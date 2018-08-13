@@ -119,7 +119,6 @@ function efetivaAtivacaoProcesso() {
 		data: {
 			horarios: listaHorarios,
 			cdprocesso: cdprocesso,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			operacao: 'ATIVAR_PROCESSO',
 			redirect: "script_ajax"
 		},
@@ -148,7 +147,6 @@ function efetivaDesativacaoProcesso(cdprocesso) {
 		data: {
 			cdprocesso: cdprocesso,
 			operacao: 'DESATIVAR_PROCESSO',
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: "script_ajax"
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -195,7 +193,6 @@ function executarEmergencial() {
 			operacao: 'EXECUTAR_EMERGENCIAL',
 			tipoExecucao: $('#tipoExecucao', '#divProgramas').val(),
 			cdcooper: $('#cdcooper', '#frmDet').val(),
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: "script_ajax"
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -250,7 +247,6 @@ function gravarHorario() {
 			idhora_processamento: $('#idhora_processamento', '#frmDet').val(),
 			dhprocessamento: dhprocessamento,
 			operacao: operacao,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -285,7 +281,6 @@ function carregarHistorico(tporigem) {
 		url		: UrlSite + 'telas/pardbt/busca_dados_hist.php', 
 		data    : { 
 			tporigem	: tporigem,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect	: 'script_ajax' 
 		},
 		error   : function(objAjax,responseError,objExcept) {
@@ -371,7 +366,6 @@ function carregarProcessos() {
 		url: UrlSite + 'telas/pardbt/' + subFolder + '/carrega_processos.php',
 		data: {
 			cdcooper: $('#cdcooper', '#frmDet').val(),
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: 'script_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -417,7 +411,6 @@ function carregarProcessoErro() {
 		url: UrlSite + 'telas/pardbt/' + subFolder + '/carrega_processo_erro.php',
 		data: {
 			cdcooper: $('#cdcooper', '#frmDet').val(),
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: 'script_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -563,7 +556,6 @@ function carregaFormularioAtivarProc(cdprocesso, dsprocesso) {
 		data: {
 			cdprocesso: cdprocesso,
 			dsprocesso: dsprocesso,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: 'script_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -608,7 +600,6 @@ function redefinirPrioridade(cdprocesso, nrprioridade) {
 		data: {
 			cdprocesso: cdprocesso,
 			nrprioridade: nrprioridade,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			operacao: 'REDEFINIR_PRIORIDADE',
 			redirect: 'script_ajax'
 		},
@@ -806,7 +797,6 @@ function carregarPrioridadesProcessos(nrprioridade) {
 		url: UrlSite + 'telas/pardbt/' + subFolder + arquivo,
 		data: {
 			idhora_processamento: horarioSelecionadoConsulta, 
-			cddopcao: cddopcao,
 			redirect: 'script_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -873,7 +863,6 @@ function excluirHorarioProc(cdprocesso) {
 		url: UrlSite + 'telas/pardbt/' + subFolder + '/form_exclusao_horario.php',
 		data: {
 			cdprocesso: cdprocesso,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: 'html_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -917,7 +906,6 @@ function validarProcessoExec(checkbox) {
 			processos: cdprocesso,
 			cdcooper: $('#cdcooper', '#frmDet').val(),
 			operacao: 'VALIDAR_PROCESSO_EM',
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: 'html_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -960,7 +948,6 @@ function adicionarHorarioProc(cdprocesso) {
 		url: UrlSite + 'telas/pardbt/' + subFolder + '/form_inclusao_horario.php',
 		data: {
 			cdprocesso: cdprocesso,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: 'html_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -1004,7 +991,6 @@ function gravarNovoHorarioProc() {
 		data: {
 			cdprocesso: cdprocesso,
 			horarios: idhora_processamento,
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			operacao: 'INCLUIR_HORARIO_PROC',
 			redirect: 'html_ajax'
 		},
@@ -1061,7 +1047,6 @@ function processarExclusaoHorarios() {
 			cdprocesso: cdprocesso,
 			horarios: listaHorarios,
 			operacao: 'EXCLUIR_HORARIO_PROC',
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: 'html_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -1161,11 +1146,11 @@ function formataPrioridades() {
 
 	var ordemInicial = new Array();
 	
-	var arrayLargura = ['50px', '295px', '54px', '42px', '42px', '40px', '81px', '81px', '190px'];
+	var arrayLargura = ['50px', '315px', '54px', '42px', '42px', '42px', '190px'];
 
 	var alinhaPrioridade = cCddopcao.val() == 'C' ? 'right' : 'left';
 
-	var arrayAlinha = [alinhaPrioridade, 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center'];
+	var arrayAlinha = [alinhaPrioridade, 'left', 'center', 'center', 'center', 'center', 'center'];
 
 	var metodoTabela = '';
 
@@ -1182,9 +1167,9 @@ function formataPrioridades() {
 	});
 
 	// Remove coluna adicional para corrigir alinhamento do cabeçalho com as colunas da tabela
-	/*$('.divRegistros').find('tbody').first().find('tr').each(function(i, elem) {
-		$(elem).find('td').eq(9).detach();
-	});*/
+	$('.divRegistros').find('tbody').first().find('tr').each(function(i, elem) {
+		$(elem).find('td').eq(7).detach();
+	});
 }
 
 function marcarExecutarTodos(e) {	
@@ -1234,7 +1219,6 @@ function excluirHorario(id) {
 		data: {
 			idhora_processamento: id,
 			operacao: 'EXCLUIR_HORARIO',
-			cddopcao: $('#cddopcao', '#frmCab').val(),
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {

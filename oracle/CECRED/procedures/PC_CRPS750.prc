@@ -32,9 +32,6 @@ BEGIN
               16/02/2018 - #674939 Inclusão do controle de execução dos jobs por agência
                            para permitir o restart do mesmo, não reexecutando as agências
                            que já foram processadas com sucesso (Carlos)
-   
-              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
-
     ............................................................................. */
 
   DECLARE
@@ -137,19 +134,6 @@ BEGIN
 
     rw_crappep cr_crappep%ROWTYPE;
 
-
-    -- Alterações na rotina para executar na cadeia noturna além do debitador
-    cursor cr_tbgen_param_debit_unico IS
-      select tdp.inexec_cadeia_noturna,
-             tdp.incontrole_exec_prog      
-        from tbgen_debitador_param  tdp
-       where exists (select 1 
-                       from tbgen_debitador_horario_proc  tdhp 
-                      where tdhp.cdprocesso = tdp.cdprocesso) --Programa deve estar associado a algum horário do Debitador Único        
-         and nrprioridade is not null --Programa deve ter prioridade informada
-         and cdprocesso = 'PC_CRPS750';    
-    rw_tbgen_param_debit_unico cr_tbgen_param_debit_unico%ROWTYPE;
-
     --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -175,10 +159,6 @@ BEGIN
     vr_nrctremp number;
     vr_nrparcela number;
     vr_idtpprd varchar2(2);
-
-    -- Debitador Unico
-    vr_flultexe     NUMBER;
-    vr_qtdexec      NUMBER;
 
     -- Busca de todas as agencias da cooperativa
     CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -241,30 +221,6 @@ BEGIN
        pr_cdcritic:= NULL;
        pr_dscritic:= NULL;
 
-    IF pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
-      -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
-      gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
-                                                  ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
-                                                  ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-    END IF; -- pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
-    
-    
-    -- Buscar parâmetro de execução na cadeia noturna além do debitador único.
-    -- Valida Programa do cadastro do Debitador
-      open cr_tbgen_param_debit_unico;
-      fetch cr_tbgen_param_debit_unico into rw_tbgen_param_debit_unico;
-      if cr_tbgen_param_debit_unico%notfound then
-        close cr_tbgen_param_debit_unico;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao buscar parâmetro de indicador de execução do programa do debitor na cadeia noturna';
-        raise vr_exc_saida;
-      else
-        close cr_tbgen_param_debit_unico;
-      end if;
-
     -- Incluir nome do modulo logado
        GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                                  ,pr_action => NULL);
@@ -307,28 +263,8 @@ BEGIN
     END IF;
     -- define como primeira execucao
     
-    -- Debitador Unico:
-    IF pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
-      --> Verificar/controlar a execução.
-      SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
-                                      ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
-                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento
-                                      ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa
-                                      ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
-                                      ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
-                                      ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
-                                      ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
-
-      IF nvl(vr_cdcritic,0) > 0 OR
-         TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_saida;
-			ELSE
-			  COMMIT;
-      END IF;
-    END IF; -- pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
-
-  -- gera log para futuros rastreios
-        pc_log_programa(PR_DSTIPLOG           => 'O',
+	  -- Gera log para futuros rastreios
+    cecred.pc_log_programa(PR_DSTIPLOG     => 'O',
                         PR_CDPROGRAMA         => 'CRPS750',
                         pr_cdcooper           => pr_cdcooper,
                         pr_tpexecucao         => 2,
@@ -337,9 +273,9 @@ BEGIN
                         PR_IDPRGLOG           => vr_idprglog); 
 
       /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
-    if PR_CDAGENCI = 0 then
-    --and   rw_crapdat.inproces >= 2 then
-                                 
+    IF PR_CDAGENCI = 0
+       AND rw_crapdat.inproces >= 2 THEN                                 
+      
        --
        PC_CRPS750_1( pr_faseprocesso => 1
                     ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
@@ -362,11 +298,9 @@ BEGIN
                                                ,'QTD_PARALE_CRPS750')
                      ,16);
 
-    
-     --  Paralelisar somente na primeira execucao do dia ou se o parametro de execução na cadeia estiver S irá executar na cadeia noturna também*/
-    IF (vr_qtdexec = 1 OR (rw_crapdat.inproces >= 2 AND NVL(rw_tbgen_param_debit_unico.inexec_cadeia_noturna,'N') = 'S'))
-	AND pr_cdagenci = 0
-    AND vr_qtdjobs > 0 THEN
+    IF rw_crapdat.inproces > 2 AND
+       pr_cdagenci = 0 AND 
+       vr_qtdjobs > 0 THEN
        
       --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
       cecred.pc_log_programa(pr_dstiplog   => 'I',    
@@ -546,8 +480,9 @@ BEGIN
            vr_nrparcela := rw_crappep.nrparepr;
            vr_idtpprd := rw_crappep.idtpprd;
 
-           if  rw_crappep.idtpprd = 'TR' then
-               --if rw_crapdat.inproces >= 2 then
+      IF rw_crappep.idtpprd = 'TR' THEN
+        IF rw_crapdat.inproces >= 2 THEN
+          
           PC_CRPS750_1(pr_faseprocesso => 2
                               ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                               ,pr_nrdconta     => rw_crappep.nrdconta  --> Número da conta
@@ -559,10 +494,10 @@ BEGIN
                               ,pr_dscritic     => vr_dscritic);
 
           IF vr_dscritic IS NULL THEN
-                     COMMIT;
+             COMMIT;
           END IF;
-        --end if;
-           elsif rw_crappep.idtpprd = 'PP' then
+        END IF;
+      elsif rw_crappep.idtpprd = 'PP' then
 
                  PC_CRPS750_2(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
@@ -573,25 +508,24 @@ BEGIN
                              ,pr_infimsol => pr_infimsol
                     ,pr_cdcritic => vr_cdcritic   --> Codigo da Critica
                     ,pr_dscritic => vr_dscritic);      --> descricao da critica
-           end if;
+      end if;
 
-           if vr_dscritic is not null then
+      if vr_dscritic is not null then
          btch0001.pc_gera_log_batch(pr_cdcooper  => pr_cdcooper,
-                                       pr_ind_tipo_log => 2,
-                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                          ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
-                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                    pr_ind_tipo_log => 2,
+                                    pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
+                                    pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
 
 
 
-           end if;
+      end if;
       /***************************************/
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
     /* encerra a execucao da pc_crps750_1 */
-    IF pr_cdagenci <> 0 THEN
-    --and rw_crapdat.inproces >= 2 THEN
-
+    IF pr_cdagenci <> 0 AND 
+       rw_crapdat.inproces >= 2 THEN
         PC_CRPS750_1( pr_faseprocesso => 3
                       ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                       ,pr_nrdconta     => null  --> Número da conta
@@ -641,7 +575,7 @@ BEGIN
                            pr_idprglog   => vr_idlog_ini_par,
                            pr_flgsucesso => 1);       
 
-
+    
     IF pr_idparale <> 0 THEN
       
       -- Atualiza finalização do batch na tabela de controle 
@@ -649,18 +583,18 @@ BEGIN
                                          ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
                                          ,pr_dscritic   => vr_dscritic);  
 
-        -- Encerrar o job do processamento paralelo dessa agência
-        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+      -- Encerrar o job do processamento paralelo dessa agência
+         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                    ,pr_des_erro => vr_dscritic);
+                                     ,pr_des_erro => vr_dscritic);
 
       --Salvar informacoes no banco de dados
-     COMMIT;
+      COMMIT;
     END IF;
   EXCEPTION
     WHEN vr_exc_saida THEN
 
-        -- Buscar a descricao
+      -- Buscar a descricao
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_cdcritic);
 
       -- Devolvemos codigo e critica encontradas
@@ -674,7 +608,7 @@ BEGIN
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
-        END IF;
+      END IF;
       
       IF pr_idparale <> 0 THEN
         -- Grava LOG de Erro

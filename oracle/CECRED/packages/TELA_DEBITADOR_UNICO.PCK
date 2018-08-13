@@ -21,7 +21,6 @@ PROCEDURE pc_grava_historico(pr_cdoperador        IN  tbgen_debitador_historico.
                            , pr_cdprocesso        IN  tbgen_debitador_historico.cdprocesso%TYPE        --> Código do processo
                            , pr_tpoperacao        IN  tbgen_debitador_historico.tpoperacao%TYPE        --> Tipo de operação
                            , pr_tporigem          IN  tbgen_debitador_historico.tporigem%TYPE          --> Origem da operação
-                           , pr_inexecuta_commit  IN  VARCHAR2 DEFAULT 'S'                             --> Indicador de execução de commit dentro da rotina                           
                            , pr_dscritic          OUT VARCHAR2);                                       --> Descrição da crítica
 
 PROCEDURE pc_busca_debitador_hist(pr_tporigem  IN tbgen_debitador_historico.tporigem%TYPE  --> Origem (0 ==> Todas, 1 ==> Cad. Horários, 2 ==> Cad. Prioridades, 3 ==> Exec. Emergenc.)
@@ -243,7 +242,6 @@ PROCEDURE pc_grava_historico(pr_cdoperador        IN  tbgen_debitador_historico.
                            , pr_cdprocesso        IN  tbgen_debitador_historico.cdprocesso%TYPE        --> Código do processo
                            , pr_tpoperacao        IN  tbgen_debitador_historico.tpoperacao%TYPE        --> Tipo de operação
                            , pr_tporigem          IN  tbgen_debitador_historico.tporigem%TYPE          --> Origem da operação
-                           , pr_inexecuta_commit  IN  VARCHAR2 DEFAULT 'S'                             --> Indicador de execução do commit aqui dentro da rotina
                            , pr_dscritic          OUT VARCHAR2                                         --> Descrição da crítica
                            ) IS
 
@@ -288,9 +286,7 @@ BEGIN
 					, pr_tporigem
 				);
 
-        IF pr_inexecuta_commit = 'S' THEN
 				COMMIT;
-        END IF;
 	 EXCEPTION
       WHEN OTHERS THEN
 				pr_dscritic := 'Erro ao gravar histórico: ' || SQLERRM;
@@ -1504,8 +1500,6 @@ DECLARE
          , p.indeb_parcial
          , p.qtdias_repescagem
          , p.nrprioridade
-				 , p.inexec_cadeia_noturna
-				 , p.incontrole_exec_prog
      FROM TBGEN_DEBITADOR_PARAM p
 		WHERE pr_idhora_processamento = 0
 		   OR p.cdprocesso IN (
@@ -1618,23 +1612,6 @@ BEGIN
                                pr_posicao  => vr_contador_pr,
                                pr_tag_nova => 'nrprioridade',
                                pr_tag_cont => rw_dados_prioridades.nrprioridade,
-                               pr_des_erro => pr_dscritic);
-
-
-				-- Prioridade (Processo) - inexec_cadeia_noturna
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador_pr,
-                               pr_tag_nova => 'inexec_cadeia_noturna',
-                               pr_tag_cont => rw_dados_prioridades.inexec_cadeia_noturna,
-                               pr_des_erro => pr_dscritic);
-
-				-- Prioridade (Processo) - incontrole_exec_prog
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador_pr,
-                               pr_tag_nova => 'incontrole_exec_prog',
-                               pr_tag_cont => rw_dados_prioridades.incontrole_exec_prog,
                                pr_des_erro => pr_dscritic);
 
         -- Prioridade (Processo) - nrprioridade
@@ -2876,9 +2853,6 @@ DECLARE
 
 		vr_dhprocessamento  tbgen_debitador_horario.dhprocessamento%TYPE;  -- Horário para inclusão no histórico
 		vr_nrprioridade     NUMBER(3);    -- Prioridade do processo para reposicionamento em tela
-    vr_ininterromper    BOOLEAN;  -- Váriavel de controle se irá permitir incluir o horario para o próximo dia
-
-		vr_mensagem         VARCHAR2(1000) := 'Horário adicionado.';
 
    BEGIN
       pr_des_erro := 'OK';
@@ -2917,17 +2891,16 @@ DECLARE
 			
 			gen_debitador_unico.pc_valida_hora_processo(pr_dhprocessamento => vr_dhprocessamento
                          ,pr_cdprocesso => pr_cdprocesso     
-                         ,pr_ininterromper => vr_ininterromper
                          ,pr_ds_erro => vr_ds_erro);    
 												 
+			IF vr_ds_erro IS NOT NULL THEN
+				RAISE vr_exc_valida_hora;
+			END IF;
+
 			OPEN cr_prioridade;
 			FETCH cr_prioridade INTO vr_nrprioridade;
 			CLOSE cr_prioridade;
 
-      -- Controlar atualização do parametro de controle de quantidades de execução
-      -- Se retornou mensagem que a inclusão irá valer a partir do próximo dia e não interromper
-      -- Ira atualizar o parâmetro de quantidade de execuções da CRAPPRM conforme chamada da rotina abaixo
-      IF NOT vr_ininterromper THEN
       -- Insere o novo horário Proc na tabela
       INSERT
         INTO TBGEN_DEBITADOR_HORARIO_PROC (
@@ -2952,19 +2925,7 @@ DECLARE
           RAISE vr_exc_historico;
         END IF;
 
-
-          -- Atualizar o parametro para controlar as execuções incluidas após a última execução
-          -- Irá utilizar a data atual pois é a data que o usuário está alterando o debitador.
-          -- Se chegar neste ponto é porque existe ultima execução já do dia atual da alteração no debitador
-          IF vr_ds_erro IS NOT NULL THEN
-            gen_debitador_unico.pc_atlz_hora_proces_prox_dia(pr_dhprocessamento => vr_dhprocessamento
-                                                            ,pr_cdprocesso => pr_cdprocesso
-                                                            ,pr_ds_erro => vr_dscritic);
-            IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_saida;
-            END IF;
-          END IF;
-
+        COMMIT;
 
         -- Inclui dados no XML de retorno
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -2995,24 +2956,6 @@ DECLARE
                                pr_tag_cont => vr_nrprioridade,
                                pr_des_erro => pr_dscritic);
 
-				  IF vr_ds_erro IS NOT NULL THEN
-						vr_mensagem := vr_ds_erro;
-					END IF;
-
-					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                                 pr_tag_pai  => 'Dados',
-                                 pr_posicao  => 0,
-                                 pr_tag_nova => 'mensagem',
-                                 pr_tag_cont => vr_mensagem,
-                                 pr_des_erro => pr_dscritic);
-        ELSE
-          IF vr_ds_erro IS NOT NULL THEN
-            RAISE vr_exc_valida_hora;
-          END IF;
-        END IF;
-
-        COMMIT;
-
    EXCEPTION
      WHEN DUP_VAL_ON_INDEX THEN
         ROLLBACK;
@@ -3021,7 +2964,7 @@ DECLARE
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 		 WHEN vr_exc_valida_hora THEN
-			  pr_dscritic := vr_ds_erro;
+			  pr_dscritic := 'Erro: ' || vr_ds_erro;
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -3076,8 +3019,7 @@ DECLARE
 
     -- Busca horário para incluir no histórico
 		CURSOR cr_horario(pr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE) IS
-		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento,
-           hor.dhprocessamento dhprocessamento_data
+		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento
 		  FROM tbgen_debitador_horario hor
 	   WHERE hor.idhora_processamento = pr_idhora_processamento;
 
@@ -3097,7 +3039,6 @@ DECLARE
     vr_exc_saida         EXCEPTION;
 		vr_exc_historico     EXCEPTION;
 		vr_exc_naocadastrado EXCEPTION;
-    vr_exc_valida_hora   EXCEPTION;
 
     -- Variáveis retornadas da gene0004.pc_extrai_dados
     vr_cdcooper INTEGER;
@@ -3109,14 +3050,8 @@ DECLARE
     vr_idorigem VARCHAR2(100);
 
 		vr_dhprocessamento VARCHAR2(5);  --> Horário para inclusão no histórico
-    vr_dhprocessamento_data tbgen_debitador_horario.dhprocessamento%TYPE;
 		vr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE;
 		vr_nrprioridade      NUMBER(3);    --> Prioridade do processo para reposicionamento em tela
- 		vr_ds_erro              crapcri.dscritic%TYPE; --> retorno gen_debitador_unico
-    vr_ds_aux_critica       VARCHAR2(4000);
-    vr_ininterromper        BOOLEAN;  -- Váriavel de controle se irá permitir incluir o horario para o próximo dia
-
-		vr_mensagem             VARCHAR2(1000) := 'Horário de processamento excluído.';
 
 		l_count binary_integer;
     l_array dbms_utility.lname_array;
@@ -3158,33 +3093,13 @@ DECLARE
                                  , tablen => l_count
                                  , tab    => l_array);
 
-        -- Início da exclusão definitiva
 				FOR i IN 1 .. l_count
 				LOOP
 				    vr_idhora_processamento := to_number(substr(l_array(i), 2, length(l_array(i))-1));
 
 						OPEN cr_horario(vr_idhora_processamento);
-          FETCH cr_horario INTO vr_dhprocessamento, vr_dhprocessamento_data;
+					  FETCH cr_horario INTO vr_dhprocessamento;
 					  CLOSE cr_horario;
-
-          vr_ds_erro       := NULL;
-          vr_ininterromper := FALSE;
-
-          gen_debitador_unico.pc_valida_exclus_hora_processo(pr_idhora_processamento => vr_idhora_processamento
-                                                            ,pr_dhprocessamento => vr_dhprocessamento_data
-                                                            ,pr_cdprocesso => pr_cdprocesso
-                                                            ,pr_ininterromper => vr_ininterromper
-                                                            ,pr_ds_erro => vr_ds_erro);
-          -- Controlar atualização do parametro de controle de quantidades de execução
-          -- Se retornou mensagem que a inclusão irá valer a partir do próximo dia e não interromper
-          -- Ira atualizar o parâmetro de quantidade de execuções da CRAPPRM conforme chamada da rotina abaixo
-          IF NOT vr_ininterromper THEN
-
-            IF vr_ds_aux_critica IS NULL THEN
-              vr_ds_aux_critica := vr_ds_erro;
-            ELSE
-              vr_ds_aux_critica := vr_ds_aux_critica||chr(10)||vr_ds_erro;
-            END IF;
 
 					  DELETE FROM tbgen_debitador_horario_proc
 						 WHERE cdprocesso = pr_cdprocesso
@@ -3197,37 +3112,15 @@ DECLARE
 											    	 , pr_cdprocesso => pr_cdprocesso
 											     	 , pr_tpoperacao => 3
 											    	 , pr_tporigem => 1
-                             , pr_inexecuta_commit => 'N'
 	                           , pr_dscritic => vr_dscritic);
 
 
 						IF vr_dscritic IS NOT NULL THEN
 							RAISE vr_exc_historico;
 						END IF;
-
-            -- Atualizar o parametro para controlar as execuções incluidas após a última execução
-            -- Irá utilizar a data atual pois é a data que o usuário está alterando o debitador.
-            -- Se chegar neste ponto é porque existe ultima execução já do dia atual da alteração no debitador
-            IF vr_ds_aux_critica IS NOT NULL THEN
-              gen_debitador_unico.pc_atlz_hora_proces_prox_dia(pr_dhprocessamento => vr_dhprocessamento_data
-                                                              ,pr_cdprocesso => pr_cdprocesso
-                                                              ,pr_ds_erro => vr_dscritic);
-              IF vr_dscritic IS NOT NULL THEN
-                RAISE vr_exc_saida;
-              END IF;
-            END IF;
-          ELSE
-            ROLLBACK;
-    				RAISE vr_exc_valida_hora;
-          END IF;
 				END LOOP;
 
 				COMMIT;
-
-        IF vr_ds_aux_critica IS NOT NULL THEN
-          vr_mensagem := vr_ds_aux_critica;
-          --RAISE vr_exc_valida_hora;
-        END IF;
 
 				-- Inclui dados no XML de retorno
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -3245,22 +3138,10 @@ DECLARE
                                pr_tag_cont => vr_nrprioridade,
                                pr_des_erro => pr_dscritic);
 
-			-- Inclui dados no XML de retorno
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'Dados',
-                             pr_posicao  => 0,
-                             pr_tag_nova => 'mensagem',
-                             pr_tag_cont => vr_mensagem,
-                             pr_des_erro => pr_dscritic);
 
 	 EXCEPTION
 		  WHEN vr_exc_historico THEN
         pr_dscritic := 'Erro de gravação de histórico na rotina da tela PARDBT - pc_exclui_debitador_hr_proces: ' ||vr_dscritic;
-        -- Carregar XML padrao para variavel de retorno
-        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
- 		  WHEN vr_exc_valida_hora THEN
-			  pr_dscritic := vr_ds_erro;
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');

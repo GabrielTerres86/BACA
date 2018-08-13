@@ -623,7 +623,7 @@ DECLARE
            crapass ass,
            craphis his
       WHERE ope.cdcooper = pr_cdcooper
-        AND ope.insit_operacao IN (1) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
+        AND ope.insit_operacao IN (3,6,7) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
         AND ope.dtrecarga = vr_dtmvtolt
         AND ass.cdagenci    = pr_cdagenci        
         AND ass.nrdconta    = nvl(pr_nrdconta,ass.nrdconta)      
@@ -631,9 +631,8 @@ DECLARE
         AND ass.cdcooper    = ope.cdcooper
         AND ass.nrdconta    = ope.nrdconta
         AND ope.cdcooper    = his.cdcooper        
-        AND his.cdhistor   = opr.cdhisdeb_cooperado  
-   /*     AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
-             his.cdhistor   = opr.cdhisdeb_centralizacao)    */
+        AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
+             his.cdhistor   = opr.cdhisdeb_centralizacao)    
         AND InStr(pr_ds_cdprocesso,'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA'||',') > 0                 
       union
       --  cecred.pc_crps439 - DEBITO DIARIO DO SEGURO
@@ -1331,7 +1330,7 @@ BEGIN
            crapass ass,
            craphis his
       WHERE ope.cdcooper = pr_cdcooper
-        AND ope.insit_operacao IN (1) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
+        AND ope.insit_operacao IN (3,6,7) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
         AND ope.dtrecarga = vr_dtmvtolt
         AND ass.cdagenci    = pr_cdagenci        
         AND ass.nrdconta    = nvl(pr_nrdconta,ass.nrdconta)      
@@ -1339,9 +1338,8 @@ BEGIN
         AND ass.cdcooper    = ope.cdcooper
         AND ass.nrdconta    = ope.nrdconta
         AND ope.cdcooper    = his.cdcooper        
-        AND his.cdhistor   = opr.cdhisdeb_cooperado  
-    /*    AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
-             his.cdhistor   = opr.cdhisdeb_centralizacao)   */ 
+        AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
+             his.cdhistor   = opr.cdhisdeb_centralizacao)    
         AND InStr(pr_ds_cdprocesso,'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA'||',') > 0                 
       union
       --  cecred.pc_crps439 - DEBITO DIARIO DO SEGURO
@@ -1695,11 +1693,29 @@ BEGIN
             vr_data_aux :=  to_date(rw_debitos.dtmvto,'DD/MM/YYYY'); 
            -- Se for Financiamento
            IF (vr_tab_craplcr(rw_debitos.auxcdlcremp).dsoperac = 'FINANCIAMENTO') THEN
-
+             --EM DIA
+             IF vr_data_aux > vr_dtmovini --rw_crapdat.dtmvtoan
+                            AND vr_data_aux <= vr_dtmvtolt THEN
                rw_debitos.historico := 2333;             
+             ELSIF --em atraso
+                 vr_data_aux < vr_dtmvtolt THEN
+               -- ATRASO
+               rw_debitos.historico := 2364;
+             ELSE -- Parcela Vencer, não lista--
+                continue;
+             END IF;  
            ELSE
-              --se for emprestimo 
+            -- EM DIA
+             IF vr_data_aux > vr_dtmovini --rw_crapdat.dtmvtoan
+                            AND vr_data_aux <= vr_dtmvtolt THEN
                 rw_debitos.historico := 2332;
+             ELSIF --em atraso
+                 vr_data_aux < vr_dtmvtolt THEN
+            -- EM ATRASO
+                rw_debitos.historico := 2362;             
+             ELSE --- Parcela Vencer , não lista--
+                   continue; 
+             END IF;
            END IF;
            FOR rw_craplcr IN cr_craphis(pr_cdcooper => pr_cdcooper, pr_cdhistor => rw_debitos.historico) LOOP
                rw_debitos.historico := rw_craplcr.dshist;
