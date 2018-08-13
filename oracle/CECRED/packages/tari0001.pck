@@ -568,6 +568,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                               ,pr_dtmvtolt      DATE          --Data Lancamento
                               ,pr_cdcritic      OUT INTEGER   --Codigo Critica
                               ,pr_dscritic      OUT VARCHAR2);--Descricao Critica                              
+  PROCEDURE pc_envia_email_tarifa(pr_rowid  IN rowid,pr_des_erro OUT varchar2);
 END TARI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
@@ -4918,8 +4919,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         FETCH cr_craptar INTO rw_craptar;
         --Se nao encontrar
         IF cr_craptar%NOTFOUND THEN
-          --Fechar Cursor
+          --PRB0040208
           CLOSE cr_craptar;
+          -- Envia e-mail para área, relatando tarifa não entontrada
+          pc_envia_email_tarifa(rw_craplat.rowid,vr_dscritic);
+          if vr_dscritic is not null then
+            gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                ,pr_cdoperad => pr_cdoperad
+                                ,pr_dscritic => vr_dscritic
+                                ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                                ,pr_dstransa => '' 
+                                ,pr_dttransa => SYSDATE
+                                ,pr_flgtrans => 0
+                                ,pr_hrtransa => gene0002.fn_busca_time
+                                ,pr_idseqttl => 1
+                                ,pr_nmdatela => pr_nmdatela 
+                                ,pr_nrdconta => 0 
+                                ,pr_nrdrowid => vr_nrdrowid);
+          end if;
+          CONTINUE;
         END IF;
         
         --Fechar Cursor
@@ -8908,5 +8926,89 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       -- Efetuar rollback
       ROLLBACK;
   END pc_calcula_tarifa;
+  
+ PROCEDURE pc_envia_email_tarifa(pr_rowid  IN rowid,
+                                 pr_des_erro OUT varchar2) IS
+                              
+    cursor c_dados is 
+    select l.cdcooper,
+           c.nmrescop,
+           l.nrdconta,
+           l.vltarifa,
+           l.cdlantar,
+           l.cdhistor,
+           h.dshistor,
+           l.progress_recid
+      from craplat l,
+           crapcop c,
+           craphis h
+     where l.rowid    = pr_rowid        
+       and l.cdcooper = c.cdcooper
+       and l.cdcooper = h.cdcooper
+       and l.cdhistor = h.cdhistor;    
+   r_dados c_dados%rowtype;                    
+                              
+  vr_des_erro   varchar2(500);
+  vr_exc_erro   exception;
+  vr_assunto    varchar2(4000);
+  vr_prm_emails varchar2(4000) := gene0001.fn_param_sistema('CRED',0,'EMAIL_TARIFAS_NENC');
+  vr_corpo      varchar2(4000);  
+  vr_proxima_linha   varchar2(100) := '<br /><br />';  
+  vr_flg_remove_anex char(1) := 'N';
+  
+
+  BEGIN
+    --    Autor   : Paulo Martins (Mout-s)
+    --    Data    : Julho/2018                         
+    --
+    --    Objetivo  : Caso não encontre tarifa, envia e-mail para área avisando
+    IF vr_prm_emails IS NULL THEN
+       vr_des_erro := 'Não localizou o parâmetro "EMAIL_TARIFAS_NENC" com os e-mails para envio.';
+       RAISE vr_exc_erro;    
+    END IF; 
+    --
+    vr_assunto := 'Não encontrado a tarifa no processo de lançamento na conta do cooperado';      
+    
+    open c_dados;
+     fetch c_dados into r_dados;
+      --
+      vr_corpo := 'Cooperativa: '||r_dados.cdcooper||' -  '||r_dados.nmrescop||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Conta: '||r_dados.nrdconta||vr_proxima_linha;
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Código Lançamento: '||r_dados.cdlantar||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Valor da Tarifa: '||r_dados.vltarifa||vr_proxima_linha;      
+      vr_corpo := vr_corpo||'Código Histórico: '||r_dados.cdhistor||' - '||r_dados.dshistor||vr_proxima_linha;      
+      vr_corpo := vr_corpo||'Data/Hora: '||to_char(sysdate,'dd/mm/rrrr hh24:mi:ss')||vr_proxima_linha;  
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Informação para T.I - Progress_recid: '||r_dados.progress_recid;
+      --
+    close c_dados;
+    -- Chamar o agendamento deste e-mail
+    gene0003.pc_solicita_email(pr_cdcooper    => r_dados.cdcooper
+                              ,pr_cdprogra    => 'TARI0001'
+                              ,pr_des_destino => vr_prm_emails
+                              ,pr_flg_remove_anex => 'S' --> Remove os anexos
+                              ,pr_des_assunto => vr_assunto
+                              ,pr_des_corpo   => vr_corpo
+                              ,pr_des_anexo   => Null
+                              ,pr_des_erro    => vr_des_erro);
+    -- Se houver erro
+    IF vr_des_erro IS NOT NULL THEN
+      -- Levantar exceção
+      RAISE vr_exc_erro;
+    END IF;
+  EXCEPTION
+    WHEN vr_exc_erro THEN --> Erro tratado
+      -- Efetuar rollback
+      ROLLBACK;
+      pr_des_erro := 'TARI0001.pc_envia_email_tarifa --> : '|| sqlerrm;                                        
+    WHEN OTHERS THEN -- Gerar log de erro
+      -- Efetuar rollback
+      ROLLBACK;
+      pr_des_erro := 'TARI0001.pc_envia_email_tarifa --> : '|| sqlerrm;
+  END pc_envia_email_tarifa;   
+  
 END TARI0001;
 /
