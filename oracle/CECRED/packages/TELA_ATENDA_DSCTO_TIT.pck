@@ -7136,6 +7136,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       Data     : Abril/2018    
 
       Objetivo  : Procedure para Alterar os títulos de um borderô
+      Alterações:
+        - 13/08/2018 - Vitor Shimada Assanuma (GFT) - Verificar se o título foi resgatado na alteração.
 
     ---------------------------------------------------------------------------------------------------------------------*/
      -- Variável de críticas
@@ -7259,6 +7261,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             AND craptdb.nrcnvcob = pr_nrcnvcob
             AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
             AND craptdb.insitapr = 1
+            AND craptdb.dtresgat IS NULL
             ;
       rw_craptdb cr_craptdb%rowtype;
       
