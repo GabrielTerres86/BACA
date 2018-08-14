@@ -4654,18 +4654,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dscritic => vr_dscritic);
 
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-               IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                  RAISE vr_exc_saida;
-               ELSE -- Não foi possível debitar (crítica de negócio)
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
-                  RAISE vr_exc_saida;
-               END IF;
+               RAISE vr_exc_saida;
             END IF;        
           
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
+            vr_dscritic := 'Erro chamada rotina lanc0001:'||sqlerrm;
             RAISE vr_exc_saida;
         END;
       END IF; -- Fim ELSE recurso nao proveniente de conta investimento
