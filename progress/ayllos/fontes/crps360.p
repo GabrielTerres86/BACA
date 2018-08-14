@@ -846,16 +846,16 @@ DO  i = 1 TO aux_contador:
                VALIDATE craplot.
 
                /*   Tratamento de Cheques Bloqueados  */
-               IF   craplcm.cdhistor = 24    OR
-                    craplcm.cdhistor = 27    OR
-                    craplcm.cdhistor = 657   THEN
+               IF   aux_cdhistor = 24    OR
+                    aux_cdhistor = 27    OR
+                    aux_cdhistor = 657   THEN
                     DO:
-                        IF   craplcm.vllanmto = crapdpb.vllanmto THEN
+                        IF   aux_vlcheque = crapdpb.vllanmto THEN
                              crapdpb.inlibera = 2.   /* Dep. Estornado */
                         ELSE
                              /*  Deposito com varios cheques */
                              crapdpb.vllanmto = (crapdpb.vllanmto -
-                                                 craplcm.vllanmto).
+                                                 aux_vlcheque).
                     END.
 
       			   IF crapass.inpessoa = 1 THEN
