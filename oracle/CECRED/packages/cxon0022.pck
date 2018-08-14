@@ -1313,6 +1313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                pr_cdcritic => pr_cdcritic,
                pr_dscritic => pr_dscritic
                );
+
                if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
                   -- Desfaz as alterações
                   ROLLBACK TO real_trans;
@@ -1330,62 +1331,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                
           dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
-/*
-          INSERT INTO craplcm
-             (craplcm.cdcooper
-             ,craplcm.dtmvtolt
-             ,craplcm.cdagenci
-             ,craplcm.cdbccxlt
-             ,craplcm.nrdolote
-             ,craplcm.nrdconta
-             ,craplcm.nrdocmto
-             ,craplcm.vllanmto
-             ,craplcm.cdhistor
-             ,craplcm.nrseqdig
-             ,craplcm.nrsequni
-             ,craplcm.nrdctabb
-             ,craplcm.nrautdoc
-             ,craplcm.cdpesqbb
-             ,craplcm.cdcoptfn
-             ,craplcm.cdagetfn
-             ,craplcm.nrterfin
-             ,craplcm.hrtransa
-             ,craplcm.cdoperad)
-          VALUES
-             (rw_crapcop.cdcooper        --cdcooper
-             ,rw_crapdat.dtmvtocd        --dtmvtolt
-             ,pr_cod_agencia             --cdagenci
-             ,11                         --cdbccxlt
-             ,vr_nro_lote                --nrdolote
-             ,pr_nrdcontapara            --nrdconta
-             ,pr_nro_docto               --nrdocmto
-             ,pr_valor                   --vllanmto
-             ,1015                       --cdhistor
-             ,Nvl(rw_craplot_dst.nrseqdig,0) --nrseqdig
-             ,Nvl(rw_craplot_dst.nrseqdig,0) --nrsequni
-             ,pr_nrdcontade              --nrdctabb
-             ,nvl(vr_ult_sequencia,0)    --nrautdoc
-             ,'CRAP22'                   --cdpesqbb
-             ,rw_crapcop.cdcooper        --cdcoptfn
-             ,pr_cod_agencia             --cdagetfn
-             ,0                          --nrterfin
-             ,GENE0002.fn_busca_time     --hrtransa
-             ,pr_cod_operador)           --cdoperad
-          RETURNING craplcm.ROWID
-                   ,craplcm.cdpesqbb
-                   ,craplcm.cdcoptfn
-                   ,craplcm.cdagetfn
-                   ,craplcm.nrterfin
-                   ,craplcm.nrsequni
-                   ,craplcm.nrautdoc
-          INTO rw_craplcm.ROWID
-               ,rw_craplcm.cdpesqbb
-               ,rw_craplcm.cdcoptfn
-               ,rw_craplcm.cdagetfn
-               ,rw_craplcm.nrterfin
-               ,rw_craplcm.nrsequni
-               ,rw_craplcm.nrautdoc;
-*/
         EXCEPTION
           WHEN Others THEN
             vr_cdcritic:= 0;
@@ -1722,69 +1667,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                
           dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
-/*
-          INSERT INTO craplcm
-             (craplcm.cdcooper
-             ,craplcm.dtmvtolt
-             ,craplcm.cdagenci
-             ,craplcm.cdbccxlt
-             ,craplcm.nrdolote
-             ,craplcm.nrdconta
-             ,craplcm.nrdocmto
-             ,craplcm.vllanmto
-             ,craplcm.cdhistor
-             ,craplcm.nrseqdig
-             ,craplcm.nrsequni
-             ,craplcm.nrdctabb
-             ,craplcm.nrautdoc
-             ,craplcm.cdpesqbb
-             ,craplcm.nrdctitg
-             ,craplcm.cdcoptfn
-             ,craplcm.cdagetfn
-             ,craplcm.nrterfin
-             ,craplcm.dsidenti
-             ,craplcm.hrtransa
-             ,craplcm.cdoperad)
-          VALUES
-             (rw_crapcop.cdcooper
-             ,rw_crapdat.dtmvtocd
-             ,pr_cod_agencia
-             ,rw_craplot_ori.cdbccxlt
-             ,vr_nro_lote
-             ,pr_nrdcontade
-             ,pr_nro_docto
-             ,pr_valor
-             ,1009 -- Debito                 --cdhistor
-             ,nvl(rw_craplot_ori.nrseqdig,0)                                          --nrseqdig
-             ,nvl(rw_craplot_ori.nrseqdig,0)                                          --nrsequni
-             ,pr_nrdcontapara                                                     --nrdctabb
-             ,nvl(vr_ult_sequencia_lcm,0)                                                --nrautdoc
-             ,'CRAP22 - '||gene0002.fn_mask(rw_crabcop.cdagectl,'9999')           --cdpesqbb
-             ,'0'                                                                 --nrdctitg
-             ,rw_crabcop.cdcooper                                                 --cdcoptfn
-             ,rw_crabass.cdagenci                                                 --cdagetfn
-             ,0                                                                   --nrterfin
-             ,'Agencia: '|| GENE0002.fn_mask(rw_crabcop.cdagectl,'9999')||        --dsidenti
-             ' Conta/DV: '|| GENE0002.fn_mask_conta(pr_nrdcontapara)
-             ,GENE0002.fn_busca_time                                              --hrtransa
-             ,pr_cod_operador)                                                    --cdoperad
-          RETURNING craplcm.ROWID
-                   ,craplcm.cdpesqbb
-                   ,craplcm.cdcoptfn
-                   ,craplcm.cdagetfn
-                   ,craplcm.nrterfin
-                   ,craplcm.nrsequni
-                   ,craplcm.nrautdoc
-           ,craplcm.cdhistor
-          INTO rw_craplcm.ROWID
-               ,rw_craplcm.cdpesqbb
-               ,rw_craplcm.cdcoptfn
-               ,rw_craplcm.cdagetfn
-               ,rw_craplcm.nrterfin
-               ,rw_craplcm.nrsequni
-               ,rw_craplcm.nrautdoc
-         ,rw_craplcm.cdhistor;
-*/
         EXCEPTION
           WHEN Others THEN
             vr_cdcritic:= 0;
@@ -2071,69 +1953,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
           dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
-/*
-          INSERT INTO craplcm
-             (craplcm.cdcooper
-             ,craplcm.dtmvtolt
-             ,craplcm.cdagenci
-             ,craplcm.cdbccxlt
-             ,craplcm.nrdolote
-             ,craplcm.nrdconta
-             ,craplcm.nrdocmto
-             ,craplcm.vllanmto
-             ,craplcm.cdhistor
-             ,craplcm.nrseqdig
-             ,craplcm.nrsequni
-             ,craplcm.nrdctabb
-             ,craplcm.nrautdoc
-             ,craplcm.cdpesqbb
-             ,craplcm.nrdctitg
-             ,craplcm.cdcoptfn
-             ,craplcm.cdagetfn
-             ,craplcm.nrterfin
-             ,craplcm.dsidenti
-             ,craplcm.hrtransa
-             ,craplcm.cdoperad)
-          VALUES
-             (rw_crabcop.cdcooper                                       --cdcooper
-             ,rw_crapdat.dtmvtocd                                       --dtmvtocd
-             ,pr_cod_agencia                                            --cdagenci
-             ,100                                                       --cdbccxlt
-             ,rw_craplot_dst.nrdolote                                   --nrdolote
-             ,pr_nrdcontapara                                           --nrdconta
-             ,pr_nro_docto_cred                                         --nrdocmto
-             ,pr_valor                                                  --vllanmto
-             ,1011                                                      --cdhistor
-             ,Nvl(rw_craplot_dst.nrseqdig,0)                            --nrseqdig
-             ,Nvl(rw_craplot_dst.nrseqdig,0)                            --nrsequni
-             ,pr_nrdcontade                                             --nrdctabb
-             ,nvl(vr_ult_sequencia,0)                                          --nrautdoc
-             ,'CRAP22 - '||gene0002.fn_mask(rw_crapcop.cdagectl,'9999') --cdpesqbb
-             ,' '                                                       --nrdctitg
-             ,rw_crapcop.cdcooper                                       --cdcoptfn
-             ,pr_cod_agencia                                            --cdagetfn
-             ,0                                                       --nrterfin
-             ,'Agencia: '||gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
-              ' Conta/DV: '|| GENE0002.fn_mask_conta(pr_nrdcontade)     --dsidenti
-             ,GENE0002.fn_busca_time                                    --hrtransa
-             ,pr_cod_operador)                                          --cdoperad
-          RETURNING craplcm.ROWID
-                   ,craplcm.cdpesqbb
-                   ,craplcm.cdcoptfn
-                   ,craplcm.cdagetfn
-                   ,craplcm.nrterfin
-                   ,craplcm.nrsequni
-                   ,craplcm.nrautdoc
-                   ,craplcm.nrdocmto
-          INTO rw_craplcm.ROWID
-               ,rw_craplcm.cdpesqbb
-               ,rw_craplcm.cdcoptfn
-               ,rw_craplcm.cdagetfn
-               ,rw_craplcm.nrterfin
-               ,rw_craplcm.nrsequni
-               ,rw_craplcm.nrautdoc
-               ,rw_craplcm.nrdocmto;
-*/
         EXCEPTION
           WHEN Others THEN
             vr_cdcritic:= 0;
