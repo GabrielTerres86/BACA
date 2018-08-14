@@ -423,6 +423,8 @@ create or replace package body cecred.TELA_APRDES is
     Data     : Abril/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Função que retorna os títulos passíveis de análise na esteira de determinado bordero
+    Alterações: 
+      14/08/2018 - Vitor Shimada Assanuma (GFT) - Alteração da chamada de procedure para calculos de liquidez
   ---------------------------------------------------------------------------------------------------------------------*/
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
@@ -438,15 +440,18 @@ create or replace package body cecred.TELA_APRDES is
    
    CURSOR cr_craptdb (pr_dtiniliq crapdat.dtmvtolt%TYPE
                      ,pr_dtfimliq crapdat.dtmvtolt%TYPE
-                     ,pr_carencia INTEGER) IS
+                     ,pr_carencia INTEGER
+                     ,pr_qtmitdcl INTEGER
+                     ,pr_vlmintcl NUMBER
+                     ) IS
      SELECT
           sab.nmdsacad,
           sab.nrcelsac,
           cob.nrnosnum,
           tdb.vltitulo,
           tdb.dtvencto,
-          DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,sab.nrinssac,pr_dtiniliq, pr_dtfimliq, pr_carencia) AS nrliqpag,
-          DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,sab.nrinssac,pr_dtiniliq, pr_dtfimliq, pr_carencia) AS nrconcen,
+          DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,sab.nrinssac,pr_dtiniliq, pr_dtfimliq, pr_carencia, pr_qtmitdcl, pr_vlmintcl) AS nrliqpag,
+          DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,sab.nrinssac,pr_dtiniliq, pr_dtfimliq, pr_carencia, pr_qtmitdcl, pr_vlmintcl) AS nrconcen,
           nvl((SELECT 
                   decode(inpossui_criticas,1,'S','N')
                   FROM 
@@ -514,7 +519,10 @@ create or replace package body cecred.TELA_APRDES is
      pr_qtregist := 0 ;
      OPEN cr_craptdb(pr_dtiniliq => rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
                     ,pr_dtfimliq => rw_crapdat.dtmvtolt
-                    ,pr_carencia => vr_tab_dados_dsctit(1).cardbtit_c);
+                    ,pr_carencia => vr_tab_dados_dsctit(1).cardbtit_c
+                    ,pr_qtmitdcl => vr_tab_dados_dsctit(1).qtmitdcl
+                    ,pr_vlmintcl => vr_tab_dados_dsctit(1).vlmintcl
+                    );
      LOOP
        	FETCH cr_craptdb INTO rw_craptdb;
         EXIT WHEN cr_craptdb%NOTFOUND;
