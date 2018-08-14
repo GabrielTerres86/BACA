@@ -7,6 +7,7 @@
 	 Objetivo  : Lista os títulos de um borderô passíveis de análise na mesa de checagem
      - 01/06/2018 | Vitor Shimada Assanuma (GFT): Inclusão de todos os titulos do borderô, mas com o campo de decisão bloqueado quando não tem crítica CNAE
      - 09/08/2018 | Vitor Shimada Assanuma (GFT): Esconder o campo de Sim/Não quando não possuir crítica CNAE
+     - 14/08/2018 | Vitor Shimada Assanuma (GFT): Rename do botão para: "Ver Detalhes da An&aacute;lise"
 	************************************************************************/
 	
 	session_start();
@@ -194,7 +195,7 @@
 											<?include('criticas_bordero.php');?>
 											<div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 												<input type="button" class="botao" value="Voltar"  onClick="encerraRotina();return false; " />
-												<input type="button" class="botao" value="Visualizar Detalhes" onClick="visualizarDetalhes();return false;"/>
+												<input type="button" class="botao" value="Ver Detalhes da An&aacute;lise" onClick="visualizarDetalhes();return false;"/>
 												<input type="button" class="botao" value="Confirmar An&aacute;lise" onClick='showConfirmacao("Deseja finalizar a an&aacute;lise do bordero?","Confirma&ccedil;&atilde;o - Ayllos","concluirChecagem()","bloqueiaFundo(divRotina)","sim.gif","nao.gif");' style="<?=$checagem?"":" display:none; "?>"/>
 											</div>
 										</div>
