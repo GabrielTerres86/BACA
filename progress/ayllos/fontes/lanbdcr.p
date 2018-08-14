@@ -1396,49 +1396,15 @@ PROCEDURE proc_recalculo:
    IF  VALID-HANDLE(h-b1wgen0200) THEN
        DELETE PROCEDURE h-b1wgen0200.
    
-   /*
-   CREATE crablcm.
-   ASSIGN crablcm.dtmvtolt = crablot.dtmvtolt 
-          crablcm.cdagenci = crablot.cdagenci
-          crablcm.cdbccxlt = crablot.cdbccxlt 
-          crablcm.nrdolote = crablot.nrdolote
-          crablcm.nrdconta = crapcdb.nrdconta
-          crablcm.nrdocmto = crablot.nrseqdig + 1
-          crablcm.vllanmto = crapcdb.vlcheque - (aux_vlliqnov - aux_vlliqori)
-          crablcm.cdhistor = 271
-          crablcm.nrseqdig = crablot.nrseqdig + 1 
-          crablcm.nrdctabb = crapcdb.nrdconta
-          crablcm.nrautdoc = 0
-          crablcm.cdpesqbb = "Resgate de cheque descontado " +
-                             crapcdb.dsdocmc7 + " Bordero " +
-                             STRING(crapcdb.nrborder)
-          crablcm.cdcooper = glb_cdcooper
-          crablcm.cdbanchq = crapcdb.cdbanchq
-          crablcm.cdagechq = crapcdb.cdagechq
-          crablcm.nrctachq = crapcdb.nrctachq
-
-          crablot.nrseqdig = crablcm.nrseqdig
-          crablot.qtinfoln = crablot.qtinfoln + 1
-          crablot.qtcompln = crablot.qtcompln + 1
-          
-          crablot.vlinfodb = crablot.vlinfodb + crablcm.vllanmto
-          crablot.vlcompdb = crablot.vlcompdb + crablcm.vllanmto
-          
-          crapcdb.vlliqdev = aux_vlliqnov.
-   VALIDATE crablcm.
-   */
-   
     ASSIGN 
-          crablot.nrseqdig = crablcm.nrseqdig
+          crablot.nrseqdig = crablot.nrseqdig + 1 
           crablot.qtinfoln = crablot.qtinfoln + 1
           crablot.qtcompln = crablot.qtcompln + 1
           
-          crablot.vlinfodb = crablot.vlinfodb + crablcm.vllanmto
-          crablot.vlcompdb = crablot.vlcompdb + crablcm.vllanmto
+          crablot.vlinfodb = crablot.vlinfodb + crapcdb.vlcheque - (aux_vlliqnov - aux_vlliqori) 
+          crablot.vlcompdb = crablot.vlcompdb + crapcdb.vlcheque - (aux_vlliqnov - aux_vlliqori) 
           
-          crapcdb.vlliqdev = aux_vlliqnov.
-
-   
+          crapcdb.vlliqdev = aux_vlliqnov.   
 END PROCEDURE.
 
 PROCEDURE proc_lautom:
