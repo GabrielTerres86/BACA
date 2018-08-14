@@ -7951,8 +7951,9 @@ EXCEPTION
         END IF;
       END IF;
 
-      -- Se o valor pago do boleto for maior que o saldo restante, lança o saldo restante como crédito na conta corrente do cooperado
-      IF vr_vlpagmto > 0 THEN
+      -- Se não for pagamento pela conta-corrente raspada e se o valor pago do boleto for maior que o saldo restante, 
+      -- então lançar o saldo restante como crédito na conta corrente do cooperado
+      IF pr_cdorigpg > 0 AND vr_vlpagmto > 0 THEN
         pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
                          ,pr_cdagenci => 1
                          ,pr_cdbccxlt => 100
