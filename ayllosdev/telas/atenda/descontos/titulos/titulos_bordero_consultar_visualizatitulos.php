@@ -18,7 +18,10 @@
 				 02/04/2018 - Padronização da tabela, retirada das restrições e adição do saldo devedor (Leonardo Oliveira -GFT)
 							  
 				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
+
 				 19/05/2018 - Insert do campo de Decisão (Vitor Shimada Assanuma - GFT)
+
+				 13/08/2018 - Novo botão "Ver Detalhes do Título" (Vitor Shimada Assanuma - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -286,24 +289,9 @@
 	<?include('criticas_bordero.php');?>
 
 	<div id="divBotoes">
-		<a
-		href="#"
-		class="botao" 
-		name="btnvoltar"
-		id="btnvoltar"
-		onClick="voltaDiv(4,3,4,'CONSULTA DE BORDER&Ocirc;');return false;" >
-			Voltar
-		</a>
-
-		<a
-		href="#"
-		class="botao" 
-		name="btnvoltar"
-		id="btnvoltar"
-		onClick="visualizarTituloDeBordero();return false;" >
-			Ver detalhes
-		</a>
-
+		<a href="#" class="botao"  name="btnvoltar"   id="btnvoltar"   onClick="voltaDiv(4,3,4,'CONSULTA DE BORDER&Ocirc;');return false;" > Voltar</a>
+		<a href="#" class="botao"  name="btnvoltar"   id="btnvoltar"   onClick="visualizarTituloDeBordero();return false;" > Ver detalhes</a>
+		<a href="#" class="botao"  name="btnDetalhes" id="btnDetalhes" onClick="visualizarDetalhesTitulo();return false;" > Ver detalhes do T&iacute;tulo</a>
 	</div>
 
 	<script type="text/javascript">

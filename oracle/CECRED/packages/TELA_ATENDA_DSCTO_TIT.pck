@@ -239,6 +239,28 @@ TYPE typ_reg_borderos IS RECORD(
 );
 TYPE typ_tab_borderos IS TABLE OF typ_reg_borderos INDEX BY BINARY_INTEGER;
 
+/*Tabela de retorno dos dados obtidos na consulta de titulo*/
+TYPE typ_reg_titulo IS RECORD(
+    nrinssac craptdb.nrinssac%TYPE,
+    nrdconta craptdb.nrdconta%TYPE,
+    dtvencto craptdb.dtvencto%TYPE,
+    nossonum VARCHAR2(50),
+    nmdsacad VARCHAR(500),
+    diasatr  INTEGER,
+    diasprz  INTEGER,
+    vltitulo craptdb.vltitulo%TYPE,
+    vlsldtit craptdb.vlsldtit%TYPE,
+    nmsacado crapsab.nmdsacad%TYPE,
+    cdtpinsc crapsab.cdtpinsc%TYPE,
+    nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE,
+    vlpago   NUMBER(15,2),
+    vlmulta  NUMBER(15,2),
+    vlmora   NUMBER(15,2),
+    vliof    NUMBER(15,2),
+    vlpagar  NUMBER(15,2)
+);
+TYPE typ_tab_titulo IS TABLE OF typ_reg_titulo INDEX BY BINARY_INTEGER;
+
 
   --     buscar informações dos titulos/boletos (utilizado em outras package)
   CURSOR cr_crapcob(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -736,6 +758,18 @@ PROCEDURE pc_contingencia_ibratan_web(pr_xmllog   IN VARCHAR2              --> X
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2             --> Erros do processo
                                  );
+
+PROCEDURE pc_busca_dados_titulo_web (pr_nrdconta    IN crapass.nrdconta%TYPE --> conta do associado
+                                     ,pr_nrborder    IN crapbdt.nrborder%TYPE --> numero do bordero
+                                     ,pr_chave       IN VARCHAR2              --> lista de 'nosso numero' a ser pesquisado
+                                     ,pr_xmllog      IN VARCHAR2              --> xml com informações de log
+                                     --------> out <--------
+                                     ,pr_cdcritic OUT PLS_INTEGER             --> código da crítica
+                                     ,pr_dscritic OUT VARCHAR2                --> descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY xmltype       --> arquivo de retorno do xml
+                                     ,pr_nmdcampo OUT VARCHAR2                --> nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2                --> erros do processo
+                                    );                                 
                                  
 END TELA_ATENDA_DSCTO_TIT;
 /
@@ -8705,6 +8739,215 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
          ROLLBACK;
   END pc_contingencia_ibratan_web ;
+
+  PROCEDURE pc_busca_dados_titulo(pr_cdcooper     IN craptdb.cdcooper%TYPE
+                                 ,pr_nrdconta     IN crapass.nrdconta%TYPE --> conta do associado
+                                 ,pr_nrborder     IN crapbdt.nrborder%TYPE --> numero do bordero
+                                 ,pr_chave        IN VARCHAR2              --> lista de 'nosso numero' a ser pesquisado
+                                 ,pr_tab_titulo   OUT  typ_tab_titulo --> Tabela de retorno
+                                 ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
+                                 ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
+                                 ) IS 
+    -- Tratamento de erro
+    vr_exc_erro exception;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%type; --> cód. erro
+    vr_dscritic varchar2(1000);        --> desc. erro
+    
+    -- Variavel para guardar a chave quebrada
+    vr_tab_chave  gene0002.typ_split;
+    
+    -- Cursor de data
+    rw_crapdat  btch0001.rw_crapdat%TYPE;
+    
+    -- Cursor do título
+    CURSOR cr_craptdb (pr_nrdocmto IN craptdb.nrdocmto%TYPE, 
+                       pr_nrcnvcob IN craptdb.nrcnvcob%TYPE,
+                       pr_nrdctabb IN craptdb.nrdctabb%TYPE,
+                       pr_cdbandoc IN crapcob.cdbandoc%TYPE) IS
+      SELECT 
+        (tdb.vltitulo - vlsldtit) AS vlpago
+       ,(vlmtatit - vlpagmta) AS vlmulta
+       ,(vlmratit - vlpagmra) AS vlmora
+       ,(vliofcpl - vlpagiof) AS vliof
+       ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) AS  vlpagar
+       ,tdb.*
+       ,cob.nrnosnum
+       ,ttc.nrctrdsc
+       ,sab.cdtpinsc
+       ,sab.nmdsacad
+      FROM
+        craptdb tdb
+        INNER JOIN crapcob cob 
+          ON tdb.cdcooper = cob.cdcooper AND tdb.nrdconta = cob.nrdconta AND tdb.nrdocmto = cob.nrdocmto AND tdb.cdbandoc = cob.cdbandoc AND tdb.nrdctabb = cob.nrdctabb AND tdb.nrcnvcob = cob.nrcnvcob
+        INNER JOIN crapsab sab
+          ON tdb.cdcooper = sab.cdcooper AND tdb.nrdconta = sab.nrdconta AND tdb.nrinssac = sab.nrinssac          
+        LEFT JOIN tbdsct_titulo_cyber ttc
+          ON tdb.cdcooper = ttc.cdcooper AND tdb.nrdconta = ttc.nrdconta AND tdb.nrborder = ttc.nrborder AND tdb.nrtitulo = ttc.nrtitulo
+      WHERE tdb.cdcooper = pr_cdcooper
+        AND tdb.nrdconta = pr_nrdconta
+        AND tdb.nrborder = pr_nrborder
+        AND tdb.nrdocmto = pr_nrdocmto
+        AND tdb.nrdctabb = pr_nrdctabb
+        AND tdb.nrcnvcob = pr_nrcnvcob
+    ;rw_craptdb cr_craptdb%ROWTYPE;
+  BEGIN
+    --    Leitura do calendário da cooperativa
+    OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat into rw_crapdat;
+    CLOSE btch0001.cr_crapdat;
+    
+    -- Tab de chaves
+    vr_tab_chave := gene0002.fn_quebra_string(pr_string  => pr_chave,
+                                                 pr_delimit => ';');   
+       
+    -- Abre o cursor de títulos                                          
+    OPEN cr_craptdb (vr_tab_chave(4), -- Conta
+                     vr_tab_chave(3), -- Convenio
+                     vr_tab_chave(2), -- Conta base do banco
+                     vr_tab_chave(1)  -- Codigo do banco
+                     );
+    FETCH cr_craptdb INTO rw_craptdb;                                                                            
+    CLOSE cr_craptdb;
+    
+    -- Insere os dados na type
+    pr_tab_titulo(0).vltitulo := rw_craptdb.vltitulo;
+    pr_tab_titulo(0).dtvencto := rw_craptdb.dtvencto;
+    pr_tab_titulo(0).vlpago   := rw_craptdb.vlpago;
+    pr_tab_titulo(0).vlmulta  := rw_craptdb.vlmulta;
+    pr_tab_titulo(0).vlmora   := rw_craptdb.vlmora;
+    pr_tab_titulo(0).vliof    := rw_craptdb.vliof;
+    pr_tab_titulo(0).vlpagar  := rw_craptdb.vlpagar;
+    pr_tab_titulo(0).nossonum := rw_craptdb.nrnosnum;
+    pr_tab_titulo(0).nrctrdsc := rw_craptdb.nrctrdsc;
+    pr_tab_titulo(0).nrinssac := rw_craptdb.nrinssac;
+    pr_tab_titulo(0).nmdsacad := rw_craptdb.nmdsacad;
+    pr_tab_titulo(0).cdtpinsc := rw_craptdb.cdtpinsc;
+    pr_tab_titulo(0).diasatr  := ccet0001.fn_diff_datas(rw_crapdat.dtmvtolt, rw_craptdb.dtvencto);
+    pr_tab_titulo(0).diasprz  := ccet0001.fn_diff_datas(rw_craptdb.dtlibbdt, rw_craptdb.dtvencto);
+    
+    EXCEPTION
+        WHEN vr_exc_erro THEN
+          pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN
+             /* montar descriçao de erro nao tratado */
+             pr_dscritic := 'erro nao tratado na TELA_ATENDA_DSCTO_TIT.pc_busca_dados_titulo ' ||sqlerrm; 
+  END pc_busca_dados_titulo;
+
+  PROCEDURE pc_busca_dados_titulo_web (pr_nrdconta    IN crapass.nrdconta%TYPE --> conta do associado
+                                      ,pr_nrborder    IN crapbdt.nrborder%TYPE --> numero do bordero
+                                      ,pr_chave       IN VARCHAR2              --> lista de 'nosso numero' a ser pesquisado
+                                      ,pr_xmllog      IN VARCHAR2              --> xml com informações de log
+                                      --------> out <--------
+                                      ,pr_cdcritic OUT PLS_INTEGER             --> código da crítica
+                                      ,pr_dscritic OUT VARCHAR2                --> descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY xmltype       --> arquivo de retorno do xml
+                                      ,pr_nmdcampo OUT VARCHAR2                --> nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2                --> erros do processo
+                                     )IS
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_dados_titulo_web
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Vitor Shimada Assanuma (GFT)
+      Data     : 14/08/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Listar as informações de um título
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Tratamento de erro
+    vr_exc_erro exception;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%type; --> cód. erro
+    vr_dscritic varchar2(1000);        --> desc. erro
+        
+    -- Variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);   
+    
+    vr_tab_titulo typ_tab_titulo;
+   
+    BEGIN
+      -- Extrai os dados
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+                              
+     -- Busca os dados do titulo                              
+     pc_busca_dados_titulo(pr_cdcooper    => vr_cdcooper
+                          ,pr_nrdconta    => pr_nrdconta
+                          ,pr_nrborder    => pr_nrborder
+                          ,pr_chave       => pr_chave
+                          -- OUT --
+                          ,pr_tab_titulo => vr_tab_titulo
+                          ,pr_cdcritic   => vr_cdcritic
+                          ,pr_dscritic   => vr_dscritic);
+      
+      -- Inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      
+      -- Inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+      
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados>');   
+      pc_escreve_xml(
+                     '<vltitulo>' || to_char(vr_tab_titulo(0).vltitulo, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vltitulo>' ||
+                     '<vlpago>'   || to_char(vr_tab_titulo(0).vlpago,   'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlpago>'   ||
+                     '<vlmulta>'  || to_char(vr_tab_titulo(0).vlmulta,  'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlmulta>'  ||
+                     '<vlmora>'   || to_char(vr_tab_titulo(0).vlmora,   'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlmora>'   ||
+                     '<vliof>'    || to_char(vr_tab_titulo(0).vliof,    'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vliof>'    ||
+                     '<vlpagar>'  || to_char(vr_tab_titulo(0).vlpagar,  'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlpagar>'  ||
+                     '<nmdsacad>' || htf.escape_sc(vr_tab_titulo(0).nmdsacad)                   || '</nmdsacad>' ||
+                     '<diasatr>'  || vr_tab_titulo(0).diasatr                                   || '</diasatr>'  ||
+                     '<diasprz>'  || vr_tab_titulo(0).diasprz                                   || '</diasprz>'  ||
+                     '<nossonum>' || vr_tab_titulo(0).nossonum                                  || '</nossonum>' ||
+                     '<nrinssac>' || vr_tab_titulo(0).nrinssac                                  || '</nrinssac>' ||
+                     '<nrctrdsc>' || vr_tab_titulo(0).nrctrdsc                                  || '</nrctrdsc>' ||
+                     '<cdtpinsc>' || vr_tab_titulo(0).cdtpinsc                                  || '</cdtpinsc>' ||
+                     '<dtvencto>' || to_char(vr_tab_titulo(0).dtvencto, 'DD/MM/RRRR')           || '</dtvencto>'
+                     );                                       
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);                     
+    EXCEPTION 
+      WHEN vr_exc_erro THEN 
+           -- Se foi retornado apenas código busca a descrição
+           IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN 
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           END IF;
+           -- Variavel de erro recebe erro ocorrido
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+           
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN 
+           -- Montar descriçao de erro nao tratado
+           pr_dscritic := 'erro nao tratado na tela_titcto.pc_busca_dados_titulo_web ' ||sqlerrm;
+           -- Carregar XML padrao para variavel de retorno
+           pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                              
+  END pc_busca_dados_titulo_web;
+
 
 END TELA_ATENDA_DSCTO_TIT;
 /
