@@ -43,6 +43,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.prvd0001 IS
   --    Alteracoes:
   --
   --  12/06/2018 - Correção dos valores de update (Cláudio - CIS Corporate)
+  --  
+  --  14/08/2018 - Validação do campo pr_insituac. PRJ468 (Lombardi)
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_manter_previdencia(pr_cdcooper IN NUMBER, -- Codigo da cooperativa
@@ -105,6 +107,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.prvd0001 IS
     END IF;
     -- Fecha cursor
     CLOSE cr_crapass;
+    
+    IF pr_insituac IS NULL     OR 
+       pr_insituac NOT IN(0,1) THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Situação inválida';
+      RAISE vr_exc_erro;
+    END IF;
   
     -- Efetua a inclusao do conta (previdencia)
     BEGIN
