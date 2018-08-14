@@ -668,7 +668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND bpr.nrctrpro = p_nrctrpro -- Numero proposta contrato
           AND bpr.flgalien = 1          -- garantia alienada a proposta
           AND bpr.tpctrpro IN (90,99)    -- Garantia
-          AND dscatbem IN ('TERRENO','APARTAMENTO','CASA')
+          AND upper(dscatbem) IN ('TERRENO','APARTAMENTO','CASA')
           AND ROWNUM = 1;
 
       CURSOR cr_crapbpr_automovel(p_cdcooper IN crapcop.cdcooper%type,
@@ -684,7 +684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND bpr.nrctrpro = p_nrctrpro -- Numero proposta contrato
           AND bpr.flgalien = 1  -- garantia alienada a proposta
           AND bpr.tpctrpro IN (90,99) -- Garantia
-          AND dscatbem IN ('AUTOMOVEL','CAMINHAO','MOTO')
+          AND upper(dscatbem) IN ('AUTOMOVEL','CAMINHAO','MOTO')
           AND ROWNUM = 1;        
 
       CURSOR cr_crapbpr_maq_equ(p_cdcooper IN crapcop.cdcooper%type,
@@ -700,7 +700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND bpr.nrctrpro = p_nrctrpro -- Numero proposta contrato
           AND bpr.flgalien = 1  -- garantia alienada a proposta
           AND bpr.tpctrpro IN (90,99) -- Garantia
-          AND dscatbem IN ('EQUIPAMENTO','MAQUINA DE COSTURA')
+          AND upper(dscatbem) IN ('EQUIPAMENTO','MAQUINA DE COSTURA')
           AND ROWNUM = 1;           
           
       CURSOR cr_crapavt_terc(p_cdcooper IN crapcop.cdcooper%type,
@@ -895,7 +895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                       c.insitest = 5    -- Situação da proposta - Nova situação "5 - expirada por decurso de prazo"       
                      ,c.dtexpira = rw_crapdat.dtmvtolt
                  WHERE
-                      c.rowid LIKE rw_crawepr.rowid;
+                      c.rowid = rw_crawepr.rowid;
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao atualizar tabela crawemp. ' || SQLERRM;
@@ -1106,7 +1106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                   ,lim.dtaprova = null
                   ,lim.hraprova = 0 
                   ,lim.dtexpira = rw_crapdat.dtmvtolt
-             WHERE lim.rowid LIKE rw_crawlim.rowid;
+             WHERE lim.rowid = rw_crawlim.rowid;
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar tabela crawlim - Expiração. ' || SQLERRM;
