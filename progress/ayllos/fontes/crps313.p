@@ -110,21 +110,6 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper  AND
        RUN sistema/generico/procedures/b1wgen0200.p 
        PERSISTENT SET h-b1wgen0200.
 
-    ASSIGN aux_podedebi = 1. 
-    IF NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
-                            INPUT glb_cdcooper, 
-                            INPUT crablcm.nrdconta,
-                            INPUT 380) THEN
-       DO:
-          /* TRATAMENTO CASO NAO POSSA REALIZAR DEBITO 
-             QUE MENSAGEM DE CRITICA DEVE GERAR ?????   */
-          ASSIGN aux_podedebi = 0.
-       END.
-       
-    /* Se nao pode debitar entao abandona o bloco transacao LIBERACAO */
-    IF aux_podedebi = 0 THEN 
-       NEXT.
-
     aux_vllanmto = aux_vllanmto + aux_vltarifa.
          
     IF   LAST-OF(crablcm.nrdconta) THEN
