@@ -229,6 +229,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                24/07/2018 - Tratar estouro do limite de caracteres do conteúdo de e-mail.
                              Belli (Envolti) - Chamado REQ0021124
 
+      			   14/08/2018 - Ajuste no timezone da rotina de envio de e-mail.
+                             Saquetta - INC0021658
+
 
 
 ..............................................................................*/
@@ -539,6 +542,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --            13/06/2018 - Sincronizar o horario do email com o horario do servidor que hoje se encontra
     --                         divergente. (Kelvin/Saqueta).
 
+  	--  	      14/08/2018 - Ajuste no timezone da rotina de envio de e-mail.
+    --                         Saquetta - INC0021658
+
     -- .............................................................................
 
     DECLARE
@@ -687,6 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         utl_smtp.open_data(vr_conexao);
         -- Enviar header
         utl_smtp.write_data(vr_conexao, 'MIME-Version: 1.0' || vr_des_quebra);
+		    utl_smtp.write_data(vr_conexao, 'Date: ' || TO_CHAR(to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp),'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR'), 'DD-MM-YYYY HH24:MI:SS TZHTZM') || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'To: ' || rw_crapsle.dsendere || vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'From: ' || vr_des_nome || ' <' || vr_des_remete ||'>'|| vr_des_quebra);
         utl_smtp.write_data(vr_conexao, 'Reply-To: ' || vr_dsnmrepl || ' <'||vr_dsemrepl||'>'|| vr_des_quebra);
