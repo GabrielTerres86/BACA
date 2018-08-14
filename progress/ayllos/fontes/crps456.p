@@ -690,10 +690,7 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                     DELETE PROCEDURE h-b1wgen0200.
                     
 
-                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
-                    /* Nao necessario Tratativas de negocio */ 
-                    /*IF aux_incrineg = 1 THEN DO:*/
-                    
+                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:                    
                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                        " - " + glb_cdprogra + "' --> '" +
                                        aux_dscritic + " Conta = " +
@@ -704,23 +701,7 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen:
                   
 					   
                   /* CREATE craplcm. */
-                  ASSIGN /* craplcm.dtmvtolt = craplot.dtmvtolt
-                         craplcm.cdagenci = craplot.cdagenci
-                         craplcm.cdbccxlt = craplot.cdbccxlt
-                         craplcm.nrdolote = craplot.nrdolote
-                         craplcm.nrdconta = aux_nrdconta
-                         craplcm.nrdctabb = aux_nrdctabb
-                         craplcm.nrdctitg = aux_nrdctitg
-                         craplcm.nrdocmto = aux_nrdocmto
-
-                         craplcm.cdhistor = aux_cdhistor
-
-                         craplcm.vllanmto = aux_vllanmto
-                         craplcm.nrseqdig = aux_nrseqint
-                         craplcm.cdpesqbb = aux_cdpesqbb
-                         craplcm.cdcooper = glb_cdcooper */
-
-                         craplot.qtinfoln = craplot.qtinfoln + 1
+                  ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
                          craplot.qtcompln = craplot.qtcompln + 1
                          craplot.vlinfocr = craplot.vlinfocr + aux_vllanmto
                          craplot.vlcompcr = craplot.vlcompcr + aux_vllanmto
