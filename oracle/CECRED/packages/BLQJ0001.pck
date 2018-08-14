@@ -1482,37 +1482,75 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
             vr_nrdocmto := vr_nrdocmto + 100000;
           END LOOP;
           -------------
+          
+          -- Inserir registro na CRAPLCM 
+          BEGIN
             
-        if rw_crapass.inpessoa = 1 then
-            vr_cdhistor := 1402;
-        else
-            vr_cdhistor := 1403;
-        end if;
+            if rw_crapass.inpessoa = 1 then
+               vr_cdhistor := 1402;
+            else
+               vr_cdhistor := 1403;
+            end if;
 
-        lanc0001.pc_gerar_lancamento_conta(
-                pr_cdcooper => pr_cdcooper
-                ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
-                ,pr_dtrefere => BTCH0001.rw_crapdat.dtmvtolt
-                ,pr_cdagenci => rw_craplot.cdagenci
-                ,pr_cdbccxlt => rw_craplot.cdbccxlt
-                ,pr_nrdolote => rw_craplot.nrdolote
-                ,pr_nrdconta => rw_crapass.nrdconta
-                ,pr_nrdctabb => rw_crapass.nrdconta
-                ,pr_nrdctitg => rw_crapass.nrdctitg
-                ,pr_nrdocmto => vr_nrdocmto
-                ,pr_cdhistor => vr_cdhistor
-                ,pr_vllanmto => TO_NUMBER(vr_tbbloque(vr_indice))
-                ,pr_nrseqdig => rw_craplot.nrseqdig + 1
-                ,pr_cdpesqbb => 'BLOQJUD'
-                ,pr_tab_retorno => vr_tab_retorno
-                ,pr_incrineg => vr_incrineg
-                ,pr_cdcritic => vr_cdcritic
-                ,pr_dscritic => vr_dscritic
-                );
+            lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                   ,pr_dtrefere => BTCH0001.rw_crapdat.dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_crapass.nrdconta
+                   ,pr_nrdctabb => rw_crapass.nrdconta
+                   ,pr_nrdctitg => rw_crapass.nrdctitg
+                   ,pr_nrdocmto => vr_nrdocmto
+                   ,pr_cdhistor => vr_cdhistor
+                   ,pr_vllanmto => TO_NUMBER(vr_tbbloque(vr_indice))
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_cdpesqbb => 'BLOQJUD'
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => vr_cdcritic
+                   ,pr_dscritic => vr_dscritic
+                   );
 
-        if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
-            RAISE vr_exp_erro;
-        end if;
+            if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
+               RAISE vr_exp_erro;
+            end if;
+/*
+            INSERT INTO craplcm(cdcooper
+                               ,dtmvtolt
+                               ,dtrefere
+                               ,cdagenci
+                               ,cdbccxlt
+                               ,nrdolote
+                               ,nrdconta
+                               ,nrdctabb
+                               ,nrdctitg
+                               ,nrdocmto
+                               ,cdhistor
+                               ,vllanmto
+                               ,nrseqdig
+                               ,cdpesqbb)
+                         VALUES(pr_cdcooper                       -- cdcooper
+                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtmvtolt
+                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtrefere
+                               ,rw_craplot.cdagenci               -- cdagenci
+                               ,rw_craplot.cdbccxlt               -- cdbccxlt
+                               ,rw_craplot.nrdolote               -- nrdolote
+                               ,rw_crapass.nrdconta               -- nrdconta
+                               ,rw_crapass.nrdconta               -- nrdctabb
+                               ,rw_crapass.nrdctitg               -- nrdctitg
+                               ,vr_nrdocmto                       -- nrdocmto
+                               ,DECODE(rw_crapass.inpessoa, 1, 1402, 1403) -- cdhistor => 1402 - PF / 1403 - PJ
+                               ,TO_NUMBER(vr_tbbloque(vr_indice)) -- vllanmto
+                               ,rw_craplot.nrseqdig + 1           -- nrseqdig
+                               ,'BLOQJUD');                       -- cdpesqbb
+*/
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
+              RAISE vr_exp_erro;
+          END;
           
           -- Atualizar o registro da CRAPLOT
           BEGIN
@@ -1550,6 +1588,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exp_erro;
           END IF;
+        
+        END IF;
         
         -- Tratamento para o ultimo registro
         IF vr_indice = vr_tbcontas.LAST() AND 
@@ -2172,7 +2212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         END LOOP;
         -------------
         -- Inserir registro na CRAPLCM 
-
+        BEGIN
             -- Demetrius
 --            UPDATE craplcm lcm
 --               SET lcm.vllanmto = lcm.vllanmto + ww_vldesblo
@@ -2218,7 +2258,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
              RAISE vr_exp_erro;
           end if;
+/*
+          INSERT INTO craplcm(cdcooper
+                             ,dtmvtolt
+                             ,dtrefere
+                             ,cdagenci
+                             ,cdbccxlt
+                             ,nrdolote
+                             ,nrdconta
+                             ,nrdctabb
+                             ,nrdctitg
+                             ,nrdocmto
+                             ,cdhistor
+                             ,vllanmto
+                             ,nrseqdig
+                             ,cdpesqbb)
+                       VALUES(pr_cdcooper                       -- cdcooper
+                             ,pr_dtmvtolt                       -- dtmvtolt
+                             ,pr_dtmvtolt                       -- dtrefere
+                             ,rw_craplot.cdagenci               -- cdagenci
+                             ,rw_craplot.cdbccxlt               -- cdbccxlt
+                             ,rw_craplot.nrdolote               -- nrdolote
+                             ,rw_crapblj.nrdconta               -- nrdconta
+                             ,rw_crapblj.nrdconta               -- nrdctabb
+                             ,rw_crapblj.nrdctitg               -- nrdctitg
+                             ,vr_nrdocmto                       -- nrdocmto
+                             ,DECODE(rw_crapblj.inpessoa, 1, 1404, 1405) -- cdhistor => 1404 - PF / 1405 - PJ
+                                 ,pr_vldesblo  --ww_vldesblo -- NVL(rw_crapblj.vlbloque,0)        -- vllanmto
+                             ,rw_craplot.nrseqdig + 1           -- nrseqdig
+                             ,'BLOQJUD');                       -- cdpesqbb
+*/
+--            END IF;
             END IF;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
+            RAISE vr_exp_erro;
+        END;
           
         -- Atualizar o registro da CRAPLOT
         BEGIN
