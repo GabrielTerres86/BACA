@@ -5099,28 +5099,7 @@ PROCEDURE gera_lancamento:
                                IF  VALID-HANDLE(h-b1wgen0200) THEN
                                    DELETE PROCEDURE h-b1wgen0200.
                                
-                               /*
-                               CREATE craplcm.
-                               ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                                      craplcm.cdagenci = craplot.cdagenci
-                                      craplcm.cdbccxlt = craplot.cdbccxlt
-                                      craplcm.nrdolote = craplot.nrdolote
-                                      craplcm.nrdconta = crapcdb.nrdconta
-                                      craplcm.nrdctabb = aux_nrctalcm
-                                      craplcm.nrdocmto = crapcdb.nrcheque
-                                      craplcm.cdhistor = 399
-                                      craplcm.nrseqdig = craplot.nrseqdig + 1
-                                      craplcm.vllanmto = crapdev.vllanmto
-                                      craplcm.cdoperad = crapdev.cdoperad
-                                      craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                                              STRING(crapdev.cdalinea)
-                                                         ELSE "21"
-                                      craplcm.cdcooper = crapcdb.cdcooper
-                                      craplcm.cdbanchq = crapcdb.cdbanchq
-                                      craplcm.cdagechq = crapcdb.cdagechq
-                                      craplcm.nrctachq = crapcdb.nrctachq
-                                      craplcm.hrtransa = TIME
-                                     */ 
+
                                ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                                       craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
                                       craplot.qtinfoln = craplot.qtinfoln + 1
@@ -5128,7 +5107,6 @@ PROCEDURE gera_lancamento:
                                       craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
 
                                VALIDATE craplot.
-                               /*VALIDATE craplcm. */
                            END.
                        ELSE /* nao encontrou crapcdb */
                            DO:
@@ -5253,28 +5231,6 @@ PROCEDURE gera_lancamento:
                                       IF  VALID-HANDLE(h-b1wgen0200) THEN
                                           DELETE PROCEDURE h-b1wgen0200.
                                    
-                                      /*
-                                      CREATE craplcm.
-                                      ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                                             craplcm.cdagenci = craplot.cdagenci
-                                             craplcm.cdbccxlt = craplot.cdbccxlt
-                                             craplcm.nrdolote = craplot.nrdolote
-                                             craplcm.nrdconta = crapcst.nrdconta
-                                             craplcm.nrdctabb = aux_nrctalcm
-                                             craplcm.nrdocmto = crapcst.nrcheque
-                                             craplcm.cdhistor = 399
-                                             craplcm.nrseqdig = craplot.nrseqdig + 1
-                                             craplcm.vllanmto = crapdev.vllanmto
-                                             craplcm.cdoperad = crapdev.cdoperad
-                                             craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                                                     STRING(crapdev.cdalinea)
-                                                                ELSE "21"
-                                             craplcm.cdcooper = crapcst.cdcooper
-                                             craplcm.cdbanchq = crapcst.cdbanchq
-                                             craplcm.cdagechq = crapcst.cdagechq
-                                             craplcm.nrctachq = crapcst.nrctachq
-                                             craplcm.hrtransa = TIME
-                                          */   
                                       ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                                              craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
                                              craplot.qtinfoln = craplot.qtinfoln + 1
@@ -5282,7 +5238,6 @@ PROCEDURE gera_lancamento:
                                              craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
                                       
                                       VALIDATE craplot.
-                                      /* VALIDATE craplcm. */
                                   END.
                            END.
                     END. /* Fim do historico 47 */
