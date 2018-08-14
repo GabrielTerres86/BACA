@@ -1943,16 +1943,18 @@ PROCEDURE bloquear-cartao-magnetico:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrcartao AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcartao AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
-    
+    DEF VAR var_nrcartao AS CHAR NO-UNDO.
     DEF VAR aux_dscritic AS CHAR NO-UNDO.
     DEF VAR aux_cdcritic AS INTE NO-UNDO.    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
     EMPTY TEMP-TABLE tt-erro.
+
+    var_nrcartao = STRING(par_nrcartao).
 
               
    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -1968,7 +1970,7 @@ PROCEDURE bloquear-cartao-magnetico:
                        INPUT  par_nrdconta, 
                        INPUT  par_idseqttl, 
                        INPUT  par_dtmvtolt,
-                       INPUT  par_nrcartao,
+                       INPUT  var_nrcartao,
                        INPUT  IF par_flgerlog THEN "S" ELSE "N", 
                        
                        OUTPUT 0,
