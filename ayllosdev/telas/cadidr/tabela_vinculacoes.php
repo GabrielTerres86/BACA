@@ -26,7 +26,6 @@
 				// Recebo todos valores em variáveis
 				$idvinculacao = getByTagName($indicador->tags,'idvinculacao');
 				$nmvinculacao = getByTagName($indicador->tags,'nmvinculacao');
-				$dsvinculacao = getByTagName($indicador->tags,'dsvinculacao');
 				$flgativo = getByTagName($indicador->tags,'flgativo');
 			?>
 			<tr>
@@ -35,7 +34,6 @@
 				<td width="50"><?php echo $flgativo;?></td>
 				<td>&nbsp;</td>
 				<td style="display:none">
-					<input type="hidden" id="dsvinculacao" value="<? echo $dsvinculacao ?>" />
 					<input type="hidden" id="idvinculacao" value="<? echo $idvinculacao ?>" />
 					<input type="hidden" id="nmvinculacao" value="<? echo $nmvinculacao ?>" />
 					<input type="hidden" id="flgativo" value="<? echo ($flgativo == 'Sim') ? '1' : '0'; ?>" />

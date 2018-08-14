@@ -25,9 +25,6 @@
 			<option value="1">Sim</option>
 			<option value="0">N&atilde;o</option>
 		</select>
-		<br style="clear:both">
-		<label for="dsvinculacao" class="rotulo" style="width:70px">Descri&ccedil;&atilde;o:</label>
-		<textarea class="campo" name="dsvinculacao" id="dsvinculacao" maxlength="400" style="margin-left: 3px; margin-top: 3px; margin-bottom: 10px;"></textarea>
     </form>
 </div>
 <script type="text/javascript">

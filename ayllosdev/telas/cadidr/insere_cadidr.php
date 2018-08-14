@@ -24,7 +24,6 @@ $nmvinculacao = (isset($_POST['nmvinculacao'])) ? utf8_decode($_POST['nmvinculac
 $tpindica = (isset($_POST['tpindica'])) ? $_POST['tpindica'] : '';	
 $flgativo = (isset($_POST['flgativo'])) ? $_POST['flgativo'] : 0;	
 $dsindica = (isset($_POST['dsindica'])) ? utf8_decode($_POST['dsindica']) : '';		
-$dsvinculacao = (isset($_POST['dsvinculacao'])) ? utf8_decode($_POST['dsvinculacao']) : '';		
 
 if ($idaba === 1) { 
 	// Montar o xml de Requisicao
@@ -34,7 +33,6 @@ if ($idaba === 1) {
 	$xml .="    <idvinculacao>".$idvinculacao."</idvinculacao>";
 	$xml .="    <nmvinculacao>".$nmvinculacao."</nmvinculacao>";
 	$xml .="    <flgativo>".$flgativo."</flgativo>";
-	$xml .="    <dsvinculacao>".$dsvinculacao."</dsvinculacao>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

@@ -87,7 +87,7 @@ function formataTabela() {
 function formataFormulario() {
 
 	if (abaAtual == 0) {
-		$('input',form).desabilitaCampo();
+		// $('input',form).desabilitaCampo();
 		$('#idindica',form).css({'width': '40px'});
 		$('#nmindica',form).css({'width': '380px'});
 		$('#tpindica',form).css({'width': '150px'});	
@@ -111,22 +111,16 @@ function formataFormulario() {
 			return false;
 		});
 	} else if (abaAtual == 1) {
-		$('input',form).desabilitaCampo();
+		// $('input',form).desabilitaCampo();
 		$('#idvinculacao',form).css({'width':'40px'});
 		$('#nmvinculacao',form).css({'width':'380px'});
 		$('#flgativo',form).css({'width':'50px'});	
-		$('#dsvinculacao',form).css({'width':'380px', 'height':'80px'});
 
 		$('#nmvinculacao',form).unbind('keydown').bind('keydown', function(e) {
 			if ( e.keyCode == 13 )  {
 				$('#flgativo',form).focus();
 				return false;
 			}
-		});
-		
-		$('#flgativo',form).unbind('change').bind('change', function() {
-			$('#dsvinculacao',form).focus();
-			return false;
 		});
 	}
 		
@@ -156,7 +150,6 @@ function selecionaLinha(opcao) {
 					$('#idvinculacao',form).val($('#idvinculacao', $(this)).val()); 
 					$('#nmvinculacao',form).val($('#nmvinculacao', $(this)).val()); 
 					$('#flgativo',form).val($('#flgativo', $(this)).val()); 
-					$('#dsvinculacao',form).val($('#dsvinculacao', $(this)).val()); 
 
 					$("#btProsseguir", divBotoes).attr('onClick', "validaVinculacao('A');");
 				}
@@ -282,10 +275,6 @@ function validaVinculacao(opcao){
 		showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#flgativo",form).focus();');
 		return false;
 	}
-	if (!$('#dsvinculacao',form).val()){
-		showError('error','Todos os campos s&atilde;o obrigat&oacute;rios, favor preench&ecirc;-los!','Alerta - Ayllos','$("#dsvinculacao",form).focus();');
-		return false;
-	}
 	
 	if (opcao == 'I'){
 		showConfirmacao('Voc&ecirc; tem certeza de que deseja incluir a vincula&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'inserir();', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
@@ -307,7 +296,6 @@ function inserir(){
 
 	var idvinculacao = $('#idvinculacao',form).val();
 	var nmvinculacao = $('#nmvinculacao',form).val();
-	var dsvinculacao = $('#dsvinculacao',form).val();
 	
 	$.ajax({		
 		type: 'POST',
@@ -324,7 +312,6 @@ function inserir(){
 
 			idvinculacao: idvinculacao,
 			nmvinculacao: nmvinculacao,
-			dsvinculacao: dsvinculacao,
 
 			redirect: 'script_ajax'
 		},
@@ -378,7 +365,6 @@ function alterar(){
 
 	var idvinculacao = $('#idvinculacao',form).val();
 	var nmvinculacao = $('#nmvinculacao',form).val();
-	var dsvinculacao = $('#dsvinculacao',form).val();
 	
 	$.ajax({		
 		type: 'POST',
@@ -394,7 +380,6 @@ function alterar(){
 
 			idvinculacao: idvinculacao,
 			nmvinculacao: nmvinculacao,
-			dsvinculacao: dsvinculacao,
 			redirect: 'script_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {

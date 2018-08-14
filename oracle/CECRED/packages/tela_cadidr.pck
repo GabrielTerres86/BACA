@@ -43,7 +43,6 @@ CREATE OR REPLACE PACKAGE CECRED.tela_cadidr IS
   PROCEDURE pc_insere_vinculacao(pr_idvinculacao IN tbrecip_vinculacao.idvinculacao%TYPE --> Identificador da vinculacao
 															 ,pr_nmvinculacao IN tbrecip_vinculacao.nmvinculacao%TYPE --> Nome da vinculacao
 															 ,pr_flgativo IN tbrecip_vinculacao.flgativo%TYPE    --> Disponibilidade da vinculacao (0 - Inativo, 1 - Ativo)
-															 ,pr_dsvinculacao IN tbrecip_vinculacao.dsvinculacao%TYPE --> Descrição da vinculacao
 		                           ,pr_xmllog   IN VARCHAR2                           --> XML com informações de LOG
 															 ,pr_cdcritic OUT PLS_INTEGER                       --> Código da crítica
 															 ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
@@ -66,7 +65,6 @@ CREATE OR REPLACE PACKAGE CECRED.tela_cadidr IS
   PROCEDURE pc_altera_vinculacao(pr_idvinculacao IN tbrecip_vinculacao.idvinculacao%TYPE --> Identificador da vinculacao
                                ,pr_nmvinculacao IN tbrecip_vinculacao.nmvinculacao%TYPE --> Nome da vinculacao
                                ,pr_flgativo IN tbrecip_vinculacao.flgativo%TYPE    --> Disponibilidade da vinculacao (0 - Inativo, 1 - Ativo)
-                               ,pr_dsvinculacao IN tbrecip_vinculacao.dsvinculacao%TYPE --> Descrição da vinculacao
                                ,pr_xmllog   IN VARCHAR2                           --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER                       --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
@@ -92,7 +90,7 @@ CREATE OR REPLACE PACKAGE CECRED.tela_cadidr IS
 
 END tela_cadidr;
 /
-CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
+CREATE OR REPLACE PACKAGE BODY CECRED.tela_cadidr IS
     ---------------------------------------------------------------------------
     --
     --  Programa : TELA_CADIDR
@@ -273,7 +271,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
             CURSOR cr_vinculacoes IS
                 SELECT idvinculacao
                       ,nmvinculacao
-                      ,dsvinculacao
                       ,decode(flgativo, 1, 'Sim', 'Não') flgativo
                       ,'Quantidade' tpvinculacao
                   FROM tbrecip_vinculacao
@@ -319,12 +316,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
                                       ,pr_posicao  => vr_auxconta
                                       ,pr_tag_nova => 'nmvinculacao'
                                       ,pr_tag_cont => to_char(rw_vinculacoes.nmvinculacao)
-                                      ,pr_des_erro => vr_dscritic);
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'vinculacao'
-                                      ,pr_posicao  => vr_auxconta
-                                      ,pr_tag_nova => 'dsvinculacao'
-                                      ,pr_tag_cont => to_char(rw_vinculacoes.dsvinculacao)
                                       ,pr_des_erro => vr_dscritic);
                 gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                       ,pr_tag_pai  => 'vinculacao'
@@ -807,7 +798,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
     PROCEDURE pc_insere_vinculacao(pr_idvinculacao IN tbrecip_vinculacao.idvinculacao%TYPE --> Identificador da vinculacao
                                   ,pr_nmvinculacao IN tbrecip_vinculacao.nmvinculacao%TYPE --> Nome da vinculacao
                                   ,pr_flgativo IN tbrecip_vinculacao.flgativo%TYPE    --> Disponibilidade da vinculacao (0 - Inativo, 1 - Ativo)
-                                  ,pr_dsvinculacao IN tbrecip_vinculacao.dsvinculacao%TYPE --> Descrição da vinculacao
                                   ,pr_xmllog   IN VARCHAR2                           --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER                       --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
@@ -838,7 +828,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
                 SELECT vin.idvinculacao
                       ,vin.nmvinculacao
                       ,decode(vin.flgativo, 1, 'Ativo', 'Inativo') flgativo
-                      ,vin.dsvinculacao
                   FROM tbrecip_vinculacao vin
                  WHERE vin.idvinculacao = pr_idvinculacao;
             rw_vinculacao cr_vinculacao%ROWTYPE;
@@ -930,9 +919,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
         
             BEGIN
                 INSERT INTO tbrecip_vinculacao
-                    (idvinculacao, nmvinculacao, dsvinculacao, flgativo)
+                    (idvinculacao, nmvinculacao, flgativo)
                 VALUES
-                    (pr_idvinculacao, pr_nmvinculacao, pr_dsvinculacao, pr_flgativo);
+                    (pr_idvinculacao, pr_nmvinculacao, pr_flgativo);
             EXCEPTION
                 WHEN OTHERS THEN
                     vr_dscritic := 'Atenção! Houve erro durante a gravação, detalhes: ' || SQLERRM;
@@ -976,12 +965,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
                                      ,pr_nmdcampo => 'Atividade Vinculacao'
                                      ,pr_dsdadant => ''
                                      ,pr_dsdadatu => vr_dsfativo);
-        
-            -- Descrição Vinculacao
-            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                     ,pr_nmdcampo => 'Descricao Vinculacao'
-                                     ,pr_dsdadant => ''
-                                     ,pr_dsdadatu => pr_dsvinculacao);
         
             COMMIT;
         
@@ -1295,7 +1278,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
     PROCEDURE pc_altera_vinculacao(pr_idvinculacao IN tbrecip_vinculacao.idvinculacao%TYPE --> Identificador da vinculacao
                                   ,pr_nmvinculacao IN tbrecip_vinculacao.nmvinculacao%TYPE --> Nome da vinculacao
                                   ,pr_flgativo IN tbrecip_vinculacao.flgativo%TYPE         --> Disponibilidade da vinculacao (0 - Inativo, 1 - Ativo)
-                                  ,pr_dsvinculacao IN tbrecip_vinculacao.dsvinculacao%TYPE --> Descrição da vinculacao
                                   ,pr_xmllog   IN VARCHAR2                           --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER                       --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2                          --> Descrição da crítica
@@ -1326,7 +1308,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
                 SELECT vin.idvinculacao
                       ,vin.nmvinculacao
                       ,decode(vin.flgativo, 1, 'Ativo', 'Inativo') flgativo
-                      ,vin.dsvinculacao
                   FROM tbrecip_vinculacao vin
                  WHERE vin.idvinculacao = pr_idvinculacao;
             rw_vinculacao cr_vinculacao%ROWTYPE;
@@ -1414,7 +1395,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
             BEGIN
                 UPDATE tbrecip_vinculacao vin
                    SET vin.nmvinculacao = pr_nmvinculacao
-                      ,vin.dsvinculacao = pr_dsvinculacao
                       ,vin.flgativo     = pr_flgativo
                  WHERE vin.idvinculacao = pr_idvinculacao;
             EXCEPTION
@@ -1460,12 +1440,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
                                      ,pr_nmdcampo => 'Atividade Vinculacao'
                                      ,pr_dsdadant => to_char(rw_vinculacao.flgativo)
                                      ,pr_dsdadatu => vr_dsfativo);
-        
-            -- Descrição Vinculacao
-            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                     ,pr_nmdcampo => 'Descricao Vinculacao'
-                                     ,pr_dsdadant => to_char(rw_vinculacao.dsvinculacao)
-                                     ,pr_dsdadatu => pr_dsvinculacao);
         
             COMMIT;
         
@@ -1759,7 +1733,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
                 SELECT vin.idvinculacao
                       ,vin.nmvinculacao
                       ,decode(vin.flgativo, 1, 'Ativo', 'Inativo') flgativo
-                      ,vin.dsvinculacao
                   FROM tbrecip_vinculacao vin
                  WHERE vin.idvinculacao = pr_idvinculacao;
             rw_vinculacao cr_vinculacao%ROWTYPE;
@@ -1865,12 +1838,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_cadidr IS
             gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                      ,pr_nmdcampo => 'Atividade Vinculacao'
                                      ,pr_dsdadant => to_char(rw_vinculacao.flgativo)
-                                     ,pr_dsdadatu => '');
-        
-            -- Descrição Vinculacao
-            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                     ,pr_nmdcampo => 'Descricao Vinculacao'
-                                     ,pr_dsdadant => to_char(rw_vinculacao.dsvinculacao)
                                      ,pr_dsdadatu => '');
         
             COMMIT;
