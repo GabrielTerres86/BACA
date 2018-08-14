@@ -410,37 +410,17 @@ PROCEDURE inclui-bloqueio-jud:
                     
                     IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                     DO:  
-                      MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                      RETURN "NOK".
+						RUN gera_erro (INPUT par_cdcooper,        
+									   INPUT 0,
+									   INPUT 1, /* nrdcaixa  */
+                                       INPUT 1, /* sequencia */
+                                       INPUT aux_cdcritic,        
+                                       INPUT-OUTPUT aux_dscritic).
+						UNDO, RETURN "NOK".
                     END.   
                     
                     IF  VALID-HANDLE(h-b1wgen0200) THEN
                         DELETE PROCEDURE h-b1wgen0200.
-
-                 /*CREATE craplcm.
-                 ASSIGN craplcm.cdcooper = par_cdcooper
-                        craplcm.dtmvtolt = par_dtmvtolt
-                        craplcm.dtrefere = par_dtmvtolt
-                        craplcm.cdagenci = craplot.cdagenci
-                        craplcm.cdbccxlt = craplot.cdbccxlt
-                        craplcm.nrdolote = craplot.nrdolote
-                        craplcm.nrdconta = crapass.nrdconta
-                        craplcm.nrdctabb = crapass.nrdconta
-                        craplcm.nrdctitg = crapass.nrdctitg
-                        craplcm.nrdocmto = aux_nrdocmto
-                        craplcm.cdhistor = IF   crapass.inpessoa = 1 THEN 
-                                                1402 /* PF */
-                                           ELSE 1403 /* PJ */ 
-                        craplcm.vllanmto = 
-                                  DEC(ENTRY(aux_contador,par_vlbloque,";"))
-                        craplcm.nrseqdig = craplot.nrseqdig + 1
-                        craplcm.cdpesqbb = "BLOQJUD"
-                        craplot.qtcompln = craplot.qtcompln + 1
-                        craplot.qtinfoln = craplot.qtinfoln + 1
-                        craplot.nrseqdig = craplot.nrseqdig + 1   
-                        craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-                        craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.*/
-                        /*VALIDATE craplcm.*/
                         
                 ASSIGN        
                 craplot.qtcompln = craplot.qtcompln + 1
