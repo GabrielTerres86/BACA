@@ -9230,53 +9230,14 @@ PROCEDURE lan_tarifa_conta_corrente:
 
                        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                          DO:  
-                          IF aux_incrineg = 1 THEN
-                             DO:
-                              /* Tratativas de negocio */ 
-                               NEXT.   
-                             END.
-                            ELSE
-                             DO:
-                              RETURN "NOK".
-                             END. 
+							  RUN gera_erro (INPUT par_cdcooper,        
+											 INPUT par_cdagenci,
+											 INPUT 1, /* nrdcaixa  */
+											 INPUT 1, /* sequencia */
+											 INPUT aux_cdcritic,        
+											 INPUT-OUTPUT aux_dscritic).
+							  UNDO, RETURN "NOK". 
                         END.  
-                
-                      
-                    
-                   /* CREATE craplcm.
-                    ASSIGN craplcm.cdcooper = par_cdcooper
-                           craplcm.dtmvtolt = craplot.dtmvtolt
-                           craplcm.cdagenci = par_cdagenci
-                           craplcm.cdbccxlt = par_cdbccxlt
-                           craplcm.nrdolote = par_nrdolote
-                           craplcm.dtrefere = craplot.dtmvtolt
-                           craplcm.hrtransa = TIME
-                           craplcm.cdoperad = par_cdoperad
-                           craplcm.nrdconta = par_nrdconta
-                           craplcm.nrdctabb = par_nrdctabb
-                           craplcm.nrdctitg = par_nrdctitg
-                           craplcm.nrseqdig = craplot.nrseqdig
-                           craplcm.nrsequni = IF par_nrsequni = 0 THEN 
-                                                 craplot.nrseqdig
-                                              ELSE
-                                                 par_nrsequni
-                           craplcm.nrdocmto = IF par_nrdocmto > 0 THEN
-                                                 INT(aux_nraplica)
-                                              ELSE
-                                                 craplot.nrseqdig
-                           craplcm.cdhistor = par_cdhistor
-                           craplcm.vllanmto = par_vltarifa
-                           craplcm.cdpesqbb = par_cdpesqbb
-                           craplcm.cdbanchq = par_cdbanchq
-                           craplcm.cdagechq = par_cdagechq
-                           craplcm.nrctachq = par_nrctachq
-                           craplcm.nrctachq = par_nrctachq
-                           craplcm.cdcoptfn = par_cdcoptfn
-                           craplcm.cdagetfn = par_cdagetfn
-                           craplcm.nrterfin = par_nrterfin
-                           craplcm.nrautdoc = par_nrautdoc
-                           craplcm.dsidenti = par_dsidenti.		
-                    VALIDATE craplcm.*/
                 END.
             ELSE
                 DO:
