@@ -509,32 +509,7 @@ PROCEDURE efetua-debito-consorcio:
 
                     IF  VALID-HANDLE(h-b1wgen0200) THEN
                         DELETE PROCEDURE h-b1wgen0200.                
-                   /*
-                    CREATE craplcm.
-                    ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                           craplcm.cdagenci = craplot.cdagenci
-                           craplcm.cdbccxlt = craplot.cdbccxlt
-                           craplcm.nrdolote = craplot.nrdolote
-                           craplcm.nrdconta = aux_nrdconta
-                           craplcm.nrdctabb = craplau.nrdctabb
-                           craplcm.nrdctitg = STRING(craplau.nrdctabb,"99999999")
-                           craplcm.nrdocmto = aux_nrdocmto
-                           craplcm.cdhistor = craplau.cdhistor
-                           craplcm.vllanmto = craplau.vllanaut
-                           craplcm.nrseqdig = craplot.nrseqdig + 1
-                           craplcm.cdcooper = craplau.cdcooper 
-                           craplcm.hrtransa = TIME
-                           craplcm.cdpesqbb = "Lote " + 
-                                              STRING(DAY(craplau.dtmvtolt),"99")      +
-                                              "/"                                     +
-                                              STRING(MONTH(craplau.dtmvtolt),"99")    +
-                                              "-"                                     +
-                                              STRING(aux_cdagenci,"999") + "-"        +
-                                              STRING(craplau.cdbccxlt,"999") + "-"    +
-                                              STRING(craplau.nrdolote,"999999") + "-" +
-                                              STRING(craplau.nrseqdig,"99999") + "-"  +
-                                              STRING(aux_nrcrcard)
-                    */                        
+                  
                     ASSIGN craplot.qtcompln = craplot.qtcompln + 1
                            craplot.vlcompdb = craplot.vlcompdb + craplau.vllanaut
                            craplot.qtinfoln = craplot.qtinfoln + 1
@@ -545,7 +520,6 @@ PROCEDURE efetua-debito-consorcio:
                            craplau.nrseqlan = craplcm.nrseqdig
                            craplau.dtdebito = aux_dtrefere
                            craplau.dsorigem = "DEBCNS".
-                   /* VALIDATE craplcm. */ 
                    
                   /* inicio NOTIF */
                    aux_dscampos = "#valordebito=" + STRING(craplau.vllanaut,"zzz,zz9.99") + ";#datadebito=" + STRING(aux_dtrefere,"99/99/9999") +
