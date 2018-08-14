@@ -62,6 +62,8 @@
  * 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cartão deve ser cancelado através do SIPAGNET. (P364)
  * 044: [01/12/2017] Jonata          (RKAM) : Não permitir acesso a opção de incluir quando conta demitida.
  * 045: [29/03/2018] Lombardi	   (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
+ * 046: [13/08/2018] Carlos         (Ailos) : prb0040273 Verificação do estado do objeto oPinpad nas funções lerCartaoChip e fechaConexaoPinpad 
+ *                                            para evitar travamento na entrega do cartão.
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -4817,12 +4819,16 @@ function lerCartaoChip() {
     var sTagPortador = '';
     var sTagDataValidade = '';
 
-    try {
-        var oPinpad = new ActiveXObject("Gertec.PPC");
-    } catch (e) {
-        hideMsgAguardo();
+    fechaConexaoPinpad(oPinpad);
+
+    if (oPinpad == "" || oPinpad == false || typeof oPinpad == 'undefined') {
+        try {
+            var oPinpad = new ActiveXObject("Gertec.PPC");
+        } catch (e) {
+            hideMsgAguardo();
 //showError("error","A rotina de entrega n&atilde;o &eacute; compat&iacute;vel com este navegador, acesse o Internet Explorer.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-        return;
+            return;
+        }
     }
 
 // Abre a porta do PINPAD
@@ -5284,13 +5290,17 @@ function altera_senha_pinpad() {
  * @param Object Objeto Pinpad
  */
 function fechaConexaoPinpad(oPinpad) {
-    oPinpad.ReadMagCard_Stop();
-    oPinpad.ChangeEMVCardPasswordStop();
-    oPinpad.StopPINBlock();
+
+    // Se houver conexao ativa, elimina	
+    if (oPinpad != false && typeof oPinpad != 'undefined') {
+        oPinpad.ReadMagCard_Stop();
+        oPinpad.ChangeEMVCardPasswordStop();
+        oPinpad.StopPINBlock();
 // Apaga o LED
-    oPinpad.SetLED(0);
+        oPinpad.SetLED(0);
 // Fecha Porta
-    oPinpad.CloseSerial();
+        oPinpad.CloseSerial();
+    }
 }
 
 function altera_cb(oPinpad, sAID, sNTexto4, sNumeroCartao) {
