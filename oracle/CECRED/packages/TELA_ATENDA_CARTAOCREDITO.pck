@@ -3857,12 +3857,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
          AND lim.nrctrcrd = pr_nrctrcrd
          AND lim.tpsituacao = 6 --Em Análise
          AND lim.insitdec = 1   --Sem Aprovação
-         AND lim.idatualizacao = (SELECT MAX(atu.idatualizacao)
+         AND lim.dtalteracao = (SELECT MAX(atu.dtalteracao)
                                     FROM tbcrd_limite_atualiza atu
                                    WHERE atu.cdcooper = lim.cdcooper
                                      AND atu.nrdconta = lim.nrdconta
-                                     AND atu.nrctrcrd = lim.nrctrcrd
-                                     AND atu.nrproposta_est = lim.nrproposta_est);
+                                     AND atu.nrconta_cartao = lim.nrconta_cartao);
     rw_crawcrd cr_crawcrd%ROWTYPE;
     
     -----------> VARIAVEIS <-----------
