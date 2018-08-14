@@ -8405,41 +8405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                  RAISE vr_exc_saida;
-              END IF;    
-
-/*            -- insere o registro na tabela de lancamentos
-              INSERT INTO craplcm
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdocmto,
-                 cdhistor,
-                 nrseqdig,
-                 vllanmto,
-                 nrdctabb,
-                 nrdctitg,
-                 cdcooper,
-                 dtrefere,
-                 cdoperad,
-                 CDPESQBB)
-              VALUES
-                (trunc(vr_dtprocesso),                              --dtmvtolt
-                 1,                                                 --cdagenci
-                 100,                                               --cdbccxlt
-                 vr_nrdolote,                                       --nrdolote
-                 vr_nrdconta,                                       --nrdconta
-                 vr_nrseqdiglcm,                                    --nrdocmto
-                 vr_cdhistor,                                       --cdhistor
-                 vr_nrseqdiglcm,                                    --nrseqdig
-                 rw_tabela.vlpagamento,                             --vllanmto
-                 vr_nrdconta,                                       --nrdctabb
-                 GENE0002.fn_mask(vr_nrdconta,'99999999'),          --nrdctitg
-                 vr_cdcooper,                                       --cdcooper
-                 rw_tabela.dtpagamento,                             --dtrefere
-                 '1',                                               --cdoperad
-                 rw_tabela.nrliquidacao);                           --CDPESQBB*/
+              END IF;   
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
