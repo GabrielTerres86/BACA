@@ -298,8 +298,15 @@ FOR EACH crapepc WHERE crapepc.cdcooper  = glb_cdcooper  AND
           
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
            DO: 
-               /* Tratamento caso retorne erro */
-               LEAVE.
+             /* Tratamento caso retorne erro */
+             glb_dscritic = aux_dscritic.
+
+             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                                glb_cdprogra + "' --> '" +
+                                glb_dscritic + STRING(crapepc.nrconven,"999") +
+                                " >> log/proc_batch.log").
+             glb_cdcritic = 0.
+             RETURN.
            END.   
         ELSE 
            DO:
