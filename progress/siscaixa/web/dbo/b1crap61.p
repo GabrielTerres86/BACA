@@ -1027,26 +1027,6 @@ PROCEDURE deposita_envelope_dinheiro:
                          UNDO DepDinheiro, LEAVE DepDinheiro.
        
                       END.
-                   
-                   /*CREATE craplcm.
-       
-                   ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                          craplcm.dtmvtolt = crapdat.dtmvtolt
-                          craplcm.cdagenci = p-cod-agencia
-                          craplcm.cdbccxlt = 11
-                          craplcm.dsidenti = p-identifica
-                          craplcm.nrdolote = i-nro-lote
-                          craplcm.nrdconta = aux_nrdconta
-                          craplcm.nrdocmto = DECI(c-docto)
-                          craplcm.vllanmto = p-vlcomput
-                          craplcm.cdhistor = 1
-                          craplcm.nrseqdig = craplot.nrseqdig + 1
-                          craplcm.nrdctabb = p-nro-conta
-                          craplcm.nrautdoc = p-ult-sequencia
-                          craplcm.cdpesqbb = "CRAP51"
-                          craplcm.nrdctitg = glb_dsdctitg.
-       
-                   VALIDATE craplcm.*/
                 
                     RUN gerar_lancamento_conta_comple IN h-b1wgen0200
                                       ( INPUT crapdat.dtmvtolt        /* par_dtmvtolt */
@@ -1093,15 +1073,10 @@ PROCEDURE deposita_envelope_dinheiro:
 
                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                     DO:  
-                      IF aux_incrineg = 1 THEN
-                       DO:
-                          /* Tratativas de negocio */ 
-                        NEXT.
-                       END.
-                     ELSE
-                     DO:
-                       RETURN "NOK".
-                     END. 
+                      ASSIGN i-cod-erro  = aux_cdcritic
+                          c-desc-erro = aux_dscritic.
+       
+					  UNDO DepDinheiro, LEAVE DepDinheiro.
                    END.  
                    
                    DELETE PROCEDURE h-b1wgen0200.      
