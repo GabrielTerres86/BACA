@@ -4819,26 +4819,7 @@ PROCEDURE gera_lancamento:
             
             
             /* VIACON - cria lancamento na coop atual */
-           /* CREATE craplcm.
-            ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                   craplcm.cdagenci = craplot.cdagenci
-                   craplcm.cdbccxlt = craplot.cdbccxlt
-                   craplcm.nrdolote = craplot.nrdolote
-                   craplcm.nrdconta = aux_nrdconta
-                   craplcm.nrdctabb = aux_nrctalcm
-                   craplcm.nrdocmto = crapdev.nrcheque
-                   craplcm.cdhistor = crapdev.cdhistor
-                   craplcm.nrseqdig = craplot.nrseqdig + 1
-                   craplcm.vllanmto = crapdev.vllanmto
-                   craplcm.cdoperad = crapdev.cdoperad
-                   craplcm.cdpesqbb = IF  crapdev.cdalinea <> 0 THEN
-                                          STRING(crapdev.cdalinea)
-                                      ELSE "21"
-                   craplcm.cdcooper = aux_cdcooper
-                   craplcm.cdbanchq = crapdev.cdbanchq
-                   craplcm.cdagechq = crapdev.cdagechq
-                   craplcm.nrctachq = crapdev.nrctachq
-               */   
+
                ASSIGN
                    craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                    craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
@@ -4909,8 +4890,6 @@ PROCEDURE gera_lancamento:
                 ELSE
                     /*craplcm.dsidenti = "2". */
                     aux_dsidenti = "2".
-
-                /*VALIDATE craplcm. */
 
                 /* P450 - Regulatório de Crédito */
                 /* BLOCO DA INSERÇAO DA CRAPLCM */
