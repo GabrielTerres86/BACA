@@ -1765,37 +1765,15 @@ PROCEDURE cria-lancamento:
 
                        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                          DO:  
-                          IF aux_incrineg = 1 THEN
-                             DO:
-                              /* Tratativas de negocio */ 
-                               NEXT.   
-                             END.
-                            ELSE
-                             DO:
-                              RETURN "NOK".
-                             END. 
-                          END.  
-                       
-                      /*  CREATE craplcm.
-                        ASSIGN craplcm.cdcooper = par_cdcooper
-                               craplcm.dtmvtolt = craplot.dtmvtolt
-                               craplcm.cdagenci = par_cdagenci
-                               craplcm.cdbccxlt = par_cdbccxlt
-                               craplcm.nrdolote = par_nrdolote
-                               craplcm.dtrefere = craplot.dtmvtolt
-                               craplcm.hrtransa = TIME
-                               craplcm.cdoperad = par_cdoperad
-                               craplcm.nrdconta = par_nrdconta
-                               craplcm.nrdctabb = par_nrdconta
-                               craplcm.nrseqdig = craplot.nrseqdig
-                               craplcm.nrsequni = craplot.nrseqdig
-                               craplcm.nrdocmto = craplot.nrseqdig
-                               craplcm.cdhistor = par_cdhistor
-                               craplcm.vllanmto = par_vllanmto.
-                        VALIDATE craplcm.*/
-                        
-                        
-                        
+							RUN gera_erro (INPUT aux_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1, 
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+							RETURN "NOK".  
+                         END.  
               END.    
            END.
         ELSE
