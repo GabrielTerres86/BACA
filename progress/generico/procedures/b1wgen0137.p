@@ -319,14 +319,21 @@
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
                      
                 11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).    
-				
+                     
                      
                 21/05/2018 - sctask0014409 Batimento de termos desativado temporariamente 
                              na opção todos (Carlos).
-                             
+                20/04/2018 - Incluir novos documentos para batime1nto de digitalizaçao.
+                             Projeto 414 - Regulatório FATCA/CRS (Marcelo Telles Coelho - Mouts).
+
+				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
                 06/06/2018 - SCTASK0016914 Na rotina efetua_batimento_ged_cadastro quando,
                              chamada pelo crps620, verifica os documentos digitalizados do
                              dia apenas (Carlos)
+
+				
+
 
 .............................................................................*/
 
@@ -562,7 +569,7 @@ PROCEDURE efetua_batimento_ged:
         
             /* SE EXISTE REGISTROS, CONSULTA DATAS DE CADASTRO E CREDITO P/ GERAR O RELATORIO */
             IF  AVAIL craptab  THEN
-                DO:                
+                DO:
                     ASSIGN aux_dtcadini = DATE(ENTRY(2,craptab.dstextab,";"))
                            aux_dtcreini = DATE(ENTRY(3,craptab.dstextab,";"))
                            aux_dtterini = DATE(ENTRY(4,craptab.dstextab,";"))
@@ -789,7 +796,7 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
-                END. 
+        END.
         END.
     ELSE
     IF  par_tipopcao = 3 THEN /* MATRICULA */
@@ -1131,7 +1138,7 @@ PROCEDURE efetua_batimento_ged_matricula:
             RUN enviar_email_completo IN h-b1wgen0011 
                                      (INPUT crapcop.cdcooper,
                                       INPUT "b1wgen00137",
-                                      INPUT "CECRED<cecred@cecred.coop.br>",
+                                      INPUT "AILOS<ailos@ailos.coop.br>",
                                       INPUT par_emailbat,
                                       INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                             " DE MATRICULAS NAO DIGITALIZADOS",
@@ -1188,7 +1195,7 @@ PROCEDURE efetua_batimento_ged_matricula:
                             RUN enviar_email_completo IN h-b1wgen0011 
                                (INPUT crapcop.cdcooper,
                                 INPUT "b1wgen00137",
-                                INPUT "CECRED<cecred@cecred.coop.br>",
+                                INPUT "AILOS<ailos@ailos.coop.br>",
                                 INPUT ENTRY(3,craptab.dstextab,";"),
                                 INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                       " DE MATRICULAS NAO DIGITALIZADOS",
@@ -1297,7 +1304,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,131,145,146,147,148,149,150,151,152", ENTRY(3,craptab.dstextab,";")) THEN
+                IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,145,146,147,148,149,150,151,152,171,172,173,174,175", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1317,10 +1324,10 @@ PROCEDURE efetua_batimento_ged_cadastro:
     ELSE
     DO:
       /* Adicionar intervalo de data, 2 em 2 meses */
-      ASSIGN aux_dtinidoc = par_datainic
-             aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,02,'months').
+    ASSIGN aux_dtinidoc = par_datainic
+           aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,02,'months').
     END.
-    
+        
     periodo:
     DO  WHILE TRUE:
 
@@ -1376,7 +1383,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             /* ZERAR VARIAVEIS DE CONTROLE DE PARAMETROS */ 
             
-            DO aux_contdocs = 1 TO 52:
+            DO aux_contdocs = 1 TO 63:
                 
                 ASSIGN aux_tpdocmto = 0.
     
@@ -1407,6 +1414,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 17. /*DEMONSTRATIVO FINANCEIRO*/
                     WHEN 22 THEN
                         ASSIGN aux_conttabs = 22. /*DOCUMENTO CÔNJUGE*/
+                    WHEN 26 THEN
+                        ASSIGN aux_conttabs = 26. /*DECLARACAO DE IMUNIDADE TRIBUTARIA*/
                     WHEN 40 THEN 
                         ASSIGN aux_conttabs = 40. /*LICENCAS SOCIO AMBIENTAIS*/
                     WHEN 45 THEN
@@ -1424,7 +1433,21 @@ PROCEDURE efetua_batimento_ged_cadastro:
                     WHEN 51 THEN
                         ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
                     WHEN 52 THEN
-                        ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
+                        ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/ 
+                    WHEN 58 THEN
+                        ASSIGN aux_conttabs = 58. /*TERMO DE ALTERACAO DE TITULARIDADE*/
+                    WHEN 59 THEN
+                        ASSIGN aux_conttabs = 59. /*DOCUMENTO DE EMANCIPACAO*/
+                    
+                    WHEN 60 THEN
+                        ASSIGN aux_conttabs = 60. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 61 THEN
+                        ASSIGN aux_conttabs = 61. /*DOCUMENTO NIF*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 62 THEN
+                        ASSIGN aux_conttabs = 62. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+                    WHEN 63 THEN
+                        ASSIGN aux_conttabs = 63. /*DOCUMENTO NIF - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
+
                     OTHERWISE
                         NEXT.
                 END CASE.
@@ -1443,7 +1466,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                  WHERE crapdoc.cdcooper = crapcop.cdcooper AND
                                        crapdoc.dtmvtolt = aux_data         AND
                                        crapdoc.tpdocmto = aux_contdocs     AND
-                                       crapdoc.flgdigit = FALSE 
+                                       crapdoc.flgdigit = FALSE            AND
+                                       crapdoc.tpbxapen = 0
                                        USE-INDEX crapdoc3 NO-LOCK:
 
                     /* Se cooperado estiver demitidos nao gera no relatorio */
@@ -1534,7 +1558,11 @@ PROCEDURE efetua_batimento_ged_cadastro:
                             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
                             IF  AVAIL(b-crapdoc)  THEN
                             DO:
-                                ASSIGN b-crapdoc.flgdigit = TRUE.
+                                ASSIGN b-crapdoc.flgdigit = TRUE
+                                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                                       b-crapdoc.dtbxapen = TODAY 
+                                       b-crapdoc.cdopebxa = "1".
+                                       
                                 RELEASE b-crapdoc NO-ERROR.
                             END.
 
@@ -1867,7 +1895,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             RUN enviar_email_completo IN h-b1wgen0011 (INPUT crapcop.cdcooper,
                                                        INPUT "b1wgen00137",
-                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                        INPUT par_emailbat,
                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                              " DE CADASTROS NAO DIGITALIZADOS",
@@ -1921,7 +1949,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                             
                             RUN enviar_email_completo IN h-b1wgen0011 (INPUT crapcop.cdcooper,
                                                                        INPUT "b1wgen00137",
-                                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                                        INPUT ENTRY(3,craptab.dstextab,";"),
                                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                                              " DE CADASTROS NAO DIGITALIZADOS",
@@ -2916,7 +2944,7 @@ PROCEDURE efetua_batimento_ged_credito:
       
             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                        INPUT "b1wgen00137",
-                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                        INPUT par_emailbat,
                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                              " DE CREDITO NAO DIGITALIZADOS",
@@ -2969,7 +2997,7 @@ PROCEDURE efetua_batimento_ged_credito:
                             
                             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                                        INPUT "b1wgen00137",
-                                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                                        INPUT ENTRY(3,craptab.dstextab,";"),
                                                                        INPUT "Rel.620 - RELACAO DE DOCUMENTOS"+
                                                                              " DE CREDITO NAO DIGITALIZADOS",
@@ -3313,7 +3341,8 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
                            crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
-                           crapdoc.flgdigit = FALSE
+                           crapdoc.flgdigit = FALSE        AND
+                           crapdoc.tpbxapen = 0
                            NO-LOCK:
                                
         /* Se cooperado estiver demitido nao gera no relatorio */
@@ -3373,7 +3402,10 @@ PROCEDURE efetua_batimento_ged_termos:
 
             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
             IF  AVAIL b-crapdoc THEN
-                ASSIGN b-crapdoc.flgdigit = TRUE.
+                ASSIGN b-crapdoc.flgdigit = TRUE
+                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                       b-crapdoc.dtbxapen = TODAY 
+                       b-crapdoc.cdopebxa = "1".
                        
             NEXT.
 
@@ -3424,7 +3456,8 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
                            crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
-                           crapdoc.flgdigit = FALSE
+                           crapdoc.flgdigit = FALSE        AND
+                           crapdoc.tpbxapen = 0
                            NO-LOCK:
         /* Se cooperado estiver demitido nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -3453,7 +3486,11 @@ PROCEDURE efetua_batimento_ged_termos:
              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
             IF  AVAIL b-crapdoc THEN
-                ASSIGN b-crapdoc.flgdigit = TRUE.
+                ASSIGN b-crapdoc.flgdigit = TRUE
+                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                       b-crapdoc.dtbxapen = TODAY 
+                       b-crapdoc.cdopebxa = "1".
+                       
             NEXT.
         END.
         ELSE DO:
@@ -3496,7 +3533,8 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
                            crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
-                           crapdoc.flgdigit = FALSE
+                           crapdoc.flgdigit = FALSE        AND
+                           crapdoc.tpbxapen = 0
                            NO-LOCK:
         /* Se cooperado estiver demitido nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -3525,7 +3563,11 @@ PROCEDURE efetua_batimento_ged_termos:
              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
             IF  AVAIL b-crapdoc THEN
-                ASSIGN b-crapdoc.flgdigit = TRUE.
+                ASSIGN b-crapdoc.flgdigit = TRUE
+                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                       b-crapdoc.dtbxapen = TODAY 
+                       b-crapdoc.cdopebxa = "1".
+                       
             NEXT.
         END.
         ELSE DO:
@@ -3693,7 +3735,7 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH tt-tarif-contas-pacote FIELDS(nrdconta dtadesao cdoperador_adesao)
                              WHERE tt-tarif-contas-pacote.dtcancel  = ?            
                                AND tt-tarif-contas-pacote.dtadesao = aux_data NO-LOCK:
-        
+
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
                    crapass.cdcooper = par_cdcooper AND
@@ -3704,7 +3746,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
         IF  crapass.dtdemiss <> ? THEN
             NEXT.
-        
+            
         /* Verifica se o contrato foi digitalizado */
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper  = par_cdcooper AND
@@ -3735,7 +3777,7 @@ PROCEDURE efetua_batimento_ged_termos:
             NEXT.
           END.
         ELSE DO:
-            
+
             FIND FIRST tt-documentos-termo
                  WHERE tt-documentos-termo.cdcooper = par_cdcooper
                    AND tt-documentos-termo.cdagenci = crapass.cdagenci
@@ -3760,8 +3802,8 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopeade
                        tt-documentos-termo.idseqite = aux_conttabs. /* Adesao */
             END.
+            END.
         END.
-    END.
     END.
     /* fim tipo de documento 39 */
     
@@ -3781,7 +3823,7 @@ PROCEDURE efetua_batimento_ged_termos:
     FOR EACH tt-tarif-contas-pacote FIELDS(cdcooper nrdconta dtcancelamento cdoperador_cancela)
                              WHERE tt-tarif-contas-pacote.dtcancel  <> ?           
                                AND tt-tarif-contas-pacote.dtcancel = aux_data NO-LOCK:
-        
+
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
                    crapass.cdcooper = par_cdcooper AND
@@ -3792,7 +3834,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
         IF  crapass.dtdemiss <> ? THEN
             NEXT.
-        
+
         /* Verifica se o contrato foi digitalizado */
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper  = par_cdcooper AND
@@ -3846,8 +3888,8 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopecan
                        tt-documentos-termo.idseqite = aux_conttabs. /* Cancelamento */
             END.
+            END.
         END.
-    END.
     /* fim tipo de documento 38 */
     
     END. /* do aux_data */
@@ -4091,7 +4133,7 @@ PROCEDURE efetua_batimento_ged_termos:
       
             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                        INPUT "b1wgen00137",
-                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                        INPUT par_emailbat,
                                                        INPUT "Rel.620 - TERMOS DE FOLHA PAGTO NAO DIGITALIZADOS",
                                                        INPUT "",
@@ -4144,7 +4186,7 @@ PROCEDURE efetua_batimento_ged_termos:
                             
                             RUN enviar_email_completo IN h-b1wgen0011 (INPUT par_cdcooper,
                                                                        INPUT "b1wgen00137",
-                                                                       INPUT "CECRED<cecred@cecred.coop.br>",
+                                                                       INPUT "AILOS<ailos@ailos.coop.br>",
                                                                        INPUT ENTRY(3,craptab.dstextab,";"),
                                                                        INPUT "Rel.620 - TERMOS DE FOLHA PAGTO NÃO DIGITALIZADOS",
                                                                        INPUT "",
@@ -4898,7 +4940,7 @@ PROCEDURE gera-relatorio-pendencias:
     RUN enviar_email_completo IN h-b1wgen0011 
                                      (INPUT crapcop.cdcooper,
                                       INPUT "b1wgen00137",
-                                      INPUT "CECRED<cecred@cecred.coop.br>",
+                                      INPUT "AILOS<ailos@ailos.coop.br>",
                                       INPUT par_dsdemail,
                                       INPUT "Pendencias - PRCGED",
                                       INPUT "",
@@ -5744,6 +5786,89 @@ PROCEDURE requisicao-lista-documentos PRIVATE:
     
     ASSIGN aux_dsreturn = "OK".
     RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE  gera_pend_digitalizacao:
+  DEF INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
+  DEF INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+  DEF INPUT PARAM par_lstpdoct AS CHAR                           NO-UNDO.
+  DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+  DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+  DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    RUN gera_pend_digitalizacao_seqdoc
+                      ( INPUT par_cdcooper,
+                        INPUT par_nrdconta,
+                        INPUT par_idseqttl,
+                        INPUT par_nrcpfcgc,
+                        INPUT par_dtmvtolt,
+                        INPUT par_lstpdoct,
+                        INPUT par_cdoperad,
+                        INPUT 0, /* par_nrseqdoc */
+                       OUTPUT par_cdcritic,
+                       OUTPUT par_cdcritic).
+
+   IF par_cdcritic <> 0 OR
+      par_dscritic <> "" THEN
+   DO:
+     RETURN "NOK".   
+   END.
+      
+
+END PROCEDURE. 
+
+PROCEDURE  gera_pend_digitalizacao_seqdoc:
+  DEF INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
+  DEF INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+  DEF INPUT PARAM par_lstpdoct AS CHAR                           NO-UNDO.
+  DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+  DEF INPUT PARAM par_nrseqdoc AS INTE                           NO-UNDO.
+  
+  DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+  DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Efetuar a chamada a rotina Oracle  */
+    RUN STORED-PROCEDURE pc_gera_pend_digitalizacao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,   /* pr_cdcooper */
+                                             INPUT par_nrdconta,   /* pr_nrdconta */
+                                             INPUT par_idseqttl,   /* pr_idseqttl */
+                                             INPUT par_nrcpfcgc,   /* pr_nrcpfcgc */
+                                             INPUT par_dtmvtolt,   /* pr_dtmvtolt */
+                                             INPUT par_lstpdoct,   /* pr_lstpdoct lista de Tipo do documento separados por ; */
+                                             INPUT par_cdoperad,   /* pr_cdoperad */            
+                                             INPUT par_nrseqdoc,   /* pr_nrseqdoc */
+                                            OUTPUT 0,              /* Código da crítica */
+                                            OUTPUT "").            /* Descriçao da crítica */
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_gera_pend_digitalizacao
+           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+    
+    /* Busca possíveis erros */ 
+    ASSIGN par_cdcritic = 0
+           par_dscritic = ""
+           par_cdcritic = pc_gera_pend_digitalizacao.pr_cdcritic 
+                          WHEN pc_gera_pend_digitalizacao.pr_cdcritic <> ?
+           par_dscritic = pc_gera_pend_digitalizacao.pr_dscritic 
+                          WHEN pc_gera_pend_digitalizacao.pr_dscritic <> ?.
+
+   IF par_cdcritic <> 0 OR
+      par_dscritic <> "" THEN
+   DO:
+     RETURN "NOK".   
+   END.
+      
 
 END PROCEDURE.
 
