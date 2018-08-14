@@ -11260,8 +11260,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_saida;
-          END IF;        
-
+          END IF;     
+		EXCEPTION   
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm. ' ||SQLERRM;
             RAISE vr_exc_saida;
