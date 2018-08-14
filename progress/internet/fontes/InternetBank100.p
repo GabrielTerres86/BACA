@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : James Prust Júnior
-   Data    : Agosto/2014.                       Ultima atualizacao: 10/12/2015
+   Data    : Agosto/2014.                       Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -15,6 +15,9 @@
    
                10/12/2015 - Adicionado validacao de responsavel legal.
                             (Jorge/David) - Proj. Assinatura Multipla
+
+               09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -43,6 +46,13 @@ DEF  INPUT PARAM par_txmensal AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_vlrtarif AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_vltaxiof AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_vltariof AS DECI                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdcoptfn AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_cdagetfn AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrterfin AS INT                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -59,6 +69,7 @@ DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_flcartma AS INTE                                           NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
+DEF VAR aux_qtminast AS INTE INIT 0                                    NO-UNDO.
 
 ASSIGN aux_dstransa = "Gravar os dados do credito pre-aprovado".
 
@@ -115,7 +126,7 @@ RUN STORED-PROCEDURE pc_verifica_rep_assinatura
                    (INPUT  par_cdcooper,
                     INPUT  par_nrdconta,
                     INPUT  par_idseqttl,
-                    INPUT  3,   /* cdorigem */
+                    INPUT  par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/   /* cdorigem */
                     OUTPUT 0,   /* idastcjt */
                     OUTPUT 0,   /* nrcpfcgc */
                     OUTPUT "",  /* nmprimtl */
@@ -181,13 +192,13 @@ DO:
                         INPUT  par_nrdcaixa,
                         INPUT  par_cdoperad,
                         INPUT  par_nmdatela,
-                        INPUT  3,   /*  par_cdorigem */
+                        INPUT  par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/   /*  par_cdorigem */
                         INPUT  par_idseqttl,
                         INPUT  0,   /* par_nrcpfope */
                         INPUT  aux_nrcpfcgc,
-                        INPUT  0,   /* par_cdcoptfn */
-                        INPUT  0,   /* par_cdagetfn */
-                        INPUT  0,   /* par_nrterfin */
+                        INPUT  par_cdcoptfn, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* par_cdcoptfn */
+                        INPUT  par_cdagetfn, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* par_cdagetfn */
+                        INPUT  par_nrterfin, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* par_nrterfin */
                         INPUT  par_dtmvtolt,
                         INPUT  par_cdcooper,
                         INPUT  par_nrdconta,
@@ -247,13 +258,13 @@ DO:
               RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                             INPUT "996",
                                             INPUT aux_dscritic,
-                                            INPUT "INTERNET",
+                                            INPUT par_dsorigem, /* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/
                                             INPUT aux_dstransa,
                                             INPUT aux_datdodia,
                                             INPUT TRUE,
                                             INPUT TIME,
                                             INPUT par_idseqttl,
-                                            INPUT "InternetBank",
+                                            INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank",*/
                                             INPUT par_nrdconta,
                                             OUTPUT aux_nrdrowid).
             
@@ -276,9 +287,23 @@ DO:
                                 "Aguardando aprovacao da operacao pelos "       +
                                 "demais responsaveis.".   
 
+          /* Se possui assinatura conjunta, retornamos a quantidade minima de assinatura na conta */
+          /*  Projeto 363 - Novo ATM  */
+          ASSIGN aux_qtminast = 0.
+          FIND FIRST crapass 
+               WHERE crapass.cdcooper = par_cdcooper
+                 AND crapass.nrdconta = par_nrdconta
+               NO-LOCK NO-ERROR.
+                 
+          IF AVAIL crapass THEN
+          DO:
+              ASSIGN aux_qtminast = crapass.qtminast.
+          END.
+          
           CREATE xml_operacao.
           ASSIGN xml_operacao.dslinxml = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>" +
-                                         "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".
+                                         "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" +
+                                         "<qtminast>" + STRING(aux_qtminast) + "</qtminast>".
 
           RETURN "OK".
        END.
@@ -295,7 +320,7 @@ DO:
                                         INPUT par_nrdcaixa,
                                         INPUT par_cdoperad,
                                         INPUT par_nmdatela,
-                                        INPUT 3, /* par_idorigem */
+                                        INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3, *//* par_idorigem */
                                         INPUT par_nrdconta,
                                         INPUT 1,
                                         INPUT par_dtmvtolt,
@@ -305,9 +330,9 @@ DO:
                                         INPUT par_vlemprst,
                                         INPUT par_dtdpagto,
                                         INPUT par_percetop,
-                                        INPUT 0, /* par_cdcoptfn */
-                                        INPUT 0, /* par_cdagetfn */
-                                        INPUT 0, /* par_nrterfin */
+                                        INPUT  par_cdcoptfn, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* par_cdcoptfn */
+                                        INPUT  par_cdagetfn, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* par_cdagetfn */
+                                        INPUT  par_nrterfin, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* par_nrterfin */                                        
                                         INPUT par_nrcpfope,
                                         OUTPUT aux_nrctremp,
                                         OUTPUT TABLE tt-erro).

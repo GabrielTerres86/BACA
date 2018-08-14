@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 13/12/2017
+   Data    : Marco/2007                        Ultima atualizacao:  12/03/2018
 
    Dados referentes ao programa:
 
@@ -137,6 +137,8 @@
 			                de demostrativo INSS tambem se existe registro na crapdbi
 							(Andrei-MOUTs)			   
 
+              12/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                           servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -194,6 +196,12 @@ DEF VAR aux_nmmesano AS CHAR EXTENT 12
 
 DEF VAR aux_vlsddisp AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsdbloq AS DECI                                           NO-UNDO.
+						  
+/*  Projeto 363 - Novo ATM */
+DEF VAR aux_vlemplib AS DECI                                           NO-UNDO.
+DEF VAR aux_vlchqlib AS DECI                                           NO-UNDO.
+DEF VAR aux_vlblqtaa AS DECI                                           NO-UNDO.
+
 DEF VAR aux_vlstotal AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsdeved AS DECI                                           NO-UNDO.
 DEF VAR aux_vldiscrd AS DECI                                           NO-UNDO.
@@ -286,6 +294,14 @@ DEF INPUT  PARAM par_dsorigip AS CHAR                                  NO-UNDO.
 DEF INPUT  PARAM par_dtmvtoan LIKE crapdat.dtmvtoan                    NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
 
+/* Projeto 363 - Novo ATM */ 
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+
+
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -315,8 +331,8 @@ IF  tmp_cdagectl <> 0  THEN
                 ASSIGN tmp_cdagectl = DECI(STRING(tmp_cdagectl) + "0").
 
                 RUN dig_fun IN h-b1wgen9999 (INPUT par_cdcooper,
-                                             INPUT 90,
-                                             INPUT 900,
+                                             INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                             INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                              INPUT-OUTPUT tmp_cdagectl,
                                             OUTPUT TABLE tt-erro).
 
@@ -532,8 +548,8 @@ ASSIGN aux_flgsamae = AVAIL crapatr.
  (U=Nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1) */
 RUN STORED-PROCEDURE pc_obtem_saldo_dia_prog
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
-                                         INPUT 90, /* cdagenci */
-                                         INPUT 900, /* nrdcaixa */
+                                         INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                         INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                          INPUT "996",
                                          INPUT par_nrdconta,
                                          INPUT aux_datdodia,
@@ -577,7 +593,11 @@ DO:
            aux_vlreccap = wt_saldos.vlsddisp + wt_saldos.vlsdrdca +
                           wt_saldos.vlsdcota
            aux_vllicret = wt_saldos.vlopcdia + wt_saldos.vllimutl
-           aux_vltotren = wt_saldos.vltotren.
+           aux_vltotren = wt_saldos.vltotren
+           aux_vlemplib = wt_saldos.vlsdbloq
+           aux_vlchqlib = wt_saldos.vlsdblpr + wt_saldos.vlsdblfp
+           aux_vlblqtaa = wt_saldos.vlblqtaa.
+           
 END.
 
 
@@ -588,17 +608,17 @@ IF  VALID-HANDLE(h-b1wgen0002)  THEN
     DO:
         /* Busca saldo devedor do emprestimos */
         RUN saldo-devedor-epr IN h-b1wgen0002 (INPUT par_cdcooper,
-                                               INPUT 90,
-                                               INPUT 900,
+                                               INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                               INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                                INPUT "996",
-                                               INPUT "InternetBank",
-                                               INPUT 3,
+                                               INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
+                                               INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                                INPUT par_nrdconta,
                                                INPUT par_idseqttl,
                                                INPUT par_dtmvtolt,
                                                INPUT par_dtmvtopr,
                                                INPUT 0,
-                                               INPUT "InternetBank",
+                                               INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
                                                INPUT par_inproces,
                                                INPUT FALSE,
                                               OUTPUT aux_vlsdeved,
@@ -631,11 +651,11 @@ IF VALID-HANDLE(h-b1wgen0188)  THEN
    DO:
        /* Busca saldo disponivel para o credito pre-aprovado  */
        RUN busca_dados IN h-b1wgen0188 (INPUT par_cdcooper,
-                                        INPUT 90,
-                                        INPUT 900,
+                                        INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                        INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                         INPUT "996",
-                                        INPUT "InternetBank",
-                                        INPUT 3,
+                                        INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
+                                        INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                         INPUT par_nrdconta,
                                         INPUT IF crapass.idastcjt = 0 THEN par_idseqttl ELSE 1,
                                         INPUT par_nrcpfope,
@@ -663,13 +683,13 @@ IF  VALID-HANDLE(h-b1wgen0003)  THEN
     DO:
         /* Busca saldo de lancamentos futuros */
         RUN consulta-lancamento IN h-b1wgen0003 (INPUT par_cdcooper,
-                                             INPUT 90,
-                                             INPUT 900,
+                                             INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                             INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                              INPUT "996",
                                              INPUT par_nrdconta,
-                                             INPUT 3,
+                                             INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                              INPUT par_idseqttl,
-                                             INPUT "InternetBank",
+                                             INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
                                              INPUT FALSE,
                                             OUTPUT TABLE tt-totais-futuros,
                                             OUTPUT TABLE tt-erro,
@@ -718,13 +738,13 @@ EMPTY TEMP-TABLE tt-saldo-rdca.
 RUN STORED-PROCEDURE pc_lista_aplicacoes_car
    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,   /* Código da Cooperativa */
                                         INPUT "1",            /* Código do Operador */
-                                        INPUT "InternetBank", /* Nome da Tela */
-                                        INPUT 3,              /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
-                                        INPUT 900,            /* Numero do Caixa */
+                                        INPUT par_nmprogra,   /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */ /* Nome da Tela */
+                                        INPUT par_cdorigem,   /* Projeto 363 - Novo ATM -> estava fixo 3 */ /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+                                        INPUT par_nrdcaixa,   /* Projeto 363 - Novo ATM -> estava fixo 900 */ /* Numero do Caixa */
                                         INPUT par_nrdconta,   /* Número da Conta */
                                         INPUT par_idseqttl,   /* Titular da Conta */
-                                        INPUT 90,             /* Codigo da Agencia */
-                                        INPUT "InternetBank", /* Codigo do Programa */
+                                        INPUT par_cdagenci,   /* Projeto 363 - Novo ATM -> estava fixo 90 */ /* Codigo da Agencia */
+                                        INPUT par_nmprogra,   /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */ /* Codigo do Programa */
                                         INPUT 0,              /* Número da Aplicação - Parâmetro Opcional */
                                         INPUT 0,              /* Código do Produto – Parâmetro Opcional */
                                         INPUT par_dtmvtolt,   /* Data de Movimento */
@@ -832,18 +852,18 @@ IF  VALID-HANDLE(h-b1wgen0006)  THEN
     DO:
         /* Busca saldo da poupanca programada */
         RUN consulta-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,
-                                               INPUT 90,
-                                               INPUT 900,
+                                               INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                               INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                                INPUT "996",
-                                               INPUT "InternetBank",
-                                               INPUT 3,
+                                               INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
+                                               INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                                INPUT par_nrdconta,
                                                INPUT par_idseqttl,
                                                INPUT 0,
                                                INPUT par_dtmvtolt,
                                                INPUT par_dtmvtopr,
                                                INPUT par_inproces,
-                                               INPUT "InternetBank",
+                                               INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
                                                INPUT FALSE,
                                               OUTPUT aux_vltotrpp,
                                               OUTPUT TABLE tt-erro,
@@ -875,11 +895,11 @@ IF  VALID-HANDLE(h-b1wgen0020)  THEN
         /* Saldo Conta Investimento */
         RUN obtem-saldo-investimento IN h-b1wgen0020
                                            (INPUT par_cdcooper,
-                                            INPUT 90,
-                                            INPUT 900,
+                                            INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                            INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                             INPUT "996",
-                                            INPUT "InternetBank",
-                                            INPUT 3,
+                                            INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
+                                            INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                             INPUT par_nrdconta,
                                             INPUT par_idseqttl,
                                             INPUT par_dtmvtolt,
@@ -900,11 +920,11 @@ IF  VALID-HANDLE(h-b1wgen0021)  THEN
     DO:
         /* Saldo de Cotas/Capital */
         RUN obtem-saldo-cotas IN h-b1wgen0021 (INPUT par_cdcooper,
-                                               INPUT 90,
-                                               INPUT 900,
+                                               INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                               INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                                INPUT "996",
-                                               INPUT "InternetBank",
-                                               INPUT 3,
+                                               INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
+                                               INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                                INPUT par_nrdconta,
                                                INPUT par_idseqttl,
                                               OUTPUT TABLE tt-saldo-cotas,
@@ -953,14 +973,14 @@ IF  VALID-HANDLE(h-b1wgen0030)  THEN
     DO:
         RUN busca_total_descontos IN h-b1wgen0030
                                     (INPUT par_cdcooper,
-                                     INPUT 90,
-                                     INPUT 900,
+                                     INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                     INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                      INPUT "996",
                                      INPUT par_dtmvtolt,
                                      INPUT par_nrdconta,
                                      INPUT par_idseqttl,
-                                     INPUT 3,
-                                     INPUT "InternetBank",
+                                     INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
+                                     INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
                                      INPUT FALSE, /** LOG **/
                                     OUTPUT TABLE tt-tot_descontos).
 
@@ -1017,11 +1037,11 @@ IF  par_indlogin <> 0  THEN
 
                 RUN permissoes-menu IN h-b1wnet0002
                                     (INPUT par_cdcooper,
-                                     INPUT 90,
-                                     INPUT 900,
+                                     INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                     INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                      INPUT "996",
-                                     INPUT "InternetBank",
-                                     INPUT 3,
+                                     INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
+                                     INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                      INPUT par_nrdconta,
                                      INPUT par_idseqttl,
                                      INPUT par_nrcpfope,
@@ -1051,11 +1071,11 @@ IF  par_indlogin <> 0  THEN
 
                 RUN verifica-acesso IN h-b1wnet0002
                                                (INPUT par_cdcooper,
-                                                INPUT 90,
-                                                INPUT 900,
+                                                INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                                INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                                 INPUT "996",
-                                                INPUT "InternetBank",
-                                                INPUT 3,
+                                                INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
+                                                INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                                 INPUT par_nrdconta,
                                                 INPUT par_idseqttl,
                                                 INPUT par_nrcpfope,
@@ -1276,7 +1296,7 @@ RUN busca_limites IN h-b1wgen0015 (INPUT par_cdcooper,
                                    INPUT FALSE,
                                    INPUT par_dtmvtocd,
                                    INPUT FALSE,
-                                   INPUT "INTERNET",
+                                   INPUT par_dsorigem, /*  Projeto 363 - Novo ATM -> estava fixo "INTERNET" */
                                   OUTPUT aux_dscritic,
                                   OUTPUT TABLE tt-limites-internet).
                                   
@@ -1449,7 +1469,12 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmextttl>" +
                                STRING(aux_vllimvrb, "zzz,zzz,zzz,zz9.99") + 
                                "</vllimvrb><vllimflp>" + 
                                STRING(aux_vllimflp, "zzz,zzz,zzz,zz9.99") + 
-                               "</vllimflp></CORRENTISTA>".
+                               "</vllimflp>" + 
+                               "<vlemplib>" + STRING(aux_vlemplib, "zzz,zzz,zzz,zz9.99") + "</vlemplib>" +
+                               "<vlchqlib>" + STRING(aux_vlchqlib, "zzz,zzz,zzz,zz9.99") + "</vlchqlib>" + 
+                               "<vlblqtaa>" + STRING(aux_vlblqtaa, "zzz,zzz,zzz,zz9.99") + "</vlblqtaa>" +
+                               "</CORRENTISTA>".
+
 
 RETURN "OK".
 
@@ -1458,6 +1483,14 @@ RETURN "OK".
 PROCEDURE proc_geracao_log:
 
     DEF INPUT PARAM par_flgtrans AS LOGICAL                         NO-UNDO.
+    
+    DEF VAR aux_dsorigem         AS CHAR                            NO-UNDO.
+    
+    IF par_flmobile THEN
+        ASSIGN aux_dsorigem = "MOBILE".
+    ELSE 
+        ASSIGN aux_dsorigem = par_dsorigem.
+
 
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT
         SET h-b1wgen0014.
@@ -1467,13 +1500,13 @@ PROCEDURE proc_geracao_log:
             RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                           INPUT "996",
                                           INPUT aux_dscritic,
-                                          INPUT "INTERNET",
+                                          INPUT par_dsorigem, /* Projeto 363 - Novo ATM -> estava fixo "INTERNET" */
                                           INPUT aux_dstransa,
                                           INPUT aux_datdodia,
                                           INPUT par_flgtrans,
                                           INPUT TIME,
                                           INPUT par_idseqttl,
-                                          INPUT "InternetBank",
+                                          INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank" */
                                           INPUT par_nrdconta,
                                           OUTPUT aux_nrdrowid).
 
@@ -1481,7 +1514,7 @@ PROCEDURE proc_geracao_log:
                           (INPUT aux_nrdrowid,
                            INPUT "Origem",
                            INPUT "",
-                           INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
+                           INPUT aux_dsorigem).
 
             DELETE PROCEDURE h-b1wgen0014.
         END.

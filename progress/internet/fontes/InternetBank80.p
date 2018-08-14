@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2012.                       Ultima atualizacao: 12/04/2016
+   Data    : Abril/2012.                       Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa:
    
@@ -26,6 +26,9 @@
                             cadastro de favorecidos no Mobile (Dionathan) 
 
                12/04/2016 - Remocao Aprovacao Favorecido. (Jaison/Marcos - SUPERO)
+
+               09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 
 ..............................................................................*/
  
@@ -64,6 +67,12 @@ DEF  INPUT PARAM par_insitcta AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_flgexecu AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_rowidcti AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_flexclui AS CHAR                                  NO-UNDO.
+/*  Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+
                                                               
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -78,11 +87,11 @@ IF  par_rowidcti <> "" AND
     /* Procedimento que ira remover o desativar o registro */
     RUN exclui-conta-transferencia IN h-b1wgen0015 
                                   (INPUT par_cdcooper,
-                                   INPUT 90,
-                                   INPUT 900,
+                                   INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/
+                                   INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/
                                    INPUT "996",
-                                   INPUT "INTERNETBANK",
-                                   INPUT 3,
+                                   INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/
+                                   INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/
                                    INPUT par_nrdconta,
                                    INPUT par_idseqttl,
                                    INPUT par_rowidcti,
@@ -122,11 +131,11 @@ IF  NOT VALID-HANDLE(h-b1wgen0015)  THEN
 
         RUN valida-inclusao-conta-transferencia IN h-b1wgen0015 
                                                (INPUT par_cdcooper,
-                                                INPUT 90,
-                                                INPUT 900,
+                                                INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/
+                                                INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/
                                                 INPUT "996",
-                                                INPUT "INTERNETBANK",
-                                                INPUT 3,
+                                                INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/
+                                                INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/
                                                 INPUT par_nrdconta,
                                                 INPUT par_idseqttl,
                                                 INPUT par_dtmvtolt,
@@ -175,11 +184,11 @@ IF  NOT VALID-HANDLE(h-b1wgen0015)  THEN
             DO:               
                 RUN inclui-conta-transferencia IN h-b1wgen0015 
                                               (INPUT par_cdcooper,
-                                               INPUT 90,              /* cdagenci */
-                                               INPUT 900,             /* nrdcaixa */
+                                               INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 90,*/ /* cdagenci */
+                                               INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/ /* nrdcaixa */
                                                INPUT "996",           /* cdoperad */
-                                               INPUT "INTERNETBANK",  /* nmdatela */
-                                               INPUT 3,               /* idorigem */
+                                               INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/  /* nmdatela */
+                                               INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*//* idorigem */
                                                INPUT par_nrdconta,
                                                INPUT par_idseqttl,
                                                INPUT par_dtmvtolt,

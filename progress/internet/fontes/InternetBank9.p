@@ -18,6 +18,9 @@
                22/02/2016 - Alterado chamada da procedure consulta-lancamento-periodo para
                             conulta-lancto-car  - Projeto melhoria 157 (Lucas Ranghetti #330322)              
                             
+               12/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                           servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+
                02/08/2018 - Ajustar para nao gerar mais LOG (Douglas - PRJ 285 Nova Conta Online)
                                
 ..............................................................................*/
@@ -38,6 +41,11 @@ DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF  INPUT PARAM par_dtiniper AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_dtfimper AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_indebcre AS CHAR                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -50,13 +58,13 @@ IF  VALID-HANDLE(h-b1wgen0003)  THEN
 
         RUN consulta-lancto-car  IN h-b1wgen0003 
                                 (INPUT par_cdcooper,
-                                 INPUT 90,
-                                 INPUT 900,
+                                 INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                 INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                  INPUT "996",
                                  INPUT par_nrdconta,
-                                 INPUT 3,
+                                 INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                  INPUT par_idseqttl,
-                                 INPUT "INTERNETBANK",
+                                 INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                  INPUT FALSE, /* nao gerar mais log */
                                  INPUT par_dtiniper,
                                  INPUT par_dtfimper,

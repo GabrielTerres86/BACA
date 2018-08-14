@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 26/05/2018
+    Data    : Novembro/2007                  Ultima Atualizacao: 19/07/2018
     
     Dados referentes ao programa:
 
@@ -347,7 +347,10 @@
                 26/12/2017 - #820634 Aumentado o limite de saque noturno, 
                              de R$300 para R$500 (Carlos)
 
-				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                
+                19/07/2018 - Remover a acentuacao das mensagens de retorno, para que todas fiquem
+                             identicas. (PRJ 363 - Douglas Quisinski)
 
 ..............................................................................*/
 
@@ -415,7 +418,7 @@ PROCEDURE confirma_reboot:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -447,7 +450,7 @@ PROCEDURE confirma_update:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -697,14 +700,14 @@ PROCEDURE valida_letras_seguranca:
                                                        
     IF  NOT AVAILABLE crapsnh   THEN
         DO:
-            par_dscritic = "Letras de segurança nao cadastradas.".
+            par_dscritic = "Letras de seguranca nao cadastradas.".
             RETURN "NOK".
         END.
 
     /* se a situacao nao estiver ativa no momento EXATO da validacao de senha */
     IF  crapsnh.cdsitsnh <> 1  THEN
         DO:
-            par_dscritic = "Senha Inválida.".
+            par_dscritic = "Senha Invalida.".
             RETURN "NOK".
         END.                              
 
@@ -832,7 +835,7 @@ PROCEDURE altera_situacao:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -895,7 +898,7 @@ PROCEDURE efetua_suprimento:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -986,7 +989,7 @@ PROCEDURE efetua_recolhimento:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -1077,7 +1080,7 @@ PROCEDURE efetua_recolhimento:
 
                         IF  RETURN-VALUE <> "OK"  THEN
                             DO:
-                                par_dscritic = "TAA indisponível.".
+                                par_dscritic = "TAA indisponivel.".
                                 UNDO, RETURN "NOK".
                             END.
 
@@ -1200,7 +1203,7 @@ PROCEDURE entrega_envelope:
         IF  NOT AVAILABLE craptfn  THEN
             DO:
                 IF  LOCKED(craptfn)  THEN
-                    par_dscritic = "TAA indisponível.".
+                    par_dscritic = "TAA indisponivel.".
                 ELSE
                     par_dscritic = "TAA nao cadastrado.".
     
@@ -1333,7 +1336,7 @@ PROCEDURE vira_data:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -1405,7 +1408,7 @@ PROCEDURE vira_data:
 
                 IF  RETURN-VALUE <> "OK"  THEN
                     DO:
-                        par_dscritic = "TAA indisponível.".
+                        par_dscritic = "TAA indisponivel.".
                         UNDO, RETURN "NOK".
                     END.
 
@@ -1419,7 +1422,7 @@ PROCEDURE vira_data:
 
                 IF  RETURN-VALUE <> "OK"  THEN
                     DO:
-                        par_dscritic = "TAA indisponível.".
+                        par_dscritic = "TAA indisponivel.".
                         UNDO, RETURN "NOK".
                     END.
 
@@ -1435,7 +1438,7 @@ PROCEDURE vira_data:
 
                 IF  RETURN-VALUE <> "OK"  THEN
                     DO:
-                        par_dscritic = "TAA indisponível.".
+                        par_dscritic = "TAA indisponivel.".
                         UNDO, RETURN "NOK".
                     END.
 
@@ -1450,7 +1453,7 @@ PROCEDURE vira_data:
 
                 IF  RETURN-VALUE <> "OK"  THEN
                     DO:
-                        par_dscritic = "TAA indisponível.".
+                        par_dscritic = "TAA indisponivel.".
                         UNDO, RETURN "NOK".
                     END.
 
@@ -1649,7 +1652,7 @@ PROCEDURE efetua_configuracao:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -1892,7 +1895,7 @@ PROCEDURE verifica_transferencia:
 
             IF NOT aux_flgretor THEN
                 DO:
-                    ASSIGN par_dscritic = "Data do agendamento deve ser um dia útil.".
+                    ASSIGN par_dscritic = "Data do agendamento deve ser um dia util.".
                     RETURN "NOK".
                 END.
 
@@ -1927,7 +1930,7 @@ PROCEDURE verifica_transferencia:
             IF  par_dttransf > aux_dtdialim  THEN
                 DO:                          
                     ASSIGN par_dscritic = "A data limite para efetuar" +
-                                          " agendamentos é " +
+                                          " agendamentos e " +
                                           STRING(aux_dtdialim,"99/99/9999") +
                                           ".".
                     RETURN "NOK".                      
@@ -2361,7 +2364,7 @@ PROCEDURE verifica_saque:
        portanto, usa o TODAY como referencia */
     /* Diario */
     ASSIGN aux_dtlimite = TODAY - 1
-           par_dssaqmax = par_dssaqmax + "Diário "               
+           par_dssaqmax = par_dssaqmax + "Diario "               
            
            /* verifica se ja sacou o total permitido */
            aux_vldsaque = par_vldsaque
@@ -2489,7 +2492,7 @@ PROCEDURE verifica_saque:
         
     IF  par_vldsaque > aux_vlsaqmax  THEN
         DO:
-            par_dssaqmax = "Limite por transaçao: R$ " + TRIM(STRING(aux_vlsaqmax,"zz,zz9.99")).
+            par_dssaqmax = "Limite por transacao: R$ " + TRIM(STRING(aux_vlsaqmax,"zz,zz9.99")).
             par_dscritic = "Limite de Saque Excedido".
             RETURN "NOK".
         END.
@@ -2682,7 +2685,11 @@ PROCEDURE efetua_saque:
             
                 IF   RETURN-VALUE = "NOK"   THEN
                      DO:
-                         par_dscritic = "Problemas ao criar lançamento".
+                         IF par_dscritic <> ? OR par_dscritic <> "" THEN
+                             par_dscritic = "Problemas ao criar lancamento - " + par_dscritic.
+                         ELSE
+                             par_dscritic = "Problemas ao criar lancamento".
+                             
                          UNDO, RETURN "NOK".
                      END.
             END.
@@ -2785,7 +2792,7 @@ PROCEDURE efetua_saque:
 
         IF  RETURN-VALUE <> "OK"  THEN
             DO:
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
                 UNDO, RETURN "NOK".
             END.
 
@@ -3343,7 +3350,7 @@ PROCEDURE confere_saque:
 
         IF  RETURN-VALUE <> "OK"  THEN
             DO:
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
                 UNDO, RETURN "NOK".
             END.
 
@@ -3385,7 +3392,7 @@ PROCEDURE atualiza_saldo:
     IF  NOT AVAILABLE craptfn  THEN
         DO:
             IF  LOCKED(craptfn)  THEN
-                par_dscritic = "TAA indisponível.".
+                par_dscritic = "TAA indisponivel.".
             ELSE
                 par_dscritic = "TAA nao cadastrado.".
 
@@ -4994,7 +5001,7 @@ PROCEDURE verifica_cartao_magnetico:
 
     IF  NOT AVAIL crapcop  THEN
         DO: 
-            ASSIGN par_dscritic = "Cartao Inválido.".
+            ASSIGN par_dscritic = "Cartao Invalido.".
             RETURN "NOK".
         END.
     ELSE
@@ -5004,7 +5011,7 @@ PROCEDURE verifica_cartao_magnetico:
             IF  aux_tptitcar      = 9             AND
                 crapcop.cdcooper <> par_cdcoptfn  THEN
                 DO:
-                    ASSIGN par_dscritic = "Cartao Inválido".
+                    ASSIGN par_dscritic = "Cartao Invalido".
                     RETURN "NOK".
                 END.
 
@@ -5025,7 +5032,7 @@ PROCEDURE verifica_cartao_magnetico:
 
                     IF  NOT AVAIL crapcop  THEN
                         DO:
-                            ASSIGN par_dscritic = "Cooperativa Inválida.".
+                            ASSIGN par_dscritic = "Cooperativa Invalida.".
                             RETURN "NOK".
                         END.
 
@@ -5063,7 +5070,7 @@ PROCEDURE verifica_cartao_magnetico:
                         NOT AVAILABLE crabdat  OR
                         crapdat.dtmvtocd <> crabdat.dtmvtocd  THEN
                         DO:
-                            par_dscritic = "Datas Inválidas".
+                            par_dscritic = "Datas Invalidas.".
                             RETURN "NOK".
                         END.
                 END.
@@ -5088,7 +5095,7 @@ PROCEDURE verifica_cartao_magnetico:
     IF  NOT AVAILABLE crapcrm   THEN
         DO:
             IF  LOCKED(crapcrm)  THEN
-                par_dscritic = "Cartao indisponível.".
+                par_dscritic = "Cartao indisponivel.".
             ELSE
                 par_dscritic = "Cartao nao cadastrado.".
 
@@ -5106,7 +5113,7 @@ PROCEDURE verifica_cartao_magnetico:
     IF  crapcrm.cdsitcar <> 2  THEN
         DO:
             par_dscritic = IF  crapcrm.cdsitcar = 1  THEN
-                               "Cartao Inválido"
+                               "Cartao Invalido"
                            ELSE
                            IF  crapcrm.cdsitcar = 3  THEN
                                "Cartao Cancelado"
@@ -5114,7 +5121,7 @@ PROCEDURE verifica_cartao_magnetico:
                            IF  crapcrm.cdsitcar = 4  THEN
                                "Cartao Bloqueado"
                            ELSE
-                               "Cartao Inválido".
+                               "Cartao Invalido".
 
             /* E-mail de monitoracao para uso de cartoes bloqueados */
             IF  crapcrm.cdsitcar  = 4           AND   /* Bloqueado */
@@ -5561,7 +5568,7 @@ PROCEDURE valida_senha_cartao_cecred:
            IF crapcrd.qtsenerr = crapcop.taamaxer THEN
               DO:
                   IF aux_flgcadas  THEN
-                     ASSIGN par_dscritic = "     Senha Inválida,      Acesso Bloqueado".
+                     ASSIGN par_dscritic = "     Senha Invalida,      Acesso Bloqueado".
                   ELSE
                      ASSIGN par_dscritic = " Dados nao conferem,      Acesso Bloqueado".
 
@@ -5589,7 +5596,7 @@ PROCEDURE valida_senha_cartao_cecred:
               DO:
                   /* Informa quantas tentativas ainda restam */
                   IF aux_flgcadas  THEN
-                     ASSIGN par_dscritic = "      Senha Inválida,    Resta(m) " +
+                     ASSIGN par_dscritic = "      Senha Invalida,    Resta(m) " +
                                            STRING(crapcop.taamaxer - crapcrd.qtsenerr,"z9") +
                                            " Tentativa(s)".
                   ELSE
@@ -5646,7 +5653,7 @@ PROCEDURE valida_senha_cartao_magnetico:
     /* se a situacao nao estiver ativa no momento EXATO da validacao de senha */
     IF  crapcrm.cdsitcar <> 2  THEN
         DO:
-            par_dscritic = "Cartao Inválido.".
+            par_dscritic = "Cartao Invalido.".
             RETURN "NOK".
         END.
 
@@ -5697,7 +5704,7 @@ PROCEDURE valida_senha_cartao_magnetico:
 
     IF  NOT AVAILABLE crapcrm   THEN
         DO:
-            par_dscritic = "Cartao indisponível.".
+            par_dscritic = "Cartao indisponivel.".
             RETURN "NOK".
         END.
 
@@ -5722,7 +5729,7 @@ PROCEDURE valida_senha_cartao_magnetico:
             IF  crapcrm.qtsenerr = crapcop.taamaxer  THEN
                 DO:
                     IF  aux_flgcadas  THEN
-                        par_dscritic = "     Senha Inválida,      Cartao Bloqueado".
+                        par_dscritic = "     Senha Invalida,      Cartao Bloqueado".
                     ELSE
                         par_dscritic = " Dados nao conferem,      Cartao Bloqueado".
 
@@ -5749,7 +5756,7 @@ PROCEDURE valida_senha_cartao_magnetico:
                     /* Informa quantas tentativas ainda restam */
 
                     IF  aux_flgcadas  THEN
-                        par_dscritic = "      Senha Inválida,    Resta(m) " +
+                        par_dscritic = "      Senha Invalida,    Resta(m) " +
                                        STRING(crapcop.taamaxer - crapcrm.qtsenerr,"z9") +
                                        " Tentativa(s)".
                     ELSE
@@ -5931,7 +5938,7 @@ PROCEDURE valida_senha_letras_cartao_magnetico:
     /* se a situacao nao estiver ativa no momento EXATO da validacao de senha */
     IF  crapcrm.cdsitcar <> 2  THEN
         DO:
-            par_dscritic = "Cartao Inválido.".
+            par_dscritic = "Cartao Invalido.".
             RETURN "NOK".
         END.
 
@@ -5948,7 +5955,7 @@ PROCEDURE valida_senha_letras_cartao_magnetico:
     IF  RETURN-VALUE <> "OK"  THEN
         DO:
             IF  par_dscritic = ""  THEN
-                par_dscritic = "Cartao Inválido.".
+                par_dscritic = "Cartao Invalido.".
 
             RETURN "NOK".
         END.
@@ -5958,7 +5965,7 @@ PROCEDURE valida_senha_letras_cartao_magnetico:
 
     IF  NOT AVAILABLE crapcrm   THEN
         DO:
-            par_dscritic = "Cartao indisponível.".
+            par_dscritic = "Cartao indisponivel.".
             RETURN "NOK".
         END.
 
@@ -5973,7 +5980,7 @@ PROCEDURE valida_senha_letras_cartao_magnetico:
             /* Verifica a quantidade máxima de senhas erradas */
             IF  crapcrm.qtsenerr >= crapcop.taamaxer  THEN
                 DO:
-                    par_dscritic = "Senha Inválida, Cartao Bloqueado".
+                    par_dscritic = "Senha Invalida, Cartao Bloqueado".
 
                     RUN sistema/generico/procedures/b1wgen0032.p PERSISTENT SET h_b1wgen0032.
 
@@ -5995,7 +6002,7 @@ PROCEDURE valida_senha_letras_cartao_magnetico:
                 END.
             ELSE
                 /* Informa quantas tentativas ainda restam */
-                par_dscritic = "      Senha Inválida,    Resta(m) " +
+                par_dscritic = "      Senha Invalida,    Resta(m) " +
                                STRING(crapcop.taamaxer - crapcrm.qtsenerr,"z9") +
                                " Tentativa(s)".
 
@@ -6210,7 +6217,7 @@ PROCEDURE valida_senha_tp_cartao:
                     IF  TRIM(aux_dspnblcr) = ""   THEN
                         DO:
                             ASSIGN par_cdcritic  = 0
-                                   par_dscritic  = "Erro na verificaçao de senha. (01)".
+                                   par_dscritic  = "Erro na verificacao de senha. (01)".
                             RETURN "NOK".
                         END.
                        
@@ -6241,7 +6248,7 @@ PROCEDURE valida_senha_tp_cartao:
             IF  NOT AVAILABLE crapcrd THEN
                 DO:
                     ASSIGN par_cdcritic  = 0
-                           par_dscritic  = "Erro na obtençao de dados do cartao AILOS.".
+                           par_dscritic  = "Erro na obtencao de dados do cartao AILOS.".
                     RETURN "NOK".
                 END.
                 
@@ -6288,7 +6295,7 @@ PROCEDURE valida_senha_tp_cartao:
                    IF  TRIM(aux_dspnblcr) = ""   THEN
                        DO:
                           ASSIGN par_cdcritic  = 0
-                                 par_dscritic  = "Erro na verificaçao de senha (02).".
+                                 par_dscritic  = "Erro na verificacao de senha (02).".
                           RETURN "NOK".
                        END.
                    

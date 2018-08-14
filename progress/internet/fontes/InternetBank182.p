@@ -4,14 +4,15 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Outubro/2017                      Ultima atualizacao: 00/00/0000
+   Data    : Outubro/2017                      Ultima atualizacao: 27/04/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Carregar informacoes gerais da conta corrente.
 
-   Alteracoes: 
+   Alteracoes: 27/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Douglas Quisinski)
 
 ..............................................................................*/
 
@@ -48,6 +49,10 @@ DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
 DEF VAR aux_nrcpfpre LIKE crapsnh.nrcpfcgc                             NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
+/*  Projeto 363 - Novo ATM */
+DEF VAR aux_flgemiss AS INTE                                           NO-UNDO.
+DEF VAR aux_xml      AS CHAR                                           NO-UNDO.
+
 
 DEF BUFFER crabass FOR crapass.
 
@@ -57,6 +62,12 @@ DEF INPUT  PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF INPUT  PARAM par_nrcpfope LIKE crapopi.nrcpfope                    NO-UNDO.
 DEF INPUT  PARAM par_dtmvtocd LIKE crapdat.dtmvtocd                    NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
+/*  Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -89,8 +100,8 @@ IF  tmp_cdagectl <> 0  THEN
                 ASSIGN tmp_cdagectl = DECI(STRING(tmp_cdagectl) + "0").
 
                 RUN dig_fun IN h-b1wgen9999 (INPUT par_cdcooper,
-                                             INPUT 90,
-                                             INPUT 900,
+                                             INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/
+                                             INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/
                                              INPUT-OUTPUT tmp_cdagectl,
                                             OUTPUT TABLE tt-erro).
 
@@ -246,56 +257,110 @@ ASSIGN aux_idpessoa = 0
 
 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }       
 
-RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT
-    SET h-b1wnet0002.
+  FIND FIRST tbtaa_limite_saque 
+       WHERE tbtaa_limite_saque.cdcooper = par_cdcooper
+         AND tbtaa_limite_saque.nrdconta = par_nrdconta
+       NO-LOCK NO-ERROR.
+   
+  IF AVAIL tbtaa_limite_saque THEN
+    ASSIGN aux_flgemiss = INTE(tbtaa_limite_saque.flgemissao_recibo_saque).
+  ELSE 
+    ASSIGN aux_flgemiss = 0.     
 
-IF  VALID-HANDLE(h-b1wnet0002)  THEN
+/* Carregar as informacoes do ultimo acesso apenas quando a requisicao for realizada do IB ou Mobile */
+IF par_cdorigem = 3  OR    /* Internet Bank */
+   par_cdorigem = 10 THEN  /* Mobile */ 
+DO:
+    RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT
+        SET h-b1wnet0002.
+
+    IF  VALID-HANDLE(h-b1wnet0002)  THEN
+        DO:
+
+            /* Somente a conta online armazena o acesso anterior,
+               com isso os parametros nao foram ajustados para 
+               o projeto 363 Novo caixa eletronico */
+            RUN obtem-acesso-anterior IN h-b1wnet0002
+                                     (INPUT par_cdcooper,
+                                      INPUT 90,
+                                      INPUT 900,
+                                      INPUT "996",
+                                      INPUT "InternetBank",
+                                      INPUT 3,
+                                      INPUT par_nrdconta,
+                                      INPUT par_idseqttl,
+                                      INPUT par_nrcpfope,
+                                      INPUT FALSE,
+                                      INPUT par_flmobile,
+                                     OUTPUT TABLE tt-erro,
+                                     OUTPUT TABLE tt-acesso).
+
+            DELETE PROCEDURE h-b1wnet0002.
+
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                    IF  AVAILABLE tt-erro  THEN
+                        aux_dscritic = tt-erro.dscritic.
+                    ELSE
+                        aux_dscritic = "Nao foi possivel carregar os " +
+                                       "saldos.".
+                    
+                    xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+                                   "</dsmsgerr>".
+
+                    RUN proc_geracao_log (INPUT FALSE).
+
+                    RETURN "NOK".
+                END.                
+
+            FIND FIRST tt-acesso NO-LOCK NO-ERROR.
+
+            IF  AVAILABLE tt-acesso  THEN
+                ASSIGN aux_dtultace = IF  tt-acesso.dtultace <> ?  THEN
+                                          STRING(tt-acesso.dtultace,
+                                                 "99/99/9999")
+                                      ELSE
+                                          ""
+                       aux_hrultace = STRING(tt-acesso.hrultace,"HH:MM:SS").                           
+        END.
+END.
+
+
+/* Para pessoa física, buscar o nome de todos os titulares da conta */
+IF  crapass.inpessoa = 1  THEN
     DO:
-        RUN obtem-acesso-anterior IN h-b1wnet0002
-                                 (INPUT par_cdcooper,
-                                  INPUT 90,
-                                  INPUT 900,
-                                  INPUT "996",
-                                  INPUT "InternetBank",
-                                  INPUT 3,
-                                  INPUT par_nrdconta,
-                                  INPUT par_idseqttl,
-                                  INPUT par_nrcpfope,
-                                  INPUT FALSE,
-                                  INPUT par_flmobile,
-                                 OUTPUT TABLE tt-erro,
-                                 OUTPUT TABLE tt-acesso).
+        ASSIGN aux_xml = '<TITULARES>'.
+        
+        FOR EACH crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                               crapttl.nrdconta = par_nrdconta NO-LOCK:
 
-        DELETE PROCEDURE h-b1wnet0002.
+             ASSIGN aux_xml = aux_xml + '<TITULAR><idseqttl>' +
+                                           STRING(crapttl.idseqttl) +
+                                           '</idseqttl><nmtitula>' +
+                                           crapttl.nmextttl +
+                                           '</nmtitula><nrcpfcgc>' +
+                                           STRING(crapttl.nrcpfcgc) +
+                                           '</nrcpfcgc></TITULAR>'.             
 
-        IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-                IF  AVAILABLE tt-erro  THEN
-                    aux_dscritic = tt-erro.dscritic.
-                ELSE
-                    aux_dscritic = "Nao foi possivel carregar os " +
-                                   "saldos.".
-
-                xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                               "</dsmsgerr>".
-
-                RUN proc_geracao_log (INPUT FALSE).
-
-                RETURN "NOK".
-            END.                
-
-        FIND FIRST tt-acesso NO-LOCK NO-ERROR.
-
-        IF  AVAILABLE tt-acesso  THEN
-            ASSIGN aux_dtultace = IF  tt-acesso.dtultace <> ?  THEN
-                                      STRING(tt-acesso.dtultace,
-                                             "99/99/9999")
-                                  ELSE
-                                      ""
-                   aux_hrultace = STRING(tt-acesso.hrultace,"HH:MM:SS").                           
+        END.
+          
+        ASSIGN aux_xml = aux_xml + '</TITULARES>'. 
+        
     END.
+ELSE
+    DO:		
+        /* Para pessoa jurídica, carregar o nome do dono da conta */ 
+        ASSIGN aux_xml = aux_xml + '<TITULARES><TITULAR><idseqttl>' +
+                                       '1</idseqttl><nmtitula>' +
+                                       crapass.nmprimtl +
+                                       '</nmtitula><nrcpfcgc>' +
+                                       STRING(crapass.nrcpfcgc) +
+                                       '</nrcpfcgc></TITULAR></TITULARES>'.
+                                       
+    END.
+
 
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" + 
@@ -338,7 +403,14 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                STRING(aux_nrcpfcgc) + 
                                "</nrcpfcgc><cdsitdct>" + 
                                STRING(crapass.cdsitdct) + 
-                               "</cdsitdct></CORRENTISTA>".
+                               "</cdsitdct><qtminast>" +
+                               STRING(crapass.qtminast,"9999") +
+                               "</qtminast><flrecsaq>" +
+                               STRING(aux_flgemiss) +
+                               "</flrecsaq><flgiddep>" +
+                               STRING(crapass.flgiddep) +
+                               "</flgiddep></CORRENTISTA>"+
+                               aux_xml.
 
 RETURN "OK".
 
@@ -348,6 +420,13 @@ PROCEDURE proc_geracao_log:
 
     DEF INPUT PARAM par_flgtrans AS LOGICAL                         NO-UNDO.
 
+    DEF   VAR       aux_dsorigem AS CHAR                            NO-UNDO.
+
+    IF	 par_flmobile THEN
+        ASSIGN aux_dsorigem = "MOBILE".
+    ELSE
+        ASSIGN aux_dsorigem = par_nmprogra.
+
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT
         SET h-b1wgen0014.
 
@@ -356,13 +435,13 @@ PROCEDURE proc_geracao_log:
             RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                           INPUT "996",
                                           INPUT aux_dscritic,
-                                          INPUT "INTERNET",
+                                          INPUT par_dsorigem,   /* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/
                                           INPUT aux_dstransa,
                                           INPUT aux_datdodia,
                                           INPUT par_flgtrans,
                                           INPUT TIME,
                                           INPUT par_idseqttl,
-                                          INPUT "InternetBank",
+                                          INPUT par_nmprogra,   /* Projeto 363 - Novo ATM -> estava fixo "InternetBank",*/
                                           INPUT par_nrdconta,
                                           OUTPUT aux_nrdrowid).
 
@@ -370,7 +449,7 @@ PROCEDURE proc_geracao_log:
                           (INPUT aux_nrdrowid,
                            INPUT "Origem",
                            INPUT "",
-                           INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
+                           INPUT aux_dsorigem).
 
             DELETE PROCEDURE h-b1wgen0014.
         END.

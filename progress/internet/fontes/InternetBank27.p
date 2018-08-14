@@ -77,6 +77,9 @@
                             
                30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
                
+               28/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+
                12/04/2018 - Inclusao de novos campo para realizaçao 
                               de analise de fraude. 
                               PRJ381 - AntiFraude (Odirlei-AMcom)
@@ -118,6 +121,13 @@ DEF VAR aux_vldifere AS LOGI                                           NO-UNDO.
 DEF INPUT  PARAM par_cdcooper LIKE crapcop.cdcooper                    NO-UNDO.
 DEF INPUT  PARAM par_nrdconta LIKE crapttl.nrdconta                    NO-UNDO.
 DEF INPUT  PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
 DEF INPUT  PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF INPUT  PARAM par_idtitdda AS DECI                                  NO-UNDO.
 DEF INPUT  PARAM par_idagenda AS INTE                                  NO-UNDO.
@@ -147,14 +157,18 @@ DEF INPUT  PARAM par_versaldo AS INTE                                  NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF INPUT  PARAM par_tpcptdoc AS INTE                                  NO-UNDO. 
 DEF INPUT  PARAM par_cdctrlcs AS CHAR                                  NO-UNDO. 
-DEF  INPUT PARAM par_iptransa AS CHAR                                  NO-UNDO.
-DEF  INPUT PARAM par_iddispos AS CHAR                                  NO-UNDO.
-
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdcoptfn AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagetfn AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nrterfin AS INTE                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_msgofatr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_cdempcon AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_cdsegmto AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsprotoc AS CHAR                                  NO-UNDO.
+/*Projeto 363 - Novo ATM */
+DEF OUTPUT PARAM xml_idlancto AS CHAR                                  NO-UNDO.
 
 DEF VAR aux_cdcoptfn AS INTE                                           NO-UNDO.
 DEF VAR aux_cdagetfn AS INTE                                           NO-UNDO.
@@ -201,6 +215,13 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
       (INPUT par_cdcooper    /* Codigo da cooperativa  */
       ,INPUT par_nrdconta    /* Numero da conta        */
       ,INPUT par_idseqttl    /* Sequencial titular     */
+      /* Projeto 363 - Novo ATM */
+      ,INPUT par_cdorigem    /* --> Origem */ 
+      ,INPUT par_cdagenci    /* --> Agencia */ 
+      ,INPUT par_nrdcaixa    /* --> Caixa */ 
+      ,INPUT par_dsorigem    /* --> Descricao Origem */ 
+      ,INPUT par_nmprogra    /* --> Programa */ 
+      /* Projeto 363 - Novo ATM */ 
       ,INPUT par_dtmvtolt    /* Data de movimento      */
       ,INPUT string(par_idtitdda)    /* Indicador DDA          */
       ,INPUT par_idagenda    /* Ind. agendamento/pagamento     */
@@ -230,13 +251,17 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
       ,INPUT INTE(par_flmobile) /* Indicador que origem é Mobile */
       ,INPUT par_tpcptdoc    /* Indicador de tipo de captura */
       ,INPUT (par_cdctrlcs)  /* --> Numero de controle da consulta no NPC */
-      ,INPUT par_iptransa    /* --> IP da transacao  IBank/mobile */
-      ,INPUT par_iddispos    /* --> ID Dispositivo mobile         */
+      /* Projeto 363 - Novo ATM */ 
+      ,INPUT par_cdcoptfn    /* Cooperativa do Caixa Eletronico */ 
+      ,INPUT par_cdagetfn    /* Agencia do Caixa Eletronico */ 
+      ,INPUT par_nrterfin    /* Numero do Caixa Eletronico */  
+      /* Projeto 363 - Novo ATM */ 
       ,OUTPUT ""             /* pr_xml_dsmsgerr */
       ,OUTPUT ""             /* pr_xml_msgofatr */
       ,OUTPUT ""             /* pr_xml_cdempcon */ 
       ,OUTPUT ""             /* pr_xml_cdsegmto */ 
       ,OUTPUT ""             /* pr_xml_dsprotoc */ 
+      ,OUTPUT ""             /* pr_xml_idlancto */ /* Projeto 363 - Novo ATM */
       ,OUTPUT ""       ).    /* pr_dsretorn     */ 
 
   IF  ERROR-STATUS:ERROR  THEN DO:
@@ -268,6 +293,7 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
          xml_msgofatr = ""
          xml_cdempcon = ""
          xml_cdsegmto = ""         
+         xml_idlancto = ""
          aux_dsretorn = pc_InternetBank27.pr_dsretorn 
                         WHEN pc_InternetBank27.pr_dsretorn <> ?
          xml_dsmsgerr = pc_InternetBank27.pr_xml_dsmsgerr 
@@ -279,7 +305,9 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
          xml_cdsegmto = pc_InternetBank27.pr_xml_cdsegmto 
                         WHEN pc_InternetBank27.pr_xml_cdsegmto <> ?
          xml_dsprotoc = pc_InternetBank27.pr_xml_dsprotoc 
-                        WHEN pc_InternetBank27.pr_xml_dsprotoc <> ?.
+                        WHEN pc_InternetBank27.pr_xml_dsprotoc <> ?
+         xml_idlancto = pc_InternetBank27.pr_xml_idlancto
+                        WHEN pc_InternetBank27.pr_xml_idlancto <> ?.
 
   /* Verificar se retornou critica */
   IF aux_dsretorn = "NOK" THEN
@@ -300,13 +328,13 @@ PROCEDURE proc_geracao_log:
         (INPUT par_cdcooper    /* pr_cdcooper */
         ,INPUT "996"           /* pr_cdoperad */
         ,INPUT aux_dscritic    /* pr_dscritic */
-        ,INPUT "INTERNET"      /* pr_dsorigem */
+        ,INPUT par_dsorigem    /* pr_dsorigem */ /* Projeto 363 - Novo ATM -> extava fixo "INTERNET" */
         ,INPUT aux_dstransa    /* pr_dstransa */
         ,INPUT aux_datdodia    /* pr_dttransa */
         ,INPUT 0 /* Operacao sem sucesso */ /* pr_flgtrans */
         ,INPUT TIME            /* pr_hrtransa */
         ,INPUT par_idseqttl    /* pr_idseqttl */
-        ,INPUT "INTERNETBANK"  /* pr_nmdatela */
+        ,INPUT par_nmprogra    /* pr_nmdatela */ /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
         ,INPUT par_nrdconta    /* pr_nrdconta */
         ,OUTPUT 0 ). /* pr_nrrecid  */
 

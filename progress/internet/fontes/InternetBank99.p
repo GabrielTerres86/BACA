@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Agosto/2014.                       Ultima atualizacao: 30/05/2016
+   Data    : Agosto/2014.                       Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -17,6 +17,8 @@
                             
                30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
                
+               09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -40,6 +42,15 @@ DEF INPUT PARAM par_cdhisdeb LIKE gnconve.cdhisdeb                     NO-UNDO.
 DEF INPUT PARAM par_flcadast AS INTE                                   NO-UNDO.
 DEF INPUT PARAM par_cdhistor LIKE gnconve.cdhisdeb                     NO-UNDO.
 DEF INPUT PARAM par_idmotivo AS INTE                                   NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdcoptfn AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_cdagetfn AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrterfin AS INT                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -70,6 +81,7 @@ DEF VAR aux_flcartma AS INTE                                           NO-UNDO.
 
 DEF VAR aux_nrtelsac AS CHAR                                           NO-UNDO.
 
+DEF VAR aux_qtminast AS INTE INIT 0                                    NO-UNDO.
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -124,7 +136,7 @@ RUN STORED-PROCEDURE pc_verifica_rep_assinatura
                   (INPUT  par_cdcooper,
                    INPUT  par_nrdconta,
                    INPUT  par_idseqttl,
-                   INPUT  3,   /* cdorigem */
+                   INPUT  par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/   /* cdorigem */
                    OUTPUT 0,   /* idastcjt */
                    OUTPUT 0,   /* nrcpfcgc */
                    OUTPUT "",  /* nmprimtl */
@@ -254,11 +266,11 @@ DO:
                               " - Debito Automatico Facil.".
 
         RUN valida-dados IN h-b1wgen0092 (INPUT par_cdcooper,
-                                         INPUT 90, /* cdagenci */
-                                         INPUT 900, /* nrdcaixa */
+                                         INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/ /* cdagenci */
+                                         INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/ /* nrdcaixa */
                                          INPUT "996", /* cdoperad */
-                                         INPUT "INTERNETBANK", /* nmdatela */
-                                         INPUT 3, /* idorigem */
+                                         INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/ /* nmdatela */
+                                         INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* idorigem */
                                          INPUT par_nrdconta,
                                          INPUT par_idseqttl,
                                          INPUT FALSE,
@@ -287,17 +299,17 @@ DO:
 
             RUN STORED-PROCEDURE pc_cria_trans_pend_deb_aut
             aux_handproc = PROC-HANDLE NO-ERROR
-                          (INPUT  90,
-                           INPUT  900,
+                          (INPUT  par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/
+                           INPUT  par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/
                            INPUT  "996",
-                           INPUT  "INTERNETBANK",
-                           INPUT  3,   /*  pr_cdorigem */
+                           INPUT  par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/
+                           INPUT  par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/   /*  pr_cdorigem */
                            INPUT  par_idseqttl, 
                            INPUT  0,   /* pr_nrcpfope */
                            INPUT  aux_nrcpfcgc, /* pr_nrcpfrep */
-                           INPUT  0,   /* pr_cdcoptfn */
-                           INPUT  0,   /* pr_cdagetfn */
-                           INPUT  0,   /* pr_nrterfin */
+                           INPUT  par_cdcoptfn, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* pr_cdcoptfn */
+                           INPUT  par_cdagetfn, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* pr_cdagetfn */
+                           INPUT  par_nrterfin, /* Projeto 363 - Novo ATM -> estava fixo 0,*/   /* pr_nrterfin */
                            INPUT  par_dtmvtolt,
                            INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -357,13 +369,13 @@ DO:
                  RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                                INPUT "996",
                                                INPUT aux_dscritic,
-                                               INPUT "INTERNET",
+                                               INPUT par_dsorigem, /* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/
                                                INPUT aux_dstransa,
                                                INPUT aux_datdodia,
                                                INPUT TRUE,
                                                INPUT TIME,
                                                INPUT par_idseqttl,
-                                               INPUT "InternetBank",
+                                               INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "InternetBank",*/
                                                INPUT par_nrdconta,
                                                OUTPUT aux_nrdrowid).
             
@@ -391,19 +403,35 @@ DO:
              ASSIGN aux_dscritic = "Autorizacao registrado com sucesso. "     + 
                                    "Aguardando aprovacao da operacao pelos "  +
                                    "demais responsaveis.".   
+                                   
+                                   
+              /* Se possui assinatura conjunta, retornamos a quantidade minima de assinatura na conta */
+              /*  Projeto 363 - Novo ATM  */
+              ASSIGN aux_qtminast = 0.
+              FIND FIRST crapass 
+                   WHERE crapass.cdcooper = par_cdcooper
+                     AND crapass.nrdconta = par_nrdconta
+                   NO-LOCK NO-ERROR.
+                     
+              IF AVAIL crapass THEN
+              DO:
+                  ASSIGN aux_qtminast = crapass.qtminast.
+              END.
+                                   
              ASSIGN xml_dsmsgerr = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>" +
-                                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".
+                                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" +
+                                   "<qtminast>" + STRING(aux_qtminast) + "</qtminast>".
              RETURN "NOK".
             END.    
         END.
         ELSE
         DO:
             RUN grava-dados IN h-b1wgen0092 (INPUT par_cdcooper,
-                                             INPUT 90, /* cdagenci */
-                                             INPUT 900, /* nrdcaixa */
+                                             INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/ /* cdagenci */
+                                             INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/ /* nrdcaixa */
                                              INPUT "996", /* cdoperad */
-                                             INPUT "INTERNETBANK", /* nmdatela */
-                                             INPUT 3, /* idorigem */
+                                             INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/ /* nmdatela */
+                                             INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* idorigem */
                                              INPUT par_nrdconta,
                                              INPUT par_idseqttl,
                                              INPUT TRUE,
@@ -438,11 +466,11 @@ DO:
                               " - Debito Automatico Facil.".
 
         RUN altera_autorizacao IN h-b1wgen0092 (INPUT par_cdcooper,
-                                                INPUT 90,  /* cdagenci */
-                                                INPUT 900, /* nrdcaixa */
+                                                INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/  /* cdagenci */
+                                                INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/ /* nrdcaixa */
                                                 INPUT "996", /* cdoperad */
-                                                INPUT "INTERNETBANK", /* nmdatela */
-                                                INPUT 3, /* idorigem */
+                                                INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/ /* nmdatela */
+                                                INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* idorigem */
                                                 INPUT par_nrdconta,
                                                 INPUT par_dtmvtolt,
                                                 INPUT par_idconsum,
@@ -459,11 +487,11 @@ DO:
                               " - Debito Automatico Facil.".
 
         RUN exclui_autorizacao IN h-b1wgen0092 (INPUT par_cdcooper,
-                                                INPUT 90,  /* cdagenci */
-                                                INPUT 900, /* nrdcaixa */
+                                                INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/  /* cdagenci */
+                                                INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/ /* nrdcaixa */
                                                 INPUT "996", /* cdoperad */
-                                                INPUT "INTERNETBANK", /* nmdatela */
-                                                INPUT 3, /* idorigem */
+                                                INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/ /* nmdatela */
+                                                INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* idorigem */
                                                 INPUT par_nrdconta,
                                                 INPUT par_dtmvtolt,
                                                 INPUT par_cdsegmto,
@@ -494,7 +522,9 @@ DO:
     END.
 
     IF (par_flcadast = 0) THEN    
-    RUN proc_geracao_log (INPUT TRUE).
+        RUN proc_geracao_log (INPUT TRUE,
+                              INPUT par_dsorigem,
+                              INPUT par_nmprogra).
     
     RETURN "OK".
 
@@ -505,6 +535,8 @@ END.
 PROCEDURE proc_geracao_log:
     
     DEF INPUT PARAM par_flgtrans AS LOGICAL                         NO-UNDO.
+    DEF INPUT PARAM par_dsorigem AS CHAR                            NO-UNDO.
+    DEF INPUT PARAM par_nmprogra AS CHAR                            NO-UNDO.
     
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
         SET h-b1wgen0014.
@@ -514,13 +546,13 @@ PROCEDURE proc_geracao_log:
             RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                           INPUT "996",
                                           INPUT aux_dscritic,
-                                          INPUT "INTERNET",
+                                          INPUT par_dsorigem, /* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/
                                           INPUT aux_dstransa,
                                           INPUT aux_datdodia,
                                           INPUT par_flgtrans,
                                           INPUT TIME,
                                           INPUT par_idseqttl,
-                                          INPUT "INTERNETBANK",
+                                          INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/
                                           INPUT par_nrdconta,
                                           OUTPUT aux_nrdrowid).
                                                             

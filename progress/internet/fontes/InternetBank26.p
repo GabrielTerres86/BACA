@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007                        Ultima atualizacao: 24/06/2015
+   Data    : Junho/2007                        Ultima atualizacao: 28/03/2018
 
    Dados referentes ao programa:
    
@@ -50,11 +50,15 @@
                28/07/2015 - Adição de parâmetro flmobile para indicar que a origem
                             da chamada é do mobile (Dionathan)
 
-			   07/02/2017 - Incluir código de controle de consulta CIP como 
-			                parametro. (Odirlei)
+               07/02/2017 - Incluir código de controle de consulta CIP como 
+                            parametro. (Odirlei)
 
-			   01/11/2017 -  Ajustes diversos para projeto de DDA Mobile
-							 PRJ356.4 - DDA (Ricardo Linhares)
+               01/11/2017 - Ajustes diversos para projeto de DDA Mobile
+                            PRJ356.4 - DDA (Ricardo Linhares)
+
+               28/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -94,6 +98,13 @@ DEF VAR aux_dtvencto AS DATE                                           NO-UNDO.
 DEF  INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapttl.nrdconta                    NO-UNDO.
 DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
 DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_idtitdda AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_idtpdpag AS INTE                                  NO-UNDO.
@@ -158,6 +169,13 @@ ASSIGN aux_dstransa = "Valida " +
       (INPUT par_cdcooper    /* --> Codigo da cooperativa */
       ,INPUT par_nrdconta    /* --> Numero da conta       */
       ,INPUT par_idseqttl    /* --> Sequencial titular    */
+      /* Projeto 363 - Novo ATM */ 
+      ,INPUT par_cdorigem    /* --> Origem */ 
+      ,INPUT par_cdagenci    /* --> Agencia */ 
+      ,INPUT par_nrdcaixa    /* --> Caixa */ 
+      ,INPUT par_dsorigem    /* --> Descricao Origem */ 
+      ,INPUT par_nmprogra    /* --> Programa */ 
+      /* Projeto 363 - Novo ATM */ 
       ,INPUT par_dtmvtolt    /* --> Data de movimento     */
       ,INPUT STRING(par_idtitdda)    /* --> Indicador DDA         */
       ,INPUT par_idtpdpag    /* --> Indicador de tipo de pagamento */
@@ -376,13 +394,13 @@ PROCEDURE proc_geracao_log:
         (INPUT par_cdcooper    /* pr_cdcooper */
         ,INPUT "996"           /* pr_cdoperad */
         ,INPUT aux_dscritic    /* pr_dscritic */
-        ,INPUT "INTERNET"      /* pr_dsorigem */
+        ,INPUT par_dsorigem    /* pr_dsorigem */ /* Projeto 363 - Novo ATM -> estava fixo "INTERNET" */ 
         ,INPUT aux_dstransa    /* pr_dstransa */
         ,INPUT aux_datdodia    /* pr_dttransa */
         ,INPUT 0 /* Operacao sem sucesso */ /* pr_flgtrans */
         ,INPUT TIME            /* pr_hrtransa */
         ,INPUT par_idseqttl    /* pr_idseqttl */
-        ,INPUT "INTERNETBANK"  /* pr_nmdatela */
+        ,INPUT par_nmprogra    /* pr_nmdatela */ /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */ 
         ,INPUT par_nrdconta    /* pr_nrdconta */
         ,OUTPUT 0 ). /* pr_nrrecid  */
 

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 29/11/2017
+   Data    : Marco/2007                        Ultima atualizacao: 12/03/2018
 
    Dados referentes ao programa:
 
@@ -24,6 +24,8 @@
                29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                             PRJ404 - Garantia.(Odirlei-AMcom)               
                             
+              12/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                           servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
     
     
@@ -56,6 +58,11 @@ DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_dtmvtopr LIKE crapdat.dtmvtopr                    NO-UNDO.
 DEF  INPUT PARAM par_inproces LIKE crapdat.inproces                    NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -117,18 +124,18 @@ IF  NOT VALID-HANDLE(h-b1wgen0006)  THEN
     END.
 
 RUN consulta-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,        
-                                       INPUT 90,                   
-                                       INPUT 900,                 
+                                       INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                       INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                        INPUT "996",
-                                       INPUT "INTERNETBANK",
-                                       INPUT 3,
+                                       INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
+                                       INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                        INPUT par_nrdconta,
                                        INPUT par_idseqttl,
                                        INPUT 0,
                                        INPUT par_dtmvtolt,    
                                        INPUT par_dtmvtopr,
                                        INPUT par_inproces,
-                                       INPUT "INTERNETBANK",      
+                                       INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                        INPUT TRUE,
                                       OUTPUT aux_vlsdrdpp,
                                       OUTPUT TABLE tt-erro,      

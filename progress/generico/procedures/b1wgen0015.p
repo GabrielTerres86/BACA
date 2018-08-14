@@ -36,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 24/04/2018
+    Data    : Abril/2006                      Ultima Atualizacao: 19/07/2018
     
     Dados referentes ao programa:
 
@@ -425,6 +425,8 @@
                            de analise de fraude. 
                            PRJ381 - AntiFraude (Odirlei-AMcom)
                            
+              19/07/2018 - Ajustar a verifica_operacao para enviar o parametro de agencia corretamente
+                           ao inves do valor fixo 90 (PRJ 363 - Douglas Quisinski)
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -1855,7 +1857,7 @@ PROCEDURE verifica_operacao:
 
                             RUN busca-tarifa-ted IN h-b1crap20 
                                   (INPUT par_cdcooper,
-                                   INPUT 90,    /* cdagenci*/
+                                   INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */ 
                                    INPUT par_nrdconta,
                                    INPUT par_vllanmto,
                                   OUTPUT aux_vltarifa,
@@ -1879,7 +1881,7 @@ PROCEDURE verifica_operacao:
 
                             RUN tarifa-transf-intercooperativa IN h-b1crap22 
                                   (INPUT par_cdcooper,
-                                   INPUT 90,    /* cdagenci*/
+                                   INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */ 
                                    INPUT par_nrdconta,
                                    INPUT par_vllanmto,
                                   OUTPUT aux_vltarifa,

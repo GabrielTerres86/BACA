@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : James Prust Junior
-   Data    : Setembro/2014.                       Ultima atualizacao: 18/01/2016
+   Data    : Setembro/2014.                       Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa:
    
@@ -14,6 +14,8 @@
    Alteracoes: 18/01/2016 - Adicionar parâmetro vlliquid na chamada da BO188
                             e retorno da mesma no xml (Anderson).
 
+               09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -35,6 +37,8 @@ DEF  INPUT PARAM par_vlemprst AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_vlparepr AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_nrparepr AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_dtvencto AS DATE                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -54,7 +58,7 @@ IF VALID-HANDLE(h-b1wgen0188) THEN
                                                     INPUT par_nrdcaixa,
                                                     INPUT par_cdoperad,
                                                     INPUT par_nmdatela,
-                                                    INPUT 3, /* par_cdorigem */
+                                                    INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* par_cdorigem */
                                                     INPUT par_nrdconta,
                                                     INPUT par_dtmvtolt,
                                                     INPUT par_vlemprst,

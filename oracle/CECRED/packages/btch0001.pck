@@ -166,6 +166,12 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
 
   PROCEDURE pc_log_internal_exception(pr_cdcooper IN crapcop.cdcooper%TYPE DEFAULT 3); --> Cooperativa
 
+  -- Rotina para carregar as datas do sistema
+  PROCEDURE pc_busca_data_coop(pr_cdcooper   IN INTEGER          --> Numero da critica Inicial
+                              ,pr_cdcritic  OUT PLS_INTEGER      --> Código da crítica
+                              ,pr_dscritic  OUT VARCHAR2         --> Descrição da crítica
+                              ,pr_retxml    OUT NOCOPY XMLType); --> Arquivo de retorno do XML
+
 END btch0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
@@ -1580,6 +1586,109 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   BEGIN
     cecred.pc_internal_exception(pr_cdcooper);
   END pc_log_internal_exception;
+
+  -- Rotina para carregar as datas do sistema
+  PROCEDURE pc_busca_data_coop(pr_cdcooper   IN INTEGER            --> Numero da critica Inicial
+                              ,pr_cdcritic  OUT PLS_INTEGER        --> Código da crítica
+                              ,pr_dscritic  OUT VARCHAR2           --> Descrição da crítica
+                              ,pr_retxml    OUT NOCOPY XMLType) IS --> Arquivo de retorno do XML
+  BEGIN
+    /* .............................................................................
+    Programa: pc_busca_data_coop
+    Sistema : Conta-Corrente - Cooperativa de Credito
+    Sigla   : CRED
+    Autor   : Douglas Quisinski
+    Data    : 19/06/2018                        Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar as datas de movimento da cooperativa
+
+    Alteracoes:
+    ............................................................................. */
+    DECLARE
+      
+      -- Variáveis de erro
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      vr_exec_err EXCEPTION;
+      
+      -- Busca as informações da cooperativa conectada
+      CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+        SELECT crapcop.cdcooper
+              ,crapcop.dsdircop
+              ,crapcop.cdbcoctl
+              ,crapcop.cdagectl
+              ,crapcop.nmrescop
+              ,crapcop.vlinimon
+              ,crapcop.vllmonip
+              ,crapcop.nmextcop
+              ,crapcop.flgofatr
+        FROM crapcop crapcop
+        WHERE crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+    BEGIN
+      -- Verificar se a cooperativa existe
+      OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      -- Verificar se encontrou registro
+      IF cr_crapcop%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_crapcop;
+        vr_cdcritic := 794;
+        RAISE vr_exec_err;
+      ELSE
+        -- Fechar o cursor
+        CLOSE cr_crapcop;
+      END IF;
+    
+      -- Verificar se existe a data do sistema
+      OPEN btch0001.cr_crapdat (pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
+      -- Verificar se encontrou registro
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+        vr_cdcritic := 1;
+        RAISE vr_exec_err;
+      ELSE
+        -- Fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+    
+
+      -- Recriar cabecalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><DATAS>'|| 
+                                       '<dtmvtolt>'|| to_char(btch0001.rw_crapdat.dtmvtolt,'DD/MM/RRRR') ||'</dtmvtolt>'||
+                                       '<dtmvtocd>'|| to_char(btch0001.rw_crapdat.dtmvtocd,'DD/MM/RRRR') ||'</dtmvtocd>'||
+                                       '<dtmvtoan>'|| to_char(btch0001.rw_crapdat.dtmvtoan,'DD/MM/RRRR') ||'</dtmvtoan>'||
+                                       '<dtmvtopr>'|| to_char(btch0001.rw_crapdat.dtmvtopr,'DD/MM/RRRR') ||'</dtmvtopr>'||
+                                       '<inproces>'|| to_char(btch0001.rw_crapdat.inproces) ||'</inproces>' ||
+                                     '</DATAS>');
+
+    EXCEPTION
+      WHEN vr_exec_err THEN
+        IF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na BTCH0001.pc_busca_data_coop: ' || SQLERRM;
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+  END pc_busca_data_coop;
 
 END btch0001;
 /

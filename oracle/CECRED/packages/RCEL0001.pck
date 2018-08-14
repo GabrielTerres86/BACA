@@ -1,5 +1,42 @@
 CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
   
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --    Programa: RCEL0001
+  --    Autor   : Lucas Reinert
+  --    Data    : Janeiro/2017                   Ultima Atualizacao: 16/07/2018
+  --
+  --    Dados referentes ao programa:
+  --
+  --    Objetivo  : Package para centralizar as rotinas de recarga de celular
+  --
+  --    Alteracoes: 06/06/2017 - Inclusão da função de calculo de repasse
+  --                           - Alteração para corrigir reagendamento de job  (Renato Darosci)
+  --    
+  --                02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --                             crapass, crapttl, crapjur 
+  --                              (Adriano - P339).
+  --
+  --                17/08/2017 - Alteração para ajustar relatório de agendamentos e mensagem do InternetBank 
+  --                             para recargas agendadas. (Reinert)
+  --
+  --                28/09/2017 - Alteração para tratar múltiplas requisições de recargas pelo Android.
+  --                             (Reinert)
+  --
+  --                24/10/2017 - Ajustado data de débito da procedure pc_efetua_recarga. (Reinert)
+  -- 
+  --                03/11/2017 - Ajuste para tratar agendamentos duplicados. (Reinert)
+  --
+  --                08/11/2017 - Ajustado tempo para nova solicitação de recarga para 5 minutos na procedure
+  --                             pc_confirma_recarga_ib. (Reinert)
+  --
+  --                09/02/2018 - Alterado para verificar operação de recarga duplicada;
+  --                           - Alterada crítica para solicitações de recargas repetidas no TAA. (Reinert)
+  --
+  --                16/07/2018 - Inclusão do campo dsorigem no retorno da procedure pc_carrega_agend_recarga, Prj. 363 (Jean Michel)
+  --
+  ---------------------------------------------------------------------------------------------------------------
+
   TYPE typ_reg_critic IS
     RECORD (idoperacao INTEGER
            ,situacao   INTEGER -- 1 - Efetuado / 2 - Não efetuado
@@ -36,12 +73,13 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
           ,dttransa       tbrecarga_operacao.dttransa%TYPE
           ,vlrecarga      tbrecarga_operacao.vlrecarga%TYPE
           ,insit_operacao tbrecarga_operacao.insit_operacao%TYPE
-					,dssit_operacao VARCHAR2(100)
+          ,dssit_operacao VARCHAR2(100)
           ,nrddd          tbrecarga_operacao.nrddd%TYPE
           ,nrcelular      tbrecarga_operacao.nrcelular%TYPE
           ,nmoperadora    tbrecarga_operadora.nmoperadora%TYPE
-					,incancel       NUMBER
-					,dscritic VARCHAR2(100));
+          ,incancel       NUMBER
+          ,dscritic VARCHAR2(100)
+          ,dsorigem       craplau.dsorigem%TYPE);
 		
 	TYPE typ_tab_age_recarga IS TABLE OF typ_reg_age_recarga INDEX BY PLS_INTEGER;
  
@@ -95,6 +133,9 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 														 ,pr_qtmesagd  IN INTEGER                            -- Qtd. meses agendamento
 														 ,pr_cddopcao  IN INTEGER                            -- Opção: 1 - Data atual / 2 - Data futura / 3 - Agendamento
 														 ,pr_idorigem  IN INTEGER                            -- Indicador de Origem
+                               ,pr_cdagenci IN INTEGER                             -- Agencia de Origem
+                               ,pr_nrdcaixa IN INTEGER                             -- Caixa de Origem
+                               ,pr_nmprogra IN VARCHAR2                            -- Programa que chamou
 														 ,pr_lsdatagd OUT VARCHAR2                           -- Lista de datas agendadas
 														 ,pr_cdcritic OUT PLS_INTEGER                        -- Cód. da crítica
 														 ,pr_dscritic OUT VARCHAR2);                         -- Desc. da crítica
@@ -115,12 +156,16 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 														 ,pr_cdcoptfn  IN crapcop.cdcooper%TYPE -- Cód. da cooperativa do terminal financeiro (Apenas TAA)
 														 ,pr_cdagetfn  IN crapage.cdagenci%TYPE -- Cód. da agencia do terminal financeiro (Apenas TAA)
 														 ,pr_nrterfin  IN craptfn.nrterfin%TYPE -- Nr. do terminal financeiro (Apenas TAA)
-														 ,pr_nrcartao  IN NUMBER                -- Nr. do cartao														 
+                             ,pr_nrcartao  IN NUMBER                -- Nr. do cartao (Apenas TAA)
 														 ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único (Apenas TAA)														 
 														 ,pr_idorigem  IN INTEGER               -- Id. origem (3-IB / 4-TAA)
+                             ,pr_cdagenci  IN INTEGER               -- Agencia da Transação
+                             ,pr_nrdcaixa  IN INTEGER               -- Caixa da Transação
+                             ,pr_nmprogra  IN VARCHAR2              -- Nome do Programa que chamou
 														 ,pr_inaprpen  IN NUMBER                -- Indicador de aprovação de transacao pendente
 														 ,pr_idoperac  IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na efetivação do agendamento e aprovação de transação pendente)
                              ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
+                             ,pr_dslancto OUT VARCHAR2              -- Lista com todos os ID operação dos agendamentos criados
                              ,pr_idastcjt OUT INTEGER               -- Se possui assinatura														 
 														 ,pr_dsprotoc OUT VARCHAR2              -- Protocolo
 														 ,pr_dsnsuope OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU Operadora														 
@@ -141,8 +186,11 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 														 ,pr_cdcoptfn  IN craptfn.cdcooper%TYPE -- Coopertaiva do terminal financeiro
 														 ,pr_nrterfin  IN craptfn.nrterfin%TYPE -- Nr. do terminal financeiro
 														 ,pr_nrcartao  IN DECIMAL               -- Nr. do cartão
-                             ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único														 
+                               ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único (Apenas TAA)
 														 ,pr_idorigem  IN INTEGER -- Id. origem
+                               ,pr_cdagenci  IN INTEGER -- Agencia da transação
+                               ,pr_nrdcaixa  IN INTEGER -- Caixa da transação
+                               ,pr_nmprogra  IN VARCHAR2 -- Programa que chamou
                              ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
 														 ,pr_nsuopera  OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU operadora
 														 ,pr_dsprotoc  OUT VARCHAR2                                -- Protocolo
@@ -163,7 +211,9 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 																	 ,pr_dtrecarga IN tbrecarga_operacao.dtrecarga%TYPE -- Data de recarga
 																	 ,pr_lsdatagd IN VARCHAR2 DEFAULT NULL             -- Lista de datas para agendamento
 																	 ,pr_idorigem IN INTEGER                            -- Id. de origem
+                                     ,pr_nmprogra IN VARCHAR2                           -- Nome do Programa
 																	 ,pr_idoperac IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na aprovação de transação pendente)																	 
+                                     ,pr_dslancto OUT VARCHAR2                          -- Lista de ID Operação
 																	 ,pr_cdcritic OUT PLS_INTEGER                       -- Cód. da crítica
 																	 ,pr_dscritic OUT VARCHAR2);                        -- Desc. da crítica	
 																	 
@@ -204,6 +254,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                           ,pr_idseqttl   IN crapttl.idseqttl%TYPE
                                           ,pr_idorigem   IN INTEGER
                                           ,pr_idoperacao IN INTEGER 
+                                          ,pr_nmprogra   IN VARCHAR2
                                           ,pr_cdcritic  OUT PLS_INTEGER
                                           ,pr_dscritic  OUT VARCHAR2);	
 	
@@ -242,6 +293,15 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                   ,pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE
                                   ,pr_inaprpen   IN NUMBER
                                   ,pr_flmobile   IN NUMBER
+                                  ,pr_idorigem IN INTEGER -- Indicador de Origem
+                                  ,pr_cdagenci IN INTEGER -- Agencia de Origem
+                                  ,pr_nrdcaixa IN INTEGER -- Caixa de Origem
+                                  ,pr_nmprogra IN VARCHAR2 -- Programa que chamou
+                                  ,pr_cdcoptfn  IN crapcop.cdcooper%TYPE -- Cód. da cooperativa do terminal financeiro (Apenas TAA)
+                                  ,pr_cdagetfn  IN crapage.cdagenci%TYPE -- Cód. da agencia do terminal financeiro (Apenas TAA)
+                                  ,pr_nrterfin  IN craptfn.nrterfin%TYPE -- Nr. do terminal financeiro (Apenas TAA)
+                                  ,pr_nrcartao  IN NUMBER                -- Nr. do cartao (Apenas TAA)
+                                  ,pr_xml_idlancto OUT VARCHAR2 -- Lista com todos os agendamentos
                                   ,pr_msg_retor OUT VARCHAR2
                                   ,pr_cdcritic  OUT PLS_INTEGER
                                   ,pr_dscritic  OUT VARCHAR2);
@@ -276,7 +336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
   --    Programa: RCEL0001
   --    Autor   : Lucas Reinert
-  --    Data    : Janeiro/2017                   Ultima Atualizacao: 09/02/2018
+  --    Data    : Janeiro/2017                   Ultima Atualizacao: 16/07/2018
   --
   --    Dados referentes ao programa:
   --
@@ -304,6 +364,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
 	--                09/02/2018 - Alterado para verificar operação de recarga duplicada;
 	--                           - Alterada crítica para solicitações de recargas repetidas no TAA. (Reinert)
+  --
+  --                16/07/2018 - Inclusão do campo dsorigem no retorno da procedure pc_carrega_agend_recarga, Prj. 363 (Jean Michel)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   -- Objetos para armazenar as variáveis da notificação
@@ -970,6 +1033,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_qtmesagd  IN INTEGER                            -- Qtd. meses agendamento
 														 ,pr_cddopcao  IN INTEGER                            -- Opção: 1 - Data atual / 2 - Data futura / 3 - Agendamento
 														 ,pr_idorigem  IN INTEGER                            -- Indicador de Origem
+                             ,pr_cdagenci IN INTEGER -- Agencia de Origem
+                             ,pr_nrdcaixa IN INTEGER -- Caixa de Origem
+                             ,pr_nmprogra IN VARCHAR2 -- Programa que chamou
 														 ,pr_lsdatagd OUT VARCHAR2                           -- Lista de datas agendadas
 														 ,pr_cdcritic OUT PLS_INTEGER                        -- Cód. da crítica
 														 ,pr_dscritic OUT VARCHAR2) IS                       -- Desc. da crítica
@@ -1127,11 +1193,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			                             ,pr_rw_crapdat => rw_crapdat
 				 		                       ,pr_cdagenci => CASE 
                                                    WHEN pr_idorigem = 5 THEN 1
-							                                     WHEN pr_idorigem = 3 THEN 90
-						 	                                     ELSE 91 END
+                                                       ELSE pr_cdagenci END  /* Projeto 363 - Novo ATM */
 					                         ,pr_nrdcaixa => CASE 
 						                                       WHEN pr_idorigem = 5 THEN 0
-						 	                                     ELSE 900 END
+                                                       ELSE pr_nrdcaixa END /* Projeto 363 - Novo ATM */
 					                         ,pr_cdoperad => CASE 
 						                                       WHEN pr_idorigem = 5 THEN 1
 						 	                                     ELSE 996 END
@@ -1268,8 +1333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														,pr_flgtrans => 0
 														,pr_hrtransa => gene0002.fn_busca_time
 														,pr_idseqttl => pr_idseqttl
-														,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
-													                       ELSE 'TAA' END
+														,pr_nmdatela => pr_nmprogra /* Projeto 363 - Novo ATM */
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
 						
@@ -1302,8 +1366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														,pr_flgtrans => 0
 														,pr_hrtransa => gene0002.fn_busca_time
 														,pr_idseqttl => pr_idseqttl
-														,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
-													                       ELSE 'TAA' END
+														,pr_nmdatela => pr_nmprogra /* Projeto 363 - Novo ATM */
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
     END;																							
@@ -1328,9 +1391,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_nrcartao  IN NUMBER                -- Nr. do cartao (Apenas TAA)
 														 ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único (Apenas TAA)
 														 ,pr_idorigem  IN INTEGER               -- Id. origem (3-IB / 4-TAA)
+                             ,pr_cdagenci  IN INTEGER               -- Agencia da Transação
+                             ,pr_nrdcaixa  IN INTEGER               -- Caixa da Transação
+                             ,pr_nmprogra  IN VARCHAR2              -- Nome do Programa que chamou
 														 ,pr_inaprpen  IN NUMBER                -- Indicador de aprovação de transacao pendente
 														 ,pr_idoperac  IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na efetivação do agendamento e aprovação de transação pendente)
                              ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
+                             ,pr_dslancto OUT VARCHAR2              -- Lista com todos os ID operação dos agendamentos criados
                              ,pr_idastcjt OUT INTEGER               -- Se possui assinatura
 														 ,pr_dsprotoc OUT VARCHAR2              -- Protocolo
 														 ,pr_dsnsuope OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU Operadora
@@ -1431,12 +1498,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			
 			-- Se recarga foi feita por operador ou conta possui assinatura conjunta
 			IF (pr_nrcpfope > 0 OR vr_idastcjt = 1) AND pr_inaprpen = 0 THEN
-				INET0002.pc_cria_trans_pend_recarga(pr_cdagenci => CASE WHEN pr_idorigem = 3 THEN 90 
-				                                                        ELSE 91 END
-																					 ,pr_nrdcaixa => 900 
+              INET0002.pc_cria_trans_pend_recarga(pr_cdagenci => pr_cdagenci
+                                                 ,pr_nrdcaixa => pr_nrdcaixa
 																					 ,pr_cdoperad => '996'
-																					 ,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
-																					                      ELSE 'TAA' END
+                                                 ,pr_nmdatela => pr_nmprogra
 																					 ,pr_idorigem => pr_idorigem
 																					 ,pr_idseqttl => pr_idseqttl
 																					 ,pr_nrcpfope => pr_nrcpfope -- Quando idorigem <> 3-Internet virá zerado 
@@ -1497,8 +1562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														,pr_flgtrans => 1
 														,pr_hrtransa => gene0002.fn_busca_time
 														,pr_idseqttl => pr_idseqttl
-														,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
-													                       ELSE 'TAA' END
+														,pr_nmdatela => pr_nmprogra
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
         
@@ -1572,7 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   pr_dsdadant => NULL,
                                   pr_dsdadatu => CASE pr_flmobile
                                                  WHEN 1 THEN 'MOBILE'
-                                                 ELSE 'INTERNETBANK'
+                                                 ELSE pr_nmprogra
                                                   END);
         END IF;
         
@@ -1595,6 +1659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			,pr_nrcartao  => pr_nrcartao
 																			,pr_nrsequni  => pr_nrsequni
 																			,pr_idorigem  => pr_idorigem
+                                                                            ,pr_cdagenci  => pr_cdagenci
+                                                                            ,pr_nrdcaixa  => pr_nrdcaixa
+                                                                            ,pr_nmprogra  => pr_nmprogra
 																			,pr_flmobile  => pr_flmobile
 																			,pr_nsuopera  => pr_dsnsuope
 																			,pr_dsprotoc  => pr_dsprotoc
@@ -1620,7 +1687,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																						,pr_dtrecarga => pr_dtrecarga
 																						,pr_lsdatagd => pr_lsdatagd
 																						,pr_idorigem => pr_idorigem
+                                                        ,pr_nmprogra => pr_nmprogra
 																						,pr_idoperac => pr_idoperac
+                                                        ,pr_dslancto => pr_dslancto
 																						,pr_cdcritic => vr_cdcritic
 																						,pr_dscritic => vr_dscritic);
 																						
@@ -1673,6 +1742,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_nrcartao  IN DECIMAL               -- Nr. do cartão
 														 ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único (Apenas TAA)
 														 ,pr_idorigem  IN INTEGER -- Id. origem
+                               ,pr_cdagenci  IN INTEGER -- Agencia da transação
+                               ,pr_nrdcaixa  IN INTEGER -- Caixa da transação
+                               ,pr_nmprogra  IN VARCHAR2 -- Programa que chamou
                              ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
 														 ,pr_nsuopera  OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU operadora
 														 ,pr_dsprotoc  OUT VARCHAR2                                -- Protocolo
@@ -1903,10 +1975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 															,pr_flgtrans => 0
 															,pr_hrtransa => gene0002.fn_busca_time
 															,pr_idseqttl => pr_idseqttl
-															,pr_nmdatela => CASE 
-																							WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
-																							WHEN pr_idorigem = 5 THEN 'AYLLOS'
-																							ELSE 'TAA' END
+															,pr_nmdatela => pr_nmprogra
 															,pr_nrdconta => pr_nrdconta
 															,pr_nrdrowid => vr_nrdrowid);
 															
@@ -1940,7 +2009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   pr_dsdadant => NULL,
                                   pr_dsdadatu => CASE pr_flmobile
                                                  WHEN 1 THEN 'MOBILE'
-                                                 ELSE 'INTERNETBANK'
+                                                 ELSE pr_nmprogra
                                                   END);															 
           END IF;
           
@@ -2084,13 +2153,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       -- Obtem saldo do cooperado
       EXTR0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper
 			                           ,pr_rw_crapdat => rw_crapdat
-																 ,pr_cdagenci => CASE 
-																                 WHEN pr_idorigem = 5 THEN 1
-																								 WHEN pr_idorigem = 3 THEN 90
-																								 ELSE 91 END
-																 ,pr_nrdcaixa => CASE 
-																                 WHEN pr_idorigem = 5 THEN 0
-																								 ELSE 900 END
+                                       ,pr_cdagenci => pr_cdagenci
+                                       ,pr_nrdcaixa => pr_nrdcaixa
 																 ,pr_cdoperad => CASE 
 																                 WHEN pr_idorigem = 5 THEN 1
 																								 ELSE 996 END
@@ -2536,7 +2600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																		,pr_nrdocmto => rw_craplcm.nrdocmto
 																		,pr_nrseqaut => 0
 																		,pr_vllanmto => pr_vlrecarga
-																		,pr_nrdcaixa => 900
+																		,pr_nrdcaixa => pr_nrdcaixa
 																		,pr_gravapro => TRUE
 																		,pr_cdtippro => 20 /* recarga de celular */ 
 																		,pr_dsinfor1 => vr_dsinfor1
@@ -2640,10 +2704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														,pr_flgtrans => 1
 														,pr_hrtransa => gene0002.fn_busca_time
 														,pr_idseqttl => pr_idseqttl
-														,pr_nmdatela => CASE 
-														                WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
-                                            WHEN pr_idorigem = 5 THEN 'AYLLOS'
-											                      ELSE 'TAA' END
+														,pr_nmdatela => pr_nmprogra
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
 														
@@ -2700,7 +2761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => CASE pr_flmobile
                                                WHEN 1 THEN 'MOBILE'
-                                               ELSE 'INTERNETBANK'
+                                               ELSE pr_nmprogra
                                                 END);
         END IF;
 				
@@ -2745,7 +2806,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																	 ,pr_dtrecarga IN tbrecarga_operacao.dtrecarga%TYPE -- Data de recarga
 																	 ,pr_lsdatagd IN VARCHAR2 DEFAULT NULL             -- Lista de datas para agendamento
 																	 ,pr_idorigem IN INTEGER                            -- Id. de origem
+                                     ,pr_nmprogra IN VARCHAR2                           -- Nome do Programa
 																	 ,pr_idoperac IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na aprovação de transação pendente)
+                                     ,pr_dslancto OUT VARCHAR2                          -- Lista de ID Operação
 																	 ,pr_cdcritic OUT PLS_INTEGER                       -- Cód. da crítica
 																	 ,pr_dscritic OUT VARCHAR2) IS                      -- Desc. da crítica
   BEGIN																	 
@@ -2776,6 +2839,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			vr_dstransa   VARCHAR2(1000);
 			vr_nrdrowid   ROWID;
       vr_nmopetel   tbrecarga_operadora.nmoperadora%TYPE;
+      vr_idlancto   INTEGER;
+      vr_dslancto   VARCHAR2(30000) := '';
 					
       -- Buscar informações da operadora
 			CURSOR cr_operadora IS
@@ -2816,7 +2881,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				,pr_idorigem
 																				,pr_vlrecarga
 																				,1 -- Agendado
-																				,pr_cdproduto);
+                                                  ,pr_cdproduto)
+                                           RETURNING idoperacao INTO vr_idlancto;
+                  IF TRIM(vr_dslancto) IS NOT NULL THEN
+                    vr_dslancto := vr_dslancto || ',';
+                  END IF;
+                  vr_dslancto := vr_dslancto || to_char(vr_idlancto);
 				END IF;
 			ELSE -- Agendamento recorrente
 			  -- Quebrar as datas de agendamento
@@ -2846,7 +2916,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				,pr_idorigem
 																				,pr_vlrecarga
 																				,1 -- Agendado
-																				,pr_cdproduto);
+                                                  ,pr_cdproduto)
+                                           RETURNING idoperacao INTO vr_idlancto;
+                    IF TRIM(vr_dslancto) IS NOT NULL THEN
+                      vr_dslancto := vr_dslancto || ',';
+                    END IF;
+                    vr_dslancto := vr_dslancto || to_char(vr_idlancto);
         END LOOP;
 			END IF;
 			
@@ -2864,8 +2939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 													,pr_flgtrans => 1
 													,pr_hrtransa => gene0002.fn_busca_time
 													,pr_idseqttl => pr_idseqttl
-													,pr_nmdatela => CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK' 
-																							 ELSE 'TAA' END
+													,pr_nmdatela => pr_nmprogra
 													,pr_nrdconta => pr_nrdconta
 													,pr_nrdrowid => vr_nrdrowid);
 			-- Operador
@@ -2916,6 +2990,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				
 			-- Efetuar commit
 			COMMIT;
+            -- Devolver a lista de agendamento 
+            pr_dslancto := vr_dslancto;
     EXCEPTION
       WHEN vr_exc_erro THEN
         IF vr_cdcritic <> 0 THEN
@@ -3426,7 +3502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_carrega_agend_recarga
     Sistema : Ayllos Web
     Autor   : Lucas Lunelli
-    Data    : Set/2017                 Ultima atualizacao:
+    Data    : Set/2017                 Ultima atualizacao: 16/07/2018
 
     Dados referentes ao programa:
 
@@ -3434,7 +3510,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Objetivo  :  Rotina para carregar os agendamentos de recarga de celular
 
-    Alteracoes: -----
+    Alteracoes: 16/07/2018 - Inclusão do campo dsorigem no retorno da procedure, Prj. 363 (Jean Michel)
+
     ..............................................................................*/
     DECLARE
       
@@ -3470,8 +3547,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               ,opc.nrddd 
               ,opc.nrcelular
               ,opa.nmoperadora
+              ,ent.nmcanal
           FROM tbrecarga_operacao opc
               ,tbrecarga_operadora opa
+              ,tbgen_canal_entrada ent
          WHERE opc.cdcooper = pr_cdcooper
            AND (pr_nrdconta = 0 OR opc.nrdconta = pr_nrdconta)
            AND ((pr_situacao = 0
@@ -3479,7 +3558,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
             OR opc.insit_operacao = pr_situacao)
            AND ((pr_dtinicial IS NULL AND pr_dtfinal IS null) 
 					  OR opc.dtrecarga BETWEEN pr_dtinicial AND pr_dtfinal)
-           AND opa.cdoperadora = opc.cdoperadora;
+           AND opa.cdoperadora = opc.cdoperadora
+           AND opc.cdcanal = ent.cdcanal;
 
 		BEGIN				
 			
@@ -3506,7 +3586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					pr_tab_age_recarga(vr_index).nmoperadora    := rw_agendamentos.nmoperadora;
 					pr_tab_age_recarga(vr_index).incancel       := rw_agendamentos.incancel;
 					pr_tab_age_recarga(vr_index).dscritic      := ''; -- Alimentar DSCRITIC - P.285 Novo InternetBanking
-
+          pr_tab_age_recarga(vr_index).dsorigem       := rw_agendamentos.nmcanal;
 				EXCEPTION
 						WHEN vr_exc_iter THEN
 							-- Somente passa para a próxima iteração do LOOP
@@ -3662,6 +3742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                           ,pr_idseqttl   IN crapttl.idseqttl%TYPE
                                           ,pr_idorigem   IN INTEGER
                                           ,pr_idoperacao IN INTEGER 
+                                          ,pr_nmprogra   IN VARCHAR2
                                           ,pr_cdcritic  OUT PLS_INTEGER
                                           ,pr_dscritic  OUT VARCHAR2) IS
   BEGIN
@@ -3749,9 +3830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                           ,pr_flgtrans => 1
                           ,pr_hrtransa => gene0002.fn_busca_time
                           ,pr_idseqttl => pr_idseqttl
-                          ,pr_nmdatela => (CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK'
-                                                ELSE 'TAA'
-                                           END)
+                          ,pr_nmdatela => pr_nmprogra
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
                           
@@ -3777,9 +3856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                             ,pr_flgtrans => 1
                             ,pr_hrtransa => gene0002.fn_busca_time
                             ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => (CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK'
-                                                  ELSE 'TAA'
-                                             END)
+                            ,pr_nmdatela => pr_nmprogra
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
                             
@@ -3796,9 +3873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                             ,pr_flgtrans => 1
                             ,pr_hrtransa => gene0002.fn_busca_time
                             ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => (CASE WHEN pr_idorigem = 3 THEN 'INTERNETBANK'
-                                                  ELSE 'TAA'
-                                             END)
+                            ,pr_nmdatela => pr_nmprogra
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
                             
@@ -4047,6 +4122,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE
                                   ,pr_inaprpen   IN NUMBER
                                   ,pr_flmobile   IN NUMBER
+                                  ,pr_idorigem   IN INTEGER -- Indicador de Origem
+                                  ,pr_cdagenci   IN INTEGER -- Agencia de Origem
+                                  ,pr_nrdcaixa   IN INTEGER -- Caixa de Origem
+                                  ,pr_nmprogra   IN VARCHAR2 -- Programa que chamou
+                                  ,pr_cdcoptfn   IN crapcop.cdcooper%TYPE -- Cód. da cooperativa do terminal financeiro (Apenas TAA)
+                                  ,pr_cdagetfn   IN crapage.cdagenci%TYPE -- Cód. da agencia do terminal financeiro (Apenas TAA)
+                                  ,pr_nrterfin   IN craptfn.nrterfin%TYPE -- Nr. do terminal financeiro (Apenas TAA)
+                                  ,pr_nrcartao   IN NUMBER                -- Nr. do cartao (Apenas TAA)
+                                  ,pr_xml_idlancto OUT VARCHAR2 -- Lista com todos os agendamentos
                                   ,pr_msg_retor OUT VARCHAR2
                                   ,pr_cdcritic  OUT PLS_INTEGER
                                   ,pr_dscritic  OUT VARCHAR2) IS
@@ -4081,6 +4165,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_produto   tbrecarga_produto.cdproduto%TYPE;
       vr_dtrecarga tbrecarga_operacao.dtrecarga%TYPE;
       vr_qtmesagd  INTEGER;
+      vr_dslancto  VARCHAR2(30000);
+      vr_agendamentos   gene0002.typ_split;
+      
+      vr_nrsequni INTEGER;
       
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -4189,7 +4277,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                 ,pr_dtrecarga => vr_dtrecarga
                                 ,pr_qtmesagd  => vr_qtmesagd
                                 ,pr_cddopcao  => pr_cddopcao
-                                ,pr_idorigem  => 3
+                                ,pr_idorigem  => pr_idorigem
+                                ,pr_cdagenci  => pr_cdagenci
+                                ,pr_nrdcaixa  => pr_nrdcaixa
+                                ,pr_nmprogra  => pr_nmprogra
                                 ,pr_lsdatagd  => vr_lsdatagd
                                 ,pr_cdcritic  => vr_cdcritic
                                 ,pr_dscritic  => vr_dscritic);
@@ -4198,6 +4289,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         RAISE vr_exc_erro;
       END IF;
       IF pr_inaprpen <> 3 THEN
+        -- Sequencial Unico sempre será ZERO
+        vr_nrsequni := 0;
+        IF pr_idorigem = 4 THEN
+          -- Apenas quando origem for TAA, é que deve ser gerado o sequencial
+          -- Parametros foram identificados em TAA_autorizador > operacao 13 > obtem_nsu > bo25.obtem_nsu
+          pc_sequence_progress(pr_nmtabela => 'CRAPNSU'
+                              ,pr_nmdcampo => 'NRSEQUNI'
+                              ,pr_dsdchave => pr_cdcooper
+                              ,pr_flgdecre => 'N'
+                              ,pr_sequence => vr_nrsequni);
+        END IF;
+        
         -- Criar recarga ou agendamento de recarga
         RCEL0001.pc_manter_recarga(pr_cdcooper  => pr_cdcooper
                                   ,pr_nrdconta  => pr_nrdconta
@@ -4211,16 +4314,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_nrtelefo  => vr_nrcelular
                                   ,pr_cdopetel  => vr_operadora
                                   ,pr_cdprodut  => vr_produto
-                                  ,pr_cdcoptfn  => 0
-                                  ,pr_cdagetfn  => 0
-                                  ,pr_nrterfin  => 0
-                                  ,pr_nrcartao  => 0
-                                  ,pr_nrsequni  => 0
-                                  ,pr_idorigem  => 3
+                                  ,pr_cdcoptfn  => pr_cdcoptfn
+                                  ,pr_cdagetfn  => pr_cdagetfn
+                                  ,pr_nrterfin  => pr_nrterfin
+                                  ,pr_nrcartao  => pr_nrcartao
+                                  ,pr_nrsequni  => vr_nrsequni
+                                  ,pr_idorigem  => pr_idorigem
+                                  ,pr_cdagenci  => pr_cdagenci
+                                  ,pr_nrdcaixa  => pr_nrdcaixa
+                                  ,pr_nmprogra  => pr_nmprogra
                                   ,pr_inaprpen  => pr_inaprpen
                                   ,pr_flmobile  => pr_flmobile
                                   ,pr_idastcjt  => vr_idastcjt
                                   ,pr_idoperac  => pr_idoperacao
+                                  ,pr_dslancto  => vr_dslancto
                                   ,pr_dsprotoc  => vr_dsprotoc
                                   ,pr_dsnsuope  => vr_dsnsuope
                                   ,pr_cdcritic  => vr_cdcritic
@@ -4269,6 +4376,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       ELSE
         pr_msg_retor := pr_msg_retor || '<dsprotoc></dsprotoc>';
       END IF;
+      
+      pr_xml_idlancto := '<agendamentos>';
+      
+      vr_agendamentos := GENE0002.fn_quebra_string(pr_string  => vr_dslancto, 
+                                                   pr_delimit => ',');
+      IF vr_agendamentos.count > 0 THEN
+				-- Devemos gerar uma operação de recarga para cada data de agendamento
+        FOR i IN vr_agendamentos.FIRST..vr_agendamentos.LAST LOOP
+            pr_xml_idlancto := pr_xml_idlancto || '<idlancto>' || vr_agendamentos(i) || '</idlancto>';
+        END LOOP;
+      END IF;
+      
+      pr_xml_idlancto := pr_xml_idlancto || '</agendamentos>';
       
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -4596,6 +4716,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_index    VARCHAR2(100);
       vr_vldinami VARCHAR2(1000);
       vr_dsdmensg VARCHAR2(1000);
+      vr_cdagenci INTEGER;
+      vr_nrdcaixa INTEGER;
+      vr_nmprogra VARCHAR2(100);
       
       -- Variaveis de critica
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -4710,6 +4833,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         END IF;
         CLOSE cr_crapass;
         
+        IF rw_tbrecarga.cdcanal = 3 THEN
+          vr_cdagenci := 90;
+          vr_nrdcaixa := 900;
+          vr_nmprogra := 'INTERNETBANK';
+        ELSIF rw_tbrecarga.cdcanal = 4 THEN
+          vr_cdagenci := 91;
+          vr_nrdcaixa := 900;
+          vr_nmprogra := 'TAA';
+        ELSE
+          vr_cdagenci := 1;
+          vr_nrdcaixa := 0;
+          vr_nmprogra := '';
+        END IF;
+        
         -- Efetua Recarga agendada
         rcel0001.pc_efetua_recarga(pr_cdcooper  => pr_cdcooper
                                   ,pr_nrdconta  => rw_tbrecarga.nrdconta
@@ -4726,6 +4863,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_nrcartao  => 0
                                   ,pr_nrsequni  => 0
                                   ,pr_idorigem  => rw_tbrecarga.cdcanal
+                                  ,pr_cdagenci  => vr_cdagenci
+                                  ,pr_nrdcaixa  => vr_nrdcaixa
+                                  ,pr_nmprogra  => vr_nmprogra
                                   ,pr_flmobile  => 0
                                   ,pr_nsuopera  => vr_nsuopera
                                   ,pr_dsprotoc  => vr_dsprotoc

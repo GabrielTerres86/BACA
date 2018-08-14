@@ -3792,6 +3792,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- 
   --              07/05/2018 - Verificacao de impedimento de talionario atraves da proc 
   --                           pc_ind_impede_talonario. PRJ366 (Lombardi)
+  -- 
+  --              20/04/2018 - Remover a validação de CASH - FOTON (Douglas - PRJ363 Novo Caixa Eletrônico)
   --
   --              09/08/2018 - Alterado forma para da busca de lançamentos futuros para emprestimos e 
   --                           Fatura de cartão de crédito : (Alcemir - Mout's / PRB0040071).  
@@ -4553,117 +4555,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       --Fechar Cursor
       CLOSE cr_crapass;
       
-      /*  .....................................................................
-        Especifico para CASH - FOTON .......... Utilizado a Mesma Analise da
-        versao anterior do sistema Cash (Progress) descrito no saldo_ass.p   */ 
-      IF pr_idorigem = 4 and
-         pr_nmdatela = 'TAA' THEN
-        --Selecionar Saldos da Conta
-        OPEN cr_crapsld (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta);
-        --Posicionar no proximo registro
-        FETCH cr_crapsld INTO rw_crapsld;
-        --Se nao encontrou
-        IF cr_crapsld%NOTFOUND THEN
-          --Fechar Cursor
-          CLOSE cr_crapsld;
-          --Sem Lancamentos futuros
-          pr_tab_totais_futuros(1).vllautom:= 0;
-          --Levantar Excecao Saida com Sucesso
-          RAISE vr_exc_sucesso;
-        END IF;  
-        --Fechar Cursor
-        CLOSE cr_crapsld;
-        
-        CADA0006.pc_permite_produto_tipo(pr_cdprodut => 38
-                                        ,pr_cdtipcta => rw_crapass.cdtipcta
-                                        ,pr_cdcooper => pr_cdcooper
-                                        ,pr_inpessoa => rw_crapass.inpessoa
-                                        ,pr_possuipr => vr_possuipr
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-        
-        IF vr_cdcritic > 0 AND vr_dscritic IS NOT NULL THEN
-          --Levantar Excecao Saida com Sucesso
-          RAISE vr_exc_erro;
-        END IF;
-        		
-        CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
-                                        ,pr_nrdconta => pr_nrdconta
-                                        ,pr_inimpede_talionario => vr_inimpede_talionario
-                                        ,pr_des_erro => vr_des_reto
-                                        ,pr_dscritic => vr_dscritic);
-        IF vr_des_reto = 'NOK' THEN
-          RAISE vr_exc_erro;
-        END IF;
-        
-        /*  Nao calcula programados para quem movimenta com talao de cheques  */
-        IF vr_possuipr = 'S' AND vr_inimpede_talionario = 0 THEN
-          --Sem Lancamentos futuros
-          pr_tab_totais_futuros(1).vllautom:= 0;
-          --Levantar Excecao Saida com Sucesso
-          RAISE vr_exc_sucesso;
-        END IF;
-        /*  Para associados sem talao de cheques e sem o crédito da folha no mes  */ 
-        IF rw_crapsld.vltsallq = 0 THEN
-          --Selecionar Lancamentos
-          OPEN cr_craplcm (pr_cdcooper => pr_cdcooper
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
-          FETCH cr_craplcm INTO rw_craplcm;
-          --Se nao encontrou
-          IF cr_craplcm%NOTFOUND THEN
-            --Fechar Cursor
-            CLOSE cr_craplcm;                
-            --Sem Lancamentos futuros
-            pr_tab_totais_futuros(1).vllautom:= 0;
-            --Levantar Excecao Saida com Sucesso
-            RAISE vr_exc_sucesso;
-          END IF;  
-          --Fechar Cursor
-          CLOSE cr_craplcm;                
-        END IF;
-        /*  Parcela de seguro  */
-        --Selecionar Seguros
-        OPEN cr_crapseg (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_dtdebito => rw_crapdat.dtmvtolt);
-        FETCH cr_crapseg INTO rw_crapseg;
-        --Acumular Valor
-        vr_vllautom:= nvl(vr_vllautom,0) + rw_crapseg.vlpreseg;
-        --Fechar Cursor
-        CLOSE cr_crapseg;
-        /*  Parcela de poupança programada  */
-        --Selecionar Poupancas Programadas
-        OPEN cr_craprpp (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_dtdebito => rw_crapdat.dtmvtolt);
-        FETCH cr_craprpp INTO rw_craprpp;
-        --Acumular Valor
-        vr_vllautom:= nvl(vr_vllautom,0) + rw_craprpp.vlprerpp;
-        --Fechar Cursor
-        CLOSE cr_craprpp;
-        /*  Parcela do plano de capital  */
-        FOR rw_crappla IN cr_crappla (pr_cdcooper => pr_cdcooper
-                                     ,pr_nrdconta => pr_nrdconta) LOOP
-          --Se Existir valor Pendente
-          IF nvl(rw_crappla.vlpenden,0) > 0 AND rw_crappla.dtdpagto <> rw_crapdat.dtmvtolt  THEN
-            --Acumular Valor
-            vr_vllautom:= nvl(vr_vllautom,0) + nvl(rw_crappla.vlpenden,0);                              
-          END IF;
-          --Acumular valor se for mesmo mes e ano                              
-          IF TRUNC(rw_crappla.dtdpagto,'MM') = TRUNC(rw_crapdat.dtmvtolt,'MM') THEN 
-            --Acumular Valor
-            vr_vllautom:= nvl(vr_vllautom,0) + nvl(rw_crappla.vlprepla,0);
-          END IF;  
-        END LOOP; --rw_crappla
-        
-        /* Totais Futuros */
-        pr_tab_totais_futuros(1).vllautom:= vr_vllautom;
-        --Levantar Excecao Saida com Sucesso
-        RAISE vr_exc_sucesso;
-      END IF; --pr_idorigem = 4 
-      
       --Internet/TAA e nao for cecred
       IF (pr_idorigem = 3  OR
           pr_idorigem = 4) AND
@@ -5300,7 +5191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Sair com erro
         RAISE vr_exc_erro;
       END IF;  
-      
+           
       
       IF pr_dtiniper IS NOT NULL THEN 
          vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');    
@@ -5806,7 +5697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END IF;     
         END IF;    
       END LOOP;
-      
+            
       IF pr_dtiniper IS NOT NULL THEN  
          --buscar dia ultil anterior
 	       vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');

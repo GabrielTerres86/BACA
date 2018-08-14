@@ -4,14 +4,15 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Luneli
-   Data    : Maio/2016                        Ultima atualizacao:
+   Data    : Maio/2016                        Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa: Oferta DEBAUT Sicredi [PROJ320]
    Frequencia: Sempre que for chamado (On-Line)
    
    Objetivo  : Operaçoes de SMS (DEBAUT)
       
-   Alteracoes: 
+   Alteracoes: 09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -27,6 +28,11 @@ DEF INPUT  PARAM par_dtmvtolt  AS DATE                                 NO-UNDO.
 DEF INPUT  PARAM par_flgacsms  AS CHAR                                 NO-UNDO.
 DEF INPUT  PARAM par_nrdddtfc  AS DECI                                 NO-UNDO.
 DEF INPUT  PARAM par_nrtelefo  AS DECI                                 NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -38,11 +44,11 @@ IF  NOT VALID-HANDLE(h-b1wgen0092) THEN
     RUN sistema/generico/procedures/b1wgen0092.p PERSISTENT SET h-b1wgen0092.
 
 RUN sms-cooperado-debaut IN h-b1wgen0092 (INPUT par_cdcooper,
-                                          INPUT 90,              /* par_cdagenci */
-                                          INPUT 900,             /* par_nrdcaixa */
+                                          INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/              /* par_cdagenci */
+                                          INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/             /* par_nrdcaixa */
                                           INPUT "996",           /* par_cdoperad */
-                                          INPUT "INTERNETBANK",  /* par_nmdatela */
-                                          INPUT 3,               /* par_idorigem */
+                                          INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/  /* par_nmdatela */
+                                          INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/               /* par_idorigem */
                                           INPUT par_cddopcao,    /* par_cddopcao */
                                           INPUT par_nrdconta,
                                           INPUT par_idseqttl,    /* par_idseqttl */

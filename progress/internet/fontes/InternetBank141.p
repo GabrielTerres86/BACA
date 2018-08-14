@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Junho/2015                        Ultima atualizacao: 12/05/2017
+   Data    : Junho/2015                        Ultima atualizacao: 05/07/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -20,8 +20,11 @@
                             do operador conectado e tambem troca de tags da quantidade de pagamento
                             no pagamento por arquivo (Marcos-Supero)
 							
-			   12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
-         
+               12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
+
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
+                            Prj.363 (Jean Michel).
+
 ................................................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -88,6 +91,8 @@ DEF VAR aux_idastcjt AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
 DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
+DEF VAR aux_cdtarifa AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdfaixav AS CHAR                                           NO-UNDO.
 
 DEF VAR h-b1wgen0014 AS HANDLE                                         NO-UNDO.
              
@@ -930,7 +935,10 @@ ELSE IF  par_tpoperac = 12 THEN DO: /* Busca informacoes de pagamento para alter
                          aux_qtregpag = STRING(xRoot:GET-ATTRIBUTE("qtregpag")) 
                          aux_vllctpag = STRING(xRoot:GET-ATTRIBUTE("vllctpag")) 
                          aux_flgrvsal = STRING(xRoot:GET-ATTRIBUTE("flgrvsal"))
-                         aux_vltarapr = STRING(xRoot:GET-ATTRIBUTE("vltarapr")). 
+                         aux_vltarapr = STRING(xRoot:GET-ATTRIBUTE("vltarapr"))
+                         aux_cdtarifa = STRING(xRoot:GET-ATTRIBUTE("cdtarifa"))
+                         aux_cdfaixav = STRING(xRoot:GET-ATTRIBUTE("cdfaixav")). 
+                         
                          
                 END.
                 
@@ -973,10 +981,9 @@ ELSE IF  par_tpoperac = 12 THEN DO: /* Busca informacoes de pagamento para alter
    
    CREATE xml_operacao.
       ASSIGN xml_operacao.dslinxml = "<dados dtcredit =""" + aux_dtcredit + """ dtdebito =""" + aux_dtdebito + """ idopdebi =""" + aux_idopdebi + """ qtlctpag =""" + aux_qtregpag + """
-                                             vllctpag =""" + aux_vllctpag + """ flgrvsal =""" + aux_flgrvsal + """ vltarapr =""" + aux_vltarapr + """ >".
+                                             vllctpag =""" + aux_vllctpag + """ flgrvsal =""" + aux_flgrvsal + """ vltarapr =""" + aux_vltarapr + """ cdtarifa=""" + aux_cdtarifa + """ cdfaixav=""" + aux_cdfaixav + """>".
                                             
    FOR EACH xml_operacao141 WHERE NO-LOCK:   
-      MESSAGE "l".
       CREATE xml_operacao.
       ASSIGN xml_operacao.dslinxml = "<lanctos><cdcooper>" + xml_operacao141.cdcooper + "</cdcooper>" +
                                      "<cdempres>" + xml_operacao141.cdempres + "</cdempres>" +
