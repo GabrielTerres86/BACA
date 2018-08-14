@@ -1516,36 +1516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
             if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
                RAISE vr_exp_erro;
             end if;
-/*
-            INSERT INTO craplcm(cdcooper
-                               ,dtmvtolt
-                               ,dtrefere
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdctabb
-                               ,nrdctitg
-                               ,nrdocmto
-                               ,cdhistor
-                               ,vllanmto
-                               ,nrseqdig
-                               ,cdpesqbb)
-                         VALUES(pr_cdcooper                       -- cdcooper
-                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtmvtolt
-                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtrefere
-                               ,rw_craplot.cdagenci               -- cdagenci
-                               ,rw_craplot.cdbccxlt               -- cdbccxlt
-                               ,rw_craplot.nrdolote               -- nrdolote
-                               ,rw_crapass.nrdconta               -- nrdconta
-                               ,rw_crapass.nrdconta               -- nrdctabb
-                               ,rw_crapass.nrdctitg               -- nrdctitg
-                               ,vr_nrdocmto                       -- nrdocmto
-                               ,DECODE(rw_crapass.inpessoa, 1, 1402, 1403) -- cdhistor => 1402 - PF / 1403 - PJ
-                               ,TO_NUMBER(vr_tbbloque(vr_indice)) -- vllanmto
-                               ,rw_craplot.nrseqdig + 1           -- nrseqdig
-                               ,'BLOQJUD');                       -- cdpesqbb
-*/
+
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir Lancamento: '||SQLERRM;
@@ -2258,36 +2229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
              RAISE vr_exp_erro;
           end if;
-/*
-          INSERT INTO craplcm(cdcooper
-                             ,dtmvtolt
-                             ,dtrefere
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,nrdconta
-                             ,nrdctabb
-                             ,nrdctitg
-                             ,nrdocmto
-                             ,cdhistor
-                             ,vllanmto
-                             ,nrseqdig
-                             ,cdpesqbb)
-                       VALUES(pr_cdcooper                       -- cdcooper
-                             ,pr_dtmvtolt                       -- dtmvtolt
-                             ,pr_dtmvtolt                       -- dtrefere
-                             ,rw_craplot.cdagenci               -- cdagenci
-                             ,rw_craplot.cdbccxlt               -- cdbccxlt
-                             ,rw_craplot.nrdolote               -- nrdolote
-                             ,rw_crapblj.nrdconta               -- nrdconta
-                             ,rw_crapblj.nrdconta               -- nrdctabb
-                             ,rw_crapblj.nrdctitg               -- nrdctitg
-                             ,vr_nrdocmto                       -- nrdocmto
-                             ,DECODE(rw_crapblj.inpessoa, 1, 1404, 1405) -- cdhistor => 1404 - PF / 1405 - PJ
-                                 ,pr_vldesblo  --ww_vldesblo -- NVL(rw_crapblj.vlbloque,0)        -- vllanmto
-                             ,rw_craplot.nrseqdig + 1           -- nrseqdig
-                             ,'BLOQJUD');                       -- cdpesqbb
-*/
+
 --            END IF;
             END IF;
         EXCEPTION
