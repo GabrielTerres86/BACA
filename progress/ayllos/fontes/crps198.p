@@ -583,19 +583,7 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
                       END.
                       
                  ASSIGN crapavs.flgproce = TRUE.                      
-             END.
-
-
-        /* 11/06/2018 - TJ - Funcao para verificar se pode debitar */
-        IF  NOT DYNAMIC-FUNCTION("PodeDebitar"  IN h-b1wgen0200, 
-                                 INPUT glb_cdcooper, 
-                                 INPUT crapavs.nrdconta,
-                                 INPUT crapavs.cdhistor) THEN
-            DO:
-               /* MESSAGE "Nao Pode." VIEW-AS ALERT-BOX.
-                  Caso nao possa, passar para o proximo registro */
-               NEXT.
-            END.             
+             END.           
 
         IF   aux_vldescto > 0 THEN
              DO:
@@ -681,18 +669,18 @@ FOR EACH craptab WHERE craptab.cdcooper        = glb_cdcooper   AND
                    
                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN 
                  DO:   
-                    IF aux_incrineg = 0 THEN 
-                       DO: 
-                          /* TRATAR ERRO INSERCAO/BANCO DADOS
-                             MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX. */
-                          RETURN "NOK".
-                       END.
-                    ELSE
-                       DO:
-                          /* TRATAR EXCESSAO DA REGRA DE DEBITO 
-                             MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX. */
-                          NEXT.
-                       END.  
+					 RUN fontes/critic.p.
+
+					 glb_dscritic = aux_dscritic.
+
+                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '" +
+                                       glb_dscritic + " Conta : " +
+                                       STRING(crapavs.nrdconta,"zzzz,zz9,9") +
+                                       " >> log/proc_batch.log").
+                     glb_cdcritic = 0.
+
+                     NEXT.                      
                  END.
                    
              END. /* fim aux_vldescto > 0 */
