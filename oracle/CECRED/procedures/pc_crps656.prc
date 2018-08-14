@@ -49,6 +49,9 @@ BEGIN
                  07/06/2017 - Ajuste da regra que define a origem a ser utilizada. Adequacao
                               da regra para que fique igual a regra existente no pc_crps280_i.
                               Heitor (Mouts) - Chamado 681595
+                              
+                 15/07/2018 - Incluir dados de prejuizo no cursor de empréstimos
+                              Renato Cordeiro (AMcom)                              
 
   ............................................................................. */
 
@@ -141,6 +144,32 @@ BEGIN
 
    /* Busca dados dos empréstimos com índice de prejuízo zero por cooperativa */
    CURSOR cr_crapepr(pr_cdcooper IN crapcyb.cdcooper%TYPE) IS
+     SELECT ass.cdcooper,
+            ass.nrdconta,
+            ass.nrdconta           nrctremp,
+            0                      cdlcremp,
+            prej.dtinclusao        dtprejuz, --
+            prej.vlsdprej          vlsdprej,
+            0                      cdfinemp,
+            prej.dtinclusao        dtmvtolt, --
+            prej.vldivida_original vlemprst, --
+            1                      qtpreemp, --
+            0                      tpdescto, --
+            0                      flgpagto, --
+            ass.inprejuz,
+            0                      qtmesdec, -- meses decorridos
+            0                      inliquid, --
+            0                      vlsdeved, --
+            0                      qtprecal, -- qtd prestações pagas
+            0                      vlpreemp, --
+            0                      txjuremp, --
+            0                      txmensal 
+     FROM tbcc_prejuizo prej, crapass ass
+        WHERE ass.inprejuz = 1
+           and ass.cdcooper = prej.cdcooper
+           and ass.nrdconta = prej.nrdconta
+           AND ass.cdcooper <> pr_cdcooper
+     UNION
      SELECT cer.cdcooper
            ,cer.nrdconta
            ,cer.nrctremp
@@ -161,10 +190,10 @@ BEGIN
            ,cer.vlpreemp
            ,cer.txjuremp
            ,cer.txmensal
-      FROM crapepr cer
-      WHERE cer.inprejuz > 0
-        AND cer.cdcooper <> pr_cdcooper
-      ORDER BY cer.cdcooper;
+     FROM crapepr cer
+     WHERE cer.inprejuz > 0
+       AND cer.cdcooper <> pr_cdcooper
+     ORDER BY 1;
 
     /* Buscar todos os registros do sistema CYBER */
     CURSOR cr_crapcyt IS
