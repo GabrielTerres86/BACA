@@ -6734,55 +6734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     END IF; 
     vr_nrseqdig:= rw_craplot.nrseqdig + 1;
     vr_vllanmto:= pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori);
-    /*
-		BEGIN
-			-- Criar lançamento de desconto de bordero
-			INSERT INTO craplcm
-							(dtmvtolt
-							,cdagenci
-							,cdbccxlt
-							,nrdolote
-							,nrdconta
-							,nrdocmto
-							,vllanmto
-							,cdhistor
-							,nrseqdig
-							,nrdctabb
-							,nrdctitg
-							,nrautdoc
-							,cdcooper
-							,cdpesqbb
-							,cdbanchq
-							,cdagechq
-							,nrctachq)
-				VALUES(rw_craplot.dtmvtolt
-							,rw_craplot.cdagenci
-							,rw_craplot.cdbccxlt
-							,rw_craplot.nrdolote
-							,pr_nrdconta
-							,rw_craplot.nrseqdig + 1
-							,pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori)
-							,271
-							,rw_craplot.nrseqdig + 1
-							,pr_nrdconta
-							,to_char(pr_nrdconta, 'fm00000000')
-							,0
-							,pr_cdcooper
-							,'Resgate de cheque descontado ' || pr_tab_cheques.dsdocmc7 
-								|| ' Bordero ' || to_char(pr_nrborder, 'fm999g999g990')
-							,pr_tab_cheques.cdbanchq
-							,pr_tab_cheques.cdagechq
-							,pr_tab_cheques.nrctachq)
-			RETURNING nrseqdig, vllanmto INTO vr_nrseqdig , vr_vllanmto;
-		EXCEPTION
-			WHEN OTHERS THEN      
-				-- Gerar crítica
-				vr_cdcritic := 0;
-				vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento: ' || SQLERRM, chr(13)),chr(10));																			
-				-- Levantar exceção
-				RAISE vr_exc_erro;				
-		END;
-		*/		
+   
 		BEGIN 
 			-- Atualizar valores do lote				
 			UPDATE craplot lot
@@ -7154,56 +7106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     END IF; 
     vr_nrseqdig:= rw_craplot.nrseqdig + 1;
     vr_vllanmto:= vr_vlliquid;
-    /*	
-		BEGIN
-			-- Criar lançamento de desconto de bordero
-			INSERT INTO craplcm
-							(dtmvtolt
-							,cdagenci
-							,cdbccxlt
-							,nrdolote
-							,nrdconta
-							,nrdocmto
-							,vllanmto
-							,cdhistor
-							,nrseqdig
-							,nrdctabb
-							,nrdctitg
-							,nrautdoc
-							,cdcooper
-							,cdpesqbb
-							,cdbanchq
-							,cdagechq
-							,nrctachq)
-				VALUES(rw_craplot.dtmvtolt
-							,rw_craplot.cdagenci
-							,rw_craplot.cdbccxlt
-							,rw_craplot.nrdolote
-							,pr_nrdconta
-							,rw_craplot.nrseqdig + 1
-							,vr_vlliquid
-							,271
-							,rw_craplot.nrseqdig + 1
-							,pr_nrdconta
-							,to_char(pr_nrdconta, 'fm00000000')
-							,0
-							,pr_cdcooper
-							,'Resgate de cheque descontado ' || pr_tab_cheques.dsdocmc7 
-								|| ' Bordero ' || to_char(pr_nrborder, 'fm999g999g990')
-							,pr_tab_cheques.cdbanchq
-							,pr_tab_cheques.cdagechq
-							,pr_tab_cheques.nrctachq)
-			RETURNING nrseqdig, vllanmto INTO vr_nrseqdig , vr_vllanmto;
-		EXCEPTION
-			WHEN OTHERS THEN      
-				-- Gerar crítica
-				vr_cdcritic := 0;
-				vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento: ' || SQLERRM, chr(13)),chr(10));																			
-				-- Levantar exceção
-				RAISE vr_exc_erro;				
-		END;
-    */
-				
+    	
 		BEGIN 
 			-- Atualizar valores do lote				
 			UPDATE craplot lot
@@ -8354,47 +8257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          END IF;
       END IF; 
     
-      /*
-    	BEGIN
-				-- Criar lançamento de desconto de bordero
-				INSERT INTO craplcm
-				        (dtmvtolt
-								,cdagenci
-								,cdbccxlt
-								,nrdolote
-								,nrdconta
-								,nrdocmto
-								,vllanmto
-								,cdhistor
-								,nrseqdig
-								,nrdctabb
-								,nrdctitg
-								,nrautdoc
-								,cdcooper
-								,cdpesqbb)
-				  VALUES(rw_craplot.dtmvtolt
-					      ,rw_craplot.cdagenci
-								,rw_craplot.cdbccxlt
-								,rw_craplot.nrdolote
-								,pr_nrdconta
-								,pr_nrborder
-								,vr_vlborder
-								,270
-								,vr_nrseqdig
-								,pr_nrdconta
-								,to_char(pr_nrdconta, 'fm00000000')
-								,0
-								,pr_cdcooper
-								,'Desconto do bordero ' || to_char(pr_nrborder, 'fm999g999g990'));
-			EXCEPTION
-				WHEN OTHERS THEN      
-					-- Gerar crítica
-					vr_cdcritic := 0;
-					vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento: ' || SQLERRM, chr(13)),chr(10));																			
-					-- Levantar exceção
-					RAISE vr_exc_erro;				
-			END;
-			*/
+      
 			BEGIN 
 			  -- Atualizar valores do lote				
 			  UPDATE craplot lot
@@ -8543,47 +8406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          END IF; 
          vr_vllanmto:= ROUND(vr_vltotiof, 2);
          
-         /*
-          -- Cria lançamento na craplcm refente ao IOF
-          BEGIN
-            INSERT INTO craplcm(dtmvtolt
-                               ,cdagenci
-                               ,cdbccxlt
-                               ,nrdolote
-                               ,nrdconta
-                               ,nrdctabb
-                               ,nrdctitg
-                               ,nrdocmto
-                               ,cdhistor
-                               ,nrseqdig
-                               ,cdpesqbb
-                               ,vllanmto
-                               ,cdcooper)
-                         VALUES(rw_crapdat.dtmvtolt
-                               ,1
-                               ,100
-                               ,(19000 + vr_cdpactra)
-                               ,pr_nrdconta
-                               ,pr_nrdconta
-                               ,to_char(pr_nrdconta, 'fm00000000')
-                               ,pr_nrborder
-                               ,2318 --324 Novo histórico - Projeto 410
-                               ,(vr_nrseqdig + 1)
-                               ,to_char(vr_vlborder, 'fm000g000g000d00')
-                               --,ROUND( ( ROUND((vr_vlborder * vr_txccdiof), 2) + vr_vltotiof),2)
-                               ,ROUND(vr_vltotiof, 2)
-                               ,pr_cdcooper)
-              RETURNING vllanmto INTO vr_vllanmto;
-            EXCEPTION
-              WHEN OTHERS THEN      
-                -- Gerar crítica
-                vr_cdcritic := 0;
-                vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-                -- Levantar exceção
-                RAISE vr_exc_erro;
-          END;	
-          
-          */		
+         	
           BEGIN
             TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
                               ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
