@@ -1843,7 +1843,7 @@ PROCEDURE atualiza-deposito-com-captura:
                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                           DO:  
                              ASSIGN i-cod-erro  = aux_cdcritic
-								    c-desc-erro = aux_dscritic     
+								    c-desc-erro = aux_dscritic.     
 							 RUN cria-erro (INPUT p-cooper,
 											INPUT p-cod-agencia,
 											INPUT p-nro-caixa,
@@ -1924,7 +1924,7 @@ PROCEDURE atualiza-deposito-com-captura:
                               IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                 DO:  
 									 ASSIGN i-cod-erro  = aux_cdcritic
-										    c-desc-erro = aux_dscritic     
+										    c-desc-erro = aux_dscritic.     
 									 RUN cria-erro (INPUT p-cooper,
 													INPUT p-cod-agencia,
 													INPUT p-nro-caixa,
