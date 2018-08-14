@@ -1842,31 +1842,20 @@ PROCEDURE atualiza-deposito-com-captura:
   
                         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                           DO:  
-                            MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                            RETURN "NOK".
+                             ASSIGN i-cod-erro  = aux_cdcritic
+								    c-desc-erro = aux_dscritic     
+							 RUN cria-erro (INPUT p-cooper,
+											INPUT p-cod-agencia,
+											INPUT p-nro-caixa,
+											INPUT i-cod-erro,
+											INPUT c-desc-erro,
+											INPUT YES).
+							 RETURN "NOK".
                           END.   
                           
                         IF  VALID-HANDLE(h-b1wgen0200) THEN
                             DELETE PROCEDURE h-b1wgen0200.
-                      
-                      /* CREATE craplcm.
-                      ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
-                             craplcm.cdagenci = p-cod-agencia
-                             craplcm.cdbccxlt = 11
-                             craplcm.dsidenti = p-identifica
-                             craplcm.nrdolote = i-nro-lote
-                             craplcm.nrdconta = aux_nrdconta
-                             craplcm.nrdocmto = INTE(c-docto)
-                             craplcm.vllanmto = crapmrw.vldepdin
-                             craplcm.cdhistor = 1 /* Dinheiro */
-                             craplcm.nrseqdig = craplot.nrseqdig + 1 
-                             craplcm.nrdctabb = p-nro-conta
-                             craplcm.nrdctitg = glb_dsdctitg
-                             craplcm.cdpesqbb = "CRAP57"
-                             craplcm.nrautdoc = p-ult-sequencia.
-                      VALIDATE craplcm.
- */
+
                       ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1 
                              craplot.qtcompln = craplot.qtcompln + 1
                              craplot.qtinfoln = craplot.qtinfoln + 1
@@ -1934,30 +1923,19 @@ PROCEDURE atualiza-deposito-com-captura:
   
                               IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                 DO:  
-                                  MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-                                  RETURN "NOK".
+									 ASSIGN i-cod-erro  = aux_cdcritic
+										    c-desc-erro = aux_dscritic     
+									 RUN cria-erro (INPUT p-cooper,
+													INPUT p-cod-agencia,
+													INPUT p-nro-caixa,
+													INPUT i-cod-erro,
+													INPUT c-desc-erro,
+													INPUT YES).
+									 RETURN "NOK".
                                 END.   
                                 
                               IF  VALID-HANDLE(h-b1wgen0200) THEN
                                   DELETE PROCEDURE h-b1wgen0200.
-/*                             
-                               CREATE craplcm.
-                               ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                                      craplcm.dtmvtolt = crapdat.dtmvtolt
-                                      craplcm.cdagenci = p-cod-agencia
-                                      craplcm.cdbccxlt  = 11
-                                      craplcm.dsidenti = p-identifica
-                                      craplcm.nrdolote = i-nro-lote
-                                      craplcm.nrdconta = aux_nrdconta
-                                      craplcm.nrdocmto = INTE(c-docto) 
-                                      craplcm.vllanmto = crapmrw.vlchqipr
-                                      craplcm.cdhistor = 372
-                                      craplcm.nrseqdig = craplot.nrseqdig + 1 
-                                      craplcm.nrdctabb = p-nro-conta
-                                      craplcm.nrdctitg = glb_dsdctitg
-                                      craplcm.cdpesqbb = "CRAP57"
-                                      craplcm.nrautdoc = p-ult-sequencia.
-                               VALIDATE craplcm. */
                            END.     
                       ELSE 
                            DO:
