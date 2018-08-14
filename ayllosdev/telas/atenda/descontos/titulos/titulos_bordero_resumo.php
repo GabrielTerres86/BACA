@@ -6,6 +6,7 @@
 	 Data : 22/03/2018                Última Alteração: 
 	                                                                  
 	 Objetivo  : Resumo de um novo Bordero
+     - 14/08/2018 | Vitor Shimada Assanuma (GFT): Rename do botão para: "Ver Detalhes da An&aacute;lise"
 
 	************************************************************************/
 	
@@ -184,7 +185,7 @@
 	<!-- Botoes -->
 	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,3,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
 	<input type="button" class="botao" value="Remover T&iacute;tulo"  onClick="showConfirmacao('Deseja excluir o t&iacute;tulo do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','removerTituloResumo();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');"/>
-	<input type="button" class="botao" value="Ver Detalhes" onClick="mostrarDetalhesPagador();return false;"/>
+	<input type="button" class="botao" value="Ver Detalhes da An&aacute;lise" onClick="mostrarDetalhesPagador();return false;"/>
 	<input type="button" class="botao" value="Confirmar Inclus&atilde;o" onClick="showConfirmacao('Confirma inclus&atilde;o do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','confirmarInclusao();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 	
 </div>
