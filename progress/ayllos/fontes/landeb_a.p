@@ -441,32 +441,6 @@ DO WHILE TRUE:
   
          IF  VALID-HANDLE(h-b1wgen0200) THEN
              DELETE PROCEDURE h-b1wgen0200.
-        
-        /*
-         CREATE craplcm.
-         ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                craplcm.cdagenci = craplot.cdagenci
-                craplcm.cdbccxlt = craplot.cdbccxlt
-                craplcm.nrdolote = craplot.nrdolote
-                craplcm.cdoperad = craplot.cdoperad
-                craplcm.nrdconta = tel_nrdconta
-                craplcm.nrdctabb = tel_nrdconta
-                craplcm.nrdctitg = STRING(tel_nrdconta,"99999999")
-                craplcm.vllanmto = tel_vllanmto
-                craplcm.cdhistor = tel_cdhistor
-                craplcm.nrseqdig = craplot.nrseqdig + 1
-                craplcm.nrdocmto = tel_nrdocmto
-                craplcm.cdcooper = glb_cdcooper
-                              
-                craplot.nrseqdig = craplot.nrseqdig + 1
-                craplot.qtcompln = craplot.qtcompln + 1
-                craplot.qtinfoln = craplot.qtcompln
-
-                craplot.vlcompdb = craplot.vlcompdb + tel_vllanmto
-                craplot.vlinfodb = craplot.vlcompdb.
-
-         VALIDATE craplcm.
-         */
          
          ASSIGN
                 craplot.nrseqdig = craplot.nrseqdig + 1
