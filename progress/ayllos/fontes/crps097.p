@@ -514,7 +514,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                          ,OUTPUT aux_incrineg
                          ,OUTPUT aux_cdcritic
                          ,OUTPUT aux_dscritic).
-/*  ver com a Josi como tratar a crítica */               
+            
              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
              DO:   
                IF aux_incrineg = 1 THEN
