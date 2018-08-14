@@ -3440,6 +3440,30 @@ function pagarTitulosVencidos(){
     return false;
 }
 
+function visualizarDetalhesTitulo(){
+    showMsgAguardo("Aguarde, carregando dados do t&iacute;tulo ...");
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_visualizar_detalhes.php",
+        dataType: "html",
+        data: {
+            nrdconta    : nrdconta,
+            selecionados: selecionados,
+            nrborder    : nrbordero,
+            redirect    : "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao5").html(response);
+        }
+    });
+    return false;
+}
+
 function formataTabelaCriticas(div){
     var tabela = div.find("table");
     div.zebraTabela();

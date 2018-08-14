@@ -51,7 +51,9 @@
   
 			 28/04/2018 - Inclusão de novas colunas na grid de borderô (Alex Sandro  - GFT)
 
-			 03/08/2018 - Inclusão de dois novos campos de risco na tabela de bordero(Vitor Shimada Assanuma - GFT)
+			 03/08/2018 - Inclusão de dois novos campos de risco na tabela de bordero (Vitor Shimada Assanuma - GFT)
+
+			 13/08/2018 - Novo formulário formDetalheTitulo (Vitor Shimada Assanuma - GFT)
 
 ************************************************************************/
 
@@ -1515,6 +1517,82 @@ function formataLayout(nomeForm){
 		
 		ajustarCentralizacao();
 	
+	}else if ( nomeForm == 'formDetalheTitulo' ){
+		$('#'+nomeForm).css('width','500px');
+		var Lnrborder = $('label[for="nrborder"]','#'+nomeForm);
+		var Lnrnosnum = $('label[for="nrnosnum"]','#'+nomeForm);
+		var Lqtdprazo = $('label[for="qtdprazo"]','#'+nomeForm);
+		var Lvlrmulta = $('label[for="vlrmulta"]','#'+nomeForm);
+		var Lvliofatr = $('label[for="vliofatr"]','#'+nomeForm);
+		var Lvlslddvd = $('label[for="vlslddvd"]','#'+nomeForm);
+		var Lnrctrcyb = $('label[for="nrctrcyb"]','#'+nomeForm);
+		var Lnmdpagad = $('label[for="nmdpagad"]','#'+nomeForm);
+		var Lnrcpfcnp = $('label[for="nrcpfcnp"]','#'+nomeForm);
+		var Ldtdvenct = $('label[for="dtdvenct"]','#'+nomeForm);
+		var Lvltitulo = $('label[for="vltitulo"]','#'+nomeForm);
+		var Ldiasdatr = $('label[for="diasdatr"]','#'+nomeForm);
+		var Lvljrmora = $('label[for="vljrmora"]','#'+nomeForm);
+		var Lvlorpago = $('label[for="vlorpago"]','#'+nomeForm);
+
+		var Cnrborder = $('#nrborder','#'+nomeForm);
+		var Cnrnosnum = $('#nrnosnum','#'+nomeForm);
+		var Cqtdprazo = $('#qtdprazo','#'+nomeForm);
+		var Cvlrmulta = $('#vlrmulta','#'+nomeForm);
+		var Cvliofatr = $('#vliofatr','#'+nomeForm);
+		var Cvlslddvd = $('#vlslddvd','#'+nomeForm);
+		var Cnrctrcyb = $('#nrctrcyb','#'+nomeForm);
+		var Cnmdpagad = $('#nmdpagad','#'+nomeForm);
+		var Cnrcpfcnp = $('#nrcpfcnp','#'+nomeForm);
+		var Cdtdvenct = $('#dtdvenct','#'+nomeForm);
+		var Cvltitulo = $('#vltitulo','#'+nomeForm);
+		var Cdiasdatr = $('#diasdatr','#'+nomeForm);
+		var Cvljrmora = $('#vljrmora','#'+nomeForm);
+		var Cvlorpago = $('#vlorpago','#'+nomeForm);
+
+		Lnrborder.addClass('rotulo').css('width','120px');
+		Ldtdvenct.addClass('rotulo-linha').css('width','140px');
+		Lnrnosnum.addClass('rotulo').css('width','120px');
+		Lvltitulo.addClass('rotulo-linha').css('width','90px');
+		Lqtdprazo.addClass('rotulo').css('width','120px');
+		Ldiasdatr.addClass('rotulo-linha').css('width','140px');
+		Lvlrmulta.addClass('rotulo').css('width','120px');
+		Lvljrmora.addClass('rotulo-linha').css('width','140px');
+		Lvliofatr.addClass('rotulo').css('width','120px');
+		Lvlorpago.addClass('rotulo-linha').css('width','140px');
+		Lvlslddvd.addClass('rotulo').css('width','120px');
+		Lnrctrcyb.addClass('rotulo').css('width','120px');
+		Lnmdpagad.addClass('rotulo').css('width','120px');
+		Lnrcpfcnp.addClass('rotulo').css('width','120px');
+
+		Cnrborder.css({'width':'80px','text-align':'right'});
+		Cdtdvenct.css({'width':'80px','text-align':'right'});
+		Cnrnosnum.css({'width':'130px','text-align':'right'});
+		Cvltitulo.css({'width':'80px','text-align':'right'});
+		Cqtdprazo.css({'width':'80px','text-align':'right'});
+		Cdiasdatr.css({'width':'80px','text-align':'right'});
+		Cvlrmulta.css({'width':'80px','text-align':'right'});
+		Cvljrmora.css({'width':'80px','text-align':'right'});
+		Cvliofatr.css({'width':'80px','text-align':'right'});
+		Cvlorpago.css({'width':'80px','text-align':'right'});
+		Cvlslddvd.css({'width':'80px','text-align':'right'});
+		Cnrctrcyb.css({'width':'80px','text-align':'right'});
+		Cnmdpagad.css({'width':'308px','text-align':'left'});
+		Cnrcpfcnp.css({'width':'120px','text-align':'right'});
+				
+		Cnrborder.desabilitaCampo();
+		Cnrnosnum.desabilitaCampo();
+		Cqtdprazo.desabilitaCampo();
+		Cvlrmulta.desabilitaCampo();
+		Cvliofatr.desabilitaCampo();
+		Cvlslddvd.desabilitaCampo();
+		Cnrctrcyb.desabilitaCampo();
+		Cnmdpagad.desabilitaCampo();
+		Cnrcpfcnp.desabilitaCampo();
+		Cdtdvenct.desabilitaCampo();
+		Cvltitulo.desabilitaCampo();
+		Cdiasdatr.desabilitaCampo();
+		Cvljrmora.desabilitaCampo();
+		Cvlorpago.desabilitaCampo();
 	}else if ( nomeForm == 'divResumoBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');
