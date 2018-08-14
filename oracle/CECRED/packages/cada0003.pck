@@ -10048,34 +10048,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_saida;
       END IF;                                                                        
-       
-      /*--Inserir registro de crédito:
-      INSERT INTO craplcm(cdcooper
-                         ,dtmvtolt
-                         ,dtrefere
-                         ,cdagenci
-                         ,cdbccxlt
-                         ,nrdolote
-                         ,nrdconta
-                         ,nrdctabb
-                         ,nrdctitg
-                         ,nrdocmto
-                         ,cdhistor     
-                         ,vllanmto
-                         ,nrseqdig)
-                   VALUES(vr_cdcooper
-                         ,rw_crapdat.dtmvtolt
-                         ,rw_crapdat.dtmvtolt
-                         ,rw_crapass_ori.cdagenci
-                         ,100
-                         ,vr_nrdolote
-                         ,rw_crapass_dst.nrdconta
-                         ,rw_crapass_dst.nrdconta
-                         ,TO_CHAR(gene0002.fn_mask(rw_crapass_dst.nrdconta,'99999999'))
-                         ,vr_nrdocmto
-                         ,2418 -- CR. COTAS/CAP
-                         ,pr_vldsaque
-                         ,vr_nrseqdig_lot);  */
       
       --Atualiza o valor de cotas do associado origem                        
       UPDATE crapcot
@@ -10937,36 +10909,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  RAISE vr_exc_saida;
               END IF;               
                    
-/*              --Inserir registro de crédito:
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,dtrefere
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor     
-                                 ,vllanmto
-                                 ,nrseqdig
-                                 ,hrtransa)
-                           VALUES(pr_cdcooper
-                                 ,rw_crapdat.dtmvtolt
-                                 ,rw_crapdat.dtmvtolt
-                                 ,rw_crapass.cdagenci
-                                 ,100
-                                 ,vr_nrdolote  
-                                 ,pr_nrdconta
-                                 ,pr_nrdconta
-                                 ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
-                                 ,vr_nrdocmto
-                                 ,2137 --Credita conta
-                                 ,pr_vldcotas
-                                 ,vr_nrseqdig
-                                 ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));
-*/                                         
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
@@ -11145,37 +11087,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
             END IF;                         
-             
-          --Inserir registro de crédito:
-/*          INSERT INTO craplcm(cdcooper
-                             ,dtmvtolt
-                             ,dtrefere
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,nrdconta
-                             ,nrdctabb
-                             ,nrdctitg
-                             ,nrdocmto
-                             ,cdhistor     
-                             ,vllanmto
-                             ,nrseqdig
-                             ,hrtransa)
-                       VALUES(pr_cdcooper
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapass.cdagenci
-                             ,100
-                             ,vr_nrdolote
-                             ,pr_nrdconta
-                             ,pr_nrdconta
-                             ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
-                             ,vr_nrdocmto
-                             ,2137 -- CR. COTAS/CAP
-                             ,pr_vldcotas
-                             ,vr_nrseqdig
-                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));*/
-                                     
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm.' ||SQLERRM;
@@ -11350,36 +11261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_saida;
           END IF;        
-/*          INSERT INTO craplcm(cdcooper
-                             ,dtmvtolt
-                             ,dtrefere
-                             ,cdagenci
-                             ,cdbccxlt
-                             ,nrdolote
-                             ,nrdconta
-                             ,nrdctabb
-                             ,nrdctitg
-                             ,nrdocmto
-                             ,cdhistor     
-                             ,vllanmto
-                             ,nrseqdig
-                             ,hrtransa)
-                       VALUES(pr_cdcooper
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapdat.dtmvtolt
-                             ,rw_crapass.cdagenci
-                             ,100
-                             ,vr_nrdolote
-                             ,pr_nrdconta
-                             ,pr_nrdconta
-                             ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
-                             ,vr_nrdocmto
-                             ,decode(rw_crapass.inpessoa,1,2061,2062)
-                             ,NVL(TO_CHAR(vr_vlrsaldo),'0')
-                             ,vr_nrseqdig
-                             ,TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')));  */
-                             
-        EXCEPTION
+
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na tabela craplcm. ' ||SQLERRM;
             RAISE vr_exc_saida;
