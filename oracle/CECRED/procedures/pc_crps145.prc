@@ -1049,33 +1049,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                        RAISE vr_exc_saida;
                     END IF;           
-                   /* INSERT INTO craplcm( cdagenci
-                                        ,cdbccxlt
-                                        ,cdhistor
-                                        ,dtmvtolt
-                                        ,cdpesqbb
-                                        ,nrdconta
-                                        ,nrdctabb
-                                        ,nrdctitg
-                                        ,nrdocmto
-                                        ,nrdolote
-                                        ,nrseqdig
-                                        ,vllanmto
-                                        ,cdcooper
-                    )VALUES( rw_craplot_8470.cdagenci --craplcm.cdagenci  
-                            ,rw_craplot_8470.cdbccxlt --craplcm.cdbccxlt  
-                            ,160                 --craplcm.cdhistor  
-                            ,rw_crapdat.dtmvtolt --craplcm.dtmvtolt  
-                            ,' '                 --craplcm.cdpesqbb 
-                            ,rw_craprpp.nrdconta --craplcm.nrdconta  
-                            ,rw_craprpp.nrdconta --craplcm.nrdctabb  
-                            ,LPAD(rw_craprpp.nrdconta,8, '0') --craplcm.nrdctitg
-                            ,vr_nrdocmto                      --craplcm.nrdocmto  
-                            ,rw_craplot_8470.nrdolote              --craplcm.nrdolote  
-                            ,rw_craplot_8470.nrseqdig              --craplcm.nrseqdig  
-                            ,rw_craprpp.vlprerpp              --craplcm.vllanmto  
-                            ,pr_cdcooper                      --craplcm.cdcooper
-                    );                    */
+
                   EXCEPTION
                     WHEN OTHERS THEN
                       --descricao da critica
