@@ -3932,6 +3932,7 @@ PROCEDURE envia_vrboleto_spb:
     DEF VAR aux_tpinssac          AS INTE                           NO-UNDO.
     DEF VAR aux_tppessac          AS CHAR                           NO-UNDO.
     DEF VAR aux_flginsok          AS LOGICAL                        NO-UNDO.
+    DEF VAR aux_cdcritic          AS INTE                           NO-UNDO.
 
     DEF VAR aux_sufixo            AS CHAR                           NO-UNDO.
 
@@ -4056,37 +4057,48 @@ PROCEDURE envia_vrboleto_spb:
                     STRING(crapcop.cdagectl,"9999") + 
                     STRING(ETIME,"9999999999") + 
                     aux_sufixo.
-
-     /** Enviar mensagem STR0026 para a cabine SPB **/
-     RUN sistema/generico/procedures/b1wgen0046.p PERSISTENT
-         SET h-b1wgen0046.
-
-     RUN proc_envia_vr_boleto IN h-b1wgen0046
-         (INPUT par_cdcooper,
-          INPUT par_cdagenci, /* PA 90 - Internet */
-          INPUT par_nrdcaixa, /* 900 - nrdcaixa */
-          INPUT par_cdoperad, /* 996 operador internet */
-          INPUT par_idorigem, /* origem = internet */
-          INPUT aux_nrctrlif,
-          INPUT par_cdbarras,
-          INPUT aux_cdbccxlt, /* banco cedente */
-          INPUT 0,            /* agencia cedente - nao obrigatorio */
-          INPUT aux_tppesced,
-          INPUT par_nrinsced,
-          INPUT aux_tppessac,
-          INPUT par_nrinssac,
-          INPUT 0, /* vlr do titulo */
-          INPUT 0, /* vlr do abatimento */
-          INPUT 0, /* vlr dos juros */
-          INPUT 0, /* vlr da multa */
-          INPUT 0, /* outros acrescimos */
-          INPUT par_vldpagto,
-         OUTPUT aux_dscritic
-          ).                
-
-     IF  TRIM(aux_dscritic) <> "" THEN
+                               
+     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+     RUN STORED-PROCEDURE pc_proc_envia_vr_boleto
+       aux_handproc = PROC-HANDLE NO-ERROR
+                                    (INPUT par_cdcooper,
+                                     INPUT par_cdagenci, /* PA 90 - Internet */
+                                     INPUT par_nrdcaixa, /* 900 - nrdcaixa */
+                                     INPUT par_cdoperad, /* 996 operador internet */
+                                     INPUT par_idorigem, /* origem = internet */
+                                     INPUT aux_nrctrlif,
+                                     INPUT par_cdbarras,
+                                     INPUT aux_cdbccxlt, /* banco cedente */
+                                     INPUT 0,            /* agencia cedente - nao obrigatorio */
+                                     INPUT aux_tppesced,
+                                     INPUT par_nrinsced,
+                                     INPUT aux_tppessac,
+                                     INPUT par_nrinssac,
+                                     INPUT 0, /* vlr do titulo */
+                                     INPUT 0, /* vlr do abatimento */
+                                     INPUT 0, /* vlr dos juros */
+                                     INPUT 0, /* vlr da multa */
+                                     INPUT 0, /* outros acrescimos */
+                                     INPUT par_vldpagto,                                    
+                                    OUTPUT 0,    /* Cod Erro */
+                                    OUTPUT "").   /* Descriçao da crítica */
+                    
+                    CLOSE STORED-PROC pc_proc_envia_vr_boleto
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                    
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    ASSIGN 
+                           aux_cdcritic = 0
+                           aux_dscritic = ""
+                           aux_cdcritic = pc_proc_envia_vr_boleto.pr_cdcritic
+                                           WHEN pc_proc_envia_vr_boleto.pr_cdcritic <> ?
+                           aux_dscritic = pc_proc_envia_vr_boleto.pr_dscritic
+                                           WHEN pc_proc_envia_vr_boleto.pr_dscritic <> ?.
+                                           
+       IF  TRIM(aux_dscritic) <> "" THEN
          DO:
-             ASSIGN i-cod-erro  = 0           
+             ASSIGN i-cod-erro  = aux_cdcritic
                     c-desc-erro = aux_dscritic.
     
              RUN cria-erro (INPUT crapcop.nmrescop,
@@ -4095,15 +4107,9 @@ PROCEDURE envia_vrboleto_spb:
                             INPUT i-cod-erro,
                             INPUT c-desc-erro,
                             INPUT YES).
-    
-             IF  VALID-HANDLE(h-b1wgen0046) THEN
-                 DELETE PROCEDURE h-b1wgen0046.
-
+              
              RETURN "NOK".
          END.
-
-     IF  VALID-HANDLE(h-b1wgen0046) THEN
-         DELETE PROCEDURE h-b1wgen0046.
 
     /** Enviar email para operadores da cabine SPB **/
     RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT
