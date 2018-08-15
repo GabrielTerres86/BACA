@@ -557,51 +557,7 @@ BEGIN
             CONTINUE;  
          END IF;  
       END IF;		  
-/* PRJ450 - 05/07/2018	  
-      -- Gera lancamentos em depositos a vista
-      begin
-        insert into craplcm(cdagenci,
-                            cdbccxlt,
-                            cdhistor,
-                            dtmvtolt,
-                            cdpesqbb,
-                            nrdconta,
-                            nrdctabb,
-                            nrdctitg,
-                            nrdocmto,
-                            nrdolote,
-                            nrseqdig,
-                            vllanmto,
-                            cdcooper,
-                            hrtransa)
-          values(rw_craplot.cdagenci,
-                 rw_craplot.cdbccxlt,
-                 127,
-                 rw_crapdat.dtmvtolt,
-                 vr_cdprogra,
-                 rw_crappla.nrdconta,
-                 rw_crappla.nrdconta,
-                 to_char(rw_crappla.nrdconta, '00000000'),
-                 rw_crappla.nrctrpla,
-                 rw_craplot.nrdolote,
-                 rw_craplot.nrseqdig,
-                 rw_crappla.vlprepla,
-                 pr_cdcooper,
-                 vr_hrtransa)
-          returning nrdconta,
-                    nrdocmto,
-                    nrseqdig,
-                    vllanmto
-               into vr_nrdconta_lcm,
-                    vr_nrdocmto_lcm,
-                    vr_nrseqdig_lcm,
-                    vr_vllanmto_lcm;
-      exception
-        when others then
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao inserir em CRAPLCM. ' || sqlerrm;
-      end;
-*/	  
+
       -- Gera aviso de debito em conta corrente
       begin
         insert into crapavs(cdagenci,
