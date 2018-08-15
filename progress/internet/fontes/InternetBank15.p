@@ -76,12 +76,15 @@
                09/04/2018 - Ajuste para retornar o valor total disponível para
                             resgate através do canal de autoatendimento.
                             Ou seja, somando apenas RDCPOS (Anderson P285).
+
+               28/06/2018 - Inserido tag <SALDORESGATEPOU>
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
 
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/b1wgen0004tt.i }
+{ sistema/generico/includes/b1wgen0006tt.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/var_oracle.i   }
 
@@ -91,6 +94,7 @@ DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0148 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0081 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0112 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0006 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
@@ -100,6 +104,8 @@ DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_vlblqjud AS DECI                                           NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                           NO-UNDO.
+DEF VAR aux_vlblqjudpp AS DECI                                         NO-UNDO.
+DEF VAR aux_vlresblqpp AS DECI                                         NO-UNDO.
 DEF VAR aux_vlsldtot AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsldisp AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsldblq AS DECI                                           NO-UNDO.
@@ -111,6 +117,7 @@ DEF VAR aux_flgstapl AS LOGI                                           NO-UNDO.
 DEF VAR aux_rsgtdisp AS LOGI                                           NO-UNDO.
 DEF VAR aux_vlblqapl_gar  AS DECI                                      NO-UNDO.
 DEF VAR aux_vlblqpou_gar  AS DECI                                      NO-UNDO.
+DEF VAR aux_vltotrpp AS DECI DECIMALS 8                                NO-UNDO.
 
 /*DEF VAR aux_intipapl AS CHAR										   NO-UNDO.*/
 
@@ -154,6 +161,8 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
     
     ASSIGN aux_vlblqjud = 0
            aux_vlresblq = 0
+           aux_vlblqjudpp = 0
+           aux_vlresblqpp = 0
            aux_vlsldtot = 0
            aux_vlsldisp = 0
            aux_vlsldblq = 0
@@ -178,6 +187,23 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                              INPUT crapdat.dtmvtolt,
                                              OUTPUT aux_vlblqjud,
                                              OUTPUT aux_vlresblq).
+
+    IF VALID-HANDLE(h-b1wgen0155) THEN
+      DELETE PROCEDURE h-b1wgen0155.
+    
+    /*** Busca Saldo Bloqueado Judicial Poupança***/
+    IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
+        RUN sistema/generico/procedures/b1wgen0155.p 
+            PERSISTENT SET h-b1wgen0155.
+    
+    RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT 0, /* fixo - nrcpfcgc */
+                                             INPUT 0, /* fixo - cdtipmov */
+                                             INPUT 3, /* 3 - Poupança */
+                                             INPUT crapdat.dtmvtolt,
+                                             OUTPUT aux_vlblqjudpp,
+                                             OUTPUT aux_vlresblqpp).
 
     IF VALID-HANDLE(h-b1wgen0155) THEN
       DELETE PROCEDURE h-b1wgen0155.
@@ -562,6 +588,55 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
     IF VALID-HANDLE(h-b1wgen0148) THEN
        DELETE PROCEDURE h-b1wgen0148.
 
+    /* carregar dados poupança nos totalizadores */
+    RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT
+        SET h-b1wgen0006.
+
+    IF  VALID-HANDLE(h-b1wgen0006)  THEN
+        DO:
+            /* Busca saldo da poupanca programada */
+            RUN consulta-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,
+                                                   INPUT 90,
+                                                   INPUT 900,
+                                                   INPUT "996",
+                                                   INPUT "InternetBank",
+                                                   INPUT 3,
+                                                   INPUT par_nrdconta,
+                                                   INPUT par_idseqttl,
+                                                   INPUT 0,
+                                                   INPUT crapdat.dtmvtolt,
+                                                   INPUT crapdat.dtmvtopr,
+                                                   INPUT crapdat.inproces,
+                                                   INPUT "InternetBank",
+                                                   INPUT FALSE,
+                                                  OUTPUT aux_vltotrpp,
+                                                  OUTPUT TABLE tt-erro,
+                                                  OUTPUT TABLE tt-dados-rpp).
+
+            DELETE PROCEDURE h-b1wgen0006.
+
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                    IF  AVAILABLE tt-erro  THEN
+                        aux_dscritic = tt-erro.dscritic.
+                    ELSE
+                        aux_dscritic = "Nao foi possivel carregar os saldos poupanca.".
+
+                    xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+
+                    RUN proc_geracao_log (INPUT FALSE).
+
+                    RETURN "NOK".
+                END.
+        END.    
+    /* Valor poupança programa - valor blq garantia - valor blq judicial*/
+    ASSIGN aux_vltotrpp = aux_vltotrpp - aux_vlblqpou_gar - aux_vlblqjudpp.
+    
+    IF  aux_vltotrpp < 0 THEN
+       ASSIGN aux_vltotrpp = 0.
+
     CREATE xml_operacao.
     
     ASSIGN xml_operacao.dslinxml = "</DADOS>".
@@ -612,6 +687,13 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                                  TRIM(STRING(aux_vlsldaat,"zzz,zzz,zz9.99-")) +
                                           "</vlsldaat>" + 
                                      "</SALDORESGATEAUTOATEND>".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "<SALDORESGATEPOU>" + 
+                                          "<vlsldpou>" +  
+                                                 TRIM(STRING(aux_vltotrpp,"zzz,zzz,zz9.99-")) +
+                                          "</vlsldpou>" + 
+                                     "</SALDORESGATEPOU>".
 
     RUN proc_geracao_log (INPUT TRUE). 
        

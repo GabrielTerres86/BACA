@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 18/06/2018
+      Data: Janeiro/2010                        Ultima alteracao: 15/08/2018
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -322,6 +322,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
+
+            15/08/2018 - Inclusão da operação 200 - URA
+                         (Everton - Mouts - Projeto 427)
 			            
 ............................................................................. */
 
@@ -648,6 +651,9 @@ DO:
         xField:GET-CHILD(xText,1).
 
         /* Validacao dos parametros de configuracao */
+        IF  xField:NAME = "OPERACAO"   THEN
+            aux_operacao = INT(xText:NODE-VALUE).
+        ELSE
         IF   xField:NAME = "CDCOPTFN"   THEN
              DO:
                  FIND crapcop WHERE crapcop.cdcooper = INT(xText:NODE-VALUE) NO-LOCK NO-ERROR.
@@ -671,10 +677,10 @@ DO:
                  NEXT.
              END.
 
-        IF   NOT AVAIL crapcop   OR
+        IF   (NOT AVAIL crapcop   OR
              NOT AVAIL crapdat   OR
              NOT AVAIL crapage   OR
-             NOT AVAIL craptfn   THEN
+             NOT AVAIL craptfn) AND aux_operacao <> 200   THEN
              DO:
                  aux_dscritic = "Parâmetros Inválidos.".
                  LEAVE REQUISICAO.
@@ -1152,7 +1158,7 @@ DO:
                       NEXT.
              END.
         ELSE
-        IF   aux_operacao = 2  THEN
+        IF   aux_operacao = 2 OR aux_operacao = 200 THEN
              DO:
                  RUN valida_senha.
 
