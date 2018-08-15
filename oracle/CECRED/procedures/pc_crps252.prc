@@ -1112,64 +1112,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_saida;
              END;
 
-/* -- PRJ450 - 05/06/2018 - INICIO
-
-            OPEN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                           ,pr_cdagenci => 1
-                           ,pr_cdbccxlt => 756
-                           ,pr_nrdolote => vr_nrdolote
-                           ,pr_nrdctabb => lt_d_nrctbdst
-                           ,pr_nrdocmto => lt_d_nrdocmto);
-
-            FETCH cr_craplcm INTO rw_craplcm;
-
-            IF cr_craplcm%FOUND THEN
-               vr_cdcritic := 92;
-               vr_dscritic := NULL;
-               RAISE vr_exc_saida;
-            END IF;
-
-            BEGIN
-              INSERT
-                INTO craplcm(dtmvtolt, cdagenci,
-                             cdbccxlt, nrdolote,
-                             nrdconta, nrdocmto,
-                             cdhistor, nrseqdig,
-                             vllanmto, nrdctabb,
-                             cdpesqbb, cdbanchq,
-                             cdcmpchq, cdagechq,
-                             nrctachq, sqlotchq,
-                             cdcooper, nrdctitg)
-                VALUES(rw_craplot.dtmvtolt ,rw_craplot.cdagenci
-                      ,rw_craplot.cdbccxlt ,rw_craplot.nrdolote
-                      ,lt_d_nrctbdst       ,lt_d_nrdocmto
-                      ,vr_cdhistor         ,lt_d_nrsequen
-                      ,lt_d_vldocmto       ,lt_d_nrctbdst
-                      ,lt_d_nmaprese       ,lt_d_nrbanori
-                      ,lt_d_cdcmpori       ,lt_d_nrageori
-                      ,lt_d_nrctarem       ,lt_d_nrsequen
-                      ,rw_crapcop.cdcooper ,TO_CHAR(lt_d_nrctbdst,'fm00000000'));
-
-              UPDATE craplot
-                 SET craplot.qtinfoln = NVL(craplot.qtinfoln,0) + 1
-                    ,craplot.qtcompln = NVL(craplot.qtcompln,0) + 1
-                    ,craplot.vlinfocr = NVL(craplot.vlinfocr,0) + lt_d_vldocmto
-                    ,craplot.vlcompcr = NVL(craplot.vlcompcr,0) + lt_d_vldocmto
-                    ,craplot.nrseqdig = lt_d_nrsequen
-               WHERE craplot.rowid = rw_craplot.rowid;
-
-              vr_qtcompln     := vr_qtcompln + 1;
-              vr_vlcompcr     := vr_vlcompcr + lt_d_vldocmto;
-
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Problemas ao criar lancamento';
-                RAISE vr_exc_saida;
-            END;
-
--- PRJ450 - 05/06/2018 - FIM             */
-
             lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
                                              , pr_cdagenci => 1
                                              , pr_cdbccxlt => 756
@@ -1216,16 +1158,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
                                              , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-              -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-              IF vr_incrineg = 0 THEN  
-                vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
                 RAISE vr_exc_saida;	
-              ELSE
-                -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
-                -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
-                -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
-                CONTINUE;  
-              END IF;  
             END IF;				
 			
             vr_cdcritic := 0;

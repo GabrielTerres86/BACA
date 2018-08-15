@@ -469,32 +469,6 @@ BEGIN
               RAISE vr_exc_saida;
            end if;
 
-/*      
-      INSERT INTO craplcm(cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,nrdconta
-                           ,nrdctabb
-                           ,nrdctitg
-                           ,nrdocmto
-                           ,cdhistor
-                           ,nrseqdig
-                           ,vllanmto)
-                   VALUES  (pr_cdcooper
-                           ,rw_craplot.dtmvtolt
-                           ,rw_craplot.cdagenci
-                           ,rw_craplot.cdbccxlt
-                           ,rw_craplot.nrdolote
-                           ,rw_craplau.nrdconta
-                           ,rw_craplau.nrdconta
-                           ,GENE0002.FN_MASK(rw_craplau.nrdconta, '99999999')
-                           ,vr_nrdocmto
-                           ,rw_craplau.cdhistor
-                           ,rw_craplot.nrseqdig + 1
-                           ,rw_craplau.vllanaut);
-*/
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tabela craplcm. ' || SQLERRM;

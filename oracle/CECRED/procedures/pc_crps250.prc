@@ -1613,25 +1613,6 @@ BEGIN
            if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
               RAISE vr_exc_saida;
            end if;
-
-/*
-        INSERT INTO 
-        craplcm (cdcooper,      dtmvtolt,      dtrefere,      cdagenci,      cdbccxlt,      nrdolote, 
-                 nrdconta,      nrdctabb,      nrdocmto,      cdhistor,      
-                 vllanmto,      nrseqdig, 
-                 cdpesqbb,      cdbanchq,      cdcmpchq,      cdagechq,      nrctachq,      nrlotchq,      sqlotchq)
-          VALUES(pr_cdcooper,rw_crapdat.dtmvtolt,vr_aux_dtleiarq,vr_aux_cdagenci,vr_aux_cdbancob,vr_aux_nrdolote, 
-                 vr_aux_nrdconta,vr_aux_nrdctabb,vr_aux_nrdocmto, (case rw_crapfdc.tpcheque
-                                                                  when 2 then 340 
-                                                                  else 313
-                                                                  end),  
-                 vr_tab_linhas(i)('VLDOCMTO').numero, vr_aux_nrseqarq,
-                 vr_aux_cdpesqbb,vr_aux_cdbanchq,vr_aux_cdcmpchq,vr_aux_cdagechq,vr_aux_nrctachq,vr_aux_nrlotchq,vr_aux_sqlotchq);
-        EXCEPTION
-          WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir registro craplcm (#1): '||sqlerrm;
-          RAISE vr_exc_saida;
-*/
       END;
 
       BEGIN

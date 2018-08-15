@@ -806,42 +806,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                 if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
                    RAISE vr_exc_saida;
                 end if;
-/*
-                insert into craplcm(craplcm.dtmvtolt--
-                                   ,craplcm.dtrefere
-                                   ,craplcm.cdagenci--
-                                   ,craplcm.cdbccxlt--
-                                   ,craplcm.nrdolote--
-                                   ,craplcm.nrdconta--
-                                   ,craplcm.nrdctabb--
-                                   ,craplcm.nrdctitg--
-                                   ,craplcm.nrdocmto--
-                                   ,craplcm.cdhistor--
-                                   ,craplcm.vllanmto--
-                                   ,craplcm.nrseqdig--
-                                   ,craplcm.cdcooper--
-                                   ,craplcm.cdbanchq--
-                                   ,craplcm.cdagechq--
-                                   ,craplcm.nrctachq--
-                                   ,craplcm.cdpesqbb)--
-                             values(pr_craplot_mig.dtmvtolt
-                                   ,pr_craplot_mig.dtmvtolt
-                                   ,pr_craplot_mig.cdagenci
-                                   ,pr_craplot_mig.cdbccxlt
-                                   ,pr_craplot_mig.nrdolote
-                                   ,pr_craplau.nrdconta 
-                                   ,pr_craplau.nrdctabb
-                                   ,pr_craplau.nrdctitg
-                                   ,pr_craplau.vllanaut
-                                   ,pr_craplau.cdhistor
-                                   ,pr_craplau.vllanaut
-                                   ,pr_craplot_mig.nrseqdig + 1
-                                   ,rw_craptco.cdcooper
-                                   ,rw_crapfdc.cdbanchq
-                                   ,rw_crapfdc.cdagechq
-                                   ,rw_crapfdc.nrctachq
-                                   ,'LANCAMENTO DE CONTA MIGRADA');
-*/
               EXCEPTION 
                 WHEN OTHERS THEN 
                   -- Gerar criticas
@@ -886,46 +850,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                 if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
                    RAISE vr_exc_saida;
                 end if;
-                /*
-                insert into craplcm(craplcm.dtmvtolt--
-                                   ,craplcm.dtrefere--
-                                   ,craplcm.cdagenci--
-                                   ,craplcm.cdbccxlt--
-                                   ,craplcm.nrdolote--
-                                   ,craplcm.nrdconta--
-                                   ,craplcm.nrdctabb--
-                                   ,craplcm.nrdctitg--
-                                   ,craplcm.nrdocmto--
-                                   ,craplcm.cdhistor--
-                                   ,craplcm.vllanmto--
-                                   ,craplcm.nrseqdig--
-                                   ,craplcm.cdcooper--
-                                   ,craplcm.cdbanchq--
-                                   ,craplcm.cdagechq--
-                                   ,craplcm.nrctachq--
-                                   ,craplcm.cdpesqbb)--
-                             values(pr_craplot.dtmvtolt
-                                   ,pr_craplot.dtmvtolt
-                                   ,pr_craplot.cdagenci
-                                   ,pr_craplot.cdbccxlt
-                                   ,pr_craplot.nrdolote
-                                   ,pr_craplau.nrdconta 
-                                   ,pr_craplau.nrdctabb
-                                   ,pr_craplau.nrdctitg
-                                   ,pr_craplau.nrdocmto
-                                   ,pr_craplau.cdhistor
-                                   ,pr_craplau.vllanaut
-                                   ,pr_craplot.nrseqdig + 1
-                                   ,pr_cdcooper
-                                   ,rw_crapfdc.cdbanchq
-                                   ,rw_crapfdc.cdagechq
-                                   ,rw_crapfdc.nrctachq
-                                   ,to_char(pr_craplau.dtmvtolt,'DD/MM/RRRR')||'-' ||
-                                    TO_CHAR(pr_craplau.cdagenci,'fm000')       ||'-' ||
-                                    TO_CHAR(pr_craplau.cdbccxlt,'fm000')       ||'-' ||
-                                    TO_CHAR(pr_craplau.nrdolote,'fm000000')    ||'-' ||
-                                    to_char(pr_craplau.nrseqdig,'fm00000'));
-                  */
               EXCEPTION 
                 WHEN OTHERS THEN 
                   -- Gerar criticas
@@ -1115,34 +1039,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
           if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
              RAISE vr_exc_saida;
           end if;
-/*
-          INSERT INTO craplcm (dtmvtolt--
-                              ,cdagenci--
-                              ,cdbccxlt--
-                              ,nrdolote--
-                              ,nrdconta--
-                              ,nrdctabb--
-                              ,nrdctitg--
-                              ,nrdocmto--
-                              ,cdhistor--
-                              ,vllanmto--
-                              ,nrseqdig--
-                              ,cdcooper--
-                              ,cdpesqbb)--
-                       values (pr_craplot.dtmvtolt
-                              ,pr_craplot.cdagenci
-                              ,pr_craplot.cdbccxlt
-                              ,pr_craplot.nrdolote
-                              ,pr_craplau.nrdconta
-                              ,pr_craplau.nrdconta
-                              ,to_char(pr_craplau.nrdconta,'99999999')
-                              ,pr_craplau.nrdocmto
-                              ,pr_craplau.cdhistor
-                              ,pr_craplau.vllanaut
-                              ,pr_craplot.nrseqdig + 1
-                              ,pr_cdcooper
-                              ,to_char(pr_craplau.dtmvtolt,'99/99/9999') || '-' || to_char(pr_craplau.cdagenci,'fm000') || '-' || to_char(pr_craplau.cdbccxlt,'fm000')|| '-' || to_char(pr_craplau.nrdolote,'fm000000') || '-' || to_char(pr_craplau.nrseqdig,'fm00000'));
-*/
         EXCEPTION 
           WHEN OTHERS THEN
             -- Erro na gravação da LCM

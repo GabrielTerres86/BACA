@@ -1341,7 +1341,6 @@ BEGIN
           rw_craplcm.nrseqdig:=  rw_craplot.nrseqdig + 1;
                                           
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-             IF vr_incrineg = 0 THEN
 		     	    	RAISE vr_exc_erro;
              ELSE
                 --Atualiza registro de lancamento automatico
@@ -1386,7 +1385,6 @@ BEGIN
                 END IF;
                 --
                 RETURN;
-             END IF;    
       	  END IF;  
 
           BEGIN
