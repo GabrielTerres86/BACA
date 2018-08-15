@@ -166,6 +166,7 @@ BEGIN
             0                      txmensal 
      FROM tbcc_prejuizo prej
         WHERE prej.dtliquidacao is null
+		  AND prej.cdcooper <> pr_cdcooper 
      UNION
      SELECT cer.cdcooper
            ,cer.nrdconta
