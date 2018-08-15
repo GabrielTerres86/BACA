@@ -942,7 +942,7 @@ PROCEDURE cria-lancamento:
                        FIND FIRST tt-ret-lancto.
                        FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
                     END.
-               END.  
+               
                
                IF  VALID-HANDLE(h-b1wgen0200) THEN
                    DELETE PROCEDURE h-b1wgen0200.
@@ -966,7 +966,8 @@ PROCEDURE cria-lancamento:
                
                VALIDATE craplot.
                  
-               RETURN "OK".
+               RETURN "OK".		  
+        END.
     ELSE
       RETURN "NOK".
                                
