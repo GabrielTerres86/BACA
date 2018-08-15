@@ -338,6 +338,7 @@ function excluir(id){
 		url: UrlSite + 'telas/cadidr/exclui_cadidr.php', 
 		data: { 
 			id: id,
+			idaba: abaAtual,
 			redirect: 'script_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {

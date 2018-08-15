@@ -115,7 +115,7 @@
 																						<span></span>
 																						<a href="#" class="botao" id="btAlterar" onClick="verificaAcesso('A');" style="text-align: right;">Alterar</a>
 																						<a href="#" class="botao" id="btIncluir" onClick="verificaAcesso('I');" style="text-align: right;">Incluir</a>
-																						<a href="#" class="botao" id="btExcluir" onClick="selecionaIndicador('E');" style="text-align: right;">Excluir</a>
+																						<a href="#" class="botao" id="btExcluir" onClick="selecionaLinha('E');" style="text-align: right;">Excluir</a>
 																						<a href="#" class="botao" id="btVoltar"  onClick="trocaVisao('');" style="display: none; text-align: right;">Voltar</a>
 																						<a href="#" class="botao" id="btProsseguir" style="display: none; text-align: right;">Prosseguir</a>
 																					</div>																				
@@ -148,7 +148,7 @@
 																						<span></span>
 																						<a href="#" class="botao" id="btAlterar" onClick="verificaAcesso('A');" style="text-align: right;">Alterar</a>
 																						<a href="#" class="botao" id="btIncluir" onClick="verificaAcesso('I');" style="text-align: right;">Incluir</a>
-																						<a href="#" class="botao" id="btExcluir" onClick="selecionaIndicador('E');" style="text-align: right;">Excluir</a>
+																						<a href="#" class="botao" id="btExcluir" onClick="selecionaLinha('E');" style="text-align: right;">Excluir</a>
 																						<a href="#" class="botao" id="btVoltar"  onClick="trocaVisao('');" style="display: none; text-align: right;">Voltar</a>
 																						<a href="#" class="botao" id="btProsseguir" style="display: none; text-align: right;">Prosseguir</a>
 																					</div>																				

@@ -17,6 +17,7 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();	
  
+$idaba    = (isset($_POST['idaba'])) ? (int) $_POST['idaba'] : null;
 $idindica = (isset($_POST['idindica'])) ? $_POST['idindica'] : '';
 $idvinculacao = (isset($_POST['idvinculacao'])) ? $_POST['idvinculacao'] : '';
 $nmindica = (isset($_POST['nmindica'])) ? utf8_decode($_POST['nmindica']) : '';	
