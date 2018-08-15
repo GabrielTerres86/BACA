@@ -763,42 +763,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;  
           END IF;		  
 		  
-/*  PRJ450 06/07/2018        
-          -- inserir lancamento
-          BEGIN
-            INSERT INTO craplcm
-                       ( craplcm.cdagenci
-                        ,craplcm.cdbccxlt
-                        ,craplcm.cdhistor
-                        ,craplcm.dtmvtolt
-                        ,craplcm.cdpesqbb
-                        ,craplcm.nrdconta
-                        ,craplcm.nrdctabb
-                        ,craplcm.nrdctitg
-                        ,craplcm.nrdocmto
-                        ,craplcm.nrdolote
-                        ,craplcm.nrseqdig
-                        ,craplcm.vllanmto
-                        ,craplcm.cdcooper)
-                 VALUES( rw_craplot.cdagenci  --craplcm.cdagenci 
-                        ,rw_craplot.cdbccxlt  --craplcm.cdbccxlt 
-                        ,rw_crapavs.cdhistor  --craplcm.cdhistor 
-                        ,rw_crapdat.dtmvtolt  --craplcm.dtmvtolt
-                        ,' '                  --craplcm.cdpesqbb
-                        ,rw_crapavs.nrdconta  --craplcm.nrdconta 
-                        ,rw_crapavs.nrdconta  --craplcm.nrdctabb 
-                        ,to_char(rw_crapavs.nrdconta,'00000000') --craplcm.nrdctabb
-                        ,vr_nrdocmto          --craplcm.nrdocmto 
-                        ,rw_craplot.nrdolote  --craplcm.nrdolote 
-                        ,rw_craplot.nrseqdig  --craplcm.nrseqdig 
-                        ,vr_vldescto          --craplcm.vllanmto
-                        ,pr_cdcooper);        --craplcm.cdcooper 
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir lancamento nrdconta '||rw_crapavs.nrdconta||' : '||SQLERRM;
-              RAISE vr_exc_saida;    
-          END;
-*/		  
+  
         END IF; -- Fim IF vr_vldescto > 0  
         
         vr_vlsldtot := vr_vlsldtot - TRUNC(vr_vldescto * (1 + vr_tab_txcpmfcc),2);
