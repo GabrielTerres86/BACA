@@ -945,45 +945,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
               END IF;  
             END IF;	
 				
-/* PRJ450 - 03/07/2018
-            -- inserir lançamento
-            BEGIN
-              INSERT INTO craplcm
-                          (craplcm.dtmvtolt
-                          ,craplcm.cdagenci
-                          ,craplcm.cdbccxlt
-                          ,craplcm.nrdolote
-                          ,craplcm.nrdconta
-                          ,craplcm.nrdctabb
-                          ,craplcm.nrdctitg                 
-                          ,craplcm.nrdocmto
-                          ,craplcm.cdhistor
-                          ,craplcm.vllanmto
-                          ,craplcm.nrseqdig
-                          ,craplcm.cdcooper)
-                   VALUES( rw_craplot.dtmvtolt -- craplcm.dtmvtolt
-                          ,rw_craplot.cdagenci -- craplcm.cdagenci
-                          ,rw_craplot.cdbccxlt -- craplcm.cdbccxlt
-                          ,rw_craplot.nrdolote -- craplcm.nrdolote
-                          ,rw_craprpp.nrdconta -- craplcm.nrdconta
-                          ,rw_craprpp.nrdconta -- craplcm.nrdctabb
-                          ,gene0002.fn_mask(rw_craprpp.nrdconta,'99999999') -- craplcm.nrdctitg
-                          ,rw_craplot.nrseqdig -- craplcm.nrdocmto
-                          ,(CASE rw_craprpp.flgctain 
-                             WHEN 1 /* true *//* THEN 501 -- TRANSF. RESGATE POUP.PROGRAMADA DA C/I PARA C/C
-                             ELSE 159 -- CR.POUP.PROGR
-                            END)          -- craplcm.cdhistor
-                          ,vr_vlresgat         -- craplcm.vllanmto
-                          ,rw_craplot.nrseqdig -- craplcm.nrseqdig
-                          ,pr_cdcooper);       -- craplcm.cdcooper
-        
-                
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Não foi possivel atualizar craplcm (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
-                RAISE vr_exc_saida;  
-            END; 
-*/			
           END IF; --> Fim IF rw_craplrg.flgcreci = 0 /* false */ /*Resgate Conta Corrente*/
 		  
           /* Gerar  lançamento na conta investimento*/
