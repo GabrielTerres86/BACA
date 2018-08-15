@@ -16522,6 +16522,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                         ,pr_nrdctabb IN craplcm.nrdctabb%type
                         ,pr_nrdocmto IN craplcm.nrdocmto%type) IS
         SELECT craplcm.nrseqdig
+				     , craplcm.vllanmto
         FROM craplcm craplcm
         WHERE craplcm.cdcooper = pr_cdcooper
         AND   craplcm.dtmvtolt = pr_dtmvtolt
@@ -16696,7 +16697,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                  ,pr_cdcritic => pr_cdcritic
                  ,pr_dscritic => pr_dscritic
                  );
-              rw_craplcm.vllanmto := pr_vllanmto;
+              rw_craplcm.vllanmto := pr_tab_lcm_consolidada(vr_index).vllancto;
              
             EXCEPTION
               WHEN OTHERS THEN
@@ -21387,6 +21388,7 @@ end;';
                        ,pr_nrdocmto IN craplau.nrdocmto%TYPE) IS
         SELECT lcm.nrseqdig
               ,lcm.nrdolote
+						,lcm.vllanmto
           FROM craplcm lcm
          WHERE lcm.cdcooper = pr_cdcooper
            AND lcm.dtmvtolt = pr_dtmvtolt
