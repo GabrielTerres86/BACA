@@ -29,6 +29,8 @@
 
                   28/05/2018 - Incluso impressoa Proposta (GFT)   
 
+                  15/08/2018 - Inserção da verificação se é bordero liberado no processo novo ou antigo.
+
 	************************************************************************/ 
 
 	session_cache_limiter("private");
@@ -107,14 +109,30 @@
 		?><script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
 	}	
-	
-    if ($idimpres == 1 || // COMPLETA
+
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " <nrborder>".$nrborder."</nrborder>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+	$flgnewbor = $root->dados->flgnewbor->cdata;
+		
+    if (($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
         $idimpres == 7 || // BORDERO DE CHEQUES
-        $idimpres == 11) {// BORDERO EXTRATO
-        
+        $idimpres == 11) && ($flgnewbor) ) {// BORDERO EXTRATO
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
