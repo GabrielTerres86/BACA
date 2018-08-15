@@ -47,7 +47,9 @@
 				03/08/2018 - Inclusão da regra para mostrar mensagem se for bordero novo ou antigo (Vitor Shimada Assanuma - GFT)
 							 Inclusão dos campos de Risco
 
-				06/08/2018 - Impressão de Extrato do Borderô
+				06/08/2018 - Impressão de Extrato do Borderô (Vitor Shimada Assanuma - GFT)
+
+				15/08/2018 - Inserido a regra para verificar se a chave está virada e se o borderô foi liberado no processo antigo. (Vitor Shimada Assanuma - GFT)
 
 	************************************************************************/
 	
@@ -281,7 +283,7 @@ hideMsgAguardo();
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
-<?php if ($flgnewbor == 0 && $dtlibbdt){ ?>
+<?php if ($flgnewbor == 0 && $flgverbor == 1 && $dtlibbdt){ ?>
 	hideMsgAguardo();	
 	showError("inform","ATEN&Ccedil;&Atilde;O: Border&ocirc; liberado no processo antigo!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
 <?php }	?>
