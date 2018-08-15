@@ -2216,42 +2216,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
           	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
 		       		RAISE vr_exc_fimprg;
       			END IF;                                                                                         
-          
-          /*  INSERT INTO craplcm( craplcm.dtmvtolt
-                                ,craplcm.cdagenci
-                                ,craplcm.cdbccxlt
-                                ,craplcm.nrdolote
-                                ,craplcm.nrdconta
-                                ,craplcm.nrdctabb
-                                ,craplcm.nrdctitg
-                                ,craplcm.nrdocmto
-                                ,craplcm.cdhistor
-                                ,craplcm.nrseqdig
-                                ,craplcm.vllanmto
-                                   ,craplcm.cdpesqbb
-                                ,craplcm.cdcooper
-                                ,craplcm.dsidenti
-            ) VALUES (        rw_craplot.dtmvtolt
-                              ,rw_craplot.cdagenci
-                              ,rw_craplot.cdbccxlt
-                              ,rw_craplot.nrdolote
-                              ,nvl(pr_nrdconta,0)
-                              ,nvl(pr_nrdconta,0)
-                              ,lpad(pr_nrdctabb,8,'0')
-                              ,nvl(vr_nrdocmto,0)
-                              ,nvl(pr_cdhistor,0)
-                              ,rw_craplot.nrseqdig + 1
-                              ,nvl(pr_vllanmto,0) \* Tarifa - Debito *\
-                              ,nvl(vr_cdpesqbb,' ')
-                              ,nvl(pr_cdcooper,0)
-                              ,To_Char(pr_qtdbolet))
-            RETURNING craplcm.nrseqdig
-                 INTO vr_nrseqdig;
-*/          EXCEPTION
+          EXCEPTION
             WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao inserir dados na craplcm na rotina pc_efetua_lancamento. '||SQLERRM;
-            -- volta para o programa chamador
-            RETURN;
+               pr_dscritic := 'Erro ao inserir dados na craplcm na rotina pc_efetua_lancamento. '||SQLERRM;
+               -- volta para o programa chamador
+               RETURN;
           END;
 
             /* CRED. COBRANCA */

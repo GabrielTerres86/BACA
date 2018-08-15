@@ -514,58 +514,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps389 (pr_cdcooper IN crapcop.cdcooper%T
         vr_nrdocmto := rw_craplot.nrseqdig + 1;
 
         IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-           -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-           IF vr_incrineg = 0 THEN  
-              vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
-              RAISE vr_exc_saida;	
-           ELSE
-              -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
-              -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
-              -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
-              RETURN;--CONTINUE;  
-           END IF;  
+           RAISE vr_exc_saida;	
         END IF;		  
 		
-/* PRJ450 10/07/2018 
-        -- Insere lancamento de deposito a vista
-        BEGIN
-          INSERT INTO craplcm
-            (dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             nrdconta,
-             nrdctabb,
-             nrdctitg,
-             nrdocmto,
-             cdhistor,
-             cdpesqbb,
-             nrseqdig,
-             vllanmto,
-             cdcooper)
-           VALUES
-            (rw_crapdat.dtmvtolt,
-             rw_craplot.cdagenci,
-             rw_craplot.cdbccxlt,
-             rw_craplot.nrdolote,
-             rw_crapsdc.nrdconta,
-             rw_crapsdc.nrdconta,
-             to_char(rw_crapsdc.nrdconta,'00000000'),
-             rw_craplot.nrseqdig + 1, --Em conversa com o Guilherme, foi colocado este valor ao inves do DECIMAL(RECID(craplcm)) 
-             127,
-             decode(rw_crapsdc.tplanmto,1,'SUBSCRICAO DE CAPITAL INICIAL',
-                                          'PLANO DE SUBSCRICAO DE CAPITAL - PARCELA REF. ' || 
-                                             to_char(rw_crapsdc.dtrefere,'dd/mm/yyyy')),
-             rw_craplot.nrseqdig + 1,
-             rw_crapsdc.vllanmto,
-             pr_cdcooper)
-           RETURNING nrdocmto INTO vr_nrdocmto;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na CRAPLCM: '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-*/
         -- PRJ450 - 10/07/2018 - fim.
 
         -- Atualiza a capa de lote
@@ -1224,3 +1175,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps389 (pr_cdcooper IN crapcop.cdcooper%T
     END;
 
   END pc_crps389;
+/

@@ -2366,7 +2366,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                                    
                  -- Conforme tipo de criticia realiza acao diferenciada
                  IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                   IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                      -- No caso de erro de programa gravar tabela especifica de log - Chamado 786752 - 27/10/2017
                      CECRED.pc_internal_exception(pr_compleme => vr_dscritic);
                      --Variavel de erro recebe erro ocorrido
@@ -2388,9 +2387,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                                    ', nrseqdig:'|| rw_craplot.nrseqdig||
                                    ', cdcoptfn:'||rw_craplot.nrseqdig||'. ' || vr_dscritic;
                      RAISE vr_exc_saida;
-                   ELSE  -- Regra de negocio
-                     RAISE vr_exc_saida;
-                   END If;
                  END IF; -- fim encontrou critica
                  
                  -- Sai do loop

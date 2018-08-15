@@ -1830,13 +1830,9 @@ BEGIN
                                             ,pr_dscritic => vr_dscritic);   
                                            
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-             IF vr_incrineg = 0 THEN
-		      	  	RAISE vr_exc_saida;
-             ELSE
-               CONTINUE;
-             END IF;    
+             RAISE vr_exc_saida;
       		END IF;   
-          
+
           
           -- Se foi lançamento de Credito
           IF vr_indebcre = 'C' THEN        
