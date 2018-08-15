@@ -144,9 +144,9 @@ BEGIN
 
    /* Busca dados dos empréstimos com índice de prejuízo zero por cooperativa */
    CURSOR cr_crapepr(pr_cdcooper IN crapcyb.cdcooper%TYPE) IS
-     SELECT ass.cdcooper,
-            ass.nrdconta,
-            ass.nrdconta           nrctremp,
+     SELECT prej.cdcooper,
+            prej.nrdconta,
+            prej.nrdconta           nrctremp,
             0                      cdlcremp,
             prej.dtinclusao        dtprejuz, --
             prej.vlsdprej          vlsdprej,
@@ -156,7 +156,7 @@ BEGIN
             1                      qtpreemp, --
             0                      tpdescto, --
             0                      flgpagto, --
-            ass.inprejuz,
+            1                      inprejuz,
             0                      qtmesdec, -- meses decorridos
             0                      inliquid, --
             0                      vlsdeved, --
@@ -164,11 +164,8 @@ BEGIN
             0                      vlpreemp, --
             0                      txjuremp, --
             0                      txmensal 
-     FROM tbcc_prejuizo prej, crapass ass
-        WHERE ass.inprejuz = 1
-           and ass.cdcooper = prej.cdcooper
-           and ass.nrdconta = prej.nrdconta
-           AND ass.cdcooper <> pr_cdcooper
+     FROM tbcc_prejuizo prej
+        WHERE prej.dtliquidacao is null
      UNION
      SELECT cer.cdcooper
            ,cer.nrdconta
