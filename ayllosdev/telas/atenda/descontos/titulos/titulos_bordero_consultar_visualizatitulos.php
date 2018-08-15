@@ -25,7 +25,7 @@
 
                  14/08/2018 - Rename do botão para: "Ver Detalhes da An&aacute;lise" (Vitor Shimada Assanuma - GFT)
 
-                 15/08/2018 - Alteração da situação do título quando a decisão estiver como NÃO APROVADO (Vitor Shimada Assanuma - GFT)
+                 15/08/2018 - Alteração da situação e prazo para 0 do título quando a decisão estiver como NÃO APROVADO (Vitor Shimada Assanuma - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -219,12 +219,16 @@
 									<td><?php echo number_format(str_replace(",",".",$t->tags[8]->cdata),2,",",".");?></td> 
 									<td><?php echo number_format(str_replace(",",".",$t->tags[9]->cdata),2,",","."); ?></td> 
 									<td><?php 
+											//Verifica se o título já está liberado, caso esteja é a diferença de data de lib-venc, senão utiliza a data de movimento.
 											if (trim($t->tags[4]->cdata) != ""){ 
 												echo diffData($t->tags[3]->cdata,$t->tags[4]->cdata); 
-												
 											}else{
-												echo diffData($t->tags[3]->cdata,$glbvars["dtmvtolt"]);
-												
+												//Caso o título esteja APROVADO é a lib-dtmvtolt senão é zerado.
+												if ($t->tags[14]->cdata != 2){
+													echo diffData($t->tags[3]->cdata,$glbvars["dtmvtolt"]);
+												}else{
+													echo "0";
+												}
 											}
 									?></td>
 									<td><?php echo $t->tags[11]->cdata;
