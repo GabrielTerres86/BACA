@@ -1625,9 +1625,9 @@ END pc_inserir_lancamento_bordero;
 
   BEGIN
     IF  pr_dtmvtolt > pr_dtvencto THEN
-        vr_qtd_dias := ccet0001.fn_diff_datas(to_date(pr_dtvencto,'DD/MM/RRRR'), to_date(pr_dtmvtolt,'DD/MM/RRRR'));
+        vr_qtd_dias := ccet0001.fn_diff_datas(pr_dtvencto, pr_dtmvtolt);
     ELSE
-        vr_qtd_dias := to_date(pr_dtvencto,'DD/MM/RRRR') -  to_date(pr_dtmvtolt,'DD/MM/RRRR');
+        vr_qtd_dias := pr_dtvencto -  pr_dtmvtolt;
     END IF;
     
     --  Percorre a quantidade de dias baseado na data atual até o vencimento do título
@@ -3977,8 +3977,9 @@ END pc_inserir_lancamento_bordero;
 
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure que que efetua a análise do Borderô.
-      
-                  27/04/2018 - Andrew Albuquerque (GFT) - Alterações para contemplar Mesa de Checagem e Esteira IBRATAN
+      Alterações:
+         27/04/2018 - Andrew Albuquerque (GFT) - Alterações para contemplar Mesa de Checagem e Esteira IBRATAN
+         15/08/2018 - Vitor Shimada Assanuma (GFT) - Colocar validação se o borderô em análise está no contrato ativo.         
 
     ---------------------------------------------------------------------------------------------------------------------*/
     DECLARE
@@ -4053,6 +4054,7 @@ END pc_inserir_lancamento_bordero;
              ,crapbdt.insitbdt
              ,crapbdt.insitapr
              ,crapbdt.dtenvmch
+             ,crapbdt.nrctrlim
       FROM   crapbdt
       WHERE  crapbdt.cdcooper = pr_cdcooper
         AND    crapbdt.nrborder = pr_nrborder;
@@ -4145,7 +4147,35 @@ END pc_inserir_lancamento_bordero;
     -- Retorno da #TAB052
     vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
     vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
+    vr_tab_dados_limite    TELA_ATENDA_DSCTO_TIT.typ_tab_dados_limite;          --> retorna dos dados do contrato   
+    
     BEGIN
+      /*Busca dados do contrato ativo*/
+      TELA_ATENDA_DSCTO_TIT.pc_busca_dados_limite (pr_nrdconta
+                                     ,pr_cdcooper
+                                     ,3 -- desconto de titulo
+                                     ,2 -- apenas ativo
+                                     ,pr_dtmvtolt
+                                     --------> OUT <--------
+                                     ,vr_tab_dados_limite
+                                     ,vr_cdcritic
+                                     ,vr_dscritic
+                            );
+      IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
+         RAISE vr_exc_erro;
+      END IF;              
+      
+      /*Dados do Bordero*/
+      OPEN cr_crapbdt;
+      FETCH cr_crapbdt INTO rw_crapbdt;
+      IF (cr_crapbdt%NOTFOUND) THEN
+        vr_dscritic := 'Borderô inválido';
+        RAISE vr_exc_erro;
+      END IF;
+      IF (rw_crapbdt.nrctrlim<>vr_tab_dados_limite(0).nrctrlim) THEN
+        vr_dscritic := 'O contrato deste borderô não se encontra mais ativo.';
+        RAISE vr_exc_erro;
+      END IF;                    
       --Iniciar variáveis e Parâmetros de Retorno
       pr_ind_inpeditivo := 0;
       vr_des_reto := 'OK';
@@ -4394,8 +4424,6 @@ END pc_inserir_lancamento_bordero;
           -- Se encontrou, busca todos os títulos que possuem Restrição de CNAE, altera seus status enviando para 
           -- a Mesa de Checagem, e altera o status do borderô para enviado para mesa de checagem, bem como seta seus campos
           -- de status de análise.
-          OPEN cr_crapbdt;
-          FETCH cr_crapbdt INTO rw_crapbdt;
           IF (cr_crapabt_qtde%FOUND AND rw_crapbdt.dtenvmch IS NULL) THEN -- Possui crítica de CNAE E NÃO passou pela mesa ainda
             -- carrega todos os Títulos que estão com Restrição de CNAE (9)
             FOR rw_craptdb_restri IN
@@ -5316,10 +5344,9 @@ END pc_inserir_lancamento_bordero;
     vr_vltotbrt     NUMBER; 
     vr_vltxiofatra  NUMBER; --> Valor total IOF Atraso
     vr_vltotjur     NUMBER;
-                             
-        
-  BEGIN
     
+              
+  BEGIN
     --Seta as variáveis de Descrição de Origem e descrição de Transação se For gerar Log
     IF pr_flgerlog THEN
       vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -5508,6 +5535,8 @@ END pc_inserir_lancamento_bordero;
 
     Frequencia: Sempre que for chamado
     Objetivo  : Procedure que que efetua a análise e Aprovação automática do Borderô.
+    Alterações:
+         15/08/2018 - Vitor Shimada Assanuma (GFT) - Colocar validação se o borderô em análise está no contrato ativo.    
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -5545,7 +5574,24 @@ END pc_inserir_lancamento_bordero;
     vr_enviadomesa INTEGER;
     vr_flsnhcoo BOOLEAN;
     
-    BEGIN
+    -- Retorna dos dados do contrato                             
+    vr_tab_dados_limite  TELA_ATENDA_DSCTO_TIT.typ_tab_dados_limite;   
+    
+    -- Selecionar bordero titulo
+    CURSOR cr_crapbdt (vr_cdcooper crapbdt.cdcooper%TYPE) IS
+      SELECT crapbdt.cdcooper
+            ,crapbdt.nrborder
+            ,crapbdt.nrdconta
+            ,crapbdt.insitbdt
+            ,crapbdt.insitapr
+            ,crapbdt.dtenvmch
+            ,crapbdt.nrctrlim
+      FROM   crapbdt
+      WHERE  crapbdt.cdcooper = vr_cdcooper
+         AND crapbdt.nrborder = pr_nrborder
+    ;rw_crapbdt cr_crapbdt%ROWTYPE;  
+    
+    BEGIN  
       pr_nmdcampo := NULL;
       pr_des_erro := 'OK';
       vr_possuicnae  := 0;
@@ -5565,6 +5611,32 @@ END pc_inserir_lancamento_bordero;
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
       CLOSE BTCH0001.cr_crapdat;
+      
+       -- Busca dados do contrato ativo 
+      TELA_ATENDA_DSCTO_TIT.pc_busca_dados_limite(pr_nrdconta
+                                                 ,vr_cdcooper
+                                                 ,3 -- desconto de titulo
+                                                 ,2 -- apenas ativo
+                                                 ,rw_crapdat.dtmvtolt
+                                                 --------> OUT <--------
+                                                 ,vr_tab_dados_limite
+                                                 ,vr_cdcritic
+                                                 ,vr_dscritic);
+      IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
+         raise vr_exc_erro;
+      END IF;       
+
+      -- Dados do Bordero
+      OPEN cr_crapbdt(vr_cdcooper);
+      FETCH cr_crapbdt INTO rw_crapbdt;
+      IF (cr_crapbdt%NOTFOUND) THEN
+        vr_dscritic := 'Borderô inválido';
+        raise vr_exc_erro;
+      END IF;
+      IF (rw_crapbdt.nrctrlim<>vr_tab_dados_limite(0).nrctrlim) THEN
+        vr_dscritic := 'O contrato deste borderô não se encontra mais ativo.';
+        raise vr_exc_erro;
+      END IF;  
       
       -- Inicia Variável de msg de contingência.
       --vr_msgcontingencia := '';

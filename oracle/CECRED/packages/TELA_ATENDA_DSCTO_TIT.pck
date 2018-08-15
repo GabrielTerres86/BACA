@@ -4315,7 +4315,8 @@ END pc_obtem_proposta_aciona_web;
                                   ) IS
     /* -------------------------------------------------------------------------------------------------------
     - Alterações
-    -   09/08/2018 - Vitor Shimada Assanuma - Inclusão do paramentro da TAB052 de QtdMaxTit.
+    -   09/08/2018 - Vitor Shimada Assanuma (GFT) - Inclusão do paramentro da TAB052 de QtdMaxTit.
+    -   15/08/2018 - Vitor Shimada Assanuma (GFT) - Incluso verificação (RAISE) caso não ache o contrato ativo.
     -
      ------------------------------------------------------------------------------------------------------- */
     pr_tab_dados_limite  typ_tab_dados_limite;          --> retorna dos dados
@@ -4372,6 +4373,9 @@ END pc_obtem_proposta_aciona_web;
                               vr_cdcritic,
                               vr_dscritic
                              );
+       IF (nvl(vr_cdcritic,0) <> 0 OR  vr_dscritic IS NOT NULL) THEN
+         raise vr_exc_erro;
+       END IF;
                              
        -- busca os dados do associado/cooperado para só então encontrar seus dados na tabela de parâmetros
        OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
