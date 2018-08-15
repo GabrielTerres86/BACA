@@ -457,22 +457,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
                  RAISE vr_exc_saida;
                 END IF;
               
-    /*          INSERT INTO craplot
-                         (  cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,tplotmov)
-                  VALUES (  pr_cdcooper -- cdcooper
-                           ,pr_dtintegr -- dtmvtolt
-                           ,1           -- cdagenci
-                           ,100         -- cdbccxlt
-                           ,pr_nrlotccs --nrdolote
-                           ,32          -- tplotmov
-                           )
-                returning rowid into vr_rowidlot ;*/
-
               pr_flfirst2  := FALSE;
               close cr_craplot;
               Exit;--sair do loop pois ja conseguiu inserir
@@ -1600,35 +1584,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                  RAISE vr_exc_saida;
               END IF;
-
-              -- Inseir lançamento
-/*              INSERT INTO craplcm
-                          (  dtmvtolt
-                            ,cdagenci
-                            ,cdbccxlt
-                            ,nrdolote
-                            ,nrdconta
-                            ,nrdctabb
-                            ,nrdctitg
-                            ,nrdocmto
-                            ,cdhistor
-                            ,vllanmto
-                            ,nrseqdig
-                            ,cdcooper)
-                   VALUES (  rw_craplot.dtmvtolt -- dtmvtolt
-                            ,rw_craplot.cdagenci -- cdagenci
-                            ,rw_craplot.cdbccxlt -- cdbccxlt
-                            ,rw_craplot.nrdolote -- nrdolote
-                            ,pr_nrdconta         -- nrdconta
-                            ,pr_nrdconta         -- nrdctabb
-                            ,gene0002.fn_mask(pr_nrdconta,'99999999') -- nrdctitg
-                            ,rw_craplot.nrseqdig + 1 -- nrdocmto
-                            ,vr_idx                  -- cdhistor
-                            ,pr_tab_vldebcta(vr_idx) -- vllanmto
-                            ,rw_craplot.nrseqdig + 1 -- nrseqdig
-                            ,pr_cdcooper)            -- cdcooper
-                  RETURNING craplcm.nrseqdig  into vr_nrseqdig;
-*/            EXCEPTION
+           EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Não foi possivel atualizar lancamento (craplcm)'
                                ||' nrdconta: '|| pr_nrdconta
@@ -1850,23 +1806,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
                IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_saida;
                END IF;
-
-          
-           /* INSERT INTO CRAPLOT
-                        ( dtmvtolt
-                         ,cdagenci
-                         ,cdbccxlt
-                         ,nrdolote
-                         ,tplotmov
-                         ,cdcooper)
-                  VALUES( pr_dtintegr -- dtmvtolt
-                         ,pr_cdagenci -- cdagenci
-                         ,pr_cdbccxlt -- cdbccxlt
-                         ,pr_nrlotfol -- nrdolote
-                         ,1           -- tplotmov
-                         ,pr_cdcooper -- cdcooper
-                         );
-*/
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Não foi possivel inserir capa do lote(craplot)'
@@ -1967,24 +1906,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
              END IF;  
-          
-          
-          
-        /*    INSERT INTO CRAPLOT
-                        ( dtmvtolt
-                         ,cdagenci
-                         ,cdbccxlt
-                         ,nrdolote
-                         ,tplotmov
-                         ,cdcooper)
-                  VALUES( pr_dtintegr -- dtmvtolt
-                         ,pr_cdagenci -- cdagenci
-                         ,pr_cdbccxlt -- cdbccxlt
-                         ,pr_nrlotcot -- nrdolote
-                         ,3           -- tplotmov
-                         ,pr_cdcooper -- cdcooper
-                         );
-*/
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Não foi possivel inserir capa do lote(craplot)'
@@ -2082,24 +2003,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
 
              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
-             END IF;    
-          
-          
-/*            INSERT INTO CRAPLOT
-                        ( dtmvtolt
-                         ,cdagenci
-                         ,cdbccxlt
-                         ,nrdolote
-                         ,tplotmov
-                         ,cdcooper)
-                  VALUES( pr_dtintegr -- dtmvtolt
-                         ,pr_cdagenci -- cdagenci
-                         ,pr_cdbccxlt -- cdbccxlt
-                         ,pr_nrlotemp -- nrdolote
-                         ,5           -- tplotmov
-                         ,pr_cdcooper -- cdcooper
-                         );*/
-
+             END IF;              
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Não foi possivel inserir capa do lote(craplot)'
@@ -3564,43 +3468,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120 (pr_cdcooper  IN crapcop.cdcooper%
                                                   ,pr_incrineg => vr_incrineg
                                                   ,pr_cdcritic => vr_cdcritic
                                                   ,pr_dscritic => vr_dscritic);
-                                                
-                                                
-
                     
               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                  RAISE vr_exc_saida;
               END IF;
-                  
-                  
-                
-             /*   
-                  INSERT INTO craplcm
-                              (   dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdctabb
-                                 ,nrdctitg
-                                 ,nrdocmto
-                                 ,cdhistor
-                                 ,vllanmto
-                                 ,nrseqdig
-                                 ,cdcooper)
-                       VALUES (   rw_craplot.dtmvtolt -- dtmvtolt
-                                 ,rw_craplot.cdagenci -- cdagenci
-                                 ,rw_craplot.cdbccxlt -- cdbccxlt
-                                 ,rw_craplot.nrdolote -- nrdolote
-                                 ,vr_nrdconta         -- nrdconta
-                                 ,vr_nrdconta         -- nrdctabb
-                                 ,gene0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg
-                                 ,vr_nrdocmto         -- nrdocmto
-                                 ,vr_cdhistor         -- cdhistor
-                                 ,vr_vllanmto         -- vllanmto
-                                 ,rw_craplot.nrseqdig + 1 -- nrseqdig
-                                 ,pr_cdcooper)        -- cdcooper
-                        returning nrseqdig into vr_nrseqdig;*/
 
                   folh0001.pc_inserir_lanaut(pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => vr_nrdconta
