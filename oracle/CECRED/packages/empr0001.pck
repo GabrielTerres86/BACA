@@ -1057,6 +1057,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
   --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
   --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
+
+  --             05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
+  --                          Josiane Stiehler- AMcom
+
   --             31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
   --                          da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)
   ---------------------------------------------------------------------------------------------------------------
@@ -7811,6 +7815,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
 
+      -- Variáveis P450 - Regultório de Crédito
+      vr_incrineg    INTEGER;
+      vr_tab_retorno lanc0001.typ_reg_retorno;
+      vr_fldebita    BOOLEAN;
+      
     BEGIN
       --Inicializar variavel erro
       pr_des_reto := 'OK';
@@ -7839,52 +7848,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_erro;
         END IF;
 
-        --Inserir Lancamento
+         -- Atualiza lote e e Insere lançamento
+         -- P450 - Regulatório de Crédito
         BEGIN
-          INSERT INTO craplcm
-            (craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.nrdconta
-            ,craplcm.nrdctabb
-            ,craplcm.nrdctitg
-            ,craplcm.nrdocmto
-            ,craplcm.cdhistor
-            ,craplcm.nrseqdig
-            ,craplcm.vllanmto
-            ,craplcm.cdcooper
-            ,craplcm.nrparepr
-            ,craplcm.cdpesqbb
-            ,craplcm.nrseqava
-            ,craplcm.cdoperad
-            ,craplcm.hrtransa
-            ,craplcm.idlautom)
-          VALUES
-            (pr_dtmvtolt
-            ,pr_cdpactra
-            ,pr_cdbccxlt
-            ,pr_nrdolote
-            ,pr_nrdconta
-            ,pr_nrdconta
-            ,gene0002.fn_mask(pr_nrdconta, '99999999')
-            ,pr_nrseqdig
-            ,pr_cdhistor
-            ,pr_nrseqdig
-            ,pr_vllanmto
-            ,pr_cdcooper
-            ,pr_nrparepr
-            ,gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
-            ,pr_nrseqava
-            ,pr_cdoperad
-            ,gene0002.fn_busca_time
-            ,pr_idlautom);
-        EXCEPTION
-          WHEN OTHERS THEN
+            LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => pr_dtmvtolt
+                                              ,pr_cdagenci => pr_cdpactra
+                                              ,pr_cdbccxlt => pr_cdbccxlt
+                                              ,pr_nrdolote => pr_nrdolote
+                                              ,pr_nrdconta => pr_nrdconta
+                                              ,pr_nrdocmto => pr_nrseqdig
+                                              ,pr_cdhistor => pr_cdhistor
+                                              ,pr_nrseqdig => pr_nrseqdig
+                                              ,pr_vllanmto => pr_vllanmto
+                                              ,pr_nrdctabb => pr_nrdconta
+                                              ,pr_cdpesqbb => gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
+                                              ,pr_hrtransa => gene0002.fn_busca_time
+                                              ,pr_cdoperad => pr_cdoperad
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta, '99999999')
+                                              ,pr_nrparepr => pr_nrparepr
+                                              ,pr_nrseqava => pr_nrseqava
+                                              ,pr_idlautom => pr_idlautom
+                                              -- OUTPUT --
+                                              ,pr_tab_retorno => vr_tab_retorno
+                                              ,pr_incrineg => vr_incrineg
+                                              ,pr_cdcritic => vr_cdcritic
+                                              ,pr_dscritic => vr_dscritic); 
+                      
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+               IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+                  RAISE vr_exc_erro;
+               ELSE -- Não foi possível debitar (crítica de negócio)
             vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao inserir na craplcm. ' || SQLERRM;
-            --Levantar Excecao
+                  vr_dscritic:='Lançamento não efetuado';
             RAISE vr_exc_erro;
+               END IF;	
+            END IF;   
         END;
       END IF;
 
