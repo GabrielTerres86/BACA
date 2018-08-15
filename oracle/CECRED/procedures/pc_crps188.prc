@@ -432,33 +432,6 @@ BEGIN
            if (nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) then
               RAISE vr_exc_saida;
            end if;
-
-/*
-        INSERT INTO craplcm(cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,nrdconta
-                           ,nrdctabb
-                           ,nrdctitg
-                           ,nrdocmto
-                           ,cdhistor
-                           ,nrseqdig
-                           ,vllanmto)
-                   VALUES  (pr_cdcooper
-                           ,rw_craplot.dtmvtolt
-                           ,rw_craplot.cdagenci
-                           ,rw_craplot.cdbccxlt
-                           ,rw_craplot.nrdolote
-                           ,rw_crapass.nrdconta
-                           ,rw_crapass.nrdconta
-                           ,GENE0002.FN_MASK(rw_crapass.nrdconta, '99999999')
-                           ,to_number(SUBSTR(to_char(rw_crawcrd.nrcrcard),9,8))
-                           ,vr_cdhistor
-                           ,rw_craplot.nrseqdig + 1
-                           ,vr_vlanuida);
-*/
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tabela craplcm. ' || SQLERRM;
