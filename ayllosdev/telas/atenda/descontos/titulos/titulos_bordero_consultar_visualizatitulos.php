@@ -24,6 +24,8 @@
 				 13/08/2018 - Novo botão "Ver Detalhes do Título" (Vitor Shimada Assanuma - GFT)
 
                  14/08/2018 - Rename do botão para: "Ver Detalhes da An&aacute;lise" (Vitor Shimada Assanuma - GFT)
+
+                 15/08/2018 - Alteração da situação do título quando a decisão estiver como NÃO APROVADO (Vitor Shimada Assanuma - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -236,8 +238,8 @@
 									?></td>
 									
 									<td><?php 
-										//Caso o titulo não esteja pago ou baixado e a diferença da data de movimento com o de pagamento for negativo, então está vencido
-										if ($t->tags[15]->cdata == 1){
+										//Caso o titulo não esteja pago ou baixado e a diferença da data de movimento com o de pagamento for negativo e a decisão seja diferente de NÃO APROVADO, então está vencido
+										if (($t->tags[15]->cdata == 1) && ($t->tags[14]->cdata != 2)){
 											echo "Vencido";
 										}else{
 										switch ($t->tags[12]->cdata){
