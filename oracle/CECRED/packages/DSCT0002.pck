@@ -8762,18 +8762,16 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     ;
     rw_concentracao_excecao cr_concentracao_excecao%rowtype;
     
-    -- Cursor para pegar o tipo do pagador 
-    CURSOR cr_crapsab IS
-      SELECT
-        crapsab.cdtpinsc
-      FROM
-        crapsab
-      WHERE
-        crapsab.nrinssac = pr_nrinssac
-        AND crapsab.nrdconta = pr_nrdconta
-        AND crapsab.cdcooper = pr_cdcooper
-    ;
-    rw_crapsab cr_crapsab%ROWTYPE;
+    -- Cursor para pegar o tipo do cooperado
+    CURSOR cr_crapass IS
+    SELECT 
+      inpessoa
+    FROM 
+      crapass ass
+    WHERE 
+      nrdconta = pr_nrdconta
+      AND cdcooper = pr_cdcooper;
+    rw_crapass cr_crapass%ROWTYPE;
     
     -- Cursor para verificar se ainda mantem as criticas
     CURSOR cr_analise_pagador IS
@@ -8811,9 +8809,9 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     
     BEGIN
       IF (pr_qtcarpag IS NULL OR pr_qttliqcp IS NULL OR pr_vltliqcp IS NULL OR pr_pcmxctip IS NULL OR pr_dtmvtolt_de IS NULL OR pr_qtmitdcl IS NULL OR pr_vlmintcl is NULL) THEN
-        OPEN cr_crapsab;
-        FETCH cr_crapsab INTO rw_crapsab;
-        IF cr_crapsab%NOTFOUND THEN
+        OPEN cr_crapass;
+        FETCH cr_crapass INTO rw_crapass;
+        IF cr_crapass%NOTFOUND THEN
           vr_cdcritic := 1187;
           RAISE vr_exc_erro;
         END IF;
@@ -8834,7 +8832,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                                    ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
                                    ,pr_idorigem          => null -- Não utiliza dentro da procedure
                                    ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
-                                   ,pr_inpessoa          => rw_crapsab.cdtpinsc
+                                   ,pr_inpessoa          => rw_crapass.inpessoa
                                    ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
                                    ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
                                    ,pr_cdcritic          => vr_cdcritic
@@ -8868,7 +8866,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                        ,vr_qtcarpag
                        ,vr_qtmitdcl
                        ,vr_vlmintcl
-                       -- OUT --
+                       -- OUT --     
                        --  CÁLCULO LIQUIDEZ CEDENTE x PAGADOR --
                        ,pr_pc_cedpag
                        ,pr_qtd_cedpag
