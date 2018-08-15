@@ -2405,49 +2405,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
 
       -- Conforme tipo de erro realiza acao diferenciada
       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-           vr_dscritic := 'Erro ao inserir lancamento.';
            cecred.pc_internal_exception(pr_cdcooper);
            RAISE vr_exc_saida;
-        END If;
       END IF;
-
-     /*
-      BEGIN
-         INSERT INTO craplcm(cdcooper
-                            ,dtmvtolt
-                            ,dtrefere
-                            ,cdagenci
-                            ,cdbccxlt
-                            ,nrdolote
-                            ,nrdconta
-                            ,nrdctabb
-                            ,nrdctitg
-                            ,nrdocmto
-                            ,cdhistor     
-                            ,vllanmto
-                            ,nrseqdig)
-                      VALUES(pr_cdcooper
-                            ,rw_crapdat.dtmvtolt
-                            ,rw_crapdat.dtmvtolt
-                            ,pr_cdagenci
-                            ,100
-                            ,vr_nrdolote
-                            ,pr_nrdconta
-                            ,pr_nrdconta
-                            ,TO_CHAR(gene0002.fn_mask(pr_nrdconta,'99999999'))
-                            ,vr_nrdocmto
-                            ,2137 -- CR. COTAS/CAP
-                            ,pr_vldcotas
-                            ,vr_nrseqdig); 
-         
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir lancamento.';
-          cecred.pc_internal_exception(pr_cdcooper);
-          RAISE vr_exc_saida;
-      END;
-      */
       BEGIN
          
         UPDATE crapcot
