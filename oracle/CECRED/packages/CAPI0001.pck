@@ -671,37 +671,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     END IF;    
     vr_nrdrowid := vr_tab_retorno.rowidlct;
 
-    /*-- cria lançamento de depositos a vista - craplcm
-    INSERT INTO craplcm
-      (cdagenci
-      ,cdbccxlt
-      ,cdhistor
-      ,dtmvtolt
-      ,cdpesqbb
-      ,nrdconta
-      ,nrdctabb
-      ,nrdctitg
-      ,nrdocmto
-      ,nrdolote
-      ,nrseqdig
-      ,vllanmto
-      ,cdcooper)
-    VALUES
-      (vc_cdagenci
-      ,vc_cdbccxlt
-      ,vr_craplcm_cdhist
-      ,pr_dtmvtolt
-      ,vr_cdpesqbb -- craplct.nrodcmto
-      ,pr_nrdconta
-      ,pr_nrdconta
-      ,LPAD(pr_nrdconta, 9, 0)
-      ,vr_nrseqdig
-      ,vc_lote_deposito_vista
-      ,vr_nrseqdig
-      ,pr_vlintegr
-      ,pr_cdcooper)
-      RETURNING ROWID INTO vr_nrdrowid;*/
-
    -- atualiza as cotas de capital
    UPDATE crapcot
       SET vldcotas = (vldcotas + pr_vlintegr)
