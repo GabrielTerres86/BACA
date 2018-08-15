@@ -27,7 +27,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0006.p                  
     Autora  : Junior
-    Data    : 12/09/2005                      Ultima atualizacao: 07/02/2018
+    Data    : 12/09/2005                      Ultima atualizacao: 19/07/2018
 
     Dados referentes ao programa:
 
@@ -1826,6 +1826,304 @@ PROCEDURE reativar-poupanca:
                                                        "zzz,zzz,zz9"))).
 
             /** Situacao da Poupanca **/
+            IF  aux_cdsitrpp <> craprpp.cdsitrpp  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "cdsitrpp",
+                                         INPUT STRING(aux_cdsitrpp),
+                                         INPUT STRING(craprpp.cdsitrpp)).
+
+            /** Data da Alteracao **/
+            IF  aux_dtaltrpp <> craprpp.dtaltrpp  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtaltrpp",
+                                         INPUT IF  aux_dtaltrpp = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(aux_dtaltrpp,
+                                                      "99/99/9999"),
+                                         INPUT STRING(craprpp.dtaltrpp,
+                                                      "99/99/9999")).
+
+            /** Data do Reinicio **/
+            IF  aux_dtrnirpp <> craprpp.dtrnirpp  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtrnirpp",
+                                         INPUT IF  aux_dtrnirpp = ?  THEN 
+                                                   ""
+                                               ELSE 
+                                                   STRING(aux_dtrnirpp,
+                                                          "99/99/9999"),
+                                         INPUT IF  craprpp.dtrnirpp = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(craprpp.dtrnirpp,
+                                                          "99/99/9999")).
+
+            /** Data do Cancelamento **/
+            IF  aux_dtcancel <> craprpp.dtcancel  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtcancel",
+                                         INPUT IF  aux_dtcancel = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(aux_dtcancel,
+                                                         "99/99/9999"),
+                                         INPUT IF  craprpp.dtcancel = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(craprpp.dtcancel,
+                                                          "99/99/9999")).
+
+            /** Data do Debito **/
+            IF  aux_dtdebito <> craprpp.dtdebito  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtdebito",
+                                         INPUT IF  aux_dtdebito = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(aux_dtdebito,
+                                                         "99/99/9999"),
+                                         INPUT IF  craprpp.dtdebito = ?  THEN
+                                                   ""
+                                               ELSE 
+                                                   STRING(craprpp.dtdebito,
+                                                          "99/99/9999")).
+        END.
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+/******************************************************************************/
+/**              Procedure para reativar a aplicacao programada              **/
+/******************************************************************************/
+PROCEDURE reativar-aplicacao-programada:
+ 
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctrrpp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+	
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_cdsitrpp AS INTE                                    NO-UNDO.
+
+    DEF VAR aux_dtaltrpp AS DATE                                    NO-UNDO.
+    DEF VAR aux_dtcancel AS DATE                                    NO-UNDO.
+    DEF VAR aux_dtdebito AS DATE                                    NO-UNDO.
+    DEF VAR aux_dtrnirpp AS DATE                                    NO-UNDO.
+
+    DEF VAR aux_vlmaxppr AS DECI                                    NO-UNDO.
+    
+    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.    
+    
+    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Reativar aplicacao programada"
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+        
+    TRANS_POUP:
+
+    DO TRANSACTION ON ERROR  UNDO TRANS_POUP, LEAVE TRANS_POUP 
+                   ON ENDKEY UNDO TRANS_POUP, LEAVE TRANS_POUP:
+
+        DO aux_contador = 1 TO 10:
+
+            FIND craprpp WHERE craprpp.cdcooper = par_cdcooper AND
+                               craprpp.nrdconta = par_nrdconta AND
+                               craprpp.nrctrrpp = par_nrctrrpp 
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+            IF  NOT AVAILABLE craprpp  THEN
+                DO:
+                    IF  LOCKED craprpp  THEN
+                        DO:
+                            IF  aux_contador = 10  THEN
+                                DO:
+                                    FIND craprpp WHERE 
+                                         craprpp.cdcooper = par_cdcooper AND
+                                         craprpp.nrdconta = par_nrdconta AND
+                                         craprpp.nrctrrpp = par_nrctrrpp 
+                                         NO-LOCK NO-ERROR.
+                                    
+                                    RUN critica-lock (INPUT RECID(craprpp),
+                                                      INPUT "banco",
+                                                      INPUT "craprpp").
+                                END.
+                            ELSE
+                                DO:
+                                    PAUSE 1 NO-MESSAGE.
+                                    NEXT.
+                                END.
+                        END.
+                    ELSE
+                        ASSIGN aux_cdcritic = 495.
+                END.
+
+            LEAVE.
+
+        END. /** Fim do DO ... TO **/
+
+        IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+            UNDO TRANS_POUP, LEAVE TRANS_POUP.
+
+        IF  craprpp.cdsitrpp = 5  THEN
+            DO:
+                ASSIGN aux_cdcritic = 919
+                       aux_dscritic = "".
+                
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+    
+        IF  (craprpp.cdsitrpp = 3 OR craprpp.cdsitrpp = 4) AND craprpp.cdprodut = 0  THEN 
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Este e um fundo antigo que nao pode ser reativado.".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+
+        IF  craprpp.cdsitrpp = 1  THEN
+            DO:
+                ASSIGN aux_cdcritic = 483
+                       aux_dscritic = "".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+			
+        IF  NOT craprpp.flgctain  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Aplicacao programada nao pode ser reativada.".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+
+        ASSIGN aux_vlmaxppr = ValorMaximoPrestacao(INPUT par_cdcooper).
+                                  
+        IF  craprpp.vlprerpp > aux_vlmaxppr  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Valor acima do permitido. Maximo de " +
+                           TRIM(STRING(aux_vlmaxppr,"zzz,zzz,zz9.99")) + ".".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+
+        IF  craprpp.cdsitrpp = 2  THEN
+            ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                   aux_dtaltrpp     = craprpp.dtaltrpp
+                   aux_dtrnirpp     = craprpp.dtrnirpp
+                   craprpp.cdsitrpp = 1
+                   craprpp.dtaltrpp = par_dtmvtolt
+                   craprpp.dtrnirpp = ?.
+        ELSE
+        IF  craprpp.cdsitrpp = 3  THEN
+            ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                   aux_dtaltrpp     = craprpp.dtaltrpp
+                   aux_dtcancel     = craprpp.dtcancel
+                   aux_dtdebito     = craprpp.dtdebito
+                   craprpp.cdsitrpp = 1
+                   craprpp.dtaltrpp = par_dtmvtolt
+                   craprpp.dtcancel = ?
+                   craprpp.dtdebito = craprpp.dtfimper.
+        ELSE
+        IF  craprpp.cdsitrpp = 4  THEN
+            DO:
+                IF  craprpp.dtrnirpp < par_dtmvtolt  THEN
+                    ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                           aux_dtaltrpp     = craprpp.dtaltrpp
+                           aux_dtrnirpp     = craprpp.dtrnirpp
+                           aux_dtcancel     = craprpp.dtcancel
+                           aux_dtdebito     = craprpp.dtdebito
+                           craprpp.cdsitrpp = 1
+                           craprpp.dtaltrpp = par_dtmvtolt
+                           craprpp.dtrnirpp = ?
+                           craprpp.dtcancel = ?
+                           craprpp.dtdebito = craprpp.dtfimper.
+                ELSE
+                    ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                           aux_dtaltrpp     = craprpp.dtaltrpp
+                           aux_dtcancel     = craprpp.dtcancel
+                           craprpp.cdsitrpp = 2
+                           craprpp.dtaltrpp = par_dtmvtolt
+                           craprpp.dtcancel = ?.
+            END.
+
+        FIND CURRENT craprpp NO-LOCK NO-ERROR.
+
+        ASSIGN aux_flgtrans = TRUE.
+
+    END. /** Fim do DO TRANSACTION - TRANS_POUP **/
+    
+    IF  NOT aux_flgtrans  THEN
+        DO: 
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel reativar a aplicacao " +
+                                      "programada.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                   
+            IF  par_flgerlog  THEN
+                DO:
+                    RUN proc_gerar_log (INPUT par_cdcooper,
+                                        INPUT par_cdoperad,
+                                        INPUT aux_dscritic,
+                                        INPUT aux_dsorigem,
+                                        INPUT aux_dstransa,
+                                        INPUT FALSE,
+                                        INPUT par_idseqttl,
+                                        INPUT par_nmdatela,
+                                        INPUT par_nrdconta,
+                                       OUTPUT aux_nrdrowid).
+
+                    /** Numero de Contrato da Poupanca **/
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "nrctrrpp",
+                                             INPUT "",
+                                             INPUT TRIM(STRING(par_nrctrrpp,
+                                                               "zzz,zzz,zz9"))).
+                END.
+
+            RETURN "NOK".
+        END.
+
+    IF  par_flgerlog  THEN
+        DO:
+            RUN proc_gerar_log (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT "",
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT TRUE,
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                               OUTPUT aux_nrdrowid).
+
+            /** Numero de Contrato da Aplicacao **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "nrctrrpp",
+                                     INPUT "",
+                                     INPUT TRIM(STRING(par_nrctrrpp,
+                                                       "zzz,zzz,zz9"))).
+
+            /** Situacao da Aplicacao **/
             IF  aux_cdsitrpp <> craprpp.cdsitrpp  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
                                          INPUT "cdsitrpp",
