@@ -985,41 +985,7 @@ BEGIN
                  END;
                  
                END IF;
-/* PRJ450 08/06/2018 - INICIO               
-               -- Cria o lancamento em C/C
-               BEGIN
-                 INSERT INTO craplcm (dtmvtolt
-                                     ,cdagenci
-                                     ,cdbccxlt
-                                     ,nrdolote
-                                     ,nrdconta
-                                     ,nrdctabb
-                                     ,nrdctitg
-                                     ,nrdocmto
-                                     ,cdhistor
-                                     ,vllanmto
-                                     ,nrseqdig
-                                     ,cdcooper
-                                     ,hrtransa)
-                              VALUES(rw_crapdat.dtmvtolt
-                                    ,1
-                                    ,100
-                                    ,8482
-                                    ,vr_nrdconta_new
-                                    ,vr_nrdconta_new
-                                    ,gene0002.fn_mask(vr_nrdconta_new,'99999999') -- nrdctitg
-                                    ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                                    ,1787
-                                    ,vr_vloperac
-                                    ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                                    ,vr_cdcooper
-                                    ,to_char(SYSDATE,'sssss'));
-               EXCEPTION
-                 WHEN OTHERS THEN
-                   vr_cdmotivo := 'Erro ao criar Transferencia em C/C: '||SQLERRM;
-                   RAISE vr_exc_saida;
-               END;
--- PRJ450 08/06/2018 - FIM */
+
 
                lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                 , pr_cdagenci => 1
