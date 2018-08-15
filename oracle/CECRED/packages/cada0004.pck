@@ -40,6 +40,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 
+
+                23/05/2018 - Mensagem quando ocorre prejuízo em conta corrente e empréstimo
+                              Diego Simas - AMcom
+                
                  03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
 
                  27/04/2018 - Removido vetor para armazenar a descrição das situacoes
@@ -857,6 +861,7 @@ PROCEDURE pc_bloquear_cartao_magnetico( pr_cdcooper IN crapcop.cdcooper%TYPE  --
 
 END CADA0004;
 /
+
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -922,6 +927,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --
   --               12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure
   --                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+  --
+  -- 
+  --               23/05/2018 - Mensagem quando ocorre prejuízo em conta corrente e empréstimo
+  --                            Diego Simas - AMcom              
   --
   --               03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
   --
@@ -4306,6 +4315,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              20/02/2018 - Alteracao da verificação de tipos de conta individuais, pela
     --                           verificação da categoria da conta. PRJ366 (Lombardi).
+    
+    --              23/05/2018 - Mensagem quando ocorre prejuízo em conta corrente e empréstimo
+    --                           Diego Simas - AMcom
+    --
     --
     --              27/04/2018 - Buscar descricao da tabela de situacoes. PRJ366 (Lombardi)
     --
@@ -4332,10 +4345,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.idimprtr,
              crapass.idastcjt,
              crapass.cdsitdct,
-             crapass.cdcatego
+             crapass.cdcatego,
+             crapass.inprejuz
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
+         
     rw_crapass cr_crapass%ROWTYPE;
     rw_bcrapass cr_crapass%ROWTYPE;
 
@@ -4774,6 +4789,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         WHERE cdcooper = pr_cdcooper
               AND nrdconta = pr_nrdconta;
     rw_cr_impdecsn cr_impdecsn%ROWTYPE;
+    
+ --> Consultar se já houve prejuizo nessa conta
+    CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+      SELECT t.nrdconta
+        FROM tbcc_prejuizo t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.nrdconta = pr_nrdconta;
+    rw_prejuizo cr_prejuizo%ROWTYPE;   
+    
+    --> Consultar se já houve prejuizo referente a empréstimos
+    CURSOR cr_crapepr_emp(pr_cdcooper crapepr.cdcooper%TYPE,
+                          pr_nrdconta crapepr.nrdconta%TYPE,
+                          pr_inliquid crapepr.inliquid%TYPE)IS 
+      SELECT c.nrdconta
+        FROM crapepr c
+       WHERE c.cdcooper = pr_cdcooper
+         AND c.nrdconta = pr_nrdconta
+         AND c.inprejuz = 1
+         AND c.inliquid = pr_inliquid; 
+    rw_crapepr_emp cr_crapepr_emp%ROWTYPE;     
+    
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -5126,26 +5163,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     CLOSE cr_craprli;
 
-    vr_flgpreju := FALSE;
-    vr_dsprejuz := ' - liquidado';
-
-    --> Verificar se possui emprestimo em prejuizo
-    FOR rw_crapepr IN cr_crapepr LOOP
-      vr_flgpreju := TRUE;
-
-      IF rw_crapepr.vlsdprej > 0  THEN
-        vr_dsprejuz := NULL;
-        EXIT;
-      END IF;
-    END LOOP;
-
-    IF rw_crapass.cdsitdtl IN (5,6,7,8) OR vr_flgpreju  THEN
+    -- MENSAGENS PREJUÍZO --    
+    IF rw_crapass.inprejuz = 1 THEN
+      -- Conta corrente em prejuizo
       -- Incluir na temptable
-      pc_cria_registro_msg(pr_dsmensag             => 'Houve prejuizo nessa conta'|| vr_dsprejuz,
+      pc_cria_registro_msg(pr_dsmensag             => 'Conta Corrente em Prejuizo',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    ELSE
+      OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta);
+      FETCH cr_prejuizo INTO rw_prejuizo;
+      IF cr_prejuizo%FOUND THEN 
+        CLOSE cr_prejuizo;
+        -- Houve prejuizo de Conta Corrente
+        -- Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => 'Houve Prejuizo de Conta Corrente',
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+      ELSE
+        CLOSE cr_prejuizo;
+      END IF;
     END IF;
-
-    IF pr_cdcooper IN (16,1) THEN /* Se Viacredi AltoVale ou Viacredi*/
+    
+    OPEN cr_crapepr_emp(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_inliquid => 0);
+    FETCH cr_crapepr_emp INTO rw_crapepr_emp;
+    IF cr_crapepr_emp%FOUND THEN 
+      CLOSE cr_crapepr_emp;
+      -- Conta Corrente com Emprestimo em Prejuizo
+      -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Conta Corrente com Emprestimo em Prejuizo',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    ELSE
+      CLOSE cr_crapepr_emp;
+    END IF;
+    
+    OPEN cr_crapepr_emp(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_inliquid => 1);
+    FETCH cr_crapepr_emp INTO rw_crapepr_emp;
+    IF cr_crapepr_emp%FOUND THEN 
+      CLOSE cr_crapepr_emp;
+      -- Houve prejuizo de emprestimo
+      -- Incluir na temptable
+      pc_cria_registro_msg(pr_dsmensag             => 'Houve Prejuizo de Emprestimo',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    ELSE
+      CLOSE cr_crapepr_emp;
+    END IF;
+    
+    -- FIM MENSAGENS PREJUÍZO --        
+    
+   IF pr_cdcooper IN (16,1) THEN /* Se Viacredi AltoVale ou Viacredi*/
       pc_ret_criticas_altovale(pr_cdcooper => pr_cdcooper            --> Codigo da cooperativa
                               ,pr_nrcpfcgc => rw_crapass.nrcpfcgc    --> CPF/CNPJ do cooperado
                               ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt --> Data do movimento
