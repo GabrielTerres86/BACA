@@ -25,8 +25,8 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                 e alteracoes na rotina pc_crias_analise_antifraude             
                                 PRJ381 - Antifraude (Teobaldo J. - AMcom) 
 																
-                   15/08/2018 - Alterada procedure pc_reg_reto_analise_antifraude para enviar campo 
-									              "IdentificacaoPessoa" com o formato correto. (Reinert)
+                   15/08/2018 - Alterada procedure pc_aprovacao_analise para enviar campo 
+				                "IdentificacaoPessoa" com o formato correto. (Reinert)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
