@@ -6,7 +6,8 @@
 	 * DATA CRIACAO : 28/02/2018
 	 * OBJETIVO     : Rotina para salvar informações de mensagens manuais da tela ENVNOT
 	 * --------------
-	 * ALTERCOES   : 
+	 * ALTERCOES    : 15/08/2018 - Realizar Encode e Decode da Url informada na acao do clique do banner	
+								   (INC0021147 - Kelvin)
 	 * -------------- 
 	**/
 	
@@ -82,7 +83,7 @@
 	$inexibe_msg_confirmacao = (isset($_POST['inexibe_msg_confirmacao'])) ? 1 : 0;
 	// $dstexto_botao_acao_mobile = (isset($_POST['dstexto_botao_acao_mobile'])) ? $_POST['dstexto_botao_acao_mobile'] : "";
 	$idacao_banner = (isset($_POST['idacao_banner'])) ? $_POST['idacao_banner'] : 0;
-	$dslink_acao_banner = (isset($_POST['dslink_acao_banner'])) ? $_POST['dslink_acao_banner'] : "";
+	$dslink_acao_banner = (isset($_POST['dslink_acao_banner'])) ? urlencode($_POST['dslink_acao_banner']) : "";
 	$cdmenu_acao_mobile = (isset($_POST['cdmenu_acao_mobile'])) ? $_POST['cdmenu_acao_mobile'] : 0;
 	$dsmensagem_acao_banner = (isset($_POST['dsmensagem_acao_banner'])) ? $_POST['dsmensagem_acao_banner'] : "";
 	//EXIBIR PARA

@@ -4,7 +4,8 @@
 	 * DATA CRIAÇÃO : 26/02/2018
 	 * OBJETIVO     : Arquivo para carregar layouts das telas
 	 * --------------
-	 * ALTERAÇÕES   :
+	 * ALTERAÇÕES   : 15/08/2018 - Realizar Encode e Decode da Url informada na acao do clique do banner	
+								   (INC0021147 - Kelvin)
 	 * --------------
 	 */
 	 	
@@ -112,7 +113,7 @@
 		$cdmenu_acao_mobile = getByTagName($banner,'CDMENU_ACAO_MOBILE');
 		$exibie_msg_confirmacao = trim(getByTagName($banner,'INEXIBE_MSG_CONFIRMACAO'));
 		$inexibe_msg_confirmacao = ( $exibie_msg_confirmacao == "1" ) ? " checked " : "";
-		$dslink_acao_banner = getByTagName($banner,'DSLINK_ACAO_BANNER');
+		$dslink_acao_banner = urldecode(getByTagName($banner,'DSLINK_ACAO_BANNER'));
 		$dsmensagem_acao_banner = getByTagName($banner,'DSMENSAGEM_ACAO_BANNER');
 		echo("<script> console.log('dsmensagem_acao_banner = ".$dsmensagem_acao_banner."');</script> ");
 		//Exibir para - (exibir_para.php)
