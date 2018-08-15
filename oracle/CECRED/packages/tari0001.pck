@@ -3220,7 +3220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                               , pr_cdcritic => vr_cdcritic
                                               , pr_dscritic => vr_dscritic
                                               );
-            IF vr_dscritic IS NOT NULL THEN
+            IF vr_cdcritic <> 0 or vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_erro;
             END IF;
 
