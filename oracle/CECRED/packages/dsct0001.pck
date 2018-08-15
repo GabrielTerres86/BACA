@@ -4458,143 +4458,143 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               RAISE vr_exc_erro;
           END IF;
       ELSE
-      IF rw_craptdb.dtvencto > pr_dtmvtoan AND
-         rw_craptdb.dtvencto < pr_dtresgat THEN
-        vr_qtdprazo := rw_craptdb.dtvencto - rw_crapbdt.dtlibbdt;
-      ELSE
-        vr_qtdprazo := pr_dtresgat - rw_crapbdt.dtlibbdt;
-      END IF;
+        IF rw_craptdb.dtvencto > pr_dtmvtoan AND
+           rw_craptdb.dtvencto < pr_dtresgat THEN
+          vr_qtdprazo := rw_craptdb.dtvencto - rw_crapbdt.dtlibbdt;
+        ELSE
+          vr_qtdprazo := pr_dtresgat - rw_crapbdt.dtlibbdt;
+        END IF;
 
-      vr_vltitulo := rw_craptdb.vltitulo;
-      vr_dtperiod := rw_crapbdt.dtlibbdt;
-      vr_vldjuros := 0;
-      vr_vljurper := 0;
-      vr_vlliqori := rw_craptdb.vlliquid;
-      vr_tab_crawljt.delete;
+        vr_vltitulo := rw_craptdb.vltitulo;
+        vr_dtperiod := rw_crapbdt.dtlibbdt;
+        vr_vldjuros := 0;
+        vr_vljurper := 0;
+        vr_vlliqori := rw_craptdb.vlliquid;
+        vr_tab_crawljt.delete;
 
-      /* Restituicao nao no mesmo dia da Liberacao */
-      IF vr_qtdprazo > 0 THEN
-        FOR vr_contador IN 1..vr_qtdprazo LOOP
-          vr_vldjuros := apli0001.fn_round(vr_vltitulo * vr_txdiaria,2);
-          vr_vltitulo := vr_vltitulo + vr_vldjuros;
-          vr_dtperiod := vr_dtperiod + 1;
-          vr_dtrefjur := last_day(vr_dtperiod);
+        /* Restituicao nao no mesmo dia da Liberacao */
+        IF vr_qtdprazo > 0 THEN
+          FOR vr_contador IN 1..vr_qtdprazo LOOP
+            vr_vldjuros := apli0001.fn_round(vr_vltitulo * vr_txdiaria,2);
+            vr_vltitulo := vr_vltitulo + vr_vldjuros;
+            vr_dtperiod := vr_dtperiod + 1;
+            vr_dtrefjur := last_day(vr_dtperiod);
 
-          --Marcar que nao encontrou
-          vr_flgachou:= FALSE;
-          --Selecionar Lancamento Juros Desconto Titulo
+            --Marcar que nao encontrou
+            vr_flgachou:= FALSE;
+            --Selecionar Lancamento Juros Desconto Titulo
+            FOR idx IN 1..vr_tab_crawljt.Count LOOP
+              IF vr_tab_crawljt(idx).cdcooper = rw_craptdb.cdcooper AND
+                 vr_tab_crawljt(idx).nrdconta = rw_craptdb.nrdconta AND
+                 vr_tab_crawljt(idx).nrborder = rw_craptdb.nrborder AND
+                 vr_tab_crawljt(idx).dtrefere = vr_dtrefjur         AND
+                 vr_tab_crawljt(idx).cdbandoc = rw_craptdb.cdbandoc AND
+                 vr_tab_crawljt(idx).nrdctabb = rw_craptdb.nrdctabb AND
+                 vr_tab_crawljt(idx).nrcnvcob = rw_craptdb.nrcnvcob AND
+                 vr_tab_crawljt(idx).nrdocmto = rw_craptdb.nrdocmto THEN
+                --Marcar que encontrou
+                vr_flgachou:= TRUE;
+                --Acumular valor juros
+                vr_tab_crawljt(idx).vldjuros:= vr_tab_crawljt(idx).vldjuros + vr_vldjuros;
+              END IF;
+            END LOOP;
+
+            /*Se nao encontrou cria */
+            IF NOT vr_flgachou THEN
+              --Selecionar indice
+              vr_incrawljt:= vr_tab_crawljt.Count+1;
+              --Gravar dados tabela memoria
+              vr_tab_crawljt(vr_incrawljt).cdcooper:= rw_craptdb.cdcooper;
+              vr_tab_crawljt(vr_incrawljt).nrdconta:= rw_craptdb.nrdconta;
+              vr_tab_crawljt(vr_incrawljt).nrborder:= rw_craptdb.nrborder;
+              vr_tab_crawljt(vr_incrawljt).dtrefere:= vr_dtrefjur;
+              vr_tab_crawljt(vr_incrawljt).cdbandoc:= rw_craptdb.cdbandoc;
+              vr_tab_crawljt(vr_incrawljt).nrdctabb:= rw_craptdb.nrdctabb;
+              vr_tab_crawljt(vr_incrawljt).nrcnvcob:= rw_craptdb.nrcnvcob;
+              vr_tab_crawljt(vr_incrawljt).nrdocmto:= rw_craptdb.nrdocmto;
+              vr_tab_crawljt(vr_incrawljt).vldjuros:= vr_vldjuros;
+            END IF;
+          END LOOP;  --vr_contador IN 1..vr_qtdprazo
+
+          vr_vlliqnov := rw_craptdb.vltitulo - (vr_vltitulo - rw_craptdb.vltitulo);
+
+          --> Atualiza registro de provisao de juros ..........
           FOR idx IN 1..vr_tab_crawljt.Count LOOP
-            IF vr_tab_crawljt(idx).cdcooper = rw_craptdb.cdcooper AND
-               vr_tab_crawljt(idx).nrdconta = rw_craptdb.nrdconta AND
-               vr_tab_crawljt(idx).nrborder = rw_craptdb.nrborder AND
-               vr_tab_crawljt(idx).dtrefere = vr_dtrefjur         AND
-               vr_tab_crawljt(idx).cdbandoc = rw_craptdb.cdbandoc AND
-               vr_tab_crawljt(idx).nrdctabb = rw_craptdb.nrdctabb AND
-               vr_tab_crawljt(idx).nrcnvcob = rw_craptdb.nrcnvcob AND
-               vr_tab_crawljt(idx).nrdocmto = rw_craptdb.nrdocmto THEN
-              --Marcar que encontrou
-              vr_flgachou:= TRUE;
-              --Acumular valor juros
-              vr_tab_crawljt(idx).vldjuros:= vr_tab_crawljt(idx).vldjuros + vr_vldjuros;
+            --Se for a mesma cooperativa
+            IF vr_tab_crawljt(idx).cdcooper = pr_cdcooper THEN
+              BEGIN
+                --Selecionar lancamento juros desconto titulo
+                OPEN cr_crapljt (pr_cdcooper => vr_tab_crawljt(idx).cdcooper
+                                ,pr_nrdconta => vr_tab_crawljt(idx).nrdconta
+                                ,pr_nrborder => vr_tab_crawljt(idx).nrborder
+                                ,pr_dtrefere => vr_tab_crawljt(idx).dtrefere
+                                ,pr_cdbandoc => vr_tab_crawljt(idx).cdbandoc
+                                ,pr_nrdctabb => vr_tab_crawljt(idx).nrdctabb
+                                ,pr_nrcnvcob => vr_tab_crawljt(idx).nrcnvcob
+                                ,pr_nrdocmto => vr_tab_crawljt(idx).nrdocmto);
+
+                FETCH cr_crapljt INTO rw_crapljt;
+                vr_fcrapljt := cr_crapljt%FOUND;
+                CLOSE cr_crapljt;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_fcrapljt := FALSE;
+              END;
+
+              -- Verificar se encontrou o registro
+              IF vr_fcrapljt = FALSE THEN
+                -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                vr_cdcritic := 1170; --Registro crapljt nao encontrado.
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                RAISE vr_exc_erro;
+              END IF;
+
+              --Se o valor dos juros mudou
+              IF rw_crapljt.vldjuros <> vr_tab_crawljt(idx).vldjuros THEN
+                --Se valor juros tabela eh maior encontrado
+                IF  rw_crapljt.vldjuros > vr_tab_crawljt(idx).vldjuros THEN
+                  --Atualizar tabela juros
+                  BEGIN
+                    UPDATE crapljt SET crapljt.vlrestit = NVL(crapljt.vldjuros,0) - NVL(vr_tab_crawljt(idx).vldjuros,0)
+                                      ,crapljt.vldjuros = nvl(vr_tab_crawljt(idx).vldjuros,0)
+                    WHERE crapljt.ROWID = rw_crapljt.ROWID
+                    RETURNING crapljt.vlrestit INTO rw_crapljt.vlrestit;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+                      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                      -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                      vr_cdcritic := 1035;
+                      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                                     'crapljt(4):'||
+                                     ' vlrestit:'  || 'NVL(crapljt.vldjuros,0) - ' || NVL(vr_tab_crawljt(idx).vldjuros,0) ||
+                                     ', vldjuros:' || nvl(vr_tab_crawljt(idx).vldjuros,0) ||
+                                     ', ROWID:'    || rw_crapljt.ROWID || 
+                                     '. ' ||sqlerrm; 
+                      --Levantar Excecao
+                      RAISE vr_exc_erro;
+                  END;
+                ELSE
+                  -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                  vr_cdcritic := 367; --Erro - Juros negativo:
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
+                                 rw_crapljt.vldjuros;
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;
+              END IF;
+              --Data de Referencia
+              vr_dtultdat:= vr_tab_crawljt(idx).dtrefere;
+              --Excluir registro da tabela memoria
+              vr_tab_crawljt.DELETE(idx);
             END IF;
           END LOOP;
 
-          /*Se nao encontrou cria */
-          IF NOT vr_flgachou THEN
-            --Selecionar indice
-            vr_incrawljt:= vr_tab_crawljt.Count+1;
-            --Gravar dados tabela memoria
-            vr_tab_crawljt(vr_incrawljt).cdcooper:= rw_craptdb.cdcooper;
-            vr_tab_crawljt(vr_incrawljt).nrdconta:= rw_craptdb.nrdconta;
-            vr_tab_crawljt(vr_incrawljt).nrborder:= rw_craptdb.nrborder;
-            vr_tab_crawljt(vr_incrawljt).dtrefere:= vr_dtrefjur;
-            vr_tab_crawljt(vr_incrawljt).cdbandoc:= rw_craptdb.cdbandoc;
-            vr_tab_crawljt(vr_incrawljt).nrdctabb:= rw_craptdb.nrdctabb;
-            vr_tab_crawljt(vr_incrawljt).nrcnvcob:= rw_craptdb.nrcnvcob;
-            vr_tab_crawljt(vr_incrawljt).nrdocmto:= rw_craptdb.nrdocmto;
-            vr_tab_crawljt(vr_incrawljt).vldjuros:= vr_vldjuros;
-          END IF;
-        END LOOP;  --vr_contador IN 1..vr_qtdprazo
-
-        vr_vlliqnov := rw_craptdb.vltitulo - (vr_vltitulo - rw_craptdb.vltitulo);
-
-        --> Atualiza registro de provisao de juros ..........
-        FOR idx IN 1..vr_tab_crawljt.Count LOOP
-          --Se for a mesma cooperativa
-          IF vr_tab_crawljt(idx).cdcooper = pr_cdcooper THEN
-            BEGIN
-              --Selecionar lancamento juros desconto titulo
-              OPEN cr_crapljt (pr_cdcooper => vr_tab_crawljt(idx).cdcooper
-                              ,pr_nrdconta => vr_tab_crawljt(idx).nrdconta
-                              ,pr_nrborder => vr_tab_crawljt(idx).nrborder
-                              ,pr_dtrefere => vr_tab_crawljt(idx).dtrefere
-                              ,pr_cdbandoc => vr_tab_crawljt(idx).cdbandoc
-                              ,pr_nrdctabb => vr_tab_crawljt(idx).nrdctabb
-                              ,pr_nrcnvcob => vr_tab_crawljt(idx).nrcnvcob
-                              ,pr_nrdocmto => vr_tab_crawljt(idx).nrdocmto);
-
-              FETCH cr_crapljt INTO rw_crapljt;
-              vr_fcrapljt := cr_crapljt%FOUND;
-              CLOSE cr_crapljt;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_fcrapljt := FALSE;
-            END;
-
-            -- Verificar se encontrou o registro
-            IF vr_fcrapljt = FALSE THEN
-              -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-              vr_cdcritic := 1170; --Registro crapljt nao encontrado.
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-              RAISE vr_exc_erro;
-            END IF;
-
-            --Se o valor dos juros mudou
-            IF rw_crapljt.vldjuros <> vr_tab_crawljt(idx).vldjuros THEN
-              --Se valor juros tabela eh maior encontrado
-              IF  rw_crapljt.vldjuros > vr_tab_crawljt(idx).vldjuros THEN
-                --Atualizar tabela juros
-                BEGIN
-                  UPDATE crapljt SET crapljt.vlrestit = NVL(crapljt.vldjuros,0) - NVL(vr_tab_crawljt(idx).vldjuros,0)
-                                    ,crapljt.vldjuros = nvl(vr_tab_crawljt(idx).vldjuros,0)
-                  WHERE crapljt.ROWID = rw_crapljt.ROWID
-                  RETURNING crapljt.vlrestit INTO rw_crapljt.vlrestit;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-                    CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-                    -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-                    vr_cdcritic := 1035;
-                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
-                                   'crapljt(4):'||
-                                   ' vlrestit:'  || 'NVL(crapljt.vldjuros,0) - ' || NVL(vr_tab_crawljt(idx).vldjuros,0) ||
-                                   ', vldjuros:' || nvl(vr_tab_crawljt(idx).vldjuros,0) ||
-                                   ', ROWID:'    || rw_crapljt.ROWID || 
-                                   '. ' ||sqlerrm; 
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
-                END;
-              ELSE
-                -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-                vr_cdcritic := 367; --Erro - Juros negativo:
-                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
-                               rw_crapljt.vldjuros;
-                --Levantar Excecao
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;
-            --Data de Referencia
-            vr_dtultdat:= vr_tab_crawljt(idx).dtrefere;
-            --Excluir registro da tabela memoria
-            vr_tab_crawljt.DELETE(idx);
-          END IF;
-        END LOOP;
-
-      ELSE
-        vr_dtultdat := pr_dtresgat;
-        vr_vlliqori := rw_craptdb.vlliquid;
-        vr_vlliqnov := rw_craptdb.vltitulo;
-      END IF;-- Fim IF vr_qtdprazo > 0 THEN
+        ELSE
+          vr_dtultdat := pr_dtresgat;
+          vr_vlliqori := rw_craptdb.vlliquid;
+          vr_vlliqnov := rw_craptdb.vltitulo;
+        END IF;-- Fim IF vr_qtdprazo > 0 THEN
       END IF;
 
       --Selecionar lancamento juros desconto titulo
@@ -6386,7 +6386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       AND   craptdb.nrdctabb = pr_nrdctabb
       AND   craptdb.nrcnvcob = pr_nrcnvcob
       AND   craptdb.nrdconta = pr_nrdconta
-      AND   craptdb.nrdocmto = pr_nrdocmto;
+      AND   craptdb.nrdocmto = pr_nrdocmto
+      AND   craptdb.insittit = 4;
     rw_craptdb cr_craptdb%ROWTYPE;
       
     --Selecionar lancamento juros desconto titulo
