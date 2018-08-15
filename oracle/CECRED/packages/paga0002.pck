@@ -7916,53 +7916,7 @@ create or replace package body cecred.PAGA0002 is
                 RAISE vr_exc_erro;
             END;
 
-       /*BEGIN
-          INSERT INTO craplcm
-                     (cdcooper,
-                      dtmvtolt,
-                      cdagenci,
-                      cdbccxlt,
-                      nrdolote,
-                      nrdconta,
-                      nrdctabb,
-                      nrdocmto,
-                      cdhistor,
-                      vllanmto,
-                      nrseqdig,
-                      cdpesqbb,
-                      cdoperad,
-                      hrtransa,
-                      cdcoptfn)
-                VALUES
-                      (rw_craplot.cdcooper,
-                       rw_craplot.dtmvtolt,
-                       rw_craplot.cdagenci,
-                       rw_craplot.cdbccxlt,
-                       rw_craplot.nrdolote,
-                       rw_crapccs.nrctatrf,
-                       rw_crapccs.nrdconta,
-                       rw_craplcs.nrdocmto,
-                       gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_CRE_TEC_B85'),
-                       rw_craplcs.vllanmto,
-                         rw_craplot.nrseqdig,
-                       vr_dadosdeb,
-                       pr_cdoperad,
-                       TO_CHAR(SYSDATE, 'SSSSS'),
-                       pr_cdcooper)
-             RETURNING craplcm.nrdconta,
-                       craplcm.vllanmto,
-                       craplcm.nrdocmto
-                  INTO rw_craplcm.nrdconta,
-                       rw_craplcm.vllanmto,
-                       rw_craplcm.nrdocmto;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapccs.nrdconta || SQLERRM;
-            RAISE vr_exc_erro;
-        END;*/
-
+  
         --Atualizar dados do lote no rowtype
         rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
         rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
