@@ -1588,13 +1588,14 @@ END pc_inserir_lancamento_bordero;
       Objetivo  : Calcula o juros do título do borderô para o dia
 
       Alteração : 25/05/2018 - Criação (Fernando Sacchi(GFT) / Paulo Penteado (GFT))
-
+                  15/08/2018 - Corrigido lancamento da ltj e refeita a formula de calculo - Luis Fernando (GFT)
     ---------------------------------------------------------------------------------------------------------------------*/
     vr_dia      INTEGER;
     vr_qtd_dias NUMBER;
     vr_dtrefere DATE;
+    vr_dtcalcul DATE;
     vr_vldjuros crapljt.vldjuros%TYPE;
-
+    vr_jurosdia NUMBER;
     -- Variável de críticas
     vr_dscritic VARCHAR2(10000);
 
@@ -1618,7 +1619,8 @@ END pc_inserir_lancamento_bordero;
     AND    crapljt.cdbandoc = pr_cdbandoc
     AND    crapljt.nrdctabb = pr_nrdctabb
     AND    crapljt.nrdconta = pr_nrdconta
-    AND    crapljt.cdcooper = pr_cdcooper;
+    AND    crapljt.cdcooper = pr_cdcooper
+    AND    crapljt.nrborder = pr_nrborder;
     rw_crapljt cr_crapljt%rowtype;
 
   BEGIN
@@ -1628,58 +1630,71 @@ END pc_inserir_lancamento_bordero;
         vr_qtd_dias := to_date(pr_dtvencto,'DD/MM/RRRR') -  to_date(pr_dtmvtolt,'DD/MM/RRRR');
     END IF;
     
-    vr_vldjuros := 0;
-    vr_dtrefere := last_day(pr_dtmvtolt);
-
     --  Percorre a quantidade de dias baseado na data atual até o vencimento do título
-    FOR vr_dia IN 0..vr_qtd_dias LOOP
+    vr_vldjuros := 0;
+    pr_vldjuros := 0;
+    vr_dtrefere := last_day(pr_dtmvtolt);
+    vr_dtcalcul := pr_dtmvtolt;
+    vr_jurosdia := ((pr_txmensal / 100) / 30);
+    
+--    vr_qtd_dias := pr_dtmvtolt - pr_dtvencto;
+    
+    WHILE (vr_qtd_dias > 0) LOOP
+      vr_dtcalcul := vr_dtcalcul+1;
+      vr_dtrefere := last_day(vr_dtcalcul);
+      IF (vr_dtcalcul+vr_qtd_dias) > vr_dtrefere THEN             -- se a ultima data calculada + os dias restantes de juros são maior que a data de referencia
+        vr_dia := vr_dtrefere - (vr_dtcalcul-1);                      -- calcula quantos dias terão juros naquele mes
+        vr_dtcalcul := vr_dtrefere;                             -- coloca o proximo dia de calculo de juros para o proximo dia da referencia
+        vr_qtd_dias := vr_qtd_dias - vr_dia;                       -- tira quantos dias de juros foram calculados do total
+      ELSE 
+        vr_dia := vr_qtd_dias;                                    -- 
+        vr_dtcalcul := vr_dtrefere;
+        vr_qtd_dias := 0;
+      END IF;
+      
+      vr_vldjuros := pr_vltitulo * vr_dia * vr_jurosdia;        -- calcula o juros em cima dos dias
+      
+      BEGIN
+        OPEN  cr_crapljt(vr_dtrefere);
+        FETCH cr_crapljt INTO rw_crapljt;
+        --    Se já foi lançado juros para este período, atualiza a tabela de lançamento de juros 
+        IF    cr_crapljt%FOUND THEN
 
-        vr_dtrefere := last_day(pr_dtmvtolt + vr_dia);
-
-        -- Calcula o juros do título do borderô para o dia
-        vr_vldjuros := pr_vltitulo * vr_dia * ((pr_txmensal / 100) / 30);
-        
-        BEGIN
-          OPEN  cr_crapljt(vr_dtrefere);
-          FETCH cr_crapljt INTO rw_crapljt;
-          --    Se já foi lançado juros para este período, atualiza a tabela de lançamento de juros 
-          IF    cr_crapljt%FOUND THEN
-
-                UPDATE crapljt
-                SET    crapljt.vldjuros = vr_vldjuros
-                WHERE  crapljt.rowid=rw_crapljt.rowid;
+              UPDATE crapljt
+              SET    crapljt.vldjuros = vr_vldjuros
+              WHERE  crapljt.rowid=rw_crapljt.rowid;
             
-          --    Caso contrário, insere novo registro
-          ELSE
-                INSERT INTO crapljt
-                       (/*01*/ cdcooper
-                       ,/*02*/ nrdconta
-                       ,/*03*/ nrborder
-                       ,/*04*/ dtrefere
-                       ,/*05*/ cdbandoc
-                       ,/*06*/ nrdctabb
-                       ,/*07*/ nrcnvcob
-                       ,/*08*/ nrdocmto
-                       ,/*09*/ vldjuros)
-                VALUES (/*01*/ pr_cdcooper
-                       ,/*02*/ pr_nrdconta
-                       ,/*03*/ pr_nrborder
-                       ,/*04*/ vr_dtrefere
-                       ,/*05*/ pr_cdbandoc
-                       ,/*06*/ pr_nrdctabb
-                       ,/*07*/ pr_nrcnvcob
-                       ,/*08*/ pr_nrdocmto
-                       ,/*09*/ vr_vldjuros );
-          END   IF;
-          CLOSE cr_crapljt;
-        EXCEPTION
-          WHEN OTHERS THEN
-               vr_dscritic := 'Erro ao atualizar os juros calculado do título do borderô: '||SQLERRM;
-               RAISE vr_exc_erro;
-        END; 
+        --    Caso contrário, insere novo registro
+        ELSE
+              INSERT INTO crapljt
+                     (/*01*/ cdcooper
+                     ,/*02*/ nrdconta
+                     ,/*03*/ nrborder
+                     ,/*04*/ dtrefere
+                     ,/*05*/ cdbandoc
+                     ,/*06*/ nrdctabb
+                     ,/*07*/ nrcnvcob
+                     ,/*08*/ nrdocmto
+                     ,/*09*/ vldjuros)
+              VALUES (/*01*/ pr_cdcooper
+                     ,/*02*/ pr_nrdconta
+                     ,/*03*/ pr_nrborder
+                     ,/*04*/ vr_dtrefere
+                     ,/*05*/ pr_cdbandoc
+                     ,/*06*/ pr_nrdctabb
+                     ,/*07*/ pr_nrcnvcob
+                     ,/*08*/ pr_nrdocmto
+                     ,/*09*/ vr_vldjuros );
+        END   IF;
+        CLOSE cr_crapljt;
+        pr_vldjuros := pr_vldjuros + vr_vldjuros;
+      EXCEPTION
+        WHEN OTHERS THEN
+             vr_dscritic := 'Erro ao atualizar os juros calculado do título do borderô: '||SQLERRM;
+             RAISE vr_exc_erro;
+      END;
     END LOOP;
-        
-    pr_vldjuros := vr_vldjuros;
+    
     pr_dtrefere := vr_dtrefere;
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1695,7 +1710,7 @@ END pc_inserir_lancamento_bordero;
                                        ,pr_nrborder IN crapbdt.nrborder%TYPE
                                        ,pr_nrdconta IN crapass.nrdconta%TYPE 
                                        ,pr_cdoperad IN craptdb.cdoperad%TYPE --> Operador
-                                       ,pr_dtmvtolt IN VARCHAR2
+                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                        ,pr_vltotliq OUT NUMBER 
                                        ,pr_vltotbrt OUT NUMBER 
                                        ,pr_vltotjur OUT NUMBER
@@ -1722,7 +1737,6 @@ END pc_inserir_lancamento_bordero;
     vr_vltotliq number;
     vr_vltotbrt number;
     vr_vltotjur NUMBER;
-    vr_dtmvtolt DATE;
     vr_dtrefere DATE;
     
     vr_exc_erro exception;
@@ -1795,7 +1809,6 @@ END pc_inserir_lancamento_bordero;
     
     BEGIN
       vr_contingencia := 0;
-      vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
       
       open cr_crapbdt;
       fetch cr_crapbdt into rw_crapbdt;
@@ -1810,7 +1823,7 @@ END pc_inserir_lancamento_bordero;
         cr_base_calculo (pr_cdcooper => pr_cdcooper
                         ,pr_nrborder => pr_nrborder
                         ,pr_nrdconta => pr_nrdconta
-                        ,pr_dtmvtolt => vr_dtmvtolt
+                        ,pr_dtmvtolt => pr_dtmvtolt
                         ,pr_contingencia => vr_contingencia) 
         LOOP                
         pc_calcula_juros_simples_tit(pr_cdcooper => pr_cdcooper
@@ -1822,7 +1835,7 @@ END pc_inserir_lancamento_bordero;
                                     ,pr_nrdocmto => rw_base_calculo.nrdocmto
                                     ,pr_vltitulo => rw_base_calculo.vltitulo
                                     ,pr_dtvencto => rw_base_calculo.dtvencto
-                                    ,pr_dtmvtolt => vr_dtmvtolt
+                                    ,pr_dtmvtolt => pr_dtmvtolt
                                     ,pr_txmensal => rw_crapbdt.txmensal
                                     ,pr_vldjuros => vr_vldjuros
                                     ,pr_dtrefere => vr_dtrefere
@@ -1831,7 +1844,7 @@ END pc_inserir_lancamento_bordero;
         -- Aproveita o loop do cursor de títulos do borderô para atualizar as informações no banco
         UPDATE craptdb
         SET    craptdb.vlliquid = ROUND((rw_base_calculo.vltitulo - vr_vldjuros),2),
-               craptdb.dtlibbdt = vr_dtmvtolt,
+               craptdb.dtlibbdt = pr_dtmvtolt,
                craptdb.insittit = 4,
                craptdb.insitapr = 1,
                craptdb.vlsldtit = rw_base_calculo.vltitulo
@@ -5256,7 +5269,7 @@ END pc_inserir_lancamento_bordero;
                                ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
                                ,pr_idseqttl IN INTEGER               --> idseqttl
                                ,pr_nrborder IN crapbdt.nrborder%TYPE --> numero do bordero
-                               ,pr_dtmvtolt IN VARCHAR2              --> Data do movimento
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                ,pr_flgerlog IN BOOLEAN               --> identificador se deve gerar log
                                --------> OUT <--------
                                ,pr_vltotliq OUT NUMBER 
@@ -5524,12 +5537,8 @@ END pc_inserir_lancamento_bordero;
 
     vr_tab_retorno_analise typ_tab_retorno_analise;
 
-    -- variaveis de data
-    vr_dtmvtopr crapdat.dtmvtolt%TYPE;
-    vr_dtmvtolt crapdat.dtmvtolt%TYPE;
-
-      -- rowid tabela de log
-      vr_nrdrowid ROWID;
+    -- rowid tabela de log
+    vr_nrdrowid ROWID;
 
 --    vr_em_contingencia_ibratan boolean;
     vr_possuicnae  INTEGER;
@@ -5555,12 +5564,6 @@ END pc_inserir_lancamento_bordero;
       --Selecionar dados da data
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-      -- Se encontrar
-      IF BTCH0001.cr_crapdat%FOUND THEN
-        vr_dtmvtopr:= rw_crapdat.dtmvtopr;
-        vr_dtmvtolt:= rw_crapdat.dtmvtolt;
-      END IF;
-      -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
       
       -- Inicia Variável de msg de contingência.
@@ -5586,8 +5589,8 @@ END pc_inserir_lancamento_bordero;
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_nrdconta => pr_nrdconta
                                 ,pr_idseqttl => 1
-                                ,pr_dtmvtolt => vr_dtmvtolt
-                                ,pr_dtmvtopr => vr_dtmvtopr
+                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                ,pr_dtmvtopr => rw_crapdat.dtmvtopr
                                 ,pr_inproces => 0
                                 ,pr_nrborder => pr_nrborder
                                 ,pr_flgerlog => FALSE
@@ -5615,7 +5618,7 @@ END pc_inserir_lancamento_bordero;
                               ,pr_cdoperad =>  vr_cdoperad
                               ,pr_nmdatela =>  vr_nmdatela
                               ,pr_idorigem =>  vr_idorigem
-                              ,pr_dtmvtolt =>  vr_dtmvtolt
+                              ,pr_dtmvtolt =>  rw_crapdat.dtmvtolt
                               ,pr_nrdconta =>  pr_nrdconta
                               ,pr_idseqttl =>  1
                               ,pr_nrborder =>  pr_nrborder
@@ -5648,7 +5651,7 @@ END pc_inserir_lancamento_bordero;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_idseqttl => 1
                               ,pr_nrborder => pr_nrborder
-                              ,pr_dtmvtolt => vr_dtmvtolt
+                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                               ,pr_vltotliq => vr_vltotliq
                               ,pr_flgerlog => FALSE
                               ,pr_tab_erro => vr_tab_erro
@@ -5680,7 +5683,7 @@ END pc_inserir_lancamento_bordero;
              crapbdt
           SET
             insitapr = 4,
-            dtaprova = vr_dtmvtolt,
+            dtaprova = rw_crapdat.dtmvtolt,
             hraprova = to_char(SYSDATE, 'SSSSS'),
             cdopeapr = vr_cdoperad
           WHERE
@@ -6796,9 +6799,8 @@ EXCEPTION
        Objetivo  : Efetuar o Pagamento dos Titulos Vencidos
 
        Alteração : 19/05/2018 - Criação (Vitor Shimada (GFT))
-
                    20/06/2018 - Substituido o processo de pagamento pela chamada da procedure pc_pagar_titulo (Paulo Penteado (GFT) 
-       
+                   15/08/2018 - Alteração no select para trazer apenas os campos utilizados (Vitor Shimada Assanuma (GFT))
      ---------------------------------------------------------------------------------------------------------------------*/
      vr_vlpagmto craptdb.vltitulo%TYPE;
      
@@ -6824,9 +6826,13 @@ EXCEPTION
      -- Cursor dos titulos para ser preenchido pelo comando SQL dentro do programa
      CURSOR cr_craptdb IS
             SELECT (vlmtatit - vlpagmta) AS vlmulta
-                   ,(vlmratit - vlpagmra) AS vlmora
-                   ,(vliofcpl - vlpagiof) AS vliof
-                   ,craptdb.* 
+                  ,(vlmratit - vlpagmra) AS vlmora
+                  ,(vliofcpl - vlpagiof) AS vliof
+                  ,craptdb.cdbandoc
+                  ,craptdb.nrdctabb
+                  ,craptdb.nrcnvcob
+                  ,craptdb.nrdocmto
+                  ,craptdb.vlsldtit
             FROM craptdb;
      rw_craptdb cr_craptdb%ROWTYPE;     
   BEGIN
@@ -6851,7 +6857,11 @@ EXCEPTION
     vr_sql := 'SELECT   (vlmtatit - vlpagmta) AS vlmulta' ||
                       ',(vlmratit - vlpagmra) AS vlmora'  ||
                       ',(vliofcpl - vlpagiof) AS vliof'   ||
-                      ',craptdb.* '||
+                      ',craptdb.cdbandoc ' ||
+                      ',craptdb.nrdctabb ' ||
+                      ',craptdb.nrcnvcob ' ||
+                      ',craptdb.nrdocmto ' ||
+                      ',craptdb.vlsldtit ' ||
                  ' FROM craptdb '  ||
                  ' WHERE '||
                    ' craptdb.nrborder = :nrborder ' || 

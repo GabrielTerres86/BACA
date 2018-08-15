@@ -5661,9 +5661,20 @@ END pc_insere_bordero;
     -- criticas
     vr_tab_criticas dsct0003.typ_tab_critica;
     ----------------> CURSORES <----------------
+    -- Associado
+    CURSOR cr_crapass IS
+    SELECT 
+      inpessoa
+    FROM 
+      crapass ass
+    WHERE 
+      nrdconta = pr_nrdconta
+      AND cdcooper = pr_cdcooper;
+    rw_crapass cr_crapass%ROWTYPE;
     -- Pagador
     cursor cr_crapsab is
-    SELECT *
+    SELECT nrinssac,
+           nmdsacad
     from crapsab
     where cdcooper = pr_cdcooper
     AND nrinssac = vr_nrinssac
@@ -5817,45 +5828,6 @@ END pc_insere_bordero;
                    AND craprpf.innegati = 9);
                    
        rw_craprpf cr_craprpf%rowtype; 
-       
-       /*Carrega as criticas do border*/
-       
-       /*
-       CURSOR cr_crapabt(pr_nrdocmto IN crapcob.nrdocmto%TYPE
-                   ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
-                   ,pr_nrdctabb IN crapcob.nrdctabb%TYPE
-                   ,pr_cdbandoc IN crapcob.cdbandoc%TYPE) IS
-         SELECT 
-           *
-         FROM 
-           crapabt abt
-         WHERE
-           abt.cdcooper = pr_cdcooper
-           AND abt.nrdconta = pr_nrdconta
-           AND abt.nrborder = vr_nrborder
-           AND ((abt.nrdocmto = 0 AND abt.cdbandoc = 0 AND abt.nrcnvcob = 0) OR (abt.nrdocmto=pr_nrdocmto AND abt.cdbandoc = pr_cdbandoc AND abt.nrcnvcob = pr_nrcnvcob AND abt.nrdctabb=pr_nrdctabb))
-       ;
-       rw_crapabt cr_crapabt%ROWTYPE;
-       */
-       /* Verifica se as criticas da tabela de pagador já foram inseridas na ABT */
-       /*
-       CURSOR cr_crapabt_duppes(pr_nrdocmto IN crapcob.nrdocmto%TYPE
-                   ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
-                   ,pr_nrdctabb IN crapcob.nrdctabb%TYPE
-                   ,pr_cdbandoc IN crapcob.cdbandoc%TYPE) IS
-         SELECT 
-            CASE WHEN abt.nrseqdig = 10 THEN 1 ELSE 0 END AS qtnaopag,
-            CASE WHEN abt.nrseqdig = 52 THEN 1 ELSE 0 END AS pcmxctip,
-            CASE WHEN abt.nrseqdig = 90 THEN 1 ELSE 0 END AS qtremcrt,
-            CASE WHEN abt.nrseqdig = 91 THEN 1 ELSE 0 END AS qttitprt
-         FROM  crapabt abt
-         WHERE   abt.cdcooper = pr_cdcooper 
-             AND abt.nrdconta = pr_nrdconta
-             AND abt.nrborder = pr_nrborder
-             AND abt.nrdocmto=pr_nrdocmto AND abt.cdbandoc = pr_cdbandoc AND abt.nrcnvcob = pr_nrcnvcob AND abt.nrdctabb=pr_nrdctabb
-       ;rw_crapabt_duppes cr_crapabt_duppes%ROWTYPE;
-       */
-       
        -- Cursor genérico de calendário
        rw_crapdat btch0001.cr_crapdat%rowtype;
        
@@ -5999,6 +5971,8 @@ END pc_insere_bordero;
           END LOOP;
         END IF;
       ELSE -- bordero ainda esta aberto
+        OPEN cr_crapass;
+        FETCH cr_crapass INTO rw_crapass;
         DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
                                    ,pr_cdagenci          => null -- Não utiliza dentro da procedure
                                    ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
@@ -6006,7 +5980,7 @@ END pc_insere_bordero;
                                    ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
                                    ,pr_idorigem          => null -- Não utiliza dentro da procedure
                                    ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
-                                   ,pr_inpessoa          => rw_crapsab.cdtpinsc
+                                   ,pr_inpessoa          => rw_crapass.inpessoa
                                    ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
                                    ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
                                    ,pr_cdcritic          => vr_cdcritic
@@ -6656,8 +6630,9 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     Frequencia: Sempre que for chamado
     Objetivo  : Procedure que busca os dados do bordero e de seus titulos  e monta o xml para a tela 
     Alterações
-      -   09/08/2018 - Vitor Shimada Assanuma - Inclusão do paramentro da TAB052 de QtdMaxTit.
-
+      -   09/08/2018 - Vitor Shimada Assanuma (GFT) - Inclusão do paramentro da TAB052 de QtdMaxTit.
+      -   15/08/2018 - Vitor Shimada Assanuma (GFT) - Remoção do NrCtrLimite na pesquisa da Bdt e alteração da mensagem quando não contratos 
+                            ativo é diferente do contrato do borderô clicado.
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -6698,7 +6673,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         crapbdt.cdcooper = vr_cdcooper
         AND crapbdt.nrdconta = pr_nrdconta
         AND crapbdt.nrborder = pr_nrborder
-        AND crapbdt.nrctrlim = vr_nrctrlim
       ;
     rw_crapbdt cr_crapbdt%rowtype;
 
@@ -6751,7 +6725,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         raise vr_exc_erro;
       END IF;
       IF (rw_crapbdt.nrctrlim<>vr_tab_dados_limite(0).nrctrlim) THEN
-        vr_dscritic := 'O contrato do borderô difere do contrato ativo';
+        vr_dscritic := 'O contrato deste borderô não se encontra mais ativo.';
         raise vr_exc_erro;
       END IF;
       IF (rw_crapbdt.insitbdt>2 OR rw_crapbdt.insitapr=7) THEN -- 1 = Em estudo, 2 = Analisado -- insitapr 7 = Prazo Expirado
