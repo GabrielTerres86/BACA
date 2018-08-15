@@ -1310,40 +1310,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                        vr_nrseqdig := Nvl(rw_craplot.nrseqdig,0) + 1;
                        rw_craplcm.vllanmto := round(rw_crapsld.vliofmes,2) ;
                         
-/*                     INSERT INTO craplcm (cdcooper
-                                         ,dtmvtolt
-                                         ,cdagenci
-                                         ,cdbccxlt
-                                         ,nrdolote
-                                         ,nrdconta
-                                         ,nrdctabb
-                                         ,nrdctitg
-                                         ,nrdocmto
-                                         ,cdhistor
-                                         ,nrseqdig
-                                         ,vllanmto
-                                         ,cdpesqbb
-                                         ,vldoipmf)
-                                 VALUES  (pr_cdcooper
-                                         ,rw_craplot.dtmvtolt
-                                         ,rw_craplot.cdagenci
-                                         ,rw_craplot.cdbccxlt
-                                         ,rw_craplot.nrdolote
-                                         ,rw_crapsld.nrdconta
-                                         ,rw_crapsld.nrdconta
-                                         ,to_char(rw_crapsld.nrdconta,'fm00000000')
-                                         ,99999323
-                                         ,2323
-                                         ,Nvl(rw_craplot.nrseqdig,0) + 1
-                                         ,round(rw_crapsld.vliofmes,2)
-                                         ,to_char(rw_crapsld.vlbasiof,'fm000g000g000d00')
-                                         ,0)
-                                 RETURNING vllanmto
-                                          ,nrseqdig
-                                          ,ROWID
-                                 INTO     rw_craplcm.vllanmto
-                                         ,vr_nrseqdig
-                                         ,rw_craplcm.rowid;*/
 
                      -- Se na carga inicial não haviam lançamentos do dia para a conta
                      IF NOT vr_tab_craplcm.EXISTS(rw_crapsld.nrdconta) THEN
