@@ -5,13 +5,14 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
   --  Sistema  : Rotinas para busca de comprovantes
   --  Sigla    : COMP
   --  Autor    : Ricardo Linhares
-  --  Data     : Junho/2017.                   Ultima atualizacao: 
+  --  Data     : Junho/2017.                   Ultima atualizacao: 14/08/2018
   --
-  --  Dados referentes ao programa:
+  -- Dados referentes ao programa:
   --
-  --  Frequencia: -
-  --  Objetivo  : Rotinas para busca de comprovantes
+  -- Frequencia: -
+  -- Objetivo  : Rotinas para busca de comprovantes
   --
+  -- Alteracoes: 14/08/2018 - Adicionado procedure pc_detalhe_compr_doc. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
   TYPE typ_reg_info_sac IS
     RECORD(nrtelsac crapcop.nrtelsac%TYPE
@@ -274,7 +275,16 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                      ,pr_dsprotoc IN crappro.dsprotoc%TYPE --> Protocolo
                                      ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
                                      ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
-                                     ,pr_dsretorn OUT VARCHAR2);          -- OK/NOK                                                                  
+                                     ,pr_dsretorn OUT VARCHAR2);          -- OK/NOK  
+									                                                                 
+  PROCEDURE pc_detalhe_compr_doc ( pr_cdcooper IN craplcm.cdcooper%TYPE  --> Código da cooperativa
+																	,pr_nrdconta IN craplcm.nrdconta%TYPE  --> Número da conta
+																	,pr_dttransa IN craplcm.dtmvtolt%TYPE  --> Data da transação
+																	,pr_cdhistor IN craplcm.cdhistor%TYPE  --> Código do histórico
+																	,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Nr. documento
+																	,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor de Lançamento
+																	,pr_retxml   OUT xmltype               --> Arquivo de retorno do XML                                        
+																	,pr_dsretorn OUT VARCHAR2);            -- OK/NOK	                                                                                                                                           
                                                                   
 END COMP0002;
 /
@@ -286,13 +296,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
   --  Sistema  : Rotinas para busca de comprovantes
   --  Sigla    : COMP
   --  Autor    : Ricardo Linhares
-  --  Data     : Junho/2017.                   Ultima atualizacao: 
+  --  Data     : Junho/2017.                   Ultima atualizacao: 14/08/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -
   -- Objetivo  : Rotinas para busca de comprovantes
   --
+	-- Alteracoes: 14/08/2018 - Adicionado procedure pc_detalhe_compr_doc. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
 	CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
@@ -5629,6 +5640,325 @@ END pc_comprovantes_recebidos;
     
   END pc_detalhe_compr_deposito;
 
+  PROCEDURE pc_detalhe_compr_doc ( pr_cdcooper IN craplcm.cdcooper%TYPE  --> Código da cooperativa
+																	,pr_nrdconta IN craplcm.nrdconta%TYPE  --> Número da conta
+																	,pr_dttransa IN craplcm.dtmvtolt%TYPE  --> Data da transação
+																	,pr_cdhistor IN craplcm.cdhistor%TYPE  --> Código do histórico
+																	,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Nr. documento
+																	,pr_vllanmto IN craplcm.vllanmto%TYPE  --> Valor de Lançamento
+																	,pr_retxml   OUT xmltype               --> Arquivo de retorno do XML                                        
+																	,pr_dsretorn OUT VARCHAR2) IS          -- OK/NOK
+    /* ................................................................................
+
+     Programa: pc_detalhe_compr_doc
+     Sistema : Internet Banking
+     Sigla   : COMP
+     Autor   : Lucas Reinert
+     Data    : Agosto/2018.                    Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina de consulta comprovantes de DOC.
+
+     Observacao: -----
+
+     Alteracoes: 
+
+     ..................................................................................*/  
+
+		vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+		vr_xml_temp    VARCHAR2(32726) := '';
+		vr_dscritic    VARCHAR2(4000);
+		vr_cdcritic    crapcri.cdcritic%TYPE;
+		vr_info_sac    typ_reg_info_sac;
+		vr_des_erro    VARCHAR2(4000);
+      
+		-- Variáveis auxiliares
+		vr_cdbanrem    NUMBER;
+		vr_cdagerem    NUMBER;
+		vr_nrctarem    VARCHAR2(20);
+		vr_nrcpfrem    NUMBER;
+		vr_dsnomrem    VARCHAR2(100);
+		vr_cdbandst    NUMBER;
+		vr_cdagedst    NUMBER;
+		vr_nrctadst    VARCHAR2(20);
+		vr_nrcpfdst    NUMBER;
+		vr_dsnomdst    VARCHAR2(100);
+		vr_stsnrcal_rem BOOLEAN;
+		vr_stsnrcal_dst BOOLEAN;
+		vr_inpessoa_rem INTEGER;
+		vr_inpessoa_dst INTEGER;
+			
+		vr_retxml      CLOB;
+      
+		TYPE typ_tab_campos IS TABLE OF VARCHAR2(2000)
+				 INDEX BY VARCHAR2(40);
+		vr_tab_campos typ_tab_campos;
+		vr_idx VARCHAR2(40);
+		vr_split_reg   gene0002.typ_split;
+		vr_split_campo gene0002.typ_split;
+            
+		--> Buscar código da agência da cooperativa cadastrada no bancoob
+		CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+			SELECT cop.cdbcoctl
+						,cop.cdagectl
+				FROM crapcop cop
+			 WHERE cop.cdcooper = pr_cdcooper;
+		rw_crapcop cr_crapcop%ROWTYPE;
+			
+		-- Cursor para detalhar DOCs enviados
+		CURSOR cr_craptvl (pr_cdcooper IN craptvl.cdcooper%TYPE
+											,pr_dtmvtolt IN craptvl.dtmvtolt%TYPE
+											,pr_nrdconta IN craptvl.nrdconta%TYPE
+											,pr_nrdocmto IN craptvl.nrdocmto%TYPE
+											,pr_vllanmto IN craptvl.vldocrcb%TYPE) IS
+			SELECT tvl.nrdconta
+						,tvl.cpfcgemi
+						,tvl.nmpesemi
+						,tvl.cdbccrcb
+						,tvl.cdagercb
+						,tvl.nrcctrcb
+						,tvl.cpfcgrcb
+						,tvl.nmpesrcb
+				FROM craptvl tvl
+			 WHERE tvl.cdcooper = pr_cdcooper
+				 AND tvl.dtmvtolt = pr_dtmvtolt
+				 AND tvl.nrdconta = pr_nrdconta
+				 AND tvl.nrdocmto = pr_nrdocmto
+				 AND tvl.vldocrcb = pr_vllanmto;
+		rw_craptvl cr_craptvl%ROWTYPE; 			
+			
+		-- Cursor para detalhar DOCs recebidos
+		CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE
+											,pr_nrdconta IN craplcm.nrdconta%TYPE
+											,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+											,pr_nrdocmto IN craplcm.nrdocmto%TYPE
+											,pr_vllanmto IN craplcm.vllanmto%TYPE) IS
+			SELECT lcm.cdbanchq
+						,lcm.cdagechq
+						,lcm.nrctachq
+				FROM craplcm lcm
+			 WHERE lcm.cdcooper = pr_cdcooper
+				 AND lcm.nrdconta = pr_nrdconta
+				 AND lcm.dtmvtolt = pr_dtmvtolt
+				 AND lcm.nrdocmto = pr_nrdocmto
+				 AND lcm.vllanmto = pr_vllanmto;
+		rw_craplcm cr_craplcm%ROWTYPE;
+		
+		-- Cursor para detalhar DOCs recebidos
+		CURSOR cr_gncpdoc (pr_cdcooper IN gncpdoc.cdcooper%TYPE
+		                  ,pr_nrdconta IN gncpdoc.nrdconta%TYPE
+											,pr_dtmvtolt IN gncpdoc.dtmvtolt%TYPE
+											,pr_nrdocmto IN gncpdoc.nrdocmto%TYPE) IS
+      SELECT doc.cpfcgemi
+			      ,doc.nmpesemi
+			  FROM gncpdoc doc
+			 WHERE doc.cdcooper = pr_cdcooper
+			   AND doc.nrdconta = pr_nrdconta
+				 AND doc.dtmvtolt = pr_dtmvtolt
+				 AND doc.nrdocmto = pr_nrdocmto;
+		rw_gncpdoc cr_gncpdoc%ROWTYPE;
+		
+		-- Buscar dados do destinatário do DOC recebido
+		CURSOR cr_crapass_doc(pr_cdcooper IN crapass.cdcooper%TYPE
+		                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+			SELECT ass.nrdconta
+			      ,ass.nrcpfcgc
+						,ass.nmprimtl
+			  FROM crapass ass
+			 WHERE ass.cdcooper = pr_cdcooper
+			   AND ass.nrdconta = pr_nrdconta;
+		rw_crapass_doc cr_crapass_doc%ROWTYPE;
+  BEGIN																	
+		-- Buscar dados da cooperativa			
+		OPEN cr_crapcop(pr_cdcooper);
+		FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrou registro de cooperativa
+    IF cr_crapcop%NOTFOUND THEN
+			-- Fechar cursor
+      CLOSE cr_crapcop;
+			-- Gerar crítica
+      vr_dscritic := 'Cooperativa nao encontrada.';
+      vr_des_erro := 'Erro em pc_detalhe_compr_doc: ' || vr_dscritic;
+			-- Levantar exceção
+      RAISE vr_exc_erro;
+    END IF;
+		-- Fechar cursor
+    CLOSE cr_crapcop;
+					
+		-- Débito		
+		IF pr_cdhistor IN (103, 355) THEN
+			-- Buscar detalhe do DOC enviado
+			OPEN cr_craptvl(pr_cdcooper => pr_cdcooper
+			               ,pr_dtmvtolt => pr_dttransa
+										 ,pr_nrdconta => pr_nrdconta
+										 ,pr_nrdocmto => pr_nrdocmto
+										 ,pr_vllanmto => pr_vllanmto);
+			FETCH cr_craptvl INTO rw_craptvl;
+
+      -- Se não encontrou registro			
+			IF cr_craptvl%NOTFOUND THEN
+				-- Fechar cursor
+				CLOSE cr_craptvl;
+				-- Gerar crítica
+				vr_dscritic := 'Detalhe de DOC não encontrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_doc: ' || vr_dscritic;
+				-- Levantar exceção
+				RAISE vr_exc_erro;				
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_craptvl;			
+			
+			-- Atribuir detalhes às variáveis auxiliares
+			vr_cdbanrem := rw_crapcop.cdbcoctl;
+			vr_cdagerem := rw_crapcop.cdagectl;
+			vr_nrctarem := LPAD(to_char(rw_craptvl.nrdconta), 14, '0');
+			vr_nrcpfrem := rw_craptvl.cpfcgemi;
+			vr_dsnomrem := rw_craptvl.nmpesemi;
+			vr_cdbandst := rw_craptvl.cdbccrcb;
+			vr_cdagedst := rw_craptvl.cdagercb;
+			vr_nrctadst := LPAD(to_char(rw_craptvl.nrcctrcb), 14, '0');
+			vr_nrcpfdst := rw_craptvl.cpfcgrcb;
+			vr_dsnomdst := rw_craptvl.nmpesrcb;
+		-- Crédito
+		ELSE
+			-- Buscar detalhe do DOC recebido
+			OPEN cr_craplcm(pr_cdcooper => pr_cdcooper
+			               ,pr_nrdconta => pr_nrdconta
+										 ,pr_dtmvtolt => pr_dttransa
+										 ,pr_nrdocmto => pr_nrdocmto
+										 ,pr_vllanmto => pr_vllanmto);
+			FETCH cr_craplcm INTO rw_craplcm;
+			
+			-- Se não encontrou
+			IF cr_craplcm%NOTFOUND THEN
+				-- Fechar cursor
+				CLOSE cr_craplcm;
+				
+				-- Gerar crítica
+				vr_dscritic := 'Detalhe de DOC não encontrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_doc: ' || vr_dscritic;
+				-- Levantar exceção
+				RAISE vr_exc_erro;								
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_craplcm;
+			
+			-- Buscar dados do destinatário do DOC recebido
+			OPEN cr_crapass_doc(pr_cdcooper => pr_cdcooper
+			                   ,pr_nrdconta => pr_nrdconta);
+			FETCH cr_crapass_doc INTO rw_crapass_doc;
+			
+			-- Se não encontrou registro
+			IF cr_crapass_doc%NOTFOUND THEN
+				-- Fechar cursor
+				CLOSE cr_crapass_doc;
+				
+				-- Gerar crítica
+				vr_dscritic := 'Destinatário não encontrado.';
+				vr_des_erro := 'Erro em pc_detalhe_compr_doc: ' || vr_dscritic;
+				-- Levantar exceção
+				RAISE vr_exc_erro;												
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_crapass_doc;
+			
+			-- Buscar detalhe do DOC recebido			
+			OPEN cr_gncpdoc(pr_cdcooper => pr_cdcooper
+			               ,pr_nrdconta => pr_nrdconta
+										 ,pr_dtmvtolt => pr_dttransa
+										 ,pr_nrdocmto => pr_nrdocmto);
+			FETCH cr_gncpdoc INTO rw_gncpdoc;
+			
+			-- Se encontrou registro
+			IF cr_gncpdoc%FOUND THEN
+			  -- Atribuir detalhes às variáveis auxiliares				
+				vr_nrcpfrem := rw_gncpdoc.cpfcgemi;
+				vr_dsnomrem := rw_gncpdoc.nmpesemi;			
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_gncpdoc;
+			
+			-- Atribuir detalhes às variáveis auxiliares
+			vr_cdbanrem := rw_craplcm.cdbanchq;
+			vr_cdagerem := rw_craplcm.cdagechq;
+			vr_nrctarem := LPAD(to_char(rw_craplcm.nrctachq), 14, '0');
+			vr_cdbandst := rw_crapcop.cdbcoctl;
+			vr_cdagedst := rw_crapcop.cdagectl;
+			vr_nrctadst := LPAD(to_char(rw_crapass_doc.nrdconta), 14, '0');
+			vr_nrcpfdst := rw_crapass_doc.nrcpfcgc;
+			vr_dsnomdst := rw_crapass_doc.nmprimtl;
+			
+		END IF;
+
+    -- Verificar se é CPF ou CNPJ				
+		gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_nrcpfrem
+		                           ,pr_stsnrcal => vr_stsnrcal_rem
+															 ,pr_inpessoa => vr_inpessoa_rem);
+															 
+		gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_nrcpfdst
+		                           ,pr_stsnrcal => vr_stsnrcal_dst
+															 ,pr_inpessoa => vr_inpessoa_dst);															 
+		
+		vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+		dbms_lob.createtemporary(vr_retxml, TRUE);
+		dbms_lob.open(vr_retxml, dbms_lob.lob_readwrite);
+       
+		 -- Criar cabecalho do XML
+		gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+													 ,pr_texto_completo => vr_xml_temp
+													 ,pr_texto_novo     => '<Comprovante>');       
+      
+		gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+													 ,pr_texto_completo => vr_xml_temp      
+													 ,pr_texto_novo     => 
+														 '<dados>'||
+														    '<dttransa>' || to_char(pr_dttransa,'DD/MM/RRRR') || '</dttransa>' ||
+																'<cdbanrem>' || vr_cdbanrem                       || '</cdbanrem>' ||
+																'<cdagerem>' || vr_cdagerem                       || '</cdagerem>' ||
+																'<nrctarem>' || vr_nrctarem                       || '</nrctarem>' ||
+																'<dsnomrem>' || vr_dsnomrem                       || '</dsnomrem>' ||
+																'<nrcpfrem>' || gene0002.fn_mask_cpf_cnpj(vr_nrcpfrem, vr_inpessoa_rem) || '</nrcpfrem>' ||
+																'<cdbandst>' || vr_cdbandst                       || '</cdbandst>' ||
+																'<cdagedst>' || vr_cdagedst                       || '</cdagedst>' ||
+																'<nrctadst>' || vr_nrctadst                       || '</nrctadst>' ||
+																'<dsnomdst>' || vr_dsnomdst                       || '</dsnomdst>' ||
+																'<nrcpfdst>' || gene0002.fn_mask_cpf_cnpj(vr_nrcpfdst, vr_inpessoa_dst) || '</nrcpfdst>' ||
+																'<infosac>' ||
+																		'<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+																		'<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+																		'<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+																		'<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+																		'<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+																		'<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+																'</infosac>' ||                                  
+														 '</dados>' );          
+      
+	  gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+												 	 ,pr_texto_completo => vr_xml_temp
+												   ,pr_texto_novo     => '</Comprovante>'
+												   ,pr_fecha_xml      => TRUE);      
+                          
+	  pr_retxml := XMLTYPE.CREATEXML(vr_retxml);
+		    
+	  pr_dsretorn := 'OK';		
+							
+  EXCEPTION								
+    WHEN vr_exc_erro THEN  							
+					
+      pr_retxml := XMLTYPE.CREATEXML('<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>');
+      pr_dsretorn := 'NOK';
+																 
+    WHEN OTHERS THEN
+								
+      vr_des_erro := 'Erro ao detalhar comprovante de DOC: ' || SQLERRM;
+      pr_retxml :=   XMLTYPE.CREATEXML('<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>');
+      pr_dsretorn := 'NOK';
+																	
+	END pc_detalhe_compr_doc;
 
 END;
 /
