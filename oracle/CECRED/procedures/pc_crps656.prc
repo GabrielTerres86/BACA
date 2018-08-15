@@ -151,7 +151,7 @@ BEGIN
             prej.dtinclusao        dtprejuz, --
             prej.vlsdprej + prej.vljur60_ctneg + 
 			prej.vljur60_lcred + 
-			prej.vljurepj          vlsdprej,
+			prej.vljuprej          vlsdprej,
             0                      cdfinemp,
             prej.dtinclusao        dtmvtolt, --
             prej.vldivida_original vlemprst, --
