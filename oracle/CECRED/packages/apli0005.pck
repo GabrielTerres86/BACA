@@ -8296,7 +8296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(4000) := '-10';
+      vr_dscritic VARCHAR2(4000) := '';
       vr_des_reto VARCHAR2(100);
 
       -- Tratamento de erros
@@ -15313,7 +15313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       IF pr_idvalida = 0 THEN
         -- Validacao de solicitacao de resgate
         apli0005.pc_val_solicit_resg(pr_cdcooper => vr_cdcooper
-                                    ,pr_cdoperad => vr_cdcooper
+                                    ,pr_cdoperad => vr_cdoperad
                                     ,pr_nmdatela => vr_nmdatela
                                     ,pr_idorigem => vr_idorigem
                                     ,pr_nrdconta => pr_nrdconta
