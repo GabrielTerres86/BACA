@@ -2515,35 +2515,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                  --vr_nrdrowid := vr_tab_retorno.rowidlct;
                  
                  
-/*                 INSERT INTO craplcm (cdcooper
-                                     ,dtmvtolt
-                                     ,cdagenci
-                                     ,cdbccxlt
-                                     ,nrdolote
-                                     ,nrdconta
-                                     ,nrdctabb
-                                     ,nrdctitg
-                                     ,nrdocmto
-                                     ,cdhistor
-                                     ,cdpesqbb
-                                     ,nrseqdig
-                                     ,vllanmto
-                                     ,vldoipmf)
-                             VALUES  (pr_cdcooper
-                                     ,rw_craplot.dtmvtolt
-                                     ,rw_craplot.cdagenci
-                                     ,rw_craplot.cdbccxlt
-                                     ,rw_craplot.nrdolote
-                                     ,rw_crapsld.nrdconta
-                                     ,rw_crapsld.nrdconta
-                                     ,to_char(rw_crapsld.nrdconta,'fm00000000')
-                                     ,Nvl(rw_craplot.nrseqdig,0)
-                                     ,289
-                                     ,' '
-                                     ,Nvl(rw_craplot.nrseqdig,0)
-                                     ,vr_vlcobsld
-                                     ,vr_vldoipmf);
-*/               EXCEPTION
+               EXCEPTION
                  WHEN OTHERS THEN
                    vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
                    --Sair do programa
