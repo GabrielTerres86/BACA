@@ -30,7 +30,7 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
   PROCEDURE pc_busca_inicio_atraso (pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                    ,pr_dtiniatr OUT DATE);          --> retorno da data de inicio de atraso
-                                   
+
   PROCEDURE pc_consulta_preju_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
                                 ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
@@ -38,7 +38,7 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2);            --> Descricao do erro                       
+                                ,pr_des_erro OUT VARCHAR2);            --> Descricao do erro
 
   -- retorna dados da conta em prejuizo, em XML
   PROCEDURE pc_busca_vlrs_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
@@ -48,7 +48,7 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);                                
+                                     ,pr_des_erro OUT VARCHAR2);
 
   -- efetua pagamento de conta em prejuizo
   PROCEDURE pc_paga_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
@@ -60,8 +60,8 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);  
-                                     
+                                     ,pr_des_erro OUT VARCHAR2);
+
   -- consulta data de inclusão prejuízo
   PROCEDURE pc_consulta_dt_preju(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
@@ -70,16 +70,26 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2);                                                                   
+                                ,pr_des_erro OUT VARCHAR2);
 
 
   PROCEDURE pc_busca_saldos_juros60(pr_cdcooper IN crapris.cdcooper%TYPE --> Código da cooperativa
-	                              , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
-																, pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
-                                , pr_vlsld59d OUT NUMBER               --> Saldo até 59 dias (saldo devedor - juros +60)  
-																, pr_vljuro60 OUT NUMBER
-																, pr_cdcritic OUT crapcri.cdcritic%TYPE
-																, pr_dscritic OUT crapcri.dscritic%TYPE);
+                                , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
+                                , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
+                                , pr_vlsld59d OUT NUMBER               --> Saldo até 59 dias (saldo devedor - juros +60)
+                                , pr_vljuro60 OUT NUMBER
+                                , pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                , pr_dscritic OUT crapcri.dscritic%TYPE);
+
+  -- Busca saldo até 59 dias e valores de juros +60 detalhados (hist. 37+57+2718 e hist 38)
+  PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> Código da cooperativa
+                                    , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
+                                    , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
+                                    , pr_vlsld59d OUT NUMBER             --> Saldo até 59 dias (saldo devedor - juros +60)
+                                    , pr_vljucneg OUT NUMBER             --> Juros +60 (Hist. 37 + 57 + 2718)
+																  	, pr_vljucesp OUT NUMBER             -- Juros + 60 (Hist. 38)
+                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                    , pr_dscritic OUT crapcri.dscritic%TYPE);
 
 END TELA_ATENDA_DEPOSVIS;
 /
@@ -287,31 +297,6 @@ DECLARE
                                                          ,pr_cdacesso => 'DT_CORTE_REGCRE')
                                                          ,'DD/MM/RRRR');
 
-      /*IF rw_saldos.dtrisclq IS NULL THEN
-        vr_saldo_devedor_59dias := 0;
-      ELSE  
-        IF rw_saldos.qtddsdev < 60 THEN
-          vr_saldo_devedor_59dias := rw_saldos.vlsddisp;
-        ELSE
-           IF rw_saldos.dtrisclq < vr_data_corte THEN -- Se data de início do atraso menor que a data de corte
-              vr_data_59dias_atraso := fn_soma_dias_uteis_data(vr_cdcooper, rw_saldos.dtrisclq, 59); -- Conta dias úteis
-           ELSE
-              vr_data_59dias_atraso := rw_saldos.dtrisclq + 59; -- Conta dias corridos
-           END IF;
-
-           OPEN cr_crapsda(vr_cdcooper, pr_nrdconta, vr_data_59dias_atraso);
-           FETCH cr_crapsda INTO rw_crapsda;
-
-           IF cr_crapsda%NOTFOUND THEN
-              CLOSE cr_crapsda;
-
-              RAISE vr_exc_saldo_indisponivel;
-           ELSE
-              vr_saldo_devedor_59dias      := rw_crapsda.vlsddisp;              
-           END IF;
-        END IF;
-      END IF;*/
-      
       pc_busca_saldos_juros60(pr_cdcooper => vr_cdcooper
                             , pr_nrdconta => pr_nrdconta
                             , pr_vlsld59d => vr_saldo_devedor_59dias
@@ -349,12 +334,9 @@ DECLARE
                                                      'nls_numeric_characters='',.'''),
                               pr_des_erro => vr_dscritic);
 
-      /* vr_saldo_devedor_total := vr_saldo_devedor_59dias +
-                                 vr_saldo_devedor_mais_60dias +
-                                 vr_valor_iof_debitar;*/
-																 
-       vr_saldo_devedor_total := rw_saldos.vlsddisp +
-                                 vr_valor_iof_debitar;																 
+       vr_saldo_devedor_total := vr_saldo_devedor_59dias +
+			                           vr_vljuros60 +
+                                 vr_valor_iof_debitar;
 
        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                               pr_tag_pai  => 'Dados',
@@ -547,7 +529,7 @@ END pc_busca_saldos_devedores;
     pr_valorprj := nvl(rw_crapepr.vlsdprej, 0);
     pr_dtiniprj := rw_crapepr.dtmvtolt;
   END pc_busca_preju_cc_L100;
-  
+
   PROCEDURE pc_consulta_preju_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
                                 ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
@@ -571,30 +553,30 @@ END pc_busca_saldos_devedores;
     Objetivo   : Consulta para verificar se a conta corrente houve prejuizo ou se esta em prejuizo.
 
     Alterações : PJ450 - Adicionado campo indicador de prejuizo da conta
-	             (Renato Cordeiro - AMCOM)
+               (Renato Cordeiro - AMCOM)
 
     -------------------------------------------------------------------------------------------------------------*/
-    
-    -- CURSORES --    
-    
+
+    -- CURSORES --
+
     --> Consultar se já houve prejuizo nessa conta
     CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
       SELECT t.nrdconta
         FROM tbcc_prejuizo t
        WHERE t.cdcooper = pr_cdcooper
          AND t.nrdconta = pr_nrdconta;
-    rw_prejuizo cr_prejuizo%ROWTYPE;    
-    
+    rw_prejuizo cr_prejuizo%ROWTYPE;
+
     --> Consultar crapass
     CURSOR cr_crapass(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                      pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
       SELECT c.inprejuz
         FROM crapass c
        WHERE c.cdcooper = pr_cdcooper
          AND c.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;    
-    
+    rw_crapass cr_crapass%ROWTYPE;
+
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(4000);
@@ -603,7 +585,7 @@ END pc_busca_saldos_devedores;
 
     --Tabela de Erros
     vr_tab_erro gene0001.typ_tab_erro;
-    
+
     -- Variaveis de log
     vr_cdcooper crapcop.cdcooper%TYPE;
     vr_cdoperad VARCHAR2(100);
@@ -661,28 +643,28 @@ END pc_busca_saldos_devedores;
                            pr_tag_nova => 'inf',
                            pr_tag_cont => NULL,
                            pr_des_erro => vr_dscritic);
-    
+
     -----> PROCESSAMENTO PRINCIPAL <-----
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta);
 
     FETCH cr_crapass INTO rw_crapass;
-    
+
     vr_despreju := '';
 
-    IF cr_crapass%FOUND THEN 
+    IF cr_crapass%FOUND THEN
       CLOSE cr_crapass;
       IF rw_crapass.inprejuz = 1 THEN
         -- Conta Corrente em Prejuízo
-        vr_despreju := 'Conta Corrente em Prejuízo';     
+        vr_despreju := 'Conta Corrente em Prejuízo';
       ELSE
         OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper,
                          pr_nrdconta => pr_nrdconta);
         FETCH cr_prejuizo INTO rw_prejuizo;
-        IF cr_prejuizo%FOUND THEN 
+        IF cr_prejuizo%FOUND THEN
           CLOSE cr_prejuizo;
           -- Houve prejuízo de Conta Corrente
-          vr_despreju := 'Houve prejuízo de Conta Corrente';     
+          vr_despreju := 'Houve prejuízo de Conta Corrente';
         ELSE
           CLOSE cr_prejuizo;
         END IF;
@@ -690,7 +672,7 @@ END pc_busca_saldos_devedores;
     ELSE
       CLOSE cr_crapass;
     END IF;
-    
+
     pr_cdcritic := NULL;
     pr_dscritic := NULL;
 
@@ -706,7 +688,7 @@ END pc_busca_saldos_devedores;
                            pr_posicao  => vr_qtregist,
                            pr_tag_nova => 'inprejuz',
                            pr_tag_cont => rw_crapass.inprejuz,
-                           pr_des_erro => vr_dscritic);                           
+                           pr_des_erro => vr_dscritic);
 
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -732,7 +714,7 @@ END pc_busca_saldos_devedores;
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
-  END pc_consulta_preju_cc;               
+  END pc_consulta_preju_cc;
 
     /* .............................................................................
 
@@ -758,9 +740,9 @@ END pc_busca_saldos_devedores;
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2)  IS
-    -- CURSORES --    
+    -- CURSORES --
     CURSOR cr_tbcc_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                            pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                            pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
       SELECT prej.vlsdprej, prej.vljuprej, sld.vliofmes
         FROM tbcc_prejuizo prej
         LEFT JOIN crapsld sld
@@ -769,7 +751,7 @@ END pc_busca_saldos_devedores;
        WHERE prej.cdcooper = pr_cdcooper
          AND prej.nrdconta = pr_nrdconta
          AND prej.dtliquidacao IS NULL;
-    rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;    
+    rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;
 
     -- variaveis
     vr_vlsdprej           tbcc_prejuizo.vlsdprej%TYPE := 1;
@@ -787,13 +769,13 @@ END pc_busca_saldos_devedores;
                           pr_nrdconta => pr_nrdconta);
 
     FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
-    
+
     IF cr_tbcc_prejuizo%FOUND THEN
       vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej;
       vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
       vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
     END IF;
-    
+
     CLOSE cr_tbcc_prejuizo;
 
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -832,7 +814,7 @@ END pc_busca_saldos_devedores;
                                                  'nls_numeric_characters='',.''')
                           ,pr_des_erro => vr_dscritic);
 
-    EXCEPTION             
+    EXCEPTION
         WHEN vr_exc_erro THEN
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
@@ -845,7 +827,7 @@ END pc_busca_saldos_devedores;
                                          '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
 
   END pc_busca_vlrs_prejuz_cc;
-  
+
       /* .............................................................................
 
      Programa: pc_busca_dts_preju_atraso
@@ -895,8 +877,8 @@ END pc_busca_saldos_devedores;
     -- Tratamento de erros
       --vr_dscritic := 'erro teste de erro';
       --RAISE vr_exc_erro;
-    
-    EXCEPTION             
+
+    EXCEPTION
         WHEN vr_exc_erro THEN
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
@@ -909,7 +891,7 @@ END pc_busca_saldos_devedores;
                                          '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
 
   END pc_paga_prejuz_cc;
-  
+
   PROCEDURE pc_consulta_dt_preju(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
                                 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
@@ -935,44 +917,44 @@ END pc_busca_saldos_devedores;
   Alterações :
 
   -------------------------------------------------------------------------------------------------------------*/
-  
-  -- CURSORES --    
-  
+
+  -- CURSORES --
+
   --> Consultar data de inclusão prejuizo quando a conta está em prejuízo
   CURSOR cr_prejuizo_s(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                       pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
     SELECT t.dtinclusao
       FROM tbcc_prejuizo t
      WHERE t.cdcooper = pr_cdcooper
        AND t.nrdconta = pr_nrdconta
        AND t.dtliquidacao IS NULL;
-  rw_prejuizo_s cr_prejuizo_s%ROWTYPE;    
-  
+  rw_prejuizo_s cr_prejuizo_s%ROWTYPE;
+
   --> Consultar data de inclusão prejuizo quando a conta "não" está em prejuízo
   CURSOR cr_prejuizo_n(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                     pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                     pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
     SELECT MIN(t.dtinclusao) dtinclusao
       FROM tbcc_prejuizo t
      WHERE t.cdcooper = pr_cdcooper
        AND t.nrdconta = pr_nrdconta;
-  rw_prejuizo_n cr_prejuizo_n%ROWTYPE;   
-  
+  rw_prejuizo_n cr_prejuizo_n%ROWTYPE;
+
   --> Consultar crapass
   CURSOR cr_crapass(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
-                    pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+                    pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
     SELECT c.inprejuz
       FROM crapass c
      WHERE c.cdcooper = pr_cdcooper
        AND c.nrdconta = pr_nrdconta;
-  rw_crapass cr_crapass%ROWTYPE; 
-  
+  rw_crapass cr_crapass%ROWTYPE;
+
    --> Consultar crapdat
-  CURSOR cr_crapdat(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE)IS 
+  CURSOR cr_crapdat(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE)IS
     SELECT c.dtmvtolt
       FROM crapdat c
      WHERE c.cdcooper = pr_cdcooper;
-  rw_crapdat cr_crapdat%ROWTYPE;      
-  
+  rw_crapdat cr_crapdat%ROWTYPE;
+
   --Variaveis de Criticas
   vr_cdcritic INTEGER;
   vr_dscritic VARCHAR2(4000);
@@ -981,7 +963,7 @@ END pc_busca_saldos_devedores;
 
   --Tabela de Erros
   vr_tab_erro gene0001.typ_tab_erro;
-  
+
   -- Variaveis de log
   vr_cdcooper crapcop.cdcooper%TYPE;
   vr_cdoperad VARCHAR2(100);
@@ -1041,22 +1023,22 @@ BEGIN
                          pr_tag_nova => 'inf',
                          pr_tag_cont => NULL,
                          pr_des_erro => vr_dscritic);
-  
+
   -----> PROCESSAMENTO PRINCIPAL <-----
   OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                   pr_nrdconta => pr_nrdconta);
 
   FETCH cr_crapass INTO rw_crapass;
-  
-  IF cr_crapass%FOUND THEN 
+
+  IF cr_crapass%FOUND THEN
     CLOSE cr_crapass;
     IF rw_crapass.inprejuz = 1 THEN
       -- Conta Corrente está em Prejuízo
       OPEN cr_prejuizo_s(pr_cdcooper => pr_cdcooper,
                          pr_nrdconta => pr_nrdconta);
 
-      FETCH cr_prejuizo_s INTO rw_prejuizo_s;   
-      IF cr_prejuizo_s%FOUND THEN 
+      FETCH cr_prejuizo_s INTO rw_prejuizo_s;
+      IF cr_prejuizo_s%FOUND THEN
         vr_dataprej := rw_prejuizo_s.dtinclusao;
       END IF;
     ELSE
@@ -1064,24 +1046,24 @@ BEGIN
       OPEN cr_prejuizo_n(pr_cdcooper => pr_cdcooper,
                          pr_nrdconta => pr_nrdconta);
 
-      FETCH cr_prejuizo_n INTO rw_prejuizo_n;   
-      IF cr_prejuizo_n%FOUND THEN 
+      FETCH cr_prejuizo_n INTO rw_prejuizo_n;
+      IF cr_prejuizo_n%FOUND THEN
         vr_dataprej := rw_prejuizo_n.dtinclusao;
-      END IF; 
+      END IF;
     END IF;
   ELSE
     CLOSE cr_crapass;
   END IF;
-  
+
   OPEN cr_crapdat(pr_cdcooper => pr_cdcooper);
   FETCH cr_crapdat INTO rw_crapdat;
-  IF cr_crapdat%FOUND THEN 
+  IF cr_crapdat%FOUND THEN
     CLOSE cr_crapdat;
     vr_dataatua := rw_crapdat.dtmvtolt;
   ELSE
     CLOSE cr_crapdat;
   END IF;
-  
+
   pr_cdcritic := NULL;
   pr_dscritic := NULL;
 
@@ -1091,13 +1073,13 @@ BEGIN
                          pr_tag_nova => 'datpreju',
                          pr_tag_cont => to_char(vr_dataprej,'DD/MM/YYYY'),
                          pr_des_erro => vr_dscritic);
-                         
+
   gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                          pr_tag_pai  => 'inf',
                          pr_posicao  => vr_qtregist,
                          pr_tag_nova => 'datatual',
                          pr_tag_cont => to_char(vr_dataatua, 'DD/MM/YYYY'),
-                         pr_des_erro => vr_dscritic);                         
+                         pr_des_erro => vr_dscritic);
 
 
 EXCEPTION
@@ -1124,197 +1106,344 @@ EXCEPTION
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                    '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
-  END pc_consulta_dt_preju; 
-	
+  END pc_consulta_dt_preju;
+
 PROCEDURE pc_busca_saldos_juros60(pr_cdcooper IN crapris.cdcooper%TYPE --> Código da cooperativa
-	                              , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
-																, pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
-                                , pr_vlsld59d OUT NUMBER               --> Saldo até 59 dias (saldo devedor - juros +60)  
-																, pr_vljuro60 OUT NUMBER
-																, pr_cdcritic OUT crapcri.cdcritic%TYPE
-																, pr_dscritic OUT crapcri.dscritic%TYPE)  IS          --> Valor dos juros +60
+                                , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
+                                , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
+                                , pr_vlsld59d OUT NUMBER               --> Saldo até 59 dias (saldo devedor - juros +60)
+                                , pr_vljuro60 OUT NUMBER
+                                , pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                , pr_dscritic OUT crapcri.dscritic%TYPE)  IS          --> Valor dos juros +60
 
 BEGIN
-	
-DECLARE 
+
+DECLARE
   -- Recupera a soma dos lançamentos de juros +60 da conta
-  CURSOR cr_craplcm_ccjuros60(pr_dt59datr IN crapris.dtinictr%TYPE) IS           
+  CURSOR cr_craplcm_ccjuros60(pr_dt59datr IN crapris.dtinictr%TYPE) IS
   SELECT  nvl(sum(lcm.vllanmto),0) vl_juros60
-	  FROM craplcm lcm
-	 WHERE lcm.cdhistor IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
-		 AND lcm.cdcooper   = pr_cdcooper
-		 AND lcm.nrdconta   = pr_nrdconta
-		 AND lcm.dtmvtolt   > pr_dt59datr; -- Data em que completou 59 dias em ADP
-		 
-	-- Recupera os lançamentos que não são juros +60 ocorridos após 60 dias de atraso da conta
-  CURSOR cr_craplcm_outros(pr_dt59datr IN crapris.dtinictr%TYPE) IS           
+    FROM craplcm lcm
+   WHERE lcm.cdhistor IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
+     AND lcm.cdcooper   = pr_cdcooper
+     AND lcm.nrdconta   = pr_nrdconta
+     AND lcm.dtmvtolt   > pr_dt59datr; -- Data em que completou 59 dias em ADP
+
+  -- Recupera os lançamentos que não são juros +60 ocorridos após 60 dias de atraso da conta
+  CURSOR cr_craplcm_outros(pr_dt59datr IN crapris.dtinictr%TYPE) IS
   SELECT lcm.vllanmto
-	     , lcm.dtmvtolt
-			 , his.indebcre    
-	  FROM craplcm lcm
-		   , craphis his
-	 WHERE lcm.cdhistor NOT IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
-		 AND lcm.cdcooper   = pr_cdcooper
-		 AND lcm.nrdconta   = pr_nrdconta  
-		 AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
-		 AND his.cdcooper   = lcm.cdcooper
-		 AND his.cdhistor   = lcm.cdhistor
-	 ORDER BY indebcre DESC;
-	rw_craplcm_outros cr_craplcm_outros%ROWTYPE;
-	
-	-- Busca o limite de crédito atual do cooperado
-	CURSOR cr_limite IS 
+       , lcm.dtmvtolt
+       , his.indebcre
+    FROM craplcm lcm
+       , craphis his
+   WHERE lcm.cdhistor NOT IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
+     AND lcm.cdcooper   = pr_cdcooper
+     AND lcm.nrdconta   = pr_nrdconta
+     AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
+     AND his.cdcooper   = lcm.cdcooper
+     AND his.cdhistor   = lcm.cdhistor
+   ORDER BY indebcre DESC;
+  rw_craplcm_outros cr_craplcm_outros%ROWTYPE;
+
+  -- Busca o limite de crédito atual do cooperado
+  CURSOR cr_limite IS
   SELECT nvl(ass.vllimcre,0) vllimcre
-		FROM crapass ass
-	 WHERE ass.cdcooper = pr_cdcooper
-	  AND ass.nrdconta = pr_nrdconta;
-	
-	-- Informações de saldo atual da conta corrente
-	CURSOR cr_saldos(pr_cdcooper NUMBER
-								 , pr_nrdconta NUMBER) IS
-	SELECT abs(sld.vlsddisp) vlsddisp
-			 , sld.dtrisclq
-			 , sld.qtddsdev
-			 , sld.vliofmes
-		FROM crapsld sld
-	 WHERE sld.cdcooper = pr_cdcooper
-		 AND sld.nrdconta = pr_nrdconta;
-	rw_saldos cr_saldos%ROWTYPE;
+    FROM crapass ass
+   WHERE ass.cdcooper = pr_cdcooper
+    AND ass.nrdconta = pr_nrdconta;
 
-	-- Histórico do saldo da conta
-	CURSOR cr_crapsda(pr_dtmvtolt DATE) IS
-	SELECT * FROM (
-	SELECT abs(sda.vlsddisp) vlsddisp
-	     , ROWNUM  
-		FROM crapsda sda
-	 WHERE sda.cdcooper = pr_cdcooper
-		 AND sda.nrdconta = pr_nrdconta
-		 AND sda.dtmvtolt >= pr_dtmvtolt
-	ORDER BY dtmvtolt)
-	WHERE rownum = 1;
-	rw_crapsda cr_crapsda%ROWTYPE;
+  -- Informações de saldo atual da conta corrente
+  CURSOR cr_saldos(pr_cdcooper NUMBER
+                 , pr_nrdconta NUMBER) IS
+  SELECT abs(sld.vlsddisp) vlsddisp
+       , sld.dtrisclq
+       , sld.qtddsdev
+       , sld.vliofmes
+    FROM crapsld sld
+   WHERE sld.cdcooper = pr_cdcooper
+     AND sld.nrdconta = pr_nrdconta;
+  rw_saldos cr_saldos%ROWTYPE;
 
-	-- Calendário da cooperativa
-	rw_crapdat btch0001.rw_crapdat%TYPE;
-  
-  vr_data_corte_dias_uteis DATE; --> Data de corte para contagem de dias de atraso em dias corridos	 
-	vr_dtcorte_rendaprop     DATE; --> Data de corte de implantação do Rendas a Apropriar (não apropriação de receita dos juros +60)
-	vr_data_59dias_atraso    DATE; --> Data em que a conta atingiu 59 dias de atraso (ADP)	
-	
-	vr_vlrlimite NUMBER;
-	
-	vr_exc_saldo_indisponivel EXCEPTION;  --> Exceção para o caso de saldo indisponível na base de dados														
-	vr_qtddiaatr INTEGER;                 --> Quantidade de dias de atraso da conta
+  -- Histórico do saldo da conta
+  CURSOR cr_crapsda(pr_dtmvtolt DATE) IS
+  SELECT * FROM (
+  SELECT abs(sda.vlsddisp) vlsddisp
+       , ROWNUM
+    FROM crapsda sda
+   WHERE sda.cdcooper = pr_cdcooper
+     AND sda.nrdconta = pr_nrdconta
+     AND sda.dtmvtolt >= pr_dtmvtolt
+  ORDER BY dtmvtolt)
+  WHERE rownum = 1;
+  rw_crapsda cr_crapsda%ROWTYPE;
+
+  -- Calendário da cooperativa
+  rw_crapdat btch0001.rw_crapdat%TYPE;
+
+  vr_data_corte_dias_uteis DATE; --> Data de corte para contagem de dias de atraso em dias corridos
+  vr_dtcorte_rendaprop     DATE; --> Data de corte de implantação do Rendas a Apropriar (não apropriação de receita dos juros +60)
+  vr_data_59dias_atraso    DATE; --> Data em que a conta atingiu 59 dias de atraso (ADP)
+
+  vr_vlrlimite NUMBER;
+
+  vr_exc_saida  EXCEPTION;  --> Exceção para o caso de saldo indisponível na base de dados
+  vr_qtddiaatr  INTEGER;                 --> Quantidade de dias de atraso da conta
+	vr_jur60_cneg NUMBER;                 --> Juros +60 (Hist. 37 + Hist. 57)
+	vr_jur60_cesp NUMBER;                 --> Juros +60 (Hist. 38)
+	vr_cdcritic   crapcri.cdcritic%TYPE;
+	vr_dscritic   crapcri.dscritic%TYPE;
 BEGIN
-		-- Busca data de corte para contagem de dias de atraso em dias corridos
-		vr_data_corte_dias_uteis := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
-																									 ,pr_nmsistem => 'CRED'
-																									 ,pr_cdacesso => 'DT_CORTE_REGCRE')
-																									 ,'DD/MM/RRRR');											
-																									 
-		--Buscar a data de corte
-		 vr_dtcorte_rendaprop := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
-																							   					     ,pr_nmsistem => 'CRED'
-																									 			       ,pr_cdacesso => 'DT_CORTE_RENDAPROP')
-																												       ,'DD/MM/RRRR');
-															
-		-- Carrega o calendário da cooperativa										 
-		OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-		CLOSE BTCH0001.cr_crapdat;
+    pc_busca_saldos_juros60_det(pr_cdcooper => pr_cdcooper
+		                         , pr_nrdconta => pr_nrdconta
+														 , pr_qtdiaatr => pr_qtdiaatr
+														 , pr_vlsld59d => pr_vlsld59d
+														 , pr_vljucneg => vr_jur60_cneg
+														 , pr_vljucesp => vr_jur60_cesp
+														 , pr_cdcritic => vr_cdcritic
+														 , pr_dscritic => vr_dscritic);
 
-		--  Carrega informações de saldo atual da conta
-		OPEN cr_saldos(pr_cdcooper, pr_nrdconta);
-		FETCH cr_saldos INTO rw_saldos;
-		CLOSE cr_saldos;
-		
-		-- Busca o limite ativo da conta
-		OPEN cr_limite;
-		FETCH cr_limite INTO vr_vlrlimite;
-		CLOSE cr_limite;
-		
-		vr_qtddiaatr := pr_qtdiaatr;
-		
-		-- Se não foi informada a quantidade de dias em atraso (este valor será informado quando
-		-- for necessário considerar a quantidade de dias em atraso calculada e não a armazenada na CRAPSLD).
-		IF vr_qtddiaatr IS NULL THEN
-			vr_qtddiaatr := rw_saldos.qtddsdev; -- Considera os dias em atraso da CRAPSLD
+		IF vr_cdcritic >0 OR vr_dscritic IS NOT NULL THEN
+			RAISE vr_exc_saida;
 		END IF;
-		
-		pr_vljuro60 := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
-		
-		IF rw_saldos.dtrisclq IS NULL THEN -- Se a conta não está em atraso
-			pr_vlsld59d := 0;
-		ELSE	
-			IF vr_qtddiaatr < 60 THEN -- Se a conta não ultrapassou os 60 dias de atraso
-				pr_vlsld59d := rw_saldos.vlsddisp - vr_vlrlimite;
-			ELSE
-				 IF rw_saldos.dtrisclq < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
-						vr_data_59dias_atraso := fn_soma_dias_uteis_data(pr_cdcooper, rw_saldos.dtrisclq, 59); -- Conta dias úteis
-				 ELSE
-						vr_data_59dias_atraso := rw_saldos.dtrisclq + 59; -- Conta dias corridos
-				 END IF;
-				 
-				 -- Se contrato atingiu 60 dias de atraso antes da data de corte do Rendas a Apropriar
-				 IF vr_data_59dias_atraso < vr_dtcorte_rendaprop THEN 
-					 vr_data_59dias_atraso := vr_dtcorte_rendaprop;
-				 END IF;
 
-				 -- Busca os saldo do dia em que a conta completou 59 dias de atraso
-				 OPEN cr_crapsda(vr_data_59dias_atraso);
-				 FETCH cr_crapsda INTO rw_crapsda;
-
-				 IF cr_crapsda%NOTFOUND THEN -- Se não encontrou o saldo para o dia em questão
-						CLOSE cr_crapsda;
-
-						RAISE vr_exc_saldo_indisponivel;
-				 ELSE
-						pr_vlsld59d := rw_crapsda.vlsddisp - vr_vlrlimite;							
-						
-						-- Recupera somatório dos lançamentos de juros +60
-						OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso);
-						FETCH cr_craplcm_ccjuros60 INTO pr_vljuro60;
-						CLOSE cr_craplcm_ccjuros60;					
-						
-						-- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
-						FOR rw_craplcm_outros IN cr_craplcm_outros(vr_data_59dias_atraso) LOOP
-							IF rw_craplcm_outros.indebcre = 'D' THEN
-								-- Incorpora o débito no saldo devedor até 59 dias
-								pr_vlsld59d := pr_vlsld59d + rw_craplcm_outros.vllanmto;
-							ELSE
-								IF pr_vljuro60 > 0 THEN
-									-- Amortiza os juros + 60
-									IF rw_craplcm_outros.vllanmto >= pr_vljuro60 THEN
-										pr_vljuro60 := 0;
-										rw_craplcm_outros.vllanmto := rw_craplcm_outros.vllanmto - pr_vljuro60;
-									ELSE
-										pr_vljuro60 := pr_vljuro60 - rw_craplcm_outros.vllanmto;
-										rw_craplcm_outros.vllanmto := 0;
-									END IF;
-								END IF;	
-								
-								IF rw_craplcm_outros.vllanmto > 0 THEN
-									-- Amortiza o saldo devedor até 59 dias
-									IF rw_craplcm_outros.vllanmto >= pr_vlsld59d THEN
-										pr_vlsld59d := 0;
-									ELSE
-										pr_vlsld59d := pr_vlsld59d - rw_craplcm_outros.vllanmto;
-									END IF;
-								END IF;							
-							END IF;
-						END LOOP;
-				 END IF;
-			END IF;
-		END IF;
-	EXCEPTION
-		WHEN vr_exc_saldo_indisponivel THEN
-			pr_cdcritic := 853;
-			pr_dscritic := 'Não foi possível recuperar o saldo de 59 dias de atraso.';
-		WHEN OTHERS THEN
-			pr_cdcritic := 9999;
-			pr_dscritic := 'Erro não tratado na "TELA_ATENDA_DEPOSVIS.pc_consulta_saldos_juros60".';
-	END;
+		pr_vljuro60 := vr_jur60_cneg + vr_jur60_cesp;
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_cdcritic := 9999;
+      pr_dscritic := 'Erro não tratado na "TELA_ATENDA_DEPOSVIS.pc_consulta_saldos_juros60".';
+  END;
 END pc_busca_saldos_juros60;
-  
+
+-- Busca saldo até 59 dias e valores de juros +60 detalhados (hist. 37+57+2718 e hist 38)
+PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> Código da cooperativa
+                                    , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
+                                    , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
+                                    , pr_vlsld59d OUT NUMBER             --> Saldo até 59 dias (saldo devedor - juros +60)
+                                    , pr_vljucneg OUT NUMBER             --> Juros +60 (Hist. 37 + 57 + 2718)
+																  	, pr_vljucesp OUT NUMBER             -- Juros + 60 (Hist. 38)
+                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                    , pr_dscritic OUT crapcri.dscritic%TYPE)  IS          --> Valor dos juros +60
+
+BEGIN
+
+DECLARE
+  -- Recupera a soma dos lançamentos de juros +60 da conta
+  CURSOR cr_craplcm_ccjuros60(pr_dt59datr IN crapris.dtinictr%TYPE
+	                          , pr_cdhistor IN craphis.cdhistor%TYPE) IS
+  SELECT  nvl(sum(lcm.vllanmto),0) vl_juros60
+    FROM craplcm lcm
+   WHERE lcm.cdhistor = pr_cdhistor
+     AND lcm.cdcooper = pr_cdcooper
+     AND lcm.nrdconta = pr_nrdconta
+     AND lcm.dtmvtolt > pr_dt59datr; -- Data em que completou 59 dias em ADP
+
+  -- Recupera os lançamentos que não são juros +60 ocorridos após 60 dias de atraso da conta
+  CURSOR cr_craplcm_outros(pr_dt59datr IN crapris.dtinictr%TYPE) IS
+  SELECT lcm.vllanmto
+       , lcm.dtmvtolt
+       , his.indebcre
+    FROM craplcm lcm
+       , craphis his
+   WHERE lcm.cdhistor NOT IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
+     AND lcm.cdcooper   = pr_cdcooper
+     AND lcm.nrdconta   = pr_nrdconta
+     AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
+     AND his.cdcooper   = lcm.cdcooper
+     AND his.cdhistor   = lcm.cdhistor
+   ORDER BY indebcre DESC;
+  rw_craplcm_outros cr_craplcm_outros%ROWTYPE;
+
+  -- Busca o limite de crédito atual do cooperado
+  CURSOR cr_limite IS
+  SELECT nvl(ass.vllimcre,0) vllimcre
+    FROM crapass ass
+   WHERE ass.cdcooper = pr_cdcooper
+    AND ass.nrdconta = pr_nrdconta;
+
+  -- Informações de saldo atual da conta corrente
+  CURSOR cr_saldos(pr_cdcooper NUMBER
+                 , pr_nrdconta NUMBER) IS
+  SELECT nvl(abs(sld.vlsddisp),0) vlsddisp
+       , sld.dtrisclq
+       , sld.qtddsdev
+       , sld.vliofmes
+    FROM crapsld sld
+   WHERE sld.cdcooper = pr_cdcooper
+     AND sld.nrdconta = pr_nrdconta;
+  rw_saldos cr_saldos%ROWTYPE;
+
+  -- Histórico do saldo da conta
+  CURSOR cr_crapsda(pr_dtmvtolt DATE) IS
+  SELECT * FROM (
+  SELECT nvl(abs(sda.vlsddisp),0) vlsddisp
+       , ROWNUM
+    FROM crapsda sda
+   WHERE sda.cdcooper = pr_cdcooper
+     AND sda.nrdconta = pr_nrdconta
+     AND sda.dtmvtolt >= pr_dtmvtolt
+  ORDER BY dtmvtolt)
+  WHERE rownum = 1;
+  rw_crapsda cr_crapsda%ROWTYPE;
+
+  -- Calendário da cooperativa
+  rw_crapdat btch0001.rw_crapdat%TYPE;
+
+  vr_data_corte_dias_uteis DATE; --> Data de corte para contagem de dias de atraso em dias corridos
+  vr_dtcorte_rendaprop     DATE; --> Data de corte de implantação do Rendas a Apropriar (não apropriação de receita dos juros +60)
+  vr_data_59dias_atraso    DATE; --> Data em que a conta atingiu 59 dias de atraso (ADP)
+	vr_jur60_37              NUMBER;
+	vr_jur60_57              NUMBER;
+	vr_jur60_2718            NUMBER;
+	vr_jur60_38              NUMBER;
+
+  vr_vlrlimite NUMBER;
+
+  vr_exc_saldo_indisponivel EXCEPTION;  --> Exceção para o caso de saldo indisponível na base de dados
+  vr_qtddiaatr INTEGER;                 --> Quantidade de dias de atraso da conta
+BEGIN
+    -- Busca data de corte para contagem de dias de atraso em dias corridos
+    vr_data_corte_dias_uteis := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                   ,pr_nmsistem => 'CRED'
+                                                   ,pr_cdacesso => 'DT_CORTE_REGCRE')
+                                                   ,'DD/MM/RRRR');
+
+    --Buscar a data de corte
+     vr_dtcorte_rendaprop := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                                ,pr_nmsistem => 'CRED'
+                                                                ,pr_cdacesso => 'DT_CORTE_RENDAPROP')
+                                                               ,'DD/MM/RRRR');
+
+    -- Carrega o calendário da cooperativa
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+
+    --  Carrega informações de saldo atual da conta
+    OPEN cr_saldos(pr_cdcooper, pr_nrdconta);
+    FETCH cr_saldos INTO rw_saldos;
+    CLOSE cr_saldos;
+
+    -- Busca o limite ativo da conta
+    OPEN cr_limite;
+    FETCH cr_limite INTO vr_vlrlimite;
+    CLOSE cr_limite;
+
+    vr_qtddiaatr := pr_qtdiaatr;
+
+    -- Se não foi informada a quantidade de dias em atraso (este valor será informado quando
+    -- for necessário considerar a quantidade de dias em atraso calculada e não a armazenada na CRAPSLD).
+    IF vr_qtddiaatr IS NULL THEN
+      vr_qtddiaatr := rw_saldos.qtddsdev; -- Considera os dias em atraso da CRAPSLD
+    END IF;
+
+    pr_vljucneg := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
+		pr_vljucesp := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
+
+    IF rw_saldos.dtrisclq IS NULL THEN -- Se a conta não está em atraso
+      pr_vlsld59d := 0;
+    ELSE
+      IF vr_qtddiaatr < 60 THEN -- Se a conta não ultrapassou os 60 dias de atraso
+        pr_vlsld59d := rw_saldos.vlsddisp - vr_vlrlimite;
+      ELSE
+         IF rw_saldos.dtrisclq < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
+            vr_data_59dias_atraso := fn_soma_dias_uteis_data(pr_cdcooper, rw_saldos.dtrisclq, 59); -- Conta dias úteis
+         ELSE
+            vr_data_59dias_atraso := rw_saldos.dtrisclq + 59; -- Conta dias corridos
+         END IF;
+
+         -- Se contrato atingiu 60 dias de atraso antes da data de corte do Rendas a Apropriar
+         IF vr_data_59dias_atraso < vr_dtcorte_rendaprop THEN
+           vr_data_59dias_atraso := vr_dtcorte_rendaprop;
+         END IF;
+
+         -- Busca os saldo do dia em que a conta completou 59 dias de atraso
+         OPEN cr_crapsda(vr_data_59dias_atraso);
+         FETCH cr_crapsda INTO rw_crapsda;
+
+         IF cr_crapsda%NOTFOUND THEN -- Se não encontrou o saldo para o dia em questão
+            CLOSE cr_crapsda;
+
+            RAISE vr_exc_saldo_indisponivel;
+         ELSE
+            pr_vlsld59d := rw_crapsda.vlsddisp - vr_vlrlimite;
+
+            -- Recupera somatório dos lançamentos de juros +60 (Hist. 37)
+            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 37);
+            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_37;
+            CLOSE cr_craplcm_ccjuros60;
+
+						-- Recupera somatório dos lançamentos de juros +60 (Hist. 57)
+            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 57);
+            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_57;
+            CLOSE cr_craplcm_ccjuros60;
+
+						-- Recupera somatório dos lançamentos de juros +60 (Hist. 2718)
+            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 2718);
+            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_2718;
+            CLOSE cr_craplcm_ccjuros60;
+
+						-- Recupera somatório dos lançamentos de juros +60 (Hist. 38)
+            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 38);
+            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_38;
+            CLOSE cr_craplcm_ccjuros60;
+
+						pr_vljucneg := vr_jur60_37 + vr_jur60_57 + vr_jur60_2718;
+						pr_vljucesp := vr_jur60_38;
+
+            -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
+            FOR rw_craplcm_outros IN cr_craplcm_outros(vr_data_59dias_atraso) LOOP
+              IF rw_craplcm_outros.indebcre = 'D' THEN
+                -- Incorpora o débito no saldo devedor até 59 dias
+                pr_vlsld59d := pr_vlsld59d + rw_craplcm_outros.vllanmto;
+              ELSE
+                IF pr_vljucneg > 0 THEN
+                  -- Amortiza os juros + 60 (Hist. 37 + Hist. 57)
+                  IF rw_craplcm_outros.vllanmto >= pr_vljucneg THEN
+                    pr_vljucneg := 0;
+                    rw_craplcm_outros.vllanmto := rw_craplcm_outros.vllanmto - pr_vljucneg;
+                  ELSE
+                    pr_vljucneg := pr_vljucneg - rw_craplcm_outros.vllanmto;
+                    rw_craplcm_outros.vllanmto := 0;
+                  END IF;
+                END IF;
+
+								IF rw_craplcm_outros.vllanmto > 0 THEN
+									IF pr_vljucesp > 0 THEN
+										-- Amortiza os juros + 60 (Hist. 38)
+										IF rw_craplcm_outros.vllanmto >= pr_vljucesp THEN
+											pr_vljucesp := 0;
+											rw_craplcm_outros.vllanmto := rw_craplcm_outros.vllanmto - pr_vljucesp;
+										ELSE
+											pr_vljucesp := pr_vljucesp - rw_craplcm_outros.vllanmto;
+											rw_craplcm_outros.vllanmto := 0;
+										END IF;
+									END IF;
+								END IF;
+
+                IF rw_craplcm_outros.vllanmto > 0 THEN
+                  -- Amortiza o saldo devedor até 59 dias
+                  IF rw_craplcm_outros.vllanmto >= pr_vlsld59d THEN
+                    pr_vlsld59d := 0;
+                  ELSE
+                    pr_vlsld59d := pr_vlsld59d - rw_craplcm_outros.vllanmto;
+                  END IF;
+                END IF;
+              END IF;
+            END LOOP;
+         END IF;
+      END IF;
+    END IF;
+  EXCEPTION
+    WHEN vr_exc_saldo_indisponivel THEN
+      pr_cdcritic := 853;
+      pr_dscritic := 'Não foi possível recuperar o saldo de 59 dias de atraso.';
+    WHEN OTHERS THEN
+      pr_cdcritic := 9999;
+      pr_dscritic := 'Erro não tratado na "TELA_ATENDA_DEPOSVIS.pc_consulta_saldos_juros60_ab".';
+  END;
+END pc_busca_saldos_juros60_det;
+
 END TELA_ATENDA_DEPOSVIS;
 /
