@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-04-04T12:56:02 -->
+<!-- 2018-08-10T14:27:26 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="aditiv" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Key" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -215,7 +215,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["TERMO DE ADESÃO ÀS CONDIÇÕES GERAIS DO CONTRATO DE ABERTURA DE CRÉDITO EM CONTA CORRENTE"]]></textFieldExpression>
+				<textFieldExpression><![CDATA["TERMO DE ADESÃO ÀS CONDIÇÕES GERAIS DO CONTRATO DE ABERTURA DE CRÉDITO EM CONTA CORRENTE N.: " + $F{nrctrlim}]]></textFieldExpression>
 			</textField>
 			<componentElement>
 				<reportElement x="410" y="11" width="50" height="50" isPrintInFirstWholeBand="true" uuid="acc379cf-8b68-45f4-acff-2fd5137eaf1c">

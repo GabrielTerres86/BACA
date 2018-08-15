@@ -163,7 +163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         -- converter content em objeto
         vr_obj_content := json(vr_obj_retorno.get('Content').to_char());
         --> Extrair a critica encontrada
-        RETURN replace(vr_obj_content.get('descricao').to_char(),'"');
+        RETURN nvl(replace(vr_obj_content.get('descricao').to_char(),'"'),replace(vr_obj_content.get('data').to_char(),'"'));
       END IF;
     ELSE
       -- Verificar se é um xml(retorno da analise)
@@ -604,23 +604,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       --> Definir mensagem de critica
       CASE
         WHEN pr_dsmetodo = 'POST' THEN
-          vr_dscritic_aux := 'Nao foi possivel enviar proposta para Análise de Credito.';
+          vr_dscritic_aux := 'Nao foi possivel enviar proposta para Analise de Credito.';
         WHEN pr_dsmetodo = 'PUT' AND pr_comprecu IS NULL THEN
-          vr_dscritic_aux := 'Nao foi possivel reenviar a proposta para Análise de Crédito.';
+          vr_dscritic_aux := 'Nao foi possivel reenviar a proposta para Analise de Credito.';
         WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/numeroProposta' THEN
-          vr_dscritic_aux := 'Nao foi possivel alterar numero da proposta da Análise de Crédito.';
+          vr_dscritic_aux := 'Nao foi possivel alterar numero da proposta da Analise de Credito.';
         WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/cancelar' THEN
-          vr_dscritic_aux := 'Nao foi possivel excluir a proposta da Análise de Crédito.';
+          vr_dscritic_aux := 'Nao foi possivel excluir a proposta da Analise de Credito.';
         WHEN pr_dsmetodo = 'PUT' AND pr_comprecu = '/efetivar' THEN
-          vr_dscritic_aux := 'Nao foi possivel enviar a efetivacao da proposta da Análise de Crédito.';
+          vr_dscritic_aux := 'Nao foi possivel enviar a efetivacao da proposta da Analise de Credito.';
         WHEN pr_dsmetodo = 'GET' THEN
-          vr_dscritic_aux := 'Nao foi possivel solicitar o retorno da Análise Automática de Crédito.';
+          vr_dscritic_aux := 'Nao foi possivel solicitar o retorno da Análise Automatica de Credito.';
         ELSE
           vr_dscritic_aux := 'Nao foi possivel enviar informacoes para Análise de Crédito.';
         END CASE;
 
       IF vr_response.status_code = 400 THEN
         pr_dscritic := fn_retorna_critica('{"Content":'||vr_response.content||'}');
+
+        IF pr_dscritic IS NULL THEN
+          pr_dscritic := substr(gene0007.fn_convert_web_db(TO_CHAR(vr_response.content)),
+                                instr(gene0007.fn_convert_web_db(TO_CHAR(vr_response.content)),'failed:')+7);
+        END IF;
 
         IF pr_dscritic IS NOT NULL THEN
           -- Tratar mensagem específica de Fluxo Atacado:
@@ -637,7 +642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         pr_dscritic := vr_dscritic_aux;
       END IF;
 
-    END IF;
+    ELSE
 
     IF pr_tpenvest = 'M' AND pr_dsmetodo = 'POST' THEN
       --> Transformar texto em objeto json
@@ -675,6 +680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
           vr_dscritic := 'Nao foi possivel retornar Protocolo de Análise Automática de Crédito!';
           RAISE vr_exc_erro;
       END;
+    END IF;
     END IF;
 
   EXCEPTION
@@ -5718,7 +5724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
        WHERE w.cdcooper = pr_cdcooper
          AND w.nrdconta = pr_nrdconta
          AND w.insitapr IN(1,3)        -- já estao aprovadas
-         AND w.insitest <> 4           -- Expiradas
+         AND w.insitest NOT IN(4,5)    -- 4 - Expiradas 5 - Expiradas por decurso de prazo - PJ 438 - Márcio(Mouts)
          AND NOT EXISTS ( SELECT 1
                             FROM crapepr p
                            WHERE w.cdcooper = p.cdcooper
@@ -6815,7 +6821,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
                                                       ,pr_tpsituac => 4 --> Crítica
                                                       ,pr_insitdec => NULL
                                                       ,pr_nmdatela => NULL
-													  ,pr_cdopesup => NULL
                                                       ,pr_cdcritic => vr_cdcritic
                                                       ,pr_dscritic => vr_dscritic
                                                       ,pr_des_erro => vr_dsmensag

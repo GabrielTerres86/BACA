@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 27/04/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 25/07/2018
 
    Dados referentes ao programa:
 
@@ -232,6 +232,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                10/04/2018 - P450 - Consistencia para considerar dias úteis ou corridos na atualização do saldo - Daniel(AMcom)
                
                27/04/2018 - P450 - Novo tratamento para IOF a Debitar (Guilherme/AMcom)
+			         
+			   03/07/2018 - Tratar conta corrente invalida no cadastro de lançamento.
+			                craplcm - (Belli - Envolti - Chamado REQ0018868).
+                      
+               25/07/2018 - Deverá buscar novamente o saldo em conta e utilizar o 
+                            valor final da diferença (Renato Darosci - Supero)
+							
      ............................................................................. */
 
      DECLARE
@@ -770,6 +777,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_ingerneg  BOOLEAN := TRUE;
        vr_des_erro  VARCHAR2(100);
        vr_vlresgat  NUMBER;
+       vr_vlsomvld  NUMBER;
 
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
@@ -992,7 +1000,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        --Carregar tabela memoria com as contas com lancamento no dia
        FOR rw_craplcm IN cr_craplcm2(pr_cdcooper => pr_cdcooper
                                     ,pr_dtmvtolt => vr_dtmvtolt) LOOP
-         vr_tab_craplcm(rw_craplcm.nrdconta):= rw_craplcm.nrdconta;
+		     --	 Tratar conta corrente invalida no cadastro de lançamento - 03/07/2018 - Chamado REQ0018868
+         BEGIN
+           vr_tab_craplcm(rw_craplcm.nrdconta):= rw_craplcm.nrdconta;
+         EXCEPTION
+           WHEN OTHERS THEN
+             CECRED.pc_internal_exception(pr_cdcooper);
+             BEGIN
+               cecred.pc_log_programa(pr_dstiplog      => 'E'
+                                     ,pr_cdprograma    => 'CRPS001'
+                                     ,pr_cdcooper      => pr_cdcooper
+                                     ,pr_tpocorrencia  => 1 -- Erro de negocio
+                                     ,pr_cdcriticidade => 2
+                                     ,pr_cdmensagem    => 9999
+                                     ,pr_dsmensagem    => gene0001.fn_busca_critica(pr_cdcritic => 9999) ||
+                                                          'Lançamento com conta invalida.' ||
+                                                          '  dtmvtolt:'   || vr_dtmvtolt   ||
+                                                          ', nrdconta:'   || rw_craplcm.nrdconta ||
+                                                          '.' || SQLERRM
+                                     ,pr_idprglog     => vr_idprglog);
+             EXCEPTION
+               WHEN OTHERS THEN
+                 CECRED.pc_internal_exception(pr_cdcooper);
+             END;
+         END;
        END LOOP;
 
        --Carregar tabela memoria com os limites de credito das contas
@@ -2217,7 +2248,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                                       ,pr_cdoperad => '1'
                                                       ,pr_idorigem => 5
                                                       ,pr_cdprogra => vr_cdprogra
-                                                      ,pr_qtdiaatr => rw_crapsld.qtddusol + 1
+                                                      ,pr_qtdiaatr => rw_crapsld.qtddusol  /* + 1 */
                                                       ,pr_vlresgat => vr_vlresgat
                                                       ,pr_flefetiv => 'S' -- Efetivar o resgate
                                                       ,pr_dscritic => vr_dscritic);
@@ -2231,6 +2262,54 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    vr_vlresgat := 0;
                  ELSE -- Não havendo erros
                    
+                   -- Verificar Saldo do cooperado
+                   extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper 
+                                              ,pr_rw_crapdat => rw_crapdat 
+                                              ,pr_cdagenci => 1 
+                                              ,pr_nrdcaixa => 0 
+                                              ,pr_cdoperad => '1' 
+                                              ,pr_nrdconta => rw_crapsld.nrdconta 
+                                              ,pr_vllimcre => vr_tab_crapass(rw_crapsld.nrdconta).vllimcre 
+                                              ,pr_dtrefere => rw_crapdat.dtmvtolt 
+                                              ,pr_flgcrass => FALSE 
+                                              ,pr_tipo_busca => 'A' -- Tipo Busca(A-dtmvtoan)
+                                              ,pr_des_reto => vr_des_erro 
+                                              ,pr_tab_sald => vr_tab_saldo 
+                                              ,pr_tab_erro => vr_tab_erro);
+                                                                  
+                   -- Se ocorreu erro
+                   IF vr_des_erro = 'NOK' THEN
+                     -- Tenta buscar o erro no vetor de erro
+                     IF vr_tab_erro.COUNT > 0 THEN
+                       vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                       vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_crapsld.nrdconta;
+                     ELSE
+                       vr_cdcritic:= 0;
+                       vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapsld.nrdconta;
+                     END IF;
+                                    
+                     IF vr_cdcritic <> 0 THEN
+                       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' Conta: '||rw_crapsld.nrdconta;
+                     END IF;                              
+
+                     -- Levantar Excecao
+                     RAISE vr_exc_saida;
+                   ELSE
+                     vr_dscritic:= NULL;
+                   END IF;
+                   
+                   -- Buscar saldo
+                   IF vr_tab_saldo.COUNT > 0 THEN
+                     -- Acumular Saldo
+                     vr_vlsomvld := ROUND( NVL(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) ,2); 
+                   END IF;
+                
+                   -- Se a diferenças dos saldos é menor que o valor de resgate
+                   IF ABS( rw_crapsld.vlsddisp - vr_vlsomvld ) <> vr_vlresgat THEN
+                     -- A diferença deve ser utilizada como valor de resgate
+                     vr_vlresgat := ABS( rw_crapsld.vlsddisp - vr_vlsomvld );
+                   END IF;
+                  
                    ---------------------------------------------------------
                    -- Decrementar do saldo negativo o valor resgatado
 					   			 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;

@@ -118,6 +118,9 @@
 
    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+   20/07/2018 - Condição para não poder marcar/desmarcar cheques normais depois das 13:00
+				(Andrey Formigari - Mouts - PRB0040153)
+
 
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
@@ -2778,6 +2781,7 @@ PROCEDURE geracao-devolu:
     DEF VAR aux_cdalinea AS INTE                                       NO-UNDO.
     DEF VAR aux_nmoperad AS CHAR FORMAT "x(20)"                        NO-UNDO.
     DEF VAR aux_nrdrecid AS RECID                                      NO-UNDO.
+	DEF VAR ret_execucao AS LOGICAL                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2813,6 +2817,31 @@ PROCEDURE geracao-devolu:
             DO  TRANSACTION:  /* transacao para devolver */        
 
                 IF  par_flag THEN DO: /* a devolver */
+
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para desmarcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
                     
                     ASSIGN aux_dssituac = "normal"
                            par_flag     = FALSE
@@ -2841,6 +2870,31 @@ PROCEDURE geracao-devolu:
                     
                 END.
                 ELSE DO:
+					
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para marcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
 
                     ASSIGN par_flag     = TRUE
                            aux_dssituac = "a devolver" 
@@ -2877,6 +2931,31 @@ PROCEDURE geracao-devolu:
             FOR EACH tt-desmarcar NO-LOCK:
 
                 IF  tt-desmarcar.flag THEN DO: /* a devolver */
+
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(tt-desmarcar.cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para desmarcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
                     
                     ASSIGN aux_dssituac = "normal"
                            par_flag     = FALSE

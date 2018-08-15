@@ -203,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 11/06/2018
+   Data    : Maio/2017                      Ultima atualizacao: 24/07/2018
 
    Dados referentes ao programa:
 
@@ -212,9 +212,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                transferência para prejuízo
 
    Alteracoes: 
-
+   
    11/06/2018 - INC0014258 Na rotina pc_controla_exe_job, não registrar as validações
                 de execução do job como erro, para que o plantão não seja acionado (Carlos)
+   
+   24/07/2018 - inc0018036 Melhorias nos fechamentos dos cursores das rotinas 
+                pc_transfere_epr_prejuizo_PP, pc_transfere_epr_prejuizo_TR,
+                pc_estorno_trf_prejuizo_PP e pc_estorno_trf_prejuizo_TR (Carlos)
 
 ..............................................................................*/
 
@@ -457,10 +461,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
       ELSE
         RETURN(0);  -- Garante retorno zero se não houver valor      
       END IF;
-    ELSE
-      RETURN(0);  -- Garante retorno zero se não houver valor
-    END IF;
-    --
+  ELSE
+    RETURN(0);  -- Garante retorno zero se não houver valor
+  END IF;
+  --
   END fn_juros60_emprej;
 
   --
@@ -1435,6 +1439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     FETCH c_crapepr INTO r_crapepr;
 
     IF c_crapepr%FOUND THEN
+      CLOSE c_crapepr;
       IF r_crapepr.inprejuz = 1 THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Contrato ja esta em prejuizo!';
@@ -2049,7 +2054,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
       END IF;
 
     ELSE
-
+      CLOSE c_crapepr;
       vr_cdcritic := 0;
       vr_dscritic := 'Falha ao gerar o emprestimo para prejuizo. ' || sqlerrm;
       pr_des_reto := 'NOK';
@@ -2279,6 +2284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
            INTO r_busca_retorno_boleto;
           --
           IF c_busca_retorno_boleto%FOUND THEN
+            CLOSE c_busca_retorno_boleto;
             vr_cdcritic := 0;
             vr_dscritic := 'Boleto da conta: ' || r_busca_boleto.nrdconta_cob ||
                            ', Contrato: ' || r_busca_boleto.nrctremp ||
@@ -2287,11 +2293,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                            ', Valor: ' || to_char(r_busca_boleto.vltitulo,'999g999g999d99') ||
                            '. Está pago, PENDENTE de processamento!';
             RAISE vr_erro;   
-          END IF;
-          IF c_busca_retorno_boleto%ISOPEN THEN
+          ELSE
             CLOSE c_busca_retorno_boleto;
           END IF;
-                        
+
       END IF;
     END LOOP;
                 
@@ -2398,14 +2403,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     FETCH c_craplcr INTO r_craplcr;
 
     IF c_craplcr%NOTFOUND THEN
+      CLOSE c_craplcr;
       vr_cdcritic := 0;
       vr_dscritic := 'Linha de Credito nao Cadastrada!';
       RAISE vr_erro;
-    END IF;
-    IF c_craplcr%ISOPEN THEN
+    ELSE
       CLOSE c_craplcr;
-    END IF;    
-            
+    END IF;
+
     IF r_craplcr.dsoperac = 'FINANCIAMENTO' THEN /* Financiamento */
       vr_cdhistor1 := 2401;  /* 2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO */
       if vr_idfraude then
@@ -2661,10 +2666,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
       pr_des_reto := 'NOK';
-      
-      IF c_crapepr%ISOPEN THEN
-        CLOSE c_crapepr;
-      END IF;
     
     WHEN OTHERS THEN
       ROLLBACK;
@@ -2679,10 +2680,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
       pr_des_reto := 'NOK';
-      
-      IF c_crapepr%ISOPEN THEN
-        CLOSE c_crapepr;
-      END IF;    
 
   END pc_transfere_epr_prejuizo_TR;      
 
@@ -3724,6 +3721,7 @@ end pc_gera_prejuizo_cc;*/
     FETCH c_crapepr INTO r_crapepr;
 
     IF c_crapepr%FOUND THEN
+      CLOSE c_crapepr;
       IF f_valida_pagamento_abono(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_nrctremp => pr_nrctremp) THEN
@@ -3757,7 +3755,7 @@ end pc_gera_prejuizo_cc;*/
         RAISE vr_exc_erro;
       ELSE
         /* Verificar se ocorreram pagamentos */
-        vr_dtmvtolt := r_crapepr.Dtprejuz;
+        vr_dtmvtolt := r_crapepr.dtprejuz;
                      
         /* open cr_craplem(vr_dtmvtolt);
           fetch cr_craplem into vr_existePg;
@@ -4214,7 +4212,7 @@ end pc_gera_prejuizo_cc;*/
       END LOOP;
         
       IF vr_existe_prejuizo = 0 THEN
-        rw_crapdat.dtmvtolt := R_crapepr.dtprejuz;
+        rw_crapdat.dtmvtolt := r_crapepr.dtprejuz;
                 
         pc_reabrir_conta_corrente(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
@@ -4237,6 +4235,7 @@ end pc_gera_prejuizo_cc;*/
       END IF; 
                   
     ELSE  -- Se não encontrou na tabela crapepr
+      CLOSE c_crapepr;
       vr_cdcritic := 0;
       vr_dscritic := 'Erro ao estornar prejuizo PP: ' || sqlerrm;
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -4248,8 +4247,6 @@ end pc_gera_prejuizo_cc;*/
                           ,pr_tab_erro => pr_tab_erro);
       pr_des_reto := 'NOK';
     END IF;
-
-    CLOSE c_crapepr;
 
     IF NOT vr_flgtrans THEN
       vr_cdcritic := 0;
@@ -4412,12 +4409,13 @@ BEGIN
   close btch0001.cr_crapdat;
          
   /* Busca informações do empréstimo */
-  OPEN C_CRAPEPR(pr_cdcooper
+  OPEN c_crapepr(pr_cdcooper
                 ,pr_nrdconta
                 ,pr_nrctremp);
-  FETCH C_CRAPEPR INTO r_crapepr;
+  FETCH c_crapepr INTO r_crapepr;
 
-  IF C_CRAPEPR%FOUND THEN
+  IF c_crapepr%FOUND THEN
+    CLOSE c_crapepr;
     IF f_valida_pagamento_abono(pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrctremp => pr_nrctremp) THEN
@@ -4435,7 +4433,7 @@ BEGIN
       pr_des_reto := 'NOK';
       raise vr_exc_erro;                     
     END IF;           
-    IF R_crapepr.inprejuz = 0 THEN
+    IF r_crapepr.inprejuz = 0 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Contrato não esta em prejuizo!';
 
@@ -4451,7 +4449,7 @@ BEGIN
       raise vr_exc_erro;
     ELSE
       /* Verificar se ocorreram pagamentos */
-      vr_dtmvtolt := R_crapepr.dtprejuz;                                                          
+      vr_dtmvtolt := r_crapepr.dtprejuz;                                                          
                       
       /* Busca Lançamentos Empréstimos (LEM) */
       FOR rw_craplem in cr_craplem2(vr_dtmvtolt) LOOP
@@ -4799,7 +4797,7 @@ BEGIN
     END LOOP;
     --
     IF vr_existe_prejuizo = 0 THEN
-      rw_crapdat.dtmvtolt := R_crapepr.dtprejuz;
+      rw_crapdat.dtmvtolt := r_crapepr.dtprejuz;
                
       pc_reabrir_conta_corrente(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
@@ -4823,6 +4821,7 @@ BEGIN
        END IF;                    
     END IF;
   ELSE
+    CLOSE c_crapepr;
     vr_cdcritic := 0;
     vr_dscritic := 'Erro ao estornar prejuizo emprestimo TR: ' || sqlerrm;
 
@@ -4836,8 +4835,6 @@ BEGIN
 
     pr_des_reto := 'NOK';
   END IF;
-  
-  CLOSE c_crapepr;
 
   IF NOT vr_flgtrans THEN
     vr_cdcritic := 0;
@@ -6978,6 +6975,9 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
                             pr_dstiplog => 'E',
                             pr_dscritic => vr_dscritic);
+                            
+      cecred.pc_internal_exception(pr_cdcooper => nvl(vr_cdcooper,3),
+                                   pr_compleme => vr_dscritic);                            
 
       ROLLBACK;
         

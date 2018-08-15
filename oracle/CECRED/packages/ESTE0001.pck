@@ -267,7 +267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Março/2016.                   Ultima atualizacao: 02/04/2018
+      Data     : Março/2016.                   Ultima atualizacao: 25/07/2018
 
       Dados referentes ao programa:
 
@@ -276,6 +276,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
       Alteracoes: 03/05/2017 - Alterações referentes ao Projeto 337. (Reinert)
                   01/03/2018 - Substituir utilização da tabela tbepr_acionamento pela tbgen_webservice_aciona
+				  02/04/2018 - Incluir novo campo liquidOpCredAtraso no retorno do
+                               motor de credito e enviar para esteira - Diego Simas (AMcom)
+				  25/07/2018 - Correção para a contagem de dias em atraso
+							   Fluxo Atraso (quantidadeDiasAtraso)
+							   PJ 450 - Diego Simas (AMcom)		
 
   ---------------------------------------------------------------------------------------------------------------*/
   --> Funcao para formatar o numero em decimal conforme padrao da IBRATAN
@@ -985,8 +990,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     Programa : pc_grava_acionamento        
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
-  Autor    : Luis Fernando - GFT
-  Data     : Fevereiro/2018.                   Ultima atualizacao: 
+    Autor    : Odirlei Busana(Amcom)
+    Data     : Março/2016.                   Ultima atualizacao: 08/03/2016
     
     Dados referentes ao programa:
     
@@ -1358,7 +1363,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 20/07/2017
+      Data     : Março/2016.                   Ultima atualizacao: 26/07/2018
     
       Dados referentes ao programa:
     
@@ -1383,6 +1388,16 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                
                   20/07/2017 - P337 - Customizacoes Motor de Credit0 (Marcos-Supero)                               
         
+                  02/04/2018 - Incluir novo campo liquidOpCredAtraso na esteira
+                               Diego Simas (AMcom)
+
+				  25/07/2018 - Correção para a contagem de dias em atraso
+							   Fluxo Atraso (quantidadeDiasAtraso)
+							   PJ 450 - Diego Simas (AMcom)
+
+                  26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
+							   PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)							   
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -1414,6 +1429,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
              epr.qtpreemp,
              epr.dtvencto,
              epr.vlpreemp,
+             epr.inliquid_operac_atraso,
              epr.hrinclus,
              epr.cdlcremp,
              lcr.dslcremp,
@@ -1478,7 +1494,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        WHERE w.cdcooper = pr_cdcooper
          AND w.nrdconta = pr_nrdconta
          AND w.insitapr IN(1,3)        -- já estao aprovadas
-         AND w.insitest <> 4           -- Expiradas
+         AND w.insitest NOT IN(4,5)    -- 4 - Expiradas - 5 - Expirada por decurso de prazo -- PJ 438 - Márcio (Mouts)
          AND w.nrctremp <> pr_nrctremp -- desconsiderar a proposta que esta sendo enviada no momento
          AND NOT EXISTS ( SELECT 1
                             FROM crapepr p
@@ -1536,6 +1552,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
         AND nrdconta = pr_nrdconta;
     rw_crapjfn cr_crapjfn%ROWTYPE;
     
+    -- Buscar quantos dias de atraso houve no contrato
+    CURSOR cr_crapris(pr_nrctremp IN crapepr.nrctremp%TYPE
+                     ,pr_dtultdma IN crapdat.dtultdma%TYPE) IS
+      SELECT MAX(ris.qtdiaatr) qtdiaatr
+        FROM crapris ris
+       WHERE ris.cdcooper = pr_cdcooper
+         AND ris.nrdconta = pr_nrdconta
+         AND ris.nrctremp = NVL(pr_nrctremp,ris.nrctremp)
+         AND ris.dtrefere >= pr_dtultdma
+         AND ris.cdmodali in(299,499)
+         AND ris.inddocto = 1;
+    vr_qtddiatr NUMBER;
+
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
@@ -1566,6 +1595,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
         vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%TYPE;
         vr_dsdirarq  VARCHAR2(1000);
         vr_dscomando VARCHAR2(1000);
+    vr_ind_opeatr   BOOLEAN;
+    vr_qthisemp     crapprm.dsvlrprm%TYPE;
       
   BEGIN
     
@@ -1961,6 +1992,27 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     -- Enviar flag se a proposta é de renogociação
     vr_obj_proposta.put('renegociacao',(rw_crawepr.dsliquid != '0,0,0,0,0,0,0,0,0,0'));
     
+    -- Buscar parâmetro da quantidade de meses para encontro do histórico de empréstimos
+    vr_qthisemp := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EMPREST');
+   
+    -- Busca maior atraso dentre os emprestimos do cooperado        
+    OPEN cr_crapris(null, add_months(rw_crapdat.dtmvtolt,-vr_qthisemp));
+    FETCH cr_crapris
+     INTO vr_qtddiatr;
+    CLOSE cr_crapris; 
+
+	vr_qtddiatr := nvl(vr_qtddiatr,0);
+
+    -- Enviar flag política de crédito
+    IF rw_crawepr.inliquid_operac_atraso = 0 THEN
+      vr_ind_opeatr := false;
+    ELSE
+      vr_ind_opeatr := true;
+    END IF;
+    
+    vr_obj_proposta.put('operacaoCreditoNaoLiquidada',vr_ind_opeatr);
+    vr_obj_proposta.put('quantidadeDiasAtraso',vr_qtddiatr);
+
     -- BUscar faturamento se pessoa Juridica
     IF rw_crapass.inpessoa = 2 THEN 
       -- Buscar faturamento 
@@ -2302,6 +2354,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
         END IF;
       ELSIF rw_crawepr.insitest = 4 THEN
         pr_dsmensag := '<b>Expirada</b> apos '||vr_qtsegund||' segundos de espera.';        
+      ELSIF rw_crawepr.insitest = 5 THEN -- PJ 438 - Márcio (Mouts)
+        pr_dsmensag := '<b>Expirada por decurso de prazo</b>';   -- PJ 438 - Márcio (Mouts)
       ELSE 
         pr_dsmensag := '<b>Finalizada</b> com situação indefinida!';
       END IF;
@@ -4748,6 +4802,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 		vr_nrinfcad VARCHAR2(100);
 		vr_nrliquid VARCHAR2(100);
 		vr_nrgarope VARCHAR2(100);
+    vr_inopeatr VARCHAR2(100);
 		vr_nrparlvr VARCHAR2(100);
 		vr_nrperger VARCHAR2(100);
     vr_datscore VARCHAR2(100);
@@ -5049,6 +5104,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                 vr_nrgarope := ltrim(rtrim(vr_obj_indicadores.get('garantia').to_char(),'"'),'"');
               END IF;
       		    
+              -- Indicador de operação de crédito em atraso
+              IF vr_obj_indicadores.exist('liquidOpCredAtraso') THEN
+                vr_inopeatr := ltrim(rtrim(vr_obj_indicadores.get('liquidOpCredAtraso').to_char(),'"'),'"');
+              END IF;
+
               -- Patrimônio Pessoal Livre -- 
               IF vr_obj_indicadores.exist('patrimonioPessoalLivre') THEN
                 vr_nrparlvr := ltrim(rtrim(vr_obj_indicadores.get('patrimonioPessoalLivre').to_char(),'"'),'"');
@@ -5105,6 +5165,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                 ,pr_nrinfcad => vr_nrinfcad
                                                 ,pr_nrliquid => vr_nrliquid
                                                 ,pr_nrgarope => vr_nrgarope
+                                                ,pr_inopeatr => vr_inopeatr
                                                 ,pr_nrparlvr => vr_nrparlvr
                                                 ,pr_nrperger => vr_nrperger
                                                 ,pr_desscore => vr_desscore

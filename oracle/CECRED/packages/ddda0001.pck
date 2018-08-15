@@ -411,6 +411,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
   PROCEDURE pc_ConsultarBaixaOperacional(pr_cdctrbxo IN VARCHAR2 --> Numero controle participante da baixa operacional
                                         ,pr_cdcodbar IN VARCHAR2 --> Codigo de barras do titulo
                                         ,pr_baixaope OUT cr_baixaoperacional%ROWTYPE --> retornar dados da baixa operacional
+                                        ,pr_idbxapdn OUT NUMBER                      --> Indica comunicação de baixa pendente
                                         ,pr_des_erro OUT VARCHAR2                    --> Indicador erro OK/NOK
                                         ,pr_dscritic OUT VARCHAR2);                  --> Descricao erro
 
@@ -419,6 +420,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
                                      ,pr_idtitdda IN VARCHAR2    --> Identificador Titulo DDA
                                      ,pr_cdctrlcs IN VARCHAR2    --> Numero controle consulta NPC
                                      ,pr_cdcodbar IN VARCHAR2    --> Codigo de barras do titulo
+                                     ,pr_idpenden IN OUT NUMBER  --> Indica o processamento da pendencia
                                      ,pr_des_erro OUT VARCHAR2   --> Indicador erro OK/NOK
                                      ,pr_dscritic OUT VARCHAR2); --> Descricao erro
 
@@ -426,6 +428,9 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
   PROCEDURE pc_notif_novo_dda (pr_cdcooper IN crapcop.cdcooper%TYPE
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE
                                 ,pr_notif_dda IN typ_reg_notif_dda);
+
+  -- Procedure para processar pendencia de cancelamento de baixa operacional 
+  PROCEDURE pc_pendencia_cancel_baixa(pr_dsrowid   IN VARCHAR2);   -- Rowid do registro a ser processado
 
 END ddda0001;
 /
@@ -3991,6 +3996,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             26/10/2017 - Incluir gravacao de log NPCB0001.pc_gera_log_npc no when others
     --                          dos inserts (SD#769996 - AJFink)
     --
+    --             02/08/2018 - Alterado mensagem de erro ao gravar no LOG (Alcemir - Mouts / PRB0040064).
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -4345,7 +4352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_tab_remessa_dda(vr_index).rowidcob
                                          ,pr_cdoperad => '1'
                                          ,pr_dtmvtolt => SYSDATE
-                                         ,pr_dsmensag => 'Erro ao gerar titulo na cabine JDNPC (OPTIT)'
+                                         ,pr_dsmensag => 'Erro ao integrar instrução na cabine JDNPC (OPTIT)'
                                          ,pr_des_erro => vr_des_erro
                                          ,pr_dscritic => vr_dscritic);
             
@@ -4391,7 +4398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
               PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_tab_remessa_dda(vr_index).rowidcob
                                            ,pr_cdoperad => '1'
                                            ,pr_dtmvtolt => SYSDATE
-                                           ,pr_dsmensag => 'Erro ao gerar titulo na cabine JDNPC (CTRL)'
+                                           ,pr_dsmensag => 'Erro ao integrar instrução na cabine JDNPC (CTRL)'
                                            ,pr_des_erro => vr_des_erro
                                            ,pr_dscritic => vr_dscritic);                        
               --Levantar Excecao
@@ -5277,6 +5284,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                              /*    (4)Baixa por Decurso de Prazo */
     -- Frequencia: -----
     -- Objetivo  : Procedure para executar os procedimentos DDA-JD
+    --
+    --            02/08/2018 - valida se ocorreu erro na pltable pr_tab_remessa_dda, depois de executar 
+    --                         a proc pc_remessa_titulos_dda (Alcemir - Mout's / PRB0040064).
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5285,6 +5295,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dscritic VARCHAR2(4000);
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
+
+      
     BEGIN
       --Inicializar Parametros Erro
       pr_cdcritic := vr_cdcritic;
@@ -5311,7 +5323,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       DDDA0001.pc_remessa_titulos_dda(pr_tab_remessa_dda => pr_tab_remessa_dda --Remessa dda
                                      ,pr_tab_retorno_dda => pr_tab_retorno_dda --Retorno dda
                                      ,pr_cdcritic        => vr_cdcritic --Codigo de Erro
-                                     ,pr_dscritic        => vr_dscritic); --Descricao de Erro
+                                     ,pr_dscritic        => vr_dscritic); --Descricao de Erro     
+      
+      IF pr_tab_remessa_dda.COUNT > 0 THEN         
+        IF pr_tab_remessa_dda(pr_tab_remessa_dda.FIRST).dscritic IS NOT NULL THEN 
+          
+           vr_dscritic := 'Erro ao integrar instrução, tente novamente mais tarde.';           
+           vr_cdcritic := pr_tab_remessa_dda(pr_tab_remessa_dda.FIRST).cdcritic;
+                      
+           RAISE vr_exc_erro;
+        END IF;
+      END IF;
+                  
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL
          OR vr_dscritic IS NOT NULL THEN
@@ -5785,6 +5808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   PROCEDURE pc_ConsultarBaixaOperacional(pr_cdctrbxo IN VARCHAR2                     --> Numero controle participante da baixa operacional
                                         ,pr_cdcodbar IN VARCHAR2                     --> Codigo de barras do titulo
                                         ,pr_baixaope OUT cr_baixaoperacional%ROWTYPE --> retornar dados da baixa operacional
+                                        ,pr_idbxapdn OUT NUMBER                      --> Indica comunicação de baixa pendente
                                         ,pr_des_erro OUT VARCHAR2                    --> Indicador erro OK/NOK
                                         ,pr_dscritic OUT VARCHAR2) IS                --> Descricao erro
     /*---------------------------------------------------------------------------------------------------------------
@@ -5821,6 +5845,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dsxmlbxo      CLOB;
     
     BEGIN
+    
+      -- Inicializar com valor padrão de retorno
+      pr_idbxapdn := 0; 
     
       -- Limpa a tab de campos
       vr_tbcampos.DELETE();
@@ -5915,6 +5942,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       
       IF rw_baixaoperacional.SitBaixaOperacional <> 3 THEN
         pr_dscritic := 'Baixa operacional pendente de processamento, favor aguarde.';
+        
+        -- Se for encerrar porque a baixa ainda está pendente, deve retornar flag indicando
+        pr_idbxapdn := 1; -- indica que baixa está pendente
+        
         RAISE vr_exc_erro;   
       END IF;
       
@@ -5937,6 +5968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                      ,pr_idtitdda IN VARCHAR2   --> Identificador Titulo DDA
                                      ,pr_cdctrlcs IN VARCHAR2   --> Numero controle consulta NPC
                                      ,pr_cdcodbar IN VARCHAR2   --> Codigo de barras do titulo
+                                     ,pr_idpenden IN OUT NUMBER --> Indica o processamento da pendencia
                                      ,pr_des_erro OUT VARCHAR2  --> Indicador erro OK/NOK
                                      ,pr_dscritic OUT VARCHAR2) IS --> Descricao erro
   BEGIN
@@ -5953,9 +5985,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_cdCanPgt      INTEGER;
       vr_cdmeiopg      INTEGER;
       vr_baixaope      cr_baixaoperacional%ROWTYPE;
+      vr_idbxapdn      NUMBER;
       vr_cdctrbxo      VARCHAR2(100);
       
+      -- Gravar o registro de pendencia da baixa operacional
+      PROCEDURE pc_registra_pend_baixa(pr_cdlegado  IN VARCHAR2      --> Codigo Legado
+                                      ,pr_cdctrlcs  IN VARCHAR2      --> Numero controle consulta NPC
+                                      ,pr_cdcodbar  IN VARCHAR2      --> Codigo de barras do titulo
+                                      ,pr_des_erro OUT VARCHAR2) IS --> Descricao erro
+        PRAGMA AUTONOMOUS_TRANSACTION;
       
+      BEGIN
+        -- Inserir registro na tabela de pendencia de baixa
+        INSERT INTO tbcobran_baixa_pendente(cdlegado
+                                           ,cdctrlcs
+                                           ,cdcodbar
+                                           ,dhsolicita_baixa
+                                           ,insituacao_solicitacao
+                                           ,dhultima_solicitacao
+                                           ,qttentativa_baixa)
+                                     VALUES(pr_cdlegado   -- cdlegado
+                                           ,pr_cdctrlcs   -- cdctrlcs
+                                           ,pr_cdcodbar   -- cdcodbar
+                                           ,SYSDATE       -- dhsolicita_baixa
+                                           ,0 -- Pendente -- insituacao_solicitacao
+                                           ,NULL          -- dhultima_solicitacao
+                                           ,0);           -- qttentativa_baixa
+            
+        -- retornar o ok para rotina chamadora
+        pr_des_erro := 'OK';
+        
+        -- Comitar a inclusão da pendencia de baixa
+        COMMIT;
+                                    
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Ocorrendo erro de inclusão, deve retornar a mensagem padrão 
+          pr_dscritic := 'NOK';
+      END pc_registra_pend_baixa;
             
     BEGIN
     
@@ -5963,14 +6030,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pc_ConsultarBaixaOperacional(pr_cdctrbxo => pr_cdctrlcs   --> Numero controle participante da baixa operacional
                                   ,pr_cdcodbar => pr_cdcodbar   --> Codigo de barras do titulo
                                   ,pr_baixaope => vr_baixaope   --> retornar dados da baixa operacional
+                                  ,pr_idbxapdn => vr_idbxapdn   --> Indica se a baixa operacional está pendente
                                   ,pr_des_erro => pr_des_erro   --> Indicador erro OK/NOK
                                   ,pr_dscritic => pr_dscritic); --> Descricao erro
     
-      -- Verifica se ocorreu erro
+      -- Verifica se ocorreu erro e .. se não for de baixa pendente ou for processamento de pendencia
+      IF    pr_des_erro != 'OK' AND (NVL(vr_idbxapdn,0) = 0 OR pr_idpenden = 1 )  THEN
+        
+        -- Se o erro ocorreu devido a pendencia de baixa
+        IF NVL(vr_idbxapdn,0) = 1 THEN
+          -- Indica que o erro retornado é de pendencia de baixa
+          pr_idpenden := 1;
+        ELSE
+          -- Indica que o erro retornado NÃO é de pendencia de baixa
+          pr_idpenden := 0;
+        END IF;
+      
+        RAISE vr_exc_erro;
+      -- Se o erro retornado for referente a baixa pendente
+      ELSIF pr_des_erro != 'OK' AND NVL(vr_idbxapdn,0) = 1 THEN
+        pr_des_erro := NULL;  
+      
+        -- Rotina para registrar a pendencia de baixa
+        pc_registra_pend_baixa(pr_cdlegado => pr_cdlegado
+                              ,pr_cdctrlcs => pr_cdctrlcs
+                              ,pr_cdcodbar => pr_cdcodbar
+                              ,pr_des_erro => pr_des_erro);
+      
+        -- Se houver retorno de erro
       IF pr_des_erro != 'OK' THEN
+          -- Deve seguir o processo criticando o estorno - Será apresentada a critica da pc_ConsultarBaixaOperacional
         RAISE vr_exc_erro;
       END IF;
     
+        -- Se não houve erros, deve limpar as criticas e retornar
+        pr_des_erro := 'OK';
+        pr_dscritic := NULL;
+        
+        RETURN;
+        
+      END IF;
+      
+      -- Retornar zero, pois se houver algum erro não é da pendencia
+      pr_idpenden := 0;
+      
       --> NumCtrlPart
       vr_ctrlpart := fn_gera_ctrlpart('C');
 
@@ -6112,5 +6215,240 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END;
   END pc_notif_novo_dda;
 
+  /* Procedure para processar pendencia de cancelamento de baixa operacional */
+  PROCEDURE pc_pendencia_cancel_baixa(pr_dsrowid   IN VARCHAR2) IS     -- Rowid do registro a ser processado
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_pendencia_cancel_baixa
+    --  Sistema  : Procedure para tentar processar a solicitação de cancelamento de baixa que está pendente
+    --  Sigla    : CRED
+    --  Autor    : Renato Darosci
+    --  Data     : Julho/2018.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Tentar efetuar a comunicação do cancelamento da baixa do titulo e caso não seja possível 
+    --             reagendar um job para tentar novamente depois de determinado tempo
+    ---------------------------------------------------------------------------------------------------------------
+    
+    -- CONSTANTES
+    vr_cdcooper   CONSTANT NUMBER := 3; -- Rodará sempre como CENTRAL
+    vr_nrminuto   CONSTANT NUMBER := 1 / 24 / 60; -- Fator referente à 1 minuto
+    
+    -- Buscar os dados da requisição a ser processada
+    CURSOR cr_pendencia IS
+      SELECT tb.*
+        FROM tbcobran_baixa_pendente tb
+       WHERE tb.rowid = pr_dsrowid;
+    rg_pendencia    cr_pendencia%ROWTYPE;
+    
+    -- Buscar parametro
+    CURSOR cr_crappco IS 
+      SELECT to_date(to_char(SYSDATE,'DD/MM/YYYY')||' '||t.dsconteu,'DD/MM/YYYY HH24:MI') dtlimite
+        FROM crappco t
+       WHERE t.cdcooper = vr_cdcooper -- Será cadastrado o parametro de forma geral para todas as coops
+         AND t.cdpartar = 57;         -- Código do parametro
+    
+    -- VARIÁVEIS
+    vr_exc_erro   EXCEPTION;
+    
+    vr_dtprxexc   DATE;
+    vr_dtlimite   DATE;
+    vr_nrdifere   NUMBER; 
+    vr_idpenden   NUMBER;
+    vr_insituac   NUMBER;
+    vr_des_erro   VARCHAR2(10);
+    vr_dscritic   VARCHAR2(1000);
+    vr_dsnomjob   VARCHAR2(100);
+    vr_dsdplsql   VARCHAR2(30000);
+    
+  BEGIN
+    
+    -- Buscar os dados da pendencia
+    OPEN  cr_pendencia;
+    FETCH cr_pendencia INTO rg_pendencia;
+    
+    -- Se a pendencia não foi encontrada
+    IF cr_pendencia%NOTFOUND THEN
+      CLOSE cr_pendencia;
+      vr_dscritic := 'Pendência de baixa operacional não encontrada.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Fechamento do cursor
+    CLOSE cr_pendencia;
+  
+    -- Verifica se a pendencia ainda não foi processada
+    IF rg_pendencia.insituacao_solicitacao <> 0 THEN
+      vr_dscritic := 'Pendência de baixa operacional já foi processada.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Na chamada da rotina de baixa, indicar que o processamento é de uma pendencia de baixa
+    vr_idpenden := 1;
+    
+    -- Chama rotina de baixa operacional
+    DDDA0001.pc_cancelar_baixa_operac(pr_cdlegado => rg_pendencia.cdlegado
+                                     ,pr_idtitdda => '0'          
+                                     ,pr_cdctrlcs => rg_pendencia.cdctrlcs
+                                     ,pr_cdcodbar => rg_pendencia.cdcodbar
+                                     ,pr_idpenden => vr_idpenden
+                                     ,pr_des_erro => vr_des_erro
+                                     ,pr_dscritic => vr_dscritic);
+    
+    -- Se nenhuma crítica for retornada
+    IF vr_des_erro = 'OK' THEN
+      
+      -- Atualizar os dados da pendencia com sucesso e encerrar a mesma
+      BEGIN 
+        UPDATE tbcobran_baixa_pendente tb
+           SET tb.insituacao_solicitacao = 1 -- PROCESSADA COM SUCESSO
+             , tb.dhultima_solicitacao   = SYSDATE
+             , tb.qttentativa_baixa      = NVL(rg_pendencia.qttentativa_baixa,0) + 1
+             , tb.dserro_pendencia       = NULL -- Sem ocorrencia de erro
+         WHERE tb.rowid = pr_dsrowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Em caso de erros, apenas retornar e finalizar
+          vr_dscritic := 'Erro ao finalizar pendência: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+    
+    -- Se ocorreu crítica 
+    ELSE
+      /* Deve reagendar o job para executar novamente 
+      -- Calcular a próxima execução do job, conforme regra:
+         -> Até a primeira hora, executar a cada 10 minutos
+         -> Da primeira até a terceira hora executar a cada 30 minutos
+         -> Após isto executar a cada 1 hora, obedecendo a hora limite */
+      
+      BEGIN
+        -- Buscar a hora limite da execução do parametro
+        OPEN  cr_crappco;
+        FETCH cr_crappco INTO vr_dtlimite;
+        
+        -- Se não encontrar a hora no parametro
+        IF cr_crappco%NOTFOUND THEN
+          -- Será considerada a última hora do dia
+          vr_dtlimite := to_date(to_char(SYSDATE,'DD/MM/YYYY')||' 23:00','DD/MM/YYYY HH24:MI');
+        END IF;
+        
+        -- Fechar o cursor
+        CLOSE cr_crappco;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Em caso de erro na busca do parametro será considerada a última hora do dia
+          vr_dtlimite := to_date(to_char(SYSDATE,'DD/MM/YYYY')||' 23:00','DD/MM/YYYY HH24:MI');
+      END;
+      
+      -- Se a hora atual é maior que a data limite
+      IF SYSDATE >= vr_dtlimite THEN
+        
+        -- Se o erro é de pendencia
+        IF vr_idpenden = 1 THEN
+          vr_dscritic := NULL;  -- Não gravar erro 
+          vr_insituac := 2;     -- Gravar como EXPIRADA
+        ELSE
+          vr_insituac := 3;     -- Gravar como COM ERRO 
+        END IF;
+        
+        -- Atualizar os dados da pendencia para expirada
+        BEGIN 
+          UPDATE tbcobran_baixa_pendente tb
+             SET tb.insituacao_solicitacao = vr_insituac
+               , tb.dhultima_solicitacao   = SYSDATE
+               , tb.qttentativa_baixa      = NVL(rg_pendencia.qttentativa_baixa,0) + 1
+               , tb.dserro_pendencia       = vr_dscritic
+           WHERE tb.rowid = pr_dsrowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- Em caso de erros, apenas retornar e finalizar
+            vr_dscritic := 'Erro ao expirar pendência: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+      
+      ELSE  -- Se ainda não chegou na hora limite
+        
+        -- Calcular a diferença entre a hora atual e a hora da solicitação do cancelamento em segundos
+        vr_nrdifere := GENE0002.fn_busca_time()
+                     - TO_NUMBER( TO_CHAR(rg_pendencia.dhsolicita_baixa,'SSSSS') );
+      
+        -- Se a diferença for menor ou igual a uma hora (3600 segundos)
+        IF vr_nrdifere <= 3600 THEN
+          -- Deve executar novamente em 10 minutos
+          vr_dtprxexc := SYSDATE + (vr_nrminuto * 10);
+          
+        -- Se a diferença for menor ou igual a três horas (10800 segundos)
+        ELSIF vr_nrdifere <= 10800 THEN
+          -- Deve executar novamente em 10 minutos
+          vr_dtprxexc := SYSDATE + (vr_nrminuto * 30);
+          
+        ELSE 
+          -- Deve executar novamente em 1 hora (60 minutos)
+          vr_dtprxexc := SYSDATE + (vr_nrminuto * 60);
+          
+        END IF;
+        
+        -- Se a próxima execução ultrapassar a hora limite
+        IF vr_dtprxexc > vr_dtlimite THEN
+          -- Deve agendar a próxima execução para a hora limite
+          vr_dtprxexc := vr_dtlimite;
+        END IF;
+        
+        -- Define o prefixo do JOB
+        vr_dsnomjob := 'JBCOBRAN_CNCL_BXA$'; 
+        
+        -- Define o código a ser executado pelo JOB
+        vr_dsdplsql := 'BEGIN'||CHR(13)||
+                       '  DDDA0001.pc_pendencia_cancel_baixa(pr_dsrowid  => '''||pr_dsrowid||''');'||CHR(13)||
+                       'END;';                                                 
+        
+        -- Reagendar JOB para a próxima hora definida
+        GENE0001.pc_submit_job(pr_cdcooper  => vr_cdcooper
+                              ,pr_cdprogra  => 'DDDA0001'
+                              ,pr_dsplsql   => vr_dsdplsql
+                              ,pr_dthrexe   => TO_TIMESTAMP_TZ(
+                                                   TO_CHAR(vr_dtprxexc,'dd/mm/rrrr hh24:mi:ss')||' '|| to_char( SYSTIMESTAMP, 'TZH:TZM' )
+                                              ,'dd/mm/rrrr hh24:mi:ss TZH:TZM')
+                              ,pr_interva   => NULL
+                              ,pr_jobname   => vr_dsnomjob          
+                              ,pr_des_erro  => vr_dscritic);
+        
+        -- Tratamento Erro
+        IF vr_dscritic IS NOT NULL THEN
+          vr_dscritic := 'Falha no reagendamento do JOB. (Job: '||vr_dsnomjob||'). Erro: '||vr_dscritic;
+          RAISE vr_exc_erro;              
+        END IF;
+        
+        -- Atualizar os indicadores da pendencia 
+        BEGIN 
+          UPDATE tbcobran_baixa_pendente tb
+             SET tb.dhultima_solicitacao   = SYSDATE
+               , tb.qttentativa_baixa      = NVL(rg_pendencia.qttentativa_baixa,0) + 1
+           WHERE tb.rowid = pr_dsrowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- Em caso de erros, apenas retornar e finalizar
+            vr_dscritic := 'Erro ao atualizar pendência: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+        
+      END IF; -- IF SYSDATE >= vr_dtlimite 
+    END IF; -- IF vr_des_erro = 'OK'
+    
+    -- Commitar a sessão ao final da execução
+    COMMIT;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Encerrar o job com erro
+      RAISE_APPLICATION_ERROR(-20001,'Erro DDDA0001.pc_pendencia_cancel_baixa: '||vr_dscritic);
+    WHEN OTHERS THEN
+      -- Encerrar o job com erro
+      vr_dscritic := 'Erro na rotina DDDA0001.pc_pendencia_cancel_baixa. '||SQLERRM;
+      RAISE_APPLICATION_ERROR(-20000,vr_dscritic);
+  END pc_pendencia_cancel_baixa;
+  
 END ddda0001;
 /

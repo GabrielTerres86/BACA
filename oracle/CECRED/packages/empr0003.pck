@@ -223,7 +223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 26/06/2017
+  --  Data     : agosto/2014.                   Ultima atualizacao: 26/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -259,6 +259,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --						 (Adriano - P339).
   --
   --              12/06/2018 - Projeto 413 - Mudanca de Marcas (Paulo Martins-Mout´s)
+  --
+  --              23/07/2018 - Alterado para verificar o campo nrplnovo, ufplnovo, nrrenovo na crapbpr, 
+  --                           caso tenha valor nestes campos, deve ser pego este campo, caso contrario
+  --                           pegar dos campos nrdplaca, ufdplaca, nrrenava, respectivamente.
+  --                           (André Mout's) - (INC0019097).
+  --
+  --			  26/07/2018 - Ajuste no xml co-responsabilidade (Andrey Formigari - Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -917,7 +924,7 @@ BEGIN
               crapbpr.dsbemfin,
               crapbpr.vlmerbem,
               crapbpr.dscatbem,
-              'Renavan: '||crapbpr.nrrenava nrrenava,
+              'Renavan: '|| case when nvl(crapbpr.nrrenovo, 0) <> 0 then crapbpr.nrrenovo else crapbpr.nrrenava end nrrenava,
               decode(crapbpr.dscatbem,'TERRENO','Endereco: ' ||crapbpr.dscorbem,
                                       'CASA','Endereco: ' ||crapbpr.dscorbem,
                                       'APARTAMENTO','Endereco: ' ||crapbpr.dscorbem,
@@ -925,8 +932,8 @@ BEGIN
                                       'EQUIPAMENTO','Chassi/N Série: '||crapbpr.dschassi,
                                                     'Chassi: '||crapbpr.dschassi) dschassi,
               crapbpr.tpchassi,
-              crapbpr.ufdplaca,
-              'Placa: '||crapbpr.nrdplaca nrdplaca,
+              case when nvl(crapbpr.ufplnovo, ' ') <> ' ' then crapbpr.ufplnovo else crapbpr.ufdplaca end ufdplaca,
+              'Placa: '|| case when nvl(crapbpr.nrplnovo, ' ') <> ' ' then crapbpr.nrplnovo else crapbpr.nrdplaca end nrdplaca,
               crapbpr.uflicenc,
               'Ano: '||crapbpr.nranobem||' Modelo: '||crapbpr.nrmodbem dsanomod,
               'Cor: '||crapbpr.dscorbem dscorbem,
@@ -4019,6 +4026,10 @@ BEGIN
     -- Criar documento XML
     dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
     dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
+        
+	gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?> ');
         
     -- Insere o cabeçalho do XML 
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 

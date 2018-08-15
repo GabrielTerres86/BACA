@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE TELA_CONPRO IS
+CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
 
   ---------------------------------------------------------------------------
   --
@@ -155,7 +155,7 @@ CREATE OR REPLACE PACKAGE TELA_CONPRO IS
 
 END TELA_CONPRO;
 /
-CREATE OR REPLACE PACKAGE BODY TELA_CONPRO IS
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
   ---------------------------------------------------------------------------
   --
   --  Programa : TELA_CONPRO
@@ -525,6 +525,9 @@ CREATE OR REPLACE PACKAGE BODY TELA_CONPRO IS
                                separadamente (Marcos-Supero)
                   02/04/2018 - P345 - Inclusão do Parâmetro Tipo de Produto para considerar
                                cartões de crédito
+				  27/07/2018 - Adicionado NVL dentro do IF de verificação de último envio (esteira ou motor)
+                               ,pois sem o NVL caso uma das datas fossem nulas, estava causando erro. 
+                               INC0020322 (Mateus Z / Mouts)			   
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -568,7 +571,9 @@ CREATE OR REPLACE PACKAGE BODY TELA_CONPRO IS
 														 ,1,'Env. p/@Analise@Autom.'
 														 ,2,'Env. p/@Analise@Manual'
 														 ,3,'Analise@Finalizada'
-														 ,4,'Expirado','') situacao_ayllos
+														 ,4,'Expirado'
+														 ,5,'Expirado Dec. Prazo' -- PJ 438 - Márcio (Mouts)                            
+                             ,'') situacao_ayllos
                        -- Parecer esteira
                       ,
                        DECODE(epr.insitapr,
@@ -840,8 +845,8 @@ CREATE OR REPLACE PACKAGE BODY TELA_CONPRO IS
         pr_tab_crawepr(vr_ind_crawepr).hrmvtolt := gene0002.fn_calc_hora(rw_crawepr.hrinclus);
       
         -- Enviar data e hora do ultimo envio (Motor ou Esteira)
-        IF to_date(to_char(rw_crawepr.dtenvest,'ddmmrrrr')||to_char(rw_crawepr.hrenvest,'fm00000'),'ddmmrrrrsssss')
-         > to_date(to_char(rw_crawepr.dtenvmot,'ddmmrrrr')||to_char(rw_crawepr.hrenvmot,'fm00000'),'ddmmrrrrsssss') THEN 
+        IF to_date(to_char(nvl(rw_crawepr.dtenvest,to_date('01/01/1900','DD/MM/RRRR')),'ddmmrrrr')||to_char(rw_crawepr.hrenvest,'fm00000'),'ddmmrrrrsssss')
+         > to_date(to_char(nvl(rw_crawepr.dtenvmot,to_date('01/01/1900','DD/MM/RRRR')),'ddmmrrrr')||to_char(rw_crawepr.hrenvmot,'fm00000'),'ddmmrrrrsssss') THEN 
           -- Envio Esteira foi o ultimo 
           vr_dtenvest := rw_crawepr.dtenvest;
         IF rw_crawepr.hrenvest > 0 THEN

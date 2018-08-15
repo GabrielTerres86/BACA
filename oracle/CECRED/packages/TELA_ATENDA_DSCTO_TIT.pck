@@ -2271,7 +2271,7 @@ BEGIN
              end if;
 
        --    se retornou da análise do ibratan como Não Aprovada, cancelar a proposta
-       elsif rw_crawlim.insitlim = 6 and rw_crawlim.insitapr = 4 then
+       elsif (rw_crawlim.insitlim = 6 OR rw_crawlim.insitlim = 8) AND rw_crawlim.insitapr = 4 then
              pc_cancelar_proposta(pr_cdcooper => pr_cdcooper
 
                                  ,pr_nrdconta => pr_nrdconta
@@ -3065,6 +3065,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                             when 3 then 'CANCELADA'
                             when 5 then 'APROVADA'
                             when 6 then 'NAO APROVADA'
+                            when 8 then 'EXPIRADA DECURSO DE PRAZO'
                             else        'DIFERENTE'
           end dssitlim
          ,lim.insitest
@@ -3096,7 +3097,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                      ctr.nrdconta = lim.nrdconta and
                                      ctr.cdcooper = lim.cdcooper)
    where  case --   mostrar propostas em situações de analise (em estudo) ou canceladas dentro de x dias
-               when lim.insitlim in (1,3,5,6) and lim.dtpropos >= vr_dtpropos then 1
+               when lim.insitlim in (1,3,5,6,8) and lim.dtpropos >= vr_dtpropos then 1
                --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and
                     lim.nrctrlim = (select max(lim_ativo.nrctrlim)
@@ -3121,6 +3122,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
    order  by case when lim.insitlim = 1 then -3
                   when lim.insitlim = 5 then -2
                   when lim.insitlim = 6 then -1
+                  when lim.insitlim = 8 then -1
                   else lim.insitlim
              end
            , lim.nrctrmnt

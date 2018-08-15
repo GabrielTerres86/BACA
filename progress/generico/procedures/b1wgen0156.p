@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0156.p
     Autor   : Jorge I. Hamaguchi
-    Data    : Maio/2013                Ultima Atualizacao: 11/12/2017
+    Data    : Maio/2013                Ultima Atualizacao: 30/07/2018
      
     Dados referentes ao programa:
    
@@ -41,6 +41,8 @@
                             
               11/12/2017 - Ajustar mensagem do Porte conta fisica e Juridica para exibier o
                            campo da tabela crapprm (Lucas Ranghetti #809661)
+
+              30/07/2018 - SCTASK0021664 Inclusao do campo vlperfin na rotina alterar_lote (Carlos)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0156tt.i }
@@ -1371,6 +1373,7 @@ PROCEDURE alterar_lote:
     DEF  INPUT  PARAM par_dtultamo AS DATE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdmunbce AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_cdsetpro AS INTE                           NO-UNDO.
+    DEF  INPUT  PARAM par_vlperfin AS DECI                           NO-UNDO.
     
     DEF  OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF  OUTPUT PARAM TABLE FOR tt-erro.
@@ -1416,7 +1419,9 @@ PROCEDURE alterar_lote:
            craplpc.dtpriamo = par_dtpriamo
            craplpc.dtultamo = par_dtultamo
            craplpc.cdmunbce = par_cdmunbce
-           craplpc.cdsetpro = par_cdsetpro.
+           craplpc.cdsetpro = par_cdsetpro
+           craplpc.vlperfin = par_vlperfin
+           .
 
     RETURN "OK".
 

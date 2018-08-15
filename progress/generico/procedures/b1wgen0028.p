@@ -539,6 +539,8 @@
                 
 			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                 
+				30/07/2018 - Alterado a procedure verifica_acesso_2via colocando uma nova condição para conta restrita.
+                
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1344,7 +1346,7 @@ PROCEDURE carrega_dados_inclusao:
             RETURN "NOK".
          END.
     ELSE
-    IF   crapass.cdsitdct <> 1   AND
+    /*IF   crapass.cdsitdct <> 1   AND
        (((crapass.cdsitdct <> 5  OR
           crapass.cdsitdct <> 9) AND
           par_idorigem <> 1)     OR
@@ -1365,7 +1367,7 @@ PROCEDURE carrega_dados_inclusao:
                           
             RETURN "NOK".
          END.
-    ELSE
+    ELSE*/
     IF   CAN-DO("5,6,7,8",STRING(crapass.cdsitdtl)) THEN
          DO:
             ASSIGN aux_cdcritic = 695
@@ -9941,10 +9943,11 @@ PROCEDURE verifica_acesso_2via:
     IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
 
-    IF  crapass.cdsitdct <> 1  THEN
+    IF  crapass.cdsitdct <> 1 AND
+		crapass.cdsitdct <> 5 THEN
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = (IF  crapass.cdsitdct = 5 OR crapass.cdsitdct = 9 THEN
+                   aux_dscritic = (IF  /*crapass.cdsitdct = 5 OR*/ crapass.cdsitdct = 9 THEN
                                        "Conta nao aprovada"
                                    ELSE
                                        "Conta encerrada") +

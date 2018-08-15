@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 19/07/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 27/07/2018
 
    Dados referentes ao programa:
 
@@ -121,14 +121,17 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 							   
                  07/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				         23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
-							                pelo AD. (PRJ339 - Reinert)
+				 23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
+							  pelo AD. (PRJ339 - Reinert)
                  
                  18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
                  19/07/2018 - Inclusão de acentuação na procedure pc_horario_limite e inclusão de tratamento
                               para bloquear resgate de aplicação enquanto o processo batch estiver rodando
                               na procedure pc_cad_resgate_aplica (Jean Michel)
+
+                27/07/2018 - Melhoria na validação de horários(pc_horario_limite), Ayllos WEB não é validado (Jean Michel)
+
   ............................................................................*/
 
   /* Tipo que compreende o registro da tab. temporária tt-carencia-aplicacao */
@@ -1205,7 +1208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 19/07/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 30/07/2018
 
    Dados referentes ao programa:
 
@@ -1430,6 +1433,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 19/07/2018 - Inclusão de acentuação na procedure pc_horario_limite e inclusão de tratamento
                              para bloquear resgate de aplicação enquanto o processo batch estiver rodando
                              na procedure pc_cad_resgate_aplica (Jean Michel)             
+
+                27/07/2018 - Melhoria na validação de horários(pc_horario_limite),
+                             Ayllos WEB não é validado (Jean Michel)
+
+                30/07/2018 - Inclusão de validação de horários para transações de 
+                             aplicações(pc_excluir_agendmto) (Jean Michel)             
 
   ............................................................................*/
   
@@ -10120,7 +10129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 18/07/2018
+   Data    : Maio/2014                          Ultima atualizacao: 27/07/2018
 
    Dados referentes ao programa:
 
@@ -10131,6 +10140,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                             (Adriano  - SD 452932).
                 
                19/07/2018 - Inclusão de acentuação (Jean Michel)
+
+               27/07/2018 - Melhoria na validação de horários, Ayllos WEB não é validado (Jean Michel)
                 
   .......................................................................................*/
   PROCEDURE pc_horario_limite(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
@@ -10163,6 +10174,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
     BEGIN   
         
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+          
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+          
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+            
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+        
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            
+        -- Gera exceção
+        RAISE vr_exc_erro;
+            
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+            
+      END IF;
+          
+      IF rw_crapdat.inproces >= 3 THEN
+        
+        IF pr_tpvalida = 1 THEN   
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'Sistema indisponível para acesso as operações de aplicação.';
+              
+          -- Gera exceção
+          RAISE vr_exc_erro;
+        END IF;
+      ELSE
+        IF pr_idorigem <> 5 THEN
       /** Obtem limites da cooperativa **/
       vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                               ,pr_nmsistem => 'CRED'
@@ -10233,48 +10280,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
           -- Monta critica
           vr_cdcritic := 0;
-          vr_dscritic := 'Horário esgotado para acesso as operações de aplicação.';
+              vr_dscritic := 'Horário esgotado para acesso as operações de aplicação.';
 
           -- Gera exceção
           RAISE vr_exc_erro;
           
         END IF;
         
-        -- Verifica se a cooperativa esta cadastrada
-        OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-        
-        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-        
-        -- Se não encontrar
-        IF BTCH0001.cr_crapdat%NOTFOUND THEN
-          
-          -- Fechar o cursor pois haverá raise
-          CLOSE BTCH0001.cr_crapdat;
-          
-          -- Montar mensagem de critica
-          vr_cdcritic := 1;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          
-          -- Gera exceção
-          RAISE vr_exc_erro;
-          
-        ELSE
-          -- Apenas fechar o cursor
-          CLOSE BTCH0001.cr_crapdat;
-          
         END IF;
         
-        IF rw_crapdat.inproces >= 3 THEN
-          
-          -- Montar mensagem de critica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Sistema indisponível para acesso as operações de aplicação.';
-          
-          -- Gera exceção
-          RAISE vr_exc_erro;
-          
         END IF;
-      
       END IF;      
       
     EXCEPTION
@@ -18988,7 +19003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              o valor a ser resgatado é superior a disponivel (Lucas Ranghetti #492125)
                              
                 05/12/2017 - Alterei a gravacao do lote pois a tabela CRAPLOT estava ficando alocada
-                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)   
+                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)             
 
                 19/07/2018 - Inclusão de tratamento para bloquear resgate de aplicação enquanto o
                              processo batch estiver rodando (Jean Michel)
@@ -19121,10 +19136,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     vr_exc_saida       EXCEPTION;
     vr_exc_desvio      EXCEPTION;
     vr_exc_erro        EXCEPTION;
-      
+    
     vr_hrlimini INTEGER;
     vr_hrlimfim INTEGER;
-	vr_idesthor INTEGER;
+	  vr_idesthor INTEGER;
   
   BEGIN
     
@@ -21040,7 +21055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
     /* .............................................................................
 
-     Programa: pc_incluir_agendamento
+     Programa: pc_excluir_det_agendmto
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Tiago
@@ -21141,6 +21156,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       --Registro do tipo calendario
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
+      vr_hrlimini INTEGER;
+      vr_hrlimfim INTEGER;
+  	  vr_idesthor INTEGER;
+
     BEGIN
 
         -- Verifica se a cooperativa esta cadastrada
@@ -21166,6 +21185,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           CLOSE BTCH0001.cr_crapdat;
 
         END IF;
+
+        pc_horario_limite(pr_cdcooper => pr_cdcooper
+                         ,pr_cdagenci => 90 --INTERNETBANK
+                         ,pr_nrdcaixa => 100
+                         ,pr_cdoperad => '996'
+                         ,pr_nmdatela => 'INTERNETBANK'
+                         ,pr_idorigem => 3
+                         ,pr_tpvalida => 1
+                         ,pr_hrlimini => vr_hrlimini
+                         ,pr_hrlimfim => vr_hrlimfim
+												 ,pr_idesthor => vr_idesthor
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
         OPEN cr_cr3pass(pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => pr_nrdconta);
 
@@ -21340,7 +21377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Tiago
-     Data    : setembro/14.                    Ultima atualizacao: 05/09/2014
+     Data    : setembro/14.                    Ultima atualizacao: 30/07/2018
 
      Dados referentes ao programa:
 
@@ -21350,7 +21387,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 30/07/2018 - Inclusão de validação de horários para transações de 
+                              aplicações (Jean Michel)
     ..............................................................................*/
     DECLARE
 
@@ -21417,6 +21455,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       --Registro do tipo calendario
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
+      vr_hrlimini INTEGER;
+      vr_hrlimfim INTEGER;
+  	  vr_idesthor INTEGER;
+
     BEGIN
 
         -- Verifica se a cooperativa esta cadastrada
@@ -21435,6 +21477,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- Apenas fechar o cursor
           CLOSE BTCH0001.cr_crapdat;
         END IF;
+
+        pc_horario_limite(pr_cdcooper => pr_cdcooper
+                         ,pr_cdagenci => 90 --INTERNETBANK
+                         ,pr_nrdcaixa => 100
+                         ,pr_cdoperad => '996'
+                         ,pr_nmdatela => 'INTERNETBANK'
+                         ,pr_idorigem => 3
+                         ,pr_tpvalida => 1
+                         ,pr_hrlimini => vr_hrlimini
+                         ,pr_hrlimfim => vr_hrlimfim
+												 ,pr_idesthor => vr_idesthor
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
         OPEN cr_cr3pass(pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => pr_nrdconta);
 
@@ -22074,6 +22134,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       --Registro do tipo calendario
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
+      vr_hrlimini INTEGER;
+      vr_hrlimfim INTEGER;
+	    vr_idesthor INTEGER;
+
     BEGIN
 
         -- Verifica se a cooperativa esta cadastrada
@@ -22100,6 +22164,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         END IF;
       
+      pc_horario_limite(pr_cdcooper => pr_cdcooper
+                       ,pr_cdagenci => 90 --INTERNETBANK
+                       ,pr_nrdcaixa => 100
+                       ,pr_cdoperad => '996'
+                       ,pr_nmdatela => 'INTERNETBANK'
+                       ,pr_idorigem => 3
+                       ,pr_tpvalida => 1
+                       ,pr_hrlimini => vr_hrlimini
+                       ,pr_hrlimfim => vr_hrlimfim
+                       ,pr_idesthor => vr_idesthor
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+
+      -- Se ocorreu erro
+      IF NVL(vr_cdcritic,0) <> 0 OR
+         vr_dscritic IS NOT NULL THEN
+
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+
+      END IF;
+        
       --Verifica se conta for conta PJ e se exige asinatura multipla
       INET0002.pc_verifica_rep_assinatura(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta

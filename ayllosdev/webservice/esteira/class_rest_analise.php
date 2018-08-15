@@ -3,6 +3,11 @@
  * Classe Responsavel da requisicao REST da analise
  * 
  * @autor: Lucas Reinert
+ * @alteracoes:
+ *              28/06/2018 - Incluindo novo parametro para recebimento do motor de crédito
+ *                           Fluxo atraso (liquidOpCredAtraso - inopeatr)
+ *                           P450 - Diego Simas - AMcom
+ *
  */
 require_once('../class/class_rest_server_json.php');
 class RestAnalise extends RestServerJson{
@@ -122,17 +127,18 @@ class RestAnalise extends RestServerJson{
 			      $xml .= " <Dados>";
 			      $xml .= "   <cdorigem>9</cdorigem>";
 			      $xml .= "   <dsprotoc>".$oDados->protocolo."</dsprotoc>";
-            $xml .= "   <nrtransa>0</nrtransa>";
+                  $xml .= "   <nrtransa>0</nrtransa>";
 			      $xml .= "   <dsresana>".$oDados->resultadoAnaliseRegra."</dsresana>";
 			      $xml .= "   <indrisco>".$oDados->indicadoresGeradosRegra->nivelRisco."</indrisco>";
 			      $xml .= "   <nrnotrat>".$oDados->indicadoresGeradosRegra->notaRating."</nrnotrat>";
 			      $xml .= "   <nrinfcad>".$oDados->indicadoresGeradosRegra->informacaoCadastral."</nrinfcad>";
 			      $xml .= "   <nrliquid>".$oDados->indicadoresGeradosRegra->liquidez."</nrliquid>";
 			      $xml .= "   <nrgarope>".$oDados->indicadoresGeradosRegra->garantia."</nrgarope>";
+                  $xml .= "   <inopeatr>".$oDados->indicadoresGeradosRegra->liquidOpCredAtraso."</inopeatr>";
 			      $xml .= "   <nrparlvr>".$oDados->indicadoresGeradosRegra->patrimonioPessoalLivre."</nrparlvr>";
 			      $xml .= "   <nrperger>".$oDados->indicadoresGeradosRegra->percepcaoGeralEmpresa."</nrperger>";
-            $xml .= "   <desscore>".$oDados->indicadoresGeradosRegra->descricaoScoreBVS."</desscore>";
-            $xml .= "   <datscore>".$oDados->indicadoresGeradosRegra->dataScoreBVS."</datscore>";
+                  $xml .= "   <desscore>".$oDados->indicadoresGeradosRegra->descricaoScoreBVS."</desscore>";
+                  $xml .= "   <datscore>".$oDados->indicadoresGeradosRegra->dataScoreBVS."</datscore>";
 			      $xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
 			      $xml .= "   <namehost>".$this->getNameHost()."</namehost>";
 			      $xml .= " </Dados>";

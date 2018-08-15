@@ -106,6 +106,8 @@ $json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[
 
 $erro = $objXml->Erro->Registro->dscritic;
 if(strlen($erro) > 0){
+	$erro =  str_replace(" ]"," ]<br>",$erro);
+	$erro =  str_replace("\u00C3\u0192\u00C2\u00A1","a",$erro);
 	echo"<script>showError('error', '".utf8ToHtml($erro)."', 'Alerta - Ayllos', 'voltaDiv(0, 1, 4);') </script>";
 }
 
@@ -299,24 +301,23 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 				while(limiteSolicitado.indexOf(".") > -1)
 					limiteSolicitado = limiteSolicitado.replace(".","");
 				limiteSolicitado = parseFloat(limiteSolicitado.replace(",","."));
-				if(limiteSolicitado == 0){
-					var permiteZero = !(select[1] != 12) ;
+				/*if(limiteSolicitado == 0){
+					var permiteZero = !(select[1] != 12) ; /*
 					if( !permiteZero){
 						showError("error", '<? echo utf8ToHtml("Limite R$0 não permitido para a bandeira solicitada.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 						return;
 					}
 					
-				}
-				
+				}*/
 				if(limiteSolicitado > vlMaxlimcrd){
 					showError("error", '<? echo utf8ToHtml("Não é possível solictar limite acima do máximo da categoria");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
                     return;
                 }
 				
-				if(limiteSolicitado <= parseFloat(vlSugMotor) && !permiteZero && select[4] == 't'){					
+				if(limiteSolicitado <= parseFloat(vlSugMotor) && select[4] == 't'){					
 					showError("error", '<? echo utf8ToHtml("Limite solicitado dentro dos valores sugeridos, por favor utilize as caixas de seleção.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
                     return;
-				}else if(select[4] == 'n' && limiteSolicitado < parseFloat(vlSugMotor) && !permiteZero){
+				}else if(select[4] == 'n' && limiteSolicitado < parseFloat(vlSugMotor) ){
 					showError("error", '<? echo utf8ToHtml("Limite solicitado abaixo do limite mínimo da categoria.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");						
 					return;
 				}
@@ -330,10 +331,10 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 				var value = $(inputLimite).val().replace('.', "").replace(",",".");
 				var min = $(inputLimite ).attr("min");
 				var max = $(inputLimite ).attr("max").replace('.', "").replace(",",".");
-				if(parseFloat(value) == 0 && $(inputLimite ).attr("cdadm") != 11){
-					showError("error", '<? echo utf8ToHtml("Limite com valor R$0 deve ser enviado para análise da esteira.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+				//if(parseFloat(value) == 0 && $(inputLimite ).attr("cdadm") != 11 /*&& $(inputLimite ).attr("cdadm") != 12*/){ /*
+				/*	showError("error", '<? echo utf8ToHtml("Limite com valor R$0 deve ser enviado para análise da esteira.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
-				}
+				}*/
 				if(parseFloat(value) > parseFloat(max)){
 					showError("error", '<? echo utf8ToHtml("Valor maior que o permitido, por favor selecione a opção  na parte inferior da tela.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;

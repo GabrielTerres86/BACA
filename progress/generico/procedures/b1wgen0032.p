@@ -148,6 +148,9 @@
 
                 29/03/2018 - Chamar rotina pc_valida_adesao_produto na proc 
                              obtem-permissao-solicitacao. PRJ366 (Lombardi).
+							 
+				03/08/2018 - Ajuste na grava-senha-letras, para	alterar a situação
+				             da senha letras para ativo. INC0019451 (Wagner - Sustentação)
 
 ..............................................................................*/
 
@@ -3398,6 +3401,7 @@ PROCEDURE grava-senha-letras:
                                          UPPER(SUBSTR(par_dssennov,1,1)))
                crapsnh.dtaltsnh = par_dtmvtolt
                crapsnh.cdoperad = par_cdoperad
+			   crapsnh.cdsitsnh = 1 /* Ativo */
                aux_flgtrans     = TRUE.
         
     END. /** Fim do DO TRANSACTION - TRANSACAO **/

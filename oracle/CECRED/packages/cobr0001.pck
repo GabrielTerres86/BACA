@@ -3036,7 +3036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
     Sistema  : Rotina para buscar as parcelas que pertencem a um carnê, de acordo com a parcela selecionada
     Sigla    : COBR
     Autor    : Douglas Quisinski - CECRED
-    Data     : Junho/2015.                      Ultima atualizacao: 09/02/2018
+    Data     : Junho/2015.                      Ultima atualizacao: 02/08/2018
 
     Dados referentes ao programa:
     
@@ -3051,6 +3051,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                              (Douglas - Chamado 754911)
 
 				09/02/2018 - Adicionado novas tags referente ao PRJ285 - Novo IB (Rafael)
+                
+                02/08/2018 - Utilizar a procedure COBR0009.pc_busca_nome_imp_blt para retornar
+                             o nome que deve ser impresso no carnê. Mesma regra utilizada no boleto
+                             (Douglas - PRJ285 Nova Conta Online)
+                            
     ............................................................................. */
     DECLARE
       -- Variáveis para identificar os boletos
@@ -3061,6 +3066,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
 
       -- Email do pagador
       vr_dsdemail    VARCHAR2(5000);
+
+      -- Nome do Beneficiario para imprimir no boleto
+      vr_nmbenefi    VARCHAR2(150);
+      vr_des_erro_benef VARCHAR2(3);
 
       vr_xml_tab_temp VARCHAR2(32767) := '';
 
@@ -3444,6 +3453,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
             vr_parcela_ant := 1;
             vr_parcela_atu := 0;
                                 
+            -- Buscar o nome do beneficiario que deve ser impresso no boleto
+            -- O carnê é emitido pelo mesmo beneficário, então vamos buscar o nome com o IDSEQTTL da primeira parcela do carnê
+            COBR0009.pc_busca_nome_imp_blt(pr_cdcooper => rw_primeira_parcela.cdcooper
+                                          ,pr_nrdconta => rw_primeira_parcela.nrdconta
+                                          ,pr_idseqttl => rw_primeira_parcela.idseqttl
+                                          ,pr_nmprimtl => vr_nmbenefi
+                                          ,pr_des_erro => vr_des_erro_benef
+                                          ,pr_dscritic => vr_dscritic);
+                                
             FOR rw_parcelas IN cr_all_parcelas(pr_cdcooper => rw_primeira_parcela.cdcooper
                                               ,pr_nrdconta => rw_primeira_parcela.nrdconta
                                               ,pr_nrcnvcob => rw_primeira_parcela.nrcnvcob
@@ -3547,6 +3565,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                  vr_dsdinst4 := ' ';
               END IF;
                                              
+              -- Se não retornou o nome do beneficiario da COBR0009, utilizamos o nome que estava sendo devolvido
+              IF vr_des_erro_benef <> 'OK' THEN
+                vr_nmbenefi := rw_parcelas.nmprimtl;
+              END IF;
 
               -- Gera a informação dos boletos
               gene0002.pc_escreve_xml(pr_xml => pr_tab_boleto,
@@ -3573,7 +3595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                                                      || '<vldpagto>' || rw_parcelas.vldpagto || '</vldpagto>'
                                                      || '<cdtpinsc>' || rw_parcelas.cdtpinsc || '</cdtpinsc>'
                                                      || '<inpessoa>' || rw_parcelas.inpessoa || '</inpessoa>'
-                                                     || '<nmprimtl>' || rw_parcelas.nmprimtl || '</nmprimtl>'
+                                                     || '<nmprimtl>' || vr_nmbenefi          || '</nmprimtl>'
                                                      || '<vldescto>' || rw_parcelas.vldescto || '</vldescto>'
                                                      || '<cdmensag>' || rw_parcelas.cdmensag || '</cdmensag>'
                                                      || '<dsinform>' || rw_parcelas.dsinform || '</dsinform>'
