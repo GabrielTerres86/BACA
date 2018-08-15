@@ -1504,49 +1504,9 @@ BEGIN
 
           -- Conforme tipo de erro realiza acao diferenciada
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                RAISE vr_exc_saida;
-            END If;
           END IF;
 
-     /* 
-        -- Efetua lancamento de crédito em conta-corrente
-        BEGIN
-        
-          INSERT INTO craplcm
-            (cdcooper,
-             dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             nrdconta,
-             nrdctabb,
-             nrdocmto,
-             nrseqdig,
-             dtrefere,
-             vllanmto,
-             cdhistor)
-          VALUES
-            (rw_craplot.cdcooper,
-             rw_craplot.dtmvtolt,
-             rw_craplot.cdagenci,
-             rw_craplot.cdbccxlt,
-             rw_craplot.nrdolote,
-             rw_craprac.nrdconta,
-             rw_craprac.nrdconta,
-             rw_craprac.nraplica,
-             rw_craplot.nrseqdig,
-             rw_craplot.dtmvtolt,
-             vr_vlsldrgt,          -- Valor do resgate
-             rw_craprac.cdhsvrcc);
-        
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao inserir registro de lancamento em conta-corrente. Erro: ' || SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-     */
       END IF; -- Fim verifica se aplicacao esta bloqueada
     
       vr_tptelefo := ''; -- Inicializa variavel de sequencia de telefone

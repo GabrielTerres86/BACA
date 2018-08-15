@@ -340,55 +340,9 @@ BEGIN
                                        , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-         -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-         IF vr_incrineg = 0 THEN
-            vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
             RAISE vr_exc_erro;
-         ELSE
-            -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
-            -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela);
-            -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
-            NULL;--CONTINUE;
-         END IF;
       END IF;
-/* PRJ450 - 11/07/2018
-      BEGIN
-        INSERT INTO craplcm (cdcooper
-                            ,dtmvtolt
-                            ,cdagenci
-                            ,cdbccxlt
-                            ,nrdolote
-                            ,nrdconta
-                            ,nrdctabb
-                            ,nrdctitg
-                            ,nrdocmto
-                            ,cdhistor
-                            ,nrseqdig
-                            ,vllanmto                          
-                            ,cdcoptfn
-                            ,idlautom)
-               VALUES  (pr_cdcooper  
-                       ,rw_craplot.dtmvtolt
-                       ,rw_craplot.cdagenci
-                       ,rw_craplot.cdbccxlt
-                       ,rw_craplot.nrdolote
-                       ,pr_nrdconta
-                       ,pr_nrdconta
-                       ,GENE0002.FN_MASK(pr_nrdconta, '99999999')
-                       ,vr_qtdlan
-                       ,pr_cdhistor
-                       ,rw_craplot.nrseqdig
-                       ,pr_vllanmto                     
-                       ,0
-                       ,pr_idlautom);
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      END;
-*/      
+
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_dscritic:= vr_dscritic;

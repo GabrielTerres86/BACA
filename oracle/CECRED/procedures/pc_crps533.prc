@@ -1000,12 +1000,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  vr_nrseqdig := vr_nrseqdig + 100000;
                  continue;
                ELSE
-                 -- Se não houve crítica de negócio
-                 IF vr_incrineg = 0 THEN
                    cecred.pc_internal_exception;
                    vr_des_erro := vr_dscritic;
                    RAISE vr_exc_erro;
-                 END IF;
                END IF;
              END IF;
 
@@ -4594,11 +4591,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_nrseqdig := vr_nrseqdig + 100000;
                               continue;
                             ELSE
-                              IF vr_incrineg = 0 THEN
                                 cecred.pc_internal_exception;
                                 vr_des_erro:= vr_dscritic;
                                 RAISE vr_exc_erro;
-                              END IF;
                             END IF;
                           END IF;
 
@@ -4655,12 +4650,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_nrseqdig := vr_nrseqdig + 100000;
                               continue;
                             ELSE
-                              -- Se não houve crítica de negócio
-                              IF vr_incrineg = 0 THEN
                                 cecred.pc_internal_exception;
                                 vr_des_erro:= vr_dscritic;
                                 RAISE vr_exc_erro;
-                              END IF;
                             END IF;
                           END IF;
 
@@ -4858,12 +4850,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_nrseqdig := vr_nrseqdig + 100000;
                               continue;
                             ELSE
-                              -- Se não houve crítica de negócio
-                              IF vr_incrineg = 0 THEN
                                 cecred.pc_internal_exception;
                                 vr_des_erro:= vr_dscritic;
                                 RAISE vr_exc_erro;
-                              END IF;
                             END IF;
                           END IF;
 

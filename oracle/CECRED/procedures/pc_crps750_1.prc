@@ -1406,18 +1406,7 @@ BEGIN
 
             -- Conforme tipo de erro realiza acao diferenciada
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-              IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                 vr_dscritic := 'Erro ao criar sequencia da (CRAPLCM) '
-                             || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
-                             || '- Seq.Lote:'||to_char(Nvl(rw_craplot_8457.nrseqdig,0) + 1)
-                             || '. Detalhes: '||sqlerrm;
                 RAISE vr_exc_erro;
-              ELSE -- Nao foi possivel debitar (critica de negocio)
-                -- Avanca para o proximo registro, conforme demais tratamentos acima
-                -- ### Verificar tratamento devido para quando: Nao pode debitar.
-                CONTINUE;
-                --RAISE vr_exc_erro;
-              END IF;
             END IF;
             
             -- Subtrai o valor pago do saldo disponivel

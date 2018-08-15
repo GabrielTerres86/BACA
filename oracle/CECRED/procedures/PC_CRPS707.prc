@@ -1067,19 +1067,9 @@ BEGIN
                                                 , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 
                IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                    -- Se vr_incrineg = 0, se trata de um erro de Banco de Dados e deve abortar a sua execução
-                 IF  vr_incrineg = 0 THEN  
                    vr_cdmotivo := 'Erro ao criar Transferencia em C/C: '||vr_dscritic;
                    RAISE vr_exc_saida;	
-                 ELSE
-                    -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
-                   -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
-                   -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
-                   CONTINUE;  
-                 END IF;  
                END IF;
-
-			
 			
                -- Efetuar geração do LOG da TED com sucesso
                sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper

@@ -454,49 +454,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
 
           -- Conforme tipo de erro realiza acao diferenciada
           IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
               RAISE vr_exc_saida;
-            END If;
           END IF;
-        /*
-          -- Insere os lancamentos de deposito a vista
-          BEGIN
-            INSERT INTO craplcm
-              (cdcooper,
-               cdagenci,
-               cdbccxlt,
-               cdhistor,
-               dtmvtolt,
-               cdpesqbb,
-               nrdconta,
-               nrdctabb,
-               nrdctitg,
-               nrdocmto,
-               nrdolote,
-               nrseqdig,
-               vllanmto,
-               hrtransa)
-            VALUES
-              (pr_cdcooper,
-               1,
-               100,
-               127, -- DB. COTAS 
-               rw_crapdat.dtmvtolt,
-               vr_cdprogra,
-               rw_crappla.nrdconta,
-               rw_crappla.nrdconta,
-               to_char(rw_crappla.nrdconta,'00000000'),
-               rw_crappla.nrctrpla,
-               8454,
-               rw_craplot.nrseqdig,
-               vr_vldebito,
-               vr_hrtransa);
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao inserir craplcm: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
-         */
          
           /* Quando debitar valor total para plano C/C cria crapavs,
              conforme crps172. No caso de plano FOLHA, este registro eh

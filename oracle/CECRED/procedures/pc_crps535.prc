@@ -1392,58 +1392,7 @@ BEGIN
           if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
              RAISE vr_exc_saida;
           end if;
-/*
-          INSERT INTO craplcm
-            (dtmvtolt,--
-             cdagenci,--
-             cdbccxlt,--
-             nrdolote,--
-             nrdconta,--
-             nrdocmto,--
-             cdhistor,--
-             nrseqdig,--
-             vllanmto,--
-             nrdctabb,--
-             nrdctitg,--
-             cdpesqbb,--
-             vldoipmf,--
-             nrautdoc,--
-             nrsequni,--
-             cdbanchq,--
-             cdcmpchq,--
-             cdagechq,--
-             nrctachq,--
-             nrlotchq,--
-             sqlotchq,--
-             cdcooper,--
-             dsidenti,--
-						 cdcoptfn)--
-          VALUES
-            (rw_crapdat.dtmvtolt,
-             1,
-             100,
-             4650,
-             vr_nrctachd,
-             vr_nrcheque_tmp,
-             vr_cdhistor,
-             nvl(rw_craplot.nrseqdig,0) + 1,
-             SUBSTR(vr_dstexto,34,17) / 100,
-             vr_nrctachd,
-             gene0002.fn_mask(vr_nrctachd,'99999999'),
-             vr_cdalinea,
-             0,
-             0,
-             0,
-             rw_crapchd.cdbanchq,
-             rw_crapchd.cdcmpchq,
-             rw_crapchd.cdagechq,
-             rw_crapchd.nrctachq,
-             0,
-             0,
-             pr_cdcooper,
-             'CTL',
-						 vr_cdcoptfn);
-*/
+
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
