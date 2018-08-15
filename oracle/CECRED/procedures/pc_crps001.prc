@@ -690,16 +690,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
             AND r.cdmodali = 101; -- ADP
        rw_ris_adp      cr_ris_adp%ROWTYPE;
 
-      -- valor de jusros prejuizo de uma determinada conta / cooperativa
-      CURSOR cr_tbcc_prejuizo(pr_nrdconta IN tbcc_prejuizo.nrdconta%TYPE
-                             ,pr_cdcooper IN tbcc_prejuizo.cdcooper%TYPE) IS
-        SELECT NVL(vljuprej, 0) as vljuprej
-          FROM tbcc_prejuizo
-         WHERE nrdconta = pr_nrdconta
-           AND cdcooper = pr_cdcooper
-           AND dtliquidacao IS NULL;
-        rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;
-
        /* Variaveis Locais da pc_crps001 */
 
        --Variaveis dos Indices
@@ -1709,49 +1699,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                 END; -- Final do bloco de inclusao de lcm e lote
                END IF; -- FIM bloco - Condicao para verificar se permite incluir as linhas parametrizadas
              END IF; -- FIM bloco - Se o juros do cheque especial for maior zero E nao estiver em prejuizo
-             
-             -- se estiver em prejuizo, lanca juros prej na lcm e zera esse juros prej
-             IF prej0003.fn_verifica_preju_conta(rw_crapsld.nrdconta, pr_cdcooper) THEN
-               -- procura por registro de prejuizo não liquidado
-               OPEN cr_tbcc_prejuizo(pr_cdcooper, rw_crapsld.nrdconta);
-               FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
-                     
-               -- se tivermos um registro ainda no liquidado...
-               IF cr_tbcc_prejuizo%FOUND THEN
-                 -- insere lote e lanca na lcm
-                 LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1
-                                                   , pr_cdbccxlt => 100
-                                                   , pr_nrdolote => 650011
-                                                   , pr_cdhistor => 2718 -- juros remunaratorio do prejuizo
-                                                   , pr_dtmvtolt => vr_dtmvtolt
-                                                   , pr_nrdconta => rw_crapsld.nrdconta
-                                                   , pr_nrdctabb => rw_crapsld.nrdconta
-                                                   , pr_nrdctitg => GENE0002.FN_MASK(rw_crapsld.nrdconta, '99999999')
-                                                   , pr_nrdocmto => 99992718
-                                                   , pr_vllanmto => rw_tbcc_prejuizo.vljuprej
-                                                   , pr_cdcooper => pr_cdcooper
-                                                   , pr_tab_retorno => vr_tab_retorno
-                                                   , pr_inprolot => 1
-                                                   , pr_incrineg => vr_incrineg
-                                                   , pr_cdcritic => vr_cdcritic
-                                                   , pr_dscritic => vr_dscritic
-                                                   );
-                 -- se nao tiver critica
-                IF vr_dscritic IS NOT NULL
-                  AND vr_incrineg = 0 THEN -- Erro de sistema/BD
-                   RAISE vr_exc_saida;
-                ELSE
-                 BEGIN
-                   -- zera juros prej
-                   UPDATE tbcc_prejuizo SET vljuprej = 0
-                    WHERE cdcooper = pr_cdcooper
-                      AND nrdconta = rw_crapsld.nrdconta
-                      AND dtliquidacao IS NULL;
-                 END;
-                END IF;
-                
-               END IF; -- fim do bloco => valor do juros prejuizo
-             END IF; -- fim bloco => verifica conta em prejuizo
            END IF; -- FIM bloco ==> Se for primeiro dia util
 
            --linha 477
