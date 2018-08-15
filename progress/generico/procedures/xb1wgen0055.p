@@ -28,6 +28,7 @@
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).          
                
+			   18/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 .............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                           NO-UNDO.
@@ -83,6 +84,7 @@ DEF VAR aux_cdnvlcgo AS INTE                                           NO-UNDO.
 DEF VAR aux_cdturnos AS INTE                                           NO-UNDO.
 DEF VAR aux_dtadmemp AS DATE                                           NO-UNDO.
 DEF VAR aux_vlsalari AS DECI                                           NO-UNDO.
+DEF VAR aux_nmsocial AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdeanos AS INT                                            NO-UNDO.
 DEF VAR aux_nrdmeses AS INT                                            NO-UNDO.
 DEF VAR aux_dsdidade AS CHAR                                           NO-UNDO.
@@ -153,6 +155,7 @@ PROCEDURE valores_entrada:
           WHEN "dtadmemp" THEN aux_dtadmemp = DATE(tt-param.valorCampo).
           WHEN "vlsalari" THEN aux_vlsalari = DECI(tt-param.valorCampo).
           WHEN "chavealt" THEN aux_chavealt = tt-param.valorCampo.
+		  WHEN "nmsocial" THEN aux_nmsocial = tt-param.valorCampo.
           WHEN "tpatlcad" THEN aux_tpatlcad = INTE(tt-param.valorCampo).
           WHEN "verrespo" THEN aux_verrespo = LOGICAL(tt-param.valorCampo).
           WHEN "permalte" THEN aux_permalte = LOGICAL(tt-param.valorCampo).
@@ -488,6 +491,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_cdturnos,
                             INPUT aux_dtadmemp,
                             INPUT aux_vlsalari,
+							INPUT aux_nmsocial,
                             INPUT TABLE tt-resp,
                            OUTPUT aux_msgalert,
                            OUTPUT aux_tpatlcad,
