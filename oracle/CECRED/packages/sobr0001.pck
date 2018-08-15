@@ -978,13 +978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          ,pr_dscritic => vr_dscritic);
 
                IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                 IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                    RAISE vr_exc_saida;
-                 ELSE -- Não foi possível debitar (crítica de negócio)
-                   vr_cdcritic := 0;
-                   vr_dscritic := 'Erro ao inserir registro de lancamento de depósito a vista.';
-                   RAISE vr_exc_saida;
-                 END IF;
                END IF; 
             EXCEPTION
               WHEN OTHERS THEN
@@ -2008,13 +2002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          ,pr_dscritic => vr_dscritic);
 
                       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                           RAISE vr_exc_saida;
-                        ELSE -- Não foi possível debitar (crítica de negócio)
-                          vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
-                          RAISE vr_exc_saida;
-                        END IF;
                       END IF;   
                   EXCEPTION
                     WHEN OTHERS THEN
@@ -2178,13 +2166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          ,pr_dscritic => vr_dscritic);
 
                       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                           RAISE vr_exc_saida;
-                        ELSE -- Não foi possível debitar (crítica de negócio)
-                          vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
-                          RAISE vr_exc_saida;
-                        END IF;
                       END IF;  
                   EXCEPTION
                     WHEN OTHERS THEN
@@ -2346,13 +2328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          ,pr_dscritic => vr_dscritic);
 
                       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                           RAISE vr_exc_saida;
-                        ELSE -- Não foi possível debitar (crítica de negócio)
-                          vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
-                          RAISE vr_exc_saida;
-                        END IF;
                       END IF;    
                   EXCEPTION
                     WHEN OTHERS THEN
@@ -2511,13 +2487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          ,pr_dscritic => vr_dscritic);
 
                       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                           RAISE vr_exc_saida;
-                        ELSE -- Não foi possível debitar (crítica de negócio)
-                          vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
-                          RAISE vr_exc_saida;
-                        END IF;
                       END IF;  
                   EXCEPTION
                     WHEN OTHERS THEN
@@ -2795,13 +2765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          ,pr_dscritic => vr_dscritic);
 
                       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                           RAISE vr_exc_saida;
-                        ELSE -- Não foi possível debitar (crítica de negócio)
-                          vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
-                          RAISE vr_exc_saida;
-                        END IF;
                       END IF;    
               EXCEPTION
                 WHEN OTHERS THEN
@@ -2957,13 +2921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                          ,pr_dscritic => vr_dscritic);
 
                       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                        IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                           RAISE vr_exc_saida;
-                        ELSE -- Não foi possível debitar (crítica de negócio)
-                          vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao inserir registro na conta corrente.';
-                          RAISE vr_exc_saida;
-                        END IF;
                       END IF;   
               EXCEPTION
                 WHEN OTHERS THEN
