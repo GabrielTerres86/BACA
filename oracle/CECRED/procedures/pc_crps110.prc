@@ -85,6 +85,8 @@ BEGIN
              05/01/2018 - Rotina atualizada para permitir execução por paralelismo 
                           quando necessário - Projeto Ligeirinho (Roberto Nunhes - AMCOM).
 
+             15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)
+
    ............................................................................. */
 
    DECLARE
@@ -1364,6 +1366,7 @@ BEGIN
                                                     ,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
                                                     ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                     ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                    ,pr_idaplpgm => 0                     --> Aplicação Programada  (0-Não/1-Sim)
                                                     ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                     ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                     ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1395,6 +1398,7 @@ BEGIN
                                                     ,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
                                                     ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                     ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                    ,pr_idaplpgm => 0                     --> Aplicação Programada  (0-Não/1-Sim)
                                                     ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                     ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                     ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)

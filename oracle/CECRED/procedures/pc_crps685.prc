@@ -20,6 +20,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
 
      Objetivo  : Calcula a provisao sobre o saldo das aplicacoes ativas mensalmente
 
+     Alterações: 15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
+
+
     ...............................................................................*/
 
     DECLARE
@@ -626,6 +629,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
                                                       pr_cddindex => vr_tab_crapcpc(rw_craprac.cdprodut).cddindex,
                                                       pr_qtdiacar => rw_craprac.qtdiacar,
                                                       pr_idgravir => vr_idgravir, 
+                                                      pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim) 
                                                       pr_dtinical => rw_craprac.dtatlsld,
                                                       pr_dtfimcal => vr_dtmvtolt, 
                                                       pr_idtipbas => vr_idtipbas,
@@ -651,6 +655,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
                                                       pr_cddindex => vr_tab_crapcpc(rw_craprac.cdprodut).cddindex, 
                                                       pr_qtdiacar => rw_craprac.qtdiacar,
                                                       pr_idgravir => vr_idgravir, 
+                                                      pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                       pr_dtinical => rw_craprac.dtatlsld,
                                                       pr_dtfimcal => vr_dtmvtolt, 
                                                       pr_idtipbas => vr_idtipbas,
@@ -1248,4 +1253,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
 
 END pc_crps685;
 /
-

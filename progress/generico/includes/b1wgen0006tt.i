@@ -16,6 +16,7 @@
                
                03/10/2012 - Adicionado campo dsextrat em tt-extr-rpp (Jorge).
                    
+               19/07/2018 - Adicionado campo cdprodut em tt-dados-rpp (CIS Corporate).			   
 ..............................................................................*/
 
 
@@ -46,7 +47,8 @@ DEF TEMP-TABLE tt-dados-rpp NO-UNDO
     FIELD dsmsgsaq AS CHAR FORMAT "x(40)"
     FIELD cdtiparq AS INTE FORMAT "9"
     FIELD dtsldrpp AS DATE
-    FIELD nrdrowid AS ROWID.
+    FIELD nrdrowid AS ROWID
+	FIELD cdprodut AS INTE FORMAT "zzzz9".
 
 DEF TEMP-TABLE tt-extr-rpp NO-UNDO
     FIELD dtmvtolt AS DATE FORMAT "99/99/9999"

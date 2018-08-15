@@ -207,6 +207,10 @@
                             PRJ404-Garantia(Odirlei-AMcom)             
               
                10/05/2018 - Permitir resgate de aplicaçoes bloqueadas (SM404)
+              
+               19/07/2018 - Mostrar apenas aplicações não programadas no obtem-tipos-aplicacao e buscar-dados-aplicacao
+							Proj. 411.2 - CIS Corporate
+			   
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -4123,7 +4127,7 @@ PROCEDURE obtem-tipos-aplicacao:
     
     FOR EACH crapcpc FIELDS(cdprodut nmprodut idtippro cdhscacc cdhsvrcc
                                                         cdhsraap cdhsnrap cdhsprap cdhsrvap cdhsrdap
-                                cdhsirap cdhsrgap cdhsvtap) WHERE crapcpc.idsitpro = 1 NO-LOCK:
+                                cdhsirap cdhsrgap cdhsvtap) WHERE crapcpc.idsitpro = 1 AND crapcpc.indplano = 0 NO-LOCK:
 
         FOR EACH crapdpc FIELDS(cdcooper idsitmod cdmodali)
             WHERE crapdpc.cdcooper = par_cdcooper AND
@@ -4772,6 +4776,7 @@ PROCEDURE buscar-dados-aplicacao:
             DO:
                 FIND craprac WHERE craprac.cdcooper = par_cdcooper AND
                                    craprac.nrdconta = par_nrdconta AND
+								   craprac.nrctrrpp = 0 AND /* Nao para Aplicacao Programada */
                                    craprac.nraplica = par_nraplica
                                    NO-LOCK NO-ERROR.
 

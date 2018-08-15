@@ -115,7 +115,7 @@
 				 01/12/2017 - Permitir acesso a produtos para contas demitidas (Joanta - RKAM P364).
 
 				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
-
+				 
  * ********************************************************************************** */
 
 	session_start();	
@@ -177,10 +177,10 @@ if ($nrdconta != "") {
 	
 	// Monta o xml de requisição
 $xmlGetDadosAtenda = "";
-	$xmlGetDadosAtenda .= "<Root>";	
-    $xmlGetDadosAtenda .= "	<Dados>";
+$xmlGetDadosAtenda .= "<Root>";	
+$xmlGetDadosAtenda .= "	<Dados>";
 $xmlGetDadosAtenda .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
-	$xmlGetDadosAtenda .= "		<idseqttl>1</idseqttl>";
+$xmlGetDadosAtenda .= "		<idseqttl>1</idseqttl>";
 $xmlGetDadosAtenda .= "		<nrdctitg>" . $nrdctitg . "</nrdctitg>";
 $xmlGetDadosAtenda .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
 $xmlGetDadosAtenda .= "		<dtmvtopr>" . $glbvars["dtmvtopr"] . "</dtmvtopr>";
@@ -551,7 +551,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			}
 			case "POUP. PROG": {
 				$nomeRotina = "Poupan&ccedil;a Programada"; 
-                $urlRotina = "poupanca_programada";
+                $urlRotina = "aplicacoes_programadas";
                 $strValue = ( isset($valores[4]->cdata) ) ? number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".") : '';
 				$telaPermitadaAcessoBacen = 1;
 				break;	

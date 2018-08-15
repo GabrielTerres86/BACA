@@ -373,6 +373,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                          
   /* Procedure para tratar registro do extrato de conta corrente */
   PROCEDURE pc_gera_registro_extrato(pr_cdcooper     IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
+                                    ,pr_idorigem     IN NUMBER                   --> Origem da consulta
                                     ,pr_rowid        IN ROWID                    --> Registro buscado da craplcm
                                     ,pr_flgident     IN BOOLEAN                  --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     IN VARCHAR2                 --> Extrato ou Depósito
@@ -456,11 +457,6 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                ,pr_tab_comp_medias OUT typ_tab_comp_medias --> Retorna complemento medias
                                ,pr_cdcritic        OUT PLS_INTEGER         --> Código da crítica
                                ,pr_dscritic        OUT VARCHAR2);          --> Descrição da crítica
-
-  PROCEDURE pc_busca_saldo_cooperado(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
-                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
-                                    ,pr_vlsaldo   OUT NUMBER                --> Saldo do cooperado
-                                    ,pr_dscritic  OUT VARCHAR2);            --> Descrição do erro                                
 END EXTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
@@ -3052,6 +3048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
   /* Procedure para tratar registro do extrato de conta corrente */
   PROCEDURE pc_gera_registro_extrato(pr_cdcooper     IN crapcop.cdcooper%TYPE    --> Cooperativa conectada
+                                    ,pr_idorigem     IN NUMBER                   --> Origem da consulta
                                     ,pr_rowid        IN ROWID                    --> Registro buscado da craplcm
                                     ,pr_flgident     IN BOOLEAN                  --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     IN VARCHAR2                 --> Extrato ou Depósito
@@ -3417,14 +3414,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           -- Se já foi liberado
           IF rw_crapdpb.inlibera = 1 THEN
             -- Guardar a data
+            IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
             vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
           ELSE
+              vr_dslibera := to_char(rw_crapdpb.dtliblan,'dd/mm/RRRR');
+            END IF;
+          ELSE
             -- INdicar que há estorno
+            IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
             vr_dslibera := '(Estorno)';
+          END IF;
           END IF;
         ELSE
           -- Usar descrição padrão
+          IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
           vr_dslibera := '(**/**)';
+        END IF;
         END IF;
         -- Fechar o cursor
         CLOSE cr_crapdpb;
@@ -3588,6 +3593,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_extr(vr_ind_tab).dsextrat := vr_dsextrat;
         pr_tab_extr(vr_ind_tab).dshistor := vr_dshistor;
         pr_tab_extr(vr_ind_tab).cdcoptfn := vr_cdcoptfn;
+        pr_tab_extr(vr_ind_tab).dsprotoc := ''; 
+        pr_tab_extr(vr_ind_tab).flgdetal := 0;               
+        
+        IF TRIM(vr_dslibera) IS NOT NULL OR TRIM(vr_dsidenti) IS NOT NULL THEN
+          pr_tab_extr(vr_ind_tab).flgdetal := 1;
+        END IF;
                 
         -- caso historico existir no que esta no parametro, então adiciona o complemento 
         -- (Estabelecimento) na pl_table         
@@ -3708,9 +3719,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             pr_tab_extr(vr_ind_tab).flgdetal := 0;
           END IF;
           CLOSE cr_crappro;
-        ELSE
-          pr_tab_extr(vr_ind_tab).dsprotoc := ''; 
-          pr_tab_extr(vr_ind_tab).flgdetal := 0;               
         END IF;
         
         IF rw_craplcm.cdhistor IN (519,555,578,799,958) THEN -- TED Recebida e Realizada
@@ -4104,8 +4112,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                           ,pr_cdhistor_ign => 289) LOOP  --> Código do histórico a ignorar
         -- Chama rotina que gera-registro-extrato na temp-table
         pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
+                                ,pr_idorigem     => pr_idorigem   --> Origem da consulta
                                 ,pr_rowid        => rw_craplcm_ign.rowid --> Registro buscado da craplcm
-                                ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
+                                ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
                                 ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                 ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                 ,pr_lshiscon     => vr_lshiscon   --> Lista de históricos de convênios para pagamento
@@ -4211,8 +4220,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                 ) THEN
             -- Chama rotina que gera-registro-extrato na temp-table
             pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
+                                    ,pr_idorigem     => pr_idorigem   --> Origem da consulta
                                     ,pr_rowid        => rw_craplcm_olt.rowid --> Registro buscado da craplcm
-                                    ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
+                                    ,pr_flgident     => TRUE          --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                     ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
                                     ,pr_lshiscon     => vr_lshiscon   --> Lista de históricos de convênios para pagamento
@@ -4290,7 +4300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                          || gene0002.fn_mask(rw_crapenl.cdagetfn,'9999') || '/'
                                          || gene0002.fn_mask(rw_crapenl.nrterfin,'9999');
         vr_tab_extr(vr_ind_tab).nrdocmto := gene0002.fn_mask(rw_crapenl.nrseqenv,'zzzzzzz.zz9');
-        vr_tab_extr(vr_ind_tab).dtliblan := '(**/**)';
+        vr_tab_extr(vr_ind_tab).dtliblan := CASE WHEN pr_idorigem NOT IN (3,4) THEN '(**/**)' ELSE '' END;
         vr_tab_extr(vr_ind_tab).indebcre := 'C';
         vr_tab_extr(vr_ind_tab).inhistor := 3;
         vr_tab_extr(vr_ind_tab).cdhistor := 698;
@@ -5645,7 +5655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema : Conta-Corrente - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Adriano
-        Data    : Maio/2014                         Ultima atualizacao: 27/08/2014
+        Data    : Maio/2014                         Ultima atualizacao: 09/08/2018
 
         Dados referetes ao programa:
 
@@ -5656,6 +5666,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                     27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes
                                  (Jean Michel).
+
+                    09/08/2018 - Correcoes nas validacoes
+                                           Inicializar saldo com 0 para permitir soma com outros valores
+                                           Saldo da poupança (não programada) calculada de forma equivocada (saldo atual - todos os resgates) 
+                                 Somar saldo de Aplicação Programada ao saldo da Poupança
+                                 Proj. 411.2 - (CIS Corporate)
 
     */
     DECLARE
@@ -5749,6 +5765,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             ,rpp.vlsdrdpp
             ,rpp.nrdconta
             ,rpp.nrctrrpp
+            ,rpp.cdprodut
+            ,rpp.dtsdppan
         FROM craprpp rpp
        WHERE rpp.cdcooper = pr_cdcooper
          AND rpp.nrdconta = pr_nrdconta
@@ -5758,13 +5776,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Cursor para encontrar Cadastro de lancamentos de aplicacoes de poupanca
       CURSOR cr_craplpp(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE
-                       ,pr_nrctrrpp IN craplpp.nrctrrpp%TYPE) IS
-      SELECT lpp.vllanmto
+                       ,pr_nrctrrpp IN craplpp.nrctrrpp%TYPE
+                       ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE) IS
+      SELECT lpp.vllanmto,lpp.cdhistor
         FROM craplpp lpp
        WHERE lpp.cdcooper = pr_cdcooper
          AND lpp.nrdconta = pr_nrdconta
          AND lpp.nrctrrpp = pr_nrctrrpp
-         AND (lpp.cdhistor = 496 OR lpp.cdhistor = 158);
+         AND lpp.dtmvtolt > pr_dtmvtolt; -- Apenas movimentos apóss último cálculo
       rw_craplpp cr_craplpp%ROWTYPE;
 
       -- Cursor para encontrar a folha de cheques
@@ -5829,7 +5848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_dscritic VARCHAR2(4000);
 
       -- Valor do saldo
-      vr_vldsaldo NUMBER;
+      vr_vldsaldo NUMBER :=0;
 
       -- Data
       vr_datdodia DATE;
@@ -6048,23 +6067,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         END IF;
 
         vr_sldresga := vr_sldpresg;
-
         IF vr_sldresga = 0 THEN
-
           IF rw_craprda.tpaplica = 3 THEN
-
             vr_sldresga := vr_vlsdrdca;
-
           ELSIF rw_craprda.tpaplica = 5 THEN
-
             vr_sldresga := vr_vlsdrdca;
-
           ELSE
-
             vr_sldresga := 0;
-
           END IF;
-
         END IF;
 
         vr_vldsaldo := vr_vldsaldo + vr_sldresga + vr_vlsldrgt;
@@ -6163,7 +6173,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_vldsaldo := vr_vldsaldo + vr_sldresga;
 
       END LOOP;
-
       IF vr_vldsaldo > 0 THEN
 
         -- Monta critica
@@ -6228,29 +6237,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       FOR rw_craprpp IN cr_craprpp(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta) LOOP
 
+        IF rw_craprpp.cdprodut > 0 THEN -- Nova aplicação programada
+            apli0008.pc_calc_saldo_apl_prog(pr_cdcooper => pr_cdcooper,
+                                            pr_cdprogra => pr_cdprogra,
+                                            pr_cdoperad => '0',
+                                            pr_nrdconta => pr_nrdconta,
+                                            pr_idseqttl => 1,
+                                            pr_idorigem => 5,
+                                            pr_nrctrrpp => rw_craprpp.nrctrrpp,
+                                            pr_dtmvtolt => pr_dtmvtolt,
+                                            pr_vlsdrdpp => vr_vldsaldo,
+                                            pr_des_erro => vr_dscritic);
+        
+        ELSE -- Poupança Programada (Antiga) 
         vr_vldsaldo := rw_craprpp.vlsdrdpp;
-
         -- Encontrar Cadastro de lancamentos de aplicacoes de poupanca
         FOR rw_craplpp IN cr_craplpp(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => rw_craprpp.nrdconta
-                                    ,pr_nrctrrpp => rw_craprpp.nrctrrpp) LOOP
+                                      ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                      ,pr_dtmvtolt => rw_craprpp.dtsdppan) LOOP
 
+            IF rw_craplpp.cdhistor IN (496,158) THEN -- Resgates Efetuados
           vr_vldsaldo := vr_vldsaldo - rw_craplpp.vllanmto;
-
+            ELSE 
+               vr_vldsaldo := vr_vldsaldo + rw_craplpp.vllanmto;
+            END IF;
         END LOOP;
-
+        END IF;
+      END LOOP;
         IF vr_vldsaldo > 0 THEN
-
           -- Monta critica
           vr_cdcritic := NULL;
           vr_dscritic := 'POUPANCA PROGRAMADA COM SALDO.';
-
           -- Gera exceção
           RAISE vr_exc_erro;
-
         END IF;
-
-      END LOOP;
 
       -- Encontra folhas de cheque
       FOR rw_crapfdc IN cr_crapfdc(pr_cdcooper => pr_cdcooper
@@ -6625,6 +6646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
           -- Chama rotina que gera-registro-extrato na temp-table
           EXTR0001.pc_gera_registro_extrato (pr_cdcooper   => pr_cdcooper      --> Cooperativa conectada
+		                                    ,pr_idorigem   => pr_idorigem
                                             ,pr_rowid      => rw_craplcm.rowid --> Registro buscado da craplcm
                                             ,pr_flgident   => TRUE             --> Se deve ou não usar o craplcm.dsidenti
                                             ,pr_nmdtable   => 'D'              --> Depósito Identificado
@@ -7421,7 +7443,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         
         --Percorrer todos os beneficiarios
         WHILE vr_index IS NOT NULL LOOP
-          
           vr_string:= '<extrato>'||
                         '<nrdconta>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).nrdconta),' ')|| '</nrdconta>'|| 
                         '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).dtmvtolt,'DD/MM/YYYY'),' ')|| '</dtmvtolt>'|| 
@@ -7875,82 +7896,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END IF;
   END pc_carrega_medias;    
   
-  /* Buscar o valor de saldo que o cooperado tem disponivel */
-  PROCEDURE pc_busca_saldo_cooperado(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
-                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
-                                    ,pr_vlsaldo   OUT NUMBER                --> Saldo do cooperado
-                                    ,pr_dscritic  OUT VARCHAR2) IS          --> Descrição do erro                                
-    vr_des_reto VARCHAR2(03);           --> OK ou NOK
-    vr_tab_erro GENE0001.typ_tab_erro;  --> Tabela com erros
-    vr_tab_saldos  typ_tab_saldos;      --> Tabela de retorno da rotina
-    
-    vr_dscritic VARCHAR2(4000);
-    vr_exec_err EXCEPTION;
-    
-    -- Cursor para encontrar a conta/corrente
-    CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-      SELECT ass.cdcooper
-            ,ass.nrdconta
-            ,ass.inpessoa
-            ,ass.vllimcre
-        FROM crapass ass
-       WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta;
-      rw_crapass cr_crapass%ROWTYPE;
-    
-  BEGIN
-    -- Inicializar o valor de saldo do cooperado
-    pr_vlsaldo := 0;  
-    
-    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
-    IF cr_crapass%NOTFOUND THEN
-      CLOSE cr_crapass;
-      -- Associado não encontrado
-      vr_dscritic := gene0001.fn_busca_critica(9);
-      RAISE vr_exec_err;
-    END IF;
-
-    pc_obtem_saldo_dia_sd(pr_cdcooper => rw_crapass.cdcooper
-                         ,pr_cdagenci => 0
-                         ,pr_nrdcaixa => 0
-                         ,pr_cdoperad => 996
-                         ,pr_nrdconta => rw_crapass.nrdconta
-                         ,pr_vllimcre => rw_crapass.vllimcre
-                         ,pr_tipo_busca => 'A'
-                         ,pr_des_reto => vr_des_reto
-                         ,pr_tab_sald => vr_tab_saldos
-                         ,pr_tab_erro => vr_tab_erro);
-
-    -- Verifica se deu erro
-    IF vr_des_reto = 'NOK' THEN
-      IF TRIM(vr_tab_erro(vr_tab_erro.first).dscritic) IS NULL THEN
-        vr_tab_erro(vr_tab_erro.first).dscritic := gene0001.fn_busca_critica(vr_tab_erro(vr_tab_erro.first).cdcritic);
-      END IF;
-      
-      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-      RAISE vr_exec_err;
-    END IF;
-    
-    -- Se nao ocorreu erro, devolvemos o valor de saldo disponivel da conta do cooperado
-    pr_vlsaldo := NVL(vr_tab_saldos(vr_tab_saldos.first).vlsddisp, 0) +
-                  NVL(vr_tab_saldos(vr_tab_saldos.first).vlsdchsl, 0);
-    
-  EXCEPTION
-    WHEN vr_exec_err THEN
-      -- Se ocorreu erro, devolvemos o saldo com ZERO e a mensagem de erro
-      pr_vlsaldo  := 0;
-      pr_dscritic := vr_dscritic;
-      
-    WHEN OTHERS THEN
-      -- Retorno não OK
-      -- Se ocorreu erro, devolvemos o saldo com ZERO e a mensagem de erro
-      pr_vlsaldo  := 0;
-      pr_dscritic := '<dscritic>Erro nao tratado na rotina EXTR0001.pc_busca_saldo_cooperado: '||sqlerrm || '</dscritic>';
-      
-  END pc_busca_saldo_cooperado;
 
 END EXTR0001;
 /
