@@ -1,16 +1,4 @@
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : vw_parcelado_contrato
-  --  Sistema  : View de parcelas de emprestimos
-  --  Sigla    : CRED
-  --  Autor    : DESCONHECIDO
-  --  Data     : DESCONHECIDO                  Ultima atualizacao: 08/08/2017
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Alteracoes: 08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
-  ---------------------------------------------------------------------------------------------------------------
-create or replace force view cecred.vw_parcelado_contrato as
+create or replace view cecred.vw_parcelado_contrato as
 select
   '1' nr,
   ass.nrdconta,
@@ -18,7 +6,8 @@ select
   cop.nrdocnpj as CNPJCtrc,
   case when length(ass.nrcpfcgc) < 12 then 1 else 2 end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  bdc.nrborder as NrCtr,
+  --bdc.nrborder as NrCtr,
+  ass.cdcooper || ass.nrdconta || bdc.nrborder as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   '0302' as CdProduto, --contrato de desconto de cheque
   to_char((bdc.dtlibbdc),'YYYYMMDD') as DtCtrc,
   ass.cdagenci as PrfAg,
@@ -29,12 +18,12 @@ select
     where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdc.nrborder) as QtPcl,
   to_char(((select max(dtlibera) from crapcdb
     where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdc.nrborder)),'YYYYMMDD') as DtVnctUltPcl,
-  (select  count(DISTINCT extract (MONTH FROM dtlibera)) Meses from crapcdb
+  /*(select  count(DISTINCT extract (MONTH FROM dtlibera)) Meses from crapcdb
     where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdc.nrborder and insitchq = 2 and dtlibera > sysdate) as QtPclPgr,
   '' as DtVnctPrxPcl,
   0 as VlPrxPcl,
   (select  count(DISTINCT extract (MONTH FROM dtlibera)) Meses from crapcdb
-    where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdc.nrborder and insitchq = 2 and dtlibera > sysdate ) as QtPclVncr,
+    where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdc.nrborder and insitchq = 2 and dtlibera > sysdate ) as QtPclVncr,*/
   null as AdndContrato
 from
   crapass ass,
@@ -58,7 +47,8 @@ select
   cop.nrdocnpj as CNPJCtrc,
   case when length(ass.nrcpfcgc) < 12 then 1 else 2 end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  bdt.nrborder as NrCtr,
+  --bdt.nrborder as NrCtr,
+  ass.cdcooper || ass.nrdconta || bdt.nrborder as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   '0301' as CdProduto, --contrato de desconto de títulos
   to_char(bdt.dtlibbdt,'YYYYMMDD') as DtCtrc,
   ass.cdagenci as PrfAg,
@@ -69,12 +59,12 @@ select
     where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdt.nrborder) as QtPcl,
   to_char((select max(dtvencto) from craptdb
     where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdt.nrborder),'YYYYMMDD') as DtVnctUltPcl,
-  (select  count(DISTINCT extract (MONTH FROM dtvencto)) Meses from craptdb
+  /*(select  count(DISTINCT extract (MONTH FROM dtvencto)) Meses from craptdb
     where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdt.nrborder and insittit = 4) as QtPclPgr,
   '' as DtVnctPrxPcl,
   0 as VlPrxPcl,
   (select  count(DISTINCT extract (MONTH FROM dtvencto)) Meses from craptdb
-    where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdt.nrborder and insittit = 4 ) as QtPclVncr,
+    where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrborder = bdt.nrborder and insittit = 4 ) as QtPclVncr,*/
   null as AdndContrato
 from
   crapass ass,
@@ -97,7 +87,8 @@ select
   cop.nrdocnpj as CNPJCtrc,
   case when length(ass.nrcpfcgc) < 12 then 1 else 2 end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  epr.nrctremp as NrCtr,
+  --epr.nrctremp as NrCtr,
+  ass.cdcooper || ass.nrdconta || epr.nrctremp as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   --case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end cdproduto,
   fn_busca_modalidade_bacen(case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end , ass.cdcooper, ass.nrdconta, epr.nrctremp, ass.inpessoa, 3, '') as cdproduto,
   to_char(epr.dtmvtolt,'YYYYMMDD') as DtCtrc,
@@ -106,7 +97,7 @@ select
   to_char(nvl(epr.vlemprst,0),'fm9999900V00') as VlCtrdFut,
   epr.qtpreemp as QtPcl,
   to_char(ADD_MONTHS((select dtdpagto from crawepr where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrctremp = epr.nrctremp),decode(epr.qtpreemp, 1,1,epr.qtpreemp-1)),'YYYYMMDD') as DtVnctUltPcl,
-  case
+  /*case
     when epr.inliquid = 1 then 0
     else
       ceil((case
@@ -121,7 +112,7 @@ select
       ceil((case
         when trunc(months_between(sysdate,epr.dtmvtolt)) >= epr.qtpreemp then 0
         else (epr.qtpreemp - epr.qtpcalat)
-  end)) end as QtPclVncr,
+  end)) end as QtPclVncr,*/
   null as AdndContrato
 from
   crapass ass,
@@ -145,7 +136,8 @@ select
   cop.nrdocnpj as CNPJCtrc,
   case when length(ass.nrcpfcgc) < 12 then 1 else 2 end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  epr.nrctremp as NrCtr,
+  --epr.nrctremp as NrCtr,
+  ass.cdcooper || ass.nrdconta || epr.nrctremp as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   --case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end cdproduto,
   fn_busca_modalidade_bacen(case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end , ass.cdcooper, ass.nrdconta, epr.nrctremp, ass.inpessoa, 3, '') as cdproduto,
   to_char(epr.dtmvtolt,'YYYYMMDD') as DtCtrc,
@@ -157,10 +149,10 @@ select
   to_char(nvl(epr.vlemprst,0),'fm9999900V00') as VlCtrdFut,
   epr.qtpreemp as QtPcl,
   to_char(ADD_MONTHS((select dtdpagto from crawepr where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrctremp = epr.nrctremp),decode(epr.qtpreemp, 1,1,epr.qtpreemp-1)),'YYYYMMDD') as DtVnctUltPcl,
-  (select count(progress_recid) from crappep where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrctremp = epr.nrctremp and inliquid = 0) as QtPclPgr,
+  /*(select count(progress_recid) from crappep where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrctremp = epr.nrctremp and inliquid = 0) as QtPclPgr,
   '' as DtVnctPrxPcl,
   0 as VlPrxPcl,
-  (select count(progress_recid) from crappep where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrctremp = epr.nrctremp and dtvencto > sysdate and inliquid = 0) as QtPclVncr,
+  (select count(progress_recid) from crappep where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrctremp = epr.nrctremp and dtvencto > sysdate and inliquid = 0) as QtPclVncr,*/
   null as AdndContrato
 from
   crapass ass,
@@ -185,3 +177,4 @@ where
               ) OR EPR.INLIQUID = 0 )
 order by
   CNPJCtrc, idfccli, nrctr
+;
