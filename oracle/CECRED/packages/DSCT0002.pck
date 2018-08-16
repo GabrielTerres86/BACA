@@ -7263,6 +7263,8 @@ END fn_letra_risco;
     --                            para "crrl519_bordero_titulos". PRJ300 (Lombardi)
     --               
     --               06/06/2018 - Remoção das restrições da impressão do bordero
+    --
+    --               16/08/2018 - Zerar o prazo quando o titulo estiver vencido
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -7586,7 +7588,11 @@ END fn_letra_risco;
         IF vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt IS NOT NULL THEN
           vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt;
         ELSE
-          vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - pr_dtmvtolt;
+          IF (vr_tab_tit_bordero_ord(vr_idxord).insitapr <> 2) THEN
+            vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - pr_dtmvtolt;
+          ELSE
+            vr_rel_qtdprazo := 0;
+          END IF;
         END IF;
         
         -- Calcular totais por tipo de cobrança
