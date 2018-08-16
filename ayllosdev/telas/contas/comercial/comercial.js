@@ -191,8 +191,8 @@ function controlaOperacao(operacao, flgConcluir) {
                 eval(response);
                 controlaFoco(operacao);
             }
-			//if(operacao == 'CA' || operacao == 'CAE'){
-		    if(operacao == 'CAE'){
+			if(operacao == 'CA' || operacao == 'CAE'){
+		    //if(operacao == 'CAE'){
               $("#nmextemp").desabilitaCampo();
 			  buscaInfEmpresa();
             }
@@ -1303,6 +1303,8 @@ function buscaInfEmpresa(){
         url: UrlSite + 'telas/contas/comercial/busca_informacoes_empresa.php',
         data: {
             cdempres: cdempres,
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
