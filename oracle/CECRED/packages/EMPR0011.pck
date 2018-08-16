@@ -192,7 +192,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                    ,pr_dtdpagto     IN  crawepr.dtdpagto%TYPE      --> Data de Pagamento do Primeiro Vencimento
                                    ,pr_vlsprojt     IN  crapepr.vlsprojt%TYPE      --> Saldo Devedor Projetado
                                    ,pr_qttolatr     IN  crapepr.qttolatr%TYPE      --> Tolerancia para cobranca de multa e mora parcelas atraso
-                                   ,pr_tab_parcelas OUT EMPR0011_RANGEL.typ_tab_parcelas --> Temp-Table contendo todas as parcelas calculadas
+                                   ,pr_tab_parcelas OUT EMPR0011.typ_tab_parcelas --> Temp-Table contendo todas as parcelas calculadas
                                    ,pr_cdcritic     OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                    ,pr_dscritic     OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
@@ -733,7 +733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_ano_data_final := to_char(pr_data_final, 'RRRR');
         
         -- Calcula a diferenca entre duas datas e retorna os dias corridos
-        EMPR0001_RANGEL.pc_calc_dias360(pr_ehmensal => pr_ehmensal
+        EMPR0001.pc_calc_dias360(pr_ehmensal => pr_ehmensal
                                 ,pr_dtdpagto => to_char(pr_dtvencto,'DD') -- Dia do primeiro vencimento do emprestimo
                                 ,pr_diarefju => vr_dia_data_inicial       -- Dia da data de referência da última vez que rodou juros
                                 ,pr_mesrefju => vr_mes_data_inicial       -- Mes da data de referência da última vez que rodou juros
@@ -2517,7 +2517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       pr_mesrefju := to_number(to_char(vr_data_final, 'MM'));
       pr_anorefju := to_number(to_char(vr_data_final, 'YYYY'));        
       
-      EMPR0001_RANGEL.pc_calc_dias360(pr_ehmensal => pr_ehmensal -- Indica se juros esta rodando na mensal
+      EMPR0001.pc_calc_dias360(pr_ehmensal => pr_ehmensal -- Indica se juros esta rodando na mensal
                               ,pr_dtdpagto => to_char(pr_dtvencto, 'DD') -- Dia do primeiro vencimento do emprestimo
                               ,pr_diarefju => vr_diavtolt -- Dia da data de referência da última vez que rodou juros
                               ,pr_mesrefju => vr_mesvtolt -- Mes da data de referência da última vez que rodou juros
@@ -4582,7 +4582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       IF vr_flgcrcta = 1 THEN
         -- Efetua o credito na conta corrente do cooperado
-        EMPR0001_RANGEL.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
                                       ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
                                       ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
                                       ,pr_cdbccxlt => 100           --> Numero do caixa
@@ -4664,7 +4664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           END IF;
       
           -- Lanca o IOF na conta corrente do cooperado
-          EMPR0001_RANGEL.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+          EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
                                               ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
                                               ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
                                               ,pr_cdbccxlt => 100           --> Numero do caixa
