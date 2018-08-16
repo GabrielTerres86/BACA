@@ -4178,7 +4178,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND nrseqctr = pr_nrseqctr;
 
         -- Buscar todos os riscos de empréstimos ou financiamentos
-        --AWAE - Ajustando o cursor para identificar quando é contrato consignado
         CURSOR cr_crapris_epr IS
           SELECT nrdconta
                 ,nrctremp
