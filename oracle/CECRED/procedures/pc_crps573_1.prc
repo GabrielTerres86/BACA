@@ -4621,10 +4621,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
           IF vr_reestrut = 1 and vr_dtatvprobl is not null THEN
             -- Enviar informação adicional do contrato de Reestruturação
-            vr_texto := '                        <Inf Tp="1701"' -- Fixo
+            vr_texto := vr_texto||CHR(10)|| '                        <Inf Tp="1701"' -- Fixo
                                                  || ' Cd="' ||vr_dtatvprobl || '"'
                                                  || '/>';
-          END IF;         
+          END IF;          
           --
          If vr_tpexecucao = 2 Then
             vr_seq_relato := vr_seq_relato + 1;
@@ -6441,7 +6441,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
               IF vr_reestrut = 1 AND vr_dtatvprobl IS NOT NULL THEN
                 -- Enviar informação adicional do contrato de Reestruturação
-                VR_TEXTO := '            <Inf Tp="1701"' -- Fixo
+                    VR_TEXTO := vr_texto||chr(10)|| '            <Inf Tp="1701"' -- Fixo
                                          || ' Cd="' ||vr_dtatvprobl || '"'
                                          || '/>';
               END IF;
@@ -7011,10 +7011,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                   end if;
                 else
                   -- Enviar o vencimento
-                  gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                         ,pr_texto_completo => vr_xml_3040_temp
+                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                             ,pr_texto_completo => vr_xml_3040_temp
                                          ,pr_texto_novo     => ' v' || vr_tab_venc_agreg(vr_indice_venc_agreg).cdvencto 
-                                                            ||'="' || replace(to_char(vr_vldivnor, 'fm999999990D00'),',','.') || '"');
+                                                                || '="' || replace(to_char(vr_vldivnor, 'fm999999990D00'),',','.') || '"');
                 end if;
               END IF;
             END IF;
@@ -7834,13 +7834,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         -- Gerar log
         pc_controla_log_batch(1, '6 - Fim PA: '||pr_cdagenci );
                     
-        --Grava data fim para o JOB na tabela de LOG 
-        pc_log_programa(pr_dstiplog   => 'F',    
-                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
-                        pr_cdcooper   => pr_cdcooper, 
-                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                        pr_idprglog   => vr_idlog_ini_par);  
-
+        -- Encerrar a tabela de modalidades
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Chamada encerra paralelo ' ,
+                        PR_IDPRGLOG           => vr_idlog_ini_par);      
 
         -- Atualiza finalização do batch na tabela de controle 
         gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
