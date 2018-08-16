@@ -2003,7 +2003,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND ret.cdocorre in (6,17,76,77)
        AND ret.vlrpagto < 250000
        AND ((ret.cdbcorec = 85 AND ret.cdagerec <> cop.cdagectl) OR
-            (ret.cdbcorec <> 85))
+            (ret.cdbcorec <> 85) OR 
+            (ret.cdocorre = 6 AND ret.cdmotivo = '08')) -- liquidacoes cartorio IEPTB
      GROUP BY ret.nrcnvcob, cco.dsorgarq;
 
   CURSOR cr_crapsld(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -2289,6 +2290,76 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
        AND j.cdagenci = pr_cdagenci
        AND j.nrdocmto <> 0; -- Pra não escrever duas vezes a linha do convenio
                           
+  -- Movimentos Protesto IEPTB
+	CURSOR cr_finieptb(pr_cdcooper tbfin_recursos_movimento.cdcooper%TYPE
+	                  ,pr_dtmvtolt tbfin_recursos_movimento.dtmvtolt%TYPE
+	                  ) IS
+    SELECT his.nrctadeb
+					,his.nrctacrd
+					,his.cdhstctb
+					,his.cdhistor
+					,fin.vllanmto
+			FROM tbfin_recursos_movimento fin
+					,craphis                  his
+		 WHERE his.cdcooper = fin.cdcooper
+			 AND his.cdhistor = fin.cdhistor
+			 AND fin.vllanmto > 0
+			 AND fin.cdhistor IN(2622, 2642, 2646, 2663,2734)
+			 AND fin.cdcooper = pr_cdcooper
+			 AND fin.dtmvtolt = pr_dtmvtolt;
+  --                        
+  rw_finieptb cr_finieptb%ROWTYPE;
+	
+	-- Lançamentos Protesto IEPTB
+	CURSOR cr_lanipetb(pr_cdcooper craplcm.cdcooper%TYPE
+	                  ,pr_dtmvtolt craplcm.dtmvtolt%TYPE
+	                  ) IS
+    SELECT SUM(lcm.vllanmto) vllanmto
+					,lcm.cdhistor
+			FROM craplcm lcm
+          ,crapcop cop
+		 WHERE cop.cdcooper = pr_cdcooper
+       AND lcm.cdcooper = 3
+       AND lcm.nrdconta = cop.nrctactl
+       AND lcm.dtmvtolt = pr_dtmvtolt
+			 AND lcm.vllanmto > 0
+			 AND lcm.cdhistor IN (2635, 2637, 2639)
+	GROUP BY lcm.cdhistor;
+  --
+	rw_lanipetb cr_lanipetb%ROWTYPE;
+	
+	CURSOR cr_lanipetb2(pr_cdcooper craplcm.cdcooper%TYPE
+	                   ,pr_dtmvtolt craplcm.dtmvtolt%TYPE
+	                  ) IS
+		SELECT cdagenci
+					,sum(vltarifa_ieptb) vltarifa_ieptb
+					,sum(sum(vltarifa_ieptb)) OVER () vltarifa_ieptb_total
+		 FROM( SELECT ass.cdagenci
+								 ,SUM(con.vlgrava_eletronica) vltarifa_ieptb
+						 FROM tbcobran_confirmacao_ieptb con
+								 ,crapass ass
+						WHERE con.cdcooper        = pr_cdcooper
+							AND con.dtmvtolt        = pr_dtmvtolt
+							AND con.idlancto_tarifa > 0
+							AND ass.cdcooper        = con.cdcooper
+							AND ass.nrdconta        = con.nrdconta
+						GROUP BY ass.cdagenci
+						UNION
+					 SELECT ass.cdagenci
+								 ,SUM(rti.vlgrava_eletronica)
+						 FROM tbcobran_retorno_ieptb rti
+								 ,crapass ass
+						WHERE rti.cdcooper        = pr_cdcooper
+							AND rti.dtmvtolt        = pr_dtmvtolt
+							AND rti.idlancto_tarifa > 0
+							AND ass.cdcooper        = rti.cdcooper
+							AND ass.nrdconta        = rti.nrdconta
+				 GROUP BY ass.cdagenci)
+		GROUP BY cdagenci
+		ORDER BY 1;
+	--
+	rw_lanipetb2 cr_lanipetb2%ROWTYPE;
+	
   --> Buscar convenios Bancoob                        
   CURSOR cr_crapcon_bancoob (pr_cdcooper in crapcon.cdcooper%TYPE
 	                        ,pr_cdempcon IN crapcon.cdempcon%TYPE
@@ -2684,6 +2755,8 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
   vr_contador               NUMBER := 0;
   --
   vr_vltardes               NUMBER := 0;
+  
+	vr_isFirst                BOOLEAN;
   
   function fn_calcula_data (pr_cdcooper in craptab.cdcooper%type,
                             pr_dtmvtoan in date) return date is
@@ -7900,7 +7973,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                                                    ,7053
                                                    ,7468 
                                                       ,rw_craprej.vlsdapli
-                                                   ,'"RECEITA COBRANCA CECRED (MANUAL) - PESSOA FISICA"');
+                                                   ,'"RECEITA COBRANCA AILOS (MANUAL) - PESSOA FISICA"');
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
 
@@ -7913,7 +7986,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                                                    ,7053
                                                    ,7343
                                                    ,rw_craprej.vlsdapli
-                                                   ,'"RECEITA COBRANCA CECRED (MANUAL) - PESSOA JURIDICA"');
+                                                   ,'"RECEITA COBRANCA AILOS (MANUAL) - PESSOA JURIDICA"');
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_setlinha); --> Texto para escrita
                     
@@ -13657,6 +13730,198 @@ BEGIN
 		-- Fechar cursor
 		CLOSE cr_craptvl_recarg;
   END IF;
+
+	-- 
+	IF pr_cdcooper = 3 THEN 
+    --
+		OPEN cr_finieptb(pr_cdcooper
+	                  ,vr_dtmvtolt
+	                  );
+		--
+		LOOP
+			--
+			FETCH cr_finieptb INTO rw_finieptb;
+			EXIT WHEN cr_finieptb%NOTFOUND;
+			--
+			CASE
+				WHEN rw_finieptb.cdhistor = 2622 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+												 trim(vr_dtmvtolt_yymmdd) || ',' ||
+												 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+												 to_char(rw_finieptb.nrctadeb) || ',' || -- (1425)
+												 to_char(rw_finieptb.nrctacrd) || ',' || -- (4887)
+												 TRIM(to_char(nvl(rw_finieptb.vllanmto, 0),'fm99999999999990.00')) || ',' ||
+												 to_char(rw_finieptb.cdhstctb) || ',' ||
+												 '"(crps249) LIQUIDAÇÃO DE BOLETO EM CARTORIO"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+				WHEN rw_finieptb.cdhistor = 2663 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+												 trim(vr_dtmvtolt_yymmdd) || ',' ||
+												 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+												 to_char(rw_finieptb.nrctadeb) || ',' || -- (?)
+												 to_char(rw_finieptb.nrctacrd) || ',' || -- (?)
+												 TRIM(to_char(nvl(rw_finieptb.vllanmto, 0),'fm99999999999990.00')) || ',' ||
+												 to_char(rw_finieptb.cdhstctb) || ',' ||
+												 '"(crps249) DEVOLUCAO LIQUIDACAO BOLETO EM CART. TED REM. STR"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+				WHEN rw_finieptb.cdhistor = 2734 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+												 trim(vr_dtmvtolt_yymmdd) || ',' ||
+												 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+												 to_char(rw_finieptb.nrctadeb) || ',' || -- (?)
+												 to_char(rw_finieptb.nrctacrd) || ',' || -- (?)
+												 TRIM(to_char(nvl(rw_finieptb.vllanmto, 0),'fm99999999999990.00')) || ',' ||
+												 to_char(rw_finieptb.cdhstctb) || ',' ||
+												 '"(crps249) DEVOLUCAO RECEBIDAS. TED REM. STR"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+          
+				WHEN rw_finieptb.cdhistor = 2642 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+												 trim(vr_dtmvtolt_yymmdd) || ',' ||
+												 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+												 to_char(rw_finieptb.nrctadeb) || ',' || -- (4888)
+												 to_char(rw_finieptb.nrctacrd) || ',' || -- (1425)
+												 TRIM(to_char(nvl(rw_finieptb.vllanmto, 0),'fm99999999999990.00')) || ',' ||
+												 to_char(rw_finieptb.cdhstctb) || ',' ||
+												 '"(crps249) PAGAMENTO DE CUSTAS E DESPESAS CARTORARIAS"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+				WHEN rw_finieptb.cdhistor = 2646 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+												 trim(vr_dtmvtolt_yymmdd) || ',' ||
+												 trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+												 to_char(rw_finieptb.nrctadeb) || ',' || -- (4889)
+												 to_char(rw_finieptb.nrctacrd) || ',' || -- (1425)
+												 TRIM(to_char(nvl(rw_finieptb.vllanmto, 0),'fm99999999999990.00')) || ',' ||
+												 to_char(rw_finieptb.cdhstctb) || ',' ||
+												 '"(crps249) PAGAMENTO DE TARIFA IEPTB - PROTESTO DE TITULO"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+			END CASE;
+			--
+		END LOOP;
+		--
+		CLOSE cr_finieptb;
+		--
+	ELSE -- pr_cdcooper <> 3 (todas as cooperativas diferente da central)
+		--
+		OPEN cr_lanipetb(pr_cdcooper
+	                  ,vr_dtmvtolt
+	                  );
+		--
+		LOOP
+			--
+			FETCH cr_lanipetb INTO rw_lanipetb;
+			EXIT WHEN cr_lanipetb%NOTFOUND;
+			--
+			CASE
+				WHEN rw_lanipetb.cdhistor = 2635 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+					               trim(vr_dtmvtolt_yymmdd) || ',' ||
+					               trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+					               '4888,' ||
+					               '1455,' ||
+					               TRIM(to_char(nvl(rw_lanipetb.vllanmto, 0), 'fm99999999999990.00')) || ',' ||
+					               '5210,' ||
+					               '"(crps249) REPASSE DE CUSTAS E DESPESAS CARTORARIAS"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+				WHEN rw_lanipetb.cdhistor = 2637 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+					               trim(vr_dtmvtolt_yymmdd) || ',' ||
+					               trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+					               '4888,' ||
+					               '1455,' ||
+					               TRIM(to_char(nvl(rw_lanipetb.vllanmto, 0), 'fm99999999999990.00')) || ',' ||
+					               '5210,' ||
+					               '"(crps249) REPASSE MANUAL DE CUSTAS E DESPESAS CARTORARIAS"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+				WHEN rw_lanipetb.cdhistor = 2639 THEN
+					--
+					vr_cdestrut := 50;
+					vr_linhadet := trim(vr_cdestrut) ||
+					               trim(vr_dtmvtolt_yymmdd) || ',' ||
+					               trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+					               '1455,' ||
+					               '4888,' ||
+					               TRIM(to_char(nvl(rw_lanipetb.vllanmto, 0), 'fm99999999999990.00')) || ',' ||
+					               '5210,' ||
+					               '"(crps249) ESTORNO DE REPASSE DE CUSTAS E DESPESAS CARTORARIAS"';
+					gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+					--
+			END CASE;
+			--
+		END LOOP;
+		--
+		CLOSE cr_lanipetb;
+		--
+		OPEN cr_lanipetb2(pr_cdcooper
+	                   ,vr_dtmvtolt
+	                  );
+		--
+		vr_isFirst := TRUE;
+		--
+		LOOP
+			--
+			FETCH cr_lanipetb2 INTO rw_lanipetb2;
+			EXIT WHEN cr_lanipetb2%NOTFOUND;
+			--
+			IF vr_isFirst THEN
+				--
+			vr_cdestrut := 50;
+			vr_linhadet := trim(vr_cdestrut) ||
+			               trim(vr_dtmvtolt_yymmdd) || ',' ||
+			               trim(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
+			               '8125,' ||
+			               '1455,' ||
+											 TRIM(to_char(nvl(rw_lanipetb2.vltarifa_ieptb_total, 0), 'fm99999999999990.00')) || ',' ||
+			               '5210,' ||
+			               '"(crps249) REPASSE DE TARIFA IEPTB - PROTESTO TITULO"';
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+			--
+				vr_isFirst := FALSE;
+				--
+			END IF;
+			--
+			vr_linhadet := lpad(rw_lanipetb2.cdagenci, 3, '0' ) || ',' ||
+			               TRIM(to_char(nvl(rw_lanipetb2.vltarifa_ieptb, 0), 'fm99999999999990.00'));
+      --
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+			--
+		END LOOP;
+		--
+    /* por solicitação da Keyt/Contabilidade 20/06/2018, não precisa totalizar o gerencial
+		IF rw_lanipetb2.vltarifa_ieptb_total IS NOT NULL THEN
+			--
+			vr_linhadet := '999,' ||
+			               TRIM(to_char(nvl(rw_lanipetb2.vltarifa_ieptb_total, 0), 'fm99999999999990.00'));
+      --
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+			--
+		END IF; */
+		--
+		CLOSE cr_lanipetb2;
+		--  
+  END IF;
+
   --  Contabilizacao mensal ...................................................
   IF to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') THEN
 
