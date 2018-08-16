@@ -2774,6 +2774,8 @@ BEGIN
           IF rw_crapris.cdorigem = 1 THEN
             -- conta corrente
             vr_tab_crapris(vr_des_chave_crapris).qtdiaatr := vr_qtatraso;
+          ELSIF (rw_crapris.cdorigem IN (4,5)) THEN
+            vr_tab_crapris(vr_des_chave_crapris).qtdiaatr := rw_crapris.qtdiaatr;
           ELSE
             vr_tab_crapris(vr_des_chave_crapris).qtdiaatr := vr_qtdiaatr;
           END IF;
@@ -4561,7 +4563,7 @@ BEGIN
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
                                   ,pr_texto_completo => vr_txtauxi_227
                                   ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
-
+          
         END IF;
 
         -- Gerar linha no relatório 354 se não houver prejuizo total
@@ -4617,7 +4619,7 @@ BEGIN
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
                                    ,pr_texto_completo => vr_txtauxi_354
                                    ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
-                                   
+          
           -- Desde que o programa chamador não seja o 184
           IF pr_cdprogra <> 'CRPS184' THEN
             -- Limpar linha de Crédito
