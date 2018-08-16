@@ -60,6 +60,9 @@
 			                 solicitação feita no chamado 549118 (Renato Darosci - Supero)
 
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+				
+				16/08/2018 - Remover regras que impedia o controle de permissões para algumas 
+				             telas do sistema Progrid. (INC0022095 - Wagner - Sustentação).
 
 ............................................................................. */
 
@@ -2313,14 +2316,14 @@ PROCEDURE proc_permis: /* Permissos do progrid dependendo dos prog. e idevento*/
     DEF INPUT PARAM par_cddopcao AS CHAR INIT "1" NO-UNDO.
     DEF INPUT PARAM par_idevento AS INT           NO-UNDO.
 
-    IF   CAN-DO("wpgd0007,wpgd0031,wpgd0032,wpgd0024,wpgd0010,wpgd0029," +
+    /*IF   CAN-DO("wpgd0007,wpgd0031,wpgd0032,wpgd0024,wpgd0010,wpgd0029," +
                 "wpgd0019,wpgd0027,wpgd0018,wpgd0017,wpgd0039,wpgd0014",
                 par_nmdatela)          AND
                 par_idevento = 1   THEN
          DO:          
              IF   par_cddopcao <> "C"   THEN
                   RETURN "NOK".
-         END.
+         END.*/
 
     RETURN "OK".
 
