@@ -1,11 +1,12 @@
-create or replace force view cecred.vw_parcelado_pgto_avulso as
+create or replace view cecred.vw_parcelado_pgto_avulso as
 select
   ass.nrdconta nrdconta,
   cop.nrdocnpj as CNPJCtrc,
   case when length(ass.nrcpfcgc) < 12 then 1
     else 2 end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  epr.nrctremp as NrCtr,
+  --epr.nrctremp as NrCtr,
+  ass.cdcooper || ass.nrdconta || epr.nrctremp as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   --case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end cdproduto,
   fn_busca_modalidade_bacen(case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end , ass.cdcooper, ass.nrdconta, epr.nrctremp, ass.inpessoa, 3, '') as cdproduto,
   case when max(lem.dtmvtolt) is not null then to_char(max(lem.dtmvtolt), 'YYYYMMDD')
@@ -47,4 +48,3 @@ group by
 order by
   cnpjctrc, idfccli, nrctr
 ;
-
