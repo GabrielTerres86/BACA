@@ -2911,7 +2911,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                      ,INPUT p-cod-agencia    /* Cod. Agencia */
                                      ,INPUT p-nro-caixa      /* Numero  Caixa */
                                      ,INPUT p-cod-operador   /* Operador */
-                                     ,INPUT p-titular        /* Mesmo Titular */
+                                     ,INPUT 1                /* Mesmo Titular */
                                      ,INPUT p-val-doc        /* Vlr. DOCMTO */
                                      ,INPUT aux_nrctrlif     /* NumCtrlIF */
                                      ,INPUT p-nro-conta-de   /* Nro Conta */
@@ -2941,7 +2941,6 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                      ,INPUT aux_hrtransa /* Hora transacao */
                                      ,INPUT p-ispb-if /* ISPB Banco */
                                      ,INPUT 1 /* DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED */
-                                     --------- SAIDA --------
                                      ,OUTPUT 0    /* Codigo do erro */
                                      ,OUTPUT ""). /* Descriçao da crítica */
                   CLOSE STORED-PROC pc_proc_envia_tec_ted_prog
