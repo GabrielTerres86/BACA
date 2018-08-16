@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 02/07/2018
+     Data    : Maio/2001                       Ultima atualizacao: 15/08/2018
 
      Dados referentes ao programa:
 
@@ -314,7 +314,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  26/06/2018 - P450 - Ajuste calculo Juros60 (Rangel/AMcom)
 
-                 02/07/2018 - Criação da rotina pc_lista_emp_consig para tratar emprestimos consignados
+                 15/08/2018 - Ajustado os valores do risco para os borderos (Luis Fernando - GFT)
 
   ............................................................................ */
 
@@ -471,18 +471,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            -- OU Ativo OU Com prejuizo
            AND (crapepr.inliquid = 0 OR crapepr.inprejuz = 1)
          ORDER BY crapepr.nrctremp;
-
-      -- Busca de todos os contratos em aberto com prejuizo
-      CURSOR cr_tbepr_consignado_contrato(pr_cdcooper IN tbepr_consignado_contrato.cdcooper%TYPE,
-                                          pr_nrdconta IN tbepr_consignado_contrato.nrdconta%TYPE) IS
-           SELECT c.*
-           FROM tbepr_consignado_contrato c,
-                tbepr_consignado_parcelas p
-           WHERE c.idcontrato_cons = p.idcontrato_cons
-             AND cdcooper = pr_cdcooper
-             AND nrdconta = pr_nrdconta
-             AND inliquidada = 0  --> Não liquidada
-           ORDER BY c.nrctremp;
 
       -- Buscar todos os cadastro de borderos dos cheques por conta
       CURSOR cr_crapbdc(pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
@@ -1004,10 +992,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
          RECORD ( cdcooper crawepr.cdcooper%TYPE
                  ,nrdconta crawepr.nrdconta%TYPE
                  ,nrctremp crawepr.nrctremp%TYPE
-                 ,dsnivcal crawepr.dsnivcal%TYPE
-                 --AWAE: Adicionado para Consignado
-                 ,innivris tbepr_consignado_contrato.inrisco_calculado%TYPE
-                 ,ind_consignado integer);
+                 ,dsnivcal crawepr.dsnivcal%TYPE);
       TYPE typ_tab_crawepr_up IS TABLE OF typ_reg_crawepr_up
         INDEX BY PLS_INTEGER;
       vr_tab_crawepr_up typ_tab_crawepr_up;
@@ -3376,428 +3361,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       || '. Detalhes: '||sqlerrm;
       END;
 
-      -- Varrer e processar empréstimos consignados
-      PROCEDURE pc_lista_emp_consig(pr_rw_crapass IN cr_crapass%ROWTYPE
-                                   ,pr_rw_consignado_contrato IN tbepr_consignado_contrato%ROWTYPE
-                                   ,pr_risco_rating IN PLS_INTEGER
-                                   ,pr_des_erro  OUT VARCHAR2) IS
-        -- Variáveis auxiliares
-        vr_dias             PLS_INTEGER; --> Número de dias em relação as parcelas pagas * meses decorridos
-        vr_qtdiaacl         PLS_INTEGER; --> Número de dias faixa inicial do risco do contrato anterior
-        vr_cdmodali         crapris.cdmodali%TYPE; --> Código da modalidade montado cfme a linha de crédito
-        vr_aux_nivel        PLS_INTEGER;           --> Nivel do risco
-        vr_nivel_atraso     PLS_INTEGER;           --> Nivel do risco
-        vr_qtdiaatr         crapris.qtdiaatr%TYPE; --> Quantidade de dias em atraso
-        vr_rowid            ROWID;                 --> Guardar o ID do registro criado
-        --vr_vljura60         crapris.vljura60%TYPE; --> Juros do risco
-        vr_vldiv060         crapris.vldiv060%TYPE; --> Valor do atraso quando prazo inferior a 60
-        vr_vldiv180         crapris.vldiv180%TYPE; --> Valor do atraso quando prazo inferior a 180
-        vr_vldiv360         crapris.vldiv360%TYPE; --> Valor do atraso quando prazo inferior a 360
-        vr_vldiv999         crapris.vldiv999%TYPE; --> Valor do atraso para outros casos
-        vr_vlvec180         crapris.vlvec180%TYPE; --> Valor a vencer nos próximos 180 dias
-        vr_vlvec360         crapris.vlvec360%TYPE; --> Valor a vencer nos próximos 360 dias
-        vr_vlvec999         crapris.vlvec999%TYPE; --> Valor a vencer para outros casos
-        vr_vldivida_acum    NUMBER;                --> Valor da divida acumulada
-        vr_totjur60         NUMBER;                --> Total dos juros 60 dias
-        vr_nrparepr         NUMBER;                --> Ultima parcela
-        vr_dsnivris         VARCHAR2(2);           --> Nivel do risco atual
-
-        vr_vlprxpar         crapris.vlprxpar%TYPE; --> Valor da próxima parcela
-        vr_dtprxpar         crapris.dtprxpar%TYPE; --> Data da próxima parcela
-        vr_vlsdeved_atual   NUMBER;                --> Saldo devedor atual
-        vr_dtprimeiropagamento DATE;
-
-        -- Busca da parcela de maior atraso
-        CURSOR cr_crappep_maior IS
-           SELECT p.*
-           FROM tbepr_consignado_contrato c,
-                tbepr_consignado_parcelas p
-           WHERE c.idcontrato_cons = p.idcontrato_cons
-             AND cdcooper = pr_cdcooper
-             AND nrdconta = pr_rw_consignado_contrato.nrdconta
-             AND nrctremp = pr_rw_consignado_contrato.nrctremp
-             AND inliquidada = 0  --> Não liquidada
-             AND dtvencimento <= pr_rw_crapdat.dtmvtoan; -- Anterior a data atual
-        vr_dtvencto tbepr_consignado_parcelas.dtvencimento%TYPE;
-
-        -- Busca do primeiro pagamento
-        CURSOR cr_crappep_primeiro_pagamento IS
-           SELECT nvl(min(p.dtpagamento), '01/01/1900') dtprimeiropagto
-           FROM tbepr_consignado_contrato c,
-                tbepr_consignado_parcelas p
-           WHERE c.idcontrato_cons = p.idcontrato_cons
-             AND cdcooper = pr_cdcooper
-             AND nrdconta = pr_rw_consignado_contrato.nrdconta
-             AND nrctremp = pr_rw_consignado_contrato.nrctremp;
-
-        -- Busca da ultima não liquidada
-        CURSOR cr_crappep_ultima IS
-           SELECT max(NRPARCELA)
-           FROM tbepr_consignado_contrato c,
-                tbepr_consignado_parcelas p
-           WHERE c.idcontrato_cons = p.idcontrato_cons
-             AND cdcooper = pr_cdcooper
-             AND nrdconta = pr_rw_consignado_contrato.nrdconta
-             AND nrctremp = pr_rw_consignado_contrato.nrctremp
-             AND inliquidada = 0;  --> Não liquidada
-
-        -- Busca de todas as parcelas em aberto
-        CURSOR cr_parc_consig IS
-           SELECT p.nrparcela
-                 ,p.dtvencimento
-                 ,p.vlsaldo_devedor
-                 ,p.vljuros_60
-                 ,p.vlparcela
-           FROM tbepr_consignado_contrato c,
-                tbepr_consignado_parcelas p
-           WHERE c.idcontrato_cons = p.idcontrato_cons
-             AND cdcooper = pr_cdcooper
-             AND nrdconta = pr_rw_consignado_contrato.nrdconta
-             AND nrctremp = pr_rw_consignado_contrato.nrctremp
-             AND inliquidada = 0  --> Não liquidada
-           ORDER BY nrparcela;
-
-        -- Cursor para juros em atraso ha mais de 60 dias
-        CURSOR cr_craplem_60 (pr_qtdiaatr IN NUMBER) IS
-          SELECT NVL(SUM(lem.vllanmto),0)
-            FROM craplem lem
-           WHERE lem.cdcooper = pr_cdcooper
-             AND lem.nrdconta = pr_rw_consignado_contrato.nrdconta
-             AND lem.nrctremp = pr_rw_consignado_contrato.nrctremp
-             AND lem.cdhistor IN (1037,1038)
-             AND lem.dtmvtolt > pr_rw_crapdat.dtmvtolt - (pr_qtdiaatr - 59);
-
-      BEGIN
-        --Para consig utilizar a modalidade abaixo
-        --:AWAE - De acordo com a tarefa para 3040, deve ser 0202
-        vr_cdmodali := 0202;
-
-        -- Sem atraso e risco A
-        vr_qtdiaatr := 0;
-        vr_aux_nivel := 2;
-
-        vr_dias := 0;
-
-        -- Buscar a parcela com maior atraso
-        vr_dtvencto := NULL;
-        vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(pr_rw_consignado_contrato.nrdconta,10,'0')||lpad(pr_rw_consignado_contrato.nrctremp,10,'0');
-        IF vr_tab_crappep_maior.exists(vr_idxpep) THEN
-          vr_dtvencto := vr_tab_crappep_maior(vr_idxpep);
-        END if;
-
-        -- Se encontrou
-        IF vr_dtvencto IS NOT NULL THEN
-          -- Calcular a quantidade de dias em atraso
-          vr_qtdiaatr := pr_rw_crapdat.dtmvtolt - vr_dtvencto;
-
-          vr_dias     := vr_qtdiaatr;
-
-          -- Trata os dias acelerados se estiver em atraso - Daniel(AMcom)
-          IF vr_qtdiaatr > 0 THEN
-            -- Chama verificação dos dias em atraso acelerado
-            pc_busca_dias_acelerados(pr_cdcooper => pr_cdcooper            --> Cooperativa
-                                    ,pr_nrdconta => pr_rw_consignado_contrato.nrdconta --> Conta
-                                    ,pr_nrctremp => pr_rw_consignado_contrato.nrctremp --> Contrato
-                                    ,pr_qtdiaacl => vr_qtdiaacl);
-            -- Soma a quantidade de dias acelerada quando estiver em atraso Dnaiel(amcom)
-            vr_dias     := vr_dias + vr_qtdiaacl;
-          END IF;
-
-          -- Calcular o nível de acordo com a quantidade de dias em atraso
-          CASE
-            WHEN vr_dias  < 15   THEN
-              vr_aux_nivel := 2;
-            WHEN vr_dias  <= 30   THEN
-              vr_aux_nivel := 3;
-            WHEN vr_dias  <= 60   THEN
-              vr_aux_nivel := 4;
-            WHEN vr_dias  <= 90   THEN
-              vr_aux_nivel := 5;
-            WHEN vr_dias  <= 120   THEN
-              vr_aux_nivel := 6;
-            WHEN vr_dias  <= 150   THEN
-              vr_aux_nivel := 7;
-            WHEN vr_dias  <= 180   THEN
-              vr_aux_nivel := 8;
-            ELSE
-              vr_aux_nivel := 9;
-          END CASE;
-        ELSE
-          -- Sem atraso e risco A
-          vr_qtdiaatr := 0;
-          vr_aux_nivel := 2;
-          vr_dias      := 0;
-        END IF;
-
-        -- Gravar o risco acelerado - Daniel(AMcom)
-        if vr_qtdiaacl > 0 then
-          pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
-                                  ,pr_nrdconta => pr_rw_consignado_contrato.nrdconta --> Conta
-                                  ,pr_nrctremp => pr_rw_consignado_contrato.nrctremp --> Contrato
-                                  ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
-        else
-          pc_limpa_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
-                                  ,pr_nrdconta => pr_rw_consignado_contrato.nrdconta --> Conta
-                                  ,pr_nrctremp => pr_rw_consignado_contrato.nrctremp --> Contrato
-                                  ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
-        end if;
-
-        -- Backup da variavel vr_aux_nivel
-        vr_nivel_atraso := vr_aux_nivel;
-
-        --Aqui ja vem calculado o campo inrisco_proposta
-        vr_aux_nivel := pr_rw_consignado_contrato.INRISCO_PROPOSTA;
-
-        IF pr_risco_rating <> 0 THEN
-          IF vr_tab_crapnrc.EXISTS(pr_rw_consignado_contrato.nrdconta) THEN
-            -- Se a data do rating for superior ou igual a do vencimento da parcela
-            IF vr_tab_crapnrc(pr_rw_consignado_contrato.nrdconta).dtmvtolt >= pr_rw_consignado_contrato.dtmovimento THEN
-              -- Verifica o pior Nivel entre o Rating e o Risco da Operacao
-              IF pr_risco_rating > vr_aux_nivel THEN
-                -- Assumir o nível do rating
-                vr_aux_nivel := pr_risco_rating;
-              END IF;
-
-            END IF;
-
-          END IF;
-
-        END IF; /* END IF pr_risco_rating <> 0 */
-
-        /* Se emprestimo tiver nivel maior que o atraso....*/
-        IF vr_nivel_atraso > vr_aux_nivel THEN
-          vr_aux_nivel := vr_nivel_atraso;
-        END IF;
-
-        IF pr_risco_rating <> 0 AND pr_risco_rating > vr_aux_nivel THEN
-          vr_aux_nivel := pr_risco_rating;
-        END IF;
-
-        IF pr_risco_rating <> 0 AND vr_qtdiaatr <= 0 THEN
-          IF vr_tab_crapnrc.EXISTS(pr_rw_consignado_contrato.nrdconta) THEN
-            -- Se a data do rating for superior ou igual a do vencimento da parcela
-            IF vr_tab_crapnrc(pr_rw_consignado_contrato.nrdconta).dtmvtolt >= pr_rw_consignado_contrato.dtmovimento THEN
-              -- Verifica o pior Nivel entre o Rating e o Risco da Operacao
-              IF pr_risco_rating > vr_aux_nivel THEN
-                -- Assumir o nível do rating
-                vr_aux_nivel := pr_risco_rating;
-              END IF;
-
-            END IF;
-
-          END IF;
-
-        END IF;
-
-        -- Calculo dos Juros em atraso a mais de 60 dias: vr_totjur60 e a cr_craplem_60.
-        --Não será calculado, será enviado pela FIS:
-        vr_totjur60 := 0;
-
-        -- Montar a data prevista do ultimo vencimento com base na data do
-        -- primeiro pagamento * qtde de parcelas do empréstimo
-        -- Obs: Quando empréstimo tiver apenas 1 parcela, a data do 1º
-        --      pagamento é também a data da última. Apenas atentamos
-        --      para que esta data não fique inferior a data da contratação
-        --      então usamos um greatest com a dtinictr
-        --      Quando tiver mais de 1 parcela, descontamos a parcela 01
-        --      para calculo de meses, já que a mesma já é cobrada na data
-        --      de início do pagamento
-
-        --Carregar data do primeiro pagamento
-        OPEN cr_crappep_primeiro_pagamento;
-        FETCH cr_crappep_primeiro_pagamento
-         INTO vr_dtprimeiropagamento;
-        CLOSE cr_crappep_primeiro_pagamento;
-
-        IF pr_rw_consignado_contrato.qtparcelas = 1 THEN
-          vr_dtvencop := greatest(pr_rw_consignado_contrato.dtmovimento, vr_dtprimeiropagamento);
-        ELSE
-          vr_dtvencop := gene0005.fn_dtfun(pr_dtcalcul => vr_dtprimeiropagamento
-                                          ,pr_qtdmeses => pr_rw_consignado_contrato.qtparcelas - 1);
-        END IF;
-        -- Incrementar sequencial do contrato
-        vr_nrseqctr := vr_nrseqctr + 1;
-        vr_index_crapris_aux := NULL;
-        -- Finalmente criar o registro de risco
-
-        -- Gravar temptable da crapris para posteriormente realizar o insert na tabela fisica
-        pc_grava_crapris(  pr_nrdconta => pr_rw_crapass.nrdconta
-                          ,pr_dtrefere => vr_dtrefere
-                          ,pr_innivris => vr_aux_nivel
-                          ,pr_qtdiaatr => nvl(vr_qtdiaatr,0)
-                          ,pr_vldivida => 0
-                          ,pr_vlvec180 => 0
-                          ,pr_vlvec360 => 0
-                          ,pr_vlvec999 => 0
-                          ,pr_vldiv060 => 0
-                          ,pr_vldiv180 => 0
-                          ,pr_vldiv360 => 0
-                          ,pr_vldiv999 => 0
-                          ,pr_vlprjano => 0
-                          ,pr_vlprjaan => 0
-                          ,pr_inpessoa => pr_rw_crapass.inpessoa
-                          ,pr_nrcpfcgc => pr_rw_crapass.nrcpfcgc
-                          ,pr_vlprjant => 0
-                          ,pr_inddocto => 1           -- Docto 3020
-                          ,pr_cdmodali => vr_cdmodali -- Cfme a linha de crédito
-                          ,pr_nrctremp => pr_rw_consignado_contrato.nrctremp
-                          ,pr_nrseqctr => vr_nrseqctr
-                          ,pr_dtinictr => pr_rw_consignado_contrato.dtmovimento
-                          ,pr_cdorigem => 3   -- Emprestimos/Financiamentos
-                          ,pr_cdagenci => pr_rw_crapass.cdagenci
-                          ,pr_innivori => 0
-                          ,pr_cdcooper => pr_cdcooper
-                          ,pr_vlprjm60 => 0
-                          ,pr_dtdrisco => NULL
-                          ,pr_qtdriclq => 0
-                          ,pr_nrdgrupo => 0
-                          ,pr_vljura60 => vr_totjur60
-                          ,pr_inindris => vr_aux_nivel
-                          ,pr_cdinfadi => ' '
-                          ,pr_nrctrnov => 0
-                          ,pr_flgindiv => 0
-                          ,pr_dsinfaux => ' '
-                          ,pr_dtprxpar => NULL
-                          ,pr_vlprxpar => 0
-                          ,pr_qtparcel => pr_rw_consignado_contrato.qtparcelas
-                          ,pr_dtvencop => vr_dtvencop
-                          ,pr_des_erro => vr_des_erro
-                          ,pr_index_crapris => vr_index_crapris_aux);
-        -- Testar retorno de erro
-        IF vr_des_erro IS NOT NULL THEN
-          -- Gerar erro e roolback
-          RAISE vr_exc_erro;
-        END IF;
-
-        -- Iniciar valor de juros e das parcelas a vencer e vencidas
-        vr_vldiv060 := 0;
-        vr_vldiv180 := 0;
-        vr_vldiv360 := 0;
-        vr_vldiv999 := 0;
-        vr_vlvec180 := 0;
-        vr_vlvec360 := 0;
-        vr_vlvec999 := 0;
-        vr_vldivida_acum := 0;
-
-        --> Informação é necessaria apenas na mensal
-        IF  to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm')  THEN
-          -- Obter ultima parcela em aberto
-          OPEN cr_crappep_ultima;
-          FETCH cr_crappep_ultima
-           INTO vr_nrparepr;
-          CLOSE cr_crappep_ultima;
-        END IF;
-        -- Buscar todas as parcelas não liquidadas
-        FOR rw_parc_consig IN cr_parc_consig LOOP
-              -- Acumular o valor do saldo atual
-          vr_vldivida_acum := vr_vldivida_acum + rw_parc_consig.vlsaldo_devedor;
-              -- Saldo devedor atual
-          vr_vlsrisco := rw_parc_consig.vlsaldo_devedor;
-              -- Somente na mensal
-              IF  to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm')  THEN
-                -- Se for a ultima parcela
-            IF  rw_parc_consig.nrparcela = vr_nrparepr  THEN
-                  IF  pr_rw_consignado_contrato.vlsaldo_devedor != vr_vldivida_acum  THEN
-                    vr_vlsrisco := (pr_rw_consignado_contrato.vlsaldo_devedor - vr_vldivida_acum) +
-                                rw_parc_consig.vlsaldo_devedor;
-                  END IF;
-                END IF;
-              END IF;
-
-          vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(pr_rw_crapass.nrdconta,10,'0')||
-                       lpad(pr_rw_consignado_contrato.nrctremp,10,'0');
-
-          IF vr_tab_cessoes.exists(vr_idxpep) THEN
-              -- Calcular diferença de dias entre a parcela e o dia atual
-            vr_diasvenc := vr_tab_cessoes(vr_idxpep) - pr_rw_crapdat.dtmvtolt;
-          ELSE
-            -- Calcular diferença de dias entre a parcela e o dia atual
-          vr_diasvenc := rw_parc_consig.dtvencimento - pr_rw_crapdat.dtmvtolt;
-          END IF;
-
-              -- Buscar o código do vencimento a lançar
-              vr_cdvencto := fn_calc_codigo_vcto(pr_diasvenc => vr_diasvenc
-                                                ,pr_qtdiapre => vr_diasvenc -- Enviar a mesma informaçao
-                                                ,pr_flgempre => TRUE);
-              -- Chamar rotina de gravação dos vencimentos do risco
-              pc_grava_crapvri(pr_nrdconta => pr_rw_crapass.nrdconta  --> Num. da conta
-                              ,pr_dtrefere => vr_dtrefere             --> Data de referência
-                              ,pr_innivris => vr_aux_nivel            --> Nível do risco
-                              ,pr_cdmodali => vr_cdmodali             --> Cfme a linha de crédito
-                              ,pr_cdvencto => vr_cdvencto             --> Codigo do vencimento
-                              ,pr_nrctremp => pr_rw_consignado_contrato.nrctremp  --> Nro contrato empréstimo
-                              ,pr_nrseqctr => vr_nrseqctr             --> Seq contrato empréstimo
-                              ,pr_vlsrisco => vr_vlsrisco             --> Valor do risco a lançar
-                              ,pr_des_erro => vr_des_erro);
-              -- Testar retorno de erro
-              IF vr_des_erro IS NOT NULL THEN
-                -- Gerar erro e roolback
-                RAISE vr_exc_erro;
-              END IF;
-              -- Para valores a vencer
-              IF vr_diasvenc >= 0 THEN
-                -- Se ainda não achou a primeira parcela em aberto (futuro)
-            IF vr_dtprxpar IS NULL AND rw_parc_consig.dtvencimento > pr_rw_crapdat.dtmvtolt THEN
-                  -- Armazenar valor da próxima parcela
-              vr_vlprxpar := rw_parc_consig.vlparcela;
-              vr_dtprxpar := rw_parc_consig.dtvencimento;
-                END IF;
-                -- Acumular na variavel correspondente de acordo com a quantidade de dias
-                IF vr_diasvenc <= 180 THEN
-                  vr_vlvec180 := vr_vlvec180 + vr_vlsrisco;
-                ELSIF vr_diasvenc <= 360 THEN
-                  vr_vlvec360 := vr_vlvec360 + vr_vlsrisco;
-                ELSE
-                  vr_vlvec999 := vr_vlvec999 + vr_vlsrisco;
-                END IF;
-              ELSE
-                -- Negativar a diferença de dias pois o valor já está vencido
-                -- e o calculo retornou o valor negativo
-                vr_diasvenc := vr_diasvenc * -1;
-                -- Acumular na variavel correspondente de acordo com a quantidade de dias
-                IF vr_diasvenc <= 60 THEN
-                  vr_vldiv060 := vr_vldiv060 + vr_vlsrisco;
-                ELSIF vr_diasvenc <= 180 THEN
-                  vr_vldiv180 := vr_vldiv180 + vr_vlsrisco;
-                ELSIF vr_diasvenc <= 360 THEN
-                  vr_vldiv360 := vr_vldiv360 + vr_vlsrisco;
-                ELSE
-                  vr_vldiv999 := vr_vldiv999 + vr_vlsrisco;
-                END IF;
-              END IF;
-            END LOOP;
-
-        -- Somente na mensal
-        IF  to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm')  THEN
-          vr_vldivida_acum := pr_rw_consignado_contrato.vlsaldo_devedor;
-        END IF;
-
-        -- Após calcular as parcelas em atraso, atualizar as variaveis de
-        -- parcelas a vencer e dividas do risco
-        vr_tab_crapris(vr_index_crapris_aux).vldiv060 :=  vr_vldiv060;
-        vr_tab_crapris(vr_index_crapris_aux).vldiv180 :=  vr_vldiv180;
-        vr_tab_crapris(vr_index_crapris_aux).vldiv360 :=  vr_vldiv360;
-        vr_tab_crapris(vr_index_crapris_aux).vldiv999 :=  vr_vldiv999;
-        vr_tab_crapris(vr_index_crapris_aux).vlvec180 :=  vr_vlvec180;
-        vr_tab_crapris(vr_index_crapris_aux).vlvec360 :=  vr_vlvec360;
-        vr_tab_crapris(vr_index_crapris_aux).vlvec999 :=  vr_vlvec999;
-        vr_tab_crapris(vr_index_crapris_aux).vldivida :=  vr_vldivida_acum;
-        vr_tab_crapris(vr_index_crapris_aux).vlprxpar :=  vr_vlprxpar;
-        vr_tab_crapris(vr_index_crapris_aux).dtprxpar :=  vr_dtprxpar;
-
-      EXCEPTION
-        WHEN vr_exc_erro THEN
-          pr_des_erro := 'pc_lista_emp_prefix --> Erro ao processar emprestimo pre-fixado: '
-                      || ' - Conta:' ||pr_rw_consignado_contrato.nrdconta || ' Contrato: '||pr_rw_consignado_contrato.nrctremp
-                      || '. Detalhes: '||vr_des_erro;
-
-        WHEN OTHERS THEN
-          pr_des_erro := 'pc_lista_emp_prefix --> Erro não tratado ao processar emprestimo pre-fixado: '
-                      || ' - Conta:'||pr_rw_consignado_contrato.nrdconta|| ' Contrato: '||pr_rw_consignado_contrato.nrctremp
-                      || '. Detalhes: '||sqlerrm;
-      END;
-
-
       -- Varrer e processar empréstimos pré-fixado
       PROCEDURE pc_lista_emp_prefix_prejuizo(pr_rw_crapass   IN cr_crapass%ROWTYPE
                                             ,pr_rw_crapepr   IN cr_crapepr%ROWTYPE
@@ -4617,7 +4180,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Buscar todos os riscos de empréstimos ou financiamentos
         --AWAE - Ajustando o cursor para identificar quando é contrato consignado
         CURSOR cr_crapris_epr IS
-/*          SELECT nrdconta
+          SELECT nrdconta
                 ,nrctremp
                 ,innivris
             FROM crapris
@@ -4625,30 +4188,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              AND dtrefere = vr_dtrefere
              AND inddocto = 1
              AND cdorigem = 3
-             AND cdmodali IN(0299,0499); -- Contratos de Emprestimo/Financiamento*/
-          SELECT r.nrdconta
-                ,r.nrctremp
-                ,r.innivris
-                ,DECODE(c.nrctremp,NULL,0,1) AS ind_consignado
-            FROM crapris r
-            LEFT JOIN tbepr_consignado_contrato c
-              ON r.cdcooper = c.cdcooper
-             AND r.nrdconta = c.nrdconta
-             AND r.nrctremp = c.nrctremp
-           WHERE r.cdcooper = pr_cdcooper
-             AND r.dtrefere = vr_dtrefere
-             AND r.inddocto = 1
-             AND r.cdorigem = 3
-             AND r.cdmodali IN(0299,0499);
+             AND cdmodali IN(0299,0499); -- Contratos de Emprestimo/Financiamento
 
         -- Auxiliar para busca da data
         vr_datautil DATE;
         vr_qtdrisco INTEGER:=0;
 
-        -- AWAE - Variaveis para controle de critica
-        vr_exc_saida           exception;
-        vr_cdcritic            PLS_INTEGER;
-        vr_dscritic            VARCHAR(4000);
       BEGIN
 
         -- Função para retornar dia útil anterior a data base
@@ -5053,9 +4598,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             vr_tab_crawepr_up(vr_idx_crawepr_up).nrdconta := rw_crapris.nrdconta;
             vr_tab_crawepr_up(vr_idx_crawepr_up).nrctremp := rw_crapris.nrctremp;
             vr_tab_crawepr_up(vr_idx_crawepr_up).dsnivcal := vr_tab_risco_num(rw_crapris.innivris);
-            --AWAE: Adicionado para Consignado
-            vr_tab_crawepr_up(vr_idx_crawepr_up).innivris := rw_crapris.innivris;
-            vr_tab_crawepr_up(vr_idx_crawepr_up).ind_consignado := rw_crapris.ind_consignado;
+
           EXCEPTION
             WHEN OTHERS THEN
               vr_des_erro := 'Erro ao atualizar o nível do emprestimo com base no risco --> '
@@ -5079,37 +4622,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           WHEN OTHERS THEN
             vr_des_erro := 'Erro ao atualizar o nível do emprestimo com base no risco --> '
                           || '. Detalhes:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
-              RAISE vr_exc_erro;
-        END;
-
-        --AWAE - Atualizar vencimento risco para Consignado
-        BEGIN
-          --FOR idx IN vr_tab_vlavence.FIRST..vr_tab_vlavence.LAST LOOP
-          FOR idx IN 1..vr_tab_crawepr_up.count LOOP
-            --Inserir somente se for consignado
-            IF  vr_tab_crawepr_up(vr_idx_crawepr_up).ind_consignado = 1 THEN
-            EMPR0013.pc_recebe_consig_contrato(pr_cdcooper          => vr_tab_crawepr_up(idx).cdcooper              --> Codigo da cooperativa
-                                              ,pr_nrdconta          => vr_tab_crawepr_up(idx).nrdconta              --> Conta do Associado
-                                              ,pr_nrctremp          => vr_tab_crawepr_up(idx).nrctremp    --> Número do Contrato
-                                              ,pr_nrcontratoext     => vr_tab_crawepr_up(idx).nrctremp    --> Número do Contrato
-                                              ,pr_inrisco_calculado => vr_tab_crawepr_up(idx).innivris --> Nivel de risco calculado
-                                              ----------------- > OUT < ----------------------
-                                              ,pr_cdcritic => vr_cdcritic                                             --> Código da crítica
-                                              ,pr_dscritic => vr_dscritic                                            --> Descrição da crítica
-                                              );
-
-            -- Se houve erro
-            IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_saida;
-              END IF;
-            END IF;
-
-          END LOOP;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_des_erro := 'Erro ao atualizar o nível do emprestimo consignado com base no risco --> '
-                          || '. Detalhes:'|| SQLERRM;
               RAISE vr_exc_erro;
         END;
         vr_tab_crawepr_up.delete;
@@ -6081,26 +5593,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             END IF;
 
           END LOOP; -- Fim loop crapepr
-
-          -- Busca de todos os empréstimos consignados em aberto
-          FOR rw_tbepr_consignado_contrato IN cr_tbepr_consignado_contrato(pr_cdcooper => pr_cdcooper,
-                                                                           pr_nrdconta => rw_crapass.nrdconta) LOOP
-
-              -- Emprestimos Consignados
-              pc_lista_emp_consig(pr_rw_crapass               => rw_crapass
-                                 ,pr_rw_consignado_contrato   => rw_tbepr_consignado_contrato
-                                 ,pr_risco_rating             => vr_risco_rating
-                                 ,pr_des_erro                 => vr_des_erro);
-
-              -- Testar saída com erro
-              IF vr_des_erro IS NOT NULL THEN
-                RAISE vr_exc_erro;
-              END IF;
-
-
-          END LOOP; -- Fim loop consignado
-
-
 
           -- Processar riscos de desconto de cheque --
           -- somente se a conta estiver no vetor de contas com informação na tabela
