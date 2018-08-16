@@ -1039,15 +1039,12 @@ PROCEDURE gera_lancamento:
 
                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                         DO:  
-                          IF aux_incrineg = 1 THEN
-                           DO:
-                            /* Tratativas de negocio */ 
-                            NEXT.
-                           END.
-                          ELSE
-                           DO:
-                             RETURN "NOK".
-                           END. 
+                          UNIX SILENT VALUE("echo " + 
+                                       STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '"
+                                       + aux_dscritic +  
+                                       " >> log/proc_message.log").
+						  NEXT. 
                         END. 
                      ELSE
                         DO:
@@ -1057,26 +1054,7 @@ PROCEDURE gera_lancamento:
                         END.
 
                 
-                 /*CREATE craplcm.
-                 ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                        craplcm.cdagenci = craplot.cdagenci
-                        craplcm.cdbccxlt = craplot.cdbccxlt
-                        craplcm.nrdolote = craplot.nrdolote
-                        craplcm.nrdconta = aux_nrdconta
-                        craplcm.nrdctabb = aux_nrctalcm
-                        craplcm.nrdocmto = crapdev.nrcheque
-                        craplcm.cdhistor = crapdev.cdhistor
-                        craplcm.nrseqdig = craplot.nrseqdig + 1
-                        craplcm.vllanmto = crapdev.vllanmto
-                        craplcm.cdoperad = crapdev.cdoperad
-                        craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                                STRING(crapdev.cdalinea)
-                                           ELSE "21"
-                        craplcm.cdcooper = aux_cdcooper
-                        craplcm.cdbanchq = crapdev.cdbanchq
-                        craplcm.cdagechq = crapdev.cdagechq
-                        craplcm.nrctachq = crapdev.nrctachq*/
-                        
+                 
                  ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                         craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
                         craplot.qtinfoln = craplot.qtinfoln + 1
@@ -1146,7 +1124,6 @@ PROCEDURE gera_lancamento:
                  ELSE
                       craplcm.dsidenti = "2".
 
-               /* VALIDATE craplcm.*/
                 
                  /* VIACON - cria lancamento na coop atual */
                  RUN gerar_lancamento_conta_comple IN h-b1wgen0200
@@ -1196,15 +1173,12 @@ PROCEDURE gera_lancamento:
 
                      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                       DO:  
-                        IF aux_incrineg = 1 THEN
-                         DO:
-                          /* Tratativas de negocio */ 
-                          NEXT.
-             END.
-                        ELSE
-                         DO:
-                           RETURN "NOK".
-                         END. 
+                         UNIX SILENT VALUE("echo " + 
+                                       STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '"
+                                       + aux_dscritic +  
+                                       " >> log/proc_message.log").
+						 NEXT.
                       END.  
                 
                 END. /*end pode debitar*/         
@@ -1478,15 +1452,12 @@ PROCEDURE gera_lancamento:
 
                                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                     DO:  
-                                      IF aux_incrineg = 1 THEN
-                                       DO:
-                                        /* Tratativas de negocio */ 
-                                        NEXT.
-                                       END.
-                                      ELSE
-                                       DO:
-                                        RETURN "NOK".
-                                       END. 
+                                      UNIX SILENT VALUE("echo " + 
+                                       STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '"
+                                       + aux_dscritic +  
+                                       " >> log/proc_message.log").
+									  NEXT. 
                                     END.
                                  ELSE
                                     DO:
@@ -1495,26 +1466,7 @@ PROCEDURE gera_lancamento:
                                       FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
                                     END.
                                
-                              /* CREATE craplcm.
-                               ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                                      craplcm.cdagenci = craplot.cdagenci
-                                      craplcm.cdbccxlt = craplot.cdbccxlt
-                                      craplcm.nrdolote = craplot.nrdolote
-                                      craplcm.nrdconta = crapcdb.nrdconta
-                                      craplcm.nrdctabb = aux_nrctalcm
-                                      craplcm.nrdocmto = crapcdb.nrcheque
-                                      craplcm.cdhistor = 399
-                                      craplcm.nrseqdig = craplot.nrseqdig + 1
-                                      craplcm.vllanmto = crapdev.vllanmto
-                                      craplcm.cdoperad = crapdev.cdoperad
-                                      craplcm.cdpesqbb = IF   crapdev.cdalinea <> 0 THEN
-                                                              STRING(crapdev.cdalinea)
-                                                         ELSE "21"
-                                      craplcm.cdcooper = crapcdb.cdcooper
-                                      craplcm.cdbanchq = crapcdb.cdbanchq
-                                      craplcm.cdagechq = crapcdb.cdagechq
-                                      craplcm.nrctachq = crapcdb.nrctachq
-                                      craplcm.hrtransa = TIME*/
+                             
                                       
                                ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                                       craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
@@ -1523,7 +1475,7 @@ PROCEDURE gera_lancamento:
                                       craplot.nrseqdig = craplot.nrseqdig + 1 NO-ERROR.
 
                                VALIDATE craplot.
-                               /*VALIDATE craplcm.*/
+                              
                                
                                
                                 RUN gerar_lancamento_conta_comple IN h-b1wgen0200
@@ -1573,15 +1525,12 @@ PROCEDURE gera_lancamento:
 
                                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                   DO:  
-                                    IF aux_incrineg = 1 THEN
-                                     DO:
-                                      /* Tratativas de negocio */ 
-                                      NEXT.
-                                     END.
-                                    ELSE
-                                     DO:
-                                      RETURN "NOK".
-                                     END. 
+                                    UNIX SILENT VALUE("echo " + 
+                                       STRING(TIME,"HH:MM:SS") +
+                                       " - " + glb_cdprogra + "' --> '"
+                                       + aux_dscritic +  
+                                       " >> log/proc_message.log").
+								    NEXT. 
                                   END.
                                
                                ASSIGN crapcdb.insitchq = 3.  /* Devolvido */
@@ -1761,15 +1710,12 @@ PROCEDURE gera_lancamento:
 
                                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                          DO:  
-                                           IF aux_incrineg = 1 THEN
-                                            DO:
-                                             /* Tratativas de negocio */ 
-                                             NEXT.
-                                            END.
-                                           ELSE
-                                            DO:
-                                             RETURN "NOK".
-                                            END. 
+                                           UNIX SILENT VALUE("echo " + 
+											   STRING(TIME,"HH:MM:SS") +
+											   " - " + glb_cdprogra + "' --> '"
+											   + aux_dscritic +  
+											   " >> log/proc_message.log").
+										   NEXT. 
                                          END.
                                       ELSE 
                                         DO:
