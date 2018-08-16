@@ -191,7 +191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : 
-       Data    :                            Ultima atualizacao: 22/06/2018
+       Data    :                            Ultima atualizacao: 15/08/2018
 
        Dados referentes ao programa:
 
@@ -199,6 +199,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
        Objetivo  : Rotina responsavel por gravar efetivação da proposta
 
        Alteracoes: 22/06/2018 - Conversao Progress -> Oracle. (Renato Cordeito/Odirlei AMcom)
+
+				   15/08/2018 - Alterado para qualificar a operacao ao efetivar a proposta
+                                PJ 450 - Diego Simas (AMcom) 		
                   
     ............................................................................. */
       ----->> CURSORES <<-----
@@ -210,7 +213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
                a.nrctrliq##9, a.nrctrliq##10,
                a.dtdpagto, a.dtlibera, a.dtcarenc, a.idquapro, a.qttolatr,
                a.txmensal, a.tpdescto, a.txdiaria, a.nrctaav2, a.nrctaav1,
-               a.dtmvtolt, a.idcobope, a.dsnivris, a.rowid
+               a.dtmvtolt, a.idcobope, a.dsnivris, a.rowid, a.nrliquid
         from crawepr a
         where a.cdcooper = pr_cdcooper
           and a.nrdconta = pr_nrdconta
@@ -321,6 +324,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
       vr_dscatbem       crapbpr.dscatbem%TYPE;
       vr_dsctrliq       varchar2(1000);
       vr_vlpreclc       NUMBER;
+	  vr_idquapro       NUMBER;
+      vr_dsquapro       VARCHAR2(100);
 
       vr_valoriof       crawepr.vlpreemp%TYPE;
       vr_vliofpri       crawepr.vlpreemp%TYPE;
@@ -1177,6 +1182,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
                                             ,rw_crawepr.nrctremp
                                             ,vr_qtdatref
                                             ,pr_dscritic);
+
+	     -- Diego Simas (AMcom) - PJ 450                       
+		 -- Início                                             
+       
+		 -- Verifica se existe algum contrato limite/adp       
+		 -- e adiciona a lista de contratos para qualificar           
+		 IF nvl(vr_dsctrliq, '') <> '' THEN
+			IF nvl(rw_crawepr.nrliquid, 0) <> 0 THEN
+				vr_dsctrliq := vr_dsctrliq || 
+				  ', ' || to_char(rw_crawepr.nrliquid);                           
+			END IF;         
+		 ELSE
+		    IF nvl(rw_crawepr.nrliquid, 0) <> 0 THEN
+			   vr_dsctrliq := vr_dsctrliq || 
+				  to_char(rw_crawepr.nrliquid);                           
+			END IF;  
+		 END IF;
+      
+		 -- Acionar rotina que gera a qualificacao da operacao 
+		 empr9999.pc_proc_qualif_operacao(pr_cdcooper => pr_cdcooper
+		   							     ,pr_cdagenci => pr_cdagenci
+										 ,pr_nrdcaixa => pr_nrdcaixa
+										 ,pr_cdoperad => pr_cdoperad
+										 ,pr_nmdatela => pr_nmdatela
+										 ,pr_idorigem => pr_idorigem
+										 ,pr_nrdconta => pr_nrdconta
+										 ,pr_dsctrliq => vr_dsctrliq
+										 ,pr_dtmvtolt => pr_dtmvtolt
+										 ,pr_dtmvtopr => pr_dtmvtopr
+										 ,pr_idquapro => vr_idquapro
+										 ,pr_dsquapro => vr_dsquapro
+										 ,pr_cdcritic => pr_cdcritic
+										 ,pr_dscritic => pr_dscritic);
+      
+		 IF nvl(pr_cdcritic,0) > 0 OR nvl(pr_dscritic,'OK') <> 'OK' THEN
+		    RAISE vr_exc_saida;
+		 END IF;
+
+		 pr_dscritic := NULL; 
+
+		 /* Requalifica a operacao na proposta                 */
+	     /* INICIO       									   */       
+
+		 BEGIN
+		   UPDATE crawepr c 
+			  SET c.idquapro = vr_idquapro
+			WHERE c.cdcooper = pr_cdcooper
+		      AND c.nrdconta = pr_nrdconta
+		      AND c.nrctremp = pr_nrctremp;
+		 EXCEPTION
+			WHEN OTHERS THEN
+			  pr_cdcritic := null;
+			  pr_dscritic := 'Erro atualização crawepr: '||SQLERRM;
+			  RAISE vr_exc_saida;
+		 END;
+
+		 /* FIM                                                */
+		 /* Requalifica a operacao na proposta                 */ 
+          
+		 -- Fim                                                
+		 -- Diego Simas (AMcom) - PJ 450  		
                                             
           insert into crapepr (dtmvtolt, cdagenci, --1
                                cdbccxlt, nrdolote, --2
@@ -1310,7 +1376,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
                                     else 0 end, --41
                                  
                                rw_crawepr.idfiniof, vr_vltotiofcpl, --42
-                               vr_vltotiofadi, rw_crawepr.idquapro, --43
+                               vr_vltotiofadi, vr_idquapro, --43
                                null, 0, --44
                                vr_vlaqiofc, (pr_dtmvtolt - vr_qtdatref) /*, null*/);--45
 
