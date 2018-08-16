@@ -1431,7 +1431,10 @@ PROCEDURE enviar-ted:
                                    ,INPUT par_cdageope     /* Cod. Agencia */
                                    ,INPUT par_nrcxaope     /* Numero  Caixa */
                                    ,INPUT par_cdoperad     /* Operador */
-                                   ,INPUT 1                /* Mesmo Titular */
+                                   ,INPUT (IF craptvl.flgtitul = TRUE THEN
+                                          1
+                                          ELSE
+                                          0) /* Mesmo Titular */
                                    ,INPUT par_vldocmto     /* Vlr. DOCMTO */
                                    ,INPUT aux_nrctrlif     /* NumCtrlIF */
                                    ,INPUT par_nrdconta     /* Nro Conta */
@@ -1459,9 +1462,8 @@ PROCEDURE enviar-ted:
                                    ,INPUT par_cdconven     /* Cod. Convenio */
                                    ,INPUT par_dshistor     /* Dsc do Hist. */
                                    ,INPUT TIME             /* Hora transacao */
-                                   ,INPUT 0                /* ISPB Banco */;
+                                   ,INPUT 0                /* ISPB Banco */
                                    ,INPUT 1 /* DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED */
-                                   --------- SAIDA --------
                                    ,OUTPUT 0    /* Codigo do erro */
                                    ,OUTPUT ""). /* Descriçao da crítica */
                                                
