@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 14/06/2018
+   Data    : Novembro/98                     Ultima atualizacao: 16/08/2018
 
    Dados referentes ao programa:
 
@@ -626,6 +626,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                14/06/2018 - Incluir validação de historico para a contabilização das
                             tarifas de arrecadações (Lucas Ranghetti #INC0017254)
+                            
+               16/08/2018 - Forçado indice no cursor cr_craplcm5 pois estava fazendo o programa
+                            ficar lento no processo batch (Tiago )
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -1808,7 +1811,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   CURSOR cr_craplcm5 (pr_cdcooper IN craplcm.cdcooper%TYPE,
                       pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
                       pr_cdhistor IN craplcm.cdhistor%TYPE) IS
-    SELECT crapass.cdagenci, craplau.cdempres, crapscn.dsnomcnv, COUNT(*) qtlanmto,
+    SELECT /*+ index (craplau craplau##craplau2)*/ 
+           crapass.cdagenci, craplau.cdempres, crapscn.dsnomcnv, COUNT(*) qtlanmto,
            SUM(craplcm.vllanmto) vllanmto
       FROM craplcm, craplau, crapscn, crapass
       WHERE craplcm.cdcooper = craplau.cdcooper
