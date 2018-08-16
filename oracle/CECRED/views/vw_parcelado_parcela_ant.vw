@@ -1,18 +1,4 @@
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : vw_parcelado_parcela_ant
-  --  Sistema  : View de parcelas de emprestimos
-  --  Sigla    : CRED
-  --  Autor    : Tiago Machado Flor
-  --  Data     : Junho/2017.                   Ultima atualizacao: 08/08/2017
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Alteracoes: 13/06/2017 - Trazendo as parcelas ao inves de apenas o total(Tiago/Thiago #640821).
-  --
-  --             08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
-  ---------------------------------------------------------------------------------------------------------------
-create or replace force view cecred.vw_parcelado_parcela_ant as
+create or replace view cecred.vw_parcelado_parcela_ant as
 select
   nrdconta,
   CNPJCtrc,
@@ -20,14 +6,15 @@ select
   IdfcCli,
   NrCtr,
   CdProduto,
-  row_number() over (partition by nrdconta,NrCtr,CdProduto order by nrdconta,NrCtr,CdProduto) as NrPclAnt,
+  --row_number() over (partition by nrdconta,NrCtr,CdProduto order by nrdconta,NrCtr,CdProduto) as NrPclAnt,
+  'M' PercPclAnt, --Conforme definição do Fernando Ornelas em 14/08/2018. Periodicidade das parcelas - Tem que definir a forma de como buscar esta informação.
   to_char(vencimento, 'YYYYMMDD') as DtVnctPclAnt,
   to_char(vltitulo, 'fm9999900V00') as VlPclAnt,
   to_char(pagamento,'YYYYMMDD') as DtPgtoPclAnt,
-  to_char(vlpago,'fm9999900V00') as VlPgtoPclAnt,
+  to_char(vlpago,'fm9999900V00') as VlPgtoPclAnt/*,
   case when vlpago = 0 then 'I'
        when vlpago > 0 and vltitulo <> vlpago then 'P'
-       else 'T' end as SitPlcAnt
+       else 'T' end as SitPlcAnt */
 from (
 select
   ass.nrdconta nrdconta,
@@ -37,7 +24,8 @@ select
     else 2
   end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  bdt.nrborder as NrCtr,
+  --bdt.nrborder as NrCtr,
+  ass.cdcooper || ass.nrdconta || bdt.nrborder as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   '0301' as CdProduto, --contrato de desconto de titulos
   max(tdb.dtvencto) as vencimento,
   sum(tdb.vltitulo) as vltitulo,
@@ -76,7 +64,8 @@ group by
     when length(ass.nrcpfcgc) < 12 then 1
   else 2  end,
   ass.nrcpfcgc,
-  bdt.nrborder,
+  --bdt.nrborder,
+  ass.cdcooper || ass.nrdconta || bdt.nrborder, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   '0301',
   trunc(tdb.dtvencto,'MM')
 ) tab1
@@ -101,12 +90,13 @@ select
   IdfcCli,
   NrCtr,
   CdProduto,
-  row_number() over (partition by nrdconta,NrCtr,CdProduto order by nrdconta,NrCtr,CdProduto) as NrPclAnt,
+  --row_number() over (partition by nrdconta,NrCtr,CdProduto order by nrdconta,NrCtr,CdProduto) as NrPclAnt,
+  'M' PercPclAnt, --Conforme definição do Fernando Ornelas em 14/08/2018. Periodicidade das parcelas - Tem que definir a forma de como buscar esta informação
   to_char(vencimento,'YYYYMMDD') as DtVnctPclAnt,
   to_char(vltitulo,'fm9999900V00') as VlPclAnt,
   to_char(pagamento,'YYYYMMDD') as DtPgtoPclAnt,
-  to_char(vlpago,'fm9999900V00') as VlPgtoPclAnt,
-  SitPclAnt as SitPlcAnt
+  to_char(vlpago,'fm9999900V00') as VlPgtoPclAnt/*,
+  SitPclAnt as SitPlcAnt*/
 from (
 select
   ass.nrdconta nrdconta,
@@ -116,16 +106,17 @@ select
     else 2
   end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  bdc.nrborder as NrCtr,
+  --bdc.nrborder as NrCtr,
+  ass.cdcooper || ass.nrdconta || bdc.nrborder as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   '0302' as CdProduto, --contrato de desconto de cheques
   max(cdb.dtlibera) as vencimento,
   sum(cdb.vlcheque) as vltitulo,
   max(cdb.dtlibera) as pagamento,
-  sum(cdb.vlcheque) as vlpago,
+  sum(cdb.vlcheque) as vlpago/*,
   case
     when cdb.dtlibera < sysdate then 'T' --total
     when cdb.dtlibera >= sysdate then 'V' -- a vencer sem pagamento
-    else 'X' end as SitPclAnt
+    else 'X' end as SitPclAnt*/
 from
   crapass ass,
   crapcop cop,
@@ -151,7 +142,8 @@ group by
     else 2
   end,
   ass.nrcpfcgc,
-  bdc.nrborder,
+  --bdc.nrborder,
+  ass.cdcooper || ass.nrdconta || bdc.nrborder, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   '0302',
   case
     when cdb.dtlibera < sysdate then 'T' --total
@@ -168,8 +160,8 @@ group by
   CdProduto,
   vencimento,
   vltitulo,
-  to_char(pagamento,'YYYYMMDD'),
-  SitPclAnt
+  to_char(pagamento,'YYYYMMDD')/*,
+  SitPclAnt*/
 ------------------------------------------------------
 union
 select
@@ -178,20 +170,22 @@ select
   case when length(ass.nrcpfcgc) < 12 then 1
     else 2 end TipCli,
   ass.nrcpfcgc as IdfcCli,
-  epr.nrctremp as NrCtr,
+  --epr.nrctremp as NrCtr,
+  ass.cdcooper || ass.nrdconta || epr.nrctremp as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
   --case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end cdproduto,
   fn_busca_modalidade_bacen(case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end , ass.cdcooper, ass.nrdconta, epr.nrctremp, ass.inpessoa, 3, '') as cdproduto,
-  lem.nrparepr as NrPclAnt,
+  --lem.nrparepr as NrPclAnt,
+  'M' PercPclAnt, --Conforme definição do Fernando Ornelas em 14/08/2018. Periodicidade das parcelas - Tem que definir a forma de como buscar esta informação
   to_char(pep.dtvencto,'YYYYMMDD') as DtVnctPclAnt,
   to_char(pep.vlparepr,'fm9999900V00') as VlPclAnt,
   to_char(lem.dtpagemp,'YYYYMMDD') as DtPgtoPclAnt,
-  to_char(lem.vllanmto,'fm9999900V00') as VlPgtoPclAnt,
+  to_char(lem.vllanmto,'fm9999900V00') as VlPgtoPclAnt/*,
   case
     when pep.dtultpag is null and pep.dtvencto < sysdate then 'I' --vencida
     when pep.dtultpag is not null and pep.inliquid = 1 then 'T' --pagamento total
     when pep.dtultpag is not null and pep.inliquid = 0 then 'P' --pagamento parcial
     when pep.dtultpag is null and pep.dtvencto >= sysdate then 'V' -- a vencer
-      else 'X' end as SitPclAnt
+      else 'X' end as SitPclAnt*/
 from
   crapass ass,
   crapcop cop,
@@ -220,4 +214,5 @@ WHERE ass.cdcooper = cop.cdcooper
   AND epr.tpemprst IN (1,2) -- PP ou POS
   AND ((((pep.dtultpag >= (sysdate-366)) and (pep.dtultpag <= (sysdate)))) or
         ((pep.dtvencto >= (sysdate-366)) and (pep.dtvencto <= (sysdate))and (pep.dtultpag is null or pep.dtultpag >= (sysdate-366)) ))  --pagamento ou vencimento superior a Um ano atrás a até hoje e em se tratando apenas de vencimento .... verificar senão está quitada há mais de um ano.
-ORDER BY cnpjctrc, idfccli, cdproduto, nrctr, nrpclant
+ORDER BY cnpjctrc, idfccli, cdproduto, nrctr--, nrpclant
+;
