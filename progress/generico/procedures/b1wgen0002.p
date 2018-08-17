@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 12/04/2018
+   Data    : 14/09/2005                        Ultima atualizacao: 17/08/2018
 
    Dados referentes ao programa:
 
