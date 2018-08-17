@@ -96,7 +96,6 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	exibeErro(utf8_encode($msgErro));
 }
 
-
 // Monta o xml para a requisicao
 $xml  = "";
 $xml .= "<Root>";
@@ -116,6 +115,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	exibeErro(utf8_encode($msgErro));
 }
+
 
 // Monta o xml para a requisicao
 $xml  = "";
@@ -274,20 +274,6 @@ descontoConvenios = [];
 			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
-	<tr class="corImpar">
-		<td>Tarifa reciprocidade COO</td>
-		<td align="right">
-			<span>R$</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
-		</td>
-	</tr>
-	<tr class="corPar">
-		<td>Tarifa reciprocidade CEE</td>
-		<td align="right">
-			<span>R$</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
-		</td>
-	</tr>
 </table>
 <fieldset style="border:1px solid #777777; margin:5px 3px 0;padding:3px">
 	<legend align="left">Desconto adicional</legend>
@@ -337,16 +323,14 @@ descontoConvenios = [];
 		</tr>
 		<tr class="corImpar">
 			<td>Tarifa negociada COO</td>
-			<td align="right">
-				<span>R$</span>
-				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
+			<td align="center">
+				<a href="#" class="botao" onclick="acessaTarifa(0); return false;">Visualizar</a>
 			</td>
 		</tr>
 		<tr class="corPar">
 			<td>Tarifa negociada CEE</td>
-			<td align="right">
-				<span>R$</span>
-				<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
+			<td align="center">
+				<a href="#" class="botao" onclick="acessaTarifa(1); return false;">Visualizar</a>
 			</td>
 		</tr>
 	</table>

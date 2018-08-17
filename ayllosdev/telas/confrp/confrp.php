@@ -50,16 +50,13 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 	$xmlObjBuscaConf = getObjectXML($xmlResult);
 	
   $registros = $xmlObjBuscaConf->roottag->tags[0]->tags;
-	//print_r($xmlObjBuscaConf);
 
   $qtdregist = $xmlObjBuscaConf->roottag->tags[1]->cdata;
   
 	$vinculacoes = $xmlObjBuscaConf->roottag->tags[2]->tags;
 	$qtdvinculacoes = count($vinculacoes);
-	$vlcustocee = $xmlObjBuscaConf->roottag->tags[3]->cdata;
-  $vlcustocoo = $xmlObjBuscaConf->roottag->tags[4]->cdata;
-  $vlpesoboleto = $xmlObjBuscaConf->roottag->tags[5]->cdata;
-	$vlpesoadicional = $xmlObjBuscaConf->roottag->tags[6]->cdata;			
+	$vldescontomax_cee = $xmlObjBuscaConf->roottag->tags[3]->cdata;
+  $vldescontomax_coo = $xmlObjBuscaConf->roottag->tags[4]->cdata;		
   
 ?>
 <script type="text/javascript" src="../../telas/confrp/confrp.js"></script>
@@ -105,15 +102,16 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 							</tr>
 							<tr>
 								<td style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
-									<table>
+									<table style="table-layout: fixed;" width="100%">
 									  <thead>
 										<tr>
-										  <th></th>
-											<th>Indicador</th>
-										  <th>Tipo</th>
-										  <th>Valor M&iacute;nimo</th>
-										  <th>Valor M&aacute;ximo</th>
-											<th>Peso</th>
+										  <th width="20"></th>
+											<th width="310">Indicador</th>
+										  <th width="100">Tipo</th>
+										  <th width="100">Valor M&iacute;nimo</th>
+										  <th width="100">Valor M&aacute;ximo</th>
+											<th width="100">Desconto</th>
+											<th width="100">Peso</th>
 										<tr>
 									  </thead>
 									  <tbody>
@@ -130,17 +128,14 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 											<td class="campo" ><input type="text" id="tpindicador<?echo $i?>" readonly size="10" value="<? echo $tpindicador?>"></td>
 											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlminimo<?echo $i?>" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlminimo')?>"></td>
 											<td class="campo" ><input type="text" class="<?if($tpindicador == 'Quantidade'){?>qtd<?} if($tpindicador == 'Moeda'){?>moeda<?}?>" id="vlmaximo<?echo $i?>" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlmaximo')?>"></td>
-											<td class="campo" ><input type="text" id="peso<?echo $i?>" class="per" style="text-align:right" size="12" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'peso')?>"></td>
+											<td class="campo" ><input type="text" id="desconto<?echo $i?>" class="per" style="text-align:right" size="9" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'desconto')?>">%</td>
+											<td class="campo" ><input type="text" id="peso<?echo $i?>" class="per" style="text-align:right" size="9" <?if (getByTagName($registro->tags,'tpindicador') == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'peso')?>">%</td>
 										  </tr>
 									   <? $i++;
 										}?>
-									  </tbody>
-									</table>
-									<table style="margin-top:10px;">
-									  <tbody>
+										<tr><td colspan="6">&nbsp;</td></tr>
 									  <? $i = 0;
 										foreach($vinculacoes as $registro) {
-										  $tpvinculacao = getByTagName($registro->tags,'tpvinculacao');
 										  ?> 
 										  <tr>
 											<td>
@@ -148,8 +143,11 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 												<input type="hidden" id="idvinculacao<?echo $i?>" style="text-align:right;" readonly size="3" value="<? echo getByTagName($registro->tags,'idvinculacao')?>">
 											</td>
 											<td class="campo" ><input type="text" id="nmvinculacao<?echo $i?>" readonly size="50" value="<? echo getByTagName($registro->tags,'nmvinculacao')?>"></td>
-											<td class="campo" ><input type="text" id="tpvinculacao<?echo $i?>" readonly size="10" value="<? echo $tpvinculacao?>"></td>
-											<td class="campo" ><input type="text" class="<?if($tpvinculacao == 'Quantidade'){?>qtd<?} if($tpvinculacao == 'Moeda'){?>moeda<?}?>" id="vlpercentual<?echo $i?>" style="text-align:right" size="12" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual')?>">%</td>
+											<td>&nbsp;</td>
+											<td>&nbsp;</td>
+											<td>&nbsp;</td>
+											<td class="campo" ><input type="text" class="qtd" id="descontovinculacao<?echo $i?>" style="text-align:right" size="9" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_desconto')?>">%</td>
+											<td class="campo" ><input type="text" class="qtd" id="pesovinculacao<?echo $i?>" style="text-align:right" size="9" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_peso')?>">%</td>
 										  </tr>
 									   <? $i++;
 										}?>
@@ -157,21 +155,13 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 									</table>
 									<table style="margin: 10px 0px 0px 10px;">
 									  <tr>
-											<td>Valor de Custo CEE:</td>
-											<td class="campo"><input class="per" id="vlcustocee" type="text" size="5" value="<? echo $vlcustocee; ?>"></td>
+											<td>Desconto m&aacute;ximo permitido para CEE:</td>
+											<td class="campo"><input class="per" id="vldescontomax_cee" type="text" size="5" value="<? echo $vldescontomax_cee; ?>"></td>
 										</tr>
 										<tr>
-											<td>Valor de Custo COO:</td>
-											<td class="campo"><input class="per" id="vlcustocoo" type="text" size="5" value="<? echo $vlcustocoo; ?>"></td>
+											<td>Desconto m&aacute;ximo permitido para COO:</td>
+											<td class="campo"><input class="per" id="vldescontomax_coo" type="text" size="5" value="<? echo $vldescontomax_coo; ?>"></td>
 										</tr>
-										<tr>
-											<td>Peso Boleto:</td>
-											<td class="campo"><input class="per" id="vlpesoboleto" type="text" size="5" value="<? echo $vlpesoboleto; ?>">%</td>
-										</tr>
-										<tr>
-											<td>Peso Adicional:</td>
-											<td class="campo"><input class="per" id="vlpesoadicional" type="text" size="5" value="<? echo $vlpesoadicional; ?>">%</td>
-									  </tr>
 									</table>
 									<table style="margin: 0 auto;">
 									  <tr>

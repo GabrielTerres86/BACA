@@ -21,10 +21,8 @@
 	// Guardo os par�metos do POST em vari�veis	
 	$ls_configrp           = (isset($_POST['ls_configrp']))           ? $_POST['ls_configrp'] : '';
 	$ls_vinculacoesrp      = (isset($_POST['ls_vinculacoesrp']))      ? $_POST['ls_vinculacoesrp'] : '';
-	$vlcustocoo            = (isset($_POST['vlcustocoo']))            ? $_POST['vlcustocoo'] : '';
-	$vlcustocee            = (isset($_POST['vlcustocee']))            ? $_POST['vlcustocee'] : '';
-	$vlpesoboleto          = (isset($_POST['vlpesoboleto']))          ? $_POST['vlpesoboleto'] : '';
-	$vlpesoadicional       = (isset($_POST['vlpesoadicional']))       ? $_POST['vlpesoadicional'] : '';
+	$vldescontomax_coo     = (isset($_POST['vldescontomax_coo']))     ? $_POST['vldescontomax_coo'] : '';
+	$vldescontomax_cee     = (isset($_POST['vldescontomax_cee']))     ? $_POST['vldescontomax_cee'] : '';
 	$idparame_reciproci    = (isset($_POST['idparame_reciproci']))    ? $_POST['idparame_reciproci'] : 0;
 	$dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslogcfg'] : 0;
 	$cp_idparame_reciproci = (isset($_POST['cp_idparame_reciproci'])) ? $_POST['cp_idparame_reciproci'] : '';
@@ -39,10 +37,8 @@
 	$xmlConfirmaConf .= "	   <idparame_reciproci>".$idparame_reciproci."</idparame_reciproci>";
 	$xmlConfirmaConf .= "	   <configrp>".$ls_configrp."</configrp>";
 	$xmlConfirmaConf .= "	   <vinculacoesrp>".$ls_vinculacoesrp."</vinculacoesrp>";
-	$xmlConfirmaConf .= "	   <vlcustocoo>".$vlcustocoo."</vlcustocoo>";
-	$xmlConfirmaConf .= "	   <vlcustocee>".$vlcustocee."</vlcustocee>";
-	$xmlConfirmaConf .= "	   <vlpesoboleto>".$vlpesoboleto."</vlpesoboleto>";
-	$xmlConfirmaConf .= "	   <vlpesoadicional>".$vlpesoadicional."</vlpesoadicional>";
+	$xmlConfirmaConf .= "	   <vldescontomax_coo>".$vldescontomax_coo."</vldescontomax_coo>";
+	$xmlConfirmaConf .= "	   <vldescontomax_cee>".$vldescontomax_cee."</vldescontomax_cee>";
 	$xmlConfirmaConf .= "	   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlConfirmaConf .= "   </Dados>";
 	$xmlConfirmaConf .= "</Root>";

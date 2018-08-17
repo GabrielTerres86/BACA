@@ -33,39 +33,35 @@ function confirmar(qtdregis, idparame_reciproci, dslogcfg, cp_idparame_reciproci
                 exibeMensagem($('#nmindicador' + i).val() + " - Peso inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
                 return false;
             }
+            if ($('#desconto' + i).val() == "" || converteNumero($('#peso' + i).val()) < 0.01) {
+                exibeMensagem($('#nmindicador' + i).val() + " - Desconto inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
+                return false;
+            }
             verifica_selecionados = true;
         }
     }
 
     for (var i = 0; i < qtvinculacoes; i++) {
         if ($('#ativa' + i).is(':checked')) {
-            if ($('#tpvinculacao' + i).val()[0] == "M" || $('#tpvinculacao' + i).val()[0] == "Q") {
-                if ($('#vlpercentual' + i).val() == "" || converteNumero($('#vlpercentual' + i).val()) < 0.01) {
-                    exibeMensagem($('#nmvinculacao' + i).val() + " - Valor inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
-                    return false;
-                }
+            if ($('#descontovinculacao' + i).val() == "" || converteNumero($('#descontovinculacao' + i).val()) < 0.01) {
+                exibeMensagem("Vincula&ccedil;&atilde;o " + $('#nmvinculacao' + i).val() + " - Desconto inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
+                return false;
+            }
+            if ($('#pesovinculacao' + i).val() == "" || converteNumero($('#pesovinculacao' + i).val()) < 0.01) {
+                exibeMensagem("Vincula&ccedil;&atilde;o " + $('#nmvinculacao' + i).val() + " - Peso inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
+                return false;
             }
             verifica_selecionados = true;
         }
     }
 
-    if ($('#vlcustocee').val() == "" || converteNumero($('#vlcustocee').val()) < 0.01) {
+    if ($('#vldescontomax_cee').val() == "" || converteNumero($('#vldescontomax_cee').val()) < 0.01) {
         exibeMensagem("Custo CEE - Valor inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
         return false;
     }
     
-    if ($('#vlcustocoo').val() == "" || converteNumero($('#vlcustocoo').val()) < 0.01) {
+    if ($('#vldescontomax_coo').val() == "" || converteNumero($('#vldescontomax_coo').val()) < 0.01) {
         exibeMensagem("Custo COO - Valor inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
-        return false;
-    }
-    
-    if ($('#vlpesoboleto').val() == "" || converteNumero($('#vlpesoboleto').val()) < 0.01) {
-        exibeMensagem("Peso do boleto - Valor inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
-        return false;
-    }
-    
-    if ($('#vlpesoadicional').val() == "" || converteNumero($('#vlpesoadicional').val()) < 0.01) {
-        exibeMensagem("Peso adicional - Valor inv&aacute;lido! Favor informar um valor superior a 0(zero)!");
         return false;
     }    
 
@@ -107,14 +103,15 @@ function confirmar(qtdregis, idparame_reciproci, dslogcfg, cp_idparame_reciproci
         ls_configrp += $('#tpindicador' + i).val()[0] + ',';
         ls_configrp += converteMoedaFloat($('#vlminimo' + i).val()) + ',';
         ls_configrp += converteMoedaFloat($('#vlmaximo' + i).val()) + ',';
-        ls_configrp += converteNumero($('#peso' + i).val()) + ';';
+        ls_configrp += converteNumero($('#peso' + i).val()) + ',';
+        ls_configrp += converteNumero($('#desconto' + i).val()) + ';';
     }
 
     for (var i = 0; i < qtvinculacoes; i++) {
         ls_vinculacoesrp += $('#ativa' + i).is(':checked') + ',';
         ls_vinculacoesrp += converteNumero($('#idvinculacao' + i).val()) + ',';
-        ls_vinculacoesrp += $('#tpvinculacao' + i).val()[0] + ',';
-        ls_vinculacoesrp += converteNumero($('#vlpercentual' + i).val()) + ';';
+        ls_vinculacoesrp += converteNumero($('#descontovinculacao' + i).val()) + ',';
+        ls_vinculacoesrp += converteNumero($('#pesovinculacao' + i).val()) + ';';
     }
 
     $.ajax({
@@ -123,10 +120,8 @@ function confirmar(qtdregis, idparame_reciproci, dslogcfg, cp_idparame_reciproci
         data: {
             ls_configrp: ls_configrp.replace(/.$/, ''),
             ls_vinculacoesrp: ls_vinculacoesrp.replace(/.$/, ''),
-            vlcustocee: converteNumero($('#vlcustocee').val()),
-            vlcustocoo: converteNumero($('#vlcustocoo').val()),
-            vlpesoboleto: converteNumero($('#vlpesoboleto').val()),
-            vlpesoadicional: converteNumero($('#vlpesoadicional').val()),
+            vldescontomax_cee: converteNumero($('#vldescontomax_cee').val()),
+            vldescontomax_coo: converteNumero($('#vldescontomax_coo').val()),
             idparame_reciproci: idparame_reciproci,
             dslogcfg: dslogcfg,
             totaldesconto: $('#totaldesconto').val(),

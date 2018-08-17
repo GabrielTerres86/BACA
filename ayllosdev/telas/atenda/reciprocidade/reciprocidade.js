@@ -2975,3 +2975,38 @@ function abrirAprovacao() {
 function carregaCobranca() {
     acessaRotina("#labelRot21", "COBRANCA", "Cobran&ccedil;a", "cobranca", "0");
 }
+
+function acessaTarifa(tipo) {
+    // tipo == 0 (COO)
+    // tipo == 1 (CEE)
+    showMsgAguardo("Aguarde, carregando ...");
+
+    var convenios = [];
+    for (var i = 0, len = descontoConvenios.length; i < len; ++i) {
+        convenios.push(descontoConvenios[i].convenio);
+    }
+
+    // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
+    $.ajax({
+            dataType: "html",
+            type: "POST",
+            url: UrlSite + "telas/atenda/reciprocidade/desconto_tarifas.php",
+            data: {
+                inpessoa: inpessoa,
+                tipo: tipo,
+                convenios: convenios,
+                redirect: "script_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+            },
+            success: function (response) {
+                $('#divConteudoOpcao').css("display","none");
+                $('#divConvenios').html(response);
+                $("#divConvenios").css('display', 'block');
+                controlaFoco();
+                controlaLayout("");
+            }
+    });
+}
