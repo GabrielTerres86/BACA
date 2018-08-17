@@ -9,7 +9,6 @@
  * ALTERAÇÕES   	: 
  * --------------
  */ 
-
 ?>
 <div id="divIndicador">
     <form name="frmIndicador" id="frmIndicador" class="formulario">
@@ -39,11 +38,15 @@
 		<input name="vlminimo" class="campo" id="vlminimo" type="text" value="" style="text-align: right"/>
 		<label for="vlmaximo">Valor M&aacute;ximo:</label>
 		<input name="vlmaximo" class="campo" id="vlmaximo" type="text" value="" style="text-align: right"/>
+		<label for="perpeso">% Peso:</label>
+		<input name="perpeso" class="campo" id="perpeso" type="text" value="" style="text-align: right"/>
 		</br>
 		<label for="perscore">% Score:</label>
 		<input name="perscore" class="campo" id="perscore" type="text" value="" style="text-align: right"/>
 		<label for="pertolera">% Toler&acirc;ncia:</label>
 		<input name="pertolera" class="campo" id="pertolera" type="text" value="" style="text-align: right"/>
+		<label for="perdesc">% Desconto:</label>
+		<input name="perdesc" class="campo" id="perdesc" type="text" value="" style="text-align: right"/>
     </form>
 </div>
 <script type="text/javascript">

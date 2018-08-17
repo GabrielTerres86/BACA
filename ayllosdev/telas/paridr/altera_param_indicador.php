@@ -25,6 +25,8 @@ $vlminimo = (isset($_POST['vlminimo'])) ? $_POST['vlminimo'] : 0;
 $vlmaximo = (isset($_POST['vlmaximo'])) ? $_POST['vlmaximo'] : 0;
 $pertoler = (isset($_POST['pertoler'])) ? $_POST['pertoler'] : 0;
 $perscore = (isset($_POST['perscore'])) ? $_POST['perscore'] : 0;
+$perpeso = (isset($_POST['perpeso'])) ? $_POST['perpeso'] : 0;
+$perdesc = (isset($_POST['perdesc'])) ? $_POST['perdesc'] : 0;
  
 // Montar o xml de Requisicao
 $xml  = "";
@@ -38,6 +40,8 @@ $xml .= "<vlminimo>".$vlminimo."</vlminimo>";
 $xml .= "<vlmaximo>".$vlmaximo."</vlmaximo>";
 $xml .= "<pertoler>".$pertoler."</pertoler>";
 $xml .= "<perscore>".$perscore."</perscore>";
+$xml .= "<perpeso>".$perpeso."</perpeso>";
+$xml .= "<perdesc>".$perdesc."</perdesc>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 	
@@ -45,7 +49,7 @@ $xmlResult = mensageria($xml, "TELA_PARIDR", "ALTERA_PAR_IND", $glbvars["cdcoope
 $xmlObj = getObjectXML($xmlResult);					
 
 if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-	exibirErro('error',utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','cIdindica.focus();',false);
+	exibirErro('error',utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','$("idindicador").focus();',false);
 }else{
 	echo "showError('inform', 'Parametriza&ccedil;&atilde;o gravada com sucesso!', 'Alerta - Ayllos', 'voltarTabela(); cTodosCabecalho.habilitaCampo(); $(\'#btnOK\', \'#frmCab\').trigger(\'click\')');";
 }

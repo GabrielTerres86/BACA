@@ -16,7 +16,7 @@
 	<select name="cdcooper" id="cdcooper" >
 	</select>
 	
-	<a href="#" class="botao" id="btnOK" onClick="buscaIndicadores();return false;" style="text-align: right;">OK</a>
+	<a href="#" class="botao" id="btnOK" onClick="acessaOpcaoAba(abaAtual);return false;" style="text-align: right;">OK</a>
 	
 	<br style="clear:both" />	
 
