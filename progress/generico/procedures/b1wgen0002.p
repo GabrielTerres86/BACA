@@ -770,6 +770,9 @@
 
               24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
 
+			  17/08/2018 - Ajuste na qualificação da operação de contratos de renovação/renegociação
+			               P450 - Reginaldo/AMcom
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
