@@ -212,6 +212,7 @@ BEGIN
       SELECT ci.rowid
             ,ci.vldivida
             ,ci.vljura60
+						,ci.vlsld59d
             ,decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc) nrcpfcgc
             ,ci.nrdconta
             ,ci.nrctremp
@@ -1157,9 +1158,13 @@ BEGIN
       END IF;  
       -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
       IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
-        vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+				IF rw_crapris.cdorigem <> 1 THEN
+           vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+				ELSE
+					 vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
+				END IF;
       END IF;
-
+      
       -- ***
       -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
       -- estejam em Prejuízo (innivris = 10)
@@ -1167,9 +1172,8 @@ BEGIN
         vr_vldivida := vr_vldivida - (PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
                                                                 ,pr_nrdconta => rw_crapris.nrdconta
                                                                 ,pr_nrctremp => rw_crapris.nrctremp));
-      END IF;   
-
-
+      END IF;              
+      
       -- Adicionar este rowid a pltable
       vr_tab_rowid(vr_tab_rowid.count()+1) := rw_crapris.rowid;        
       -- Para o ultimo registro (Já acumulou todos os contratos do CPF)
