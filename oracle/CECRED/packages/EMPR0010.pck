@@ -219,17 +219,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
       vr_dsdemail := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SOL_CRED_AUTO');
                    
       IF TRIM(vr_dsdemail) IS NOT NULL THEN       
-	      gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-	                                ,pr_cdprogra        => 'EMPR0010'
-	                                ,pr_des_destino     => vr_dsdemail
-	                                ,pr_des_assunto     => 'Solicitação de Empréstimo'
-	                                ,pr_des_corpo       => vr_dsconteu
-	                                ,pr_des_anexo       => ''
-	                                ,pr_des_nome_reply  => vr_nmprimtl
-	                                ,pr_des_email_reply => pr_dsdemail
-	                                ,pr_flg_log_batch   => 'N'
-	                                ,pr_flg_enviar      => 'S'
-	                                ,pr_des_erro        => vr_dscritic);
+      gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                ,pr_cdprogra        => 'EMPR0010'
+                                ,pr_des_destino     => vr_dsdemail
+                                ,pr_des_assunto     => 'Solicitação de Empréstimo'
+                                ,pr_des_corpo       => vr_dsconteu
+                                ,pr_des_anexo       => ''
+                                ,pr_des_nome_reply  => vr_nmprimtl
+                                ,pr_des_email_reply => pr_dsdemail
+                                ,pr_flg_log_batch   => 'N'
+                                ,pr_flg_enviar      => 'S'
+                                ,pr_des_erro        => vr_dscritic);
 	  END IF;
      
       -- Se houver erro
@@ -267,7 +267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
       END;
       
       pr_flgderro := 'OK';
-      pr_dsmsgsai := 'Recebemos a sua solicitação, vamos retornar o contato.' ;
+      pr_dsmsgsai := 'Em breve nossa equipe entrará em contato com mais informações.' ;
 
     EXCEPTION
       WHEN vr_exc_saida THEN

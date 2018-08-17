@@ -319,71 +319,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 	rw_crapass cr_crapass%ROWTYPE;
   
   FUNCTION fn_descricao(pr_protocolo IN gene0006.typ_reg_protocolo,
-                        pr_cdtipmod NUMBER) RETURN VARCHAR2 IS
+                        pr_realizado IN BOOLEAN) RETURN VARCHAR2 IS
     BEGIN
      DECLARE
       vr_dsprotoc  VARCHAR2(4000);
-      vr_dsinfor2  VARCHAR2(4000); --> Descrição de informações      
-      vr_split gene0002.typ_split;            
-      vr_desc  VARCHAR2(500);
-      vr_ult PLS_INTEGER;               
+      vr_dsinfor2  VARCHAR2(4000); --> Descrição de informações
       
       BEGIN
     
+      IF pr_realizado = TRUE THEN
         CASE
-          WHEN (pr_protocolo.cdtippro = 1 OR pr_protocolo.cdtippro = 4) AND pr_cdtipmod = 2 THEN -- Transferencia Realizada
-            vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));      
-            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'));
-          WHEN pr_protocolo.cdtippro = 1 AND pr_cdtipmod = 3 THEN -- Transferencia Recebida
-            vr_dsprotoc := pr_protocolo.dsinform##2;
+          WHEN (pr_protocolo.cdtippro = 1 OR pr_protocolo.cdtippro = 4) THEN -- Transferencia Realizada
+          vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));      
+          vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(gene0002.fn_busca_entrada(2, vr_dsinfor2, ':'));
           WHEN pr_protocolo.cdtippro IN (2,15) THEN -- Pagamento / Convenio
-            vr_dsprotoc := pr_protocolo.dscedent;          
+          vr_dsprotoc := pr_protocolo.dscedent;          
           WHEN pr_protocolo.cdtippro = 3 THEN -- Capital;
-            vr_dsprotoc := pr_protocolo.dsinform##1;
-          WHEN pr_protocolo.cdtippro = 9 AND pr_cdtipmod = 2 THEN -- TED Realizada
-            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(4, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##3, '#'));
-          WHEN pr_protocolo.cdtippro = 9 AND pr_cdtipmod = 3 THEN -- TED Recebida
-            vr_dsprotoc := pr_protocolo.dsinform##2;
+          vr_dsprotoc := pr_protocolo.dsinform##1;
+          WHEN pr_protocolo.cdtippro = 9 THEN -- TED Realizada
+          vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(4, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##3, '#'));
           WHEN pr_protocolo.cdtippro IN(10,12) THEN -- Aplicacao POS - Resgate
-            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(SUBSTR(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#')), ':')),1,10));
+          vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(SUBSTR(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#')), ':')),1,10));
           WHEN pr_protocolo.cdtippro = 13 THEN -- GPS       
-            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#'));
-          
+          vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#'));
           WHEN pr_protocolo.cdtippro in(16, 17) THEN -- DARF / DAS
-            
-			vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(16, pr_protocolo.dsinform##3, '#')), ':'));            
-			
-			/*
-             vr_split := gene0002.fn_quebra_string(pr_protocolo.dsinform##3,'#');
-             vr_ult := vr_split.count();
-
-            IF TRIM(vr_split(vr_ult)) IS NOT NULL THEN
-               vr_desc := TRIM(gene0002.fn_busca_entrada(2, vr_split(vr_ult), ':'));
-               IF vr_desc IS NULL THEN
-                 vr_desc := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, pr_protocolo.dsinform##3, '#')), ':'));
-                 IF vr_desc IS NULL THEN
-                   vr_desc := UPPER(TRIM(pr_protocolo.dsinform##1));
-                 END IF;
-               END IF;
-            END IF;
-            
-            vr_dsprotoc := vr_desc;
-            
-			*/
-            
+          vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(16, pr_protocolo.dsinform##3, '#')), ':'));
           WHEN pr_protocolo.cdtippro in(18, 19) THEN -- Agendamento de DARF / DAS
-            vr_dsprotoc := pr_protocolo.dscedent;
+          vr_dsprotoc := pr_protocolo.dscedent;
           WHEN pr_protocolo.cdtippro = 20 THEN -- Recarga
-            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));
+          vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));
           WHEN pr_protocolo.cdtippro IN (23,24) THEN -- DAE/FGTS
-            --> buscar texto do campo Descrição do Pagamento
-            vr_dsprotoc := SUBSTR(pr_protocolo.dsinform##3,INSTR(pr_protocolo.dsinform##3,'#Descrição do Pagamento:')+1);
-            vr_dsprotoc := SUBSTR(vr_dsprotoc,1,INSTR(vr_dsprotoc,'#')-1);
-            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, vr_dsprotoc, ':'));
+          --> buscar texto do campo Descrição do Pagamento
+          vr_dsprotoc := SUBSTR(pr_protocolo.dsinform##3,INSTR(pr_protocolo.dsinform##3,'#Descrição do Pagamento:')+1);
+          vr_dsprotoc := SUBSTR(vr_dsprotoc,1,INSTR(vr_dsprotoc,'#')-1);
+          vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, vr_dsprotoc, ':'));
           ELSE
            vr_dsprotoc := pr_protocolo.dsinform##2;            
          END CASE;
-     
+      ELSE -- Comprovantes Recebidos
+        vr_dsprotoc := pr_protocolo.dsinform##2;
+      END IF;
+    
         RETURN vr_dsprotoc;
 
     END;
@@ -496,10 +472,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_des_erro    VARCHAR2(4000);
       vr_dscritic    crapcri.dscritic%TYPE;
       vr_dstippro    VARCHAR2(100);
+      vr_realizados  BOOLEAN;
     
     BEGIN					  
 			
       IF pr_cdtipmod = 3 THEN -- Transferências Recebidas
+        vr_realizados := FALSE;
         pc_comprovantes_recebidos (pr_cdcooper  => pr_cdcooper
                                   ,pr_nrdconta  => pr_nrdconta
                                   ,pr_cdorigem  => pr_cdorigem
@@ -516,6 +494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           RAISE vr_exc_erro;
         END IF;                          
       ELSE
+        vr_realizados := TRUE;
         IF pr_cdtipmod = 1 THEN -- Pagamento
           -- Pagamento (Tit/Cnv); Operações DebAut; Pagamento/Agendamento GPS; Pagamento DebAut; Pagamento DARF; Agendamento DARF; Pagamento DAS; Agendamento DAS
           vr_dstippro := '2;11;13;15;16;17;18;19'||
@@ -584,7 +563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<dstippro>' || fn_busca_dstippro(vr_prot_fltr(vr_ind))                                                     	|| '</dstippro>' ||																																		
                                   '<dttransa>' || to_char(vr_prot_fltr(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
                                   '<vldocmto>' || to_char(vr_prot_fltr(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
-                                  '<dsdescri>' || fn_descricao(vr_prot_fltr(vr_ind),pr_cdtipmod) || '</dsdescri>');     
+                                  '<dsdescri>' || fn_descricao(vr_prot_fltr(vr_ind),vr_realizados) || '</dsdescri>');     
 												
         IF pr_cdtipmod = 3 THEN			-- Transferências Recebidas
 					gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -735,6 +714,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 								 							    '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 								 							    '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																                                
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                      || '</dttransa>' ||
@@ -908,6 +889,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 								 							    '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 								 							    '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																                                                               
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                      || '</dttransa>' ||
@@ -1125,6 +1108,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 															 	  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 															 	  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
                                   '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                                                                      || '</nmprepos>' ||
@@ -1281,6 +1266,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
  																  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
                                   '<nmprepos>' || vr_protocolo(vr_ind).nmprepos                                                                                      || '</nmprepos>' ||
@@ -1487,6 +1474,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 															   '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 															   '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
                                  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                 '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                 '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																 '<cdtippag>' || to_char(vr_cdtippag)                                                                                               || '</cdtippag>' ||																 
@@ -1696,6 +1685,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||
 															    '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -1839,6 +1830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdplano>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdplano>' ||
                                   '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<dsdplano>' || TRIM(vr_protocolo(vr_ind).dsinform##3)                                                      || '</dsdplano>' ||
@@ -1978,6 +1971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 															    '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 															    '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||																 															   																 
 																	'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
@@ -2126,6 +2121,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																  '<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
                                   '<dttransa>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                                               || '</dttransa>' ||
@@ -2341,6 +2338,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(pr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(pr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -2437,6 +2436,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																	'<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(pr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(pr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -2536,6 +2537,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(pr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(pr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -2632,6 +2635,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(pr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(pr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -2729,6 +2734,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(pr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(pr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -2826,6 +2833,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(pr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(pr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -2923,6 +2932,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                   '<nrdocmto>' || to_char(pr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
                                   '<cdbcoctl>' || to_char(pr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
                                   '<cdagectl>' || to_char(pr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || to_char(pr_protocolo(vr_ind).nmrescop)                                                      || '</nmrescop>' ||
+                                  '<nmrescop_central>' || to_char(pr_protocolo(vr_ind).nmrescop_central)                                      || '</nmrescop_central>' ||
                                   '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||																	
                                   '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
 																	'<nmprepos>' || to_char(pr_protocolo(vr_ind).nmprepos)                                                      || '</nmprepos>' ||
@@ -3091,6 +3102,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																		'<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																		'<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                    '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                    '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
@@ -3160,6 +3173,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																		'<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																		'<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                    '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                    '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
@@ -3331,6 +3346,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																		'<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																		'<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                    '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                    '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
@@ -3411,6 +3428,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																		'<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																		'<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                    '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                    '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																		'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																		'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																		'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
@@ -3571,6 +3590,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																'<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																'<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																'<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
@@ -3730,6 +3751,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																'<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                                             || '</nrdocmto>' ||
 																'<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                                             || '</cdbcoctl>' ||
 																'<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                                             || '</cdagectl>' ||
+                                '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)                                                                             || '</nmrescop>' ||
+                                '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central)                                                             || '</nmrescop_central>' ||
 																'<nrdconta>' || to_char(pr_nrdconta)                                                                                               || '</nrdconta>' ||
 																'<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                                       || '</nmtitula>' ||
 																'<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)                                                                             || '</nmprepos>' ||
@@ -4888,6 +4911,8 @@ END pc_comprovantes_recebidos;
                      '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)           || '</nrdocmto>' ||
                      '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)           || '</cdbcoctl>' ||
                      '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)           || '</cdagectl>' ||
+                     '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)           || '</nmrescop>' ||
+                     '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central) || '</nmrescop_central>' ||
                      '<nrdconta>' || to_char(pr_nrdconta)                             || '</nrdconta>' ||
                      '<nmtitula>' || to_char(rw_crapass.nmextttl)                     || '</nmtitula>' ||
                      '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)           || '</nmprepos>' ||
@@ -5209,6 +5234,8 @@ END pc_comprovantes_recebidos;
                      '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)           || '</nrdocmto>' ||
                      '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)           || '</cdbcoctl>' ||
                      '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)           || '</cdagectl>' ||
+                     '<nmrescop>' || to_char(vr_protocolo(vr_ind).nmrescop)           || '</nmrescop>' ||
+                     '<nmrescop_central>' || to_char(vr_protocolo(vr_ind).nmrescop_central) || '</nmrescop_central>' ||
                      '<nrdconta>' || to_char(pr_nrdconta)                             || '</nrdconta>' ||
                      '<nmtitula>' || to_char(rw_crapass.nmextttl)                     || '</nmtitula>' ||
                      '<nmprepos>' || to_char(vr_protocolo(vr_ind).nmprepos)           || '</nmprepos>' ||
