@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades da custodia de cheque
 --  Sigla    : CUST
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao: 16/12/2016
+--  Data     : Abril/2014.                   Ultima atualizacao: 17/08/2018
 --
 -- Dados referentes ao programa:
 --
@@ -44,7 +44,8 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --			   16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
 --
 --             21/07/2017 - Ajuste na procedure pc_ver_cheque para retornar numero 
---                          da conta quando tiver critica. (Daniel)
+--                          da conta quando tiver critica. (Daniel)		
+--             17/08/2018 - SCTASK0018345 - Paulo Martins - Mouts
 ---------------------------------------------------------------------------------------------------------------
 
   -- Estruturas de registro
@@ -7335,6 +7336,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;					
 			
+      --SCTASK0018345 
+      vr_tab_cheques dscc0001.typ_tab_cheques;
+      vr_index_cheque NUMBER;		
 		  -- Busca cheques custodiados ainda não resgatados			
 		  CURSOR cr_crapcst(pr_cdcooper IN crapcop.cdcooper%TYPE
 			                 ,pr_dsdocmc7 IN VARCHAR2) IS
@@ -7349,6 +7353,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 							,cst.nrdolote
 							,cst.dtmvtolt
 							,cst.rowid
+              ,cst.nrborder
+              ,cst.dsdocmc7
+              ,cst.cdcmpchq
+              ,cst.cdbanchq
+              ,cst.cdagechq
 				  FROM crapcst cst
 				 WHERE cst.cdcooper = pr_cdcooper
 				   AND cst.nrdconta = pr_nrdconta
@@ -7521,6 +7530,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 								,cst.insitchq = 1
 					 WHERE cst.rowid = rw_crapcst.rowid;
   			
+            -- Carrega as informações do cheque para excluir do bordero 
+            vr_index_cheque := vr_tab_cheques.count + 1;  
+            vr_tab_cheques(vr_index_cheque).cdcooper := pr_cdcooper;
+            vr_tab_cheques(vr_index_cheque).nrdconta := pr_nrdconta;
+            vr_tab_cheques(vr_index_cheque).dtlibera := rw_crapcst.dtlibera;
+            vr_tab_cheques(vr_index_cheque).dsdocmc7 := rw_crapcst.dsdocmc7;
+            vr_tab_cheques(vr_index_cheque).cdcmpchq := rw_crapcst.cdcmpchq;
+            vr_tab_cheques(vr_index_cheque).cdbanchq := rw_crapcst.cdbanchq;
+            vr_tab_cheques(vr_index_cheque).cdagechq := rw_crapcst.cdagechq;
+            vr_tab_cheques(vr_index_cheque).nrctachq := rw_crapcst.nrctachq;
+            vr_tab_cheques(vr_index_cheque).nrcheque := rw_crapcst.nrcheque;           
+  			
         -- Efetua os inserts para apresentacao na tela VERLOG
         -- Gerar log do Lote do cheque
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
@@ -7548,6 +7569,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 								 
 				END IF;
 			END LOOP;
+
+      --SCTASK0018345 
+      -- Remover cheques do bordero  
+      if vr_tab_cheques.count > 0 then
+        DSCC0001.pc_excluir_cheque_bordero(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_cdagenci => rw_crapcst.cdagenci
+                                          ,pr_idorigem => 5
+                                          ,pr_cdoperad => pr_cdoperad
+                                          ,pr_nrborder => rw_crapcst.nrborder
+                                          ,pr_tab_cheques => vr_tab_cheques
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+        -- Se houve críticas													 
+        IF vr_cdcritic > 0 THEN -- Se não encontrar não critica
+          RAISE vr_exc_erro;
+        END IF;	      
+      end if;
 
       pr_tab_erro_resg := vr_tab_resgate_erro;
 			
