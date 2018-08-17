@@ -8501,7 +8501,8 @@ PROCEDURE altera-valor-proposta:
         /* PRJ 438 - Gravar data pagto recebida via parametro quando for opcao de Somente valor proposta */
         IF par_dsdopcao = "SVP" THEN  
         DO:
-            ASSIGN crawepr.dtdpagto = par_dtdpagto.
+            ASSIGN crawepr.dtvencto = par_dtdpagto
+                   crawepr.dtdpagto = par_dtdpagto.
         END.       
       /*Inicio M438*/
       IF par_dsdopcao = "TP" THEN /*Inclusao Proposta*/
