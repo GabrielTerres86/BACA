@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 05/12/2017
  * OBJETIVO     : Rotina para buscar informacoes da empresa de acordo com o codigo.
  *
- * ALTERACOES   : 
+ * ALTERACOES   : 09/08/2018 - Incluir conta e titular na chamada da rotina INC0021468 (Heitor - Mouts)
  */
 ?>
  
@@ -18,12 +18,16 @@
 	isPostMethod();		
 	
     $cdempres = $_POST['cdempres'] == '' ?  0  : $_POST['cdempres'];
+	$nrdconta = $_POST['nrdconta'] == '' ?  0  : $_POST['nrdconta'];
+	$idseqttl = $_POST['idseqttl'] == '' ?  0  : $_POST['idseqttl'];
 
 	// Monta o xml de requisição
 	$xml  = "";
 	$xml .= "<Root>";	
     $xml .= "	<Dados>";
 	$xml .= "		<cdempres>".$cdempres."</cdempres>";	
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
 	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
     $xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml .= "		<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
@@ -53,7 +57,7 @@
 	if(!isset($operacao)){
 		
 		if($idaltera == 1){			
-			echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
+			echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 			echo "$('#nrcpfemp').val('".$nrdocnpj."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 		}else{
 			
