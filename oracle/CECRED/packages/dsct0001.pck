@@ -4428,8 +4428,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           vr_vlliqori := rw_craptdb.vlliquid;
 
           dsct0003.pc_calcula_juros_simples_tit(pr_cdcooper => pr_cdcooper
-                                               ,pr_nrdconta => rw_craptdb.nrborder
-                                               ,pr_nrborder => rw_craptdb.nrdconta
+                                               ,pr_nrdconta => rw_craptdb.nrdconta
+                                               ,pr_nrborder => rw_craptdb.nrborder
                                                ,pr_cdbandoc => rw_craptdb.cdbandoc
                                                ,pr_nrdctabb => rw_craptdb.nrdctabb
                                                ,pr_nrcnvcob => rw_craptdb.nrcnvcob
@@ -6387,7 +6387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       AND   craptdb.nrcnvcob = pr_nrcnvcob
       AND   craptdb.nrdconta = pr_nrdconta
       AND   craptdb.nrdocmto = pr_nrdocmto
-      AND   craptdb.insittit = 4;
+      AND   craptdb.dtresgat IS NULL;
     rw_craptdb cr_craptdb%ROWTYPE;
       
     --Selecionar lancamento juros desconto titulo
@@ -6432,8 +6432,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     /**** ABATIMENTO DE JUROS ****/
     --Zerar valor total juros
     vr_vltotjur:= 0;
-    
-    vr_txdiaria:= APLI0001.fn_round((POWER(1 + (rw_crapbdt.txmensal / 100),1 / 30) - 1),7);
+    IF (rw_crapbdt.flverbor=0) THEN
+       vr_txdiaria := APLI0001.fn_round((POWER(1 + (rw_crapbdt.txmensal / 100),1 / 30) - 1),7);
+    ELSE
+       vr_txdiaria := (rw_crapbdt.txmensal / 100)/30;
+    END IF;
     --Quantidade dias prazo
     vr_qtdprazo:= TO_NUMBER(rw_craptdb.dtvencto - rw_craptdb.dtlibbdt) -
                   TO_NUMBER(rw_craptdb.dtvencto - rw_craptdb.dtdpagto);
