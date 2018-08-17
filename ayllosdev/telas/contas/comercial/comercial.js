@@ -1302,6 +1302,8 @@ function buscaInfEmpresa(){
         url: UrlSite + 'telas/contas/comercial/busca_informacoes_empresa.php',
         data: {
             cdempres: cdempres,
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
