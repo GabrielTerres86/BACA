@@ -6457,8 +6457,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       FOR vr_contador IN 1..vr_qtdprazo LOOP
         --Valor juros
         vr_vldjuros:= APLI0001.fn_round(vr_vltitulo * vr_txdiaria,2);
-        --Valor Titulo recebe valor juros
-        vr_vltitulo:= vr_vltitulo + vr_vldjuros;
+        
+        IF (rw_crapbdt.flverbor=0) THEN
+          --Valor Titulo recebe valor juros
+          vr_vltitulo:= vr_vltitulo + vr_vldjuros;
+        END IF;
         --Data Periodo
         vr_dtperiod:= vr_dtperiod + 1;
         --data referencia juros
