@@ -30,10 +30,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
   --                        - pc_pagar_emprestimo_tr;
   --                        - pc_pagar_emprestimo_folha;
   --                        - pc_pagar_emprestimo_pp;
-  -- 
+  --
   --             15/08/2018 - Pagamento de Emprestimos/Financiamentos (Rangel Decker / AMcom)
   --                        - pc_pagar_emprestimo_pos
-  
+
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_busca_numero_contrato(pr_cdcooper     IN tbepr_consignado_contrato.cdcooper%TYPE        --> Codigo da cooperativa
@@ -100,7 +100,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
                                   ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                   ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                   ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
-  
+
 
   -- Realizar o calculo e pagamento de prejuízo
   PROCEDURE pc_pagar_emprestimo_prejuizo(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
@@ -178,8 +178,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
                                     ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                     ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo
                                     ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
-                                    ,pr_vlemprst  IN crapepr.vlemprst%TYPE    
-                                    ,pr_txmensal  IN crapepr.txmensal%TYPE 
+                                    ,pr_vlemprst  IN crapepr.vlemprst%TYPE
+                                    ,pr_txmensal  IN crapepr.txmensal%TYPE
                                     ,pr_dtprivencto IN crawepr.dtdpagto%TYPE
                                     ,pr_vlsprojt    IN crapepr.vlsprojt%TYPE
                                     ,pr_qttolar    IN crapepr.qttolatr%TYPE
@@ -193,7 +193,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
                                     ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
                                     ,pr_cdcritic OUT NUMBER                       -- Código de críticia
                                     ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
-                                      
+
 
 END EMPR9999;
 /
@@ -219,7 +219,7 @@ create or replace package body cecred.EMPR9999 as
   --             25/07/2018 - Revisão do separador do campo pr_dsctrliq de ";" para "," pa pc_proc_qualif_operacao (Andrew Albuquerque - GFT)
   --
   --             26/07/2018 Revisão das regras de qualificação (Andrew Albuquerque - GFT)
-  -- 
+  --
    --             31/07/2018 - Pagamento de Emprestimos/Financiamentos (Rangel Decker / AMcom)
   --                        - pc_pagar_emprestimo_prejuizo;
   --                        - pc_pagar_emprestimo_tr;
@@ -236,7 +236,7 @@ create or replace package body cecred.EMPR9999 as
   /* Descrição e código da critica */
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(4000);
-  
+
    -- Constante com o nome do programa
   vr_cdprogra     CONSTANT VARCHAR2(8) := 'RECP0001';
   vr_dsarqlog     CONSTANT VARCHAR2(10):= 'acordo.log';
@@ -449,6 +449,7 @@ create or replace package body cecred.EMPR9999 as
   vr_emp_a_liq crapepr.nrctremp%TYPE;
   vr_qtdias_atraso INTEGER := 0;
   vr_auxdias_atraso INTEGER := 0;
+  vr_nrcontrato     crapepr.nrctremp%TYPE;
 
   -- Monta o registro de data
   rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
@@ -484,7 +485,9 @@ create or replace package body cecred.EMPR9999 as
       --> Carregar temptable como os numeros de contrato
       IF vr_split.count > 0 THEN
         FOR i IN vr_split.first..vr_split.last LOOP
-          vr_vet_liquida(vr_split(i)) := vr_split(i);
+          -- Numero do Contrato do refinanciamento
+          vr_nrcontrato := TO_NUMBER(REPLACE(REPLACE(vr_split(i),',',''),'.',''));
+          vr_vet_liquida(vr_nrcontrato) := vr_nrcontrato;
         END LOOP;
       END IF;
     END IF;
@@ -548,11 +551,13 @@ create or replace package body cecred.EMPR9999 as
       END IF;
       CLOSE cr_crapepr;
 
+      /* REGRA ANULADA PELA HISTÓRIA 9927 (P450) - Reginaldo/AMcom - 17/08/2018
       /* Se contrato a liquidar já é um refinanciamento, força
-       qualificaçao mínima como "Renegociaçao" Reginaldo (AMcom) - Mar/2018 */
+       qualificaçao mínima como "Renegociaçao" Reginaldo (AMcom) - Mar/2018 
       IF rw_crapepr.idquaprc > 1 THEN
         vr_qtdias_atraso := GREATEST(vr_qtdias_atraso, 5);
       END IF;
+			*/
 
       vr_indice_epr := vr_vet_liquida.next(vr_indice_epr);
     END LOOP;
@@ -867,7 +872,7 @@ create or replace package body cecred.EMPR9999 as
                            ,pr_cdcritic    => vr_cdcritic
                            ,pr_des_erro    => vr_dscritic);
 
-    
+
 
     -- Verifica se houve retorno de crítica
     IF vr_dscritic IS NOT NULL THEN
@@ -976,7 +981,7 @@ create or replace package body cecred.EMPR9999 as
       /**************************/
   END pc_pagar_emprestimo_tr;
 
-  
+
   -- Realizar o calculo e pagamento de prejuízo
   PROCEDURE pc_pagar_emprestimo_prejuizo(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
@@ -1346,7 +1351,7 @@ create or replace package body cecred.EMPR9999 as
     -- INICIO PARA O LANÇAMENTO DE DEBITO DO PAGAMENTO DE PREJUIZO  -->  (((3º ETAPA)))  <--
     ------------------------------------------------------------------------------------------------------------
     IF pr_vltotpag > 0 THEN
-     IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN 
+     IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
                                       ,pr_cdagenci => pr_cdagenci         --> Código da agência
@@ -1374,7 +1379,7 @@ create or replace package body cecred.EMPR9999 as
         END IF;
         RAISE vr_exc_erro;
       END IF;
-    END IF; -- Lançamento conta corrente   
+    END IF; -- Lançamento conta corrente
 
      IF NVL(pr_vliofcpl,0) > 0 THEN
        IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
@@ -1405,19 +1410,19 @@ create or replace package body cecred.EMPR9999 as
              END IF;
             RAISE vr_exc_erro;
           END IF;
-        END IF; --Lançamento na conta corrente   
+        END IF; --Lançamento na conta corrente
 
       -- Lançamento na conta corrente
        IF UPPER(pr_nmtelant) = 'BLQPREJU' THEN
-         
+
        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
                                       pr_nrdconta => pr_nrdconta,
                                       pr_cdoperad => pr_cdoperad,
                                       pr_vlrlanc  => pr_vltotpag - nvl(pr_vliofcpl,0) + nvl(pr_vliofcpl,0) ,
                                       pr_dtmvtolt => pr_crapdat.dtmvtolt,
-                                       
+
                                       pr_cdcritic => vr_cdcritic,
-                                      pr_dscritic => vr_dscritic);                             
+                                      pr_dscritic => vr_dscritic);
 
      -- Se ocorreu erro
       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
@@ -1426,8 +1431,8 @@ create or replace package body cecred.EMPR9999 as
           pr_dscritic := vr_dscritic;
          RAISE vr_exc_erro;
      END IF;
-   END IF; 
-       
+   END IF;
+
           -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
           tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
                                , pr_nrdconta     => pr_nrdconta
@@ -1539,7 +1544,7 @@ create or replace package body cecred.EMPR9999 as
       /**************************/
   END pc_pagar_emprestimo_prejuizo;
 
-  
+
    -- Realizar o calculo e pagamento de folha de pagamento
   PROCEDURE pc_pagar_emprestimo_folha  (pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
                                           ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
@@ -1738,7 +1743,7 @@ create or replace package body cecred.EMPR9999 as
             END IF;
             RAISE vr_exc_erro;
           END IF;
-        
+
         -- O Valor do pagamento deverá considerar também o valor do ajuste
         vr_vldpagto := NVL(vr_vldpagto,0) + nvl(vr_vlajuste, 0);
 
@@ -1839,7 +1844,7 @@ create or replace package body cecred.EMPR9999 as
     -----------------------------------------------------------------------------------------------
     -- Debita em conta corrente o total pago do emprestimo
     -----------------------------------------------------------------------------------------------
-    IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN     
+    IF UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
       EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt  --> Movimento atual
                                     ,pr_cdagenci => pr_cdagenci   --> Código da agência
@@ -1867,19 +1872,19 @@ create or replace package body cecred.EMPR9999 as
         END IF;
         RAISE vr_exc_erro;
       END IF;
-   END IF; -- Lançamento na conta corrente  
-    
+   END IF; -- Lançamento na conta corrente
+
     --Lançamento conta transitoria
     IF UPPER(pr_nmtelant) = 'BLQPREJU' THEN
-         
+
        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper  => pr_cdcooper,
                                      pr_nrdconta => pr_nrdconta,
                                      pr_cdoperad => pr_cdoperad,
                                      pr_vlrlanc  => pr_vltotpag ,
                                      pr_dtmvtolt => pr_crapdat.dtmvtolt,
-                                       
+
                                      pr_cdcritic => vr_cdcritic,
-                                     pr_dscritic => vr_dscritic);                             
+                                     pr_dscritic => vr_dscritic);
 
      -- Se ocorreu erro
       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
@@ -1889,7 +1894,7 @@ create or replace package body cecred.EMPR9999 as
          RAISE vr_exc_erro;
      END IF;
    END IF; --Lançamento conta transitoria
-   
+
   EXCEPTION
     WHEN  vr_exc_erro THEN
       pr_vltotpag := 0; -- retornar zero
@@ -1906,7 +1911,7 @@ create or replace package body cecred.EMPR9999 as
       ROLLBACK TO SAVE_EPR_FOLHA;
       /**************************/
   END pc_pagar_emprestimo_folha;
- 
+
 
    -- Realizar o calculo e pagamento de Emprestimo PP
   PROCEDURE pc_pagar_emprestimo_pp(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
@@ -2278,8 +2283,8 @@ create or replace package body cecred.EMPR9999 as
       ROLLBACK;
       /**************************/
   END pc_pagar_emprestimo_pp;
-  
-  
+
+
   -- Realizar o calculo e pagamento de Emprestimo POS
   PROCEDURE pc_pagar_emprestimo_pos(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
@@ -2287,8 +2292,8 @@ create or replace package body cecred.EMPR9999 as
                                    ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
                                    ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo
                                    ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
-                                   ,pr_vlemprst  IN crapepr.vlemprst%TYPE    
-                                   ,pr_txmensal  IN crapepr.txmensal%TYPE 
+                                   ,pr_vlemprst  IN crapepr.vlemprst%TYPE
+                                   ,pr_txmensal  IN crapepr.txmensal%TYPE
                                    ,pr_dtprivencto IN crawepr.dtdpagto%TYPE
                                    ,pr_vlsprojt    IN crapepr.vlsprojt%TYPE
                                    ,pr_qttolar    IN crapepr.qttolatr%TYPE
@@ -2325,21 +2330,21 @@ create or replace package body cecred.EMPR9999 as
            AND craplem.nrctremp = pr_nrctremp
            AND craplem.cdhistor IN (1040, 1041, 1042, 1043, 2311, 2312);
 
- 
+
 
    --Tabelas de Memoria para Pagamentos das Parcelas Emprestimo
    vr_tab_pgto_parcel  EMPR0001.typ_tab_pgto_parcel;
    vr_tab_calculado    EMPR0001.typ_tab_calculado;
    vr_tab_parcelas_pos EMPR0011.typ_tab_parcelas;
-   
+
    vr_tab_price EMPR0011.typ_tab_price;
-   
+
    vr_index_pos PLS_INTEGER;
 
 
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
-    
+
         -- Função para retornar o ultimo dia util anterior
     FUNCTION fn_dia_util_anterior(pr_data IN DATE) RETURN DATE IS
 
@@ -2362,7 +2367,7 @@ create or replace package body cecred.EMPR9999 as
     -----------------------------------------------------------------------------------------------
 
 
-       
+
 
       -- Busca as parcelas para pagamento
       EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
@@ -2392,12 +2397,12 @@ create or replace package body cecred.EMPR9999 as
                                                           ' - Contrato = ' || TO_CHAR(pr_nrctremp, 'FM99G999G999'));
             RAISE vr_exc_saida;
           END IF;
-          
-          
-          
+
+
+
           -- Limpa PLTable
           vr_tab_price.DELETE;
-          
+
           -- Carregar as variveis de retorno
           vr_index_pos := vr_tab_parcelas_pos.FIRST;
           WHILE vr_index_pos IS NOT NULL LOOP
@@ -2433,7 +2438,7 @@ create or replace package body cecred.EMPR9999 as
   EXCEPTION
     WHEN  vr_exc_erro THEN
       pr_vltotpag := 0; -- retornar zero
-      pr_dscritic := vr_dscritic;    
+      pr_dscritic := vr_dscritic;
       /** DESFAZER A TRANSAÇÃO **/
       ROLLBACK;
       /**************************/
