@@ -844,7 +844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       /*Fim 438*/
       
     BEGIN
-      
+      --Limpar tabela erro      
+      vr_tab_erro.DELETE;      
       -- Buscar os dados da proposta de emprestimo
       OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -1006,8 +1007,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                 ,pr_tab_crapras          => vr_tab_crapras          --> Tabela com os registros proc
                                 ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro
                                 ,pr_des_reto             => vr_des_reto);           --> Ind. de retorno OK/NOK
-      
-      vr_ind := NULL;
+      --Limpar tabela erro 
+      -- Para o calculo de rating, caso houver erro não devemos tratar para 
+      -- não travar o processo de retorno
+      vr_tab_erro.DELETE;                                 
+      vr_des_reto := 'OK';
       vr_ind := vr_tab_impress_risco_cl.first; -- Vai para o primeiro registro            
       -- loop sobre a tabela de retorno
       WHILE vr_ind IS NOT NULL LOOP
