@@ -458,11 +458,19 @@ create or replace package body cecred.EMPR9999 as
   TYPE typ_vet_liquida IS TABLE OF NUMBER
        INDEX BY PLS_INTEGER;
   vr_vet_liquida typ_vet_liquida;
+	
+	TYPE typ_des_qualif IS TABLE OF VARCHAR(50)
+	     INDEX BY PLS_INTEGER;
+	vr_vet_qualif typ_des_qualif;
 
   BEGIN
     /* descriçao e código da critica */
     vr_cdcritic := null;
     vr_dscritic := '';
+		
+		vr_vet_qualif(2) := 'Renovacao de credito';
+		vr_vet_qualif(3) := 'Renegociacao de credito';
+		vr_vet_qualif(4) := 'Composicao de divida';
 
     -- Busca a data corrente para a cooperativa.
     OPEN btch0001.cr_crapdat(pr_cdcooper);
@@ -560,26 +568,28 @@ create or replace package body cecred.EMPR9999 as
 			*/
 
       vr_indice_epr := vr_vet_liquida.next(vr_indice_epr);
+			
+			IF vr_auxdias_atraso < vr_qtdias_atraso THEN
+				vr_auxdias_atraso := vr_qtdias_atraso;
+			END IF;
     END LOOP;
-
-    IF vr_auxdias_atraso < vr_qtdias_atraso THEN
-      vr_auxdias_atraso := vr_qtdias_atraso;
-    END IF;
 
     -- De 0 a 4 dias de atraso - Renovaçao de Crédito
     IF vr_auxdias_atraso < 5 THEN
-      pr_idquapro := 2;
-      pr_dsquapro := 'Renovacao de credito';
+      pr_idquapro := 2;      
     -- De 5 a 60 dias de atraso - Renegociaçao de Crédito
     ELSIF vr_auxdias_atraso > 4 and vr_auxdias_atraso < 61 THEN
       pr_idquapro := 3;
-      pr_dsquapro := 'Renegociacao de credito';
     -- Igual ou acima de 61 dias - Composiçao de dívida
     ELSIF  vr_auxdias_atraso >= 61 THEN
       pr_idquapro := 4;
-      pr_dsquapro := 'Composicao da divida';
     END IF;
-
+		
+		IF pr_idquapro < rw_crapepr.idquaprc THEN
+			pr_idquapro := rw_crapepr.idquaprc;
+		END IF;
+		
+		pr_dsquapro := vr_vet_qualif(pr_idquapro);
   EXCEPTION
     WHEN vr_exc_erro THEN
     /* busca valores de critica predefinidos */
