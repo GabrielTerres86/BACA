@@ -743,7 +743,11 @@ END pc_busca_saldos_devedores;
     -- CURSORES --
     CURSOR cr_tbcc_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
                             pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
-      SELECT prej.vlsdprej, prej.vljuprej, sld.vliofmes
+      SELECT prej.vlsdprej
+			     , prej.vljur60_ctneg
+					 , prej.vljur60_lcred
+			     , prej.vljuprej
+					 , sld.vliofmes
         FROM tbcc_prejuizo prej
         LEFT JOIN crapsld sld
                ON sld.nrdconta = prej.nrdconta
@@ -771,7 +775,9 @@ END pc_busca_saldos_devedores;
     FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
 
     IF cr_tbcc_prejuizo%FOUND THEN
-      vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej;
+      vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej + 
+			               rw_tbcc_prejuizo.vljur60_ctneg +
+										 rw_tbcc_prejuizo.vljur60_lcred;
       vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
       vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
     END IF;
