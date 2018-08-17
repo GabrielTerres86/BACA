@@ -35,7 +35,7 @@ BEGIN
    
               13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
 
-    ............................................................................. */
+ ............................................................................. */
 
   DECLARE
 
@@ -339,7 +339,7 @@ BEGIN
       /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
     if PR_CDAGENCI = 0 then
     --and   rw_crapdat.inproces >= 2 then
-                                 
+      
        --
        PC_CRPS750_1( pr_faseprocesso => 1
                     ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
@@ -559,10 +559,10 @@ BEGIN
                               ,pr_dscritic     => vr_dscritic);
 
           IF vr_dscritic IS NULL THEN
-                     COMMIT;
+             COMMIT;
           END IF;
         --end if;
-           elsif rw_crappep.idtpprd = 'PP' then
+      elsif rw_crappep.idtpprd = 'PP' then
 
                  PC_CRPS750_2(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
@@ -573,18 +573,18 @@ BEGIN
                              ,pr_infimsol => pr_infimsol
                     ,pr_cdcritic => vr_cdcritic   --> Codigo da Critica
                     ,pr_dscritic => vr_dscritic);      --> descricao da critica
-           end if;
+      end if;
 
-           if vr_dscritic is not null then
+      if vr_dscritic is not null then
          btch0001.pc_gera_log_batch(pr_cdcooper  => pr_cdcooper,
-                                       pr_ind_tipo_log => 2,
-                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                          ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
-                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                    pr_ind_tipo_log => 2,
+                                    pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
+                                    pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
 
 
 
-           end if;
+      end if;
       /***************************************/
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
@@ -641,7 +641,7 @@ BEGIN
                            pr_idprglog   => vr_idlog_ini_par,
                            pr_flgsucesso => 1);       
 
-
+    
     IF pr_idparale <> 0 THEN
       
       -- Atualiza finalização do batch na tabela de controle 
@@ -649,18 +649,18 @@ BEGIN
                                          ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
                                          ,pr_dscritic   => vr_dscritic);  
 
-        -- Encerrar o job do processamento paralelo dessa agência
-        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+      -- Encerrar o job do processamento paralelo dessa agência
+         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                    ,pr_des_erro => vr_dscritic);
+                                     ,pr_des_erro => vr_dscritic);
 
       --Salvar informacoes no banco de dados
-     COMMIT;
+      COMMIT;
     END IF;
   EXCEPTION
     WHEN vr_exc_saida THEN
 
-        -- Buscar a descricao
+      -- Buscar a descricao
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_cdcritic);
 
       -- Devolvemos codigo e critica encontradas
@@ -674,7 +674,7 @@ BEGIN
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
-        END IF;
+      END IF;
       
       IF pr_idparale <> 0 THEN
         -- Grava LOG de Erro

@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/05/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -81,11 +81,14 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
   --                          (Lucas Ranghetti #847282)
   --
-  --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
-  --                          (Lucas Ranghetti SCTASK0014662)
-  --       
   --             13/04/2018 - Incluido o controle de execução de programa
   --                          Projeto Debitador Unico - Josiane Stiehler (AMcom)
+  --
+  --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
+  --                          (Lucas Ranghetti SCTASK0014662)
+  --
+  --             30/07/2018 - Adicionado tratamento para não enviar conta PJ caso a mesma ainda não tenha sido criada 
+  --                          no arquivo gerado na procedure pc_crps671 (Reinert).
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6160,6 +6163,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             
           END LOOP;
 
+          -- Zerar variável de conta
+		  vr_nrctarg1 := 0;
+
           -- Executa LOOP em registro de Cartões para gravar DETALHE
           FOR rw_crawcrd IN cr_crawcrd(rw_crapcol.cdcooper) LOOP
             BEGIN
@@ -6553,6 +6559,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Tp. Operac.: Inclusão de Cartão
                   vr_tipooper := '01';
 
+                  -- Guarda o número da conta informado no registro tipo 1
+                  vr_nrctarg1 := rw_crawcrd.nrdconta;
+
                   -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
                   gera_linha_registro_tipo1 (rw_crawcrd,
                                              rw_crapcol,
@@ -6597,6 +6606,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- Tp. Operac.: Inclusão de Cartão Adicional
                 vr_tipooper := '04';
                 ELSE
+                  -- Se não for a mesma conta do registro 01 enviado, deve pular o registro
+				  IF NVL(vr_nrctarg1,0) <> NVL(rw_crawcrd.nrdconta,-1) THEN
+					CONTINUE;
+				  END IF;									
+								
                   vr_tipooper := '01';
                 END IF;
 
@@ -7835,7 +7849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               FETCH cr_craptlc INTO rw_craptlc;
               vr_craptlc := cr_craptlc%FOUND;
               CLOSE cr_craptlc;
-              
+			  
               -- Se nao encontrou, vamos tentar buscar os limites na nova tabela
               IF NOT vr_craptlc THEN
                 -- CECRED
@@ -7846,11 +7860,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 vr_craptlc := cr_craptlc_cecred%FOUND;
                 CLOSE cr_craptlc_cecred;
               ELSE
-              vr_cdlimcrd := rw_craptlc.cdlimcrd;
+                  vr_cdlimcrd := rw_craptlc.cdlimcrd;
               END IF;
             ELSE
               vr_craptlc := TRUE;  
-            END IF;  
+            END IF;
             
           END IF; /* END IF rw_crawcrd_limite.nrseqreg = 1 THEN */
           
@@ -10568,7 +10582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           EXIT WHEN vr_vet_nrdlote.LAST = vr_indice;
         
           vr_indice := vr_vet_nrdlote.NEXT(vr_indice);
-        
+      
         END LOOP;   
       END IF;
       -- Adiciona a linha ao XML
@@ -10988,7 +11002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                         ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade
                                         ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro
                                         ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer
-     
+
            IF nvl(vr_cdcritic,0) > 0 OR
               TRIM(vr_dscritic) IS NOT NULL THEN
              RAISE vr_exc_saida;
@@ -11009,7 +11023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
          RAISE vr_exc_saida;
       END IF;        
     
-      vr_dscritic := '';
+      vr_dscritic := '';      
       --Buscar Transacao
       vr_dstransa:= 'Debito fatura';
 
@@ -11383,7 +11397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         --Mudar situacao da fatura para nao efetuado qdo 
         --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
-        IF pr_cdprogra = 'CRPS674' AND          
+        IF pr_cdprogra = 'CRPS674' AND  
            vr_flultexe = 1 AND -- somente quando for a última execução do debitador  - Projeto Debitador Unico    
           (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0 AND
            gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
@@ -11988,7 +12002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_dsdireto_rlnsv:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
                                                ,pr_cdcooper => pr_cdcooper
                                                ,pr_nmsubdir => 'rlnsv');
-            
+     
       vr_dsdirarq := vr_dsdireto||'/rl/crrl693_'|| to_char( gene0002.fn_busca_time )||'.lst';
             
       -- Submeter o relatório 693

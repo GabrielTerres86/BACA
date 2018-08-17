@@ -35,7 +35,10 @@ BEGIN
               13/12/2017 - Melhorar performance da rotina filtrando corretamente
                            os acordos, conforme chamado 807093. (Kelvin).
 
-              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).						   
+              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).		
+              
+              15/08/2018 - Debitar Parcelas de emprestimos PP (Parcelas em Dia) em todas as execuções do dia e 
+                           não mais somente na última execução (Marcelo Elias Gonçalves / AMcom Make IT Real).					   
   ............................................................................. */
   DECLARE
 
@@ -272,7 +275,7 @@ BEGIN
       
       /* Se parcela ja liquidada ou nao tem valor pra pagar, nao permitir pagamento */
       IF nvl(pr_vlsomato,0) <= 0 OR pr_inliquid = 1 THEN
-        pr_flgpagpa:= FALSE;
+        pr_flgpagpa := FALSE;
       ELSE
         pr_flgpagpa:= TRUE;
       END IF;
@@ -668,34 +671,40 @@ BEGIN
 
       IF vr_flgemdia THEN /* PARCELA EM DIA */
         /* Parcela em dia */
-        /* 229243 Definido pela area de negocio que serão pagas apenas
-        parcelas vencidas no processo on-line */
         
-        --IF rw_crapdat.inproces <> 1 THEN  /*primeiro processamento*/
-        IF vr_flultexe = 1 THEN 
+        /* 229243 Definido pela area de negocio que serão pagas apenas
+        parcelas vencidas no processo on-line */ 
+        /* 15/08/2018 (Debitador Único) - Definido pela area de negocio que serão 
+        pagas parcelas em dia em todas as execuções do dia e não mais só na última execução do dia.                  
+        --IF rw_crapdat.inproces <> 1 THEN 
           /*ultimo processamento*/
 
           --Criar savepoint
-          SAVEPOINT sav_trans_750;
-
-          --Atualizar quantidade meses descontados
-          BEGIN
-            UPDATE crapepr 
-               SET crapepr.qtmesdec = nvl(crapepr.qtmesdec,0) + 1
-              WHERE crapepr.rowid = rw_crapepr.rowid;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Erro ao atualizar crapepr. '||SQLERRM;
-              -- Levantar Excecao
-              RAISE vr_exc_saida;
-          END;
+          SAVEPOINT sav_trans_750;          
 
           -- Verificar Pagamento
           pc_verifica_pagamento (pr_vlsomato => vr_vlsomato --> Soma Total + Soma Resgate
                                 ,pr_inliquid => rw_crappep.inliquid   --> Indicador Liquidacao
                                 ,pr_flgpagpa => vr_flgpagpa           --> Pagamento OK
                                 ,pr_des_reto => vr_des_erro);         --> Indicador Erro OK/NOK
+                                
+          --15/08/2018 (Debitador Único)          
+          --Só atualiza Qtde de Meses Decorridos na última execução do dia 
+          IF vr_flultexe = 1 THEN 
+            --Atualizar quantidade meses decorridos
+            BEGIN
+              UPDATE crapepr 
+              SET    crapepr.qtmesdec = nvl(crapepr.qtmesdec,0) + 1
+              WHERE  crapepr.rowid = rw_crapepr.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Erro ao atualizar crapepr. '||SQLERRM;
+                -- Levantar Excecao
+                RAISE vr_exc_saida;
+            END;
+          END IF;  
+                                        
           -- Se ocorreu erro
           IF vr_des_erro <> 'OK' THEN
             --Proximo Registro
@@ -926,8 +935,7 @@ BEGIN
               -- Proximo registro
               CONTINUE;
             END IF;
-          END IF;
-        END IF; -- IF rw_crapdat.inproces <> 1
+          END IF;       
         
       ELSE /* PARCELA VENCIDA */
         
