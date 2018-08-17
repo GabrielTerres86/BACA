@@ -1652,7 +1652,7 @@ END pc_inserir_lancamento_bordero;
         vr_qtd_dias := 0;
       END IF;
       
-      vr_vldjuros := pr_vltitulo * vr_dia * vr_jurosdia;        -- calcula o juros em cima dos dias
+      vr_vldjuros := apli0001.fn_round(pr_vltitulo * vr_dia * vr_jurosdia,2);        -- calcula o juros em cima dos dias
       
       BEGIN
         OPEN  cr_crapljt(vr_dtrefere);
@@ -1675,7 +1675,8 @@ END pc_inserir_lancamento_bordero;
                      ,/*06*/ nrdctabb
                      ,/*07*/ nrcnvcob
                      ,/*08*/ nrdocmto
-                     ,/*09*/ vldjuros)
+                     ,/*09*/ vldjuros
+                     ,/*10*/ dtmvtolt)
               VALUES (/*01*/ pr_cdcooper
                      ,/*02*/ pr_nrdconta
                      ,/*03*/ pr_nrborder
@@ -1684,7 +1685,8 @@ END pc_inserir_lancamento_bordero;
                      ,/*06*/ pr_nrdctabb
                      ,/*07*/ pr_nrcnvcob
                      ,/*08*/ pr_nrdocmto
-                     ,/*09*/ vr_vldjuros );
+                     ,/*09*/ vr_vldjuros
+                     ,/*10*/ pr_dtmvtolt );
         END   IF;
         CLOSE cr_crapljt;
         pr_vldjuros := pr_vldjuros + vr_vldjuros;
@@ -4155,7 +4157,7 @@ END pc_inserir_lancamento_bordero;
                                      ,pr_cdcooper
                                      ,3 -- desconto de titulo
                                      ,2 -- apenas ativo
-                                     ,pr_dtmvtolt
+                                     ,to_char(pr_dtmvtolt, 'DD/MM/RRRR')
                                      --------> OUT <--------
                                      ,vr_tab_dados_limite
                                      ,vr_cdcritic
@@ -5535,8 +5537,6 @@ END pc_inserir_lancamento_bordero;
 
     Frequencia: Sempre que for chamado
     Objetivo  : Procedure que que efetua a análise e Aprovação automática do Borderô.
-    Alterações:
-         15/08/2018 - Vitor Shimada Assanuma (GFT) - Colocar validação se o borderô em análise está no contrato ativo.    
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -5617,7 +5617,7 @@ END pc_inserir_lancamento_bordero;
                                                  ,vr_cdcooper
                                                  ,3 -- desconto de titulo
                                                  ,2 -- apenas ativo
-                                                 ,rw_crapdat.dtmvtolt
+                                                 ,to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')
                                                  --------> OUT <--------
                                                  ,vr_tab_dados_limite
                                                  ,vr_cdcritic
