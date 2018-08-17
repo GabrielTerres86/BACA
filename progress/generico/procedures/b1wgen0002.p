@@ -4871,11 +4871,12 @@ PROCEDURE proc_qualif_operacao:
               NO-LOCK: 
                   ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
             END.
+		  /* REGRA ALTERADA (ANULADA) CONFORME HISTÓRIA 9927 (P450 - Reginaldo/AMcom) */
           /* Se contrato a liquidar já é um refinanciamento, força 
              qualificação mínima como "Renegociação" 
-             Reginaldo (AMcom) - Mar/2018                     */
+             Reginaldo (AMcom) - Mar/2018                     
           IF  crabepr.idquaprc > 1 THEN
-              ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+              ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5). */
 
         END.
 
