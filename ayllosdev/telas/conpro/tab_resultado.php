@@ -6,7 +6,7 @@
  * DATA CRIAÇÃO : 17/03/2016 
  * OBJETIVO     : Tabela que apresenta resultado da consulta realizada
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 13/08/2018 - P438 - Adicionada a coluna Data de Execução na tabela de consulta (Mateus Z - Mouts)
   ----------------
  */
 
@@ -34,6 +34,8 @@ if ($tpproduto!=4)
 	$tabela .= "<th class=\"hr_title_parecer empINfo\">Parecer <br>de Cr&eacute;dito</th>";
 }
 $tabela .= "<th class=\"hr_title_situacao\">Situa&ccedil;&atilde;o <br> Ayllos</th>";
+// PRJ 438 - Adicionada coluna Data de Expiração
+$tabela .= "<th class=\"hr_title_data_expiracao\">Data de <br> Expira&ccedil;&atilde;o</th>";
 $tabela .= "<th class=\"hr_title_parecer_est\">Parecer <br> Esteira</th>";
 if ($tpproduto!=4)
 {
@@ -77,6 +79,8 @@ foreach ($registros as $r) {
 		$tabela .= "<td class=\"td_title_parecer empINfo\">" . str_replace('@', '<br>', getByTagName($r->tags, 'parecer_ayllos')) . "</td>";
 	}
     $tabela .= "<td class=\"td_title_situacao\">" . str_replace('@', '<br>', getByTagName($r->tags, 'situacao_ayllos')) . "</td>";
+	// PRJ 438 - Adicionada coluna Data de Eexpiração
+    $tabela .= "<td class=\"td_title_situacao\">" . getByTagName($r->tags, 'dtexpira') . "</td>";
     $tabela .= "<td  class=\"td_title_parecer_est\">" . str_replace('@', '<br>', getByTagName($r->tags, 'parecer_esteira')) . "</td>";
 	if ($tpproduto!=4)
 	{
