@@ -41,8 +41,8 @@ CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
 FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
                        , pr_nrdconta craplcm.nrdconta%TYPE
                        , pr_cdhistor craplcm.cdhistor%TYPE) RETURN BOOLEAN;
-											 
---> Rotina para verificar se pode realizar o debito - Versão Progress											 
+
+--> Rotina para verificar se pode realizar o debito - Versão Progress
 PROCEDURE pc_pode_debitar (pr_cdcooper  IN craplcm.cdcooper%TYPE
                          , pr_nrdconta  IN craplcm.nrdconta%TYPE
                          , pr_cdhistor  IN craplcm.cdhistor%TYPE
@@ -208,10 +208,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   --  Data     : Abril/2018.
   --
   -- Frequencia: -----
-  -- Objetivo  : Procedimentos para centralização de lançamentos na CRAPLCM e aplicação das respectivas 
+  -- Objetivo  : Procedimentos para centralização de lançamentos na CRAPLCM e aplicação das respectivas
 	--             regras de negócio.
   --
-  -- Alterado  : 10/05/2018 - Migração do cursor "cr_craplot" e da procedure "pc_inclui_altera_lote" 
+  -- Alterado  : 10/05/2018 - Migração do cursor "cr_craplot" e da procedure "pc_inclui_altera_lote"
   --                          a partir da package "EMPR0001".
   --                          (Reginaldo - AMcom - PRJ 450)
   --
@@ -220,13 +220,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
 -- Record para armazenar dados dos históricos para evitar consultas repetitivas
 TYPE typ_reg_historico IS RECORD (
      indebcre        craphis.indebcre%TYPE
-   , indebprj        craphis.indebprj%TYPE);
+   , indebprj        craphis.indebprj%TYPE
+	 /*, intransf_cred_prejuizo craphis.intransf_cred_prejuizo%TYPE;*/
+);
 
 -- Tabela com dados dos históricos já consultados na rotina
 TYPE typ_tab_historico IS TABLE OF typ_reg_historico INDEX BY VARCHAR2(8);
 
 -- Varíavel para armazenamento da tabela de dados dos históricos
-vr_tab_historico typ_tab_historico; 
+vr_tab_historico typ_tab_historico;
 
 -- Tabela para armazenar a informação de dias de atraso das contas para evitar consultas repetitivas
 TYPE typ_tab_atraso IS TABLE OF crapsld.qtddsdev%TYPE INDEX BY VARCHAR2(18);
@@ -237,7 +239,7 @@ vr_tab_atraso typ_tab_atraso;
 -- Record com dados do lote, obtidos a partir do cursor "LANC0001.cr_craplot"
 rw_craplot cr_craplot%ROWTYPE;
 
--- Variável que Indica se as regras de negócio do tratamento do prejuízo já estão ativas, 
+-- Variável que Indica se as regras de negócio do tratamento do prejuízo já estão ativas,
 -- ou seja, se as regras de bloqueio de débitos e transferência de créditos para a conta
 -- transitória já devem ser processados para contas em prejuízo.
 vr_inatvprj BOOLEAN := NVL(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -253,6 +255,7 @@ FUNCTION fn_obtem_dados_historico(pr_cdcooper craplcm.cdcooper%TYPE
   CURSOR cr_historico IS
   SELECT his.indebprj
        , his.indebcre
+			-- , his.intransf_cred_prejuizo
     FROM craphis his
    WHERE his.cdcooper = pr_cdcooper
      AND his.cdhistor = pr_cdhistor;
@@ -271,6 +274,8 @@ BEGIN
 
        vr_tab_historico(vr_chvhist).indebcre := rw_historico.indebcre;
        vr_tab_historico(vr_chvhist).indebprj := rw_historico.indebprj;
+			 vr_reg_historico.indebcre := rw_historico.indebcre;
+			 vr_reg_historico.indebprj := rw_historico.indebprj;
      END IF;
 
      RETURN vr_reg_historico;
@@ -306,6 +311,26 @@ BEGIN
 	RETURN vr_dias_atraso;
 END fn_obtem_dias_atraso ;
 
+-- Função que obtém saldo bloqueado em BACENJUD para a conta
+FUNCTION fn_obtem_saldo_blq_bacenjud(pr_cdcooper crapsld.cdcooper%TYPE
+                            , pr_nrdconta crapsld.nrdconta%TYPE)
+  RETURN tbblqj_monitora_ordem_bloq.vlsaldo%TYPE AS vr_vlsaldo tbblqj_monitora_ordem_bloq.vlsaldo%TYPE;
+
+  -- Cursos que recupera o saldo bloqueado em BACENJUD
+  CURSOR cr_saldo IS
+  SELECT bcj.vlsaldo
+    FROM tbblqj_monitora_ordem_bloq bcj
+   WHERE bcj.cdcooper = pr_cdcooper
+     AND bcj.nrdconta = pr_nrdconta;
+
+BEGIN
+	OPEN cr_saldo;
+	FETCH cr_saldo INTO vr_vlsaldo;
+	CLOSE cr_saldo;
+
+	RETURN vr_vlsaldo;
+END fn_obtem_saldo_blq_bacenjud ;
+
 -- Função qye verifica se pode debitar um histórico em uma conta de acordo com as marcações feitas
 -- na tela HISTOR
 FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
@@ -318,15 +343,15 @@ FUNCTION fn_pode_debitar(pr_cdcooper craplcm.cdcooper%TYPE
 
 BEGIN
 	vr_pode_debitar := TRUE;
-	
+
 	-- Se as regras de negócio do prejuízo já estão ativadas
 	IF vr_inatvprj THEN
 		vr_reg_historico := fn_obtem_dados_historico(pr_cdcooper, pr_cdhistor);
-		
+
 		-- Confere se o histórico em questão é de Débito
-		IF vr_reg_historico.indebcre = 'D' THEN	
+		IF vr_reg_historico.indebcre = 'D' THEN
 			-- Se a conta está em prejuízo e o histórico não permite aumentar o estouro da conta
-			IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) 
+			IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta)
 			AND vr_reg_historico.indebprj = 0 THEN
 				vr_pode_debitar := FALSE;
 			END IF;
@@ -341,7 +366,7 @@ PROCEDURE pc_pode_debitar (pr_cdcooper  IN craplcm.cdcooper%TYPE
                          , pr_nrdconta  IN craplcm.nrdconta%TYPE
                          , pr_cdhistor  IN craplcm.cdhistor%TYPE
                          , pr_flpoddeb OUT INTEGER )               --> Indica se pode debitat  0-Nao 1-Sim
-                         IS 
+                         IS
   /* ............................................................................
         Programa: pc_pode_debitar
         Sistema : Ayllos
@@ -364,7 +389,7 @@ BEGIN
                    , pr_cdhistor => pr_cdhistor) THEN
     pr_flpoddeb := 1; -- Sim, pode debitar
   ELSE
-    pr_flpoddeb := 0; -- Não pode debitar              
+    pr_flpoddeb := 0; -- Não pode debitar
   END IF;
 
 END pc_pode_debitar;
@@ -412,8 +437,8 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0 -- Campo para inclusão na CRAPLOT
 																	, pr_tab_retorno OUT typ_reg_retorno   -- Record com os dados retornados pela procedure
 																	, pr_incrineg  OUT INTEGER             -- Retorna o indicador de crítica de negócio (0 - Não, 1 - Sim)
-																	, pr_cdcritic  OUT PLS_INTEGER         
-                                  , pr_dscritic  OUT VARCHAR2) IS        
+																	, pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2) IS
 BEGIN
    /* ............................................................................
         Programa: pc_gerar_lancamento_conta
@@ -424,7 +449,7 @@ BEGIN
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
-        Objetivo  : Rotina centralizada para incluir lançamentos na CRAPLCM, 
+        Objetivo  : Rotina centralizada para incluir lançamentos na CRAPLCM,
 				            aplicando as respectivas regras de negócio.
         Observacao: -----
         Alteracoes:
@@ -436,6 +461,8 @@ DECLARE
     vr_nrseqdig       craplot.nrseqdig%TYPE;   -- Aramazena o valor do campo "nrseqdig" da CRAPLOT para referência na CRAPLCM
     vr_flgcredi       BOOLEAN;                 -- Flag indicadora para Crédito/Débito
 		vr_inprejuz       BOOLEAN;                 -- Indicador de conta em prejuízo
+		vr_vlsldblq       tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; -- Saldo bloqueado por BACENJUD (somente para Créditos)
+		vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)
 
     vr_exc_erro       EXCEPTION;
 BEGIN
@@ -581,19 +608,103 @@ BEGIN
 		  pr_tab_retorno.rowidlct, pr_tab_retorno.progress_recid_lcm;
 
     -- Se é um lançamento de crédito e se as regras de negócio do prejuízo já estão ativas
-    IF vr_reg_historico.indebcre = 'C' AND vr_inatvprj THEN
+    IF vr_reg_historico.indebcre = 'C' THEN
 			-- Identifica se a conta está em prejuízo
   		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
-			
-			IF vr_inprejuz THEN -- *** Acrescentar crítica do campo craphis.INTRANSF_CRED_PREJUIZO que está sendo criado ***
+
+			IF vr_inprejuz /* AND vr_reg_historico.intransf_cred_prejuizo = 1  */
+			AND vr_inatvprj THEN
 				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
-				
+
+				vr_vltransf := pr_vllanmto;
+
 				-- Processar bloqueio BACENJUD
+				vr_vlsldblq := fn_obtem_saldo_blq_bacenjud(pr_cdcooper
+				                                         , pr_nrdconta);
 
-				-- Realizar lançamento referente ao débito na CRAPLOT com histórico (650009)
-				-- Realizar lançamento de débito na CRAPLCM
+				IF vr_vlsldblq > 0 THEN
+					IF vr_vltransf > vr_vlsldblq THEN
+						vr_vltransf := vr_vltransf - vr_vlsldblq;
+					ELSE
+						vr_vltransf := 0;
+					END IF;
+			  END IF;
 
-				-- Realizar lançamento de crédito na TBCC_PREJUIZO_LANCAMENTO
+				-- Se há valor a transferir após verificação de bloqueio por BACENJUD
+				IF vr_vltransf > 0 THEN
+          -- Calcula o "nrseqdig"
+          vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
+                                    ,pr_nmdcampo => 'NRSEQDIG'
+                                    ,pr_dsdchave => to_char(pr_cdcooper)||';'||
+                                    to_char(pr_dtmvtolt, 'DD/MM/RRRR')||';'||
+                                    '1;100;650009');
+
+
+
+					-- Efetua débito do valor que será transferido para a Conta Transitória (créditos bloqueados por prejuízo em conta)
+					INSERT INTO craplcm (
+							dtmvtolt
+						, cdagenci
+						, cdbccxlt
+						, nrdolote
+						, nrdconta
+						, nrdocmto
+						, cdhistor
+						, nrseqdig
+						, vllanmto
+						, nrdctabb
+						, cdpesqbb
+						, dtrefere
+						, hrtransa
+						, cdoperad
+						, cdcooper
+						, cdorigem
+					)
+					VALUES (
+							pr_dtmvtolt
+						, pr_cdagenci
+						, pr_cdbccxlt
+						, 650009
+						, pr_nrdconta
+						, pr_nrdocmto
+						, 2719
+						, vr_nrseqdig
+						, vr_vltransf
+						, pr_nrdctabb
+						, 'ESTORNO DE CREDITO RECEBIDO EM C/C EM PREJUIZO'
+						, pr_dtmvtolt
+						, gene0002.fn_busca_time
+						, 1
+						, pr_cdcooper
+						, 5
+					);
+
+				  -- Insere lançamento do crédito transferido para a Conta Transitória
+					INSERT INTO TBCC_PREJUIZO_LANCAMENTO (
+					       dtmvtolt
+							 , cdagenci
+							 , nrdconta
+							 , nrdocmto
+							 , cdhistor
+							 , vllanmto
+							 , dthrtran
+							 , cdoperad
+							 , cdcooper
+							 , cdorigem
+					)
+					VALUES (
+							   pr_dtmvtolt
+							 , pr_cdagenci
+							 , pr_nrdconta
+							 , pr_nrdocmto
+							 , 2738 --- ****** SUBSTITUIR *******
+							 , vr_vltransf
+							 , SYSDATE
+							 , 1
+							 , pr_cdcooper
+							 , 5
+					);
+				END IF;
 			END IF;
 		END IF;
   EXCEPTION
@@ -605,7 +716,7 @@ BEGIN
 			END IF;
 		WHEN DUP_VAL_ON_INDEX THEN
 			pr_cdcritic := 92; -- Lançamento já existe
-      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || 
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) ||
                      ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
     WHEN OTHERS THEN
       pr_cdcritic := 9999;
