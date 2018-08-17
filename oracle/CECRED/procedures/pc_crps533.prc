@@ -323,6 +323,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                            Tivemos que voltar versão devido a não estar enviando os cheques para BBC
                            nestes casos, de devolução automática. (Wagner/Sustentação).
                            
+			   17/08/2018 - SCTASK0018345-Borderô desconto cheque - Paulo Martins - Mouts
 ............................................................................. */
 
      DECLARE
@@ -2155,6 +2156,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND crapcdb.nrctachq = pr_nrctachq
                  AND crapcdb.nrcheque = pr_nrcheque
                  AND crapcdb.insitchq IN (0, 2)
+                 AND crapcdb.insitana NOT IN (0,2) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
                  AND crapcdb.dtlibera > pr_dtlibera;
             rw_crapcdb cr_crapcdb%ROWTYPE;
 

@@ -243,6 +243,8 @@
 			               Chamado SCTASK0012893 - Gabriel (Mouts).
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+        
+        04/07/2018 - Ajuste referente SCTASK0018345
 
 ..............................................................................*/
 
@@ -1181,7 +1183,7 @@ PROCEDURE gera_lancamento:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
-                                           AND NOT CAN-DO("0,2",STRING(crapcdb.insitana))
+                                           AND NOT CAN-DO("0,2",STRING(crapcdb.insitana)) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
                                            AND crapcdb.dtdevolu = ?
                                            EXCLUSIVE-LOCK:
                        END.                        
@@ -2976,6 +2978,7 @@ PROCEDURE gera_arquivo_cecred:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2,3",STRING(crapcdb.insitchq))
+                                           AND NOT CAN-DO("0,2",STRING(crapcdb.insitana)) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
                                            AND crapcdb.dtdevolu = ?
                                            NO-LOCK:
                        END.                        
