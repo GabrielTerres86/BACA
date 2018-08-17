@@ -471,7 +471,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
           /* Totalizar o saldo de todas as aplicações */
          /* ASSIGN aux_vlsldtot = aux_vlsldtot + tt-saldo-rdca.sldresga.*/
-
+         
          /* Saldo resgatavel nos canais de autoatendimento
             Mesma condicao da tag <apli_disp_resg> */
          IF aux_rsgtdisp                 AND  /* Disponivel para resgate */
@@ -586,7 +586,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                                  TRIM(STRING(aux_vlsldnew,"zzz,zzz,zz9.99-")) +
                                           "</vlsldnew>" + 
                                      "</SALDOAPLINOVA>".
-
+      
       CREATE xml_operacao.
       ASSIGN xml_operacao.dslinxml = "<SALDOBLOQ_GARANTIA>" + 
                                           "<vlblqapl_gar>" +
@@ -598,9 +598,9 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                                        "zzz,zzz,zzz,zz9.99")) +
                                           "</vlblqpou_gar>"+      
                                      "</SALDOBLOQ_GARANTIA>".
-      
-	  CREATE xml_operacao.                               
-      ASSIGN xml_operacao.dslinxml = "<SALDORESGATEAUTOATEND>" + 
+                                     
+      CREATE xml_operacao.
+	  ASSIGN xml_operacao.dslinxml = "<SALDORESGATEAUTOATEND>" + 
                                           "<vlsldaat>" +  
                                                  TRIM(STRING(aux_vlsldaat,"zzz,zzz,zz9.99-")) +
                                           "</vlsldaat>" + 
