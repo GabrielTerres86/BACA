@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-07-02T14:47:11 -->
+<!-- 2018-08-17T16:20:37 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl040" language="groovy" pageWidth="442" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.8150000000000006"/>
 	<property name="ireport.x" value="0"/>
@@ -185,7 +185,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="9" isBold="true" pdfFontName="Courier-Bold" pdfEncoding=""/>
 				</textElement>
-				<text><![CDATA[EXTRATO BLOQUEADO PREJUÍZO]]></text>
+				<text><![CDATA[EXTRATO BLOQUEADO]]></text>
 			</staticText>
 		</band>
 	</columnHeader>
