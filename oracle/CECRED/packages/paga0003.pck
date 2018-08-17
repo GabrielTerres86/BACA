@@ -421,6 +421,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 										
 			 23/07/2018 - Fixado nome da cooperativa CECRED (paleativamente) devido problemas no processamento dos mesmos
 			              no Bancoob. (Reinert)
+
+	   16/08/2018 - Ajustado cursores da craptab para utilizar o Unique Key Index
+                    na procedure pc_gera_arrecadacao_bancoob. (Reinert) 
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Início -- PRJ406
@@ -7652,10 +7655,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         SELECT dstextab
           INTO vr_dstextab
           FROM craptab
-         WHERE nmsistem = 'CRED'
-           AND tptabela = 'GENERI'
+         WHERE upper(nmsistem) = 'CRED'
+           AND upper(tptabela) = 'GENERI'
            AND cdempres = pr_cdconven
-           AND cdacesso = 'ARQBANCOOB'
+           AND upper(cdacesso) = 'ARQBANCOOB'
            AND tpregist = 00
            AND cdcooper = pr_cdcooper;
         --
@@ -7799,10 +7802,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           --
           UPDATE craptab
              SET dstextab = lpad(to_number(substr(dstextab,1,6)) + 1, 6, '0') || ' ' || to_char(pr_dtmvtolt, 'DDMMYYYY')
-           WHERE nmsistem = 'CRED'
-             AND tptabela = 'GENERI'
+           WHERE upper(nmsistem) = 'CRED'
+             AND upper(tptabela) = 'GENERI'
              AND cdempres = pr_cdconven
-             AND cdacesso = 'ARQBANCOOB'
+             AND upper(cdacesso) = 'ARQBANCOOB'
              AND tpregist = 00
              AND cdcooper = pr_cdcooper;
           --

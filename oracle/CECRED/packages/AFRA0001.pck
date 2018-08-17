@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
       Sistema  : Rotinas referentes a Analise de Fraude
       Sigla    : AFRA
       Autor    : Odirlei Busana - AMcom
-      Data     : Novembro/2016.                   Ultima atualizacao: 04/04/2018
+      Data     : Novembro/2016.                   Ultima atualizacao: 15/08/2018
 
       Dados referentes ao programa:
 
@@ -24,6 +24,10 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                    04/04/2018 - Criacao das rotinas pc_ler_parametros_fraude e fn_envia_analise,
                                 e alteracoes na rotina pc_crias_analise_antifraude             
                                 PRJ381 - Antifraude (Teobaldo J. - AMcom) 
+																
+                   15/08/2018 - Alterada procedure pc_aprovacao_analise para enviar campo 
+				                "IdentificacaoPessoa" com o formato correto. (Reinert)
+
   ---------------------------------------------------------------------------------------------------------------*/
   
   --- Armazenar os campos alterados
@@ -245,7 +249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Sistema  : Rotinas referentes a Analise de Fraude
       Sigla    : AFRA
       Autor    : Odirlei Busana - AMcom
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 15/08/2018
 
       Dados referentes ao programa:
 
@@ -259,6 +263,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                 e alteracoes na rotina pc_crias_analise_antifraude             
                                 PRJ381 - Antifraude (Teobaldo J. - AMcom)
 
+                   15/08/2018 - Alterada procedure pc_aprovacao_analise para enviar campo 
+				                "IdentificacaoPessoa" com o formato correto. (Reinert)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---> Formatos utilizados para montagem do Json
@@ -5098,6 +5104,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                             SUBSTR(rw_craplgp.dslindig, 26, 14)
                          END;
         END IF;
+
+				vr_cdidenti := LPAD(vr_cdidenti, 14, '0');
 
         -- Mantido tratamento de dados obtidos de INS0002.pc_gps_arrecadar_sicredi
         vr_mmaacomp := lpad(rw_craplgp.mmaacomp,6,'0');
