@@ -1935,8 +1935,8 @@ create or replace package body cecred.TELA_COBTIT is
                MAX(dtdbaixa) dtmaxbai
           FROM crapcob cob
          WHERE cob.cdcooper = pr_cdcooper
-           AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac) IN 
-               (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta
+           AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrdocmto) IN 
+               (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, cde.nrboleto
                   FROM tbrecup_cobranca cde
                  WHERE cde.cdcooper = pr_cdcooper
                    AND cde.nrdconta = pr_nrdconta
@@ -1946,8 +1946,8 @@ create or replace package body cecred.TELA_COBTIT is
            AND cob.dtdbaixa >= nvl(nvl((SELECT MAX(cob.dtdpagto) -- 1) buscar pelo ultimo pagamento
                                       FROM crapcob cob
                                      WHERE cob.cdcooper = pr_cdcooper
-                                       AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac) IN 
-                                           (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta
+                                       AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrdocmto) IN 
+                                           (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, cde.nrboleto
                                               FROM tbrecup_cobranca cde
                                              WHERE cde.cdcooper = pr_cdcooper
                                                AND cde.nrdconta = pr_nrdconta
@@ -1958,8 +1958,8 @@ create or replace package body cecred.TELA_COBTIT is
                                        (SELECT MAX(cob.dtdbaixa) -- 2) buscar pela ultima baixa
                                           FROM crapcob cob
                                          WHERE cob.cdcooper = pr_cdcooper
-                                           AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac) IN 
-                                               (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta
+                                           AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrdocmto) IN 
+                                               (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, cde.nrboleto
                                                   FROM tbrecup_cobranca cde
                                                  WHERE cde.cdcooper = pr_cdcooper
                                                    AND cde.nrdconta = pr_nrdconta
