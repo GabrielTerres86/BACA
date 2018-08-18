@@ -1069,19 +1069,13 @@ function formataTabelaConsulta() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	//arrayLargura[0] = '135px';
+	arrayLargura[0] = '140px';
 	arrayLargura[1] = '80px';
 	arrayLargura[2] = '80px';
 	arrayLargura[3] = '80px';
 	arrayLargura[4] = '91px';
-	arrayLargura[5] = '54px';
-	arrayLargura[6] = '54px';
-
-	// AXAO
-	if(mostraColunasDscto == 4){
-		arrayLargura[6] = '90px';
-		arrayLargura[7] = '88px';
-	}
+	arrayLargura[5] = '85px';
+	//arrayLargura[6] = '54px';
 
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
@@ -1090,14 +1084,8 @@ function formataTabelaConsulta() {
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'center';
-	
-	// AXAO
-	if(mostraColunasDscto == 4){
-		arrayAlinha[6] = 'center';
-		arrayAlinha[7] = 'center';
-	}
-	
-	
+	arrayAlinha[6] = 'center';
+		
 	var metodoTabela = '';
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, metodoTabela );
