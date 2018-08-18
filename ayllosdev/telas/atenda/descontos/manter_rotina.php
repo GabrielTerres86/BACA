@@ -572,8 +572,6 @@
     	$arrAlterar['msg'] = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->cdata);
 
 		echo json_encode($arrAlterar);	
-	    //echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
-			
 	}else if ($operacao =='BUSCAR_TITULOS_RESGATE'){
 
 		$xml = "<Root>";
