@@ -221,7 +221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
 TYPE typ_reg_historico IS RECORD (
      indebcre        craphis.indebcre%TYPE
    , indebprj        craphis.indebprj%TYPE
-	 /*, intransf_cred_prejuizo craphis.intransf_cred_prejuizo%TYPE;*/
+	 , intransf_cred_prejuizo craphis.intransf_cred_prejuizo%TYPE
 );
 
 -- Tabela com dados dos históricos já consultados na rotina
@@ -255,7 +255,7 @@ FUNCTION fn_obtem_dados_historico(pr_cdcooper craplcm.cdcooper%TYPE
   CURSOR cr_historico IS
   SELECT his.indebprj
        , his.indebcre
-			-- , his.intransf_cred_prejuizo
+			 , his.intransf_cred_prejuizo
     FROM craphis his
    WHERE his.cdcooper = pr_cdcooper
      AND his.cdhistor = pr_cdhistor;
@@ -612,7 +612,7 @@ BEGIN
 			-- Identifica se a conta está em prejuízo
   		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
 
-			IF vr_inprejuz /* AND vr_reg_historico.intransf_cred_prejuizo = 1  */
+			IF vr_inprejuz AND vr_reg_historico.intransf_cred_prejuizo = 1  
 			AND vr_inatvprj THEN
 				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
 
