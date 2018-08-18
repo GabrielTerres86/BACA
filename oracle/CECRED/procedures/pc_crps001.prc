@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 27/04/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 26/07/2018
 
    Dados referentes ao programa:
 
@@ -236,6 +236,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                29/06/2018 - Tratamento de Históricos de Credito/Debito   
                                 José Carvalho / Marcel (AMcom)
                                                                            
+               26/07/2018 - P450 - Gravar saldo da conta transitória (Diego Simas/AMcom)
+
      ............................................................................. */
 
      DECLARE
@@ -292,6 +294,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
               ,vlsdanes crapsld.vlsdanes%type
               ,dtrefere crapsld.dtrefere%type
               ,vlblqjud crapsld.vlblqjud%TYPE
+              ,nrdconta crapsld.nrdconta%TYPE
               ,vr_rowid ROWID);
 
        TYPE typ_tab_crapsld IS TABLE OF typ_reg_crapsld INDEX BY PLS_INTEGER;
@@ -2962,7 +2965,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                           ,crapsda.vllimcre
                           ,crapsda.cdcooper
                           ,crapsda.vlsdcota
-                          ,crapsda.vlblqaco)
+                          ,crapsda.vlblqaco
+                          ,crapsda.vlblqprj)
                    VALUES (vr_tab_crapsda2(idx).nrdconta
                           ,vr_tab_crapsda2(idx).dtmvtolt
                           ,vr_tab_crapsda2(idx).vlsddisp
@@ -2976,7 +2980,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                           ,vr_tab_crapsda2(idx).vllimcre
                           ,vr_tab_crapsda2(idx).cdcooper
                           ,vr_tab_crapsda2(idx).vlsdcota
-                          ,vr_tab_crapsda2(idx).vlblqaco);
+                          ,vr_tab_crapsda2(idx).vlblqaco
+                          ,PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
+                                                  ,pr_nrdconta => vr_tab_crapsda2(idx).nrdconta));
                EXCEPTION
                  WHEN OTHERS THEN
                    vr_dscritic:= 'Erro ao atualizar tabela crapsda. '||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
@@ -3017,6 +3023,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                      ,crapsld.vlsdanes = vr_tab_crapsld(idx).vlsdanes
                      ,crapsld.dtrefere = vr_tab_crapsld(idx).dtrefere
                      ,crapsld.vlblqjud = vr_tab_crapsld(idx).vlblqjud
+                     ,crapsld.vlblqprj = PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
+                                                                ,pr_nrdconta => rw_crapsld.nrdconta)
                    WHERE rowid = vr_tab_crapsld(idx).vr_rowid;
                EXCEPTION
                  WHEN OTHERS THEN
@@ -3076,7 +3084,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                   ,crapsda.dtdsdclq
                   ,crapsda.vllimcre
                   ,crapsda.cdcooper
-                  ,crapsda.vlsdcota)
+                  ,crapsda.vlsdcota
+                  ,crapsda.vlblqprj)
            VALUES (vr_tab_crapsda2(idx).nrdconta
                   ,vr_tab_crapsda2(idx).dtmvtolt
                   ,vr_tab_crapsda2(idx).vlsddisp
@@ -3089,7 +3098,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                   ,vr_tab_crapsda2(idx).dtdsdclq
                   ,vr_tab_crapsda2(idx).vllimcre
                   ,vr_tab_crapsda2(idx).cdcooper
-                  ,vr_tab_crapsda2(idx).vlsdcota);
+                  ,vr_tab_crapsda2(idx).vlsdcota
+                  ,PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => vr_tab_crapsda2(idx).nrdconta));
        EXCEPTION
          WHEN OTHERS THEN
            vr_dscritic:= 'Erro ao atualizar tabela crapsda. '||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
@@ -3128,6 +3139,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapsld.vlsdanes = vr_tab_crapsld(idx).vlsdanes
              ,crapsld.dtrefere = vr_tab_crapsld(idx).dtrefere
              ,crapsld.vlblqjud = vr_tab_crapsld(idx).vlblqjud
+             ,crapsld.vlblqprj = PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
+                                                        ,pr_nrdconta => vr_tab_crapsld(idx).nrdconta)
            WHERE rowid = vr_tab_crapsld(idx).vr_rowid;
        EXCEPTION
          WHEN OTHERS THEN
