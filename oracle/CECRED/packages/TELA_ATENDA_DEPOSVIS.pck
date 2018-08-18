@@ -1513,8 +1513,8 @@ BEGIN
                 IF pr_vljucneg > 0 THEN
                   -- Amortiza os juros + 60 (Hist. 37 + Hist. 57)
                   IF rw_craplcm_outros.vllanmto >= pr_vljucneg THEN
-                    pr_vljucneg := 0;
                     rw_craplcm_outros.vllanmto := rw_craplcm_outros.vllanmto - pr_vljucneg;
+										pr_vljucneg := 0;
                   ELSE
                     pr_vljucneg := pr_vljucneg - rw_craplcm_outros.vllanmto;
                     rw_craplcm_outros.vllanmto := 0;
@@ -1525,8 +1525,8 @@ BEGIN
 									IF pr_vljucesp > 0 THEN
 										-- Amortiza os juros + 60 (Hist. 38)
 										IF rw_craplcm_outros.vllanmto >= pr_vljucesp THEN
-											pr_vljucesp := 0;
 											rw_craplcm_outros.vllanmto := rw_craplcm_outros.vllanmto - pr_vljucesp;
+											pr_vljucesp := 0;
 										ELSE
 											pr_vljucesp := pr_vljucesp - rw_craplcm_outros.vllanmto;
 											rw_craplcm_outros.vllanmto := 0;
