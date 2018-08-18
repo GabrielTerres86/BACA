@@ -36,7 +36,7 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Ayllos',"",false);
 	}else{
-		exibirErro('inform','Liberação efetuada com sucesso!','Alerta - Ayllos',"",false);
+		exibirErro('inform',utf8ToHtml('Liberação efetuada com sucesso!'),'Alerta - Ayllos',"",false);
 	}
 
 ?>
