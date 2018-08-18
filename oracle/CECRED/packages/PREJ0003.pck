@@ -3446,8 +3446,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     rw_crapepr   cr_crapepr%ROWTYPE;
 
     -- VARIÁVEIS
-    vr_vlpagmto     NUMBER :=pr_vlrpagto
-     ;
+    vr_vlpagmto     NUMBER :=pr_vlrpagto;
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
 
@@ -3474,8 +3473,6 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
       CLOSE BTCH0001.cr_crapdat;
     END IF;
 
-		/*
-
     -- Buscar dados do contrato
     OPEN  cr_crapepr;
     FETCH cr_crapepr INTO rw_crapepr;
@@ -3486,8 +3483,8 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
       CLOSE cr_crapepr;
 
       -- Deve retornar erro de execução
-      pr_cdcritic := 0;
-      pr_dscritic := 'Contrato '||TRIM(GENE0002.fn_mask_contrato(pr_nrctremp))||
+      vr_cdcritic := 0;
+      vr_dscritic := 'Contrato '||TRIM(GENE0002.fn_mask_contrato(pr_nrctremp))||
                      ' do acordo não foi encontrado para a conta '||
                      TRIM(GENE0002.fn_mask_conta(pr_nrdconta))||'.';
       RAISE vr_exp_erro;
@@ -3509,9 +3506,8 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
     -- Pagamento de Prejuizo
     IF rw_crapepr.inprejuz = 1 THEN
-
       -- Realizar a chamada da rotina para pagamento de prejuizo
-      EMPR9999_RANGEL.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
+      EMPR9999.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_cdagenci => pr_cdagenci
                                   ,pr_crapdat  => rw_crapdat
@@ -3543,7 +3539,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     ELSIF rw_crapepr.flgpagto = 1 THEN
 
       -- Realizar a chamada da rotina para pagamento de prejuizo
-      EMPR9999_RANGEL.pc_pagar_emprestimo_folha(pr_cdcooper => pr_cdcooper
+      EMPR9999.pc_pagar_emprestimo_folha(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_cdagenci => pr_cdagenci
                                ,pr_crapdat  => rw_crapdat
@@ -3576,7 +3572,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
       IF rw_crapepr.tpemprst = 0 THEN
 
         -- Pagar empréstimo TR
-            EMPR9999_RANGEL.pc_pagar_emprestimo_tr(pr_cdcooper => pr_cdcooper
+            EMPR9999.pc_pagar_emprestimo_tr(pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_cdagenci => pr_cdagenci
                               ,pr_crapdat  => rw_crapdat
@@ -3591,7 +3587,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                               ,pr_txjuremp => rw_crapepr.txjuremp
                               ,pr_dtultpag => rw_crapepr.dtultpag
                               ,pr_vlparcel => vr_vlpagmto
-                              ,pr_idorigem => pr_idorigem
+                              ,pr_idorigem => 1
                               ,pr_nmtelant => 'BLQPREJU'
                               ,pr_cdoperad => pr_cdoperad
                               ,pr_vltotpag => pr_vltotpag
@@ -3608,7 +3604,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
         -- Pagar empréstimo PP
 
-         EMPR9999_RANGEL.pc_pagar_emprestimo_pp(pr_cdcooper => pr_cdcooper
+         EMPR9999.pc_pagar_emprestimo_pp(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_cdagenci => pr_cdagenci
                                ,pr_crapdat  => rw_crapdat
@@ -3617,7 +3613,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                ,pr_vlsdeved => rw_crapepr.vlsdeved
                                ,pr_vlsdevat => rw_crapepr.vlsdevat
                                ,pr_vlparcel => vr_vlpagmto
-                               ,pr_idorigem => pr_idorigem
+                               ,pr_idorigem => 1
                                ,pr_nmtelant => 'BLQPREJU'
                                ,pr_cdoperad => pr_cdoperad
                                ,pr_idvlrmin => pr_idvlrmin
@@ -3632,8 +3628,6 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
       END IF;
     END IF;
-		*/
-
   EXCEPTION
     WHEN vr_exp_erro THEN
       -- Retornar total pago como zero

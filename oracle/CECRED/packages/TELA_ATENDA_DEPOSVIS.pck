@@ -61,6 +61,18 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);
+																		 
+  PROCEDURE pc_paga_emprestimo_ct(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                 ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                 ,pr_vlrabono  IN NUMBER                --> valor de abono pago
+                                 ,pr_vlrpagto  IN NUMBER                --> valor pago
+                                 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);																		 
 
   -- consulta data de inclusão prejuízo
   PROCEDURE pc_consulta_dt_preju(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
@@ -1004,30 +1016,36 @@ END pc_busca_saldos_devedores;
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+		
+		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
-    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
-    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Root'
                           ,pr_posicao  => 0
                           ,pr_tag_nova => 'Dados'
                           ,pr_tag_cont => NULL
                           ,pr_des_erro => vr_dscritic);
+													
+				OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+				FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+				CLOSE BTCH0001.cr_crapdat;
+													
+			  IF pr_vlrpagto > PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta) THEN
+					vr_dscritic := 'Valor informado para pagamento é maior que o saldo disponível.';
+					
+					RAISE vr_exc_erro;
+				END IF;
 
-    -- PROCEDURE/FUNCAO -> RANGEL (AMcom)
-    -- Fazer a chamada de pagamento do empréstimo
-    -- Tratamento de erros
-    -- vr_dscritic := 'erro teste de erro';
-    -- RAISE vr_exc_erro;
-
-        prej0003.pc_pagar_contrato_emprestimo(pr_cdcooper =>  pr_cdcooper,
+        PREJ0003.pc_pagar_contrato_emprestimo(pr_cdcooper =>  pr_cdcooper,
                                                       pr_nrdconta => pr_nrdconta,
                                                       pr_cdagenci => 1, -- Questionar
                                                       pr_nrctremp => pr_nrctremp,
                                                       pr_nrparcel => 1, --Questionar
-                                                      pr_cdoperad => 1, --Questionar
+                                                      pr_cdoperad => '1', --Questionar
                                                       pr_vlrpagto => pr_vlrpagto,
-                                                      pr_idorigem =>0,  --Questionar
+                                                      pr_idorigem => 0,  --Questionar
                                                       pr_idvlrmin => vr_idvlrmin,
                                                       pr_vltotpag => vr_vltotpag,
                                                       pr_cdcritic => vr_cdcritic,
@@ -1036,19 +1054,40 @@ END pc_busca_saldos_devedores;
        IF  vr_cdcritic <> NULL OR vr_dscritic <> NULL THEN
          RAISE vr_exc_erro;
        END IF;
-
+			 
+			 IF vr_vltotpag > 0 THEN
+				 PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+																		 , pr_nrdconta => pr_nrdconta
+																		 , pr_vlrlanc => vr_vltotpag
+																		 , pr_dtmvtolt => rw_crapdat.dtmvtolt
+																		 , pr_cdcritic => vr_cdcritic
+																		 , pr_dscritic => vr_dscritic);
+																		 
+				 IF  vr_cdcritic <> NULL OR vr_dscritic <> NULL THEN
+					 RAISE vr_exc_erro;
+				 END IF;
+			 ELSE 
+				 vr_dscritic := 'Nenhum valor foi pago.';
+				 
+				 RAISE vr_exc_erro;
+			 END IF;
+			 
+			 COMMIT;
     EXCEPTION
         WHEN vr_exc_erro THEN
-          -- Carregar XML padrão para variável de retorno não utilizada.
-          -- Existe para satisfazer exigência da interface.
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := vr_dscritic;
+					
           pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
+				  ROLLBACK;
         WHEN OTHERS THEN
-          -- Carregar XML padrão para variável de retorno não utilizada.
-          -- Existe para satisfazer exigência da interface.
-          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+          pr_cdcritic := 0;
+					pr_dscritic := 'Erro não tratado na rotina TELA_ATENDA_DEPOSVIS.pc_paga_emprestimo_ct: ' || SQLERRM;
+				
+					pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
-
+          ROLLBACK;
   END pc_paga_emprestimo_ct;
 
   PROCEDURE pc_consulta_dt_preju(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa

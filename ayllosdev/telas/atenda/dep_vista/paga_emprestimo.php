@@ -36,9 +36,9 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Ayllos',"",false);
+		exibirErro('error',utf8ToHtml($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
 	}else{
-		exibirErro('inform','Pagamento de Empréstimo efetuado com sucesso!','Alerta - Ayllos',"",false);
+		exibirErro('inform',utf8ToHtml('Pagamento de Empréstimo efetuado com sucesso!'),'Alerta - Ayllos',"mostraDetalhesCT()",false);
 	}	
 
 ?>

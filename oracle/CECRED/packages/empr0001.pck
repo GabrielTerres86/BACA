@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --  Sistema  : Rotinas gen¿ricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 26/09/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 25/06/2018
   --
   -- Dados referentes ao programa:
   --
@@ -46,8 +46,14 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --             19/04/2018 - Ajustado para so descontar do campo Valores Pagos, historicos novos de abono. Os historicos antigos nao devem descontar.
   --                          Heitor (Mouts) - Prj 324
   --
-  --             31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
-  --                          da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)  
+  --             01/06/2018 - Inclusao dos registros de Emprestimo Consignado na pc_obtem_dados_empresti_web (Andrew Albuquerque - GFT)
+  --
+  --             25/06/2018 - Ajustes para a inclusão dos registros de Emprestimo Consignado na pc_obtem_dados_empresti
+  --                          e remoção da pc_obtem_dados_empresti_web (Andrew Albuquerque - GFT)
+  --
+  --             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+  --
+  --             17/07/2018 - Ajuste no retorno da procedure 'pc_obtem_dados_empresti' (Leonardo Oliveira - GFT)
   ---------------------------------------------------------------------------------------------------------------
   -- CURSOR para buscar o saldo que será no Extrato PP.
   -- Usado também an rotina PREJ0001
@@ -249,7 +255,10 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,idfiniof crapepr.idfiniof%TYPE
     ,vliofepr crapepr.vliofepr%TYPE
     ,vlrtarif crapepr.vltarifa%TYPE
-    ,vlrtotal crapepr.vlsdeved%TYPE);
+    ,vlrtotal crapepr.vlsdeved%TYPE
+    --AWAE: Ajuste para Consignado.
+    ,dstpcont VARCHAR2(40)
+    ,cdtpcont INTEGER);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -990,7 +999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 31/10/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 25/06/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1057,12 +1066,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
   --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
   --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
+  --             01/06/2018 - Inclusao dos registros de Emprestimo Consignado na pc_obtem_dados_empresti_web (Andrew Albuquerque - GFT)
+  --
+  --            25/06/2018 - Ajustes para a inclusão dos registros de Emprestimo Consignado na pc_obtem_dados_empresti
+  --                         e remoção da pc_obtem_dados_empresti_web (Andrew Albuquerque - GFT)
 
-  --             05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
-  --                          Josiane Stiehler- AMcom
-
-  --             31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
-  --                          da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -4936,6 +4944,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     07/06/2018 - P410 - Inclusao de campos do IOF (Marcos-Envolti)
 
+                    25/06/2018 - Ajustes para a inclusão dos registros de Emprestimo Consignado (Andrew Albuquerque - GFT)
+
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -4949,54 +4959,116 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       -- Busca dos dados do emprestimo passado ou de todos os emprestimos da conta quando nrctremp = 0
       CURSOR cr_crapepr IS
-        SELECT nrctremp
-              ,cdlcremp
-              ,inliquid
-              ,inprejuz
-              ,dtultpag
-              ,txjuremp
-              ,vlsdeved
-              ,vljuracu
-              ,qtprecal
-              ,qtpreemp
-              ,tpemprst
-              ,dtmvtolt
-              ,cdagenci
-              ,cdbccxlt
-              ,nrdolote
-              ,flgpagto
-              ,dtdpagto
-              ,cdfinemp
-              ,nrctaav1
-              ,nrctaav2
-              ,vljurmes
-              ,vlemprst
-              ,txmensal
-              ,vlprejuz
-              ,vlsdprej
-              ,dtprejuz
-              ,vljraprj
-              ,vljrmprj
-              ,qtmesdec
-              ,vlpreemp
-              ,flgdigit
-              ,vlttmupr
-              ,vlttjmpr
-              ,vlpgmupr
-              ,vlpgjmpr
-              ,cdorigem
-              ,qtimpctr
-              ,qttolatr
-        ,vliofcpl
+        WITH tbl_crapepr AS (
+        SELECT epr.nrctremp
+              ,epr.cdlcremp
+              ,epr.inliquid
+              ,epr.inprejuz
+              ,epr.dtultpag
+              ,epr.txjuremp
+              ,epr.vlsdeved
+              ,epr.vljuracu
+              ,epr.qtprecal
+              ,epr.qtpreemp
+              ,epr.tpemprst
+              ,epr.dtmvtolt
+              ,epr.cdagenci
+              ,epr.cdbccxlt
+              ,epr.nrdolote
+              ,epr.flgpagto
+              ,epr.dtdpagto
+              ,epr.cdfinemp
+              ,epr.nrctaav1
+              ,epr.nrctaav2
+              ,epr.vljurmes
+              ,epr.vlemprst
+              ,epr.txmensal
+              ,epr.vlprejuz
+              ,epr.vlsdprej
+              ,epr.dtprejuz
+              ,epr.vljraprj
+              ,epr.vljrmprj
+              ,epr.qtmesdec
+              ,epr.vlpreemp
+              ,epr.flgdigit
+              ,epr.vlttmupr
+              ,epr.vlttjmpr
+              ,epr.vlpgmupr
+              ,epr.vlpgjmpr
+              ,epr.cdorigem
+              ,epr.qtimpctr
+              ,epr.qttolatr
+              ,epr.vliofcpl
               ,idfiniof
               ,vliofepr
               ,vltarifa
-          FROM crapepr
-         WHERE cdcooper = pr_cdcooper
-               AND nrdconta = pr_nrdconta
-               AND nrctremp = DECODE(pr_nrctremp, 0, nrctremp, pr_nrctremp) --> Se zero traz todos, senão só ele
-         ORDER BY cdlcremp
-                 ,cdfinemp;
+              ,'Emp. E Financ.' as dstpcont
+              ,1 as cdtpcont
+          FROM crapepr epr
+         WHERE epr.cdcooper = pr_cdcooper
+           AND epr.nrdconta = pr_nrdconta
+           AND epr.nrctremp = DECODE(pr_nrctremp, 0, epr.nrctremp, pr_nrctremp) --> Se zero traz todos, senão só ele
+         ORDER BY epr.cdlcremp
+                 ,epr.cdfinemp),
+        tbl_consignado AS (
+        SELECT cns.nrctremp
+              ,null as cdlcremp
+              ,null as inliquid
+              ,null as inprejuz
+              ,null as dtultpag
+              ,0.0660306 as txjuremp -- 0,0660306  NUMBER(12, 7)
+              ,cns.vlsaldo_devedor as vlsdeved
+              ,4591.46 as vljuracu -- 4.591,46 NUMBER(12, 2)
+              ,null as qtprecal
+              ,cns.qtparcelas as qtpreemp
+              ,1 as tpemprst
+              ,cns.dtmovimento as dtmvtolt
+              ,null as cdagenci
+              ,0 as cdbccxlt
+              ,0 as nrdolote
+              ,null as flgpagto
+              ,null as dtdpagto
+              ,null as cdfinemp
+              ,null as nrctaav1
+              ,0 as nrctaav2
+              ,159.38 as vljurmes -- 159,38 NUMBER(12, 2)
+              ,cns.vlfinanciado as vlemprst
+              ,2.0000000 as txmensal --2,0000000 NUMBER(25,6)
+              ,null as vlprejuz
+              ,null as vlsdprej
+              ,null as dtprejuz
+              ,null as vljraprj
+              ,null as vljrmprj
+              ,18 as qtmesdec
+              ,cns.vlparcela as vlpreemp
+              ,null as flgdigit
+              ,null as vlttmupr
+              ,null as vlttjmpr
+              ,null as vlpgmupr
+              ,null as vlpgjmpr
+              ,null as cdorigem
+              ,null as qtimpctr
+              ,null as qttolatr
+              ,null as vliofcpl
+              ,null as idfiniof
+              ,null as vliofepr
+              ,null as vltarifa
+              ,'Emp. Consignado' as dstpcont
+              ,2 as cdtpcont
+          FROM tbepr_consignado_contrato cns
+         WHERE cns.insitctr = 2 -- já é um contrato
+           AND cns.cdcooper = pr_cdcooper
+           AND cns.nrdconta = pr_nrdconta
+           AND cns.nrctremp = DECODE(pr_nrctremp, 0, cns.nrctremp, pr_nrctremp) --> Se zero traz todos, senão só ele
+           )
+        SELECT emp.*
+          FROM tbl_crapepr emp
+         UNION
+        SELECT ccs.*
+          FROM tbl_consignado ccs
+         ;
+      rw_crapepr cr_crapepr%ROWTYPE;
+      
       -- Buscar dados da linha de crédito
       CURSOR cr_craplcr(pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
         SELECT dslcremp
@@ -5352,6 +5424,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
 
           -- Buscar descrição da linha de crédito
+          -- apenas se não for Empréstimo Consignado
+          IF rw_crapepr.cdtpcont = 1 THEN
           OPEN cr_craplcr(pr_cdlcremp => rw_crapepr.cdlcremp);
           FETCH cr_craplcr
             INTO rw_craplcr;
@@ -5377,6 +5451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             FETCH cr_gnsbmod INTO rw_gnsbmod;
             --Fechar Cursor
             CLOSE cr_gnsbmod;
+          END IF;
           END IF;
 
           -- Verifica se cobra Multa
@@ -5433,6 +5508,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_vlprvenc := 0;
 
           -- Calculo de saldo devedor em emprestimos baseado na includes/lelem.i.
+          -- apenas se não for Empréstimo Consignado
+          IF rw_crapepr.cdtpcont = 1 THEN
           pc_calc_saldo_deved_epr_lem(pr_cdcooper   => pr_cdcooper --> Cooperativa conectada
                                      ,pr_cdprogra   => pr_cdprogra --> Código do programa corrente
                                      ,pr_cdagenci   => rw_crapepr.cdagenci --> Código da agência
@@ -5465,6 +5542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           IF pr_des_reto = 'NOK' THEN
             -- Gerar exceção
             RAISE vr_exc_erro2;
+          END IF;
           END IF;
           -- Verifica se deve deixar saldo provisionado no chq. sal
           IF NOT vr_tab_flgfolha THEN
@@ -5648,6 +5726,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
 
           /*** PORTABILIDADE - Verifica se eh uma proposta de portabilidade **/
+          -- apenas se não for Empréstimo Consignado
+          IF rw_crapepr.cdtpcont = 1 THEN
           EMPR0006.pc_possui_portabilidade( pr_cdcooper => pr_cdcooper         --Codigo Cooperativa
                                            ,pr_nrdconta => pr_nrdconta         --Numero da Conta
                                            ,pr_nrctremp => rw_crapepr.nrctremp --Numero de Emprestimo
@@ -5661,6 +5741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              OR nvl(vr_cdcritic,0) <> 0 THEN
             -- Levantar exceção
             RAISE vr_exc_erro;
+          END IF;
           END IF;
         /*** FIM - PORTABILIDADE - Verifica se eh uma proposta de portabilidade **/
 
@@ -5742,8 +5823,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                                                        ,1
                                                                                        ,6));
           pr_tab_dados_epr(vr_indadepr).tpemprst := rw_crapepr.tpemprst;
+
+          -- AWAE: Ajuste para consignado.
+          IF rw_crapepr.cdtpcont = 1 THEN -- emprestimo padrão
           pr_tab_dados_epr(vr_indadepr).cdtpempr := '0,1,2';
           pr_tab_dados_epr(vr_indadepr).dstpempr := 'Cálculo Atual,Pré-Fixada,Pós-Fixado';
+          ELSIF rw_crapepr.cdtpcont = 2 THEN -- emprestimo consignado
+            pr_tab_dados_epr(vr_indadepr).cdtpempr := '1';
+            pr_tab_dados_epr(vr_indadepr).dstpempr := 'Price Pre-Fixado';
+          END IF;
+          pr_tab_dados_epr(vr_indadepr).dstpcont := rw_crapepr.dstpcont;
+          pr_tab_dados_epr(vr_indadepr).cdtpcont := rw_crapepr.cdtpcont;
+
           pr_tab_dados_epr(vr_indadepr).perjurmo := rw_craplcr.perjurmo;
           pr_tab_dados_epr(vr_indadepr).inliquid := rw_crapepr.inliquid;
           pr_tab_dados_epr(vr_indadepr).flgatras := vr_flgatras;
@@ -5823,6 +5914,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- A utilizacao da taxa diaria para conversao anual eh devido o
             -- contrato antigo nao possuir taxa mensal
             pr_tab_dados_epr(vr_indadepr).txanual  := TRUNC((POWER(1 + (rw_crawepr.txdiaria / 100), 360) - 1) * 100, 5);
+          END IF;
+          
+          -- em caso de emprestimo consignado alterar valores flgimppr e flgimpnp
+          IF rw_crapepr.cdtpcont = 2 THEN 
+            pr_tab_dados_epr(vr_indadepr).flgimppr := 1;--True;
+            pr_tab_dados_epr(vr_indadepr).flgimpnp := 0;--False;
           END IF;
           -- Para empréstimos de preju¿zo
           IF pr_tab_dados_epr(vr_indadepr).inprejuz > 0 THEN
@@ -6049,11 +6146,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
 
           -- Montar descrição de parcelas a pagar
+          
+          IF rw_crapepr.cdtpcont = 2 THEN
+             --##
+              pr_tab_dados_epr(vr_indadepr).dspreapg := '17,0000/024 ->  7,0000';
+          ELSE
           pr_tab_dados_epr(vr_indadepr).dspreapg := lpad(to_char(vr_qtprecal,'fm990d0000'),11,' ')
                                                  || '/'
                                                  || to_char(rw_crapepr.qtpreemp,'fm000')
                                                  || ' ->'
                                                  || lpad(to_char(vr_qtpreapg,'fm990d0000'),8,' ')||' ';
+          END IF;
           pr_tab_dados_epr(vr_indadepr).qtpreapg := vr_qtpreapg;
           -- Guardar o valor prestações a pagar cfme já calculado
           IF rw_crapepr.tpemprst IN (1,2) THEN
@@ -6319,7 +6422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Agosto/2015.                         Ultima atualizacao: 23/06/2017
+       Data    : Agosto/2015.                         Ultima atualizacao: 25/06/2018
 
        Dados referentes ao programa:
 
@@ -6334,6 +6437,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    07/06/2018 - P410 - Inclusao dos campos do IOF (Marcos-Envolti)
 
+                   01/06/2018 - Inclusao dos registros de Emprestimo Consignado (Andrew Albuquerque - GFT)
+
+                   25/06/2018 - Ajustes para remoção do Consignado da pc_obtem_dados_empresti_web, pois
+                                este passo a vir na pc_obtem_dados_empresti (Andrew Albuquerque - GFT)
     ............................................................................. */
 
     -------------------------- VARIAVEIS ----------------------
@@ -6500,7 +6607,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
     END IF;
 
-
     -- Inicializar o CLOB
     vr_des_xml := NULL;
     dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -6626,6 +6732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<qttolatr>' || vr_tab_dados_epr(vr_index).qttolatr || '</qttolatr>' ||
             '<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
                         '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
+                        '<dstpcont>' || vr_tab_dados_epr(vr_index).dstpcont || '</dstpcont>' ||
+                        '<cdtpcont>' || vr_tab_dados_epr(vr_index).cdtpcont || '</cdtpcont>' ||
                       '</inf>' );
 
       -- buscar proximo
@@ -7815,11 +7923,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
 
-      -- Variáveis P450 - Regultório de Crédito
-      vr_incrineg    INTEGER;
-      vr_tab_retorno lanc0001.typ_reg_retorno;
-      vr_fldebita    BOOLEAN;
-      
     BEGIN
       --Inicializar variavel erro
       pr_des_reto := 'OK';
@@ -7848,42 +7951,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_erro;
         END IF;
 
-         -- Atualiza lote e e Insere lançamento
-         -- P450 - Regulatório de Crédito
+        --Inserir Lancamento
         BEGIN
-            LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => pr_dtmvtolt
-                                              ,pr_cdagenci => pr_cdpactra
-                                              ,pr_cdbccxlt => pr_cdbccxlt
-                                              ,pr_nrdolote => pr_nrdolote
-                                              ,pr_nrdconta => pr_nrdconta
-                                              ,pr_nrdocmto => pr_nrseqdig
-                                              ,pr_cdhistor => pr_cdhistor
-                                              ,pr_nrseqdig => pr_nrseqdig
-                                              ,pr_vllanmto => pr_vllanmto
-                                              ,pr_nrdctabb => pr_nrdconta
-                                              ,pr_cdpesqbb => gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
-                                              ,pr_hrtransa => gene0002.fn_busca_time
-                                              ,pr_cdoperad => pr_cdoperad
-                                              ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nrdctitg => gene0002.fn_mask(pr_nrdconta, '99999999')
-                                              ,pr_nrparepr => pr_nrparepr
-                                              ,pr_nrseqava => pr_nrseqava
-                                              ,pr_idlautom => pr_idlautom
-                                              -- OUTPUT --
-                                              ,pr_tab_retorno => vr_tab_retorno
-                                              ,pr_incrineg => vr_incrineg
-                                              ,pr_cdcritic => vr_cdcritic
-                                              ,pr_dscritic => vr_dscritic); 
-                      
-            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-               IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                  RAISE vr_exc_erro;
-               ELSE -- Não foi possível debitar (crítica de negócio)
+          INSERT INTO craplcm
+            (craplcm.dtmvtolt
+            ,craplcm.cdagenci
+            ,craplcm.cdbccxlt
+            ,craplcm.nrdolote
+            ,craplcm.nrdconta
+            ,craplcm.nrdctabb
+            ,craplcm.nrdctitg
+            ,craplcm.nrdocmto
+            ,craplcm.cdhistor
+            ,craplcm.nrseqdig
+            ,craplcm.vllanmto
+            ,craplcm.cdcooper
+            ,craplcm.nrparepr
+            ,craplcm.cdpesqbb
+            ,craplcm.nrseqava
+            ,craplcm.cdoperad
+            ,craplcm.hrtransa
+            ,craplcm.idlautom)
+          VALUES
+            (pr_dtmvtolt
+            ,pr_cdpactra
+            ,pr_cdbccxlt
+            ,pr_nrdolote
+            ,pr_nrdconta
+            ,pr_nrdconta
+            ,gene0002.fn_mask(pr_nrdconta, '99999999')
+            ,pr_nrseqdig
+            ,pr_cdhistor
+            ,pr_nrseqdig
+            ,pr_vllanmto
+            ,pr_cdcooper
+            ,pr_nrparepr
+            ,gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
+            ,pr_nrseqava
+            ,pr_cdoperad
+            ,gene0002.fn_busca_time
+            ,pr_idlautom);
+        EXCEPTION
+          WHEN OTHERS THEN
             vr_cdcritic := 0;
-                  vr_dscritic:='Lançamento não efetuado';
+            vr_dscritic := 'Erro ao inserir na craplcm. ' || SQLERRM;
+            --Levantar Excecao
             RAISE vr_exc_erro;
-               END IF;	
-            END IF;   
         END;
       END IF;
 
@@ -11040,8 +11153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Objetivo  : Rotina para efetivar pagamento parcela atrasada
 
        Alteracoes: 28/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
-                   31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
-                                da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)  
+
     ............................................................................. */
 
     DECLARE
@@ -11134,26 +11246,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Sair
           RAISE vr_exc_saida;
         END IF;
-       
-        IF UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
-         /* Valor da multa */
-         IF nvl(vr_vlrmulta, 0) > 0 THEN
+
+        /* Valor da multa */
+        IF nvl(vr_vlrmulta, 0) > 0 AND pr_nmdatela <> 'BLQPREJU' THEN
           /* Lanca em C/C e atualiza o lote */
           EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                               ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
-                                               ,pr_cdagenci => pr_cdagenci --> Código da agência
-                                               ,pr_cdbccxlt => 100 --> Número do caixa
-                                               ,pr_cdoperad => pr_cdoperad --> Código do Operador
-                                               ,pr_cdpactra => pr_cdpactra --> P.A. da transação
-                                               ,pr_nrdolote => vr_lotemult --> Numero do Lote
-                                               ,pr_nrdconta => pr_nrdconta --> Número da conta
-                                               ,pr_cdhistor => vr_cdhismul --> Codigo historico
-                                               ,pr_vllanmto => vr_vlrmulta --> Valor da parcela emprestimo
-                                               ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
-                                               ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
-                                               ,pr_nrseqava => pr_nrseqava -- Pagamento: Sequencia do avalista
-                                               ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
-                                               ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
+                                        ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+                                        ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                        ,pr_cdbccxlt => 100 --> Número do caixa
+                                        ,pr_cdoperad => pr_cdoperad --> Código do Operador
+                                        ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+                                        ,pr_nrdolote => vr_lotemult --> Numero do Lote
+                                        ,pr_nrdconta => pr_nrdconta --> Número da conta
+                                        ,pr_cdhistor => vr_cdhismul --> Codigo historico
+                                        ,pr_vllanmto => vr_vlrmulta --> Valor da parcela emprestimo
+                                        ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+                                        ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                        ,pr_nrseqava => pr_nrseqava -- Pagamento: Sequencia do avalista
+                                        ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
+                                        ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
           --Se Retornou erro
           IF vr_des_erro <> 'OK' THEN
             --Sair
@@ -11163,7 +11274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
         /* Pagamento de juros de mora */
         IF nvl(vr_vlatraso, 0) > 0
-           AND nvl(vr_vlpagsld, 0) >= 0 THEN
+           AND nvl(vr_vlpagsld, 0) >= 0 AND pr_nmdatela <> 'BLQPREJU' THEN
           /* Debita o pagamento da parcela da C/C */
           EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
@@ -11189,7 +11300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
         /* Projeto 410 - efetua o debito do IOF complementar de atraso */
         IF nvl(vr_vliofcpl, 0) > 0
-           AND nvl(vr_vlpagsld, 0) >= 0 THEN
+           AND nvl(vr_vlpagsld, 0) >= 0 AND pr_nmdatela <> 'BLQPREJU' THEN
 
           /* Debita o valor do IOF complementar atraso da C/C */
           EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -11217,7 +11328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
 
         /* Lancamento de Valor Pago da Parcela */
-        IF nvl(vr_vlpagsld, 0) > 0 THEN
+        IF nvl(vr_vlpagsld, 0) > 0 AND pr_nmdatela <> 'BLQPREJU' THEN
           /* Debita o pagamento da parcela da C/C */
           EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
@@ -11238,36 +11349,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           IF vr_des_erro <> 'OK' THEN
             --Sair
             RAISE vr_exc_ok;
-          END IF;
-          --Marcar transacao como realizada
-          vr_flgtrans := TRUE;
+          END IF; 
         END IF;
-    END IF;    
-        
-
-      IF UPPER(pr_nmdatela) = 'BLQPREJU' THEN
-      
-          PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
-                                        pr_nrdconta => pr_nrdconta,
-                                        pr_cdoperad => pr_cdoperad,
-                                        pr_vlrlanc  => vr_vlrmulta  + 
-                                                       vr_vlatraso  +
-                                                       vr_vliofcpl  +
-                                                       vr_vlpagsld,
-                                                       
-                                        pr_dtmvtolt => pr_dtmvtolt,
-                                       
-                                        pr_cdcritic => vr_cdcritic,
-                                        pr_dscritic => vr_dscritic);
-                                               
-          --Se Retornou erro
-          IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-            --Sair
-            RAISE vr_exc_saida;
-          END IF;
-      
-      END IF;
-      
+				
+         --Marcar transacao como realizada
+          vr_flgtrans := TRUE;
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
@@ -12596,9 +12682,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
        Alteracoes: 28/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
 
-                   31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
-                                da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)
-
     ............................................................................. */
 
     DECLARE
@@ -12666,35 +12749,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Sair
           RAISE vr_exc_saida;
         END IF;
-        
-       IF UPPER(pr_nmdatela) <> 'BLQPREJU' THEN  
-        
-        /* Lanca em C/C e atualiza o lote */
-        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                      ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
-                                      ,pr_cdagenci => pr_cdagenci --> Código da agência
-                                      ,pr_cdbccxlt => 100 --> Número do caixa
-                                      ,pr_cdoperad => pr_cdoperad --> Código do Operador
-                                      ,pr_cdpactra => pr_cdpactra --> P.A. da transação
-                                      ,pr_nrdolote => vr_nrdolote --> Numero do Lote
-                                      ,pr_nrdconta => pr_nrdconta --> Número da conta
-                                      ,pr_cdhistor => vr_cdhistor --> Codigo historico
-                                      ,pr_vllanmto => pr_vlparepr --> Valor da parcela emprestimo
-                                      ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
-                                      ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
-                                      ,pr_nrseqava => pr_nrseqava --> Pagamento: Sequencia do avalista
-                                      ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
-                                      ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
-        --Se Retornou erro
-        IF vr_des_erro <> 'OK' THEN
-          --Sair
-          RAISE vr_exc_saida;
-        END IF;
+				
+				IF pr_nmdatela <> 'BLQPREJU' THEN
+
+					/* Lanca em C/C e atualiza o lote */
+					EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+																				,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+																				,pr_cdagenci => pr_cdagenci --> Código da agência
+																				,pr_cdbccxlt => 100 --> Número do caixa
+																				,pr_cdoperad => pr_cdoperad --> Código do Operador
+																				,pr_cdpactra => pr_cdpactra --> P.A. da transação
+																				,pr_nrdolote => vr_nrdolote --> Numero do Lote
+																				,pr_nrdconta => pr_nrdconta --> Número da conta
+																				,pr_cdhistor => vr_cdhistor --> Codigo historico
+																				,pr_vllanmto => pr_vlparepr --> Valor da parcela emprestimo
+																				,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+																				,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+																				,pr_nrseqava => pr_nrseqava --> Pagamento: Sequencia do avalista
+																				,pr_des_reto => vr_des_erro --> Retorno OK / NOK
+																				,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
+					--Se Retornou erro
+					IF vr_des_erro <> 'OK' THEN
+						--Sair
+						RAISE vr_exc_saida;
+					END IF;
+				END IF;
 
         --Marcar que ocorreu transacao
         vr_flgtrans := TRUE;
-      END IF;
-        
+
       EXCEPTION
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
@@ -12734,28 +12817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Retorno OK
         pr_des_reto := 'OK';
       END IF;
-      
-      --Gera lançamento na conta transitoria
-      IF UPPER(pr_nmdatela) = 'BLQPREJU' THEN  
-         PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
-                                       pr_nrdconta => pr_nrdconta,
-                                       pr_cdoperad => pr_cdoperad,
-                                       pr_vlrlanc  => pr_vlparepr,
-                                       pr_dtmvtolt => pr_dtmvtolt,
-                                       
-                                       pr_cdcritic => vr_cdcritic,
-                                       pr_dscritic => vr_dscritic);
-                                       
-                                       
-          --Se Retornou erro
-         IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-          --Sair
-          RAISE vr_exc_saida;
-        END IF;
-                              
-                                       
-      END IF; 
-      
+
     EXCEPTION
       WHEN OTHERS THEN
         -- Retorno não OK
@@ -13650,10 +13712,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    27/09/2016 - Tornar o parametro PR_TAB_PGTO_PARCEL um parametro
                                 "IN OUT" (Renato/Supero - P.302 - Acordos)
 
- 
-                   31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
-                                da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)
-
     ............................................................................. */
 
     DECLARE
@@ -13858,14 +13916,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
             --Efetivar Pagamento Atrasado parcela na craplem
             EMPR0001.pc_efetiva_pag_atr_parcel_lem (pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
-                                                          ,pr_cdagenci    => pr_cdagenci --> Código da agência
-                                                          ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
-                                                          ,pr_cdoperad    => pr_cdoperad --> Código do Operador
-                                                          ,pr_nmdatela    => pr_nmdatela --> Nome da tela
-                                                          ,pr_idorigem    => pr_idorigem --> Id do módulo de sistema
-                                                          ,pr_cdpactra    => pr_cdpactra --> P.A. da transação
-                                                          ,pr_nrdconta    => pr_nrdconta --> Número da conta
-                                                          ,pr_idseqttl    => pr_idseqttl --> Seq titula
+                                                   ,pr_cdagenci    => pr_cdagenci --> Código da agência
+                                                   ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
+                                                   ,pr_cdoperad    => pr_cdoperad --> Código do Operador
+                                                   ,pr_nmdatela    => pr_nmdatela --> Nome da tela
+                                                   ,pr_idorigem    => pr_idorigem --> Id do módulo de sistema
+                                                   ,pr_cdpactra    => pr_cdpactra --> P.A. da transação
+                                                   ,pr_nrdconta    => pr_nrdconta --> Número da conta
+                                                   ,pr_idseqttl    => pr_idseqttl --> Seq titula
                                                    ,pr_dtmvtolt    => pr_dtmvtolt --> Movimento atual
                                                    ,pr_flgerlog    => pr_flgerlog --> Indicador S/N para geração de log
                                                    ,pr_nrctremp    => rw_crappep.nrctremp --> Número do contrato de empréstimo
@@ -14043,52 +14101,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_index_lanc:= vr_tab_lanc.FIRST;
         WHILE vr_index_lanc IS NOT NULL LOOP
 
-
-         IF UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
-              /* Lanca em C/C e atualiza o lote */
-              EMPR0001.pc_cria_lancamento_cc_chave (pr_cdcooper => vr_tab_lanc(vr_index_lanc).cdcooper --> Cooperativa conectada
-                                             ,pr_dtmvtolt => vr_tab_lanc(vr_index_lanc).dtmvtolt --> Movimento atual
-                                             ,pr_cdagenci => vr_tab_lanc(vr_index_lanc).cdagenci --> Código da agência
-                                             ,pr_cdbccxlt => vr_tab_lanc(vr_index_lanc).cdbccxlt --> Número do caixa
-                                             ,pr_cdoperad => vr_tab_lanc(vr_index_lanc).cdoperad --> Código do Operador
-                                             ,pr_cdpactra => vr_tab_lanc(vr_index_lanc).cdpactra --> P.A. da transação
-                                             ,pr_nrdolote => vr_tab_lanc(vr_index_lanc).nrdolote --> Numero do Lote
-                                             ,pr_nrdconta => vr_tab_lanc(vr_index_lanc).nrdconta --> Número da conta
-                                             ,pr_cdhistor => vr_tab_lanc(vr_index_lanc).cdhistor --> Codigo historico
-                                             ,pr_vllanmto => vr_tab_lanc(vr_index_lanc).vllanmto --> Valor da parcela emprestimo
-                                             ,pr_nrparepr => 0                                   --> Número parcelas empréstimo
-                                             ,pr_nrctremp => vr_tab_lanc(vr_index_lanc).nrctremp --> Número do contrato de empréstimo
-                                             ,pr_nrseqava => vr_tab_lanc(vr_index_lanc).nrseqava --> Pagamento: Sequencia do avalista
-                                                   ,pr_nrseqdig => vr_nrseqdig
-                                             ,pr_des_reto => vr_des_erro                         --> Retorno OK / NOK
-                                             ,pr_tab_erro => pr_tab_erro);                       --> Tabela com possíves erros
-              --Se Retornou erro
-              IF vr_des_erro <> 'OK' THEN
-                --Sair
-                RAISE vr_exc_saida;
-              END IF;
-         END IF;
-         
-         
-        --Gera lançamento na conta transitoria
-        IF UPPER(pr_nmdatela) = 'BLQPREJU' THEN  
-           PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper =>  vr_tab_lanc(vr_index_lanc).cdcooper --> Cooperativa conectada
-                                         ,pr_nrdconta => vr_tab_lanc(vr_index_lanc).nrdconta --> Número da conta
+          /* Lanca em C/C e atualiza o lote */
+          EMPR0001.pc_cria_lancamento_cc_chave (pr_cdcooper => vr_tab_lanc(vr_index_lanc).cdcooper --> Cooperativa conectada
+                                         ,pr_dtmvtolt => vr_tab_lanc(vr_index_lanc).dtmvtolt --> Movimento atual
+                                         ,pr_cdagenci => vr_tab_lanc(vr_index_lanc).cdagenci --> Código da agência
+                                         ,pr_cdbccxlt => vr_tab_lanc(vr_index_lanc).cdbccxlt --> Número do caixa
                                          ,pr_cdoperad => vr_tab_lanc(vr_index_lanc).cdoperad --> Código do Operador
-                                         ,pr_vlrlanc  => vr_tab_lanc(vr_index_lanc).vllanmto --> Valor da parcela emprestimo
-                                         ,pr_dtmvtolt =>  vr_tab_lanc(vr_index_lanc).dtmvtolt --> Movimento atual
-                                               
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-                                               
-                                               
-            --Se Retornou erro
-           IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+                                         ,pr_cdpactra => vr_tab_lanc(vr_index_lanc).cdpactra --> P.A. da transação
+                                         ,pr_nrdolote => vr_tab_lanc(vr_index_lanc).nrdolote --> Numero do Lote
+                                         ,pr_nrdconta => vr_tab_lanc(vr_index_lanc).nrdconta --> Número da conta
+                                         ,pr_cdhistor => vr_tab_lanc(vr_index_lanc).cdhistor --> Codigo historico
+                                         ,pr_vllanmto => vr_tab_lanc(vr_index_lanc).vllanmto --> Valor da parcela emprestimo
+                                         ,pr_nrparepr => 0                                   --> Número parcelas empréstimo
+                                         ,pr_nrctremp => vr_tab_lanc(vr_index_lanc).nrctremp --> Número do contrato de empréstimo
+                                         ,pr_nrseqava => vr_tab_lanc(vr_index_lanc).nrseqava --> Pagamento: Sequencia do avalista
+                                               ,pr_nrseqdig => vr_nrseqdig
+                                         ,pr_des_reto => vr_des_erro                         --> Retorno OK / NOK
+                                         ,pr_tab_erro => pr_tab_erro);                       --> Tabela com possíves erros
+          --Se Retornou erro
+          IF vr_des_erro <> 'OK' THEN
             --Sair
             RAISE vr_exc_saida;
           END IF;
-        END IF; 
-         
+
           --Marcar que transacao ocorreu
           vr_flgtrans:= TRUE;
           --Proximo registro
@@ -14205,9 +14240,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    14/01/2016 - Retirar campo vlsdvsji duplicado no update da crappep e ajustado
                                 retorno de criticas SD381067 (Odirlei-AMcom)
-
-                   31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
-                                da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)
 
     ............................................................................. */
 
@@ -14380,8 +14412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
 
       vr_cdhistor := 108;
-      
-     IF UPPER(pr_nmdatela) <> 'BLQPREJU' THEN  
+
       -- Lanca em C/C e atualiza o lote
       pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                            ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
@@ -14411,29 +14442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Levantar Excecao
         RAISE vr_exc_saida;
       END IF;
-    END IF;
-    
-    --Gera lançamento na conta transitoria
-    IF UPPER(pr_nmdatela) = 'BLQPREJU' THEN  
-     PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
-                                   pr_nrdconta => rw_crapepr.nrdconta,
-                                   pr_cdoperad => pr_cdoperad,
-                                   pr_vlrlanc  => rw_crapepr.vlemprst,
-                                   pr_dtmvtolt => pr_dtmvtolt,
-                                       
-                                   pr_cdcritic => vr_cdcritic,
-                                   pr_dscritic => vr_dscritic);
-                                       
-                                       
-      --Se Retornou erro
-       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-        --Sair
-        RAISE vr_exc_erro;
-      END IF;
-    END IF; 
-    
-    
-    
+
       --Atualizar Emprestimo
        BEGIN
          UPDATE crapepr
@@ -14746,8 +14755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Frequencia: Sempre que for chamado.
        Objetivo  :
 
-       Alteracoes:  31/07/2018 - Pagamento de Emprestimo - Impedir o lançamento na c.c. quando a origem vier 
-                    da tela pr_nmtela = 'BLQPREJU'  Rangel Decker (AMcom)
+       Alteracoes:
 
     ............................................................................. */
 
@@ -14783,50 +14791,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     IF vr_des_reto <> 'OK' THEN
       RAISE vr_exc_erro;
     END IF;
-   
-   IF UPPER(pr_nmdatela) <> 'BLQPREJU' THEN
-     /* Lanca em C/C e atualiza o lote */
-     empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                          ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
-                                          ,pr_cdagenci => pr_cdagenci --> Código da agência
-                                          ,pr_cdbccxlt => 100         --> Número do caixa
-                                          ,pr_cdoperad => pr_cdoperad --> Código do Operador
-                                          ,pr_cdpactra => pr_cdpactra --> P.A. da transação
-                                          ,pr_nrdolote => pr_nrdolote --> Numero do Lote
-                                          ,pr_nrdconta => pr_nrdconta --> Número da conta
-                                          ,pr_cdhistor => pr_cdhistor --> Codigo historico
-                                          ,pr_vllanmto => pr_vlpagpar --> Valor da parcela emprestimo
-                                          ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
-                                          ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
-                                          ,pr_nrseqava => pr_nrseqava -- Pagamento: Sequencia do avalista
-                                          ,pr_des_reto => vr_des_reto --> Retorno OK / NOK
-                                          ,pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
-      --Se Retornou erro
-      IF vr_des_reto <> 'OK' THEN
-        --Sair
-        RAISE vr_exc_erro;
-      END IF;
-   END IF;  
-   
- --Gera lançamento na conta transitoria
-  IF UPPER(pr_nmdatela) = 'BLQPREJU' THEN  
-     PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
-                                   pr_nrdconta => pr_nrdconta,
-                                   pr_cdoperad => pr_cdoperad,
-                                   pr_vlrlanc  => pr_vlpagpar,
-                                   pr_dtmvtolt => pr_dtmvtolt,
-                                       
-                                   pr_cdcritic => vr_cdcritic,
-                                   pr_dscritic => vr_dscritic);
-                                       
-                                       
-      --Se Retornou erro
-     IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-      --Sair
-      RAISE vr_exc_erro;
-    END IF;
-  END IF; 
-       
+
+    IF pr_nmdatela <> 'BLQPREJU' THEN
+			/* Lanca em C/C e atualiza o lote */
+			empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+																					 ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+																					 ,pr_cdagenci => pr_cdagenci --> Código da agência
+																					 ,pr_cdbccxlt => 100         --> Número do caixa
+																					 ,pr_cdoperad => pr_cdoperad --> Código do Operador
+																					 ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+																					 ,pr_nrdolote => pr_nrdolote --> Numero do Lote
+																					 ,pr_nrdconta => pr_nrdconta --> Número da conta
+																					 ,pr_cdhistor => pr_cdhistor --> Codigo historico
+																					 ,pr_vllanmto => pr_vlpagpar --> Valor da parcela emprestimo
+																					 ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+																					 ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+																					 ,pr_nrseqava => pr_nrseqava -- Pagamento: Sequencia do avalista
+																					 ,pr_des_reto => vr_des_reto --> Retorno OK / NOK
+																					 ,pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
+			--Se Retornou erro
+			IF vr_des_reto <> 'OK' THEN
+				--Sair
+				RAISE vr_exc_erro;
+			END IF;
+		END IF;
 
     -- Retornar ok para as transações
     pr_des_reto := 'OK';
@@ -14976,7 +14964,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                      FROM tbrecup_cobranca cde
                     WHERE cde.cdcooper = pr_cdcooper
                       AND cde.nrdconta = pr_nrdconta
-                      AND cde.nrctremp = pr_nrctremp);
+                      AND cde.nrctremp = pr_nrctremp
+                      AND cde.tpproduto = 0);
       rw_cde cr_cde%ROWTYPE;
 
       -- Cursor para verificar se existe algum boleto pago pendente de processamento
@@ -14996,7 +14985,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     FROM tbrecup_cobranca cde
                    WHERE cde.cdcooper = pr_cdcooper
                      AND cde.nrdconta = pr_nrdconta
-                     AND cde.nrctremp = pr_nrctremp)
+                     AND cde.nrctremp = pr_nrctremp
+                     AND cde.tpproduto = 0)
              AND ret.cdcooper = cob.cdcooper
              AND ret.nrdconta = cob.nrdconta
              AND ret.nrcnvcob = cob.nrcnvcob
@@ -15569,7 +15559,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_tab_crawepr      EMPR0001.typ_tab_crawepr;
     vr_tab_erro         GENE0001.typ_tab_erro;
     vr_tab_msg_confirma EMPR0001.typ_tab_msg_confirma;
-
+    vr_flconsig         INTEGER;
+    vr_dsconsig         VARCHAR2(4000);
     vr_vlresgat  NUMBER;
 
     --Selecionar Detalhes Emprestimo
@@ -15592,6 +15583,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
     vr_flgerlog := sys.diutil.int_to_bool(pr_flgerlog);
 
+    EMPR0013.pc_verifica_consignado( pr_cdcooper    => pr_cdcooper /*IN  tbepr_consignado_contrato.cdcooper%TYPE*/
+                                     ,pr_nrdconta    => pr_nrdconta /*IN  tbepr_consignado_contrato.nrdconta%TYPE*/
+                                     ,pr_nrctremp    => pr_nrctremp /*IN  tbepr_consignado_contrato.nrctremp%TYPE DEFAULT 0*/
+                                     ,pr_flconsig    => vr_flconsig /*OUT INTEGER*/
+                                     ,pr_dsconsig    => vr_dsconsig /*OUT VARCHAR2*/
+                                     ,pr_cdcritic    => pr_cdcritic /*OUT PLS_INTEGER --> Código da crítica*/
+                                     ,pr_dscritic    => pr_dscritic); /*OUT VARCHAR2 --> Descrição da crítica*/
+
+    IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_erro;
+    END IF;
+    IF vr_flconsig > 0 THEN
+       pr_cdcritic := 1279;
+       pr_dscritic := vr_dsconsig;
+       RAISE vr_exc_erro;
+    END IF;
+
     --Carregar Tabela crawepr
     FOR rw_crawepr IN cr_crawepr (pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
@@ -15605,7 +15613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_tab_crawepr(vr_index_crawepr).idcobope:= rw_crawepr.idcobope;
     END LOOP;
 
-    /*    pc_valida_pagamentos_geral(pr_cdcooper    => pr_cdcooper,
+    EMPR0001.pc_valida_pagamentos_geral(pr_cdcooper    => pr_cdcooper,
                                         pr_cdagenci    => pr_cdagenci,
                                         pr_nrdcaixa    => pr_nrdcaixa,
                                         pr_cdoperad    => pr_cdoperad,
@@ -15624,7 +15632,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         pr_tab_erro    => vr_tab_erro,
                                         pr_des_reto    => pr_des_reto,
                                         pr_tab_msg_confirma => vr_tab_msg_confirma);
-*/
+
     IF pr_des_reto <> 'OK' THEN
       vr_index_erro := vr_tab_erro.FIRST;
       IF vr_index_erro IS NOT NULL THEN
