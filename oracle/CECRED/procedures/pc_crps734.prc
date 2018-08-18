@@ -27,11 +27,12 @@ BEGIN
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Codigo do programa
     vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS734';
-    vr_qtdjobs             number;
+    vr_qtdjobs  NUMBER;
     vr_dtultdia DATE;                  -- Variavel para armazenar o ultimo dia util do ano
     vr_idparale INTEGER;
-    vr_jobname             varchar2(30); 
-    vr_dsplsql             varchar2(4000); 
+    vr_jobname  VARCHAR2(30); 
+    vr_dsplsql  VARCHAR2(4000); 
+    vr_des_erro VARCHAR2(32000);
     
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
@@ -111,10 +112,10 @@ BEGIN
         -- Cadastra o programa paralelo
         gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
                                     ,pr_idprogra => LPAD(reg_crapage.cdagenci,3,'0') --> Utiliza a agência como id programa
-                                    ,pr_des_erro => vr_dscritic);
+                                    ,pr_des_erro => vr_des_erro);
         -- Testar saida com erro
-        if vr_dscritic is not null then
-          -- Levantar exceçao
+        if vr_des_erro is not null then
+          vr_dscritic := vr_des_erro;
           raise vr_exc_saida;
         END if;
         vr_dsplsql := 'declare'            ||chr(13)||
@@ -139,27 +140,27 @@ BEGIN
                                 ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
                                 ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
                                 ,pr_jobname  => vr_jobname   --> Nome randomico criado
-                                ,pr_des_erro => vr_dscritic);    
+                                ,pr_des_erro => vr_des_erro);    
 
           -- Testar saida com erro
-          IF vr_dscritic IS NOT NULL THEN
-            -- Levantar exceçao
+          IF vr_des_erro IS NOT NULL THEN
+            vr_dscritic := vr_des_erro;
             RAISE vr_exc_saida;
           END IF;
           gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                    ,pr_qtdproce => vr_qtdjobs
-                                   ,pr_des_erro => vr_dscritic);
+                                   ,pr_des_erro => vr_des_erro);
       END LOOP;
       
       --Chama rotina de aguardo agora passando 0, para esperar
       --até que todos os Jobs tenha finalizado seu processamento
       gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
                                    ,pr_qtdproce => 0
-                                   ,pr_des_erro => vr_dscritic);
+                                   ,pr_des_erro => vr_des_erro);
                                   
       -- Testar saida com erro
-      IF  vr_dscritic IS NOT NULL THEN 
-        -- Levantar exceçao
+      IF vr_des_erro IS NOT NULL THEN
+        vr_dscritic := vr_des_erro;
         RAISE vr_exc_saida;
       END IF;
     ELSE 
@@ -289,7 +290,7 @@ BEGIN
       
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                  ,pr_des_erro => vr_dscritic);
+                                  ,pr_des_erro => vr_des_erro);
       COMMIT;
             
   END IF;
@@ -299,7 +300,7 @@ BEGIN
     WHEN vr_exc_saida THEN
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                  ,pr_des_erro => vr_dscritic);
+                                  ,pr_des_erro => vr_des_erro);
       vr_cdcritic := NVL(vr_cdcritic, 0);
       IF vr_cdcritic > 0 THEN
         vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
@@ -312,7 +313,7 @@ BEGIN
     WHEN OTHERS THEN
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
-                                  ,pr_des_erro => vr_dscritic);
+                                  ,pr_des_erro => vr_des_erro);
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
       -- Efetuar rollback
