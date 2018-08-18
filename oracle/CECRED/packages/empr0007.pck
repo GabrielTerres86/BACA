@@ -3661,7 +3661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 									,cde.dhenvio        = SYSDATE
 									,cde.nrddd_sms      = pr_nrdddsms
 									,cde.nrtel_sms      = pr_nrtelsms
-									,cde.cdenvio_sms    = GENE0002.fn_char_para_number(fn_sequence('tbrecup_cobranca','CDENVIO_SMS',TO_CHAR(pr_cdcooper) ||
+									,cde.cdenvio_sms    = GENE0002.fn_char_para_number(fn_sequence('tbepr_cobranca','CDENVIO_SMS',TO_CHAR(pr_cdcooper) ||
 																																									 TO_CHAR(SYSDATE, 'RRRR') ||
 																																									 TO_CHAR(SYSDATE, 'MM') ||
 																																									 TO_CHAR(SYSDATE, 'DD')))

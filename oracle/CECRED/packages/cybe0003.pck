@@ -210,7 +210,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
             ,tbcobran_assessorias.cdassessoria_cyber
 			      ,tbcobran_assessorias.flgjudicial
 			      ,tbcobran_assessorias.flgextra_judicial
-          --  ,tbcobran_assessorias.cdsigla_cyber
         FROM tbcobran_assessorias
        WHERE tbcobran_assessorias.cdassessoria = NVL(pr_cdassessoria,tbcobran_assessorias.cdassessoria)
        ORDER BY tbcobran_assessorias.cdassessoria;
@@ -239,7 +238,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                                    ||'  <cdasscyb>'||UPPER(rw_assessoria.cdassessoria_cyber)||'</cdasscyb>'
 												                           ||'  <flgjudic>'||UPPER(rw_assessoria.flgjudicial)||'</flgjudic>'
 												                           ||'  <flextjud>'||UPPER(rw_assessoria.flgextra_judicial)||'</flextjud>'
-                                                  -- ||'  <cdsigcyb>'||UPPER(rw_assessoria.cdsigla_cyber)||'</cdsigcyb>'
                                                    ||'  <cdsigcyb>'||UPPER(vr_cdsigcyb)||'</cdsigcyb>'
                                                    ||'</assessoria>'));
       END LOOP;
@@ -300,7 +298,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
             ,tbcobran_assessorias.cdassessoria_cyber
 			      ,decode(tbcobran_assessorias.flgjudicial, 1, 'S','N')        flgjudicial
 			      ,decode(tbcobran_assessorias.flgextra_judicial, 1, 'S', 'N') flgextra_judicial
-            --,tbcobran_assessorias.cdsigla_cyber
         FROM tbcobran_assessorias
        WHERE UPPER(tbcobran_assessorias.nmassessoria) LIKE UPPER('%' || pr_nmassessoria || '%')
        ORDER BY tbcobran_assessorias.cdassessoria;
@@ -332,7 +329,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                                                    ||'  <cdasscyb>'||UPPER(rw_assessoria.cdassessoria_cyber)||'</cdasscyb>'
 												                           ||'  <flgjudic>'||UPPER(rw_assessoria.flgjudicial)||'</flgjudic>'
 												                           ||'  <flextjud>'||UPPER(rw_assessoria.flgextra_judicial)||'</flextjud>'
-                                                  -- ||'  <cdsigcyb>'||UPPER(rw_assessoria.cdsigla_cyber)||'</cdsigcyb>'
 												                           ||'  <cdsigcyb>'||UPPER(vr_cdsigcyb)||'</cdsigcyb>'
 												                           ||'</assessoria>'));
       END LOOP;
@@ -415,15 +411,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
                NMASSESSORIA,
                CDASSESSORIA_CYBER,
                FLGJUDICIAL,
-               FLGEXTRA_JUDICIAL/*,
-               CDSIGLA_CYBER*/)
+               FLGEXTRA_JUDICIAL)
             VALUES
               (VR_CDASSESS,
                UPPER(PR_DSASSESS),
                PR_CDASSCYB,
                PR_FLGJUDIC,
                PR_FLEXTJUD);
-               --, UPPER(pr_cdsigcyb));
           EXCEPTION
             WHEN OTHERS THEN
             -- Descricao do erro na insercao de registros

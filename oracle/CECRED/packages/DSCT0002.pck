@@ -5500,7 +5500,6 @@ END fn_letra_risco;
       
       --Alterado para Juros simples
       vr_rel_txdanual := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) * 12) * 100,6); 
-      --vr_rel_txdanual := apli0001.fn_round((power(1 + (vr_tab_dados_border(vr_idxborde).txmensal / 100), 12) - 1) * 100,6);
       
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
@@ -7624,37 +7623,7 @@ END fn_letra_risco;
                           '<vlliquid>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vlliquid,'fm999G999G999G990D00')   ||'</vlliquid>'|| 
                           '<qtdprazo>'||   vr_rel_qtdprazo                              ||'</qtdprazo>'|| 
                           '<nmsacado>'||   gene0007.fn_caract_controle(substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32))   ||'</nmsacado>'|| 
-                          '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>');/*|| 
-                          '<restricoes>');
-        
-        -- Percorre as restricoes
-        IF vr_tab_bordero_restri.COUNT > 0 THEN
-          FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
-            -- Sea for restricao do cheque em questao
-            IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
-              
-              --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
-              IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
-                continue;
-              END IF;  
-            
-              vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
-              
-              pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto>' ||
-              '<flgrestr>'|| pr_flgrestr ||'</flgrestr>' ||
-              '</restricao>');
-              -- Se foi aprovado pelo coordenador
-              IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
-              
-                IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
-                  vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-                END IF;              
-
-              END IF;
-            END IF;
-          END LOOP;
-        END IF;
-        pc_escreve_xml('</restricoes></titulo>');*/
+                          '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>');
         pc_escreve_xml('</titulo>');
         
       
@@ -7877,7 +7846,8 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para gerar impressoes de extrato de bordero
     --
-    --   Alteração : 
+    --   Alteração :
+    --    16/08/2018 - Vitor Shimada Assanuma (GFT) - Retirando os históricos: 2666 (Rendas à apropriar) e 2678 (Baixa da carteira ao resgatar título)
     -- .........................................................................*/
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7957,6 +7927,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
       WHERE tlb.cdcooper = pr_cdcooper
         AND tlb.nrdconta = pr_nrdconta
         AND tlb.nrborder = pr_nrborder
+        AND his.cdhistor NOT IN (2666, 2678) -- 2666 (Rendas à apropriar) E 2678 (Baixa da carteira ao resgatar título)
       ORDER BY tlb.dtmvtolt, tlb.nrtitulo 
     ;rw_craptlb cr_craptlb%ROWTYPE;
     

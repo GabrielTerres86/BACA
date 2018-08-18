@@ -917,19 +917,7 @@ PROCEDURE excluir-dados-crapcyc:
                            crapcyc.cdorigem = par_cdorigem AND
                            crapcyc.nrctremp = par_nrctremp AND
                            crapcyc.nrdconta = par_nrdconta    
-                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-        /* Caso seja bordero */                          
-    /*     IF par_nrborder > 0 AND par_cdorigem = 4 THEN
-            DO:
-                FIND tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = par_cdcooper AND
-                                               tbdsct_titulo_cyber.nrctrdsc = par_nrctremp AND
-                                               tbdsct_titulo_cyber.nrborder = par_nrborder AND
-                                               tbdsct_titulo_cyber.nrtitulo = par_nrtitulo AND
-                                               tbdsct_titulo_cyber.nrdconta = par_nrdconta    
-                                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-            END. */
-        
+                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.        
         IF  NOT AVAIL crapcyc THEN
             DO:
                IF  LOCKED crapcyc THEN
@@ -1019,11 +1007,6 @@ PROCEDURE excluir-dados-crapcyc:
 
                DELETE crapcyc.
                ASSIGN aux_flgerlog = TRUE.
-
-              /*  IF par_nrborder > 0 AND par_cdorigem = 4 THEN
-                DO:
-                    DELETE tbdsct_titulo_cyber.
-                END. */
                LEAVE.
             END.
     END.
