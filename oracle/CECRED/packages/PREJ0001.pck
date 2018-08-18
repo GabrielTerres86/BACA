@@ -6906,9 +6906,31 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
 
            RAISE vr_exc_erro;
         END IF;
+				
+				-- Calcula e debita da corrente corrente em prejuízo os juros remuneratórios
+				CECRED.PREJ0003.pc_calc_juro_prejuizo_mensal(pr_cdcooper => vr_cdcooper
+                                                  ,pr_cdcritic =>vr_cdcritic
+                                                  ,pr_dscritic =>vr_dscritic);
 
+        -- Resgata créditos bloqueados em contas em prejuízo não movimentados há mais de X dias
+        CECRED.PREJ0003.pc_resgata_cred_bloq_preju(pr_cdcooper => vr_cdcooper
+				                                          , pr_cdcritic => vr_cdcritic
+																									, pr_dscritic => vr_dscritic);
+																									
+				-- Efetua o pagamento automático do prejuízo com os créditos disponíveis para operações na conta corrente																					
+			  CECRED.PREJ0003.pc_pagar_prejuizo_cc_autom(pr_cdcooper => vr_cdcooper
+                                                  ,pr_cdcritic =>vr_cdcritic
+                                                  ,pr_dscritic =>vr_dscritic
+                                                  ,pr_tab_erro =>vr_tab_erro );
 
-         CECRED.PREJ0003.pc_transfere_prejuizo_cc(pr_cdcooper => vr_cdcooper
+        -- Processa liquidação do prejuízo para contas corrente que tiveram todo o saldo de prejuízo pago                                                  																									
+				CECRED.PREJ0003.pc_liquida_prejuizo_cc(pr_cdcooper => vr_cdcooper
+                                                  ,pr_cdcritic =>vr_cdcritic
+                                                  ,pr_dscritic =>vr_dscritic
+                                                  ,pr_tab_erro =>vr_tab_erro );
+
+        -- Transfere contas corrente para prejuízo
+        CECRED.PREJ0003.pc_transfere_prejuizo_cc(pr_cdcooper => vr_cdcooper
                                                   ,pr_cdcritic =>vr_cdcritic
                                                   ,pr_dscritic =>vr_dscritic
                                                   ,pr_tab_erro =>vr_tab_erro );
