@@ -867,13 +867,34 @@ END pc_busca_saldos_devedores;
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2)  IS
+																		 
+	  CURSOR cr_prejuizo IS 
+		SELECT prj.vlsdprej
+		     , prj.vljuprej
+				 , prj.vljur60_ctneg
+				 , prj.vljur60_lcred
+				 , prj.vlsldlib
+		  FROM tbcc_prejuizo prj
+		 WHERE prj.cdcooper = pr_cdcooper
+		   AND prj.nrdconta = pr_nrdconta
+			 AND prj.dtliquidacao IS NULL;
+		rw_prejuizo cr_prejuizo%ROWTYPE;
+																		 
     -- erros
     vr_exc_erro EXCEPTION;
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+		
+		vr_slddev NUMBER;
+		
+		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
+		OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;
+		
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -882,14 +903,52 @@ END pc_busca_saldos_devedores;
                           ,pr_tag_nova => 'Dados'
                           ,pr_tag_cont => NULL
                           ,pr_des_erro => vr_dscritic);
+													
+		OPEN cr_prejuizo;
+		FETCH cr_prejuizo INTO rw_prejuizo;
+		CLOSE cr_prejuizo;
+		
+		vr_slddev := rw_prejuizo.vlsdprej + 
+		             rw_prejuizo.vljuprej + 
+								 rw_prejuizo.vljur60_ctneg + 
+								 rw_prejuizo.vljur60_lcred;
+		
+		IF (pr_vlrpagto + nvl(pr_vlrabono, 0)) > vr_slddev THEN
+			vr_dscritic := 'O valor total informado para pagamento é maior que o saldo devedor.';
+			
+			RAISE vr_exc_erro;
+		END IF;
+		
+		IF pr_vlrpagto > rw_prejuizo.vlsldlib THEN
+			vr_dscritic := 'O valor informado para pagamento é maior que o saldo liberado para operações na conta.';
+			
+			RAISE vr_exc_erro;
+		END IF;
+													
+		PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
+		                           , pr_nrdconta => pr_nrdconta
+															 , pr_cdoperad => '1'
+															 , pr_vllanmto => pr_vlrpagto
+															 , pr_dtmvtolt => rw_crapdat.dtmvtolt
+															 , pr_cdcritic => vr_cdcritic
+															 , pr_dscritic => vr_dscritic);
+															 
+		IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+			RAISE vr_exc_erro;
+		END IF;
 
-    -- Fazer a chamada de pagamento do prejuizo.
-
-    -- Fazer a chamada de lancamento de abono
-
-    -- Tratamento de erros
-      --vr_dscritic := 'erro teste de erro';
-      --RAISE vr_exc_erro;
+    PREJ0003.pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
+		                            , pr_nrdconta => pr_nrdconta
+																, pr_vlrpagto => pr_vlrpagto
+																, pr_vlrabono => pr_vlrabono
+																, pr_cdcritic => vr_cdcritic
+																, pr_dscritic => vr_dscritic); 
+		
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+			RAISE vr_exc_erro;
+		END IF;
+		
+		COMMIT;
 
     EXCEPTION
         WHEN vr_exc_erro THEN
@@ -897,12 +956,13 @@ END pc_busca_saldos_devedores;
           -- Existe para satisfazer exigência da interface.
           pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+					ROLLBACK;
         WHEN OTHERS THEN
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
           pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
-
+					ROLLBACK;
   END pc_paga_prejuz_cc;
 
   PROCEDURE pc_paga_emprestimo_ct(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)

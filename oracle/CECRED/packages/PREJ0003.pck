@@ -800,7 +800,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 							 pr_nrdconta,
 							 rw_crapdat.dtmvtolt,
 							 rw_crapass.cdsitdct,
-							 vr_vlslddev + vr_vljuro60_cneg + vr_vljuro60_cesp,
+							 vr_vlslddev,
 							 vr_qtdiaatr,
 							 vr_vlslddev,
 							 vr_vljuro60_cneg,
@@ -2230,11 +2230,11 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
   vr_tab_retorno LANC0001.typ_reg_retorno; -- Record com dados retornados pela "pc_gerar_lancamento_conta"
 	vr_incrineg   PLS_INTEGER;
 
-	vr_vljr60_ctneg  tbcc_prejuizo.vljur60_ctneg%TYPE; -- Valor pago de juros +60 (hist. 37 + hist. 57)
-	vr_vljur60_lcred tbcc_prejuizo.vljur60_lcred%TYPE; -- Valor pago de juros +60 (hist. 38)
-	vr_vljupre       tbcc_prejuizo.vljuprej%TYPE;      -- Valor pago de juros remuneratórios do prejuízo
-	vr_vljupre_prov  tbcc_prejuizo.vljuprej%TYPE;      -- Valor pago de juros remuneratórios (provisionados) do prejuízo
-	vr_vlprinc       tbcc_prejuizo.vlsdprej%TYPE;      -- Valor pago do saldo devedor principal do prejuízo
+	vr_vljr60_ctneg  tbcc_prejuizo.vljur60_ctneg%TYPE  := 0; -- Valor pago de juros +60 (hist. 37 + hist. 57)
+	vr_vljur60_lcred tbcc_prejuizo.vljur60_lcred%TYPE  := 0; -- Valor pago de juros +60 (hist. 38)
+	vr_vljupre       tbcc_prejuizo.vljuprej%TYPE       := 0; -- Valor pago de juros remuneratórios do prejuízo
+	vr_vljupre_prov  tbcc_prejuizo.vljuprej%TYPE       := 0; -- Valor pago de juros remuneratórios (provisionados) do prejuízo
+	vr_vlprinc       tbcc_prejuizo.vlsdprej%TYPE       := 0; -- Valor pago do saldo devedor principal do prejuízo
 	vr_nrseqdig      craplcm.nrseqdig%TYPE;
 
 	vr_diarefju  number(2);
@@ -2374,7 +2374,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 			 IF vr_vlsddisp >= rw_contaprej.vljur60_ctneg THEN
 				 vr_vljr60_ctneg := rw_contaprej.vljur60_ctneg;
 			 ELSE
-				 vr_vljr60_ctneg := rw_contaprej.vljur60_ctneg - vr_vlsddisp;
+				 vr_vljr60_ctneg := vr_vlsddisp;
 			 END IF;
 
 			 BEGIN
@@ -2397,16 +2397,14 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 			 IF vr_vlsddisp >= rw_contaprej.vljur60_lcred THEN
 				 vr_vljur60_lcred := rw_contaprej.vljur60_lcred;
 			 ELSE
-				 vr_vljur60_lcred := rw_contaprej.vljur60_lcred - vr_vlsddisp;
+				 vr_vljur60_lcred := vr_vlsddisp;
 			 END IF;
 
 			 BEGIN
 					UPDATE  TBCC_PREJUIZO tbprj
 					SET tbprj.vljur60_lcred = tbprj.vljur60_lcred - vr_vljur60_lcred
 					WHERE tbprj.rowid = rw_contaprej.rowid;
-
-
-					EXCEPTION
+			EXCEPTION
 					 WHEN OTHERS THEN
 						 vr_cdcritic:=0;
 						 vr_dscritic := 'Erro ao atualizar Juros60 - TBCC_PREJUIZO:'||SQLERRM;
@@ -2434,7 +2432,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 			 IF vr_vlsddisp >= rw_contaprej.vljuprej THEN
 					vr_vljupre :=  rw_contaprej.vljuprej;
 			 ELSE
-					vr_vljupre :=  rw_contaprej.vljuprej - vr_vlsddisp;
+					vr_vljupre :=  vr_vlsddisp;
 			 END IF;
 
 			 BEGIN
@@ -2448,7 +2446,8 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 					 RAISE vr_exc_saida;
 				END;
 		END IF;
-
+		
+		vr_vlsddisp := vr_vlsddisp - vr_vljupre;
 		vr_valrpago := vr_valrpago + vr_vljupre;
 
 		IF vr_vlsddisp > 0 THEN
@@ -2528,6 +2527,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 															, pr_dscritic => vr_dscritic);
 		END IF;
 
+    vr_vlsddisp := vr_vlsddisp - vr_vljupre_prov;
 		vr_valrpago := vr_valrpago + vr_vljupre_prov;
 
 		-- Pagar saldo do prejuízo
@@ -2553,6 +2553,8 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 			   SET prj.vlsdprej = prj.vlsdprej - vr_vlprinc
 			 WHERE prj.rowid = rw_contaprej.rowid;
 		END IF;
+		
+		vr_valrpago := vr_valrpago + vr_vlprinc;
 
 		-- Lançar valor do abono no extrato do prejuízo
 		IF nvl(pr_vlrabono, 0) > 0 THEN
@@ -2565,6 +2567,10 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 															, pr_vllanmto => pr_vlrabono
 															, pr_cdcritic => vr_cdcritic
 															, pr_dscritic => vr_dscritic);
+															
+			UPDATE tbcc_prejuizo 
+			   SET vlrabono = nvl(vlrabono, 0) + pr_vlrabono
+			 WHERE ROWID = rw_contaprej.rowid;
 		END IF;
 
 		-- Valor total pago
@@ -2576,11 +2582,15 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 														, pr_vllanmto => vr_valrpago
 														, pr_cdcritic => vr_cdcritic
 														, pr_dscritic => vr_dscritic);
+														
+		UPDATE tbcc_prejuizo 
+		   SET vlpgprej = nvl(vlpgprej, 0) + vr_valrpago
+		 WHERE ROWID = rw_contaprej.rowid;
 
     -- Desconta o valor total do pagamento efetuado do saldo disponível para operações na C/C
 		pc_atualiza_sld_lib_prj(pr_cdcooper => pr_cdcooper
 		                      , pr_nrdconta => pr_nrdconta
-													, pr_vlrdebto => vr_valrpago
+													, pr_vlrdebto => least(vr_valrpago, pr_vlrpagto)
 													, pr_cdcritic => vr_cdcritic
 													, pr_dscritic => vr_dscritic
 													, pr_des_erro => vr_des_erro);
