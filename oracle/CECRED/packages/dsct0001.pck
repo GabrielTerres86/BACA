@@ -4439,6 +4439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
                                                ,pr_txmensal => rw_crapbdt.txmensal
                                                ,pr_vldjuros => vr_vldjuros
+                                               ,pr_flresgat => TRUE
                                                ,pr_dtrefere => vr_dtultdat
                                                ,pr_dscritic => vr_dscritic );
 
