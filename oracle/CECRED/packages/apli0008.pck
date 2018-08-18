@@ -1711,7 +1711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                 END IF;
                 IF rw_craphis.indebcre = 'C' THEN     /* Crédito */
                      vr_vlsldtot := NVL(vr_vlsldtot,0) + rw_craplac.vllanmto;
-                ELSIF rw_craphis.indebcre = 'D' AND  (rw_craplac.cdhistor = rw_craplac.cdhsrvap) THEN  /* Débito  */
+                ELSIF rw_craphis.indebcre = 'D' THEN  /* Débito  */
                       vr_vlsldtot := NVL(vr_vlsldtot,0) - rw_craplac.vllanmto;  
                      /*
                       IF (rw_craplac.cdhistor = rw_craplac.cdhsrvap) -- Reversao
@@ -2369,8 +2369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                 END IF;
                 IF rw_craphis.indebcre = 'C' THEN     /* Crédito */
                      vr_vlsldtot := NVL(vr_vlsldtot,0) + rw_craplac.vllanmto;
-                ELSIF rw_craphis.indebcre = 'D' AND (rw_craplac.cdhistor = rw_craplac.cdhsrvap) THEN  /* Débito  */
-                      -- Reversao
+                ELSIF rw_craphis.indebcre = 'D' THEN  /* Débito  */
                           vr_vlsldtot := NVL(vr_vlsldtot,0) - rw_craplac.vllanmto;
                 ELSE
                      vr_cdcritic := 0;
