@@ -192,6 +192,7 @@ BEGIN
                cdageori,
                dtinsori,
                dtrnirpp,
+               dtiniper,
                dtfimper,
                dtinirpp,
                dtdebito,
@@ -206,6 +207,8 @@ BEGIN
                nrseqdig,
                dtmvtolt,
                dtaltrpp,
+               vlabcpmf,
+               vlabdiof,
                cdprodut)
             Values
               (vr_nrseqted,
@@ -220,6 +223,7 @@ BEGIN
                rw_craprpp.cdageori,
                rw_craprpp.dtinsori, -- Mantendo a data original da RPP nao do novo produto
                rw_craprpp.dtrnirpp,
+               rw_craprpp.dtiniper,
                rw_craprpp.dtfimper,
                rw_craprpp.dtdebito,
                rw_craprpp.dtdebito,
@@ -234,6 +238,8 @@ BEGIN
                vr_nrseqdig,
                rw_crapcop.dtmvtolt,
                rw_crapcop.dtmvtolt, -- Alteracao do Plano
+               rw_craprpp.vlabcpmf,
+               rw_craprpp.vlabdiof,
                vr_codproduto -- Produto AP Default
                );
           Exception

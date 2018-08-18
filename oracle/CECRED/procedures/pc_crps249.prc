@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 14/06/2018
+   Data    : Novembro/98                     Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -614,8 +614,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                              incluido em pc_grava_crapopc_bulk
                             (Belli - Envolti - Chamado 841064)	
 
-       03/01/2018 - Conciliação Cooperadores/Singulares/Central - projeto 407 - Alexandre Borgmann (Mouts)
-
+               03/01/2018 - Conciliação Cooperadores/Singulares/Central - projeto 407 - Alexandre Borgmann (Mouts)
                                                       
 			   03/04/2018 - M324 Ajustes para considerar novos históricos de Prejuizo
                             Rafael Monteiro (Mouts)
@@ -625,7 +624,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             (Lucas Ranghetti #TASK0011641)
                             
                14/06/2018 - Incluir validação de historico para a contabilização das
-                            tarifas de arrecadações (Lucas Ranghetti #INC0017254)
+                            tarifas de arrecadações (Lucas Ranghetti #INC0017254)			
+
+ 	           14/08/2018 - Nao considerar as aplicações programadas nos cáculos das novas
+                            captações. (Proj 411.2 - CIS Corporate)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -2055,9 +2057,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     SELECT crapcpc.cdprodut 
           ,crapcpc.nmprodut
           ,crapcpc.cdhsnrap
-      FROM crapcpc;
+      FROM crapcpc
+     WHERE crapcpc.indplano = 0; -- Apenas não programadas
   
-  -- cursor de consulta de aplicacoes
+  -- cursor de consulta de aplicacoes - O cursor anterior já filtra por aplicações não programadas
   CURSOR cr_craprac(pr_cdcooper crapcop.cdcooper%TYPE
                    ,pr_cdprodut crapcpc.cdprodut%TYPE) IS
     SELECT craprac.vlslfmes, 

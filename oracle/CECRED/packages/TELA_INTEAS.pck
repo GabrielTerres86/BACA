@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_INTEAS is
       Sistema  : Rotinas referentes tela de integração com sistema Easy-Way
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Abril/2016.                   Ultima atualizacao: 10/04/2018
+      Data     : Abril/2016.                   Ultima atualizacao: 16/08/2018
 
       Dados referentes ao programa:
 
@@ -14,6 +14,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_INTEAS is
 
       Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
                                (Marcelo Telles Coelho - Mouts).
+
+                  16/08/2018 - Inclusão da Aplicação Programda - Proj. 411.2 (CIS Corporate)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -119,7 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       Sistema  : Rotinas referentes tela de integração com sistema Easy-Way
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Abril/2016.                   Ultima atualizacao: 20/10/2016
+      Data     : Abril/2016.                   Ultima atualizacao: 16/08/2018
 
       Dados referentes ao programa:
 
@@ -162,6 +164,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                e representantes (Anderson SD 832274).
                                
                   30/04/2018 - Alterados codigos de situacao "pr_cdsitdct". PRJ366 (Lombardi).
+                               
+                  16/08/2018 - Inclusão da Aplicação Programda - Proj. 411.2 (CIS Corporate)
                                
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
@@ -1542,6 +1546,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                  AND lpp.dtmvtolt BETWEEN pr_dtiniger AND pr_dtfimger
                  AND lpp.cdhistor NOT IN (152) -- Provisao Mes
               UNION ALL
+              /* Aplicações Programadas */
+              SELECT lac.cdcooper
+                     ,lac.nrdconta
+                     ,TRUNC(lac.dtmvtolt, 'MM') AS dtmesmvt
+                     ,his.indebcre
+                     ,lac.vllanmto
+                FROM craplac lac
+                JOIN craprac rac
+                  ON rac.cdcooper = lac.cdcooper
+                 AND rac.nrdconta = lac.nrdconta
+                 AND rac.nraplica = lac.nraplica
+                JOIN crapcpc cpc
+                  ON cpc.cdprodut = rac.cdprodut
+                JOIN craphis his
+                  ON his.cdcooper = lac.cdcooper
+                 AND his.cdhistor = lac.cdhistor
+               WHERE lac.cdcooper = pr_cdcooper
+                 AND lac.nrdconta = pr_nrdconta
+                 AND cpc.indplano = 1
+                 AND lac.dtmvtolt BETWEEN '01/07/2018' AND '01/08/2018'
+                 AND lac.cdhistor NOT IN (cdhsprap) -- Provisão
+              UNION ALL
               /* Novos produtos de captação */
               SELECT lac.cdcooper
                      ,lac.nrdconta
@@ -1560,6 +1586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                  AND his.cdhistor = lac.cdhistor
                WHERE lac.cdcooper = pr_cdcooper
                  AND lac.nrdconta = pr_nrdconta
+                 AND cpc.indplano = 0
                  AND lac.dtmvtolt BETWEEN pr_dtiniger AND pr_dtfimger
                  AND lac.cdhistor NOT IN (cpc.cdhsprap, -- Provisão
                                           cpc.cdhsrvap) -- Reversão

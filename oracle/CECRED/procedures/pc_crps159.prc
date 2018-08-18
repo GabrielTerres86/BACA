@@ -35,6 +35,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps159 (pr_cdcooper IN crapcop.cdcooper%T
 
                    13/06/2016 - Ajustado cursor da craptab para otimizar o cursor
                                 utilizando o indice da tabela (Douglas - Chamado 454248)
+                                
+                   12/08/2018 - Inclusão de Aplicações Programadas (Proj. 411.2 - CIS Corporate)
+                                
     ............................................................................ */
 
     DECLARE
@@ -64,21 +67,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps159 (pr_cdcooper IN crapcop.cdcooper%T
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-      --seleciona dados do cadastro de poupanca programada
-      --cuja data de cancelamento seja menor que a data limite
+      /* seleciona dados do cadastro de poupanca programada
+         cuja data de cancelamento seja menor que a data limite */
+      /* Deve-se verificar se não existem lançamentos em nenhum 
+      tipo de produto "Poupança Programada" E "Aplicação Programada" */ 
+      
       CURSOR cr_craprpp( pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_dtlimite IN DATE) IS
-        SELECT craprpp.nrdconta
-              ,craprpp.nrctrrpp
-              ,craprpp.rowid
-        FROM   craprpp
-        WHERE  craprpp.cdcooper = pr_cdcooper
-        AND    craprpp.dtcancel < pr_dtlimite
+        SELECT rpp.nrdconta
+              ,rpp.nrctrrpp
+              ,rpp.rowid
+        FROM   craprpp rpp
+        WHERE  rpp.cdcooper = pr_cdcooper
+        AND    rpp.dtcancel < pr_dtlimite
         AND    NOT EXISTS( SELECT 1
-                           FROM  craplpp
-                           WHERE craplpp.cdcooper = craprpp.cdcooper
-                           AND   craplpp.nrdconta = craprpp.nrdconta
-                           AND   craplpp.nrctrrpp = craprpp.nrctrrpp);
+                           FROM  craplpp lpp
+                           WHERE lpp.cdcooper = rpp.cdcooper
+                           AND   lpp.nrdconta = rpp.nrdconta
+                           AND   lpp.nrctrrpp = rpp.nrctrrpp)
+        AND    NOT EXISTS( SELECT 1
+                           FROM  craplac lac, craprac rac
+                           WHERE rac.cdcooper = rpp.cdcooper
+                           AND   rac.nrdconta = rpp.nrdconta
+                           AND   rac.nrctrrpp = rpp.nrctrrpp
+                           AND   rac.cdcooper = lac.cdcooper
+                           AND   rac.nrdconta = lac.nrdconta
+                           AND   rac.nraplica = lac.nraplica);
 
       --seleciona as informacoes da tabela generica
       CURSOR cr_craptab IS

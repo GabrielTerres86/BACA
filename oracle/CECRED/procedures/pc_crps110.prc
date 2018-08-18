@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS110" (pr_cdcooper  IN crapcop.cdcooper%TYPE
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS110 (pr_cdcooper  IN crapcop.cdcooper%TYPE
                                                 ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utilização de restart
                                                 ,pr_cdagenci  IN PLS_INTEGER DEFAULT 0  --> Código da agência, utilizado no paralelismo
                                                 ,pr_idparale  IN PLS_INTEGER DEFAULT 0  --> Identificador do job executando em paralelo.
@@ -13,7 +13,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Odair
- Data    : Janeiro/95                      Ultima Alteracao: 05/01/2018
+ Data    : Janeiro/95                      Ultima Alteracao: 03/08/2018
 
  Dados referentes ao programa:
 
@@ -85,7 +85,9 @@ BEGIN
              05/01/2018 - Rotina atualizada para permitir execução por paralelismo 
                           quando necessário - Projeto Ligeirinho (Roberto Nunhes - AMCOM).
 
-             15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)
+             15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)  
+
+             05/08/2018 - Remove aplições programadas dos cálculos das aplicações "nova captação".
 
    ............................................................................. */
 
@@ -268,6 +270,7 @@ BEGIN
           AND rac.dtvencto BETWEEN pr_dtiniper AND pr_dtfimper
           AND ass.cdagenci = pr_cdagenci
           AND rac.cdcooper = ass.cdcooper
+          AND rac.cdprodut = 0              -- Apenas aplicações não programadas
           AND rac.nrdconta = ass.nrdconta;
      rw_craprac cr_craprac%ROWTYPE;
      
@@ -277,7 +280,8 @@ BEGIN
              ,cpc.cddindex
              ,cpc.idtxfixa
          FROM crapcpc cpc
-        WHERE cpc.cdprodut = pr_cdprodut;
+        WHERE cpc.cdprodut = pr_cdprodut
+          AND cpc.indplano = 0;  -- Apenas aplicações não programadas
      rw_crapcpc cr_crapcpc%ROWTYPE;
 
      --Constantes Locais
@@ -1366,7 +1370,6 @@ BEGIN
                                                     ,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
                                                     ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                     ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
-                                                    ,pr_idaplpgm => 0                     --> Aplicação Programada  (0-Não/1-Sim)
                                                     ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                     ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                     ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1398,7 +1401,6 @@ BEGIN
                                                     ,pr_cddindex => rw_crapcpc.cddindex   --> Código do Indexador
                                                     ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                     ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
-                                                    ,pr_idaplpgm => 0                     --> Aplicação Programada  (0-Não/1-Sim)
                                                     ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                     ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                     ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)

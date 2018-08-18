@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Outubro/2003                        Ultima atualizacao: 22/09/2014
+   Data    : Outubro/2003                        Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -66,6 +66,8 @@ BEGIN
                             implicava em invalid_moth (Marcos-Supero)
 														
 							 22/09/2014 - Acrescentado leitura da tabela craplac. (Reinert)								
+
+               14/08/2018 - Inclusão das aplicações programadas na cr_craplpp							
 
 ............................................................................. */
   DECLARE
@@ -201,10 +203,15 @@ BEGIN
 			SELECT lac.nrdconta
 			      ,lac.cdhistor
 						,lac.vllanmto
-			 FROM craplac lac
-			WHERE lac.dtmvtolt = pr_dtmvtoan
-			  AND lac.cdcooper = pr_cdcooper
-			ORDER BY lac.cdcooper, lac.nrdconta, lac.dtmvtolt, lac.cdhistor, lac.vllanmto;
+       FROM crapcpc cpc,craprac rac,craplac lac
+      WHERE rac.cdcooper = pr_cdcooper
+        AND lac.dtmvtolt = pr_dtmvtoan
+        AND cpc.indplano = 0 -- Aplicação não programada
+        AND cpc.cdprodut = rac.cdprodut
+        AND rac.cdcooper = lac.cdcooper
+        AND rac.nrdconta = lac.nrdconta
+        AND rac.nraplica = lac.nraplica
+   ORDER BY lac.nrdconta, lac.cdhistor, lac.vllanmto;
 										 
     /* Busca dados de lançamentos automáticos */
     CURSOR cr_craplau(pr_cdcooper IN craplct.cdcooper%TYPE     --> Cooperativa
@@ -242,13 +249,26 @@ BEGIN
     /* Busca dados de lançamentos de poupança programada */
     CURSOR cr_craplpp(pr_cdcooper IN craplci.cdcooper%TYPE     --> Cooperativa
                      ,pr_dtmvtoan IN craplci.dtmvtolt%TYPE) IS --> Data de movimento anterior
-      SELECT cp.nrdconta
-            ,cp.cdhistor
-            ,cp.vllanmto
-      FROM craplpp cp
-      WHERE cp.dtmvtolt = pr_dtmvtoan
-        AND cp.cdcooper = pr_cdcooper
-      ORDER BY cp.CDCOOPER, cp.nrdconta, cp.DTMVTOLT, cp.CDHISTOR, cp.vllanmto;
+      SELECT nrdconta
+            ,cdhistor
+            ,vllanmto
+      FROM
+      (
+            SELECT lpp.nrdconta
+                  ,lpp.cdhistor
+                  ,lpp.vllanmto
+            FROM craplpp lpp
+            WHERE lpp.dtmvtolt = pr_dtmvtoan
+              AND lpp.cdcooper = pr_cdcooper
+            UNION
+            SELECT lac.nrdconta
+                  ,lac.cdhistor
+                  ,lac.vllanmto
+            FROM craplac lac
+            WHERE lac.dtmvtolt = pr_dtmvtoan
+              AND lac.cdcooper = pr_cdcooper
+      )      
+      ORDER BY nrdconta,cdhistor,vllanmto;
 
     /* Busca dados de transações de caixa e dispensers */
     CURSOR cr_crapltr(pr_cdcooper IN crapltr.cdcooper%TYPE     --> Cooperativa
@@ -1368,4 +1388,3 @@ BEGIN
   END;
 END PC_CRPS362;
 /
-

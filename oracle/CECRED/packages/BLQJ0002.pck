@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 
     Programa: BLQJ0002
     Autor   : Andrino Carlos de Souza Junior (Mout's)
-    Data    : Dezembro/2016                Ultima Atualizacao: 
+    Data    : Dezembro/2016                Ultima Atualizacao: 15/08/2018
      
     Dados referentes ao programa:
    
@@ -28,6 +28,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 				  22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
 
 				29/06/2018 - Alterada a procedure pc_resgata_aplicacao para utilização do Projeto URA (Everton Mouts)
+                15/08/2018 - Inclusão de aplicações programadas na checagem dos saques 
+                             Proj. 411.2 - CIS Corporate
 
   .............................................................................*/
 
@@ -154,13 +156,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
     Programa: BLQJ0002
     Autor   : Andrino Carlos de Souza Junior (Mout's)
-    Data    : Dezembro/2016                Ultima Atualizacao: 
+    Data    : Dezembro/2016                Ultima Atualizacao: 15/08/2018
      
     Dados referentes ao programa:
    
     Objetivo  : Efetuar a comunicacao do Ayllos com o Webjud
                  
-    Alteracoes: 
+    Alteracoes: 15/08/2018 - Inclusão de aplicações programadas na checagem dos saques 
+                             Proj. 411.2 - CIS Corporate
+
 
   .............................................................................*/
 
@@ -965,16 +969,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- Selecionar quantidade de saques em poupanca nos ultimos 6 meses
     CURSOR cr_craplpp (pr_cdcooper IN craplpp.cdcooper%TYPE
                       ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE) IS
-    SELECT lpp.nrdconta
-          ,lpp.nrctrrpp
+      SELECT craplpp.nrdconta
+            ,craplpp.nrctrrpp
           ,Count(*) qtlancmto
-      FROM craplpp lpp
-     WHERE lpp.cdcooper = pr_cdcooper
-       AND lpp.nrdconta = pr_nrdconta
-       AND lpp.cdhistor IN (158,496)
-       AND lpp.dtmvtolt > pr_dtmvtolt
-       GROUP BY lpp.nrdconta
-               ,lpp.nrctrrpp
+        FROM craplpp craplpp
+       WHERE craplpp.cdcooper = pr_cdcooper
+         AND craplpp.cdhistor IN (158,496)
+         AND craplpp.dtmvtolt > pr_dtmvtolt
+       GROUP BY craplpp.nrdconta,craplpp.nrctrrpp
+      HAVING Count(*) > 3
+      UNION
+      SELECT rac.nrdconta
+            ,rac.nrctrrpp
+            ,Count(*) qtlancmto
+      FROM crapcpc cpc, craprac rac, craplac lac
+      WHERE rac.cdcooper = pr_cdcooper
+      AND   rac.nrctrrpp > 0                 -- Apenas apl. programadas
+      AND   cpc.cdprodut = rac.cdprodut
+      AND   rac.cdcooper = lac.cdcooper
+      AND   rac.nrdconta = lac.nrdconta
+      AND   rac.nraplica = lac.nraplica 
+      AND   lac.cdhistor in (cpc.cdhsrgap)
+      AND   lac.dtmvtolt > pr_dtmvtolt       
+      GROUP BY rac.nrdconta,rac.nrctrrpp        
                 HAVING Count(*) > 3;
                   
     --Contar a quantidade de resgates das contas

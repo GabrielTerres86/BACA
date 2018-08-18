@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/96.                    Ultima atualizacao: 17/03/2017
+   Data    : Novembro/96.                    Ultima atualizacao: 14/08/2017
 
    Dados referentes ao programa:
 
@@ -133,6 +133,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
              17/03/2017 - Remover linhas de reversão das contas de resultado e incluir
                           lançamentos de novos históricos para o arquivo Radar ou Matera (Jonatas - Supero)                
                                                   
+             14/08/2018 - Inclusão da Aplicação Programada
+                          Proj. 411.2 (CIS Corporate)
                            
      ............................................................................. */
 
@@ -361,15 +363,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
       --Selecionar quantidade de saques em poupanca nos ultimos 6 meses
       CURSOR cr_craplpp (pr_cdcooper IN craplpp.cdcooper%TYPE
                         ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE) IS
-        --Aqui
-        SELECT craplpp.nrdconta
-              ,craplpp.nrctrrpp
+        SELECT lpp.nrdconta                   -- LPP naturalmente apenas as Poupanças antigas
+              ,lpp.nrctrrpp
               ,Count(*) qtlancmto
-        FROM craplpp craplpp
-        WHERE craplpp.cdcooper = pr_cdcooper
-        AND   craplpp.cdhistor IN (158,496)
-        AND   craplpp.dtmvtolt > pr_dtmvtolt
-        GROUP BY craplpp.nrdconta,craplpp.nrctrrpp
+        FROM craplpp lpp
+        WHERE lpp.cdcooper = pr_cdcooper
+        AND   lpp.cdhistor IN (158,496)
+        AND   lpp.dtmvtolt > pr_dtmvtolt
+        GROUP BY lpp.nrdconta,lpp.nrctrrpp
+        HAVING Count(*) > 3
+        UNION
+        SELECT rac.nrdconta
+              ,rac.nrctrrpp
+              ,Count(*) qtlancmto
+        FROM crapcpc cpc, craprac rac, craplac lac
+        WHERE rac.cdcooper = pr_cdcooper
+        AND   rac.nrctrrpp > 0                 -- Apenas apl. programadas
+        AND   cpc.cdprodut = rac.cdprodut
+        AND   rac.cdcooper = lac.cdcooper
+        AND   rac.nrdconta = lac.nrdconta
+        AND   rac.nraplica = lac.nraplica 
+        AND   lac.cdhistor in (cpc.cdhsrgap)
+        AND   lac.dtmvtolt > pr_dtmvtolt       
+        GROUP BY rac.nrdconta,rac.nrctrrpp        
         HAVING Count(*) > 3;
 
       --Contar a quantidade de resgates das contas

@@ -41,10 +41,12 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                21/04/2018 - Adicionar campo idlstdom no typ_reg_extrato_conta para retorno para
                             a operacao 12 do IB (Anderson - P285).
                                                         
-               30/05/2018 - Adinionado campo dscomple na pl_table typ_reg_extrato_conta (Alcemir Mout's - Prj. 467).            
-							 
-							 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
-														(Reinert)
+               30/05/2018 - Adinionado campo dscomple na pl_table typ_reg_extrato_conta (Alcemir Mout's - Prj. 467).              
+
+               09/08/2018 - Considerar aplicacoes programadas na pc_ver_saldos - Proj. 411.2 (CIS Corporate).
+
+			   14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+							(Reinert)
 							 
 ..............................................................................*/
 
@@ -799,9 +801,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          
          30/05/2018 - Incluido na pc_consulta_extrato carregar historicos, na pc_gera_registro_estrato
                       tratar complemento para incluir na pl_table (Alcemir Mout's - Prj 467).
-											
-				 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
-				              (Reinert)
+         
+         09/08/2018 - Considerar aplicacoes programadas na pc_ver_saldos - Proj. 411.2 (CIS Corporate).
+                      
+		 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+				      (Reinert)
 ..............................................................................*/
 
   -- Tratamento de erros
