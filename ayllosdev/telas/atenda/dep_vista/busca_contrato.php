@@ -27,11 +27,12 @@
 	$xml .= " <Dados>";
 	$xml .= "  <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";		
 	$xml .= "  <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  <incpreju>1</incpreju>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
 	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
-	$xmlResult = mensageria($xml, "ZOOM0001", "BUSCA_CONTRATOS_ATIVOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ZOOM0001", "BUSCA_CONTRATOS_ATIV_PRJ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
