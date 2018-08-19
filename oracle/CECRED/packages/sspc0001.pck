@@ -511,7 +511,7 @@ PROCEDURE pc_busca_intippes(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cód. da
                            ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
                            ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
                            ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
-                           ,pr_tpctrato IN crapavt.tpctrato%TYPE     --> Tipo de Contrato 1-Emprestimo, 8-Limite Desconto Titulo
+                           ,pr_tpctrato IN crapavt.tpctrato%TYPE DEFAULT 1 --> Tipo de Contrato 1-Emprestimo, 8-Limite Desconto Titulo
                            ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
                            ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
                            ,pr_inpessoa OUT NUMBER);                 --> 1-Física; 2- Jurídica
@@ -10739,7 +10739,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
                              ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
                              ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
                              ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
-                             ,pr_tpctrato IN crapavt.tpctrato%TYPE     --> Tipo de Contrato 1-Emprestimo, 8-Limite Desconto Titulo
+                             ,pr_tpctrato IN crapavt.tpctrato%TYPE DEFAULT 1 --> Tipo de Contrato 1-Emprestimo, 8-Limite Desconto Titulo
                              ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
                              ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
                              ,pr_inpessoa OUT NUMBER) IS               --> 1-Física; 2- Jurídica

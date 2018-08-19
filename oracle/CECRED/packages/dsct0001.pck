@@ -264,6 +264,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                            (Gustavo Sene - GFT)               
                27/04/2018 - Projeto Ligeirinho. Alterado para gravar o PA do associado na tabela de lotes (craplot)
 			                quando chamado pelo CRPS538. (Mário- AMcom)
+    
+			   04/07/2018 - Projeto Ligeirinho. Ajuste chamado pelo CRPS509 #40089. (Mário- AMcom)
                            
                24/05/2018 - Alterado procedure pc_efetua_resgate_tit_bord. Realizar os lançamentos:
                             1) Na conta corrente do cooperado (tabela CRAPLCM)
@@ -3120,14 +3122,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
 			  
+              IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN -- Merge 1 - 15/02/2018 - Chamado 851591
+
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                  PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
                  se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
                  da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
                  a agencia do cooperado*/
+				/* Ajuste quando paralelismo #40089 */
               if not paga0001.fn_exec_paralelo then              
                 -- Vamos verificar se o valo do IOF complementar é maior que 0
-                IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN -- Merge 1 - 15/02/2018 - Chamado 851591
                   /* Leitura do lote */
                   OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => vr_dtmvtolt
@@ -3471,7 +3475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                            pr_tplotmov => 1,
                                            pr_cdhistor => 591,
                                            pr_cdbccxpg => null,
-                                           pr_nmrotina => 'CXON0014.PC_EFETUA_BAIXA_TITULO');
+                                           pr_nmrotina => 'DSCT0001.PC_EFETUA_BAIXA_TITULO');
                             
               rw_craplot.dtmvtolt := pr_dtmvtolt;                  
               rw_craplot.cdagenci := 1;                   
@@ -6298,8 +6302,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log  
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);    
-  END pc_controla_log_batch;    
-  
+  END pc_controla_log_batch;
+
   PROCEDURE pc_abatimento_juros_titulo(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_nrborder  IN crapbdt.nrborder%TYPE --> Numero do bordero
@@ -6390,9 +6394,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       AND   craptdb.nrdocmto = pr_nrdocmto
       AND   craptdb.dtresgat IS NULL;
     rw_craptdb cr_craptdb%ROWTYPE;
-      
+
     --Selecionar lancamento juros desconto titulo
-    CURSOR cr_crapljt (pr_dtrefere IN crapljt.dtrefere%type
+    CURSOR cr_crapljt (pr_cdcooper IN crapljt.cdcooper%type
+                      ,pr_nrdconta IN crapljt.nrdconta%type
+                      ,pr_nrborder IN crapljt.nrborder%type
+                      ,pr_dtrefere IN crapljt.dtrefere%type
+                      ,pr_cdbandoc IN crapljt.cdbandoc%type
+                      ,pr_nrdctabb IN crapljt.nrdctabb%type
+                      ,pr_nrcnvcob IN crapljt.nrcnvcob%type
+                      ,pr_nrdocmto IN crapljt.nrdocmto%TYPE
                       ,pr_tipo     IN INTEGER) IS
       SELECT crapljt.ROWID
             ,crapljt.vldjuros
@@ -6506,7 +6517,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         --Se for a mesma cooperativa
         IF vr_tab_crawljt(idx).cdcooper = pr_cdcooper THEN
           --Selecionar lancamento juros desconto titulo
-          OPEN cr_crapljt (pr_dtrefere => vr_tab_crawljt(idx).dtrefere
+                OPEN cr_crapljt (pr_cdcooper => vr_tab_crawljt(idx).cdcooper
+                                ,pr_nrdconta => vr_tab_crawljt(idx).nrdconta
+                                ,pr_nrborder => vr_tab_crawljt(idx).nrborder
+                                ,pr_dtrefere => vr_tab_crawljt(idx).dtrefere
+                                ,pr_cdbandoc => vr_tab_crawljt(idx).cdbandoc
+                                ,pr_nrdctabb => vr_tab_crawljt(idx).nrdctabb
+                                ,pr_nrcnvcob => vr_tab_crawljt(idx).nrcnvcob
+                                ,pr_nrdocmto => vr_tab_crawljt(idx).nrdocmto
                           ,pr_tipo     => 1);
           --Posicionar no proximo registro
           FETCH cr_crapljt INTO rw_crapljt;
@@ -6574,7 +6592,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --data referencia juros
       vr_dtrefjur:= Last_Day(rw_craptdb.dtdpagto);
       /* Restitui o juro que seria apropriado no mês do pagamento do título */
-      FOR rw_crapljt IN cr_crapljt (pr_dtrefere => vr_dtrefjur
+            FOR rw_crapljt IN cr_crapljt (pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => rw_craptdb.nrdconta
+                                         ,pr_nrborder => rw_craptdb.nrborder
+                                         ,pr_dtrefere => vr_dtrefjur
+                                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                         ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                         ,pr_nrdocmto => rw_craptdb.nrdocmto
                                    ,pr_tipo     => 1) LOOP
         --Acumular total juros
         vr_vltotjur:= Nvl(vr_vltotjur,0) + Nvl(rw_crapljt.vldjuros,0);
@@ -6607,7 +6632,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_dtultdat:= Last_Day(rw_craptdb.dtdpagto);
     END IF;
     /* Restitui o juro que seria apropriado no(s) periodo(s) seguinte(s) */
-    FOR rw_crapljt IN cr_crapljt (pr_dtrefere => vr_dtultdat
+          FOR rw_crapljt IN cr_crapljt (pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => rw_craptdb.nrdconta
+                                       ,pr_nrborder => rw_craptdb.nrborder
+                                       ,pr_dtrefere => vr_dtultdat
+                                       ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                       ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                       ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                       ,pr_nrdocmto => rw_craptdb.nrdocmto
                                  ,pr_tipo     => 2) LOOP
       --Acumular total juros
       vr_vltotjur:= Nvl(vr_vltotjur,0) + Nvl(rw_crapljt.vldjuros,0);
@@ -6877,7 +6909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     WHEN OTHERS THEN
          pr_cdcritic := nvl(vr_cdcritic,0);
          pr_dscritic := 'Erro nao tratado na rotina DSCT0001.pc_abatimento_juros_titulo: '||SQLERRM;
-  END pc_abatimento_juros_titulo; 
+  END pc_abatimento_juros_titulo;
 
 
 END  DSCT0001;
