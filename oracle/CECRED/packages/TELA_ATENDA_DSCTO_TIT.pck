@@ -5226,6 +5226,7 @@ BEGIN
                               );
              fetch cr_craptdb into rw_craptdb;
              if  cr_craptdb%found AND rw_craptdb.insitapr <> 2 then
+               CLOSE cr_craptdb;
                vr_dscritic := 'Título ' ||rw_craptdb.nrdocmto || ' já selecionado em outro borderô';
                RAISE vr_exc_erro;
              end if;
