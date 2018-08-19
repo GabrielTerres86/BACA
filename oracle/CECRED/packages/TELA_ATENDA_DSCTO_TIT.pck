@@ -1452,6 +1452,7 @@ DECLARE
          ,lim.vllimite
          ,lim.cddlinha
          ,lim.insitapr
+         ,lim.idcobope
    from   crawlim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
