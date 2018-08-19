@@ -314,6 +314,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  26/06/2018 - P450 - Ajuste calculo Juros60 (Rangel/AMcom)
 
+                 15/06/2018 - P450 - Tratamento Risco Inclusão (Guilherme/AMcom)
+                                   - Ajuste Calculo Juros60 CC (Reginaldo/AMcom)
+
                  15/08/2018 - Ajustado os valores do risco para os borderos (Luis Fernando - GFT)
 
   ............................................................................ */
@@ -453,6 +456,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crawepr.dtdpagto dtdpripg
               ,crapepr.dtultpag
               ,crawepr.dsnivris
+              ,crawepr.dsnivori
               ,crapepr.diarefju
               ,crapepr.mesrefju
               ,crapepr.anorefju
@@ -612,8 +616,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,COUNT(1)      OVER (PARTITION BY bdt.nrborder,cob.flgregis) qtd_max
               ,ROW_NUMBER () OVER (PARTITION BY bdt.nrborder,cob.flgregis
                                        ORDER BY bdt.nrborder,cob.flgregis) seq_atu
-                                       
-              
           FROM crapcob cob
               ,craptdb tdb
               ,crapbdt bdt
@@ -710,14 +712,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         SELECT  craplem.nrdconta
                ,craplem.nrctremp
            --,NVL(SUM(NVL(craplem.vllanmto,0)),0) vllanmto
-          ,sum(case when craplem.cdhistor in (382,383,2388,2473,2389,2390,2475) then craplem.vllanmto else 0 end) -
-               sum(case when craplem.cdhistor in (2392,2474,2393,2394,2476) then craplem.vllanmto else 0 end) vllanmto
+          ,sum(case when craplem.cdhistor in (382,383,2388,2473) then craplem.vllanmto else 0 end) - 
+               sum(case when craplem.cdhistor in (2392,2474) then craplem.vllanmto else 0 end) vllanmto
           FROM craplem craplem
               ,crapass ass
          WHERE craplem.cdcooper = pr_cdcooper
            AND craplem.dtmvtolt <= pr_dtrefere
            -- 382-PAG.PREJ.ORIG E 383-ABONO PREJUIZO
-           AND craplem.cdhistor IN (382,383,2388,2473,2389,2390,2475,2392,2474,2393,2394,2476)
+           AND craplem.cdhistor IN (382,383,2388,2473,2392,2474)
            AND craplem.cdcooper = ass.cdcooper
            AND craplem.nrdconta = ass.nrdconta
            AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
@@ -1075,6 +1077,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vlprjant     crapris.vlprjant%TYPE; --> Valor prejuizo anterior
       vr_vljura60     crapris.vljura60%TYPE; --> Valor dos Juros em Atraso a mais de 60 dias
 
+      vr_cdcritic     crapcri.cdcritic%TYPE; --> Código da critica retornado pela "pc_busca_saldos_juros60"
+      vr_dscritic     crapcri.dscritic%TYPE; --> Descrição da crítica retornada pela "pc_busca_saldos_juros60"
+      
       vr_dtprxpar     crapris.dtprxpar%TYPE; --> Data da próxima parcela do Fluxo Financeiro
       vr_vlprxpar     crapris.vlprxpar%TYPE; --> Valor da próxima parcela do Fluxo Financeiro
       vr_qtparcel     crapris.qtparcel%TYPE; --> Quantidade de parcelas para o Fluxo Financeiro
@@ -1574,7 +1579,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           SELECT ris.dtinictr
           FROM   crapris ris
           WHERE ris.cdcooper  = pr_cdcooper
-          AND ris.nrdconta    = pr_nrdconta--77135
+          AND ris.nrdconta    = pr_nrdconta 
           AND ris.dtrefere    = pr_dtrefere
           AND ris.vldivida  > 0
           AND ris.cdmodali  =101
@@ -1594,7 +1599,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             WHERE lcm.cdcooper = his.cdcooper
             AND lcm.cdhistor   = his.cdhistor
             AND lcm.cdcooper   = pr_cdcooper
-            AND lcm.nrdconta   = pr_nrdconta--77135
+           AND lcm.nrdconta   = pr_nrdconta 
             AND lcm.dtmvtolt   > pr_dtcorte
            AND lcm.dtmvtolt   >= pr_dt60datr -- Data em que completou 60 dias em ADP
             AND his.cdhistor IN(37,38,57);
@@ -2328,7 +2333,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Buscar nível de risco do Empréstimo
         vr_dsnivris := null;
         -- Copiá-lo a variavel
-        vr_dsnivris := pr_rw_crapepr.dsnivris;
+        IF  pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
+          vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
+        ELSE
+          vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
+        END IF;
         -- Buscar o seu valor conforme o char de risco encontrado
         IF vr_tab_risco.exists(vr_dsnivris) THEN
           IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
@@ -3059,7 +3068,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         -- Testar se existe algo na tabela de cadastro complementar
         -- Copiá-lo a variavel
-        vr_dsnivris := pr_rw_crapepr.dsnivris; --  vt_tab_nivepr(LPAD(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0'));
+        IF  pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
+          vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
+        ELSE
+          vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
+        END IF;
 
         -- Verifica se o risco da proposta é pior que o risco acelerado - Daniel(AMcom)
         IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
@@ -3715,7 +3728,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_nivel_atraso := vr_aux_nivel;
 
         vr_dsnivris := NULL;
-        vr_dsnivris := pr_rw_crapepr.dsnivris; --  vt_tab_nivepr(LPAD(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0'));
+        IF  pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
+          vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
+        ELSE
+          vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
+        END IF;
 
         -- Verifica se o risco da proposta é pior que o risco acelerado - Daniel(AMcom)
         IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
@@ -4350,7 +4367,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             vr_innivris := -1;
             vr_qtdrisco := 0;
 
-            IF rw_crapris.vldivida > pr_vlarrasto THEN
+            IF rw_crapris.vldivida >= pr_vlarrasto THEN
             vr_dtdrisco := rw_crapris.dtdrisco;
             -- Armazenar a data e nível deste risco, pois é o mais elevado
             vr_innivris := rw_crapris.innivris;
@@ -5490,7 +5507,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_dtdrisco => NULL
                                 ,pr_qtdriclq => ABS(vr_qtdiaatr) --> valor absoluto
                                 ,pr_nrdgrupo => 0
-                                ,pr_vljura60 => fn_juros60cc(rw_crapass.nrdconta,nvl(vr_qtdiaatr,0))-- Rangel Decker AMcom 0
+                                ,pr_vljura60 => fn_juros60cc(rw_crapass.nrdconta, nvl(vr_qtdiaatr,0))
                                 ,pr_inindris => vr_risco_aux
                                 ,pr_cdinfadi => ' '
                                 ,pr_nrctrnov => 0

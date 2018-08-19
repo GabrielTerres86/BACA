@@ -7674,35 +7674,6 @@ END fn_letra_risco;
       END IF;
       
       pc_escreve_xml('</totais>',TRUE);
-      
-      -- Se possui restricoes aprovadas pelo coordenador
-      /*IF vr_tab_restri_apr_coo.COUNT > 0 THEN
-        pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');
-        vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
-        WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto>' || 
-                             '<flgrestr>'|| pr_flgrestr ||'</flgrestr>' ||
-          '</restricao>');
-          vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
-        END LOOP;
-        pc_escreve_xml(  '</restricoes_coord>');
-      END IF;
-      
-      --> Exibir sacados que com pagamentos nao efetuados/pendentes
-      IF vr_tab_sacado_nao_pagou.count > 0 THEN
-        pc_escreve_xml('<sacnaopago>',TRUE);
-        vr_idxsac := vr_tab_sacado_nao_pagou.first;
-        WHILE vr_idxsac IS NOT NULL LOOP        
-          pc_escreve_xml('<sacado>
-                             <nmsacado>'|| gene0007.fn_caract_controle(vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado) ||'</nmsacado>
-                             <qtdtitul>'|| vr_tab_sacado_nao_pagou(vr_idxsac).qtdtitul ||'</qtdtitul>
-                             <vlrtitul>'|| to_char(vr_tab_sacado_nao_pagou(vr_idxsac).vlrtitul,'fm999G999G999G990D00') ||'</vlrtitul>
-                          </sacado>');  
-          vr_idxsac := vr_tab_sacado_nao_pagou.next(vr_idxsac);
-        END LOOP;
-        pc_escreve_xml('</sacnaopago>');
-      END IF;*/      
-      
       pc_escreve_xml('</Bordero></raiz>',TRUE);      
       
       --> Solicita geracao do PDF

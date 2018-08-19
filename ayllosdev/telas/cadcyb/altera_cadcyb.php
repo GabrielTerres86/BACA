@@ -7,7 +7,6 @@
  * --------------
  * ALTERAÇÕES   : 01/09/2015 - Adicionado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12)
  *                03/04/2018 - Convertido para chamada via Oracle (Chamado 806202)
- *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
  * -------------- 
  */
  
