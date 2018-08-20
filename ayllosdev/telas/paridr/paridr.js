@@ -445,7 +445,8 @@ function trocaVisao(opcao) {
 			getDivFormulario().toggle();
 
 			$('#tpindicador', frmIndicador).prop('disabled', true);
-			$('#cdproduto', frmIndicador).prop('disabled', true);
+			$('#cdproduto', getForm()).prop('disabled', true);
+			$('#idvinculacao', frmVinculacao).prop('disabled', true);
 			$('#inpessoa', frmIndicador).prop('disabled', true);				
 			if ($('#tpindicador', frmIndicador).val() == 'A'){
 				$('#vlminimo', frmIndicador).val(0);
@@ -601,6 +602,7 @@ function controlaPesquisa(tipo){
 		
 		return false;
 	}else if (tipo == 'V'){
+		consultaVinculacao();
 		
 		$('#perpeso', frmVinculacao).val('0');
 		$('#perdesc', frmVinculacao).val('0');
@@ -690,7 +692,6 @@ function consultaIndicador(){
 
 function consultaProduto() {
 
-    //var cdproduto = $('#cdproduto.pesquisa.campoFocusIn', getAbaAtual()).val();
 	var cdproduto = $('#cdproduto.pesquisa',getAbaAtual()).val();
 
     if (cdproduto != '') {
@@ -722,6 +723,39 @@ function consultaProduto() {
 
 }
 
+function consultaVinculacao() {
+
+	var idvinculacao = $('#idvinculacao.pesquisa',frmVinculacao).val();
+
+    if (idvinculacao != '') {
+
+        showMsgAguardo('Aguarde, consultando vinculacao ...');
+
+        // Gera requisição ajax para validar o indicador
+        $.ajax({
+            type: 'POST',
+            dataType: 'html',
+            url: UrlSite + 'telas/paridr/valida_vinculacao.php',
+            data: {
+				cddopcao: cddopcao,
+				idvinculacao: idvinculacao,
+				redirect: 'script_ajax'
+			},
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                eval(response);
+            }
+        });
+    }
+
+    return false;
+
+}
+
 function limpaIndicador(){
 	
 	$('#idindicador', getAbaAtual()).focus(); 
@@ -735,6 +769,14 @@ function limpaProduto(){
 	$('#cdproduto', getAbaAtual()).focus(); 
 	$('#cdproduto', getAbaAtual()).val("");
 	$('#dsproduto', getAbaAtual()).val("");
+	
+}
+
+function limpaVinculacao(){
+	
+	$('#idvinculacao', frmVinculacao).focus(); 
+	$('#idvinculacao', frmVinculacao).val("");
+	$('#nmvinculacao', frmVinculacao).val("");
 	
 }
 
