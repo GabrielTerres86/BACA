@@ -545,7 +545,10 @@ create or replace package body cecred.EMPR9999 as
           CLOSE cr_craplim;
         END IF;
       END IF;
-      CLOSE cr_crapris;
+			
+			IF cr_crapris%ISOPEN THEN
+        CLOSE cr_crapris;
+			END IF;
 
       -- Verificando para Empréstimos
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
@@ -2244,7 +2247,7 @@ create or replace package body cecred.EMPR9999 as
       vr_vlajuste := vr_vlajuste + NVL(vr_vllanlem,0);
 
       -- VERIFICAR NOVAMENTE SE O VALOR DO AJUSTE É MAIOR QUE ZERO
-      IF nvl(vr_vlajuste, 0) > 0 THEN
+      IF nvl(vr_vlajuste, 0) > 0 AND pr_nmtelant <> 'BLQPREJU' THEN
 
         -- Lanca em C/C e atualiza o lote
         EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
