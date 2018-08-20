@@ -167,7 +167,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_nmdcampo      OUT VARCHAR2                              --> Nome do campo com erro
                             ,pr_des_erro      OUT VARCHAR2                              --> Erros do processo
                             );   
-    -- PRJ431
+	-- PRJ431
   PROCEDURE pc_busca_dominio(pr_nmdominio IN  tbcadast_dominio_campo.nmdominio%TYPE --> Nome do domínio
                             ,pr_xmllog    IN  VARCHAR2                              --> XML com informações de LOG
                             ,pr_cdcritic  OUT PLS_INTEGER                           --> Código da crítica
@@ -176,7 +176,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_nmdcampo  OUT VARCHAR2                              --> Nome do campo com erro
                             ,pr_des_erro  OUT VARCHAR2                              --> Erros do processo
                             );
-    -- PRJ431
+	-- PRJ431
 END TELA_ATENDA_COBRAN;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
@@ -2768,8 +2768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapsgr sgr
               ,tbcobran_categ_tarifa_conven ctc
          WHERE cat.cdsubgru = sgr.cdsubgru
-           AND cat.cdtipcat = 2   -- Cobranca
-           AND sgr.cdsubgru <> 28 -- Registro e Liquidação
+           AND cat.cdtipcat = 2 -- Cobranca
            AND ctc.cdcatego(+) = cat.cdcatego
            AND ctc.cdcooper(+) = pr_cdcooper
            AND ctc.nrdconta(+) = pr_nrdconta
@@ -4250,7 +4249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           SELECT       conv.cdcooper 
                       ,conv.nrconven
                       ,conv.cdhistor
-                      ,(  SELECT max(ceb.idrecipr) 
+                      ,(  SELECT ceb.idrecipr 
                           FROM crapceb ceb 
                           WHERE conv.cdcooper = ceb.cdcooper 
                             AND conv.nrconven = ceb.nrconven 
@@ -4267,7 +4266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           AND         conv.flgativo = 1
           AND         conv.FLRECIPR = 1
           AND         conv.dsorgarq NOT IN ('PROTESTO');
-        
+  	  
       rw_conv_recip_desc cr_conv_recip_desc%ROWTYPE;
     
       -- Variável de críticas
@@ -4295,15 +4294,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
                              pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
     BEGIN
-            --
+			--
       gene0002.pc_escreve_xml(vr_des_xml
-                                   ,vr_texto_completo
-                                                         ,pr_des_dados
-                                                         ,pr_fecha_xml
-                                                         );
-            --
+			                       ,vr_texto_completo
+														 ,pr_des_dados
+														 ,pr_fecha_xml
+														 );
+			--
     END;
-        --
+		--
     BEGIN
 
      --
@@ -4318,7 +4317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_idorigem => vr_idorigem
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic
-                                                        );
+														);
     */                      
 -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -4371,7 +4370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       --
-            ROLLBACK;
+			ROLLBACK;
     WHEN OTHERS THEN
       --
       pr_cdcritic := vr_cdcritic;
@@ -4384,8 +4383,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       ROLLBACK;
       --   
   END pc_conv_recip_desc;
-    
-    -- PRJ431
+	
+	-- PRJ431
   PROCEDURE pc_busca_dominio(pr_nmdominio IN  tbcadast_dominio_campo.nmdominio%TYPE --> Nome do domínio
                             ,pr_xmllog    IN  VARCHAR2                              --> XML com informações de LOG
                             ,pr_cdcritic  OUT PLS_INTEGER                           --> Código da crítica
