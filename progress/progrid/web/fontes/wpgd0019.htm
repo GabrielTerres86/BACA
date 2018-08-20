@@ -37,16 +37,18 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 												 do departamento para que a mesma seja feita através
 												 do código e não da descrição (Renato Darosci).
 												 
-						01/09/2017 - Inclusão de condição para desconsiderar eventos EAD, SD 729182
-												 (Jean Michel).	
-						
-						25/10/2017 - Inclusão de filtro de programa, Prj. 322 (Jean Michel).		
+			01/09/2017 - Inclusão de condição para desconsiderar eventos EAD, SD 729182
+									 (Jean Michel).	
+			
+			25/10/2017 - Inclusão de filtro de programa, Prj. 322 (Jean Michel).		
     
             01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
             18/07/2018 - sctask0019591 Melhoria no carregamento inicial da tela Composição das agendas (Carlos)
-
+			
 			18/07/2018 - Ajuste realizado para que o sequencial NRSEQDIG nunca seja inserido zerado. (INC0017391 - Kelvin)
+
+            20/07/2018 - inc0022348 Incluída a flag para recarregar a agenda após acionar as funções salvar, gerar e enviar (Carlos)
 
 -------------------------------------------------------------------------------------->
 <html>
@@ -694,37 +696,37 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 												/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
 												Contador: DO aux_contnrseq = 1 TO 5:
 
-															ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-															IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-																DO:
+													ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+													IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+														DO:
 															IF  aux_contnrseq = 5 THEN
 																DO:
 																	ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
 																		   aux_erro = NO.
-															
+																   
 																	RUN RodaJavaScript("alert('" + aux_msgderro + "')").
 																	RETURN "NOK".
-														END.
-													ELSE
-														DO:
+																END.
+															ELSE 
+															   DO:
 																   PAUSE 1 NO-MESSAGE.				   
-																	END.
+															   END.
 														END.
 													ELSE
 														LEAVE Contador.
-													
-														END.
 
+												END.
+												
 												IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
 													DO:
 														ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
 															   aux_erro = NO.
-													
+													   
 														RUN RodaJavaScript("alert('" + aux_msgderro + "')").
 														RETURN "NOK".
-												END.
+													END.														
 												/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-												
+									
 												CREATE crapadp.
 												ASSIGN crapadp.nrseqdig  = aux_nrseqdig
 															 crapadp.idevento  = gnpapgd.idevento
@@ -878,8 +880,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           IF NOT AVAIL crapagp THEN NEXT.
 
           FIND FIRST crapedp WHERE crapedp.cdevento = crapeap.cdevento 
-															 AND crapedp.tpevento <> 10
-															 AND crapedp.tpevento <> 11 NO-LOCK NO-ERROR.
+							   AND crapedp.tpevento <> 10
+							   AND crapedp.tpevento <> 11 NO-LOCK NO-ERROR.
           
           FOR EACH crapsde where crapsde.idevento = gnpapgd.idevento
                              and crapsde.cdcooper = gnpapgd.cdcooper
@@ -889,40 +891,40 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 						 
 						
             
-						/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+            /* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
 			Contador: DO aux_contnrseq = 1 TO 5:
 
-                  ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                  IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-                    DO:
+				ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+				IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+					DO:
 						IF  aux_contnrseq = 5 THEN
 							DO:
 								ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
 									   aux_erro = NO.
-                  
+							   
 								RUN RodaJavaScript("alert('" + aux_msgderro + "')").
 								RETURN "NOK".
-                END.
-              ELSE
-                DO:
+							END.
+						ELSE 
+						   DO:
 							   PAUSE 1 NO-MESSAGE.				   
-                      END.
-                      END.
+						   END.
+					END.
 				ELSE
 					LEAVE Contador.
-              
-                END.
 
+			END.
+			
 			IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
 				DO:
 					ASSIGN aux_msgderro = 'Erro ao gerar agenda, tente novamente.'
 						   aux_erro = NO.
-
+				   
 					RUN RodaJavaScript("alert('" + aux_msgderro + "')").
 					RETURN "NOK".
-            END.
+				END.			
             /* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-						
+			
             CREATE crapadp.
             ASSIGN crapadp.nrseqdig = aux_nrseqdig
                    crapadp.idevento = gnpapgd.idevento
@@ -1712,6 +1714,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
         document.form.auxmotivos.value=mMotivos;
         document.form.auxevento.value=mEventos;
         document.form.auxrowid.value=mRowids;
+        document.form.carregar.value="sim";
+        
         aguarde();   
         document.form.submit();
       }
@@ -1732,6 +1736,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       
       function gerar(){
         var vaux = document.form.aux_lspermis.value; 
+        document.form.carregar.value="sim";
         if (vaux.substring(1,2) == 'A'){                         
           document.form.gera.value="sim";
           aguarde();
@@ -1744,6 +1749,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
       function enviar(){
         var vaux = document.form.aux_lspermis.value; 
+        document.form.carregar.value="sim";
         if ((vaux.substring(1,2) == 'A')){
           document.form.envia.value="sim";
           aguarde();
