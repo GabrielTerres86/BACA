@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 23/07/2018
+     Data    : Maio/2001                       Ultima atualizacao: 15/08/2018
      
      Dados referentes ao programa:
 
@@ -317,6 +317,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  15/06/2018 - P450 - Tratamento Risco Inclusão (Guilherme/AMcom)
                                    - Ajuste Calculo Juros60 CC (Reginaldo/AMcom)
 
+                 15/08/2018 - Ajustado os valores do risco para os borderos (Luis Fernando - GFT)
+
   ............................................................................ */
 
     DECLARE
@@ -608,6 +610,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,tdb.nrcnvcob
               ,tdb.nrdocmto
               ,cob.indpagto
+              ,tdb.vljura60
+              ,tdb.vltitulo
+              ,tdb.vlsldtit
               ,COUNT(1)      OVER (PARTITION BY bdt.nrborder,cob.flgregis) qtd_max
               ,ROW_NUMBER () OVER (PARTITION BY bdt.nrborder,cob.flgregis
                                        ORDER BY bdt.nrborder,cob.flgregis) seq_atu
@@ -630,6 +635,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND (  bdt.insitbdt = 4 OR (bdt.insitbdt = 3 AND bdt.dtlibbdt <= pr_dtrefere) )
            -- Titulos Situação 4-Liberado OU 2-Processado com data igual a de processo
            AND (  tdb.insittit = 4 OR (tdb.insittit = 2 AND tdb.dtdpagto = pr_rw_crapdat.dtmvtolt) )
+           AND ( tdb.insitapr = 1 OR bdt.flverbor = 0 )
          ORDER BY bdt.nrborder
                  ,cob.flgregis
                  ,bdt.progress_recid;
@@ -5826,6 +5832,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_qtdiaatr := 0;
                 vr_qtparcel := 1; -- Para desconto de duplicata sempre gera 1 parcela do Fluxo Financeiro
                 vr_dtvencop := NULL;
+                vr_vljura60 := 0;
                 -- Limpar a temp-table
                 FOR vr_ind IN 1..23 LOOP
                   vr_tab_vlavence(vr_ind) := 0;
@@ -5848,7 +5855,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               -- Nao considera em risco, pois ja esta pago o dinheiro ja entrou para a cooperativa
               IF NOT (rw_crapbdt.insittit = 2 AND (rw_crapbdt.indpagto IN(1,3,4) OR (rw_crapbdt.indpagto = 0 AND rw_crapbdt.cdbandoc = 085))) THEN
                 -- Acumular no valor do risco o valor líquido do cheque
-                vr_vlsrisco := rw_crapbdt.vlliquid;
+                vr_vlsrisco := rw_crapbdt.vlliquid - (rw_crapbdt.vltitulo - rw_crapbdt.vlsldtit);--pagamento do titulo parcial
                 -- Calcular o prazo com base nas datas de vencimento do titulo
                 -- e da data de liberação do borderô para crédito em conta
 
@@ -5904,6 +5911,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_vlprxpar := vr_vlprxpar + vr_vlsrisco;
                 END IF;                
                 
+                vr_vljura60 := vr_vljura60 + rw_crapbdt.vljura60;
+
                 IF vr_qtdprazo > 0 THEN
                   -- Copiar o valor do risco para a variavel específica de
                   -- valores a vencer conforme o prazo calculado
@@ -6015,7 +6024,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   ,pr_dtdrisco => NULL                     
                                   ,pr_qtdriclq => 0                      
                                   ,pr_nrdgrupo => 0                                      
-                                  ,pr_vljura60 => 0                                      
+                                  ,pr_vljura60 => vr_vljura60
                                   ,pr_inindris => vr_risco_rating
                                   ,pr_cdinfadi => ' '                                    
                                   ,pr_nrctrnov => 0                                      

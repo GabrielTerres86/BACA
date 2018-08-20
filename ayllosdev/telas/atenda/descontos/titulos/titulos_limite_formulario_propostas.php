@@ -25,6 +25,8 @@
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 012: [28/03/2018] Andre Avila (GFT):  Alteração da opção retorno dos botões.
+ * 013: [03/05/2018] Andre Avila (GFT):  Alteração da opção retorno do botão cancelar.
+
  */
 
 
@@ -53,7 +55,7 @@
 			<input type="text" name="qtdiavig" id="qtdiavig" value="0" class="campoTelaSemBorda" disabled>
 			<br />
 			
-			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontoss:') ?></label>
+			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontos:') ?></label>
 			<input type="text" name="cddlinha" id="cddlinha" value="0" class="campo">
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 			<input type="text" name="cddlinh2" id="cddlinh2" value="" class="campoTelaSemBorda" disabled>
@@ -345,7 +347,14 @@
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			$('#divBotoesRenda').css('display','none');
+
+			/*Motor em contingencia*/
+			if(flctgmot){
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulosPropostas()");
+			}else{
+				fncRatingSuccess = 'carregaLimitesTitulosPropostas()';
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
+			}
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
@@ -357,7 +366,11 @@
 	});
 	
 	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
+		if(operacao == 'A' && flctgmot){
 		dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
+		}else{
+			dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDscTit_Observacao;divBotoesObs');
+		}
 		return false;
 	});
 	
@@ -373,8 +386,15 @@
 	
 	if (operacao != 'C') {
 		$('#btnCancelarLimite','#divBotoesAval').unbind('click').bind('click',function() {
-			voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
-			return false;
+
+
+    showConfirmacao(
+        "Deseja cancelar a opera&ccedil;&atilde;o?",
+        "Confirma&ccedil;&atilde;o - Ayllos",
+		"carregaLimitesTitulosPropostas();",
+        "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
+        "sim.gif",
+        "nao.gif");
 		});
 	}
 	

@@ -42,8 +42,12 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
   --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
   --
+  --    10/05/2018 - Inserção do campo 'cardbtit_c' para cálculo do % Geral de Liquidez
+  --
   --	10/05/2018 - Ajuste para considerar os novos contratos do PJ404 a com a data da proposta
   --				 para contratos de desconto de título e cheque (Lucas Skroch - Supero)
+  --
+  --    13/08/2018 - Adicionados novos campos para o calculo de liquidez (Luis Fernando - GFT)     
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Registro para armazenar parametros para desconto de titulo
@@ -63,6 +67,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   pctolera  NUMBER,
                   pcdmulta  NUMBER,
                   cardbtit  NUMBER,
+                  cardbtit_c  NUMBER,
                   pcnaopag  NUMBER,
                   qtnaopag  INTEGER,
                   qtprotes  INTEGER,
@@ -184,7 +189,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   dsdlinha  VARCHAR2(200),
                   flgdigit  crapbdt.flgdigit%TYPE,
                   cdtipdoc  VARCHAR2(80),
-                  dsopecoo  VARCHAR2(100)
+                  dsopecoo  VARCHAR2(100),
+                  innivris  crapris.innivris%TYPE, 
+                  qtdiaatr  crapris.qtdiaatr%TYPE
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
        INDEX BY PLS_INTEGER;  
@@ -200,12 +207,16 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nrdocmto craptdb.nrdocmto%TYPE,
                   dtvencto craptdb.dtvencto%TYPE,
                   dtlibbdt craptdb.dtlibbdt%TYPE,
+                  dtdpagto craptdb.dtdpagto%TYPE,
                   nossonum VARCHAR2(50),
                   vltitulo craptdb.vltitulo%TYPE,
                   vlliquid craptdb.vlliquid%TYPE,
+                  vlsldtit craptdb.vlsldtit%TYPE,
                   nmsacado crapsab.nmdsacad%TYPE,
                   flgregis crapcob.flgregis%TYPE,
-                  insittit craptdb.insittit%TYPE);
+                  insittit craptdb.insittit%TYPE,
+                  insitapr craptdb.insitapr%TYPE,
+                  nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE);
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
        INDEX BY VARCHAR2(50);
@@ -216,7 +227,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nrdocmto crapabt.nrdocmto%TYPE,
                   nrcheque crapcdb.nrcheque%TYPE,
                   tprestri INTEGER,
-                  dsrestri crapabc.dsrestri%TYPE,
+                  dsrestri crapabt.dsrestri%TYPE,
                   nrseqdig crapabt.nrseqdig%TYPE,
                   flaprcoo crapabc.flaprcoo%TYPE,
                   dsdetres crapabc.dsdetres%TYPE);
@@ -552,6 +563,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_dsiduser IN VARCHAR2               --> Descricao do id do usuario
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_flgrestr IN INTEGER DEFAULT 0      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -574,6 +586,13 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2);            --> Descrição da crítica
 
+  PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
+                                        ,pr_nrdconta IN crapsab.nrdconta%TYPE DEFAULT NULL  --> Número da Conta do Pagador       (Sacado)
+                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE DEFAULT NULL  --> Número de Inscrição do Pagador   (Sacado)
+                                         --------> OUT <--------
+                                        ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
+                                        ,pr_dscritic          OUT VARCHAR2             --> Descrição da crítica
+                                        );
                                         
   --> Buscar titulos de um determinado bordero a partir da craptdb
   PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
@@ -585,6 +604,47 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
 
+  PROCEDURE pc_atualiza_calculos_pagador ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
+                                     ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
+                                     ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
+	                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez
+                                     ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
+                                     ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
+                                     ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
+                                     ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
+                                     ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
+                                   ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
+                                   ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
+                                     --------------> OUT <--------------
+                                     ,pr_pc_cedpag    OUT NUMBER
+                                     ,pr_qtd_cedpag   OUT NUMBER
+                                     ,pr_pc_conc      OUT NUMBER
+                                     ,pr_qtd_conc     OUT NUMBER
+                                     ,pr_pc_geral     OUT NUMBER
+                                     ,pr_qtd_geral    OUT NUMBER
+                                     ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
+                                     ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
+                                  );
+  
+  PROCEDURE pc_busca_dados_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                   ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                   ,pr_cddopcao IN VARCHAR2               --> Cod opcao
+ 													         ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+													         ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+													         ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+													         ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+													         ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+													         ,pr_des_erro  OUT VARCHAR2);          --> Erros do processo
+                                   
+  PROCEDURE pc_analise_pagador_paralelo (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                 ,pr_dscritic OUT VARCHAR2);
+                                 
+  PROCEDURE pc_analise_pagador_agencia (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                        ,pr_cdagenci IN crapass.cdagenci%TYPE   --> Código da Agencia
+                                        ,pr_idparale IN INTEGER
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                        ,pr_dscritic OUT VARCHAR2);
 END  DSCT0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
@@ -636,7 +696,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --               'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT).
   --
   --   14/05/2018 - Adicionada nova procedure para a impressão de proposta (Luis Fernando - GFT)
+  --
+  --   16/07/2018 - Alteracoes para contemplar o novo sistema de criticas do border (Luis Fernando - GFT)
+  --
+  --   13/08/2018 - Adicionados mais parametros no calculo de liquidez - Luis Fernando (GFT)
   -------------------------------------------------------------------------------------------------------------
+  -- Variáveis para armazenar as informações em XML
+  vr_des_xml         clob;
+  vr_texto_completo  varchar2(32600);
+  
+  -- Rotina para escrever texto na variável CLOB do XML
+  PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
+                          , pr_fecha_xml in boolean default false
+                          ) is
+  BEGIN
+     gene0002.pc_escreve_xml( vr_des_xml
+                            , vr_texto_completo
+                            , pr_des_dados
+                            , pr_fecha_xml );
+  END pc_escreve_xml;
+
+FUNCTION fn_letra_risco (pr_innivris IN crapris.innivris%TYPE) RETURN VARCHAR2 IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_letra_risco
+    Sistema  : 
+    Sigla    : CRED
+    Autor    : Vitor Shimada Assanuma (GFT)
+    Data     : 03/08/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Trocar o número do risco para letra
+  ---------------------------------------------------------------------------------------------------------------------*/
+  BEGIN
+     RETURN (
+       CASE
+         WHEN pr_innivris=2 THEN 'A'
+         WHEN pr_innivris=3 THEN 'B'
+         WHEN pr_innivris=4 THEN 'C'
+         WHEN pr_innivris=5 THEN 'D'
+         WHEN pr_innivris=6 THEN 'E'
+         WHEN pr_innivris=7 THEN 'F'
+         WHEN pr_innivris=8 THEN 'G'
+         WHEN pr_innivris=9 THEN 'H'
+       END
+     );
+END fn_letra_risco;
+
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE           --> Numero da conta do cooperado
@@ -1562,6 +1666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_tab_dados_dsctit(1).pctolera := vr_tab_dstextab(14);
       vr_tab_dados_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(15),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
       vr_tab_dados_dsctit(1).cardbtit := vr_tab_dstextab(31);
+      vr_tab_dados_dsctit(1).cardbtit_c := vr_tab_dstextab(32);
       vr_tab_dados_dsctit(1).pcnaopag := vr_tab_dstextab(33);
       vr_tab_dados_dsctit(1).qtnaopag := vr_tab_dstextab(34);
       vr_tab_dados_dsctit(1).qtprotes := vr_tab_dstextab(35);
@@ -2226,6 +2331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pr_dscritic := replace(replace('Erro pc_busca_restricoes: ' || SQLERRM, chr(13)),chr(10));   
   END pc_busca_restricoes;
   
+  
   --> Buscar dados de um determinado bordero
   PROCEDURE pc_busca_dados_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                    ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -2254,11 +2360,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Buscar dados de um determinado bordero
     --
     --   Alteração : 25/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    --               03/08/2018 - Inserção dos campos de Risco (Vitor Shimada Assanuma - GFT)
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
     --> Buscar bordero de desconto de titulo
-    CURSOR cr_crapbdt IS
+    CURSOR cr_crapbdt (pr_dtmvtoan crapdat.dtmvtoan%TYPE)IS
       SELECT bdt.insitbdt,
              bdt.cddlinha,
              bdt.dtmvtolt,
@@ -2274,8 +2381,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              bdt.hrtransa,
              bdt.flgdigit,
              bdt.cdopcolb,
-             bdt.cdopcoan
+             bdt.cdopcoan,
+             ris.innivris, 
+             ris.qtdiaatr
         FROM crapbdt bdt
+        LEFT JOIN crapris ris ON ris.cdcooper = bdt.cdcooper 
+                             AND ris.nrdconta = bdt.nrdconta 
+                             AND bdt.nrborder = ris.nrctremp 
+                             AND ris.cdmodali = 301 
+                             AND ris.dtrefere = pr_dtmvtoan
        WHERE bdt.cdcooper = pr_cdcooper
          AND bdt.nrborder = pr_nrborder;
     rw_crapbdt  cr_crapbdt%ROWTYPE;
@@ -2340,10 +2454,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_blnfound        BOOLEAN;
     vr_cdopecoo        crapope.cdoperad%TYPE;
     
+    -- variaveis de data
+    vr_dtmvtoan crapdat.dtmvtoan%TYPE;
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     
   BEGIN
+    --Selecionar dados da data
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se encontrar
+    IF BTCH0001.cr_crapdat%FOUND THEN
+      vr_dtmvtoan:= rw_crapdat.dtmvtoan;
+    END IF;
+    -- Apenas fechar o cursor
+    CLOSE BTCH0001.cr_crapdat;
+    
     --> Buscar bordero de desconto de titulo
-    OPEN cr_crapbdt;
+    OPEN cr_crapbdt (pr_dtmvtoan => vr_dtmvtoan);
     FETCH cr_crapbdt INTO rw_crapbdt;
     IF cr_crapbdt%NOTFOUND THEN
       CLOSE cr_crapbdt;
@@ -2473,6 +2602,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     pr_tab_dados_border(vr_idxborde).dsdlinha := to_char(rw_crapbdt.cddlinha,'fm000') ||'-'|| rw_crapldc.dsdlinha;
     pr_tab_dados_border(vr_idxborde).flgdigit := rw_crapbdt.flgdigit;
     pr_tab_dados_border(vr_idxborde).cdtipdoc := vr_cdtipdoc;
+    pr_tab_dados_border(vr_idxborde).innivris := rw_crapbdt.innivris;
+    pr_tab_dados_border(vr_idxborde).qtdiaatr := NVL(rw_crapbdt.qtdiaatr, 0);
     
     -- Verifica se tem operador coordenador de liberacao ou analise
     IF TRIM(rw_crapbdt.cdopcolb) IS NOT NULL THEN
@@ -2515,6 +2646,151 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pr_dscritic := replace(replace('Erro pc_busca_dados_bordero: ' || SQLERRM, chr(13)),chr(10));   
   END pc_busca_dados_bordero;
     
+  PROCEDURE pc_busca_dados_bordero_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                   ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                   ,pr_cddopcao IN VARCHAR2               --> Cod opcao
+ 													         ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+													         ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+													         ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+													         ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+													         ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+													         ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  /* .........................................................................
+    --
+    --  Programa : pc_busca_dados_bordero_web           
+    --  Sistema  : Cred
+    --  Sigla    : DSCT0002
+    --  Autor    : Vitor Shimada Assanuma (GFT)
+    --  Data     : Agosto/2018.                   Ultima atualizacao: 03/08/2018
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Buscar dados de um determinado bordero
+    --
+    --   Alteração : 
+    -- .........................................................................*/   
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+	
+    -- Tratamento de erros
+    vr_exc_erro  EXCEPTION;
+ 
+    -- variaveis de retorno
+    vr_tab_dados_border typ_tab_dados_border;
+    vr_index    INTEGER;
+    
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+
+    -- variaveis de data
+    vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    BEGIN
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+
+
+      --Selecionar dados da data
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se encontrar
+      IF BTCH0001.cr_crapdat%FOUND THEN
+        vr_dtmvtolt:= rw_crapdat.dtmvtolt;
+      END IF;
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+      
+      pc_busca_dados_bordero (pr_cdcooper => vr_cdcooper
+                             ,pr_cdagenci => vr_cdagenci
+                             ,pr_nrdcaixa => vr_nrdcaixa
+                             ,pr_cdoperad => vr_cdoperad
+                             ,pr_dtmvtolt => vr_dtmvtolt
+                             ,pr_idorigem => vr_idorigem
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrborder => pr_nrborder
+                             ,pr_cddopcao => pr_cddopcao
+                             --------> OUT <--------                                   
+                             ,pr_tab_dados_border => vr_tab_dados_border --> retorna dados do bordero
+                             ,pr_cdcritic => vr_cdcritic           --> Código da crítica
+                             ,pr_dscritic => vr_dscritic);          --> Descrição da crítica
+                             
+      IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      -- Inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);   
+       
+      -- inicilizar as informaçoes do xml
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                             '<root><dados>');
+                             
+       -- Ler os registros de titulos e incluir no xml
+       vr_index := vr_tab_dados_border.first;
+                             
+       -- Leitura dos registros
+       WHILE vr_index IS NOT NULL LOOP 
+         pc_escreve_xml('<inf>'||
+                            '<nrborder>' || vr_tab_dados_border(vr_index).nrborder || '</nrborder>' ||
+                            '<nrctrlim>' || vr_tab_dados_border(vr_index).nrctrlim || '</nrctrlim>' ||
+                            '<insitbdt>' || vr_tab_dados_border(vr_index).insitbdt || '</insitbdt>' ||
+                            '<txmensal>' || vr_tab_dados_border(vr_index).txmensal || '</txmensal>' ||
+                            '<txjurmor>' || vr_tab_dados_border(vr_index).txjurmor || '</txjurmor>' ||
+                            '<dtlibbdt>' || to_char(vr_tab_dados_border(vr_index).dtlibbdt,'DD/MM/RRRR') || '</dtlibbdt>' ||
+                            '<txdiaria>' || vr_tab_dados_border(vr_index).txdiaria || '</txdiaria>' ||
+                            '<qttitulo>' || vr_tab_dados_border(vr_index).qttitulo || '</qttitulo>' ||
+                            '<vltitulo>' || vr_tab_dados_border(vr_index).vltitulo || '</vltitulo>' ||
+                            '<dspesqui>' || vr_tab_dados_border(vr_index).dspesqui || '</dspesqui>' ||
+                            '<dsdlinha>' || vr_tab_dados_border(vr_index).dsdlinha || '</dsdlinha>' ||
+                            '<dsopelib>' || vr_tab_dados_border(vr_index).dsopelib || '</dsopelib>' ||
+                            '<dsopedig>' || vr_tab_dados_border(vr_index).dsopedig || '</dsopedig>' ||
+                            '<flgdigit>' || vr_tab_dados_border(vr_index).flgdigit || '</flgdigit>' ||
+                            '<dsopecoo>' || vr_tab_dados_border(vr_index).dsopecoo || '</dsopecoo>' ||
+                            '<cdtipdoc>' || vr_tab_dados_border(vr_index).cdtipdoc || '</cdtipdoc>' ||
+                            '<innivris>' || fn_letra_risco(vr_tab_dados_border(vr_index).innivris)  || '</innivris>' ||
+                            '<qtdiaatr>' || vr_tab_dados_border(vr_index).qtdiaatr || '</qtdiaatr>' ||
+                        '</inf>'
+                      );
+         vr_index := vr_tab_dados_border.next(vr_index);
+       END LOOP;
+       pc_escreve_xml ('</dados></root>',true);
+       pr_retxml := xmltype.createxml(vr_des_xml); 
+        
+       /* liberando a memória alocada pro clob */
+       dbms_lob.close(vr_des_xml);
+       dbms_lob.freetemporary(vr_des_xml);         
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+       IF  vr_cdcritic <> 0 THEN
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       END IF;
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := vr_dscritic;
+
+  WHEN OTHERS THEN
+       pr_dscritic := 'Erro geral na rotina dsct0002.pc_busca_dados_bordero_web: '||SQLERRM;                           
+                                      
+  END pc_busca_dados_bordero_web;                                 
+  
   --> Rotina para Carregar dados para a impressao da proposta de bordero
   PROCEDURE pc_carrega_proposta_bordero ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                          ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -2758,6 +3034,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     -- por esse motivo as PL TABLES vr_tab_conta_bloq, vr_tab_craplpp, vr_tab_craplrg, vr_tab_resgate 
     -- e por questao de performace elas nao serao carregadas
     
+    -- Calculo do IR
+    vr_percenir:= GENE0002.fn_char_para_number(TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'CONFIG'
+                                                 ,pr_cdempres => 0
+                                                 ,pr_cdacesso => 'PERCIRAPLI'
+                                                 ,pr_tpregist => 0));
+                                                     
+
     --Executar rotina consulta poupanca
     apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
                                   ,pr_cdagenci => pr_cdagenci            --> Codigo da Agencia
@@ -3020,15 +3305,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              tdb.nrdocmto,
              tdb.dtvencto,
              tdb.dtlibbdt,
+             tdb.dtdpagto,
              tdb.vltitulo,
              tdb.vlliquid,
+             tdb.vlsldtit + (tdb.vlmtatit - tdb.vlpagmta) + (tdb.vlmratit - tdb.vlpagmra) + (tdb.vliofcpl - tdb.vlpagiof) as vlsldtit,
              sab.nmdsacad,
              tdb.insittit,
-             cob.nrnosnum
+             tdb.insitapr,
+             cob.nrnosnum,
+             ttc.nrctrdsc
         FROM craptdb tdb 
             ,crapcob cob
             ,crapcco cco
             ,crapsab sab
+            ,tbdsct_titulo_cyber ttc
        WHERE tdb.cdcooper = pr_cdcooper
          AND tdb.nrborder = pr_nrborder
          AND tdb.nrdconta = pr_nrdconta
@@ -3045,7 +3335,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          --> Busca os dados do Sacado 
          AND sab.cdcooper(+) = tdb.cdcooper 
          AND sab.nrdconta(+) = tdb.nrdconta 
-         AND sab.nrinssac(+) = tdb.nrinssac;
+         AND sab.nrinssac(+) = tdb.nrinssac
+         --> Busca Contrato Cyber
+         AND ttc.cdcooper(+) = tdb.cdcooper
+         AND ttc.nrborder(+) = tdb.nrborder
+         AND ttc.nrdconta(+) = tdb.nrdconta
+         AND ttc.nrtitulo(+) = tdb.nrtitulo;
                            
                            
     --> Buscar bordero de desconto de titulo
@@ -3106,12 +3401,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pr_tab_tit_bordero(vr_idxtitul).nrdocmto := rw_craptdb.nrdocmto;
       pr_tab_tit_bordero(vr_idxtitul).dtvencto := rw_craptdb.dtvencto;
       pr_tab_tit_bordero(vr_idxtitul).dtlibbdt := rw_craptdb.dtlibbdt;
+      pr_tab_tit_bordero(vr_idxtitul).dtdpagto := rw_craptdb.dtdpagto;
       pr_tab_tit_bordero(vr_idxtitul).nossonum := vr_nossonum;
       pr_tab_tit_bordero(vr_idxtitul).vltitulo := rw_craptdb.vltitulo;
       pr_tab_tit_bordero(vr_idxtitul).vlliquid := rw_craptdb.vlliquid;
+      pr_tab_tit_bordero(vr_idxtitul).vlsldtit := rw_craptdb.vlsldtit;
       pr_tab_tit_bordero(vr_idxtitul).nmsacado := rw_craptdb.nmdsacad;
       pr_tab_tit_bordero(vr_idxtitul).insittit := rw_craptdb.insittit;
+      pr_tab_tit_bordero(vr_idxtitul).insitapr := rw_craptdb.insitapr;
       pr_tab_tit_bordero(vr_idxtitul).flgregis := rw_craptdb.flgregis;
+      pr_tab_tit_bordero(vr_idxtitul).nrctrdsc := rw_craptdb.nrctrdsc;
 
       -->  Buscar restricoes de um determinado bordero ou titulo  
       pc_busca_restricoes ( pr_cdcooper => pr_cdcooper          --> Código da Cooperativa
@@ -3341,6 +3640,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                        ,pr_tab_grupo          OUT GECO0001.typ_tab_crapgrp
                                        ,pr_tab_rating_hist    OUT typ_tab_rating_hist
                                       ) IS
+ /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_carrega_dados_proposta
+    Sistema  : Cred
+    Sigla    :
+    Autor    : Luis Fernando (GFT)
+    Data     : Maio/2018
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Procedure para carregar os dados da proposta
+  ---------------------------------------------------------------------------------------------------------------------*/
+  
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
@@ -4036,6 +4348,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --
     --               26/12/2016 - Adicionados novos campos para impressao do contrato
     --                            de limite de desconto de cheques. Projeto 300 (Lombardi)
+    --               
+    --               06/06/2018 - Alteração do juros de ano para juros simples.
     -- .........................................................................*/
     
     ---------->> CURSORES  <<-------- 
@@ -5160,11 +5474,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
       vr_rel_txdiaria := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) / 30) * 100,7); 
                           
-      vr_rel_txdanual := apli0001.fn_round((power(1 + (vr_tab_dados_border(vr_idxborde).txmensal / 100),
-                          12) - 1) * 100,6);
+      --Alterado para Juros simples
+      vr_rel_txdanual := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) * 12) * 100,6); 
+      
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
       vr_rel_dsopecoo := substr(vr_tab_dados_border(vr_idxborde).dsopecoo,1,40);
@@ -6229,6 +6543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<nrdconta>'|| gene0002.fn_mask_conta(pr_nrdconta)          ||'</nrdconta>'||
                          '<nmextcop>'|| vr_tab_contrato_limite(vr_idxctlim).nmextcop ||'</nmextcop>'|| 
                          '<cdagenci>'|| vr_tab_contrato_limite(vr_idxctlim).cdagenci ||'</cdagenci>'||
+                         '<dsagenci>'|| rw_crapage.nmresage                          ||'</dsagenci>'||
                          '<dslinha1>'|| vr_tab_contrato_limite(vr_idxctlim).dslinha1 ||'</dslinha1>'||                    
                          '<dslinha2>'|| vr_tab_contrato_limite(vr_idxctlim).dslinha2 ||'</dslinha2>'||                    
                          '<nmprimtl>'|| vr_tab_contrato_limite(vr_idxctlim).nmprimtl ||'</nmprimtl>'|| 
@@ -6901,6 +7216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                      ,pr_dsiduser IN VARCHAR2               --> Descricao do id do usuario
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_flgrestr IN INTEGER DEFAULT 0      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -6923,6 +7239,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --               22/12/2016 - Alterado nome do Jasper de "crrl519_bordero"
     --                            para "crrl519_bordero_titulos". PRJ300 (Lombardi)
     --               
+    --               06/06/2018 - Remoção das restrições da impressão do bordero
+    --
+    --               16/08/2018 - Zerar o prazo quando o titulo estiver vencido
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -6976,6 +7295,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_idx                     VARCHAR2(50);
     vr_idxrestr                VARCHAR2(100);
     vr_idxsac                  VARCHAR2(100);
+    
+    vr_vldjuros NUMBER;
+    vr_qtd_dias INTEGER;
     
     
     
@@ -7208,7 +7530,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<txmensal>'|| TO_CHAR(vr_tab_dados_itens_bordero(vr_idxborde).txmensal,'fm9999g999g990d000000') ||'</txmensal>'||
                          '<txdiaria>'|| TO_CHAR(vr_tab_dados_itens_bordero(vr_idxborde).txdiaria,'fm9999g999g990d000000') ||'</txdiaria>'||
                          '<dsmvtolt>'|| vr_dsmvtolt ||'</dsmvtolt>'||  
-                         '<nmoperad>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmoperad ||'</nmoperad>');
+                         '<nmoperad>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmoperad ||'</nmoperad>' ||
+                         '<flgrestr>'|| pr_flgrestr ||'</flgrestr>');
 
       
       --> reordenar para exibição no relatorio
@@ -7228,11 +7551,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       pc_escreve_xml('<titulos>');  
       vr_idxord := vr_tab_tit_bordero_ord.first;
       WHILE vr_idxord IS NOT NULL  LOOP
+        -- Verifica se o valor líquido do título é 0, se for calcula
+        IF (vr_tab_tit_bordero_ord(vr_idxord).vlliquid=0) THEN
+          IF  pr_dtmvtolt > vr_tab_tit_bordero_ord(vr_idxord).dtvencto THEN
+              vr_qtd_dias := ccet0001.fn_diff_datas(vr_tab_tit_bordero_ord(vr_idxord).dtvencto, pr_dtmvtolt);
+          ELSE
+              vr_qtd_dias := vr_tab_tit_bordero_ord(vr_idxord).dtvencto -  pr_dtmvtolt;
+          END IF;
+          vr_vldjuros := vr_tab_tit_bordero_ord(vr_idxord).vltitulo * vr_qtd_dias * ((vr_tab_dados_itens_bordero(vr_idxborde).txmensal / 100) / 30);
+          vr_tab_tit_bordero_ord(vr_idxord).vlliquid := ROUND((vr_tab_tit_bordero_ord(vr_idxord).vltitulo - vr_vldjuros),2);
+        END IF;
       
         IF vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt IS NOT NULL THEN
           vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - vr_tab_tit_bordero_ord(vr_idxord).dtlibbdt;
         ELSE
+          IF (vr_tab_tit_bordero_ord(vr_idxord).insitapr <> 2) THEN
           vr_rel_qtdprazo := vr_tab_tit_bordero_ord(vr_idxord).dtvencto - pr_dtmvtolt;
+          ELSE
+            vr_rel_qtdprazo := 0;
+          END IF;
         END IF;
         
         -- Calcular totais por tipo de cobrança
@@ -7264,35 +7601,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           '<vlliquid>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vlliquid,'fm999G999G999G990D00')   ||'</vlliquid>'|| 
                           '<qtdprazo>'||   vr_rel_qtdprazo                              ||'</qtdprazo>'|| 
                           '<nmsacado>'||   gene0007.fn_caract_controle(substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32))   ||'</nmsacado>'|| 
-                          '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>'|| 
-                          '<restricoes>');
-        
-        -- Percorre as restricoes
-        IF vr_tab_bordero_restri.COUNT > 0 THEN
-          FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
-            -- Sea for restricao do cheque em questao
-            IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
-              
-              --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
-              IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
-                continue;
-              END IF;  
-            
-              vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
-              
-              pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
-              -- Se foi aprovado pelo coordenador
-              IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
-              
-                IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
-                  vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-                END IF;              
-
-              END IF;
-            END IF;
-          END LOOP;
-        END IF;
-        pc_escreve_xml('</restricoes></titulo>');
+                          '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>');
+        pc_escreve_xml('</titulo>');
         
       
         vr_idxord := vr_tab_tit_bordero_ord.next(vr_idxord);
@@ -7336,38 +7646,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           <vltotliq>'|| to_char(vr_tab_totais(idxtot).vltotliq,'fm999G999G999G990D00') ||'</vltotliq>
                           <vldmedia>'|| to_char(vr_tab_totais(idxtot).vlmedtit,'fm999G999G999G990D00') ||'</vldmedia>
                           <qtrestri>'|| vr_tab_totais(idxtot).qtrestri ||'</qtrestri>
+                          <flgrestr>'|| pr_flgrestr ||'</flgrestr>
                         </total>');  
         END LOOP;
       END IF;
       
       pc_escreve_xml('</totais>',TRUE);
-      
-      -- Se possui restricoes aprovadas pelo coordenador
-      IF vr_tab_restri_apr_coo.COUNT > 0 THEN
-        pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');
-        vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
-        WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto></restricao>');
-          vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
-        END LOOP;
-        pc_escreve_xml(  '</restricoes_coord>');
-      END IF;
-      
-      --> Exibir sacados que com pagamentos nao efetuados/pendentes
-      IF vr_tab_sacado_nao_pagou.count > 0 THEN
-        pc_escreve_xml('<sacnaopago>',TRUE);
-        vr_idxsac := vr_tab_sacado_nao_pagou.first;
-        WHILE vr_idxsac IS NOT NULL LOOP        
-          pc_escreve_xml('<sacado>
-                             <nmsacado>'|| gene0007.fn_caract_controle(vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado) ||'</nmsacado>
-                             <qtdtitul>'|| vr_tab_sacado_nao_pagou(vr_idxsac).qtdtitul ||'</qtdtitul>
-                             <vlrtitul>'|| to_char(vr_tab_sacado_nao_pagou(vr_idxsac).vlrtitul,'fm999G999G999G990D00') ||'</vlrtitul>
-                          </sacado>');  
-          vr_idxsac := vr_tab_sacado_nao_pagou.next(vr_idxsac);
-        END LOOP;
-        pc_escreve_xml('</sacnaopago>');
-      END IF;      
-      
       pc_escreve_xml('</Bordero></raiz>',TRUE);      
       
       --> Solicita geracao do PDF
@@ -7477,6 +7761,908 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       END IF; 
   END pc_gera_impressao_bordero; 
 
+PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
+                                        ,pr_nrdconta IN crapsab.nrdconta%TYPE DEFAULT NULL  --> Número da Conta do Pagador       (Sacado)
+                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE DEFAULT NULL  --> Número de Inscrição do Pagador   (Sacado)
+                                         --------------> OUT <--------------
+                                        ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
+                                        ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
+                                        ) IS             
+    -------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_efetua_analise_pagador           
+    --  Sistema  : CRED (DSCT)
+    --  Sigla    : DSCT0002
+    --  Autor    : Gustavo Guedes de Sene (GFT)
+    --  Data     : Março/2018                    Ultima atualizacao: 13/03/2018
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Diário (via JOB)
+    --   Objetivo  : Procedure para analisar e validar as possíveis críticas 
+    --               para um Limite de Desconto de Títulos.
+    --
+    --   Histórico de Alterações:
+    --    13/03/2018 - Versão Inicial (Criação) - Gustavo Guedes de Sene (GFT)
+    --    03/05/2018 - Remocao do campo invalormax_cnae, alterado o calculado para uma funcao em DSCT0003.fn_calcula_cnae()
+    --    24/05/2018 - Inserção da procedure generica de calculo de liquidez - Vitor Shimada Assanuma (GFT)
+    -------------------------------------------------------------------------------------------------
+
+    ----------------------> VARIAVEIS <----------------------
+    
+    -- Variáveis de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+
+    -- Demais variáveis
+    vr_flcrapsab           boolean;
+    vr_vlliquidez          number;
+    vr_qtliquidez          number;
+    vr_conjuge             integer;
+    vr_socio               integer;
+    vr_coop_tit_conta_pag  integer;
+    vr_concentracao_maxima number;
+    --
+    vr_inpossui_criticas   integer;
+    --
+    vr_tab_dados_dsctit    typ_tab_dados_dsctit;
+    vr_tab_dados_dsctit_fis    typ_tab_dados_dsctit;
+    vr_tab_dados_dsctit_jur    typ_tab_dados_dsctit;
+    vr_tab_cecred_dsctit   typ_tab_cecred_dsctit;
+    vr_tab_analise_pagador tpy_tab_analise_pagador;
+    
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+    --Variaveis da liquidez
+    vr_vlconcentracao NUMBER(25,2);   
+    vr_qtconcentracao NUMBER(25,2);
+    vr_vlgeral        NUMBER(25,2);
+    vr_qtgeral        NUMBER(25,2);
+    
+--    vr_tempo INTEGER;
+
+    ----------------------> CURSORES <----------------------
+
+    -- PASSO 1: OBTENÇÃO DOS REGISTROS SUJEITOS À ANÁLISE --
+    --
+    -- [PAGADORES] - Obter dados dos Pagadores a serem analisados
+    CURSOR cr_crapsab IS
+    SELECT
+      pag.cdcooper
+      ,pag.nrdconta
+      ,pag.nrinssac
+      ,pag.cdtpinsc
+      ,ass.inpessoa
+    FROM 
+      craplim lim 
+      INNER JOIN crapsab pag ON pag.nrdconta = lim.nrdconta AND pag.cdcooper = lim.cdcooper
+      INNER JOIN crapcob cob -- Boletos de Cobrança
+                       ON  cob.incobran = 0     -- Cobrança em aberto
+                       and    cob.nrinssac = pag.nrinssac
+                       and    cob.nrdconta = pag.nrdconta
+                       and    cob.cdcooper = pag.cdcooper
+      INNER JOIN crapass ass ON ass.nrdconta = pag.nrdconta AND ass.cdcooper=pag.cdcooper
+    WHERE 
+      lim.tpctrlim=3
+      AND lim.insitlim=2 
+      AND lim.cdcooper = pr_cdcooper
+      AND pag.nrdconta is NOT NULL 
+      AND pag.nrinssac = nvl(pr_nrinssac, pag.nrinssac)
+      AND pag.nrdconta = nvl(pr_nrdconta, lim.nrdconta)
+    GROUP BY
+      pag.cdcooper
+      ,pag.nrdconta
+      ,pag.nrinssac
+      ,pag.cdtpinsc
+      ,ass.inpessoa;
+    
+    rw_crapsab cr_crapsab%rowtype;
+   
+
+    -- PASSO 2: OBTENÇÃO DOS VALORES A SEREM COMPARADOS AOS PARÂMETROS DA TAB052, CADPCN e CADPCP --
+    --
+    -- [PAGADORES] - Obter Qtd. de Títulos Remetidos ao Cartório do Sacado (Pagador) para o Cedente em questão
+    cursor cr_qt_remessa_cartorio is 
+    select count(1) qt_tit_remessa
+    from   crapcco cco,
+           crapceb ceb,
+           crapcob cob,
+           crapret ret
+    where  cco.cdcooper = rw_crapsab.cdcooper
+    and    cco.flgregis = 1 -- Cobrança Registrada em Cartório
+    and    ceb.cdcooper = cco.cdcooper
+    and    ceb.cdcooper = rw_crapsab.cdcooper
+    and    ceb.nrconven = cco.nrconven
+    and    ceb.nrdconta = rw_crapsab.nrdconta
+    --
+    and    cob.cdcooper = ceb.cdcooper
+    and    cob.nrdconta = ceb.nrdconta
+    and    cob.nrcnvcob = ceb.nrconven
+    --
+    and    cob.nrinssac = rw_crapsab.nrinssac
+    --
+    and    ret.cdcooper = cob.cdcooper 
+    and    ret.nrdconta = cob.nrdconta 
+    and    ret.nrcnvcob = cob.nrcnvcob 
+    and    ret.nrdocmto = cob.nrdocmto
+    and    ret.cdocorre = 23; -- Remetidos ao Cartório
+    rw_qt_remessa_cartorio cr_qt_remessa_cartorio%rowtype;
+
+    -- [PAGADORES] - Obter Qtd. de Títulos Protestados do Sacado (Pagador) para o Cedente em questão
+    cursor cr_qt_protestados is     
+    select count(1) qt_tit_protestados
+    from   crapcco cco,
+           crapceb ceb,
+           crapcob cob,
+           crapret ret
+    where  cco.cdcooper = rw_crapsab.cdcooper
+    and    cco.flgregis = 1 -- Cobrança Registrada em Cartório
+    and    ceb.cdcooper = cco.cdcooper
+    and    ceb.cdcooper = rw_crapsab.cdcooper
+    and    ceb.nrconven = cco.nrconven
+    and    ceb.nrdconta = rw_crapsab.nrdconta
+    --
+    and    cob.cdcooper = ceb.cdcooper
+    and    cob.nrdconta = ceb.nrdconta
+    and    cob.nrcnvcob = ceb.nrconven
+    --
+    and    cob.incobran = 3 -- Baixado
+    --
+    and    cob.nrinssac = rw_crapsab.nrinssac
+    --
+    and    ret.cdcooper = cob.cdcooper 
+    and    ret.nrdconta = cob.nrdconta 
+    and    ret.nrcnvcob = cob.nrcnvcob 
+    and    ret.nrdocmto = cob.nrdocmto
+    and    ret.cdocorre = 9 -- Protestados
+    --
+    and    ret.cdmotivo = '14';
+    rw_qt_protestados cr_qt_protestados%rowtype;
+    
+    -- [PAGADORES] - Obter Qtd. de Títulos Não Pagos pelo Sacado (Pagador) em questão
+    cursor cr_qt_nao_pagos is 
+    select count(1) qt_tit_nao_pagos
+    from   crapcob cob
+    where  cob.incobran = 0
+--    and    cob.dtdpagto is null
+    and    cob.cdcooper = rw_crapsab.cdcooper
+    and    cob.nrdconta = rw_crapsab.nrdconta
+    AND    cob.dtvencto < rw_crapdat.dtmvtolt 
+    and    cob.nrinssac = rw_crapsab.nrinssac;
+    rw_qt_nao_pagos cr_qt_nao_pagos%rowtype;    
+
+    -- [PAGADORES] - Verificar se o emitente é Cônjuge/Sócio do Pagador
+    --
+    -- Cônjuge
+    cursor cr_conjuge is
+      select  1
+        from  crapcje cje
+       where  cje.cdcooper = rw_crapsab.cdcooper
+         and  cje.nrdconta = rw_crapsab.nrdconta
+         and (cje.nrctacje = rw_crapsab.nrdconta or cje.nrcpfcjg = rw_crapsab.nrinssac);
+    rw_conjuge cr_conjuge%rowtype;
+   
+    -- Sócio    
+    cursor cr_socio is
+      select  1
+        from  crapavt avt
+       where  avt.cdcooper = rw_crapsab.cdcooper
+         and  avt.nrdconta = rw_crapsab.nrdconta
+         and (avt.nrdctato = rw_crapsab.nrdconta or avt.nrcpfcgc = rw_crapsab.nrinssac)
+         and  avt.tpctrato = 6
+         and  avt.dsproftl = 'SOCIO/PROPRIETARIO';
+    rw_socio cr_socio%rowtype;
+    
+    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador
+    cursor cr_coop_tit_conta_pag is
+    select count(1) tem_tit_conta_pag
+    from   crapcob cob_pag
+          ,craptdb tdb 
+    where  cob_pag.cdcooper = pr_cdcooper
+      and  cob_pag.nrdconta = rw_crapsab.nrdconta
+      and  tdb.dtresgat is null and tdb.dtlibbdt is not null -- titulos descontados
+      and  tdb.cdcooper = cob_pag.cdcooper 
+      and  tdb.cdbandoc = cob_pag.cdbandoc 
+      and  tdb.nrdctabb = cob_pag.nrdctabb 
+      and  tdb.nrdconta = cob_pag.nrdconta 
+      and  tdb.nrcnvcob = cob_pag.nrcnvcob 
+      and  tdb.nrdocmto = cob_pag.nrdocmto
+      --
+      and  exists -- cob_pag.nrinssac in
+             (select  1
+                from  crapcob cob_rem
+                     ,craptdb tdb
+                where cob_pag.cdcooper = pr_cdcooper
+                  and cob_pag.nrinssac = rw_crapsab.nrinssac
+                  and cob_rem.nrinssac = cob_pag.nrinssac
+                  and tdb.cdcooper     = cob_rem.cdcooper 
+                  and tdb.cdbandoc     = cob_rem.cdbandoc 
+                  and tdb.nrdctabb     = cob_rem.nrdctabb 
+                  and tdb.nrdconta     = cob_rem.nrdconta 
+                  and tdb.nrcnvcob     = cob_rem.nrcnvcob 
+                  and tdb.nrdocmto     = cob_rem.nrdocmto                     
+                  and cob_rem.nrdconta in 
+                         (select nrdconta
+                            from crapass rem
+                           where rem.nrcpfcgc     = cob_pag.nrinssac
+                             and rem.cdcooper     = pr_cdcooper
+                             and cob_pag.nrinssac = rw_crapsab.nrinssac)
+             );            
+    rw_coop_tit_conta_pag cr_coop_tit_conta_pag%rowtype;                                                                   
+
+    PROCEDURE pc_resetar_flag_analise is
+    BEGIN
+       vr_tab_analise_pagador(1).qtremessa_cartorio := 0;
+       vr_tab_analise_pagador(1).qttit_protestados  := 0;
+       vr_tab_analise_pagador(1).qttit_naopagos     := 0;
+       vr_tab_analise_pagador(1).pemin_liquidez_qt  := 0;
+       vr_tab_analise_pagador(1).pemin_liquidez_vl  := 0;
+       vr_tab_analise_pagador(1).peconcentr_maxtit  := 0;
+       vr_tab_analise_pagador(1).inemitente_conjsoc := 0;
+       vr_tab_analise_pagador(1).inpossui_titdesc   := 0;
+       
+       vr_inpossui_criticas := 0;
+       vr_conjuge := 0;
+       vr_socio := 0;
+       
+    END;
+    
+        
+    PROCEDURE pc_inserir_analise(pr_cdcooper in crapsab.cdcooper%type --> Código da Cooperativa do Pagador 
+                                ,pr_nrdconta in crapsab.nrdconta%type --> Número da Conta do Pagador       
+                                ,pr_nrinssac in crapsab.nrinssac%type --> Número de Inscrição do Pagador   
+                                 --------> OUT <--------
+                                ,pr_dscritic out varchar2             --> Descrição da crítica
+                                                         ) IS
+
+    BEGIN
+        update tbdsct_analise_pagador
+           set dtanalise          = SYSDATE
+              ,hranalise          = to_char(SYSDATE,'sssss')
+              ,qtremessa_cartorio = vr_tab_analise_pagador(1).qtremessa_cartorio
+              ,qttit_protestados  = vr_tab_analise_pagador(1).qttit_protestados
+              ,qttit_naopagos     = vr_tab_analise_pagador(1).qttit_naopagos
+              ,pemin_liquidez_qt  = vr_tab_analise_pagador(1).pemin_liquidez_qt
+              ,pemin_liquidez_vl  = vr_tab_analise_pagador(1).pemin_liquidez_vl
+              ,peconcentr_maxtit  = vr_tab_analise_pagador(1).peconcentr_maxtit
+              ,inemitente_conjsoc = vr_tab_analise_pagador(1).inemitente_conjsoc
+              ,inpossui_titdesc   = vr_tab_analise_pagador(1).inpossui_titdesc
+              ,inpossui_criticas  = vr_inpossui_criticas
+        where  cdcooper = pr_cdcooper
+          and  nrdconta = pr_nrdconta
+          and  nrinssac = pr_nrinssac;
+       IF SQL%NOTFOUND THEN
+       insert into tbdsct_analise_pagador
+              (cdcooper
+              ,nrdconta
+              ,nrinssac
+              ,dtanalise
+              ,hranalise
+              ,qtremessa_cartorio
+              ,qttit_protestados
+              ,qttit_naopagos
+              ,pemin_liquidez_qt
+              ,pemin_liquidez_vl
+              ,peconcentr_maxtit
+              ,inemitente_conjsoc
+              ,inpossui_titdesc
+              ,inpossui_criticas)
+       values (pr_cdcooper
+              ,pr_nrdconta
+              ,pr_nrinssac
+              ,SYSDATE
+              ,to_char(SYSDATE,'sssss')
+              ,vr_tab_analise_pagador(1).qtremessa_cartorio
+              ,vr_tab_analise_pagador(1).qttit_protestados
+              ,vr_tab_analise_pagador(1).qttit_naopagos
+              ,vr_tab_analise_pagador(1).pemin_liquidez_qt
+              ,vr_tab_analise_pagador(1).pemin_liquidez_vl
+              ,vr_tab_analise_pagador(1).peconcentr_maxtit
+              ,vr_tab_analise_pagador(1).inemitente_conjsoc
+              ,vr_tab_analise_pagador(1).inpossui_titdesc
+              ,vr_inpossui_criticas);
+       END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro ao gravar o registro tbdsct_analise_pagador: '|| sqlerrm;
+    END;
+
+  BEGIN 
   
+   -- Verificar se a data existe
+   open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+   fetch btch0001.cr_crapdat into rw_crapdat;
+   if    btch0001.cr_crapdat%notfound then
+         close btch0001.cr_crapdat;
+         vr_cdcritic := 1;
+         raise vr_exc_erro;
+   end   if;
+   close btch0001.cr_crapdat;
+
+   -- Início da Validação das regras do Pagador --
+   vr_flcrapsab := false;
+   
+         
+         pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                   ,pr_inpessoa          => 1
+                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit_fis  --> Tabela contendo os parametros da cooperativa
+                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                   ,pr_cdcritic          => vr_cdcritic
+                                   ,pr_dscritic          => vr_dscritic);
+   if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+       raise vr_exc_erro;
+   end if;
+
+   pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                   ,pr_inpessoa          => 2
+                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit_jur  --> Tabela contendo os parametros da cooperativa
+                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                   ,pr_cdcritic          => vr_cdcritic
+                                   ,pr_dscritic          => vr_dscritic);
+         if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+             raise vr_exc_erro;
+         end if;
+   open  cr_crapsab;   
+   loop
+         fetch cr_crapsab into rw_crapsab;
+         exit  when cr_crapsab%NOTFOUND;
+         vr_flcrapsab := true;
+         IF (rw_crapsab.inpessoa=1) THEN
+            vr_tab_dados_dsctit := vr_tab_dados_dsctit_fis;
+         ELSE
+            vr_tab_dados_dsctit := vr_tab_dados_dsctit_jur;
+         END IF;      
+                          
+         pc_resetar_flag_analise;
+ 
+         --  QTREMESSA_CARTORIO : Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt)
+         open  cr_qt_remessa_cartorio;
+         fetch cr_qt_remessa_cartorio into rw_qt_remessa_cartorio;
+         close cr_qt_remessa_cartorio;
+
+         if  rw_qt_remessa_cartorio.qt_tit_remessa > vr_tab_dados_dsctit(1).qtremcrt then
+             vr_tab_analise_pagador(1).qtremessa_cartorio := rw_qt_remessa_cartorio.qt_tit_remessa;
+             vr_inpossui_criticas := 1;
+         end if;
+
+         --  QTTIT_PROTESTADOS  : Qtd de Títulos Protestados acima do permitido. (Ref. TAB052: qttitprt)
+         open  cr_qt_protestados;
+         fetch cr_qt_protestados into rw_qt_protestados;
+         close cr_qt_protestados;
+
+         if  rw_qt_protestados.qt_tit_protestados > vr_tab_dados_dsctit(1).qttitprt then
+             vr_tab_analise_pagador(1).qttit_protestados := rw_qt_protestados.qt_tit_protestados;
+             vr_inpossui_criticas := 1;
+         end if;
+
+         --  QTTIT_NAOPAGOS     : Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag)
+         open  cr_qt_nao_pagos;
+         fetch cr_qt_nao_pagos into rw_qt_nao_pagos;
+         close cr_qt_nao_pagos;
+
+         if  rw_qt_nao_pagos.qt_tit_nao_pagos > vr_tab_dados_dsctit(1).qtnaopag then
+             vr_tab_analise_pagador(1).qttit_naopagos := rw_qt_nao_pagos.qt_tit_nao_pagos;
+             vr_inpossui_criticas := 1;
+         end if;
+         --
+
+         --  INEMITENTE_CONJSOC : Emitente é Cônjuge/Sócio do Pagador (0 = Não / 1 = Sim). (Ref. TAB052: flemipar)
+         open  cr_conjuge;
+         fetch cr_conjuge into rw_conjuge;
+         if    cr_conjuge%found then
+               vr_conjuge := 1;
+         end if;
+         close cr_conjuge;
+          
+         open  cr_socio;
+         fetch cr_socio into rw_socio;
+         if    cr_socio%found then
+               vr_socio := 1;
+         end if;
+         close cr_socio;
+
+         if  vr_tab_dados_dsctit(1).flemipar = 1 and ( nvl(vr_conjuge, 0) > 0 or nvl(vr_socio, 0) > 0 ) then
+             vr_tab_analise_pagador(1).inemitente_conjsoc := 1;
+             vr_inpossui_criticas := 1;
+         end if;
+
+         --  INPOSSUI_TITDESC   : Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp)
+         if vr_tab_dados_dsctit(1).flpdctcp = 1 then 
+           open  cr_coop_tit_conta_pag;
+           fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
+           if    cr_coop_tit_conta_pag%found then
+                 vr_coop_tit_conta_pag := rw_coop_tit_conta_pag.tem_tit_conta_pag;
+           end if;
+           close cr_coop_tit_conta_pag;      
+           
+   
+           if  nvl(vr_coop_tit_conta_pag, 0) > 0 then
+               vr_tab_analise_pagador(1).inpossui_titdesc := 1;
+               vr_inpossui_criticas := 1;
+           end if;
+
+         end if;  
+         
+         pc_inserir_analise(pr_cdcooper => rw_crapsab.cdcooper
+                           ,pr_nrdconta => rw_crapsab.nrdconta
+                           ,pr_nrinssac => rw_crapsab.nrinssac
+                           ,pr_dscritic => vr_dscritic);
+
+         if  trim(vr_dscritic) is not null then
+             raise vr_exc_erro;
+         end if;
+            
+         pc_atualiza_calculos_pagador ( pr_cdcooper
+                                      ,rw_crapsab.nrdconta
+                                      ,rw_crapsab.nrinssac
+                                      ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
+                                      ,rw_crapdat.dtmvtolt 
+                                      ,vr_tab_dados_dsctit(1).cardbtit_c
+                                      ,vr_tab_dados_dsctit(1).qttliqcp
+                                      ,vr_tab_dados_dsctit(1).vltliqcp
+                                      ,vr_tab_dados_dsctit(1).pcmxctip
+                                      ,vr_tab_dados_dsctit(1).qtmitdcl
+                                      ,vr_tab_dados_dsctit(1).vlmintcl
+                                      --------------> OUT <--------------
+                                      ,vr_vlliquidez
+                                      ,vr_qtliquidez
+                                      ,vr_vlconcentracao
+                                      ,vr_qtconcentracao
+                                      ,vr_vlgeral
+                                      ,vr_qtgeral
+                                      ,pr_cdcritic
+                                      ,pr_dscritic
+                                      );
+         COMMIT;
+   end   loop;
+   close cr_crapsab;
+
+   if  not(vr_flcrapsab) then
+       vr_cdcritic := 0;
+       vr_dscritic := 'Dados do Pagador não encontrados.';
+       raise vr_exc_erro;
+   end if;
+   -- Fim validação das regras do Pagador --
+
+
+  EXCEPTION
+   WHEN vr_exc_erro THEN
+        IF  nvl(vr_cdcritic,0) <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+        END IF;
+
+   WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace('Nao foi possivel efetuar a analise diaria dos Pagadores: ' || SQLERRM, chr(13)),chr(10));
+
+  END pc_efetua_analise_pagador;
+  
+  PROCEDURE pc_atualiza_calculos_pagador ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
+                                   ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
+                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
+                                   ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data inicial para calculo da liquidez 
+                                   ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE DEFAULT NULL --> Data final para calculo da liquidez
+                                   ,pr_qtcarpag     IN NUMBER DEFAULT NULL   --> Quantidade de dias apos vencimento de carencia
+                                   ,pr_qttliqcp     IN NUMBER DEFAULT NULL   --> Quantidade limite para liquidez
+                                   ,pr_vltliqcp     IN NUMBER DEFAULT NULL   --> Valor limite para liquidez
+                                   ,pr_pcmxctip     IN NUMBER DEFAULT NULL   --> Valor limite para concentracao
+                                   ,pr_qtmitdcl     IN INTEGER DEFAULT NULL  --> Quantidade minima de titulos para calculo de liquidez
+                                   ,pr_vlmintcl     IN NUMBER DEFAULT NULL   --> Valor minimo para titulo entrar no calculo de liquidez
+                                   --------------> OUT <--------------
+                                   ,pr_pc_cedpag    OUT NUMBER
+                                   ,pr_qtd_cedpag   OUT NUMBER
+                                   ,pr_pc_conc      OUT NUMBER
+                                   ,pr_qtd_conc     OUT NUMBER
+                                   ,pr_pc_geral     OUT NUMBER
+                                   ,pr_qtd_geral    OUT NUMBER
+                                   ,pr_cdcritic          OUT PLS_INTEGER  --> Código da crítica
+                                   ,pr_dscritic          OUT VARCHAR2     --> Descrição da crítica
+                                  ) IS 
+    -------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_atualiza_calculos_pagador           
+    --  Sistema  : CRED (DSCT)
+    --  Sigla    : DSCT0002
+    --  Autor    : Luis Fernando (GFT)
+    --  Data     : Julho/2018
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que chamado
+    --   Objetivo  : Procedure para recalcular concentracao e liquidez de determinado pagador na conta.
+    --               Atualiza caso tenha dado crítica no valor da crítica. Atualiza os valores atuais na tabela de analise de pagador 
+    --
+    --   Alteracoes: 13/08/2018 - Adicionado novos parametros para o calculo de liquidez - Luis Fernando (GFT)
+    -------------------------------------------------------------------------------------------------
+    
+    -- Variáveis de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+    
+    -- Caso houver exceção de Concentração Máxima cadastrada...
+    CURSOR cr_concentracao_excecao IS
+    SELECT
+           pag.vlpercen pe_conc_excecao
+    FROM  
+           crapsab pag
+    WHERE  
+           pag.cdcooper = pr_cdcooper
+           AND pag.nrdconta = pr_nrdconta
+           AND pag.nrinssac = pr_nrinssac
+           AND pag.vlpercen > 0
+    ;
+    rw_concentracao_excecao cr_concentracao_excecao%rowtype;
+    
+    -- Cursor para pegar o tipo do cooperado
+    CURSOR cr_crapass IS
+      SELECT
+      inpessoa
+      FROM
+      crapass ass
+      WHERE
+      nrdconta = pr_nrdconta
+      AND cdcooper = pr_cdcooper;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    -- Cursor para verificar se ainda mantem as criticas
+    CURSOR cr_analise_pagador IS
+      SELECT 
+        *
+      FROM
+        tbdsct_analise_pagador
+      WHERE
+        cdcooper = pr_cdcooper
+        AND nrdconta = pr_nrdconta
+        AND nrinssac = pr_nrinssac
+    ;
+    rw_analise_pagador tbdsct_analise_pagador%ROWTYPE;
+      
+    vr_concentracao_maxima NUMBER := 0;
+    vr_inpossui_criticas   NUMBER := 0;
+    -- Critica
+    vr_cri_liquidez_qt NUMBER := 0;
+    vr_cri_liquidez_vl NUMBER := 0;
+    vr_cri_concentr_maxtit NUMBER := 0;
+    
+    -- Caso nao passe por parametro os dados da tab052
+    vr_qtcarpag  NUMBER;
+    vr_qttliqcp  NUMBER;
+    vr_vltliqcp  NUMBER;
+    vr_pcmxctip  NUMBER;
+    vr_qtmitdcl  INTEGER;
+    vr_vlmintcl  NUMBER;
+    vr_dtmvtolt_de crapdat.dtmvtolt%TYPE;
+    vr_dtmvtolt_ate crapdat.dtmvtolt%TYPE;
+    vr_tab_dados_dsctit    typ_tab_dados_dsctit;
+    vr_tab_cecred_dsctit   typ_tab_cecred_dsctit;
+    --Tipo de registro do tipo data
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    
+    BEGIN
+      IF (pr_qtcarpag IS NULL OR pr_qttliqcp IS NULL OR pr_vltliqcp IS NULL OR pr_pcmxctip IS NULL OR pr_dtmvtolt_de IS NULL OR pr_qtmitdcl IS NULL OR pr_vlmintcl is NULL) THEN
+        OPEN cr_crapass;
+        FETCH cr_crapass INTO rw_crapass;
+        IF cr_crapass%NOTFOUND THEN
+          vr_cdcritic := 1187;
+          RAISE vr_exc_erro;
+        END IF;
+        -- Verificar se a data existe
+        open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        fetch btch0001.cr_crapdat into rw_crapdat;
+        if    btch0001.cr_crapdat%notfound then
+              close btch0001.cr_crapdat;
+              vr_cdcritic := 1;
+              raise vr_exc_erro;
+        end   if;
+        close btch0001.cr_crapdat;
+        
+        pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                   ,pr_inpessoa          => rw_crapass.inpessoa
+                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                   ,pr_cdcritic          => vr_cdcritic
+                                   ,pr_dscritic          => vr_dscritic);
+
+         vr_qtcarpag  := vr_tab_dados_dsctit(1).cardbtit_c;
+         vr_qttliqcp  := vr_tab_dados_dsctit(1).qttliqcp;
+         vr_vltliqcp  := vr_tab_dados_dsctit(1).vltliqcp;
+         vr_pcmxctip  := vr_tab_dados_dsctit(1).pcmxctip;
+         vr_qtmitdcl  := vr_tab_dados_dsctit(1).qtmitdcl;
+         vr_vlmintcl  := vr_tab_dados_dsctit(1).vlmintcl;
+         vr_dtmvtolt_de := rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30;
+         vr_dtmvtolt_ate := rw_crapdat.dtmvtolt;
+      ELSE
+        vr_qtcarpag := pr_qtcarpag;
+        vr_qttliqcp := pr_qttliqcp;
+        vr_vltliqcp := pr_vltliqcp;
+        vr_pcmxctip := pr_pcmxctip;
+        vr_dtmvtolt_de := pr_dtmvtolt_de;
+        vr_dtmvtolt_ate:= pr_dtmvtolt_ate;
+        vr_qtmitdcl  := pr_qtmitdcl;
+        vr_vlmintcl  := pr_vlmintcl;
+      END IF;
+                                   
+      --> Calculo das porcentagens de Liquidez
+       DSCT0003.pc_calcula_liquidez(pr_cdcooper
+                       ,pr_nrdconta     
+                       ,pr_nrinssac     
+                       ,vr_dtmvtolt_de
+                       ,vr_dtmvtolt_ate
+                       ,vr_qtcarpag
+                       ,vr_qtmitdcl
+                       ,vr_vlmintcl
+                       -- OUT --     
+                       --  CÁLCULO LIQUIDEZ CEDENTE x PAGADOR --
+                       ,pr_pc_cedpag
+                       ,pr_qtd_cedpag
+                        --  CÁLCULO LIQUIDEZ DE CONCENTRACAO --
+                       ,pr_pc_conc
+                       ,pr_qtd_conc
+                       -- CALCULO LIQUIDEZ GERAL
+                       ,pr_pc_geral
+                       ,pr_qtd_geral
+       );
+       --  PEMIN_LIQUIDEZ_QT  : Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp)
+       if  pr_qtd_cedpag < vr_qttliqcp then
+           vr_cri_liquidez_qt := pr_qtd_cedpag;
+           vr_inpossui_criticas := 1;
+       end if;
+
+       --  PEMIN_LIQUIDEZ_VL  : Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos).  (Ref. TAB052: vltliqcp)
+       if  pr_pc_cedpag < vr_vltliqcp then
+           vr_cri_liquidez_vl := pr_pc_cedpag;
+           vr_inpossui_criticas := 1;
+       end if;             
+
+       --  PECONCENTR_MAXTIT  : Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip)
+       open  cr_concentracao_excecao;
+       fetch cr_concentracao_excecao into rw_concentracao_excecao;
+       --    Se houver exceção cadastrada na CADPCP, e ela for maior que o valor da TAB052, será considerada a exceção.
+       if    cr_concentracao_excecao%found and rw_concentracao_excecao.pe_conc_excecao > vr_pcmxctip then
+             vr_concentracao_maxima := rw_concentracao_excecao.pe_conc_excecao;
+       else
+             vr_concentracao_maxima := vr_pcmxctip;
+       end if;
+       close cr_concentracao_excecao;      
+       if  pr_pc_conc > vr_concentracao_maxima then
+           vr_cri_concentr_maxtit := pr_pc_conc;
+           vr_inpossui_criticas := 1;
+       end if;
+       
+       OPEN cr_analise_pagador;
+       FETCH cr_analise_pagador INTO rw_analise_pagador;
+       IF (cr_analise_pagador%NOTFOUND) THEN
+         vr_dscritic := 'Erro ao carregar críticas de pagador';
+         RAISE vr_exc_erro;
+       END IF;
+       
+       vr_inpossui_criticas := CASE WHEN (nvl(rw_analise_pagador.qtremessa_cartorio,0) 
+                                            + nvl(rw_analise_pagador.qttit_protestados,0) 
+                                            + nvl(rw_analise_pagador.qttit_naopagos,0) 
+                                            + nvl(rw_analise_pagador.pemin_liquidez_qt,0) 
+                                            + nvl(rw_analise_pagador.pemin_liquidez_vl,0) 
+                                            + nvl(rw_analise_pagador.peconcentr_maxtit,0) 
+                                            + nvl(rw_analise_pagador.inemitente_conjsoc,0) 
+                                            + nvl(rw_analise_pagador.inpossui_titdesc,0) 
+                                            + nvl(rw_analise_pagador.invalormax_cnae,0) 
+                                            + vr_inpossui_criticas
+                                          ) > 0 THEN 1 ELSE 0 END;
+       
+       UPDATE tbdsct_analise_pagador
+           SET dtanalise          = SYSDATE
+              ,hranalise          = to_char(SYSDATE,'sssss')
+              ,pemin_liquidez_qt  = vr_cri_liquidez_qt
+              ,pemin_liquidez_vl  = vr_cri_liquidez_vl
+              ,peconcentr_maxtit  = vr_cri_concentr_maxtit
+              ,inpossui_criticas  = vr_inpossui_criticas
+              ,perc_liquidez_qt = pr_qtd_cedpag
+              ,perc_liquidez_vl = pr_pc_cedpag
+              ,perc_concentracao= pr_pc_conc
+        WHERE
+          cdcooper = pr_cdcooper
+          AND nrdconta = pr_nrdconta
+          AND nrinssac = pr_nrinssac
+        ;
+        
+      EXCEPTION
+       WHEN vr_exc_erro THEN
+            IF  nvl(vr_cdcritic,0) <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            ELSE
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+            END IF;
+
+       WHEN OTHERS THEN
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := replace(replace('Nao foi calcular os dados dos pagadores: ' || SQLERRM, chr(13)),chr(10));
+  END pc_atualiza_calculos_pagador;  
+  
+  PROCEDURE pc_analise_pagador_paralelo (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                 ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
+
+    vr_exc_erro        EXCEPTION; 
+    vr_dstextab        NUMBER;
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
+    
+    --Definicao das tabelas de memoria
+    vr_tab_agendto PAGA0001.typ_tab_agendto;
+   
+    vr_cdprogra VARCHAR2(50) := 'PAGADOR';
+    vr_idparale INTEGER;
+    vr_qtdjobs             number;
+    vr_qterro              number := 0;
+    vr_jobname             varchar2(30); 
+    vr_dsplsql             varchar2(4000); 
+    
+    CURSOR cr_crapage IS 
+      SELECT  crapage.cdagenci
+             ,crapage.nmresage
+      FROM  crapage
+       where crapage.cdcooper = pr_cdcooper
+         AND crapage.cdagenci <> 999
+    ;
+    BEGIN
+      vr_idparale := gene0001.fn_gera_id_paralelo;
+      vr_qtdjobs := gene0001.fn_retorna_qt_paralelo(pr_cdcooper --> Código da coopertiva
+                                                   ,vr_cdprogra --> Código do programa
+                                                   );
+      FOR reg_crapage in cr_crapage LOOP
+        vr_jobname := vr_cdprogra ||'_'|| reg_crapage.cdagenci || '$';
+        -- Cadastra o programa paralelo
+        gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                    ,pr_idprogra => LPAD(reg_crapage.cdagenci,3,'0') --> Utiliza a agência como id programa
+                                    ,pr_des_erro => vr_dscritic);
+                                
+        -- Testar saida com erro
+        if vr_dscritic is not null then
+          -- Levantar exceçao
+          raise vr_exc_erro;
+        END if;
+        
+        vr_dsplsql := 'declare'            ||chr(13)||
+                      ' wpr_cdcritic  number(5); '     ||chr(13)||
+                      ' wpr_dscritic  varchar2(4000); '||chr(13)||
+                      ' begin '||chr(13)||
+                      '   dsct0002.pc_analise_pagador_agencia('||pr_cdcooper||','||chr(13)||
+                                               reg_crapage.cdagenci||','||chr(13)||
+                                               vr_idparale||','||chr(13)||
+                                               'wpr_cdcritic,' ||chr(13)||
+                                               'wpr_dscritic'  ||chr(13)||
+                                               ');'||chr(13)||
+                      'end;';
+          -- Faz a chamada ao programa paralelo atraves de JOB
+          gene0001.pc_submit_job(pr_cdcooper => pr_cdcooper  --> Código da cooperativa
+                                ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                                ,pr_dsplsql  => vr_dsplsql   --> Bloco PLSQL a executar
+                                ,pr_dthrexe  => SYSTIMESTAMP --> Executar nesta hora
+                                ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                                ,pr_des_erro => vr_dscritic);    
+
+          -- Testar saida com erro
+          IF vr_dscritic IS NOT NULL THEN
+            -- Levantar exceçao
+            RAISE vr_exc_erro;
+          END IF;
+          gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                   ,pr_qtdproce => vr_qtdjobs
+                                   ,pr_des_erro => vr_dscritic);
+      END LOOP;
+      
+      --Chama rotina de aguardo agora passando 0, para esperar
+      --até que todos os Jobs tenha finalizado seu processamento
+      gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                   ,pr_qtdproce => 0
+                                   ,pr_des_erro => vr_dscritic);
+                                  
+      -- Testar saida com erro
+      IF  vr_dscritic IS NOT NULL THEN 
+        -- Levantar exceçao
+        RAISE vr_exc_erro;
+      END IF;
+    EXCEPTION    
+      WHEN vr_exc_erro THEN
+        IF nvl(vr_cdcritic,0) <> 0 AND 
+           TRIM(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+        END IF;
+      WHEN OTHERS THEN      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace('Nao foi possivel buscar dados do avalista: ' || SQLERRM, chr(13)),chr(10));     
+      
+  END pc_analise_pagador_paralelo;
+  
+  PROCEDURE pc_analise_pagador_agencia (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                                        ,pr_cdagenci IN crapass.cdagenci%TYPE   --> Código da Agencia
+                                        ,pr_idparale IN INTEGER
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                                        ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
+                                        
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION; 
+    
+    CURSOR cr_crapass IS
+      SELECT 
+        ass.nrdconta,
+        ass.cdcooper
+      FROM 
+        crapass ass
+        INNER JOIN craplim lim ON lim.nrdconta = ass.nrdconta AND lim.cdcooper = ass.cdcooper
+      WHERE 
+        ass.cdcooper = pr_cdcooper
+        AND ass.cdagenci = pr_cdagenci  
+        AND ass.cdsitdct = 1 -- Situacao normal
+        AND lim.tpctrlim=3
+        AND lim.insitlim=2 
+    ;
+    rw_crapass cr_crapass%ROWTYPE;
+    BEGIN
+      OPEN cr_crapass;
+      LOOP
+      FETCH cr_crapass INTO rw_crapass;
+        EXIT WHEN cr_crapass%NOTFOUND;
+        pc_efetua_analise_pagador(pr_cdcooper  => rw_crapass.cdcooper
+                                  ,pr_nrdconta => rw_crapass.nrdconta
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+      END LOOP;
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro; 
+      END IF;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF nvl(vr_cdcritic,0) <> 0 AND 
+           TRIM(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+        END IF;
+      WHEN OTHERS THEN      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace('Erro nao tratado em DSCT0002.pc_analise_pagador_agencia ' || SQLERRM, chr(13)),chr(10));       
+  END pc_analise_pagador_agencia;
 END DSCT0002;
 /

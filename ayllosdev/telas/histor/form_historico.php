@@ -16,6 +16,8 @@
 	*							  "Debita após o estouro de conta corrente (60 dias)".
 	*							  Diego Simas (AMcom) - Prj 450
 	*							  			
+	*				 08/08/2018 - Adicionado TBDSCT_LANCAMENTO_BORDERO na estrutura - Luis Fernando (GFT)
+	*							  			
 	* --------------
 	*/ 
 
@@ -44,7 +46,8 @@
 		'CRAPLTR',
 		'CRAPTIT',
 		'CRAPTVL',
-		'TBCC_PREJUIZO_LANCAMENTO'
+		'TBCC_PREJUIZO_LANCAMENTO',
+		'TBDSCT_LANCAMENTO_BORDERO'
 	);
 ?>
 

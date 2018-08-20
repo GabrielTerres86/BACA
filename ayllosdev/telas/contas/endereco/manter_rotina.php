@@ -16,6 +16,7 @@
  *                                            pois a BO não utiliza o mesmo.
  * 006: [08/05/2017] Rafael Monteiro (Mouts): Remover caracteres especiais do campo complemento do endereco. Chamado 664305.
  * 007: [27/09/2017] Kelvin  (CECRED)    	: Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
+ * 008: [07/08/2018] Vitor S. Assanuma (GFT): Inclusão da mensageria para alterar a data de manutenção de avalista.
  */
 
     session_start();
@@ -178,6 +179,22 @@
 				
 			// Se não existe necessidade de Revisão Cadastral
 			} else {				
+			    // Mensageria para atualizar a data de avalista da Crapcyb
+				$xml = "<Root>";
+				$xml .= " <Dados>";
+				$xml .= " <nrdconta>".$nrdconta."</nrdconta>";
+				$xml .= " </Dados>";
+				$xml .= "</Root>";
+
+				$xmlResult = mensageria($xml,"PARCYB","PARCYB_ATUALIZAR_DTAVALISTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+				$xmlObj = getClassXML($xmlResult);
+				$root = $xmlObj->roottag;
+				// Se ocorrer um erro, mostra crítica
+				if ($root->erro){
+					exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+					exit;
+				}		
+
 				// Chama o controla Operação Finalizando a Inclusão ou Alteração			
 				if($operacao=='VA') echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\');';
 				if($operacao=='AE') echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FAE\")\');';

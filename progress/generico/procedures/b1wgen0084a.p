@@ -172,6 +172,8 @@
 
                 10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)                     
 
+                23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
+
                 07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)                
 
 ............................................................................. */
@@ -1307,23 +1309,24 @@ PROCEDURE gera_pagamentos_parcelas:
         IF  crapprm.dsvlrprm = "S" THEN
             DO:
                 /* buscar ultimo boleto do contratos */
-                FOR EACH tbepr_cobranca FIELDS (cdcooper nrdconta_cob nrcnvcob nrboleto nrctremp)
-                   WHERE tbepr_cobranca.cdcooper = par_cdcooper AND
-                         tbepr_cobranca.nrdconta = par_nrdconta AND    
-                         tbepr_cobranca.nrctremp = par_nrctremp
+                FOR EACH tbrecup_cobranca FIELDS (cdcooper nrdconta_cob nrcnvcob nrboleto nrctremp)
+                   WHERE tbrecup_cobranca.cdcooper = par_cdcooper AND
+                         tbrecup_cobranca.nrdconta = par_nrdconta AND    
+                         tbrecup_cobranca.nrctremp = par_nrctremp AND
+                         tbrecup_cobranca.tpproduto = 0
                          NO-LOCK    
-                         BY tbepr_cobranca.nrboleto DESC:
+                         BY tbrecup_cobranca.nrboleto DESC:
                     
                         /* verificar se o boleto do contrato está em aberto */
                         FOR FIRST crapcob FIELDS (dtvencto vltitulo)
-                            WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-                              AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-                              AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-                              AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+                            WHERE crapcob.cdcooper = tbrecup_cobranca.cdcooper
+                              AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
+                              AND crapcob.nrcnvcob = tbrecup_cobranca.nrcnvcob
+                              AND crapcob.nrdocmto = tbrecup_cobranca.nrboleto
                               AND crapcob.incobran = 0 NO-LOCK:
                 
                             ASSIGN  aux_cdcritic = 0
-                                    aux_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
+                                    aux_dscritic = "Boleto do contrato " + STRING(tbrecup_cobranca.nrctremp) + 
                                                    " em aberto." +      
                                                    " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
                                                    " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    
@@ -1333,10 +1336,10 @@ PROCEDURE gera_pagamentos_parcelas:
                 
                         /* verificar se o boleto do contrato está em pago, pendente de processamento */
                         FOR FIRST crapcob FIELDS (dtvencto vltitulo dtdpagto)
-                            WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-                              AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-                              AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-                              AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+                            WHERE crapcob.cdcooper = tbrecup_cobranca.cdcooper
+                              AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
+                              AND crapcob.nrcnvcob = tbrecup_cobranca.nrcnvcob
+                              AND crapcob.nrdocmto = tbrecup_cobranca.nrboleto
                               AND crapcob.incobran = 5 NO-LOCK:
                 
                                 FOR FIRST crapret      
@@ -1350,7 +1353,7 @@ PROCEDURE gera_pagamentos_parcelas:
                                       NO-LOCK:    
                 
                                     ASSIGN  aux_cdcritic = 0
-                                            aux_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
+                                            aux_dscritic = "Boleto do contrato " + STRING(tbrecup_cobranca.nrctremp) + 
                                                            " esta pago pendente de processamento." +       
                                                            " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
                                                            " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    

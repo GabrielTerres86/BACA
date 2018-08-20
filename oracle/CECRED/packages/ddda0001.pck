@@ -61,6 +61,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
       13/06/2018 - Criado assinatura da fn_datamov para ser chamada no CRPS618.
                    Chamado SCTASK0015832 - Gabriel (Mouts).
 
+      08/08/2018 - Adicionado o conveio de desconto de titulo para seguir a mesma regra do de emprestimo na definicao da data (Luis Fernando - GFT)
   ..............................................................................*/
 
 
@@ -471,7 +472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --
   --             26/10/2017 - Incluir decode no campo tpdmulta do cursor cr_crapcob para garantir
   --                          que o código enviado para cip seja 1, 2 ou 3 (SD#769996 - AJFink)
-  --
+  --             07/08/2018 - Luis Fernando (GFT)
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -2295,7 +2296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto +
                                                                    rw_crapcob.qtdiaprt
                                                                   ,'YYYYMMDD'));
-      ELSIF rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
+      ELSIF rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') THEN
         pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto,'YYYYMMDD'));
         
       ELSIF rw_crapcco.dsorgarq = 'ACORDO' THEN

@@ -995,6 +995,12 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                                       ,pr_nrprioridade_prg_erro IN tbgen_debitador_param.nrprioridade%TYPE) IS
                                       
     /*
+    | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+    | Alterações                                                                                                                                                                 |
+    | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+    | 08/08/2108 - Vitor Shimada Assanuma (GFT) - Inclusão da PC_CRPS735                                                                                                         |
+    | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
+        
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- | 
     | Programa                                                                                                                 | Debita Sem Saldo | Debita Parcial | Repescagem  | 
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- | 
@@ -1017,6 +1023,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
     | OK - PC_CRPS663 - DEBCNS - EFETUAR DEBITOS DE CONSORCIOS PENDENTES                                                       | Não              | Não            | Não         |
     | OK - PC_CRPS268 - DEBITO EM CONTA REFERENTE SEGURO DE VIDA EM GRUPO                                                      | Sim              | Não            | Não         |
     | OK - PAGA0003.PC_PROCESSA_AGEND_BANCOOB - DEBITO AGENDADOS DE PAGAMENTO BONCOOB                                          | Não              | Não            | Não         |
+    | OK - PC_CRPS735 - DESCONTO DE TÍTULOS                                                                                    | Não              | Sim            | Não         |
     | ------------------------------------------------------------------------------------------------------------------------ | ---------------- | -------------- | ----------- |     
     */                                      
           
@@ -1313,11 +1320,15 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
         FOR r_processo_horario IN cr_processo_horario(pr_idhora_processamento  => pr_idhora_processamento
                                                      ,pr_ds_cdprocesso         => pr_ds_cdprocesso
                                                      ,pr_nrprioridade_prg_erro => pr_nrprioridade_prg_erro) LOOP
-                                       
+          vr_cdprogra := '';
           --TARI0001.PC_DEB_TARIFA_PEND - COBRANCA DE TARIFAS PENDENTES          
           IF Upper(r_processo_horario.cdprocesso) = 'TARI0001.PC_DEB_TARIFA_PEND' THEN     
             vr_cdprogra := 'TARI0001.PC_DEB_TARIFA_PEND';  
+          ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS735' THEN     
+            vr_cdprogra := 'PC_CRPS735';              
+          END IF;
             
+          IF LENGTH(vr_cdprogra) > 0 THEN
             -- Log de ocorrência
             pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
                                 ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
@@ -1333,13 +1344,21 @@ CREATE OR REPLACE PACKAGE BODY cecred.gen_debitador_unico AS
                                 ,pr_tpexecuc => NULL
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                 ,pr_idtiplog => 'I');                                     
-             
+             IF Upper(vr_cdprogra) = 'TARI0001.PC_DEB_TARIFA_PEND' THEN     
             -- Executa processo/programa   
             tari0001.pc_deb_tarifa_pend(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                                        ,pr_dtinicio => NULL          --IN DATE                    --> data de inicio para verificação das tarifas
                                        ,pr_dtafinal => NULL          --IN DATE                    --> data final para verificação das tarifas
                                        ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                        ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Texto de erro/critica encontrada                                                   
+             ELSIF Upper(vr_cdprogra) = 'PC_CRPS735' THEN     
+                CECRED.PC_CRPS735(pr_cdcooper => pr_cdcooper,
+                                  pr_stprogra => vr_stprogra,
+                                  pr_infimsol => vr_infimsol,
+                                  pr_cdcritic => vr_cdcritic,
+                                  pr_dscritic => vr_dscritic
+                                  );
+             END IF;
             
             -- Tratamento de erro                                 
             IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 

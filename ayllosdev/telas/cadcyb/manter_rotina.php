@@ -8,6 +8,8 @@
  * ALTERAÇÕES   : 01/10/2013 - Ajustado variavel $retornoAposErro para voltar ao estado inicial (Lucas R.)
  *
  *                31/08/2015 - Adicionado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12)
+ *
+ *                18/08/2018 - Adicionado tratativa produto desconto de titulo (GFT)
  * -------------- 
  */
  
@@ -21,6 +23,8 @@
 	// Recebe a operação que está sendo realizada
 	$lsdconta = $_POST["strNrdconta"]; 
 	$lscontra = $_POST["strNrctremp"]; 
+	$lsborder = $_POST["strNrborder"]; 
+	$lstitulo = $_POST["strNrtitulo"]; 
 	$lsorigem = $_POST["strCdorigem"]; 
 	$lsjudici = $_POST["strFlgjudic"];
 	$lsextjud = $_POST["strFlextjud"];
@@ -50,6 +54,8 @@
     $xml .= "       <idseqttl>1</idseqttl>";		
 	$xml .= "       <lsdconta>".$lsdconta."</lsdconta>";
 	$xml .= "       <lscontra>".$lscontra."</lscontra>";
+	$xml .= "       <lsborder>".$lsborder."</lsborder>";
+	$xml .= "       <lstitulo>".$lstitulo."</lstitulo>";
 	$xml .= "       <lsorigem>".$lsorigem."</lsorigem>";
 	$xml .= "       <lsjudici>".$lsjudici."</lsjudici>";
 	$xml .= "       <lsextjud>".$lsextjud."</lsextjud>";

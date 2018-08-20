@@ -293,6 +293,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --                      (André Bohn Mout's) - PRB0040172
   
   
+  --             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -414,12 +415,8 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --Tipo de tabela de agendamento index = NRISPBIF, CDBCCXLT
   TYPE typ_tab_tp_contas IS TABLE OF typ_reg_tp_contas INDEX BY PLS_INTEGER;
   
-  
-  
-
   TYPE typ_reg_craplot_rowid IS  RECORD (vr_rowid rowid);
   TYPE typ_tab_tp_cralot_rowid IS TABLE OF typ_reg_craplot_rowid INDEX BY VARCHAR2(300);
-  
   
   TYPE typ_reg_autorizacao_favorecido IS
   RECORD (
@@ -1247,7 +1244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 04/07/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 27/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -15082,6 +15079,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --
     --   13/04/2017 - Inclusao do campo cdpesqbb para registrar as informacoes do
     --                titulo, caso precise estornar a tarifa (P340 - Rafael);
+    --
+    --   31/07/2018 - Adicionado tratativa para buscar o número da conta do convênio 
+    --                da COBTIT (Paulo Penteado GFT)
     -- .........................................................................
   BEGIN
     DECLARE
@@ -15099,24 +15099,25 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       rw_crapcco cr_crapcco%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper  IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob  IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob  IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto  IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_tpproduto IN tbrecup_cobranca.tpproduto%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = pr_tpproduto;
       rw_cde cr_cde%ROWTYPE;
       
       -- Buscar o número da conta do cooperado no qual foi feito o acordo
-      CURSOR cr_acordo_parcela(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                      	      ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                              ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                              ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE)  IS
+      CURSOR cr_acordo_parcela(pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                      	      ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                              ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                              ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE)  IS
         SELECT aco.nrdconta
           FROM tbrecup_acordo_parcela acp
              , tbrecup_acordo         aco
@@ -15242,13 +15243,30 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             vr_cdhistor:= pr_cdhistor;
           END IF;
 
-          IF nvl(rw_crapcob.nrctremp,0) > 0 THEN -- boleto de contrato de emprestimo
+          -- Boleto da COBTIT
+          IF rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
 
              OPEN cr_cde(pr_cdcooper => rw_crapcob.cdcooper
                         ,pr_nrctacob => rw_crapcob.nrdconta
                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob
                         ,pr_nrdocmto => rw_crapcob.nrdocmto
-                        ,pr_nrctremp => rw_crapcob.nrctremp);
+                        ,pr_tpproduto => 3);
+             FETCH cr_cde INTO rw_cde;
+
+             /* atribuir a conta do cooperado para pagto de emprestimo */
+             IF cr_cde%FOUND THEN
+                rw_crapcob.nrdconta := rw_cde.nrdconta;
+             END IF;
+
+             CLOSE cr_cde;
+
+          ELSIF nvl(rw_crapcob.nrctremp,0) > 0 THEN -- boleto de contrato de emprestimo
+
+             OPEN cr_cde(pr_cdcooper  => rw_crapcob.cdcooper
+                        ,pr_nrctacob  => rw_crapcob.nrdconta
+                        ,pr_nrcnvcob  => rw_crapcob.nrcnvcob
+                        ,pr_nrdocmto  => rw_crapcob.nrdocmto
+                        ,pr_tpproduto => 0);
              FETCH cr_cde INTO rw_cde;
 
              /* atribuir a conta do cooperado para pagto de emprestimo */
@@ -15286,7 +15304,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       --Se Encontrou tarifa
       IF vr_vltarifa > 0 THEN
         --Montar indice para acessar tabela
-        IF nvl(rw_crapcob.nrctremp,0) > 0 OR vr_dsorgarq = 'ACORDO' THEN
+        IF nvl(rw_crapcob.nrctremp,0) > 0 OR vr_dsorgarq = 'ACORDO' OR vr_dsorgarq = 'DESCONTO DE TITULO' THEN
            vr_index:= LPad(rw_crapcob.cdcooper,3,'0')||
                       LPad(rw_crapcob.nrdconta,10,'0')||
                       LPad(rw_crapcob.nrcnvcob,7,'0')||
@@ -15314,9 +15332,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           pr_tab_lcm_consolidada(vr_index).qtdregis:= 1;
           pr_tab_lcm_consolidada(vr_index).cdfvlcop:= vr_tar_cdfvlcop;
 
+          IF vr_dsorgarq = 'DESCONTO DE TITULO' THEN
+             pr_tab_lcm_consolidada(vr_index).nrdocmto:= rw_crapcob.nrdocmto;
           -- Adicionar campo nrctremp (contrato de emprestimo) e o boleto na
           -- estrutura tab_lcm_consolidada, e atribuir o valor abaixo
-          IF rw_crapcob.nrctremp > 0 THEN
+          ELSIF rw_crapcob.nrctremp > 0 THEN
              pr_tab_lcm_consolidada(vr_index).nrctremp:= rw_crapcob.nrctremp;
              pr_tab_lcm_consolidada(vr_index).nrdocmto:= rw_crapcob.nrdocmto;
           END IF;
@@ -15931,6 +15951,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --
     --              27/03/2018 - Ajustes referente ao PRJ352
     --
+    --              10/06/2018 - Ajustado para alimentar a lista de titulos a serem baixados. Quando se tratar da nova versão da 
+    --                           funcionalidade do borderô, não precisa verificar as regras de data de vencimento ser em feriado 
+    --                           ou fds (Paulo Penteado (GFT)
+    --
     -- .........................................................................*/
 
   BEGIN
@@ -15959,8 +15983,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,craptdb.vlliquid
               ,craptdb.nrinssac
               ,craptdb.rowid
-        FROM craptdb
-        WHERE craptdb.cdcooper = pr_cdcooper
+              ,crapbdt.flverbor
+        FROM crapbdt
+            ,craptdb
+        WHERE crapbdt.cdcooper = craptdb.cdcooper
+        AND   crapbdt.nrborder = craptdb.nrborder
+        AND   craptdb.cdcooper = pr_cdcooper
         AND   craptdb.cdbandoc = pr_cdbandoc
         AND   craptdb.nrdctabb = pr_nrdctabb
         AND   craptdb.nrcnvcob = pr_nrcnvcob
@@ -15971,17 +15999,18 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       rw_craptdb cr_craptdb%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
 
       --Variaveis Locais
@@ -16157,6 +16186,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       IF cr_craptdb%FOUND THEN
         --Fechar Cursor
         CLOSE cr_craptdb;
+        -- Verificar se o título foi incluso na versão antiga da funcionalidade do borderô. Se sim, verifica as
+        -- regras de data do vencimento sendo feriado ou fds. Se foi incluso na nova versão, então não precisa
+        -- passar pelas regras de data.
+        IF rw_craptdb.flverbor = 0 THEN
         --Verificar se eh feriado
         vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => rw_crapcob.cdcooper
                                                   ,pr_dtmvtolt => rw_craptdb.dtvencto
@@ -16186,6 +16219,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             --Nao Descontado
             vr_flgdesct:= FALSE;
           END IF;
+        END IF;
+        ELSE
+          vr_flgdesct := TRUE;
         END IF;
         --Se tiver descontado
         IF vr_flgdesct THEN
@@ -17259,17 +17295,18 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
   BEGIN
     DECLARE
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_nrctremp IN tbrecup_cobranca.nrctremp%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
 
       --Variaveis Locais
@@ -20527,17 +20564,18 @@ end;';
       rw_cursor2 cr_cursor2%ROWTYPE;
 
       -- selecionar conta do cooperado do contrato de emprestimo
-      CURSOR cr_cde (pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
-                    ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
-                    ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
-                    ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE
-                    ,pr_nrctremp IN tbepr_cobranca.nrctremp%TYPE) IS
+      CURSOR cr_cde (pr_cdcooper  IN tbrecup_cobranca.cdcooper%TYPE
+                    ,pr_nrctacob  IN tbrecup_cobranca.nrdconta_cob%TYPE
+                    ,pr_nrcnvcob  IN tbrecup_cobranca.nrcnvcob%TYPE
+                    ,pr_nrdocmto  IN tbrecup_cobranca.nrboleto%TYPE
+                    ,pr_tpproduto IN tbrecup_cobranca.tpproduto%TYPE) IS
         SELECT cde.nrdconta, cde.tpparcela
-          FROM tbepr_cobranca cde
+          FROM tbrecup_cobranca cde
          WHERE cde.cdcooper     = pr_cdcooper
            AND cde.nrdconta_cob = pr_nrctacob
            AND cde.nrcnvcob     = pr_nrcnvcob
-           AND cde.nrboleto     = pr_nrdocmto;
+           AND cde.nrboleto     = pr_nrdocmto
+           AND cde.tpproduto    = pr_tpproduto;
       rw_cde cr_cde%ROWTYPE;
 
       vr_cdcritic INTEGER;
@@ -20810,13 +20848,45 @@ end;';
                END IF;
             END IF;
 
-            IF nvl(rw_cursor1.nrctremp,0) > 0 THEN
+            IF rw_cursor1.dsorgarq = 'DESCONTO DE TITULO' THEN
 
               OPEN cr_cde(pr_cdcooper => rw_cursor1.cdcooper
                          ,pr_nrctacob => rw_cursor1.nrdconta
                          ,pr_nrcnvcob => rw_cursor1.nrcnvcob
                          ,pr_nrdocmto => rw_cursor1.nrdocmto
-                         ,pr_nrctremp => rw_cursor1.nrctremp);
+                         ,pr_tpproduto => 3);
+              FETCH cr_cde INTO rw_cde;
+              IF cr_cde%FOUND THEN
+
+                -- Tipo da parcela (1-Normal/ 2-Total do Atraso/ 3-Parcial do atraso/ 4-Quitacao Contrato
+                --                  5-Saldo Prejuízo/ 6-Parcial Prejuízo/ 7-Saldo Prejuízo Desconto)
+                CASE rw_cde.tpparcela
+                  --WHEN 1 THEN vr_cdhistor := vr_cdhistor; Considera como se fosse o ELSE do CASE
+                  WHEN 2 THEN vr_cdhistor := 1998;
+                  WHEN 3 THEN vr_cdhistor := 1999;
+                  --WHEN 4 THEN vr_cdhistor := 2000; Não se aplica para desconto de titulos
+                  --WHEN 5 THEN vr_cdhistor := 2278; Prejuizo será desenvolvido futuramente
+                  --WHEN 6 THEN vr_cdhistor := 2277; Prejuizo será desenvolvido futuramente
+                  --WHEN 7 THEN vr_cdhistor := 2278; Prejuizo será desenvolvido futuramente
+                ELSE
+                  vr_cdhistor := vr_cdhistor;
+                END CASE;
+
+                -- se o boleto foi pago e o processo rodou na COMPEFORA, utilizar
+                -- histórico 2002;
+                IF pr_nmtelant = 'COMPEFORA' THEN
+                   vr_cdhistor := 2002;
+                END  IF;
+              END IF;
+              CLOSE cr_cde;
+
+            ELSIF nvl(rw_cursor1.nrctremp,0) > 0 THEN
+
+              OPEN cr_cde(pr_cdcooper  => rw_cursor1.cdcooper
+                         ,pr_nrctacob  => rw_cursor1.nrdconta
+                         ,pr_nrcnvcob  => rw_cursor1.nrcnvcob
+                         ,pr_nrdocmto  => rw_cursor1.nrdocmto
+                         ,pr_tpproduto => 0);
               FETCH cr_cde INTO rw_cde;
 
               /* atribuir a conta do cooperado para pagto de emprestimo */

@@ -15,15 +15,17 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LDESCO IS
   --
   -- Alteracoes: 11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia na tela.
   --                          (Lombardi - PRJ404)
+
+  --             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
   --
   ---------------------------------------------------------------------------
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   TYPE typ_reg_crawepr IS RECORD(
-    cdcooper        tbepr_cobranca.cdcooper%TYPE,
+    cdcooper        tbrecup_cobranca.cdcooper%TYPE,
     cdagenci        crapass.cdagenci%TYPE,
-    nrctremp        tbepr_cobranca.nrctremp%TYPE,
-    nrdconta        tbepr_cobranca.nrdconta%TYPE,
+    nrctremp        tbrecup_cobranca.nrctremp%TYPE,
+    nrdconta        tbrecup_cobranca.nrdconta%TYPE,
     vlemprst        NUMBER,
     qtpreemp        NUMBER,
     cdlcremp        crawepr.cdlcremp%TYPE,

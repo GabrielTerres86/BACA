@@ -216,6 +216,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    11/06/2018 - INC0014258 Na rotina pc_controla_exe_job, não registrar as validações
                 de execução do job como erro, para que o plantão não seja acionado (Carlos)
 
+   23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+
    24/07/2018 - inc0018036 Melhorias nos fechamentos dos cursores das rotinas 
                 pc_transfere_epr_prejuizo_PP, pc_transfere_epr_prejuizo_TR,
                 pc_estorno_trf_prejuizo_PP e pc_estorno_trf_prejuizo_TR (Carlos)
@@ -2017,26 +2019,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
          AND craplot.cdhistor = pr_cdhistor;
     --         
     CURSOR c_busca_boleto IS
-      SELECT tbepr_cobranca.cdcooper
-            ,tbepr_cobranca.nrdconta_cob
-            ,tbepr_cobranca.nrcnvcob 
-            ,tbepr_cobranca.nrboleto 
-            ,tbepr_cobranca.nrctremp
+      SELECT tbrecup_cobranca.cdcooper
+            ,tbrecup_cobranca.nrdconta_cob
+            ,tbrecup_cobranca.nrcnvcob 
+            ,tbrecup_cobranca.nrboleto 
+            ,tbrecup_cobranca.nrctremp
             ,crapcob.incobran
             ,crapcob.dtvencto
             ,crapcob.vltitulo
             ,crapcob.dtdpagto
             ,crapcob.nrdocmto
-       FROM tbepr_cobranca, crapcob
-      WHERE tbepr_cobranca.cdcooper = pr_cdcooper
-        AND tbepr_cobranca.nrdconta = pr_nrdconta
-        AND tbepr_cobranca.nrctremp = pr_nrctremp
-        AND crapcob.cdcooper = tbepr_cobranca.cdcooper
-        AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-        AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-        AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+       FROM tbrecup_cobranca, crapcob
+      WHERE tbrecup_cobranca.cdcooper  = pr_cdcooper
+        AND tbrecup_cobranca.nrdconta  = pr_nrdconta
+        AND tbrecup_cobranca.nrctremp  = pr_nrctremp
+        AND tbrecup_cobranca.tpproduto = 0
+        AND crapcob.cdcooper           = tbrecup_cobranca.cdcooper
+        AND crapcob.nrdconta           = tbrecup_cobranca.nrdconta_cob
+        AND crapcob.nrcnvcob           = tbrecup_cobranca.nrcnvcob
+        AND crapcob.nrdocmto           = tbrecup_cobranca.nrboleto
         AND crapcob.incobran in (0, 5)
-       ORDER BY tbepr_cobranca.nrboleto DESC;
+       ORDER BY tbrecup_cobranca.nrboleto DESC;
     --             
     CURSOR c_busca_retorno_boleto(pr_nrcnvcob NUMBER
                                  ,pr_nrdocmto NUMBER

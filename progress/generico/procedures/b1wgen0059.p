@@ -213,6 +213,7 @@
 				10/05/2018 - P404 - Inclusao do tipo 4 aplicacao na descricao na da garantia 
 				             na procedure busca-craplcr (Lucas Skroch - Supero)
 
+                08/08/2018 - Adicionado para não permitir listagem do convenio de desconto de títulos para a inserção de convenio para o cooperado (Luis Fernando - GFT)
 .............................................................................*/
 
 
@@ -3019,7 +3020,8 @@ PROCEDURE busca-crapcco:
                            crapcco.flgativo = TRUE         AND /* ATIVOS */
                            crapcco.dsorgarq <> "MIGRACAO"  AND 
                            crapcco.dsorgarq <> "EMPRESTIMO" AND
-						   crapcco.dsorgarq <> "ACORDO" NO-LOCK
+                           crapcco.dsorgarq <> "ACORDO"  AND
+                           crapcco.dsorgarq <> "DESCONTO DE TITULO" NO-LOCK
                            BY crapcco.nmdbanco:
 
         IF   par_nrconven <> 0   THEN

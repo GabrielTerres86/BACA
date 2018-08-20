@@ -13,7 +13,9 @@
  * 004: [23/01/2014] Carlos (CECRED) : Retirada a include de titulos/msg_grupo_economico.php
  * 005: [25/07/2016] Evandro - RKAM : Adicionado classe (SetWindow) - necessaria para navegação com teclado.
  * 006: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
+ * 007: [18/08/2018] GFT: Ajuste Projeto 403 - Reformulação Desconto de Titulo. 
  */	
+
 
 	session_start();
 	require_once('../../../includes/config.php');
@@ -70,6 +72,7 @@
 									<div id="divOpcoesDaOpcao2"></div>
 									<div id="divOpcoesDaOpcao3"></div>
 									<div id="divOpcoesDaOpcao4"></div>											
+									<div id="divOpcoesDaOpcao5"></div>
 									<div id="divConteudoOpcao" style="height: 80px;">
 										<!-- Botoes Titulos e Cheque -->
 										

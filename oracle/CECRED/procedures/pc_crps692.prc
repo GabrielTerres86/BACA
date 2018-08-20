@@ -28,6 +28,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                    01/12/2016 - Fazer tratamento para incorporação. (Oscar)
 
 				   27/05/2018 - Chama rotina LIMI0002.PC_CANCELA_LIMITE_INADIM de cancelamento de limite - Daniel(AMcom)      
+
+                   06/06/2018 - Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
     ............................................................................ */
 
     DECLARE
@@ -780,7 +782,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
           -- Verifica se o cooperado possui algum emprestimo em atraso no CYBER
           OPEN cr_crapcyb(pr_cdcooper => rw_craplim_crapass.cdcooper,
                           pr_nrdconta => rw_craplim_crapass.nrdconta,
-                          pr_cdorigem => '2,3',
+                          --Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
+                          pr_cdorigem => '2,3,4',
                           pr_qtdiaatr => rw_craprli.qtdiaatr);
           FETCH cr_crapcyb INTO rw_crapcyb;
           IF cr_crapcyb%FOUND THEN

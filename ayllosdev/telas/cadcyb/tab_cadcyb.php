@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 31/08/2015 - Ajustado a nomenclatura de VIP para CIN (Douglas - Melhoria 12)
  *				  29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ * 				  04/06/2018 - Projeto 403 - Inclusão de tratativas para a inclusão de títulos vencidos na Cyber (Lucas - GFT) 
  * --------------
  */
 	require_once("../../includes/config.php");
@@ -22,7 +23,9 @@
 			<tr>
 				<th>Origem</th>
 				<th>Conta</th>
-				<th>Contrato</th>
+				<th id="thnrctremp">Contrato</th>
+				<th id="thnrborder">Borderô</th>
+				<th id="thnrtitulo">Título</th>
 				<th>Judicial</th>
 				<th>Extra Judicial</th>
 				<th>CIN</th>

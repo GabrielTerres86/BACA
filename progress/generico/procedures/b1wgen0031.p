@@ -205,7 +205,7 @@
                 12/03/2018 - Substituida verificacao "cdtipcta = 1,2,7,..." por "cdcatego = 1".
                              PRJ366 (Lombardi).
 
-                
+                23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
                 
 .............................................................................*/
 
@@ -1353,30 +1353,31 @@ PROCEDURE obtem-mensagens-alerta:
          END.
 
     /* buscar boletos de contratos em aberto */
-    FOR EACH tbepr_cobranca FIELDS (cdcooper nrdconta_cob nrcnvcob nrboleto nrctremp)
-       WHERE tbepr_cobranca.cdcooper = par_cdcooper AND
-             tbepr_cobranca.nrdconta = par_nrdconta 
+    FOR EACH tbrecup_cobranca FIELDS (cdcooper nrdconta_cob nrcnvcob nrboleto nrctremp)
+       WHERE tbrecup_cobranca.cdcooper = par_cdcooper AND
+             tbrecup_cobranca.nrdconta = par_nrdconta AND
+             tbrecup_cobranca.tpproduto = 0
              NO-LOCK:
         
             FOR FIRST crapcob FIELDS (dtvencto vltitulo)
-                WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-                  AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-                  AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-                  AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+                WHERE crapcob.cdcooper = tbrecup_cobranca.cdcooper
+                  AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
+                  AND crapcob.nrcnvcob = tbrecup_cobranca.nrcnvcob
+                  AND crapcob.nrdocmto = tbrecup_cobranca.nrboleto
                   AND crapcob.incobran = 0 NO-LOCK:
                 
                     RUN cria-registro-msg 
-                        (INPUT "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + " em aberto." +
+                        (INPUT "Boleto do contrato " + STRING(tbrecup_cobranca.nrctremp) + " em aberto." +
                                " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +
                                " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + "." ).    
             END.
 
             /* verificar se o boleto do contrato está em pago, pendente de processamento */
             FOR FIRST crapcob FIELDS (dtvencto vltitulo dtdpagto)
-                WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-                  AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-                  AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-                  AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+                WHERE crapcob.cdcooper = tbrecup_cobranca.cdcooper
+                  AND crapcob.nrdconta = tbrecup_cobranca.nrdconta_cob
+                  AND crapcob.nrcnvcob = tbrecup_cobranca.nrcnvcob
+                  AND crapcob.nrdocmto = tbrecup_cobranca.nrboleto
                   AND crapcob.incobran = 5 NO-LOCK:
     
                     FOR FIRST crapret      
@@ -1390,7 +1391,7 @@ PROCEDURE obtem-mensagens-alerta:
                           NO-LOCK:    
 
                         RUN cria-registro-msg 
-                            (INPUT "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
+                            (INPUT "Boleto do contrato " + STRING(tbrecup_cobranca.nrctremp) + 
                                    " esta pago pendente de processamento." +       
                                    " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
                                    " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".").    

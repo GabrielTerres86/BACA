@@ -6,10 +6,12 @@
 //*** Objetivo  : Biblioteca de funções da tela TAB096                 						***//
 //***                                                                  						***//	 
 //*** Alterações: 07/03/2017 - Adicao do campo descprej. (P210.2 - Jaison/Daniel)			***//
+//***             20/06/2018 - Adicionado parametros para a COBTIT  (Luis  Fernando (GFT)   ***//
 //*********************************************************************************************//
 
 var cCddopcao;
 var cCdcooper;
+var cTpproduto;
 var frmCab = 'frmCab';
 var frmTab096 = 'frmTab096';
 var cTodos;
@@ -49,19 +51,23 @@ function estadoInicial() {
 }
 
 function formataCabecalho() {
-
+    $('#'+frmCab).css("width",'840px');
     cTodosCabecalho = $('input[type="text"],select', '#' + frmCab);
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
 
     var rCddopcao = $('label[for="cddopcao"]', '#frmCab');
     var rCdcooper = $('label[for="cdcooper"]', '#frmCab');
+    var rTpproduto = $('label[for="tpproduto"]', '#frmCab');
 
     rCddopcao.css('width', '50px').addClass('rotulo');
-    rCdcooper.css('width', '80px').addClass('rotulo-linha');
+    rCdcooper.css('width', '70px').addClass('rotulo-linha');
+    rTpproduto.css('width', '70px').addClass('rotulo-linha');
 
     cCddopcao = $('#cddopcao', '#frmCab');
     cCddopcao.css('width', '330px');
+
+    cTpproduto = $('#tpproduto', '#frmCab');
 
     cCdcooper = $('#cdcooper', '#frmCab');
     cCdcooper.html(slcooper);
@@ -81,12 +87,24 @@ function formataCabecalho() {
 
     cCdcooper.unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 13) {
-            controlaOperacao();
+            cTpproduto.focus();
             return false;
         }
     });
 
     cCdcooper.unbind('changed').bind('changed', function(e) {
+        cTpproduto.focus();
+        return false;
+    });
+
+    cTpproduto.unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 13) {
+        controlaOperacao();
+            return false;
+        }
+    });
+
+    cTpproduto.unbind('changed').bind('changed', function(e) {
         controlaOperacao();
         return false;
     });
@@ -120,17 +138,17 @@ function formataFormulario() {
     var rQtdmaxbl = $('label[for="qtdmaxbl"]', '#frmTab096');
     var rFlgblqvl = $('label[for="flgblqvl"]', '#frmTab096');
 	
-	rNrconven.addClass('rotulo').css('width','270px');
-	rNrdconta.addClass('rotulo').css('width','270px');
-	rPrazomax.addClass('rotulo').css('width','270px');
-	rPrazobxa.addClass('rotulo').css('width','270px');
-	rVlrminpp.addClass('rotulo').css('width','270px');
-	rVlrmintr.addClass('rotulo').css('width','270px');
-	rDescprej.addClass('rotulo').css('width','270px');
-	rLinha1.addClass('rotulo').css('width','100px');
-    rLinha2.addClass('rotulo').css('width','100px');
-    rLinha3.addClass('rotulo').css('width','100px');
-    rLinha4.addClass('rotulo').css('width','100px');
+	rNrconven.addClass('rotulo').css('width','320px');
+	rNrdconta.addClass('rotulo').css('width','320px');
+	rPrazomax.addClass('rotulo').css('width','320px');
+	rPrazobxa.addClass('rotulo').css('width','320px');
+	rVlrminpp.addClass('rotulo').css('width','320px');
+	rVlrmintr.addClass('rotulo').css('width','320px');
+	rDescprej.addClass('rotulo').css('width','320px');
+	rLinha1.addClass('rotulo').css('width','200px');
+    rLinha2.addClass('rotulo').css('width','200px');
+    rLinha3.addClass('rotulo').css('width','200px');
+    rLinha4.addClass('rotulo').css('width','200px');
 	rBlqemiss.addClass('rotulo').css('width','320px');
 	rQtdmaxbl.addClass('rotulo').css('width','320px');
 	rFlgblqvl.addClass('rotulo').css('width','320px');
@@ -165,8 +183,8 @@ function formataFormulario() {
     cLinha2.css('width', '500px').addClass('alphanum').attr('maxlength','50');
     cLinha3.css('width', '500px').addClass('alphanum').attr('maxlength','50');
     cLinha4.css('width', '500px').addClass('alphanum').attr('maxlength','50');
-    cDstxtsms.css('width', '626px').addClass('alphanum').attr('maxlength','200');
-    cDstxtema.css('width', '626px').addClass('alphanum').attr('maxlength','1000');
+    cDstxtsms.css('width', '776px').addClass('alphanum').attr('maxlength','200');
+    cDstxtema.css('width', '776px').addClass('alphanum').attr('maxlength','1000');
     cBlqemiss.css('width', '30px').addClass('inteiro').attr('maxlength','2');
     cEmissnpg.css('width', '30px').addClass('inteiro').attr('maxlength','2');
     cQtdmaxbl.css('width', '60px').addClass('inteiro').attr('maxlength','2');
@@ -335,6 +353,7 @@ function controlaOperacao() {
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
     var cdcooper = $('#cdcooper', '#frmCab').val();
+    var tpproduto = $('#tpproduto', '#frmCab').val();
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
@@ -347,6 +366,7 @@ function controlaOperacao() {
         data: {
             cdcooper: cdcooper,
             cddopcao: cddopcao,
+            tpproduto: tpproduto,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {
@@ -412,6 +432,7 @@ function grava_dados() {
     var qtdmaxbl = $('#qtdmaxbl', '#frmTab096').val();
     var flgblqvl = $('#flgblqvl', '#frmTab096').val();
     var cdcooper = $("#cdcooper", "#frmCab").val();
+    var tpproduto = $("#tpproduto", "#frmCab").val();
 	
 	nrdconta = normalizaNumero(nrdconta);
 	nrconven = normalizaNumero(nrconven);
@@ -441,6 +462,7 @@ function grava_dados() {
             qtdmaxbl: qtdmaxbl,
             flgblqvl: flgblqvl,
             cdcoopex: cdcooper,
+            tpproduto: tpproduto,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {

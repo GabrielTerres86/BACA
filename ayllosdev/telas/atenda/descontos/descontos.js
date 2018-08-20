@@ -49,6 +49,12 @@
 
 			 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
   
+			 28/04/2018 - Inclusão de novas colunas na grid de borderô (Alex Sandro  - GFT)
+
+			 03/08/2018 - Inclusão de dois novos campos de risco na tabela de bordero (Vitor Shimada Assanuma - GFT)
+
+			 13/08/2018 - Novo formulário formDetalheTitulo (Vitor Shimada Assanuma - GFT)
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -73,6 +79,8 @@ arrayAlinhaInclusaoBordero[4] = 'right';
 arrayAlinhaInclusaoBordero[5] = 'center';
 arrayAlinhaInclusaoBordero[6] = 'center';
 				
+var flgverbor = 0;
+
 // Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {	
 
@@ -350,7 +358,6 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
-		$('#'+nomeForm).css('width','785px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -359,25 +366,51 @@ function formataLayout(nomeForm){
 		
 		var ordemInicial = new Array();
 				
-		var arrayLargura = new Array();
-		arrayLargura[0] = '60px';
-		arrayLargura[1] = '60px';
-		arrayLargura[2] = '60px';
-		arrayLargura[3] = '60px';
-		arrayLargura[4] = '80px';
-		arrayLargura[5] = '120px';
-		arrayLargura[6] = '80px';
-		
-				
-		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'center';
-		arrayAlinha[3] = 'center';
-		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'center';
-		arrayAlinha[6] = 'right';
-		arrayAlinha[7] = 'center';
+		if(flgverbor){ 
+			$('#'+nomeForm).css('width','945px');
+			var arrayLargura = new Array();
+			arrayLargura[0] = '60px';
+			arrayLargura[1] = '60px';
+			arrayLargura[2] = '60px';
+			arrayLargura[3] = '60px';
+			arrayLargura[4] = '60px';
+			arrayLargura[5] = '60px';
+			arrayLargura[6] = '80px';
+			arrayLargura[7] = '120px';
+			arrayLargura[8] = '';
+			arrayLargura[9] = '65px';
+			
+					
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'center';
+			arrayAlinha[1] = 'center';
+			arrayAlinha[2] = 'center';
+			arrayAlinha[3] = 'center';
+			arrayAlinha[4] = 'right';
+			arrayAlinha[5] = 'center';
+			arrayAlinha[6] = 'right';
+			arrayAlinha[7] = 'center';
+			arrayAlinha[8] = 'center';
+			arrayAlinha[9] = 'center';
+		}
+		else{
+			$('#'+nomeForm).css('width','745px');
+			var arrayLargura = new Array();
+			arrayLargura[0] = '80px';
+			arrayLargura[1] = '80px';
+			arrayLargura[2] = '80px';
+			arrayLargura[3] = '70px';
+			arrayLargura[4] = '140px';
+			arrayLargura[5] = '';
+					
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'center';
+			arrayAlinha[1] = 'right';
+			arrayAlinha[2] = 'right';
+			arrayAlinha[3] = 'right';
+			arrayAlinha[4] = 'right';
+			arrayAlinha[5] = 'center';
+		}
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
@@ -388,7 +421,47 @@ function formataLayout(nomeForm){
 		});
 		
 		ajustarCentralizacao();
+	}else if ( nomeForm == 'divBorderoTitulosPagar' ){
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+		var ordemInicial = new Array();
+		var arrayLargura = new Array();
 
+		$('#'+nomeForm).css('width','910');
+
+		arrayLargura[0] = '70px';
+		arrayLargura[1] = '50px';
+		arrayLargura[2] = '90px';
+		arrayLargura[3] = '90px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
+		arrayLargura[6] = '80px';
+		arrayLargura[7] = '70px';
+		arrayLargura[8] = '70px';
+		arrayLargura[9] = '70px';
+		
+				
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
+		arrayAlinha[8] = 'center';
+		arrayAlinha[9] = 'center';
+		
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+		
+		ajustarCentralizacao();
 	}else if ( nomeForm == 'divIncluirBordero' ){
 		$('#'+nomeForm).css('width','940px');
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
@@ -527,6 +600,8 @@ function formataLayout(nomeForm){
 		var Ltxdiaria = $('label[for="txdiaria"]','#'+nomeForm);
 		var Ldsopelib = $('label[for="dsopelib"]','#'+nomeForm);
 		var Ltxjurmor = $('label[for="txjurmor"]','#'+nomeForm);
+		var Linnivris = $('label[for="innivris"]','#'+nomeForm);
+		var Lqtdiaatr = $('label[for="qtdiaatr"]','#'+nomeForm);
 		
 		var Cdspesqui = $('#dspesqui','#'+nomeForm);
 		var Cnrborder = $('#nrborder','#'+nomeForm);
@@ -540,6 +615,8 @@ function formataLayout(nomeForm){
 		var Ctxdiaria = $('#txdiaria','#'+nomeForm);
 		var Cdsopelib = $('#dsopelib','#'+nomeForm);
 		var Ctxjurmor = $('#txjurmor','#'+nomeForm);
+		var Cinnivris = $('#innivris','#'+nomeForm);
+		var Cqtdiaatr = $('#qtdiaatr','#'+nomeForm);
 		
 		$('#'+nomeForm).css('width','480px');
 		
@@ -556,6 +633,8 @@ function formataLayout(nomeForm){
 		Ltxdiaria.addClass('rotulo').css('width','110px');
 		Ldsopelib.css('width','110px');
 		Ltxjurmor.addClass('rotulo').css('width','110px');
+		Linnivris.css('width','110px');
+		Lqtdiaatr.css('width','110px');
 		
 		Cdspesqui.css({'width':'200px'});
 		Cnrborder.css({'width':'60px','text-align':'right'});
@@ -569,6 +648,8 @@ function formataLayout(nomeForm){
 		Ctxdiaria.css({'width':'100px','text-align':'right'});
 		Cdsopelib.css({'width':'100px'});
 		Ctxjurmor.css({'width':'100px'});
+		Cinnivris.css({'width':'100px'});
+		Cqtdiaatr.css({'width':'100px'});
 		
 		Cdspesqui.desabilitaCampo();
 		Cnrborder.desabilitaCampo();
@@ -582,6 +663,8 @@ function formataLayout(nomeForm){
 		Ctxdiaria.desabilitaCampo();
 		Cdsopelib.desabilitaCampo();
 		Ctxjurmor.desabilitaCampo();
+		Cinnivris.desabilitaCampo();
+		Cqtdiaatr.desabilitaCampo();
 			
 	}else if ( nomeForm == 'divPropostas' ){
 
@@ -1388,7 +1471,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divTitulosBorderos' ){
 
-		$('#'+nomeForm).css('width','950px');
+		$('#'+nomeForm).css('width','1090px');
 
 		var divcr = $('#divcr','#'+nomeForm);		
 		var tabela      = $('table', divcr );
@@ -1399,26 +1482,30 @@ function formataLayout(nomeForm){
 				
 
 		var arrayLargura = new Array();
-		arrayLargura[0] = '60px';//Vencto
-		arrayLargura[1] = '150px';//130 Nosso Número
-		arrayLargura[2] = '80px';//Valor
-		arrayLargura[3] = '80px';//Valor Líquido
-		arrayLargura[4] = '30px';//Prz
-		arrayLargura[5] = '250px';//Pagador
-		arrayLargura[6] = '110px';// CPF/CNPJ
-		arrayLargura[7] = '80px';//130 //Situação 50 30
-		arrayLargura[8] = '80px';//Saldo Devedor
+		arrayLargura[0] = '65px';//Vencto
+		arrayLargura[1] = '128px';//130 Nosso Número
+		arrayLargura[2] = '60px';//Valor
+		arrayLargura[3] = '60px';//Valor Líquido
+		arrayLargura[4] = '25px';//Prz
+		arrayLargura[5] = '';//Pagador
+		arrayLargura[6] = '100px';// CPF/CNPJ
+		arrayLargura[7] = '100px';//130 //Situação 50 30
+		arrayLargura[8] = '100px';//130 //Decisao 50 30
+		arrayLargura[9] = '60px';//Saldo Devedor
+		arrayLargura[10] = '60px';//Nr Ctr Cyber
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';// Vencto
 		arrayAlinha[1] = 'center';//Nosso número
 		arrayAlinha[2] = 'right';//Valor
 		arrayAlinha[3] = 'right';//Valor Lóquido
-		arrayAlinha[4] = 'right';//Prz
+		arrayAlinha[4] = 'center';//Prz
 		arrayAlinha[5] = 'left';//Pagador
-		arrayAlinha[6] = 'right';// CPF/CNPJ
+		arrayAlinha[6] = 'center';// CPF/CNPJ
 		arrayAlinha[7] = 'center';//Situação
-		arrayAlinha[8] = 'right';//Saldo Devedor
+		arrayAlinha[8] = 'center';//Decisao
+		arrayAlinha[9] = 'right';//Saldo Devedor
+		arrayAlinha[10] = 'center';//Saldo Devedor
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
@@ -1430,6 +1517,82 @@ function formataLayout(nomeForm){
 		
 		ajustarCentralizacao();
 	
+	}else if ( nomeForm == 'formDetalheTitulo' ){
+		$('#'+nomeForm).css('width','500px');
+		var Lnrborder = $('label[for="nrborder"]','#'+nomeForm);
+		var Lnrnosnum = $('label[for="nrnosnum"]','#'+nomeForm);
+		var Lqtdprazo = $('label[for="qtdprazo"]','#'+nomeForm);
+		var Lvlrmulta = $('label[for="vlrmulta"]','#'+nomeForm);
+		var Lvliofatr = $('label[for="vliofatr"]','#'+nomeForm);
+		var Lvlslddvd = $('label[for="vlslddvd"]','#'+nomeForm);
+		var Lnrctrcyb = $('label[for="nrctrcyb"]','#'+nomeForm);
+		var Lnmdpagad = $('label[for="nmdpagad"]','#'+nomeForm);
+		var Lnrcpfcnp = $('label[for="nrcpfcnp"]','#'+nomeForm);
+		var Ldtdvenct = $('label[for="dtdvenct"]','#'+nomeForm);
+		var Lvltitulo = $('label[for="vltitulo"]','#'+nomeForm);
+		var Ldiasdatr = $('label[for="diasdatr"]','#'+nomeForm);
+		var Lvljrmora = $('label[for="vljrmora"]','#'+nomeForm);
+		var Lvlorpago = $('label[for="vlorpago"]','#'+nomeForm);
+
+		var Cnrborder = $('#nrborder','#'+nomeForm);
+		var Cnrnosnum = $('#nrnosnum','#'+nomeForm);
+		var Cqtdprazo = $('#qtdprazo','#'+nomeForm);
+		var Cvlrmulta = $('#vlrmulta','#'+nomeForm);
+		var Cvliofatr = $('#vliofatr','#'+nomeForm);
+		var Cvlslddvd = $('#vlslddvd','#'+nomeForm);
+		var Cnrctrcyb = $('#nrctrcyb','#'+nomeForm);
+		var Cnmdpagad = $('#nmdpagad','#'+nomeForm);
+		var Cnrcpfcnp = $('#nrcpfcnp','#'+nomeForm);
+		var Cdtdvenct = $('#dtdvenct','#'+nomeForm);
+		var Cvltitulo = $('#vltitulo','#'+nomeForm);
+		var Cdiasdatr = $('#diasdatr','#'+nomeForm);
+		var Cvljrmora = $('#vljrmora','#'+nomeForm);
+		var Cvlorpago = $('#vlorpago','#'+nomeForm);
+
+		Lnrborder.addClass('rotulo').css('width','120px');
+		Ldtdvenct.addClass('rotulo-linha').css('width','140px');
+		Lnrnosnum.addClass('rotulo').css('width','120px');
+		Lvltitulo.addClass('rotulo-linha').css('width','90px');
+		Lqtdprazo.addClass('rotulo').css('width','120px');
+		Ldiasdatr.addClass('rotulo-linha').css('width','140px');
+		Lvlrmulta.addClass('rotulo').css('width','120px');
+		Lvljrmora.addClass('rotulo-linha').css('width','140px');
+		Lvliofatr.addClass('rotulo').css('width','120px');
+		Lvlorpago.addClass('rotulo-linha').css('width','140px');
+		Lvlslddvd.addClass('rotulo').css('width','120px');
+		Lnrctrcyb.addClass('rotulo').css('width','120px');
+		Lnmdpagad.addClass('rotulo').css('width','120px');
+		Lnrcpfcnp.addClass('rotulo').css('width','120px');
+
+		Cnrborder.css({'width':'80px','text-align':'right'});
+		Cdtdvenct.css({'width':'80px','text-align':'right'});
+		Cnrnosnum.css({'width':'130px','text-align':'right'});
+		Cvltitulo.css({'width':'80px','text-align':'right'});
+		Cqtdprazo.css({'width':'80px','text-align':'right'});
+		Cdiasdatr.css({'width':'80px','text-align':'right'});
+		Cvlrmulta.css({'width':'80px','text-align':'right'});
+		Cvljrmora.css({'width':'80px','text-align':'right'});
+		Cvliofatr.css({'width':'80px','text-align':'right'});
+		Cvlorpago.css({'width':'80px','text-align':'right'});
+		Cvlslddvd.css({'width':'80px','text-align':'right'});
+		Cnrctrcyb.css({'width':'80px','text-align':'right'});
+		Cnmdpagad.css({'width':'308px','text-align':'left'});
+		Cnrcpfcnp.css({'width':'120px','text-align':'right'});
+				
+		Cnrborder.desabilitaCampo();
+		Cnrnosnum.desabilitaCampo();
+		Cqtdprazo.desabilitaCampo();
+		Cvlrmulta.desabilitaCampo();
+		Cvliofatr.desabilitaCampo();
+		Cvlslddvd.desabilitaCampo();
+		Cnrctrcyb.desabilitaCampo();
+		Cnmdpagad.desabilitaCampo();
+		Cnrcpfcnp.desabilitaCampo();
+		Cdtdvenct.desabilitaCampo();
+		Cvltitulo.desabilitaCampo();
+		Cdiasdatr.desabilitaCampo();
+		Cvljrmora.desabilitaCampo();
+		Cvlorpago.desabilitaCampo();
 	}else if ( nomeForm == 'divResumoBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');

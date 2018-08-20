@@ -334,6 +334,8 @@
 							 
 				06/08/2018 - Adicionando novos documentos (132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 167, 168, 169). (RITM0021012 - Kelvin)
 
+                11/06/2018 - No cursor crapbdt filtrar data de liberação que não seja null
+
 .............................................................................*/
 
 
@@ -5131,6 +5133,7 @@ PROCEDURE retorna_docs_liberados:
 
                     FOR EACH craptdb WHERE craptdb.cdcooper = crapbdt.cdcooper AND  
                                            craptdb.nrdconta = crapbdt.nrdconta AND 
+										   craptdb.dtlibbdt <> ?               AND
                                            craptdb.nrborder = crapbdt.nrborder NO-LOCK:
                         
                         aux_vltittot = aux_vltittot + craptdb.vltitulo.
@@ -5900,6 +5903,5 @@ PROCEDURE  gera_pend_digitalizacao_seqdoc:
 END PROCEDURE.
 
 /*...........................................................................*/
-
 
 

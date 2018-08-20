@@ -16,6 +16,9 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   -- Alteracoes: 23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
   --                          referentes a proposta. (Lindon Carlos Pecile - GFT)
   --
+  --             26/04/2018 - Adicionado os procedimentos pc_atualiza_prop_srv_border.
+  --                        - Adaptado o procedimento pc_atuaretorn_proposta_esteira para utilizaçao do Borderô de
+  --                          desconto de títulos (Andrew Albuquerque (GFT))
   --             05/05/2018 - Inclusão da procedure pc_retorno_analise_cartao (Paulo Silva (Supero))
 
   --             01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 		  
@@ -128,6 +131,21 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                      ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2          --> Erros do processo
                                      );
+
+  procedure pc_atualiza_prop_srv_border
+                (pr_cdcooper    in crapcop.cdcooper%type     --> Codigo da cooperativa
+                ,pr_nrdconta    in crapass.nrdconta%type     --> Numero da conta
+                ,pr_nrborder    IN crapbdt.nrborder%TYPE     --> Número do Borderô
+                ,pr_rw_crapdat  in btch0001.rw_crapdat%type  --> Vetor com dados de parâmetro (CRAPDAT)
+                ,pr_insitapr    in crapbdt.insitapr%type     --> Situacao da aprovação do bordero
+                ,pr_dsobscmt    in long default null         --> Observaçao recebida da esteira de crédito
+                ,pr_dsdscore    in crapass.dsdscore%type default null    --> Consulta do score feita na Boa Vista pela esteira de crédito
+                ,pr_dtdscore    in crapass.dtdscore%type default null    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
+                ,pr_status      out pls_integer              --> Status
+                ,pr_cdcritic    out pls_integer              --> Codigo da critica
+                ,pr_dscritic    out varchar2                 --> Descricao da critica
+                ,pr_msg_detalhe out varchar2                 --> Detalhe da mensagem
+                ,pr_des_reto    out varchar2);
 END WEBS0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
@@ -154,6 +172,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   --             23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
   --                          referentes a proposta. (Lindon Carlos Pecile - GFT)
   --
+  --             26/04/2018 - Adicionado os procedimentos pc_atualiza_prop_srv_border.
+  --                        - Adaptado o procedimento pc_atuaretorn_proposta_esteira para utilizaçao do Borderô de
+  --                          desconto de títulos (Andrew Albuquerque (GFT))
   --             05/05/2018 - pc_retorno_analise_cartao (Paulo Silva (Supero))
   --
   --	 	     01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 
@@ -1573,6 +1594,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  ,dsnivris = decode(pr_tpretest, 'M', nvl(pr_indrisco, lim.dsnivris), lim.dsnivris)
                  ,dtdscore = nvl(pr_dtdscore, nvl(lim.dtdscore,trunc(sysdate)))
                  ,dsdscore = nvl(pr_dsdscore, lim.dsdscore)
+                 ,nrinfcad = decode(pr_tpretest, 'M', nvl(pr_nrinfcad, lim.nrinfcad), lim.nrinfcad)
+                 ,nrgarope = decode(pr_tpretest, 'M', nvl(pr_nrgarope, lim.nrinfcad), lim.nrgarope)
+                 ,nrliquid = decode(pr_tpretest, 'M', nvl(pr_nrliquid, lim.nrinfcad), lim.nrliquid)
+                 ,nrpatlvr = decode(pr_tpretest, 'M', nvl(pr_nrparlvr, lim.nrinfcad), lim.nrpatlvr)
+                 ,nrperger = decode(pr_tpretest, 'M', nvl(pr_nrperger, lim.nrinfcad), lim.nrperger)
            where  lim.cdcooper = pr_cdcooper
            and    lim.nrdconta = pr_nrdconta
            and    lim.nrctrlim = pr_nrctrlim
@@ -1729,6 +1755,399 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                                                  ,pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
   end;                            
   end pc_atualiza_prop_srv_limdesct;       
+
+  procedure pc_atualiza_prop_srv_border
+                (pr_cdcooper    in crapcop.cdcooper%type     --> Codigo da cooperativa
+                ,pr_nrdconta    in crapass.nrdconta%type     --> Numero da conta
+                ,pr_nrborder    IN crapbdt.nrborder%TYPE     --> Número do Borderô
+                ,pr_rw_crapdat  in btch0001.rw_crapdat%type  --> Vetor com dados de parâmetro (CRAPDAT)
+                ,pr_insitapr    in crapbdt.insitapr%type     --> Situacao da aprovação do bordero
+                ,pr_dsobscmt    in long default null         --> Observaçao recebida da esteira de crédito
+                ,pr_dsdscore    in crapass.dsdscore%type default null    --> Consulta do score feita na Boa Vista pela esteira de crédito
+                ,pr_dtdscore    in crapass.dtdscore%type default null    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
+                ,pr_status      out pls_integer              --> Status
+                ,pr_cdcritic    out pls_integer              --> Codigo da critica
+                ,pr_dscritic    out varchar2                 --> Descricao da critica
+                ,pr_msg_detalhe out varchar2                 --> Detalhe da mensagem
+                ,pr_des_reto    out varchar2) is             --> Erros do processo
+  begin
+    /* .............................................................................
+    Programa: pc_atualiza_prop_srv_border
+    Sistema : Rotinas referentes ao WebService
+    Sigla   : WEBS
+    Autor   : Andrew Albuquerque (GFT)
+    Data    : Abril/2018.                    Ultima atualizacao: 26/04/2018
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Atualizar os dados de borderô de desconto de titulos
+
+    Observacao: -----
+    Alteracoes: 26/04/2018 Criaçao (Andrew Albuquerque (GFT))
+
+    ..............................................................................*/
+  declare
+    --> CARREGAR OS DADOS DO BORDERÔ
+    CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%TYPE
+                      ,pr_nrdconta IN crapbdt.nrdconta%TYPE
+                      ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+      SELECT bdt.rowid
+            ,bdt.*
+        FROM crapbdt bdt
+       WHERE bdt.cdcooper = pr_cdcooper
+         AND bdt.nrdconta = pr_nrdconta
+         AND bdt.nrborder = pr_nrborder;
+    rw_crapbdt cr_crapbdt%ROWTYPE;
+    rw_crapbdt_log cr_crapbdt%rowtype;
+
+    cursor cr_crapass(pr_cdcooper in crapass.cdcooper%type
+                     ,pr_nrdconta in crapass.nrdconta%type) is
+    select crapass.dtdscore
+          ,crapass.dsdscore
+                 ,crapass.dsnivris
+          ,crapass.inpessoa
+    from   crapass
+    where  crapass.cdcooper = pr_cdcooper
+    and    crapass.nrdconta = pr_nrdconta;
+    rw_crapass     cr_crapass%rowtype;
+    rw_crapass_log cr_crapass%rowtype;
+
+    vr_nrdrowid      rowid;
+    vr_exc_saida     exception;
+    vr_exc_erro_500  exception;
+
+    --> Acionamentos de retorno
+    cursor cr_aciona_retorno(pr_cdcooper IN crapbdt.cdcooper%TYPE
+                            ,pr_nrdconta IN crapbdt.nrdconta%TYPE
+                            ,pr_nrborder IN crapbdt.nrborder%TYPE) is
+      select ac.dsconteudo_requisicao
+      from   tbgen_webservice_aciona ac
+      where  ac.cdcooper      = pr_cdcooper
+      and    ac.nrdconta      = pr_nrdconta
+      and    ac.nrctrprp      = pr_nrborder
+      and    ac.tpacionamento = 2
+      ORDER BY ac.dhacionamento DESC
+    ;  
+    --> Somente Retorno
+    vr_dsconteudo_requisicao tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
+
+--    vr_dsprotoc Crapbdt.dsprotoc%TYPE;
+    
+    --> Objetos para retorno das mensagens
+    vr_obj_retorno cecred.json := json();
+    vr_obj_lst cecred.json_list := json_list();
+    vr_obj_tit cecred.json := json(); 
+    
+    --> variáveis para fazer o tratamento das mensagens e atualizar os títulos e borderô.
+    vr_chavetitulo VARCHAR2(100);
+    vr_sittitulo  VARCHAR2(100);
+    vr_nrdcontaPk craptdb.nrdconta%TYPE;
+    vr_nrborderPk craptdb.nrborder%TYPE;
+    vr_nrdocmtoPk craptdb.nrdocmto%TYPE;
+    vr_Aprovados  PLS_INTEGER;
+    vr_Reprovados PLS_INTEGER;
+    v_insitapr    crapbdt.insitapr%TYPE;
+  begin
+    
+    -- buscar os dados do borderô
+    OPEN cr_crapbdt(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_nrborder => pr_nrborder);
+    FETCH cr_crapbdt into rw_crapbdt;
+    IF cr_crapbdt%NOTFOUND THEN
+      CLOSE cr_crapbdt;
+      pr_status      := 202;
+      pr_cdcritic    := 1166;
+      pr_msg_detalhe := 'Parecer não foi atualizado, o borderô não foi encontrado no sistema Ayllos.';
+      raise vr_exc_saida;
+    ELSE
+      -- Verificar se o Borderô já está Liberado. Se ele estiver apenas 2-Analisado, pode receber a resposta de uma re-analise.
+      IF rw_crapbdt.insitbdt > 2 THEN -- 3 Liberado / 4-Liquidado / 5-Rejeitado
+        pr_status      := 202;
+        pr_cdcritic    := 970;
+        pr_msg_detalhe := 'Parecer do borderô não foi atualizado, o borderô já está efetivado no sistema Ayllos.';
+        raise vr_exc_saida;
+      END IF;
+    END IF;      
+    close cr_crapbdt;
+    
+    -- pegando o protocolo de envio do borderô
+--    vr_dsprotoc := rw_crapbdt.dsprotoc;
+
+    -- Buscar os dados do cooperado
+    open  cr_crapass(pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+    fetch cr_crapass into rw_crapass;
+    if    cr_crapass%notfound then
+          close cr_crapass;
+          pr_status      := 202;
+          pr_cdcritic    := 564;
+          pr_msg_detalhe := 'Parecer não foi atualizado, a conta-corrente não foi encontrada no sistema Ayllos.';
+          raise vr_exc_saida;
+    else
+          close cr_crapass;
+    end   if;
+
+    --> Tratar para nao validar criticas qnt for 99-expirado
+    if  pr_insitapr <> 99 then
+      -- Análise Finalizada (3-Aprovado Automaticamente 4-Aprovado 5-Reprovado)
+      if  rw_crapbdt.insitapr in (3,4,5,7) then
+          pr_status      := 202;
+          pr_cdcritic    := 974;
+          pr_msg_detalhe := 'Parecer não foi atualizado, a análise do borderô já foi finalizada.';
+          raise vr_exc_saida;
+      end if;
+
+      -- 6-Enviado Esteira
+      if  rw_crapbdt.insitapr <> 6 then
+          pr_status      := 202;
+          pr_cdcritic    := 971;
+          pr_msg_detalhe := 'Parecer não foi atualizado, borderô não foi enviado para a esteira de crédito.';
+          raise vr_exc_saida;
+      end if;
+    end if;
+
+    --  7-Prazo expirado
+    if  rw_crapbdt.insitapr = 7 then
+        pr_status      := 202;
+        pr_cdcritic    := 975;
+        pr_msg_detalhe := 'Parecer não foi atualizado, o prazo para análise dp borderô exipirou.';
+        raise vr_exc_saida;
+    end if;
+
+    /*  Verificar se a analise da proposta expirou na esteira*/
+    IF pr_insitapr = 99 THEN
+      BEGIN
+        UPDATE crapbdt bdt
+           SET bdt.insitapr = 7 -->expirado
+         WHERE bdt.cdcooper = pr_cdcooper
+           AND bdt.nrdconta = pr_nrdconta
+           AND bdt.nrborder = pr_nrborder
+           RETURNING insitapr
+                    ,cdopeapr
+                    ,dtaprova
+                    ,hraprova
+           INTO      rw_crapbdt.insitapr
+                    ,rw_crapbdt.cdopeapr
+                    ,rw_crapbdt.dtaprova
+                    ,rw_crapbdt.hraprova;
+      EXCEPTION
+         WHEN OTHERS THEN
+              RAISE vr_exc_erro_500;
+      END;
+    ELSE
+      /* AWAE: Ler o JSON de Resposta e atualizar cada um dos Títulos que retornaram.
+               Após, se pelo menos UM Título retornou como aprovado, deve então fazer
+               a aprovação do BORDERÔ. Se nenhum título estiver aprovado na lista, então
+               o borderô deve ficar com decisão de aprovação  = REPROVADO também.
+      */
+      -->    Buscar os detalhes do acionamento de retorno
+      OPEN cr_aciona_retorno(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrborder => pr_nrborder);
+      FETCH cr_aciona_retorno INTO vr_dsconteudo_requisicao;
+      IF cr_aciona_retorno%FOUND THEN
+        -- Se achou, é aqui que será feita a atualização dos títulos e do borderô.
+        --> Efetuar cast para JSON
+        vr_obj_retorno := json(REPLACE(vr_dsconteudo_requisicao,'&quot',''));
+
+        vr_Aprovados  := 0;
+        vr_Reprovados := 0;
+        
+        -- se existir o objeto de array de titulos
+        IF vr_obj_retorno.exist('titulo') THEN
+          vr_obj_lst := json_list(vr_obj_retorno.get('titulo').to_char());
+          
+          --> para cada título.
+          FOR vr_idx in 1..vr_obj_lst.count() LOOP
+            BEGIN
+              vr_obj_tit := json( vr_obj_lst.get(vr_idx));
+
+              -->  Se encontrar o atributo idTitulo e situacaoTitulo
+              IF vr_obj_tit.exist('idTitulo') and vr_obj_tit.exist('situacaoTitulo') THEN
+                vr_chavetitulo := rtrim(ltrim(vr_obj_tit.get('idTitulo').to_char(),'"'),'"');
+                vr_sittitulo   := upper(rtrim(ltrim(vr_obj_tit.get('situacaoTitulo').to_char(),'"'),'"'));
+                    
+                -- Atualizar o Status do Título corrente.
+                BEGIN
+                  UPDATE craptdb tdb
+                     SET tdb.insitapr = decode(vr_sittitulo,'APROVADO',1,'REPROVADO',2,tdb.insitapr)
+                        ,tdb.cdoriapr = 2 -- Esteira IBRATAN
+                   WHERE tdb.nrtitulo = vr_chavetitulo
+                     AND tdb.nrborder = pr_nrborder
+                     AND tdb.cdcooper = pr_cdcooper;
+
+                  -- contagem de aprovados e reprovados para uso quando for atualizar o borderô.
+                  IF vr_sittitulo = 'APROVADO' THEN
+                    vr_Aprovados := vr_Aprovados + 1;
+                  ELSIF vr_sittitulo = 'REPROVADO' THEN
+                    vr_Reprovados := vr_Reprovados + 1;
+                  END IF;
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    RAISE vr_exc_erro_500;
+                END;
+              END IF;
+            EXCEPTION
+              WHEN OTHERS THEN
+                NULL; --> IGNORAR ESSA LINHA
+            END;
+          END LOOP;
+          --> Verifica se ocorreu atualização, se sim, altera o status do borderô de acordo com 
+          --> a contagem de aprovados e reprovados.
+          IF (vr_Aprovados + vr_Reprovados) > 0 THEN
+            IF vr_aprovados > 0 THEN
+              v_insitapr := 4;
+            ELSIF (vr_aprovados = 0) and (vr_reprovados >0) THEN
+              v_insitapr := 5;
+            END IF;
+            BEGIN
+              UPDATE crapbdt bdt
+                 SET bdt.insitapr = v_insitapr
+                    ,bdt.dtaprova = pr_rw_crapdat.dtmvtolt
+                    ,bdt.hraprova = gene0002.fn_busca_time
+                    ,bdt.cdopeapr = 'ESTEIRA'
+                    ,bdt.insitbdt = 2
+               WHERE bdt.cdcooper = pr_cdcooper
+                 AND bdt.nrdconta = pr_nrdconta
+                 AND bdt.nrborder = pr_nrborder
+                 RETURNING insitapr
+                          ,cdopeapr
+                          ,dtaprova
+                          ,hraprova
+                 INTO      rw_crapbdt.insitapr
+                          ,rw_crapbdt.cdopeapr
+                          ,rw_crapbdt.dtaprova
+                          ,rw_crapbdt.hraprova;
+            EXCEPTION
+               WHEN OTHERS THEN
+                    RAISE vr_exc_erro_500;
+            END;
+          END IF;
+          
+        END IF;
+      END IF;  
+    END IF; -- fim if pr_insitapr = 99
+
+    rw_crapass_log := rw_crapass;
+
+    -- Atualiza os dados do cooperado
+    begin
+       update crapass
+       set    dtdscore = nvl(pr_dtdscore, crapass.dtdscore)
+             ,dsdscore = nvl(pr_dsdscore, crapass.dsdscore)
+       where  crapass.cdcooper = pr_cdcooper
+       and    crapass.nrdconta = pr_nrdconta
+       returning dtdscore
+                ,dsdscore
+                ,dsnivris
+       into      rw_crapass.dtdscore
+                ,rw_crapass.dsdscore
+                ,rw_crapass.dsnivris;
+    exception
+       when others then
+            raise vr_exc_erro_500;
+    end;
+
+    -- Gerar informaçoes do log
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => 'ESTEIRA'
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => 'AYLLOS'
+                        ,pr_dstransa => 'Parecer do borderô atualizado com sucesso'
+                        ,pr_dttransa => trunc(sysdate)
+                        ,pr_flgtrans => 1 --> FALSE
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ESTEIRA'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+
+    if  nvl(rw_crapbdt_log.insitapr,0) <> nvl(rw_crapbdt.insitapr,0) then
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'insitapr'
+                                 ,pr_dsdadant => rw_crapbdt.insitapr
+                                 ,pr_dsdadatu => rw_crapbdt.insitapr);
+    end if;
+
+    if  nvl(rw_crapbdt_log.cdopeapr,' ') <> nvl(rw_crapbdt.cdopeapr,' ') then
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'cdopeapr'
+                                 ,pr_dsdadant => rw_crapbdt_log.cdopeapr
+                                 ,pr_dsdadatu => rw_crapbdt.cdopeapr);
+    end if;
+
+    if  nvl(rw_crapbdt_log.dtaprova,to_date('01/01/1900','DD/MM/RRRR')) <> nvl(rw_crapbdt.dtaprova,to_date('01/01/1900','DD/MM/RRRR')) then
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'dtaprova'
+                                 ,pr_dsdadant => rw_crapbdt_log.dtaprova
+                                 ,pr_dsdadatu => rw_crapbdt.dtaprova);
+    end if;
+
+    if  nvl(rw_crapbdt_log.hraprova,0) <> nvl(rw_crapbdt.hraprova,0) then
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'hraprova'
+                                 ,pr_dsdadant => rw_crapbdt_log.hraprova
+                                 ,pr_dsdadatu => rw_crapbdt.hraprova);
+    end if;
+
+    if  nvl(rw_crapass_log.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) <> nvl(rw_crapass.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) then
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'dtdscore'
+                                 ,pr_dsdadant => rw_crapass_log.dtdscore
+                                 ,pr_dsdadatu => rw_crapass.dtdscore);
+    end if;
+
+    if  nvl(rw_crapass_log.dsdscore,' ') <> nvl(rw_crapass.dsdscore,' ') then
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'dsdscore'
+                                 ,pr_dsdadant => rw_crapass_log.dsdscore
+                                 ,pr_dsdadatu => rw_crapass.dsdscore);
+    end if;
+
+       if  nvl(rw_crapass_log.dsnivris,' ') <> nvl(rw_crapass.dsnivris,' ') then
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'dsnivris'
+                                 ,pr_dsdadant => rw_crapass_log.dsnivris
+                                 ,pr_dsdadatu => rw_crapass.dsnivris);
+    end if;
+
+    -- Caso nao ocorreu nenhum erro, vamos retorna como status de OK
+    pr_status      := 202;
+    pr_msg_detalhe := 'Parecer do borderô atualizado com sucesso.';
+    pr_des_reto    := 'OK';
+
+    commit;
+
+  exception
+     when vr_exc_saida then
+          rollback;
+          pr_des_reto := 'NOK';
+
+     when vr_exc_erro_500 then
+          rollback;
+          pr_des_reto    := 'NOK';
+          pr_status      := 500;
+          pr_cdcritic    := 978;
+          pr_msg_detalhe := 'Parecer não foi atualizado, ocorreu uma erro interno no sistema.(1) ';
+
+     when others then
+          rollback;
+          pr_des_reto    := 'NOK';
+          pr_status      := 500;
+          pr_cdcritic    := 978;
+          pr_msg_detalhe := 'Parecer não foi atualizado, ocorreu uma erro interno no sistema.(2):';
+
+          btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                    ,pr_ind_tipo_log => 3
+                                    ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' - WEBS0001 --> Não foi possível atualizar retorno de borderô: '||sqlerrm
+                                    ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                                                 ,pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+  end;
+  end pc_atualiza_prop_srv_border;
 
   --Atualiza Proposta de cartão
   PROCEDURE pc_atualiza_prop_srv_cartao(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
@@ -2344,6 +2763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  27/02/2018 - Adaptado o procedimento pc_atuaretorn_proposta_esteira para utilização do limite de
                               desconto de títulos (Paulo Penteado (GFT))        
      
+                 27/04/2018 - Adaptado o procedimento pc_atuaretorn_proposta_esteira para utilizaçao do Borderô de
+                              desconto de títulos (Andrew Albuquerque (GFT))
      ..............................................................................*/
     DECLARE
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;    
@@ -2405,6 +2826,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
            vr_tpproduto := 3;
      elsif pr_tpprodut = 4 then -- Cartão de Crédito
            vr_tpproduto := 4;
+     elsif pr_tpprodut = 7 then -- Borderô de Desconto de Título
+           vr_tpproduto := 7;
      end   if;
 
      select case pr_insitapr when  0 then 'NAO ANALISADO'
@@ -2563,6 +2986,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                       ,pr_dscritic    => vr_dscritic    --> Descricao da critica
                                       ,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
                                       ,pr_des_reto    => vr_des_reto);  --> Erros do processo
+        RAISE vr_exc_saida;
+
+     --    Borderô de Desconto Titulos
+     elsif pr_tpprodut = 7 then
+            pc_atualiza_prop_srv_border (pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
+                                        ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
+                                        ,pr_nrborder    => pr_nrctremp    --> Número do Borderô
+                                        ,pr_rw_crapdat  => rw_crapdat     --> Cursor da crapdat
+                                        ,pr_insitapr    => pr_insitapr    --> Situacao da proposta
+                                        ,pr_dsobscmt    => pr_dsobscmt    --> Observaçao recebida da esteira de crédito
+                                        ,pr_dsdscore    => pr_dsdscore    --> Consulta do score feita na Boa Vista pela esteira de crédito
+                                        ,pr_dtdscore    => vr_dtdscore    --> Data da consulta do score feita na Boa Vista pela esteira de crédito crédito
+                                        ,pr_status      => vr_status      --> Status
+                                        ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
+                                        ,pr_dscritic    => vr_dscritic    --> Descricao da critica
+                                        ,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
+                                        ,pr_des_reto    => vr_des_reto);  --> Erros do processo);
         RAISE vr_exc_saida;
 
       ELSE

@@ -29,6 +29,7 @@
 
  				 25/04/2018 - Alterado o comportamento dos botões na <div id="divBotoes" >, por definicção do cliente os mesmos devem ser ocultados caso o usuário não possua permissão. (Andre Avila - GFT)
 
+				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
 
 	***************************************************************************/
 	
@@ -47,7 +48,7 @@
 	
 	setVarSession("nmrotina","DSC TITS");
 	
-	include("../../../../includes/carrega_permissoes.php");
+	require_once("../../../../includes/carrega_permissoes.php");
 
 	setVarSession("opcoesTela",$opcoesTela);
 	
@@ -92,6 +93,21 @@
 	$dados = $xmlObjDscTit->roottag->tags[0]->tags[0]->tags;
 		
 	
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -100,7 +116,6 @@
 		echo '</script>';
 		exit();
 	}
-	//$xmlObjLiberacao->roottag->tags[1]->attributes["INDENTRA"]
 ?>
 
 <form id="frmTitulos">
@@ -188,7 +203,7 @@
 	type="image"
 	name="btnlimite"
 	id="btnlimite"
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	 <?php if (!in_array("DSC TITS - CONTRATO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> 
 	>
 		Contratos
@@ -201,7 +216,7 @@
 		name="btnpropostas" 
 		id="btnpropostas"
 
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	 <?php if (!in_array("DSC TITS - PROPOSTA",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> 
 	>
 			Propostas
@@ -238,7 +253,18 @@
 		>
 		Manuten&ccedil;&atilde;o
 	</a>
-
+	<?if($flgverbor){?>
+	<a 
+		href="#" 
+		class="botao"
+		id="btnResgatar"
+		name="btnResgatar"
+		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default; display:none;" onClick="return false;"'; } 
+			else { echo 'style=" margin-top: 8px; margin-bottom: 8px;" onClick="carregaResgatarTitulos();return false;"'; } ?> 
+	>
+		Resgatar T&iacute;tulos
+	</a>
+	<?}?>
 </div>
 
 
@@ -269,5 +295,5 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 		$('#btnlimite','#divBotoes').click();
 	  }
 	}
-	
+	flgverbor = <?=isset($flgverbor)?$flgverbor:0?>;
 </script>

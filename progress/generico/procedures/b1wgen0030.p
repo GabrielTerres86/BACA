@@ -20,6 +20,7 @@
   |   busca_titulos_bordero         | DSCT0002.pc_busca_titulos_bordero       |
   |   carrega_dados_bordero_titulos | DSCT0002.pc_carrega_dados_bordero_tit   |
   |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
+  |   busca_tarifa_desconto_titulo  | DSCT0003.pc_busca_tarifa_desc_titulo    |
   +---------------------------------+-----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -556,6 +557,9 @@
                             valida_alteracao_bordero e valida_exclusao_tit_bordero.
                             Projeto 366 (Lombardi).
 
+               09/05/2018 - Adicionado na busca_dados_limite_altera validação para não permitir a alteração de uma proposta criada antes da nova implantação do
+                            Limite de Desconto de Título (Paulo Penteado GFT)
+			   
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
 ..............................................................................*/
@@ -6977,6 +6981,11 @@ PROCEDURE busca_borderos:
                 crapbdt.insitbdt = 4                  THEN  
                 NEXT.
 
+		 IF crapbdt.dtmvtolt <> ?  THEN
+            IF (crapbdt.dtmvtolt <= par_dtmvtolt - 120) AND
+               (crapbdt.insitbdt = 1 OR crapbdt.insitbdt = 2) THEN
+                NEXT.
+
         ASSIGN aux_qttottit = 0
                aux_vltottit = 0.
                
@@ -7228,6 +7237,7 @@ PROCEDURE busca_dados_bordero:
     DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_bordero.
     
     DEF VAR aux_cdtipdoc AS INTEGER                         NO-UNDO.
+    DEF VAR aux_nrctrlim AS INTE                            NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dsctit_dados_bordero.
@@ -7372,6 +7382,20 @@ PROCEDURE busca_dados_bordero:
                 END.
         END.
 
+    FIND crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                       crawlim.nrdconta = par_nrdconta AND
+                       crawlim.tpctrlim = 3            AND
+                       crawlim.nrctrlim = crapbdt.nrctrlim
+                       NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE crawlim  THEN
+        IF  crawlim.nrctrmnt > 0  THEN
+            ASSIGN aux_nrctrlim = crawlim.nrctrmnt.
+        ELSE
+            ASSIGN aux_nrctrlim = crapbdt.nrctrlim.
+    ELSE
+        ASSIGN aux_nrctrlim = crapbdt.nrctrlim.
+
     CREATE tt-dsctit_dados_bordero.
     /* Operadores ............................................... */
     FIND crapope WHERE crapope.cdcooper = par_cdcooper      AND
@@ -7423,7 +7447,7 @@ PROCEDURE busca_dados_bordero:
     ASSIGN aux_cdtipdoc = INTE(ENTRY(3,craptab.dstextab,";")).
     
     ASSIGN tt-dsctit_dados_bordero.nrborder = crapbdt.nrborder
-           tt-dsctit_dados_bordero.nrctrlim = crapbdt.nrctrlim
+           tt-dsctit_dados_bordero.nrctrlim = aux_nrctrlim
            tt-dsctit_dados_bordero.insitbdt = crapbdt.insitbdt
            tt-dsctit_dados_bordero.txmensal = crapbdt.txmensal
            tt-dsctit_dados_bordero.dtlibbdt = crapbdt.dtlibbdt

@@ -157,7 +157,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
 
                08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
-               26/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+               26/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404) 
+
+               19/08/2018 - Incluso trattaiva para efetuar apenas leitura de titulos
+                            descontados e liberados (GFT)
 
  ............................................................................ */
   --
@@ -389,7 +392,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
          and crapbdt.nrdconta = crapass.nrdconta
          and craptdb.cdcooper = crapbdt.cdcooper
          and craptdb.nrdconta = crapbdt.nrdconta
-         and craptdb.nrborder = crapbdt.nrborder;
+         and craptdb.nrborder = crapbdt.nrborder
+         and craptdb.dtlibbdt is not null;
     --
   BEGIN
     -- Incluimos os descontos de cheque

@@ -200,7 +200,10 @@ PROCEDURE atualiza_data_manutencao_cadastro:
                                  crapcyb.cdorigem = 2 )                 OR
                                 (crapcyb.cdcooper = tt-crapcyb.cdcooper AND
                                  crapcyb.nrdconta = tt-crapcyb.nrdconta AND
-                                 crapcyb.cdorigem = 3))
+                                 crapcyb.cdorigem = 3 )                 OR
+                                (crapcyb.cdcooper = tt-crapcyb.cdcooper AND
+                                 crapcyb.nrdconta = tt-crapcyb.nrdconta AND
+                                 crapcyb.cdorigem = 4))
                                NO-LOCK:
 
             Contador: DO aux_contador = 1 TO 10:
