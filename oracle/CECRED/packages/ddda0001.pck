@@ -1701,7 +1701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 21/08/2017
+    --  Data     : Julho/2013.                   Ultima atualizacao: 15/08/2018
     --
     -- Dados referentes ao programa:
     --
@@ -1725,6 +1725,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             21/08/2017 - Fechar cursor cr_abertura após abri-lo. (Rafael)
     -- 
     --             20/10/2017 - Retirar cursor cr_abertura e utilizar função fn_datamov (SD#754622 - AJFink)
+    --
+    --             15/08/2018 - Alterar modelo de cálculo de 04 para 01 (SCTASK0025280 - AJFink)
     --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -2355,7 +2357,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       /* regra nova da CIP - titulos emitidos apos 17/03/2012 sao
       registrados com tipo de calculo "01" (Rafael) */
       IF rw_crapcob.dtmvtolt >= To_Date('03/17/2012', 'MM/DD/YYYY') THEN
-        pr_tab_remessa_dda(vr_index).tpmodcal := '04'; -->  CIP calcula boletos a vencer e vencido.
+        --pr_tab_remessa_dda(vr_index).tpmodcal := '04'; -->  CIP calcula boletos a vencer e vencido.
+        pr_tab_remessa_dda(vr_index).tpmodcal := '01'; --SCTASK0025280 - Instituição Recebedora calcula
       ELSE
         pr_tab_remessa_dda(vr_index).tpmodcal := '00';
       END IF;
