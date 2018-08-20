@@ -2,7 +2,7 @@
      
       b1crap32.p - Controle Titulos
       
-      Ultima Atualizacao: 05/08/2014
+      Ultima Atualizacao: 22/06/2018
       
       Alteracoes: 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
 
@@ -22,7 +22,11 @@
                                /usr/coop/sistema/siscaixa/web/spool (Fernando).
                                
                   05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).     
-----------------------------------------------------------------------------*/
+
+                  22/06/2018 - Alteracoes para usar as rotinas mesmo com o processo 
+                               norturno rodando (Douglas Pagel - AMcom).
+                               
+---------------------------------------------------------------------------- **/
 
 {dbo/bo-erro1.i}
 
@@ -69,7 +73,7 @@ DEF TEMP-TABLE tt-lote                                      NO-UNDO
     FIELD nmoperad AS CHAR    FORMAT "x(10)"
     FIELD nmarquiv AS CHAR    FORMAT "x(24)".
 
-FORM crapdat.dtmvtolt  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"
+FORM crapdat.dtmvtocd  AT   1   LABEL "REFERENCIA"   FORMAT "99/99/9999"
      SKIP(1)
      "PA CXA    LOTE"           AT  1
      "   QTD.           VALOR"        
@@ -235,7 +239,7 @@ PROCEDURE Impressao:
             VIEW STREAM str_1 FRAME f_cabrel080_1.
         END.
 
-    DISPLAY STREAM str_1  crapdat.dtmvtolt WITH FRAME f_cab. 
+    DISPLAY STREAM str_1  crapdat.dtmvtocd WITH FRAME f_cab. 
     
     /*
     FOR  EACH tt-lote:
@@ -247,12 +251,12 @@ PROCEDURE Impressao:
    
     FOR EACH craplot WHERE (craplot.cdcooper = crapcop.cdcooper      AND
                             craplot.cdagenci = p-cod-agencia         AND
-                            craplot.dtmvtolt = crapdat.dtmvtolt      AND
+                            craplot.dtmvtolt = crapdat.dtmvtocd      AND
                             craplot.cdbccxlt = 11                    AND
                             craplot.tplotmov = 20)                   OR
                            (craplot.cdcooper = crapcop.cdcooper      AND
                             craplot.cdagenci = p-cod-agencia         AND
-                            craplot.dtmvtopg = crapdat.dtmvtolt      AND 
+                            craplot.dtmvtopg = crapdat.dtmvtocd      AND 
                             craplot.tplotmov = 20)                    NO-LOCK
                            BREAK BY craplot.cdagenci
                                     BY craplot.cdbccxlt
@@ -277,8 +281,8 @@ PROCEDURE Impressao:
               tt-lote.vltitulo = craplot.vlcompcr              
               tt-lote.nmoperad = lot_nmoperad
               tt-lote.nmarquiv = STRING(crapcop.cdagebcb,"9999") +
-                                 STRING(MONTH(crapdat.dtmvtolt),"99") +
-                                 STRING(DAY(crapdat.dtmvtolt),"99") +
+                                 STRING(MONTH(crapdat.dtmvtocd),"99") +
+                                 STRING(DAY(crapdat.dtmvtocd),"99") +
                                  STRING(craplot.cdagenci,"999") +
                                  STRING(craplot.cdbccxlt,"999") +
                                  STRING(craplot.nrdolote,"999999") + ".CBE".
@@ -304,7 +308,7 @@ PROCEDURE Impressao:
                         PAGE STREAM str_1.
                        
                         DISPLAY STREAM str_1 
-                                crapdat.dtmvtolt WITH FRAME f_cab.
+                                crapdat.dtmvtocd WITH FRAME f_cab.
                     END.
             END.
    
@@ -417,7 +421,7 @@ PROCEDURE proc_lista:
     VIEW STREAM str_1 FRAME f_linha.
     
     FOR EACH craptit WHERE craptit.cdcooper = crapcop.cdcooper  AND
-                           craptit.dtmvtolt = crapdat.dtmvtolt  AND
+                           craptit.dtmvtolt = crapdat.dtmvtocd  AND
                            craptit.cdagenci = tt-lote.cdagenci  AND
                            craptit.cdbccxlt = tt-lote.cdbccxlt  AND
                            craptit.nrdolote = tt-lote.nrdolote  NO-LOCK
@@ -453,7 +457,7 @@ PROCEDURE proc_lista:
 
         IF   LINE-COUNTER(str_1) > 80  THEN DO:
              PAGE STREAM str_1.
-             DISPLAY STREAM str_1 crapdat.dtmvtolt WITH FRAME f_cab.
+             DISPLAY STREAM str_1 crapdat.dtmvtocd WITH FRAME f_cab.
             
              DISPLAY STREAM str_1  
                      tt-lote.cdagenci 
