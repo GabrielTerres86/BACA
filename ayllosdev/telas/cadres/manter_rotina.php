@@ -20,6 +20,7 @@ isPostMethod();
 $cddopcao    = (!empty($_POST['cddopcao']))    ? $_POST['cddopcao'] : '';
 $cdcooper    = (!empty($_POST['cdcooper']))    ? $_POST['cdcooper'] : $glbvars['cdcooper'];
 $cdalcada    = (!empty($_POST['cdalcada']))    ? $_POST['cdalcada'] : '';
+$dsemail     = (!empty($_POST['dsemail']))     ? $_POST['dsemail'] : '';
 $cdaprovador = (!empty($_POST['cdaprovador'])) ? $_POST['cdaprovador'] : '';
 $flregra     = (!isset($_POST['flregra']))     ? (int)$_POST['flregra'] : 0;
 
@@ -117,6 +118,7 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
     $xml->add('cdcooper',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('cdaprovador',$cdaprovador);
+    $xml->add('dsemail_aprovador',$dsemail);
 
     $xmlResult = mensageria($xml, "TELA_CADRES", "INSERE_APROVADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
