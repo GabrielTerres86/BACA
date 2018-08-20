@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para calculos e envios de extratos
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 30/05/2018
+    Data     : Dezembro/2012.                   Ultima atualizacao: 14/08/2018
 
     Alteracoes: 27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes,
                              na procedure pc_ver_saldos (Jean Michel).
@@ -42,6 +42,10 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             a operacao 12 do IB (Anderson - P285).
                                                         
                30/05/2018 - Adinionado campo dscomple na pl_table typ_reg_extrato_conta (Alcemir Mout's - Prj. 467).            
+							 
+							 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+														(Reinert)
+							 
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -467,7 +471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 30/05/2018
+    Data     : Dezembro/2012.                   Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -795,6 +799,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          
          30/05/2018 - Incluido na pc_consulta_extrato carregar historicos, na pc_gera_registro_estrato
                       tratar complemento para incluir na pl_table (Alcemir Mout's - Prj 467).
+											
+				 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+				              (Reinert)
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -3315,6 +3322,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          AND lcm.cdhistor = pr_cdhistor;
        rw_lanc_est_cart_deb   cr_lanc_est_cart_deb%ROWTYPE;                                            
        
+			-- Cursor para verificar se registro de detalhamento de DOC existe
+			CURSOR cr_craptvl (pr_cdcooper IN craptvl.cdcooper%TYPE
+			                  ,pr_dtmvtolt IN craptvl.dtmvtolt%TYPE
+												,pr_nrdconta IN craptvl.nrdconta%TYPE
+												,pr_nrdocmto IN craptvl.nrdocmto%TYPE
+												,pr_vllanmto IN craptvl.vldocrcb%TYPE) IS
+				SELECT 1
+				  FROM craptvl tvl
+				 WHERE tvl.cdcooper = pr_cdcooper
+				   AND tvl.dtmvtolt = pr_dtmvtolt
+					 AND tvl.nrdconta = pr_nrdconta
+					 AND tvl.nrdocmto = pr_nrdocmto
+					 AND tvl.vldocrcb = pr_vllanmto;
+      rw_craptvl cr_craptvl%ROWTYPE; 
+			
       -- Sequencia das tabelas internas
       vr_ind_tab VARCHAR2(24); -- Chave composta por Data + Sequencial (YYMMDD99999999...)
       vr_ind_dep PLS_INTEGER;
@@ -3415,21 +3437,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           IF rw_crapdpb.inlibera = 1 THEN
             -- Guardar a data
             IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-              vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
-            ELSE
+            vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
+          ELSE
               vr_dslibera := to_char(rw_crapdpb.dtliblan,'dd/mm/RRRR');
             END IF;
           ELSE
             -- INdicar que há estorno
             IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-              vr_dslibera := '(Estorno)';
-            END IF;
+            vr_dslibera := '(Estorno)';
+          END IF;
           END IF;
         ELSE
           -- Usar descrição padrão
           IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-            vr_dslibera := '(**/**)';
-          END IF;
+          vr_dslibera := '(**/**)';
+        END IF;
         END IF;
         -- Fechar o cursor
         CLOSE cr_crapdpb;
@@ -3769,6 +3791,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           END IF;
           CLOSE cr_crapchd;
         END IF;
+        
+				IF rw_craplcm.cdhistor IN (103,355,575) THEN -- Envio/Recebimento de DOCs
+					IF rw_craplcm.cdhistor IN (103,355) THEN -- Débito
+						-- Buscar detalhe do DOC
+						OPEN cr_craptvl (pr_cdcooper => rw_craplcm.cdcooper
+														,pr_dtmvtolt => rw_craplcm.dtmvtolt
+														,pr_nrdconta => rw_craplcm.nrdconta
+														,pr_nrdocmto => rw_craplcm.nrdocmto
+														,pr_vllanmto => rw_craplcm.vllanmto);
+						FETCH cr_craptvl INTO rw_craptvl;
+						
+						IF cr_craptvl%FOUND THEN
+   						pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplcm.nrdocmto;
+							pr_tab_extr(vr_ind_tab).flgdetal := 1;
+							pr_tab_extr(vr_ind_tab).cdtippro := 0;
+							pr_tab_extr(vr_ind_tab).idlstdom := 41;          						
+						ELSE
+							pr_tab_extr(vr_ind_tab).nrseqlmt := 0;
+							pr_tab_extr(vr_ind_tab).flgdetal := 0;
+							pr_tab_extr(vr_ind_tab).cdtippro := 0;
+							pr_tab_extr(vr_ind_tab).idlstdom := 0;               
+						END IF;
+						-- Fechar cursos
+						CLOSE cr_craptvl;
+					ELSE -- Crédito
+						pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplcm.nrdocmto;
+						pr_tab_extr(vr_ind_tab).flgdetal := 1;
+						pr_tab_extr(vr_ind_tab).cdtippro := 0;
+						pr_tab_extr(vr_ind_tab).idlstdom := 41;          						
+					END IF;
+				END IF;
         
       ELSIF pr_nmdtable = 'D' THEN
         -- Guardar o ID do novo registro
@@ -6239,7 +6292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                   ,pr_nrdconta => pr_nrdconta) LOOP
 
         vr_vldsaldo := rw_craprpp.vlsdrdpp;
-
+        
         -- Encontrar Cadastro de lancamentos de aplicacoes de poupanca
         FOR rw_craplpp IN cr_craplpp(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => rw_craprpp.nrdconta
@@ -6247,7 +6300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
           vr_vldsaldo := vr_vldsaldo - rw_craplpp.vllanmto;
 
-        END LOOP;
+      END LOOP;
 
         IF vr_vldsaldo > 0 THEN
 
