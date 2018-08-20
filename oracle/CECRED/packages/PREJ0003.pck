@@ -68,6 +68,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
 																, pr_cdoperad IN VARCHAR2 DEFAULT '1'
 																, pr_vllanmto IN NUMBER
 																, pr_dtmvtolt IN DATE
+																, pr_versaldo IN INTEGER DEFAULT 1 -- Se deve validar o saldo disponível
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -144,6 +145,10 @@ PROCEDURE pc_pagar_prejuizo_cc_autom(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                      ,pr_dscritic OUT VARCHAR2
                                      ,pr_tab_erro OUT gene0001.typ_tab_erro);
+																		 
+PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Coop conectada
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                    ,pr_dscritic OUT VARCHAR2);																		 
 
  /* Realizar pagamento do IOF de conta em prejuizo*/
  PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -- Código da Cooperativa
@@ -1113,7 +1118,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     Alteracoes:
     ..............................................................................*/
 
-
   CURSOR cr_conta_liquida (pr_cdooper  IN tbcc_prejuizo.cdcooper%TYPE) IS
    SELECT  tbprj.nrdconta,
            tbprj.cdsitdct_original
@@ -1131,13 +1135,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
   vr_des_erro  VARCHAR2(1000);
   vr_exc_saida exception;
   vr_sldconta NUMBER;
-  vr_nmdcampo VARCHAR2(100);
- -- vr_des_erro VARCHAR2(100);
- vr_xmllog VARCHAR2(100);
-
- vr_retxml XMLType;
-
+	
+	rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
  BEGIN
+	 OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+	 FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+	 CLOSE BTCH0001.cr_crapdat;
+	 
     -- Percorre a lista dos prejuízos que devem ser liquidados
     FOR rw_conta_liquida IN cr_conta_liquida(pr_cdcooper) LOOP
 			BEGIN
@@ -1174,21 +1178,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
       -- Obtém o saldo da conta transitória (desconsiderando créditos ainda bloqueados de cheques não compensados)
 			vr_sldconta:= fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
 																	,pr_nrdconta => rw_conta_liquida.nrdconta
-																	,pr_exclbloq => 1);
+																	,pr_exclbloq => 0);
 
 			IF vr_sldconta > 0 THEN
 				-- Gera lançamento para transferência do saldo disponível da conta transitória para a conta corrente
-				pc_gera_lcm_cta_prj(pr_cdcooper  => pr_cdcooper               --> Código da Cooperativa
-													 ,pr_nrdconta  => rw_conta_liquida.nrdconta --> Número da conta
-													 ,pr_cdoperad  => 1                         --> Código do Operador
-													 ,pr_vlrlanc   => vr_sldconta               --> Valor do Lançamento
-													 ,pr_xmllog    => vr_xmllog             --> XML com informações de LOG
-													 ,pr_cdcritic  => vr_cdcritic           --> Código da crítica
-													 ,pr_dscritic  => vr_dscritic           --> Descrição da crítica
-													 ,pr_retxml    => vr_retxml             --> Arquivo de retorno do XML
-													 ,pr_nmdcampo  => vr_nmdcampo           --> Nome do campo com erro
-													 ,pr_des_erro  => vr_des_erro) ;
-
+				pc_gera_transf_cta_prj(pr_cdcooper  => pr_cdcooper               --> Código da Cooperativa
+													 ,pr_nrdconta => rw_conta_liquida.nrdconta --> Número da conta
+													 ,pr_cdoperad => 1                         --> Código do Operador
+													 ,pr_vllanmto => vr_sldconta               --> Valor do Lançamento
+													 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+													 ,pr_versaldo => 0                         --> Não valida o saldo disponível
+													 ,pr_cdcritic => vr_cdcritic
+													 ,pr_dscritic => vr_dscritic);
+													 
 				IF nvl(vr_cdcritic, 0) <> 0 OR vr_dscritic IS NOT NULL THEN
 					 RAISE vr_exc_saida;
 				END IF;
@@ -1441,6 +1443,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
 																, pr_cdoperad IN VARCHAR2 DEFAULT '1'
 																, pr_vllanmto IN NUMBER
 																, pr_dtmvtolt IN DATE
+																, pr_versaldo IN INTEGER DEFAULT 1 -- Se deve validar o saldo disponível
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
@@ -1457,11 +1460,12 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
 		  pr_cdcritic := 0;
 			pr_dscritic := NULL;
 
-		  -- Verifica se há saldo disponível para a transferência
-	    IF pr_vllanmto > fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
-				                            , pr_nrdconta => pr_nrdconta
-																		, pr_exclbloq => 1) THEN
 
+		  -- Verifica se há saldo disponível para a transferência
+	    IF pr_versaldo = 1 AND pr_vllanmto > fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
+				                                                , pr_nrdconta => pr_nrdconta
+																		                    , pr_exclbloq => 1) THEN
+   
 		    vr_cdcritic := 0;
 				vr_dscritic := 'Erro: Saldo insuficiente para a transferência do valor.';
 
@@ -2891,7 +2895,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 		vr_qtdictcc NUMBER  :=0;
 		vr_dtrefere DATE;
 		vr_nracordo NUMBER;
-
+    vr_total_resgatado NUMBER := 0;
   BEGIN
       -- Buscar Parâmetros da TAB089
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -2922,6 +2926,9 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 					IF vr_nracordo IS NOT NULL THEN
 						continue; -- Não efetua os resgates de créditos para contas com acordo ativo
 					END IF;
+					
+					-- Valor total dos créditos resgatados para a conta corrente
+					vr_total_resgatado := 0;
 
 				  -- Obtém a soma dos créditos ocorridos após a data de referência
 				  OPEN cr_somacred(rw_crapass.nrdconta, vr_dtrefere);
@@ -2955,6 +2962,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 																 , pr_dscritic => vr_dscritic);
 
 						IF vr_dscritic IS NULL THEN
+							vr_total_resgatado := vr_total_resgatado + vr_valor_transferir;
 							COMMIT;
 						ELSE
 							ROLLBACK;
@@ -2968,6 +2976,14 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 							 EXIT;
 						END IF;
 					END LOOP;
+					
+					-- Atualiza o saldo liberado para operações na conta corrente
+					UPDATE tbcc_prejuizo
+					   SET vlsldlib = nvl(vlsldlib,0) + vr_total_resgatado
+					 WHERE cdcooper = pr_cdcooper
+					   AND nrdconta = rw_crapass.nrdconta
+						 AND dtliquidacao IS NULL;
+					COMMIT;
 			END LOOP;
  END pc_resgata_cred_bloq_preju;
 
