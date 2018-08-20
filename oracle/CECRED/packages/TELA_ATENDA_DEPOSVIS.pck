@@ -771,6 +771,7 @@ END pc_busca_saldos_devedores;
 					 , prej.nrmesrefju
 					 , prej.nranorefju
 					 , prej.idprejuizo
+					 , prej.dtinclusao
         FROM tbcc_prejuizo prej
         LEFT JOIN crapsld sld
                ON sld.nrdconta = prej.nrdconta
@@ -804,25 +805,24 @@ END pc_busca_saldos_devedores;
 		 FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		 CLOSE BTCH0001.cr_crapdat;
 		 
-	   -- Calcula os juros remuneratórios desde a última data de pagamento/débito até o dia atual
-			vr_diarefju  := rw_tbcc_prejuizo.nrdiarefju;
-			vr_mesrefju  := rw_tbcc_prejuizo.nrmesrefju;
-			vr_anorefju  := rw_tbcc_prejuizo.nranorefju;
-
-			prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
-																					pr_ehmensal => FALSE,
-																					pr_dtdpagto => rw_crapdat.dtmvtolt,
-																					pr_idprejuizo => rw_tbcc_prejuizo.idprejuizo,
-																					pr_vljpreju => vr_vljupre_prov,
-																					pr_diarefju => vr_diarefju,
-																					pr_mesrefju => vr_mesrefju,
-																					pr_anorefju => vr_anorefju,
-																					pr_des_reto => vr_dscritic);	
-	
-    OPEN cr_tbcc_prejuizo(pr_cdcooper => pr_cdcooper,
+		OPEN cr_tbcc_prejuizo(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta);
     FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
-		CLOSE cr_tbcc_prejuizo;
+		 
+	   -- Calcula os juros remuneratórios desde a última data de pagamento/débito até o dia atual
+		vr_diarefju  := nvl(rw_tbcc_prejuizo.nrdiarefju, to_number(to_char(rw_tbcc_prejuizo.dtinclusao, 'DD')));
+		vr_mesrefju  := nvl(rw_tbcc_prejuizo.nrmesrefju, to_number(to_char(rw_tbcc_prejuizo.dtinclusao, 'MM')));
+		vr_anorefju  := nvl(rw_tbcc_prejuizo.nranorefju, to_number(to_char(rw_tbcc_prejuizo.dtinclusao, 'YYYY')));
+
+		prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
+																				pr_ehmensal => FALSE,
+																				pr_dtdpagto => rw_crapdat.dtmvtolt,
+																				pr_idprejuizo => rw_tbcc_prejuizo.idprejuizo,
+																				pr_vljpreju => vr_vljupre_prov,
+																				pr_diarefju => vr_diarefju,
+																				pr_mesrefju => vr_mesrefju,
+																				pr_anorefju => vr_anorefju,
+																				pr_des_reto => vr_dscritic);	
 
     IF cr_tbcc_prejuizo%FOUND THEN
       vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej +
@@ -832,6 +832,8 @@ END pc_busca_saldos_devedores;
       vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
       vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
     END IF;   
+		
+		CLOSE cr_tbcc_prejuizo;
 
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
