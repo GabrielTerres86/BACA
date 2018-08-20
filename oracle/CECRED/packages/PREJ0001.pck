@@ -6908,7 +6908,7 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
         END IF;
 				
 				-- Executa apenas na mensal
-				IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr) THEN
+				IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr, 'MM') THEN
 					-- Calcula e debita da corrente corrente em prejuízo os juros remuneratórios
 					CECRED.PREJ0003.pc_calc_juro_prejuizo_mensal(pr_cdcooper => vr_cdcooper
 																										,pr_cdcritic =>vr_cdcritic
