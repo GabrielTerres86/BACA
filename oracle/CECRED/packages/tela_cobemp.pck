@@ -5259,7 +5259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lombardi
-      Data    : Marco/2017                    Ultima atualizacao: 
+      Data    : Marco/2017                    Ultima atualizacao: 16/08/2018
 
       Dados referentes ao programa:
 
@@ -5270,6 +5270,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       Observacao: -----
 
       Alteracoes: 
+      
+      16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).
+      
     ..............................................................................*/
 		DECLARE
 
@@ -5467,7 +5470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
           
           IF rw_crapcob.flgdprot = 1 THEN
              vr_dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
-             vr_dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+             vr_dsdinst4 := ' ';
           END IF;
                     
           IF rw_crapcob.flserasa = 1 AND rw_crapcob.qtdianeg > 0  THEN

@@ -3036,7 +3036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
     Sistema  : Rotina para buscar as parcelas que pertencem a um carnê, de acordo com a parcela selecionada
     Sigla    : COBR
     Autor    : Douglas Quisinski - CECRED
-    Data     : Junho/2015.                      Ultima atualizacao: 02/08/2018
+    Data     : Junho/2015.                      Ultima atualizacao: 16/08/2018
 
     Dados referentes ao programa:
     
@@ -3056,6 +3056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                              o nome que deve ser impresso no carnê. Mesma regra utilizada no boleto
                              (Douglas - PRJ285 Nova Conta Online)
                             
+                16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).        
     ............................................................................. */
     DECLARE
       -- Variáveis para identificar os boletos
@@ -3557,7 +3558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
               
               IF rw_parcelas.flgdprot = 'S' THEN
                  vr_dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_parcelas.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
-                 vr_dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+                 vr_dsdinst4 := ' ';
               END IF;
                         
               IF rw_parcelas.flserasa = 'S' AND rw_parcelas.qtdianeg > 0  THEN
