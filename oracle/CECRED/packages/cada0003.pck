@@ -822,6 +822,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             12/04/2018 - Adicionado campo pr_flgautom na proc pc_servicos_oferecidos
   --                          PRJ366 (Lombardi).
+  --
+  --             20/08/2018 - Não considerar cheque cancelado como sendo um produto contratado.
+  --                          Rotina fn_produto_habilitado, cursor cr_crapfdc (Wagner, INC0021862).  
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4355,7 +4358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        WHERE crapfdc.cdcooper = pr_cdcooper 
          AND crapfdc.nrdconta = pr_nrdconta
          AND crapfdc.dtretchq IS NOT NULL
-         AND crapfdc.incheque IN (0,1,2,8);
+         AND crapfdc.incheque IN (0,1,2);
       rw_crapfdc cr_crapfdc%ROWTYPE;
       
       -- Verifica se convenio existe pro Associado
