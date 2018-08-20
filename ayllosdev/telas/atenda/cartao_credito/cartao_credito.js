@@ -113,7 +113,7 @@ var dsadmcrdList = {
     15: "AILOS EMPRESAS"
 };
 var nmEmpresPla = "nome Empresa pl";
-var faprovador;
+
 var callbacckReturn = undefined;
 var protocolo;
 var glbadc = 'n';
@@ -239,8 +239,6 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
             $("#btnence").prop("disabled", true);
             $("#btnence").css('cursor', 'default');
 			
-			console.log('situacao',situacao);
-			console.log('decisaoMotorEsteira',decisaoMotorEsteira);
 
             if (!(situacao == "ESTUDO" && decisaoMotorEsteira == 'SEM APROVACAO')) {
                 $("#btnexcl").prop("disabled", true);
@@ -1714,7 +1712,6 @@ function validarNovoCartao() {
 					var outros = false;
 					for (j = 0; j < chklen; j++) {
 						var o = $('input[name="dsadmcrdcc"]')[j];
-						console.log(o);
 						if ($(o).attr("checked") == 'checked') {
 							if ($(o).val() == "outro")
 								outros = true;
@@ -1873,6 +1870,7 @@ function validarNovoCartao() {
                 dsrepres: dsrepres,
                 nmempres: nmempres,
 				flgdebit: flgdebit,
+				cdadmcrd: cdadmcrd,
                 redirect: "script_ajax"
             },
             error: function (objAjax, responseError, objExcept) {
@@ -1889,8 +1887,6 @@ function validarNovoCartao() {
             }
         });
     } catch (e) {
-
-        console.log(e);
         hideMsgAguardo();
         showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }
@@ -1902,9 +1898,7 @@ function senhaCoordenador(executaDepois) {
 	setTimeout(function(){
 		$( "#btnSenhaCoordenador" ).mouseover(function() {
 		  faprovador = $("#cdopelib").val();
-		  console.log("Setado pelo mouse out");
 		});
-		console.log("Setada a trigger");
 		$(".campo").blur(function(){
 			if( $(this).attr('id') =='cdopelib'){
 				faprovador = $(this).val();
@@ -2231,7 +2225,6 @@ function consultaCartao() {
         },
         success: function (response) {
             $("#divOpcoesDaOpcao1").html(response);
-			console.log(response);
         }
     });
 }
@@ -4045,6 +4038,8 @@ function carregarRepresentante(cddopcao, idrepres, nrcpfrep) {
     showMsgAguardo("Aguarde, verificando representante ...");
 
 	// Carrega conteúdo da opção através de ajax
+	if(inpessoa == 2)
+		return;
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/representantes_carregar.php",
@@ -4461,7 +4456,6 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
                 var outros = false;
                 for (j = 0; j < chklen; j++) {
                     var o = $('input[name="dsadmcrdcc"]')[j];
-                    console.log(o);
                     if ($(o).attr("checked") == 'checked') {
                         if ($(o).val() == "outro")
                             outros = true;
@@ -4747,7 +4741,6 @@ function carregaRepresentantes() {
                 cdadmcrd = 15;
             }
     }
-       console.log(">> > > "+$('#dsadmcrd').val().toUpperCase());
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando representantes...");
 
@@ -4822,13 +4815,13 @@ function lerCartaoChip() {
     fechaConexaoPinpad(oPinpad);
 
     if (oPinpad == "" || oPinpad == false || typeof oPinpad == 'undefined') {
-        try {
-            var oPinpad = new ActiveXObject("Gertec.PPC");
-        } catch (e) {
-            hideMsgAguardo();
+    try {
+        var oPinpad = new ActiveXObject("Gertec.PPC");
+    } catch (e) {
+        hideMsgAguardo();
 //showError("error","A rotina de entrega n&atilde;o &eacute; compat&iacute;vel com este navegador, acesse o Internet Explorer.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            return;
-        }
+        return;
+    }
     }
 
 // Abre a porta do PINPAD
@@ -5293,14 +5286,14 @@ function fechaConexaoPinpad(oPinpad) {
 
     // Se houver conexao ativa, elimina	
     if (oPinpad != false && typeof oPinpad != 'undefined') {
-        oPinpad.ReadMagCard_Stop();
-        oPinpad.ChangeEMVCardPasswordStop();
-        oPinpad.StopPINBlock();
+    oPinpad.ReadMagCard_Stop();
+    oPinpad.ChangeEMVCardPasswordStop();
+    oPinpad.StopPINBlock();
 // Apaga o LED
-        oPinpad.SetLED(0);
+    oPinpad.SetLED(0);
 // Fecha Porta
-        oPinpad.CloseSerial();
-    }
+    oPinpad.CloseSerial();
+}
 }
 
 function altera_cb(oPinpad, sAID, sNTexto4, sNumeroCartao) {
@@ -5906,7 +5899,6 @@ function enviaSolicitacao() {
 
 function validarSenha(nrctrcrd) {
 	
-	console.log('PAssou valida senha');
 	
     idacionamento = $("#idacionamento","#frmNovoCartao").val();
     log4console("5608 - protocolo : "+protocolo);
@@ -5914,8 +5906,8 @@ function validarSenha(nrctrcrd) {
         log4console(' add trigger back');
         $(".btnVoltar").attr('onclick','voltarParaTelaPrincipal();');
 		//|| idastcjt !=1
-        //if (inpessoa == 1 ) {
-		if(false){
+        if (inpessoa == 1 ) {
+		//if(false){
 			log4console("indo solicitar senha");
             solicitaSenhaMagnetico('registraSenha('+ nrctrcrd +',\'enviarBancoob( '+ nrctrcrd +' )\')', nrdconta, true);
             return;
@@ -5946,8 +5938,9 @@ function solicitaSenha(nrctrcrd,cdAdmCartao) {
     }}catch(e){
         console.log('estamos fora da tela novo');
     }
-	//|| idastcjt !=1
-    if (false) {
+	//|| idastcjt !=1  inpessoa == 1
+    //if (false) {
+	if( inpessoa == 1 ){
         validarSenha(nrctrcrd);
         return;
     }
@@ -6017,7 +6010,6 @@ function verificaAutorizacoes() {
             var autorizado = 3;
             eval(response);
             if(autorizado){
-                console.log(autorizado);
                 $(".imprimeTermoBTN").show();
             }else{
                 $("#continuaAprovacaoBTN").show();
@@ -6162,12 +6154,10 @@ function registraSenha(nrctrcrd, callback){
                 var error = false;
                 hideMsgAguardo();
                 eval(response);
-                console.log("voltou");
 
                 eval(callback);
 				hideMsgAguardo();
 //                voltarParaTelaPrincipal();
-                console.log("acabando");
                 if(error){
                     hideMsgAguardo();
                     return;
@@ -6185,7 +6175,6 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
 	if(dsjustif != undefined && dsjustif.length == 0){
 		dsjustif = justificativaCartao;
 	}
-    console.log("Atualizando");
     if(cdadmcrd == 0){
         if(inpessoa == 1){
             try{
@@ -6197,7 +6186,6 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
                     var outros = false;
                     for(j = 0; j< chklen; j++){	
                             var o = $('input[name="dsadmcrdcc"]')[j];
-                            console.log(o);
                             if($(o).attr("checked") == 'checked'){
                                 if($(o).val() == "outro")
                                     outros = true;
@@ -6217,7 +6205,7 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
             }
         }
     }
-    console.log("Vai atualizar params: inpessoa:"+inpessoa+" cdadmcrd:"+cdadmcrd);
+
     if(idacionamento == undefined)
         idacionamento = "";
     log4console("Executando a chamada atualiza_contrato");
@@ -6234,8 +6222,7 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
                 cdadmcrd      : cdadmcrd,
                 inpessoa      : inpessoa,
                 idproces      : idproces,
-                flagIdprocess : flagIdprocess? "1":"2",
-				faprovador    : faprovador != undefined ? faprovador : ""
+                flagIdprocess : flagIdprocess? "1":"2"
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
@@ -6264,7 +6251,6 @@ function enviarBancoob(nrctrcrd){
     var outros = false;
     for(j = 0; j< chklen; j++){	
             var o = $('input[name="dsadmcrdcc"]')[j];
-            console.log(o);
             if($(o).attr("checked") == 'checked'){
                 if($(o).val() == "outro")
                     outros = true;
@@ -6302,7 +6288,6 @@ function enviarBancoob(nrctrcrd){
 
                 hideMsgAguardo();
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-				console.log("ajax: "+objAjax+" error: "+responseError+" Except:"+objExcept);
             },
             success: function (response) {
                 hideMsgAguardo();
@@ -6413,8 +6398,7 @@ function alterarBancoob(autorizado,inpessoa,tipo){
 				limiteatualCC :   limiteatualCC,
                 protocolo     :   protocolo,
 				cdadmcrd      :   cdadmcrd,
-                justificativa :   $("#justificativa").val(),
-				faprovador    :   (faprovador != undefined )?faprovador :""
+                justificativa :   $("#justificativa").val()
 				
 
             },
@@ -6426,7 +6410,6 @@ function alterarBancoob(autorizado,inpessoa,tipo){
             success: function (response) {
                 hideMsgAguardo();
                 eval(response);
-                console.log(response);
                 //imprimirTermoDeAdesao(btn);
             }
         });
@@ -6494,7 +6477,6 @@ function ativa(id){
 function desativa(id){
 	$("#"+id).attr("disabled",true);
 	$("#"+id).attr("readonly",true);
-	console.log("Desativando "+id);
 }
  
 function detectIE() {
