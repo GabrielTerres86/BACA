@@ -3394,6 +3394,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                             - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
                             - Incluir nome do módulo logado em variável
                               (Ana - Envolti) - SD: 660356 e 660394
+
+                 08/08/2018 - Ajuste no campo nrdplaca para formatar os caracteres para
+                              caracteres maiusculos na opcao de alteracao de gravame. 
+                              Chamado PRB0040116 (Gabriel - Mouts).
+
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
@@ -3693,8 +3698,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,crapbpr.dtaltera = rw_crapdat.dtmvtolt
               ,crapbpr.tpaltera = 'M'
               ,crapbpr.dschassi = UPPER(pr_dschassi)
-              ,crapbpr.ufplnovo = pr_ufdplaca
-              ,crapbpr.nrplnovo = pr_nrdplaca
+              ,crapbpr.ufplnovo = UPPER(pr_ufdplaca)
+              ,crapbpr.nrplnovo = UPPER(pr_nrdplaca)
               ,crapbpr.nrrenovo = pr_nrrenava
               ,crapbpr.nranobem = pr_nranobem
               ,crapbpr.nrmodbem = pr_nrmodbem              
