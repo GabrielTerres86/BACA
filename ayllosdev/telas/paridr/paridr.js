@@ -631,7 +631,7 @@ function controlaPesquisa(tipo){
 
 function consultaIndicador(){
 
-	var idindica = $('#tpindicador', frmIndicador).val();
+	var idindica = $('#idindicador', frmIndicador).val();
 
     if (idindica != '') {
 
@@ -835,7 +835,7 @@ function inserirIndicador() {
 	showMsgAguardo('Aguarde, inserindo parametro...');	
 	
 	var cdcooper = cCdcooper.val();
-	var idindica = $('#tpindicador', frmIndicador).val();
+	var idindica = $('#idindicador', frmIndicador).val();
 	var cdprodut = $('#cdproduto', frmIndicador).val();
 	var inpessoa = $('#inpessoa', frmIndicador).val();
 	var vlminimo = $('#vlminimo', frmIndicador).val().replace(/\./g,"");	
@@ -925,7 +925,7 @@ function alterarIndicador() {
 	showMsgAguardo('Aguarde, alterando parametro...');	
 	
 	var cdcooper = cCdcooper.val();
-	var idindica = $('#tpindicador', frmIndicador).val();
+	var idindica = $('#idindicador', frmIndicador).val();
 	var cdprodut = $('#cdproduto', frmIndicador).val();
 	var inpessoa = $('#inpessoa', frmIndicador).val();
 	var vlminimo = $('#vlminimo', frmIndicador).val().replace(/\./g,"");
@@ -1006,7 +1006,7 @@ function alterarVinculacao() {
 function alterarParametro(){
 
 	if (abaAtual === 0) {
-		inserirIndicador();
+		alterarIndicador();
 	} else if (abaAtual === 1) {
 		alterarVinculacao();
 	}
