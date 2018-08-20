@@ -6,6 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 
  *                  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT).
+ *                  18/08/2018 - Remoção do campo 'qtmxdene' Quantidade máxima de dias para envio para Esteira (Vitor Shimada Assanuma - GFT).
  * --------------
  */
 
@@ -144,7 +145,6 @@ function formataCampos() {
     cVlmxprat = $('#vlmxprat', '#frmTab052');
     cpcmxctip = $('#pcmxctip', '#frmTab052');
     cFlcocpfp = $('#flcocpfp', '#frmTab052');
-    cQtmxdene = $('#qtmxdene', '#frmTab052');
     cQtdiexbo = $('#qtdiexbo', '#frmTab052');
     cQtmxtbib = $('#qtmxtbib', '#frmTab052');
     cQtmxtbay = $('#qtmxtbay', '#frmTab052');
@@ -182,7 +182,6 @@ function formataCampos() {
     cVlmxprat_c = $('#vlmxprat_c', '#frmTab052');
     cpcmxctip_c = $('#pcmxctip_c', '#frmTab052');
     cFlcocpfp_c = $('#flcocpfp_c', '#frmTab052');
-    cQtmxdene_c = $('#qtmxdene_c', '#frmTab052');
     cQtdiexbo_c = $('#qtdiexbo_c', '#frmTab052');
     cQtmxtbib_c = $('#qtmxtbib_c', '#frmTab052');
     cQtmxtbay_c = $('#qtmxtbay_c', '#frmTab052');
@@ -222,7 +221,6 @@ function formataCampos() {
     cVlmxprat.addClass('editcooper');//FLAG
     cpcmxctip.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cFlcocpfp.addClass('editcooper');//FLAG
-    cQtmxdene.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzzz','','');// INTE
     cQtmxtbay.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzzz','','');// INTE
@@ -263,7 +261,6 @@ function formataCampos() {
     cVlmxprat_c.addClass('editcecred');//FLAG
     cpcmxctip_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cFlcocpfp_c.addClass('editcecred');//FLAG
-    cQtmxdene_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtdiexbo_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtmxtbib_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzzz','','');// INTE
     cQtmxtbay_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzzz','','');// INTE
@@ -538,14 +535,6 @@ function controlaFoco() {
 
     $('#pcmxctip', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#qtmxdene', '#frmTab052').focus();
-            return false;
-        }
-    });
-
-
-    $('#qtmxdene', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtdiexbo', '#frmTab052').focus();
             return false;
         }
@@ -794,14 +783,6 @@ function controlaFoco() {
 
     $('#pcmxctip_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#qtmxdene_c', '#frmTab052').focus();
-            return false;
-        }
-    });
-
-
-    $('#qtmxdene_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtdiexbo_c', '#frmTab052').focus();
             return false;
         }
@@ -913,7 +894,6 @@ function manterRotina(cddopcao) {
     var vlmxprat = normalizaNumero($('#vlmxprat', '#frmTab052').val());
     var pcmxctip = normalizaNumero($('#pcmxctip', '#frmTab052').val());
     var flcocpfp = normalizaNumero($('#flcocpfp', '#frmTab052').val());
-    var qtmxdene = normalizaNumero($('#qtmxdene', '#frmTab052').val());
     var qtdiexbo = normalizaNumero($('#qtdiexbo', '#frmTab052').val());
     var qtmxtbib = normalizaNumero($('#qtmxtbib', '#frmTab052').val());
 
@@ -953,7 +933,6 @@ function manterRotina(cddopcao) {
     var vlmxprat_c = normalizaNumero($('#vlmxprat_c', '#frmTab052').val());
     var pcmxctip_c = normalizaNumero($('#pcmxctip_c', '#frmTab052').val());
     var flcocpfp_c = normalizaNumero($('#flcocpfp_c', '#frmTab052').val());
-    var qtmxdene_c = normalizaNumero($('#qtmxdene_c', '#frmTab052').val());
     var qtdiexbo_c = normalizaNumero($('#qtdiexbo_c', '#frmTab052').val());
     var qtmxtbib_c = normalizaNumero($('#qtmxtbib_c', '#frmTab052').val());
     var qtmxtbay_c = normalizaNumero($('#qtmxtbay_c', '#frmTab052').val());
@@ -1002,7 +981,6 @@ function manterRotina(cddopcao) {
             vlmxprat: vlmxprat,
             pcmxctip: pcmxctip,
             flcocpfp: flcocpfp,
-            qtmxdene: qtmxdene,
             qtdiexbo: qtdiexbo,
             qtmxtbib: qtmxtbib,
             qtmxtbay: qtmxtbay,
@@ -1040,7 +1018,6 @@ function manterRotina(cddopcao) {
             vlmxprat_c: vlmxprat_c,
             pcmxctip_c: pcmxctip_c,
             flcocpfp_c: flcocpfp_c,
-            qtmxdene_c: qtmxdene_c,
             qtdiexbo_c: qtdiexbo_c,
             qtmxtbib_c: qtmxtbib_c,
             qtmxtbay_c: qtmxtbay_c,
@@ -1253,16 +1230,6 @@ function validarCampos() {
             'A toler&acirc;ncia para limite excedido deve ser inferior ou igual ao estipulado pela AILOS',
             'Alerta - Ayllos',
             (isCECRED)? "$(\'#pctolera_c\',\'#frmTab052\').focus();" :"$(\'#pctolera\',\'#frmTab052\').focus();");
-        return false;
-    }
-
-    /* qtmxdene > qtmxdene_c o valor deve ser inferior ou igual ao estipulado pela CECRED */
-    if( converteMoedaFloat($('#qtmxdene', '#frmTab052').val()) > converteMoedaFloat($('#qtmxdene_c', '#frmTab052').val())  ){
-        showError(
-            'error',
-            'A quantidade m&aacute;ximo de dias deve ser inferior ou igual ao estipulado pela AILOS',
-            'Alerta - Ayllos',
-           (isCECRED)? "$(\'#qtmxdene_c\',\'#frmTab052\').focus();" :"$(\'#qtmxdene\',\'#frmTab052\').focus();");
         return false;
     }
 

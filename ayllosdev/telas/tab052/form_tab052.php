@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   :
  *                  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT).
+ *                  18/08/2018 - Remoção do campo 'qtmxdene' Quantidade máxima de dias para envio para Esteira (Vitor Shimada Assanuma - GFT).
  * --------------
  */
 ?>
@@ -321,19 +322,6 @@
 					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
 				<td width="170px"><input type="text" id="pcmxctip_c" name="pcmxctip_c" value="<?php echo $pcmxctip_c == 0 ? '' : $pcmxctip_c ?>" maxlength="3" style="text-align:right;"/>
 					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
-			</tr>
-
-			<!-- qtmxdene  -->
-			 <tr>
-				<td width="300px"><label for="qtmxdene" class='labelPri'><?php echo utf8ToHtml('Quantidade Máxima de Dias para Envio para Esteira:') ?></label></td>
-				<td width="170px">
-					<input type="text" id="qtmxdene" name="qtmxdene" value="<?php echo $qtmxdene == 0 ? '' : $qtmxdene ?>" maxlength="3" style="text-align:right;"/>
-					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
-				</td>
-				<td width="170px">
-					<input type="text" id="qtmxdene_c" name="qtmxdene_c" value="<?php echo $qtmxdene_c == 0 ? '' : $qtmxdene_c ?>" maxlength="3" style="text-align:right;"/>
-					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
-				</td>
 			</tr>
 
 			<!-- qtdiexbo -->

@@ -8,6 +8,7 @@
  * --------------
  * ALTERAÇÕES   :
  *                  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT).
+ *                  18/08/2018 - Remoção do campo 'qtmxdene' Quantidade máxima de dias para envio para Esteira (Vitor Shimada Assanuma - GFT).
  * -------------- 
  */
 ?> 
@@ -235,10 +236,6 @@ if ($cdopcao == 'C') {
     $xml .= "   <pcmxctip>". converteFloat($pcmxctip)."</pcmxctip>";
     $xml .= "   <pcmxctip_c>". converteFloat($pcmxctip_c)."</pcmxctip_c>";
 
-
-    $xml .= "   <qtmxdene>". $qtmxdene."</qtmxdene>";
-    $xml .= "   <qtmxdene_c>". $qtmxdene_c."</qtmxdene_c>";
-
     $xml .= "   <qtdiexbo>". $qtdiexbo."</qtdiexbo>";
     $xml .= "   <qtdiexbo_c>". $qtdiexbo_c."</qtdiexbo_c>";
 
@@ -395,10 +392,7 @@ if ($cdopcao == 'C') {
 		
 		echo '$("#flcocpfp", "#frmTab052").val("' . getByTagName($r->tags, 'flcocpfp') . '");';
         echo '$("#flcocpfp_c", "#frmTab052").val("' . getByTagName($r->tags, 'flcocpfp_c') . '");'; 
-		
-		echo '$("#qtmxdene", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxdene') . '");';
-        echo '$("#qtmxdene_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxdene_c') . '");'; 
-		
+				
 		echo '$("#qtdiexbo", "#frmTab052").val("' . getByTagName($r->tags, 'qtdiexbo') . '");';
         echo '$("#qtdiexbo_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtdiexbo_c') . '");'; 
 		
