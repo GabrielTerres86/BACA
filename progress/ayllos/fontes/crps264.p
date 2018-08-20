@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 26/05/2018
+    Data    : Marco/07.                       Ultima atualizacao: 27/07/2018 
     
     Dados referentes ao programa:
 
@@ -246,9 +246,14 @@
 																					   
               16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alínea 37
                            conforme tarefa SCTASK0010890. (Reinert)
-
+                           
               27/07/2018 - Adicionado histórico 5210 na crítica da alínea 37 do arquivo
-                          CRITICASDEVOLU.txt (Reinert).
+                           CRITICASDEVOLU.txt (Reinert).
+
+              14/08/2018 - Tratamento de devolucoes automaticas, insitdev = 2, setando seus 
+			               valores para insitdev = 1, desta forma registros irao constar no 
+						   Relatorio 219. Chamado PRB0040059 - Gabriel (Mouts).
+
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -505,6 +510,20 @@ ELSE
          
          IF   RETURN-VALUE = "OK"   THEN
               DO: 
+
+                  /* 
+                
+				  Alterado logica do programa Crps533 para criar lancamentos
+                  de devolucao  automatica,  parametrizado como insitdev = 2.
+                  Neste ponto  estaremos fazendo o tratamento  dos registros
+                  com insitdev  2, voltando  para o  valor  padronizado de 1.
+                  Desta  forma  as  devolucoes  automaticas irao  constar no
+                  Relatorio 219 gerado. Chamado PRB0040059.
+                
+			  	  */
+			  
+                  RUN trata_dev_automatica(INPUT p-cdcooper).
+				  
                        /* BANCOOB        CONTA BASE        INTEGRACAO */
                   IF   p-cddevolu = 1 OR p-cddevolu = 2 OR p-cddevolu = 3 THEN
                        RUN gera_impressao.
@@ -3547,3 +3566,18 @@ PROCEDURE verifica_incorporacao:
 END PROCEDURE.
 
 /* .......................................................................... */
+
+PROCEDURE trata_dev_automatica:
+
+  DEF INPUT  PARAM par_cdcooper  AS INT                               NO-UNDO.
+
+  FOR EACH crapdev WHERE crapdev.cdcooper = par_cdcooper AND
+                         crapdev.insitdev = 2            EXCLUSIVE-LOCK:
+
+    ASSIGN crapdev.insitdev = 1.
+
+  END.
+
+END PROCEDURE.
+
+/*........................................................................... */
