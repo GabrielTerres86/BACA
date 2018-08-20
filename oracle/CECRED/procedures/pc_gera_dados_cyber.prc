@@ -22,7 +22,7 @@ BEGIN
                            A solução definitiva será em novo chamado e a GENE0004 pode retonar
                            alem do codigo da mensagem um indicador de tipo de mensagem para não dar erro.
                            (Envolti - Belli - Chamado 831545)
-                           
+  
               13/04/2018 - 1 - Tratado Others na geração da tabela tbgen erro de sistema
                            2 - Seta Modulo
                            3 - Eliminada mensagem fixas
@@ -63,15 +63,14 @@ BEGIN
     -- Excluida variavel vr_flgerlog não é utilizada - Chmd REQ0011757 - 13/04/2018  
     vr_dthoje      DATE := TRUNC(SYSDATE);
 
-    vr_dstexto VARCHAR2(2000);
     vr_titulo VARCHAR2(1000);
     vr_destinatario_email VARCHAR2(500);
     -- Excluida variavel vr_idprglog pois não é utilizada - Chmd REQ0011757 - 13/04/2018  
-
+         
     vr_intipmsg   INTEGER := 1; -- pr_intipmsg tipo de mensagem a ser tratada especificamente - Chmd REQ0011757 - 13/04/2018 
     vr_dscrioco VARCHAR2(4000);        -- Variavel para tratar ocorrencia - Chmd REQ0011757 - 13/04/2018 
 
-    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
   PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
                                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
                                  ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
@@ -104,7 +103,7 @@ BEGIN
     -- .............................................................................
     --
     vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;        
-    BEGIN
+  BEGIN   
     -- Controlar geração de log de execução dos jobs                                
     CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro 
                           ,pr_tpocorrencia  => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
@@ -125,7 +124,7 @@ BEGIN
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log  
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
-    END pc_controla_log_batch;
+  END pc_controla_log_batch;
     
   BEGIN                                                           --- --- --- INICIO DO PROCESSO    
     -- Incluido nome do módulo logado - Chmd REQ0011757 - 13/04/2018
@@ -133,31 +132,31 @@ BEGIN
     
     -- Log de inicio de execucao
     pc_controla_log_batch(pr_dstiplog => 'I');
-    
+   
     -- SD#497991
     -- validação copiada de TARI0001
     -- Verificar se a data atual é uma data util, se retornar uma data diferente
     -- indica que não é um dia util, então deve sair do programa sem executar ou reprogramar
     IF gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
-                                  ,pr_dtmvtolt => vr_dthoje) = vr_dthoje THEN -- SD#497991
+                                  ,pr_dtmvtolt => vr_dthoje) = vr_dthoje THEN -- SD#497991   
       -- Retorna nome do módulo logado
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
       -- Troca da pc_executa_job para pc_trata_exec_job agora trata tipo de critica - Chmd REQ0011757 - 13/04/2018
       -- Indicador se deve gerar log colocado como não gerar Log 0 pois esta prc vai gerar - Chmd REQ0011757 - 13/04/2018
       gene0004.pc_trata_exec_job(pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
-                              ,pr_fldiautl => 1   --> Flag se deve validar dia util
-                              ,pr_flproces => 1   --> Flag se deve validar se esta no processo
-                              ,pr_flrepjob => 1   --> Flag para reprogramar o job
+                                ,pr_fldiautl => 1   --> Flag se deve validar dia util
+                                ,pr_flproces => 1   --> Flag se deve validar se esta no processo
+                                ,pr_flrepjob => 1   --> Flag para reprogramar o job
                                 ,pr_flgerlog => 0   --> indicador se deve gerar log
-                              ,pr_nmprogra => 'pc_gera_dados_cyber' --> Nome do programa que esta sendo executado no job
+                                ,pr_nmprogra => 'pc_gera_dados_cyber' --> Nome do programa que esta sendo executado no job
                                 ,pr_intipmsg => vr_intipmsg
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dserro
                                 );
 
       -- se nao retornou critica chama rotina
-      IF trim(vr_dserro) IS NULL THEN
+      IF trim(vr_dserro) IS NULL THEN 
         
         -- Retorna nome do módulo logado
         GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
@@ -169,7 +168,7 @@ BEGIN
         --Verifica o dia util da cooperativa e caso nao for pula a coop
         vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper  => vr_cdcooper
                                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                                  ,pr_tipo      => 'A');
+                                                  ,pr_tipo      => 'A');                                                    
         IF vr_dtmvtolt <> rw_crapdat.dtmvtolt THEN
            vr_cdcritic := 1213; -- Data da cooperativa diferente da data atual.
            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -179,7 +178,7 @@ BEGIN
            pc_controla_log_batch(pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
            RAISE vr_exc_erro; 
-        END IF;                                          
+        END IF;              
         -- Retorna nome do módulo logado
         GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);                             
          
@@ -190,7 +189,7 @@ BEGIN
                   ,pr_infimsol => vr_infimsol
                   ,pr_cdcritic => vr_cdcritic 
                   ,pr_dscritic => vr_dscritic);
-                                         
+
         IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
            
           -- Abrir chamado
@@ -221,13 +220,13 @@ BEGIN
         -- Tratar critica conforme tipo - Chmd REQ0011757 - 13/04/2018
         -- Processo noturno nao finalizado para cooperativa - Não gera critica
         IF NVL(vr_intipmsg,1) = 1 THEN
-        vr_dscritic := vr_dserro;
+          vr_dscritic := vr_dserro;
 
           --Incluída gravação de log aqui para evitar duplicidade na situação de retorno de crps652
           --Log de erro de execucao
           pc_controla_log_batch(pr_cdcritic => nvl(vr_cdcritic,0)
                                ,pr_dscritic => vr_dscritic);
-        RAISE vr_exc_erro;  
+          RAISE vr_exc_erro;
         ELSE
           vr_cdcritic := NVL(vr_cdcritic,0);
           -- Buscar a descrição - Se foi retornado apenas código
@@ -239,17 +238,17 @@ BEGIN
                                ,pr_cdcricid => 0
 		                           ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscrioco);
-      END IF;
+        END IF;
       END IF;
 
     END IF; 
 
     -- Log de fim de execucao
     pc_controla_log_batch(pr_dstiplog => 'F');
-
+    
     -- Retorna nome do módulo logado
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
-  EXCEPTION
+  EXCEPTION 
     -- Trata Log - Chmd REQ0011757 - 13/04/2018
     WHEN vr_exc_erro THEN  
       vr_cdcritic := NVL(vr_cdcritic,0);
@@ -261,7 +260,7 @@ BEGIN
       -- Excluida não utilizada GENE0001.pc_gera_erro - Chmd REQ0011757 - 13/04/2018
 
       ROLLBACK;
-        
+
     WHEN OTHERS THEN     
       cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper, 
                                    pr_compleme => vr_dscritic);
@@ -274,14 +273,10 @@ BEGIN
       -- Log de erro de execucao
       pc_controla_log_batch(pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => pr_dscritic);
-
+                     
       -- Excluida não utilizada GENE0001.pc_gera_erro - Chmd REQ0011757 - 13/04/2018
-
-      -- Log de erro de execucao
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
+                           
       ROLLBACK;                             
         
   END;          
 END pc_gera_dados_cyber;
-/
