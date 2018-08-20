@@ -5916,7 +5916,8 @@ END pc_comprovantes_recebidos;
 													 ,pr_texto_completo => vr_xml_temp      
 													 ,pr_texto_novo     => 
 														 '<dados>'||
-														    '<dttransa>' || to_char(pr_dttransa,'DD/MM/RRRR') || '</dttransa>' ||
+														        '<dttransa>' || to_char(pr_dttransa,'DD/MM/RRRR') || '</dttransa>' ||
+															    '<vllanmto>' || to_char(pr_vllanmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vllanmto>' ||
 																'<cdbanrem>' || vr_cdbanrem                       || '</cdbanrem>' ||
 																'<cdagerem>' || vr_cdagerem                       || '</cdagerem>' ||
 																'<nrctarem>' || vr_nrctarem                       || '</nrctarem>' ||
@@ -5927,6 +5928,7 @@ END pc_comprovantes_recebidos;
 																'<nrctadst>' || vr_nrctadst                       || '</nrctadst>' ||
 																'<dsnomdst>' || vr_dsnomdst                       || '</dsnomdst>' ||
 																'<nrcpfdst>' || gene0002.fn_mask_cpf_cnpj(vr_nrcpfdst, vr_inpessoa_dst) || '</nrcpfdst>' ||
+																'<idlstdom>41</idlstdom>' ||
 																'<infosac>' ||
 																		'<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
 																		'<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
