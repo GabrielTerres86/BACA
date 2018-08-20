@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 10/07/2018
+    Data    : 07/02/2013                     Ultima atualizacao: 17/08/2018
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -65,6 +65,8 @@
                            
 		10/07/2018 - Gerando arquivo de log para as operacoes da tela. (INC0018421 - Kelvin) 
                            
+        17/08/2018 - Removendo validacao do titular do javascript e colocando no
+					 progress. (SCTASK002723 - Kelvin)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -479,6 +481,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_nrdigtrf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_tpctatrf AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmfuncio AS CHAR                           NO-UNDO.
 
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
@@ -548,6 +551,14 @@ PROCEDURE Valida_Dados:
                 
                 IF  par_cddopcao = "I" THEN
                     DO:
+						IF par_nmfuncio = "" THEN
+							DO:
+								ASSIGN aux_cdcritic = 0
+									   aux_dscritic = "Informe o titular."
+									   par_nmdcampo = "nmfuncio".
+								LEAVE Valida.
+						   
+							END.
                         IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
                             RUN sistema/generico/procedures/b1wgen9999.p
                                 PERSISTENT SET h-b1wgen9999.
@@ -647,6 +658,15 @@ PROCEDURE Valida_Dados:
 
         IF  CAN-DO("A,I",par_cddopcao) THEN
             DO:
+				IF par_nmfuncio = "" THEN
+					DO:
+						ASSIGN aux_cdcritic = 0
+							   aux_dscritic = "Informe o titular."
+							   par_nmdcampo = "nmfuncio".
+						LEAVE Valida.
+				   
+					END.
+					
                 FIND crapban WHERE 
                      crapban.cdbccxlt = par_cdbantrf NO-LOCK NO-ERROR.
 

@@ -26,6 +26,8 @@
 				  14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
                                Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
   
+				  20/08/2018 - Removendo validacao do titular do javascript e colocando no progress. (SCTASK002723 - Kelvin)
+  
  */
 
  var nometela;
@@ -251,7 +253,7 @@ function Gera_Impressao(nrdconrt) {
 	var action = UrlSite + 'telas/ctasal/imprimir_dados.php';
 	var sidlogin = $("#sidlogin", "#frmMenu").val();
 	var nrdconta;
-	
+
 	if (cCddopcao.val() == 'I') 
 		 nrdconta = nrdconrt;
 	else 
@@ -793,7 +795,4 @@ function validaDados(){
 	
 	$('#nmfuncio', '#frmDados').val(nmfuncio);
 	
-	if (nmfuncio == '') {
-		showError('error','Informe o Titular.','Alerta - Ayllos','focaCampoErro(\'nmfuncio\',\'frmDados\');'); 		
-	}	
 }
