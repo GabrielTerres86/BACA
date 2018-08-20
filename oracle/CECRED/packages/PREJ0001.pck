@@ -2132,8 +2132,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     Alteracoes: 27/01/2017 - Identação do código e ajustes conforme SM 6 M324 
                (Rafael Monteiro - Mout'S)
 
-    Alteracoes: 13/08/2018 - No chamado SCTASK0023671 Foi solicitado para que o 
-				filtro que verifica se tem boleto em aberto fosse retirado.
+    Alteracoes: 20/08/2018 - No chamado SCTASK0023671 Foi solicitado para que o 
+				filtro que verifica se tem boleto em aberto e pago fosse retirado.
 				(Felipe Fronza - Mout'S)
 
    ..............................................................................*/                                          
@@ -2243,9 +2243,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
       END IF;
     END LOOP; */   
              
-    /* Verifica se existe boleto em aberto ou pago, pendente de processamento, para o contrato */
-    FOR r_busca_boleto in c_busca_boleto LOOP
-      /* SCTASK0023671 - Foi solicitado para que esse filtro fosse retirado
+    /* SCTASK0023671 - Foi solicitado para que esse filtro fosse retirado
+	   Verifica se existe boleto em aberto ou pago, pendente de processamento, para o contrato */
+    /*FOR r_busca_boleto in c_busca_boleto LOOP
+     
 	  IF r_busca_boleto.incobran = 0 THEN -- boleto aberto
         vr_cdcritic := 0;
         vr_dscritic := 'Boleto da conta: ' || r_busca_boleto.nrdconta_cob ||
@@ -2256,7 +2257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
                        '. Está EM ABERTO!';
 
         RAISE vr_erro;   
-      END IF;*/
+      END IF;
       --
       IF r_busca_boleto.incobran = 5 THEN -- boleto pago
           
@@ -2281,7 +2282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
           END IF;
 
       END IF;
-    END LOOP;
+    END LOOP;*/
                 
     /* verifica se possui acordo ativo ou liquidado */
     /* recp0001.pc_verifica_situacao_acordo (pr_cdcooper => pr_cdcooper
