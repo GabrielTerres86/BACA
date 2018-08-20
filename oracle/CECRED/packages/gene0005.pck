@@ -216,6 +216,9 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
 								  RETURN INTEGER;
 																	
+  /* Função recebe um string de 2 posições e retorna se é um código válido de UF (1 = válido, 0 = inválido) */
+  function fn_valida_uf(pr_uf in tbcadast_uf.cduf%type) return integer;
+  
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -2922,5 +2925,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 		END;																 
   END fn_valida_depart_operad;
   
+  /* Função recebe um string de 2 posições e retorna se é um código válido de UF (1 = válido, 0 = inválido) */
+  function fn_valida_uf(pr_uf in tbcadast_uf.cduf%type) return integer is
+    cursor cr_caduf is
+      select 1
+        from tbcadast_uf u
+       where u.cduf <> 'EX'
+         and upper(u.cduf) = upper(pr_uf);
+    v_retorno   number(1);
+  begin
+    open cr_caduf;
+      fetch cr_caduf into v_retorno;
+      if cr_caduf%notfound then
+        v_retorno := 0;
+      end if;
+    close cr_caduf;
+    return(v_retorno);
+  end;
+
 END GENE0005;
 /

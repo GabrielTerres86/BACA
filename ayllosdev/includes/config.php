@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Ultima Alteracao: 22/11/2016 ***//
+	//*** Data : Julho/2007                   Última Alteração: 20/08/2018 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
@@ -35,6 +35,8 @@
 	//***						   configuracoes de producao criptografadas***//
 	//***						   (Carlos Rafael Tanholi) SD 489051       ***//	
 	//***																   ***//	
+	//***             20/08/2018 - Criação de variaveis para conexao ao    ***//
+	//***                          serviço FIPE (Marcos-Envolti)           ***//
 	//************************************************************************//
 	
 	// carrega o arquivo .cfg de dados do sistema Ayllos
@@ -91,6 +93,13 @@
 	
 	// Servidor do GED (Selbetti)
 	$GEDServidor = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR']) : $array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR'];
+	
+	// Variaveis para Fipe
+	// PROD
+	// $UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+	// Homol 
+	$UrlFipe = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+	$AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
 	
 	// Identificador dos grupos de usuarios nas maquinas HP-UX
 	$gidNumbers[0] = 103; // Cecred
