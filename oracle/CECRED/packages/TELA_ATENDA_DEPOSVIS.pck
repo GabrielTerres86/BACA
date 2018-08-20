@@ -103,17 +103,6 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                     , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     , pr_dscritic OUT crapcri.dscritic%TYPE);
 
-  -- Consulta a situação do empréstimo
-  PROCEDURE pc_consulta_sit_empr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
-                                ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
-                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2); 
-
 END TELA_ATENDA_DEPOSVIS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
@@ -782,7 +771,6 @@ END pc_busca_saldos_devedores;
 					 , prej.nrmesrefju
 					 , prej.nranorefju
 					 , prej.idprejuizo
-					 , prej.dtinclusao
         FROM tbcc_prejuizo prej
         LEFT JOIN crapsld sld
                ON sld.nrdconta = prej.nrdconta
@@ -816,24 +804,25 @@ END pc_busca_saldos_devedores;
 		 FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		 CLOSE BTCH0001.cr_crapdat;
 		 
-		OPEN cr_tbcc_prejuizo(pr_cdcooper => pr_cdcooper,
+	   -- Calcula os juros remuneratórios desde a última data de pagamento/débito até o dia atual
+			vr_diarefju  := rw_tbcc_prejuizo.nrdiarefju;
+			vr_mesrefju  := rw_tbcc_prejuizo.nrmesrefju;
+			vr_anorefju  := rw_tbcc_prejuizo.nranorefju;
+
+			prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
+																					pr_ehmensal => FALSE,
+																					pr_dtdpagto => rw_crapdat.dtmvtolt,
+																					pr_idprejuizo => rw_tbcc_prejuizo.idprejuizo,
+																					pr_vljpreju => vr_vljupre_prov,
+																					pr_diarefju => vr_diarefju,
+																					pr_mesrefju => vr_mesrefju,
+																					pr_anorefju => vr_anorefju,
+																					pr_des_reto => vr_dscritic);	
+	
+    OPEN cr_tbcc_prejuizo(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta);
     FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
-		 
-	   -- Calcula os juros remuneratórios desde a última data de pagamento/débito até o dia atual
-		vr_diarefju  := nvl(rw_tbcc_prejuizo.nrdiarefju, to_number(to_char(rw_tbcc_prejuizo.dtinclusao, 'DD')));
-		vr_mesrefju  := nvl(rw_tbcc_prejuizo.nrmesrefju, to_number(to_char(rw_tbcc_prejuizo.dtinclusao, 'MM')));
-		vr_anorefju  := nvl(rw_tbcc_prejuizo.nranorefju, to_number(to_char(rw_tbcc_prejuizo.dtinclusao, 'YYYY')));
-
-		prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
-																				pr_ehmensal => FALSE,
-																				pr_dtdpagto => rw_crapdat.dtmvtolt,
-																				pr_idprejuizo => rw_tbcc_prejuizo.idprejuizo,
-																				pr_vljpreju => vr_vljupre_prov,
-																				pr_diarefju => vr_diarefju,
-																				pr_mesrefju => vr_mesrefju,
-																				pr_anorefju => vr_anorefju,
-																				pr_des_reto => vr_dscritic);	
+		CLOSE cr_tbcc_prejuizo;
 
     IF cr_tbcc_prejuizo%FOUND THEN
       vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej +
@@ -843,8 +832,6 @@ END pc_busca_saldos_devedores;
       vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
       vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
     END IF;   
-		
-		CLOSE cr_tbcc_prejuizo;
 
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -1494,20 +1481,21 @@ DECLARE
      AND lcm.dtmvtolt > pr_dt59datr; -- Data em que completou 59 dias em ADP
 
   -- Recupera os lançamentos que não são juros +60 ocorridos após 60 dias de atraso da conta
-  CURSOR cr_craplcm_outros(pr_dt59datr IN crapris.dtinictr%TYPE) IS
+  CURSOR cr_craplcm(pr_dt59datr IN crapris.dtinictr%TYPE) IS
   SELECT lcm.vllanmto
        , lcm.dtmvtolt
        , his.indebcre
+			 , his.dshistor
+			 , his.cdhistor
     FROM craplcm lcm
        , craphis his
-   WHERE lcm.cdhistor NOT IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
-     AND lcm.cdcooper   = pr_cdcooper
+   WHERE lcm.cdcooper   = pr_cdcooper
      AND lcm.nrdconta   = pr_nrdconta
      AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
-   ORDER BY indebcre DESC;
-  rw_craplcm_outros cr_craplcm_outros%ROWTYPE;
+   ORDER BY dtmvtolt ASC, indebcre DESC;
+  rw_craplcm cr_craplcm%ROWTYPE;
 
   -- Busca o limite de crédito atual do cooperado
   CURSOR cr_limite IS
@@ -1623,68 +1611,48 @@ BEGIN
          ELSE
             pr_vlsld59d := rw_crapsda.vlsddisp - vr_vlrlimite;
 
-            -- Recupera somatório dos lançamentos de juros +60 (Hist. 37)
-            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 37);
-            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_37;
-            CLOSE cr_craplcm_ccjuros60;
-
-						-- Recupera somatório dos lançamentos de juros +60 (Hist. 57)
-            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 57);
-            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_57;
-            CLOSE cr_craplcm_ccjuros60;
-
-						-- Recupera somatório dos lançamentos de juros +60 (Hist. 2718)
-            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 2718);
-            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_2718;
-            CLOSE cr_craplcm_ccjuros60;
-
-						-- Recupera somatório dos lançamentos de juros +60 (Hist. 38)
-            OPEN cr_craplcm_ccjuros60(vr_data_59dias_atraso, 38);
-            FETCH cr_craplcm_ccjuros60 INTO vr_jur60_38;
-            CLOSE cr_craplcm_ccjuros60;
-
-						pr_vljucneg := vr_jur60_37 + vr_jur60_57 + vr_jur60_2718;
-						pr_vljucesp := vr_jur60_38;
-
             -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
-            FOR rw_craplcm_outros IN cr_craplcm_outros(vr_data_59dias_atraso) LOOP
-              IF rw_craplcm_outros.indebcre = 'D' THEN
-                -- Incorpora o débito no saldo devedor até 59 dias
-                pr_vlsld59d := pr_vlsld59d + rw_craplcm_outros.vllanmto;
-              ELSE
-                IF pr_vljucneg > 0 THEN
+            FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso) LOOP
+							IF rw_craplcm.cdhistor IN (37,57,2718) THEN
+								pr_vljucneg := pr_vljucneg + rw_craplcm.vllanmto;
+							ELSIF rw_craplcm.cdhistor = 38 THEN
+								pr_vljucesp := pr_vljucesp + rw_craplcm.vllanmto;
+							ELSIF rw_craplcm.indebcre = 'D' THEN
+								pr_vlsld59d := pr_vlsld59d + rw_craplcm.vllanmto;
+							ELSE
+								IF pr_vljucneg > 0 THEN
                   -- Amortiza os juros + 60 (Hist. 37 + Hist. 57)
-                  IF rw_craplcm_outros.vllanmto >= pr_vljucneg THEN
-                    rw_craplcm_outros.vllanmto := rw_craplcm_outros.vllanmto - pr_vljucneg;
+                  IF rw_craplcm.vllanmto >= pr_vljucneg THEN
+                    rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vljucneg;
 										pr_vljucneg := 0;
                   ELSE
-                    pr_vljucneg := pr_vljucneg - rw_craplcm_outros.vllanmto;
-                    rw_craplcm_outros.vllanmto := 0;
+                    pr_vljucneg := pr_vljucneg - rw_craplcm.vllanmto;
+                    rw_craplcm.vllanmto := 0;
                   END IF;
                 END IF;
 
-								IF rw_craplcm_outros.vllanmto > 0 THEN
+								IF rw_craplcm.vllanmto > 0 THEN
 									IF pr_vljucesp > 0 THEN
 										-- Amortiza os juros + 60 (Hist. 38)
-										IF rw_craplcm_outros.vllanmto >= pr_vljucesp THEN
-											rw_craplcm_outros.vllanmto := rw_craplcm_outros.vllanmto - pr_vljucesp;
+										IF rw_craplcm.vllanmto >= pr_vljucesp THEN
+											rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vljucesp;
 											pr_vljucesp := 0;
 										ELSE
-											pr_vljucesp := pr_vljucesp - rw_craplcm_outros.vllanmto;
-											rw_craplcm_outros.vllanmto := 0;
+											pr_vljucesp := pr_vljucesp - rw_craplcm.vllanmto;
+											rw_craplcm.vllanmto := 0;
 										END IF;
 									END IF;
 								END IF;
 
-                IF rw_craplcm_outros.vllanmto > 0 THEN
+                IF rw_craplcm.vllanmto > 0 THEN
                   -- Amortiza o saldo devedor até 59 dias
-                  IF rw_craplcm_outros.vllanmto >= pr_vlsld59d THEN
+                  IF rw_craplcm.vllanmto >= pr_vlsld59d THEN
                     pr_vlsld59d := 0;
                   ELSE
-                    pr_vlsld59d := pr_vlsld59d - rw_craplcm_outros.vllanmto;
+                    pr_vlsld59d := pr_vlsld59d - rw_craplcm.vllanmto;
                   END IF;
                 END IF;
-              END IF;
+							END IF;
             END LOOP;
          END IF;
       END IF;
