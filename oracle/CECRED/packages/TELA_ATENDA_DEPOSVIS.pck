@@ -97,11 +97,23 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
   PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> Código da cooperativa
                                     , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
                                     , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
+																		, pr_dtlimite IN DATE   DEFAULT NULL --> Data limite para filtro dos lançamentos na CRAPLCM
                                     , pr_vlsld59d OUT NUMBER             --> Saldo até 59 dias (saldo devedor - juros +60)
                                     , pr_vljucneg OUT NUMBER             --> Juros +60 (Hist. 37 + 57 + 2718)
 																  	, pr_vljucesp OUT NUMBER             -- Juros + 60 (Hist. 38)
                                     , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     , pr_dscritic OUT crapcri.dscritic%TYPE);
+  
+  -- Consulta a situação do empréstimo
+  PROCEDURE pc_consulta_sit_empr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK
 
 END TELA_ATENDA_DEPOSVIS;
 /
@@ -1461,6 +1473,7 @@ END pc_busca_saldos_juros60;
 PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> Código da cooperativa
                                     , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
                                     , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
+																		, pr_dtlimite IN DATE   DEFAULT NULL --> Data limite para filtro dos lançamentos na CRAPLCM
                                     , pr_vlsld59d OUT NUMBER             --> Saldo até 59 dias (saldo devedor - juros +60)
                                     , pr_vljucneg OUT NUMBER             --> Juros +60 (Hist. 37 + 57 + 2718)
 																  	, pr_vljucesp OUT NUMBER             -- Juros + 60 (Hist. 38)
@@ -1470,16 +1483,6 @@ PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> C
 BEGIN
 
 DECLARE
-  -- Recupera a soma dos lançamentos de juros +60 da conta
-  CURSOR cr_craplcm_ccjuros60(pr_dt59datr IN crapris.dtinictr%TYPE
-	                          , pr_cdhistor IN craphis.cdhistor%TYPE) IS
-  SELECT  nvl(sum(lcm.vllanmto),0) vl_juros60
-    FROM craplcm lcm
-   WHERE lcm.cdhistor = pr_cdhistor
-     AND lcm.cdcooper = pr_cdcooper
-     AND lcm.nrdconta = pr_nrdconta
-     AND lcm.dtmvtolt > pr_dt59datr; -- Data em que completou 59 dias em ADP
-
   -- Recupera os lançamentos que não são juros +60 ocorridos após 60 dias de atraso da conta
   CURSOR cr_craplcm(pr_dt59datr IN crapris.dtinictr%TYPE) IS
   SELECT lcm.vllanmto
@@ -1492,6 +1495,7 @@ DECLARE
    WHERE lcm.cdcooper   = pr_cdcooper
      AND lcm.nrdconta   = pr_nrdconta
      AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
+		 AND (pr_dtlimite IS NULL OR lcm.dtmvtolt <= pr_dtlimite)
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
    ORDER BY dtmvtolt ASC, indebcre DESC;
@@ -1675,7 +1679,7 @@ PROCEDURE pc_consulta_sit_empr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código 
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                ,pr_des_erro OUT VARCHAR2)IS            --Saida OK/NOK
+                                ,pr_des_erro OUT VARCHAR2)IS           --> Saida OK/NOK
 
   /*---------------------------------------------------------------------------------------------------------------
 
