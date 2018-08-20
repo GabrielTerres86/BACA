@@ -103,6 +103,17 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                     , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     , pr_dscritic OUT crapcri.dscritic%TYPE);
 
+  -- Consulta a situação do empréstimo
+  PROCEDURE pc_consulta_sit_empr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2); 
+
 END TELA_ATENDA_DEPOSVIS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
