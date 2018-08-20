@@ -1063,7 +1063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lombardi
-     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
+     Data    : Agosto/2015                     Ultima atualizacao: 16/08/2018
 
      Dados referentes ao programa:
 
@@ -1082,6 +1082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               Inclusão pc_set_modulo
                               Tratamento exceptions
                               (Ana - Envolti - Ch 839539)
+                              
+                 16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).                              
   ............................................................................ */      
 
       vr_cdbarras VARCHAR2(44);
@@ -1288,14 +1290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       END IF;         
      
       /* se inst aut de protesto, cob registrada e banco 085 */
-      IF pr_flgregis = 1 AND 
-         pr_flgdprot = 1 AND 
-         rw_crapcco.cddbanco = 085 THEN 
-         vr_dsdinstr := '** Servico de protesto sera efetuado ' ||  
-                        'pelo Banco do Brasil **';
-      ELSE
+      /* Retirado mensagem de serviço de protesto pelo BB 16/08/2018 */
          vr_dsdinstr := pr_dsdinstr;
-      END IF;
 
         /* se banco emite e expede, nosso num conv+ceb+doctmo -
            Rafael Cechet 29/03/11 */
@@ -1662,6 +1658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                  10/05/2018 - Revitalização
                               Grava tabela de log nas exceptions
                               (Ana - Envolti - Ch REQ0011327)
+
+               16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).                              
   ............................................................................ */      
 
 	DECLARE
@@ -2344,7 +2342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR BOLETO APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS DO VENCIMENTO.';
              ELSIF rw_crapcob.insrvprt = 2 THEN
              pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
-             pr_tab_cob(vr_ind_cob).dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+             pr_tab_cob(vr_ind_cob).dsdinst4 := ' ';
           END IF;
           END IF;
                     

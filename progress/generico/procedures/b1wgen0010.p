@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 16/06/2018
+   Data    : 12/09/2005                     Ultima atualizacao: 16/08/2018
 
    Dados referentes ao programa:
 
@@ -478,7 +478,9 @@
 
                16/06/2018 - Ajuste na situacao do boleto quando Protestado "P" 
                           - Popular dados do beneficiario na temp-table tt-consulta-blt (Carta de Anuencia)
-                          - (PRJ352 - Rafael).
+                          - (PRJ352 - Rafael). 
+
+               16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael)
 
 ........................................................................... */
 
@@ -4523,7 +4525,8 @@ PROCEDURE cria_tt-consulta-blt.
                     ELSE
                         ASSIGN aux_dsstaabr = "INS"
                                aux_dsstacom = "REM CARTORIO "
-                               aux_dtsitcrt = crapcob.dtsitcrt.                                  END.
+                               aux_dtsitcrt = crapcob.dtsitcrt.                                  
+                 END.
                  WHEN 3 THEN ASSIGN aux_dsstaabr = "CAR"
                                     aux_dsstacom = "EM CARTORIO"
                                     aux_dtsitcrt = crapcob.dtsitcrt.
@@ -4810,7 +4813,7 @@ PROCEDURE cria_tt-consulta-blt.
                                               ' ORIGINAL ' + STRING(tt-consulta-blt.dtvencto,'99/99/9999') + '.'
                                            ELSE 
                                               '.')
-               tt-consulta-blt.dsdinst4 = '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***'.
+               tt-consulta-blt.dsdinst4 = ' '.
                
      IF crapcob.flserasa = TRUE AND crapcob.qtdianeg > 0  THEN
         ASSIGN tt-consulta-blt.dsdinst3 = 'NEGATIVAR NA SERASA APOS ' + STRING(crapcob.qtdianeg) + ' DIAS CORRIDOS DO VENCIMENTO' +
@@ -9472,7 +9475,7 @@ PROCEDURE calcula_multa_juros_boleto:
                                                  ' ORIGINAL ' + STRING(tt-consulta-blt.dtvencto,'99/99/9999') + '.'
                                               ELSE 
                                                  '.')
-                  tt-consulta-blt.dsdinst4 = '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***'.
+                  tt-consulta-blt.dsdinst4 = ' '.
                   
         IF crapcob.flserasa = TRUE AND crapcob.qtdianeg > 0  THEN
            ASSIGN tt-consulta-blt.dsdinst3 = 'NEGATIVAR NA SERASA APOS ' + STRING(crapcob.qtdianeg) + ' DIAS CORRIDOS DO VENCIMENTO' +

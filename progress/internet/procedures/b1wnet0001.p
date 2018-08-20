@@ -289,6 +289,8 @@
                             por parametro quando o codigo da carteira for 5-Quanta ou 
                             6-Recuperacao de Credito. (PRJ468 - Previdencia - Rafael)   
 
+               16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (Rafael).
+
 .............................................................................*/
 
 
@@ -4747,15 +4749,6 @@ PROCEDURE p_cria_titulo:
         END.
 
     END.
-
-   
-    /* se inst aut de protesto, cob registrada e banco 085 */
-    IF p-flgregis AND 
-       p-flgdprot AND 
-       crapcco.cddbanco = 085 THEN 
-       ASSIGN p-dsdinstr = 
-              "** Servico de protesto sera efetuado " + 
-              "pelo Banco do Brasil **".
 
     /* se banco emite e expede, nosso num conv+ceb+doctmo -
        Rafael Cechet 29/03/11 */
