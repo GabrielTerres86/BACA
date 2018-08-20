@@ -4,14 +4,17 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lombardi
-   Data    : Setembro/2016                        Ultima atualizacao: --/--/----
+   Data    : Setembro/2016                        Ultima atualizacao: 20/08/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Resumo de cheques em custodia
    
-   Alteracoes: 
+   Alteracoes: 20/08/2018 - Ajustar o retorno do XML para que seja quebrado 
+                            a cada 31000 caracteres, devido a limitacao de 
+                            tamanho do xml_operacao.dslinxml
+                            (Douglas - INC0021908)
                             
 ..............................................................................*/
     
@@ -20,6 +23,10 @@ CREATE WIDGET-POOL.
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/var_oracle.i }
  
+
+DEF VAR aux_iteracoes AS INT      NO-UNDO.
+DEF VAR aux_posini    AS INT      NO-UNDO.
+DEF VAR aux_contador  AS INT      NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                         NO-UNDO.
 DEF VAR xml_req      AS LONGCHAR                     NO-UNDO.
 
@@ -46,6 +53,13 @@ DEF  INPUT PARAM par_iddspscp AS INTE                NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
+
+FUNCTION roundUp RETURNS INTEGER ( x as decimal ):
+  IF x = TRUNCATE( x, 0 ) THEN
+    RETURN INTEGER( x ).
+  ELSE
+    RETURN INTEGER(TRUNCATE( x, 0 ) + 1 ).
+END.
 
 IF par_operacao = 1 THEN
   DO:
@@ -142,8 +156,15 @@ ELSE IF par_operacao = 3 THEN
         RETURN "NOK".
     END.
 
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+           aux_posini    = 1.    
+
+    DO  aux_contador = 1 TO aux_iteracoes:
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = SUBSTRING(xml_req, aux_posini, 31000)
+               aux_posini            = aux_posini + 31000.
+                   
+    END.
   END.
   
 ELSE IF par_operacao = 4 THEN
