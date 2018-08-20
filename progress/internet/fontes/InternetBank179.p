@@ -90,8 +90,15 @@ IF par_operacao = 1 THEN
         RETURN "NOK".
     END.
 
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+           aux_posini    = 1.    
+
+    DO  aux_contador = 1 TO aux_iteracoes:
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = SUBSTRING(xml_req, aux_posini, 31000)
+               aux_posini            = aux_posini + 31000.
+                   
+    END.
   END.
   
 ELSE IF par_operacao = 2 THEN
@@ -123,8 +130,15 @@ ELSE IF par_operacao = 2 THEN
         RETURN "NOK".
     END.
  
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+           aux_posini    = 1.    
+
+    DO  aux_contador = 1 TO aux_iteracoes:
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = SUBSTRING(xml_req, aux_posini, 31000)
+               aux_posini            = aux_posini + 31000.
+                   
+    END.
 
   END.
 
@@ -197,8 +211,15 @@ ELSE IF par_operacao = 4 THEN
         RETURN "NOK".
     END.
 
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+           aux_posini    = 1.    
+
+    DO  aux_contador = 1 TO aux_iteracoes:
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = SUBSTRING(xml_req, aux_posini, 31000)
+               aux_posini            = aux_posini + 31000.
+                   
+    END.
   END.
 
 ELSE IF par_operacao = 5 THEN
@@ -237,8 +258,15 @@ ELSE IF par_operacao = 5 THEN
         RETURN "NOK".
     END.
     
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+           aux_posini    = 1.    
+
+    DO  aux_contador = 1 TO aux_iteracoes:
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = SUBSTRING(xml_req, aux_posini, 31000)
+               aux_posini            = aux_posini + 31000.
+                   
+    END.
   END.
   
 ELSE IF par_operacao = 6 THEN
@@ -267,8 +295,15 @@ ELSE IF par_operacao = 6 THEN
         RETURN "NOK".
     END.
     
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+           aux_posini    = 1.    
+
+    DO  aux_contador = 1 TO aux_iteracoes:
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = SUBSTRING(xml_req, aux_posini, 31000)
+               aux_posini            = aux_posini + 31000.
+                   
+    END.
   END.
 
 ELSE IF par_operacao = 7 THEN
@@ -298,8 +333,15 @@ ELSE IF par_operacao = 7 THEN
         RETURN "NOK".
     END.
     
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+           aux_posini    = 1.    
+
+    DO  aux_contador = 1 TO aux_iteracoes:
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = SUBSTRING(xml_req, aux_posini, 31000)
+               aux_posini            = aux_posini + 31000.
+                   
+    END.
   END.
 
 /*............................................................................*/
