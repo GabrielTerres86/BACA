@@ -1,19 +1,21 @@
 <?php
 /*!
  * FONTE        : form_empresa.php
- * CRIAÇÃO      : Cristian Filipe Fernandes (GATI)
- * DATA CRIAÇÃO : 13/11/2013
+ * CRIAÃ‡ÃƒO      : Cristian Filipe Fernandes (GATI)
+ * DATA CRIAÃ‡ÃƒO : 13/11/2013
  * OBJETIVO     : formulario para a tela CADEMP
  * --------------
- * ALTERAÇÕES   : 28/03/2014 - Retirado o caracter "." do label UF. Retirada de espaço em "Mê s" (Carlos)
+ * ALTERAÃ‡Ã•ES   : 28/03/2014 - Retirado o caracter "." do label UF. Retirada de espaÃ§o em "MÃª s" (Carlos)
  *
- *                11/06/2014 - Adicionado acentuação "Codigo da Empresa Sistema Folha" (Douglas - Chamado 122814)
+ *                11/06/2014 - Adicionado acentuaÃ§Ã£o "Codigo da Empresa Sistema Folha" (Douglas - Chamado 122814)
  *
  *                17/05/2016 - Movido o campo Dia Fechamento Folha da segunda aba para a ultima aba.
  *                             Remocao do campo Gera Aviso Poup.Prog. Criacao do campo Dia Limite Debitos Vinculados. 
  *                             (Jaison/Marcos)
  *
- *				  28/07/2016 - Removi o comando session_start e a função utf8tohtml desnecessarios. SD 491925. (Carlos R.)
+ *				  28/07/2016 - Removi o comando session_start e a funÃ§Ã£o utf8tohtml desnecessarios. SD 491925. (Carlos R.)
+ *
+ *          06/08/2018 - Ajuste na formataÃ§Ã£o do campo e-mail (Andrey Formigari - Mouts)
  *
  * --------------
  */
@@ -115,7 +117,7 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 			<br style="clear:both" />
 
 			<label for="dsdemail">E-mail:</label>
-			<input name="dsdemail" type="text"  id="dsdemail" class='campo' />
+			<input name="dsdemail" type="text"  id="dsdemail" class='campo' onkeypress="monitorarCTRLV(event, this);" onblur="monitorarCTRLV(event, this);" onkeyup="monitorarCTRLV(event, this);" />
 
 			<!-- CAMPOS PARA LOG -->
 			<input type='hidden' name='old_nmextemp' id='old_nmextemp'>
