@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0115tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Setembro/2011                      Ultima atualizacao: 30/10/2017
+    Data    : Setembro/2011                      Ultima atualizacao: 30/07/2018
   
     Dados referentes ao programa:
   
@@ -12,37 +12,45 @@
                              tt-aplicacoes. (Reinert)
     
                 30/10/2017 - Adicionado tpctrato. (Jaison/Marcos Martini - PRJ404)
+                
+                30/07/2018 - P442 - Inclusão de campos do projeto (Marcos-Envolti)
 
 .............................................................................*/
 
 DEF TEMP-TABLE tt-aditiv NO-UNDO
-    FIELD cdaditiv  AS INT     FORMAT "9"
-    FIELD nraditiv  AS INT     FORMAT "z9"
-    FIELD idseqbem  AS INTE    FORMAT "99"
-    FIELD nrsequen  AS INTE    FORMAT "99"
-    FIELD nrctremp  LIKE crapadt.nrctremp
-    FIELD nmprimtl  LIKE crapass.nmprimtl
-    FIELD nrdconta  LIKE crapadi.nrdconta
-    FIELD nrctagar  LIKE crapadt.nrctagar
-    FIELD dtmvtolt  LIKE crapadt.dtmvtolt
-    FIELD flgpagto  AS LOGICAL FORMAT "FOLHA DE PAGTO/CONTA CORRENTE"
-    FIELD dtdpagto  LIKE crapadi.dtdpagto
-    FIELD dsbemfin  LIKE crapadi.dsbemfin
-    FIELD dschassi  LIKE crapadi.dschassi
-    FIELD nrdplaca  LIKE crapadi.nrdplaca
-    FIELD dscorbem  LIKE crapadi.dscorbem
-    FIELD nranobem  LIKE crapadi.nranobem
-    FIELD nrmodbem  LIKE crapadi.nrmodbem
-    FIELD tpaplica  AS INT     FORMAT "9"        EXTENT 20
-    FIELD nraplica  AS INT     FORMAT "zzzz,zz9" EXTENT 20
-    FIELD impdocir  AS LOGICAL FORMAT "S/N"      INIT TRUE
-    FIELD nrrenava  LIKE crapadi.nrrenava
-    FIELD tpchassi  LIKE crapadi.tpchassi
-    FIELD ufdplaca  LIKE crapadi.ufdplaca
-    FIELD uflicenc  LIKE crapadi.uflicenc
-    FIELD nmdavali  LIKE crapadi.nmdavali
-    FIELD nrcpfcgc  LIKE crapadi.nrcpfcgc
-    FIELD nrcpfgar  LIKE crapadt.nrcpfgar
+    FIELD cdaditiv  AS INT     FORMAT "9"                                                   
+    FIELD nraditiv  AS INT     FORMAT "z9"                                                  
+    FIELD idseqbem  AS INTE    FORMAT "99"                                                  
+    FIELD nrsequen  AS INTE    FORMAT "99"                                                  
+    FIELD nrctremp  LIKE crapadt.nrctremp                                                   
+    FIELD nmprimtl  LIKE crapass.nmprimtl                                                   
+    FIELD nrdconta  LIKE crapadi.nrdconta                                                   
+    FIELD nrctagar  LIKE crapadt.nrctagar                                                   
+    FIELD dtmvtolt  LIKE crapadt.dtmvtolt                                                   
+    FIELD flgpagto  AS LOGICAL FORMAT "FOLHA DE PAGTO/CONTA CORRENTE"                       
+    FIELD dtdpagto  LIKE crapadi.dtdpagto                                                   
+    FIELD dscatbem  LIKE crapadi.dscatbem                       
+    FIELD dsmarbem  LIKE crapadi.dsmarbem                       
+    FIELD dsbemfin  LIKE crapadi.dsbemfin                                                   
+    FIELD dschassi  LIKE crapadi.dschassi                                                   
+    FIELD nrdplaca  LIKE crapadi.nrdplaca                                                   
+    FIELD dscorbem  LIKE crapadi.dscorbem                                                   
+    FIELD nranobem  LIKE crapadi.nranobem                                                   
+    FIELD nrmodbem  LIKE crapadi.nrmodbem                                                   
+    FIELD dstpcomb  LIKE crapadi.dstpcomb                   
+    FIELD vlrdobem  LIKE crapadi.vlrdobem           
+    FIELD vlfipbem  LIKE crapadi.vlfipbem           
+    FIELD dstipbem  LIKE crapadi.dstipbem          
+    FIELD tpaplica  AS INT     FORMAT "9"        EXTENT 20                                  
+    FIELD nraplica  AS INT     FORMAT "zzzz,zz9" EXTENT 20                                  
+    FIELD impdocir  AS LOGICAL FORMAT "S/N"      INIT TRUE                                  
+    FIELD nrrenava  LIKE crapadi.nrrenava                                                   
+    FIELD tpchassi  LIKE crapadi.tpchassi                                                   
+    FIELD ufdplaca  LIKE crapadi.ufdplaca                                                   
+    FIELD uflicenc  LIKE crapadi.uflicenc                                                   
+    FIELD nmdavali  LIKE crapadi.nmdavali                                                   
+    FIELD nrcpfcgc  LIKE crapadi.nrcpfcgc                                                   
+    FIELD nrcpfgar  LIKE crapadt.nrcpfgar                                                   
     FIELD nrdocgar  LIKE crapadt.nrdocgar
     FIELD nmdgaran  LIKE crapadt.nmdgaran
     FIELD nrpromis  AS CHAR    FORMAT "x(20)"           EXTENT 10

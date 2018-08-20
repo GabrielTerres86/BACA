@@ -465,6 +465,17 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   TYPE typ_tab_rating_hist IS TABLE OF typ_rec_rating_hist
        INDEX BY PLS_INTEGER;
 
+  --> Buscar dados do avalista
+  PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE           --> Numero da conta do cooperado
+                                    ,pr_nrctrato IN crapavt.nrctremp%TYPE DEFAULT 0 --> Numero do contrato para busca de avalistas terceiros
+                                    ,pr_tpctrato IN crapavt.tpctrato%TYPE DEFAULT 0 --> Tipo do contrato para busca de avalistas terceiros
+                                    ,pr_tpavalis IN INTEGER                         --> Tipo de avalista (1- Avalista cooperado, 2 - Terceiro)
+                                     --------> OUT <--------                                   
+                                    ,pr_tab_dados_avais IN OUT typ_tab_dados_avais  --> tabela contendo os parametros da cooperativa
+                                    ,pr_cdcritic           OUT PLS_INTEGER          --> Código da crítica
+                                    ,pr_dscritic           OUT VARCHAR2);           --> Descrição da crítica
+  
   --> listar avalistas de contratos
   PROCEDURE pc_lista_avalistas ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                 ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia

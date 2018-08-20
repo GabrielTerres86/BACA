@@ -71,6 +71,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 049:	[28/08/2017] Lombardi (CECRED)		: Criada nova rotina buscaDominios. Projeto 366 - Reestruturação dos tipos e situações de conta.
  * 050:	[26/04/2018] Lombardi (CECRED)		: Criada nova rotina buscaSituacoesConta. Projeto 366 - Reestruturação dos tipos e situações de conta.
  * 051: [10/04/2018] Luis Fernando (Gft)	: Criada nova função getClassXml que devolve um objeto modificado do xmlFile fazendo algumas alterações em métodos para facilitar a construção
+ * 052: [20/08/2018] Maykon (Envolti) : P442 - Criadas funcoes para Fipe, Aditiv e Manbem
   */
 
 // Função para requisição de dados através de XML 
@@ -568,6 +569,33 @@ function retornaUFs() {
 	return $estados;
 }
 
+function retornaCategorias() {
+	$categorias[0]["IDENTIFICADOR"]  = "AUTOMOVEL";
+	$categorias[0]["DESCRICAO"]   = "Automóvel";
+	$categorias[1]["IDENTIFICADOR"]  = "CAMINHAO";
+	$categorias[1]["DESCRICAO"]   = "Caminhão;
+	$categorias[2]["IDENTIFICADOR"]  = "MOTO";
+	$categorias[2]["DESCRICAO"]   = "Moto";	
+	
+	return $categorias;
+}
+function retornaTiposVeiculo() {
+	$tiposVeiculos[0]["IDENTIFICADOR"]  = "ZERO KM";
+	$tiposVeiculos[0]["DESCRICAO"]   = "Zero KM";
+	$tiposVeiculos[1]["IDENTIFICADOR"]  = "USADO";
+	$tiposVeiculos[1]["DESCRICAO"]   = "Usado";
+	
+	return $tiposVeiculos;
+}
+function retornaTiposChassi() {
+	$tiposVeiculos[0]["IDENTIFICADOR"]  = "1";
+	$tiposVeiculos[0]["DESCRICAO"]   = "Remarcado";
+	$tiposVeiculos[1]["IDENTIFICADOR"]  = "2";
+	$tiposVeiculos[1]["DESCRICAO"]   = "Normal";
+	
+	return $tiposVeiculos;
+}
+
 function validaPermissao($nmdatela,$nmrotina,$cddopcao='',$flgsecao=true) {
 	global $glbvars;
 	
@@ -668,6 +696,58 @@ function getByTagName( $xml, $tagName ) {
 	return trim($resultado);	
 }	
 
+function mask($val, $mask)
+{
+	$maskared = '';
+	$k = 0;
+	for($i = 0; $i<=strlen($mask)-1; $i++)
+	{
+		if($mask[$i] == '#')
+		{
+			if(isset($val[$k]))
+			$maskared .= $val[$k++];
+		}
+		else
+		{
+			if(isset($mask[$i]))
+			$maskared .= $mask[$i];
+		}
+	}
+	return $maskared;
+}
+
+function getCpfCnpj( $xml, $tagName ) {	
+	$resultado = "";
+	if ( $xml != ''){
+		foreach( $xml as $tag ) {
+			if ( strtoupper($tag->name) == strtoupper($tagName) ) {
+				$resultado = $tag->cdata;
+				break;
+			} 		
+		}
+	}	
+	$resultado = trim($resultado);
+	if(strlen($resultado)<11)
+	{
+		$resultado = str_pad($resultado,11, '0', STR_PAD_LEFT);
+		$resultado  = mask($resultado,'###.###.###-##');
+	}
+	else if(strlen($resultado)==11)
+	{
+		$resultado  = mask($resultado,'###.###.###-##');
+	}
+	else if(strlen($resultado) > 11)
+	{
+		if(strlen($resultado) < 14)
+		{
+			$resultado = str_pad($resultado,14, '0', STR_PAD_LEFT);
+		}
+		$resultado = mask($resultado,'##.###.###/####-##');
+	}	
+	return $resultado;
+}
+
+
 /*!
  * ALTERAÇÃO  : 002 - Criada Função
  *              010 - Na chamada da fução "showError" do javascript, ao invés de passar os parâmetros $msgErro e $titulo 
@@ -750,6 +830,51 @@ function selectEstado($nomeCampo,$valorCampo,$modo = 3) {
 	$retorno .= '</select>';
 	return $retorno;
 }
+
+function selectCategoria($nomeCampo,$valorCampo) {
+	
+	$retorno 	  = '';
+	$categorias      = retornaCategorias();	
+	$retorno =  '<select name="'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	$retorno .= '<option value=""> - </option>';
+	
+	for ($i = 0; $i < count($categorias); $i++) {
+		$selected = ($valorCampo == $categorias[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$categorias[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$categorias[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+
+function selectTipoVeiculo($nomeCampo,$valorCampo) {
+	
+	$retorno 	  = '';
+	$tiposVeiculo      = retornaTiposVeiculo();	
+	$retorno =  '<select name="'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	$retorno .= '<option value=""> - </option>';
+	
+	for ($i = 0; $i < count($tiposVeiculo); $i++) {
+		$selected = ($valorCampo == $tiposVeiculo[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$tiposVeiculo[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$tiposVeiculo[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+function selectTipoChassi($nomeCampo,$valorCampo) {
+	
+	$retorno 	  = '';
+	$tiposChassi      = retornaTiposChassi();	
+	$retorno =  '<select name="'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	$retorno .= '<option value=""> - </option>';
+	
+	for ($i = 0; $i < count($tiposChassi); $i++) {
+		$selected = ($valorCampo == $tiposChassi[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$tiposChassi[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$tiposChassi[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+
 
 /*!
  * ALTERAÇÃO  : 004
