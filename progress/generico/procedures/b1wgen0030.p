@@ -2588,7 +2588,6 @@ PROCEDURE efetua_liber_anali_bordero:
                                  craplot.nrseqdig = craplot.nrseqdig + 1.
                             
                           VALIDATE craplot.
-                          VALIDATE craplcm.
                       END.
 
                    /* Apagar handle associado */
@@ -10517,6 +10516,8 @@ PROCEDURE efetua_resgate_tit_bordero:
     DEF VAR aux_dtultdat AS DATE    NO-UNDO.
     DEF VAR aux_vltarres AS DECI    NO-UNDO.
     DEF VAR h-b1wgen0088 AS HANDLE  NO-UNDO.
+    DEF VAR h-b1wgen0200 AS HANDLE  NO-UNDO.
+    DEF VAR aux_incrineg AS INT     NO-UNDO.
     
     DEF BUFFER crablot FOR craplot.
     DEF BUFFER cra2lot FOR craplot.
@@ -11018,23 +11019,60 @@ PROCEDURE efetua_resgate_tit_bordero:
                 END.
    
             /*  Cria lancamento da conta do associado ..................  */
-            CREATE crablcm.
-            ASSIGN crablcm.dtmvtolt = crablot.dtmvtolt 
-                   crablcm.cdagenci = crablot.cdagenci
-                   crablcm.cdbccxlt = crablot.cdbccxlt 
-                   crablcm.nrdolote = crablot.nrdolote
-                   crablcm.nrdconta = craptdb.nrdconta
-                   crablcm.nrdocmto = crablot.nrseqdig + 1
-                   crablcm.vllanmto = craptdb.vltitulo - (aux_vlliqnov - 
-                                                          aux_vlliqori) 
-                   crablcm.cdhistor = 687
-                   crablcm.nrseqdig = crablot.nrseqdig + 1 
-                   crablcm.nrdctabb = craptdb.nrdconta
-                   crablcm.nrautdoc = 0
-                   crablcm.cdpesqbb = STRING(craptdb.nrdocmto) 
-                   crablcm.cdcooper = par_cdcooper
 
-                   crablot.nrseqdig = crablcm.nrseqdig
+            IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+                 RUN sistema/generico/procedures/b1wgen0200.p 
+                     PERSISTENT SET h-b1wgen0200.
+
+            RUN gerar_lancamento_conta IN h-b1wgen0200 
+              (INPUT crablot.dtmvtolt                                 /* par_dtmvtolt */ 
+              ,INPUT crablot.cdagenci                                 /* par_cdagenci */ 
+              ,INPUT crablot.cdbccxlt                                 /* par_cdbccxlt */ 
+              ,INPUT crablot.nrdolote                                 /* par_nrdolote */ 
+              ,INPUT craptdb.nrdconta                                 /* par_nrdconta */ 
+              ,INPUT crablot.nrseqdig + 1                             /* par_nrdocmto */ 
+              ,INPUT 687                                              /* par_cdhistor */ 
+              ,INPUT crablot.nrseqdig + 1                             /* par_nrseqdig */ 
+              ,INPUT craptdb.vltitulo - (aux_vlliqnov - aux_vlliqori) /* par_vllanmto */ 
+              ,INPUT craptdb.nrdconta                                 /* par_nrdctabb */ 
+              ,INPUT STRING(craptdb.nrdocmto)                         /* par_cdpesqbb */ 
+              ,INPUT 0                                                /* par_nrautdoc */ 
+              ,INPUT 0                                                /* par_nrsequni */ 
+              ,INPUT ""                                               /* par_dtrefere */ 
+              ,INPUT ""                                               /* par_cdoperad */                                
+              ,INPUT par_cdcooper                                     /* par_cdcooper */ 
+              ,INPUT ""                                               /* par_nrdctitg */ 
+              ,INPUT 0                                                /* par_cdcoptfn */ 
+              ,INPUT 0                                                /* par_cdagetfn */ 
+              ,INPUT 0                                                /* par_nrterfin */ 
+              ,INPUT 0                                                /* par_cdorigem */ 
+              /* CAMPOS OPCIONAIS DO LOTE                                                    */
+              ,INPUT 0                      /* Processa lote                                 */
+              ,INPUT 0                      /* Tipo de lote a movimentar                     */
+              /* CAMPOS DE SAIDA                                                             */
+              ,OUTPUT TABLE tt-ret-lancto   /* Collection que contém o retorno do lançamento */
+              ,OUTPUT aux_incrineg          /* Indicador de crítica de negócio               */
+              ,OUTPUT aux_cdcritic          /* Código da crítica                             */
+              ,OUTPUT aux_dscritic).        /* Descriçao da crítica                          */
+
+            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                DO:
+
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT crablot.cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+
+                    UNDO RESGATE, RETURN "NOK".                    
+                END.
+
+            FIND FIRST crablcm 
+                WHERE RECID(crablcm) = tt-ret-lancto.recid_lcm
+                      NO-ERROR.
+
+            ASSIGN crablot.nrseqdig = crablcm.nrseqdig
                    crablot.qtinfoln = crablot.qtinfoln + 1
                    crablot.qtcompln = crablot.qtcompln + 1
                    crablot.vlinfodb = crablot.vlinfodb + crablcm.vllanmto
@@ -11048,7 +11086,6 @@ PROCEDURE efetua_resgate_tit_bordero:
                    craptdb.vlliqres = aux_vlliqnov.
 
             VALIDATE crablot.
-            VALIDATE crablcm.
 
                    FIND FIRST crapcob 
                         WHERE crapcob.cdcooper = craptdb.cdcooper
@@ -14769,7 +14806,6 @@ PROCEDURE efetua_baixa_titulo:
                                           aux_vllanmto     = aux_vllanmto + (craptdb.vltitulo - tt-titulos.vltitulo).
                                      
                                    VALIDATE craplot.
-                                   VALIDATE craplcm.
                                END.
 
                             /* Apagar handle associado */
@@ -14893,7 +14929,6 @@ PROCEDURE efetua_baixa_titulo:
                                               aux_vllanmto     = aux_vllanmto + (tt-titulos.vltitulo - craptdb.vltitulo).
                                          
                                        VALIDATE craplot.
-                                       VALIDATE craplcm.
                                    END.
 
                                 /* Apagar handle associado */
@@ -15105,7 +15140,6 @@ PROCEDURE efetua_baixa_titulo:
                                                craplot.vlcompcr = craplot.vlcompcr + aux_vliofcpl.
                                           
                                         VALIDATE craplot.
-                                        VALIDATE craplcm.
                                     END.
 
                                  /* Apagar handle associado */
@@ -15268,7 +15302,6 @@ PROCEDURE efetua_baixa_titulo:
                                   craplot.vlcompcr = craplot.vlcompcr + tt-titulos.vltitulo.
                              
                            VALIDATE craplot.
-                           VALIDATE craplcm.
                        END.
 
                     /* Apagar handle associado */
@@ -15586,7 +15619,6 @@ PROCEDURE efetua_baixa_titulo:
                                   cra2lot.qtcompln = cra2lot.qtcompln + 1.
                              
                            VALIDATE cra2lot.
-                           VALIDATE craplcm.
                        END.
 
                     /* Apagar handle associado */
