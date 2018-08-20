@@ -8,7 +8,8 @@
  * ALTERACOES:
  *
  *		  001: [03/11/2014] Daniel (CECRED): Incluso novos campos no form frmPreju
- *        002: [04/01/2016] Heitor (RKAM): Inclusao de novo campo para indicar o Tipo de Risco
+ *      002: [04/01/2016] Heitor (RKAM): Inclusao de novo campo para indicar o Tipo de Risco
+ *      003: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
  */	
 ?>	
 
@@ -50,25 +51,29 @@
 		<label for="vlttmupr">Multa:</label>
 		<input name="vlttmupr" id="vlttmupr" type="text" value="" />
 		
+    <label for="vlpgmupr">Vlr. Pg. Multa:</label>
+		<input name="vlpgmupr" id="vlpgmupr" type="text" value="" />
+		
 		<label for="vlttjmpr">Juros de Mora:</label>
 		<input name="vlttjmpr" id="vlttjmpr" type="text" value="" />
 		<br />
 		
-		<label for="vlpgmupr">Vlr. Pg. Multa:</label>
-		<input name="vlpgmupr" id="vlpgmupr" type="text" value="" />
-		
 		<label for="vlpgjmpr">Vlr.Pg.Juros Mora:</label>
 		<input name="vlpgjmpr" id="vlpgjmpr" type="text" value="" />
 		<br />
-		
-		<label for="vliofcpl">Valor do IOF:</label>
-		<input name="vliofcpl" id="vliofcpl" type="text" value="" />
-		
-		<label for="vlsdprej">Saldo Atualizado:</label>
-		<input name="vlsdprej" id="vlsdprej" type="text" value="" />
+    
+        <label for="vltiofpr">IOF Atraso:</label>
+		<input name="vltiofpr" id="vltiofpr" type="text" value="" />
 		<br />
+		
+		<label for="vlpiofpr">Vlr.Pg.IOF Atraso:</label>
+		<input name="vlpiofpr" id="vlpiofpr" type="text" value="" />
+		<br />
+		
+		<label for="vlsdprej" style="width: 92px;">Saldo Atualiz.:</label>
+		<input name="vlsdprej" id="vlsdprej" type="text" value="" />
 				
-		<label for="tpdrisco"><? echo utf8ToHtml('Classif. de Risco:') ?></label>
+		<label for="tpdrisco"><? echo utf8ToHtml('Classif. Risco:') ?></label>
 		<input name="tpdrisco" id="tpdrisco" type="text" value=""/>
 	</fieldset>
 	

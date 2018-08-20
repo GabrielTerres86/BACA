@@ -6,6 +6,7 @@
  * OBJETIVO     : Realizar pagamento de prejuizo de contrato.
  
    ALTERACOES   : 09/01/2018: Confirmação de estorno. Andrey Formigari - Mouts
+                  05/07/2018: Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
    
  */
 	session_start();
@@ -51,6 +52,10 @@
 			<tr>
 				<td><label for="vlmulta">&nbsp;&nbsp;<?php echo utf8ToHtml('Multa:') ?></label></td>
 				<td><input type="text" id="vlmulta" name="vlmulta" value="<? echo getByTagName($oEstorno->tags,'vlttmupr') ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
+			</tr>
+			<tr>
+				<td><label for="vlrdiof">&nbsp;&nbsp;<?php echo utf8ToHtml('IOF Atraso:') ?></label></td>
+				<td><input type="text" id="vlrdiof" name="vlrdiof" value="<? echo getByTagName($oEstorno->tags,'vltiofpr') ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
 			</tr>
 			<tr>
 				<td><label for="vlpagto">&nbsp;&nbsp;<?php echo utf8ToHtml('Pagamento:') ?></label></td>

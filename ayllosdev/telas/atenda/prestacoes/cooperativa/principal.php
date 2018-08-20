@@ -47,7 +47,7 @@
  * 035: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  * 036: [07/06/2018] - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti
  * 036: [22/05/2018] - Ajuste para calcular a antecipação da parcela parcial do projeto 298 - Pos Fixado. (James)
- * 037: [12/07/2018] - Incluir novamente a passagem do campo idcobope, que foi removido indevidamente. (Renato Darosci - Supero)
+ * 037: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
  */
 ?>
 
@@ -287,9 +287,14 @@
 			arrayRegistros['vlpgmupr'] = '<? echo getByTagName($registros,'vlpgmupr'); ?>';
 			arrayRegistros['vlpgjmpr'] = '<? echo getByTagName($registros,'vlpgjmpr'); ?>';
 			arrayRegistros['vlsdpjtl'] = '<? echo getByTagName($registros,'vlsdpjtl'); ?>';
-			
+      
+      /* 410 IOF */
 			arrayRegistros['vliofcpl'] = '<? echo formataMoeda(getByTagName($registros,'vliofcpl')); ?>';
-            arrayRegistros['idfiniof'] = '<? echo getByTagName($registros,'idfiniof'); ?>';
+      arrayRegistros['idfiniof'] = '<? echo getByTagName($registros,'idfiniof'); ?>';
+      
+      /* IOF Prejuizo */
+      arrayRegistros['vltiofpr'] = '<? echo getByTagName($registros,'vltiofpr'); ?>';
+      arrayRegistros['vlpiofpr'] = '<? echo getByTagName($registros,'vlpiofpr'); ?>';
       
 			</script><?
 			
@@ -387,7 +392,6 @@
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
-			arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
             arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof'); ?>';
 			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr'); ?>';
 			arrayProposta['vlrtarif'] = '<? echo getByTagName($proposta,'vlrtarif'); ?>';

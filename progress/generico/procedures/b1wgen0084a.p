@@ -172,6 +172,8 @@
 
                 10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)                     
 
+                07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)                
+
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -994,6 +996,17 @@ PROCEDURE calcula_atraso_parcela:
                      DO:
                        ASSIGN par_vliofcpl = ROUND(DECI(pc_calcula_valor_iof_epr.pr_vliofcpl),2).
                      END.
+                     
+                   IF par_vliofcpl <> ? AND crabpep.vlpagiof > 0 THEN
+                     DO:
+                       ASSIGN par_vliofcpl = par_vliofcpl - crabpep.vlpagiof.
+                       IF par_vliofcpl < 0 THEN
+                         DO:
+                           ASSIGN par_vliofcpl = 0.
+                         END.
+                     END.  
+                     
+                     
                      
        /* Valor a pagar - multa e juros de mora  */
        ASSIGN  par_vlpagsld = IF   par_vlpagpar <> 0   THEN

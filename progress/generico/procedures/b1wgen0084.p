@@ -4179,7 +4179,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.dtinipag = ?
               crapepr.tpdescto = crawepr.tpdescto
               crapepr.vliofepr = aux_vltotiof
-              crapepr.vlpagiof = aux_vliofpri
+              crapepr.vliofpri = aux_vliofpri
               crapepr.vliofadc = aux_vliofadi
               crapepr.cdcooper = par_cdcooper
               crapepr.qttolatr = crawepr.qttolatr
@@ -5716,6 +5716,7 @@ PROCEDURE transf_contrato_prejuizo.
 							  crapepr.vliofcpl = aux_vliofcpl          /* valor do IOF complementar de atraso */
                               crapepr.vlpgmupr = 0
                               crapepr.vlpgjmpr = 0
+                              /* crapepr.vlpiofpr = 0 --> Como nao ha estorno de IOF Prejuizo, manter valor pago anteriormente */                                
                               crapepr.vlsdeved = 0
                               crapepr.vlsdevat = 0.
                        /*
@@ -6236,8 +6237,11 @@ PROCEDURE desfaz_transferencia_prejuizo.
                    crapepr.dtprejuz = ?
                    crapepr.vlttmupr = 0
                    crapepr.vlttjmpr = 0
+                   crapepr.vltiofpr = 0
                    crapepr.vlpgmupr = 0
-                   crapepr.vlpgjmpr = 0.
+                   crapepr.vlpgjmpr = 0
+                   /* crapepr.vlpiofpr = 0 --> Como nao ha estorno de IOF Prejuizo, manter valor pago anteriormente */
+                   .
 
             /* Registrar LOG */
             ASSIGN aux_dstransa = STRING(par_dtmvtolt,"99/99/9999") + " - " +

@@ -768,8 +768,6 @@
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
               
-			 
-
 			  24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
 
               22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
@@ -11216,7 +11214,10 @@ PROCEDURE obtem-dados-conta-contrato:
            tt-dados-epr.portabil = aux_portabilidade
            tt-dados-epr.liquidia = aux_liquidia
            tt-dados-epr.dtapgoib = crapepr.dtapgoib
-           tt-dados-epr.vliofcpl = crapepr.vliofcpl.
+           tt-dados-epr.vliofcpl = crapepr.vliofcpl
+           /* IOF Prejuizo */
+           tt-dados-epr.vltiofpr = crapepr.vltiofpr
+           tt-dados-epr.vlpiofpr = crapepr.vlpiofpr.
            
          
 
@@ -11259,6 +11260,10 @@ PROCEDURE obtem-dados-conta-contrato:
                    tt-dados-epr.vljrmprj = crapepr.vljrmprj
                    tt-dados-epr.slprjori = crapepr.vlprejuz.
 
+            /* IOF */
+            ASSIGN tt-dados-epr.vltiofpr = crapepr.vltiofpr
+                   tt-dados-epr.vlpiofpr = crapepr.vlpiofpr.                 
+            
             /* Daniel */
             ASSIGN  aux_flpgmujm          = FALSE
                     tt-dados-epr.vlsdprej = crapepr.vlsdprej +

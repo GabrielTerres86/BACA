@@ -236,6 +236,7 @@
 	echo "arrayProposta['nivrisco'] = '".$nivrisco."';";
 	echo "arrayProposta['dtlibera'] = '".$dtlibera."';";	
 	echo "arrayProposta['idcobope'] = '".$idcobope."';";	
+    echo "arrayProposta['idfiniof'] = '".$idfiniof."';";
 	echo "aDadosPropostaFinalidade['dsnivris'] = arrayProposta['nivrisco'];";
 	
 	echo "$('#vlpreemp','#frmNovaProp').val('".$vlpreemp."');";
@@ -247,4 +248,5 @@
 	echo "$('#nivrisco','#frmNovaProp').val('".$nivrisco."');";
 	echo "$('#dtlibera','#frmNovaProp').val('".$dtlibera."');";
 	echo "$('#idcobope','#frmNovaProp').val('".$idcobope."');";
+    echo "$('#idfiniof','#frmNovaProp').val('".$idfiniof."');";
 ?>

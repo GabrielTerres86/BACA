@@ -1360,7 +1360,7 @@ DO WHILE TRUE:
              crabepr.dtinipag = ?
              crabepr.tpdescto = aux_tpdescto
              crabepr.vliofepr = aux_vltotiof
-             crabepr.vlpagiof = aux_vliofpri
+             crabepr.vliofpri = aux_vliofpri
              crabepr.vliofadc = aux_vliofadi
              crabepr.cdcooper = glb_cdcooper.
 

@@ -246,7 +246,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,idfiniof crapepr.idfiniof%TYPE
     ,vliofepr crapepr.vliofepr%TYPE
     ,vlrtarif crapepr.vltarifa%TYPE
-    ,vlrtotal crapepr.vlsdeved%TYPE);
+    ,vlrtotal crapepr.vlsdeved%TYPE
+    ,vltiofpr crapepr.vltiofpr%TYPE
+    ,vlpiofpr crapepr.vlpiofpr%TYPE);      
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -2450,7 +2452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                         Ultima atualizacao: 10/05/2018
+       Data    : Fevereiro/2013.                         Ultima atualizacao: 07/08/2018
     
        Dados referentes ao programa:
     
@@ -2476,6 +2478,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 				   21/10/2016 - Ajuste para utilização do cursor padrão da craptab. (Rodrigo)
            
                    10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
+                   
+                   07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)
     ............................................................................. */
     DECLARE
       -- Saida com erro opção 2
@@ -2506,6 +2510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,pep.vlsdvpar
               ,pep.vlsdvsji
               ,pep.vlpagmra
+              ,pep.vlpagiof
           FROM crappep pep
          WHERE pep.cdcooper = pr_cdcooper
                AND pep.nrdconta = pr_nrdconta
@@ -2764,6 +2769,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                            ,pr_flgimune => vr_flgimune
                                            ,pr_dscritic => vr_dscritic);
 
+        -- Diminuir do valor do IOF complementar o valor já pago
+        IF rw_crappep.vlpagiof > 0 THEN
+          pr_vliofcpl := greatest(0,pr_vliofcpl-rw_crappep.vlpagiof);
+        END IF;
         
         -- Se o valor a pagar originalmente for diferente de zero
         IF pr_vlpagpar <> 0 THEN
@@ -2853,7 +2862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 10/05/2018
+       Data    : 06/03/2012                         Ultima atualizacao: 07/08/2018
     
        Dados referentes ao programa:
     
@@ -2894,6 +2903,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
 
+                    07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)
+
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -2930,6 +2941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             ,vlpagmta
             ,vlsdvsji
             ,vlpagmra
+            ,vlpagiof
         FROM crappep
        WHERE crappep.cdcooper = pr_cdcooper
              AND crappep.nrdconta = pr_nrdconta
@@ -3201,6 +3213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                            
           END IF;
         
+          -- Calcular IOF atraso
           TIOF0001.pc_calcula_valor_iof_epr(pr_tpoperac => 2 -- Só atraso
                                            ,pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
@@ -3208,7 +3221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                            ,pr_vlemprst => vr_vlbaseiof
                                            ,pr_dscatbem => ''
                                            ,pr_cdlcremp => pr_cdlcremp
-                                           ,pr_cdfinemp => rw_crapepr.cdfinemp
+                                           ,pr_cdfinemp => rw_crawepr.cdfinemp
                                            ,pr_dtmvtolt => pr_dtmvtolt
                                            ,pr_qtdiaiof => vr_qtdiaiof
                                            ,pr_vliofpri => vr_vliofpri
@@ -3217,6 +3230,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                            ,pr_vltaxa_iof_principal => vr_vltxaiof
                                            ,pr_flgimune => vr_flgimune
                                            ,pr_dscritic => vr_dscritic);
+          -- Diminuir do valor do IOF complementar o valor já pago
+          IF rw_crappep.vlpagiof > 0 THEN
+            vr_vliofcpl_tmp := greatest(0,vr_vliofcpl_tmp-rw_crappep.vlpagiof);
+          END IF;       
                                         
               --Acumula o IOF de atraso das parcelas
                                         vr_vliofcpl := NVL(vr_vliofcpl,0) + NVL(vr_vliofcpl_tmp,0);
@@ -4854,7 +4871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 21/12/2017
+       Data    : Abril/2013.                         Ultima atualizacao: 07/08/2018
     
        Dados referentes ao programa:
     
@@ -4927,6 +4944,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  
                     07/06/2018 - P410 - Inclusao de campos do IOF (Marcos-Envolti)              
                                  
+                    07/08/2018 - P410 - Retornar pagamentos IOF Prejuizo (Marcos-Envolti)          
+                                 
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -4982,12 +5001,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,idfiniof
               ,vliofepr
               ,vltarifa
+              ,vltiofpr
+              ,vlpiofpr
           FROM crapepr
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta
                AND nrctremp = DECODE(pr_nrctremp, 0, nrctremp, pr_nrctremp) --> Se zero traz todos, senão só ele
          ORDER BY cdlcremp
                  ,cdfinemp;
+                 
       -- Buscar dados da linha de crédito
       CURSOR cr_craplcr(pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
         SELECT dslcremp
@@ -5003,6 +5025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          WHERE cdcooper = pr_cdcooper
                AND cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
+      
       -- Busca dos dados de complemento do empréstimo
       CURSOR cr_crawepr(pr_cdcooper  crapepr.cdcooper%TYPE,
                         pr_nrdconta  crapepr.nrdconta%TYPE,
@@ -5023,6 +5046,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND epr.nrdconta = pr_nrdconta
                AND epr.nrctremp = pr_nrctremp;
       rw_crawepr cr_crawepr%ROWTYPE;
+      
       -- Leitura da descricao da finalidade do emprestimo
       CURSOR cr_crapfin(pr_cdfinemp IN crapfin.cdfinemp%TYPE) IS
         SELECT dsfinemp
@@ -5051,6 +5075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND nrctremp = pr_nrctremp
                AND tpctrato = 90; -- Emprestimo/Financiamento
       vr_qtaditiv INTEGER;
+      
       -- Busca dos avalistas terceiros
       CURSOR cr_crapavt(pr_nrctremp IN crapavt.nrctremp%TYPE) IS
         SELECT nrcpfcgc
@@ -5060,6 +5085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND nrdconta = pr_nrdconta
                AND nrctremp = pr_nrctremp
                AND tpctrato = 1; --> Empréstimo
+           
         -- Cursor para buscar a modalidade
         CURSOR cr_gnmodal(pr_cdmodali IN gnmodal.cdmodali%TYPE) IS
           SELECT gnmodal.cdmodali
@@ -5067,6 +5093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             FROM gnmodal
            WHERE upper(gnmodal.cdmodali) = upper(pr_cdmodali);
         rw_gnmodal cr_gnmodal%ROWTYPE;
+        
         -- Cursor para buscar a sub modalidade
         CURSOR cr_gnsbmod(pr_cdmodali IN gnsbmod.cdmodali%TYPE
                          ,pr_cdsubmod IN gnsbmod.cdsubmod%TYPE) IS
@@ -5076,6 +5103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            WHERE upper(gnsbmod.cdmodali) = upper(pr_cdmodali)
              AND upper(gnsbmod.cdsubmod) = upper(pr_cdsubmod);
         rw_gnsbmod cr_gnsbmod%ROWTYPE;
+      
       -- nova M324
       CURSOR cr_craplem1(prc_nrctremp craplem.nrctremp%TYPE) IS
         SELECT sum(case when c.cdhistor in (382,384,2388,2473,2389,2390,2475) then c.vllanmto else 0 end) 
@@ -5092,19 +5120,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              2389, /* 2389 - PAGAMENTO JUROS PREJUIZO */
                              2390, /* 2390 - PAGAMENTO MULTA ATRASO PREJUIZO */
                              2475, /* 2475 - PAGAMENTO JUROS MORA PREJUIZO */
+                             
                              2392, /* 2392 - ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
                              2474, /* 2474 - ESTORNO PAGAMENTO JUROS +60 PREJUIZO */
                              2393, /* 2393 - ESTORNO PAGAMENTO DE JUROS PREJUIZO */
                              2394, /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
                              2476);      
-       /* SELECT sum(case when c.cdhistor in (2386,384) then c.vllanmto else 0 end) 
-               - 
-               sum(case when c.cdhistor in (2387) then c.vllanmto else 0 end) valor_pago
-          FROM craplcm c
-         WHERE c.cdcooper = pr_cdcooper
-           AND c.nrdconta = pr_nrdconta
-           AND to_number(trim(replace(c.cdpesqbb,'.',''))) = prc_nrctremp
-           AND c.cdhistor in(2386,2387,384);*/ 
+      
       -- nova M324
       CURSOR cr_craplem2(prc_nrctremp craplem.nrctremp%TYPE) IS
         SELECT sum(case when c.cdhistor in (383,2391) then c.vllanmto else 0 end) 
@@ -5117,6 +5139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND c.cdhistor in(383, /*ABONO DE PREJUIZO*/
                              2391, /*ABONO DE PREJUIZO*/
                              2395); /*ESTORNO ABONO DE PREJUIZO*/ 
+      
       -- nova M324
       CURSOR cr_craplem3(prc_nrctremp craplem.nrctremp%TYPE) IS  
         SELECT sum(case when c.cdhistor in (382,2388,2473,2389,2391) then c.vllanmto else 0 end) - 
@@ -5126,7 +5149,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND c.nrdconta = pr_nrdconta
            AND c.nrctremp = prc_nrctremp
            AND c.cdhistor in (382,2388,2473,2389,2391, 2392,2474,2393,2395);
-       --
 
       --nova M324
       CURSOR cr_craplem4(prc_nrctremp craplem.nrctremp%TYPE) IS
@@ -5142,18 +5164,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       vr_vlrabono_novo craplem.vllanmto%type;
 
+      -- Pagamento IOF Prejuizo
+      CURSOR cr_craplcm_iof(pr_nrctremp craplem.nrctremp%TYPE) IS
+        SELECT sum(c.vllanmto) vllanmto
+          FROM craplcm c
+         WHERE c.cdcooper = pr_cdcooper
+           AND c.nrdconta = pr_nrdconta
+           AND c.cdpesqbb = gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
+           AND c.cdagenci = 1 --
+           AND c.cdbccxlt = 100
+           AND c.cdoperad = '1'
+           AND c.nrdolote = 8457
+           AND c.cdhistor = 2317; --IOF     
+      vr_lcmiof NUMBER := 0;
+      
       -- Temp table para armazenar os avalistas encontrados
-      TYPE typ_reg_avalist IS RECORD(
-         nrgeneri VARCHAR2(30) --> Pode ser o CPF ou NroConta
+      TYPE typ_reg_avalist IS RECORD(nrgeneri VARCHAR2(30) --> Pode ser o CPF ou NroConta
         ,nmdavali crapavt.nmdavali%TYPE); --> Nome do avalista
       TYPE typ_tab_avalist IS TABLE OF typ_reg_avalist INDEX BY PLS_INTEGER;
       vr_ind_avalist PLS_INTEGER;
       vr_tab_avalist typ_tab_avalist;
       vr_nrctaavg    NUMBER; --> Número genérico
+      
       -- Campos de descrição dos avalistas 1, 2 e por extenso
       vr_dsdavali VARCHAR2(300);
       vr_dsdaval1 VARCHAR2(300);
       vr_dsdaval2 VARCHAR2(300);
+      
       -- Buscar se existe alguma parcela vencida
       CURSOR cr_crappep(pr_nrctremp IN crapepr.nrctremp%TYPE) IS
         SELECT 1
@@ -5163,6 +5200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND nrctremp = pr_nrctremp
                AND inliquid = 0 -- Não liquidada
                AND dtvencto <= pr_rw_crapdat.dtmvtoan; -- Parcela Vencida
+      
       -- Busca dos lançamentos cfme lista de históricos passado
       CURSOR cr_craplem(pr_nrctremp  IN crapepr.nrctremp%TYPE
                        ,pr_lsthistor IN VARCHAR2 DEFAULT ' ') IS --> Lista comdigos de histórico a retornar
@@ -5172,9 +5210,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          WHERE cdcooper = pr_cdcooper
                AND nrdconta = pr_nrdconta --> Conta enviada
                AND nrctremp = pr_nrctremp --> Empréstimo atual
-               AND
-               ',' || pr_lsthistor || ',' LIKE ('%,' || cdhistor || ',%'); --> Retornar históricos passados na listagem
+           AND ',' || pr_lsthistor || ',' LIKE ('%,' || cdhistor || ',%'); --> Retornar históricos passados na listagem
       rw_craplem cr_craplem%ROWTYPE;
+      
       -- Verificar se existe aviso de débito em conta corrente não processado
       CURSOR cr_crapavs(pr_nrdconta IN crapavs.nrdconta%TYPE) IS
         SELECT 'S'
@@ -5203,6 +5241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND craplcm.dtmvtolt = pr_dtmvtolt_dat;
       rw_craplcm cr_craplcm%ROWTYPE;
       
+      -- Busca Rating do Contrato
       cursor c_rating is
         select 1 idrating
              , t.indrisco||'-'||to_char(t.dtmvtolt,'DD/MM/RRRR')||' '||decode(t.insitrat,1,'(Pr.)','(Ef.)') dsrating
@@ -5220,14 +5259,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            and t.nrdconta (+) = pr_nrdconta
            and t.nrctrrat (+) = pr_nrctremp
            and t.tpctrrat (+) = 90;
+      
       -- variaveis auxiliares a busca
       vr_nmprimtl crapass.nmprimtl%TYPE; --> Nome do associado
       vr_dsdpagto VARCHAR2(100); --> Descrição auxiliar do débito
       vr_qtmesdec NUMBER(16, 8); --> Qtde de meses decorridos
       vr_qtpreemp NUMBER; --> Quantidade de parcelas do empréstimos
       vr_qtpreapg NUMBER; --> Quantidade de parcelas a pagar
-      --vr_vlpreapg NUMBER(20,7);                --> Valor das parcelas a pagar
-      --vr_vlpreemp NUMBER;              --> Valor da parcela do empréstimo
       vr_vlpreapg NUMBER; --> Valor das parcelas a pagar
       vr_vlmrapar crappep.vlmrapar%TYPE; --> Valor do Juros de Mora
       vr_vlmtapar crappep.vlmtapar%TYPE; --> Valor da Multa
@@ -5301,18 +5339,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
       -- Busca do nome do associado
       vr_nmprimtl := pr_nmprimtl;
-      --OPEN cr_crapass(pr_nrdconta => pr_nrdconta);
-      --FETCH cr_crapass INTO vr_nmprimtl;
-      --CLOSE cr_crapass;
     
       -- busca o tipo de documento GED
       vr_dstextab := pr_tab_digitaliza;
-      /*vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-      ,pr_nmsistem => 'CRED'
-      ,pr_tptabela => 'GENERI'
-      ,pr_cdempres => 00
-      ,pr_cdacesso => 'DIGITALIZA'
-      ,pr_tpregist => 5);*/ /* Contrt. emprestimo/financiamento (GED) */
+      
       -- Se encontrar
       IF vr_dstextab IS NULL THEN
         vr_tpdocged := 0;
@@ -5322,12 +5352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       -- Leitura do indicador de uso da tabela de taxa de juros
       vr_dstextab := pr_tab_parempctl;
-      /*vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => 3
-      ,pr_nmsistem => 'CRED'
-      ,pr_tptabela => 'USUARI'
-      ,pr_cdempres => 11
-      ,pr_cdacesso => 'PAREMPCTL'
-      ,pr_tpregist => 01);*/
+      
       -- Se encontrar
       IF vr_dstextab IS NULL THEN
         -- Gerar erro
@@ -5340,8 +5365,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Busca dos dados do emprestimo passado ou de todos os emprestimos da conta quando nrctremp = 0
       FOR rw_crapepr IN cr_crapepr LOOP
         BEGIN
-          
-          
           -- Buscar descrição da linha de crédito
           OPEN cr_craplcr(pr_cdlcremp => rw_crapepr.cdlcremp);
           FETCH cr_craplcr
@@ -5378,14 +5401,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
           
           -- Montar a descrição da linha de crédito
-          vr_dslcremp := TRIM(rw_crapepr.cdlcremp) || '-' ||
-                         rw_craplcr.dslcremp;
+          vr_dslcremp := TRIM(rw_crapepr.cdlcremp) || '-' ||rw_craplcr.dslcremp;
           --  Mostrar emprestimos em aberto (nao liquidados), emprestimos que
           --  estao em prejuizo, e emprestimos liquidados sem prejuizo que ainda
           --  podem ser visualizados conforme campo craplcr.nrdialiq cadastrado
           --  na tela LCREDI. A ultima condicao e utilizada conforme o parametro
           --  par_flgcondic for alimentando.
-          IF NOT (UPPER(pr_nmdatela) IN ('EXTEMP', 'IMPRES') OR
+          IF NOT (UPPER(pr_nmdatela) IN ('EXTEMP', 'IMPRES') 
+                 OR
               RW_crapepr.inliquid = 0 OR rw_crapepr.inprejuz = 1 OR
               (pr_flgcondc AND rw_crapepr.inliquid = 1 AND
               rw_crapepr.inprejuz = 0 AND
@@ -5823,23 +5846,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             pr_tab_dados_epr(vr_indadepr).vljraprj := rw_crapepr.vljraprj;
             pr_tab_dados_epr(vr_indadepr).vljrmprj := rw_crapepr.vljrmprj;
             pr_tab_dados_epr(vr_indadepr).slprjori := rw_crapepr.vlprejuz;
+            -- IOF do prejuizo
+            pr_tab_dados_epr(vr_indadepr).vltiofpr := rw_crapepr.vltiofpr;
+            pr_tab_dados_epr(vr_indadepr).vlpiofpr := rw_crapepr.vlpiofpr;
           
             /* Daniel */
             vr_flpgmujm := FALSE;
-            pr_tab_dados_epr(vr_indadepr).vlsdprej := nvl(rw_crapepr.vlsdprej
-                                                         ,0) +
-                                                      (pr_tab_dados_epr(vr_indadepr)
-                                                       .vlttmupr - pr_tab_dados_epr(vr_indadepr)
-                                                       .vlpgmupr) +
-                                                      (pr_tab_dados_epr(vr_indadepr)
-                                                       .vlttjmpr - pr_tab_dados_epr(vr_indadepr)
-                                                       .vlpgjmpr);
+            pr_tab_dados_epr(vr_indadepr).vlsdprej := nvl(rw_crapepr.vlsdprej,0) 
+                                                    + (pr_tab_dados_epr(vr_indadepr).vlttmupr - pr_tab_dados_epr(vr_indadepr).vlpgmupr) 
+                                                    + (pr_tab_dados_epr(vr_indadepr).vlttjmpr - pr_tab_dados_epr(vr_indadepr).vlpgjmpr)
+                                                    + (pr_tab_dados_epr(vr_indadepr).vltiofpr - pr_tab_dados_epr(vr_indadepr).vlpiofpr);
           
             /* Verificacao para saber se foi pago multa e juros de mora */
-            IF pr_tab_dados_epr(vr_indadepr)
-             .vlttmupr - pr_tab_dados_epr(vr_indadepr).vlpgmupr <= 0
-                AND pr_tab_dados_epr(vr_indadepr)
-               .vlttjmpr - pr_tab_dados_epr(vr_indadepr).vlpgjmpr <= 0 THEN
+            IF pr_tab_dados_epr(vr_indadepr).vlttmupr - pr_tab_dados_epr(vr_indadepr).vlpgmupr <= 0
+            AND pr_tab_dados_epr(vr_indadepr).vlttjmpr - pr_tab_dados_epr(vr_indadepr).vlpgjmpr <= 0 THEN
               vr_flpgmujm := TRUE;
             END IF;
           
@@ -5864,10 +5884,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               vr_vlrabono_novo := NVL(r_craplem4.valor_pago_abono,0);
             END LOOP;
             
+            -- Pagamento IOF Prejuizo
+            FOR rw_lcm IN cr_craplcm_iof(pr_nrctremp => rw_crapepr.nrctremp) LOOP
+              vr_lcmiof := nvl(rw_lcm.vllanmto,0);
+            END LOOP;
+            
             -- Valores pagos Prejuizo
             FOR r_craplem1 IN cr_craplem1(prc_nrctremp => rw_crapepr.nrctremp) LOOP
-              pr_tab_dados_epr(vr_indadepr).vlrpagos := nvl(r_craplem1.valor_pago,0) - vr_vlrabono_novo;
+              pr_tab_dados_epr(vr_indadepr).vlrpagos := nvl(r_craplem1.valor_pago,0) + vr_lcmiof - vr_vlrabono_novo;
             END LOOP;            
+            
             -- Saldo original prejuizo
             FOR r_craplem3 IN cr_craplem3(prc_nrctremp => rw_crapepr.nrctremp) LOOP
                 
@@ -5888,73 +5914,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                     
             FOR rw_craplem IN cr_craplem(pr_nrctremp  => rw_crapepr.nrctremp
                                         ,pr_lsthistor => '391,382,383,390,2388,2392,2391,2395,2473') LOOP
-              -- Para pagamento de prejuizos 391 e 382
-              /*IF rw_craplem.cdhistor IN (391, 382,2388,2473) THEN
-                -- Adicionar no campo valor pagos
-                pr_tab_dados_epr(vr_indadepr).vlrpagos := NVL(pr_tab_dados_epr(vr_indadepr)
-                                                              .vlrpagos
-                                                             ,0) +
-                                                          rw_craplem.vllanmto;
-              END IF;
-            
-              \* Melhoria 324 - se for estorno de pagamento, deduzir do valor pago *\
-              IF rw_craplem.cdhistor IN (2392) THEN
-                -- Adicionar no campo valor pagos
-                pr_tab_dados_epr(vr_indadepr).vlrpagos := NVL(pr_tab_dados_epr(vr_indadepr)
-                                                              .vlrpagos
-                                                             ,0) -
-                                                          rw_craplem.vllanmto;
-              END IF;*/
-            
-              /* Somente sera mostrado o valor do Saldo Prejuizo Original,
-              quando o valor da multa e juros de mora for pago total   */
-              /*M324 - comentado campo vr_flpgmujm pois a regra de negocio solicita para recalcular o saldo prejuizo original */ 
-                           --IF (/*(vr_flpgmujm) AND*/ (rw_craplem.cdhistor IN (382, 383, 2388, 2392, 2395))) THEN --RMM - Inclusao do his 2391
-                -- Decrementar no campo saldo prejuizo origem
-/*                if rw_craplem.cdhistor in (382, 383,391,2388, 2391,2473) then
-                pr_tab_dados_epr(vr_indadepr).slprjori := NVL(pr_tab_dados_epr(vr_indadepr)
-                                                              .slprjori
-                                                             ,0) -
-                                                          rw_craplem.vllanmto;
-              END IF;
-                if rw_craplem.cdhistor in ( 2392, 2395) then --estorno do pagamento/estorno abono
-                    pr_tab_dados_epr(vr_indadepr).slprjori := NVL(pr_tab_dados_epr(vr_indadepr)
-                                                              .slprjori
-                                                             ,0) +
-                                                          rw_craplem.vllanmto;
-                  
-                end if;*/
-              --END IF;
-              -- Somente para o Abono Prejuizo 383
-              /*IF rw_craplem.cdhistor in ( 383, 2391) THEN
-                -- Considerar este como o abono
-                pr_tab_dados_epr(vr_indadepr).vlrabono := rw_craplem.vllanmto;
-              END IF;
-              -- M324 - se for estorno do Abono Prejuizo 2395
-              IF rw_craplem.cdhistor = 2395 THEN
-                -- Considerar este como o abono
-                pr_tab_dados_epr(vr_indadepr).vlrabono := pr_tab_dados_epr(vr_indadepr).vlrabono  - rw_craplem.vllanmto;
-              END IF;*/
               
               -- Somente para Serv.TAxas 390
               IF rw_craplem.cdhistor = 390 THEN
                 -- Adicionar no campo vlr acrescimo
-                pr_tab_dados_epr(vr_indadepr).vlacresc := NVL(pr_tab_dados_epr(vr_indadepr)
-                                                              .vlacresc
-                                                             ,0) +
-                                                          rw_craplem.vllanmto;
+                pr_tab_dados_epr(vr_indadepr).vlacresc := NVL(pr_tab_dados_epr(vr_indadepr).vlacresc,0) + rw_craplem.vllanmto;
               END IF;
             END LOOP;
-          
-            /* Como nao tem historico para multa e juros de mora, precisamos
-            diminuir do valor total pago da multa e juros de mora      */
-            -- RMM
-            /*IF vr_flpgmujm THEN
-              pr_tab_dados_epr(vr_indadepr).slprjori := pr_tab_dados_epr(vr_indadepr)
-                                                        .slprjori + pr_tab_dados_epr(vr_indadepr)
-                                                        .vlpgmupr + pr_tab_dados_epr(vr_indadepr)
-                                                        .vlpgjmpr;
-            END IF;*/
           
             -- Ao final, garantir que o saldo prejuizo original não fique inferior a zero
             IF pr_tab_dados_epr(vr_indadepr).slprjori < 0 THEN
@@ -6082,8 +6048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
             -- Se a quantidade de meses decorridas armazenada for superior a de parcelas
             -- OU se o valor pendente a pagar for superior ao saldo devedor calculado
-            IF pr_tab_dados_epr(vr_indadepr)
-             .qtmesdec > rw_crapepr.qtpreemp
+            IF pr_tab_dados_epr(vr_indadepr).qtmesdec > rw_crapepr.qtpreemp
                 OR pr_tab_dados_epr(vr_indadepr).vlpreapg > vr_vlsdeved THEN
               -- Considerar o saldo devedor calculado como o pendente a pagar
               pr_tab_dados_epr(vr_indadepr).vlpreapg := vr_vlsdeved;
@@ -6096,24 +6061,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         
           -- Copiar quantidade de parcelas calculadas
           pr_tab_dados_epr(vr_indadepr).qtprecal := vr_qtprecal;
-          pr_tab_dados_epr(vr_indadepr).vltotpag := nvl(pr_tab_dados_epr(vr_indadepr)
-                                                        .vlpreapg
-                                                       ,0) +
-                                                    nvl(pr_tab_dados_epr(vr_indadepr)
-                                                        .vlmrapar
-                                                       ,0) +
-                                                    nvl(pr_tab_dados_epr(vr_indadepr)
-                                                        .vlmtapar
-                                                       ,0) +
-                                                    nvl(pr_tab_dados_epr(vr_indadepr)
-                                                        .vliofcpl
-                                                       ,0);
+          pr_tab_dados_epr(vr_indadepr).vltotpag := nvl(pr_tab_dados_epr(vr_indadepr).vlpreapg,0) 
+                                                  + nvl(pr_tab_dados_epr(vr_indadepr).vlmrapar,0) 
+                                                  + nvl(pr_tab_dados_epr(vr_indadepr).vlmtapar,0) 
+                                                  + nvl(pr_tab_dados_epr(vr_indadepr).vliofcpl,0);
         
           -- Calcular Parcela/Atraso
-          vr_qtmesdec := pr_tab_dados_epr(vr_indadepr)
-                         .qtmesdec - pr_tab_dados_epr(vr_indadepr).qtprecal;
-          vr_qtpreemp := pr_tab_dados_epr(vr_indadepr)
-                         .qtpreemp - pr_tab_dados_epr(vr_indadepr).qtprecal;
+          vr_qtmesdec := pr_tab_dados_epr(vr_indadepr).qtmesdec - pr_tab_dados_epr(vr_indadepr).qtprecal;
+          vr_qtpreemp := pr_tab_dados_epr(vr_indadepr).qtpreemp - pr_tab_dados_epr(vr_indadepr).qtprecal;
           -- Se quantidade decorrida for superior a de parcelas
           IF vr_qtmesdec > vr_qtpreemp THEN
             -- Considerar como atraso a quantidade de parcelas
@@ -6143,7 +6098,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             END IF;
             -- Fechar o cursor
             CLOSE cr_crappre;
-          
           END IF;
           -- Fechar o cursor
           CLOSE cr_crapass;
@@ -6610,6 +6564,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<vlrtarif>' || vr_tab_dados_epr(vr_index).vlrtarif || '</vlrtarif>' ||
                         '<vlrtotal>' || vr_tab_dados_epr(vr_index).vlrtotal || '</vlrtotal>' ||
                         '<vliofcpl>' || vr_tab_dados_epr(vr_index).vliofcpl || '</vliofcpl>' ||
+                        '<vltiofpr>' || vr_tab_dados_epr(vr_index).vltiofpr || '</vltiofpr>' ||
+                        '<vlpiofpr>' || vr_tab_dados_epr(vr_index).vlpiofpr || '</vlpiofpr>' ||
                         '<tpatuidx>' || vr_tab_dados_epr(vr_index).tpatuidx || '</tpatuidx>' ||
                         '<idcarenc>' || vr_tab_dados_epr(vr_index).idcarenc || '</idcarenc>' ||
                         '<dtcarenc>' || to_char(vr_tab_dados_epr(vr_index).dtcarenc,'DD/MM/RRRR') || '</dtcarenc>' ||

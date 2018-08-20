@@ -141,7 +141,6 @@ DEF VAR var_txmensal AS DECI                                        NO-UNDO.
 DEF VAR var_vliofepr AS DECI                                        NO-UNDO.
 DEF VAR var_vlrtarif AS DECI                                        NO-UNDO.
 DEF VAR var_vllibera AS DECI                                        NO-UNDO.
-DEF VAR var_vllibcet AS DECI                                        NO-UNDO.
 DEF VAR var_permnovo AS LOGI                                        NO-UNDO.
 
 
@@ -818,14 +817,12 @@ PROCEDURE grava_simulacao:
         RETURN "NOK".
 
         /* Incrementar Tarifa e IOF */
-        ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr
-               var_vllibcet = par_vlemprst.
+        ASSIGN var_vllibera = par_vlemprst.
 
     END.
     ELSE
     DO:
-        ASSIGN var_vllibera = par_vlemprst
-               var_vllibcet = par_vlemprst - var_vlrtarif - var_vliofepr.
+        ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr.
     END.
     
     /* Criacao ou busca do registro de simulacao */
@@ -905,7 +902,7 @@ PROCEDURE grava_simulacao:
                                      INPUT IF AVAIL tt-parcelas-epr THEN 
                                               tt-parcelas-epr.vlparepr 
                                            ELSE 0, 
-                                     INPUT var_vllibcet,
+                                     INPUT var_vllibera,
                                      INPUT par_dtlibera, 
                                      INPUT par_dtdpagto,
                                     OUTPUT aux_txcetano,
@@ -1379,6 +1376,7 @@ PROCEDURE imprime_simulacao:
     DEF VAR aux_vlajuepr          AS CHAR                           NO-UNDO.
     DEF VAR aux_vlrtarif          AS CHAR                           NO-UNDO.
     DEF VAR aux_vllibera          AS CHAR                           NO-UNDO.
+    DEF VAR aux_dsfiniof          AS CHAR                           NO-UNDO.
     DEF VAR aux_percetop          AS DECI FORMAT "zz9.99"           NO-UNDO.
     DEF VAR aux_diapagto          AS INTE                           NO-UNDO.
     DEF VAR aux_mespagto          AS INTE                           NO-UNDO.
@@ -1424,6 +1422,8 @@ PROCEDURE imprime_simulacao:
         aux_tributos     FORMAT "x(18)"    AT 13 LABEL "Tributos"
         SKIP
         aux_vlrtarif     FORMAT "x(13)"    AT 15 LABEL "Tarifa"
+        SKIP
+        aux_dsfiniof     FORMAT "x(3)"     AT 02 LABEL "Financia IOF/Tarifa"
         SKIP
         aux_vllibera     FORMAT "x(18)"    AT 02 LABEL "Vl.Liquido Liberado"
         aux_percetop                       AT 11 LABEL "CET(%a.a.)"
@@ -1535,6 +1535,11 @@ PROCEDURE imprime_simulacao:
                
                aux_anopagto = YEAR(tt-crapsim.dtdpagto).
 
+               IF tt-crapsim.idfiniof = 1 THEN 
+                   ASSIGN aux_dsfiniof = "SIM".
+               ELSE
+                   ASSIGN aux_dsfiniof = "NAO".
+
                RUN sistema/generico/procedures/b1wgen0084.p 
                    PERSISTENT SET hb1wgen0084.
     
@@ -1589,6 +1594,7 @@ PROCEDURE imprime_simulacao:
                 aux_carencia
                 aux_tributos
                 aux_vlrtarif
+                aux_dsfiniof
                 aux_vllibera
                 aux_percetop
                 aux_cdmodali

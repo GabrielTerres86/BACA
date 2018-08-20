@@ -1455,7 +1455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
               ,crapepr.vliofepr
               ,crapepr.qtpreemp
               ,crapepr.tpemprst
-              ,crapepr.vlpagiof vliofpri
+              ,crapepr.vliofpri
               ,crapepr.vliofadc 
           from crapepr
          where cdcooper = pr_cdcooper
@@ -1467,7 +1467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
       cursor cr_crappep(pr_cdcooper crapepr.cdcooper%type
                        ,pr_nrdconta crapepr.nrdconta%type
                        ,pr_nrctremp crapepr.nrctremp%type) is
-        select sum(nvl(pep.vltariof,0)) vliofpri 
+        select sum(nvl(pep.vliofpri,0)) vliofpri 
               ,sum(nvl(pep.vliofadc,0)) vliofadc
           from crappep pep
          where pep.cdcooper = pr_cdcooper
@@ -2429,7 +2429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
             -- Atualizar CRAPPEP
             BEGIN  
               UPDATE crappep
-                 SET vltariof = nvl(vr_tab_parcelas(vr_indice).vliofpri,0)
+                 SET vliofpri = nvl(vr_tab_parcelas(vr_indice).vliofpri,0)
                     ,vliofadc = nvl(vr_tab_parcelas(vr_indice).vliofadc,0)
                WHERE cdcooper = pr_cdcooper
                  AND nrdconta = pr_nrdconta
@@ -2440,7 +2440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
                 -- Erro não tratado 
                 vr_cdcritic := 1035;
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' crappep: '
-                            || 'vltariof:' || vr_tab_parcelas(vr_indice).vliofpri 
+                            || 'vliofpri:' || vr_tab_parcelas(vr_indice).vliofpri 
                             || ' ,vliofadc:' || vr_tab_parcelas(vr_indice).vliofadc
                             || ' com cdcooper: '||pr_cdcooper
                             || ' ,nrdconta: '||pr_nrdconta
