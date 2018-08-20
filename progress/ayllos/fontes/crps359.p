@@ -174,9 +174,14 @@
                       
                03/05/2017 - #601794 Inclusao dos parametros de criacao de 
                             chamado (Carlos)
+							
+			   10/05/2018 - Geração do registro no cadastro tbgen
+			                quando um programa para a cadeia e de quando o programa he reiniciado
+							( Belli - Envolti - Chamado REQ0013442)
+
                24/05/2018 - feito tratamento no lote emprestimo condiginado, para 
 			                quando tiver 7 e 4 digitos, atualizar corretamente o lote. Alcemir (Mout's) (SCTASK0015071).
-							             
+                            
 ............................................................................. */
 
 DEF STREAM str_mp.      /*  Stream para monitoramento do programas paralelos  */
@@ -231,6 +236,15 @@ DEF            VAR aux_flgproce AS LOGICAL                           NO-UNDO.
 DEF            VAR h-b1wgen0011 AS HANDLE                            NO-UNDO.
 
 DEF BUFFER crabass FOR crapass.
+
+/* Variaveis para geração do registro no cadastro tbgen quando um programa para a cadeia, chd REQ0013442, 10/05/2018 */
+DEF VAR aux_cdcrimsg      AS INTE                                   NO-UNDO.
+DEF VAR aux_dscrimsg      AS CHAR                                   NO-UNDO. 
+
+/* Variaveis para geração do registro no cadastro tbgen quando um programa para a cadeia, chd REQ0013442, 10/05/2018 */
+DEF            VAR aux_injareex AS CHAR                              NO-UNDO. 
+
+ASSIGN aux_injareex = "N". /* INDICANDO QUE AINDA NAO REXECUTOU O PROCESSO */
 
 ASSIGN glb_cdprogra = "crps359".
      /*  glb_nmmodora = glb_cdprogra.  Comentado Temporariamente */
@@ -875,7 +889,7 @@ PROCEDURE proc_roda_exclusivo:
                       LC(SUBSTRING(aux_cadeiaex,aux_nrposprg,7) + ".p").
    
        aux_nmcobjet = SEARCH(aux_nmdobjet).
-
+	   
        IF   aux_nmcobjet <> ?   THEN
             DO:
                 FIND FIRST crapprg WHERE 
@@ -912,6 +926,45 @@ PROCEDURE proc_roda_exclusivo:
                      ).
                 CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
                 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+		   
+				/* Geração do registro no cadastro tbgen quando um programa he reiniciado na cadeia, chd REQ0013442, 10/05/2018 */
+				IF aux_flgrepro AND
+                   aux_injareex = "N" THEN
+                  DO:				
+                     ASSIGN aux_injareex = "S". /* INDICANDO QUE AINDA NAO REXECUTOU O PROCESSO */
+
+                     ASSIGN aux_cdcrimsg = 1231
+                            aux_dscrimsg = "crapcri nao encontrada".	
+							
+                     FIND crapcri WHERE crapcri.cdcritic = aux_cdcrimsg
+                                        NO-LOCK NO-ERROR.                            
+                     IF AVAIL crapcri THEN
+                       ASSIGN aux_dscrimsg = crapcri.dscritic. 
+					   
+                     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+					 
+                     RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+                    (input "O",                        /* Tipo do log: I - inicio, F - fim, O - ocorrencia */
+                     input SUBSTRING(aux_nmdobjet, 8), /* Codigo do programa ou do job */
+                     input glb_cdcooper,               /* Codigo da cooperativa */
+                     input 1,  /* Tipo de execucao   0-Outro, 1-Batch, 2-Job, 3-Online  */
+                     input 4,  /* tipo de ocorrencia 1-Erro de negocio, 2-Erro nao tratado, 3-Alerta, 4-Mensagem */
+                     input 0,  /* Nivel criticidade  0-Baixa, 1-Media, 2-Alta, 3-Critica  */
+                     input aux_cdcrimsg,
+                     input aux_dscrimsg,                     
+                     input 1,  /* Indicador de sucesso da execução */
+                     input "", /* Nome do arquivo */
+                     input 0,  /* Abre chamado sim/nao */
+                     input "", /* Texto do chamado */
+                     input "", /* Destinatario do email */
+                     input 0,  /* Erro pode reincidir no prog em dias diferentes, devendo abrir chamado */
+                     input 0   /* Identificador unico da tabela (sequence) */
+					 ).
+					 
+                     CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+					 
+                     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }	
+                  END.
 
                 RUN VALUE("fontes/" +
                           LC(SUBSTRING(aux_cadeiaex,aux_nrposprg,7) + ".p")).
@@ -943,10 +996,47 @@ PROCEDURE proc_roda_exclusivo:
                                        "Execucao ok " +
                                        " >> log/proc_batch.log").
                 ELSE
+				
+                DO:
                      UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                        " - " + glb_cdprogra + "' --> '" +
                                        "PROGRAMA COM ERRO" +
                                        " >> log/proc_batch.log").
+									   
+					 /* Geração do registro no cadastro tbgen quando um programa para a cadeia, chd REQ0013442, 10/05/2018 */
+						
+                     ASSIGN aux_cdcrimsg = 1229
+                            aux_dscrimsg = "crapcri nao encontrada".	
+							
+                     FIND crapcri WHERE crapcri.cdcritic = aux_cdcrimsg
+                                        NO-LOCK NO-ERROR.                            
+                     IF AVAIL crapcri THEN
+                       ASSIGN aux_dscrimsg = crapcri.dscritic. 
+					   
+                     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+					 
+                     RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+                    (input "O",                        /* Tipo do log: I - inicio, F - fim, O - ocorrencia */
+                     input SUBSTRING(aux_nmdobjet, 8), /* Codigo do programa ou do job */
+                     input glb_cdcooper,               /* Codigo da cooperativa */
+                     input 1,  /* Tipo de execucao   0-Outro, 1-Batch, 2-Job, 3-Online  */
+                     input 4,  /* tipo de ocorrencia 1-Erro de negocio, 2-Erro nao tratado, 3-Alerta, 4-Mensagem */
+                     input 0,  /* Nivel criticidade  0-Baixa, 1-Media, 2-Alta, 3-Critica  */
+                     input aux_cdcrimsg,
+                     input aux_dscrimsg,                     
+                     input 1,  /* Indicador de sucesso da execução */
+                     input "", /* Nome do arquivo */
+                     input 0,  /* Abre chamado sim/nao */
+                     input "", /* Texto do chamado */
+                     input "", /* Destinatario do email */
+                     input 0,  /* Erro pode reincidir no prog em dias diferentes, devendo abrir chamado */
+                     input 0   /* Identificador unico da tabela (sequence) */
+					 ).
+					 
+                     CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+					 
+                     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }	
+                END.
 
                 glb_cdprogra = "crps359".
             END.
@@ -1035,6 +1125,45 @@ PROCEDURE proc_roda_paralelo:
                        
                 NEXT.          /*  Executa proximo da lista  */
             END.
+		   
+				/* Geração do registro no cadastro tbgen quando um programa he reiniciado na cadeia, chd REQ0013442, 10/05/2018 */
+				IF aux_flgrepro AND
+                   aux_injareex = "N" THEN
+                  DO:				
+                     ASSIGN aux_injareex = "S". /* INDICANDO QUE AINDA NAO REXECUTOU O PROCESSO */
+
+                     ASSIGN aux_cdcrimsg = 1231
+                            aux_dscrimsg = "crapcri nao encontrada".	
+							
+                     FIND crapcri WHERE crapcri.cdcritic = aux_cdcrimsg
+                                        NO-LOCK NO-ERROR.                            
+                     IF AVAIL crapcri THEN
+                       ASSIGN aux_dscrimsg = crapcri.dscritic. 
+					   
+                     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+					 
+                     RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+                    (input "O",                        /* Tipo do log: I - inicio, F - fim, O - ocorrencia */
+                     input "CRPS359.P",                  /* Codigo do programa ou do job */
+                     input glb_cdcooper,               /* Codigo da cooperativa */
+                     input 1,  /* Tipo de execucao   0-Outro, 1-Batch, 2-Job, 3-Online  */
+                     input 4,  /* tipo de ocorrencia 1-Erro de negocio, 2-Erro nao tratado, 3-Alerta, 4-Mensagem */
+                     input 0,  /* Nivel criticidade  0-Baixa, 1-Media, 2-Alta, 3-Critica  */
+                     input aux_cdcrimsg,
+                     input aux_dscrimsg,                     
+                     input 1,  /* Indicador de sucesso da execução */
+                     input "", /* Nome do arquivo */
+                     input 0,  /* Abre chamado sim/nao */
+                     input "", /* Texto do chamado */
+                     input "", /* Destinatario do email */
+                     input 0,  /* Erro pode reincidir no prog em dias diferentes, devendo abrir chamado */
+                     input 0   /* Identificador unico da tabela (sequence) */
+					 ).
+					 
+                     CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+					 
+                     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }	
+                  END.
 
        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }       
        RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
@@ -1104,6 +1233,40 @@ PROCEDURE proc_roda_paralelo:
                                   "' --> '" + "PROGRAMA COM ERRO: " +
                                   "cecred_mbpro FALHOU" + 
                                   " >> log/proc_batch.log").
+									   
+					 /* Geração do registro no cadastro tbgen quando um programa para a cadeia, chd REQ0013442, 10/05/2018 */
+						
+                     ASSIGN aux_cdcrimsg = 1278
+                            aux_dscrimsg = "crapcri nao encontrada".	
+							
+                     FIND crapcri WHERE crapcri.cdcritic = aux_cdcrimsg
+                                        NO-LOCK NO-ERROR.                            
+                     IF AVAIL crapcri THEN
+                       ASSIGN aux_dscrimsg = crapcri.dscritic. 
+					   
+                     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+					 
+                     RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+                    (input "O",                        /* Tipo do log: I - inicio, F - fim, O - ocorrencia */
+                     input SUBSTR(aux_cadeiaex,aux_nrposprg,7), /* Codigo do programa ou do job */
+                     input glb_cdcooper,               /* Codigo da cooperativa */
+                     input 1,  /* Tipo de execucao   0-Outro, 1-Batch, 2-Job, 3-Online  */
+                     input 4,  /* tipo de ocorrencia 1-Erro de negocio, 2-Erro nao tratado, 3-Alerta, 4-Mensagem */
+                     input 0,  /* Nivel criticidade  0-Baixa, 1-Media, 2-Alta, 3-Critica  */
+                     input aux_cdcrimsg,
+                     input aux_dscrimsg,                     
+                     input 1,  /* Indicador de sucesso da execução */
+                     input "", /* Nome do arquivo */
+                     input 0,  /* Abre chamado sim/nao */
+                     input "", /* Texto do chamado */
+                     input "", /* Destinatario do email */
+                     input 0,  /* Erro pode reincidir no prog em dias diferentes, devendo abrir chamado */
+                     input 0   /* Identificador unico da tabela (sequence) */
+					 ).
+					 
+                     CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+					 
+                     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
                 ASSIGN aux_nrposprg = aux_nrposprg + 8
                        aux_flgerrcp = TRUE.
@@ -1185,6 +1348,40 @@ PROCEDURE proc_roda_paralelo:
                                " >> log/proc_batch.log").
 
              UNIX SILENT VALUE("> controles/Proc_Noturno.Erro").
+									   
+					 /* Geração do registro no cadastro tbgen quando um programa para a cadeia, chd REQ0013442, 10/05/2018 */
+						
+                     ASSIGN aux_cdcrimsg = 1229
+                            aux_dscrimsg = "crapcri nao encontrada".	
+							
+                     FIND crapcri WHERE crapcri.cdcritic = aux_cdcrimsg
+                                        NO-LOCK NO-ERROR.                            
+                     IF AVAIL crapcri THEN
+                       ASSIGN aux_dscrimsg = crapcri.dscritic. 
+					   
+                     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+					 
+                     RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+                    (input "O",                        /* Tipo do log: I - inicio, F - fim, O - ocorrencia */
+                     input "CRPS359.P", /* Codigo do programa ou do job */
+                     input glb_cdcooper,               /* Codigo da cooperativa */
+                     input 1,  /* Tipo de execucao   0-Outro, 1-Batch, 2-Job, 3-Online  */
+                     input 4,  /* tipo de ocorrencia 1-Erro de negocio, 2-Erro nao tratado, 3-Alerta, 4-Mensagem */
+                     input 0,  /* Nivel criticidade  0-Baixa, 1-Media, 2-Alta, 3-Critica  */
+                     input aux_cdcrimsg,
+                     input aux_dscrimsg,                     
+                     input 1,  /* Indicador de sucesso da execução */
+                     input "", /* Nome do arquivo */
+                     input 0,  /* Abre chamado sim/nao */
+                     input "", /* Texto do chamado */
+                     input "", /* Destinatario do email */
+                     input 0,  /* Erro pode reincidir no prog em dias diferentes, devendo abrir chamado */
+                     input 0   /* Identificador unico da tabela (sequence) */
+					 ).
+					 
+                     CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+					 
+                     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }	
 
              QUIT.
          END.
@@ -1235,6 +1432,40 @@ PROCEDURE proc_espera_paralelos:
                                        LC(aux_cdprgpar[aux_contapar]) + 
                                        "' --> '" + "PROGRAMA COM ERRO" +
                                        " >> log/proc_batch.log").
+									   
+					 /* Geração do registro no cadastro tbgen quando um programa para a cadeia, chd REQ0013442, 10/05/2018 */
+						
+                     ASSIGN aux_cdcrimsg = 1278
+                            aux_dscrimsg = "crapcri nao encontrada".	
+							
+                     FIND crapcri WHERE crapcri.cdcritic = aux_cdcrimsg
+                                        NO-LOCK NO-ERROR.                            
+                     IF AVAIL crapcri THEN
+                       ASSIGN aux_dscrimsg = crapcri.dscritic. 
+					   
+                     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+					 
+                     RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+                    (input "O",                        /* Tipo do log: I - inicio, F - fim, O - ocorrencia */
+                     input aux_cdprgpar[aux_contapar], /* Codigo do programa ou do job */
+                     input glb_cdcooper,               /* Codigo da cooperativa */
+                     input 1,  /* Tipo de execucao   0-Outro, 1-Batch, 2-Job, 3-Online  */
+                     input 4,  /* tipo de ocorrencia 1-Erro de negocio, 2-Erro nao tratado, 3-Alerta, 4-Mensagem */
+                     input 0,  /* Nivel criticidade  0-Baixa, 1-Media, 2-Alta, 3-Critica  */
+                     input aux_cdcrimsg,
+                     input aux_dscrimsg,                     
+                     input 1,  /* Indicador de sucesso da execução */
+                     input "", /* Nome do arquivo */
+                     input 0,  /* Abre chamado sim/nao */
+                     input "", /* Texto do chamado */
+                     input "", /* Destinatario do email */
+                     input 0,  /* Erro pode reincidir no prog em dias diferentes, devendo abrir chamado */
+                     input 0   /* Identificador unico da tabela (sequence) */
+					 ).
+					 
+                     CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+					 
+                     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }	
             
                      ASSIGN aux_cdprgpar[aux_contapar] = ""
                             aux_mtpidprg[aux_contapar] = 0
