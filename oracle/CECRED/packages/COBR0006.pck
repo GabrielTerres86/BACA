@@ -29,6 +29,10 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --	          29/05/2018 - Ajuste no comando que envia arquivos .LOG e .ERR para servidor ftp.
   --                           Chamado INC0015743 - Gabriel (Mouts).
   --
+  --			  20/08/2018 - Foi incluido a validação do segmento Q
+  --						   (Felipe - Mouts).
+
+
   ---------------------------------------------------------------------------------------------------------------
     
   --> type para armazenar arquivos a serem processados b1wgen0010tt.i/crawaux
@@ -10299,6 +10303,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
                                 (SD#791193 - AJFink)
+
+				   20/08/2018 - Foi incluido a validação do segmento Q
+							    (Felipe - Mouts).
 
     ............................................................................ */   
     
