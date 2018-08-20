@@ -58,6 +58,8 @@
  * 046: [24/01/2018] Incluído tratamento para o nível de risco original (Reginaldo - AMcom)
  * 047: [09/07/2018] Criado opção para tela de controles (Qualificação da Operação e Contratos Liquidados)
  *	   			   	 PJ450 - Diego Simas (AMcom)
+ * 048: [20/08/2018] Ajustado a função mostraExtrato para não exibir o conteúdo carregado em telas anteriores da divUsoGenerico
+ *                   PJ450 - Diego Simas (AMcom) 
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -2507,16 +2509,15 @@ function limpaDivGenerica(){
 function mostraExtrato( operacao ) {
 
 	showMsgAguardo('Aguarde, abrindo extrato...');
-	exibeRotina($('#divUsoGenerico'));
 
 	tpemprst = arrayRegistros['tpemprst'];
 
 	if (tpemprst == 0) {
-	    exibeRotina($('#divUsoGenerico'));
-	    limpaDivGenerica();
+		exibeRotina($('#divUsoGenerico'));
+		limpaDivGenerica();
 	}
 
-	if  (tpemprst == 1 || tpemprst == 2) {
+	if (tpemprst == 1 || tpemprst == 2) {
 		verificaTipoEmprestimo();
 		return;
 	}
@@ -2530,15 +2531,15 @@ function mostraExtrato( operacao ) {
 			operacao: operacao,
 			tpemprst: tpemprst,
 			redirect: 'html_ajax'
-			},
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
-			$('#divUsoGenerico').html(response);
-			layoutPadrao();
+		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			hideMsgAguardo();
+			$('#divUsoGenerico').html(response);
+			exibeRotina($('#divUsoGenerico'));
 			bloqueiaFundo($('#divUsoGenerico'));
 		}
 	});
