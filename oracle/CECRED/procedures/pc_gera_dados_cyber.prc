@@ -15,6 +15,9 @@ BEGIN
   Alteracoes: 14/11/2017 - Log de trace da exception others e retorno de crítica para
                            o programa chamador (Carlos)
 
+              09/01/2018 - #826598 Tratamento para enviar e-mail e abrir chamado quando 
+                           ocorrer erro na execução do programa pc_crps652 (Carlos)
+
               16/01/2018 - Quando chegar reagendamento não retornar mensagem de erro.
                            A solução definitiva será em novo chamado e a GENE0004 pode retonar
                            alem do codigo da mensagem um indicador de tipo de mensagem para não dar erro.
@@ -60,10 +63,11 @@ BEGIN
     -- Excluida variavel vr_flgerlog não é utilizada - Chmd REQ0011757 - 13/04/2018  
     vr_dthoje      DATE := TRUNC(SYSDATE);
 
+    vr_dstexto VARCHAR2(2000);
     vr_titulo VARCHAR2(1000);
     vr_destinatario_email VARCHAR2(500);
     -- Excluida variavel vr_idprglog pois não é utilizada - Chmd REQ0011757 - 13/04/2018  
-         
+
     vr_intipmsg   INTEGER := 1; -- pr_intipmsg tipo de mensagem a ser tratada especificamente - Chmd REQ0011757 - 13/04/2018 
     vr_dscrioco VARCHAR2(4000);        -- Variavel para tratar ocorrencia - Chmd REQ0011757 - 13/04/2018 
 
@@ -169,7 +173,7 @@ BEGIN
         IF vr_dtmvtolt <> rw_crapdat.dtmvtolt THEN
            vr_cdcritic := 1213; -- Data da cooperativa diferente da data atual.
            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                                                    
+
            --Incluída gravação de log aqui para evitar duplicidade na situação de retorno de crps652
            --Log de erro de execucao
            pc_controla_log_batch(pr_cdcritic => vr_cdcritic
@@ -273,6 +277,9 @@ BEGIN
 
       -- Excluida não utilizada GENE0001.pc_gera_erro - Chmd REQ0011757 - 13/04/2018
 
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => vr_dscritic);
       ROLLBACK;                             
         
   END;          
