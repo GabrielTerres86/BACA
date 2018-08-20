@@ -47,6 +47,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             18/07/2018 - sctask0019591 Melhoria no carregamento inicial da tela Composição das agendas (Carlos)
 												 
 			18/07/2018 - Ajuste realizado para que o sequencial NRSEQDIG nunca seja inserido zerado. (INC0017391 - Kelvin)
+            
+            20/07/2018 - inc0022348 Incluída a flag para recarregar a agenda após acionar as funções salvar, gerar e enviar (Carlos)
 
 -------------------------------------------------------------------------------------->
 <html>
@@ -1714,6 +1716,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
         document.form.auxmotivos.value=mMotivos;
         document.form.auxevento.value=mEventos;
         document.form.auxrowid.value=mRowids;
+        document.form.carregar.value="sim";
+        
         aguarde();   
         document.form.submit();
       }
@@ -1734,8 +1738,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       
       function gerar(){
         var vaux = document.form.aux_lspermis.value; 
+        document.form.carregar.value="sim";
         if (vaux.substring(1,2) == 'A'){                         
-          document.form.gera.value="sim";
+          document.form.gera.value="sim";          
           aguarde();
           document.form.submit();
         }else{ 
@@ -1746,8 +1751,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
       function enviar(){
         var vaux = document.form.aux_lspermis.value; 
+        document.form.carregar.value="sim";
         if ((vaux.substring(1,2) == 'A')){
-          document.form.envia.value="sim";
+          document.form.envia.value="sim";          
           aguarde();
           document.form.submit();
         }else{ 
