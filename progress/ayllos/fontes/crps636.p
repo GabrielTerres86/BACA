@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/07/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 16/07/2018
     
     Dados referente ao programa:
     
@@ -158,6 +158,9 @@
                  
                  05/07/2018 - Alteracao referente a dtfimsus no envio do registro B, validar 
                               final de semana (Lucas Ranghetti INC0018634)
+                              
+                 16/07/2018 - Ajustado relatorio crrl674 para aparecer a referencia com "-"
+                              Lucas Eduardo Ranghetti (INC0019390)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -421,7 +424,7 @@ FORM tt-totais-crrl664.dsconsor FORMAT "x(10)"          COLUMN-LABEL "SEGMENTO"
 FORM tt-rel674-cadastro.cdagenci FORMAT "zz9"               COLUMN-LABEL "  PA"
      tt-rel674-cadastro.nrdconta FORMAT "zzzzz,zz9,9"       COLUMN-LABEL "CONTA/DV"
      tt-rel674-cadastro.dsnomcnv FORMAT "x(35)"             COLUMN-LABEL "CONVENIO"
-     tt-rel674-cadastro.cdrefere FORMAT "zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
+     tt-rel674-cadastro.cdrefere FORMAT "-zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
      tt-rel674-cadastro.dsmovmto FORMAT "x(35)"             COLUMN-LABEL "OPERACAO"
     WITH NO-BOX DOWN WIDTH 132 FRAME f_crrl674_cadastro.
 
@@ -429,7 +432,7 @@ FORM tt-rel674-lancamentos.cdagenci FORMAT "zz9"               COLUMN-LABEL "  P
      tt-rel674-lancamentos.nrdconta FORMAT "zzzzz,zz9,9"       COLUMN-LABEL "CONTA/DV" 
      tt-rel674-lancamentos.nrctacns FORMAT "zzz,zz9,9"         COLUMN-LABEL "CT SICREDI"
      tt-rel674-lancamentos.dsnomcnv FORMAT "x(35)"             COLUMN-LABEL "CONVENIO" 
-     tt-rel674-lancamentos.nrdocmto FORMAT "zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
+     tt-rel674-lancamentos.nrdocmto FORMAT "-zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
      tt-rel674-lancamentos.vllanmto FORMAT "zzz,zz9.99"        COLUMN-LABEL "VALOR"
     WITH NO-BOX DOWN WIDTH 132 FRAME f_crrl674_lancamentos.
 
@@ -437,7 +440,7 @@ FORM tt-rel674-lancamentos.cdagenci FORMAT "zz9"               COLUMN-LABEL "  P
      tt-rel674-lancamentos.nrdconta FORMAT "zzzzz,zz9,9"       COLUMN-LABEL "CONTA/DV" 
      tt-rel674-lancamentos.nrctacns FORMAT "zzz,zz9,9"         COLUMN-LABEL "CT SICREDI"
      tt-rel674-lancamentos.dsnomcnv FORMAT "x(28)"             COLUMN-LABEL "CONVENIO" 
-     tt-rel674-lancamentos.nrdocmto FORMAT "zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
+     tt-rel674-lancamentos.nrdocmto FORMAT "-zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
      tt-rel674-lancamentos.vllanmto FORMAT "zzz,zz9.99"        COLUMN-LABEL "VALOR"
      tt-rel674-lancamentos.dscritic FORMAT "x(38)"             COLUMN-LABEL "CRITICA"
     WITH NO-BOX DOWN WIDTH 132 FRAME f_crrl674_lancamentos_criticas.
