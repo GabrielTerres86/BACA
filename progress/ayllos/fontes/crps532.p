@@ -22,6 +22,10 @@
                             
                05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
 
+               06/08/2018 - Ao mover arquivo para pasta salvar, foi concatenado
+                            data e horario para impedir sobreposicao de dados.
+                            Chamado INC0020247 (Gabriel - Mouts)
+
 ..............................................................................*/
 
 { includes/var_batch.i }    
@@ -42,6 +46,7 @@ DEF TEMP-TABLE w_relato
 
 DEF VAR aux_nmarqlog AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
+DEF VAR aux_nmarqren AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqrel AS CHAR                                           NO-UNDO.
 
 DEF VAR aaa_dtabtcct AS CHAR    FORMAT "9999"                          NO-UNDO.
@@ -102,7 +107,15 @@ IF  NOT AVAILABLE crapcop THEN
     END.
 
 ASSIGN aux_dscooper = "/usr/coop/cecred/"
-       aux_nmarqimp = "ICF" + STRING(crapcop.cdbcoctl,"999") + "01.REM"
+       aux_nmarqimp = "ICF" + STRING(crapcop.cdbcoctl,"999") + "01"
+       /* Variavel de nome arquivo para move pasta Salvar. */
+       aux_nmarqren = aux_nmarqimp + "_" + 
+                      STRING(YEAR(glb_dtmvtolt),"9999") + 
+                      STRING(MONTH(glb_dtmvtolt),"99")  + 
+                      STRING(DAY(glb_dtmvtolt),"99")    + "_" + 
+                      STRING(TIME,"HH:MM:SS")           + ".REM"
+       aux_nmarqren = replace(aux_nmarqren,":","")			  
+       aux_nmarqimp = aux_nmarqimp + ".REM"
        aux_nmarqlog = "log/prcctl_" + 
                       STRING(YEAR(glb_dtmvtolt),"9999") + 
                       STRING(MONTH(glb_dtmvtolt),"99") + 
@@ -226,7 +239,11 @@ PROCEDURE fecha_arquivo:
                       " > /micros/cecred/abbc/" + 
                       aux_nmarqimp + " 2>/dev/null").
 
+    /* Renomear nome do arquivo para nao sobreescrever */
     UNIX SILENT VALUE("mv " + aux_dscooper + "arq/" + aux_nmarqimp + " " +
+                      aux_dscooper + "arq/" + aux_nmarqren).        
+                             
+    UNIX SILENT VALUE("mv " + aux_dscooper + "arq/" + aux_nmarqren  + " " +
                        aux_dscooper + "salvar 2>/dev/null"). 
 
 
