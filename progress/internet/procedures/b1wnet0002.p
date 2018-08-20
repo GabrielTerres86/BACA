@@ -549,7 +549,7 @@ PROCEDURE carrega-titulares.
 
                 CREATE tt-titulares.
                 ASSIGN tt-titulares.idseqttl = crapttl.idseqttl
-                       tt-titulares.nmtitula = crapttl.nmextttl
+                       tt-titulares.nmtitula = TRIM(crapttl.nmextttl)
                        tt-titulares.nrcpfope = 0
                        tt-titulares.incadsen = aux_incadsen
                        tt-titulares.inbloque = aux_inbloque
@@ -599,7 +599,7 @@ PROCEDURE carrega-titulares.
          
                 CREATE tt-titulares.
                 ASSIGN tt-titulares.idseqttl = 1
-                       tt-titulares.nmtitula = crapass.nmprimtl
+                       tt-titulares.nmtitula = TRIM(crapass.nmprimtl)
                        tt-titulares.nrcpfope = 0
                        tt-titulares.incadsen = aux_incadsen
                        tt-titulares.inbloque = aux_inbloque
@@ -685,7 +685,7 @@ PROCEDURE carrega-titulares.
                               aux_incadsen = 0.
                     CREATE tt-titulares.
                     ASSIGN tt-titulares.idseqttl = crapsnh.idseqttl
-                           tt-titulares.nmtitula = tt-crapavt.nmdavali
+                           tt-titulares.nmtitula = TRIM(tt-crapavt.nmdavali)
                            tt-titulares.nrcpfope = 0
                            tt-titulares.incadsen = aux_incadsen
                            tt-titulares.inbloque = aux_inbloque
@@ -718,7 +718,7 @@ PROCEDURE carrega-titulares.
                                
                     CREATE tt-titulares.
                     ASSIGN tt-titulares.idseqttl = 1
-                           tt-titulares.nmtitula = crapopi.nmoperad
+                           tt-titulares.nmtitula = TRIM(crapopi.nmoperad)
                            tt-titulares.nrcpfope = crapopi.nrcpfope
                            tt-titulares.incadsen = aux_incadsen
                            tt-titulares.inbloque = aux_inbloque
