@@ -38,6 +38,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
 
                      16/07/2018 - Ajustes no procedimento de paralelismo para ganho de performance. - Mario Bernat (Amcom).
                                             
+                     20/08/2018 - Ajustes no procedimento pc_verif_ativo_problematico (desmonte da query principal). - Mario Bernat (Amcom).
 
     .............................................................................................................................*/
 
@@ -3897,8 +3898,335 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           END IF;
         END IF;
       END;    
-      
+
+
       -- **
+      -- Verifica Ativo Problemático - Daniel(AMcom)
+      -- Processamento visando performance - Mario (AMcom)
+      PROCEDURE pc_verif_ativo_problematico(pr_cdcooper    IN NUMBER       -- Cooperativa
+                                           ,pr_nrdconta    IN NUMBER       -- Conta
+                                           ,pr_nrctremp    IN NUMBER       -- Contrato
+                                           ,pr_atvprobl   OUT NUMBER       -- Identificador de Ativo Problemático
+                                           ,pr_reestrut   OUT NUMBER       -- 1-ComReestruturação 0-SemReestruturação
+                                           ,pr_dtatvprobl OUT VARCHAR2     -- Data da Reestruturação
+                                           ,pr_cdcritic   OUT PLS_INTEGER  -- Código da crítica
+                                           ,pr_dscritic   OUT VARCHAR2) IS -- Erros do processo
+        -- ** Motivos contemplados(TBGEN_MOTIVO) ** --
+        -- select * from tbgen_motivo where cdproduto = 42
+        --
+        -- 57 - REESTRUTURAÇÃO
+        -- 58 - ATRASO > 90 DIAS
+        -- 59 - PREJUIZO
+        -- 60 - SOCIO FALECIDO
+        -- 61 - ACAO CONTRA
+        -- 62 - COOPERADO PRESO
+        -- 63 - FALENCIA PJ
+        -- 64 - RECUPERACAO JUDICIAL PJ
+        -- 65 - OUTROS
+
+        -- Variáveis
+        vr_cdcooper     NUMBER(5)    := NULL;
+        vr_nrdconta     NUMBER(10)   := NULL;
+        vr_nrctremp     NUMBER(10)   := NULL;
+        vr_dtinreg      DATE         := NULL;
+        vr_cdmotivo     NUMBER(5)    := NULL;
+        vr_idtipo_envio NUMBER(5)    := NULL;
+        vr_innivris     NUMBER(5)    := NULL;
+        vr_qtdiaatr     NUMBER(10)   := 0;
+        vr_dsobservacao VARCHAR2(100):= NULL;
+
+        vr_idquaprc     NUMBER(10)   := null;
+        vr_achou        NUMBER(1)    := 0;
+
+        -- Cursor PRINCIPAL
+        CURSOR cr_atvprb(pr_cdcooper IN NUMBER
+                        ,pr_nrdconta IN NUMBER
+                        ,pr_nrctremp IN NUMBER) IS
+          SELECT a.dtasitct dtinreg
+               , a.cdcooper
+               , a.nrdconta
+               , pr_nrctremp nrctremp
+               , 60 cdmotivo -- 60 - SOCIO FALECIDO
+               , 1 idtipo_envio
+               , 1 idatvprobl
+               , 0 idreestrut
+               , null dsobservacao                       
+          FROM crapass a
+         WHERE a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta
+           AND a.cdsitdct = 8
+         UNION
+        SELECT nvl(cyc.dtinclus, cyc.dtaltera) dtinreg
+             , cyc.cdcooper
+             , cyc.nrdconta
+             , cyc.nrctremp
+             , 61 cdmotivo -- 61 - ACAO CONTRA
+             , 1 idtipo_envio
+             , 1 idatvprobl
+             , 0 idreestrut
+             , null dsobservacao                     
+          from crapcyc cyc
+         where cyc.cdmotcin in (2,7)
+           and cyc.cdcooper = pr_cdcooper
+           AND cyc.nrdconta = pr_nrdconta
+           AND cyc.nrctremp = pr_nrctremp -- Ativo
+         UNION
+        SELECT  distinct
+                ap.dtinclus dtinreg
+              , ap.cdcooper
+              , ap.nrdconta
+              , ap.nrctremp
+              , ap.cdmotivo
+              , 2 idtipo_envio
+              , 1 idatvprobl
+              , 0 idreestrut
+              , ap.dsobserv dsobservacao                       
+           FROM TBCADAST_ATIVO_PROBL AP
+          WHERE ap.cdcooper = pr_cdcooper
+            AND ap.nrdconta = pr_nrdconta
+            AND ap.nrctremp = decode(ap.nrctremp, 0, ap.nrctremp, pr_nrctremp)
+            AND ap.dtexclus is null
+            AND ap.cdmotivo IN( 60  -- SOCIO FALECIDO MANUAL
+                              , 62  -- COOPERADO PRESO
+                              , 63  -- FALENCIA PJ
+                              , 64  -- RECUPERACAO JUDICIAL PJ
+                              , 65) -- OUTROS
+            AND ap.idativo  = 1 -- Registro Ativo
+          ORDER BY 1;
+          rw_atvprb cr_atvprb%ROWTYPE;
+
+        BEGIN
+           
+         -- ** INÍCIO VERIFICAÇÃO ATIVO PROBLEMÁTICO ** --
+         -- Inicializa variáveis de retorno
+         pr_atvprobl   := 0;
+         pr_reestrut   := 0;
+         pr_dtatvprobl := NULL;
+         pr_cdcritic   := NULL;
+         pr_dscritic   := NULL;
+
+         vr_dtinreg := null;
+         vr_innivris := null;
+         vr_qtdiaatr := 0;
+         vr_achou := 0;
+         
+         begin
+           select
+                  ris.dtinictr
+                 ,ris.innivris
+                 ,ris.qtdiaatr
+             into vr_dtinreg 
+                 ,vr_innivris
+                 ,vr_qtdiaatr
+             FROM crapris ris
+            WHERE ris.cdcooper  = pr_cdcooper
+              AND ris.nrdconta  = pr_nrdconta
+              AND ris.nrctremp  = pr_nrctremp
+              AND ris.dtrefere  = pr_dtultdma
+              AND ris.dtinictr  = ( select min(ris2.dtinictr) 
+                                      FROM crapris ris2
+                                     WHERE ris2.cdcooper  = pr_cdcooper
+                                       AND ris2.nrdconta  = pr_nrdconta
+                                       AND ris2.nrctremp  = pr_nrctremp
+                                       AND ris2.dtrefere  = pr_dtultdma)
+              and rownum = 1;
+         exception
+           when no_data_found then
+              vr_dtinreg := null;
+              vr_innivris := null;
+              vr_qtdiaatr := 0;
+           when others then
+              pr_cdcritic := 0;
+              pr_dscritic := 'Erro Leitura crapris: '||SQLERRM;
+              -- Efetuar rollback
+              ROLLBACK;            
+         end;
+
+         begin
+           select epr.idquaprc
+             into vr_idquaprc 
+             FROM crapepr epr
+            WHERE epr.cdcooper  = pr_cdcooper
+              AND epr.nrdconta  = pr_nrdconta
+              AND epr.nrctremp  = pr_nrctremp;                
+         exception
+           when no_data_found then
+              vr_idquaprc := 0;
+           when others then
+              pr_cdcritic := 0;
+              pr_dscritic := 'Erro Leitura crapepr: '||SQLERRM;
+              -- Efetuar rollback
+              ROLLBACK;            
+         end;
+
+         if vr_dtinreg is not null then
+           if vr_idquaprc in (3,4) then
+
+             -- Move informações para as variáveis de INSERT
+             vr_cdcooper     := pr_cdcooper;
+             vr_nrdconta     := pr_nrdconta;
+             vr_nrctremp     := pr_nrctremp;
+             vr_dtinreg      := vr_dtinreg;
+             vr_cdmotivo     := 57;  -- 57 - REESTRUTURAÇÃO
+             vr_idtipo_envio := 1;
+             vr_dsobservacao := null;        
+             pr_atvprobl     := 1;
+             pr_reestrut     := 1;
+             pr_dtatvprobl   := TO_CHAR(vr_dtinreg, 'YYYY-MM-DD');
+
+           else
+             if vr_innivris >= 10 then
+
+               -- Move informações para as variáveis de INSERT
+               vr_cdcooper     := pr_cdcooper;
+               vr_nrdconta     := pr_nrdconta;
+               vr_nrctremp     := pr_nrctremp;
+               vr_dtinreg      := vr_dtinreg;
+               vr_cdmotivo     := 59;   -- 59 - PREJUIZO
+               vr_idtipo_envio := 1;
+               vr_dsobservacao := null;        
+               pr_atvprobl     := 1;
+               pr_reestrut     := 0;
+               pr_dtatvprobl   := TO_CHAR(vr_dtinreg, 'YYYY-MM-DD');
+
+             else
+               -- Verifica se o contrato está atraso a mais de 90 dias ou se não foi quitado após estar em 90 dias de atraso
+               if vr_qtdiaatr >= 30 then 
+                 begin
+                   select distinct 1
+                     into vr_achou
+                     from tbhist_ativo_probl his
+                    where his.cdcooper  = pr_cdcooper
+                      and his.nrdconta  = pr_nrdconta
+                      and his.nrctremp  = pr_nrctremp
+                      and his.cdmotivo  = 58
+                      and to_char(his.dthistreg,'YYYYMM') = to_char(ADD_MONTHS(pr_dtultdma, -1),'YYYYMM');                     
+                 exception
+                    when no_data_found then
+                      vr_achou := 0;
+                    when others then
+                      pr_cdcritic := 0;
+                      pr_dscritic := 'Erro Leitura tbhist_ativo_probl: '||SQLERRM;
+                      -- Efetuar rollback
+                      ROLLBACK;            
+                 end;
+           
+                 IF vr_qtdiaatr > 90 or vr_achou = 1 then
+
+                   -- Move informações para as variáveis de INSERT
+                   vr_cdcooper     := pr_cdcooper;
+                   vr_nrdconta     := pr_nrdconta;
+                   vr_nrctremp     := pr_nrctremp;
+                   vr_dtinreg      := vr_dtinreg;
+                   vr_cdmotivo     := 58;  -- 58 - ATRASO > 90 DIAS
+                   vr_idtipo_envio := 1;
+                   vr_dsobservacao := null;        
+                   pr_atvprobl     := 1;
+                   pr_reestrut     := 0;
+                   pr_dtatvprobl   := TO_CHAR(vr_dtinreg, 'YYYY-MM-DD');
+                 end if;
+               end if;   --vr_qtdiaatr >= 30
+             end if;  --vr_innivris >= 10
+
+             OPEN cr_atvprb(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrctremp => pr_nrctremp);
+             FETCH cr_atvprb
+              INTO rw_atvprb;
+
+             IF cr_atvprb%FOUND THEN
+               CLOSE cr_atvprb;
+
+               if rw_atvprb.dtinreg > vr_dtinreg then
+                 -- Move informações para as variáveis de RETORNO
+                 pr_atvprobl   := rw_atvprb.idatvprobl;
+                 pr_reestrut   := 0;
+                 pr_dtatvprobl := NULL;
+                 -- Move informações para as variáveis de INSERT
+                 vr_cdcooper     := rw_atvprb.cdcooper;
+                 vr_nrdconta     := rw_atvprb.nrdconta;
+                 vr_nrctremp     := rw_atvprb.nrctremp;
+                 vr_dtinreg      := rw_atvprb.dtinreg;
+                 vr_cdmotivo     := rw_atvprb.cdmotivo;
+                 vr_idtipo_envio := rw_atvprb.idtipo_envio;
+                 vr_dsobservacao := rw_atvprb.dsobservacao;
+               end if;
+             else
+               CLOSE cr_atvprb;
+             end if;
+
+           end if;  --Found
+         else
+           OPEN cr_atvprb(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctremp => pr_nrctremp);
+           FETCH cr_atvprb
+            INTO rw_atvprb;
+
+           IF cr_atvprb%FOUND THEN
+             CLOSE cr_atvprb;
+             -- Move informações para as variáveis de RETORNO
+             pr_atvprobl   := rw_atvprb.idatvprobl;
+             pr_reestrut   := 0;
+             pr_dtatvprobl := NULL;
+             -- Move informações para as variáveis de INSERT
+             vr_cdcooper     := rw_atvprb.cdcooper;
+             vr_nrdconta     := rw_atvprb.nrdconta;
+             vr_nrctremp     := rw_atvprb.nrctremp;
+             vr_dtinreg      := rw_atvprb.dtinreg;
+             vr_cdmotivo     := rw_atvprb.cdmotivo;
+             vr_idtipo_envio := rw_atvprb.idtipo_envio;
+             vr_dsobservacao := rw_atvprb.dsobservacao;
+           else
+             CLOSE cr_atvprb;
+           end if;  --Found
+           
+         end if;  --vr_idquaprc in (3,4)
+
+         --
+         -- Gravar HISTORICO se existir um registro de Ativo Problemático
+         if pr_atvprobl = 1 then
+           BEGIN
+             INSERT INTO TBHIST_ATIVO_PROBL
+                        (cdcooper
+                        ,nrdconta
+                        ,nrctremp
+                        ,dtinreg
+                        ,dthistreg
+                        ,cdmotivo
+                        ,dsobserv
+                        ,idtipo_envio)
+                 VALUES (vr_cdcooper
+                        ,vr_nrdconta
+                        ,vr_nrctremp
+                        ,vr_dtinreg
+                        ,pr_dtultdma  -- dthistreg
+                        ,vr_cdmotivo
+                        ,vr_dsobservacao
+                        ,vr_idtipo_envio);
+           EXCEPTION
+             WHEN DUP_VAL_ON_INDEX then
+               --Não necessita incluir
+               NULL;
+             WHEN OTHERS THEN
+               pr_cdcritic := 0;
+               pr_dscritic := 'Erro INSERT HISTORICO ATIVO PROBLEMATICO: '||SQLERRM;
+               -- Efetuar rollback
+               ROLLBACK;
+           END;
+         end if;
+         --
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          pr_dscritic := 'Erro PC_VERIF_ATIVO_PROBLEMATICO: '||SQLERRM;
+          -- Efetuar rollback
+          ROLLBACK;
+      END pc_verif_ativo_problematico;
+
+
+/*      
+      -- Substituido pela versão acima, visando performance
       -- Verifica Ativo Problemático - Daniel(AMcom)
       PROCEDURE pc_verif_ativo_problematico(pr_cdcooper    IN NUMBER       -- Cooperativa
                                            ,pr_nrdconta    IN NUMBER       -- Conta
@@ -4187,6 +4515,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           -- Efetuar rollback
           ROLLBACK;
       END pc_verif_ativo_problematico;
+*/
       
       -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
       PROCEDURE pc_busca_coddindx(pr_cdcooper IN crapcop.cdcooper%TYPE
