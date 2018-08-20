@@ -108,7 +108,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
           INDEX BY VARCHAR2(30);
       
       vr_tab_captacao typ_tab_captacao;
-      vr_dschave_captacao VARCHAR2(10);
+      vr_dschave_captacao VARCHAR2(30);
       -- Variável auxiliar para buscar a primeira taxa de aplicação cadastrada na craplap
       vr_txaplica   craplap.txaplica%type;
       -- Variável auxiliar para separar os produtos de captação no relatório crrl515
@@ -198,6 +198,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
         SELECT vlslfmes
           FROM craprpp
          WHERE cdcooper = pr_cdcooper
+           AND cdprodut < 1   --> Apenas as RPPs antigas
            AND vlsdrdpp <> 0; --> Somente aquelas com saldo
 
       -- Busca das aplicações de captação
@@ -212,7 +213,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
          WHERE rac.cdcooper = pr_cdcooper      AND
                rac.idsaqtot = 0                AND
                rac.cdprodut = cpc.cdprodut
-         ORDER BY cpc.cdprodut;
+         ORDER BY cpc.indplano,cpc.nmprodut,txaplica,qtdiacar;
 
       -- Variáveis para criação do XML e geração dos relatórios
       vr_des_xml  CLOB;             -- Dados do XML
@@ -598,7 +599,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
         
         -- Alimenta chave da PLTABLE
         vr_dschave_captacao := lpad(rw_craprac.cdprodut,5,'0') ||
-                               lpad(rw_craprac.qtdiacar,5,'0'); /* ||
+                               lpad(rw_craprac.qtdiacar,5,'0') ||
+                               REPLACE(REPLACE(to_char(vr_txaplica,'fm000000d00'),'.',''),',','');
+                                /* ||
                                REPLACE(REPLACE(to_char(vr_txaplica,
                                'fm00000000000000000000000d00'),'.',''),',','');*/
 
@@ -772,4 +775,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS528(pr_cdcooper IN crapcop.cdcooper%TY
     END;
   END pc_crps528;
 /
-

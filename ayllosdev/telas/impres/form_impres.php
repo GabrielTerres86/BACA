@@ -48,7 +48,6 @@
 		<option value="3">3-Dep Identificados</option>
 		<option value="4">4-Todos</option>
 		</select>
-
 		<label for="nrctremp"><? echo utf8ToHtml('Contrato:') ?></label>
 		<input name="nrctremp" id="nrctremp" type="text" value="<? echo $nrctremp ?>" value="" />
 		<a style="margin-top:5px"><img id="lnrctremp" src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
@@ -61,7 +60,7 @@
 		-->
 		<br style="clear:both" />
 
-        <div id="divTipo6" >
+ <div id="divTipo6" >
 		<label for="tpinform"><? echo utf8ToHtml('Informe:') ?></label>
 		<select name="tpinform" id="tpinform">
 		    <option value=0 selected>Anual</option>
@@ -78,15 +77,15 @@
 		</select>
         </div>
 </div>
-
 		<label for="nraplica"><? echo utf8ToHtml('Aplicac.:') ?></label>
 		<input name="nraplica" id="nraplica" type="text" value="<? echo $nraplica ?>" value="" />
 		<a style="margin-top:5px"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 
-    <div id='divTodos2'>
+<div id='divTodos2'>
 		<label for="nranoref"><? echo utf8ToHtml('Ano:') ?></label>
 		<input name="nranoref" id="nranoref" type="text" value="<? echo $nranoref ?>" value="" />
-    </div>
+</div>
+	
 <div id="divGeral" style="float:left">
 		<label for="flgemiss"><? echo utf8ToHtml('Quando?:') ?></label>
 		<select name="flgemiss" id="flgemiss">
