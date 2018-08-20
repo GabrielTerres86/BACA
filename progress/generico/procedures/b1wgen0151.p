@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 14/05/2018
+    Data    : 07/02/2013                     Ultima atualizacao: 10/07/2018
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -62,6 +62,8 @@
              
     14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
                  Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
+                           
+		10/07/2018 - Gerando arquivo de log para as operacoes da tela. (INC0018421 - Kelvin) 
                            
 ............................................................................*/
 
@@ -745,6 +747,82 @@ PROCEDURE Valida_Dados:
 
 END PROCEDURE. /* Valida_Dados */
 
+	
+PROCEDURE Gera_arquivo_log:
+	DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_campolog AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_valornov AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_valorvel AS CHAR                           NO-UNDO.
+	
+	
+	DEF VAR aux_dsdircop AS CHAR FORMAT "x(20)" 					NO-UNDO.
+	
+	FOR FIRST crapcop FIELD(crapcop.dsdircop) 
+        WHERE crapcop.cdcooper = par_cdcooper NO-LOCK:
+        ASSIGN aux_dsdircop = crapcop.dsdircop.
+    END.
+	
+	CASE par_cddopcao:
+		WHEN "I" THEN DO:
+			UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt, "99/99/9999") + " " +
+							  STRING(TIME,"HH:MM:SS") + "' --> '" + 
+							  " Operador " + par_cdoperad  +
+							  " incluiu  o campo " + "'" + par_campolog + "'" + 
+							  " com o valor " + "'" + par_valornov + "'" + 
+							  " na empresa " + STRING(par_cdempres)  + 
+							  " >> /usr/coop/"   + 
+							  aux_dsdircop       +
+							  "/log/ctasal.log").
+		END.
+		WHEN "A" THEN DO:
+			UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt, "99/99/9999") + " " +
+							  STRING(TIME,"HH:MM:SS") + "' --> '" + 
+							  " Operador " + par_cdoperad  +
+							  " alterou  o campo "  +  "'" + par_campolog  + "'" +
+							  " de " + "'" + par_valorvel + "'" + "  para   " + "'" +
+							  par_valornov + "'" + " na empresa " + STRING(par_cdempres)  + 
+							  " >> /usr/coop/"   + 
+							  aux_dsdircop       +  
+							  "/log/ctasal.log").
+		END.
+		WHEN "E" THEN DO:
+			UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt, "99/99/9999") + " " +
+							  STRING(TIME,"HH:MM:SS") + "' --> '" + 
+							  " Operador " + par_cdoperad  +
+							  " excluiu a empresa " + STRING(par_cdempres)  + 
+							  " >> /usr/coop/"   + 
+							  aux_dsdircop       +  
+							  "/log/ctasal.log").
+		END.
+		WHEN "S" THEN DO:
+			UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt, "99/99/9999") + " " +
+							  STRING(TIME,"HH:MM:SS") + "' --> '" + 
+							  " Operador " + par_cdoperad  +
+							  " alterou  o campo "  +  "'" + par_campolog  + "'" +
+							  " de " + "'" + par_valorvel + "'" + "  para   " + "'" +
+							  par_valornov + "'" + " na empresa " + STRING(par_cdempres)  + 
+							  " >> /usr/coop/"   + 
+							  aux_dsdircop       +  
+							  "/log/ctasal.log").
+		END.
+		WHEN "X" THEN DO:
+			UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt, "99/99/9999") + " " +
+							  STRING(TIME,"HH:MM:SS") + "' --> '" + 
+							  " Operador " + par_cdoperad  +
+							  " reativou a empresa " + STRING(par_cdempres)  + 
+							  " >> /usr/coop/"   + 
+							  aux_dsdircop       +  
+							  "/log/ctasal.log").
+		END.
+	END CASE.		
+	
+
+END PROCEDURE.
+
 /* ------------------------------------------------------------------------- */
 /*               REALIZA A GRAVACAO DOS DADOS DA OPCAO TITULAR               */
 /* ------------------------------------------------------------------------- */
@@ -832,6 +910,96 @@ PROCEDURE Grava_Dados:
                    crapccs.tpctatrf = par_tpctatrf.
             VALIDATE crapccs.
 
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+			                    ,INPUT par_cddopcao
+			                    ,INPUT par_cdoperad
+			                    ,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+			                    ,INPUT "cdagenca"
+			                    ,INPUT par_cdagenca
+			                    ,INPUT "").
+			
+            RUN Gera_arquivo_log(INPUT par_cdcooper
+			                    ,INPUT par_cddopcao
+			                    ,INPUT par_cdoperad
+			                    ,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+			                    ,INPUT "cdempres"
+			                    ,INPUT par_cdempres
+			                    ,INPUT "").
+								 
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "cdagetrf"
+								,INPUT par_cdagetrf
+								,INPUT "").			
+								 
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "cdbantrf"
+								,INPUT par_cdbantrf
+								,INPUT "").
+			
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "nrdigtrf"
+								,INPUT par_nrdigtrf
+								,INPUT "").
+								
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "nrdconrt"
+								,INPUT aux_nrdconrt
+								,INPUT "").
+			
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "nrcpfcgc"
+								,INPUT par_nrcpfcgc
+								,INPUT "").
+			
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "nmfuncio"
+								,INPUT par_nmfuncio
+								,INPUT "").
+			
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "dtmvtolt"
+								,INPUT par_dtmvtolt
+								,INPUT "").
+			
+			RUN Gera_arquivo_log(INPUT par_cdcooper
+								,INPUT par_cddopcao
+								,INPUT par_cdoperad
+								,INPUT par_cdempres
+								,INPUT par_dtmvtolt
+								,INPUT "tpctatrf"
+								,INPUT par_tpctatrf
+								,INPUT "").
+			
             LEAVE Grava.
 
         END.
@@ -874,6 +1042,42 @@ PROCEDURE Grava_Dados:
         CASE par_cddopcao:
             WHEN "A" THEN DO:
         
+				IF crapccs.nmfuncio <> par_nmfuncio THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT crapccs.cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "nmfuncio"
+											,INPUT par_nmfuncio
+											,INPUT crapccs.nmfuncio).								
+					END.
+				
+				IF crapccs.cdagenci <> par_cdagenca THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT crapccs.cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "cdagenca"
+											,INPUT par_cdagenca
+											,INPUT crapccs.cdagenci).								
+					END.
+				
+				IF crapccs.cdempres <> par_cdempres THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT crapccs.cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "cdempres"
+											,INPUT par_cdempres
+											,INPUT crapccs.cdempres).								
+					END.
+				
                 ASSIGN crapccs.nmfuncio = par_nmfuncio
                        crapccs.cdagenci = par_cdagenca.
                        crapccs.cdempres = par_cdempres.
@@ -881,6 +1085,16 @@ PROCEDURE Grava_Dados:
             END. /* par_cddopcao = A */
 
             WHEN "E" THEN DO:
+			
+				RUN Gera_arquivo_log(INPUT par_cdcooper
+									,INPUT par_cddopcao
+									,INPUT par_cdoperad
+									,INPUT par_cdempres
+									,INPUT par_dtmvtolt
+									,INPUT ""
+									,INPUT ""
+									,INPUT "").
+											
                 ASSIGN crapccs.cdsitcta = 2
                        crapccs.dtcantrf = par_dtmvtolt
                        crapccs.cdopecan = par_cdoperad
@@ -890,6 +1104,67 @@ PROCEDURE Grava_Dados:
             END. /* par_cddopcao = E */
 
             WHEN "S" THEN DO:
+			
+				IF crapccs.cdbantrf <> par_cdbantrf THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT par_cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "cdbantrf"
+											,INPUT par_cdbantrf
+											,INPUT crapccs.cdbantrf).								
+					END.
+				
+				IF crapccs.cdagetrf <> par_cdagetrf THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT par_cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "cdagetrf"
+											,INPUT par_cdagetrf
+											,INPUT crapccs.cdagetrf).								
+					END.
+				
+				IF crapccs.nrctatrf <> par_nrctatrf THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT par_cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "nrctatrf"
+											,INPUT par_nrctatrf
+											,INPUT crapccs.nrctatrf).								
+					END.
+					
+				IF crapccs.nrdigtrf <> par_nrdigtrf THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT par_cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "nrdigtrf"
+											,INPUT par_nrdigtrf
+											,INPUT crapccs.nrdigtrf).								
+					END.
+				
+				IF crapccs.tpctatrf <> par_tpctatrf THEN
+					DO:
+						RUN Gera_arquivo_log(INPUT par_cdcooper
+											,INPUT par_cddopcao
+											,INPUT par_cdoperad
+											,INPUT par_cdempres
+											,INPUT par_dtmvtolt
+											,INPUT "tpctatrf"
+											,INPUT par_tpctatrf
+											,INPUT crapccs.tpctatrf).								
+					END.
+				
                 ASSIGN crapccs.cdbantrf = par_cdbantrf
                        crapccs.cdagetrf = par_cdagetrf
                        crapccs.nrctatrf = par_nrctatrf
@@ -899,6 +1174,16 @@ PROCEDURE Grava_Dados:
             END. /* par_cddopcao = S */
 
             WHEN "X" THEN DO:
+			
+				RUN Gera_arquivo_log(INPUT par_cdcooper
+									,INPUT par_cddopcao
+									,INPUT par_cdoperad
+									,INPUT par_cdempres
+									,INPUT par_dtmvtolt
+									,INPUT ""
+									,INPUT ""
+									,INPUT "").
+									
                 ASSIGN crapccs.cdsitcta = 1
                        crapccs.dtcantrf = ?
                        crapccs.cdopecan = ""
