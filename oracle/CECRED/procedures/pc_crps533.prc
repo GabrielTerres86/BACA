@@ -317,18 +317,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                08/05/2018 - Efetuado manutenção para não enviar o relatório crrl564 a intranet. Ele não é mais usado
                             pela área de negócio (Jonata - MOUTS SCTASK0012408)                           
                            
-			   18/05/2018 - Se conta está encerrada, gera devolução (crítica 64)              
+			   18/05/2018 - Se conta está encerrada, gera devolução (crítica 64)                    
                            
                28/05/2018 - ROLLBACK --> Chamado #861675.
                            Tivemos que voltar versão devido a não estar enviando os cheques para BBC
                            nestes casos, de devolução automática. (Wagner/Sustentação).
-
+                           
 			   19/06/2018 - Removida a alteração realizada em 18/05/2018, pois foi realizado a solicitação para retirada 
 							do requisito do projeto. (Renato Darosci - Supero)
                            
                08/08/2018 - Melhoria referente a devolucoes de cheques.
                             Chamado PRB0040059 (Gabriel - Mouts).
 
+			   17/08/2018 - SCTASK0018345-Borderô desconto cheque - Paulo Martins - Mouts
 ............................................................................. */
 
      DECLARE
@@ -2161,6 +2162,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND crapcdb.nrctachq = pr_nrctachq
                  AND crapcdb.nrcheque = pr_nrcheque
                  AND crapcdb.insitchq IN (0, 2)
+                 AND crapcdb.insitana NOT IN (0,2) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
                  AND crapcdb.dtlibera > pr_dtlibera;
             rw_crapcdb cr_crapcdb%ROWTYPE;
 
@@ -2901,7 +2903,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         --Ir para a proxima linha do arquivo
                         RAISE vr_exc_pula;
                       END IF; --cr_crapass%NOTFOUND
-            
+
                       --Verificar se a situacao da conta (somente para não integradas)
                       IF vr_nrdconta_incorp IS NULL THEN
                         IF vr_tab_crapass(vr_nrdconta).cdsitdtl IN (2,4,5,6,7,8) THEN

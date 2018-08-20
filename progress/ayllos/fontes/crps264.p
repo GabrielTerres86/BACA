@@ -243,7 +243,9 @@
 			               Chamado SCTASK0012893 - Gabriel (Mouts).
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-																					   
+
+        04/07/2018 - Ajuste referente SCTASK0018345
+
               16/07/2018 - Incluido critica no arquivo CRITICASDEVOLU.txt para alínea 37
                            conforme tarefa SCTASK0010890. (Reinert)
                            
@@ -1205,6 +1207,7 @@ PROCEDURE gera_lancamento:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                           AND NOT CAN-DO("0,2",STRING(crapcdb.insitana)) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
                                            AND crapcdb.dtdevolu = ?
                                            EXCLUSIVE-LOCK:
                        END.                        
@@ -3002,6 +3005,7 @@ PROCEDURE gera_arquivo_cecred:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2,3",STRING(crapcdb.insitchq))
+                                           AND NOT CAN-DO("0,2",STRING(crapcdb.insitana)) /* Inclusao Paulo Martins - Mouts (SCTASK0018345)*/
                                            AND crapcdb.dtdevolu = ?
                                            NO-LOCK:
                        END.                        
@@ -3044,7 +3048,7 @@ PROCEDURE gera_arquivo_cecred:
                
                                 OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.                               
                                
-           END.           
+                            END.           
        																									  
                           ASSIGN aux_linhaarq = "20" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + 
                                                 STRING(MONTH(glb_dtmvtolt),"99")   +
