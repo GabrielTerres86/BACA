@@ -690,7 +690,8 @@ function consultaIndicador(){
 
 function consultaProduto() {
 
-    var cdproduto = $('#cdproduto.pesquisa.campoFocusIn', getAbaAtual()).val();
+    //var cdproduto = $('#cdproduto.pesquisa.campoFocusIn', getAbaAtual()).val();
+	var cdproduto = $('#cdproduto.pesquisa',getAbaAtual()).val();
 
     if (cdproduto != '') {
 
