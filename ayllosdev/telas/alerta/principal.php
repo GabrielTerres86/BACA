@@ -3,14 +3,15 @@
 	/*************************************************************************
 	*  Fonte: principal.php                                               
 	*  Autor: Adriano                                                  
-	*  Data : Fevereiro/2013                       Última Alteração: 30/05/2014
+	*  Data : Fevereiro/2013                       Última Alteração: 10/07/2018
 	*                                                                   
 	*  Objetivo  : Mostrar as rotinas da tela ALERTA.             
 	*                                                                 
 	*  Alterações: 30/05/2014 - Ajuste para retirar caracteres de quebra de linha
 	*							do campo dsjusinc.
 	*  							(Jorge/Rosangela) - Emergencial		
-	*                                                                  
+	*              
+	*		       10/07/2018 - Ajuste para nao permitir caractere invalido. (PRB0040139 - Kelvin)
 	***********************************************************************/
 
 
@@ -70,7 +71,7 @@
 		// Executa script para envio do XML
 		$xmlResult = getDataXML($xmlConsulta);
 			
-		$xmlObjConsulta = getObjectXML($xmlResult);
+		$xmlObjConsulta = getObjectXML(removeCaracteresInvalidos($xmlResult));
 			
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObjConsulta->roottag->tags[0]->name) == "ERRO") {
