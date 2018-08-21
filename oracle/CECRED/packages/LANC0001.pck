@@ -274,8 +274,10 @@ BEGIN
 
        vr_tab_historico(vr_chvhist).indebcre := rw_historico.indebcre;
        vr_tab_historico(vr_chvhist).indebprj := rw_historico.indebprj;
+			 vr_tab_historico(vr_chvhist).intransf_cred_prejuizo := rw_historico.intransf_cred_prejuizo;
 			 vr_reg_historico.indebcre := rw_historico.indebcre;
 			 vr_reg_historico.indebprj := rw_historico.indebprj;
+			 vr_reg_historico.intransf_cred_prejuizo := rw_historico.intransf_cred_prejuizo;
      END IF;
 
      RETURN vr_reg_historico;
