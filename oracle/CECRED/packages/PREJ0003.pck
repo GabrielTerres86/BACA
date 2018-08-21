@@ -3464,7 +3464,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     rw_crapepr   cr_crapepr%ROWTYPE;
 
     -- VARIÁVEIS
-    vr_vlpagmto     NUMBER :=pr_vlrpagto;
+    vr_vlpagmto     NUMBER := pr_vlrpagto;
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
 
@@ -3536,8 +3536,10 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                       pr_cdcritic => vr_cdcritic,
                       pr_dscritic => vr_dscritic);   
 											
-         IF vr_dscritic IS NOT NULL THEN    
+         IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN    
            RAISE vr_exp_erro;
+				 ELSE 
+					 pr_vltotpag := vr_vlpagmto;
          END IF;
 			ELSE
 				-- Realizar a chamada da rotina para pagamento de prejuizo
