@@ -16,16 +16,16 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
 
                   12/12/2017 - Projeto 410 - inclusão do IOF sobre atraso - (JEan - MOut´S)
 
-				  19/07/2018 - Ajuste no aval cruzado para o valor da proposta enviada 
-							   compor o comprometimento do avalista 
-							   PJ 450 - Diego Simas - AMcom
+          19/07/2018 - Ajuste no aval cruzado para o valor da proposta enviada 
+                 compor o comprometimento do avalista 
+                 PJ 450 - Diego Simas - AMcom
 
                   20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
-							   PJ 450 - Diego Simas - AMcom
+                 PJ 450 - Diego Simas - AMcom
 
-				  06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
-				               Limite de crédito, Desconto de título e Desconto de cheque
-							   PJ 450 - Diego Simas - AMcom
+          06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
+                       Limite de crédito, Desconto de título e Desconto de cheque
+                 PJ 450 - Diego Simas - AMcom
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -139,7 +139,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
                                   ,pr_dsjsonan  OUT NOCOPY json             --> Retorno do clob em modelo json com os dados para analise
                                   ,pr_cdcritic  OUT NUMBER                  --> Codigo da critica
                                   ,pr_dscritic  OUT VARCHAR2);              --> Descricao da critica
-									
+                  
 END ESTE0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
@@ -174,9 +174,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                Campo documentoAval - Diego Simas - AMcom
 
-				  06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
-				               Limite de crédito, Desconto de título e Desconto de cheque
-							   PJ 450 - Diego Simas - AMcom
+          06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
+                       Limite de crédito, Desconto de título e Desconto de cheque
+                 PJ 450 - Diego Simas - AMcom
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1002,9 +1002,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
         Alteração : 
 
-				    19/07/2018 - Alterado para considerar o nro de contrato de emprestimo
-					             no cursor do que busca o total de prestacoes do associado
-								 PJ 450 - Diego Simas - AMcom
+            19/07/2018 - Alterado para considerar o nro de contrato de emprestimo
+                       no cursor do que busca o total de prestacoes do associado
+                 PJ 450 - Diego Simas - AMcom
         
     ..........................................................................*/                           
     
@@ -1120,7 +1120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Lucas Reinert
-        Data     : Maio/2017.                    Ultima atualizacao: 06/08/2018
+        Data     : Maio/2017.                    Ultima atualizacao: 21/08/2018
       
         Dados referentes ao programa:
       
@@ -1138,19 +1138,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                     24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
                                  Campo documentoAval - Diego Simas - AMcom
 
-					19/07/2018 - Alterado para o campo totalPrestacoesAvalista conter a soma do valor da prestação da proposta
-								 PJ 450 - Diego Simas - AMcom
-					
-					20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
-							     PJ 450 - Diego Simas - AMcom
+                    19/07/2018 - Alterado para o campo totalPrestacoesAvalista conter a soma do valor da prestação da proposta
+                                 PJ 450 - Diego Simas - AMcom
+                    
+                    20/07/2018 - Correção para a quantidade de dias de atraso do cooperado (quantDiasAtrasoEmprest)
+                                 PJ 450 - Diego Simas - AMcom
 
-					26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
-  							     PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)	
+                    26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
+                                 PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)  
 
-				    06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
-				                 Limite de crédito, Desconto de título e Desconto de cheque
-							     PJ 450 - Diego Simas - AMcom
+                    06/08/2018 - Ajuste para enviar quando o proponente é avalista também para os produtos
+                                 Limite de crédito, Desconto de título e Desconto de cheque
+                                 PJ 450 - Diego Simas - AMcom
 
+                    21/08/2018 - Ajuste para considerar quando o cooperado está em prejuízo
+                                 PJ 450 - Diego Simas - AMcom
+                         
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
@@ -1638,6 +1641,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND epr.nrdconta = pr_nrdconta
            AND epr.inprejuz = 1;
       rw_crapepr_preju cr_crapepr_preju%ROWTYPE;
+      
+      --> Consultar se já houve prejuizo nessa conta do cooperado
+      CURSOR cr_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
+                         pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS 
+        SELECT 1
+          FROM tbcc_prejuizo t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta;
+      rw_prejuizo cr_prejuizo%ROWTYPE; 
     
       -- Verificar se ha emprestimo nas linhas 800 e 900     
       CURSOR cr_crapepr_800_900 IS
@@ -2736,9 +2748,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Verificar se houve prejuizo do Cooperado na Cooperativa          
       OPEN cr_crapepr_preju;
       FETCH cr_crapepr_preju
-        INTO rw_crapepr_preju;
+       INTO rw_crapepr_preju;
+        
+      OPEN cr_prejuizo(pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_prejuizo 
+       INTO rw_prejuizo;  
     
-      IF cr_crapepr_preju%FOUND OR rw_crapass.cdsitdtl IN (5, 6, 7, 8) THEN
+      IF cr_crapepr_preju%FOUND 
+      OR rw_crapass.cdsitdtl IN (5, 6, 7, 8) 
+      OR cr_prejuizo%FOUND THEN
         vr_flprjcop := TRUE;
       ELSE
         vr_flprjcop := FALSE;
@@ -3609,7 +3628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         INTO vr_nratrmai;
       CLOSE cr_crapris;
       
-	  vr_nratrmai := nvl(vr_nratrmai, 0);
+    vr_nratrmai := nvl(vr_nratrmai, 0);
       
       -- Enviar informações do atraso e parcelas calculadas para o JSON
       vr_obj_generic2.put('valorAtrasoEmprest'
