@@ -61,7 +61,21 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0015 IS
                                 ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
                                 ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
                                 ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
-                                ,pr_dscritic  OUT crapcri.dscritic%TYPE);                                       
+                                ,pr_dscritic  OUT crapcri.dscritic%TYPE); 
+                                   
+  PROCEDURE pc_gerar_evento_email (pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                  ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                  ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                  ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                  ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                  ,pr_dscritic  OUT crapcri.dscritic%TYPE);
+
+  PROCEDURE pc_valida_push_proposta (pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                     ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                     ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                     ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                     ,pr_dscritic  OUT crapcri.dscritic%TYPE);                                  
 END EMPR0015;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
@@ -1233,6 +1247,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       pr_dscritic := 'Erro na procedure EMPR0012.pc_executa_expiracao: ' || SQLERRM;  
   END pc_executa_expiracao; 
 
+  PROCEDURE pc_gerar_evento_email (pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                  ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                  ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                  ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                  ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                  ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
+  /* .............................................................................
+
+       Programa: pc_gerar_evento_email
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael(Mouts)
+       Data    : 08/2018                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para procesar as regras de geração de e-mail
+
+       Alteracoes: 
+    ............................................................................. */                                  
+  
+    CURSOR cr_crapcop()IS
+      SELECT *
+        FROM crapcop cop
+       WHERE cop.cdcooper = nvl(prc_cdcooper, cop.cdcooper)
+         AND cop.cdcooper <> 3
+         AND cop.
+    CURSOR cr_crawepr (prc_cdcooper IN crawepr.cdcooper%TYPE) IS
+      SELECT epr.cdcooper,
+             epr.nrdconta,
+             epr.nrctremp,
+             epr.dtaprova
+        FROM crawepr epr
+       WHERE epr.cdcooper = NVL(prc_cdcooper, epr.cdcooper)
+         AND epr.insitest = 3 -- Situacao Analise Finalizada
+         AND epr.insitapr = 1 -- Decisao aprovada
+         AND epr.dtaprova IS NOT NULL  -- Ter data de 
+         AND NOT EXISTS (SELECT 1 
+                           FROM crapepr epr2
+                          WHERE epr2.cdcooper = epr.cdcooper
+                            AND epr2.nrdconta = epr.nrdconta
+                            AND epr2.nrctremp = epr.nrctremp) ;
+  
+  
+  BEGIN
+    pr_dserro := 'OK';
+    NULL;
+  
+  END pc_gerar_evento_email; 
+
+  PROCEDURE pc_valida_push_proposta (pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                     ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                     ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                     ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                     ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
+   /* .............................................................................
+
+       Programa: pc_valida_push_proposta
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael(Mouts)
+       Data    : 08/2018                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para procesar as regras de geração de e-mail
+
+       Alteracoes: 
+    ............................................................................. */                                                                    
+  BEGIN
+    NULL;
+  
+  
+  END;                                                       
 
 END EMPR0015;
 /
