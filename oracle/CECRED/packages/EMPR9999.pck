@@ -575,22 +575,22 @@ create or replace package body cecred.EMPR9999 as
 			IF vr_auxdias_atraso < vr_qtdias_atraso THEN
 				vr_auxdias_atraso := vr_qtdias_atraso;
 			END IF;
+			
+			-- De 0 a 4 dias de atraso - Renovaçao de Crédito
+			IF vr_auxdias_atraso < 5 THEN
+				pr_idquapro := 2;      
+			-- De 5 a 60 dias de atraso - Renegociaçao de Crédito
+			ELSIF vr_auxdias_atraso > 4 and vr_auxdias_atraso < 61 THEN
+				pr_idquapro := 3;
+			-- Igual ou acima de 61 dias - Composiçao de dívida
+			ELSIF  vr_auxdias_atraso >= 61 THEN
+				pr_idquapro := 4;
+			END IF;
+			
+			IF pr_idquapro < rw_crapepr.idquaprc THEN
+				pr_idquapro := rw_crapepr.idquaprc;
+			END IF;
     END LOOP;
-
-    -- De 0 a 4 dias de atraso - Renovaçao de Crédito
-    IF vr_auxdias_atraso < 5 THEN
-      pr_idquapro := 2;      
-    -- De 5 a 60 dias de atraso - Renegociaçao de Crédito
-    ELSIF vr_auxdias_atraso > 4 and vr_auxdias_atraso < 61 THEN
-      pr_idquapro := 3;
-    -- Igual ou acima de 61 dias - Composiçao de dívida
-    ELSIF  vr_auxdias_atraso >= 61 THEN
-      pr_idquapro := 4;
-    END IF;
-		
-		IF pr_idquapro < rw_crapepr.idquaprc THEN
-			pr_idquapro := rw_crapepr.idquaprc;
-		END IF;
 		
 		pr_dsquapro := vr_vet_qualif(pr_idquapro);
   EXCEPTION
@@ -1433,7 +1433,6 @@ create or replace package body cecred.EMPR9999 as
                                       pr_cdoperad => pr_cdoperad,
                                       pr_vlrlanc  => pr_vltotpag - nvl(pr_vliofcpl,0) + nvl(pr_vliofcpl,0) ,
                                       pr_dtmvtolt => pr_crapdat.dtmvtolt,
-
                                       pr_cdcritic => vr_cdcritic,
                                       pr_dscritic => vr_dscritic);
 
