@@ -1696,7 +1696,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
         FROM crapsda sda
        WHERE sda.cdcooper = pr_cdcooper
          AND sda.nrdconta = pr_nrdconta
-         AND sda.dtmvtolt >= pr_dtmvtolt
+         AND sda.dtmvtolt = pr_dtmvtolt
 		   ORDER BY dtmvtolt DESC)
 		 WHERE rownum = 1;
     rw_crapsda cr_crapsda%ROWTYPE;
