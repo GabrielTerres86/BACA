@@ -614,6 +614,12 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                               ,pr_cdcritic OUT PLS_INTEGER             --> código da crítica
                               ,pr_dscritic OUT VARCHAR2                --> descrição da crítica
                               );
+                              
+  PROCEDURE pc_expira_borderos_coop (pr_cdcooper    IN crapbdt.cdcooper%TYPE DEFAULT 0 --> Cooperativa
+                                     --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER                       --> código da crítica
+                                    ,pr_dscritic OUT VARCHAR2                          --> descrição da crítica
+                                    );
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -8787,10 +8793,10 @@ EXCEPTION
       -- Busca o bordero        
       CURSOR cr_crapbdt IS
         SELECT
-          bdt.ROWID,
+          bdt.cdcooper,
           bdt.nrdconta,
           bdt.nrborder,
-          GREATEST(bdt.dtmvtolt,bdt.dtanabor,bdt.dtenvmch) AS dtalteracao
+          GREATEST(nvl(bdt.dtanabor, bdt.dtmvtolt), nvl(bdt.dtenvmch,bdt.dtmvtolt), nvl(bdt.dtaprova, bdt.dtmvtolt)) AS dtalteracao
         FROM
           crapbdt bdt
         WHERE bdt.cdcooper = pr_cdcooper
@@ -8839,38 +8845,50 @@ EXCEPTION
         CLOSE cr_crapass;
         
         -- Busca os Parâmetros para o Cooperado e Cobrança Com Registro
-        DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper, --pr_cdcooper,
-                                            NULL, --Agencia de operação
-                                            NULL, --Número do caixa
-                                            NULL, --Operador
-                                            NULL, -- Data da Movimentação
-                                            NULL, --Identificação de origem
-                                            1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
-                                            rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+        DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper,         -- Cooperativa
+                                            NULL,                -- Agencia de operação
+                                            NULL,                -- Número do caixa
+                                            NULL,                -- Operador
+                                            NULL,                -- Data da Movimentação
+                                            NULL,                -- Identificação de origem
+                                            1,                   -- Tipo de Cobrança: 1: REGISTRADA / 0: NÃO REGISTRADA
+                                            rw_crapass.inpessoa, -- 1: PESSOA FÍSICA / 2: PESSOA JURÍDICA
+                                            -- OUT --
                                             vr_tab_dados_dsctit,
                                             vr_tab_cecred_dsctit,
                                             vr_cdcritic,
                                             vr_dscritic);
-        -- Valida a procedure  da #TAB052
         IF ((NVL(vr_cdcritic, 0) > 0) OR (vr_dscritic IS NOT NULL)) THEN
           RAISE vr_exc_erro;
         END IF;
         
-        -- Caso a data de criação do borderô for maior que a data atual + dias de expiração, então expira o borderô
-        IF (to_date(to_char(rw_crapdat.dtmvtolt + vr_tab_dados_dsctit(1).qtdiexbo, 'DD/MM/RRRR')) < rw_crapbdt.dtalteracao) THEN
+        -- Caso a data da ultima alteração do bordero + qtd. dias de expiração for menor que a data de movimento, expira.
+        IF (to_date(to_char(rw_crapbdt.dtalteracao + vr_tab_dados_dsctit(1).qtdiexbo, 'DD/MM/RRRR')) < rw_crapdat.dtmvtolt)THEN
           -- Atualiza o bordero com REJEITADO e PRAZO EXPIRADO
+          pc_altera_status_bordero(pr_cdcooper => rw_crapbdt.cdcooper
+                                  ,pr_nrborder => rw_crapbdt.nrborder
+                                  ,pr_nrdconta => rw_crapbdt.nrdconta
+                                  ,pr_status   => 5                          -- Rejeitado
+                                  ,pr_insitapr => 7                          -- Prazo Expirado
+                                  ,pr_dtrejeit => rw_crapdat.dtmvtolt        -- Data de rejeição
+                                  ,pr_hrrejeit => to_char(sysdate,'SSSSS')   -- Hora de rejeião
+                                  ,pr_dscritic => vr_dscritic                -- Se houver registro de crítica
+                                  );
+          IF (vr_dscritic IS NOT NULL) THEN
+              RAISE vr_exc_erro;
+          END IF;
+
+          -- Altera a decisao de todos os titulos daquele bordero para NAO APROVADOS
           BEGIN
-            UPDATE crapbdt SET insitbdt = 5, insitapr = 7 WHERE ROWID = rw_crapbdt.ROWID;
-            vr_dscritic := 'Atualizado';
+            UPDATE craptdb SET insittit = 0, insitapr = 2 WHERE nrborder = rw_crapbdt.nrborder AND cdcooper = rw_crapbdt.cdcooper AND nrdconta = rw_crapbdt.nrdconta;
+            COMMIT;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar a crapbdt, bordero: '|| rw_crapbdt.nrborder || ' em DSCT0003.pc_expira_bordero'||SQLERRM;
+              ROLLBACK;
+              vr_dscritic := 'Erro ao atualizar a craptdb, bordero: '|| rw_crapbdt.nrborder || ' em DSCT0003.pc_expira_bordero'||SQLERRM;
               RAISE vr_exc_erro;
           END;
         END IF;
-        vr_dscritic := 'Nao atualizado';
-        -- Remover depois SHIN
-        RAISE vr_exc_erro;
       EXCEPTION 
         WHEN vr_exc_erro THEN 
              -- Se foi retornado apenas código busca a descrição
@@ -8883,6 +8901,71 @@ EXCEPTION
         WHEN OTHERS THEN 
              pr_dscritic := 'Erro nao tratado na DSCT0003.pc_expira_bordero ' ||SQLERRM;
   END pc_expira_bordero;
+
+ PROCEDURE pc_expira_borderos_coop (pr_cdcooper    IN crapbdt.cdcooper%TYPE DEFAULT 0 --> Cooperativa
+                                   --------> OUT <--------
+                                   ,pr_cdcritic OUT PLS_INTEGER                       --> código da crítica
+                                   ,pr_dscritic OUT VARCHAR2                          --> descrição da crítica
+                                   ) IS
+      /*---------------------------------------------------------------------------------------------------------------------
+        Programa  : pc_expira_borderos_coop
+        Sistema   : 
+        Sigla     : CRED
+        Autor     : Vitor Shimada Assanuma (GFT)
+        Data      : 18/08/2018
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para expirar os borderos de uma cooperativa
+      ---------------------------------------------------------------------------------------------------------------------*/
+      -- Tratamento de erro
+      vr_exc_erro EXCEPTION;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%type; --> cód. erro
+      vr_dscritic varchar2(1000);        --> desc. erro
+      
+      -- Busca o bordero, caso nao seja passado cdcooper, pega de todas as cooperativas.        
+      CURSOR cr_crapbdt IS
+        SELECT
+           bdt.cdcooper
+          ,bdt.nrborder
+        FROM
+          crapbdt bdt
+        WHERE bdt.cdcooper = decode(pr_cdcooper, 0, bdt.cdcooper, pr_cdcooper)  -- Caso seja passado a coop
+          AND bdt.cdcooper IN (SELECT cdcooper FROM crapcop WHERE flgativo = 1) -- Somente cooperativas ativas
+          AND bdt.insitbdt < 3                                                  -- Em estudo e Analisado
+      ;rw_crapbdt cr_crapbdt%ROWTYPE; 
+      
+      BEGIN
+        -- Abre o cursor da BDT para buscar o bordero
+        OPEN cr_crapbdt;
+        LOOP
+          FETCH cr_crapbdt INTO rw_crapbdt;
+          EXIT WHEN cr_crapbdt%NOTFOUND;
+          -- Chama a rotina de expirar bordero
+          pc_expira_bordero(pr_cdcooper => rw_crapbdt.cdcooper
+                           ,pr_nrborder => rw_crapbdt.nrborder
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+          );
+          
+          -- Valida a procedure de expirar o bordero
+          IF ((NVL(vr_cdcritic, 0) > 0) OR (vr_dscritic IS NOT NULL)) THEN
+            RAISE vr_exc_erro;
+          END IF;
+        END LOOP;
+        CLOSE cr_crapbdt;
+      EXCEPTION 
+        WHEN vr_exc_erro THEN 
+             -- Se foi retornado apenas código busca a descrição
+             IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN 
+                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+             END IF;
+             -- Variavel de erro recebe erro ocorrido
+             pr_cdcritic := nvl(vr_cdcritic,0);
+             pr_dscritic := vr_dscritic;
+        WHEN OTHERS THEN 
+             pr_dscritic := 'Erro nao tratado na DSCT0003.pc_expira_borderos_coop ' ||SQLERRM;
+  END pc_expira_borderos_coop;
 
 END DSCT0003;
 /
