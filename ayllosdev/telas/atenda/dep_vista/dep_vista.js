@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  �ltima Altera��o: 03/08/2018
+   Data : Fevereiro/2007                  �ltima Altera��o: 21/08/2018
 
    Objetivo  : Biblioteca de fun��es da rotina Dep. Vista da tela
                ATENDA
@@ -30,6 +30,8 @@
 			   				PJ450 - Diego Simas - AMcom
 			   03/08/2018 - Campos do pagamento do empréstimo (Conta Transitória)
                             P450 - Diego Simas - AMcom
+               21/08/2018 - Incluído campo Juros referente ao juros remuneratório da conta transitória.
+				  		    PJ450 - Diego Simas - AMcom 
 
  ***********************************************************************/
 
@@ -1062,6 +1064,8 @@ function mostraPagamentoEmp(nrctremp){
 function formataPagamentoPrejuzCC() {
 	var Lvlsdprej = $('label[for="vlsdprej"]', '#frmPagPrejCC');
 	var Cvlsdprej = $('#vlsdprej', '#frmPagPrejCC');
+	var Ljuremune = $('label[for="juremune"]', '#frmPagPrejCC');
+	var Cjuremune = $('#juremune', '#frmPagPrejCC');
 	var Lvlttjurs = $('label[for="vlttjurs"]', '#frmPagPrejCC');
 	var Cvlttjurs = $('#vlttjurs', '#frmPagPrejCC');
 	var Lvltotiof = $('label[for="vltotiof"]', '#frmPagPrejCC');
@@ -1075,6 +1079,8 @@ function formataPagamentoPrejuzCC() {
 
 	Lvlsdprej.addClass('rotulo').css({ 'width': '130px' });
 	Cvlsdprej.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
+	Ljuremune.addClass('rotulo').css({ 'width': '130px' });
+	Cjuremune.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
 	Lvlttjurs.addClass('rotulo').css({ 'width': '130px' });
 	Cvlttjurs.css({ 'width': '110px', 'text-align': 'right' }).addClass('monetario');
 	Lvltotiof.addClass('rotulo').css({ 'width': '130px' });
@@ -1262,6 +1268,7 @@ function retiraMascara(numero) {
 function calcularSaldo() {
 	
 	var vlsdprej = retiraMascara($('#vlsdprej', '#frmPagPrejCC').val()) || 0;
+	var juremune = retiraMascara($('#juremune', '#frmPagPrejCC').val()) || 0;
 	var vltotiof = retiraMascara($('#vltotiof', '#frmPagPrejCC').val()) || 0;
 	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
 	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0;

@@ -7,6 +7,9 @@
 
    ALTERACOES   : 01/08/2018 - Ajuste nos campos do pagamento do prejuízo da conta transitória
 			   		   		   PJ450 - Diego Simas - AMcom
+
+			      20/08/2018 - Incluído campo Juros referente ao juros remuneratório da conta transitória.
+				  		       PJ450 - Diego Simas - AMcom
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -60,6 +63,10 @@
 												<tr>
 													<td><label for="vlsdprej">&nbsp;&nbsp;<?php echo utf8ToHtml('Saldo Devedor:') ?></label></td>
 													<td><input type="text" id="vlsdprej" name="vlsdprej" value="<? echo getByTagName($dadosPrejuCC,'vlsdprej'); ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
+												</tr>
+												<tr>
+													<td><label for="juremune">&nbsp;&nbsp;<?php echo utf8ToHtml('Juros:') ?></label></td>
+													<td><input type="text" id="juremune" name="juremune" value="<? echo getByTagName($dadosPrejuCC,'juremune'); ?>" disabled readonly class="moeda campo campoTelaSemBorda" /></td>
 												</tr>												
 												<tr>
 													<td><label for="vltotiof">&nbsp;&nbsp;<?php echo utf8ToHtml('IOF:') ?></label></td>
