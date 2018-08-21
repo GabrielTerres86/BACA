@@ -55,6 +55,15 @@ require_once("../../../class/xmlfile.php");
 // Carrega permissões do operador
 include("../../../includes/carrega_permissoes.php");
 
+// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
+function exibeErro($msgErro) {
+	echo '<script type="text/javascript">';
+	echo 'hideMsgAguardo();';
+	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
+	echo '</script>';
+	exit();
+}
+
 $idcalculo_reciproci = (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcalculo_reciproci'] : '';
 $cdcooper            = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
 $cddopcao            = (!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'C';
@@ -95,6 +104,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	exibeErro(utf8_encode($msgErro));
 }
+
 
 // Monta o xml para a requisicao
 $xml  = "";
@@ -143,6 +153,26 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	exibeErro(utf8_encode($msgErro));
 }
+
+// Monta o xml para a requisicao
+$xml  = "";
+$xml .= "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= " </Dados>";     
+$xml .= "</Root>";
+
+// Executa script para envio do XML
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "BUSCA_VINCULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$vinculacao = getObjectXML($xmlResult);
+$vinculacao = $vinculacao->roottag->tags[0];
+// Se ocorrer um erro, mostra crítica
+if (strtoupper($vinculacao->roottag->tags[0]->name) == "ERRO") {
+	$msgErro = $vinculacao->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	exibeErro(utf8_encode($msgErro));
+}
+$nmvinculacao = getByTagName($vinculacao->tags, "nmvinculacao");
+$idvinculacao = getByTagName($vinculacao->tags, "idvinculacao");
 
 ?>
 <style>
@@ -226,7 +256,8 @@ descontoConvenios = [];
 	<tr class="corImpar">
 		<td>Vincula&ccedil;&atilde;o</td>
 		<td align="right">
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
+			<input name="nmvinculacao" id="nmvinculacao" type="text" class="campo campoTelaSemBorda" disabled value="<? echo $nmvinculacao; ?>" style="width:153px;" />
+			<input name="idvinculacao" id="idvinculacao" type="hidden" value="<? echo $idvinculacao; ?>" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
@@ -385,8 +416,8 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 // Se a tela foi chamada pela rotina "Produtos" então acessa a opção "Habilitar".
 (executandoProdutos == true) ? consulta('S','','',true,'','') : '';
 
-$('.valor').setMask('DECIMAL', 'zz.zzz.zz9,99', '.', '');
-$('.inteiro').setMask('DECIMAL', 'zz.zzz.zzz', '.', '');
+$('.valor').setMask('DECIMAL', 'zzz.zzz.zzz.zzz.zz9,99', '.', '');
+$('.inteiro').setMask('DECIMAL', 'z.zzz.zzz.zzz.zzz', '.', '');
 
 $('.imgEditar').tooltip();	
 $('.imgExcluir').tooltip();

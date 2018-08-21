@@ -1699,7 +1699,7 @@ function acessaAba(id,cddopcao) {
     if (linkVoltar == 1){
         document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
     }else if (linkVoltar == 2){
-        document.getElementById("btnVoltar").onclick=function(){acessaAba(id + 1,cddopcao);}
+        document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
     }
 
     // Removido esta forma de atribuir pois não funciona com modo de compatibilidade
@@ -2183,8 +2183,9 @@ function formataLogConv() {
 
     var arrayLargura = new Array();
 
-    arrayLargura[0] = '150px';
-	arrayLargura[1] = '250px';
+    arrayLargura[0] = '105px';
+	arrayLargura[1] = '434px';
+    arrayLargura[2] = '100px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -2979,13 +2980,17 @@ function carregaCobranca() {
 function acessaTarifa(tipo) {
     // tipo == 0 (COO)
     // tipo == 1 (CEE)
-    showMsgAguardo("Aguarde, carregando ...");
+    if (descontoConvenios.length == 0) {
+        showError("error", "Selecione ao menos um conv&ecirc;nio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return false;
+    }
 
     var convenios = [];
     for (var i = 0, len = descontoConvenios.length; i < len; ++i) {
         convenios.push(descontoConvenios[i].convenio);
     }
 
+    showMsgAguardo("Aguarde, carregando ...");
     // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
     $.ajax({
             dataType: "html",
