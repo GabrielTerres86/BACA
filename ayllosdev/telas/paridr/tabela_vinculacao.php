@@ -35,12 +35,12 @@
 				$perdesc = getByTagName($vinculacao->tags,'vlpercentual_desconto');
 			?>
 			<tr>
-				<td width="60"><?php echo $idvinculacao;?></td>
-				<td width="241"><?php echo $nmvinculacao;?></td>
-				<td width="135"><?php echo $dsproduto;?></td>
-				<td width="54"><?php echo $inpessoa;?></td>
-				<td width="60"><?php echo $perpeso;?></td>
-				<td width="50"><?php echo $perdesc;?>
+				<td width="90"><?php echo $idvinculacao;?></td>
+				<td width="165"><?php echo $nmvinculacao;?></td>
+				<td width="235"><?php echo $dsproduto;?></td>
+				<td width="145"><?php echo $inpessoa;?></td>
+				<td width="90"><?php echo $perpeso;?></td>
+				<td><?php echo $perdesc;?>
 					<input type="hidden" id="idvinculacao" value="<? echo $idvinculacao; ?>" />
 					<input type="hidden" id="nmvinculacao" value="<? echo $nmvinculacao; ?>" />
 					<input type="hidden" id="cdproduto" value="<? echo $cdproduto; ?>" />

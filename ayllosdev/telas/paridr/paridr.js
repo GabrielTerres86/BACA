@@ -358,7 +358,7 @@ function formataTabela() {
 		arrayLargura = ['60px','241px','65px','135px','54px','60px','60px','50px'];
 		arrayAlinha = ['right','left','left','left','center','right','right','right','right'];
 	} else if (abaAtual === 1) {
-		arrayLargura = ['100px','165px','235px','135px','90px','90px'];
+		arrayLargura = ['90px','165px','235px','145px','90px'];
 		arrayAlinha = ['right','left','left','left','right','right'];
 	}
 	
