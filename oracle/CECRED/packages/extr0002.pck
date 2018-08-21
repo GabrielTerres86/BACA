@@ -2040,6 +2040,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         SELECT craplpp.cdhistor
               ,-100 cdhsprap            -- Utilizado apenas na nova apl
               ,-100 cdhsrgap            -- Utilizado apenas na nova apl
+              ,-100 cdhsrvap            -- Utilizado apenas na nova apl
+              ,-100 cdhsrdap            -- Utilizado apenas na nova apl
+              ,-100 cdhsirap            -- Utilizado apenas na nova apl
               ,craplpp.vllanmto
               ,craplpp.dtmvtolt
               ,craplpp.dtrefere
@@ -2069,6 +2072,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         SELECT lac.cdhistor
               ,cpc.cdhsprap
               ,cpc.cdhsrgap
+			  ,cpc.cdhsrvap
+		      ,cpc.cdhsrdap
+			  ,cpc.cdhsirap
               ,lac.vllanmto
               ,lac.dtmvtolt
               ,NULL dtrefere
@@ -2408,7 +2414,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_tab_extrato_rpp(vr_index).cdbccxlt:= rw_lancam.cdbccxlt;
         vr_tab_extrato_rpp(vr_index).nrdolote:= rw_lancam.nrdolote;
         vr_tab_extrato_rpp(vr_index).cdhistor:= rw_lancam.cdhistor;
-        IF rw_craphis.cdhistor IN (rw_lancam.cdhsprap,rw_lancam.cdhsrgap) THEN
+        IF rw_craphis.cdhistor IN 
+                (rw_lancam.cdhsprap,rw_lancam.cdhsrgap
+                ,rw_lancam.cdhsrvap,rw_lancam.cdhsrdap
+                ,rw_lancam.cdhsirap) THEN
+
            vr_tab_extrato_rpp(vr_index).aghistor := 1; -- Acumula
         ELSE
            vr_tab_extrato_rpp(vr_index).aghistor := 0; -- Nao Acumula
@@ -17250,6 +17260,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_dsiduser IN VARCHAR2               --Identificador Usuario
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE  --Numero da Conta do Associado
                                 ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE  --Numero Contrato
+                                ,pr_tpapprog IN INTEGER default 0      --Tipo de Aplicao (0 = Ambas, 1 = RPP, 2 = Apl. Prog.)
                                 ,pr_dtiniper IN DATE                   --Data Inicio Periodo
                                 ,pr_dtfimper IN DATE                   --Data Final Periodo
                                 ,pr_idseqttl IN crapttl.idseqttl%TYPE  --Sequencial do Titular                                                                
@@ -17289,6 +17300,10 @@ END pc_consulta_ir_pj_trim;
   --
   --              02/03/2018 - Ajustes na exibição dos valores de bloqueio Judicial e de cobertura de aplicacao
   --                           (Lucas Skroch - Supero TI)
+  --
+  --              20/08/2018 - Suporte a aplicações programadas (Extrato sintético APs)
+  --                           Proj. 411.2 - CIS Corporate
+
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -17571,6 +17586,9 @@ END pc_consulta_ir_pj_trim;
           --Percorrer dados extrato da poupanca
           vr_index_dados_rpp:= vr_tab_dados_rpp.FIRST;
           WHILE vr_index_dados_rpp IS NOT NULL LOOP
+                IF (pr_tpapprog = 0) OR -- Processar tudo
+                   (pr_tpapprog = 1 AND vr_tab_dados_rpp(vr_index_dados_rpp).cdprodut<1) OR -- Apenas RPP
+                   (pr_tpapprog = 2 AND vr_tab_dados_rpp(vr_index_dados_rpp).cdprodut>0) THEN  -- Apenas Novas
             --Limpar tabela Memoria
             vr_tab_extrato_rpp.DELETE;
             --Consultar Extrato Poupanca
@@ -17704,6 +17722,7 @@ END pc_consulta_ir_pj_trim;
             gene0002.pc_escreve_xml(pr_clobxml, pr_dstexto,'</extratos></conta>');
             --Escreve CLOB Interno
             gene0002.pc_escreve_xml(vr_clobxml209, vr_dstexto209,'</extratos></conta>');
+                END IF;
             --Proximo Registro
             vr_index_dados_rpp:= vr_tab_dados_rpp.NEXT(vr_index_dados_rpp);
           END LOOP; --dados_rpp
@@ -20597,7 +20616,12 @@ END pc_consulta_ir_pj_trim;
           ELSE
             vr_nraplica:= pr_nraplica;
           END IF; 
-          IF pr_inrelext = 1 THEN -- Extrato Default
+          IF pr_inrelext IN (1,2) THEN -- Extrato Default (Completo ou das aplicações programadas)
+             IF pr_inrelext = 1 THEN -- Sintético Aplic. Programada
+                vr_tpapprog := 0;
+             ELSE  
+                vr_tpapprog := 2;
+             END IF;
           --Extrato da Poupanca Programada    
               pc_gera_impextppr (pr_cdcooper => pr_cdcooper      --Codigo Cooperativa
                                 ,pr_cdagenci => pr_cdagenci      --Codigo Agencia
@@ -20612,6 +20636,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_dsiduser => pr_dsiduser      --Identificador Usuario
                                 ,pr_nrdconta => pr_nrdconta      --Numero da Conta do Associado
                                 ,pr_nrctrrpp => vr_nraplica      --Numero Contrato
+                                ,pr_tpapprog => vr_tpapprog      --Tipo de Aplicao (0 = Ambas, 1 = RPP, 2 = Apl. Prog.)
                                 ,pr_dtiniper => pr_dtrefere      --Data Inicio Periodo
                                 ,pr_dtfimper => pr_dtreffim      --Data Final Periodo
                                 ,pr_idseqttl => pr_idseqttl      --Sequencial do Titular
