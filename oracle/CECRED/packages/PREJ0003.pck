@@ -806,7 +806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 							 pr_nrdconta,
 							 rw_crapdat.dtmvtolt,
 							 rw_crapass.cdsitdct,
-							 vr_vlslddev,
+							 vr_vlslddev + vr_vljuro60_cneg + vr_vljuro60_cesp,
 							 vr_qtdiaatr,
 							 vr_vlslddev,
 							 vr_vljuro60_cneg,
@@ -3474,7 +3474,8 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     vr_exp_erro     EXCEPTION;
 
   BEGIN
-
+    GENE0001.pc_set_modulo('BLQPREJU');
+		
     -- 01 CARREGAR CRAPDAT
     -- Verifica se a data esta cadastrada
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
