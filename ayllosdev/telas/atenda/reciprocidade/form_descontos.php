@@ -417,7 +417,7 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 (executandoProdutos == true) ? consulta('S','','',true,'','') : '';
 
 $('.valor').setMask('DECIMAL', 'zzz.zzz.zzz.zzz.zz9,99', '.', '');
-$('.inteiro').setMask('DECIMAL', 'z.zzz.zzz.zzz.zzz', '.', '');
+$('.inteiro').setMask('DECIMAL', 'zzz.zzz.zzz.zzz.zzz', '.', '');
 
 $('.imgEditar').tooltip();	
 $('.imgExcluir').tooltip();
