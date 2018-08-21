@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 17/03/2016
  * OBJETIVO     : Mostrar tela CONPRO
  * --------------
- * ALTERAÇÕES   : 14/08/2018 - P438 - Adicionada nova situacao "Expirado Dec. Prazo" 
+ * ALTERAÇÕES   : 14/08/2018 - P438 - Adicionada novas situacoes "Expirado Dec. Prazo" e "Anulada" 
  *                                    para tipo produto Emprestimos  (Mateus Z - Mouts)
  * --------------
  */
@@ -47,7 +47,8 @@ setVarSession("opcoesTela", $opcoesTela);
                         '3':'<?php echo utf8ToHtml("Análise Finalizada"); ?>',
                         '4':'<?php echo utf8ToHtml("Expirado"); ?>',
                         // PRJ 438
-                        '5':'<?php echo utf8ToHtml("Expirado Dec. Prazo"); ?>'
+                        '5':'<?php echo utf8ToHtml("Expirado Dec. Prazo"); ?>',
+                        '6':'<?php echo utf8ToHtml("Anulada"); ?>' 
                     };
                     situacoes[3] = {  
                         '9':'Todos',
