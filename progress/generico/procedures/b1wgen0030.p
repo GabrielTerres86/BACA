@@ -6598,15 +6598,15 @@ PROCEDURE efetua_cancelamento_limite:
           DO:
             IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
               DO:
-                aux_dscritic = "Registro de contrato encontra-se em " +
-                             "análise na IBRATAN. Tente Novamente.".
+                aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
               END.
             ELSE
               /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
               IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
                 DO:
-                  aux_dscritic = "Registro de contrato encontra-se em " +
-                               "análise na IBRATAN. Tente Novamente.".
+                aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                               "um processo de análise deste contrato em andamento".
                 END.
           END.
           
@@ -6651,15 +6651,15 @@ PROCEDURE efetua_cancelamento_limite:
               DO:
                 IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
                   DO:
-                    aux_dscritic = "Registro de contrato encontra-se em " +
-                                 "análise na IBRATAN. Tente Novamente.".
+                    aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                   "um processo de análise deste contrato em andamento".
                   END.
                 ELSE
                   /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
                   IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
                     DO:
-                      aux_dscritic = "Registro de contrato encontra-se em " +
-                                   "análise na IBRATAN. Tente Novamente.".
+                      aux_dscritic = "Nao é possível cancelar o contrato. Existe " + 
+                                     "um processo de análise deste contrato em andamento".
                     END.
               END.
     
