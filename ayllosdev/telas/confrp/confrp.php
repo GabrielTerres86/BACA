@@ -145,8 +145,8 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 											<td>&nbsp;</td>
 											<td>&nbsp;</td>
 											<td>&nbsp;</td>
-											<td class="campo" ><input type="text" class="qtd" id="descontovinculacao<?echo $i?>" style="text-align:right" size="9" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_desconto')?>">%</td>
-											<td class="campo" ><input type="text" class="qtd" id="pesovinculacao<?echo $i?>" style="text-align:right" size="9" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_peso')?>">%</td>
+											<td class="campo" ><input type="text" class="per" id="descontovinculacao<?echo $i?>" style="text-align:right" size="9" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_desconto')?>">%</td>
+											<td class="campo" ><input type="text" class="per" id="pesovinculacao<?echo $i?>" style="text-align:right" size="9" <?if ($tpvinculacao == utf8_encode('Ades&atilde;o') || strtoupper($consulta) == 'S') {?>readonly<?}?> value="<? echo getByTagName($registro->tags,'vlpercentual_peso')?>">%</td>
 										  </tr>
 									   <? $i++;
 										}?>
