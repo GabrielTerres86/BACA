@@ -303,6 +303,19 @@ INSERT INTO crapaca(nmdeacao
 									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_COBRAN')
 									 );
 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('BUSCA_CODIGO_BARRAS'
+						       ,'TELA_COBRAN'
+									 ,'pc_consulta_cod_barras_web'
+									 ,'pr_dtvencto,pr_cdbandoc,pr_vltitulo,pr_nrcnvcob,pr_nrdconta,pr_nrdocmto'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBRAN')
+									 );
+
 -- ------------------------------------------
 -- Inclusão dos indicadores da reciprocidade
 -- ------------------------------------------

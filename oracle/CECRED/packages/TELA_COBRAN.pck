@@ -138,7 +138,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBRAN IS
                                     ,pr_dsxmlrel OUT CLOB                          --> Retorna xml do relatorio quando origem for 3 -InternetBank
                                     ,pr_cdcritic OUT NUMBER                        --> Retorna codigo de critica
                                     ,pr_dscritic OUT VARCHAR2);                    --> Retorno de critica                                 
-                                   
+  --
+	PROCEDURE pc_consulta_cod_barras_web(pr_dtvencto    IN VARCHAR2
+																			,pr_cdbandoc    IN INTEGER
+																			,pr_vltitulo    IN crapcob.vltitulo%TYPE
+																			,pr_nrcnvcob    IN crapcob.nrcnvcob%TYPE
+																			,pr_nrdconta    IN crapcob.nrdconta%TYPE
+																			,pr_nrdocmto    IN crapcob.nrdocmto%TYPE
+																		  ,pr_xmllog      IN VARCHAR2                        --> XML com informações de LOG
+																		  ,pr_cdcritic   OUT PLS_INTEGER                     --> Código da crítica
+																		  ,pr_dscritic   OUT VARCHAR2                        --> Descrição da crítica
+																		  ,pr_retxml  IN OUT NOCOPY XMLType                  --> Arquivo de retorno do XML
+																		  ,pr_nmdcampo   OUT VARCHAR2                        --> Nome do campo com erro
+																		  ,pr_des_erro   OUT VARCHAR2                        --> Erros do processo
+																			);
+	--
 END TELA_COBRAN;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
@@ -148,7 +162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --  Sistema  : Rotinas utilizadas pela Tela COBRAN
   --  Sigla    : Cobran
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Maio/2016.                   Ultima atualizacao: 03/04/2018
+  --  Data     : Maio/2016.                   Ultima atualizacao: 20/08/2018
   --
   -- Dados referentes ao programa:
   --
@@ -160,6 +174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --
   --             03/04/2018 - Inserido noti0001.pc_cria_notificacao
   --
+	--             20/08/2018 - Inserido 
+	--
   ---------------------------------------------------------------------------*/
   -- Chamada AyllosWeb Rotina para retornar lista de convenios ceb e suas situações
   PROCEDURE pc_consulta_conv_sit_web (pr_telcdcop    IN crapcop.cdcooper%TYPE DEFAULT 0 --> cooperativa
@@ -1811,6 +1827,176 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
     WHEN OTHERS THEN
       pr_dscritic := 'Erro geral pc_relat_carta_anuencia : '||SQLERRM;  	                                   
   END pc_relat_carta_anuencia;
-
+	
+	PROCEDURE pc_consulta_cod_barras_web(pr_dtvencto    IN VARCHAR2
+																			,pr_cdbandoc    IN INTEGER
+																			,pr_vltitulo    IN crapcob.vltitulo%TYPE
+																			,pr_nrcnvcob    IN crapcob.nrcnvcob%TYPE
+																			,pr_nrdconta    IN crapcob.nrdconta%TYPE
+																			,pr_nrdocmto    IN crapcob.nrdocmto%TYPE
+																		  ,pr_xmllog      IN VARCHAR2                        --> XML com informações de LOG
+																		  ,pr_cdcritic   OUT PLS_INTEGER                     --> Código da crítica
+																		  ,pr_dscritic   OUT VARCHAR2                        --> Descrição da crítica
+																		  ,pr_retxml  IN OUT NOCOPY XMLType                  --> Arquivo de retorno do XML
+																		  ,pr_nmdcampo   OUT VARCHAR2                        --> Nome do campo com erro
+																		  ,pr_des_erro   OUT VARCHAR2                        --> Erros do processo
+																			) IS
+    /* .............................................................................
+    
+        Programa: pc_consulta_cod_barras_web
+        Sistema : CECRED
+        Sigla   : COBRAN
+        Autor   : Adriano Nagasava
+        Data    : Agosto/2018.                    Ultima atualizacao: --/--/----
+      
+        Dados referentes ao programa:
+      
+        Frequencia: Sempre que for chamado
+      
+        Objetivo  : Rotina para retornar o código de barras e a linha digitável
+      
+        Observacao: -----
+      
+        Alteracoes:
+      ..............................................................................*/
+  
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- PL/Table
+    vr_tab_crapceb typ_tab_crapceb; -- PL/Table com os dados retornados da procedure
+    vr_idx          INTEGER := 0; -- Indice para a PL/Table retornada da procedure
+      
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+		--
+		vr_cdcartei crapcob.cdcartei%TYPE;
+		vr_cdbarras VARCHAR2(100);
+		vr_lindigit VARCHAR2(100);
+    vr_dtvencto DATE;
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+      
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+		--
+  BEGIN
+    --
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+														 );
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+			--
+    END IF;
+    --
+		BEGIN
+			--
+			SELECT crapcob.cdcartei
+			  INTO vr_cdcartei
+			  FROM crapcob
+			 WHERE crapcob.nrdconta = pr_nrdconta
+			   AND crapcob.nrdocmto = pr_nrdocmto
+				 AND crapcob.nrcnvcob = pr_nrcnvcob
+				 AND crapcob.cdcooper = vr_cdcooper;
+			--
+		EXCEPTION
+			WHEN no_data_found THEN
+				vr_dscritic := 'Boleto não encontrado!';
+				RAISE vr_exc_saida;
+			WHEN OTHERS THEN
+				vr_dscritic := 'Erro ao buscar o boleto: ' || SQLERRM;
+				RAISE vr_exc_saida;
+		END;
+		--
+		vr_dtvencto := to_date(pr_dtvencto, 'DD/MM/RRRR');
+		--
+		cobr0005.pc_calc_codigo_barras(pr_dtvencto => vr_dtvencto -- IN
+																	,pr_cdbandoc => pr_cdbandoc -- IN
+																	,pr_vltitulo => pr_vltitulo -- IN
+																	,pr_nrcnvcob => pr_nrcnvcob -- IN
+																	,pr_nrdconta => pr_nrdconta -- IN
+																	,pr_nrdocmto => pr_nrdocmto -- IN
+																	,pr_cdcartei => vr_cdcartei -- IN
+																	,pr_cdbarras => vr_cdbarras -- OUT
+																	);
+    --
+		cobr0005.pc_calc_linha_digitavel(pr_cdbarras => vr_cdbarras -- IN
+																		,pr_lindigit => vr_lindigit -- Out
+																		);    
+		-- Inicializar o CLOB
+		vr_des_xml := NULL;
+		dbms_lob.createtemporary(vr_des_xml, TRUE);
+		dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+		vr_texto_completo := NULL;
+		--
+		pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><root><dados>');
+		--
+		pc_escreve_xml('<inf>'||
+										'<cdbarras>' || vr_cdbarras ||'</cdbarras>' ||
+										'<lindigit>' || vr_lindigit ||'</lindigit>' ||
+									 '</inf>');
+		--
+		pc_escreve_xml('</dados></root>',TRUE);        
+    pr_retxml := XMLType.createXML(vr_des_xml);
+    --
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_consulta_cod_barras_web;
+  --
 END TELA_COBRAN;
 /
