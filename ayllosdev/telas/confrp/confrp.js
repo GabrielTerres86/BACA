@@ -108,7 +108,7 @@ function confirmar(qtdregis, idparame_reciproci, dslogcfg, cp_idparame_reciproci
     }
 
     for (var i = 0; i < qtvinculacoes; i++) {
-        ls_vinculacoesrp += $('#ativa' + i).is(':checked') + ',';
+        ls_vinculacoesrp += 'true,';
         ls_vinculacoesrp += converteNumero($('#idvinculacao' + i).val()) + ',';
         ls_vinculacoesrp += converteNumero($('#descontovinculacao' + i).val()) + ',';
         ls_vinculacoesrp += converteNumero($('#pesovinculacao' + i).val()) + ';';

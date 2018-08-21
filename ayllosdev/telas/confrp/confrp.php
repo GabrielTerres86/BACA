@@ -139,7 +139,6 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 										  ?> 
 										  <tr>
 											<td>
-												<input id="ativa<?echo $i?>" <?if ((getByTagName($registro->tags,'flgativa') == 1) || ($tela_anterior == 'pacote_tarifas' && strtoupper($consulta) == "N")) {?>checked<?} if($consulta == "S" || $consulta == "s") {?> disabled="disabled" <?}?> type="checkbox" size="13">
 												<input type="hidden" id="idvinculacao<?echo $i?>" style="text-align:right;" readonly size="3" value="<? echo getByTagName($registro->tags,'idvinculacao')?>">
 											</td>
 											<td class="campo" ><input type="text" id="nmvinculacao<?echo $i?>" readonly size="50" value="<? echo getByTagName($registro->tags,'nmvinculacao')?>"></td>
@@ -156,11 +155,11 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 									<table style="margin: 10px 0px 0px 10px;">
 									  <tr>
 											<td>Desconto m&aacute;ximo permitido para CEE:</td>
-											<td class="campo"><input class="per" id="vldescontomax_cee" type="text" size="5" value="<? echo $vldescontomax_cee; ?>"></td>
+											<td class="campo"><input class="per" id="vldescontomax_cee" type="text" size="5" value="<? echo $vldescontomax_cee; ?>">%</td>
 										</tr>
 										<tr>
 											<td>Desconto m&aacute;ximo permitido para COO:</td>
-											<td class="campo"><input class="per" id="vldescontomax_coo" type="text" size="5" value="<? echo $vldescontomax_coo; ?>"></td>
+											<td class="campo"><input class="per" id="vldescontomax_coo" type="text" size="5" value="<? echo $vldescontomax_coo; ?>">%</td>
 										</tr>
 									</table>
 									<table style="margin: 0 auto;">
