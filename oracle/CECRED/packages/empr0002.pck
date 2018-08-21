@@ -246,6 +246,22 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   -- Function para buscar os cooperados com crédito pré-aprovado ativo - Utilizada para envio de Notificações/Push
   FUNCTION fn_sql_contas_com_preaprovado RETURN CLOB;
   
+  --> Procedimento para validar dados do credito pré-aprovado (crapcpa)
+  PROCEDURE pc_valida_dados_cpa ( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Codigo da cooperativa
+                                 ,pr_cdagenci  IN crapage.cdagenci%TYPE    --> Código da agencia
+                                 ,pr_nrdcaixa  IN crapbcx.nrdcaixa%TYPE    --> Numero do caixa
+                                 ,pr_cdoperad  IN crapope.cdoperad%TYPE    --> Codigo do operador
+                                 ,pr_nmdatela  IN craptel.nmdatela%TYPE    --> Nome da tela
+                                 ,pr_idorigem  IN INTEGER                  --> Id origem
+                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE    --> Numero da conta do cooperado
+                                 ,pr_idseqttl  IN crapttl.idseqttl%TYPE    --> Sequencial do titular
+                                 ,pr_vlemprst  IN crapepr.vlemprst%TYPE    --> Valor do emprestimo
+                                 ,pr_diapagto  IN INTEGER                  --> Dia de pagamento
+                                 ,pr_nrcpfope  IN NUMBER                   --> CPF do operador
+                                 ,pr_cdcritic OUT NUMBER                   --> Retorna codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2                 --> Retorna descrição da critica
+                                 );
+                                                     
   END EMPR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
@@ -4570,6 +4586,259 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                AND val.nrdconta = usu.nrdconta
                AND val.vllimdis > 0';
   END fn_sql_contas_com_preaprovado;
+  
+  --> Procedimento para validar dados do credito pré-aprovado (crapcpa)
+  PROCEDURE pc_valida_dados_cpa ( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Codigo da cooperativa
+                                 ,pr_cdagenci  IN crapage.cdagenci%TYPE    --> Código da agencia
+                                 ,pr_nrdcaixa  IN crapbcx.nrdcaixa%TYPE    --> Numero do caixa
+                                 ,pr_cdoperad  IN crapope.cdoperad%TYPE    --> Codigo do operador
+                                 ,pr_nmdatela  IN craptel.nmdatela%TYPE    --> Nome da tela
+                                 ,pr_idorigem  IN INTEGER                  --> Id origem
+                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE    --> Numero da conta do cooperado
+                                 ,pr_idseqttl  IN crapttl.idseqttl%TYPE    --> Sequencial do titular
+                                 ,pr_vlemprst  IN crapepr.vlemprst%TYPE    --> Valor do emprestimo
+                                 ,pr_diapagto  IN INTEGER                  --> Dia de pagamento
+                                 ,pr_nrcpfope  IN NUMBER                   --> CPF do operador
+                                 ,pr_cdcritic OUT NUMBER                   --> Retorna codigo da critica
+                                 ,pr_dscritic OUT VARCHAR2                 --> Retorna descrição da critica
+                                 ) IS
+    /* .............................................................................
+
+     Programa: pc_valida_dados_cpa        antigo: b1wgen0188.p/valida_dados
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Odirlei Busana(AMcom)
+     Data    : Junho/2018.                    Ultima atualizacao: 28/06/2018
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Procedimento para validar dados do credito pré-aprovado (crapcpa)
+
+     Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
+
+
+    ..............................................................................*/ 
+
+    ---------------> CURSORES <-----------------
+
+    -- Verifica se esta na tabela do pre-aprovado
+    CURSOR cr_crapcpa (pr_cdcooper IN crapcpa.cdcooper%TYPE,
+                       pr_nrdconta IN crapcpa.nrdconta%TYPE,
+                       pr_idcarga  IN crapcpa.iddcarga%TYPE) IS
+      SELECT cpa.vllimdis
+            ,cpa.vlcalpre
+            ,cpa.vlctrpre
+            ,cpa.cdlcremp
+        FROM crapcpa cpa
+       WHERE cpa.cdcooper = pr_cdcooper
+         AND cpa.nrdconta = pr_nrdconta
+         AND cpa.iddcarga = pr_idcarga;
+    rw_crapcpa cr_crapcpa%rowtype;
+
+    CURSOR cr_carga_manual(pr_iddcarga IN crapcpa.iddcarga%TYPE) IS
+      SELECT to_char(carga.dsmensagem_aviso) || ' Limite: R$ ' mensagem
+        FROM tbepr_carga_pre_aprv carga 
+       WHERE carga.idcarga = pr_iddcarga
+         AND carga.tpcarga = 1 -- Manual
+       ORDER BY carga.dtcalculo DESC;
+    rw_carga_manual cr_carga_manual%ROWTYPE;
+    
+    CURSOR cr_param_conta (pr_cdcooper IN crapcpa.cdcooper%TYPE
+                          ,pr_nrdconta IN crapcpa.nrdconta%TYPE) IS 
+      SELECT conta.flglibera_pre_aprv
+        FROM tbepr_param_conta conta
+       WHERE conta.cdcooper  = pr_cdcooper
+         AND conta.nrdconta  = pr_nrdconta;
+    rw_param_conta cr_param_conta%ROWTYPE;
+    
+    --> Verifica se o associado pode obter o credido pre-aprovado
+    CURSOR cr_crapass IS
+      SELECT ass.cdcooper
+            ,ass.nrdconta
+            ,ass.inpessoa
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+
+    --> Verifica se esta bloqueado o pre-aprovado 
+    CURSOR cr_crappre (pr_cdcooper IN crappre.cdcooper%TYPE,
+                       pr_inpessoa IN crappre.inpessoa%TYPE)IS
+      SELECT pre.cdcooper
+            ,pre.vllimctr
+        FROM crappre pre
+       WHERE pre.cdcooper = pr_cdcooper
+         AND pre.inpessoa = pr_inpessoa;
+    rw_crappre cr_crappre%ROWTYPE;     
+
+    -- Cursor generico de calendario
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+    ---------------> VARIAVEIS <----------------       
+
+    --> Tratamento de erros
+    vr_exc_erro  EXCEPTION;
+    vr_cdcritic  crapcri.cdcritic%TYPE;
+    vr_dscritic  VARCHAR2(4000);
+
+    vr_idx       PLS_INTEGER;
+    vr_idxcpa    PLS_INTEGER;
+    vr_idcarga   tbepr_carga_pre_aprv.idcarga%TYPE;
+    vr_tab_dados_cpa typ_tab_dados_cpa;
+    vr_des_reto      VARCHAR2(100);
+    vr_tab_erro      gene0001.typ_tab_erro;
+    vr_flgmanual BOOLEAN;
+    vr_flgfound  BOOLEAN;
+    
+    vr_dstextab  craptab.dstextab%TYPE;
+    vr_hhsicini  NUMBER;               
+    vr_hhsicfim  NUMBER;
+    
+    
+
+  BEGIN
+  
+    IF pr_vlemprst = 0 THEN
+      vr_dscritic := 'Valor da contratacao nao informado';
+      RAISE vr_exc_erro;
+    END IF; --> IF par_vlemprst = 0 
+    
+    IF pr_diapagto <= 0 OR 
+       pr_diapagto >= 28 THEN
+      vr_dscritic := 'Dia do vencimento nao permitido';
+      RAISE vr_exc_erro;  
+       
+    END IF; 
+    
+    --> Somente o primeiro titular irar poder contratar 
+    IF pr_idseqttl > 1 THEN
+      vr_cdcritic := 79;
+      RAISE vr_exc_erro;    
+    END IF;
+    
+    pc_busca_dados_cpa( pr_cdcooper => pr_cdcooper,
+                        pr_cdagenci => pr_cdagenci,
+                        pr_nrdcaixa => pr_nrdcaixa,
+                        pr_cdoperad => pr_cdoperad,
+                        pr_nmdatela => pr_nmdatela,
+                        pr_idorigem => pr_idorigem,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_idseqttl => pr_idseqttl,
+                        pr_nrcpfope => pr_nrcpfope,
+                        pr_tab_dados_cpa => vr_tab_dados_cpa,
+                        pr_des_reto => vr_des_reto,
+                        pr_tab_erro => vr_tab_erro
+                        );
+                                                
+    IF nvl(vr_des_reto,'OK') <> 'OK' THEN 
+      IF vr_tab_erro.count > 0 THEN
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      ELSE
+        vr_dscritic := 'Erro ao buscar dados do credito pre-aprovado.';
+      END IF;
+      
+      RAISE vr_exc_erro;
+    END IF;
+    
+    vr_idxcpa := vr_tab_dados_cpa.first;
+    
+    IF nvl(vr_idxcpa,0) = 0 THEN
+      vr_dscritic := 'Associado nao possui credito pre-aprovado.';
+      RAISE vr_exc_erro;
+    END IF;  
+    
+    --> Valor a ser contratado nao pode ser maior que o limite disponivel 
+    IF pr_vlemprst > vr_tab_dados_cpa(vr_idxcpa).vldiscrd THEN
+      vr_dscritic := 'Valor informado para contratacao maior que o valor do limite pre-aprovado '||
+                     'disponivel. Valor disponivel: '|| 
+                     gene0002.fn_mask(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'zzz,zzz,zz9.99');
+      RAISE vr_exc_erro;               
+    END IF;   
+    
+    --> Verifica se esta bloqueado o pre-aprovado 
+    OPEN cr_crappre(pr_cdcooper => vr_tab_dados_cpa(vr_idxcpa).cdcooper,
+                    pr_inpessoa => vr_tab_dados_cpa(vr_idxcpa).inpessoa);
+    FETCH cr_crappre INTO rw_crappre;
+
+    IF cr_crappre%NOTFOUND THEN
+      CLOSE cr_crappre;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Parametros pre-aprovado nao cadastrado';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crappre;
+    END IF;   
+    
+    --> Caso a origem for Internet Banking ou TAA
+    IF pr_idorigem IN(3,4) THEN
+      --> Valor a ser contratado nao pode ser menor que limite contratado
+      IF pr_vlemprst < rw_crappre.vllimctr THEN
+        vr_dscritic := 'Valor informado para contratacao nao pode ser menor que R$ '|| 
+                       gene0002.fn_mask(rw_crappre.vllimctr,'zzz,zzz,zz9.99');          
+    
+      END IF;
+    
+    
+    
+      -- Busca dstextab
+      vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 00
+                                               ,pr_cdacesso => 'HRCTRPREAPROV'
+                                               ,pr_tpregist => 00);
+      IF TRIM(vr_dstextab) IS NULL THEN
+        vr_dscritic := 'Parametros de Horario nao cadastrado';
+        RAISE vr_exc_erro;
+      END IF;        
+      
+      vr_hhsicini := gene0002.fn_busca_entrada( pr_postext => 1,
+                                                pr_dstext  => vr_dstextab,
+                                                pr_delimitador => ' ');
+      vr_hhsicfim := gene0002.fn_busca_entrada( pr_postext => 2,
+                                                pr_dstext  => vr_dstextab,
+                                                pr_delimitador => ' ');
+      IF gene0002.fn_busca_time < vr_hhsicini OR 
+         gene0002.fn_busca_time > vr_hhsicfim THEN
+        vr_dscritic := 'Horario nao permitido para efetuar o pre-aprovado';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Leitura do calendario da CECRED
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
+      IF rw_crapdat.inproces >= 3 THEN
+        vr_dscritic := 'Horario nao permitido para efetuar o pre-aprovado';
+      END IF;  
+    END IF; -- pr_idorigem IN(3,4)
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      
+      IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic, 
+                                                 pr_dscritic => vr_dscritic);
+      
+      END IF;
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      -- Montar descrição de erro não tratado
+      vr_dscritic := 'Erro na rotina EMPR0002.pc_valida_dados_cpa: ' ||sqlerrm;
+      
+      pr_cdcritic := 0;
+      pr_dscritic := vr_dscritic;
+      
+  END pc_valida_dados_cpa;
+
   
 END EMPR0002;
 /

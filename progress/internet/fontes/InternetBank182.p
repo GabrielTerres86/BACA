@@ -11,6 +11,9 @@
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Carregar informacoes gerais da conta corrente.
 
+   Alteracoes: 26/06/2018 - Inclusao de novos campos para retorno de dados da conta.
+                            PRJ-CDC (Odirlei-AMcom)
+
    Alteracoes: 27/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
                             servico da conta online (PRJ 363 - Douglas Quisinski)
 
@@ -43,6 +46,8 @@ DEF VAR tmp_cdagectl AS DECI                                           NO-UNDO.
 
 DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
+DEF VAR aux_dtadmiss AS CHAR                                           NO-UNDO.
+DEF VAR aux_dtdemiss AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_idpessoa AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
@@ -141,6 +146,18 @@ IF  NOT AVAILABLE crapass  THEN
         RETURN "NOK".
     END.
 
+
+IF crapass.dtadmiss <> ? THEN
+  ASSIGN aux_dtadmiss = STRING(crapass.dtadmiss,"99/99/9999").
+ELSE
+  ASSIGN aux_dtadmiss = "".
+
+
+IF crapass.dtdemiss <> ? THEN
+  ASSIGN aux_dtdemiss = STRING(crapass.dtdemiss,"99/99/9999").
+ELSE
+  ASSIGN aux_dtdemiss = "".
+
 IF  crapass.inpessoa = 1  THEN
     DO:
         FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
@@ -164,7 +181,7 @@ IF  crapass.inpessoa = 1  THEN
                aux_nmprepos = ""
                aux_nrcpfpre = 0
                aux_nrcpfcgc = crapttl.nrcpfcgc
-               aux_inpessoa = crapttl.inpessoa.
+               aux_inpessoa = crapttl.inpessoa. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
     END.
 ELSE
     DO:
@@ -173,7 +190,7 @@ ELSE
                aux_nmprepos = ""
                aux_nrcpfpre = 0
                aux_nrcpfcgc = crapass.nrcpfcgc
-               aux_inpessoa = crapass.inpessoa.
+               aux_inpessoa = crapass.inpessoa. /* TODO - Alterar para campo TB_CADAST_PESSOA.IDPESSOA - CRM */
 
         IF  par_nrcpfope > 0  THEN
             DO:
@@ -409,7 +426,11 @@ ASSIGN xml_operacao.dslinxml = "<CORRENTISTA><nmtitula>" +
                                STRING(aux_flgemiss) +
                                "</flrecsaq><flgiddep>" +
                                STRING(crapass.flgiddep) +
-                               "</flgiddep></CORRENTISTA>"+
+                               "</flgiddep><dtadmiss>" +
+                               aux_dtadmiss + 
+                               "</dtadmiss><dtdemiss>" + 
+                               aux_dtdemiss +
+                               "</dtdemiss></CORRENTISTA>" +
                                aux_xml.
 
 RETURN "OK".

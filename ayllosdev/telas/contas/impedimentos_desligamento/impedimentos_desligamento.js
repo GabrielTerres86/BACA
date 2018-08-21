@@ -540,6 +540,19 @@ function efetuaCancelamentoManual(){
 
 			        break;
 
+				//CONVENIO CDC
+				case "24":
+									
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela ATENDA ...\'); '  + 
+										   'setaParametros(\'ATENDA\',\'\',nrdconta,flgcadas); ' +
+										   'setaImped();' +
+										   'direcionaTela(\'ATENDA\',\'no\');';
+					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'CONVENIO CDC\',\'Conv&ecirc;nio CDC\',\'convenio_cdc\');';
+					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
+					index++;
+					
+					break;
 					
 			}
 			produtosCancM[index - 1] = 'cdproduto = ' + $(this).attr('id') + ";" + produtosCancM[index - 1];			

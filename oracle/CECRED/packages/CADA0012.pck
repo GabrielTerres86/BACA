@@ -1464,6 +1464,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                    ,pr_idpessoa IN NUMBER  -- Identificador unico da pessoa
 														       ,pr_retorno  OUT xmltype -- XML de retorno
 														       ,pr_dscritic OUT VARCHAR2) IS -- Retorno de Erro
+		/* ..........................................................................
+    --
+    --  Programa : pc_retorna_pessoa_conta
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : 
+    --  Data     :                        Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Rotina para retorno das contas da pessoa (Consulta simplificada)
+    --
+    --  Alteração : 30/05/2018 - Ajuste para permitir passar pr_cdcooper zerado.
+    --                           PRJ - CDC (Odirlei-AMcom)
+    --
+    --
+    -- ..........................................................................*/
 		-- Exceções
 		vr_exc_erro EXCEPTION;
     -- Tratamento de erros
@@ -1474,19 +1492,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 
     -- Cursor para buscar as contas da pessoa
     CURSOR cr_contas IS
-      SELECT ass.cdcooper
+      SELECT /*+index (ass CRAPASS##CRAPASS5)*/
+             ass.cdcooper
             ,ass.nrdconta
             ,1 idseqttl
             ,ROWNUM - 1 seq
         FROM tbcadast_pessoa tps
 				    ,crapass ass
        WHERE tps.idpessoa = pr_idpessoa
-			   AND ass.cdcooper = pr_cdcooper
+			   AND ass.cdcooper = DECODE(NVL(pr_cdcooper,0),0,ass.cdcooper,pr_cdcooper) 
 				 AND ass.nrcpfcgc = tps.nrcpfcgc
          AND ass.inpessoa <> 1
 --				 AND ass.dtdemiss IS NULL
       UNION ALL
-      SELECT ass.cdcooper
+      SELECT /*+index (ttl CRAPTTL##CRAPTTL6)*/
+             ass.cdcooper
             ,ass.nrdconta
             ,ttl.idseqttl
             ,ROWNUM - 1 seq
@@ -1494,7 +1514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
             ,tbcadast_pessoa tps
 				    ,crapttl ttl
        WHERE tps.idpessoa = pr_idpessoa
-			   AND ttl.cdcooper = pr_cdcooper
+			   AND ttl.cdcooper = DECODE(NVL(pr_cdcooper,0),0,ttl.cdcooper,pr_cdcooper) 
 				 AND ttl.nrcpfcgc = tps.nrcpfcgc
          AND ass.cdcooper = ttl.cdcooper
          AND ass.nrdconta = ttl.nrdconta

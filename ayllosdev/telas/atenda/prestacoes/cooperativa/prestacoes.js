@@ -60,6 +60,8 @@
  * 048: [27/06/2018] Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
  * 047: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
  * 048: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
+ * 049: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
+ * 050: [07/06/2018] Tratamento para nao permitir desfazer efetivação de emprestimo CDC. PRJ439 (Odirlei-AMcom)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -204,7 +206,24 @@ function controlaOperacao(operacao) {
 		nrctremp = '';
 	}
 
-	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'C_PAG_PREST_PREJU', 'ALT_QUALIFICA', 'CON_QUALIFICA']) ) {
+    // validacao de contingencia Integracao CDC
+    var flintcdc       = $("#tabPrestacao table tr.corSelecao").find("input[id='flintcdc']").val();
+    var inintegra_cont = $("#tabPrestacao table tr.corSelecao").find("input[id='inintegra_cont']").val();
+    var tpfinali       = $("#tabPrestacao table tr.corSelecao").find("input[id='tpfinali']").val();
+    var cdoperad       = $("#tabPrestacao table tr.corSelecao").find("input[id='cdoperad']").val();
+
+	if(tpfinali == 3 && cdoperad=='AUTOCDC'){
+        
+        // botao Registrar GRV
+		if (operacao == 'D_EFETIVA'){
+				showError('error', 'Não é permitido desfazer efetivação, proposta com origem na integração CDC!', 'Alerta - Ayllos', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+				return false;			
+		// botao efetivar
+		}
+    }
+
+  
+	if ( in_array(operacao,['TC','IMP', 'C_PAG_PREST', 'C_PAG_PREST_POS', 'D_EFETIVA', 'C_TRANSF_PREJU', 'C_DESFAZ_PREJU', 'PORTAB_CRED', 'PORTAB_CRED_C', 'C_LIQ_MESMO_DIA', 'ALT_QUALIFICA', 'CON_QUALIFICA'] ) ) {
 
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
@@ -2038,11 +2057,11 @@ function atualizaTela(){
 
 		// Tipo de risco
 		$('#tpdrisco','#frmPreju').val( utf8_decode(arrayRegistros['tpdrisco']) );
-    
+
     // IOF Prejuizo
     $('#vltiofpr','#frmPreju').val( utf8_decode(arrayRegistros['vltiofpr']) );
     $('#vlpiofpr','#frmPreju').val( utf8_decode(arrayRegistros['vlpiofpr']) );
-
+		
 		
 	}else if (in_array(operacao,['C_NOVA_PROP','C_NOVA_PROP_V'])){
 
@@ -2663,7 +2682,7 @@ function validaPagamentoPreju(){
 	//Validar para não permitir que todos os campos estejam vazios/zerados
 	if(vlpagto > 0 || vlabono > 0) {
 		if(vlprincipal > 0 || vljuros > 0 || vlmulta > 0 || vlrdiof > 0){
-	    showConfirmacao('Confirma pagamento do prejuízo?','Confirma&ccedil;&atilde;o - Ayllos','pagPrestPreju();','$(\'#btVoltar\').click();','sim.gif','nao.gif');
+	showConfirmacao('Confirma pagamento do prejuízo?','Confirma&ccedil;&atilde;o - Ayllos','pagPrestPreju();','$(\'#btVoltar\').click();','sim.gif','nao.gif');
 		}else{
 			showError('error','Contrato liquidado.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		}

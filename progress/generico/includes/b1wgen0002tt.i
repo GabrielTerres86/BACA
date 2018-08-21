@@ -194,6 +194,9 @@
 			  21/02/2018 - Inclusão do FIELD IDENEMPR na tt-dados-epr.
 			               (Simas AMcom)
               
+              14/12/2017 - Inclusao de campos na tt tt-proposta-epr, campos
+                           flintcdc e inintegra_cont,Prj. 402 (Jean Michel)
+              
               04/07/2018 - P410 - Inclusão dos campos vltiofpr e vlpiofpr (Marcos-Envolti)
               
 .............................................................................*/
@@ -321,7 +324,9 @@ DEF TEMP-TABLE tt-dados-coope NO-UNDO
     FIELD nrctremp AS INTE
     FIELD nralihip AS INTE
     FIELD lssemseg AS CHAR
-    FIELD flginter AS LOGI.
+    FIELD flginter AS LOGI
+    FIELD flintcdc LIKE crapcop.flintcdc
+    FIELD inintegra_cont AS INT.
 
 DEF TEMP-TABLE tt-dados-assoc NO-UNDO
     FIELD inpessoa AS INTE
@@ -394,7 +399,10 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD dtcarenc LIKE crawepr.dtcarenc
     FIELD idcobope AS INTE
     FIELD vlfinanc AS DECI
-	FIELD nivriori LIKE crawepr.dsnivori.
+	FIELD nivriori LIKE crawepr.dsnivori
+    FIELD flintcdc LIKE crapcop.flintcdc
+    FIELD inintegra_cont AS INT
+    FIELD tpfinali LIKE crapfin.tpfinali.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

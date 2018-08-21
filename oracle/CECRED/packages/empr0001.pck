@@ -250,7 +250,12 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
     ,vlrtarif crapepr.vltarifa%TYPE
     ,vlrtotal crapepr.vlsdeved%TYPE
     ,vltiofpr crapepr.vltiofpr%TYPE
-    ,vlpiofpr crapepr.vlpiofpr%TYPE);      
+    ,vlpiofpr crapepr.vlpiofpr%TYPE      
+    ,cdoperad crapope.cdoperad%TYPE
+    ,flintcdc crapcop.flintcdc%TYPE
+    ,inintegra_cont INTEGER
+    ,tpfinali crapfin.tpfinali%TYPE
+    );
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_dados_epr IS TABLE OF typ_reg_dados_epr INDEX BY VARCHAR2(100);
@@ -5043,6 +5048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               ,tpatuidx
               ,idcarenc
               ,dtcarenc
+              ,epr.cdoperad
           FROM crawepr epr
          WHERE epr.cdcooper = pr_cdcooper
                AND epr.nrdconta = pr_nrdconta
@@ -5051,7 +5057,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       -- Leitura da descricao da finalidade do emprestimo
       CURSOR cr_crapfin(pr_cdfinemp IN crapfin.cdfinemp%TYPE) IS
-        SELECT dsfinemp
+        SELECT dsfinemp,
+               tpfinali
           FROM crapfin
          WHERE cdcooper = pr_cdcooper
                AND cdfinemp = pr_cdfinemp;
@@ -5105,7 +5112,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            WHERE upper(gnsbmod.cdmodali) = upper(pr_cdmodali)
              AND upper(gnsbmod.cdsubmod) = upper(pr_cdsubmod);
         rw_gnsbmod cr_gnsbmod%ROWTYPE;
-      
+
+      -- Buscar dados da cooperativa
+      CURSOR cr_crapcop(pr_cdcooper NUMBER) IS
+        SELECT t.flintcdc 
+          FROM crapcop t
+         WHERE t.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;  
+
       -- nova M324
       CURSOR cr_craplem1(prc_nrctremp craplem.nrctremp%TYPE) IS
         SELECT sum(case when c.cdhistor in (382,384,2388,2473,2389,2390,2475) then c.vllanmto else 0 end) 
@@ -5320,6 +5334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_liquidia INTEGER := 0;
       vr_err_efet PLS_INTEGER;    
       vr_portabilidade VARCHAR2(500);
+      vr_incdccon INTEGER; 
       
     
     BEGIN
@@ -5363,6 +5378,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
     
       vr_nrregist := pr_nrregist;
+    
+      -- Buscar dados da cooperativa
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      CLOSE cr_crapcop;
+      
+      vr_incdccon := 0;
+      --> Rotina responsavel por validar se cooperativa está em contingência
+      empr0012.pc_verifica_contingencia_cdc(pr_cdcooper => pr_cdcooper
+                                            ,pr_incdccon => vr_incdccon
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+          
+      vr_cdcritic := 0;
+      vr_dscritic := NULL;
     
       -- Busca dos dados do emprestimo passado ou de todos os emprestimos da conta quando nrctremp = 0
       FOR rw_crapepr IN cr_crapepr LOOP
@@ -5774,6 +5804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           else
           pr_tab_dados_epr(vr_indadepr).vliofcpl := NVL(vr_vliofcpl,0);
           end if;
+          
           -- Copiar campos do IOF
           pr_tab_dados_epr(vr_indadepr).vlrtotal := rw_crapepr.vlemprst;
           pr_tab_dados_epr(vr_indadepr).idfiniof := rw_crapepr.idfiniof;
@@ -5784,6 +5815,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- Remover do valor liquido o IOF e tarifa
             pr_tab_dados_epr(vr_indadepr).vlrtotal := pr_tab_dados_epr(vr_indadepr).vlrtotal - nvl(rw_crapepr.vliofepr,0) - nvl(rw_crapepr.vltarifa,0);
           END IF;
+          
+          -- inf CDC
+          pr_tab_dados_epr(vr_indadepr).flintcdc := nvl(rw_crapcop.flintcdc,0);
+          pr_tab_dados_epr(vr_indadepr).cdoperad := rw_crawepr.cdoperad;          
+          pr_tab_dados_epr(vr_indadepr).inintegra_cont := vr_incdccon;
+          pr_tab_dados_epr(vr_indadepr).tpfinali := nvl(rw_crapfin.tpfinali,0);
           
           pr_tab_dados_epr(vr_indadepr).vlprvenc := vr_vlprvenc;
           pr_tab_dados_epr(vr_indadepr).vlpraven := vr_vlpraven;
@@ -6575,6 +6612,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                         '<qttolatr>' || vr_tab_dados_epr(vr_index).qttolatr || '</qttolatr>' ||
 						'<dsratpro>' || vr_tab_dados_epr(vr_index).dsratpro || '</dsratpro>' ||
                         '<dsratatu>' || vr_tab_dados_epr(vr_index).dsratatu || '</dsratatu>' ||
+                        '<flintcdc>' || vr_tab_dados_epr(vr_index).flintcdc            || '</flintcdc>' || 
+                        '<cdoperad>' || vr_tab_dados_epr(vr_index).cdoperad            || '</cdoperad>' || 
+                        '<inintegra_cont>' || vr_tab_dados_epr(vr_index).inintegra_cont|| '</inintegra_cont>' ||
+                        '<tpfinali>' ||  vr_tab_dados_epr(vr_index).tpfinali           || '</tpfinali>' ||                         
                       '</inf>' );
 
       -- buscar proximo

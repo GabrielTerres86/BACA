@@ -71,6 +71,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
                                 (Jaison/James - PRJ298)
 
                    15/12/2017 - Remover o vinculo com a cobertura. PRJ404 (Lombardi)
+
+                   13/12/2017 - Alterado para ignorar contratos de emprestimos CDC para
+							                  cooperativas que permitirem integração CDC. (Reinert)
     ............................................................................ */
 
     DECLARE
@@ -92,6 +95,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
       CURSOR cr_crapcop IS
         SELECT cop.nmrescop
               ,cop.nmextcop
+              ,cop.flintcdc
           FROM crapcop cop
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
@@ -121,6 +125,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
               ,crawepr.nrctremp --Numero do contrato de emprestimo
               ,crawepr.tpemprst --Tipo do emprestimo (0 - atual, 1 - pre-fixada)
               ,crawepr.idcobope --Cobertura
+              ,crawepr.cdfinemp --Finalidade de emprestimo
+              ,crawepr.cdoperad --Usuario de criacao da proposta
               ,crawepr.rowid    --id do registro
         FROM  crawepr
         WHERE crawepr.cdcooper = pr_cdcooper
@@ -131,6 +137,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
                            AND    crapepr.nrdconta = crawepr.nrdconta
                            AND    crapepr.nrctremp = crawepr.nrctremp);
 
+			-- Verificar o tipo de finalidade
+			CURSOR cr_crapfin(pr_cdcooper IN crapfin.cdcooper%TYPE
+			                 ,pr_cdfinemp IN crapfin.cdfinemp%TYPE) IS
+				SELECT fin.tpfinali
+			    FROM crapfin fin
+				 WHERE fin.cdcooper = pr_cdcooper
+				   AND fin.cdfinemp = pr_cdfinemp;
+      rw_crapfin cr_crapfin%ROWTYPE;
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
       ------------------------------- VARIAVEIS -------------------------------
@@ -383,6 +397,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
       FOR rw_crawepr IN cr_crawepr( pr_cdcooper => pr_cdcooper
                                    ,pr_dtmvtolt => vr_dtlimepr)
       LOOP
+				-- Se cooperativa permite integração CDC
+			  IF rw_crapcop.flintcdc = 1 and rw_crawepr.cdoperad='AUTOCDC' THEN
+					
+				   -- Devemos verificar o tipo de finalidade da proposta
+					 OPEN cr_crapfin(pr_cdcooper => pr_cdcooper
+					                ,pr_cdfinemp => rw_crawepr.cdfinemp);
+					 FETCH cr_crapfin INTO rw_crapfin;
+					 
+					 -- Se não encontrar finalidade de emprestimo
+					 IF cr_crapfin%NOTFOUND THEN
+						 -- Fechar cursor
+						 CLOSE cr_crapfin;
+						 -- Gerar crítica
+						 vr_cdcritic := 0;
+						 vr_dscritic := 'Finalidade de emprestimo nao encontrada.';
+						 -- Levatar exceção
+						 RAISE vr_exc_saida;
+					 END IF;
+					 -- Fechar cursor
+					 CLOSE cr_crapfin;
+					 
+					 -- Se for CDC devemos ignorar
+					 IF rw_crapfin.tpfinali = 3 THEN
+              continue;
+					 END IF;
+				END IF;
+			
         /* Excluindo as informaoes das propostas de emprestimo */
         BEGIN
           DELETE FROM  crapprp

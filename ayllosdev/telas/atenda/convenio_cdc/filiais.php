@@ -33,7 +33,7 @@
         if ($msgErro == "") {
             $msgErro = $xmlObject->roottag->tags[0]->cdata;
         }
-        exibirErro('error',$msgErro,'Alerta - Ayllos','acessaOpcaoAba()');
+        exibirErro('error',$msgErro,'Alerta - Ayllos','acessaOpcaoAba(\'P\',0)');
     }
 
     $registros = $xmlObject->roottag->tags[0]->tags;
@@ -76,7 +76,7 @@
 </div>
 
 <div id="divBotoes">	
-	<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="acessaOpcaoAba()" />
+	<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="acessaOpcaoAba('P',0)" />
 	<input type="image" id="btExcluir" src="<? echo $UrlImagens; ?>botoes/excluir.gif"  onClick="controlaOperacao('FCE')" />
     <input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif"  onClick="controlaOperacao('FCA')" />
     <input type="image" id="btIncluir" src="<? echo $UrlImagens; ?>botoes/incluir.gif"  onClick="controlaOperacao('FCI')" />

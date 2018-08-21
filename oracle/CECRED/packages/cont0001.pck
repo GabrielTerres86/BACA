@@ -220,7 +220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   --  Sistema  : CONT
   --  Sigla    : CONT
   --  Autor    : Jonatas Jaqmam Pereira - Supero
-  --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+  --  Data     : Maio/2017.                   Ultima atualizacao: 06/08/2018
   --
   -- Dados referentes ao programa:
   --
@@ -232,6 +232,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   --            - Inclusão da chamada de procedure em exception others
   --            - Colocado logs no padrão
   --              (Ana - Envolti - Chamado 744433)
+  --
+  -- 06/08/2018 - Adicionado historico 2736 e 2737 (Rafael Faria - Supero PJ439)
   ---------------------------------------------------------------------------------------------------------------
     
     -- Buscar informações de lançamentos das filiadas na central
@@ -254,7 +256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                             1137,2057,2058,51,135,1917,1919,1148,1810,1837,1838,1028,777,851,1988,1660,1661,
                             1148,2227,2237,2238,2239,2240,2249,2250,2251,2252,
 														845,1589,1090,844,846,847,848,1659,1864,2183,2222,2223,1155,843,1725,2461,
-														2462,1788,1811,1835,1836,2647,1687,1806,2221,1588,2657)
+                            2462,1788,1811,1835,1836,2647,1687,1806,2221,1588,2657,2736,2737)
          AND l.cdcooper = 3   --Apenas lançamentos realizados na central para a filiada
          AND l.dtmvtolt = pr_dtmvtolt 
          AND c.cdcooper = pr_cdcooper
@@ -601,6 +603,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 				vr_tab_historico(2657).nrctaori := 4453;
         vr_tab_historico(2657).nrctades := 1452;
         vr_tab_historico(2657).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. DESPESAS COM TRANSPORTE DE VALORES - NFS FATURADAS P/ FILIADAS';
+
+        vr_tab_historico(2736).nrctaori := 1452;
+        vr_tab_historico(2736).nrctades := 4955;
+        vr_tab_historico(2736).dsrefere := 'CREDITO C/C pr_nrctafmt AILOS REF. REGULARIZACAO DE REPASSE DE CDC AUTOMATIZADO NA COOPERATIVA E REPASSADO POR OUTRA COOPERATIVA FILIADA A AILOS';
+
+        vr_tab_historico(2737).nrctaori := 4955;
+        vr_tab_historico(2737).nrctades := 1452;
+        vr_tab_historico(2737).dsrefere := 'DEBITO C/C pr_nrctafmt AILOS REF. REGULARIZACAO DE REPASSE DE CDC AUTOMATIZADO NA COOPERATIVA E REPASSADO POR OUTRA COOPERATIVA FILIADA A AILOS';
 				
    END;  
     

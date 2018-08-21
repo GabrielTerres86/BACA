@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 22/05/2018
+   Data    : Junho/2007                     Ultima atualizacao: 28/06/2018
 
    Dados referentes ao programa:
 
@@ -145,6 +145,8 @@
                            PRJ366 (Lombardi)
                            
               12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).
+
+              28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom) 
               
 ..............................................................................*/
 
@@ -397,9 +399,6 @@ DEF VAR aux_vlrtotal AS DECI                                           NO-UNDO.
 DEF VAR aux_idcarenc AS INTE                                           NO-UNDO.
 DEF VAR aux_dtcarenc AS DATE                                           NO-UNDO.
 
-/** ------------------------- Variaveis Lojista CDC ---------------------- **/
-DEF VAR aux_cdcoploj AS INTE                                           NO-UNDO.
-DEF VAR aux_nrcntloj AS DECI                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0024tt.i }
@@ -637,9 +636,6 @@ PROCEDURE valores_entrada:
 
             WHEN "idcarenc" THEN aux_idcarenc = INTE(tt-param.valorCampo).
             WHEN "dtcarenc" THEN aux_dtcarenc = DATE(tt-param.valorCampo).
-
-            WHEN "cdcoploj" THEN aux_cdcoploj = INTE(tt-param.valorCampo).
-            WHEN "nrcntloj" THEN aux_nrcntloj = DECI(tt-param.valorCampo).
 
         END CASE.
     
@@ -1649,6 +1645,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_idcobope,
                                 INPUT aux_idfiniof,
                                 INPUT aux_dscatbem,
+                                INPUT 1, /* par_inresapr */
                                 OUTPUT TABLE tt-erro,                          
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT aux_recidepr,
@@ -1899,6 +1896,7 @@ PROCEDURE altera-valor-proposta:
                               INPUT aux_dtlibera,
                               INPUT aux_idfiniof,
                               INPUT aux_dscatbem,
+                              INPUT 1, /* par_inresapr */
                               /* PRJ 438 - Ajuste para alterar a data pagto dentro da proc altera-valor-proposta */
                               INPUT aux_dtdpagto,
                              OUTPUT aux_flmudfai,
@@ -2543,6 +2541,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
          INPUT aux_inpesso2,
          INPUT aux_dtnasct2,
          INPUT par_dsdbeavt,
+         INPUT 1, /* par_inresapr */
         OUTPUT aux_flmudfai,
         OUTPUT TABLE tt-erro,
         OUTPUT TABLE tt-msg-confirma).

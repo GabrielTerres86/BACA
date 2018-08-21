@@ -9,6 +9,7 @@
  *
  *                 03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  *
+ *				   21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
  */
 ?>
 
@@ -153,6 +154,8 @@
     $qtdiaenl = (isset($_POST["qtdiaenl"])) ? $_POST["qtdiaenl"] : 0;
     $cdsinfmg = (isset($_POST["cdsinfmg"])) ? $_POST["cdsinfmg"] : 0;
     $taamaxer = (isset($_POST["taamaxer"])) ? $_POST["taamaxer"] : 0;
+		$flintcdc = (isset($_POST["flintcdc"])) ? $_POST["flintcdc"] : 0;
+		$tpcdccop = (isset($_POST["tpcdccop"])) ? $_POST["tpcdccop"] : 0;
     $vllimapv = (isset($_POST["vllimapv"])) ? $_POST["vllimapv"] : 0;
     $vllimpag = (isset($_POST["vllimpag"])) ? $_POST["vllimpag"] : 0;
     $nrctabcb = (isset($_POST["nrctabcb"])) ? $_POST["nrctabcb"] : 0;
@@ -299,6 +302,8 @@
     $xml     .="       <nrsacbcb>".$nrsacbcb."</nrsacbcb>";  
     $xml     .="       <nrouvbcb>".$nrouvbcb."</nrouvbcb>";      
     $xml     .="       <vllimpag>".$vllimpag."</vllimpag>";    
+	$xml     .="       <flintcdc>".$flintcdc."</flintcdc>";
+    $xml     .="       <tpcdccop>".$tpcdccop."</tpcdccop>";
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";
 

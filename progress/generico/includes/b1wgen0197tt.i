@@ -12,6 +12,9 @@
 		
 			   21/11/2017 - Inclusao de novos campos (Jonata - RKAM P364).
 
+               18/12/2017 - Inclusao de novo campo(flgconve) tt-inf-produto,
+                            Prj. 402 (Jean Michel).
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-inf-produto NO-UNDO               
@@ -40,4 +43,5 @@ DEF TEMP-TABLE tt-inf-produto NO-UNDO
   FIELD flgcarta AS INTEGER
   FIELD qtfdcest AS INTEGER
   FIELD flsegauto  AS INTEGER
-  FIELD flsegvida  AS INTEGER.
+  FIELD flsegvida  AS INTEGER
+  FIELD flgconve AS INTEGER.

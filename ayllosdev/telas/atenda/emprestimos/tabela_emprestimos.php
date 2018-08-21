@@ -22,6 +22,7 @@
  * 012: [30/03/2017] Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
  * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
  * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
+ * 014: [14/12/2017] Incluido campos hidden flintcdc e inintegra_cont, Prj. 402 (Jean Michel)
  */
 ?>
 
@@ -75,6 +76,11 @@
 					    <input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
             <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
+						
+						<input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($registro->tags,'flintcdc') ?>" />
+						<input type="hidden" id="inintegra_cont" name="inintegra_cont" value="<? echo getByTagName($registro->tags,'inintegra_cont') ?>" />
+						<input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($registro->tags,'tpfinali') ?>" />
+						<input type="hidden" id="cdoperad" name="cdoperad" value="<? echo getByTagName($registro->tags,'cdoperad') ?>" />
                     </td>
 
 					<td> <? echo stringTabela($tipo,40,'maiuscula'); ?>  </td>

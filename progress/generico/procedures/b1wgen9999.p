@@ -5213,7 +5213,11 @@ PROCEDURE critica_numero_lote:
 		 par_nrdolote = 650003 OR    /* Pagamento de contrato do Price Pos-Fixado */
          par_nrdolote = 650004 OR	 /* Pagamento de contrato do Price Pos-Fixado */
 		(par_nrdolote >= 600038 AND     /*Devolucao de capital*/      
-         par_nrdolote <= 600043)  THEN  
+         par_nrdolote <= 600043)  OR
+         par_nrdolote = 650005 OR   /* REPASSE CDC COMPARTILHADO */
+         par_nrdolote = 650006 OR   /* RENOVACAO DE TARIFA CONVENIO CDC */
+         par_nrdolote = 650007 OR   /* ADESAO DE TARIFA CONVENIO CDC */ 
+         par_nrdolote = 650008 THEN /* REPASSE CDC COMPARTILHADO CECRED X COOPERATIVAS */   
 		 
          DO:
              ASSIGN aux_cdcritic = 261

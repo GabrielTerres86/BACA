@@ -80,6 +80,12 @@
 						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<?php echo getByTagName($banco->tags,'cdlcremp') ?>" />
 						<input type="hidden" id="qttolatr" name="qttolatr" value="<?php echo getByTagName($banco->tags,'qttolatr') ?>" />
+                        
+                        <input type="hidden" id="flintcdc" name="flintcdc" value="<? echo getByTagName($banco->tags,'flintcdc') ?>" />
+						<input type="hidden" id="inintegra_cont" name="inintegra_cont" value="<? echo getByTagName($banco->tags,'inintegra_cont') ?>" />
+						<input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($banco->tags,'tpfinali') ?>" />
+						<input type="hidden" id="cdoperad" name="cdoperad" value="<? echo getByTagName($banco->tags,'cdoperad') ?>" />
+                        
 					</td>
 					<td><?php echo getByTagName($banco->tags,'cdfinemp') ?></td>
 					<td><?php echo formataNumericos("z.zzz.zzz.zzz",getByTagName($banco->tags,'nrctremp'),"."); ?></td>

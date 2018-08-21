@@ -1641,6 +1641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       CURSOR cr_craplcr (pr_cdcooper IN craplcr.cdcooper%TYPE
                         ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
         SELECT craplcr.flgtarif
+              ,decode(craplcr.cdhistor,2013,1,2014,1,0) inlcrcdc
         FROM craplcr
         WHERE craplcr.cdcooper = pr_cdcooper
         AND   craplcr.cdlcremp = pr_cdlcremp;
@@ -8415,7 +8416,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para efetuar o cálculo de tarifa
-    --   Alterações
+    --
+    --   Alterações: 09/07/2018 - Alterado para buscar tarifas diferenciadas para emprestimos CDC
+    --                            PRJ439 - CDC(Odirlei - AMcom)
+    --
+    --
     --
     vr_cdbattar VARCHAR2(100) := ' ';
     vr_cdhistor craphis.cdhistor%TYPE;
@@ -8454,6 +8459,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_cdhiscad_lem craphis.cdhistor%TYPE;
     vr_cdhisgar_lem craphis.cdhistor%TYPE;
     
+    vr_cdmotivo  VARCHAR2(10);
+    
     -- Tabela temporaria para tipos de bens em garantia
     TYPE typ_reg_dscatbem IS
      RECORD(dscatbem crapbpr.dscatbem%TYPE);
@@ -8478,6 +8485,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     CURSOR cr_craplcr (pr_cdcooper in crapass.cdcooper%type,
                        pr_cdlcremp in craplcr.cdlcremp%type) is
        select dsoperac
+              ,decode(craplcr.cdhistor,2013,1,2014,1,0) inlcrcdc
+              ,craplcr.tplcremp
        from   craplcr
        where  cdcooper = pr_cdcooper
        and    cdlcremp = pr_cdlcremp;
@@ -8537,6 +8546,11 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta);
     FETCH cr_crapass INTO rw_crapass;
     CLOSE cr_crapass;
+    
+    open cr_craplcr (pr_cdcooper => pr_cdcooper
+                    ,pr_cdlcremp => pr_cdlcremp);
+    fetch cr_craplcr into rw_craplcr;
+    close cr_craplcr;
     
     IF pr_cdusolcr = 1 THEN
       IF rw_crapass.inpessoa = 1 THEN
@@ -8601,10 +8615,21 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       pr_cdhistor := vr_cdhistor;
       pr_cdfvlcop := vr_cdfvlcop;
     ELSE
+    
+      vr_cdmotivo := 'EM';
+      --> Definir tarifas para CDC
+      IF rw_craplcr.inlcrcdc = 1 THEN
+        IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+          vr_cdmotivo := 'C4';
+        ELSE --> Emprestimo
+          vr_cdmotivo := 'C2';
+        END IF;
+      END IF;
+    
       -- Buscar tarifa emprestimo
       TARI0001.pc_carrega_dados_tarifa_empr(pr_cdcooper => pr_cdcooper
                                            ,pr_cdlcremp => pr_cdlcremp
-                                           ,pr_cdmotivo => 'EM'
+                                           ,pr_cdmotivo => vr_cdmotivo
                                            ,pr_inpessoa => rw_crapass.inpessoa
                                            ,pr_vllanmto => pr_vlemprst
                                            ,pr_cdprogra => pr_cdprogra
@@ -8742,8 +8767,26 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       IF pr_tpctrato = 2 THEN -- Ben Movel
         IF rw_crapass.inpessoa = 1 THEN -- Fisica 
           vr_cdbattar := 'AVALBMOVPF'; -- Avaliacao de Garantia de Bem Movel - PF
-        ELSE
+
+          -- se for CDC busca nova tarifa
+          IF rw_craplcr.inlcrcdc = 1 THEN
+             IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+               vr_cdbattar := 'CDCFALBMPF'; -- Financiamento Tarifa alienação PF	354
+             ELSE -- EMPRESTIMO
+               vr_cdbattar := 'CDCEALBMPF'; -- Tarifa alienação PF	350
+             END IF;
+          END IF;
+        ELSE -- Juridica
           vr_cdbattar := 'AVALBMOVPJ'; -- Avaliacao de Garantia de Bem Movel - PJ
+
+          -- se for CDC busca nova tarifa
+          IF rw_craplcr.inlcrcdc = 1 THEN
+             IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+               vr_cdbattar := 'CDCFALBMPJ'; -- Financiamento Tarifa alienação PJ	355
+             ELSE -- EMPRESTIMO
+               vr_cdbattar := 'CDCEALBMPJ'; -- Tarifa alienação PJ	351
+        END IF;
+          END IF;
         END IF;
       ELSE -- Bens Imoveis
         IF rw_crapass.inpessoa = 1 THEN -- Fisica
@@ -8826,10 +8869,6 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       --pr_cdgarlcm := pr_cdhisgar;
     END IF; -- Fim cobranca da tarifa de avaliacao de bens em garantia
     
-    open cr_craplcr (pr_cdcooper => pr_cdcooper
-                    ,pr_cdlcremp => pr_cdlcremp);
-    fetch cr_craplcr into rw_craplcr;
-    close cr_craplcr;
     
     IF pr_idfiniof = 1 THEN
       IF pr_tpemprst = 1 THEN  -- PP

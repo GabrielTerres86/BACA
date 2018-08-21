@@ -11107,7 +11107,7 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
   --  Objetivo  : Rotina responsável por buscar as informações das consultas efetuadas nos Birôs a partir da 
 	--              Esteira
   --
-  --  Alteracoes: 
+  --  Alteracoes: 01/08/2018 - Ajustado para propostas de CDC (Rafael Faria - Supero)
   ---------------------------------------------------------------------------------------------------------------			
 		DECLARE
 		  -- Tratamento de críticas
@@ -11129,7 +11129,8 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 			
 			-- Cursor sobre os dados de emprestimo
 			CURSOR cr_crawepr IS
-				SELECT crawepr.cdopeste
+				SELECT decode(empr0001.fn_tipo_finalidade(pr_cdcooper => crawepr.cdcooper
+                                                         ,pr_cdfinemp => crawepr.cdfinemp), 3, crawepr.cdoperad, crawepr.cdopeste) as cdopeste
 							,crawepr.nrconbir
 					FROM crawepr
 				 WHERE crawepr.cdcooper = pr_cdcooper

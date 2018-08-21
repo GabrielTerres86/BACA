@@ -26,6 +26,8 @@
                
                12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
+			   28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -633,6 +635,7 @@ PROCEDURE grava_dados:
                         /* INPUT 0,                         nrcntloj */
                         INPUT 0,						 /* idfiniof */
 						INPUT "",                        /* dscatbem */
+                       INPUT 1, /* par_inresapr */
                        OUTPUT TABLE tt-erro,
                        OUTPUT TABLE tt-msg-confirma,
                        OUTPUT aux_recidepr,

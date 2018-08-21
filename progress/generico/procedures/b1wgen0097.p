@@ -1930,8 +1930,20 @@ PROCEDURE consulta_tarifa_emprst:
           /* Se retornou erro */
           ASSIGN aux_dscritic = ""
                  aux_dscritic = pc_calcula_tarifa.pr_dscritic WHEN pc_calcula_tarifa.pr_dscritic <> ?.
+          
           IF aux_dscritic <> "" THEN
+          DO:
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT 1,
+                            INPUT 1,
+                            INPUT 1,
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+
             RETURN "NOK".
+          END.
+          
+          
             
           /* Valor tarifa */
           ASSIGN par_vlrtarif = 0.

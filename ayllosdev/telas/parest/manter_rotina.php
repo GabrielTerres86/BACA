@@ -32,6 +32,8 @@ $nmregmpf = (isset($_POST['nmregmpf'])) ? $_POST['nmregmpf'] : '';
 $nmregmpj = (isset($_POST['nmregmpj'])) ? $_POST['nmregmpj'] : '';
 $qtsstime = (isset($_POST['qtsstime'])) ? $_POST['qtsstime'] : 0;
 $qtmeschq = (isset($_POST['qtmeschq'])) ? $_POST['qtmeschq'] : 0;
+$qtmeschqal11 = (isset($_POST['qtmeschqal11'])) ? $_POST['qtmeschqal11'] : 0;
+$qtmeschqal12 = (isset($_POST['qtmeschqal12'])) ? $_POST['qtmeschqal12'] : 0;
 $qtmesest = (isset($_POST['qtmesest'])) ? $_POST['qtmesest'] : 0;
 $qtmesemp = (isset($_POST['qtmesemp'])) ? $_POST['qtmesemp'] : 0;
 $tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : 0;
@@ -67,6 +69,16 @@ if ($anlautom == 1 && $cdopcao == 'A' && $tlcooper <> 0){
   if ((!isset($_POST['qtmeschq'])) || $_POST['qtmeschq'] == ''){
     echo 'hideMsgAguardo();';
     echo 'showError("error","Qtde de meses para Dev. Cheques &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmeschq\', \'#frmParest\').focus()");';
+    exit();
+  }
+  if ((!isset($_POST['qtmeschqal11'])) || $_POST['qtmeschqal11'] == ''){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Qtde de meses para Dev. Cheques al. 11 &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmeschqal11\', \'#frmParest\').focus()");';
+    exit();
+  }
+  if ((!isset($_POST['qtmeschqal12'])) || $_POST['qtmeschqal12'] == ''){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Qtde de meses para Dev. Cheques &eacute; al. 12 obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmeschqal12\', \'#frmParest\').focus()");';
     exit();
   }
   if ((!isset($_POST['qtmesest'])) || $_POST['qtmesest'] == ''){
@@ -116,6 +128,7 @@ if ( $cdopcao == 'C') {
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
 	$xml .= "   <flgativo>1</flgativo>";
+	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
     $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
@@ -123,9 +136,10 @@ if ( $cdopcao == 'C') {
     $xml .= "   <nmregmpj>" . $nmregmpj . "</nmregmpj>";
 	$xml .= "   <qtsstime>" . $qtsstime . "</qtsstime>";
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
+	$xml .= "   <qtmeschqal11>" . $qtmeschqal11 . "</qtmeschqal11>";
+	$xml .= "   <qtmeschqal12>" . $qtmeschqal12 . "</qtmeschqal12>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
 	$xml .= "   <qtmesemp>" . $qtmesemp . "</qtmesemp>";
-	$xml .= "   <tpprodut>" . $tpprodut . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -176,12 +190,16 @@ if ( $cddopcao == 'C') {
 					echo '$("#nmregmpj", "#divAlteracao").desabilitaCampo();';
 					echo '$("#qtsstime", "#divAlteracao").desabilitaCampo();';
 					echo '$("#qtmeschq", "#divAlteracao").desabilitaCampo();';
+				echo '$("#qtmeschqal11", "#divAlteracao").desabilitaCampo();';
+				echo '$("#qtmeschqal12", "#divAlteracao").desabilitaCampo();';
 					echo '$("#qtmesest", "#divAlteracao").desabilitaCampo();';
 					echo '$("#qtmesemp", "#divAlteracao").desabilitaCampo();';
 					echo '$("#nmregmpf", "#divAlteracao").val("");';
 					echo '$("#nmregmpj", "#divAlteracao").val("");';
 					echo '$("#qtsstime", "#divAlteracao").val("0");';
 					echo '$("#qtmeschq", "#divAlteracao").val("0");';
+				echo '$("#qtmeschqal11", "#divAlteracao").val("0");';
+				echo '$("#qtmeschqal12", "#divAlteracao").val("0");';
 					echo '$("#qtmesest", "#divAlteracao").val("0");';
 					echo '$("#qtmesemp", "#divAlteracao").val("0");';
 				}
@@ -190,6 +208,8 @@ if ( $cddopcao == 'C') {
 				echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
 				echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
 				echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
+			echo '$("#qtmeschqal11", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschqal11').'");';
+			echo '$("#qtmeschqal12", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschqal12').'");';
 				echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';
 				echo '$("#qtmesemp", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesemp').'");';
 				
@@ -201,7 +221,7 @@ if ( $cddopcao == 'C') {
 			echo 'hideMsgAguardo();';
 		}else if($tpproduto == 4){
 			
-			$labels = array("cdcooper","nmrescop","contigen","anlautom","nmregmpf","nmregmpj","qtsstime","qtmeschq","qtmesest","qtmesemp");
+			$labels = array("cdcooper","nmrescop","contigen","anlautom","nmregmpf","nmregmpj","qtsstime","qtmeschq","qtmesest","qtmesemp","qtmeschqal11","qtmeschqal12");
 			foreach ($registros as $r) {
 				foreach($labels as $label){
 					echo '$("#'. $label.'", "#divAlteracao04").val("'.getByTagName($r->tags,  $label).'"); ';

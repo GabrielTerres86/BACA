@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   --  Sistema  : Rotinas referentes ao WebService de Propostas
   --  Sigla    : EMPR
   --  Autor    : James Prust Junior
-  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 01/08/2018
+  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 05/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -132,6 +132,30 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                      ,pr_des_erro OUT VARCHAR2          --> Erros do processo
                                      );
 
+  PROCEDURE pc_atualiza_prop_srv_emprestim(pr_cdcooper    IN crapcop.cdcooper%TYPE     --> Codigo da cooperativa
+                                          ,pr_nrdconta    IN crapass.nrdconta%TYPE     --> Numero da conta
+                                          ,pr_nrctremp    IN crawepr.nrctremp%TYPE     --> Numero do contrato
+										                      ,pr_tpretest    IN VARCHAR2                  --> Tipo do retorno recebido ('M' - Motor/ 'E' - Esteira)
+                                          ,pr_rw_crapdat  IN btch0001.rw_crapdat%TYPE  --> Vetor com dados de parâmetro (CRAPDAT)
+                                          ,pr_insitapr    IN crawepr.insitapr%TYPE     --> Situacao da proposta
+                                          ,pr_dsobscmt    IN crawepr.dsobscmt%TYPE DEFAULT NULL    --> Observação recebida da esteira de crédito
+                                          ,pr_dsdscore    IN crapass.dsdscore%TYPE DEFAULT NULL    --> Consulta do score feita na Boa Vista pela esteira de crédito
+                                          ,pr_dtdscore    IN crapass.dtdscore%TYPE DEFAULT NULL    --> Data da consulta do score feita na Boa Vista pela esteira de crédito
+                    										  ,pr_indrisco    IN VARCHAR2 DEFAULT NULL     --> Nível do risco calculado para a operação
+															  ,pr_inopeatr    IN crawepr.inliquid_operac_atraso%TYPE DEFAULT NULL --> Identificador da operacao de credito em atraso
+										                      ,pr_nrnotrat    IN NUMBER   DEFAULT NULL     --> Valor do rating calculado para a operação
+                     										  ,pr_nrinfcad    IN NUMBER   DEFAULT NULL     --> Valor do item Informações Cadastrais calculado no Rating
+										                      ,pr_nrliquid    IN NUMBER   DEFAULT NULL     --> Valor do item Liquidez calculado no Rating
+                     										  ,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
+										                      ,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
+                     										  ,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
+                                          ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
+                                          ,pr_status      OUT PLS_INTEGER              --> Status
+                                          ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
+                                          ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
+                                          ,pr_msg_detalhe OUT VARCHAR2                 --> Detalhe da mensagem
+                                          ,pr_des_reto    OUT VARCHAR2);               --> Erros do processo
+
   procedure pc_atualiza_prop_srv_border
                 (pr_cdcooper    in crapcop.cdcooper%type     --> Codigo da cooperativa
                 ,pr_nrdconta    in crapass.nrdconta%type     --> Numero da conta
@@ -146,6 +170,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                 ,pr_dscritic    out varchar2                 --> Descricao da critica
                 ,pr_msg_detalhe out varchar2                 --> Detalhe da mensagem
                 ,pr_des_reto    out varchar2);
+
 END WEBS0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
@@ -753,6 +778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																					,pr_nrgarope    IN NUMBER   DEFAULT NULL     --> Valor das Garantias calculada no Rating
 																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
 																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
+                                          ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -789,6 +815,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 
 			     01/08/2018 - Incluir novo campo liquidOpCredAtraso na esteira
                               Diego Simas (AMcom) 
+
+                 21/11/2017 - Inclusão do parametro pr_flgpreap, Prj. 402 (Jean Michel)             
      ..............................................................................*/
     DECLARE
       CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -1135,6 +1163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                 ,crawepr.vlempori = crawepr.vlemprst /*M438*/
                 ,crawepr.vlpreori = crawepr.vlpreemp /*M438*/
                 ,crawepr.dsratori = vr_rating /* M438 */
+                ,crawepr.flgpreap = NVL(pr_flgpreap,crawepr.flgpreap)
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp
@@ -2857,19 +2886,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       END IF;
       
       -- Para cada requisicao sera criado um numero de transacao
-      ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
+      WEBS0003.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
                                      pr_cdagenci                 => 1, 
                                      pr_cdoperad                 => 'ESTEIRA',
                                      pr_cdorigem                 => 9,
                                     pr_nrctrprp                 => vr_nrctrprp,
                                      pr_nrdconta                 => pr_nrdconta,
+                                     pr_cdcliente                => 1,
                                      pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                      pr_dsoperacao               => 'RETORNO PROPOSTA - '||vr_dssitapr,
                                      pr_dsuriservico             => pr_namehost,
+                                     pr_dsmetodo                 => 'PUT',
                                      pr_dtmvtolt                 => NULL,
                                      pr_cdstatus_http            => 0,
                                      pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
                                      pr_dsresposta_requisicao    => NULL,
+                                     pr_flgreenvia               => 0,
+                                     pr_nrreenvio                => 0,
+                                     pr_tpconteudo               => 1,
                                      pr_tpproduto                => vr_tpproduto,
                                      pr_idacionamento            => vr_nrtransacao,
                                      pr_dscritic                 => vr_dscritic);
@@ -3017,19 +3051,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         
         IF vr_nrtransacao = 0 THEN
           -- Para cada requisicao sera criado um numero de transacao
-          ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
+          WEBS0003.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
                                          pr_cdagenci                 => 1, 
                                          pr_cdoperad                 => 'ESTEIRA',
                                          pr_cdorigem                 => 9,
                                          pr_nrctrprp                 => vr_nrctrprp,
                                          pr_nrdconta                 => pr_nrdconta,
+                                         pr_cdcliente                => 1,
                                          pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                          pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
                                          pr_dsuriservico             => NULL,
+                                         pr_dsmetodo                 => NULL,
                                          pr_dtmvtolt                 => NULL,
                                          pr_cdstatus_http            => 0,
                                          pr_dsconteudo_requisicao    => NULL,
                                          pr_dsresposta_requisicao    => NULL,
+                                         pr_flgreenvia               => 0,
+                                         pr_nrreenvio                => 0,
+                                         pr_tpconteudo               => 1,
 										 pr_tpproduto                => vr_tpproduto,
                                          pr_idacionamento            => vr_nrtransacao,
                                          pr_dscritic                 => vr_dscritic);
@@ -3055,19 +3094,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         
         IF vr_nrtransacao = 0 THEN
           -- Para cada requisicao sera criado um numero de transacao
-          ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
+          WEBS0003.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
                                          pr_cdagenci                 => 1, 
                                          pr_cdoperad                 => 'ESTEIRA',
                                          pr_cdorigem                 => 9,
                                          pr_nrctrprp                 => vr_nrctrprp,
                                          pr_nrdconta                 => pr_nrdconta,
+                                         pr_cdcliente                => 1,
                                          pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                          pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO PROPOSTA - '||vr_dssitapr,
                                          pr_dsuriservico             => NULL,
+                                         pr_dsmetodo                 => NULL,
                                          pr_dtmvtolt                 => NULL,
                                          pr_cdstatus_http            => 0,
                                          pr_dsconteudo_requisicao    => NULL,
                                          pr_dsresposta_requisicao    => NULL,
+                                         pr_flgreenvia               => 0,
+                                         pr_nrreenvio                => 0,
+                                         pr_tpconteudo               => 1,
                                          pr_tpproduto                => vr_tpproduto,
                                          pr_idacionamento            => vr_nrtransacao,
                                          pr_dscritic                 => vr_dscritic);
@@ -3195,6 +3239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   01/08/2018 - P450 - Incluir novo campo liquidOpCredAtraso no retorno do 
                                motor de credito - Diego Simas (AMcom)              
         
+                  21/11/2017 - Alterações referente ao Prj. 402 (Jean Michel).           
 	 ..............................................................................*/	
 		DECLARE
 		  -- Tratamento de críticas
@@ -3370,19 +3415,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Se o DEBUG estiver habilitado
       IF vr_flgdebug = 'S' THEN
         --> Gravar dados log acionamento
-        este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+        WEBS0003.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
                                       pr_cdagenci              => 1,          
                                       pr_cdoperad              => 'MOTOR',          
                                       pr_cdorigem              => pr_cdorigem,          
                                       pr_nrctrprp              => rw_crawepr.nrctremp,      
                                       pr_nrdconta              => rw_crawepr.nrdconta,  
+                                      pr_cdcliente             => 1,
                                       pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                       pr_dsoperacao            => 'INICIO RETORNO ANALISE',       
                                       pr_dsuriservico          => pr_namehost,       
+                                      pr_dsmetodo              => 'PUT',
                                       pr_dtmvtolt              => trunc(sysdate),       
                                       pr_cdstatus_http         => 0,
                                       pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
                                       pr_dsresposta_requisicao => null,
+                                      pr_flgreenvia            => 0,
+                                      pr_nrreenvio             => 0,
+                                      pr_tpconteudo            => 1,
+                                      pr_tpproduto             => 0,
                                       pr_dsprotocolo           => pr_dsprotoc,
                                       pr_idacionamento         => vr_idaciona,
                                       pr_dscritic              => vr_dscritic);
@@ -3423,20 +3474,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Se o acionamento ainda não foi gravado
       IF vr_nrtransacao = 0 THEN 				
         -- Gravar o acionamento 
-        ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
+        WEBS0003.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
                                       pr_cdagenci                 => 1, 
                                       pr_cdoperad                 => 'MOTOR',
                                       pr_cdorigem                 => pr_cdorigem,
                                       pr_nrctrprp                 => rw_crawepr.nrctremp,
                                       pr_nrdconta                 => rw_crawepr.nrdconta,
+                                      pr_cdcliente                => 1,
                                       pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
                                       pr_dsoperacao               => 'RETORNO ANALISE AUTOMATICA - '||vr_dssitret,
                                       pr_dsuriservico             => pr_namehost,
+                                      pr_dsmetodo                 => 'PUT',
                                       pr_dtmvtolt                 => rw_crapdat.dtmvtolt,
                                       pr_cdstatus_http            => 200,
                                       pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
                                       pr_dsresposta_requisicao    => vr_dssitret,
                                       pr_dsprotocolo              => pr_dsprotoc,
+                                      pr_flgreenvia               => 0,
+                                      pr_nrreenvio                => 0,
+                                      pr_tpconteudo               => 1,
+                                      pr_tpproduto                => 0,
                                       pr_idacionamento            => vr_nrtransacao,
                                       pr_dscritic                 => vr_dscritic);
         -- Se retornou crítica
@@ -3604,6 +3661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																		,pr_nrperger    => gene0002.fn_char_para_number(vr_nrperger)    --> Percepção Geral Empresa na Analise 
 																		,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
 																		,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
+                                    ,pr_flgpreap    => 0                                  --> Indicador de Pré Aprovado
 																		,pr_status      => vr_status      --> Status
 																		,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
 																		,pr_dscritic    => vr_dscritic    --> Descricao da critica
@@ -3621,19 +3679,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       -- Se o DEBUG estiver habilitado
       IF vr_flgdebug = 'S' THEN
         --> Gravar dados log acionamento
-        este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+        WEBS0003.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
                                       pr_cdagenci              => 1,          
                                       pr_cdoperad              => 'MOTOR',          
                                       pr_cdorigem              => pr_cdorigem,          
                                       pr_nrctrprp              => rw_crawepr.nrctremp,      
                                       pr_nrdconta              => rw_crawepr.nrdconta,  
+                                      pr_cdcliente             => 1,  
                                       pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                       pr_dsoperacao            => 'FINAL RETORNO ANALISE',       
                                       pr_dsuriservico          => pr_namehost,       
+                                      pr_dsmetodo              => 'PUT',
                                       pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                       pr_cdstatus_http         => 0,
                                       pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
                                       pr_dsresposta_requisicao => null,
+                                      pr_flgreenvia            => 0,
+                                      pr_nrreenvio             => 0,
+                                      pr_tpconteudo            => 1,
+                                      pr_tpproduto             => 0,
                                       pr_dsprotocolo           => pr_dsprotoc,
                                       pr_idacionamento         => vr_idaciona,
                                       pr_dscritic              => vr_dscritic);
@@ -3669,19 +3733,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           -- Se o DEBUG estiver habilitado
           IF vr_flgdebug = 'S' THEN
             --> Gravar dados log acionamento
-            este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+            WEBS0003.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
                                           pr_cdagenci              => 1,          
                                           pr_cdoperad              => 'MOTOR',          
                                           pr_cdorigem              => pr_cdorigem,          
                                           pr_nrctrprp              => rw_crawepr.nrctremp,      
                                           pr_nrdconta              => rw_crawepr.nrdconta,  
+                                          pr_cdcliente             => 1,
                                           pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                           pr_dsoperacao            => 'FINAL RETORNO CONAUT',       
                                           pr_dsuriservico          => pr_namehost,       
+                                          pr_dsmetodo              => 'PUT',      
                                           pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                           pr_cdstatus_http         => 0,
                                           pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
                                           pr_dsresposta_requisicao => null,
+                                          pr_flgreenvia            => 0,
+                                          pr_nrreenvio             => 0,
+                                          pr_tpconteudo            => 1,
+                                          pr_tpproduto             => 0,
                                           pr_dsprotocolo           => pr_dsprotoc,
                                           pr_idacionamento         => vr_idaciona,
                                           pr_dscritic              => vr_dscritic);
@@ -3742,20 +3812,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Se ainda nao houve geracao id Acionamento
         IF vr_nrtransacao = 0 AND rw_crawepr.nrdconta IS NOT NULL THEN
           -- Para cada requisicao sera criado um numero de transacao
-          ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
+          WEBS0003.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
 																				pr_cdagenci                 => 1, 
 																				pr_cdoperad                 => 'MOTOR',
 																				pr_cdorigem                 => 9,
 																				pr_nrctrprp                 => rw_crawepr.nrctremp,
 																				pr_nrdconta                 => rw_crawepr.nrdconta,
+                                        pr_cdcliente                => 1,
 																				pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
 																				pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO ANALISE AUTO – '
 																																		||rw_crawepr.dssitapr,
 																				pr_dsuriservico             => pr_namehost,
+                                        pr_dsmetodo                 => 'PUT',
 																				pr_dtmvtolt                 => rw_crapdat.dtmvtolt,
 																				pr_cdstatus_http            => 0,
 																				pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
 																				pr_dsresposta_requisicao    => NULL,
+                                        pr_flgreenvia               => 0,
+                                        pr_nrreenvio                => 0,
+                                        pr_tpconteudo               => 1,
+                                        pr_tpproduto                => 0,
 																				pr_idacionamento            => vr_nrtransacao,
 																				pr_dscritic                 => vr_dscritic);
 
@@ -3803,20 +3879,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Se ainda nao houve geracao id Acionamento
         IF vr_nrtransacao = 0 AND rw_crawepr.nrdconta IS NOT NULL THEN
           -- Para cada requisicao sera criado um numero de transacao
-          ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
+          WEBS0003.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
 																				pr_cdagenci                 => 1, 
 																				pr_cdoperad                 => 'MOTOR',
 																				pr_cdorigem                 => 9,
 																				pr_nrctrprp                 => rw_crawepr.nrctremp,
 																				pr_nrdconta                 => rw_crawepr.nrdconta,
+                                        pr_cdcliente                => 1,
 																				pr_tpacionamento            => 2,  -- 1 - Envio, 2 – Retorno 
 																				pr_dsoperacao               => 'ERRO ACIONAMENTO RETORNO ANALISE '
 																																		|| 'PROPOSTA - '||rw_crawepr.dssitapr,
 																				pr_dsuriservico             => pr_namehost,
+                                        pr_dsmetodo                 => 'PUT',
 																				pr_dtmvtolt                 => rw_crapdat.dtmvtolt,
 																				pr_cdstatus_http            => 0,
 																				pr_dsconteudo_requisicao    => replace(pr_dsrequis,'&quot;','"'),
 																				pr_dsresposta_requisicao    => NULL,
+                                        pr_flgreenvia               => 0,
+                                        pr_nrreenvio                => 0,
+                                        pr_tpconteudo               => 1,
+                                        pr_tpproduto                => 0,
 																				pr_idacionamento            => vr_nrtransacao,
 																				pr_dscritic                 => vr_dscritic);
 

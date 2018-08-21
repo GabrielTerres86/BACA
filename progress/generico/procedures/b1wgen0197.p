@@ -187,7 +187,8 @@ PROCEDURE busca_inf_produtos:
            tt-inf-produto.qtchqcan = 0
            tt-inf-produto.inarqcbr = 0
            tt-inf-produto.flgbinss = 0
-           tt-inf-produto.flpdbrde = 0.
+           tt-inf-produto.flpdbrde = 0
+           tt-inf-produto.flgconve = 0.
 
     /************************ Emprestimo *********************************/
     FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper AND
@@ -564,6 +565,13 @@ PROCEDURE busca_inf_produtos:
 		ASSIGN tt-inf-produto.flgcrmag = 1.		
 	END.
 	
+    /* PRJ 402 */
+    FOR FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper
+                        AND crapcdr.nrdconta = par_nrdconta NO-LOCK: END.
+                      
+    IF AVAILABLE crapcdr THEN
+      ASSIGN tt-inf-produto.flgconve = INTEGER(STRING(crapcdr.flgconve, "1/0")).
+    /* PRJ 402 */
 	
     RETURN "OK".
     

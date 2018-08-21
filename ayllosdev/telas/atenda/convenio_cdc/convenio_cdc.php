@@ -9,6 +9,11 @@
  *                             (Jaison/Anderson)
  * --------------
  * 25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM).
+ *
+ * 								29/11/2017 - Adicionado aba de SEGMENTOS, Prj. 402(Jean Michel).
+ *
+ *                              26/05/2018 - Adicionado abas Vendedores e Usuários  Prj. Restruturação CDC (Diego Simas - AMcom)
+ *
  */	
 ?>
 <?
@@ -60,12 +65,23 @@
 						<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td style="border: 1px solid #F4F3F0;">
-									<table border="background-color: #F4F3F0;" cellspacing="0" cellpadding="0" >
+									<table border="background-color: #F4F3F0;" cellspacing="0" cellpadding="0" id="tbAbasCDC">
 										<tr>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq0"></td>
-										<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" onClick="acessaOpcaoAba()" class="txtNormalBold">Principal</a></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" onClick="acessaOpcaoAba('P',0);" class="txtNormalBold">Principal</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir0"></td>
 											<td width="1"></td>
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq1"></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" onClick="acessaOpcaoAba('S',1);" class="txtNormalBold">Segmentos</a></td>
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir1"></td>
+                      <td width="2"></td>
+                      <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq2"></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen2"><a href="#" id="linkAba2" onClick="acessaOpcaoAba('V',2);" class="txtNormalBold">Vendedores</a></td>
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir2"></td>
+                      <td width="3"></td>
+                      <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq3"></td>
+											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen3"><a href="#" id="linkAba3" onClick="acessaOpcaoAba('U',3);" class="txtNormalBold">Usuários</a></td>
+											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir3"></td>
 										</tr>
 									</table>
 								</td>
@@ -91,5 +107,5 @@
 	exibeRotina(divRotina);
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
-	acessaOpcaoAba();	
+	acessaOpcaoAba('P',0);	
 </script>

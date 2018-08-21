@@ -8,7 +8,9 @@
   | Dias360                                 | EMPR0001.pc_calc_dias360             |
   | fnBuscaDataDoUltimoDiaUtilMes           | gene0005.fn_valida_dia_util          |
   | busca_parcelas_proposta                 | EMPR0004.pc_busca_parcelas_proposta  |
+  | calcula_emprestimo                      | EMPR0004.pc_calcula_emprestimo       |
   | calcula_data_parcela                    | EMPR0004.pc_calcula_data_parcela     |
+  | gera_parcelas_emprestimo                | EMPR0004.pc_gera_parcelas_emprest    |
   +-----------------------------------------+--------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -302,6 +304,16 @@
 			  02/04/2018 - Corrigir para não apresentar no extrato de empréstimo histórico do IOF zerado. (James)
               
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+                           
+              21/11/2017 - Incluído condiçao na leitura da crappre na procedure
+                           grava_efetivacao_proposta, incluido leitura da crawepr
+                           na procedure desfaz_efetivacao_emprestimo 
+                           (Jean Michel - Prj. 402).
+                           
+              20/12/2017 - Criados novos históricos(2013,2014) para demonstraçao da
+                           parte contábil dos lançamentos de CDC, alteraçao nas
+                           procedures desfaz_efetivacao_emprestimo, busca_desfazer_efetivacao_emprestimo
+                           e grava_efetivacao_proposta, Prj. 402 (Jean Michel).
                            
 ............................................................................. */
 
@@ -3338,7 +3350,6 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR h-b1wgen0110 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0171 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                    NO-UNDO.
-  
     DEF VAR aux_dscatbem AS CHAR                                      NO-UNDO.
     DEF VAR aux_dsctrliq AS CHAR                                      NO-UNDO.
     DEF VAR i            AS INTE                                      NO-UNDO.
@@ -3486,9 +3497,8 @@ PROCEDURE grava_efetivacao_proposta:
 
        FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin) WHERE crappre.cdcooper = par_cdcooper     
                                                               AND crappre.inpessoa = crapass.inpessoa
-                                                              AND crappre.cdfinemp = crawepr.cdfinemp NO-LOCK: END.
-                                                              /*AND (crappre.cdfinemp = crawepr.cdfinemp
-                                                               OR crawepr.flgpreap = TRUE) NO-LOCK: END.*/
+                                                              AND (crappre.cdfinemp = crawepr.cdfinemp
+                                                               OR crawepr.flgpreap = 1) NO-LOCK: END.
 
        /* Verifica se o emprestimo eh pre-aprovado */
        IF AVAIL crappre THEN
@@ -5026,9 +5036,8 @@ PROCEDURE desfaz_efetivacao_emprestimo.
         
         FOR crappre FIELDS(cdfinemp vlmulpli) WHERE crappre.cdcooper = par_cdcooper
                                                 AND crappre.inpessoa = crapass.inpessoa
-                                                AND crappre.cdfinemp = crapepr.cdfinemp NO-LOCK: END.
-                                                /*AND (crappre.cdfinemp = crapepr.cdfinemp 
-                                                 OR crawepr.flgpreap = TRUE) NO-LOCK: END.*/
+                                                AND (crappre.cdfinemp = crapepr.cdfinemp 
+                                                 OR crawepr.flgpreap = 1) NO-LOCK: END.
 
         /* Verifica se o emprestimo eh pre-aprovado */
         IF AVAIL crappre THEN

@@ -4,7 +4,7 @@
    Sistema : Mobile - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Setembro/2014.                       Ultima atualizacao: 07/11/2014
+   Data    : Setembro/2014.                       Ultima atualizacao: 19/06/2018
 
    Dados referentes ao programa:
 
@@ -14,6 +14,8 @@
    Alteracoes: 07/11/2014 - Removido a CECRED da listagem (Guilherme).
                
                23/06/2015 - Removida abreviação VIACREDI AV (Dionathan).
+
+			   19/06/2018 - Incluido campo nrdoccnpj.(Odirlei-AMcom)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -25,7 +27,7 @@ DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 DEF VAR aux_nmrescop AS CHAR                                           NO-UNDO.
 
-FOR EACH crapcop FIELDS(cdcooper cdagectl nmrescop) 
+FOR EACH crapcop FIELDS(cdcooper cdagectl nmrescop nrdocnpj) 
    WHERE crapcop.flgativo 
      AND crapcop.cdcooper <> 3:
 
@@ -39,6 +41,7 @@ FOR EACH crapcop FIELDS(cdcooper cdagectl nmrescop)
           "<cdcooper>"  + STRING(crapcop.cdcooper) + "</cdcooper>" + 
           "<cdagectl>"  + STRING(crapcop.cdagectl,"9999") + "</cdagectl>" + 
           "<nmrescop>"  + STRING(UPPER(aux_nmrescop)) + "</nmrescop>" +
+                  "<nrdocnpj>"  + STRING(crapcop.nrdocnpj,"99999999999999") + "</nrdocnpj>" +
           "</DADOS>".
 
 END.

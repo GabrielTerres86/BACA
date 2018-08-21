@@ -65,6 +65,9 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --              14/03/2018 - Correcao no cursor cr_crapbpr, que estava considerando o parametro com ele 
   --                           mesmo ao inves de comparar com o campo da tabela
   --                           Everton Souza (Mouts) - Chamado 859015
+  --
+  --              24/04/2018 - Incluído rotina PC_REGISTRAR_GRAVAMES, convertido com progress b1wgen0171.p
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -140,7 +143,8 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                     ,pr_nrdconta crapbpr.nrdconta%type
                     ,pr_nrctrpro crapbpr.nrctrpro%type) IS
     SELECT crapbpr.tpdbaixa,
-           crapbpr.rowid
+           crapbpr.rowid,
+           crapbpr.cdsitgrv
       FROM crapbpr
      WHERE crapbpr.cdcooper = pr_cdcooper
        AND crapbpr.nrdconta = pr_nrdconta
@@ -301,6 +305,44 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                                      ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                      ,pr_des_erro OUT VARCHAR2);          --Saida OK/NOK
                                                              
+PROCEDURE pc_valida_alienacao_fiduciaria (pr_cdcooper IN crapcop.cdcooper%type   -- Código da cooperativa
+                                         ,pr_nrdconta IN crapass.nrdconta%type   -- Numero da conta do associado
+                                         ,pr_nrctrpro IN PLS_INTEGER             -- Numero do contrato
+                                         ,pr_des_reto OUT varchar2               -- Retorno Ok ou NOK do procedimento
+                                         ,pr_dscritic OUT VARCHAR2               -- Retorno da descricao da critica do erro
+                                         ,pr_tab_erro OUT gene0001.typ_tab_erro  -- Retorno da PlTable de erros
+                                         );
+                                           
+PROCEDURE pc_registrar_gravames(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
+                               ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado
+                               ,pr_nrctrpro IN crapbpr.nrctrpro%type -- Numero do contrato                               
+--                               ,pr_dtmvtolt IN DATE                  -- Data de movimento para baixa
+                               ,pr_cddopcao IN VARCHAR2              -- V-VALIDAR / E-EFETIVAR
+                               ,pr_flgresta IN PLS_INTEGER
+                               ,pr_stprogra OUT PLS_INTEGER
+                               ,pr_infimsol OUT PLS_INTEGER
+                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                               ,pr_dscritic OUT VARCHAR2);
+
+PROCEDURE pc_valida_bens_alienados(pr_cdcooper IN crapcop.cdcooper%type   -- Código da cooperativa
+                                  ,pr_nrdconta IN crapass.nrdconta%type   -- Numero da conta do associado
+                                  ,pr_nrctrpro IN PLS_INTEGER             -- Numero do contrato
+                                  ,pr_cdopcao  IN varchar2                -- 
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                  ,pr_dscritic OUT crapcri.dscritic%TYPE
+                                  ,pr_tab_erro OUT gene0001.typ_tab_erro  -- Retorno da PlTable de erros
+                                  );
+                                  
+PROCEDURE  pc_valida_situacao_gravames ( pr_cdcooper IN crapbpr.cdcooper%TYPE       -- Cód. cooperativa
+                                        ,pr_nrdconta IN crapbpr.nrdconta%TYPE       -- Nr. da conta
+                                        ,pr_nrctrpro IN crapbpr.nrctrpro%TYPE       -- Nr. contrato
+                                        ,pr_idseqbem IN crapbpr.idseqbem%TYPE       -- Sequencial do bem
+                                        ,pr_cdsitgrv OUT INTEGER                    -- Retorna situação do gravames 
+                                        ,pr_dssitgrv OUT VARCHAR2                   -- Retorna critica do gravames
+                                        ,pr_dscrigrv OUT VARCHAR2                   -- Retorna critica de processamento do gravames
+                                        ,pr_cdcritic OUT INTEGER                    -- Codigo de critica de sistema
+                                        ,pr_dscritic OUT VARCHAR2                   -- Descrição da critica de sistema
+                                        );                                  
                                                                                                                                                       
 END GRVM0001;
 /
@@ -368,8 +410,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
   --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
   --                           (Ana - Envolti) - SD: 660356 e 660394
-  --
-  --             18/12/2017 - Inclusão da procedure pc_consulta_situacao_cdc, Prj. 402 (Jean Michel)
   --
   --             22/02/2018 - Inclusão de Logs nas procedures pc_gravames_baixa_manual, pc_gravames_cancelar, pc_gravames_inclusao_manual
   ---------------------------------------------------------------------------------------------------------------
@@ -5999,6 +6039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                      'Tip:' || to_char(rw_crapgrv_sem_retorno.tpctrpro) || 
                                                      'Ctr:' || to_char(rw_crapgrv_sem_retorno.nrctrpro) || 
                                                      'Chassi:' || to_char(rw_crapgrv_sem_retorno.dschassi)||'][BPR_1]');  
+        rw_crapbpr := null;                                              
       END IF;                  
       
       --Fechar o cursor
@@ -6070,6 +6111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                       'Tip:' || to_char(rw_crapgrv_sucesso.tpctrpro) || 
                                                       'Ctr:' || to_char(rw_crapgrv_sucesso.nrctrpro) || 
                                                       'Chassi:' || to_char(rw_crapgrv_sucesso.dschassi)||'][BPR_2]');  
+        rw_crapbpr := null;                                                                                                     
           
       END IF;                   
       
@@ -6146,6 +6188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                       'Tip:' || to_char(rw_crapgrv_erro.tpctrpro) || 
                                                       'Ctr:' || to_char(rw_crapgrv_erro.nrctrpro) || 
                                                       'Chassi:' || to_char(rw_crapgrv_erro.dschassi)||'][BPR_3]');          
+        rw_crapbpr := null;                                                                                                    
       END IF;                  
       
       --Fechar o cursor
@@ -7321,6 +7364,657 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
 
     END;
   END pc_gravames_processa_retorno;
+
+PROCEDURE pc_registrar_gravames(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
+                               ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado
+                               ,pr_nrctrpro IN crapbpr.nrctrpro%type -- Numero do contrato                               
+                        --       ,pr_dtmvtolt IN DATE                  -- Data de movimento para baixa
+                               ,pr_cddopcao IN VARCHAR2              -- V-VALIDAR / E-EFETIVAR
+                               ,pr_flgresta IN PLS_INTEGER
+                               ,pr_stprogra OUT PLS_INTEGER
+                               ,pr_infimsol OUT PLS_INTEGER
+                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                               ,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+  /* .............................................................................
+
+   Procedure: pc_registrar_gravames             Antigo: fontes/b1wgen0171.p
+   Sistema : Conta-Corrente - Cooperativa de Crédito
+   Sigla   : CRED
+   Autor   : Renato Raul Cordeiro (AMcom)
+   Data    : Abril/2018.                     Ultima atualização:
+
+   --HISTÓRICO ORACLE--
+          23/04/2018 - Migrado rotina/fonte progress para oracle.
+                       Renato Raul Cordeiro (AMcom)
+
+  ............................................................................... */
+
+  DECLARE
+
+      -- Código do programa
+      vr_cdprogra crapprg.cdprogra%TYPE;
+      -- Erro para parar a cadeia
+      vr_exc_saida exception;
+      -- Erro sem parar a cadeia
+      vr_exc_fimprg exception;
+
+      ---------------- Cursores genéricos ----------------
+
+      -- Busca dados da cooperativa --
+      CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+        SELECT cop.nmrescop
+        FROM crapcop cop
+        WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+      -- Cursor para buscar as informações para restart
+      -- e rowid para atualização posterior
+      CURSOR cr_crapres IS
+        SELECT res.dsrestar
+              ,res.rowid
+          FROM crapres res
+         WHERE res.cdcooper = pr_cdcooper
+           AND res.cdprogra = vr_cdprogra;
+      rw_crapres cr_crapres%ROWTYPE;
+
+      -------------- Cursores específicos ----------------
+
+      -- Busca sobre data de inclusão do contrato --
+      CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
+                       ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado
+                       ,pr_nrctrpro IN crapbpr.nrctrpro%type) IS -- Numero do contrato
+        SELECT crawepr.*, crawepr.rowid
+        FROM crawepr
+        WHERE crawepr.cdcooper  = pr_cdcooper
+          AND crawepr.nrdconta  = pr_nrdconta
+          AND crawepr.nrctremp  = pr_nrctrpro;
+      rw_crawepr cr_crawepr%ROWTYPE;
+
+      -------------- Variáveis e Tipos -------------------
+
+      -- Variável genérica de calendário com base no cursor da btch0001
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Código da crítica
+      vr_dscritic     VARCHAR2(2000);    --> Descrição da crítica
+      
+      -- Variaveis locais para retorno de erro
+      vr_des_reto varchar2(4000);
+      vr_tab_erro gene0001.typ_tab_erro;
+
+      -- Variáveis de trabalho
+      vr_cdcooper crawepr.cdcooper%TYPE;
+      vr_nrdconta crawepr.nrdconta%TYPE;
+      vr_nrctremp crawepr.nrctremp%TYPE;
+      vr_rowid    rowid;
+
+    BEGIN
+
+      -- Código do programa
+      vr_cdprogra := 'GRVM0001';
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'pr_registrar_gravames'
+                                ,pr_action => null);
+
+      /** Validar Data de Inclusao do Contrato **/
+      open cr_crawepr(pr_cdcooper,pr_nrdconta,pr_nrctrpro) ;
+      fetch cr_crawepr into rw_crawepr;
+      if cr_crawepr%NOTFOUND then
+        CLOSE cr_crawepr;
+        -- Montar mensagem de crítica
+        vr_cdcritic := 356;
+        RAISE vr_exc_saida;
+      else
+        if rw_crawepr.cdcooper = 1             and rw_crawepr.dtmvtolt < to_date('18112014','ddmmyyyy') or
+           rw_crawepr.cdcooper = 4             and rw_crawepr.dtmvtolt < to_date('23072014','ddmmyyyy') or
+           rw_crawepr.cdcooper = 7             and rw_crawepr.dtmvtolt < to_date('06102014','ddmmyyyy') or
+           (rw_crawepr.cdcooper not in (1,4,7) and rw_crawepr.dtmvtolt < to_date('26022015','ddmmyyyy')) then
+           vr_cdcritic := 0;
+           vr_dscritic := ' Operacao bloqueada![Data Contrato] ';
+           RAISE vr_exc_saida;
+        end if;
+        if nvl(rw_crawepr.flgokgrv,0) = 1 then
+           vr_cdcritic := 0;
+           vr_dscritic := ' Proposta ja OK para envio ao GRAVAMES! ';
+           RAISE vr_exc_saida;
+        end if;
+        
+        -- salva variaveis para usar no LOOP final
+        vr_cdcooper := rw_crawepr.cdcooper;
+        vr_nrdconta := rw_crawepr.nrdconta;
+        vr_nrctremp := rw_crawepr.nrctremp;
+        vr_rowid    := rw_crawepr.rowid;
+      end if;
+        
+    -- Valida se eh alienacao fiduciaria
+    pc_valida_alienacao_fiduciaria( pr_cdcooper => pr_cdcooper   -- Código da cooperativa
+                                   ,pr_nrdconta => pr_nrdconta   -- Numero da conta do associado
+                                   ,pr_nrctrpro => pr_nrctrpro   -- Numero do contrato
+                                   ,pr_des_reto => vr_des_reto   -- Retorno Ok ou NOK do procedimento
+                                   ,pr_dscritic => vr_dscritic   -- Retorno da descricao da critica do erro
+                                   ,pr_tab_erro => vr_tab_erro);  -- Retorno de PlTable com erros
+    /** OBS: Sempre retornara OK pois a chamada da solicita_baixa_automatica
+             nos CRPS171,CRPS078,CRPS120_1,B1WGEN0136, nesses casos nao pode
+             impedir de seguir para demais contratos. **/
+
+    IF vr_des_reto <> 'OK' THEN
+       vr_cdcritic := 0;
+       -- Não é necessário atribuir a variável vr_dscritic porque já retorna da procedure 
+       -- chamada imediatamente acima
+       RAISE vr_exc_saida;
+    END IF;
+
+    if rw_crapbpr.cdsitgrv <> 0 then
+       vr_cdcritic := 0;
+       vr_dscritic := ' Situacao do Gravame invalida! ';
+       RAISE vr_exc_saida;
+    end if;
+      
+    -- No fonte Progress tinha neste ponto o comando: IF  crawepr.flgokgrv = TRUE THEN DO:
+    -- Coloquei este if na leitura que já existia da crawepr, com a mesma consistencia.
+    
+    begin
+       update crawepr set flgokgrv = 1 where rowid = vr_rowid;
+    exception
+       when others then
+          vr_cdcritic := 0;
+          vr_dscritic := substr(' Erro atualização crawepr:'||SQLERRM,1,2000);
+          RAISE vr_exc_saida;
+    end;
+
+    begin
+       update crapbpr a
+       set a.flginclu = 1,
+           a.cdsitgrv = 0,
+           a.tpinclus = 'A'
+       where a.cdcooper = vr_cdcooper
+         and a.nrdconta = vr_nrdconta
+         and a.tpctrpro = 90
+         and a.nrctrpro = vr_nrctremp
+         and a.flgalien = 1
+         and (
+                a.dscatbem like '%AUTOMOVEL%' OR
+                a.dscatbem like '%MOTO%'      OR
+                a.dscatbem like '%CAMINHAO%'
+             );
+    exception
+       when others then
+          vr_cdcritic := 0;
+          vr_dscritic := substr(' Erro atualização crapbpr:'||SQLERRM,1,2000);
+          RAISE vr_exc_saida;
+    end;
+
+   EXCEPTION
+
+    WHEN vr_exc_fimprg THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Se foi gerada critica para envio ao log
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_cdprogra || ' --> '
+                                                   || vr_dscritic );
+      END IF;
+      -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
+      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_infimsol => pr_infimsol
+                               ,pr_stprogra => pr_stprogra);
+      -- Efetuar commit pois gravaremos o que foi processo até então
+      COMMIT;
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      ROLLBACK;
+    WHEN OTHERS THEN
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+      -- Efetuar rollback
+      ROLLBACK;
+   END;
+
+END pc_registrar_gravames;
+  
+PROCEDURE pc_valida_bens_alienados(pr_cdcooper IN crapcop.cdcooper%type   -- Código da cooperativa
+                                  ,pr_nrdconta IN crapass.nrdconta%type   -- Numero da conta do associado
+                                  ,pr_nrctrpro IN PLS_INTEGER             -- Numero do contrato
+                                  ,pr_cdopcao  IN varchar2                -- 
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                  ,pr_dscritic OUT crapcri.dscritic%TYPE
+                                  ,pr_tab_erro OUT gene0001.typ_tab_erro  -- Retorno da PlTable de erros
+                                  ) as
+
+   /* .............................................................................
+
+       Programa: pc_valida_bens_alienados           (Antigo b1wgen0171.p - valida_bens_alienados)
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : 
+       Data    :                            Ultima atualizacao: 22/06/2018
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+       Objetivo  : Rotina responsavel em validar bens alienados
+
+       Alteracoes: 22/06/2018 - Conversao Progress -> Oracle. (Renato Cordeiro/Odirlei AMcom)
+                  
+    ............................................................................. */
+    
+         
+  -- Busca sobre data de inclusão do contrato --
+  CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
+                   ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado
+                   ,pr_nrctrpro IN crapbpr.nrctrpro%type) IS -- Numero do contrato
+    SELECT crawepr.*
+          ,crawepr.rowid
+      FROM crawepr
+     WHERE crawepr.cdcooper = pr_cdcooper
+       AND crawepr.nrdconta = pr_nrdconta
+       AND crawepr.nrctremp = pr_nrctrpro;
+  rw_crawepr cr_crawepr%ROWTYPE;
+  
+  CURSOR cr_crapbpr (pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
+                    ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado
+                    ,pr_nrctrpro IN crapbpr.nrctrpro%type) IS -- Numero do contrato
+    SELECT a.cdsitgrv
+      FROM crapbpr a
+     WHERE a.cdcooper = pr_cdcooper
+       AND a.nrdconta = pr_nrdconta
+       AND a.tpctrpro = 90
+       AND a.nrctrpro = pr_nrctrpro
+       AND a.flgalien = 1
+       AND ((a.dscatbem LIKE '%AUTOMOVEL%') OR 
+            (a.dscatbem LIKE '%MOTO%') OR
+            (a.dscatbem LIKE '%CAMIMNHAO%'));
+              
+  -- Código do programa
+  vr_cdprogra crapprg.cdprogra%TYPE;
+  -- Erro para parar a cadeia
+  vr_exc_saida exception;
+  -- Erro sem parar a cadeia
+  vr_exc_fimprg exception;
+
+  vr_des_reto varchar2(2000);
+
+begin
+
+  -- Código do programa
+  vr_cdprogra := 'GRAVAM';
+  -- Incluir nome do módulo logado
+  GENE0001.pc_informa_acesso(pr_module => 'pc_valida_bens_alienados'
+                            ,pr_action => 'pc_valida_bens_alienados');
+
+  open cr_crawepr(pr_cdcooper,pr_nrdconta,pr_nrctrpro) ;
+  fetch cr_crawepr into rw_crawepr;
+  if cr_crawepr%NOTFOUND then
+    -- Montar mensagem de crítica
+    pr_cdcritic := 356;
+    pr_dscritic := null;
+    CLOSE cr_crawepr;
+    RAISE vr_exc_saida;
+  ELSIF rw_crawepr.cdcooper = 1             and rw_crawepr.dtmvtolt < to_date('18112014','ddmmyyyy') or
+        rw_crawepr.cdcooper = 4             and rw_crawepr.dtmvtolt < to_date('23072014','ddmmyyyy') or
+        rw_crawepr.cdcooper = 7             and rw_crawepr.dtmvtolt < to_date('06102014','ddmmyyyy') or
+       (rw_crawepr.cdcooper not in (1,4,7) and rw_crawepr.dtmvtolt < to_date('26022015','ddmmyyyy')) then
+    CLOSE cr_crawepr;
+    raise vr_exc_fimprg; -- Sai do programa
+  end if;
+  CLOSE cr_crawepr;
+
+  pc_valida_alienacao_fiduciaria(pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => pr_nrdconta,
+                                 pr_nrctrpro => pr_nrctrpro,
+                                 pr_des_reto => vr_des_reto,
+                                 pr_dscritic => pr_dscritic,
+                                 pr_tab_erro => pr_tab_erro);
+  /** OBS: Sempre retornara OK pois a chamada da valida_bens_alienados
+         vem da "EFETIVAR" (LANCTRI e BO00084), nesses casos nao pode
+         impedir de seguir para demais contratos. **/
+  --Se ocorreu erro
+  IF vr_des_reto <> 'OK' THEN
+    raise vr_exc_fimprg; -- Sai do programa        
+  END IF;
+  
+  if (rw_crawepr.flgokgrv = 0) then
+    pr_cdcritic := 0;
+    pr_dscritic := 'Opcao Registro de Gravames, na tela ATENDA nao efetuada! Verifique.';
+    RAISE vr_exc_saida;
+  end if;
+  
+  pr_cdcritic := null;
+  pr_dscritic := null;
+  for rw_crapbpr in cr_crapbpr ( pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_nrctrpro => pr_nrctrpro) LOOP   
+     
+    pr_dscritic := NULL;
+    IF rw_crapbpr.cdsitgrv = 2 THEN --> 2 - ALIENADO
+     continue;
+    ELSIF rw_crapbpr.cdsitgrv = 0 then
+      pr_dscritic := 'Arquivo Gravame nao enviado. Verifique';
+    elsif rw_crapbpr.cdsitgrv = 1 then
+      pr_dscritic := 'Falta retorno arquivo Gravames. Verifique.';
+    elsif rw_crapbpr.cdsitgrv = 3 then
+      pr_dscritic := 'Arquivo Gravames com problemas de processamento. Verifique.';
+    elsif rw_crapbpr.cdsitgrv = 4 then
+      pr_dscritic := 'Bem baixado.';
+    elsif rw_crapbpr.cdsitgrv = 5 then
+      pr_dscritic := 'Bem cancelado.';
+    end if;
+     
+    if pr_dscritic is not null then
+      -- somente precisa do RAISE porque a descrição já foi preenchida no cursor
+      -- imediatamente anterior e o código foi inicializado com ZERO
+      RAISE vr_exc_saida;
+    end if;
+     
+  END LOOP;
+  
+
+exception
+  WHEN vr_exc_saida THEN
+    gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                         ,pr_cdagenci => 0
+                         ,pr_nrdcaixa => 0
+                         ,pr_nrsequen => 0
+                         ,pr_cdcritic => pr_cdcritic
+                         ,pr_dscritic => pr_dscritic
+                         ,pr_tab_erro => pr_tab_erro);
+
+    --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+    --Gera log
+    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                              ,pr_ind_tipo_log => 1 -- Mensagem
+                              ,pr_nmarqlog     => 'gravam.log'
+                              ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                  ' - '||vr_cdprogra||' --> '||                                                   
+                                                  ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                  ',Nrctrpro:'||pr_nrctrpro ||
+                                                  'ERRO: '|| pr_cdcritic ||' - '|| pr_dscritic ||
+                                                  '[valida_bens_alienados]');
+
+    ROLLBACK;
+  when vr_exc_fimprg then
+    pr_cdcritic := null;
+    pr_dscritic := null;
+  WHEN OTHERS THEN
+    pr_cdcritic := 0;
+    pr_dscritic := 'Erro ao validar bens alienados';
+
+    --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+    --Gera log
+    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                              ,pr_ind_tipo_log => 1 -- Mensagem
+                              ,pr_nmarqlog     => 'gravam.log'
+                              ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                  ' - '||vr_cdprogra||' --> '||                                                   
+                                                  ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                  ',Nrctrpro:'||pr_nrctrpro ||
+                                                  'ERRO: '|| pr_cdcritic ||' - '|| pr_dscritic ||
+                                                  '[valida_bens_alienados]');
+
+    ROLLBACK;
+  
+end pc_valida_bens_alienados;
+
+PROCEDURE  pc_valida_situacao_gravames ( pr_cdcooper IN crapbpr.cdcooper%TYPE       -- Cód. cooperativa
+                                        ,pr_nrdconta IN crapbpr.nrdconta%TYPE       -- Nr. da conta
+                                        ,pr_nrctrpro IN crapbpr.nrctrpro%TYPE       -- Nr. contrato
+                                        ,pr_idseqbem IN crapbpr.idseqbem%TYPE       -- Sequencial do bem
+                                        ,pr_cdsitgrv OUT INTEGER                    -- Retorna situação do gravames 
+                                        ,pr_dssitgrv OUT VARCHAR2                   -- Retorna critica do gravames
+                                        ,pr_dscrigrv OUT VARCHAR2                   -- Retorna critica de processamento do gravames
+                                        ,pr_cdcritic OUT INTEGER                    -- Codigo de critica de sistema
+                                        ,pr_dscritic OUT VARCHAR2                   -- Descrição da critica de sistema
+                                        ) IS
+                                        
+                                        
+   /* ..........................................................................
+    
+      Programa :  pc_valida_situacao_gravames
+
+      Sistema  : Rotinas genericas para GRAVAMES
+      Sigla    : GRVM
+      Autor    : Odirlei Busana - AMcom
+      Data     : Julhi/2018.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+       Objetivo  : Rotina para validar situação do GRAVAMES
+    
+       Alteracoes: 
+    ............................................................................. */
+       
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    vr_nrsequen INTEGER;
+    vr_tparquiv VARCHAR2(10);
+    vr_dssituac VARCHAR2(300);
+      
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION; 
+    vr_exc_erro  EXCEPTION; 
+    
+    -- CURSORES
+    -- Cursor para a tabela de emprestrimos      
+    CURSOR cr_crapepr IS
+      SELECT 1
+        FROM crapepr epr
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctrpro;
+    rw_crapepr cr_crapepr%ROWTYPE;
+    
+    
+    CURSOR cr_crapbpr (pr_cdcooper IN crapcop.cdcooper%TYPE      -- Numero da cooperativa
+                      ,pr_nrdconta IN crapcop.nrdconta%TYPE      -- Numero da conta do associado
+                      ,pr_nrctrpro IN crapbpr.nrctrpro%TYPE      -- Numero do contrato
+                      ,pr_idseqbem IN crapbpr.nrctrpro%TYPE ) IS -- Sequencial do bem
+                      
+      SELECT a.cdsitgrv,
+             a.cdcooper,
+             a.nrdconta,
+             a.tpctrpro,
+             a.nrctrpro,
+             a.idseqbem
+        FROM crapbpr a
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta
+         AND a.tpctrpro = 90
+         AND a.nrctrpro = pr_nrctrpro
+         AND a.idseqbem = pr_idseqbem
+         AND a.flgalien = 1
+         AND ((a.dscatbem LIKE '%AUTOMOVEL%') OR 
+              (a.dscatbem LIKE '%MOTO%') OR
+              (a.dscatbem LIKE '%CAMIMNHAO%'));
+    
+    rw_crapbpr cr_crapbpr%ROWTYPE; 
+    
+    --> Buscar ultimo retorno
+    CURSOR cr_crapgrv(pr_cdcooper crapgrv.cdcooper%TYPE,
+                      pr_nrdconta crapgrv.nrdconta%TYPE,
+                      pr_tpctrpro crapgrv.tpctrpro%TYPE,
+                      pr_nrctrpro crapgrv.nrctrpro%TYPE,
+                      pr_idseqbem crapgrv.idseqbem%TYPE) IS
+      SELECT grv.cdoperac,
+             grv.cdretlot,
+             grv.cdretgrv,
+             grv.cdretctr
+        FROM crapgrv grv
+       WHERE grv.cdcooper = pr_cdcooper
+         AND grv.nrdconta = pr_nrdconta
+         AND grv.tpctrpro = pr_tpctrpro
+         AND grv.nrctrpro = pr_nrctrpro
+         AND grv.idseqbem = pr_idseqbem
+       ORDER BY nrseqlot DESC;
+    rw_crapgrv cr_crapgrv%ROWTYPE;
+    
+    CURSOR cr_craprto(pr_cdoperac IN craprto.cdoperac%TYPE
+                     ,pr_nrtabela IN craprto.nrtabela%TYPE
+                     ,pr_cdretorn IN craprto.cdretorn%TYPE) IS
+      SELECT craprto.cdretorn
+            ,craprto.dsretorn
+        FROM craprto
+       WHERE craprto.cdprodut = 1 --Produto gravames
+         AND craprto.cdoperac = pr_cdoperac
+         AND craprto.nrtabela = pr_nrtabela
+         AND craprto.cdretorn = pr_cdretorn;
+    rw_craprto cr_craprto%ROWTYPE;
+     
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
+  BEGIN
+    --Incluir nome do módulo logado
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_valida_situacao_gravames');
+    
+    --> buscar dados do bem alienado 
+    OPEN cr_crapbpr (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta
+                    ,pr_nrctrpro => pr_nrctrpro
+                    ,pr_idseqbem => pr_idseqbem);
+    FETCH cr_crapbpr INTO rw_crapbpr;
+    IF cr_crapbpr%NOTFOUND THEN
+      CLOSE cr_crapbpr;
+      RAISE vr_exc_saida; -- sair sem erro
+      
+    ELSE
+      CLOSE cr_crapbpr;      
+    END IF;
+    
+    pr_cdsitgrv := rw_crapbpr.cdsitgrv;
+    
+    CASE pr_cdsitgrv
+      WHEN 0 THEN pr_dssitgrv :=  'Nao enviado';
+      WHEN 1 THEN pr_dssitgrv :=  'Em processamento';
+      WHEN 2 THEN pr_dssitgrv :=  'Alienacao';
+      WHEN 3 THEN pr_dssitgrv :=  'Processado com Critica';
+      WHEN 4 THEN pr_dssitgrv :=  'Baixado';
+      WHEN 5 THEN pr_dssitgrv :=  'Cancelado';
+    END CASE;
+     
+    IF pr_cdsitgrv = 3 THEN
+     
+      --> Buscar ultimo retorno
+      OPEN cr_crapgrv( pr_cdcooper => rw_crapbpr.cdcooper,
+                       pr_nrdconta => rw_crapbpr.nrdconta,
+                       pr_tpctrpro => rw_crapbpr.tpctrpro,
+                       pr_nrctrpro => rw_crapbpr.nrctrpro,
+                       pr_idseqbem => rw_crapbpr.idseqbem);
+      FETCH cr_crapgrv INTO rw_crapgrv;
+      CLOSE cr_crapgrv;
+       
+      CASE rw_crapgrv.cdoperac
+        WHEN 1 THEN vr_tparquiv := 'I';          
+        WHEN 2 THEN vr_tparquiv := 'C';
+        --> *** Para retornos, foi utilizada a letra "Q" e nao letra "B" ***
+        WHEN 3 THEN  vr_tparquiv := 'Q';
+        ELSE vr_tparquiv := NULL ;        
+      END CASE;
+      
+      vr_dssituac := '';
+      
+      /** Exibir todos os retornos com erros **/
+      IF rw_crapgrv.cdretlot <> 0 THEN
+        
+        OPEN cr_craprto(pr_cdoperac => vr_tparquiv
+                       ,pr_nrtabela => 1
+                       ,pr_cdretorn => rw_crapgrv.cdretlot);
+        
+        FETCH cr_craprto INTO rw_craprto;
+        
+        IF cr_craprto%NOTFOUND THEN
+          vr_dssituac := TRIM(to_char(rw_crapgrv.cdretlot,'999')) || ' - SITUACAO NAO CADASTRADA';
+        ELSE
+          vr_dssituac := TRIM(to_char(rw_craprto.cdretorn,'999')) || ' - ' || rw_craprto.dsretorn;
+        END IF;
+        
+        --Fecha o cursor
+        CLOSE cr_craprto;
+               
+      ELSIF rw_crapgrv.cdretlot = 0  AND
+        (rw_crapgrv.cdretgrv <> 0 AND
+         rw_crapgrv.cdretgrv <> 30) THEN
+        
+        OPEN cr_craprto(pr_cdoperac => vr_tparquiv
+                       ,pr_nrtabela => 2
+                       ,pr_cdretorn => rw_crapgrv.cdretgrv);
+        
+        FETCH cr_craprto INTO rw_craprto;
+        
+        IF cr_craprto%NOTFOUND THEN
+          vr_dssituac := TRIM(to_char(rw_crapgrv.cdretlot,'999')) || ' - SITUACAO NAO CADASTRADA';
+        ELSE
+          vr_dssituac := TRIM(to_char(rw_craprto.cdretorn,'999')) || ' - ' || rw_craprto.dsretorn;
+        END IF;
+        
+        --Fecha o cursor
+        CLOSE cr_craprto;               
+               
+      ELSIF rw_crapgrv.cdretlot = 0  AND
+        (rw_crapgrv.cdretctr <> 0 AND
+         rw_crapgrv.cdretctr <> 90) THEN
+        
+        OPEN cr_craprto(pr_cdoperac => vr_tparquiv
+                       ,pr_nrtabela => 3
+                       ,pr_cdretorn => rw_crapgrv.cdretctr);
+        
+        FETCH cr_craprto INTO rw_craprto;
+        
+        IF cr_craprto%NOTFOUND THEN
+          vr_dssituac := TRIM(to_char(rw_crapgrv.cdretlot,'999')) || ' - SITUACAO NAO CADASTRADA';
+        ELSE
+          vr_dssituac := TRIM(to_char(rw_craprto.cdretorn,'999')) || ' - ' || rw_craprto.dsretorn;
+        END IF;
+        
+        --Fecha o cursor
+        CLOSE cr_craprto;               
+      END IF;
+      pr_dscrigrv := vr_dssituac; 
+     
+    END IF;
+    
+       
+  EXCEPTION   
+    WHEN vr_exc_saida THEN
+      NULL;     
+    -- Críticas tratadas
+    WHEN vr_exc_erro THEN
+    
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);      
+      END IF;
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    -- Críticas nao tratadas
+    WHEN OTHERS THEN                                      
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na rotina GRVM0001.pc_valida_situacao_gravames -> '||SQLERRM;        
+      
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );      
+      
+  END pc_valida_situacao_gravames;
+
   
 END GRVM0001;
 /
