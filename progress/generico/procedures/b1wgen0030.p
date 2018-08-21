@@ -37,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 26/05/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 21/08/2018
            
     Dados referentes ao programa:
                 
@@ -463,11 +463,11 @@
                             (Tiago/Rodrigo Melhoria 116).
 
                16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
-			                tarifa de resgate na data de resgate e não na data na qual
-				  		   foi criado o bordero de desconto de titulo.
-						   PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
+                                        tarifa de resgate na data de resgate e não na data na qual
+                                                     foi criado o bordero de desconto de titulo.
+                                                   PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
 
-			   28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
+                           28/04/2016 - Adicionado verificacao para tratar isencao de cobranca
                             de tarifa na procedure efetua_liber_anali_bordero. 
                             (Reinert)
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
@@ -481,8 +481,8 @@
 
                25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
 
-			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
-					       (Adriano - SD 603451).
+                           09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
+                                               (Adriano - SD 603451).
 
                12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
@@ -490,8 +490,8 @@
                             (Tiago/Ademir #678289)
                             
                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-			 		       (Adriano - P339).
+                                        crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+                                                (Adriano - P339).
 
                29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 
@@ -551,7 +551,7 @@
                             Adicionado a procedure busca_dados_proposta_manuten. (Paulo Penteado GFT)
                
                25/04/2018 - Correções na busca_parametros_dsctit para buscar as regras de registrados (Luis Fernando GFT)
-				
+                                
                17/04/2017 - Chamada para rotina pc_valida_adesao_produto.
                           - Inlusao das procedures valida_inclusao_bordero,
                             valida_alteracao_bordero e valida_exclusao_tit_bordero.
@@ -559,8 +559,11 @@
 
                09/05/2018 - Adicionado na busca_dados_limite_altera validação para não permitir a alteração de uma proposta criada antes da nova implantação do
                             Limite de Desconto de Título (Paulo Penteado GFT)
-			   
-			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                           
+                           26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+               21/08/2018 - Adicionado na efetua_cancelamento_limite validação para não permitir a exclusao de contrato com propostas pendentes na IBRATAN (Andrew Albuquerque - GFT)
+               
 
 ..............................................................................*/
 
@@ -1076,25 +1079,25 @@ PROCEDURE efetua_liber_anali_bordero:
 
         END.    
     
-	RUN valida_titulos_bordero(INPUT par_cdcooper,
-							   INPUT par_cdagenci,
-							   INPUT par_nrdcaixa,
-							   INPUT par_cdoperad,
-							   INPUT par_dtmvtolt,
-							   INPUT par_idorigem,
-							   INPUT par_nrdconta,
-							   INPUT par_nrborder,
-							   INPUT 1, /*tpvalida*/
-							   INPUT TABLE tt-titulos,
-							   OUTPUT TABLE tt-erro).
+        RUN valida_titulos_bordero(INPUT par_cdcooper,
+                                                           INPUT par_cdagenci,
+                                                           INPUT par_nrdcaixa,
+                                                           INPUT par_cdoperad,
+                                                           INPUT par_dtmvtolt,
+                                                           INPUT par_idorigem,
+                                                           INPUT par_nrdconta,
+                                                           INPUT par_nrborder,
+                                                           INPUT 1, /*tpvalida*/
+                                                           INPUT TABLE tt-titulos,
+                                                           OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE <> "OK" THEN
-	   DO:
-	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+           DO:
+              FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-		  IF NOT AVAIL tt-erro THEN
-		     DO:
-		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+                  IF NOT AVAIL tt-erro THEN
+                     DO:
+                        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
             
                 RUN gera_erro (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -3533,31 +3536,31 @@ PROCEDURE busca_dados_limite_incluir:
     END.
 
     RUN lista-linhas-desc-tit (INPUT par_cdcooper,
-							   INPUT par_cdagenci, 
-							   INPUT par_nrdcaixa, 
-							   INPUT par_cdoperad,
-							   INPUT par_dtmvtolt,
-							   INPUT par_nrdconta,
-							   INPUT 0,
-							   INPUT 999,
-							   INPUT 0,
-							  OUTPUT aux_nriniseq,
-							  OUTPUT TABLE tt-linhas_desc).
+                                                           INPUT par_cdagenci, 
+                                                           INPUT par_nrdcaixa, 
+                                                           INPUT par_cdoperad,
+                                                           INPUT par_dtmvtolt,
+                                                           INPUT par_nrdconta,
+                                                           INPUT 0,
+                                                           INPUT 999,
+                                                           INPUT 0,
+                                                          OUTPUT aux_nriniseq,
+                                                          OUTPUT TABLE tt-linhas_desc).
 
     IF  RETURN-VALUE = "NOK" THEN
-	    DO:
-		   ASSIGN aux_cdcritic = 0
+            DO:
+                   ASSIGN aux_cdcritic = 0
                   aux_dscritic = "Habilite o produto Cobranca para incluir um limite.".
 
-		   RUN gera_erro (INPUT par_cdcooper,
-						  INPUT par_cdagenci,
-					      INPUT par_nrdcaixa,
-					      INPUT 1,            /** Sequencia **/
-					      INPUT aux_cdcritic,
-					      INPUT-OUTPUT aux_dscritic).
-			
-		   RETURN "NOK".
-	    END.
+                   RUN gera_erro (INPUT par_cdcooper,
+                                                  INPUT par_cdagenci,
+                                              INPUT par_nrdcaixa,
+                                              INPUT 1,            /** Sequencia **/
+                                              INPUT aux_cdcritic,
+                                              INPUT-OUTPUT aux_dscritic).
+                        
+                   RETURN "NOK".
+            END.
 
     /* GGS - Inicio */  
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
@@ -3618,9 +3621,9 @@ PROCEDURE busca_dados_limite_incluir:
 
         END.
     
-		/*Se tem cnae verificar se e um cnae restrito*/
-		IF  crapass.cdclcnae > 0 THEN
-			DO:
+                /*Se tem cnae verificar se e um cnae restrito*/
+                IF  crapass.cdclcnae > 0 THEN
+                        DO:
 
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -3637,11 +3640,11 @@ PROCEDURE busca_dados_limite_incluir:
                 ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
                                             WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
 
-				IF  aux_flgrestrito = 1 THEN
-					DO:
-    						CREATE tt-msg-confirma.
-							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+                                IF  aux_flgrestrito = 1 THEN
+                                        DO:
+                                                    CREATE tt-msg-confirma.
+                                                        ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+                                                                   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
         END.
     
       END.
@@ -5354,7 +5357,7 @@ PROCEDURE efetua_inclusao_limite:
                crawlim.vltotsfn    = par_vltotsfn
                crawlim.cdcooper    = par_cdcooper
                crawlim.nrctrmnt    = par_nrctrmnt
-			   crawlim.idcobope    = par_idcobope
+                           crawlim.idcobope    = par_idcobope
                crawlim.idcobefe    = par_idcobope.
         
         VALIDATE crawlim.
@@ -6036,7 +6039,7 @@ PROCEDURE efetua_alteracao_limite:
                crawlim.nrperger    = par_nrperger
                old_vltotsfn        = crawlim.vltotsfn
                crawlim.vltotsfn    = par_vltotsfn
-			   crawlim.idcobope    = par_idcobope
+                           crawlim.idcobope    = par_idcobope
                crawlim.idcobefe    = par_idcobope
                crawlim.insitest    = 0
                crawlim.dtenvest    = ?
@@ -6490,11 +6493,11 @@ PROCEDURE efetua_cancelamento_limite:
         
         ASSIGN craplim.insitlim = 3
                craplim.dtcancel = par_dtmvtolt
-			   /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                           /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.cdopeexc = par_cdoperad
                craplim.cdageexc = par_cdagenci
                craplim.dtinsexc = TODAY
-			   /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                           /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                craplim.cdopecan = par_cdoperad.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -6586,18 +6589,32 @@ PROCEDURE efetua_cancelamento_limite:
                 ELSE
                     ASSIGN aux_dscritic = "Registro de contrato nao " +
                                           "encontrado.".
-
             LEAVE.
 
-        END. /* Final do DO .. TO */    
-    
+        END. /* Final do DO .. TO */
+        
+        /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+        IF aux_dscritic = "" THEN
+          DO:
+            IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+              DO:
+                aux_dscritic = "Registro de contrato encontra-se em " +
+                             "análise na IBRATAN. Tente Novamente.".
+              END.
+            ELSE
+              /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+              IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                DO:
+                  aux_dscritic = "Registro de contrato encontra-se em " +
+                               "análise na IBRATAN. Tente Novamente.".
+                END.
+          END.
+          
         IF  aux_dscritic <> ""  THEN
             UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
 
         IF  AVAILABLE crawlim   THEN 
             ASSIGN crawlim.insitlim = 3.
-
-
 
         /* No cancelamento do contrato, busco as propostas de manutencao e cancelo */
         FOR EACH crablim WHERE crablim.cdcooper = par_cdcooper AND
@@ -6624,9 +6641,27 @@ PROCEDURE efetua_cancelamento_limite:
                    ELSE
                        ASSIGN aux_dscritic = "Registro de contrato nao " +
                                              "encontrado.".
+                                             
                LEAVE. 
 
             END.   
+            
+            /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+            IF aux_dscritic = "" THEN
+              DO:
+                IF crawlim.insitlim = 1 AND crawlim.insitest = 2 THEN
+                  DO:
+                    aux_dscritic = "Registro de contrato encontra-se em " +
+                                 "análise na IBRATAN. Tente Novamente.".
+                  END.
+                ELSE
+                  /* Adicinando tratamento para impedir cancelamento quando proposta estiver na IBRATAN */
+                  IF crawlim.insitlim = 1 AND crawlim.insitapr = 8 THEN
+                    DO:
+                      aux_dscritic = "Registro de contrato encontra-se em " +
+                                   "análise na IBRATAN. Tente Novamente.".
+                    END.
+              END.
     
             IF  aux_dscritic <> ""  THEN
                 UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
@@ -6975,7 +7010,7 @@ PROCEDURE busca_borderos:
                 crapbdt.insitbdt = 4                  THEN  
                 NEXT.
 
-		 IF crapbdt.dtmvtolt <> ?  THEN
+                 IF crapbdt.dtmvtolt <> ?  THEN
             IF (crapbdt.dtmvtolt <= par_dtmvtolt - 120) AND
                (crapbdt.insitbdt = 1 OR crapbdt.insitbdt = 2) THEN
                 NEXT.
@@ -9348,26 +9383,26 @@ PROCEDURE valida_inclusao_bordero:
 
             RETURN "NOK".
         END.
-		
-	RUN valida_titulos_bordero(INPUT par_cdcooper,
-							   INPUT par_cdagenci,
-							   INPUT par_nrdcaixa,
-							   INPUT par_cdoperad,
-							   INPUT par_dtmvtolt,
-							   INPUT par_idorigem,
-							   INPUT par_nrdconta,
-							   INPUT 0, /*nrborder*/
-							   INPUT 2, /*tpvalida*/
-							   INPUT TABLE tt-titulos,
-							   OUTPUT TABLE tt-erro).
+                
+        RUN valida_titulos_bordero(INPUT par_cdcooper,
+                                                           INPUT par_cdagenci,
+                                                           INPUT par_nrdcaixa,
+                                                           INPUT par_cdoperad,
+                                                           INPUT par_dtmvtolt,
+                                                           INPUT par_idorigem,
+                                                           INPUT par_nrdconta,
+                                                           INPUT 0, /*nrborder*/
+                                                           INPUT 2, /*tpvalida*/
+                                                           INPUT TABLE tt-titulos,
+                                                           OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE <> "OK" THEN
-	   DO:
-	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+           DO:
+              FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-		  IF NOT AVAIL tt-erro THEN
-		     DO:
-		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+                  IF NOT AVAIL tt-erro THEN
+                     DO:
+                        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
             
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -9542,26 +9577,26 @@ PROCEDURE efetua_inclusao_bordero:
 
             RETURN "NOK".
         END.
-		
-	RUN valida_titulos_bordero(INPUT par_cdcooper,
-							   INPUT par_cdagenci,
-							   INPUT par_nrdcaixa,
-							   INPUT par_cdoperad,
-							   INPUT par_dtmvtolt,
-							   INPUT par_idorigem,
-							   INPUT par_nrdconta,
-							   INPUT 0, /*nrborder*/
-							   INPUT 2, /*tpvalida*/
-							   INPUT TABLE tt-titulos,
-							   OUTPUT TABLE tt-erro).
+                
+        RUN valida_titulos_bordero(INPUT par_cdcooper,
+                                                           INPUT par_cdagenci,
+                                                           INPUT par_nrdcaixa,
+                                                           INPUT par_cdoperad,
+                                                           INPUT par_dtmvtolt,
+                                                           INPUT par_idorigem,
+                                                           INPUT par_nrdconta,
+                                                           INPUT 0, /*nrborder*/
+                                                           INPUT 2, /*tpvalida*/
+                                                           INPUT TABLE tt-titulos,
+                                                           OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE <> "OK" THEN
-	   DO:
-	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+           DO:
+              FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-		  IF NOT AVAIL tt-erro THEN
-		     DO:
-		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+                  IF NOT AVAIL tt-erro THEN
+                     DO:
+                        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
             
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -18761,8 +18796,8 @@ PROCEDURE valida_titulos_bordero:
     DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
     DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
-	DEF INPUT PARAM par_nrborder AS INTE				    NO-UNDO.
-	DEF INPUT PARAM par_tpvalida AS INTE                    NO-UNDO.
+        DEF INPUT PARAM par_nrborder AS INTE                                    NO-UNDO.
+        DEF INPUT PARAM par_tpvalida AS INTE                    NO-UNDO.
     
     DEF INPUT PARAM TABLE FOR tt-titulos.
          
@@ -18771,122 +18806,122 @@ PROCEDURE valida_titulos_bordero:
     DEF VAR aux_contador AS INTE NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI NO-UNDO.
 
-	DEF BUFFER b-craptdb FOR craptdb.
+        DEF BUFFER b-craptdb FOR craptdb.
 
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_contador = 0
-		   aux_flgtrans = TRUE
-		   aux_cdcritic = 0
+                   aux_flgtrans = TRUE
+                   aux_cdcritic = 0
            aux_dscritic = "".
 
     IF par_tpvalida = 1 THEN
-	   DO:
-	     FOR EACH craptdb WHERE craptdb.cdcooper = par_cdcooper AND
-								craptdb.nrborder = par_nrborder 
-								NO-LOCK:
+           DO:
+             FOR EACH craptdb WHERE craptdb.cdcooper = par_cdcooper AND
+                                                                craptdb.nrborder = par_nrborder 
+                                                                NO-LOCK:
 
-	       /* Se este titulo ja esta em um bordero e ele estiver pago, 
-			  a ser pago(liberado no bordero ou nao) */ 
-		   FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
-			 					      b-craptdb.cdbandoc = craptdb.cdbandoc  AND
-								      b-craptdb.nrdctabb = craptdb.nrdctabb  AND
-					 			      b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
-								      b-craptdb.nrdconta = craptdb.nrdconta  AND
-								      b-craptdb.nrborder <> craptdb.nrborder AND
-								      b-craptdb.nrdocmto = craptdb.nrdocmto  AND
-								      b-craptdb.insittit = 0 
-								      NO-LOCK NO-ERROR.
-								                    
-		   IF NOT AVAIL b-craptdb THEN									      
-		      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
-										 b-craptdb.cdbandoc = craptdb.cdbandoc  AND
-										 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
-										 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
-										 b-craptdb.nrdconta = craptdb.nrdconta  AND
-										 b-craptdb.nrborder <> craptdb.nrborder AND
-										 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
-										 b-craptdb.insittit = 2
-										 NO-LOCK NO-ERROR.
+               /* Se este titulo ja esta em um bordero e ele estiver pago, 
+                          a ser pago(liberado no bordero ou nao) */ 
+                   FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+                                                                       b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+                                                                      b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+                                                                       b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+                                                                      b-craptdb.nrdconta = craptdb.nrdconta  AND
+                                                                      b-craptdb.nrborder <> craptdb.nrborder AND
+                                                                      b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+                                                                      b-craptdb.insittit = 0 
+                                                                      NO-LOCK NO-ERROR.
+                                                                                    
+                   IF NOT AVAIL b-craptdb THEN                                                                              
+                      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+                                                                                 b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+                                                                                 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+                                                                                 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+                                                                                 b-craptdb.nrdconta = craptdb.nrdconta  AND
+                                                                                 b-craptdb.nrborder <> craptdb.nrborder AND
+                                                                                 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+                                                                                 b-craptdb.insittit = 2
+                                                                                 NO-LOCK NO-ERROR.
 
            IF NOT AVAIL b-craptdb THEN
-		      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
-				   						 b-craptdb.cdbandoc = craptdb.cdbandoc  AND
-										 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
-										 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
-										 b-craptdb.nrdconta = craptdb.nrdconta  AND
-										 b-craptdb.nrborder <> craptdb.nrborder AND
-										 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
-										 b-craptdb.insittit = 4
-										 NO-LOCK NO-ERROR.
+                      FIND FIRST b-craptdb WHERE b-craptdb.cdcooper = craptdb.cdcooper  AND
+                                                                                    b-craptdb.cdbandoc = craptdb.cdbandoc  AND
+                                                                                 b-craptdb.nrdctabb = craptdb.nrdctabb  AND
+                                                                                 b-craptdb.nrcnvcob = craptdb.nrcnvcob  AND
+                                                                                 b-craptdb.nrdconta = craptdb.nrdconta  AND
+                                                                                 b-craptdb.nrborder <> craptdb.nrborder AND
+                                                                                 b-craptdb.nrdocmto = craptdb.nrdocmto  AND
+                                                                                 b-craptdb.insittit = 4
+                                                                                 NO-LOCK NO-ERROR.
 
-		   IF AVAIL b-craptdb THEN
-		      DO:
-			     ASSIGN aux_contador = aux_contador + 1
-			 	    	aux_dscritic = "Titulo " + string(b-craptdb.nrdocmto) + " ja incluso no bordero " + 
-									   string(b-craptdb.nrborder) + "."
-					    aux_flgtrans = FALSE.
+                   IF AVAIL b-craptdb THEN
+                      DO:
+                             ASSIGN aux_contador = aux_contador + 1
+                                             aux_dscritic = "Titulo " + string(b-craptdb.nrdocmto) + " ja incluso no bordero " + 
+                                                                           string(b-craptdb.nrborder) + "."
+                                            aux_flgtrans = FALSE.
 
-			     RUN gera_erro (INPUT par_cdcooper,
-				 			    INPUT par_cdagenci,
-							    INPUT par_nrdcaixa,
-							    INPUT aux_contador,      /** Sequencia **/
-							    INPUT aux_cdcritic,
-							    INPUT-OUTPUT aux_dscritic). 
+                             RUN gera_erro (INPUT par_cdcooper,
+                                                             INPUT par_cdagenci,
+                                                            INPUT par_nrdcaixa,
+                                                            INPUT aux_contador,      /** Sequencia **/
+                                                            INPUT aux_cdcritic,
+                                                            INPUT-OUTPUT aux_dscritic). 
 
-		      END.
+                      END.
 
-		 END.
+                 END.
 
-	  END.
-	ELSE
-	  DO:
-	     FOR EACH tt-titulos WHERE tt-titulos.flgstats = 1 NO-LOCK:
+          END.
+        ELSE
+          DO:
+             FOR EACH tt-titulos WHERE tt-titulos.flgstats = 1 NO-LOCK:
             
-		   /* Se este titulo ja esta em um bordero e ele estiver pago, 
-			  a ser pago(liberado no bordero ou nao) */ 
-		   FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
-							        craptdb.cdbandoc = tt-titulos.cdbandoc AND
-							        craptdb.nrdctabb = tt-titulos.nrdctabb AND
-							        craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
-							        craptdb.nrdconta = par_nrdconta        AND
-							        craptdb.nrdocmto = tt-titulos.nrdocmto AND
-							        craptdb.insittit = 0
-							        NO-LOCK NO-ERROR.
-			
-		   IF NOT AVAIL craptdb THEN				                            
-		      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
-				 			           craptdb.cdbandoc = tt-titulos.cdbandoc AND
-							           craptdb.nrdctabb = tt-titulos.nrdctabb AND
-							           craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
-							           craptdb.nrdconta = par_nrdconta        AND
-							           craptdb.nrdocmto = tt-titulos.nrdocmto AND
-							           craptdb.insittit = 2
-							           NO-LOCK NO-ERROR.
+                   /* Se este titulo ja esta em um bordero e ele estiver pago, 
+                          a ser pago(liberado no bordero ou nao) */ 
+                   FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+                                                                craptdb.cdbandoc = tt-titulos.cdbandoc AND
+                                                                craptdb.nrdctabb = tt-titulos.nrdctabb AND
+                                                                craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+                                                                craptdb.nrdconta = par_nrdconta        AND
+                                                                craptdb.nrdocmto = tt-titulos.nrdocmto AND
+                                                                craptdb.insittit = 0
+                                                                NO-LOCK NO-ERROR.
+                        
+                   IF NOT AVAIL craptdb THEN                                                            
+                      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+                                                                    craptdb.cdbandoc = tt-titulos.cdbandoc AND
+                                                                   craptdb.nrdctabb = tt-titulos.nrdctabb AND
+                                                                   craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+                                                                   craptdb.nrdconta = par_nrdconta        AND
+                                                                   craptdb.nrdocmto = tt-titulos.nrdocmto AND
+                                                                   craptdb.insittit = 2
+                                                                   NO-LOCK NO-ERROR.
 
            IF NOT AVAIL craptdb THEN
-		      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
-				  			           craptdb.cdbandoc = tt-titulos.cdbandoc AND
-							           craptdb.nrdctabb = tt-titulos.nrdctabb AND
-							           craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
-							           craptdb.nrdconta = par_nrdconta        AND
-							           craptdb.nrdocmto = tt-titulos.nrdocmto AND
-							           craptdb.insittit = 4
-							           NO-LOCK NO-ERROR.
+                      FIND FIRST craptdb WHERE craptdb.cdcooper = par_cdcooper        AND
+                                                                     craptdb.cdbandoc = tt-titulos.cdbandoc AND
+                                                                   craptdb.nrdctabb = tt-titulos.nrdctabb AND
+                                                                   craptdb.nrcnvcob = tt-titulos.nrcnvcob AND
+                                                                   craptdb.nrdconta = par_nrdconta        AND
+                                                                   craptdb.nrdocmto = tt-titulos.nrdocmto AND
+                                                                   craptdb.insittit = 4
+                                                                   NO-LOCK NO-ERROR.
 
           IF AVAIL craptdb THEN
-		     DO:
-			    ASSIGN aux_contador = aux_contador + 1
-			           aux_dscritic = "Titulo " + string(craptdb.nrdocmto) + " ja incluso no bordero " + 
-					  			      string(craptdb.nrborder) + "."
-					   aux_flgtrans = FALSE.
+                     DO:
+                            ASSIGN aux_contador = aux_contador + 1
+                                   aux_dscritic = "Titulo " + string(craptdb.nrdocmto) + " ja incluso no bordero " + 
+                                                                        string(craptdb.nrborder) + "."
+                                           aux_flgtrans = FALSE.
 
-			    RUN gera_erro (INPUT par_cdcooper,
-							   INPUT par_cdagenci,
-							   INPUT par_nrdcaixa,
-							   INPUT aux_contador,      /** Sequencia **/
-							   INPUT aux_cdcritic,
-							   INPUT-OUTPUT aux_dscritic). 
+                            RUN gera_erro (INPUT par_cdcooper,
+                                                           INPUT par_cdagenci,
+                                                           INPUT par_nrdcaixa,
+                                                           INPUT aux_contador,      /** Sequencia **/
+                                                           INPUT aux_cdcritic,
+                                                           INPUT-OUTPUT aux_dscritic). 
 
     END.
 
@@ -19382,7 +19417,7 @@ PROCEDURE realizar_manutencao_contrato:
                    INPUT tt-dsctit_dados_limite.vltotsfn,
                    INPUT tt-dsctit_dados_limite.perfatcl,
                    INPUT tt-dsctit_dados_limite.nrctrlim,
-				   INPUT tt-dsctit_dados_limite.idcobope,
+                                   INPUT tt-dsctit_dados_limite.idcobope,
                    OUTPUT aux_nrctrlim,                                   
                    OUTPUT TABLE tt-erro,
                    OUTPUT TABLE tt-msg-confirma).
