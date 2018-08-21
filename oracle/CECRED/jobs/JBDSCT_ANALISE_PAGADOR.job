@@ -1,4 +1,4 @@
-begin
+begin 
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_calendar = ''GREGORIAN''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_comp = ''BINARY''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD-MON-RR''';
