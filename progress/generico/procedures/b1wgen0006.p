@@ -664,6 +664,7 @@ PROCEDURE consulta-extrato-poupanca:
     
     DEF VAR aux_txaplmes AS DECI                                    NO-UNDO.
     DEF VAR aux_txaplica AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrdocmto AS INTE                                    NO-UNDO.
 
     DEF VAR aux_listahis AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtiniimu AS DATE                                    NO-UNDO.
@@ -863,7 +864,8 @@ PROCEDURE consulta-extrato-poupanca:
 					 xField:GET-CHILD(xText,1).                   
 
 					ASSIGN aux_txaplmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplmes"
-						    aux_txaplica = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplica". 
+						    aux_txaplica = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplica"
+						    aux_nrdocmto = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdocmto". 
 
 					ASSIGN tt-extr-rpp.cdagenci = INTE(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci"                               
 							tt-extr-rpp.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt"                               
@@ -877,7 +879,10 @@ PROCEDURE consulta-extrato-poupanca:
 													  0
 							tt-extr-rpp.cdbccxlt = INTE(xText:NODE-VALUE) WHEN xField:NAME = "cdbccxlt"
 							tt-extr-rpp.dshistor = xText:NODE-VALUE WHEN xField:NAME = "dshistor"
-							tt-extr-rpp.nrdocmto = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdocmto"
+						    tt-extr-rpp.nrdocmto = IF aux_nrdocmto <> ? THEN
+													  aux_nrdocmto 
+												  ELSE 
+													  0
 							tt-extr-rpp.indebcre = xText:NODE-VALUE WHEN xField:NAME = "indebcre"
 							tt-extr-rpp.vllanmto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllanmto"
 							tt-extr-rpp.vlsldppr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsldppr"

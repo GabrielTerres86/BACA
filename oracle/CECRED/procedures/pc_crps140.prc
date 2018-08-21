@@ -286,6 +286,7 @@ BEGIN
     TYPE typ_reg_craprpp IS
       RECORD(nrdconta  craprpp.nrdconta%TYPE
             ,cdsitrpp  craprpp.cdsitrpp%TYPE
+            ,cdprodut  craprpp.cdprodut%TYPE
             ,vlslfmes  craprpp.vlslfmes%TYPE
             ,rowid     VARCHAR2(50));
 
@@ -959,6 +960,7 @@ BEGIN
         vr_tab_craprpp(vr_idxindc).nrdconta := vr_craprpp.nrdconta;
         vr_tab_craprpp(vr_idxindc).cdsitrpp := vr_craprpp.cdsitrpp;
         vr_tab_craprpp(vr_idxindc).vlslfmes := vr_vlsldtot;
+        vr_tab_craprpp(vr_idxindc).cdprodut := vr_craprpp.cdprodut;
         vr_tab_craprpp(vr_idxindc).rowid := vr_craprpp.rowid;
       END LOOP;
 
@@ -1336,6 +1338,13 @@ BEGIN
                 RAISE vr_iterar;
               END IF;
 
+              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
+                -- Buscar próximo índice
+                vr_idxindc := vr_tab_craprpp.next(vr_idxindc);
+
+                RAISE vr_iterar;
+              END IF;
+
               -- Calcular o saldo até a data do movimento
               apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
                                        ,pr_dstextab  => vr_dextabi
@@ -1345,16 +1354,15 @@ BEGIN
                                        ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
                                        ,pr_rpp_rowid => vr_tab_craprpp(vr_idxindc).rowid
                                        ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
-                                       ,pr_cdcritic  => pr_cdcritic
+                                       ,pr_cdcritic  => vr_cdcritic
                                        ,pr_des_erro  => vr_dscritic);
 
               -- Se encontrar erros na execução
-              IF vr_dscritic IS NOT NULL THEN
-                vr_cdcritic := 0;
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratato
-                                          ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' || vr_dscritic || '. ');
-
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+                END IF;
+                vr_dscritic := 'Conta '||vr_tab_craprpp(vr_idxindc).nrdconta||' Rowid Poup '||vr_tab_craprpp(vr_idxindc).rowid|| ' -> ' ||vr_dscritic;
                 RAISE vr_exc_saida;
               END IF;
 
@@ -1400,11 +1408,7 @@ BEGIN
         -- Se encontrar erros na execução
         IF vr_dscritic = 'NOK' THEN
           vr_cdcritic := 0;
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratado
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra ||
-                                                        ' --> ' || vr_dscritic || '. ');
-
+          vr_dscritic := 'Conta '||rw_crapass.nrdconta||' --> ' || vr_dscritic || '. ';
           RAISE vr_exc_saida;
         END IF;
       END LOOP;
@@ -1462,11 +1466,7 @@ BEGIN
         -- Se encontrar erros na execução
         IF vr_dscritic = 'NOK' THEN
           vr_cdcritic := 0;
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratado
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra ||
-                                                        ' --> ' || vr_dscritic || '. ');
-
+          vr_dscritic := 'Conta '||rw_relwork.nrdconta||' --> ' || vr_dscritic || '. ';
           RAISE vr_exc_saida;
         END IF;
       end loop;
@@ -1838,7 +1838,7 @@ BEGIN
       if vr_idcontrole <> 0 then
         -- Atualiza finalização do batch na tabela de controle 
         gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
-                                           ,pr_cdcritic   => pr_cdcritic     --Codigo da critica
+                                           ,pr_cdcritic   => vr_cdcritic     --Codigo da critica
                                            ,pr_dscritic   => vr_dscritic);
         -- Testar saida com erro
         if  vr_dscritic is not null then 
