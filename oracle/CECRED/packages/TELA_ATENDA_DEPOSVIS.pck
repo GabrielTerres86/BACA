@@ -899,15 +899,17 @@ END pc_busca_saldos_devedores;
      Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
      Sigla   : EMPR
      Autor   : Marcel Kohls
-     Data    : Junho/2018.                    Ultima atualizacao:
+     Data    : Junho/2018.                    Ultima atualizacao: 22/08/2018
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que for chamado
 
-     Objetivo  : efetua pagamento de conta em prejuizo
+     Objetivo  : Efetua pagamento de conta em prejuizo
 
-     Alteracoes:
+     Alteracoes: Ajustado para envio de codigo de critica e descricao correta
+				 PJ 450 - Diego Simas - AMcom
+
      ..............................................................................*/
   PROCEDURE pc_paga_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
                                      ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
@@ -1003,18 +1005,15 @@ END pc_busca_saldos_devedores;
 		COMMIT;
 
     EXCEPTION
+        EXCEPTION
         WHEN vr_exc_erro THEN
-          -- Carregar XML padrão para variável de retorno não utilizada.
-          -- Existe para satisfazer exigência da interface.
-          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
-					ROLLBACK;
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+          ROLLBACK;
         WHEN OTHERS THEN
-          -- Carregar XML padrão para variável de retorno não utilizada.
-          -- Existe para satisfazer exigência da interface.
-          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
-					ROLLBACK;
+          pr_cdcritic := 0;
+          pr_dscritic := 'Não foi possível efetuar o pagamento do prejuízo. ERRO -> ' || SQLERRM ;
+          ROLLBACK;
   END pc_paga_prejuz_cc;
 
   PROCEDURE pc_paga_emprestimo_ct(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
