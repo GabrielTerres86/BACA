@@ -81,6 +81,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
   --                          (Lucas Ranghetti #847282)
   --
+  --             13/04/2018 - Incluido o controle de execução de programa
+  --                          Projeto Debitador Unico - Josiane Stiehler (AMcom)
+  --
   --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
   --                          (Lucas Ranghetti SCTASK0014662)
   --
@@ -6682,7 +6685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 IF trim(vr_dsderro) IS NOT NULL THEN
                   vr_dscritic:= vr_dsderro;
                   --Levantar Excecao
-                  RAISE vr_exc_saida;
+                RAISE vr_exc_saida;
                 END IF;
                 
                 RAISE vr_exc_saida;
@@ -6882,7 +6885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
                                 (Chamado 532712) - (Fabrício)
 
-                   01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+                           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
                                 (Chamado 532712) - (Fabricio)
                                 
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
@@ -9218,6 +9221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
                 IF vr_tpdocmto = '03' THEN                  
+
                   
                   vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,250,23)||substr(vr_des_text,7,2);
                   
@@ -10940,6 +10944,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
       ct_hispgfat CONSTANT INTEGER := 1545;
       
+      -- controle execuções programa
+      vr_flultexe     INTEGER;
+      vr_qtdexec      INTEGER;
       
       FUNCTION fn_inicia_exec(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN ROWID IS
       BEGIN
@@ -11008,6 +11015,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END fn_encerra_exec;
       
     BEGIN
+      -- Verifica se o programa que chamou é o CRPS674
+      -- para verificar a quantidade de execução programada no debitador
+      -- Faz o controle de execução para saber quando é a última execução
+      -- Projeto debitador único
+      if pr_cdprogra = 'CRPS674' then
+         -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
+         gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper    => pr_cdcooper   --Cooperativa
+                                                     ,pr_cdprocesso => 'PC_'||pr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                     ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+         IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;
+
+         -- registrar a quantidade de execução
+         -- Projeto debitador unico
+         SICR0001.pc_controle_exec_deb (pr_cdcooper   => pr_cdcooper         --> Código da coopertiva
+                                        ,pr_cdtipope  => 'I'                 --> Tipo de operacao I-incrementar e C-Consultar
+                                        ,pr_dtmvtolt  => pr_dtmvtolt         --> Data do movimento
+                                        ,pr_cdprogra  => pr_cdprogra         --> Codigo do programa
+                                        ,pr_flultexe  => vr_flultexe         --> Retorna se é a ultima execução do procedimento
+                                        ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade
+                                        ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro
+                                        ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer
+
+           IF nvl(vr_cdcritic,0) > 0 OR
+              TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
+
+           --Commit para garantir o
+           --controle de execucao do programa
+           COMMIT;
+      end if;
+
 
       --funcao que starta execucao dos debitos somente se os debito anteriores
       --estiverem ok de acordo com parametro da prm
@@ -11019,18 +11060,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END IF;        
     
       vr_dscritic := '';      
-      --RODANDO VIA JOB validacoes
-      IF upper(pr_cdprogra) = 'REPIQUE' THEN
-         gene0004.pc_executa_job(pr_cdcooper => pr_cdcooper
-                                ,pr_fldiautl => 1
-                                ,pr_flproces => 1
-                                ,pr_dscritic => vr_dscritic);                                
-                               
-         IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_saida;
-         END IF;    
-      END IF;    
-    
       --Buscar Transacao
       vr_dstransa:= 'Debito fatura';
 
@@ -11300,7 +11329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            -- Situacao de repique, repique so pode ser feito 
            -- apos o dia do vencimento da fatura e a flag de
            -- parametro estiver marcada para processar repique
-           IF rw_tbcrd_fatura.dtvencimento >= pr_dtmvtolt OR             
+           IF rw_tbcrd_fatura.dtvencimento > pr_dtmvtolt OR             
               vr_flrepccr = 'N' THEN   
               
               --Se for uma situacao de repique e a coop nao realiza
@@ -11405,6 +11434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         --Mudar situacao da fatura para nao efetuado qdo 
         --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
         IF pr_cdprogra = 'CRPS674' AND  
+           vr_flultexe = 1 AND -- somente quando for a última execução do debitador  - Projeto Debitador Unico    
           (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0 AND
            gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                       ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
@@ -11474,7 +11504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                       ,pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => rw_tbcrd_fatura.nrdconta
                                       ,pr_variaveis => vr_variaveis_notif);
-
+            
           --Pega os valores para atualizar no sld do dia das faturas
           vr_vlsomsld := vr_vlpagmto;
           vr_dtultsld := pr_dtmvtolt;
@@ -12009,7 +12039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                ,pr_cdcooper => pr_cdcooper
                                                ,pr_nmsubdir => 'rlnsv');
      
-      vr_dsdirarq := vr_dsdireto||'/rl/crrl693.lst';
+      vr_dsdirarq := vr_dsdireto||'/rl/crrl693_'|| to_char( gene0002.fn_busca_time )||'.lst';
             
       -- Submeter o relatório 693
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                                    --> Cooperativa conectada

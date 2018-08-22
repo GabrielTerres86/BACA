@@ -840,7 +840,32 @@ begin
       vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
 	  vr_incrineg := 1;
     END IF;
-																					
+
+    if vr_cdcritic = 92 then -- se critica = Lançamento já existe, então
+      --- lançar novamente somente incrementando o nr doc
+      --- feito isso pois o debitador executa esse programa várias vezes ao dia e se tiver duas parcelas 
+      --- atrasadas, pode ocorrer de na segunda execução do dia, debitar a segunda parcela atrasada e nesse caso 
+      --- dá o erro.
+              LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1 --rw_craplot.cdagenci
+                                        , pr_cdbccxlt => 100 --rw_craplot.cdbccxlt
+                                        , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
+                                        , pr_dtmvtolt => vr_dtmvtolt
+                                        , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
+                                        , pr_nrdconta => rw_crapseg.nrdconta
+                                        , pr_nrdctabb => rw_crapseg.nrdconta
+                                        , pr_nrdctitg => gene0002.fn_mask(rw_crapseg.nrdconta, '99999999')
+                                        , pr_nrdocmto => rw_crapseg.nrctrseg+1
+                                        , pr_nrdolote => 4151 --rw_craplot.nrdolote
+                                        , pr_cdcooper => pr_cdcooper
+                                        , pr_vllanmto => vr_vlpreseg
+                                        , pr_inprolot => 1   -- processa o lote na própria procedure
+                                        , pr_tplotmov => 1
+                                        , pr_tab_retorno => vr_tab_retorno
+                                        , pr_incrineg => vr_incrineg
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);					
+  end if;    
+    																
 	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
 		IF vr_incrineg = 0 THEN -- Erro de sistema/BD
 			RAISE vr_exc_saida;

@@ -29,7 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0009 IS
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
 
-	PROCEDURE pc_efetiva_lcto_pendente_job;
+	PROCEDURE pc_efetiva_lcto_pendente_job (pr_cdcooper IN crapcop.cdcooper%TYPE default 0);
   
     PROCEDURE pc_efetiva_pag_atraso_tr_prc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
                                     ,pr_cdagenci  IN crapass.cdagenci%TYPE --> Agencia
@@ -66,7 +66,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
-  --  Data     : Maio - 2016                 Ultima atualizacao: 15/02/2018
+  --  Data     : Maio - 2016                 Ultima atualizacao: 17/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -82,6 +82,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
   --                          ( Belli - Envolti - Chamados 697089 758606 ) 
   --
   --             15/02/2018 - Ajustar Cálculo juros/multa - Chamado 771668
+  --
+  --             17/04/2018 - Incluido o parametro pr_cdcooper na rotina pc_efetiva_lcto_pendnete_job
+  --                          Projeto debitador único - Josiane Stiehler (Amcom)
   ---------------------------------------------------------------------------
 
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
@@ -1555,7 +1558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
 
   END pc_efetiva_pag_atraso_tr;
 
-	PROCEDURE pc_efetiva_lcto_pendente_job IS
+	PROCEDURE pc_efetiva_lcto_pendente_job (pr_cdcooper IN crapcop.cdcooper%TYPE default 0) IS
   BEGIN
     /* .............................................................................
 
@@ -1563,7 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Maio/2016                         Ultima atualizacao:22/09/2017 
+       Data    : Maio/2016                         Ultima atualizacao:17/04/2018 
 
        Dados referentes ao programa:
 
@@ -1579,6 +1582,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
                                 Inclui nome do modulo logado
                                 ( Belli - Envolti - Chamados 697089 758606 )
 
+                   17/04/2018 - Incluido o parametro pr_cdcooper
+                                Projeto debitador único - Josiane Stiehler (Amcom) 
+
     ............................................................................. */
     DECLARE
 
@@ -1586,7 +1592,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
       CURSOR cr_crapcop IS
         SELECT cdcooper
           FROM crapcop
-         WHERE flgativo = 1;
+         WHERE flgativo = 1
+           AND cdcooper = decode(nvl(pr_cdcooper,0),0,cdcooper,pr_cdcooper);
 
       -- Cursor para retornar lancamentos automaticos
       CURSOR cr_craplau(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
