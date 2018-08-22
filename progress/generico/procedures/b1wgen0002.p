@@ -773,11 +773,11 @@
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
               
               21/11/2017 - Inclusão do campo flgpreap na procedure altera-valor-proposta, Prj. 402 (Jean Michel)
-
+			 
               14/12/2017 - Inclusão dos campo flintcdc, inintegra_cont na tt tt-proposta-epr
                            utilizada nas procedures obtem-propostas-emprestimo e 
                            obtem-dados-proposta-emprestimo, Prj. 402 (Jean Michel). 
-              
+
 			  28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
 
 			  24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
@@ -8661,7 +8661,8 @@ PROCEDURE altera-valor-proposta:
         /* PRJ 438 - Gravar data pagto recebida via parametro quando for opcao de Somente valor proposta */
         IF par_dsdopcao = "SVP" THEN  
         DO:
-            ASSIGN crawepr.dtdpagto = par_dtdpagto.
+            ASSIGN crawepr.dtvencto = par_dtdpagto
+                   crawepr.dtdpagto = par_dtdpagto.
         END.       
       /*Inicio M438*/
       IF par_dsdopcao = "TP" THEN /*Inclusao Proposta*/
