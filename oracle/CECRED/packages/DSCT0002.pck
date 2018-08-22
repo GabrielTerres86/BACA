@@ -190,8 +190,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   flgdigit  crapbdt.flgdigit%TYPE,
                   cdtipdoc  VARCHAR2(80),
                   dsopecoo  VARCHAR2(100),
-                  innivris  crapris.innivris%TYPE, 
-                  qtdiaatr  crapris.qtdiaatr%TYPE
+                  innivris  VARCHAR2(1), 
+                  qtdiaatr  NUMBER
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
        INDEX BY PLS_INTEGER;  
@@ -2404,8 +2404,8 @@ END fn_letra_risco;
              bdt.flgdigit,
              bdt.cdopcolb,
              bdt.cdopcoan,
-             ris.innivris, 
-             ris.qtdiaatr
+             DSCT0003.fn_retorna_rating(bdt.nrinrisc) AS dsinrisc ,
+             bdt.qtdirisc
         FROM crapbdt bdt
         LEFT JOIN crapris ris ON ris.cdcooper = bdt.cdcooper 
                              AND ris.nrdconta = bdt.nrdconta 
@@ -2624,8 +2624,8 @@ END fn_letra_risco;
     pr_tab_dados_border(vr_idxborde).dsdlinha := to_char(rw_crapbdt.cddlinha,'fm000') ||'-'|| rw_crapldc.dsdlinha;
     pr_tab_dados_border(vr_idxborde).flgdigit := rw_crapbdt.flgdigit;
     pr_tab_dados_border(vr_idxborde).cdtipdoc := vr_cdtipdoc;
-    pr_tab_dados_border(vr_idxborde).innivris := rw_crapbdt.innivris;
-    pr_tab_dados_border(vr_idxborde).qtdiaatr := NVL(rw_crapbdt.qtdiaatr, 0);
+    pr_tab_dados_border(vr_idxborde).innivris := rw_crapbdt.dsinrisc;
+    pr_tab_dados_border(vr_idxborde).qtdiaatr := NVL(rw_crapbdt.qtdirisc, 0);
     
     -- Verifica se tem operador coordenador de liberacao ou analise
     IF TRIM(rw_crapbdt.cdopcolb) IS NOT NULL THEN
@@ -2788,7 +2788,7 @@ END fn_letra_risco;
                             '<flgdigit>' || vr_tab_dados_border(vr_index).flgdigit || '</flgdigit>' ||
                             '<dsopecoo>' || vr_tab_dados_border(vr_index).dsopecoo || '</dsopecoo>' ||
                             '<cdtipdoc>' || vr_tab_dados_border(vr_index).cdtipdoc || '</cdtipdoc>' ||
-                            '<innivris>' || fn_letra_risco(vr_tab_dados_border(vr_index).innivris)  || '</innivris>' ||
+                            '<innivris>' || vr_tab_dados_border(vr_index).innivris  || '</innivris>' ||
                             '<qtdiaatr>' || vr_tab_dados_border(vr_index).qtdiaatr || '</qtdiaatr>' ||
                         '</inf>'
                       );

@@ -100,13 +100,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
   
   /*Tabela que retorna os dados do contrato de limite*/
   TYPE typ_reg_dados_limite IS RECORD(
-        dtpropos    craplim.dtpropos%TYPE,
-        dtinivig    craplim.dtinivig%TYPE,
-        nrctrlim    craplim.nrctrlim%TYPE,
-        vllimite    craplim.vllimite%TYPE,
-        qtdiavig    craplim.qtdiavig%TYPE,
-        cddlinha    craplim.cddlinha%TYPE,
-        tpctrlim    craplim.tpctrlim%TYPE,
+        dtpropos 		craplim.dtpropos%TYPE,
+        dtinivig 		craplim.dtinivig%TYPE,
+        nrctrlim 		craplim.nrctrlim%TYPE,
+        vllimite 		craplim.vllimite%TYPE,
+        qtdiavig 		craplim.qtdiavig%TYPE,
+        cddlinha 		craplim.cddlinha%TYPE,
+        tpctrlim 		craplim.tpctrlim%TYPE,
         vlutiliz    NUMBER,
         qtutiliz    INTEGER,
         dtfimvig    craplim.dtfimvig%TYPE,
@@ -390,7 +390,7 @@ PROCEDURE pc_analisar_proposta(pr_tpenvest in varchar2               --> Tipo do
                               ,pr_nrctrlim in  crawlim.nrctrlim%type --> Numero do Contrato do Limite.
                               ,pr_tpctrlim in  crawlim.tpctrlim%type --> Tipo de contrato do limite
                               ,pr_nrdconta in  crapass.nrdconta%type --> Conta do associado
-                              ,pr_dtmovito in  varchar2              -- crapdat.dtmvtolt%type  --> Data do movimento atual
+                              ,pr_dtmovito in  varchar2	             -- crapdat.dtmvtolt%type  --> Data do movimento atual
                               ,pr_xmllog   in  varchar2              --> XML com informações de LOG
                                --------> OUT <--------
                               ,pr_cdcritic out pls_integer           --> Codigo da critica
@@ -403,7 +403,7 @@ PROCEDURE pc_analisar_proposta(pr_tpenvest in varchar2               --> Tipo do
 PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  crawlim.nrctrlim%type --> Numero do Contrato do Limite.
                                    ,pr_tpctrlim in  crawlim.tpctrlim%type --> Tipo de contrato do limite
                                    ,pr_nrdconta in  crapass.nrdconta%type --> Conta do associado
-                                   ,pr_dtmovito in  varchar2               -- crapdat.dtmvtolt%type  --> Data do movimento atual
+                                   ,pr_dtmovito in  varchar2	             -- crapdat.dtmvtolt%type  --> Data do movimento atual
                                    ,pr_xmllog   in  varchar2              --> XML com informações de LOG
                                    ,pr_cdcritic out pls_integer           --> Codigo da critica
                                    ,pr_dscritic out varchar2              --> Descricao da critica
@@ -484,7 +484,7 @@ PROCEDURE pc_buscar_titulos_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Có
                                   ,pr_tab_dados_titulos   out  typ_tab_dados_titulos --> Tabela de retorno
                                   ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
-    
+	  
 PROCEDURE pc_buscar_titulos_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                   ,pr_dtmvtolt IN VARCHAR2               --> Data da Movimentação
                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Filtro de Tela de Inscricao do Pagador
@@ -787,8 +787,32 @@ PROCEDURE pc_busca_dados_titulo_web (pr_nrdconta    IN crapass.nrdconta%TYPE -->
                                      ,pr_retxml   IN OUT NOCOPY xmltype       --> arquivo de retorno do xml
                                      ,pr_nmdcampo OUT VARCHAR2                --> nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2                --> erros do processo
-                                    );                                 
-                                 
+                                    );              
+PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                   ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                   ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                   ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                   ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
+                                     
+PROCEDURE pc_grava_motivo_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                  ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                  ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                  ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                  ,pr_cdmotivo  IN VARCHAR2
+                                  ,pr_dsmotivo  IN VARCHAR2 
+                                  ,pr_dsobservacao IN VARCHAR2                                   
+                                  ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                  ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                  ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                  ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                  ,pr_des_erro  OUT VARCHAR2); --> Erros do processo                                                         
+
 PROCEDURE pc_busca_hist_alt_limite (pr_cdcooper  IN craplim.cdcooper%TYPE
                                    ,pr_nrdconta  IN craplim.nrdconta%TYPE
                                    ,pr_tpctrlim  IN craplim.tpctrlim%TYPE
@@ -1493,7 +1517,6 @@ DECLARE
          ,lim.vllimite
          ,lim.cddlinha
          ,lim.insitapr
-         ,lim.idcobope
    from   crawlim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1506,7 +1529,7 @@ DECLARE
          ,lim.nrdconta
          ,lim.nrctrlim
          ,lim.tpctrlim
-         ,lim.vllimite     
+         ,lim.vllimite		 
    from   craplim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1792,22 +1815,6 @@ BEGIN
            raise vr_exc_saida;
    end;
 
-   -- Se possui cobertura vinculada
-   IF rw_crawlim.idcobope > 0 AND vr_flcraplim = FALSE THEN
-        -- Chama bloqueio/desbloqueio da garantia
-        BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => rw_crawlim.idcobope
-                                            ,pr_inbloq_desbloq => 'B'
-                                            ,pr_cdoperador     => '1'
-                                            ,pr_vldesbloq      => 0
-                                            ,pr_flgerar_log    => 'S'
-                                            ,pr_dscritic       => vr_dscritic);
-        -- Se houve erro
-        IF TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_saida;
-        END IF;
-   END IF;
-
-   
    --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a 
    --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
    IF  ( ((rw_crawlim.vllimite > rw_craplim.vllimite) AND vr_flcraplim = TRUE ) OR vr_flcraplim = FALSE ) AND
@@ -2525,7 +2532,7 @@ BEGIN
              end if;
 
        --    se retornou da análise do ibratan como Não Aprovada, cancelar a proposta
-       elsif (rw_crawlim.insitlim = 6 OR rw_crawlim.insitlim = 8) AND rw_crawlim.insitapr = 4 then
+       elsif rw_crawlim.insitlim = 6 and rw_crawlim.insitapr = 4 then
              pc_cancelar_proposta(pr_cdcooper => pr_cdcooper
 
                                  ,pr_nrdconta => pr_nrdconta
@@ -3320,7 +3327,6 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                             when 3 then 'CANCELADA'
                             when 5 then 'APROVADA'
                             when 6 then 'NAO APROVADA'
-                            when 8 then 'EXPIRADA DECURSO DE PRAZO'
                             else        'DIFERENTE'
           end dssitlim
          ,lim.insitest
@@ -3351,8 +3357,8 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                      ctr.tpctrlim = lim.tpctrlim and
                                      ctr.nrdconta = lim.nrdconta and
                                      ctr.cdcooper = lim.cdcooper)
-   where  case --   mostrar propostas em situações de analise (em estudo) ou canceladas dentro de x dias
-               when lim.insitlim in (1,3,5,6,8) and lim.dtpropos >= vr_dtpropos then 1
+   where  case --   mostrar propostas em situações de analise (em estudo) e canceladas dentro de x dias
+               when lim.insitlim in (1,3,5,6) and lim.dtpropos >= vr_dtpropos then 1
                --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and
                     lim.nrctrlim = (select max(lim_ativo.nrctrlim)
@@ -3377,7 +3383,6 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
    order  by case when lim.insitlim = 1 then -3
                   when lim.insitlim = 5 then -2
                   when lim.insitlim = 6 then -1
-                  when lim.insitlim = 8 then -1
                   else lim.insitlim
              end
            , lim.nrctrmnt
@@ -4327,7 +4332,6 @@ END pc_obtem_proposta_aciona_web;
         OPEN cr_crapass;
         FETCH cr_crapass INTO rw_crapass;
         IF (cr_crapass%NOTFOUND) THEN
-          CLOSE cr_crapass;
           vr_dscritic := 'Cooperado não cadastrado';
           raise vr_exc_erro;
         END IF;
@@ -4335,7 +4339,6 @@ END pc_obtem_proposta_aciona_web;
         OPEN cr_craplim;
         FETCH cr_craplim INTO rw_craplim;
         IF (cr_craplim%NOTFOUND) THEN
-         CLOSE cr_craplim;
          vr_dscritic := 'Conta não possui contrato de limite ativo.';
          raise vr_exc_erro;
         END IF;
@@ -5259,7 +5262,6 @@ BEGIN
       OPEN cr_craplim;
       FETCH cr_craplim INTO rw_craplim;
       IF (cr_craplim%NOTFOUND) THEN
-        CLOSE cr_craplim;
         vr_dscritic := 'Contrato não encontrado.';
         raise vr_exc_erro;
       END IF;
@@ -5269,7 +5271,6 @@ BEGIN
       OPEN cr_crapldc;
       FETCH cr_crapldc INTO rw_crapldc;
       IF (cr_crapldc%NOTFOUND) THEN
-         CLOSE cr_crapldc;
          vr_dscritic := 'Linha de crédito não encontrada.';
          raise vr_exc_erro;
       END IF;
@@ -5283,7 +5284,6 @@ BEGIN
      OPEN cr_crapass;
      FETCH cr_crapass INTO rw_crapass;
      IF (cr_crapass%NOTFOUND) THEN
-        CLOSE cr_crapass;
         vr_dscritic := 'Cooperado não cadastrado';
         raise vr_exc_erro;
      END IF;
@@ -5320,7 +5320,6 @@ BEGIN
                               );
              fetch cr_craptdb into rw_craptdb;
              if  cr_craptdb%found AND rw_craptdb.insitapr <> 2 then
-               CLOSE cr_craptdb;
                vr_dscritic := 'Título ' ||rw_craptdb.nrdocmto || ' já selecionado em outro borderô';
                RAISE vr_exc_erro;
              end if;
@@ -6203,6 +6202,7 @@ END pc_insere_bordero;
           END LOOP;
         END IF;
     END IF;
+
     EXCEPTION
       WHEN vr_exc_erro THEN
            IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
@@ -6864,7 +6864,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       open cr_crapbdt;
       fetch cr_crapbdt into rw_crapbdt;
       IF (cr_crapbdt%NOTFOUND) THEN
-        CLOSE cr_crapbdt;
         vr_dscritic := 'Borderô inválido';
         raise vr_exc_erro;
       END IF;
@@ -7461,7 +7460,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         OPEN cr_craplim;
         FETCH cr_craplim INTO rw_craplim;
         IF (cr_craplim%NOTFOUND) THEN
-          CLOSE cr_craplim;
           vr_dscritic := 'Contrato não encontrado ou inativo.';
           raise vr_exc_erro;
         END IF;
@@ -7470,7 +7468,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         OPEN cr_crapldc;
         FETCH cr_crapldc INTO rw_crapldc;
         IF (cr_crapldc%NOTFOUND) THEN
-           CLOSE cr_crapldc;
            vr_dscritic := 'Linha de crédito não encontrada.';
            raise vr_exc_erro;
         END IF;
@@ -7484,7 +7481,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
        OPEN cr_crapass;
        FETCH cr_crapass INTO rw_crapass;
        IF (cr_crapass%NOTFOUND) THEN
-          CLOSE cr_crapass;
           vr_dscritic := 'Cooperado não cadastrado';
           raise vr_exc_erro;
        END IF;
@@ -7550,7 +7546,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         OPEN cr_crapbdt;
         FETCH cr_crapbdt INTO rw_crapbdt;
         IF cr_crapbdt%NOTFOUND THEN
-          CLOSE cr_crapbdt;
           vr_dscritic := 'Ocorreu um erro ao carregar o borderô para alteração';
           raise vr_exc_erro;
         END IF;
@@ -7590,7 +7585,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                        ' craptdb.nrborder = :nrborder ' || 
                        ' AND craptdb.nrdconta =  :nrdconta ' ||
                        ' AND craptdb.cdcooper = :cdcooper ' ||
-                       ' AND ((craptdb.cdbandoc||'';''||craptdb.nrdctabb||'';''||craptdb.nrcnvcob||'';''||craptdb.nrdocmto) '|| 
+                       ' AND ((craptdb.cdbandoc||'';''||craptdb.nrdctabb||'';''||craptdb.nrcnvcob||'';''||craptdb.nrdocmto) '||	
                                               ' NOT IN ('''||vr_chave||''')) ';
        vr_idtabtitulo:=0;
        open  cr_tab_cob 
@@ -7695,19 +7690,31 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             vr_index  := vr_tab_dados_titulos.next(vr_index);
         END   LOOP;
 
-        UPDATE
-          crapbdt
-        SET
-          crapbdt.insitbdt = 1, --Em Estudo
-          crapbdt.insitapr = 0,
-          crapbdt.dtenvmch = NULL,
-          crapbdt.nrseqtdb = vr_idtabtitulo,
-          crapbdt.dtanabor = NULL -- Limpa a data de analise, pois necessita nova analise
-        WHERE
-          crapbdt.nrborder = pr_nrborder
-          AND crapbdt.cdcooper = vr_cdcooper
-          AND crapbdt.nrdconta = pr_nrdconta
-        ;
+ --       IF vr_inseriu  THEN
+           UPDATE
+              crapbdt
+           SET
+              crapbdt.insitbdt = 1, --Em Estudo
+              crapbdt.insitapr = 0,
+              crapbdt.dtenvmch = NULL,
+              crapbdt.nrseqtdb = vr_idtabtitulo,
+              crapbdt.dtanabor = NULL -- Limpa a data de analise, pois necessita nova analise
+           WHERE
+              crapbdt.nrborder = pr_nrborder
+              AND crapbdt.cdcooper = vr_cdcooper
+              AND crapbdt.nrdconta = pr_nrdconta
+           ;
+/*        ELSE
+           UPDATE
+              crapbdt
+           SET
+              insitbdt = 1, --Em Estudo
+              insitapr = 0
+           WHERE
+              crapbdt.nrborder = pr_nrborder
+              AND crapbdt.cdcooper = vr_cdcooper
+              AND crapbdt.nrdconta = pr_nrdconta
+        END IF;*/
 
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Erro tratato
@@ -7924,7 +7931,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
          OPEN cr_crapass;
          FETCH cr_crapass INTO rw_crapass;
          IF (cr_crapass%NOTFOUND) THEN
-            CLOSE cr_crapass;
             vr_dscritic := 'Cooperado não cadastrado';
             raise vr_exc_erro;
          END IF;
@@ -7939,7 +7945,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
          
        vr_tab_cobs := gene0002.fn_quebra_string(pr_string  => pr_chave,
                                                  pr_delimit => ',');
-                                                 
        
        vr_idtabtitulo:=0;
        IF vr_tab_cobs.count() > 0 THEN
@@ -7978,7 +7983,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                OPEN cr_crapbdt;
                FETCH cr_crapbdt INTO rw_crapbdt;
                IF (cr_crapbdt%NOTFOUND) THEN
-                  CLOSE cr_crapbdt;
                   vr_dscritic := 'Borderô ' || vr_nrborder || ' não cadastrado';
                   raise vr_exc_erro;
                END IF;
@@ -9096,6 +9100,175 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                              
   END pc_busca_dados_titulo_web;
 
+PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                     ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                     ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                     ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                     ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                     ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                     ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                     ,pr_des_erro  OUT VARCHAR2) IS --> Erros do processo
+
+    /* .............................................................................
+    
+    Programa: pc_busca_motivos_anulacao
+    Sistema : Rotinas referentes ao PRJ438
+    Sigla   : 
+    Autor   : Paulo Martins (Mouts)
+    Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Buscar todos os motivos de anulação de emprestimos e limite de crédito
+    
+    Observacao: -----
+    ..............................................................................*/
+                                     
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;        
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    
+  BEGIN
+  
+      EMPR0001.pc_busca_motivos_anulacao(pr_tpproduto    => pr_tpproduto, 
+                                         pr_nrdconta     => pr_nrdconta, 
+                                         pr_nrctrato     => pr_nrctrato, 
+                                         pr_tpctrlim     => pr_tpctrlim, 
+                                         pr_xmllog       => pr_xmllog, 
+                                         pr_cdcritic     => vr_cdcritic, 
+                                         pr_dscritic     => vr_dscritic, 
+                                         pr_retxml       => pr_retxml, 
+                                         pr_nmdcampo     => pr_nmdcampo, 
+                                         pr_des_erro     => pr_des_erro);
+                                        
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;                                          
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+        
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+        
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');      
+    WHEN OTHERS THEN
+        
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral em TELA_ATENDA_DSCTO_TIT.pc_busca_motivos_anulacao: ' || SQLERRM;
+        
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+                                                                      
+  END pc_busca_motivos_anulacao;
+                                                                            
+  PROCEDURE pc_grava_motivo_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                    ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                    ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                    ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                    ,pr_cdmotivo  IN VARCHAR2
+                                    ,pr_dsmotivo  IN VARCHAR2 
+                                    ,pr_dsobservacao IN VARCHAR2                                   
+                                    ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                    ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                    ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                    ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                    ,pr_des_erro  OUT VARCHAR2) IS --> Erros do processo  
+
+    /* .............................................................................
+    
+    Programa: pc_grava_motivos_anulacao
+    Sistema : Rotinas referentes ao PRJ438
+    Sigla   : 
+    Autor   : Paulo Martins (Mouts)
+    Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Gravar o motivo de anulação de emprestimos e limite de crédito informado em tela 
+    
+    Observacao: -----
+    ..............................................................................*/                                    
+                                    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;        
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+                                           
+  BEGIN
+  
+      EMPR0001.pc_grava_motivo_anulacao(pr_tpproduto    => pr_tpproduto, 
+                                        pr_nrdconta     => pr_nrdconta, 
+                                        pr_nrctrato     => pr_nrctrato, 
+                                        pr_tpctrlim     => pr_tpctrlim, 
+                                        pr_cdmotivo     => pr_cdmotivo, 
+                                        pr_dsmotivo     => pr_dsmotivo, 
+                                        pr_dsobservacao => pr_dsobservacao, 
+                                        pr_xmllog       => pr_xmllog, 
+                                        pr_cdcritic     => vr_cdcritic, 
+                                        pr_dscritic     => vr_dscritic, 
+                                        pr_retxml       => pr_retxml, 
+                                        pr_nmdcampo     => pr_nmdcampo, 
+                                        pr_des_erro     => pr_des_erro);
+                                        
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;                                          
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+        
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+        
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');      
+    WHEN OTHERS THEN
+        
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral em TELA_ATENDA_DSCTO_TIT.pc_grava_motivo_anulacao: ' || SQLERRM;
+        
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+  END pc_grava_motivo_anulacao;                                       
+
   PROCEDURE pc_busca_hist_alt_limite (pr_cdcooper  IN craplim.cdcooper%TYPE
                                      ,pr_nrdconta  IN craplim.nrdconta%TYPE
                                      ,pr_tpctrlim  IN craplim.tpctrlim%TYPE
@@ -9338,4 +9511,100 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     END;
   END pc_busca_hist_alt_limite_web;
   
+  
+  PROCEDURE pc_gravar_hist_alt_limite(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                     ,pr_nrctrlim  IN crawlim.nrctrlim%type --> Contrato
+                                     ,pr_tpctrlim  IN crawlim.tpctrlim%type --> Tipo de contrato de Limite
+                                     ,pr_dsmotivo  IN tbdsct_hist_alteracao_limite.dsmotivo%TYPE --> Motivo da alteração
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                     ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                     ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_gravar_hist_alt_limite
+      Sistema  : Ayllos
+      Sigla    : 
+      Autor    : Paulo Penteado (GFT)
+      Data     : Agosto/2018
+  
+      Objetivo  : Gravar as informações de histórico de alteração do limite
+  
+      Alteração : 22/08/2018 - Criação (Paulo Penteado (GFT))
+  
+    ----------------------------------------------------------------------------------------------------------*/
+  
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+  
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    CURSOR cr_crawlim IS
+    SELECT lim.dtinivig
+          ,lim.dtfimvig
+          ,lim.vllimite
+          ,lim.insitlim
+      FROM crawlim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.tpctrlim = pr_tpctrlim
+       AND lim.nrctrlim = pr_nrctrlim;
+    rw_crawlim cr_crawlim%ROWTYPE;
+     
+  BEGIN
+    OPEN  cr_crawlim;
+    FETCH cr_crawlim into rw_crawlim;
+    IF cr_crawlim%notfound then
+      CLOSE cr_crawlim;
+      vr_cdcritic := 484;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crawlim;
+
+    BEGIN
+      INSERT INTO cecred.tbdsct_hist_alteracao_limite
+             (/*01*/ cdcooper
+             ,/*02*/ nrdconta
+             ,/*03*/ tpctrlim
+             ,/*04*/ nrctrlim
+             ,/*05*/ dtinivig
+             ,/*06*/ dtfimvig
+             ,/*07*/ vllimite
+             ,/*08*/ insitlim
+             ,/*09*/ dhalteracao
+             ,/*10*/ dsmotivo)
+      VALUES (/*01*/ pr_cdcooper
+             ,/*02*/ pr_nrdconta
+             ,/*03*/ pr_tpctrlim
+             ,/*04*/ pr_nrctrlim
+             ,/*05*/ rw_crawlim.dtinivig
+             ,/*06*/ rw_crawlim.dtfimvig
+             ,/*07*/ rw_crawlim.vllimite
+             ,/*08*/ rw_crawlim.insitlim
+             ,/*09*/ SYSDATE
+             ,/*10*/ pr_dsmotivo);
+    EXCEPTION
+      WHEN OTHERS THEN
+           vr_dscritic := 'Erro ao inserir o histórico de alteração do contrato de limite '||SQLERRM;
+           RAISE vr_exc_erro;
+    END; 
+    
+    COMMIT;
+  EXCEPTION
+    WHEN vr_exc_erro then
+      IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;
+  
+    WHEN OTHERS THEN
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := 'Erro geral na rotina TELA_ATENDA_DSCTO_TIT.pc_gravar_hist_alt_limite: '||SQLERRM;
+      ROLLBACK;
+  END pc_gravar_hist_alt_limite; 
+
 END TELA_ATENDA_DSCTO_TIT;
+/
