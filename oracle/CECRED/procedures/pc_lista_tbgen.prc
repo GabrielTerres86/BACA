@@ -7,7 +7,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_lista_tbgen(pr_cdcopprm IN  crapcop.cdcoop
 												 )
 IS
 BEGIN
-  /* .....................................................................................
+  /* ......................................................................................
   
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
