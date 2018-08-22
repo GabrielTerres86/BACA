@@ -358,38 +358,6 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
                                 ,pr_des_reto OUT VARCHAR2 );           --Descricao OK/NOK
 
   -- Subrotina para gerar impressao do extrato aplicações programadas
-  PROCEDURE pc_gera_impres_car_ap( pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
-                                  ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
-                                  ,pr_nrdcaixa IN INTEGER                --Numero do Caixa
-                                  ,pr_idorigem IN INTEGER                --Origem dos Dados
-                                  ,pr_nmdatela IN VARCHAR2               --Nome da Tela
-                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data Movimento
-                                  ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --Data Proximo Movimento
-                                  ,pr_cdprogra IN crapprg.cdprogra%TYPE  --Codigo Programa
-                                  ,pr_inproces IN INTEGER                --Indicador Processo
-                                  ,pr_cdoperad IN VARCHAR2               --Codigo Operador
-                                  ,pr_dsiduser IN VARCHAR2               --Identificador Usuario
-                                  ,pr_flgrodar IN INTEGER                --Flag Executar
-                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --Numero da Conta do Associado
-                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE  --Sequencial do Titular
-                                  ,pr_tpextrat IN INTEGER                --Tipo de Extrato
-                                  ,pr_dtrefere IN DATE                   --Data de Referencia
-                                  ,pr_dtreffim IN DATE                   --Data Referencia Final
-                                  ,pr_flgtarif IN INTEGER                --Indicador Cobra tarifa
-                                  ,pr_inrelext IN INTEGER                --Indicador Relatorio Extrato
-                                  ,pr_inselext IN INTEGER                --Indicador Selecao Extrato
-                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE  --Numero Contrato Emprestimo
-                                  ,pr_nraplica IN craplap.nraplica%TYPE  --Numero Aplicacao
-                                  ,pr_nranoref IN INTEGER                --Ano de Referencia
-                                  ,pr_flgerlog IN INTEGER                --Escreve erro Log
-                                  ,pr_intpextr IN INTEGER                --Tipo de extrato (1=Simplificado, 2=Detalhado)                                    
-                                  ,pr_tpinform IN INTEGER DEFAULT 0      -- Tipo do Informe PJ 1-Anual / 2-Trimestral
-                                  ,pr_nrperiod IN INTEGER DEFAULT 1      -- Trimestre PJ 1-Jan-Mar / 2-Abr-Jun / 3-Jul-Set / 4-Out-Dez
-                                  ,pr_nmarqimp OUT VARCHAR2              --Nome Arquivo Impressao
-                                  ,pr_nmarqpdf OUT VARCHAR2              --Nome Arquivo PDF
-                                  ,pr_des_reto OUT VARCHAR2 );           --Descricao OK/NOK                                    
-
-  -- Subrotina para gerar impressao do extrato aplicações programadas
     PROCEDURE pc_gera_impressao_car( pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
                                     ,pr_nrdcaixa IN INTEGER                --Numero do Caixa
@@ -567,7 +535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 30/05/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 17/08/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -17135,7 +17103,7 @@ END pc_consulta_ir_pj_trim;
                     
                     --Popular Clob do relatorio interno
                     gene0002.pc_escreve_xml(vr_clobxml209, vr_dstexto209,vr_dstexto);
-                
+                    IF vr_tab_extrato_ap_tit.Count > 0 THEN
                     --Percorrer todos os extratos de poupanca
                     FOR vr_index_extrato_ap_tit IN vr_tab_extrato_ap_tit.FIRST .. vr_tab_extrato_ap_tit.LAST LOOP
                         --Se for o primeiro registro
@@ -17188,6 +17156,7 @@ END pc_consulta_ir_pj_trim;
                            gene0002.pc_escreve_xml(vr_clobxml209, vr_dstexto209,vr_dstexto);
                         END IF; --vr_flgfirst   
                     END LOOP;  --extratos_rpp
+                    END IF;
                     --Finaliza TAG Extratos e Conta
                     gene0002.pc_escreve_xml(pr_clobxml, pr_dstexto,'</extratos></conta>');
                     --Escreve CLOB Interno
@@ -17331,7 +17300,7 @@ END pc_consulta_ir_pj_trim;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
-          vr_dscritic := 'Erro na pc_gera_impextppr --> '|| sqlerrm;
+          vr_dscritic := 'Erro na pc_gera_impextaap --> '|| sqlerrm;
           gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cdagenci
                                ,pr_nrdcaixa => pr_nrdcaixa
@@ -21006,6 +20975,9 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
     --
     --              11/07/2016 - M325 - Informe de Rendimentos (Guilherme/SUPERO)
     --                           - Inclusão novos parametros entrada
+    --
+    --              17/08/2018 - Extrato analítico para Apl. Programada
+    --                         - Proj. 411.2 - (CIS Corporate)
 	  ---------------------------------------------------------------------------------------------------------------
     DECLARE
     
@@ -21071,19 +21043,41 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;        
         
+    vr_dsparame VARCHAR2(4000);
+        
     -- Selecionar quantidade de saques em poupanca nos ultimos 6 meses
     CURSOR cr_craplpp (pr_cdcooper IN craplpp.cdcooper%TYPE
                       ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE
                       ,pr_nrdconta IN crapcop.nrdconta%TYPE) IS
-      SELECT lpp.nrdconta
-            ,lpp.nrctrrpp
+          SELECT nrdconta
+                ,nrctrrpp
+                ,sum(qtlancmto) qtlancmto
+                FROM (
+                  SELECT lpp.nrdconta nrdconta
+                        ,lpp.nrctrrpp nrctrrpp
             ,Count(*) qtlancmto
       FROM craplpp lpp
       WHERE lpp.cdcooper = pr_cdcooper
       AND lpp.cdhistor IN (158,496)
       AND lpp.dtmvtolt > pr_dtmvtolt
       AND lpp.nrdconta = pr_nrdconta
-      GROUP BY lpp.nrdconta,lpp.nrctrrpp;
+                  GROUP BY lpp.nrdconta,lpp.nrctrrpp
+                  UNION       
+                  SELECT rac.nrdconta nrdconta
+                        ,rac.nrctrrpp nrctrrpp
+                        ,Count(*) qtlancmto
+                  FROM crapcpc cpc, craprac rac, craplac lac 
+                  WHERE rac.cdcooper = pr_cdcooper
+                    AND rac.nrdconta = pr_nrdconta
+                    AND rac.nrctrrpp > 0
+                    AND cpc.cdprodut = rac.cdprodut
+                    AND rac.cdcooper = lac.cdcooper
+                    AND rac.nrdconta = lac.nrdconta
+                    AND lac.cdhistor in (cpc.cdhsrgap)
+                    AND lac.dtmvtolt > pr_dtmvtolt       
+               GROUP BY rac.nrdconta,rac.nrctrrpp 
+               )
+	        GROUP BY nrdconta,nrctrrpp;
                       
     --Contar a quantidade de resgates das contas
     CURSOR cr_craplrg_saque (pr_cdcooper IN craplrg.cdcooper%TYPE
@@ -21304,357 +21298,6 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
           pr_des_reto := 'NOK';
       END;    
     END pc_gera_impressao_car;  
-
-    PROCEDURE pc_gera_impres_car_ap( pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
-                                    ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
-                                    ,pr_nrdcaixa IN INTEGER                --Numero do Caixa
-                                    ,pr_idorigem IN INTEGER                --Origem dos Dados
-                                    ,pr_nmdatela IN VARCHAR2               --Nome da Tela
-                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data Movimento
-                                    ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --Data Proximo Movimento
-                                    ,pr_cdprogra IN crapprg.cdprogra%TYPE  --Codigo Programa
-                                    ,pr_inproces IN INTEGER                --Indicador Processo
-                                    ,pr_cdoperad IN VARCHAR2               --Codigo Operador
-                                    ,pr_dsiduser IN VARCHAR2               --Identificador Usuario
-                                    ,pr_flgrodar IN INTEGER                --Flag Executar
-                                    ,pr_nrdconta IN crapass.nrdconta%TYPE  --Numero da Conta do Associado
-                                    ,pr_idseqttl IN crapttl.idseqttl%TYPE  --Sequencial do Titular
-                                    ,pr_tpextrat IN INTEGER                --Tipo de Extrato
-                                    ,pr_dtrefere IN DATE                   --Data de Referencia
-                                    ,pr_dtreffim IN DATE                   --Data Referencia Final
-                                    ,pr_flgtarif IN INTEGER                --Indicador Cobra tarifa
-                                    ,pr_inrelext IN INTEGER                --Indicador Relatorio Extrato (1 = Default, 2 = Extrato Analítico novo)
-                                    ,pr_inselext IN INTEGER                --Indicador Selecao Extrato (1 = Específico, 2 = Todos)
-                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE  --Numero Contrato Emprestimo
-                                    ,pr_nraplica IN craplap.nraplica%TYPE  --Numero Aplicacao
-                                    ,pr_nranoref IN INTEGER                --Ano de Referencia
-                                    ,pr_flgerlog IN INTEGER                --Escreve erro Log
-                                    ,pr_intpextr IN INTEGER                --Tipo de extrato (1=Simplificado, 2=Detalhado)
-                                    ,pr_tpinform IN INTEGER DEFAULT 0      -- Tipo do Informe PJ 0-Anual / 1-Trimestral
-                                    ,pr_nrperiod IN INTEGER DEFAULT 1      -- Trimestre PJ 1-Jan-Mar / 2-Abr-Jun / 3-Jul-Set / 4-Out-Dez
-                                    ,pr_nmarqimp OUT VARCHAR2              --Nome Arquivo Impressao
-                                    ,pr_nmarqpdf OUT VARCHAR2              --Nome Arquivo PDF
-                                    ,pr_des_reto OUT VARCHAR2 ) IS         --Descricao OK/NOK                                    
-    BEGIN
-    ---------------------------------------------------------------------------------------------------------------
-    --
-    --  Programa : pc_gera_impres_car_ap                   Antigo: 
-    --  Sistema  : 
-    --  Sigla    : CRED
-    --  Autor    : CIS Corporate
-    --  Data     : Julho/2018                           Ultima atualizacao: 
-    --
-    -- Dados referentes ao programa:
-    --
-    -- Frequencia: -----
-    -- Objetivo   : Procedure para possibilitar a utilizacao da pc_gera_impressao através do Oracle
-    --              e assim realizar a impressao do extrato das aplicações programadas do associado.
-    --              Baseado na pc_gera_impressao_car 
-    --
-    -- Alterações : 
-	  ---------------------------------------------------------------------------------------------------------------
-    DECLARE
-    -- Cursores
-    -- Busca dos dados da cooperativa
-    CURSOR cr_crapcop IS
-      SELECT crapcop.nmrescop
-            ,crapcop.nmextcop
-            ,crapcop.dsdircop
-      FROM crapcop crapcop
-      WHERE crapcop.cdcooper = pr_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
-    
-    -- Cursor genérico de calendário
-    rw_crapdat btch0001.cr_crapdat%ROWTYPE;        
-        
-    -- Selecionar quantidade de saques em aplicação programada nos ultimos 6 meses 
-    CURSOR cr_craplac IS
-      SELECT rac.nrdconta
-            ,rac.nrctrrpp
-            ,Count(*) qtlancmto
-      FROM crapcpc cpc, craprac rac, craplac lac 
-      WHERE rac.cdcooper = pr_cdcooper
-        AND rac.nrdconta = pr_nrdconta
-        AND rac.nrctrrpp > 0
-        AND cpc.cdprodut = rac.cdprodut
-        AND rac.cdcooper = lac.cdcooper
-        AND rac.nrdconta = lac.nrdconta
-        AND rac.nraplica = lac.nraplica 
-        AND lac.cdhistor in (cpc.cdhsrgap)
-        AND lac.dtmvtolt > ADD_MONTHS(pr_dtmvtolt,-6)       
-   GROUP BY rac.nrdconta,rac.nrctrrpp; 
-
-    --Contar a quantidade de resgates das contas 
-    CURSOR cr_craplrg_saque IS
-      SELECT lrg.nrdconta
-            ,lrg.nraplica nrctrrpp
-            ,COUNT(*) qtlancmto
-      FROM craplrg lrg,craprpp rpp
-      WHERE lrg.cdcooper = pr_cdcooper
-      AND lrg.nrdconta = pr_nrdconta
-      AND lrg.tpaplica = 4 -- Tipo Poupança
-      AND lrg.inresgat = 0
-      AND lrg.cdcooper = rpp.cdcooper
-      AND lrg.nrdconta = rpp.nrdconta
-      AND lrg.nraplica = rpp.nrctrrpp
-      AND rpp.cdprodut > 0 -- Apenas Apl. programadas
-      GROUP BY lrg.nrdconta,lrg.nraplica;
-
-    --Selecionar informacoes dos lancamentos de resgate
-    CURSOR cr_craplrg (pr_cdcooper IN craplrg.cdcooper%TYPE
-                      ,pr_dtresgat IN craplrg.dtresgat%TYPE
-                      ,pr_nrdconta IN crapcop.nrdconta%TYPE) IS
-      SELECT lrg.nrdconta
-            ,lrg.nraplica nrctrrpp
-            ,lrg.tpaplica
-            ,lrg.tpresgat
-            ,NVL(SUM(NVL(lrg.vllanmto,0)),0) vllanmto
-      FROM craplrg lrg, craprpp rpp
-      WHERE lrg.cdcooper = pr_cdcooper
-      AND   lrg.dtresgat <= pr_dtresgat
-      AND   lrg.inresgat = 0
-      AND   lrg.tpresgat = 1
-      AND lrg.nrdconta = pr_nrdconta
-      AND lrg.cdcooper = rpp.cdcooper
-      AND lrg.nrdconta = rpp.nrdconta
-      AND lrg.nraplica = rpp.nrctrrpp
-      AND rpp.cdprodut > 0              -- Apenas ap. progr.
-      GROUP BY lrg.nrdconta
-              ,lrg.nraplica
-              ,lrg.tpaplica
-              ,lrg.tpresgat;                     
-
-    -- Tratamento de erros
-    vr_exc_saida EXCEPTION;
-    -- Variaveis de XML
-    vr_xml_temp VARCHAR2(32767);
-    --variveis de retorno
-    vr_nmarqimp VARCHAR2(200);
-    vr_nmarqpdf VARCHAR2(200);
-    vr_des_reto VARCHAR2(5);
-    -- Temp Table
-    vr_tab_erro GENE0001.typ_tab_erro;    
-    -- Campos CLOB
-    vr_clobxml1 CLOB;
-    vr_clobxml2 CLOB;    
-    vr_clobxml3 CLOB;
-    vr_clobxml4 CLOB;
-    vr_clobxml5 CLOB;
-    vr_clobxml6 CLOB;
-    vr_clobxml7 CLOB;
-    vr_clobxml8 CLOB;
-    vr_clobxml9 CLOB;
-    -- Campos VARCHAR2
-    vr_dstexto1 VARCHAR2(1);
-    vr_dstexto2 VARCHAR2(1);
-    vr_dstexto3 VARCHAR2(1);    
-    vr_dstexto4 VARCHAR2(1);
-    vr_dstexto5 VARCHAR2(1);
-    vr_dstexto6 VARCHAR2(1);
-    vr_dstexto7 VARCHAR2(1);
-    vr_dstexto8 VARCHAR2(1);
-    vr_dstexto9 VARCHAR2(1);
-    -- variavies booleanas  
-    vr_flgrodar BOOLEAN;
-    vr_flgtarif BOOLEAN;
-    vr_flgerlog BOOLEAN; 
-    
-    vr_nmdireto  VARCHAR2(100);
-        
-    ------------------------ VARIAVEIS PARA INDICES --------------------------  
-    vr_index_craptab VARCHAR2(20);
-    vr_index_craplac VARCHAR2(20);
-    vr_index_craplrg VARCHAR2(20);
-    vr_index_resgate VARCHAR2(25);          
-
-    ---------------------------- ESTRUTURAS DE TABELA ---------------------        
-    vr_tab_craptab  APLI0001.typ_tab_ctablq;   --> Armazenar tabela de Conta Bloqueada
-    vr_tab_craplac  APLI0001.typ_tab_craplpp;  --> Armazenar tabela com lancamento poupanca
-    vr_tab_craplrg  APLI0001.typ_tab_craplpp;  --> Armazenar tabela com resgates
-    vr_tab_resgate  APLI0001.typ_tab_resgate;  --> Armazenar resgates das contas por aplicacao                
-
-    --------------------------FIM ESTRUTURAS DE TABELA----------------------------------------
-    
-    BEGIN 
-      
-      -- Verifica se a cooperativa esta cadastrada
-      OPEN cr_crapcop;
-      FETCH cr_crapcop INTO rw_crapcop;
-      -- Se não encontrar
-      IF cr_crapcop%NOTFOUND THEN
-        -- Fechar o cursor pois haverá raise
-        CLOSE cr_crapcop;
-        -- Montar mensagem de critica
-        --vr_exc_saida := TRUE;
-        RAISE vr_exc_saida;
-      ELSE
-        -- Apenas fechar o cursor
-        CLOSE cr_crapcop;
-      END IF;    
-    
-      /* 
-      Tratamento necessario para variaveis do
-      PROGRESS do tipo Booleano que devem ser
-      passadas como Integer para o Oracle
-      */   
-      IF pr_flgrodar > 0 THEN
-        vr_flgrodar := TRUE;
-      ELSE
-        vr_flgrodar := FALSE;
-      END IF;
-      
-      IF pr_flgtarif > 0 THEN
-        vr_flgtarif := TRUE;
-      ELSE
-        vr_flgtarif := FALSE;
-      END IF;
-      
-      IF pr_flgerlog > 0 THEN
-        vr_flgerlog := TRUE;
-      ELSE
-        vr_flgerlog := FALSE;
-      END IF;
-
-      -- carrega as PLTABLES necessarias
-      IF pr_inproces = 1 AND (pr_tpextrat = 5 OR pr_tpextrat = 10) THEN
-
-        -- Leitura do calendário da cooperativa
-        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-        FETCH btch0001.cr_crapdat INTO rw_crapdat;
-        CLOSE BTCH0001.cr_crapdat;
-        -- limpa as PLTABLES   
-        vr_tab_craptab.DELETE;
-        vr_tab_craplac.DELETE;
-        vr_tab_craplrg.DELETE;
-        vr_tab_resgate.DELETE;
-
-        -- Carregar tabela de memoria de contas bloqueadas
-        TABE0001.pc_carrega_ctablq(pr_cdcooper => pr_cdcooper
-                                  ,pr_nrdconta => pr_nrdconta
-                                  ,pr_tab_cta_bloq => vr_tab_craptab);
-
-        -- Carregar tabela de memoria de lancamentos na poupanca
-        FOR rw_craplac IN cr_craplac LOOP
-          --Se possuir mais de 3 registros
-          IF rw_craplac.qtlancmto > 3 THEN                                     
-            -- Montar indice para acessar tabela
-            vr_index_craplac:= LPad(rw_craplac.nrdconta,10,'0')||LPad(rw_craplac.nrctrrpp,10,'0');
-            -- Atribuir quantidade encontrada de cada conta ao vetor
-            vr_tab_craplac(vr_index_craplac):= rw_craplac.qtlancmto;
-          END IF;
-        END LOOP;
-        -- Carregar tabela de memoria com total de resgates na poupanca
-        FOR rw_craplrg IN cr_craplrg_saque LOOP
-          -- Montar Indice para acesso quantidade lancamentos de resgate
-          vr_index_craplrg:= LPad(rw_craplrg.nrdconta,10,'0')||LPad(rw_craplrg.nrctrrpp,10,'0');
-          -- Popular tabela de memoria
-          vr_tab_craplrg(vr_index_craplrg):= rw_craplrg.qtlancmto;
-        END LOOP;
-                   
-        -- Carregar tabela de memória com total resgatado por conta e aplicacao
-        FOR rw_craplrg IN cr_craplrg (pr_cdcooper => pr_cdcooper
-                                     ,pr_dtresgat => rw_crapdat.dtmvtopr
-                                     ,pr_nrdconta => pr_nrdconta) LOOP
-          -- Montar indice para selecionar total dos resgates na tabela auxiliar
-          vr_index_resgate := LPad(rw_craplrg.nrdconta,10,'0') ||
-                              LPad(rw_craplrg.tpaplica,05,'0') ||
-                              LPad(rw_craplrg.nrctrrpp,10,'0');
-          -- Popular a tabela de memoria com a soma dos lancamentos de resgate
-          vr_tab_resgate(vr_index_resgate).tpresgat := rw_craplrg.tpresgat;
-          vr_tab_resgate(vr_index_resgate).vllanmto := rw_craplrg.vllanmto;
-        END LOOP;          
-
-      END IF;    
-      
-      pc_gera_impressao(pr_cdcooper => pr_cdcooper, 
-                        pr_cdagenci => pr_cdagenci, 
-                        pr_nrdcaixa => pr_nrdcaixa, 
-                        pr_idorigem => pr_idorigem, 
-                        pr_nmdatela => pr_nmdatela, 
-                        pr_dtmvtolt => pr_dtmvtolt, 
-                        pr_dtmvtopr => pr_dtmvtolt, 
-                        pr_cdprogra => pr_cdprogra, 
-                        pr_inproces => pr_inproces,
-                        pr_cdoperad => pr_cdoperad, 
-                        pr_dsiduser => pr_dsiduser, 
-                        pr_flgrodar => vr_flgrodar, 
-                        pr_nrdconta => pr_nrdconta, 
-                        pr_idseqttl => pr_idseqttl, 
-                        pr_tpextrat => pr_tpextrat, 
-                        pr_dtrefere => pr_dtrefere, 
-                        pr_dtreffim => pr_dtreffim, 
-                        pr_flgtarif => vr_flgtarif, 
-                        pr_inrelext => pr_inrelext, 
-                        pr_inselext => pr_inselext, 
-                        pr_nrctremp => pr_nrctremp, 
-                        pr_nraplica => pr_nraplica, 
-                        pr_nranoref => pr_nranoref, 
-                        pr_flgerlog => vr_flgerlog,
-                        pr_clobxml1 => vr_clobxml1,
-                        pr_dstexto1 => vr_dstexto1,
-                        pr_clobxml2 => vr_clobxml2,
-                        pr_dstexto2 => vr_dstexto2,
-                        pr_clobxml3 => vr_clobxml3,
-                        pr_dstexto3 => vr_dstexto3,
-                        pr_clobxml4 => vr_clobxml4,
-                        pr_dstexto4 => vr_dstexto4,
-                        pr_clobxml5 => vr_clobxml5,
-                        pr_dstexto5 => vr_dstexto5,
-                        pr_clobxml6 => vr_clobxml6,
-                        pr_dstexto6 => vr_dstexto6,
-                        pr_clobxml7 => vr_clobxml7,
-                        pr_dstexto7 => vr_dstexto7,
-                        pr_clobxml8 => vr_clobxml8,
-                        pr_dstexto8 => vr_dstexto8,
-                        pr_clobxml9 => vr_clobxml9,
-                        pr_dstexto9 => vr_dstexto9,
-                        pr_tab_craptab => vr_tab_craptab,
-                        pr_tab_craplpp => vr_tab_craplac,
-                        pr_tab_craplrg => vr_tab_craplrg,
-                        pr_tab_resgate => vr_tab_resgate,
-                        pr_intpextr => pr_intpextr,
-                        pr_tpinform => pr_tpinform,
-                        pr_nrperiod => pr_nrperiod,
-                        pr_nmarqimp => pr_nmarqimp, 
-                        pr_nmarqpdf => pr_nmarqpdf, 
-                        pr_tab_erro => vr_tab_erro, 
-                        pr_des_reto => pr_des_reto);
-                            
-      IF pr_des_reto <> 'OK' THEN
-        
-         FOR vr_contador IN vr_tab_erro.FIRST..vr_tab_erro.LAST LOOP
-          pr_des_reto := vr_tab_erro(vr_contador).dscritic;  
-         END LOOP;
-        
-      END IF;
-      
-      -- trata caminho do arquivo para acessos do tipo 5(WEB)
-      IF pr_idorigem <> 5 THEN
-        -- Busca do diretório base da cooperativa para a geração de relatórios
-        vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
-                                           ,pr_cdcooper => pr_cdcooper --> Cooperativa
-                                           ,pr_nmsubdir => 'rl');      --> Utilizaremos o rl                  
-        vr_nmdireto := vr_nmdireto||'/';                                           
-      END IF;
-      
-      pr_nmarqpdf := REPLACE(pr_nmarqimp,'.ex','.pdf');
-      
-      -- valida o retorno OK e a existencia de 1 dos 2 tipos de arquivos gerados
-      IF pr_des_reto = 'OK' THEN        
-        -- monta as variaveis de nome com o caminho correto
-        pr_nmarqimp := vr_nmdireto||pr_nmarqimp;
-        pr_nmarqpdf := vr_nmdireto||pr_nmarqpdf;
-
-      END IF;
-
-      EXCEPTION
-        WHEN vr_exc_saida THEN
-          pr_des_reto := 'NOK';
-
-        WHEN OTHERS THEN
-          pr_des_reto := 'NOK';
-      END;    
-    END pc_gera_impres_car_ap;  
 
     PROCEDURE pc_gera_impressao_portab(pr_nrdconta IN crapass.nrdconta%TYPE --Numero da Conta do Associado
                                       ,pr_nrctremp IN crapepr.nrctremp%TYPE --Numero Contrato Emprestimo

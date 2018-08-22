@@ -271,6 +271,8 @@ PROCEDURE consulta-poupanca:
                 craprpp.cdsitrpp = 5 /* Vencida */  THEN
                 NEXT.
     
+			IF craprpp.cdprodut < 1 THEN
+				DO:
             { sistema/generico/includes/b1wgen0006.i }
                                                              
             IF  aux_vlsdrdpp < 0                        AND
@@ -282,6 +284,41 @@ PROCEDURE consulta-poupanca:
                    aux_dsresgat = "N"         
                    aux_qtsaqppr = 0
                    aux_dsmsgsaq = "".
+				END.
+
+			ELSE
+				DO:
+				
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+					  /* Efetuar a chamada a rotina Oracle */
+					 RUN STORED-PROCEDURE pc_calc_saldo_apl_prog
+
+					 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper /* Código da Cooperativa */
+														 ,INPUT par_cdprogra /* Código do Programa */
+														 ,INPUT par_cdoperad /* Número da Conta */
+														 ,INPUT par_nrdconta /* Número da Conta */
+														 ,INPUT par_idseqttl /* Titular da Conta */
+														 ,INPUT par_idorigem /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+														 ,INPUT craprpp.nrctrrpp /* Número de RPP */
+														 ,INPUT par_dtmvtolt /* Data de Movimento */
+														 ,OUTPUT 0           /* Valor de Saldo RPP    */
+														 ,OUTPUT "").        /* Descrição da crítica */
+                                             
+					/* Fechar o procedimento para buscarmos o resultado */ 
+					 CLOSE STORED-PROC pc_calc_saldo_apl_prog
+						   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+					 
+					 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+				
+					ASSIGN par_vlsldrpp = par_vlsldrpp + pc_calc_saldo_apl_prog.pr_vlsdrdpp
+							   aux_vlsdrdpp = pc_calc_saldo_apl_prog.pr_vlsdrdpp
+							   aux_vlrgtrpp = pc_calc_saldo_apl_prog.pr_vlsdrdpp
+							   aux_dsresgat = "N"         
+							   aux_qtsaqppr = 0
+							   aux_dsmsgsaq = "".
+				END.
 
             /** Totalizar valores de resgate **/
             FOR EACH craplrg WHERE 
