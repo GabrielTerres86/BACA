@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 08/11/2017
  * OBJETIVO     : Mostrar tela PRVSAQ
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 13/08/2018 - PRJ 420 - Aumentado a largura da tela para 950. (Mateus Z - Mouts)
  * --------------
  */
 ?>
@@ -74,7 +74,7 @@
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="850" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table width="950" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
 																		<div id="divRotina"></div>

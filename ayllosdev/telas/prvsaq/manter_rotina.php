@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 08/11/2017
  * OBJETIVO     : Rotina tela PRVSAQ.
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 29/05/2018 - Incluido novos campos PRJ 420 - Mateus Z (Mouts).
  * -------------- 
  */
 
@@ -66,16 +66,27 @@
 
 		if($cddopcao == 'E'){
 			//consulta exclusao		
-			$nrpa    	= (isset($_POST['nrPAExc'])) ? $_POST['nrPAExc'] : '' ;		
-			$dtSaqPagto  = (isset($_POST['dtDataExc'])) ? $_POST['dtDataExc'] : '' ;
-			$nrCpfCnpj  = (isset($_POST['nrCpfCnpjExc'])) ? $_POST['nrCpfCnpjExc'] : '' ;			
+			$nrpa    	   = (isset($_POST['nrPAExc'])) ? $_POST['nrPAExc'] : '' ;		
+			$dtSaqPagto    = (isset($_POST['dtDataExc'])) ? $_POST['dtDataExc'] : '' ;
+			$nrCpfCnpj     = (isset($_POST['nrCpfCnpjExc'])) ? $_POST['nrCpfCnpjExc'] : '' ;	
+			$tporigem      = (isset($_POST['tpOrigemExc']))      ? $_POST['tpOrigemExc'] : '' ;
+			$nrdconta      = (isset($_POST['nrdcontaExc']))      ? $_POST['nrdcontaExc'] : 0 ;
+			$nrPAConta     = (isset($_POST['nrPAContaExc']))     ? $_POST['nrPAContaExc'] : 0 ;
+			$nrcpf_sacador = (isset($_POST['nrcpf_sacadorExc'])) ? $_POST['nrcpf_sacadorExc'] : '' ;
+			$vlSaqPagto    = (isset($_POST['vlSaqPagtoExc']))       ? $_POST['vlSaqPagtoExc'] : 0 ;	
 			//array com os registros a serem excluidos
-			$arrExc  	= (isset($_POST['arrExc'])) ? $_POST['arrExc'] : '' ;	
+			$arrExc  	   = (isset($_POST['arrExc'])) ? $_POST['arrExc'] : '' ;	
 		}else if($cddopcao == 'A'){
-			$nrpa    	 = (isset($_POST['nrPAAlt'])) ? $_POST['nrPAAlt'] : '' ;		
-			$dtSaqPagto  = (isset($_POST['dtDataAlt'])) ? $_POST['dtDataAlt'] : '' ;
-			$nrCpfCnpj   = (isset($_POST['nrCpfCnpjAlt'])) ? $_POST['nrCpfCnpjAlt'] : '' ;
-			$dsprotocolo = (isset($_POST['dsProtAlt'])) ? $_POST['dsProtAlt'] : '' ;
+			$dtperiini 	       = (isset($_POST['dtPeriodoIniAlt']))   ? $_POST['dtPeriodoIniAlt'] : '' ;
+			$dtperifim 	       = (isset($_POST['dtPeriodoFimAlt']))   ? $_POST['dtPeriodoFimAlt'] : '' ;
+			$nrpa    	       = (isset($_POST['nrPAAlt']))           ? $_POST['nrPAAlt'] : '' ;		
+			$nrCpfCnpj         = (isset($_POST['nrCpfCnpjAlt']))      ? $_POST['nrCpfCnpjAlt'] : '' ;
+			$dsprotocolo       = (isset($_POST['dsProtAlt']))         ? $_POST['dsProtAlt'] : '' ;
+			$tporigem          = (isset($_POST['tpOrigemAlt']))       ? $_POST['tpOrigemAlt'] : '' ;
+			$nrdconta          = (isset($_POST['nrdcontaAlt']))       ? $_POST['nrdcontaAlt'] : 0 ;
+			$nrPAConta         = (isset($_POST['nrPAContaAlt']))      ? $_POST['nrPAContaAlt'] : 0 ;
+			$nrcpf_sacador     = (isset($_POST['nrcpf_sacadorAlt']))  ? $_POST['nrcpf_sacadorAlt'] : '' ;
+			$vlSaqPagto        = (isset($_POST['vlSaqPagtoAlt']))     ? $_POST['vlSaqPagtoAlt'] : 0 ;
 		}else if($cddopcao =='A!'){			
 			//valor alterado			  
 			$dtSaqPagtoAlt  = (isset($_POST['dtSaqPagtoAlt'])) ? $_POST['dtSaqPagtoAlt'] : '' ;		
@@ -89,19 +100,24 @@
 			$nrdcontaOri 	= (isset($_POST['nrdcontaOri'])) ? $_POST['nrdcontaOri'] : '' ;
 			$vlsaqpagtoOri 	= (isset($_POST['vlsaqpagtoOri'])) ? $_POST['vlsaqpagtoOri'] : '' ;
 			$tpsituacaoOri 	= (isset($_POST['tpsituacaoOri'])) ? $_POST['tpsituacaoOri'] : '' ;						
+			$cdope_autorizador = (isset($_POST['operauto'])) ? $_POST['operauto'] : '' ;
+			$dsprotocolo    = (isset($_POST['dsprotocolo']))   ? $_POST['dsprotocolo'] : '' ;						
 		}else{
-			$dtSaqPagto  = (isset($_POST['dtSaqPagto'])) ? $_POST['dtSaqPagto'] : '' ;
-			$vlSaqPagto  = (isset($_POST['vlSaqPagto'])) ? $_POST['vlSaqPagto'] : '' ;		
-			$nrCpfCnpj   = (isset($_POST['nrCpfCnpj'])) ? $_POST['nrCpfCnpj'] : '' ;
-			$hrSaqPagto  = (isset($_POST['hrSaqPagto'])) ? $_POST['hrSaqPagto'] : '' ;
-			$nrContTit   = (isset($_POST['nrContTit'])) ? $_POST['nrContTit'] : 0 ;
-			$dtperiini 	  = (isset($_POST['dtPeriodoIni'])) ? $_POST['dtPeriodoIni'] : '' ;
-			$dtperifim 	  = (isset($_POST['dtPeriodoFim'])) ? $_POST['dtPeriodoFim'] : '' ;
-			$tpoperacao   = (isset($_POST['tpOperacao'])) ? $_POST['tpOperacao'] : '' ;
-			$nrpa         = (isset($_POST['nrPA'])) ? $_POST['nrPA'] : '' ;
-			$tpsituacao   = (isset($_POST['tpSituacao'])) ? $_POST['tpSituacao'] : '' ;
-			$tporigem     = (isset($_POST['tpOrigem'])) ? $_POST['tpOrigem'] : '' ;
-			$nriniseq     = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1 ;
+			$dtSaqPagto    = (isset($_POST['dtSaqPagto']))    ? $_POST['dtSaqPagto'] : '' ;
+			$vlSaqPagto    = (isset($_POST['vlSaqPagto']))    ? $_POST['vlSaqPagto'] : '' ;		
+			$nrCpfCnpj     = (isset($_POST['nrCpfCnpj']))     ? $_POST['nrCpfCnpj'] : '' ;
+			$hrSaqPagto    = (isset($_POST['hrSaqPagto']))    ? $_POST['hrSaqPagto'] : '' ;
+			$nrContTit     = (isset($_POST['nrContTit']))     ? $_POST['nrContTit'] : 0 ;
+			$dtperiini 	   = (isset($_POST['dtPeriodoIni']))  ? $_POST['dtPeriodoIni'] : '' ;
+			$dtperifim 	   = (isset($_POST['dtPeriodoFim']))  ? $_POST['dtPeriodoFim'] : '' ;
+			$tpoperacao    = (isset($_POST['tpOperacao']))    ? $_POST['tpOperacao'] : '' ;
+			$nrpa          = (isset($_POST['nrPA']))          ? $_POST['nrPA'] : '' ;
+			$tpsituacao    = (isset($_POST['tpSituacao']))    ? $_POST['tpSituacao'] : '' ;
+			$tporigem      = (isset($_POST['tpOrigem']))      ? $_POST['tpOrigem'] : '' ;
+			$nrdconta      = (isset($_POST['nrdconta']))      ? $_POST['nrdconta'] : 0 ;
+			$nrPAConta     = (isset($_POST['nrPAConta']))     ? $_POST['nrPAConta'] : 0 ;
+			$nrcpf_sacador = (isset($_POST['nrcpf_sacador'])) ? $_POST['nrcpf_sacador'] : '' ;
+			$nriniseq      = (isset($_POST['nriniseq']))      ? $_POST['nriniseq'] : 1 ;
 		}
 	}
 		
@@ -128,6 +144,7 @@
 		$selQuais 	 = (isset($_POST['selQuais'])) 	 ? $_POST['selQuais'] : 0 ;
 		$txtQuais 	 = (isset($_POST['txtQuais'])) 	 ? $_POST['txtQuais'] : '' ;
 		$indPessoa 	 = (isset($_POST['indPessoa']))  ? $_POST['indPessoa'] : '' ;
+		$cdope_autorizador = (isset($_POST['operauto']))  ? $_POST['operauto'] : '' ;
 	}
 
 	if($rotina == 'T'){		
@@ -238,6 +255,7 @@
 		$xml .= "   <txtquais>".$txtQuais."</txtquais>";
 		$xml .= "   <nrcpfope>0</nrcpfope>";
 		$xml .= "   <ind_grava>".$ind_grava."</ind_grava>";
+		$xml .= "   <cdope_autorizador>".$cdope_autorizador."</cdope_autorizador>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";			
 
@@ -311,6 +329,8 @@
 		$xml .= "   <vlsaqpagtoalt>".$vlSaqPagtoAlt ."</vlsaqpagtoalt>";
 		$xml .= "   <tpsituacaoalt>".$tpSituacaoAlt ."</tpsituacaoalt>";
 		$xml .= "   <ind_grava>".$ind_grava."</ind_grava>";		
+		$xml .= "   <cdope_autorizador>".$cdope_autorizador."</cdope_autorizador>";
+		$xml .= "   <dsprotocolo>".$dsprotocolo."</dsprotocolo>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";				
 
@@ -332,7 +352,7 @@
 				exit();
 			}
 		}
-		echo 'btnVoltar();manter_rotina("A");';
+		echo 'btnVoltar();';
 		exit();
 
 		$procedure = 'PRVSAQ_CONSULTA';			
@@ -358,6 +378,7 @@
 				$xml .= "   <dhsaque>".$v[1]."</dhsaque>";
 				$xml .= "   <nrcpfcnpj>".$v[2]."</nrcpfcnpj>";		
 				$xml .= "   <nrdconta>".$v[3] ."</nrdconta>";
+				$xml .= "   <dsprotocolo>".$v[4] ."</dsprotocolo>";
 				$xml .= " </Dados>";
 				$xml .= "</Root>";					
 								
@@ -377,6 +398,7 @@
 		$xml = "<Root>";
 		$xml .= " <Dados>";
 		$xml .= "   <cdcooper>" . $cdcooper . "</cdcooper>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "   <cdcoptel>" . $cdcoptel . "</cdcoptel>";
 		$xml .= "   <peri_ini>".$dtperiini."</peri_ini>";
 		$xml .= "   <peri_fim>".$dtperifim."</peri_fim>";				
@@ -388,6 +410,8 @@
 		$xml .= "   <nrcpfcnpj>".$nrCpfCnpj ."</nrcpfcnpj>";
 		$xml .= "   <dsprotocolo>".$dsprotocolo."</dsprotocolo>";
 		$xml .= "   <cdopcao>".$realopcao."</cdopcao>";
+		$xml .= "   <cdagenci>".$nrPAConta."</cdagenci>";
+		$xml .= "   <nrcpf_sacador>".$nrcpf_sacador."</nrcpf_sacador>";
 		$xml .= "   <nriniseq>".$nriniseq."</nriniseq>";
 		$xml .= "   <nrregist>".$nrregist."</nrregist>";		
 		$xml .= " </Dados>";
@@ -530,6 +554,7 @@
 		}else{
 			$registros 	= $xmlObj->Dados;
 			$qtregist   = $xmlObj->Dados->qtregist[0];						
+			$vlsaque_tot = $xmlObj->Dados->vlsaque_tot[0];
 			include('form_consulta.php');	
 		}
 		exit();

@@ -8,6 +8,8 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
                              ,pr_vlsaqpagtoalt    IN tbcc_provisao_especie.vlsaque%TYPE       --> VL PAGAMENTO ALTERADO
                              ,pr_tpsituacaoalt    IN tbcc_provisao_especie.insit_provisao%TYPE--> TIPO SITUACAO
                              ,pr_ind_grava        IN NUMBER                                   --> INDICA QUE A PRIVSAO DEVE SER CADASTRADA INDEPENDETE DE REGRAS.
+                             ,pr_cdope_autorizador IN crapope.cdoperad%TYPE                   --> Código do operador que autorizou a provisão -- Marcelo Telles Coelho - Projeto 420 - PLD
+                             ,pr_dsprotocolo      IN tbcc_provisao_especie.dsprotocolo%TYPE   --> Protocolo da provisao. PRJ 420 - Mateus Z
                              ,pr_xmllog           IN VARCHAR2                                 --> XML com informações de LOG
                              ,pr_cdcritic         OUT PLS_INTEGER                             --> Código da crítica
                              ,pr_dscritic         OUT VARCHAR2                                --> Descrição da crítica
@@ -23,11 +25,13 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                 ,pr_cdagenci_saque IN tbcc_provisao_especie.cdagenci_saque%TYPE     --> PA DE SAQUE
                                 ,pr_insit_prov     IN tbcc_provisao_especie.insit_provisao%TYPE     --> SITUACAO PROVISAO
                                 ,pr_dtsaqpagto     IN VARCHAR2                                      --> DATA DO SAQUE PAGAMENTO
-                                ,pr_idorigem       IN tbcc_provisao_especie.cdcanal%TYPE  --> DATA DO SAQUE PAGAMENTO
+                                ,pr_idorigem       IN tbcc_provisao_especie.cdcanal%TYPE            --> DATA DO SAQUE PAGAMENTO
                                 ,pr_vlsaqpagto     IN tbcc_provisao_especie.vlsaque%TYPE            --> VALOR SAQUE PAGAMENTO
                                 ,pr_nrcpfcnpj      IN tbcc_provisao_especie.nrcpfcgc %TYPE          --> CPF CNPJ TITULAR
                                 ,pr_dsprotocolo    IN crappro.dsprotoc%TYPE                         --> PROTOCOLO
-                                ,pr_cdopcao        IN VARCHAR2                                     --> opção da tela prvsaq A,I,C,E
+                                ,pr_cdopcao        IN VARCHAR2                                      --> opção da tela prvsaq A,I,C,E
+                                ,pr_cdagenci       IN tbcc_provisao_especie.cdagenci%TYPE           --> PA da conta                  -- Marcelo Telles Coelho - Projeto 420 - PLD
+                                ,pr_nrcpf_sacador  IN tbcc_provisao_especie.nrcpf_sacador%TYPE      --> CPF do sacador               -- Marcelo Telles Coelho - Projeto 420 - PLD
                                 ,pr_nriniseq       IN INTEGER DEFAULT 1                             --> NUMERO INICIAL DA SEQUENCIA
                                 ,pr_nrregist       IN INTEGER DEFAULT 30                            --> QUANTIDADE DE REGISTROS A RETONAR
                                 ,pr_xmllog         IN VARCHAR2                                      --> XML com informações de LOG
@@ -41,6 +45,7 @@ PROCEDURE pc_excluir_provisao( pr_cdcooper        IN tbcc_provisao_especie.cdcoo
                                ,pr_dhsaque        IN VARCHAR2                             --> DATA DO SAQUE PAGAMENTO
                                ,pr_nrcpfcnpj      IN tbcc_provisao_especie.nrcpfcgc %TYPE --> CPF CNPJ TITULAR
                                ,pr_nrdconta       IN tbcc_provisao_especie.nrdconta %TYPE --> NUMERO CONTA TITULAR
+                               ,pr_dsprotocolo    IN tbcc_provisao_especie.dsprotocolo%TYPE   --> Protocolo da provisao. PRJ 420 - Mateus Z
                                ,pr_xmllog         IN VARCHAR2                             --> XML com informações de LOG
                                ,pr_cdcritic       OUT PLS_INTEGER                         --> Código da crítica
                                ,pr_dscritic       OUT VARCHAR2                            --> Descrição da crítica
@@ -67,6 +72,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                               ,pr_txtquais       IN tbcc_provisao_especie.dstransacao%TYPE     --> DESCRICAO DE QUAIS MEIOS
                               ,pr_nrcpfope       IN crapopi.nrcpfope%TYPE                      --> CPF do operador internet
                               ,pr_ind_grava      IN NUMBER                                     --> INDICA QUE A PRVSAQ DEVE SER CADASTRADA INDEPENDETE DE REGRAS DE DATAS.
+                              ,pr_cdope_autorizador IN crapope.cdoperad%TYPE                   --> Código do operador que autorizou a provisão -- Marcelo Telles Coelho - Projeto 420 - PLD
                               ,pr_xmllog         IN VARCHAR2                                   --> XML com informações de LOG
                               ,pr_cdcritic       OUT PLS_INTEGER                               --> Código da crítica
                               ,pr_dscritic       OUT VARCHAR2                                  --> Descrição da crítica
@@ -124,6 +130,15 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE);
                                 ,pr_dtiniper IN DATE                      --> Data de Inicio do Periodo
                                 ,pr_qtdialib IN PLS_INTEGER) RETURN DATE; --> Quantidade de dias para acrescentar
 
+  -- Projeto 420 - Prevenção a Lavagem de Dinheiro (PLD)
+  PROCEDURE pc_valida_data(pr_cdcooper     IN crapcop.cdcooper%TYPE  --> Codigo Cooperativa
+                          ,pr_dtprovisao   IN VARCHAR2               --> Data da provisão a ser testada
+                          ,pr_xmllog       IN VARCHAR2               --> XML com informações de LOG
+                          ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
+                          ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
+                          ,pr_retxml       IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                          ,pr_nmdcampo     OUT VARCHAR2              --> Nome do campo com erro
+                          ,pr_des_erro     OUT VARCHAR2);            --> Erros do processo
 END tela_prvsaq;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
@@ -151,6 +166,8 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
                              ,pr_vlsaqpagtoalt    IN tbcc_provisao_especie.vlsaque%TYPE       --> VL PAGAMENTO ALTERADO
                              ,pr_tpsituacaoalt    IN tbcc_provisao_especie.insit_provisao%TYPE--> TIPO SITUACAO
                              ,pr_ind_grava        IN NUMBER                                   --> INDICA QUE A PRVSAQ DEVE SER CADASTRADA INDEPENDETE DE REGRAS.
+                             ,pr_cdope_autorizador IN crapope.cdoperad%TYPE                   --> Código do operador que autorizou a provisão -- Marcelo Telles Coelho - Projeto 420 - PLD
+                             ,pr_dsprotocolo      IN tbcc_provisao_especie.dsprotocolo%TYPE   --> Protocolo da provisao. PRJ 420 - Mateus Z 
                              ,pr_xmllog           IN VARCHAR2                                 --> XML com informações de LOG
                              ,pr_cdcritic         OUT PLS_INTEGER                             --> Código da crítica
                              ,pr_dscritic         OUT VARCHAR2                                --> Descrição da crítica
@@ -163,7 +180,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
         Sistema : CECRED
         Sigla   : PARM
         Autor   : Antonio Remualdo Junior
-        Data    : Nov/17.                    Ultima atualizacao: --/--/----
+        Data    : Nov/17.                    Ultima atualizacao: 25/05/2018
     
         Dados referentes ao programa:
     
@@ -173,7 +190,8 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 25/05/2018 - Projeto 420 - PLD
+                                (Marcelo Telles Coelho - Mouts).
     ..............................................................................*/
     
     -- Variável de críticas
@@ -217,6 +235,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
     vr_tot_saq tbcc_provisao_especie.vlsaque%TYPE;
     vr_tot_pagto tbcc_provisao_especie.vlpagamento%TYPE;
     vr_tot tbcc_provisao_especie.vlpagamento%TYPE;
+    vr_inexige_senha      VARCHAR2(1000);
     
     vr_dstextab VARCHAR2(2000);
         
@@ -267,7 +286,8 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
     WHERE p.cdcooper = pr_cdcooper AND
           p.dhprevisao_operacao = TO_DATE(pr_dtsaqpagto,'DD/MM/YYYY HH24:MI:SS') AND
           p.nrcpfcgc = pr_nrcpfcnpj AND
-          p.nrdconta = pr_nrdconta;
+          p.nrdconta = pr_nrdconta AND 
+          p.dsprotocolo = pr_dsprotocolo;
     rw_prv_saq cr_prv_saq%ROWTYPE;
     
     --------------->>> SUB-ROTINA <<<-----------------
@@ -279,7 +299,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
     BEGIN
       
       vr_dscdolog := to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' '|| to_char(SYSDATE,'HH24:MI:SS') ||
-                     ' --> '|| vr_cdacesso || ' --> '|| 'Operador '|| pr_cdoperad ||
+                     ' --> '||'Operador '|| pr_cdoperad ||
                      ' '||pr_dscdolog;
       
       btch0001.pc_gera_log_batch(pr_cdcooper => pr_cdcooper, 
@@ -382,12 +402,13 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
     
     --REGRA DHSAQUE
       -- PARAMETROS MONITORAMENTO
-      SELECT m.vllimite_saque,
+      SELECT m.vlprovisao_saque vllimite_saque,  -- Marcelo Telles Coelho - Projeto 420 - PLD --> alterado campo DE=>VLLIMITE_SAQUE, PARA=>VLPROVISAO_SAQUE
              m.vllimite_pagamento,
              m.hrlimite_provisao,
              m.qtdias_provisao,
              m.inverifica_saldo,
-             m.vlprovisao_email INTO vr_lim_saq,
+             m.vlalteracao_provisao_email -- Marcelo Telles Coelho - Projeto 420 - PLD --> Buscar o prm de valor de alteração para email
+                                INTO vr_lim_saq,
                                      vr_lim_pagto,
                                      vr_lim_hora,
                                      vr_lim_qtdiasprov,
@@ -412,7 +433,6 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
     IF(TO_DATE((TO_CHAR(TRUNC(vr_dhsaque),'DDMMYYYY')||TO_CHAR(SYSDATE,'HH24MI')),'DDMMYYYYHH24MI') > TO_DATE((TO_CHAR(TRUNC(vr_dhsaque),'DDMMYYYY')||vr_lim_hora),'DDMMYYYYHH24MI'))THEN
       vr_lim_qtdiasprov := vr_lim_qtdiasprov + 1;
     END IF;    
-    
     -- SE O NOVO VALOR FOR MAIOR QUE O ANTERIOR E MAIOR QUE O LIMITE
     IF(pr_ind_grava = 0 AND (pr_vlsaqpagtoalt > vr_valor_ant AND (pr_vlsaqpagtoalt + vr_tot) >= vr_lim))THEN       
        vr_data_lim := empr0008.fn_retorna_data_util(pr_cdcooper =>pr_cdcooper , pr_dtiniper =>rw_crapdat.dtmvtolt , pr_qtdialib =>vr_lim_qtdiasprov);
@@ -435,10 +455,12 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
           p.nrcpfcgc = pr_nrcpfcnpjori AND
           p.dhprevisao_operacao = TO_DATE(pr_dhsaqueori,'DD/MM/YYYY HH24:MI:SS') AND
           p.nrdconta = pr_nrdcontaori AND
-          p.insit_provisao = 1;          
+          p.insit_provisao = 1 AND
+          p.dsprotocolo = pr_dsprotocolo;
     
     
     --ENVIAR EMAIL SEG CORP, SEDE COOP, PA CADAST, PA COOP
+      IF((vr_tot + pr_vlsaqpagtoalt) >= vr_provisao_email)THEN  -- Marcelo Telles Coelho - Projeto 420 - PLD --> Verificar se valor está acima do prm de segurança
         select listagg(valor, ';') within group(order by valor) INTO vr_emails
           from (select distinct valor
                   from (select c.cdcooper cdcooper,
@@ -483,6 +505,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
             -- Levanta exceção
             RAISE vr_exc_saida;
           END IF;                       
+        END IF;
     
     IF rw_prv_saq.dhprevisao_operacao <> vr_dhsaque THEN
       --> gerar log da tela
@@ -527,6 +550,24 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
                              pr_tag_nova => 'inf',
                              pr_tag_cont => SQL%ROWCOUNT,
                              pr_des_erro => vr_dscritic);
+      -- Marcelo Telles Coelho - Projeto 420 - PLD
+      -- Gera log
+      IF pr_cdope_autorizador IS NOT NULL THEN
+        DECLARE
+          vr_dias NUMBER;
+        BEGIN
+          vr_dias := TRUNC(vr_dhsaque) - TRUNC(SYSDATE);
+          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => 'prvsaq.log'
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' -->  Autorizador  '|| pr_cdope_autorizador || ' - ' ||
+                                                        'Liberou a provisão da conta '||gene0002.fn_mask_conta(rw_prv_saq.nrdconta) || ' ' ||
+                                                        'no valor de R$ '||TO_CHAR(pr_vlsaqpagtoalt,'9999999990.00')|| ' ' ||
+                                                        '(Total provisão do dia de R$ '||TO_CHAR((vr_tot + pr_vlsaqpagtoalt),'9999999990.00')|| ') '||
+                                                        'para '||TO_CHAR(vr_dias)  ||' dias.');
+        END;
+      END IF;
                                                           
       commit;                       
                                                                        
@@ -570,6 +611,8 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                 ,pr_nrcpfcnpj      IN tbcc_provisao_especie.nrcpfcgc %TYPE         --> CPF CNPJ TITULAR
                                 ,pr_dsprotocolo    IN crappro.dsprotoc%TYPE                        --> PROTOCOLO
                                 ,pr_cdopcao        IN VARCHAR2                                     --> opção da tela prvsaq A,I,C,E
+                                ,pr_cdagenci       IN tbcc_provisao_especie.cdagenci%TYPE          --> PA da conta                  -- Marcelo Telles Coelho - Projeto 420 - PLD
+                                ,pr_nrcpf_sacador  IN tbcc_provisao_especie.nrcpf_sacador%TYPE     --> CPF do sacador               -- Marcelo Telles Coelho - Projeto 420 - PLD
                                 ,pr_nriniseq       IN INTEGER                                      --> NUMERO INICIAL DA SEQUENCIA
                                 ,pr_nrregist       IN INTEGER                                      --> QUANTIDADE DE REGISTROS A RETONAR
                                 ,pr_xmllog         IN VARCHAR2                                     --> XML com informações de LOG
@@ -584,7 +627,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
         Sistema : CECRED
         Sigla   : PRVSAQ
         Autor   : Antonio Remualdo Junior
-        Data    : Novembro/2017.                    Ultima atualizacao: --/--/----
+        Data    : Novembro/2017.                    Ultima atualizacao: 25/05/2018
     
         Dados referentes ao programa:
     
@@ -594,7 +637,8 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 25/05/2018 - Projeto 420 - PLD
+                                (Marcelo Telles Coelho - Mouts).
     ..............................................................................*/
       ----------->>> VARIAVEIS <<<--------   
       -- Variável de críticas
@@ -622,6 +666,12 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
       vr_insit_prov tbcc_provisao_especie.insit_provisao%TYPE;
       vr_tempcooper NUMBER;                     
       
+      -- Marcelo Telles Coelho - Projeto 420 - PLD
+      vr_inoferta      VARCHAR2(03);
+      vr_dsobservacao  VARCHAR2(03);
+      vr_vlsaque_tot   NUMBER;
+
+
       ---------->> CURSORES <<--------
       --> Buscar dados operador    
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
@@ -649,7 +699,10 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                       ,pr_dsprotocolo    IN crappro.dsprotoc%TYPE
                       ,pr_nriniseq       IN INTEGER
                       ,pr_nrregist       IN INTEGER
-                      ,pr_cdopcao        IN VARCHAR2) IS
+                      ,pr_cdopcao        IN VARCHAR2
+                      ,pr_cdagenci       IN tbcc_provisao_especie.cdagenci%TYPE          --> PA da conta                  -- Marcelo Telles Coelho - Projeto 420 - PLD
+                      ,pr_nrcpf_sacador  IN tbcc_provisao_especie.nrcpf_sacador%TYPE     --> CPF do sacador               -- Marcelo Telles Coelho - Projeto 420 - PLD
+                      ) IS
          SELECT ROWNUM rnum, p.*, (SELECT c.nmrescop FROM crapcop c WHERE c.cdcooper = p.cdcooper) nmrescop
          FROM tbcc_provisao_especie p
          WHERE (pr_cdcooper       IS NULL OR p.cdcooper = pr_cdcooper)                                                        AND
@@ -660,9 +713,12 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                (pr_insit_prov     IS NULL OR p.insit_provisao = pr_insit_prov)                                                AND
                (pr_dtsaqpagto     IS NULL OR TRUNC(p.dhprevisao_operacao)=TRUNC(TO_DATE(pr_dtsaqpagto,'DD/MM/YYYY HH24:MI'))) AND               
                (pr_idorigem       IS NULL OR p.cdcanal = pr_idorigem)                                                         AND                                   
-               (pr_vlsaqpagto     IS NULL OR p.vlsaque = pr_vlsaqpagto)                                                       AND
+               (pr_vlsaqpagto     IS NULL OR p.vlsaque >= pr_vlsaqpagto)                                                      AND
                (pr_nrcpfcnpj      IS NULL OR p.nrcpfcgc = pr_nrcpfcnpj)                                                       AND
-               (pr_dsprotocolo    IS NULL OR p.dsprotocolo = pr_dsprotocolo)
+               (pr_dsprotocolo    IS NULL OR p.dsprotocolo = pr_dsprotocolo)                                                  AND
+               -- Marcelo Telles Coelho - Projeto 420 - PLD
+	       (pr_cdagenci       IS NULL OR p.cdagenci = pr_cdagenci)                                                        AND
+	       (pr_nrcpf_sacador  IS NULL OR p.nrcpf_sacador = pr_nrcpf_sacador)
          ORDER BY nmrescop,
                   CASE WHEN pr_cdopcao =  'A' THEN p.cdagenci_saque             END,
                   CASE WHEN pr_cdopcao <> 'A' THEN TRUNC(p.dhprevisao_operacao) END,
@@ -756,7 +812,6 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                pr_idorigem => vr_idorigem,
                                pr_cdoperad => vr_cdoperad,
                                pr_dscritic => vr_dscritic);
-
       -- Se retornou alguma crítica                  
       
       IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -816,6 +871,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                              pr_tag_cont => NULL,
                              pr_des_erro => vr_dscritic);
       -- Insere as tags                                                                                           
+      vr_vlsaque_tot := 0;
       vr_aloc := 0;
       
       FOR rw_crapcop_all IN cr_crapcop_all LOOP
@@ -869,7 +925,10 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                    pr_dsprotocolo    => vr_dsprotocolo,
                                    pr_nriniseq       => pr_nriniseq,
                                    pr_nrregist       => pr_nrregist,
-                                   pr_cdopcao        => pr_cdopcao) LOOP
+                                   pr_cdopcao        => pr_cdopcao
+                                  ,pr_cdagenci       => pr_cdagenci         --> PA da conta                  -- Marcelo Telles Coelho - Projeto 420 - PLD
+                                  ,pr_nrcpf_sacador  => pr_nrcpf_sacador    --> CPF do sacador               -- Marcelo Telles Coelho - Projeto 420 - PLD
+                                  ) LOOP
         
      vr_qtregist := nvl(vr_qtregist, 0) + 1;
 
@@ -883,6 +942,9 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
         CONTINUE;
       END IF;
         
+      -- Marcelo Telles Coelho - Projeto 420 - PLD
+      vr_vlsaque_tot := vr_vlsaque_tot + rw_prv_saq.vlsaque;
+
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Dados',
                                pr_posicao  => 0,
@@ -1149,11 +1211,48 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                pr_tag_cont => rw_prv_saq.cdcanal,
                                pr_des_erro => vr_dscritic);
                                
+        -- Marcelo Telles Coelho - Projeto 420 - PLD
+        IF rw_prv_saq.inoferta = 1 THEN
+          vr_inoferta := 'SIM';
+        ELSE
+          vr_inoferta := 'NAO';
+        END IF;
+
+        -- Marcelo Telles Coelho - Projeto 420 - PLD
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_auxconta,
+                               pr_tag_nova => 'inoferta',
+                               pr_tag_cont => vr_inoferta,
+                               pr_des_erro => vr_dscritic);
+
+        -- Marcelo Telles Coelho - Projeto 420 - PLD
+        IF rw_prv_saq.dsobervacao IS NOT NULL THEN
+          vr_dsobservacao := 'SIM';
+        ELSE
+          vr_dsobservacao := 'NAO';
+        END IF;
+
+        -- Marcelo Telles Coelho - Projeto 420 - PLD
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_auxconta,
+                               pr_tag_nova => 'dsobservacao',
+                               pr_tag_cont => vr_dsobservacao,
+                               pr_des_erro => vr_dscritic);
+
         vr_auxconta := vr_auxconta + 1;
       END LOOP;      
                            
       END LOOP;
       
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'vlsaque_tot',
+                             pr_tag_cont => to_char(vr_vlsaque_tot, 'FM999G999G999D90', 'nls_numeric_characters='',.'''),
+                             pr_des_erro => vr_dscritic);
+
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
@@ -1210,6 +1309,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                               ,pr_txtquais       IN tbcc_provisao_especie.dstransacao%TYPE     --> DESCRICAO DE QUAIS MEIOS
                               ,pr_nrcpfope       IN crapopi.nrcpfope%TYPE                      --> CPF do operador internet
                               ,pr_ind_grava      IN NUMBER                                     --> INDICA QUE A PRVSAQ DEVE SER CADASTRADA INDEPENDETE DE REGRAS DE DATAS.
+                              ,pr_cdope_autorizador IN crapope.cdoperad%TYPE                   --> Código do operador que autorizou a provisão -- Marcelo Telles Coelho - Projeto 420 - PLD
                               ,pr_xmllog         IN VARCHAR2                                   --> XML com informações de LOG
                               ,pr_cdcritic       OUT PLS_INTEGER                               --> Código da crítica
                               ,pr_dscritic       OUT VARCHAR2                                  --> Descrição da crítica
@@ -1222,7 +1322,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
         Sistema : CECRED
         Sigla   : PRVSAQ
         Autor   : Antonio Remualdo Junior
-        Data    : Novembro/2017.                    Ultima atualizacao: 23/04/2018
+        Data    : Novembro/2017.                    Ultima atualizacao: 25/05/2018
     
         Dados referentes ao programa:
     
@@ -1234,6 +1334,8 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
     
         Alteracoes: 23/04/2018 - Alterado para não exigir a informação dos cheques quando o cadastro for 
                                  realizado através do IB, por solicitação do negócio. (Anderson P285).
+                    25/05/2018 - Projeto 420 - PLD
+                                (Marcelo Telles Coelho - Mouts).
     ..............................................................................*/
       ----------->>> VARIAVEIS <<<--------   
       -- Variável de críticas
@@ -1283,6 +1385,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       vr_pedesenha NUMBER :=0;  
       vr_aux VARCHAR2(1000); 
       vr_lib_prov_saque tbcc_monitoramento_parametro.inlibera_provisao_saque%TYPE;
+      vr_inexige_senha  VARCHAR2(1000);
       
       ---------->> CURSORES <<--------
       --> Buscar dados operador    
@@ -1453,7 +1556,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
 	  --REGRA DHSAQUE
       -- PARAMETROS MONITORAMENTO
       --Adicionado uma trava para que não seja possivel o provisionamento de valores abaixo ao parametrizado
-      SELECT m.vllimite_saque,
+      SELECT m.vlprovisao_saque vllimite_saque,  -- Marcelo Telles Coelho - Projeto 420 - PLD --> alterado campo DE=>VLLIMITE_SAQUE, PARA=>VLPROVISAO_SAQUE
              m.vllimite_pagamento,
              m.hrlimite_provisao,
              m.qtdias_provisao,
@@ -1485,35 +1588,35 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
 
 
 
-
-      
-      IF(pr_selsaqcheq = 1 and 
-         ((vr_idorigem <> 3) or  -- Ou nao é pelo Canal IB
-         ((vr_idorigem =  3) and ((pr_nrcheque > 0) or (pr_nrcontcheq > 0)))) -- Ou se for pelo IB, o cheque ou a conta devem estar preenchidos.
-         ) THEN
-        --> Buscar cheque
-        OPEN cr_cheque(pr_cdcooper => vr_cdcooper    
-                       ,pr_nrbanco => pr_nrbanco    
-                       ,pr_nragencia => pr_nragencia   
-                       ,pr_nrcontcheq => pr_nrcontcheq 
-                       ,pr_nrcheque => pr_nrcheque );
-        FETCH cr_cheque INTO rw_cheque;
-      
-        -- Se nao encontrar
-        IF cr_cheque%NOTFOUND THEN
-          -- Fechar o cursor
-          CLOSE cr_cheque;
-        
-          -- Montar mensagem de critica
-          vr_cdcritic := 244;
-          vr_dscritic := 'Cheque Inexistente.';
-          -- volta para o programa chamador
-          RAISE vr_exc_saida;      
-        END IF;
-      
-        -- Fechar o cursor
-        CLOSE cr_cheque;
-      END IF;
+      -- Marcelo Telles Coelho - Projeto 420 - PLD
+      -- Não fazer a validação do cheque, pois as informações foram retiradas da tela
+      -- IF(pr_selsaqcheq = 1 and
+      --    ((vr_idorigem <> 3) or  -- Ou nao é pelo Canal IB
+      --    ((vr_idorigem =  3) and ((pr_nrcheque > 0) or (pr_nrcontcheq > 0)))) -- Ou se for pelo IB, o cheque ou a conta devem estar preenchidos.
+      --    ) THEN
+      --   --> Buscar cheque
+      --   OPEN cr_cheque(pr_cdcooper => vr_cdcooper
+      --                  ,pr_nrbanco => pr_nrbanco
+      --                  ,pr_nragencia => pr_nragencia
+      --                  ,pr_nrcontcheq => pr_nrcontcheq
+      --                  ,pr_nrcheque => pr_nrcheque );
+      --   FETCH cr_cheque INTO rw_cheque;
+      --
+      --   -- Se nao encontrar
+      --   IF cr_cheque%NOTFOUND THEN
+      --     -- Fechar o cursor
+      --     CLOSE cr_cheque;
+      --
+      --     -- Montar mensagem de critica
+      --     vr_cdcritic := 244;
+      --     vr_dscritic := 'Cheque Inexistente.';
+      --     -- volta para o programa chamador
+      --     RAISE vr_exc_saida;
+      --   END IF;
+      --
+      --   -- Fechar o cursor
+      --   CLOSE cr_cheque;
+      -- END IF;
       
       --VALIDAR CONTA DO TITULAR
        --> Buscar conta
@@ -1613,7 +1716,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       
       --REGRA DHSAQUE
       -- PARAMETROS MONITORAMENTO
-    /*  SELECT m.vllimite_saque,
+    /*  SELECT m.vlprovisao_saque vllimite_saque,  -- Marcelo Telles Coelho - Projeto 420 - PLD --> alterado campo DE=>VLLIMITE_SAQUE, PARA=>VLPROVISAO_SAQUE
              m.vllimite_pagamento,
              m.hrlimite_provisao,
              m.qtdias_provisao,
@@ -1721,6 +1824,11 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
           END IF;                                      
       END IF;
       
+/*
+      -- Retirado a verificação de duplicidade de provisão,
+      -- pois o projeto liberou a inclusão de mais de uma provisão para o mesmo dia
+      -- Marcelo Telles Coelho - Projeto 420 - PLD
+      --
       --BUSCA PROVISAO
         OPEN cr_tbcc_provisao_especie(pr_cdcooper   => vr_cdcooper,
                                       pr_nrCpfCnpj  => vr_nrcpfcgc,
@@ -1741,6 +1849,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
         ELSE    
           CLOSE cr_tbcc_provisao_especie;
       END IF;
+*/    -- Fim Projeto 420
       
       gene0006.pc_gera_protocolo(pr_cdcooper => vr_cdcooper, 
                                  pr_dtmvtolt => vr_dtmvtolt, 
@@ -1934,6 +2043,25 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                              pr_tag_cont => vr_pedesenha,
                              pr_des_erro => vr_dscritic); 
                                                                                           
+      -- Marcelo Telles Coelho - Projeto 420 - PLD
+      -- Gera log
+      IF pr_cdope_autorizador IS NOT NULL THEN
+        DECLARE
+          vr_dias NUMBER;
+        BEGIN
+          vr_dias := TRUNC(vr_dhsaque) - TRUNC(SYSDATE);
+          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => 'prvsaq.log'
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                        ' -->  Autorizador  '|| pr_cdope_autorizador || ' - ' ||
+                                                        'Liberou a provisão da conta '||gene0002.fn_mask_conta(pr_nrContTit) || ' ' ||
+                                                        'no valor de R$ '||TO_CHAR(pr_vlSaqPagto,'9999999990.00')|| ' ' ||
+                                                        '(Total provisão do dia de R$ '||TO_CHAR((vr_tot + pr_vlSaqPagto),'9999999990.00')|| ') '||
+                                                        'para '||TO_CHAR(vr_dias)  ||' dias.');
+        END;
+      END IF;
+
       pr_des_erro := 'OK';
                                                                                          
   EXCEPTION
@@ -2010,6 +2138,7 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
                              ,pr_dhsaque        IN VARCHAR2                                   --> DATA DO SAQUE PAGAMENTO
                              ,pr_nrcpfcnpj      IN tbcc_provisao_especie.nrcpfcgc %TYPE       --> CPF CNPJ TITULAR
                              ,pr_nrdconta       IN tbcc_provisao_especie.nrdconta %TYPE       --> NUMERO CONTA TITULAR
+                             ,pr_dsprotocolo    IN tbcc_provisao_especie.dsprotocolo%TYPE   --> Protocolo da provisao. PRJ 420 - Mateus Z 
                              ,pr_xmllog         IN VARCHAR2             --> XML com informações de LOG
                              ,pr_cdcritic       OUT PLS_INTEGER         --> Código da crítica
                              ,pr_dscritic       OUT VARCHAR2            --> Descrição da crítica
@@ -2182,6 +2311,7 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
             p.dhprevisao_operacao = vr_dhsaque AND
             p.nrcpfcgc = pr_nrcpfcnpj AND 
             p.nrdconta = pr_nrdconta AND
+            p.dsprotocolo = pr_dsprotocolo AND
             p.insit_provisao = 1;           
       
       vr_valor := rw_tbcc_provisao_especie.vlsaque;
@@ -2585,7 +2715,7 @@ PROCEDURE pc_busca_operacao_especie(pr_cdcooper     IN tbcc_monitoramento_parame
   -- busca monitor
   CURSOR cr_monit_param(pr_cdcooper IN tbcc_monitoramento_parametro.cdcooper%TYPE) IS
   SELECT p.inlibera_saque,
-         p.vllimite_saque
+         p.vlprovisao_saque vllimite_saque  -- Marcelo Telles Coelho - Projeto 420 - PLD --> alterado campo DE=>VLLIMITE_SAQUE, PARA=>VLPROVISAO_SAQUE
   FROM tbcc_monitoramento_parametro p
   WHERE p.cdcooper = pr_cdcooper;         
   rw_monit_param cr_monit_param%ROWTYPE;
@@ -2658,7 +2788,7 @@ PROCEDURE pc_busca_operacao_especie(pr_cdcooper     IN tbcc_monitoramento_parame
          AND TRUNC(p.dhprevisao_operacao)<= pr_dtmvtolt 
          AND p.nrdconta = pr_nrdconta 
          AND p.insit_provisao = 1
-         AND ((pr_cm7_cheque IS NULL AND p.incheque = 0) OR (pr_cm7_cheque IS NOT NULL AND p.incheque = 1))
+ --        AND ((pr_cm7_cheque IS NULL AND p.incheque = 0) OR (pr_cm7_cheque IS NOT NULL AND p.incheque = 1))
          AND (pr_cm7_cheque IS NULL OR p.cdbanchq = SUBSTR(pr_cm7_cheque,2,3))
          AND (pr_cm7_cheque IS NULL OR p.cdagechq = SUBSTR(pr_cm7_cheque,5,4))
          AND (pr_cm7_cheque IS NULL OR p.nrctachq = SUBSTR(pr_cm7_cheque,23,10))
@@ -3128,7 +3258,7 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
   END pc_imprimir_protocolo;
 
  /* Rotina referente a verificacao de senha de usuario operador */
-  PROCEDURE pc_val_senha_operador (pr_cdcooper         IN crapcop.cdcooper%TYPE  --> Codigo Cooperativa
+  PROCEDURE pc_val_senha_operador (pr_cdcooper        IN crapcop.cdcooper%TYPE  --> Codigo Cooperativa
                                    ,pr_cdoperad        IN VARCHAR2 DEFAULT NULL  --> Operador                                  
                                    ,pr_nrdsenha        IN VARCHAR2               --> Numero da senha                                 
                                    ,pr_xmllog          IN VARCHAR2               --> XML com informações de LOG
@@ -3516,6 +3646,167 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
 		END;
 
   END fn_retorna_data_util;
+
+ /* Rotina referente a Validar se data a está em umm fim de semana ou feriado */
+  PROCEDURE pc_valida_data(pr_cdcooper     IN crapcop.cdcooper%TYPE  --> Codigo Cooperativa
+                          ,pr_dtprovisao   IN VARCHAR2               --> Data da provisão a ser testada
+                          ,pr_xmllog       IN VARCHAR2               --> XML com informações de LOG
+                          ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
+                          ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
+                          ,pr_retxml       IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                          ,pr_nmdcampo     OUT VARCHAR2              --> Nome do campo com erro
+                          ,pr_des_erro     OUT VARCHAR2) IS          --> Erros do processo
+  /*---------------------------------------------------------------------------------------------------------------
+    Programa: pc_valida_data
+    Sistema : PRVSAQ
+    Sigla   : PRVSAQ
+
+    Autor   : Marcelo Telles Coelho
+    Data    : 25/05/2018                        Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Validar se a data está em umm fim de semana ou feriado
+
+    Alteracoes:
+
+  ---------------------------------------------------------------------------------------------------------------*/
+
+  ------------------------------- CURSORES ---------------------------------
+  -- Selecionar os dados da Cooperativa
+  CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
+  SELECT cop.cdcooper
+        ,cop.nmrescop
+        ,cop.nrtelura
+        ,cop.cdbcoctl
+        ,cop.cdagectl
+        ,cop.dsdircop
+    FROM crapcop cop
+   WHERE cop.cdcooper = pr_cdcooper;
+  rw_crapcop cr_crapcop%ROWTYPE;
+
+  -- Verifica se a data é um feriado
+  CURSOR cr_crapfer (pr_cdcooper  IN crapfer.cdcooper%TYPE
+                    ,pr_dtvalidar IN DATE) IS
+  SELECT 1
+    FROM crapfer
+   WHERE cdcooper = pr_cdcooper
+     AND dtferiad = pr_dtvalidar
+     AND tpferiad = 1;
+
+  -- Verifica se a data é um fim de semana
+  CURSOR cr_fim_semana (pr_dtvalidar IN DATE) IS
+  SELECT 1
+    FROM dual
+   WHERE TO_CHAR(pr_dtvalidar, 'd') in (1,7);
+
+  ------------------------------- VARIÁVEIS --------------------------------
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+
+  --Variaveis gerais
+  vr_dsorigem VARCHAR2(40);
+  vr_dstransa VARCHAR2(100);
+
+  -- Rowid para tabela de log
+  vr_nrdrowid ROWID;
+
+  --Variaveis de Excecoes
+  vr_exc_saida EXCEPTION;
+
+  --Variaveis de Trabalho
+  vr_indata_invalida NUMBER;
+
+  BEGIN -- pc_valida_data
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE cr_crapcop;
+
+      -- Montar mensagem de critica
+      vr_cdcritic := 651;
+      -- Busca critica
+      vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+      RAISE vr_exc_saida;
+
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crapcop;
+    END IF;
+
+    vr_indata_invalida := 0;
+
+    FOR rw_fim_semana in cr_fim_semana (pr_dtvalidar => TO_DATE(pr_dtprovisao,'dd/mm/yyyy')) LOOP
+      vr_indata_invalida := 1;
+    END LOOP;
+
+    FOR rw_crapfer in cr_crapfer (pr_cdcooper  => pr_cdcooper
+                                 ,pr_dtvalidar => TO_DATE(pr_dtprovisao,'dd/mm/yyyy')) LOOP
+      vr_indata_invalida := 1;
+    END LOOP;
+
+    IF vr_indata_invalida = 1 THEN
+      vr_dscritic := 'Atenção! Não é possível incluir provisão para essa data, pois não se trata de dia útil.';
+      RAISE vr_exc_saida;
+    END IF;
+
+    --retorno protocolo
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Root',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Dados',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+    -- Insere as tags
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Dados',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'inf',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'inf',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'retnvl',
+                           pr_tag_cont => 'OK',
+                           pr_des_erro => vr_dscritic);
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro na rotina TELA_PRVSAQ.PC_VALIDA_DATA: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_valida_data;
 
 END tela_prvsaq;
 /

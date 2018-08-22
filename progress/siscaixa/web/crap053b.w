@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 28/10/2015
+   Data    : Marco/2001                      Ultima atualizacao: 10/08/2018
 
    Dados referentes ao programa:
 
@@ -39,7 +39,12 @@
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
                             
                28/10/2015 - #318705 Retirado o parametro p-flgdebcc (Carlos)
+               
+               10/08/2018 - Adicionado funcao para realizar provisao e 
+                            tratamento para solicitar senha. PRJ 420 (Mateus Z - Mouts)
 ............................................................................ */
+
+{ sistema/generico/includes/var_oracle.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -70,7 +75,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
        FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
        FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
-       FIELD v_valor AS CHARACTER FORMAT "X(256)":U .
+       FIELD v_valor AS CHARACTER FORMAT "X(256)":U
+       FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -123,7 +129,7 @@ DEF var de-nrctabdb      AS char.
 DEF var i-nrddigc2       AS char.     
 DEF var i-nrcheque       AS char.     
 DEF var i-nrddigc3       AS char.
-
+DEF VAR p-solicita           AS CHAR. /*elton*/
 
 DEFINE VARIABLE h-b1crap53 AS HANDLE     NO-UNDO.
 DEFINE VARIABLE h-b1crap54 AS HANDLE     NO-UNDO.
@@ -141,8 +147,6 @@ DEF var p-nrctabdb       AS DEC     FORMAT "zzz,zzz,zzz,9".     /* Conta */
 DEF var p-nrddigc2       AS INT     FORMAT "9".                 /* C2 */
 DEF var p-nrcheque       AS INT     FORMAT "zzz,zz9".           /* Cheque */
 DEF var p-nrddigc3       AS INT     FORMAT "9".                  /* C3 */
-
-
 
   DEF TEMP-TABLE w-compel
         FIELD dsdocmc7 AS CHAR    FORMAT "X(34)"
@@ -199,6 +203,12 @@ DEF VAR p-nro-conta-nova AS INT NO-UNDO.
 DEF VAR p-mensagem         AS CHAR NO-UNDO.
 DEF VAR p-mensagem1        AS CHAR NO-UNDO.
 DEF VAR p-mensagem2        AS CHAR NO-UNDO.
+DEF VAR p-nrcpfcgc AS CHAR NO-UNDO.
+DEF VAR p-dhprevisao_operacao AS CHAR NO-UNDO.
+DEF VAR p-nro-conta-provisao AS INT NO-UNDO.
+DEF VAR p-solicita-senha AS CHAR NO-UNDO.
+
+DEF VAR aux_dscritic AS CHAR.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -217,8 +227,8 @@ DEF VAR p-mensagem2        AS CHAR NO-UNDO.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.v_cod ab_unmap.v_senha ab_unmap.vh_foco ab_unmap.v_agenc ab_unmap.v_banco ab_unmap.v_c1 ab_unmap.v_c2 ab_unmap.v_c3 ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_cod1 ab_unmap.v_cod2 ab_unmap.v_cod3 ab_unmap.v_comp ab_unmap.v_conta ab_unmap.v_conta1 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_mensagem1 ab_unmap.v_mensagem2 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_cod ab_unmap.v_senha ab_unmap.vh_foco ab_unmap.v_agenc ab_unmap.v_banco ab_unmap.v_c1 ab_unmap.v_c2 ab_unmap.v_c3 ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_cod1 ab_unmap.v_cod2 ab_unmap.v_cod3 ab_unmap.v_comp ab_unmap.v_conta ab_unmap.v_conta1 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_mensagem1 ab_unmap.v_mensagem2 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_cod ab_unmap.v_senha ab_unmap.vh_foco ab_unmap.v_agenc ab_unmap.v_banco ab_unmap.v_c1 ab_unmap.v_c2 ab_unmap.v_c3 ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_cod1 ab_unmap.v_cod2 ab_unmap.v_cod3 ab_unmap.v_comp ab_unmap.v_conta ab_unmap.v_conta1 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_mensagem1 ab_unmap.v_mensagem2 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_cod ab_unmap.v_senha ab_unmap.vh_foco ab_unmap.v_agenc ab_unmap.v_banco ab_unmap.v_c1 ab_unmap.v_c2 ab_unmap.v_c3 ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_cod1 ab_unmap.v_cod2 ab_unmap.v_cod3 ab_unmap.v_comp ab_unmap.v_conta ab_unmap.v_conta1 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_mensagem1 ab_unmap.v_mensagem2 ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -332,6 +342,12 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U 
+           SIZE 20 BY 2     
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -376,6 +392,7 @@ DEFINE FRAME Web-Frame
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
           FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U
       END-FIELDS.
    END-TABLES.
  */
@@ -458,6 +475,8 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */   
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
 
@@ -552,6 +571,8 @@ PROCEDURE htmOffsets :
     ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).  
 END PROCEDURE.
 
 
@@ -638,9 +659,8 @@ PROCEDURE process-web-request :
          v_mensagem1      =  get-value("p-mensagem") + get-value("p-mensagem1")
          v_mensagem2      =  get-value("p-mensagem2")
          p-mensagem       =  get-value("p-mensagem")
-         p-valor-disponivel = get-value("p-valor-disponivel").
-         
-
+         p-valor-disponivel = get-value("p-valor-disponivel")
+         p-solicita-senha   =  get-value("p-solicita-senha").
 
   ASSIGN substr(c-cmc-7,34,1) = ":".
 
@@ -738,6 +758,52 @@ PROCEDURE process-web-request :
              {include/i-erro.i}
          END. 
          ELSE DO:
+         
+             RUN dbo/b1crap53.p PERSISTENT SET h-b1crap53.
+             RUN valida-pagto-cheque IN h-b1crap53(
+                                              INPUT v_coop,         
+                                              INPUT int(v_pac),
+                                              INPUT int(v_caixa),
+                                              INPUT v_cmc7,
+                                              INPUT " ",
+                                              INPUT INT(v_comp),   
+                                              INPUT INT(v_banco),
+                                              INPUT INT(v_agenc),
+                                              INPUT INT(v_c1),       
+                                              INPUT INT(v_conta), 
+                                              INPUT INT(v_c2),       
+                                              INPUT INT(v_conta1), 
+                                              INPUT INT(v_c3),
+                                              INPUT DEC(v_valor),
+                                              INPUT v_tppagmto,
+                                              INPUT "FALSE", /* flag para criar erro de Informar Codigo/Senha */
+                                              OUTPUT p-mensagem1,
+                                              OUTPUT p-mensagem2,
+                                              OUTPUT p-aux-indevchq, 
+                                              OUTPUT p-nrdocmto,
+                                              OUTPUT p-conta-atualiza,
+                                              OUTPUT p-mensagem,
+                                              OUTPUT p-valor-disponivel,
+                                              OUTPUT p-flg-cta-migrada,
+                                              OUTPUT p-coop-migrada,
+                                              OUTPUT p-flg-coop-host,
+                                              OUTPUT p-nro-conta-nova,
+                                              OUTPUT p-nrcpfcgc,
+                                              OUTPUT p-dhprevisao_operacao,
+                                              OUTPUT p-nro-conta-provisao,
+                                              OUTPUT p-solicita-senha).
+                                              
+             IF  p-solicita-senha <> " " AND v_cod = "" AND v_senha = "" THEN DO:
+                 ASSIGN l-habilita = YES. 
+                 {include/i-erro.i}
+             END.    
+             
+             IF  RETURN-value = "NOK"  THEN DO:
+                 {include/i-erro.i}
+             END.
+         
+         ELSE DO:
+         
               RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
               RUN valida-permissao-saldo-conta
                        IN h-b1crap54(INPUT v_coop,
@@ -762,39 +828,34 @@ PROCEDURE process-web-request :
                   {include/i-erro.i}
               END. 
               ELSE DO:
+                  IF v_tppagmto = "1" 
+                      THEN DO:
+                         RUN dbo/b1crap54.p
+                            PERSISTENT SET h-b1crap54.
+                                                                    
+                                RUN valida-permissao-provisao IN h-b1crap54(
+                                                                           INPUT v_coop,
+                                                                           INPUT INT(v_pac),
+                                                                           INPUT INT(v_caixa),
+                                                                           INPUT v_cod,
+                                                                           INPUT v_senha,
+                                                                           INPUT INT(v_conta),
+                                                                           INPUT DEC(v_valor),
+                                                                           INPUT p-solicita-senha).
+                                DELETE PROCEDURE h-b1crap54.
+                      END.
+                   IF v_tppagmto = "1" AND RETURN-VALUE = 'NOK' THEN DO:
+                      IF  p-solicita-senha <> " " THEN DO:
+                          ASSIGN l-habilita = YES.
+                      END.
+                      {include/i-erro.i}
+                   END.
+                   ELSE DO :
                     
                    ASSIGN l-houve-erro = NO.
 
                    DO  TRANSACTION ON ERROR UNDO:
                         
-                        RUN dbo/b1crap53.p PERSISTENT SET h-b1crap53.
-                        RUN valida-pagto-cheque IN h-b1crap53(
-                                                        INPUT v_coop,         
-                                                        INPUT int(v_pac),
-                                                        INPUT int(v_caixa),
-                                                        INPUT v_cmc7,
-                                                        INPUT " ",
-                                                        INPUT INT(v_comp),   
-                                                        INPUT INT(v_banco),
-                                                        INPUT INT(v_agenc),
-                                                        INPUT INT(v_c1),       
-                                                        INPUT INT(v_conta), 
-                                                        INPUT INT(v_c2),       
-                                                        INPUT INT(v_conta1), 
-                                                        INPUT INT(v_c3),
-                                                        INPUT DEC(v_valor),
-                                                        OUTPUT p-mensagem1,
-                                                        OUTPUT p-mensagem2,
-                                                        OUTPUT p-aux-indevchq, 
-                                                        OUTPUT p-nrdocmto,
-                                                        OUTPUT p-conta-atualiza,
-                                                        OUTPUT p-mensagem,
-                                                        OUTPUT p-valor-disponivel,
-                                                        OUTPUT p-flg-cta-migrada,
-                                                        OUTPUT p-coop-migrada,
-                                                        OUTPUT p-flg-coop-host,
-                                                        OUTPUT p-nro-conta-nova).
-
                         IF  NOT p-flg-cta-migrada  THEN
                         RUN atualiza-pagto-cheque  
                            IN h-b1crap53(INPUT v_coop,
@@ -861,6 +922,47 @@ PROCEDURE process-web-request :
 
                         END.
 
+                          IF v_tppagmto = "1" 
+                              THEN DO:
+                          
+                                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                                /* Efetuar a chamada da rotina Oracle */ 
+                                RUN STORED-PROCEDURE pc_realiza_provisao
+                                    aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,         /* Cooperativa */
+                                                                        INPUT INT(v_agenc),             /* PA aonde será realizado o saque */
+                                                                        INPUT p-dhprevisao_operacao,    /* Data e Hora da provisao */
+                                                                        INPUT DEC(p-nrcpfcgc),          /* CPF/CNPJ */
+                                                                        INPUT DEC(v_conta),             /* Número da conta da provisao */
+                                                                        INPUT p-nro-conta-provisao,     /* Número da conta do pagamento */
+                                                                        INPUT DEC(v_valor),             /* Valor da operacao */
+                                                                        INPUT v_cod,                    /* Código do operador que autorizou a provisao */
+                                                                        INPUT INT(v_pac),               /* PA aonde foi feito o saque */
+                                                                        INPUT INT(v_caixa),             /* Caixa aonde foi feito o saque */
+                                                                        OUTPUT 0,                       /* Cod. critica */
+                                                                        OUTPUT "").                     /* Desc. critica */
+
+                                /* Fechar o procedimento para buscarmos o resultado */ 
+                                CLOSE STORED-PROC pc_realiza_provisao
+                                       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                
+                                ASSIGN  aux_dscritic = ""
+                                        aux_dscritic = pc_realiza_provisao.pr_dscritic 
+                                                WHEN pc_realiza_provisao.pr_dscritic <> ?.
+                                
+                                IF aux_dscritic <> "" THEN 
+                                    DO:
+                                      
+                                        {&OUT} '<script> alert("' + aux_dscritic + '") </script>'.
+                                        
+                                        UNDO.
+                                    END.
+                                                  
+                              END.  
+                                
+
                        DELETE PROCEDURE h-b1crap53.
                        
                        ASSIGN v_valor = 
@@ -888,6 +990,7 @@ PROCEDURE process-web-request :
                                       w-craperr.dscritic   = craperr.dscritic
                                       w-craperr.erro       = craperr.erro.
                            END.
+                             
                            UNDO.
                        END.     
                    END.
@@ -956,8 +1059,9 @@ PROCEDURE process-web-request :
                          '<script>window.location = "crap053.html"
                          </script>'.
                  END.
-                  
              END.
+         END.       
+    END.
          END.       
     END.
     
@@ -987,12 +1091,22 @@ PROCEDURE process-web-request :
      * Enable objects that should be enabled. */
     RUN enableFields.
 
+    IF v_tppagmto = "1" THEN DO:
+        IF l-habilita = YES OR p-mensagem <> " " THEN
+        ENABLE v_cod
+               v_senha WITH FRAME {&FRAME-NAME}.
+        ELSE 
+            DISABLE v_cod
+                    v_senha WITH FRAME {&FRAME-NAME}.     
+    END.
+    ELSE DO:
     IF  p-mensagem <> " " THEN
         ENABLE v_cod
                v_senha WITH FRAME {&FRAME-NAME}.
     ELSE 
         DISABLE v_cod
                 v_senha WITH FRAME {&FRAME-NAME}.
+    END.
     
     /* STEP 4.2c -
      * OUTPUT the Progress form buffer to the WEB stream. */
@@ -1036,7 +1150,9 @@ PROCEDURE process-web-request :
             v_mensagem1   =  get-value("p-mensagem") + get-value("p-mensagem1")
             v_mensagem2   =  get-value("p-mensagem2")
             p-mensagem    =  get-value("p-mensagem")
-            p-valor-disponivel = get-value("p-valor-disponivel").
+            p-valor-disponivel = get-value("p-valor-disponivel")
+            v_tppagmto = STRING(get-value("v_tppagmto"))
+            p-solicita-senha = get-value("p-solicita-senha").
            
     ASSIGN vh_foco = "22".
     RUN displayFields.
@@ -1045,14 +1161,24 @@ PROCEDURE process-web-request :
      * Enable objects that should be enabled. */
     RUN enableFields.
 
+    IF v_tppagmto = "1" THEN DO:
+        IF  p-solicita-senha <> " " OR p-mensagem <> " "  THEN DO:
+        ENABLE v_cod
+               v_senha WITH FRAME {&FRAME-NAME}.
+        END.           
+        ELSE DO:
+            DISABLE v_cod
+                    v_senha WITH FRAME {&FRAME-NAME}.
+        END.
+    END.
+    ELSE DO:
     IF  p-mensagem <> " "  THEN
         ENABLE v_cod
                v_senha WITH FRAME {&FRAME-NAME}.
     ELSE 
         DISABLE v_cod
                 v_senha WITH FRAME {&FRAME-NAME}.
-
-   
+    END.            
 
     /* STEP 2c -
      * OUTPUT the Progress from buffer to the WEB stream. */
