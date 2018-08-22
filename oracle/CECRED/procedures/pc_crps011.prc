@@ -9,7 +9,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
      /*************************************************************************
         Magui: no informe de rendimentos do ano, campo saldo em 31/12/AAAA e
         alimentado com o campo CRAPDIR.VLSDAPLI. Sendo que aplicacoes RDCPOS
-        tera um calculo diferente para o informe de rendimento:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+        tera um calculo diferente para o informe de rendimento:
         his 528(aplicacao feita) + 532(rendimento) - 533(irrf) - 534(resgate).
      *************************************************************************/
 
@@ -18,7 +18,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                       Ultima atualizacao: 22/10/2015
+   Data    : Janeiro/92.                       Ultima atualizacao: 03/01/2018
 
    Dados referentes ao programa:
 
@@ -102,13 +102,26 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
                01/08/2013 - Tratamento para o Bloqueio Judicial (Ze).
 
                30/01/2014 - Conversão Progress >> PLSQL (Jean Michel).
-							 
-							 05/08/2014 - Ajuste de geração de registro anual de sobras e DIRF.
-							              (Reinert)
-                            
+
+               05/08/2014 - Ajuste de geração de registro anual de sobras e DIRF.
+                            (Reinert)
+
                22/10/2015 - Totalizar o valor tarifado por conta anualmente na tabela
                             TBCOTAS_TARIFAS_PAGAS e limpar campos mensais para
                             utilização no ano seguinte. (Dionathan)
+
+               27/06/2016 - M325 - Tributacao Juros ao Capital (Guilherme/SUPERO)
+
+               23/08/2017 - M325 - Alterar a forma de processamento dos históricos de 
+                            pagamento de empréstimos, afim de resolver problema de performance, 
+                            causado pela leitura dos registros da craplcm (Renato Darosci)
+
+               04/09/2017 - M439 Modificado cursor cr_craplct para somar todos 
+                            lancamentos dentro do ano (Tiago/Thiago #635669)
+
+               03/01/2018 - Carregar o saldo devedor dos emprestimos para a tabela de
+                            memória somente se o empréstimo está ativo (inliquid = 0)
+                            ou está em prejuízo (inprejuz = 1) (SD#748299 - AJFink)
 
     ............................................................................ */
 
@@ -203,36 +216,30 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
        and cdhistor in (474, 529, 475, 532, 463, 531)
        and dtmvtolt between trunc(pr_dtmvtolt, 'yyyy') and pr_dtmvtolt
      group by cdcooper, nrdconta;
-  
+
   -- Rendimento sobre o CAPITAL
   cursor cr_craplct (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrctares in crapass.nrdconta%type,
                      pr_dtmvtolt in crapdat.dtmvtolt%type) is
-    select juros.cdcooper,
+    SELECT juros.cdcooper,
            juros.nrdconta,
-           juros.dtmvtolt,
-           juros.cdhistor cdhistor_juros,
-           juros.vllanmto vllanmto_juros,
-           ir.cdhistor cdhistor_ir,
-           ir.vllanmto vllanmto_ir,
-           ir.nrdocmto
-      from craplct juros,
+           '926' cdhistor_juros,
+           SUM(juros.vllanmto) vllanmto_juros,
+           '922' cdhistor_ir,
+           SUM(ir.vllanmto) vllanmto_ir
+      FROM craplct juros,
            craplct ir
-     where juros.cdcooper = pr_cdcooper
-       and juros.nrdconta > pr_nrctares
-       and juros.cdhistor = 926
-       and trunc(juros.dtmvtolt,'yyyy') = trunc(pr_dtmvtolt, 'yyyy') --> Dentro do ano
-       -- Somente o ultimo lançamento
-       and juros.dtmvtolt = (select max(lct.dtmvtolt)
-                               from craplct lct
-                              where lct.cdcooper = juros.cdcooper
-                                and lct.nrdconta = juros.nrdconta
-                                and lct.cdhistor = juros.cdhistor)
+     WHERE juros.cdcooper = pr_cdcooper
+       AND juros.nrdconta > pr_nrctares
+       AND juros.cdhistor = 926
+       AND trunc(juros.dtmvtolt,'yyyy') = trunc(pr_dtmvtolt, 'yyyy') --> Dentro do ano
        -- Podendo ou não haver IR sobre os juros
-       and ir.cdcooper (+) = juros.cdcooper
-       and ir.nrdconta (+) = juros.nrdconta
-       and ir.dtmvtolt (+) = juros.dtmvtolt
-       and ir.cdhistor (+) = 922;
+       AND ir.cdcooper (+) = juros.cdcooper
+       AND ir.nrdconta (+) = juros.nrdconta
+       AND ir.dtmvtolt (+) = juros.dtmvtolt
+       AND ir.cdhistor (+) = 922
+    GROUP BY juros.cdcooper, juros.nrdconta, '926', '922';
+       
   -- Calcula saldo da poupanca programada
   cursor cr_craprpp (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrctares in crapass.nrdconta%type,
@@ -271,6 +278,10 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
       from crapepr
      where cdcooper = pr_cdcooper
        and nrdconta > pr_nrctares
+       --se está ativo (inliquid = 0) ou está em prejuízo (inprejuz = 1)
+       and (inliquid = 0 or inprejuz = 1)
+       --se possui saldo devedor diferente de zero
+       and nvl(vlsdeved,0) <> 0
      group by cdcooper, nrdconta;
   -- Busca o registro de saldo dos associados
   cursor cr_crapsld(pr_cdcooper crapcop.cdcooper%type,
@@ -494,37 +505,37 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
        and ass.nrdconta(+) = sld.nrdconta
      order by sld.cdcooper,
               sld.nrdconta;
-  -- Cursor de lançamentos de aplicação da captação							
+  -- Cursor de lançamentos de aplicação da captação
   CURSOR cr_craprac (pr_cdcooper craprac.cdcooper%TYPE
-	                  ,pr_nrdconta craprac.nrdconta%TYPE) IS
-		SELECT rac.cdcooper,
-		       rac.cdprodut,
-					 rac.nrdconta,
-					 rac.nraplica
-			FROM craprac rac
-  	 WHERE rac.cdcooper = pr_cdcooper
-		   AND rac.nrdconta > pr_nrdconta
-			 AND rac.idsaqtot = 0;
-	rw_craprac cr_craprac%ROWTYPE;
-	
-	-- Cursor dos lançamentos de aplicações da captação para calculo do IR
-	CURSOR cr_craplac (pr_cdcooper craprac.cdcooper%TYPE
-	                  ,pr_nrdconta craprac.nrdconta%TYPE
-										,pr_nraplica craprac.nraplica%TYPE) IS
-	  SELECT lac.cdhistor
-		      ,lac.vllanmto
-          ,lac.dtmvtolt
-			FROM craplac lac
-		 WHERE lac.cdcooper = pr_cdcooper
-		   AND lac.nrdconta = pr_nrdconta
-			 AND lac.nraplica = pr_nraplica;
-	rw_craplac cr_craplac%ROWTYPE;
+                    ,pr_nrdconta craprac.nrdconta%TYPE) IS
+    SELECT rac.cdcooper,
+           rac.cdprodut,
+           rac.nrdconta,
+           rac.nraplica
+      FROM craprac rac
+     WHERE rac.cdcooper = pr_cdcooper
+       AND rac.nrdconta > pr_nrdconta
+       AND rac.idsaqtot = 0;
+  rw_craprac cr_craprac%ROWTYPE;
 
   -- Cursor dos lançamentos de aplicações da captação para calculo do IR
-	CURSOR cr_craplac_ano(pr_cdcooper in crapcop.cdcooper%TYPE,
+  CURSOR cr_craplac (pr_cdcooper craprac.cdcooper%TYPE
+                    ,pr_nrdconta craprac.nrdconta%TYPE
+                    ,pr_nraplica craprac.nraplica%TYPE) IS
+    SELECT lac.cdhistor
+          ,lac.vllanmto
+          ,lac.dtmvtolt
+      FROM craplac lac
+     WHERE lac.cdcooper = pr_cdcooper
+       AND lac.nrdconta = pr_nrdconta
+       AND lac.nraplica = pr_nraplica;
+  rw_craplac cr_craplac%ROWTYPE;
+
+  -- Cursor dos lançamentos de aplicações da captação para calculo do IR
+  CURSOR cr_craplac_ano(pr_cdcooper in crapcop.cdcooper%TYPE,
                         pr_nrctares in crapass.nrdconta%TYPE,
                         pr_dtmvtolt in crapdat.dtmvtolt%TYPE) IS
-	  SELECT lac.nrdconta
+    SELECT lac.nrdconta
           ,lac.cdhistor
           ,lac.vllanmto
           ,lac.dtmvtolt
@@ -539,24 +550,59 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
        AND rac.cdcooper = lac.cdcooper
        AND rac.nrdconta = lac.nrdconta
        AND rac.nraplica = lac.nraplica
-       AND cpc.cdprodut = rac.cdprodut 
-       AND lac.dtmvtolt BETWEEN trunc(pr_dtmvtolt, 'yyyy') AND pr_dtmvtolt;    
-	
+       AND cpc.cdprodut = rac.cdprodut
+       AND lac.dtmvtolt BETWEEN trunc(pr_dtmvtolt, 'yyyy') AND pr_dtmvtolt;
+
   rw_craplac_ano cr_craplac_ano%ROWTYPE;
-		
-	-- Cursor para busca de produto cadastrado
-	CURSOR cr_crapcpc (pr_cdprodut crapcpc.cdprodut%TYPE) IS
-	  SELECT cpc.cdhsraap,
-		       cpc.cdhsnrap,
-					 cpc.cdhsrdap,
-					 cpc.cdhsirap,
-					 cpc.cdhsrgap,
-					 cpc.cdhsvtap,
-					 cpc.cdhsprap,
-					 cpc.cdhsrvap
-			FROM crapcpc cpc
-		 WHERE cpc.cdprodut = pr_cdprodut;
-	rw_crapcpc cr_crapcpc%ROWTYPE;
+
+  -- Cursor para busca de produto cadastrado
+  CURSOR cr_crapcpc (pr_cdprodut crapcpc.cdprodut%TYPE) IS
+    SELECT cpc.cdhsraap,
+           cpc.cdhsnrap,
+           cpc.cdhsrdap,
+           cpc.cdhsirap,
+           cpc.cdhsrgap,
+           cpc.cdhsvtap,
+           cpc.cdhsprap,
+           cpc.cdhsrvap
+      FROM crapcpc cpc
+     WHERE cpc.cdprodut = pr_cdprodut;
+  rw_crapcpc cr_crapcpc%ROWTYPE;
+
+  -- Calculo dos Valores Pagos em Emprestimos e Financiamentos no ano
+  CURSOR cr_apuraepr(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                     pr_cdoperac IN NUMBER,
+                     pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS 
+    SELECT t.nrdconta
+         , SUM(t.vloperacao)  vllanmto
+      FROM cecred.tbcc_operacoes_diarias t
+     WHERE t.cdcooper   = pr_cdcooper
+       AND t.cdoperacao = pr_cdoperac
+       AND t.dtoperacao BETWEEN trunc(pr_dtmvtolt, 'yyyy') and pr_dtmvtolt
+     GROUP BY t.nrdconta;
+  
+  /*  NÃO DEVERÁ MAIS LER A TABELA DE LANÇAMENTOS
+  cursor cr_craplcm (pr_cdcooper in crapcop.cdcooper%type,
+                     pr_nrdconta in crapass.nrdconta%type,
+                     pr_dtmvtolt in crapdat.dtmvtolt%type) is
+    select lcm.cdcooper,
+           lcm.nrdconta,
+           sum(decode(lcm.cdhistor,
+                      108, lcm.vllanmto,
+                      275, lcm.vllanmto,
+                     1539, lcm.vllanmto,
+                      393, lcm.vllanmto,
+                     1706, lcm.vllanmto * -1,
+                       99, lcm.vllanmto * -1,
+                       0)) vllanmto_lcm
+      from craplcm lcm
+     where lcm.cdcooper = pr_cdcooper
+       and lcm.nrdconta = pr_nrdconta
+       and lcm.cdhistor in (108, 275, 1539, 393, 1706, 99)
+       and lcm.dtmvtolt between trunc(pr_dtmvtolt, 'yyyy') and pr_dtmvtolt
+     group by lcm.cdcooper, lcm.nrdconta;
+  rw_craplcm cr_craplcm%ROWTYPE;*/
+
 
   ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
@@ -577,6 +623,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
   vr_totvlsdrdca  decimal(25,8)  := 0;
   vr_totvlsdeved  decimal(25,8)  := 0;
   vr_totvlsdrdpp  decimal(25,8)  := 0;
+  vr_totvleprpgt  decimal(25,8)  := 0; -- Valores Pagos em Emprestimos e Financiamentos
   vr_vlrencot     decimal(25,8)  := 0;
   vr_vlirfcot     decimal(25,8)  := 0;
   vr_dupvlsdrdca  decimal(25,8)  := 0;
@@ -584,6 +631,9 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
   vr_sldrgttt     decimal(25,8)  := 0;
   vr_vlsdrdca     decimal(25,8)  := 0;
   vr_sldpresg     decimal(25,8)  := 0;
+
+  -- Parametro com o código de operação dos lançamentos de histórico
+  vr_cdoperac_pagepr   NUMBER;
 
   -- PL/Table para armazenar os lançamentos das contas
   type typ_aplica is record (nraplica      craprda.nraplica%type,
@@ -611,35 +661,51 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
   type typ_tab_craprda is table of typ_craprda index by varchar2(10); -- O índice será o nrdconta
   -- O índice da pl/table é o número da conta e o número da aplicação.
   vr_ind_craprda   varchar2(10);
-	vr_ind_aplica    varchar2(10);
+  vr_ind_aplica    varchar2(10);
   -- Variável para instanciar a pl/table
   vr_craprda       typ_tab_craprda;
-	
-	-- PL/Table para armazenar o saldo das aplicações
+
+  -- PL/Table para armazenar o saldo das aplicações
   TYPE typ_vlsldapl_aplica IS RECORD(vlsldapl    crapdir.VLSDAPLI%TYPE);
-	TYPE typ_tab_vlsldapl_aplica IS TABLE OF typ_vlsldapl_aplica INDEX BY VARCHAR2(10);
-	TYPE typ_vlsldapl IS RECORD(vr_vlsldapl    typ_tab_vlsldapl_aplica);
-	TYPE typ_tab_vlsldapl IS TABLE OF typ_vlsldapl INDEX BY VARCHAR2(10);
+  TYPE typ_tab_vlsldapl_aplica IS TABLE OF typ_vlsldapl_aplica INDEX BY VARCHAR2(10);
+  TYPE typ_vlsldapl IS RECORD(vr_vlsldapl    typ_tab_vlsldapl_aplica);
+  TYPE typ_tab_vlsldapl IS TABLE OF typ_vlsldapl INDEX BY VARCHAR2(10);
 
   -- Variável para instanciar a pl/table
   vr_craprac       typ_tab_vlsldapl;
-	
-	-- O indice da pl/table vr_craprac é o número da conta
-	vr_ind_vlsldapl         varchar2(10);
-	-- O indice do campo vr_vlsldapl da pl/table vr_craprac é o número da aplicação
-	vr_ind_vlsldapl_aplica  varchar2(10);
 
-	-- PL/Table para armazenar a provisao anterior das aplicacoes RDC
-	TYPE typ_vlprvapl IS RECORD(vlprvapl crapcot.vlpvardc%TYPE);
-	TYPE typ_tab_vlprvapl IS TABLE OF typ_vlprvapl INDEX BY VARCHAR2(10);
-	
-	-- Variável para instanciar a pl/table
+
+ -- PL/Table para armazenar a conta e a PL/Table de Emprestimos e Financiamentos
+  type typ_prgepr is record (nrdconta        craprda.nrdconta%TYPE,
+                             vlsdpgepr       crapepr.vlsdeved%TYPE);
+  type typ_tab_pgtepr is table of typ_prgepr index by varchar2(10); -- O índice será o nrdconta
+  
+  -- table para guardar a apuração de valores de empréstimo por conta
+  TYPE typ_apura_epr IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
+  vr_apuracao_epr     typ_apura_epr;
+
+  -- Variavel para Pagamento de Emprestimos
+  vr_pgtoepr       typ_tab_pgtepr;
+
+  -- O indice da pl/table vr_craprac é o número da conta
+  vr_ind_vlsldapl         varchar2(10);
+  -- O indice do campo vr_vlsldapl da pl/table vr_craprac é o número da aplicação
+  vr_ind_vlsldapl_aplica  varchar2(10);
+
+  -- Indice do campo que acumula valores pagos em Emprestimos e Financiamentos
+  vr_ind_pgtoepr          VARCHAR2(10);
+
+  -- PL/Table para armazenar a provisao anterior das aplicacoes RDC
+  TYPE typ_vlprvapl IS RECORD(vlprvapl crapcot.vlpvardc%TYPE);
+  TYPE typ_tab_vlprvapl IS TABLE OF typ_vlprvapl INDEX BY VARCHAR2(10);
+
+  -- Variável para instanciar a pl/table
   vr_crapcot       typ_tab_vlprvapl;
-	    
+
   -- Variáveis para controle de restart
   vr_nrctares crapass.nrdconta%TYPE := 0;      --> Número da conta de restart
   vr_dsrestar VARCHAR2(4000);             --> String genérica com informações para restart
-  vr_inrestar INTEGER;                    --> Indicador de Restart      	
+  vr_inrestar INTEGER;                    --> Indicador de Restart
   -- Buscar as informações para restart e Rowid para atualização posterior
   CURSOR cr_crapres IS
     SELECT res.dsrestar
@@ -681,7 +747,7 @@ BEGIN
       raise vr_exc_saida;
     end if;
   close btch0001.cr_crapdat;
-  
+
   -- Validações iniciais do programa
   btch0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper,
                              pr_flgbatch => 1,
@@ -693,7 +759,7 @@ BEGIN
     -- Envio centralizado de log de erro
     raise vr_exc_saida;
   end if;
-  
+
   -- Busca das informações de restart
   IF pr_flgresta = 1 THEN
     -- Tratamento e retorno de valores de restart
@@ -710,9 +776,14 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
   END IF;
+
+  -----------------------------------------------------------------------------------------------
+  -- Buscar o código de operação para os registros de lançamento de históricos de empréstimos
+  vr_cdoperac_pagepr := to_number(gene0001.fn_param_sistema('CRED',0,'CDOPERAC_HIS_PAGTO_EPR'));
+  -----------------------------------------------------------------------------------------------
   
   -- Regra de negócio do programas --
-  
+
   -- Leitura de dados de ufir
   open cr_crapmfx(pr_cdcooper => pr_cdcooper,          -- codigo da cooperativa
                   pr_dtmvtolt => rw_crapdat.dtmvtolt); -- data de movimentacao atual
@@ -726,7 +797,7 @@ BEGIN
       raise vr_exc_saida;
     end if;
   close cr_crapmfx;
-  
+
   -- Carrega PL/Table com os lançamentos para uso no loop do cursor cr_crapsld
   for rw_craprda in cr_craprda (pr_cdcooper,
                                 vr_nrctares) loop
@@ -746,63 +817,63 @@ BEGIN
     vr_craprda(vr_ind_craprda).vr_aplica(vr_ind_aplica).tpaplrdc     := rw_craprda.tpaplrdc;
     vr_craprda(vr_ind_craprda).vr_aplica(vr_ind_aplica).vllanmto     := rw_craprda.vllanmto;
   end loop;
-	
-	-- Para cada registros de aplicação de captação
-	FOR rw_craprac IN cr_craprac(pr_cdcooper
-		                          ,vr_nrctares) LOOP
-		
-	  -- Alimenta Chaves
-    vr_ind_vlsldapl := lpad(rw_craprac.nrdconta, 10, '0');
-		vr_ind_vlsldapl_aplica := lpad(rw_craprac.nraplica, 10, '0');
-															
-		-- Abre cursor de produtos cadastrados
-    OPEN cr_crapcpc(rw_craprac.cdprodut);
-		FETCH cr_crapcpc INTO rw_crapcpc;
-		
-		-- Se encontrar produto
-		IF cr_crapcpc%FOUND THEN
-      -- Fecha cursor
-			CLOSE cr_crapcpc;
 
-		  -- Busca os lançamentos de aplicações da captação para calculo do IR
-			FOR rw_craplac IN cr_craplac(rw_craprac.cdcooper
-																	,rw_craprac.nrdconta
-																	,rw_craprac.nraplica) LOOP
-      
-			  IF rw_craplac.cdhistor = rw_crapcpc.cdhsraap OR   --> Renovação Aplicação
-					 rw_craplac.cdhistor = rw_crapcpc.cdhsnrap OR   --> Aplicação Recurso Novo
-					 rw_craplac.cdhistor = rw_crapcpc.cdhsrdap THEN --> Rendimento
-					-- Soma valor de lançamento na PL/TABLE
+  -- Para cada registros de aplicação de captação
+  FOR rw_craprac IN cr_craprac(pr_cdcooper
+                              ,vr_nrctares) LOOP
+
+    -- Alimenta Chaves
+    vr_ind_vlsldapl := lpad(rw_craprac.nrdconta, 10, '0');
+    vr_ind_vlsldapl_aplica := lpad(rw_craprac.nraplica, 10, '0');
+
+    -- Abre cursor de produtos cadastrados
+    OPEN cr_crapcpc(rw_craprac.cdprodut);
+    FETCH cr_crapcpc INTO rw_crapcpc;
+
+    -- Se encontrar produto
+    IF cr_crapcpc%FOUND THEN
+      -- Fecha cursor
+      CLOSE cr_crapcpc;
+
+      -- Busca os lançamentos de aplicações da captação para calculo do IR
+      FOR rw_craplac IN cr_craplac(rw_craprac.cdcooper
+                                  ,rw_craprac.nrdconta
+                                  ,rw_craprac.nraplica) LOOP
+
+        IF rw_craplac.cdhistor = rw_crapcpc.cdhsraap OR   --> Renovação Aplicação
+           rw_craplac.cdhistor = rw_crapcpc.cdhsnrap OR   --> Aplicação Recurso Novo
+           rw_craplac.cdhistor = rw_crapcpc.cdhsrdap THEN --> Rendimento
+          -- Soma valor de lançamento na PL/TABLE
           IF vr_craprac.EXISTS(vr_ind_vlsldapl) AND
              vr_craprac(vr_ind_vlsldapl).vr_vlsldapl.EXISTS(vr_ind_vlsldapl_aplica) THEN
-					  vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl := 
-					  NVL(vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl,0) + NVL(rw_craplac.vllanmto,0);
+            vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl :=
+            NVL(vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl,0) + NVL(rw_craplac.vllanmto,0);
           ELSE
             vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl := NVL(rw_craplac.vllanmto,0);
           END IF;
-				END IF;
-				
-				IF rw_craplac.cdhistor = rw_crapcpc.cdhsirap OR   --> IRRF Rendimento 
-					 rw_craplac.cdhistor = rw_crapcpc.cdhsrgap OR   --> Resgate
-					 rw_craplac.cdhistor = rw_crapcpc.cdhsvtap THEN --> Vencimento
-				  -- Subtrai valor de lançamento na PL/TABLE
+        END IF;
+
+        IF rw_craplac.cdhistor = rw_crapcpc.cdhsirap OR   --> IRRF Rendimento
+           rw_craplac.cdhistor = rw_crapcpc.cdhsrgap OR   --> Resgate
+           rw_craplac.cdhistor = rw_crapcpc.cdhsvtap THEN --> Vencimento
+          -- Subtrai valor de lançamento na PL/TABLE
           IF  vr_craprac.EXISTS(vr_ind_vlsldapl) AND
             vr_craprac(vr_ind_vlsldapl).vr_vlsldapl.EXISTS(vr_ind_vlsldapl_aplica) THEN
-  					vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl := 
-	  				NVL(vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl,0) - NVL(rw_craplac.vllanmto,0);
+            vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl :=
+            NVL(vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl,0) - NVL(rw_craplac.vllanmto,0);
           ELSE
             vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl :=  (-1 *  NVL(rw_craplac.vllanmto,0));
           END IF;
-			  END IF;
-        
-			END LOOP;
-		ELSE
-      -- Fecha cursor
-			CLOSE cr_crapcpc;	
-		END IF;
+        END IF;
 
-	END LOOP;
-	
+      END LOOP;
+    ELSE
+      -- Fecha cursor
+      CLOSE cr_crapcpc;
+    END IF;
+
+  END LOOP;
+
   -- Carrega pltable de Lançamentos da aplicação
   for rw_craplap in cr_craplap (pr_cdcooper,
                                 vr_nrctares,
@@ -813,8 +884,8 @@ BEGIN
   -- Leitura de lancamento do ano vigente
   FOR rw_craplac_ano IN cr_craplac_ano(pr_cdcooper
                                       ,vr_nrctares
-                                      ,rw_crapdat.dtmvtolt) LOOP 
-          
+                                      ,rw_crapdat.dtmvtolt) LOOP
+
     IF rw_craplac_ano.cdhistor = rw_craplac_ano.cdhsprap OR   /* Provisão   */
       rw_craplac_ano.cdhistor = rw_craplac_ano.cdhsrdap THEN /* Rendimento */
       -- Soma valor de lançamento na PL/TABLE
@@ -824,8 +895,8 @@ BEGIN
         vr_crapcot(LPAD(rw_craplac_ano.nrdconta,10,'0')).vlprvapl := NVL(rw_craplac_ano.vllanmto,0);
       END IF;
     END IF;
-  				  
-    IF rw_craplac_ano.cdhistor = rw_craplac_ano.cdhsrvap THEN /* Reversão */			
+
+    IF rw_craplac_ano.cdhistor = rw_craplac_ano.cdhsrvap THEN /* Reversão */
       -- Subtrai valor de lançamento na PL/TABLE
       IF vr_crapcot.EXISTS(LPAD(rw_craplac_ano.nrdconta,10,'0')) THEN
         vr_crapcot(LPAD(rw_craplac_ano.nrdconta,10,'0')).vlprvapl := NVL(vr_crapcot(LPAD(rw_craplac_ano.nrdconta,10,'0')).vlprvapl,0) - NVL(rw_craplac_ano.vllanmto,0);
@@ -836,12 +907,12 @@ BEGIN
 
   END LOOP;
 
-  -- Carrega pltable de Lancamentos de cotas/capital 
+  -- Carrega pltable de Lancamentos de cotas/capital
   for rw_craplct in cr_craplct (pr_cdcooper,
                                 vr_nrctares,
                                 rw_crapdat.dtmvtolt) loop
     vr_ind_craprda := lpad(rw_craplct.nrdconta, 10, '0');
-    vr_craprda(vr_ind_craprda).dtmvtolt       := rw_craplct.dtmvtolt;
+    vr_craprda(vr_ind_craprda).dtmvtolt       := rw_crapdat.dtmvtolt;
     vr_craprda(vr_ind_craprda).vllanmto_juros := nvl(rw_craplct.vllanmto_juros, 0);
     vr_craprda(vr_ind_craprda).vllanmto_ir    := nvl(rw_craplct.vllanmto_ir, 0);
   end loop;
@@ -856,7 +927,21 @@ BEGIN
                                 vr_nrctares) loop
     vr_craprda(lpad(rw_crapepr.nrdconta, 10, '0')).vlsdeved := nvl(rw_crapepr.vlsdeved, 0);
   end loop;
-  
+
+  ------------------------------------------------------------------------------
+  -- Deve executar a rotina de apuração para o dia do fechamento, afim de 
+  -- calcular os valores para o último dia do mês (Renato Darosci - 23/08/2017)
+  PAGA0002.pc_apura_lcm_his_emprestimo(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtrefere => rw_crapdat.dtmvtolt);
+                                      
+   -- Após realizar a apuração dos dados ... deve agrupar os valores na tabela de memória
+   FOR rw_apuraepr IN cr_apuraepr(pr_cdcooper
+                                 ,vr_cdoperac_pagepr
+                                 ,rw_crapdat.dtmvtolt) LOOP
+     vr_apuracao_epr(rw_apuraepr.nrdconta) := rw_apuraepr.vllanmto;
+   END LOOP;
+  ------------------------------------------------------------------------------
+
   -- Busca o registro de saldo dos associados e zera os totalizadores anuais
   for rw_crapsld in cr_crapsld (pr_cdcooper,
                                 vr_nrctares) LOOP
@@ -887,7 +972,7 @@ BEGIN
     end if;
     -- Efetuar varredura das aplicações RDCA da Conta
     while vr_ind_aplica is not null loop
-      
+
       if vr_craprda(vr_ind_craprda).vr_aplica(vr_ind_aplica).tpaplica_rda = 3 then
         -- Cálculo RDCA
         apli0001.pc_calc_aplicacao(pr_cdcooper     => pr_cdcooper,  --> COOPERATIVA
@@ -956,26 +1041,57 @@ BEGIN
       end if;
       vr_ind_aplica := vr_craprda(vr_ind_craprda).vr_aplica.next(vr_ind_aplica);
     end loop;
-		
-		-- Alimenta indice da PL/TABLE
-		vr_ind_vlsldapl := lpad(rw_crapsld.nrdconta, 10, '0');
+
+    -- Alimenta indice da PL/TABLE
+    vr_ind_vlsldapl := lpad(rw_crapsld.nrdconta, 10, '0');
     if vr_craprac.exists(vr_ind_vlsldapl) then
       vr_ind_vlsldapl_aplica := vr_craprac(vr_ind_vlsldapl).vr_vlsldapl.first;
     else
       vr_ind_vlsldapl_aplica := null;
     end if;
-		-- Percorre todos os registros da conta da PL/TABLE
-		WHILE vr_ind_vlsldapl_aplica IS NOT NULL LOOP
-			
-		  -- Se o valor do saldo da aplicação não for negativo
-		  IF vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl > 0 THEN
-		    vr_totvlsdrdca := vr_totvlsdrdca + vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl;
-			END IF;
-		
-		  vr_ind_vlsldapl_aplica := vr_craprac(vr_ind_vlsldapl).vr_vlsldapl.next(vr_ind_vlsldapl_aplica);
-	
-		END LOOP;				
-		
+    -- Percorre todos os registros da conta da PL/TABLE
+    WHILE vr_ind_vlsldapl_aplica IS NOT NULL LOOP
+
+      -- Se o valor do saldo da aplicação não for negativo
+      IF vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl > 0 THEN
+        vr_totvlsdrdca := vr_totvlsdrdca + vr_craprac(vr_ind_vlsldapl).vr_vlsldapl(vr_ind_vlsldapl_aplica).vlsldapl;
+      END IF;
+
+      vr_ind_vlsldapl_aplica := vr_craprac(vr_ind_vlsldapl).vr_vlsldapl.next(vr_ind_vlsldapl_aplica);
+
+    END LOOP;
+
+    ----------------------------------------------------------------------
+    -- Realizar a leitura da tabela de auditoria ao invés da tabela de 
+    -- lançamentos. (Renato Darosci - 23/08/2017)
+    ----------------------------------------------------------------------
+    vr_totvleprpgt := 0;
+    
+    -- Verifica se existe dados para a conta
+    IF vr_apuracao_epr.EXISTS(rw_crapsld.nrdconta) THEN
+      vr_totvleprpgt := NVL( vr_apuracao_epr(rw_crapsld.nrdconta) , 0);
+    END IF;
+    
+    /*IF cr_craplcm%ISOPEN THEN
+      CLOSE cr_craplcm;
+    END IF;
+    open cr_craplcm(pr_cdcooper,
+                    rw_crapsld.nrdconta,
+                    rw_crapdat.dtmvtolt);
+    fetch cr_craplcm into rw_craplcm;
+    -- Verificar se existe informação, e gerar erro caso não exista
+    if cr_craplcm%notfound then
+        -- Fechar o cursor
+      CLOSE cr_craplcm;
+      vr_totvleprpgt := 0;
+    ELSE
+      vr_totvleprpgt := nvl(rw_craplcm.vllanmto_lcm, 0);
+    END IF;
+    IF cr_craplcm%ISOPEN THEN
+      CLOSE cr_craplcm;
+    END IF;*/
+    ----------------------------------------------------------------------
+
     -- Preparar informações cfme existência ou não da RDA
     if vr_craprda.exists(vr_ind_craprda) then
       vr_totvlsdeved := round(nvl(vr_craprda(vr_ind_craprda).vlsdeved, 0), 2);
@@ -990,10 +1106,10 @@ BEGIN
       vr_vlrencot    := 0;
       vr_vlirfcot    := 0;
     end if;
-		
-		IF vr_crapcot.exists(vr_ind_craprda) THEN
-			vr_vlpvardc    := vr_vlpvardc + vr_crapcot(vr_ind_craprda).vlprvapl;
-		END IF;
+
+    IF vr_crapcot.exists(vr_ind_craprda) THEN
+      vr_vlpvardc    := vr_vlpvardc + vr_crapcot(vr_ind_craprda).vlprvapl;
+    END IF;
     -- Cria registro para declaracao do imposto de renda
     begin
       insert into crapdir
@@ -1160,7 +1276,9 @@ BEGIN
          smposano##9,
          smposano##10,
          smposano##11,
-         smposano##12)
+         smposano##12
+        ,vlprepag -- Valores Pagos em Emprestimos e Financiamentos
+         )
       values
         (rw_crapsld.nrdconta,
          rw_crapsld.dtdemiss,
@@ -1325,13 +1443,15 @@ BEGIN
          rw_crapsld.smposano##9,
          rw_crapsld.smposano##10,
          rw_crapsld.smposano##11,
-         rw_crapsld.smposano##12);
+         rw_crapsld.smposano##12
+        ,nvl(vr_totvleprpgt,0) -- Valores Pagos em Emprestimos e Financiamentos
+        );
     exception
       when others then
         vr_dscritic := 'Problema ao inserir registro na tabela CRAPDIR: ' || sqlerrm;
         raise vr_exc_saida;
     end;
-				
+
     -- Atualiza informações nas cotas
     begin
       update crapcot
@@ -1665,13 +1785,13 @@ BEGIN
         COMMIT;
         --ROLLBACK;
       end if;
-    END IF;  
+    END IF;
   end loop;
-  
+
   BEGIN
     -- Atualiza o valor pago em tarifas no ano e zera as colunas para o proximo ano
     UPDATE tbcotas_tarifas_pagas ctp
-       SET ctp.vlpagoanoant = ctp.vlpagomes1  + ctp.vlpagomes2  + ctp.vlpagomes3 + 
+       SET ctp.vlpagoanoant = ctp.vlpagomes1  + ctp.vlpagomes2  + ctp.vlpagomes3 +
                               ctp.vlpagomes4  + ctp.vlpagomes5  + ctp.vlpagomes6 +
                               ctp.vlpagomes7  + ctp.vlpagomes8  + ctp.vlpagomes9 +
                               ctp.vlpagomes10 + ctp.vlpagomes11 + ctp.vlpagomes12,
@@ -1694,7 +1814,7 @@ BEGIN
        vr_dscritic := 'Problema ao atualizar registro na tabela TBCOTAS_TARIFAS_PAGAS: ' || sqlerrm;
        RAISE vr_exc_saida;
   END;
-  
+
   -- Eliminar controle de reprocesso
   btch0001.pc_elimina_restart(pr_cdcooper,
                               vr_cdprogra,
@@ -1736,7 +1856,7 @@ EXCEPTION
     -- Efetuar commit pois gravaremos o que foi processo até então
     COMMIT;
     --ROLLBACK;
-    
+
   when vr_exc_saida then
     -- Se foi retornado apenas código
     if vr_cdcritic > 0 and vr_dscritic is null then
@@ -1756,4 +1876,3 @@ EXCEPTION
     rollback;
 END;
 /
-

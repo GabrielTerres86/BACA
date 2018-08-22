@@ -1,4 +1,4 @@
-<? 
+<?php 
 /*!
 * FONTE        : manter_rotina.php
 * CRIAÇÃO      : Rogérius Militão (DB1)
@@ -8,6 +8,7 @@
 * ALTERAÇÕES   : 
 *   10/09/2012 - Guilherme    (SUPERO) : Demonstrativo Aplicações: Campo data-Validacao
 *   31/05/2013 - Daniel       (CECRED) : Fixado valor variavel flgtarif para yes. (Daniel)
+*   08/08/2016 - Guilherme    (SUPERO) : M325 - Informe de Rendimentos Trimestral PJ
 * -------------- 
 */
 ?> 
@@ -37,6 +38,8 @@ $nranoref = (isset($_POST['nranoref'])) ? $_POST['nranoref'] : '';
 $inrelext = (isset($_POST['inrelext'])) ? $_POST['inrelext'] : '';
 $inselext = (isset($_POST['inselext'])) ? $_POST['inselext'] : '';
 $nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
+$tpinform = (isset($_POST['tpinform'])) ? $_POST['tpinform'] : 0;
+$nrperiod = (isset($_POST['nrperiod'])) ? $_POST['nrperiod'] : 1;
 $narplica = (isset($_POST['narplica'])) ? $_POST['narplica'] : 0;
 $flgemiss = $_POST['flgemiss'] == 'yes' ? 'yes' : 'no';
 
@@ -95,6 +98,8 @@ $xml .= '		<nrctremp>' . $nrctremp . '</nrctremp>';
 $xml .= '		<nraplica>' . $narplica . '</nraplica>';
 $xml .= '		<flgemiss>' . $flgemiss . '</flgemiss>';
 $xml .= '		<inrelext>' . $inrelext . '</inrelext>';
+$xml .= '		<tpinform>' . $tpinform . '</tpinform>';
+$xml .= '		<nrperiod>' . $nrperiod . '</nrperiod>';
 $xml .= '		<intpextr>2</intpextr>';
 $xml .= retornaXmlFilhos($camposDc, $dadosDc, 'Impres', 'Itens');
 $xml .= '	</Dados>';
@@ -149,6 +154,8 @@ if (($cddopcao == 'I' and $operacao == 'VO')) {
     echo 'aux[\'nranoref\'] = "' . $nranoref . '";';
     echo 'aux[\'flgemiss\'] = "' . $flgemiss . '";';
     echo 'aux[\'inisenta\'] = "' . $flgtarif . '";';
+    echo 'aux[\'tpinform\'] = "' . $tpinform . '";';
+    echo 'aux[\'nrperiod\'] = "' . $nrperiod. '";';
     echo 'aux[\'insitext\'] = "1";';
 
     // recebe

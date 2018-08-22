@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Mirtes
-       Data    : Dezembro/2003.                  Ultima atualizacao: 29/08/2014
+       Data    : Dezembro/2003.                  Ultima atualizacao: 28/06/2016
        Dados referentes ao programa:
 
        Frequencia: Diario.
@@ -80,11 +80,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
                   23/01/2014 - Conversão Progress -> Oracle (Petter - Supero).
 
                   07/03/2014 - Ajuste na lógica de busca da data (Marcos-Supero)
-                  
+
                   13/05/2014 - Ajuste na busca dos valores a pagar dos decidios anteriores(Odirlei/AMcom)
 
                   29/08/2014 - Adicionado tratamento para lançamentos de produtos
-									             de captação. (Reinert)
+                               de captação. (Reinert)
+
+                 27/06/2016 - M325 - Tributacao Juros ao Capital
+                              Nao gerar pc_imposto para inpessoa 3 (Guilherme/SUPERO)
     ............................................................................ */
 
     DECLARE
@@ -204,28 +207,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
       vr_xmlclob        CLOB;
       vr_deblan_a       NUMBER(20,2) := 0;
       vr_nom_dir        VARCHAR2(4000);
-			
-			-- Variáveis dos lançamentos de aplicações de captação
-			vr_qtdrend_lac_f PLS_INTEGER := 0;
-			vr_vlrrend_lac_f NUMBER(20,2) := 0;
-			vr_qtdrend_lac_j PLS_INTEGER := 0;
-			vr_vlrrend_lac_j NUMBER(20,2) := 0;
-			vr_qtdirrf_lac_f PLS_INTEGER := 0;
-			vr_vlrirrf_lac_f NUMBER(20,2) := 0;
-			vr_qtdirrf_lac_j PLS_INTEGER := 0;
-			vr_vlrirrf_lac_j NUMBER(20,2) := 0;
+
+      -- Variáveis dos lançamentos de aplicações de captação
+      vr_qtdrend_lac_f PLS_INTEGER := 0;
+      vr_vlrrend_lac_f NUMBER(20,2) := 0;
+      vr_qtdrend_lac_j PLS_INTEGER := 0;
+      vr_vlrrend_lac_j NUMBER(20,2) := 0;
+      vr_qtdirrf_lac_f PLS_INTEGER := 0;
+      vr_vlrirrf_lac_f NUMBER(20,2) := 0;
+      vr_qtdirrf_lac_j PLS_INTEGER := 0;
+      vr_vlrirrf_lac_j NUMBER(20,2) := 0;
 
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
-			
-			-- PLTable para armazenar históricos da crapcpc
-			TYPE typ_cdhistor      IS RECORD (cdhsrdap crapcpc.cdhsrdap%TYPE
-																			 ,cdhsirap crapcpc.cdhsirap%TYPE);
-			TYPE typ_cdhistor_tab  IS TABLE OF typ_cdhistor INDEX BY PLS_INTEGER;
-			vr_tab_hist      typ_cdhistor_tab;
+
+      -- PLTable para armazenar históricos da crapcpc
+      TYPE typ_cdhistor      IS RECORD (cdhsrdap crapcpc.cdhsrdap%TYPE
+                                       ,cdhsirap crapcpc.cdhsirap%TYPE);
+      TYPE typ_cdhistor_tab  IS TABLE OF typ_cdhistor INDEX BY PLS_INTEGER;
+      vr_tab_hist      typ_cdhistor_tab;
 
       ------------------------------- CURSORES ---------------------------------
       /* Busca dos dados da cooperativa */
@@ -300,19 +303,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
 
       -- Buscar lançamentos de aplicações de captação
       CURSOR cr_craplacass(pr_cdcooper       IN craplac.cdcooper%TYPE
-			                    ,pr_data_inicio    IN craplac.dtmvtolt%TYPE
-													,pr_data_fim       IN craplac.dtmvtolt%TYPE
-													,pr_cdhistor       IN craplac.cdhistor%TYPE) IS
-			SELECT crapass.inpessoa, 
-			       craplac.cdhistor, 
-						 craplac.vllanmto 
-				FROM craplac, 
-				     crapass
-			 WHERE craplac.cdcooper  = pr_cdcooper                         AND
-						 craplac.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim AND
-						 craplac.cdhistor  = pr_cdhistor                         AND
-						 crapass.cdcooper  = craplac.cdcooper                    AND
-						 crapass.nrdconta  = craplac.nrdconta;
+                          ,pr_data_inicio    IN craplac.dtmvtolt%TYPE
+                          ,pr_data_fim       IN craplac.dtmvtolt%TYPE
+                          ,pr_cdhistor       IN craplac.cdhistor%TYPE) IS
+      SELECT crapass.inpessoa,
+             craplac.cdhistor,
+             craplac.vllanmto
+        FROM craplac,
+             crapass
+       WHERE craplac.cdcooper  = pr_cdcooper                         AND
+             craplac.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim AND
+             craplac.cdhistor  = pr_cdhistor                         AND
+             crapass.cdcooper  = craplac.cdcooper                    AND
+             crapass.nrdconta  = craplac.nrdconta;
 
 
       /* Buscar dados das aplicações programadas em poupança */
@@ -374,7 +377,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
               AND gc.tpimpost = 2
               AND gc.inapagar = NVL(pr_inapagar, gc.inapagar);
           rw_gnarrec cr_gnarrec%ROWTYPE;
-          
+
           /* Buscar valores de decendios anteriores nao recolhidos*/
           CURSOR cr_gnarrec_ant(pr_cdcooper    IN gnarrec.cdcooper%TYPE      --> Código da cooperativa
                                ,pr_data_inicio IN gnarrec.dtiniapu%TYPE      --> Data de apuração
@@ -769,55 +772,55 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
           END IF;
         END IF;
       END LOOP;
-			
-			vr_contador := 0;
-			
-			-- Para cada produto de captação																				
-			FOR rw_crapcpc IN (SELECT cpc.cdhsrdap,
-																cpc.cdhsirap														
-													 FROM crapcpc cpc) LOOP
-				-- Incrementa indice da wt
-				vr_contador := vr_contador + 1;
-				-- Armazena os históricos na wt
-				vr_tab_hist(vr_contador).cdhsrdap := rw_crapcpc.cdhsrdap;
-				vr_tab_hist(vr_contador).cdhsirap := rw_crapcpc.cdhsirap;
-			END LOOP;																
-			
-			-- Para cada histórico dos produtos de captação
-			FOR vr_cont IN 1..vr_tab_hist.COUNT LOOP		
-				
-				-- Soma quantidade e valor dos lançamentos de rendimento
-			  FOR rw_craplacass IN cr_craplacass(pr_cdcooper    => pr_cdcooper
-					                                ,pr_data_inicio => vr_data_inicio
-																					,pr_data_fim    => vr_data_fim
-																					,pr_cdhistor    => vr_tab_hist(vr_cont).cdhsrdap) LOOP
-																					
+
+      vr_contador := 0;
+
+      -- Para cada produto de captação
+      FOR rw_crapcpc IN (SELECT cpc.cdhsrdap,
+                                cpc.cdhsirap
+                           FROM crapcpc cpc) LOOP
+        -- Incrementa indice da wt
+        vr_contador := vr_contador + 1;
+        -- Armazena os históricos na wt
+        vr_tab_hist(vr_contador).cdhsrdap := rw_crapcpc.cdhsrdap;
+        vr_tab_hist(vr_contador).cdhsirap := rw_crapcpc.cdhsirap;
+      END LOOP;
+
+      -- Para cada histórico dos produtos de captação
+      FOR vr_cont IN 1..vr_tab_hist.COUNT LOOP
+
+        -- Soma quantidade e valor dos lançamentos de rendimento
+        FOR rw_craplacass IN cr_craplacass(pr_cdcooper    => pr_cdcooper
+                                          ,pr_data_inicio => vr_data_inicio
+                                          ,pr_data_fim    => vr_data_fim
+                                          ,pr_cdhistor    => vr_tab_hist(vr_cont).cdhsrdap) LOOP
+
           IF rw_craplacass.inpessoa = 1 THEN /* Pessoa Física */
-					  vr_qtdrend_lac_f := vr_qtdrend_lac_f + 1;
-					  vr_vlrrend_lac_f := vr_vlrrend_lac_f + rw_craplacass.vllanmto;
-				  ELSE /* Pessoa Jurídica */
-						vr_qtdrend_lac_j := vr_qtdrend_lac_j + 1;
-						vr_vlrrend_lac_j := vr_vlrrend_lac_j + rw_craplacass.vllanmto;																					
-					END IF;
-					
-				END LOOP;
-				
-				-- Soma quantidade e valor dos lançamentos de IRRF
-				FOR rw_craplacass IN cr_craplacass(pr_cdcooper    => pr_cdcooper
-					                                ,pr_data_inicio => vr_data_inicio
-																					,pr_data_fim    => vr_data_fim
-																					,pr_cdhistor    => vr_tab_hist(vr_cont).cdhsirap) LOOP
-				  IF rw_craplacass.inpessoa = 1 THEN /* Pessoa Física */
-						vr_qtdirrf_lac_f := vr_qtdirrf_lac_f + 1;
-						vr_vlrirrf_lac_f := vr_vlrirrf_lac_f + rw_craplacass.vllanmto;
-					ELSE /* Pessoa Jurídica */
-						vr_qtdirrf_lac_j := vr_qtdirrf_lac_j + 1;
-						vr_vlrirrf_lac_j := vr_vlrirrf_lac_j + rw_craplacass.vllanmto;
-					END IF;
+            vr_qtdrend_lac_f := vr_qtdrend_lac_f + 1;
+            vr_vlrrend_lac_f := vr_vlrrend_lac_f + rw_craplacass.vllanmto;
+          ELSE /* Pessoa Jurídica */
+            vr_qtdrend_lac_j := vr_qtdrend_lac_j + 1;
+            vr_vlrrend_lac_j := vr_vlrrend_lac_j + rw_craplacass.vllanmto;
+          END IF;
 
         END LOOP;
-			
-			END LOOP;
+
+        -- Soma quantidade e valor dos lançamentos de IRRF
+        FOR rw_craplacass IN cr_craplacass(pr_cdcooper    => pr_cdcooper
+                                          ,pr_data_inicio => vr_data_inicio
+                                          ,pr_data_fim    => vr_data_fim
+                                          ,pr_cdhistor    => vr_tab_hist(vr_cont).cdhsirap) LOOP
+          IF rw_craplacass.inpessoa = 1 THEN /* Pessoa Física */
+            vr_qtdirrf_lac_f := vr_qtdirrf_lac_f + 1;
+            vr_vlrirrf_lac_f := vr_vlrirrf_lac_f + rw_craplacass.vllanmto;
+          ELSE /* Pessoa Jurídica */
+            vr_qtdirrf_lac_j := vr_qtdirrf_lac_j + 1;
+            vr_vlrirrf_lac_j := vr_vlrirrf_lac_j + rw_craplacass.vllanmto;
+          END IF;
+
+        END LOOP;
+
+      END LOOP;
 
 
       -- Processar aplicações programadas de poupança
@@ -865,10 +868,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
       vr_deblan_fj := vr_vlr922_fj;
       vr_qtdlan_f := vr_qtd533_f + vr_qtd476_f + vr_qtd588_f + vr_qtd864_f + vr_qtd870_f + vr_qtd868_f + vr_qtd871_f + vr_qtd861_f + vr_qtd862_f +
                      vr_qtd116_f + vr_qtd179_f + vr_qtd863_f + vr_qtd151_f + vr_qtd875_f + vr_qtd876_f + vr_qtd877_f + vr_qtd475_f + vr_qtd532_f +
-										 vr_qtdrend_lac_f + vr_qtdirrf_lac_f;
+                     vr_qtdrend_lac_f + vr_qtdirrf_lac_f;
       vr_qtdlan_j := vr_qtd533_j + vr_qtd476_j + vr_qtd588_J + vr_qtd864_j + vr_qtd870_j + vr_qtd868_j + vr_qtd871_j + vr_qtd861_j + vr_qtd862_j +
                      vr_qtd116_j + vr_qtd179_j + vr_qtd863_j + vr_qtd151_j + vr_qtd875_j + vr_qtd876_j + vr_qtd877_j + vr_qtd475_j + vr_qtd532_j +
-										 vr_qtdrend_lac_j + vr_qtdirrf_lac_j;
+                     vr_qtdrend_lac_j + vr_qtdirrf_lac_j;
       vr_baslan_f := vr_vlr588_f + vr_vlr116_f + vr_vlr179_f + vr_vlr151_f + vr_vlr475_f + vr_vlr532_f + vr_vlrrend_lac_f;
       vr_baslan_j := vr_vlr588_j + vr_vlr116_j + vr_vlr179_j + vr_vlr151_j + vr_vlr475_j + vr_vlr532_j + vr_vlrrend_lac_j;
       vr_deblan_f := vr_vlr533_f + vr_vlr476_f + vr_vlr864_f + vr_vlr870_f + vr_vlr868_f + vr_vlr871_f + vr_vlr861_f + vr_vlr862_f + vr_vlr863_f +
@@ -901,7 +904,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
                                   '<deblan_fj>' || TO_CHAR(vr_deblan_fj, 'FM999G999G999G990D00') || '</deblan_fj>' ||
                                   '<vlirct_j>' || TO_CHAR(vr_vlirct_j, 'FM999G999G999G990D00') || '</vlirct_j>
                                   </resumo2>';
-                                  
+
         gene0002.pc_clob_buffer(pr_dados => vr_bfclob, pr_gravfim => FALSE, pr_clob => vr_xmlclob);
       END IF;
 
@@ -1022,7 +1025,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
 
         -- Gerar imposto
         vr_bfclob := vr_bfclob || '<tributos>';
-        FOR idx IN 1..3 LOOP
+        FOR idx IN 1..2 LOOP
           pc_imposto(pr_inpessoa => idx, pr_dscritic => vr_dscritic);
 
           -- Verifica se ocorreram erros
@@ -1122,4 +1125,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
     END;
   END pc_crps373;
 /
-

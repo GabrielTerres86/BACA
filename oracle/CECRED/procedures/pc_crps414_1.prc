@@ -10,7 +10,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Agosto/2011.                   Ultima atualizacao: 04/12/2015
+     Data    : Agosto/2011.                   Ultima atualizacao: 02/08/2016
 
      Dados referentes ao programa:
 
@@ -59,6 +59,9 @@ BEGIN
          04/12/2015 - #369383 retirado a atualização da crapsda em função do saldo de cotas e implementado 
                       na rotina para popular este campo no PC_CRPS001, diretamente na criação do registro na tabela.
                       (Carlos)
+
+                 02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                              (Jaison/Anderson)
 
    ............................................................................ */
   DECLARE
@@ -763,7 +766,7 @@ BEGIN
     /* Se contabilizou algo OU é PAC ATIVO, grava as contabilizacoes na tabela */
     IF ( vr_age_qtcapati + vr_res_vlcapati + vr_vldscchq + vr_vldsctit
        + vr_vltotrdc + vr_vltotrii + vr_vlrdcpre + vr_vlrdcpos > 0)
-    OR (pr_idprogra NOT IN(90,91) AND vr_insitage = 1) THEN -- INTERNET e TAA e PAC Ativo
+    OR (pr_idprogra NOT IN(90,91) AND vr_insitage IN (1,3)) THEN -- INTERNET e TAA e PAC 1-Ativo ou 3-Temporariamente Indisponivel
       -- Gravar a tabela GNINFPL - Informações detalhadas para os relatórios da Intranet
       DECLARE
         vr_dsopera VARCHAR2(30);
