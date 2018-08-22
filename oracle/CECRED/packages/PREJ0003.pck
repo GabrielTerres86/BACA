@@ -1119,17 +1119,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     Alteracoes:
     ..............................................................................*/
 
+  -- Recupera informações dos prejuízo a serem liquidados (saldo devedor total igual a zero)
   CURSOR cr_conta_liquida (pr_cdooper  IN tbcc_prejuizo.cdcooper%TYPE) IS
-   SELECT  tbprj.nrdconta,
-           tbprj.cdsitdct_original
-   FROM tbcc_prejuizo tbprj
-   WHERE tbprj.cdcooper = pr_cdcooper
-   AND   tbprj.dtliquidacao IS NULL
-   AND  (tbprj.vlsdprej +
-         tbprj.vljuprej +
-         tbprj.vljur60_ctneg +
-         tbprj.vljur60_lcred) = 0;
-
+   SELECT tbprj.nrdconta,
+          tbprj.cdsitdct_original,
+					tbprj.rowid
+     FROM tbcc_prejuizo tbprj
+    WHERE tbprj.cdcooper = pr_cdcooper
+      AND tbprj.dtliquidacao IS NULL
+      AND (tbprj.vlsdprej +
+           tbprj.vljuprej +
+           tbprj.vljur60_ctneg +
+           tbprj.vljur60_lcred) = 0;
 
   vr_cdcritic  NUMBER(3);
   vr_dscritic  VARCHAR2(1000);
@@ -1139,27 +1140,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 	
 	rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
  BEGIN
+	 -- Recupera calendário de datas da cooperativa
 	 OPEN BTCH0001.cr_crapdat(pr_cdcooper);
 	 FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 	 CLOSE BTCH0001.cr_crapdat;
 	 
     -- Percorre a lista dos prejuízos que devem ser liquidados
     FOR rw_conta_liquida IN cr_conta_liquida(pr_cdcooper) LOOP
-			BEGIN
-				-- Preenche a data de liquidação do prejuízo
-				UPDATE tbcc_prejuizo tbprj
-				   SET tbprj.dtliquidacao = TRUNC(SYSDATE)
-				 WHERE tbprj.cdcooper = pr_cdcooper
-				   AND tbprj.nrdconta  = rw_conta_liquida.nrdconta;
-			EXCEPTION
-			  WHEN OTHERS THEN
-					vr_cdcritic := 99999;
-					vr_dscritic := 'Erro ao atualizar a tabela tbcc_prejuizo. '||SQLERRM;
-
-					--Sair do programa
-					RAISE vr_exc_saida;
-			END;
-
 			BEGIN
 				-- Restaura a situação da conta corrente e retira a flag de "em prejuízo"
 				UPDATE crapass a
@@ -1170,13 +1157,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 			EXCEPTION
 			  WHEN OTHERS THEN
 					vr_cdcritic :=99999;
-					vr_dscritic := 'Erro ao atualizar a tabela crapass. '||SQLERRM;
-
-					 --Sair do programa
-					 RAISE vr_exc_saida;
+					vr_dscritic := 'Erro ao atualizar a tabela CRAPASS. '||SQLERRM;
+          
+					-- ********** TROCAR POR gera_log *******************
+					RAISE vr_exc_saida;
 			END;
 
-      -- Obtém o saldo da conta transitória (desconsiderando créditos ainda bloqueados de cheques não compensados)
+      -- Obtém o saldo total da conta transitória 
 			vr_sldconta:= fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
 																	,pr_nrdconta => rw_conta_liquida.nrdconta
 																	,pr_exclbloq => 0);
@@ -1193,9 +1180,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 													 ,pr_dscritic => vr_dscritic);
 													 
 				IF nvl(vr_cdcritic, 0) <> 0 OR vr_dscritic IS NOT NULL THEN
+					 -- ********** TROCAR POR gera_log *******************
 					 RAISE vr_exc_saida;
 				END IF;
 			END IF;
+			
+			BEGIN
+				-- Zero o saldo disponível para operações na conta corrente
+				UPDATE tbcc_prejuizo tbprj
+				   SET tbprj.vlsldlib     = 0
+				 WHERE tbprj.cdcooper     = pr_cdcooper
+				   AND tbprj.rowid        = rw_conta_liquida.rowid;
+			EXCEPTION
+			  WHEN OTHERS THEN
+					vr_cdcritic := 99999;
+					vr_dscritic := 'Erro ao atualizar a tabela TBCC_PREJUIZO. ' || SQLERRM;
+
+					-- ********** TROCAR POR gera_log *******************
+					RAISE vr_exc_saida;
+			END;
     END LOOP;
 
     EXCEPTION
@@ -1243,38 +1246,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
-
-      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
-
-
-      -- Variaveis retornadas da gene0004.pc_extrai_dados
-      vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
-
     BEGIN
-
       pr_des_erro := 'OK';
-      -- Extrai dados do xml
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                               pr_cdcooper => vr_cdcooper,
-                               pr_nmdatela => vr_nmdatela,
-                               pr_nmeacao  => vr_nmeacao,
-                               pr_cdagenci => vr_cdagenci,
-                               pr_nrdcaixa => vr_nrdcaixa,
-                               pr_idorigem => vr_idorigem,
-                               pr_cdoperad => vr_cdoperad,
-                               pr_dscritic => vr_dscritic);
-
-      -- Se retornou alguma crítica
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Levanta exceção
-        RAISE vr_exc_saida;
-      END IF;
 
       -- PASSA OS DADOS PARA O XML RETORNO
       -- Criar cabeçalho do XML
@@ -1295,12 +1268,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_auxconta,
+                             pr_posicao  => 0,
                              pr_tag_nova => 'saldo',
                              pr_tag_cont => fn_sld_cta_prj(pr_cdcooper
                                                           ,pr_nrdconta),
                              pr_des_erro => vr_dscritic);
-
   EXCEPTION
     WHEN vr_exc_saida THEN
 
@@ -1317,18 +1289,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
       -- Existe para satisfazer exigência da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
     WHEN OTHERS THEN
-
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_dscritic := 'Erro não tratado na rotina PREJ0003.pc_consulta_sld_cta_prj: ' || SQLERRM;
       pr_des_erro := 'NOK';
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
-    END pc_consulta_sld_cta_prj;
+END pc_consulta_sld_cta_prj;
 
 PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da Cooperativa
                              ,pr_nrdconta  IN NUMBER             --> Número da conta
@@ -1364,35 +1333,9 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
 
-      -- Variaveis retornadas da gene0004.pc_extrai_dados
-      vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
-
-     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     BEGIN
       pr_des_erro := 'OK';
-
-      -- Extrai dados do xml
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                               pr_cdcooper => vr_cdcooper,
-                               pr_nmdatela => vr_nmdatela,
-                               pr_nmeacao  => vr_nmeacao,
-                               pr_cdagenci => vr_cdagenci,
-                               pr_nrdcaixa => vr_nrdcaixa,
-                               pr_idorigem => vr_idorigem,
-                               pr_cdoperad => vr_cdoperad,
-                               pr_dscritic => vr_dscritic);
-
-      -- Se retornou alguma crítica
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Levanta exceção
-        RAISE vr_exc_saida;
-      END IF;
 
 			OPEN BTCH0001.cr_crapdat(pr_cdcooper);
 			FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -1430,7 +1373,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
       ROLLBACK;
     WHEN OTHERS THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_dscritic := 'Erro não tratado na rotina PREJ0003.pr_gera_lcm_cta_prj: ' || SQLERRM;
       pr_des_erro := 'NOK';
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
@@ -1450,8 +1393,6 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
 
 	    vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
       vr_tab_retorno   LANC0001.typ_reg_retorno;
-
-      -- Outras
       vr_nrseqdig     NUMBER     := 0;
       vr_nrdocmto     NUMBER(25) := 0;
       vr_nrdocmto_prj NUMBER(25) := 0;
@@ -1460,7 +1401,6 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
 	BEGIN
 		  pr_cdcritic := 0;
 			pr_dscritic := NULL;
-
 
 		  -- Verifica se há saldo disponível para a transferência
 	    IF pr_versaldo = 1 AND pr_vllanmto > fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
@@ -1485,6 +1425,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
 				WHEN OTHERS THEN
 				vr_cdcritic := 0;
 				vr_dscritic := 'Erro ao buscar número do documento na CRAPLCM';
+				
 				RAISE vr_exc_saida;
 			END;
 
@@ -1541,6 +1482,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
         ELSE
           vr_cdcritic := 0;
           vr_dscritic := 'Erro ao inserir lançamento (LANC0001)';
+					
           RAISE vr_exc_saida;
         END IF;
       END IF;
@@ -1692,14 +1634,13 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     CURSOR cr_crapsda( pr_cdcooper IN crapass.cdcooper%TYPE,
                        pr_nrdconta IN crapass.nrdconta%TYPE,
                        pr_dtmvtolt IN DATE ) IS
-     SELECT * FROM (SELECT sda.vlblqprj
+     SELECT vlblqprj FROM (SELECT sda.vlblqprj
         FROM crapsda sda
        WHERE sda.cdcooper = pr_cdcooper
          AND sda.nrdconta = pr_nrdconta
          AND sda.dtmvtolt = pr_dtmvtolt
 		   ORDER BY dtmvtolt DESC)
 		 WHERE rownum = 1;
-    rw_crapsda cr_crapsda%ROWTYPE;
 
     ---->> VARIAVEIS <<-----
      vr_cdcritic    NUMBER(3);
@@ -1734,16 +1675,17 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
       OPEN cr_crapsda( pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta,
                        pr_dtmvtolt => pr_dtmvtolt);
-      FETCH cr_crapsda INTO rw_crapsda;
+      FETCH cr_crapsda INTO vr_vldsaldo;
 
       IF cr_crapsda%NOTFOUND THEN
         CLOSE cr_crapsda;
+				vr_vldsaldo := 0;
+				
         vr_dscritic := 'Não há saldo para o dia ' || to_char(pr_dtmvtolt,'DD/MM/RRRR');
 
         RAISE vr_exc_erro;
       ELSE
         CLOSE cr_crapsda;
-        vr_vldsaldo := rw_crapsda.vlblqprj;
       END IF;
     END IF;
 
@@ -2056,43 +1998,44 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
     Alteracoes:
 */
-       vr_exc_saida exception;
+       vr_exc_saida EXCEPTION;
 
-       cursor cr_tbcc_prejuizo is
-       select a.dtinclusao
+       -- Recupera as informações do prejuízo de conta corrente
+       CURSOR cr_tbcc_prejuizo IS
+       SELECT a.dtinclusao
 			      , a.dtrefjur
 						, a.vlsdprej + 
 						  a.vljur60_ctneg + 
 							a.vljur60_lcred +
 							a.vljuprej vlsdprej
-       from tbcc_prejuizo a
-       where a.idprejuizo = pr_idprejuizo;
-
-       rw_tbcc_prejuizo cr_tbcc_prejuizo%rowtype;
+         FROM tbcc_prejuizo a
+        WHERE a.idprejuizo = pr_idprejuizo;
+       rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;
 
        vr_dstextab craptab.dstextab%TYPE;
-       vr_pctaxpre NUMBER  :=0;
+       vr_pctaxpre NUMBER := 0;
 
-       vr_diarefju  number(2); -- *2* ver tipos de dados dessas 8 variaveis
+       vr_diarefju  tbcc_prejuizo.nrdiarefju%TYPE; 
        vr_dtdpagto  number(8);
-       vr_mesrefju  number(2);
-       vr_anorefju  number(4);
-       vr_diafinal  number(2);
-       vr_mesfinal  number(2);
-       vr_anofinal  number(4);
-       vr_qtdedias  number(10);
+       vr_mesrefju  tbcc_prejuizo.nrmesrefju%TYPE;
+       vr_anorefju  tbcc_prejuizo.nranorefju%TYPE;
+       vr_diafinal  tbcc_prejuizo.nrdiarefju%TYPE;
+       vr_mesfinal  tbcc_prejuizo.nrmesrefju%TYPE;
+       vr_anofinal  tbcc_prejuizo.nranorefju%TYPE;
+       vr_qtdedias  tbcc_prejuizo.qtdiaatr%TYPE;
 
        vr_potencia NUMBER(30, 10);
        vr_valor    NUMBER;
-
   BEGIN
 		 pr_des_reto := 'OK';
 
 		 OPEN cr_tbcc_prejuizo;
 
 		 IF cr_tbcc_prejuizo%NOTFOUND THEN
-				pr_des_reto := 'Prejuizo não existe: '|| pr_idprejuizo;
+				pr_des_reto := 'Não há prejuízo ativo para a conta informada: ' || pr_idprejuizo;
 
+        CLOSE cr_tbcc_prejuizo;
+				
 				RAISE vr_exc_saida;
 		 ELSE
 				FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
@@ -2100,23 +2043,23 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
 		 CLOSE cr_tbcc_prejuizo;
 
-		 vr_dtdpagto := to_char(pr_dtdpagto,'dd');
+		 vr_dtdpagto := to_char(pr_dtdpagto,'DD');
 
 		 if rw_tbcc_prejuizo.dtrefjur is null then
-				vr_diarefju := to_char(rw_tbcc_prejuizo.dtinclusao,'dd');
-				vr_mesrefju := to_char(rw_tbcc_prejuizo.dtinclusao,'mm');
+				vr_diarefju := to_char(rw_tbcc_prejuizo.dtinclusao,'DD');
+				vr_mesrefju := to_char(rw_tbcc_prejuizo.dtinclusao,'MM');
 				vr_anorefju := to_char(rw_tbcc_prejuizo.dtinclusao,'RRRR');
 		 else
-				vr_diarefju := to_char(rw_tbcc_prejuizo.dtrefjur,'dd');
-				vr_mesrefju := to_char(rw_tbcc_prejuizo.dtrefjur,'mm');
+				vr_diarefju := to_char(rw_tbcc_prejuizo.dtrefjur,'DD');
+				vr_mesrefju := to_char(rw_tbcc_prejuizo.dtrefjur,'MM');
 				vr_anorefju := to_char(rw_tbcc_prejuizo.dtrefjur,'RRRR');
-
 		 end if;
 
-		 vr_diafinal := to_char(pr_dtdpagto,'dd');
-		 vr_mesfinal := to_char(pr_dtdpagto,'mm');
-		 vr_anofinal := to_char(pr_dtdpagto,'rrrr');
+		 vr_diafinal := to_char(pr_dtdpagto,'DD');
+		 vr_mesfinal := to_char(pr_dtdpagto,'MM');
+		 vr_anofinal := to_char(pr_dtdpagto,'RRRR');
 
+     -- Calcula a quantidade de dias a ser considerada para o cálculo dos juros remuneratórios
 		 empr0001.pc_calc_dias360(pr_ehmensal => pr_ehmensal,
 															pr_dtdpagto => vr_dtdpagto,
 															pr_diarefju => vr_diarefju,
@@ -2127,25 +2070,26 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 															pr_anofinal => vr_anofinal,
 															pr_qtdedias => vr_qtdedias);
 
-		 -- Buscar dados da TAB
+		 -- Buscar dados da TAB para extração da taxa de juros remuneratórios
 		 vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
 																							,pr_nmsistem => 'CRED'
 																							,pr_tptabela => 'USUARI'
 																							,pr_cdempres => 11
 																							,pr_cdacesso => 'PAREMPREST'
 																							,pr_tpregist => 01);
-
+     
+		 -- Extrai a taxa de juros remuneratórios cadastrada na tela TAB089                                              
 		 vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
 
 		 --Calcular Juros
 		 vr_valor    := 1 + (vr_pctaxpre / 100);
 		 vr_potencia := POWER(vr_valor, vr_qtdedias);
 
-		 --Retornar Juros do Mes
+		 --Retornar Juros calculados
 		 pr_vljpreju := rw_tbcc_prejuizo.vlsdprej * (vr_potencia - 1);
 
-		 --Se valor for zero ou negativo
-		 IF pr_vljpreju <= 0 THEN
+		 --Se valor for  negativo
+		 IF pr_vljpreju < 0 THEN
 				--zerar Valor
 				pr_vljpreju := 0;
 				--Sair
@@ -2155,9 +2099,9 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 		 pr_diarefju := vr_diarefju;
 		 pr_mesrefju := vr_mesrefju;
 		 pr_anorefju := vr_anorefju;
-		 pr_des_reto := null;
+		 pr_des_reto := 'OK';
 	EXCEPTION
-		WHEN vr_exc_saida then
+		WHEN vr_exc_saida THEN
 			pr_des_reto := 'NOK';
 	END pc_calc_juro_remuneratorio;
 

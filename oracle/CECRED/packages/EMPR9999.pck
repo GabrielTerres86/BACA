@@ -468,9 +468,11 @@ create or replace package body cecred.EMPR9999 as
     vr_cdcritic := null;
     vr_dscritic := '';
 		
+		vr_vet_qualif(1) := 'Operacao Normal';
 		vr_vet_qualif(2) := 'Renovacao de credito';
 		vr_vet_qualif(3) := 'Renegociacao de credito';
 		vr_vet_qualif(4) := 'Composicao de divida';
+		vr_vet_qualif(5) := 'Cessao de cartao';
 
     -- Busca a data corrente para a cooperativa.
     OPEN btch0001.cr_crapdat(pr_cdcooper);
