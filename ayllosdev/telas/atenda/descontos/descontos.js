@@ -55,6 +55,8 @@
 
 			 13/08/2018 - Novo formulário formDetalheTitulo (Vitor Shimada Assanuma - GFT)
 
+			 22/08/2018 - Adicionado abas na tela de títulos e histórico de contrato de limite. (Vitor Shimada Assanuma - GFT)
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -167,13 +169,13 @@ function metodoBlock(){
 function carregaTitulos() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando dados de desconto de t&iacute;tulos ...");
-
+    
 	// Carrega biblioteca javascript da rotina
 	// Ao carregar efetua chamada do conteúdo da rotina através de ajax
 	$.getScript(UrlSite + "telas/atenda/descontos/titulos/titulos.js",function() {
 		$.ajax({		
 			type: "POST", 
-			url: UrlSite + "telas/atenda/descontos/titulos/titulos.php",
+			url: UrlSite + "telas/atenda/descontos/titulos/titulos_principal.php",
 			dataType: "html",
 			data: {
 				nrdconta: nrdconta,
@@ -414,6 +416,42 @@ function formataLayout(nomeForm){
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+		
+		ajustarCentralizacao();
+	}else if( nomeForm == 'divTitulosUltAlteracoes' ){
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+		var ordemInicial = new Array();
+		var arrayLargura = new Array();
+
+		$('#'+nomeForm).css('width','700px');
+	    divRegistro.css({'height': '255px', 'padding-bottom': '2px'});
+
+		arrayLargura[0] = '60px'; // Contrato
+		arrayLargura[1] = '80px'; // Dt Ini
+		arrayLargura[2] = '80px'; // Dt Fim
+		arrayLargura[3] = '80px'; // Vl Limite
+		arrayLargura[4] = '80px'; // Situacao
+		arrayLargura[5] = '80px'; // Dt Situacao
+		//arrayLargura[5] = '80px'; // Motivo
+		
+				
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
 		$('tbody > tr',tabela).each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
 				$(this).focus();		
@@ -1761,4 +1799,71 @@ function formataTabelaEmiten(){
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
 	return false;
+}
+
+function acessaOpcaoAba(id){
+	var nrOpcoes = 2;
+    showMsgAguardo("Aguarde, carregando dados do t&iacute;tulo ...");
+
+    // Atribui cor de destaque para aba da opção
+	nrOpcoes = nrOpcoes + 1;
+	for (var i = 0; i < nrOpcoes; i++) {
+		if (id == i) { // Atribui estilos para foco da opção
+			$("#linkAba" + id).attr("class","txtBrancoBold");
+			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
+			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
+			$("#imgAbaCen" + id).css("background-color","#969FA9");
+			continue;			
+		}
+		
+		$("#linkAba" + i).attr("class","txtNormalBold");
+		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
+		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
+		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
+	}
+
+    if (id == 0){
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/titulos/titulos.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                cdproduto: cdproduto,
+                executandoProdutos: executandoProdutos,
+                redirect: "html_ajax"
+            },      
+            error: function(objAjax,responseError,objExcept) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function(response) {
+                $("#divConteudoTab").html(response);
+            }               
+        });
+        return false;
+    }else if (id == 1){
+    	var nrctrlim = $("#frmTitulos #nrctrlim").val();
+    	$.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/titulos/titulos_historico.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                nrctrlim: nrctrlim,
+                redirect: "html_ajax"
+            },      
+            error: function(objAjax,responseError,objExcept) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function(response) {
+                $("#divConteudoTab").html(response);
+            }               
+        });
+        return false;
+	}else{
+    	hideMsgAguardo();
+        showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
 }
