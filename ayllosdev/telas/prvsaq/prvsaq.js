@@ -709,7 +709,7 @@ function manter_rotina(rotina, nriniseq, nrregist) {
 
         if (nrdconta == '0') {
             nrdconta = '';
-    }
+        }
     }
 
     if (rotina == 'I' || rotina == 'I!' || rotina == 'I!!' || rotina == 'I!!!' || rotina == 'PDF') {
@@ -1929,6 +1929,11 @@ function validarData(form) {
         var dtprovisao = $('#dtSaqPagto', '#frmInclusao').val();
     } else { //alteracao
         var dtprovisao = $('#dtSaqPagtoAlt', '#frmConsulta').val();
+    }
+    
+	// Se o campo data estiver vazio, apenas retornar false, pois a validacao com erro já é feita na hora de salvar
+    if(dtprovisao == ''){
+        return false;
     }
     
     if (!validaData(dtprovisao)) {

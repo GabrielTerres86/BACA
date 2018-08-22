@@ -29,14 +29,14 @@
 						<thead>
 							<tr>
 								<? if($cddopcao == 'C'){ ?>
-								<th><? echo utf8ToHtml('Cooperativa');?></th>
-								<th><? echo utf8ToHtml('Data Saque');?></th>
-								<th><? echo utf8ToHtml('PA Saque');?></th>				
+									<th><? echo utf8ToHtml('Cooperativa');?></th>
+									<th><? echo utf8ToHtml('Data Saque');?></th>
+									<th><? echo utf8ToHtml('PA Saque');?></th>				
 									<th><? echo utf8ToHtml('CPF/CNPJ Titular');?></th>
 									<th><? echo utf8ToHtml('Nome Titular');?></th>
-								<th><? echo utf8ToHtml('Conta/dv');?></th>
-								<th><? echo utf8ToHtml('Valor');?></th>
-								<th><? echo utf8ToHtml('Situação');?></th>
+									<th><? echo utf8ToHtml('Conta/dv');?></th>
+									<th><? echo utf8ToHtml('Valor');?></th>
+									<th><? echo utf8ToHtml('Situação');?></th>
 									<th><? echo utf8ToHtml('Obs.');?></th>
 								<? }else if($cddopcao == 'A'){ ?>
 									<th><? echo utf8ToHtml('Cooperativa');?></th>
@@ -56,7 +56,7 @@
 									<th><? echo utf8ToHtml('CPF/CNPJ Titular');?></th>
 									<th><? echo utf8ToHtml('Nome Titular');?></th>
 									<th><? echo utf8ToHtml('Conta/dv');?></th>
-									<th><? echo utf8ToHtml('Valor');?></th>								
+									<th><? echo utf8ToHtml('Valor');?></th>
 									<th><? echo utf8ToHtml('Situação');?></th>
 								<?}?>					
 							</tr>
@@ -131,7 +131,7 @@
 										</td>																						
 										<td>
 											<? 	if($cddopcao != 'A'){
-													echo $registros->inf[$i]->nrcpfcgc; 
+													echo $registros->inf[$i]->nrcpfcgc;
 												}else{
 													echo $registros->inf[$i]->nrcpfcgc;
 												}
@@ -145,7 +145,7 @@
 												}else{
 													echo stringTabela($registros->inf[$i]->nmtitular_saque,28,'maiuscula');
 												}
-											?>								
+											?>
 										</td>
 										<td>
 											<? 	echo $registros->inf[$i]->nrdconta; ?>
@@ -164,20 +164,20 @@
 												if($cddopcao == 'C'){
 													echo $registros->inf[$i]->nmsit_provisao;
 												}else{
-													echo $registros->inf[$i]->nmsit_provisao; 							
+													echo $registros->inf[$i]->nmsit_provisao;
 												}
 											?>										
-										</td>										
+										</td>
 										<?	if($cddopcao != 'E'){ ?>
-										<td>
+											<td>
 												<?	if($cddopcao == 'C'){
 														echo $registros->inf[$i]->dsobservacao;
 													}else if($cddopcao == 'A'){
 														
 														echo $registros->inf[$i]->dsprotocolo;
-												}
-											?>
-										</td>										
+													}
+												?>
+											</td>	
 										<? } ?>									
 									</tr>
 								<? } ?>
@@ -271,7 +271,7 @@
 			</div>
 			<div id="divDadosAlt" style="display:none">				
 				<label for="dtSaqPagtoAlt" id="lbDtSaqPagtoAlt"><? echo utf8ToHtml('Data do saque:') ?></label>
-				<input id="dtSaqPagtoAlt" name="dtSaqPagtoAlt" class='campo data' type="text" onchange="validarData('alteracao');" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
+				<input id="dtSaqPagtoAlt" name="dtSaqPagtoAlt" class='campo data' type="text" onblur="validarData('alteracao');" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
 
 				<label for="hrSaqPagtoAlt" id="lbHrSaqPagtoAlt"><? echo utf8ToHtml('Horário saque:') ?></label>
 				<input id="hrSaqPagtoAlt" name="hrSaqPagtoAlt" class="campo" type="time" maxlength="5" value="<? echo utf8ToHtml($hrSaqPagto); ?>"/>

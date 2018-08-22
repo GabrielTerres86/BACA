@@ -35,7 +35,7 @@
 			<legend><? echo utf8ToHtml('Dados da provisão') ?></legend>												
 		
 			<label for="dtSaqPagto"><? echo utf8ToHtml('Data do saque:') ?></label>
-			<input id="dtSaqPagto" name="dtSaqPagto" class='campo data' type="text" onchange="validarData('inclusao');" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
+			<input id="dtSaqPagto" name="dtSaqPagto" class='campo data' type="text" onblur="validarData('inclusao');" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
 
 			<label for="hrSaqPagto"><? echo utf8ToHtml('Horário saque:') ?></label>
 			<input id="hrSaqPagto" name="hrSaqPagto" class = 'campo inteiro' type="time" maxlength="5" value="<? echo utf8ToHtml($hrSaqPagto); ?>"/>
