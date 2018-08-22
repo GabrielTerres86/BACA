@@ -838,12 +838,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_tab_crapras          RATI0001.typ_tab_crapras;
       vr_tab_erro             GENE0001.typ_tab_erro;
       vr_ind                  PLS_INTEGER; --> Indice da tabela de retorno  
-      vr_rating               VARCHAR2(2);
+      vr_rating               VARCHAR2(2) := NULL;
       vr_flgcriar             NUMBER;
+      vr_des_reto             VARCHAR2(100);
       /*Fim 438*/
       
     BEGIN
-      
+      --Limpar tabela erro      
+      vr_tab_erro.DELETE;      
       -- Buscar os dados da proposta de emprestimo
       OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -974,7 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           pr_msg_detalhe := 'Parecer nao foi atualizado: '||pr_dscritic;
           RAISE vr_exc_saida;
         END IF;
-        
+    
       END IF;			
       /*Inicio M438*/
       -- Calcular Rating para atualiza no campo rating original
@@ -1004,23 +1006,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                 ,pr_tab_ratings          => vr_tab_ratings          --> Informacoes com os Ratings d
                                 ,pr_tab_crapras          => vr_tab_crapras          --> Tabela com os registros proc
                                 ,pr_tab_erro             => vr_tab_erro             --> Tabela de retorno de erro
-                                ,pr_des_reto             => pr_dscritic);           --> Ind. de retorno OK/NOK
-      -- Em caso de erro
-      IF pr_dscritic <> 'OK' THEN
-        --Se não tem erro na tabela
-        IF vr_tab_erro.COUNT = 0 THEN
-          pr_cdcritic:= 0;
-          pr_dscritic:= 'Falha ao calcular rating sem tabela de erros.';
-        ELSE
-          pr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-          pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-        END IF;
-        pr_status      := pr_cdcritic;
-        pr_msg_detalhe := 'Calculo Rating : '||pr_dscritic;
-        -- Sair
-        RAISE vr_exc_saida;
-      END IF;
-      
+                                ,pr_des_reto             => vr_des_reto);           --> Ind. de retorno OK/NOK
+      --Limpar tabela erro 
+      -- Para o calculo de rating, caso houver erro não devemos tratar para 
+      -- não travar o processo de retorno
+      vr_tab_erro.DELETE;                                 
+      vr_des_reto := 'OK';
       vr_ind := vr_tab_impress_risco_cl.first; -- Vai para o primeiro registro            
       -- loop sobre a tabela de retorno
       WHILE vr_ind IS NOT NULL LOOP
@@ -1028,8 +1019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Vai para o proximo registro
         vr_ind := vr_tab_impress_risco_cl.next(vr_ind);
       END LOOP;          
-      /*Fim 438*/	
-      
+      /*Fim 438*/	         
       /* Verificar se a analise da proposta expirou na esteira*/      
       IF pr_insitapr = 99 THEN
         BEGIN

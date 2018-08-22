@@ -204,12 +204,12 @@ END CADA0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
-  
+
     Programa : CADA0002
     Sistema  : Rotinas acessadas pelas telas de cadastros Web
     Sigla    : CADA
     Autor    : Renato Darosci - Supero
-    Data     : Julho/2014.                   Ultima atualizacao: 08/06/2017
+    Data     : Julho/2014.                   Ultima atualizacao: 09/08/2018
   
    Dados referentes ao programa:
   
@@ -260,6 +260,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                            (Adriano - SD 620221).
                            
                08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
+               
+               09/08/2018 - sctask0012741 Gerar log de operadores apenas quando inativados, pelo job 
+                            JBOPE_BLOQUEIA_OPERADORES, podendo ser consultado na tela LOGTEL (Carlos)
   ---------------------------------------------------------------------------------------------------------------------------*/
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -4094,9 +4097,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
            LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 20 THEN
           vr_cdcritic := 1217;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          pr_nmdcampo := 'nrctatrf';
-          RAISE vr_exc_saida;
-        END IF;
+        pr_nmdcampo := 'nrctatrf';
+        RAISE vr_exc_saida;
+      END IF;
       END IF;
 
       -- Verifica o tipo de pessoa
@@ -4146,9 +4149,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         IF pr_intipcta = 3 THEN -- Conta de Pagamento
           vr_cdcritic := 1219;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' '|| vr_dstextab;
-          pr_nmdcampo := 'intipcta';
-          RAISE vr_exc_saida;
-        END IF;
+        pr_nmdcampo := 'intipcta';
+        RAISE vr_exc_saida;
+      END IF;
       END IF;
 
       IF pr_inpessoa = 1 THEN 
@@ -4171,8 +4174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_cdcritic := 1221;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           pr_nmdcampo := 'nrcpfcgc';
-          RAISE vr_exc_saida;
-        END IF;
+        RAISE vr_exc_saida;
+      END IF;
       END IF;
       END IF;
 
@@ -4182,7 +4185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       pr_nmdcampo := 'nrctatrf';
       RAISE vr_exc_saida;
-    END IF;
+      END IF;
         
     EXCEPTION
 			WHEN vr_exc_saida THEN
@@ -4293,6 +4296,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                  SET ope.cdsitope = 2
                WHERE ope.cdcooper = rw_crapope.cdcooper
                  AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+
+            -- Log de sucesso. Poderá ser consultado na tela LOGTEL
+            btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapope.cdcooper,
+                                       pr_ind_tipo_log => 1, --> mensagem
+                                       pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr hh24:mi:ss') ||
+                                                          ' --> Vetor inativou o operador ' || rw_crapope.cdoperad,
+                                       pr_nmarqlog     => 'operad.log',
+                                       pr_dstiplog     => 'O',
+                                       pr_flfinmsg     => 'N',
+                                       pr_cdprograma   => 'JBOPE_BLOQUEIA_OPERADORES');
             EXCEPTION
               WHEN OTHERS THEN
                 RAISE vr_exc_error;
@@ -4300,7 +4313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           --E CECRED
           ELSE
             CLOSE cr_valida_cecred;  
-            --Inativa operador
+          --Ativa operador
             BEGIN 
               UPDATE crapope ope
                  SET ope.cdsitope = 1
@@ -4310,18 +4323,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                 RAISE vr_exc_error;
             END;
     END IF;
-
-          -- Log de sucesso.
-          CECRED.pc_log_programa(pr_dstiplog => 'O'
-                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
-                               , pr_cdcooper => rw_crapope.cdcooper
-                               , pr_tpexecucao => 0
-                               , pr_tpocorrencia => 4 
-                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
-                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
-                               , pr_idprglog => vr_idprglog);                      
-
 
         ELSE
           CLOSE cr_tbcadast_colaborador;
@@ -4341,7 +4342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     WHEN vr_exc_error THEN
 
       pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - CADA0002 --> Erro ao atualzar a tabela crapope na rotina pc_bloqueia_operadores. Detalhes: ' || SQLERRM;
-        
+
       CECRED.pc_log_programa(pr_dstiplog => 'O'
                            , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
                            , pr_cdcooper => 0

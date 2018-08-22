@@ -101,7 +101,7 @@ create or replace package body cecred.CXON0054 is
         AND TRUNC(p.dhprevisao_operacao) <= pr_dtmvtolt
         AND p.insit_provisao = 1
         AND p.vlsaque >= pr_valor
-        AND ((pr_cm7_cheque IS NULL AND p.incheque = 0) OR (pr_cm7_cheque IS NOT NULL AND p.incheque = 1))
+--elton        AND ((pr_cm7_cheque IS NULL AND p.incheque = 0) OR (pr_cm7_cheque IS NOT NULL AND p.incheque = 1))
          AND (pr_cm7_cheque IS NULL OR p.cdbanchq = SUBSTR(pr_cm7_cheque,2,3))
          AND (pr_cm7_cheque IS NULL OR p.cdagechq = SUBSTR(pr_cm7_cheque,5,4))
          AND (pr_cm7_cheque IS NULL OR p.nrctachq = SUBSTR(pr_cm7_cheque,23,10))
@@ -160,7 +160,16 @@ create or replace package body cecred.CXON0054 is
           WHERE p.cdcooper = rw_provisao.cdcooper
                 AND p.dhprevisao_operacao = rw_provisao.dhprevisao_operacao
                 AND p.nrcpfcgc = rw_provisao.nrcpfcgc
-                AND p.nrdconta = rw_provisao.nrdconta;                                                           
+                AND p.nrdconta = rw_provisao.nrdconta
+                AND dhcadastro||vlsaque = (SELECT min(aa.dhcadastro)|| min(aa.vlsaque)
+                                        FROM tbcc_provisao_especie aa
+                                       WHERE aa.cdcooper            = p.cdcooper
+                                         AND aa.cdagenci_saque      = p.cdagenci_saque
+                                         AND aa.nrcpfcgc            = p.nrcpfcgc
+                                         AND aa.nrdconta            = p.nrdconta
+                                         AND aa.vlsaque            >= pr_valor
+                                         AND aa.dhprevisao_operacao = p.dhprevisao_operacao                                         
+                                         AND aa.insit_provisao      = 1);                                                           
       END IF;
       
       INSERT INTO tbcc_operacoes_diarias( cdcooper, 

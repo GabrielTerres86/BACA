@@ -1774,7 +1774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                   || ' '                                           -- 17 - Cód. Múltiplas Curvas
                   || ' '                                           -- 18 - Escalonamento
                   || RPAD(' ',200,' ')                             -- 19 - Descrição Adicional (Campo Livre)
-                  || 'S'                                           -- 20 - Condição de Resgate Antecipado
+                  || 'N'                                           -- 20 - Condição de Resgate Antecipado
                   || vr_cdfrmpag                                   -- 21 - Forma de PAgamento
                   /*Forma de Pagamento*/
                   || vr_nrrentab                                   -- 22 - Rentabilidade / Indexador / Taxa
@@ -1945,7 +1945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --  Sistema  : Captação
     --  Sigla    : CRED
     --  Autor    : Marcos - Envolti
-    --  Data     : Março/2018.                   Ultima atualizacao: 
+    --  Data     : Março/2018.                   Ultima atualizacao: 20/08/2018 
     --
     -- Dados referentes ao programa:
     --
@@ -1954,7 +1954,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --             os arquivos para envio na tabela TBCAPT_CUSTODIA_ARQUIVO
     -- 
     -- Alteracoes:
-    --
+    --             20/08/2018 - P411 - Usar sempre a Cooperativa zero para montagem do nome do 
+    --                          arquivo conforme solicitação DAniel Heinen (Marcos-Envolti)
     ---------------------------------------------------------------------------------------------------------------  
     DECLARE
       -- Busca dos lançamentos ainda não gerados em arquivos
@@ -2058,7 +2059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           -- Gerar ID do arquivo
           vr_idarquivo := tbcapt_custudia_arquivo_seq.NEXTVAL;          
           -- Gerar nome único do arquivo
-          vr_nmarquivo := fn_nmarquivo_custodia(vr_idarquivo,rw_lct.cdcooper,rw_lct.idtipo_arquivo,rw_lct.dtregistro); 
+          vr_nmarquivo := fn_nmarquivo_custodia(vr_idarquivo,0,rw_lct.idtipo_arquivo,rw_lct.dtregistro); 
           -- Criaremos o registro de arquivo
           BEGIN
             INSERT INTO TBCAPT_CUSTODIA_ARQUIVO

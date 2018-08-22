@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
    JOB: PC_JOB_AGENDEB
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Odirlei Busana - AMcom
-   Data    : Novembro/2015.                     Ultima atualizacao: 18/05/2018
+   Data    : Novembro/2015.                     Ultima atualizacao: 07/08/2018
 
    Dados referentes ao programa:
 
@@ -53,10 +53,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                             
                11/01/2018 - Ajustado rotina para executar debitos agendados do bancoob DEBBAN.
                             PRJ406 - FGTS (Odirlei-AMcom)
-
+                            
 			   18/05/2018 - Ajuste para chamada do reagendamento do crps688 quando o mesmo ja
 			                havia sido reagendado anteriormente. (PRB0040045) - (Fabricio)
-                            
+         
+               07/08/2018 - Ajustado a pc_reprograma_job para conseguir reagendar o job da
+                            DEBNET até que o processo batch finalize. (Tiago INC0018236)             
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra    VARCHAR2(40) := 'PC_JOB_AGENDEB';
@@ -239,8 +241,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
         --ANTES (13): CRPS688_16_P$ || _REP$ 913102
         --NOVO  (18): JBP_CRPS688_01_P$R || 1234567
         --NOVO  (18): JBP_DEBNET_01_P$R || 1234567
-        IF instr(pr_job_name, 'CRPS688', 1, 1) > 1 THEN
-        vr_jobname := substr(rw_job.job_name,1,17)||'R';
+        IF  instr(pr_job_name, 'CRPS688', 1, 1) > 1 
+         OR instr(pr_job_name, 'DEBNET', 1, 1) > 1
+         OR instr(pr_job_name, 'DEBSIC', 1, 1) > 1 THEN
+          vr_jobname := substr(rw_job.job_name,1,17)||'R';
         ELSE
           vr_jobname := substr(rw_job.job_name,1,16)||'R';
         END IF;
@@ -812,7 +816,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                            'ao atualizar crapche: '||SQLERRM;
             RAISE vr_exc_email;
         END;
-        
+
       END IF;
     END IF; -- fim IF coop = 3
     
@@ -824,12 +828,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
       
       /* Se aconteceu erro, gera o log e envia o erro por e-mail */
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                         pr_ind_tipo_log => 2, --> erro tratado
-                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                 pr_ind_tipo_log => 2, --> erro tratado
+                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                             ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
                                  pr_dstiplog     => 'E',
                                  pr_cdprograma   => pr_dsjobnam,
-                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
       -- buscar destinatarios do email                           
       vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_JOB');
       
