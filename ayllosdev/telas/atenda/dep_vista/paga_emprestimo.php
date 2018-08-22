@@ -36,7 +36,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',utf8ToHtml($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
+		exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
 	}else{
 		$msgRetorno = getByTagName($xmlObjeto->roottag->tags[0], 'msg');
 		exibirErro('inform',utf8ToHtml($msgRetorno),'Alerta - Ayllos',"mostraDetalhesCT()",false);
