@@ -2,7 +2,7 @@
 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 12/04/2018
+   Data    : 21/03/2017                        Ultima atualizacao: 21/08/2018
 
    Dados referentes ao programa:
 
@@ -15,8 +15,8 @@
 
                15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
 
-	           12/10/2017 - Projeto 410 - passar como parametro da calcula_iof o
-			                numero do contrato (Jean - Mout´s)
+ 	             12/10/2017 - Projeto 410 - passar como parametro da calcula_iof o
+			                      numero do contrato (Jean - Mout´s)
 
                21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                             grava-proposta-completa. PRJ402 - Integracao CDC
@@ -25,6 +25,9 @@
                24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
                
                12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+               
+               21/08/2018 - Alterado para receber qualificacao especifica de cessao de cartao
+                            PJ 450 - Diego Simas - AMcom
 
  ..............................................................................*/
 
@@ -526,7 +529,7 @@ PROCEDURE grava_dados:
                         INPUT FALSE,        /* par_flgimppr */
                         INPUT FALSE,        /* par_flgimpnp */
                         INPUT aux_percetop,
-                        INPUT 1,            /* par_idquapro */
+                        INPUT 5,            /* par_idquapro */ /* cessao de cartao */
                         INPUT par_dtdpagto,
                         INPUT 1,            /* par_qtpromis */
                         INPUT FALSE,        /* par_flgpagto */
