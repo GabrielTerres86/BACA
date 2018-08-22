@@ -407,10 +407,9 @@ BEGIN
                              (nvl(rw_crapepr.vlttmupr,0) - nvl(rw_crapepr.vlpgmupr,0)) + -- valor residual de multa
                              (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0)));
         
-        ELSIF vr_vldpagto <= 0 OR vr_vldabono <= 0 THEN
+        ELSIF vr_vldpagto < 0 OR vr_vldabono < 0 THEN
           vr_dscritic := 'Pagamento não permitido, Saldo de pagamento ou abono menor ou igual a zero.';
-          RAISE vr_exc_erro;                  
-           
+          RAISE vr_exc_erro;    
         END IF;
         --
         -- Inserir o valor de pagamento na conta corrente do cooperado
