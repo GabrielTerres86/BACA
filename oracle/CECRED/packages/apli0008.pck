@@ -1475,6 +1475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
      Frequencia: Sempre que for chamado
 
      Objetivo  : Rotina referente a busca de extratos das aplicações programadas de forma consolidada.
+                 Utilizada na ATENDA
                  Derivada de apli0005.pc_busca_extrato_aplicacao
 
      Observacao: -----
@@ -1624,7 +1625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                     vr_lshistor := to_char(rw_craplac.cdhsraap) || ',' || -- CR. Plano poup
                                    to_char(rw_craplac.cdhsnrap) || ',' || -- CR. Plano poup
                                    to_char(rw_craplac.cdhsprap) || ',' || -- Previsao Mes
-                                   -- to_char(rw_craplac.cdhsrvap) || ',' || -- 1636 Reversão
+                                   to_char(rw_craplac.cdhsrvap) || ',' || -- Reversão
                                    to_char(rw_craplac.cdhsrdap) || ',' || -- Rendimento
                                    to_char(rw_craplac.cdhsirap) || ',' || -- DB.IRRF
                                    to_char(rw_craplac.cdhsrgap) || ',' || -- Resgate
@@ -1710,13 +1711,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                 END IF;
                 IF rw_craphis.indebcre = 'C' THEN     /* Crédito */
                      vr_vlsldtot := NVL(vr_vlsldtot,0) + rw_craplac.vllanmto;
-                ELSIF rw_craphis.indebcre = 'D' THEN  /* Débito  */
+                ELSIF rw_craphis.indebcre = 'D' AND  (rw_craplac.cdhistor = rw_craplac.cdhsrvap) THEN  /* Débito  */
+                      vr_vlsldtot := NVL(vr_vlsldtot,0) - rw_craplac.vllanmto;  
+                     /*
                       IF (rw_craplac.cdhistor = rw_craplac.cdhsrvap) -- Reversao
                       AND (rw_craplac.dtmvtolt_lac - rw_craplac.dtmvtolt_rac >=  rw_craplac.qtdiacar) THEN -- Fora do período de carência
-                          vr_vlsldtot := NVL(vr_vlsldtot,0); -- Nao faz nada
+                          vr_vlsldtot := NVL(vr_vlsldtot,0) -- Não faz nada
                       ELSE
                           vr_vlsldtot := NVL(vr_vlsldtot,0) - rw_craplac.vllanmto;
-                      END IF;
+                      END IF; */
                 ELSE
                      vr_cdcritic := 0;
                      vr_dscritic := 'Tipo de lancamento invalido';
@@ -1747,9 +1750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                      vr_txlancto := 0; 
                 END IF;
                 
-                IF gene0002.fn_existe_valor(vr_lshistor,rw_craplac.cdhistor,',') = 'S' OR 
-                   (rw_craplac.cdhistor = rw_craplac.cdhsrvap AND /* Reversão */
-                   (rw_craplac.dtmvtolt_lac - rw_craplac.dtmvtolt_rac) < rw_craplac.qtdiacar) THEN
+                IF gene0002.fn_existe_valor(vr_lshistor,rw_craplac.cdhistor,',') = 'S' THEN
                    IF (vr_saldo_imp=0 AND (rw_craplac.dtmvtolt_lac >= pr_dtmvtolt_ini)) THEN -- Saldo anterior ainda nao foi impresso mas ja pode
                       vr_ind_extrato :=  1;
                       vr_tab_extrato_temp(vr_ind_extrato).dtmvtolt := pr_dtmvtolt_ini;
@@ -2094,9 +2095,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE                 -- Código da crítica
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE                 -- Descrição da crítica
    
-   
-
-   
    ) IS
     BEGIN
      /* .............................................................................
@@ -2285,7 +2283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                     vr_lshistor := to_char(rw_craplac.cdhsraap) || ',' || -- CR. Plano poup
                                    to_char(rw_craplac.cdhsnrap) || ',' || -- CR. Plano poup
                                    to_char(rw_craplac.cdhsprap) || ',' || -- Previsao Mes
-                                   to_char(rw_craplac.cdhsrvap) || ',' || -- 1636 Reversão
+                                   to_char(rw_craplac.cdhsrvap) || ',' || -- Reversão
                                    to_char(rw_craplac.cdhsrdap) || ',' || -- Rendimento
                                    to_char(rw_craplac.cdhsirap) || ',' || -- DB.IRRF
                                    to_char(rw_craplac.cdhsrgap) || ',' || -- Resgate
@@ -2371,13 +2369,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                 END IF;
                 IF rw_craphis.indebcre = 'C' THEN     /* Crédito */
                      vr_vlsldtot := NVL(vr_vlsldtot,0) + rw_craplac.vllanmto;
-                ELSIF rw_craphis.indebcre = 'D' THEN  /* Débito  */
-                      IF (rw_craplac.cdhistor = rw_craplac.cdhsrvap) -- Reversao
-                      AND (rw_craplac.dtmvtolt_lac - rw_craplac.dtmvtolt_rac >=  rw_craprac.qtdiacar) THEN -- Fora do período de carência
-                          vr_vlsldtot := NVL(vr_vlsldtot,0); -- Nao faz nada
-                      ELSE
+                ELSIF rw_craphis.indebcre = 'D' AND (rw_craplac.cdhistor = rw_craplac.cdhsrvap) THEN  /* Débito  */
+                      -- Reversao
                           vr_vlsldtot := NVL(vr_vlsldtot,0) - rw_craplac.vllanmto;
-                      END IF;
                 ELSE
                      vr_cdcritic := 0;
                      vr_dscritic := 'Tipo de lancamento invalido';
@@ -2408,9 +2402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                      vr_txlancto := 0; 
                 END IF;
                 
-                IF gene0002.fn_existe_valor(vr_lshistor,rw_craplac.cdhistor,',') = 'S' OR 
-                   (rw_craplac.cdhistor = rw_craplac.cdhsrvap AND /* Reversão */
-                   (rw_craplac.dtmvtolt_lac - rw_craplac.dtmvtolt_rac) < rw_craprac.qtdiacar) THEN
+                IF gene0002.fn_existe_valor(vr_lshistor,rw_craplac.cdhistor,',') = 'S' THEN
                    IF (vr_saldo_imp=0 AND (rw_craplac.dtmvtolt_lac >= pr_dtmvtolt_ini)) THEN -- Saldo anterior ainda nao foi impresso mas ja pode
                       vr_ind_extrato :=  1;
                       vr_tab_extrato_temp(vr_ind_extrato).dtmvtolt := pr_dtmvtolt_ini;
@@ -2861,6 +2853,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
 
 
   END pc_buscar_detalhe_apl_prog_web;
+
+
+
 
 
 END APLI0008; 
