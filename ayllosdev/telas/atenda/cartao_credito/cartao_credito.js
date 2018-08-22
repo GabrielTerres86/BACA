@@ -64,6 +64,8 @@
  * 045: [29/03/2018] Lombardi	   (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
  * 046: [13/08/2018] Carlos         (Ailos) : prb0040273 Verificação do estado do objeto oPinpad nas funções lerCartaoChip e fechaConexaoPinpad 
  *                                            para evitar travamento na entrega do cartão.
+ * 046: [17/08/2018] Fabricio      (AILOS)  : Tratamento na altera_senha_pinpad() para ignorar a AID (application ID) 'A0000001510000'
+ *                                            GP GlobalPlatform (por solicitacao da Cabal) em virtude da geracao dos novos chips - SCTASK0025102. (Fabricio)
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -4037,7 +4039,7 @@ function carregarRepresentante(cddopcao, idrepres, nrcpfrep) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, verificando representante ...");
 
-	// Carrega conteúdo da opção através de ajax
+    // Carrega conteúdo da opção através de ajax
 	if(inpessoa == 2)
 		return;
     $.ajax({
@@ -5235,6 +5237,9 @@ function altera_senha_pinpad() {
                             }
 
                             for (iAPP in aOperacao) {
+                                /* Se application ID diferente de GP GlobalPlatform (solicitado pela Cabal para ignorarmos) - 
+                                   SCTASK0025102 (Fabricio) */
+                                if (aOperacao[iAPP] != 'A0000001510000') {
                                 oRetornoJson = altera_cb(oPinpad, aOperacao[iAPP], sNTexto4, sNumeroCartao);
 // Para cada transacao precisamos fechar a conexao e abrir novamente. (By GERTEC)
                                 if (oRetornoJson.bOK) {
@@ -5244,6 +5249,7 @@ function altera_senha_pinpad() {
                                     fechaConexaoPinpad(oPinpad);
                                     return;
                                 }
+                            }
                             }
 
                             fechaConexaoPinpad(oPinpad);
