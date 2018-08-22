@@ -11,14 +11,14 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   -- Sistema : Conta-Corrente - Cooperativa de Credito
   -- Sigla   : CRED
   -- Autor   : Jean Michel
-  -- Data    : Maio/2015.                     Ultima atualizacao: 22/03/2017
+  -- Data    : Maio/2015.                     Ultima atualizacao: 04/05/2015
 
   -- Dados referentes ao programa:
 
   -- Frequencia : A view para calculo de saldo de aplicacao que retorna informacoes para o BI utiliza esta function
   -- Objetivo   : Retornar os registros de saldo de aplicacoes vinculadas a aditivos de empréstimos.
   --
-  -- Parâmetros : pr_cdcooper: Codigo da Cooperativa
+  -- Par?metros : pr_cdcooper: Codigo da Cooperativa
   --              pr_nrdconta: Numero da Conta
   --              pr_nrctagar: Numero da Conta do Garantidor
   --              pr_nraplica: Numero da Aplicacao
@@ -30,8 +30,11 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   -- Alteracoes: 17/11/2016 -  Correção do campo pr_tpproapl (1 - NOVO / 2 - ANTIGO ) era ((2 - NOVO / 1 - ANTIGO )
   --                           foi criado invertido, sendo assim não trazia as informações SD555414- Vanessa Klein
   --
-  --             22/03/2017 - #455742 Ajuste de passagem dos parâmetros de informações da aplicação e cdprogra
-  --                          na rotina pc_saldo_rdc_pos (Carlos)
+  --             15/07/2018 - Inclusão do parâmetro pr_idaplpgm nas chamadas
+  --                          apli0006.pc_posicao_saldo_aplicacao_pre
+  --                          apli0006.pc_posicao_saldo_aplicacao_pos
+  --                          Claudio - CIS Corporate
+  --
   -- .............................................................................
 
   -- Seleciona produtos e aplicacoes novas
@@ -67,42 +70,25 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
                     ,pr_nraplica  IN craprda.nraplica%TYPE) IS    --> Numero da aplicacao
 
     -- Cursor sobre o cadastro de aplicacoes RDCA.
-    SELECT rda.nraplica,
-           rda.tpaplica,
-           rda.vlsdrdca,
-           rda.dtmvtolt,
-           rda.cdagenci,
-           rda.cdbccxlt,
-           rda.nrdolote,
-           rda.inaniver,
-           rda.dtfimper,
-           rda.vlaplica,
-           rda.tpnomapl,
-           rda.qtdiauti,
-           rda.qtdiaapl,
-           rda.dtvencto,
-           rda.vlsltxmm,
-           rda.dtatslmm,
-           rda.dtatslmx,
-           rda.vlsltxmx,
-           lap.txaplica,
-           lap.txaplmes
-      FROM craprda rda
-          ,craplap lap
-     WHERE rda.cdcooper = pr_cdcooper
-       AND rda.nrdconta = pr_nrdconta
-       AND rda.nraplica = pr_nraplica       
-       AND lap.cdcooper = rda.cdcooper
-       AND lap.dtmvtolt = rda.dtmvtolt
-       AND lap.cdagenci = rda.cdagenci
-       AND lap.cdbccxlt = rda.cdbccxlt
-       AND lap.nrdolote = rda.nrdolote
-       AND lap.nrdconta = rda.nrdconta
-       AND lap.nrdocmto = rda.nraplica;
+    SELECT nraplica,
+           tpaplica,
+           vlsdrdca,
+           dtmvtolt,
+           cdagenci,
+           cdbccxlt,
+           nrdolote,
+           inaniver,
+           dtfimper,
+           vlaplica,
+           tpnomapl,
+           qtdiauti,
+           qtdiaapl
+      FROM craprda
+     WHERE craprda.cdcooper = pr_cdcooper
+       AND craprda.nrdconta = pr_nrdconta
+       AND craprda.nraplica = pr_nraplica;
 
   rw_craprda cr_craprda%ROWTYPE;
-
-  vr_craprda apli0001.typ_tab_craprda;
 
   --Selecionar informacoes das poupancas programadas
   CURSOR cr_craprpp (pr_cdcooper IN craprpp.cdcooper%TYPE
@@ -278,18 +264,6 @@ BEGIN
 
     CLOSE cr_craprda;
 
-    vr_craprda(1).dtvencto := rw_craprda.dtvencto;
-    vr_craprda(1).dtmvtolt := rw_craprda.dtmvtolt;
-    vr_craprda(1).vlsdrdca := rw_craprda.vlsdrdca;
-    vr_craprda(1).qtdiauti := rw_craprda.qtdiauti;
-    vr_craprda(1).vlsltxmm := rw_craprda.vlsltxmm;
-    vr_craprda(1).dtatslmm := rw_craprda.dtatslmm;
-    vr_craprda(1).vlsltxmx := rw_craprda.vlsltxmx;
-    vr_craprda(1).dtatslmx := rw_craprda.dtatslmx;
-    vr_craprda(1).tpaplica := rw_craprda.tpaplica;          
-    vr_craprda(1).txaplica := rw_craprda.txaplica;
-    vr_craprda(1).txaplmes := rw_craprda.txaplmes;
-
     -- Insere valor inicial de aplicao
     vr_vlsldapl := rw_craprda.vlaplica;
     vr_dtmvtolt := rw_craprda.dtmvtolt;
@@ -299,7 +273,9 @@ BEGIN
     OPEN cr_crapdtc(rw_craprda.tpaplica);
     FETCH cr_crapdtc INTO rw_crapdtc;
 
-    CLOSE cr_crapdtc;
+    IF cr_crapdtc%NOTFOUND THEN -- Se nao encontrou registro
+      CLOSE cr_crapdtc;
+    END IF;
 
     -- Nome do produto
     IF rw_craprda.tpaplica = 3  THEN -- RDCA30
@@ -445,14 +421,13 @@ BEGIN
                            pr_dtmvtolt => rw_crapdat.dtmvtoan, --> Movimento atual
                            pr_dtmvtopr => rw_crapdat.dtmvtolt, --> Proximo dia util
                            pr_nrdconta => vr_nrdconta,         --> Nro da conta da aplicacao RDC
-                           pr_craprda  => vr_craprda,          --> Informações da aplicacao RDC
+                           pr_nraplica => pr_nraplica, --> Nro da aplicacao RDC
                            pr_dtmvtpap => rw_crapdat.dtmvtoan,         --> Data do movimento atual passado
                            pr_dtcalsld => rw_crapdat.dtmvtoan,         --> Data do movimento atual passado
                            pr_flantven => FALSE,               --> Flag antecede vencimento
                            pr_flggrvir => FALSE,               --> Identificador se deve gravar valor insento
                            pr_dtinitax => vr_dtinitax,         --> Data de inicio da utilizacao da taxa de poupanca.
                            pr_dtfimtax => vr_dtfimtax,         --> Data de fim da utilizacao da taxa de poupanca.
-                           pr_cdprogra => '',                  --> Código do programa
                            pr_vlsdrdca => vr_vlsdrdca,         --> Saldo da aplicacao pos calculo
                            pr_vlrentot => vr_vlrentot,         --> Saldo da aplicacao pos calculo
                            pr_vlrdirrf => vr_vlrdirrf,         --> Valor de IR
@@ -525,6 +500,7 @@ BEGIN
                                              ,pr_cddindex => rw_craprac.cddindex -- Codigo de Indexador
                                              ,pr_qtdiacar => rw_craprac.qtdiacar -- Quantidade de Dias de Carencia
                                              ,pr_idgravir => 0                   -- Imunidade Tributaria
+                                             ,pr_idaplpgm => 0                   -- Aplicação Programada (0-Não / 1-Sim)      
                                              ,pr_dtinical => rw_craprac.dtmvtolt -- Data de Inicio do Calculo
                                              ,pr_dtfimcal => rw_crapdat.dtmvtoan -- Data de Fim do Calculo
                                              ,pr_idtipbas => 2                   -- Tipo Base / 2-Total
@@ -551,6 +527,7 @@ BEGIN
                                              ,pr_cddindex => rw_craprac.cddindex -- Codigo de Indexador
                                              ,pr_qtdiacar => rw_craprac.qtdiacar -- Quantidade de Dias de Carencia
                                              ,pr_idgravir => 0                   -- Imunidade Tributaria
+                                             ,pr_idaplpgm => 0                   -- Aplicação Programada (0-Não / 1-Sim)
                                              ,pr_dtinical => rw_craprac.dtmvtolt -- Data de Inicio do Calculo
                                              ,pr_dtfimcal => rw_crapdat.dtmvtoan         -- Data de Fim do Calculo
                                              ,pr_idtipbas => 2                   -- Tipo Base / 2-Total

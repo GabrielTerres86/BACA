@@ -27,6 +27,8 @@ BEGIN
                             existe para resgate de conta investimento para reaplicacao.
                             (Jaison/Marcos Martini - PRJ404)
 
+               15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
+
   .................................................................................... */
 
   DECLARE
@@ -661,6 +663,7 @@ BEGIN
                                                 pr_cddindex => rw_craprac.cddindex,
                                                 pr_qtdiacar => rw_craprac.qtdiacar,
                                                 pr_idgravir => vr_idgravir,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_craprac.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => vr_idtipbas,
@@ -693,6 +696,7 @@ BEGIN
                                                 pr_cddindex => rw_craprac.cddindex,
                                                 pr_qtdiacar => rw_craprac.qtdiacar,
                                                 pr_idgravir => vr_idgravir,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_craprac.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => vr_idtipbas,
@@ -1606,6 +1610,7 @@ BEGIN
                                                 pr_cddindex => rw_crapcpc.cddindex,
                                                 pr_qtdiacar => rw_crapcpc.qtdiacar,
                                                 pr_idgravir => 1,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_crapcpc.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => 2,
@@ -1632,6 +1637,7 @@ BEGIN
                                                 pr_cddindex => rw_crapcpc.cddindex,
                                                 pr_qtdiacar => rw_crapcpc.qtdiacar,
                                                 pr_idgravir => 1,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_crapcpc.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => 2,

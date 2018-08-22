@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/95                      Ultima atualizacao: 15/05/2018
+   Data    : Novembro/95                      Ultima atualizacao: 15/07/2018
 
    Dados referentes ao programa:
 
@@ -127,6 +127,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
               
                15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)  
               
+               15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
+             
 ............................................................................. */
 BEGIN
 
@@ -975,6 +977,7 @@ BEGIN
                                                  ,pr_cddindex => rw_craprac.cddindex   --> Código do Indexador
                                                  ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                  ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                 ,pr_idaplpgm => 0                     --> Aplicação Programada  (0-Não/1-Sim)
                                                  ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                  ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                  ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1007,6 +1010,7 @@ BEGIN
                                                 ,pr_cddindex => rw_craprac.cddindex   --> Código do Indexador
                                                 ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                 ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                ,pr_idaplpgm => 0                   --> Aplicação Programada  (0-Não/1-Sim)
                                                 ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                 ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                 ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)

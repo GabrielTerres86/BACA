@@ -17,6 +17,8 @@
                              e'validar-dados-inclusao' para cálculo de prazo 
                              de vencimento da Poup. Prog (Lucas).
                              
+                19/07/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
+				
 ..............................................................................*/
 
 
@@ -56,6 +58,11 @@ DEF VAR aux_flgctain AS LOGI                                           NO-UNDO.
 DEF VAR aux_flgoprgt AS LOGI                                           NO-UNDO.
 DEF VAR aux_flgcance AS LOGI                                           NO-UNDO.
 DEF VAR aux_flgerlog AS LOGI  INIT TRUE                                NO-UNDO.
+
+DEF VAR aux_cdprodut AS INTE                                           NO-UNDO.
+DEF VAR aux_dsfinali AS CHAR                                           NO-UNDO.
+DEF VAR aux_flgteimo AS INTE                                           NO-UNDO.
+DEF VAR aux_flgdbpar AS INTE                                           NO-UNDO.
 
 DEF VAR aux_dtmaxvct AS DATE FORMAT "99/99/9999"                       NO-UNDO.
 
@@ -109,6 +116,10 @@ PROCEDURE valores_entrada:
             WHEN "vlrrsgat" THEN aux_vlrrsgat = DECI(tt-param.valorCampo).
             WHEN "cddsenha" THEN aux_cddsenha = tt-param.valorCampo.
             WHEN "flgsenha" THEN aux_flgsenha = INTE(tt-param.valorCampo).
+            WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
+            WHEN "dsfinali" THEN aux_dsfinali = tt-param.valorCampo.
+            WHEN "flgteimo" THEN aux_flgteimo = INTE(tt-param.valorCampo).
+            WHEN "flgdbpar" THEN aux_flgdbpar = INTE(tt-param.valorCampo).
 
         END CASE.
     
@@ -925,6 +936,57 @@ PROCEDURE incluir-poupanca-programada:
         END.
 
 END PROCEDURE.
+
+/******************************************************************************/
+/**                Procedure para incluir aplicacao programada               **/
+/******************************************************************************/
+PROCEDURE incluir-aplicacao-programada:
+ 
+    RUN incluir-aplicacao-programada IN hBO (INPUT aux_cdcooper,
+                                             INPUT aux_cdagenci,
+                                             INPUT aux_nrdcaixa,
+                                             INPUT aux_cdoperad,
+                                             INPUT aux_nmdatela,
+                                             INPUT aux_idorigem,
+                                             INPUT aux_nrdconta,
+                                             INPUT aux_idseqttl,
+                                             INPUT aux_dtmvtolt,
+                                             INPUT aux_dtinirpp,
+                                             INPUT aux_mesdtvct,
+                                             INPUT aux_anodtvct,
+                                             INPUT aux_vlprerpp,
+                                             INPUT aux_tpemiext,
+                                             INPUT TRUE,
+											 INPUT aux_cdprodut,
+											 INPUT aux_dsfinali,
+											 INPUT aux_flgteimo,
+											 INPUT aux_flgdbpar,
+                                           OUTPUT aux_nrdrowid,
+                                           OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE
+        DO:
+            RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "nrdrowid",INPUT STRING(aux_nrdrowid)).
+            RUN piXmlSave.
+        END.
+
+END PROCEDURE.
+
 
 
 /******************************************************************************/

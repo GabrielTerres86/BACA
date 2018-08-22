@@ -13,7 +13,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Fernando Hilgenstieler
- Data    : Agosto/2003.                    Ultima atualizacao: 26/02/2018
+ Data    : Agosto/2003.                    Ultima atualizacao: 15/07/2018
 
  Dados referentes ao programa:
 
@@ -135,6 +135,9 @@ BEGIN
             
             26/02/2018 - Remocao de hint no cursor da LCM e da LCI para melhoria de performance.
                          (Roberto - AMCOM / Fabricio - Cecred).
+
+            15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
+
   ............................................................................. */
   DECLARE
     -- Tipo para totalização de valores (utilizados para criar totais dos relatórios)
@@ -1723,6 +1726,7 @@ BEGIN
                                                         pr_cddindex => rw_craprac.cddindex,   -- Cód. do indexador
                                                         pr_qtdiacar => rw_craprac.qtdiacar,   -- Qtd. de dias de carência
                                                         pr_idgravir => 0,                     -- Imunidade tributária
+                                                        pr_idaplpgm => 0,                     -- Aplicação Programada  (0-Não/1-Sim)
                                                         pr_dtinical => rw_craprac.dtmvtolt,   -- Data Inicial Cálculo
                                                         pr_dtfimcal => rw_crapdat.dtmvtolt,   -- Data Final Cálculo
                                                         pr_idtipbas => 2,                     -- Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1778,6 +1782,7 @@ BEGIN
                                                        ,pr_cddindex => rw_craprac.cddindex -- Codigo de Indexador
                                                        ,pr_qtdiacar => rw_craprac.qtdiacar -- Quantidade de Dias de Carencia
                                                        ,pr_idgravir => 0                   -- Imunidade Tributaria
+                                                       ,pr_idaplpgm => 0                   -- Aplicação Programada  (0-Não/1-Sim)
                                                        ,pr_dtinical => rw_craprac.dtmvtolt -- Data de Inicio do Calculo
                                                        ,pr_dtfimcal => rw_crapdat.dtmvtolt -- Data de Fim do Calculo
                                                        ,pr_idtipbas => 2                   -- Tipo Base / 2-Total
