@@ -13,6 +13,7 @@
   | verifica_microcredito               | EMPR0005.pc_verifica_microcredito    |
   | retornaDataUtil                     | EMPR0008.pc_retorna_data_util        |
   | atualiza_risco_proposta             | RATI0002.pc_atualiza_risco_proposta  |  
+  | proc_qualif_operacao                | EMPR9999.pc_proc_qualif_operacao     |
   +-------------------------------------+--------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -782,9 +783,12 @@
 			               deve ser pego este campo, caso contrario pegar do campo nrdplaca.
 						   (Alcemir Mout's) - (PRB0040101).
 
-          12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).     
+              11/07/2018 - Ajuste na proc_qualif_operacao e na grava-proposta-completa para utilizar as procedures Oracle
+                           EMPR9999.pc_proc_qualif_operacao e EMPR9999.pc_busca_numero_contrato. (Andrew/Pedro - GFT)
+
+		      12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).     
               
-          19/07/2018 - Chamar nova rotina para validar perda de aprovaçao quando alterado valor ou valor da prestaçao ou Rating (PRJ 438 - Rafael - Mouts).
+              19/07/2018 - Chamar nova rotina para validar perda de aprovaçao quando alterado valor ou valor da prestaçao ou Rating (PRJ 438 - Rafael - Mouts).
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -4771,153 +4775,70 @@ PROCEDURE proc_qualif_operacao:
     DEF OUTPUT PARAM par_idquapro AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dsquapro AS CHAR                           NO-UNDO.
     
-    DEF VAR aux_nrctremp          AS CHAR                           NO-UNDO.
-    DEF VAR aux_qtprecal          AS DECI                           NO-UNDO.
-    DEF VAR aux_atraso            AS INTE                           NO-UNDO.
-    DEF VAR aux_mai_atraso        AS DECI                           NO-UNDO.
-	DEF VAR aux_qtd_dias_atraso   AS INTE							NO-UNDO.
-	DEF VAR aux_dias_atraso       AS INTE                           NO-UNDO.
-    DEF VAR aux_contaliq          AS INTE                           NO-UNDO.
-    DEF VAR aux_emp_a_liq         AS INTE                           NO-UNDO.
-
-
-    DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
-    DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
-    DEF VAR par_qtprecal          AS INTE                           NO-UNDO.
-	DEF VAR aux_dtmvtoan          AS DATE                           NO-UNDO.
-
-    DEF BUFFER crabepr FOR crapepr.
+    DEF VAR aux_idquapro          AS INTE                           NO-UNDO.
+    DEF VAR aux_dsquapro          AS CHAR                           NO-UNDO.
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
     ASSIGN par_dsctrliq = " " + par_dsctrliq.
 
+    /* AWAE (GFT) - Chamada para nova funçao de qualificaçao da operacao em Oracle */
 
-    FIND FIRST crapdat 
-         WHERE cdcooper = par_cdcooper
-       NO-LOCK NO-ERROR.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-    /* Se Mes do Dia diferente do Mes do dia de ontem,
-       assume dada do ultimo dia do mes anterior */
-    IF  MONTH(crapdat.dtmvtolt) <> MONTH(crapdat.dtmvtoan) THEN
-        ASSIGN aux_dtmvtoan = crapdat.dtultdma.
-    ELSE
-        ASSIGN aux_dtmvtoan = crapdat.dtmvtoan.
+    RUN STORED-PROCEDURE pc_proc_qualif_operacao
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                        ,INPUT par_nrdconta
+                                        ,INPUT par_nrdcaixa
+                                        ,INPUT par_cdoperad
+                                        ,INPUT par_nmdatela
+                                        ,INPUT par_idorigem
+                                        ,INPUT par_nrdconta
+                                        ,INPUT par_dsctrliq
+                                        ,INPUT par_dtmvtolt
+                                        ,INPUT par_dtmvtopr
+                                        /* --------- OUT --------- */
+                                        ,OUTPUT 0  /* pr_idquapro */
+                                        ,OUTPUT ""  /* pr_dsquapro */
+                                        ,OUTPUT 0  /* pr_cdcritic --> Codigo da critica */
+                                        ,OUTPUT "" /* pr_dscritic --> Descriçao da critica */
+                                        ).
 
+    CLOSE STORED-PROC pc_proc_qualif_operacao
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-    DO  aux_contaliq = 1 TO NUM-ENTRIES(par_dsctrliq):
-		aux_qtd_dias_atraso = 0.
-        aux_emp_a_liq = INTEGER(ENTRY(aux_contaliq,par_dsctrliq)).
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        /* ADP                                                */
-        IF  aux_emp_a_liq = par_nrdconta THEN DO:
-                /* Ver se existe na central de risco          */
-                FIND FIRST crapris
-                     WHERE crapris.cdcooper = par_cdcooper
-                       AND crapris.nrdconta = par_nrdconta
-                       AND crapris.dtrefere = aux_dtmvtoan
-                       AND crapris.inddocto = 1
-                       AND crapris.cdorigem = 1
-                       AND crapris.cdmodali = 101
-                       AND crapris.nrctremp = aux_emp_a_liq
-                           NO-LOCK NO-ERROR.
-                IF  AVAIL crapris  THEN
-                    DO:
-                        ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-                    END.                
-            END.
-	    ELSE 
-			/* LIMITE OU LIMITE/ADP                              */
-			DO:
-				FIND FIRST craplim
-					 WHERE craplim.cdcooper = par_cdcooper
-					   AND craplim.nrdconta = par_nrdconta
-					   AND craplim.tpctrlim = 1
-					   AND craplim.nrctrlim = aux_emp_a_liq					   
-					   AND craplim.insitlim = 2
-						   NO-LOCK NO-ERROR.
+    ASSIGN aux_idquapro = pc_proc_qualif_operacao.pr_idquapro
+                             WHEN pc_proc_qualif_operacao.pr_idquapro <> ?
+           aux_dsquapro = pc_proc_qualif_operacao.pr_dsquapro
+                             WHEN pc_proc_qualif_operacao.pr_dsquapro <> ?
+           aux_cdcritic = pc_proc_qualif_operacao.pr_cdcritic
+                             WHEN pc_proc_qualif_operacao.pr_cdcritic <> ?
+           aux_dscritic = pc_proc_qualif_operacao.pr_dscritic
+                             WHEN pc_proc_qualif_operacao.pr_dscritic <> ?.
 
-				IF  AVAIL craplim THEN
+    /* Se ocorrer critica, abortar e gerar erro.*/
+    IF aux_cdcritic <> 0   OR
+       aux_dscritic <> ""  THEN
 					DO:
-						/* LIMITE                                */
-						FIND FIRST crapris
-							 WHERE crapris.cdcooper = par_cdcooper
-							   AND crapris.nrdconta = par_nrdconta
-                               AND crapris.dtrefere = aux_dtmvtoan
-                               AND crapris.inddocto = 1
-							   AND crapris.cdorigem = 1
-							   AND crapris.cdmodali = 201
-							   AND crapris.nrctremp = aux_emp_a_liq
-								   NO-LOCK NO-ERROR.
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1,
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic).
 
-						IF AVAIL crapris THEN
-							ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.                
-
-						/* LIMITE/ADP                                */
-						FIND FIRST crapris
-							 WHERE crapris.cdcooper = par_cdcooper
-							   AND crapris.nrdconta = par_nrdconta
-                               AND crapris.dtrefere = aux_dtmvtoan
-                               AND crapris.inddocto = 1	
-							   AND crapris.cdorigem = 1
-							   AND crapris.cdmodali = 101
-								   NO-LOCK NO-ERROR.
-
-						IF AVAIL crapris THEN
-							ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.                
-					END.
-			END.
-
-        FIND FIRST crabepr
-             WHERE crabepr.cdcooper = par_cdcooper
-               AND crabepr.nrdconta = par_nrdconta
-               AND crabepr.nrctremp = aux_emp_a_liq
-               AND crabepr.inliquid = 0
-                   NO-LOCK NO-ERROR.
-
-        IF  AVAIL crabepr THEN DO:
-		    FOR FIRST crapris FIELDS(qtdiaatr) 
-                WHERE crapris.cdcooper = par_cdcooper 
-                  AND crapris.dtrefere = aux_dtmvtoan
-                  AND crapris.inddocto = 1
-		    	  AND crapris.nrdconta = par_nrdconta
-		    	  AND crapris.nrctremp = crabepr.nrctremp
-		    	  AND crapris.cdorigem = 3
-              NO-LOCK: 
-				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-            END.
-
-          /* Se contrato a liquidar já é um refinanciamento, força 
-		     qualificação mínima como "Renegociação" 
-		     Reginaldo (AMcom) - Mar/2018                     */
-          IF crabepr.idquaprc > 1 THEN
-			 ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
-
-        END.
-
-		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
-		   aux_dias_atraso = aux_qtd_dias_atraso.
+         RETURN "NOK".
              END.
-
-	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
-    IF  aux_dias_atraso < 5 THEN
-        ASSIGN par_idquapro = 2
-               par_dsquapro = "Renovacao de credito".
     ELSE
-	
-	/*  De 5 a 60 dias de atraso - Renegociação de Crédito		            */ 
-    IF  aux_dias_atraso > 4 AND aux_dias_atraso < 61 THEN
-        ASSIGN par_idquapro = 3               
-               par_dsquapro = "Renegociacao de credito".
-    ELSE
-	
-	/*  Igual ou acima de 61 dias - Composição de dívida			        */
-	IF aux_dias_atraso >= 61 THEN
-        ASSIGN par_idquapro = 4
-               par_dsquapro = "Composicao da divida".
+       DO:
+         ASSIGN par_idquapro = aux_idquapro
+                par_dsquapro = aux_dsquapro.
 
     RETURN "OK".
+       END.
 
 END PROCEDURE.
 
