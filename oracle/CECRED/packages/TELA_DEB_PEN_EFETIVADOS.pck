@@ -526,7 +526,20 @@ DECLARE
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)
+               AND crapcon.cdcooper = craplau.cdcooper
+                UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )
       Union
       --DEBSIC - crps642 - programa de convenios terceiroS - SICREDI, menos agua e luz
       SELECT DISTINCT
@@ -578,7 +591,20 @@ DECLARE
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)          
+               AND crapcon.cdcooper = craplau.cdcooper
+               UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )          
       union
       -- pc_crps145 - Poupanca Programada - craprpp - pendentes
       SELECT craprpp.cdcooper coope,
@@ -623,7 +649,7 @@ DECLARE
            crapass ass,
            craphis his
       WHERE ope.cdcooper = pr_cdcooper
-        AND ope.insit_operacao IN (3,6,7) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
+        AND ope.insit_operacao IN (1) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
         AND ope.dtrecarga = vr_dtmvtolt
         AND ass.cdagenci    = pr_cdagenci        
         AND ass.nrdconta    = nvl(pr_nrdconta,ass.nrdconta)      
@@ -631,8 +657,9 @@ DECLARE
         AND ass.cdcooper    = ope.cdcooper
         AND ass.nrdconta    = ope.nrdconta
         AND ope.cdcooper    = his.cdcooper        
-        AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
-             his.cdhistor   = opr.cdhisdeb_centralizacao)    
+        AND his.cdhistor   = opr.cdhisdeb_cooperado  
+   /*     AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
+             his.cdhistor   = opr.cdhisdeb_centralizacao)    */
         AND InStr(pr_ds_cdprocesso,'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA'||',') > 0                 
       union
       --  cecred.pc_crps439 - DEBITO DIARIO DO SEGURO
@@ -1233,7 +1260,20 @@ BEGIN
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)
+               AND crapcon.cdcooper = craplau.cdcooper
+                UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )
       Union
       --DEBSIC - crps642 - programa de convenios terceiroS - SICREDI, menos agua e luz
       SELECT DISTINCT
@@ -1285,7 +1325,20 @@ BEGIN
                AND crapscn.dsoparre = 'E' -- debito automatico
                AND crapscn.cddmoden IN ('A','C') -- tipo da modalidade de cadastro debito automatico
                AND crapscn.cdsegmto in (2, 3) -- agua / energia
-               AND crapcon.cdcooper = craplau.cdcooper)          
+               AND crapcon.cdcooper = craplau.cdcooper
+                UNION
+               SELECT 1
+               FROM crapscn
+                   ,crapcon
+               WHERE crapscn.cdempcon = crapcon.cdempcon
+                AND crapscn.cdsegmto = crapcon.cdsegmto
+                AND crapcon.flgcnvsi = 1 -- indica que é sicred
+                AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+                AND crapscn.cdsegmto in (2, 3) -- agua / energia
+                AND crapscn.cdempcon = TO_NUMBER(SUBSTR(craplau.dscodbar,16,4)) -- empresa convenio
+                AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(craplau.dscodbar,2,1))  -- segmento convenio
+                AND crapcon.cdcooper = craplau.cdcooper                
+               )          
       union
       -- pc_crps145 - Poupanca Programada - craprpp - pendentes
       SELECT craprpp.cdcooper coope,
@@ -1330,7 +1383,7 @@ BEGIN
            crapass ass,
            craphis his
       WHERE ope.cdcooper = pr_cdcooper
-        AND ope.insit_operacao IN (3,6,7) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
+        AND ope.insit_operacao IN (1) --(1-Agendado/ 2-Processado/ 3-Transacao Pendente/ 4-Cancelado/ 5-Nao efetivado/ 6-Nao aprovada transacao pendente/ 7-Expirada transacao pendente/ 8-Transacao abortada)
         AND ope.dtrecarga = vr_dtmvtolt
         AND ass.cdagenci    = pr_cdagenci        
         AND ass.nrdconta    = nvl(pr_nrdconta,ass.nrdconta)      
@@ -1338,8 +1391,9 @@ BEGIN
         AND ass.cdcooper    = ope.cdcooper
         AND ass.nrdconta    = ope.nrdconta
         AND ope.cdcooper    = his.cdcooper        
-        AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
-             his.cdhistor   = opr.cdhisdeb_centralizacao)    
+        AND his.cdhistor   = opr.cdhisdeb_cooperado  
+    /*    AND (his.cdhistor   = opr.cdhisdeb_cooperado OR 
+             his.cdhistor   = opr.cdhisdeb_centralizacao)   */ 
         AND InStr(pr_ds_cdprocesso,'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA'||',') > 0                 
       union
       --  cecred.pc_crps439 - DEBITO DIARIO DO SEGURO
@@ -1693,29 +1747,11 @@ BEGIN
             vr_data_aux :=  to_date(rw_debitos.dtmvto,'DD/MM/YYYY'); 
            -- Se for Financiamento
            IF (vr_tab_craplcr(rw_debitos.auxcdlcremp).dsoperac = 'FINANCIAMENTO') THEN
-             --EM DIA
-             IF vr_data_aux > vr_dtmovini --rw_crapdat.dtmvtoan
-                            AND vr_data_aux <= vr_dtmvtolt THEN
-               rw_debitos.historico := 2333;             
-             ELSIF --em atraso
-                 vr_data_aux < vr_dtmvtolt THEN
-               -- ATRASO
-               rw_debitos.historico := 2364;
-             ELSE -- Parcela Vencer, não lista--
-                continue;
-             END IF;  
+
+                rw_debitos.historico := 2333;   
            ELSE
-            -- EM DIA
-             IF vr_data_aux > vr_dtmovini --rw_crapdat.dtmvtoan
-                            AND vr_data_aux <= vr_dtmvtolt THEN
+              --se for emprestimo 
                 rw_debitos.historico := 2332;
-             ELSIF --em atraso
-                 vr_data_aux < vr_dtmvtolt THEN
-            -- EM ATRASO
-                rw_debitos.historico := 2362;             
-             ELSE --- Parcela Vencer , não lista--
-                   continue; 
-             END IF;
            END IF;
            FOR rw_craplcr IN cr_craphis(pr_cdcooper => pr_cdcooper, pr_cdhistor => rw_debitos.historico) LOOP
                rw_debitos.historico := rw_craplcr.dshist;

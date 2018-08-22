@@ -810,7 +810,7 @@ BEGIN
       vr_cdbccxlt CONSTANT PLS_INTEGER := 100;
       vr_qtd_reg  NUMBER:=0;
       vr_inliquid crapepr.inliquid%TYPE;
-
+      
       ------------------------------- CURSORES ---------------------------------
 
       -- Buscar o cadastro dos associados da Cooperativa

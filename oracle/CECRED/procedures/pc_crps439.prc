@@ -242,6 +242,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and craptsg.tpseguro = pr_tpseguro
        and craptsg.cdsegura = pr_cdsegura;
   rw_craptsg     cr_craptsg%rowtype;
+	
   -- Buscar informações do associado
   cursor cr_crapass (pr_cdcooper in crapass.cdcooper%type,
                      pr_nrdconta in crapass.nrdconta%type) is
@@ -259,6 +260,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crapass.nrdconta = pr_nrdconta
        AND crapass.idorgexp = org.idorgao_expedidor(+);
   rw_crapass     cr_crapass%rowtype;
+	
   -- Buscar informações de seguros
   cursor cr_crawseg (pr_cdcooper in crawseg.cdcooper%type,
                      pr_cdsegura in crawseg.cdsegura%type,
@@ -279,6 +281,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crawseg.nrdconta = pr_nrdconta
        and crawseg.nrctrseg = pr_nrctrseg;
   rw_crawseg     cr_crawseg%rowtype;
+	
   -- Capa dos lotes
   cursor cr_craplot (pr_cdcooper in craplot.cdcooper%type,
                      pr_dtmvtopr in craplot.dtmvtolt%type,
@@ -298,6 +301,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and co.cdbccxlt = pr_cdbccxlt
        and co.nrdolote = pr_nrdolote;
   rw_craplot     cr_craplot%rowtype;
+	
   -- Buscar informações de seguros
   cursor cr_crapseg2 (pr_cdcooper in crapseg.cdcooper%type,
                       pr_dtmvtolt in crapseg.dtmvtolt%type) is
@@ -325,6 +329,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
             or crapseg.dtcancel = pr_dtmvtolt)
        and nvl(crapseg.dtmvtolt, to_date('31122999','ddmmyyyy')) <> nvl(crapseg.dtcancel, to_date('31122999','ddmmyyyy'))
        and crapseg.tpseguro >= 11;
+			 
   -- Cadastro do titular da conta
   cursor cr_crapttl (pr_cdcooper in crapttl.cdcooper%type,
                      pr_nrdconta in crapttl.nrdconta%type) is
@@ -335,6 +340,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crapttl.idseqttl = 1
        and crapttl.tpdocttl = 'CI';
   rw_crapttl     cr_crapttl%rowtype;
+	
   -- Buscar o telefone fixo ou celular
   cursor cr_craptfc (pr_cdcooper in craptfc.cdcooper%type,
                      pr_nrdconta in craptfc.nrdconta%type) is
@@ -345,6 +351,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and craptfc.tptelefo in (1,2)
      order by craptfc.progress_recid;
   rw_craptfc     cr_craptfc%rowtype;
+	
   -- Buscar o e-mail do titular
   cursor cr_crapcem (pr_cdcooper in crapcem.cdcooper%type,
                      pr_nrdconta in crapcem.nrdconta%type) is
@@ -355,6 +362,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crapcem.idseqttl = 1
      order by crapcem.progress_recid;
   rw_crapcem     cr_crapcem%rowtype;
+	
   -- Buscar o endereço de correspondência
   cursor cr_crapenc (pr_cdcooper in crapenc.cdcooper%type,
                      pr_nrdconta in crapenc.nrdconta%type,
@@ -722,6 +730,7 @@ begin
         continue;
       end if;
     close cr_craptsg;
+
     -- Busca informações do associado
     open cr_crapass (pr_cdcooper,
                      rw_crapseg.nrdconta);
