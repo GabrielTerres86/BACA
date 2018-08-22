@@ -120,24 +120,24 @@
                             batimento do lote processo. (Fabricio)
                
               29/08/2014 - Incluso parametro par_dshistor na proc_envia_tec_ted
-                           referente a descri√ß√£o do hist√≥rico(Vanessa). 
+                           referente a descriÁ„o do histÛrico(Vanessa). 
                            
               24/10/2014 - Enviar hora da transacao (Jonata-RKAM).
                             
-              11/12/2014 - Convers√£o da fn_sequence para procedure para n√£o
+              11/12/2014 - Convers„o da fn_sequence para procedure para n„o
                            gerar cursores abertos no Oracle. (Dionathan)
                            
               03/06/2015 - Remover validacao do conveio 53 Foz do brasil
                            (Lucas Ranghetti #292200)
                            
-              05/06/2015 - Inclus√£o do paramentro par_cdispbif = 0 na procedure
+              05/06/2015 - Inclus„o do paramentro par_cdispbif = 0 na procedure
                            proc_envia_tec_ted (Vanessa - FDR041 SD271603)
                            
-              02/09/2015 - Inclusao da gera√ßao do arquivo REPCNVFIL.TXT para 
+              02/09/2015 - Inclusao da geraÁ„o do arquivo REPCNVFIL.TXT para 
                            cada cooperativa  PRJ-214 (Vanessa) 
 
 
-              07/10/2016 - Altera√ß√£o do diret√≥rio para gera√ß√£o de arquivo cont√°bil.
+              07/10/2016 - AlteraÁ„o do diretÛrio para geraÁ„o de arquivo cont·bil.
                            P308 (Ricardo Linhares).                            
                             
                            
