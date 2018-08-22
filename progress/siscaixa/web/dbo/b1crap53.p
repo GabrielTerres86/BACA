@@ -94,6 +94,9 @@
                              
                18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                       norturno rodando (Douglas Pagel - AMcom).
+                      
+               10/08/2018 - Adicionado funcao para verificar necessidade de  senha. 
+                            PRJ 420 (Mateus Z - Mouts)       
                              
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -899,6 +902,8 @@ PROCEDURE valida-pagto-cheque:
                                                    /* Chq */           NO-UNDO.
     DEF INPUT  PARAM p-nrddigc3            AS INT  FORMAT "9" /* C3 */ NO-UNDO.
     DEF INPUT  PARAM p-valor               AS DEC                      NO-UNDO.
+    DEF INPUT  PARAM p_tppagmto            AS INT                      NO-UNDO.
+    DEF INPUT  PARAM p_flg-erro-cod-senha  AS CHAR                      NO-UNDO.
     DEF OUTPUT PARAM p-aviso-cheque        AS CHAR INITIAL ''          NO-UNDO.
     DEF OUTPUT PARAM p-transferencia-conta AS CHAR INITIAL ''          NO-UNDO.
     DEF OUTPUT PARAM p-aux-indevchq        AS INT  /* Devolucao */     NO-UNDO.
@@ -910,8 +915,17 @@ PROCEDURE valida-pagto-cheque:
     DEF OUTPUT PARAM p-coop-migrada        AS CHAR                     NO-UNDO.
     DEF OUTPUT PARAM p-flg-coop-host       AS LOGICAL                  NO-UNDO.
     DEF OUTPUT PARAM p-nro-conta-nova      AS INT                      NO-UNDO.
+    DEF OUTPUT PARAM p-nrcpfcgc            AS CHAR                     NO-UNDO.
+    DEF OUTPUT PARAM p-dhprevisao_operacao AS CHAR                     NO-UNDO.
+    DEF OUTPUT PARAM p-nro-conta-provisao  AS INT                      NO-UNDO.
+    DEF OUTPUT PARAM p-solicita-senha      AS CHAR                     NO-UNDO.    
     
     DEF VAR h-b1wgen0001 AS HANDLE                                    NO-UNDO.
+    DEF VAR aux_nrdconta            AS INT                                       NO-UNDO.
+    DEF VAR aux_inexige_senha       AS CHAR                                      NO-UNDO.
+    DEF VAR aux_nrcpfcgc            AS CHAR                                      NO-UNDO.
+    DEF VAR aux_cdcritic            AS INT                                       NO-UNDO.
+    DEF VAR aux_dscritic            AS CHAR                                      NO-UNDO.
     DEF BUFFER crabcop FOR crapcop.
     
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
@@ -2094,6 +2108,98 @@ PROCEDURE valida-pagto-cheque:
                                             TRIM(STRING(de-valor-bloqueado,
                                             "zzz,zzz,zzz,zz9.99-")).
 
+                          END.
+                          
+                        /* Verificar necessidade de senha apenas se tiver selecionado o tipo Especie */    
+                      IF p_tppagmto = 1 
+                          THEN DO:    
+                              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                              
+                              aux_nrcpfcgc = REPLACE(tt-conta.cpfcgc, ".", "").
+                              aux_nrcpfcgc = REPLACE(aux_nrcpfcgc, "-", "").
+                              aux_nrcpfcgc = REPLACE(aux_nrcpfcgc, "/", "").
+                              
+                              /* CPF/CNPJ sera retornado via parametro */
+                              ASSIGN p-nrcpfcgc = aux_nrcpfcgc.
+                
+                              /* Efetuar a chamada da rotina Oracle */ 
+                              RUN STORED-PROCEDURE pc_ver_necessidade_senha
+                                  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,         /* Cooperativa */
+                                                                      INPUT p-cod-agencia,            /* Agencia */
+                                                                      INPUT DEC(aux_nrcpfcgc),        /* CPF/CNPJ */
+                                                                      INPUT p-valor,                  /* Valor Saque */
+                                                                      OUTPUT "",                      /* Data e hora prevista para saque/pagamento em especie. */
+                                                                      OUTPUT 0,                       /* Numero da conta da provisao */
+                                                                      OUTPUT "",                      /* Indicador de necessidade de senha */
+                                                                      OUTPUT 0,                       /* Cod. critica */
+                                                                      OUTPUT "").                     /* Desc. critica */
+
+                              /* Fechar o procedimento para buscarmos o resultado */ 
+                              CLOSE STORED-PROC pc_ver_necessidade_senha
+                                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                              
+                              HIDE MESSAGE NO-PAUSE.
+
+                              /* Busca possíveis erros */ 
+                              ASSIGN p-dhprevisao_operacao = ""
+                                     p-dhprevisao_operacao = pc_ver_necessidade_senha.pr_dhprevisao_operacao 
+                                                          WHEN pc_ver_necessidade_senha.pr_dhprevisao_operacao <> ?
+                                     p-nro-conta-provisao = 0
+                                     p-nro-conta-provisao = pc_ver_necessidade_senha.pr_nrdconta 
+                                                          WHEN pc_ver_necessidade_senha.pr_nrdconta <> ?                     
+                                     aux_inexige_senha = ""
+                                     aux_inexige_senha = pc_ver_necessidade_senha.pr_inexige_senha 
+                                                    WHEN pc_ver_necessidade_senha.pr_inexige_senha <> ?
+                                     aux_cdcritic = 0
+                                     aux_cdcritic = pc_ver_necessidade_senha.pr_cdcritic 
+                                                    WHEN pc_ver_necessidade_senha.pr_cdcritic <> ?          
+                                     aux_dscritic = ""
+                                     aux_dscritic = pc_ver_necessidade_senha.pr_dscritic 
+                                                    WHEN pc_ver_necessidade_senha.pr_dscritic <> ?.
+                              
+                              IF  aux_dscritic <> "" THEN
+                                 DO:
+                                     ASSIGN i-cod-erro  = aux_cdcritic
+                                            c-desc-erro = aux_dscritic.           
+                                     RUN cria-erro (INPUT p-cooper,
+                                                    INPUT p-cod-agencia,
+                                                    INPUT p-nro-caixa,
+                                                    INPUT i-cod-erro,
+                                                    INPUT c-desc-erro,
+                                                    INPUT YES). 
+                                     RETURN "NOK".
+                                 END.
+                              
+                              IF aux_inexige_senha = "S" THEN
+                                 DO:
+                                    
+                                    ASSIGN i-cod-erro = 0
+                                           c-desc-erro = "Atencao! Provisao para saque nao realizada.
+                                          Saque nao autorizado." .
+                                 
+                                    RUN cria-erro (INPUT p-cooper,
+                                                   INPUT p-cod-agencia,
+                                                   INPUT p-nro-caixa,
+                                                   INPUT i-cod-erro,
+                                                   INPUT c-desc-erro,
+                                                   INPUT YES).
+                                    
+                                    IF p_flg-erro-cod-senha = "TRUE" THEN DO:
+                                        ASSIGN i-cod-erro  = 0
+                                               c-desc-erro = "Informe Codigo/Senha ".
+                                        RUN cria-erro (INPUT p-cooper,
+                                                       INPUT p-cod-agencia,
+                                                       INPUT p-nro-caixa,
+                                                       INPUT i-cod-erro,
+                                                       INPUT c-desc-erro,
+                                                       INPUT YES).
+                                    END.                                                   
+                                 
+                                    ASSIGN p-solicita-senha = "TRUE".
+                                    
+                                 END. 
                           END.
                   END.
          END.    

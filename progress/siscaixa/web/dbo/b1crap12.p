@@ -38,9 +38,14 @@
                
                 08/12/2017 - Melhoria 458, auste fechamento-boletim-caixa. Antonio R. Jr (mouts)
                 
-                14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).                    
+                14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).
+                
+                05/07/2018 - Tratar os novos históricos
+                             1590 - DEPOSITO TRANSPORTE DE VALORES (ESTABELECIMENTOS)
+                             2692 - DB TRANSPORTE DE VALORES (ESTABELECIMENTOS)
+                             Marcelo Telles Coelho - Projeto 420 - PLD
                      
------------------------------------------------------------------------------- **/
+------------------------------------------------------------------------------ */
 {dbo/bo-erro1.i}
 
 DEF VAR i-cod-erro      AS INTEGER.
@@ -209,12 +214,14 @@ PROCEDURE fechamento-boletim-caixa:
     FOR EACH craplcm WHERE craplcm.cdcooper  = crapcop.cdcooper     AND
                            craplcm.dtmvtolt  = crapdat.dtmvtocd     AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).*/
                            craplcm.cdagenci  = p-cod-agencia        AND
-                           craplcm.cdbccxlt  = 11                   AND
+                         ((craplcm.cdbccxlt = 11                    AND    /*-- Marcelo Telles Coelho - Projeto 420 - PLD*/
                            craplcm.nrdolote  = 11000 + p-nro-caixa  AND
                           (craplcm.cdhistor  = 1                    OR
                            craplcm.cdhistor  = 21                   OR
                            craplcm.cdhistor  = 22                   OR
-                           craplcm.cdhistor  = 1030)                AND
+                           craplcm.cdhistor = 1030))                OR     /*-- Marcelo Telles Coelho - Projeto 420 - PLD*/
+                          (craplcm.cdhistor = 1590                  OR     /*-- Marcelo Telles Coelho - Projeto 420 - PLD*/
+                           craplcm.cdhistor = 2692))                AND    /*-- Marcelo Telles Coelho - Projeto 420 - PLD*/
                            craplcm.vllanmto >= aux_vlctrmve         
                            USE-INDEX craplcm3 NO-LOCK:
         

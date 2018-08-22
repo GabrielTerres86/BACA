@@ -46,7 +46,12 @@
                18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                       norturno rodando (Douglas Pagel - AMcom).
                       
+               10/08/2018 - Adicionado funcao para realizar provisao e 
+                            tratamento para solicitar senha. PRJ 420 (Mateus Z - Mouts)       
+                      
 ............................................................................ */
+
+{ sistema/generico/includes/var_oracle.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -62,7 +67,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_msg AS CHARACTER FORMAT "X(256)":U 
        FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
        FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
-       FIELD v_valor AS CHARACTER FORMAT "X(256)":U .
+       FIELD v_valor AS CHARACTER FORMAT "X(256)":U
+       FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -121,6 +127,12 @@ DEF VAR p-flg-cta-migrada AS LOG NO-UNDO.
 DEF VAR p-coop-migrada AS CHAR NO-UNDO.
 DEF VAR p-flg-coop-host AS LOG NO-UNDO.
 DEF VAR p-nro-conta-nova AS INT NO-UNDO.
+DEF VAR p-nrcpfcgc AS CHAR NO-UNDO.
+DEF VAR p-dhprevisao_operacao AS CHAR NO-UNDO.
+DEF VAR p-nro-conta-provisao AS INT NO-UNDO.
+DEF VAR p-solicita-senha AS CHAR NO-UNDO.
+
+DEF VAR aux_dscritic AS CHAR.
 
 DEF VAR p-mensagem1 AS CHAR NO-UNDO.
 DEF VAR p-mensagem2 AS CHAR NO-UNDO.
@@ -165,8 +177,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor 
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor 
+&Scoped-Define ENABLED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -220,6 +232,12 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.v_tppagmto AT ROW 1 COL 1 HELP
+          "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
+          RADIO-BUTTONS 
+           "v_tppagmto 0", "0":U,
+           "v_tppagmto 1", "1":U 
+           SIZE 20 BY 2
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -249,6 +267,7 @@ DEFINE FRAME Web-Frame
           FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U
       END-FIELDS.
    END-TABLES.
  */
@@ -301,6 +320,8 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */      
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
 
@@ -365,6 +386,8 @@ PROCEDURE htmOffsets :
     ("v_pac":U,"ab_unmap.v_pac":U,ab_unmap.v_pac:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).  
 END PROCEDURE.
 
 
@@ -528,7 +551,7 @@ PROCEDURE process-web-request :
                                       *******************/
 
                             {&OUT}
-                            '<script>window.location = "crap053a.w?v_valor=" + "'get-value("v_valor")'"</script>'.
+                            '<script>window.location = "crap053a.w?v_valor=" + "'get-value("v_valor")'" + "&v_tppagmto=" + "'get-value("v_tppagmto")'"</script>'.
                         END.
                     END.
                     ELSE DO:
@@ -586,6 +609,8 @@ PROCEDURE process-web-request :
                                                 INPUT p-nrcheque,       
                                                 INPUT p-nrddigc3,
                                                 INPUT DEC(v_valor),
+                                                INPUT v_tppagmto,
+                                                INPUT "TRUE", /* flag para criar erro de Informar Codigo/Senha */
                                                 OUTPUT p-mensagem1,
                                                 OUTPUT p-mensagem2,
                                                 OUTPUT p-aux-indevchq, 
@@ -596,9 +621,17 @@ PROCEDURE process-web-request :
                                                 OUTPUT p-flg-cta-migrada,
                                                 OUTPUT p-coop-migrada,
                                                 OUTPUT p-flg-coop-host,
-                                                OUTPUT p-nro-conta-nova).
+                                                OUTPUT p-nro-conta-nova,
+                                                OUTPUT p-nrcpfcgc,
+                                                OUTPUT p-dhprevisao_operacao,
+                                                OUTPUT p-nro-conta-provisao,
+                                                OUTPUT p-solicita-senha).
 
                                 DELETE PROCEDURE h-b1crap53.
+                                
+                                IF  p-solicita-senha <> " " THEN DO:
+                                    {include/i-erro.i}
+                                END.
                                 
                                 IF RETURN-VALUE = "NOK" THEN DO:
                                     ASSIGN vh_foco = "8".
@@ -608,7 +641,8 @@ PROCEDURE process-web-request :
                                     
                                     IF TRIM(p-mensagem1) = '' AND
                                        TRIM(p-mensagem2) = '' AND
-                                       TRIM(p-mensagem)  = '' THEN DO:
+                                       TRIM(p-mensagem)  = '' AND
+                                       TRIM(p-solicita-senha)  = '' THEN DO:
 
                                         ASSIGN l-houve-erro = NO.
 
@@ -684,6 +718,46 @@ PROCEDURE process-web-request :
                                                       OUTPUT p-ult-sequencia).
                                               
                                       END.
+                                      
+                                      IF v_tppagmto = "1" 
+                                          THEN DO:                                                                        
+                                      
+                                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                              
+                                            /* Efetuar a chamada da rotina Oracle */ 
+                                            RUN STORED-PROCEDURE pc_realiza_provisao
+                                                aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,         /* Cooperativa */
+                                                                                    INPUT p-cdagechq,               /* PA aonde será realizado o saque */
+                                                                                    INPUT p-dhprevisao_operacao,    /* Data e Hora da provisao */
+                                                                                    INPUT DEC(p-nrcpfcgc),          /* CPF/CNPJ */
+                                                                                    INPUT p-conta-atualiza,         /* Número da conta do pagamento */
+                                                                                    INPUT p-nro-conta-provisao,     /* Número da conta da provisao */
+                                                                                    INPUT DEC(v_valor),             /* Valor da operacao */
+                                                                                    INPUT "",                       /* Código do operador que autorizou a provisao */
+                                                                                    INPUT INT(v_pac),               /* PA aonde foi feito o saque */
+                                                                                    INPUT INT(v_caixa),             /* Caixa aonde foi feito o saque */
+                                                                                    OUTPUT 0,                       /* Cod. critica */
+                                                                                    OUTPUT "").                     /* Desc. critica */
+
+                                            /* Fechar o procedimento para buscarmos o resultado */ 
+                                            CLOSE STORED-PROC pc_realiza_provisao
+                                                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                            
+                                            ASSIGN  aux_dscritic = ""
+                                                    aux_dscritic = pc_realiza_provisao.pr_dscritic 
+                                                            WHEN pc_realiza_provisao.pr_dscritic <> ?.
+                                            
+                                            IF aux_dscritic <> "" THEN 
+                                                DO:
+                                                  
+                                                    {&OUT} '<script> alert("' + aux_dscritic + '") </script>'.
+
+                                                    UNDO.
+                                                END.
+                                                    
+                                          END.
 
                                       DELETE PROCEDURE h-b1crap53.
                                          
@@ -847,6 +921,8 @@ PROCEDURE process-web-request :
                                             + "&p-mensagem1=" + "' p-mensagem1 '"
                                             + "&p-mensagem2="  + "' p-mensagem2 '"
                                             + "&p-valor-disponivel="  + "' p-valor-disponivel '"
+                                            + "&v_tppagmto="  + "' v_tppagmto '"
+                                            + "&p-solicita-senha="  + "' p-solicita-senha '"
                                             </script>'.
 
                                     END.
