@@ -381,7 +381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 	  -- Busca valor do saldo liberado para operações na CC
 		CURSOR cr_sldlib IS
 		SELECT vlsldlib
-		  FROM tbcc_prejuizo_lancamento
+		  FROM tbcc_prejuizo
 		 WHERE cdcooper = pr_cdcooper
 		   AND nrdconta = pr_nrdconta;
 
@@ -2059,7 +2059,12 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        vr_exc_saida exception;
 
        cursor cr_tbcc_prejuizo is
-       select a.dtinclusao, a.dtrefjur, a.vlsdprej
+       select a.dtinclusao
+			      , a.dtrefjur
+						, a.vlsdprej + 
+						  a.vljur60_ctneg + 
+							a.vljur60_lcred +
+							a.vljuprej vlsdprej
        from tbcc_prejuizo a
        where a.idprejuizo = pr_idprejuizo;
 
@@ -2319,11 +2324,18 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 					SET vliofmes = 0
 					  , vlbasiof = 0
 				WHERE ROWID = rw_crapsldiof.rowid;
+			  
+			 -- Incrementa o saldo devedor do prejuízo com o valor debitado do IOF na conta corrente
+			 UPDATE tbcc_prejuizo prj
+			    SET prj.vlsdprej = prj.vlsdprej + vr_vllanciof
+				WHERE prj.rowid = rw_contaprej.rowid; 
 		END IF;
 
 		--Calcula o saldo disponivel  apos pagamento de IOF
-		vr_vlsddisp := vr_vlsddisp - vr_vllanciof;
-		vr_valrpago := vr_valrpago + vr_vllanciof;
+		vr_vlsddisp := vr_vlsddisp - nvl(vr_vllanciof,0);
+		vr_valrpago := vr_valrpago + nvl(vr_vllanciof,0);
+		
+		vr_vllanciof := 0; -- Reinicializa a variável para reutilizá-la
 
 		-- Verifica IOF no saldo da conta CRAPLAU (lançamentos furutos)
 	  OPEN cr_craplauiof(pr_cdcooper => pr_cdcooper,
@@ -2332,7 +2344,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 	  CLOSE cr_craplauiof;
 
 		-- Conta possui saldo
-		IF vr_vlsddisp > 0 AND rw_craplauiof.vliofmes > 0 THEN
+		IF vr_vlsddisp > 0 AND nvl(rw_craplauiof.vliofmes,0) > 0 THEN
 			IF vr_vlsddisp  >= rw_craplauiof.vliofmes THEN
 				 vr_vllanciof := rw_craplauiof.vliofmes;     -- Paga Total
 			ELSE
@@ -2368,11 +2380,16 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 			 UPDATE craplau
 					SET insitlau = 2
 				WHERE ROWID = rw_craplauiof.rowid;
+				
+			 -- Incrementa o saldo devedor do prejuízo com o valor debitado do IOF na conta corrente
+			 UPDATE tbcc_prejuizo prj
+			    SET prj.vlsdprej = prj.vlsdprej + vr_vllanciof
+				WHERE prj.rowid = rw_contaprej.rowid; 	
 		END IF;
 
 		--Calcula o saldo disponivel  apos pagamento de IOF
-		vr_vlsddisp := vr_vlsddisp - vr_vllanciof;
-		vr_valrpago := vr_valrpago + vr_vllanciof;
+		vr_vlsddisp := vr_vlsddisp - nvl(vr_vllanciof,0);
+		vr_valrpago := vr_valrpago + nvl(vr_vllanciof,0);
 
 		IF vr_vlsddisp > 0 AND rw_contaprej.vljur60_ctneg > 0 THEN
 			 --O Saldo disponivel pode liquidar Juros60 37,57
@@ -2669,11 +2686,15 @@ Alteracoes:
 				 -- Obtém saldo disponível para pagamento
   		   vr_vlsddisp:=  fn_cred_disp_prj(pr_nrdconta => rw_contaprej.nrdconta,
 				    														 pr_cdcooper => rw_contaprej.cdcooper);
-         pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
-				                 , pr_nrdconta => rw_contaprej.nrdconta
-												 , pr_vlrpagto => vr_vlsddisp
-												 , pr_cdcritic => vr_cdcritic
-												 , pr_dscritic => vr_dscritic);
+				
+         IF vr_vlsddisp > 0 THEN
+				
+					 pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
+													 , pr_nrdconta => rw_contaprej.nrdconta
+													 , pr_vlrpagto => vr_vlsddisp
+													 , pr_cdcritic => vr_cdcritic
+													 , pr_dscritic => vr_dscritic);
+				 END IF;
 
 				 -- Tratar críticas
        END LOOP;
@@ -2779,6 +2800,8 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 								 RAISE vr_exc_saida;
 						END IF;
 				EXCEPTION
+					WHEN vr_exc_saida THEN
+						RAISE vr_exc_saida; -- RElança a exceção para ser tratada fora do bloco BEGIN...END
 					WHEN OTHERS THEN
 						vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
 						--Sair do programa
@@ -2809,8 +2832,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 					 RAISE vr_exc_saida;
 				 END IF;
   EXCEPTION
-    WHEN  vr_exc_erro THEN
-
+    WHEN  vr_exc_saida THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
@@ -3539,7 +3561,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
          IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN    
            RAISE vr_exp_erro;
 				 ELSE 
-					 pr_vltotpag := vr_vlpagmto;
+					 pr_vltotpag := vr_vlpagmto + pr_vlrabono;
          END IF;
 			ELSE
 				-- Realizar a chamada da rotina para pagamento de prejuizo
