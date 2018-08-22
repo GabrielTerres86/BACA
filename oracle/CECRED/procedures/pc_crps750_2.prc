@@ -271,6 +271,9 @@ BEGIN
     -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
     vr_dsctactrjud      CRAPPRM.dsvlrprm%TYPE := NULL;
 
+    -- Debitador Unico	
+    vr_flultexe     NUMBER;
+    vr_qtdexec      NUMBER;	
   ----------------------------------------------------------------------------------
   
     -- Procedure para limpar os dados das tabelas de memoria
