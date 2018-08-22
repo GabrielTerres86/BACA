@@ -230,6 +230,7 @@ BEGIN
 			 WHERE rac.cdcooper = pr_cdcooper    -- Cooperativa
 			   AND rac.nrdconta = pr_nrdconta    -- Nr. da conta
 				 AND rac.idsaqtot = 0              -- Indicador de saque total
+         AND cpc.indplano = 0              -- Apenas aplicações não automáticas;
 				 AND cpc.cdprodut = rac.cdprodut;  -- Código do produto
 										 
     -- Variáveis para acumulo das aplicações RDC
@@ -932,4 +933,3 @@ BEGIN
   END;
 END pc_crps414_1;
 /
-

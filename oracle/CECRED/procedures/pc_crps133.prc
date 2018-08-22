@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/95                      Ultima atualizacao: 17/05/2018
+   Data    : Setembro/95                      Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -105,6 +105,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
                             modalidade do tipo de conta diferente de "2" e "3". PRJ366. (Lombardi)
 
                17/05/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
+               
+               11/08/2018 - Inclusão da aplicação programada no cursor cr_craplpp (Proj. 411.2 - CIS Corporate).
 
 ............................................................................. */
 BEGIN
@@ -542,13 +546,21 @@ BEGIN
   cursor cr_craplpp (pr_dtmvtolt in crapdat.dtmvtolt%type,
                        pr_cdcooper in crapcop.cdcooper%type,
                        pr_nrdconta in crapass.nrdconta%type) is
-      SELECT crap.nrdconta,
-           crap.cdhistor,
-           crap.vllanmto
-      from craplpp crap
-     where crap.dtmvtolt = pr_dtmvtolt
-         and crap.cdcooper = pr_cdcooper
-         and crap.nrdconta = pr_nrdconta;
+      SELECT lpp.nrdconta,
+             lpp.cdhistor,
+             lpp.vllanmto
+        from craplpp lpp
+       where lpp.dtmvtolt = pr_dtmvtolt
+         and lpp.cdcooper = pr_cdcooper
+         and lpp.nrdconta = pr_nrdconta
+       UNION
+      SELECT lac.nrdconta,
+             lac.cdhistor,
+             lac.vllanmto
+        from craplac lac
+       where lac.dtmvtolt = pr_dtmvtolt
+         and lac.cdcooper = pr_cdcooper
+         and lac.nrdconta = pr_nrdconta;
 
   -- Transações nos caixas e auto-atendimento
   cursor cr_crapltr (pr_dtmvtolt in crapdat.dtmvtolt%type,

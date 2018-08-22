@@ -827,9 +827,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                      na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
         
         21/05/2018 - Alterações relacionadas a SM4 - PRJ364 - Paulo Martins - Mout´s
-        
+
         30/05/2018 - Adicionado dscomple xml na pc_gera_impextdpv (Alcemir Mout's - Prj. 467).                     
-        
+
         03/08/2018 - Inclusao de aplicacoes programadas - PRJ 411.2 - CIS Corporate
 
 
@@ -2348,7 +2348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               AND rw_lancam.cdhistor IN (150,151,152,154,155,863,869,870) THEN  
           --Pular Registro
           CONTINUE; 
-        END IF;   
+           END IF;   
         ELSE -- APL. PROGR
             FETCH cr_craplac INTO rw_lancam;
             EXIT WHEN cr_craplac%NOTFOUND;
@@ -2499,9 +2499,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 pr_tab_extrato_rpp(vr_index).dsextrat:= vr_tab_extrato_rpp(vr_index_temp).dsextrat;
              END IF;
         END LOOP;
-        ELSE 
+      ELSE 
         pr_tab_extrato_rpp := vr_tab_extrato_rpp;
-        END IF; 
+      END IF;
       -- Se foi solicitado geração de LOG
       IF pr_flgerlog THEN
         -- Chamar geração de LOG
@@ -2859,7 +2859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_flgfirst:= TRUE;
       --Valor Total recebe o Saldo Anterior
       vr_vlstotal:= vr_vlsldant;
-
+      
       /* Procedure para verificar periodo de imunidade tributaria */
       IMUT0001.pc_verifica_periodo_imune(pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
                                         ,pr_nrdconta => pr_nrdconta  --> Numero da Conta
@@ -21379,6 +21379,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
         AND cpc.cdprodut = rac.cdprodut
         AND rac.cdcooper = lac.cdcooper
         AND rac.nrdconta = lac.nrdconta
+        AND rac.nraplica = lac.nraplica 
         AND lac.cdhistor in (cpc.cdhsrgap)
         AND lac.dtmvtolt > ADD_MONTHS(pr_dtmvtolt,-6)       
    GROUP BY rac.nrdconta,rac.nrctrrpp; 

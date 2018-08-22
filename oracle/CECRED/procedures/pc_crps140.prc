@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/95                      Ultima atualizacao: 15/07/2018
+   Data    : Novembro/95                      Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -129,6 +129,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
               
                15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
              
+               08/08/2018 - Inclusão da Apl. Programada - Proj. 411.2 - CIS Corporate
+              
 ............................................................................. */
 BEGIN
 
@@ -377,6 +379,8 @@ BEGIN
             ,ass.cdagenci
             ,cp.cdsitrpp
             ,cp.vlslfmes
+            ,cp.nrctrrpp
+            ,cp.cdprodut
             ,cp.rowid
         FROM craprpp cp
             ,crapass ass    
@@ -426,6 +430,7 @@ BEGIN
          AND rac.nrdconta = ass.nrdconta
          AND rac.cdcooper = pr_cdcooper
          AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
+         AND rac.nrctrrpp = 0          -- Apenas produtos não aplicação programada
          AND rac.idsaqtot = 0
        ORDER BY rac.nrdconta, rac.nraplica;
        
@@ -928,13 +933,32 @@ BEGIN
             vr_tab_craprpp(lpad(vr_craprpp.nrdconta, 10, '0') || '0000000000').nrdconta := 99999;
           END IF;
         END IF;
+        IF vr_craprpp.cdprodut > 0 THEN -- Nova aplicao
+            vr_vlsldtot := 0;          
+            apli0008.pc_calc_saldo_apl_prog (pr_cdcooper => pr_cdcooper
+                                    ,pr_cdprogra => vr_cdprogra
+                                    ,pr_cdoperad => '1'
+                                    ,pr_nrdconta => vr_craprpp.nrdconta
+                                    ,pr_idseqttl => 1
+                                    ,pr_idorigem => 5
+                                    ,pr_nrctrrpp => vr_craprpp.nrctrrpp
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_vlsdrdpp => vr_vlsldtot
+                                    ,pr_des_erro => vr_dscritic);
+            -- Se procedure retornou erro                                        
+            IF vr_dscritic is not null THEN
+              RAISE vr_exc_saida;
+            END IF;
+        ELSE
+          vr_vlsldtot := vr_craprpp.vlslfmes;
+        END IF;
 
         -- Criar índice
         vr_idxindc := lpad(vr_craprpp.nrdconta, 10, '0') || lpad(vr_icxauto, 10, '0');
 
         vr_tab_craprpp(vr_idxindc).nrdconta := vr_craprpp.nrdconta;
         vr_tab_craprpp(vr_idxindc).cdsitrpp := vr_craprpp.cdsitrpp;
-        vr_tab_craprpp(vr_idxindc).vlslfmes := vr_craprpp.vlslfmes;
+        vr_tab_craprpp(vr_idxindc).vlslfmes := vr_vlsldtot;
         vr_tab_craprpp(vr_idxindc).rowid := vr_craprpp.rowid;
       END LOOP;
 
@@ -977,7 +1001,6 @@ BEGIN
                                                  ,pr_cddindex => rw_craprac.cddindex   --> Código do Indexador
                                                  ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                  ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
-                                                 ,pr_idaplpgm => 0                     --> Aplicação Programada  (0-Não/1-Sim)
                                                  ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                  ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                  ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1027,7 +1050,8 @@ BEGIN
                                                       
           -- Se procedure retornou erro                                        
           IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            vr_dscritic := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pos -> ' || vr_dscritic;
+            vr_dscritic := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pos ' 
+                        || ' Conta '||rw_craprac.nrdconta||' Aplica '||rw_craprac.nraplica||'-> ' || vr_dscritic;
             -- Levanta exceção
             RAISE vr_exc_saida;
           END IF;

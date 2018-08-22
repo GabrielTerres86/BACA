@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_INTEAS is
       Sistema  : Rotinas referentes tela de integração com sistema Easy-Way
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Abril/2016.                   Ultima atualizacao: 12/04/2016
+      Data     : Abril/2016.                   Ultima atualizacao: 16/08/2018
 
       Dados referentes ao programa:
 
@@ -13,6 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_INTEAS is
       Objetivo  : Rotinas referentes tela de integração com sistema Easy-Way
 
       Alteracoes:
+
+                  16/08/2018 - Inclusão da Aplicação Programda - Proj. 411.2 (CIS Corporate)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -118,7 +120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       Sistema  : Rotinas referentes tela de integração com sistema Easy-Way
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Abril/2016.                   Ultima atualizacao: 20/10/2016
+      Data     : Abril/2016.                   Ultima atualizacao: 16/08/2018
 
       Dados referentes ao programa:
 
@@ -156,6 +158,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                buscando dados de 2016.
                                Nas proximas alteracoes, remover essas funcoes para evitar deixar lixo no codigo.
                                
+                  15/01/2018 - Melhorar o registro do log para situacoes de erro na geracao do arquivo de cadastro.
+                               Ajustar estouro dos campos de endereco no arquivo de cadastro, para procuradores
+                               e representantes (Anderson SD 832274).
+                               
+                  30/04/2018 - Alterados codigos de situacao "pr_cdsitdct". PRJ366 (Lombardi).
+                               
+                  16/08/2018 - Inclusão da Aplicação Programda - Proj. 411.2 (CIS Corporate)
+                               
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
   FUNCTION fn_nrcpfcgc_easy (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE,
@@ -184,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                                                  '                  ')
                           ,'[^a-zA-Z0-9Ç@:._ +,();=-]+',' ');
   END fn_remove_caract_espec;
-
+  
   /* Funcao responsavel por verificar se a conta eh migrada da TRANSULCRED - TRANSPOCRED,
      e se o ano de referencia eh 2016. Apos a geracao deste periodo, devemos apagar
      essa funcao e os locais de utilizacao. 
@@ -605,7 +615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       vr_dslinha  VARCHAR2(3200);
       vr_dscritic VARCHAR2(2000);
     BEGIN
-      
+
       --> Buscar endereço do cooperado
       OPEN cr_crapenc ( pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => pr_nrdconta,
@@ -1003,9 +1013,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         -- Verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
           pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
-          continue;
-        END IF;
-        
+            continue;  
+          END IF;
+          
         -- Sair do loop qnd processar a mesma conta entre os dois cursores
         IF rw_crapass_nrcpfcgc.nrdconta = rw_crapass.nrdconta THEN
           EXIT;
@@ -1014,12 +1024,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       END LOOP;    
     END LOOP; -- Fim  Loop cr_crapass_nrcpfcgc
     
-
+    
     --> Buscar os Procuradores e Responsáveis dos cooperados enviados para a Easyway
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
                                                    pr_dtiniger => pr_dtiniger,
                                                    pr_dtfimger => pr_dtfimger) LOOP
-        
+
         /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
          o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
         IF (fn_ignorar_conta(pr_cdcooper => rw_crapass_nrcpfcgc.cdcooper,
@@ -1251,7 +1261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     
-    WHEN OTHERS THEN
+    WHEN OTHERS THEN      
       pr_dscritic := 'Não foi possivel gerar arquivo de cadstro dos cooperados: '||SQLERRM;
       --pc_gera_log( pr_dscritic);
   END pc_gera_arq_cadastro_ass;
@@ -1388,6 +1398,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                  AND lpp.dtmvtolt BETWEEN pr_dtiniger AND pr_dtfimger
                  AND lpp.cdhistor NOT IN (152) -- Provisao Mes
               UNION ALL
+              /* Aplicações Programadas */
+              SELECT lac.cdcooper
+                     ,lac.nrdconta
+                     ,TRUNC(lac.dtmvtolt, 'MM') AS dtmesmvt
+                     ,his.indebcre
+                     ,lac.vllanmto
+                FROM craplac lac
+                JOIN craprac rac
+                  ON rac.cdcooper = lac.cdcooper
+                 AND rac.nrdconta = lac.nrdconta
+                 AND rac.nraplica = lac.nraplica
+                JOIN crapcpc cpc
+                  ON cpc.cdprodut = rac.cdprodut
+                JOIN craphis his
+                  ON his.cdcooper = lac.cdcooper
+                 AND his.cdhistor = lac.cdhistor
+               WHERE lac.cdcooper = pr_cdcooper
+                 AND lac.nrdconta = pr_nrdconta
+                 AND cpc.indplano = 1
+                 AND lac.dtmvtolt BETWEEN '01/07/2018' AND '01/08/2018'
+                 AND lac.cdhistor NOT IN (cdhsprap) -- Provisão
+              UNION ALL
               /* Novos produtos de captação */
               SELECT lac.cdcooper
                      ,lac.nrdconta
@@ -1406,6 +1438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                  AND his.cdhistor = lac.cdhistor
                WHERE lac.cdcooper = pr_cdcooper
                  AND lac.nrdconta = pr_nrdconta
+                 AND cpc.indplano = 0
                  AND lac.dtmvtolt BETWEEN pr_dtiniger AND pr_dtfimger
                  AND lac.cdhistor NOT IN (cpc.cdhsprap, -- Provisão
                                           cpc.cdhsrvap) -- Reversão
@@ -1859,7 +1892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                       pr_dtiniger => pr_dtiniger,
                                       pr_dtfimger => pr_dtfimger) LOOP
                                        
-          
+                                       
           /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
            o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
           IF (fn_ignorar_conta(pr_cdcooper => rw_crapsda.cdcooper,
@@ -2635,7 +2668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_nrdconta => pr_nrdconta,
                                     pr_dtiniger => pr_dtiniger,
                                     pr_dtfimger => pr_dtfimger) LOOP
-        
+                                       
         /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
            o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
         IF (fn_ignorar_conta(pr_cdcooper => rw_crapass.cdcooper,

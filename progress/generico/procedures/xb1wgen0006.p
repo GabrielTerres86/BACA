@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/xb1wgen0006.p
     Autor   : Murilo/David
-    Data    : Junho/2007                      Ultima atualizacao: 26/12/2011
+    Data    : Junho/2007                      Ultima atualizacao: 19/07/2018
 
     Dados referentes ao programa:
 
@@ -436,6 +436,47 @@ END PROCEDURE.
 PROCEDURE reativar-poupanca:
  
     RUN reativar-poupanca IN hBO (INPUT aux_cdcooper,
+                                  INPUT aux_cdagenci,
+                                  INPUT aux_nrdcaixa,
+                                  INPUT aux_cdoperad,
+                                  INPUT aux_nmdatela,
+                                  INPUT aux_idorigem,
+                                  INPUT aux_nrdconta,
+                                  INPUT aux_idseqttl,
+                                  INPUT aux_nrctrrpp,
+                                  INPUT aux_dtmvtolt,
+                                  INPUT TRUE,
+                                 OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE
+        DO:
+            RUN piXmlNew.
+            RUN piXmlSave.
+        END.
+        
+END PROCEDURE.
+
+
+/******************************************************************************/
+/**              Procedure para reativar a aplicacao programada              **/
+/******************************************************************************/
+PROCEDURE reativar-aplicacao-programada:
+ 
+    RUN reativar-aplicacao-programada IN hBO (INPUT aux_cdcooper,
                                   INPUT aux_cdagenci,
                                   INPUT aux_nrdcaixa,
                                   INPUT aux_cdoperad,
@@ -961,8 +1002,8 @@ PROCEDURE incluir-aplicacao-programada:
 											 INPUT aux_dsfinali,
 											 INPUT aux_flgteimo,
 											 INPUT aux_flgdbpar,
-                                           OUTPUT aux_nrdrowid,
-                                           OUTPUT TABLE tt-erro).
+                                            OUTPUT aux_nrdrowid,
+                                            OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
         DO:

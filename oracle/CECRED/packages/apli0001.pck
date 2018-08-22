@@ -5310,7 +5310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Marco/96.                       Ultima atualizacao: 09/03/2018
+   Data    : Marco/96.                       Ultima atualizacao: 19/07/2018
 
    Dados referentes ao programa:
 
@@ -5399,6 +5399,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                23/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
                             Incluido crps147 na lista de programas que nao gravam CRAPTRD             
                                                       
+               19/07/2018 - Proj. 411.2 - Aplicação programada
+                            Alteração na pc_calc_poupanca para levar em consideração a nova apl. programada     
+                                   
+                                                      
 ................................................................................................... */
     -- Variaveis para auxiliar nos calculos
     vr_percenir         number(8,4);
@@ -5453,28 +5457,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
              craprpp.nrdconta,
              craprpp.nrctrrpp,
              craprpp.vlabdiof,
-             craprpp.dtmvtolt
+             craprpp.dtmvtolt,
+             craprpp.cdprodut
         from craprpp
        where craprpp.rowid = pr_rowid;
     rw_craprpp     cr_craprpp%rowtype;
     -- Lançamentos da poupança programada
     cursor cr_craplpp is
-      select nvl(SUM(decode(craplpp.cdhistor,150,vllanmto,0)),0) vllan150,
-             nvl(SUM(decode(craplpp.cdhistor,152,vllanmto,
-                                         154,vllanmto,
-                                         155,vllanmto*-1,0)),0) vllan152,
-             nvl(SUM(decode(craplpp.cdhistor,158,vllanmto,
-                                         496,vllanmto,0)),0) vllan158,
-             nvl(SUM(decode(craplpp.cdhistor,925,vllanmto,
-                                        1115,vllanmto,0)),0) vllan925
-        from craplpp
-       where craplpp.cdcooper  = pr_cdcooper
-         and craplpp.nrdconta  = rw_craprpp.nrdconta
-         and craplpp.nrctrrpp  = rw_craprpp.nrctrrpp
-         and craplpp.dtmvtolt >= vr_dtcalcul
-         and craplpp.dtmvtolt <= vr_dtmvtolt
-         and craplpp.dtrefere  = vr_dtrefere
-         AND craplpp.cdhistor IN (150,152,154,155,158,496,925,1115);
+      select nvl(SUM(decode(cdhistor,150,vllanmto,0)),0) vllan150,
+             nvl(SUM(decode(cdhistor,152,vllanmto,154,vllanmto,155,vllanmto*-1,0)),0) vllan152,
+             nvl(SUM(decode(cdhistor,158,vllanmto,496,vllanmto,0)),0) vllan158,
+             nvl(SUM(decode(cdhistor,925,vllanmto,1115,vllanmto,0)),0) vllan925
+      from(
+            select lpp.cdhistor cdhistor,
+                   lpp.vllanmto vllanmto
+              from craplpp lpp
+             where lpp.cdcooper  = pr_cdcooper
+               and lpp.nrdconta  = rw_craprpp.nrdconta
+               and lpp.nrctrrpp  = rw_craprpp.nrctrrpp
+               and lpp.dtmvtolt >= vr_dtcalcul
+               and lpp.dtmvtolt <= vr_dtmvtolt
+               and lpp.dtrefere  = vr_dtrefere
+               and lpp.cdhistor IN (150,152,154,155,158,496,925,1115)
+      union         
+      select decode(lac.cdhistor,
+                    cpc.cdhsraap,150,
+                    cpc.cdhsnrap,152,
+                    cpc.cdhsrvap,154,
+                    2747,155,
+                    cpc.cdhsrgap,158,
+                    cpc.cdhsvtap,496
+                    ) cdhistor
+             ,lac.vllanmto vllanmto
+        FROM  craplac lac, craprac rac,crapcpc cpc
+        WHERE rac.cdcooper = pr_cdcooper
+        AND   rac.nrdconta = rw_craprpp.nrdconta
+        AND   rac.nrctrrpp = rw_craprpp.nrctrrpp
+        AND   rac.cdcooper = lac.cdcooper
+        AND   rac.nrdconta = lac.nrdconta
+        AND   rac.nraplica = lac.nraplica
+        AND   cpc.cdprodut = rac.cdprodut
+        AND   lac.dtmvtolt between vr_dtcalcul and vr_dtmvtolt
+        AND   lac.cdhistor IN (cpc.cdhsraap,cpc.cdhsnrap,cpc.cdhsrvap,2747,cpc.cdhsrgap,cpc.cdhsvtap)
+       );
+         
     rw_craplpp cr_craplpp%ROWTYPE;
 
     -- Taxas de RDCA
@@ -5565,6 +5591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     end if;
 
     -- Leitura dos lançamentos da aplicação
+    if rw_craprpp.cdprodut < 1 then -- aplicacao antiga 
     OPEN cr_craplpp;
     FETCH cr_craplpp INTO rw_craplpp;
     IF cr_craplpp%FOUND THEN
@@ -5574,11 +5601,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
     END IF;
     CLOSE cr_craplpp;
-
-    -- Calcula o saldo da poupança programada
+        -- Calcula o saldo da poupança
     vr_vlsdrdpp := vr_vlsdrdpp + vr_vllan150 - vr_vllan158 - vr_vllan925;
+    else -- Apl. Prog
+        apli0008.pc_calc_saldo_apl_prog (pr_cdcooper => pr_cdcooper
+                                        ,pr_cdprogra => pr_cdprogra
+                                        ,pr_cdoperad => '1'
+                                        ,pr_nrdconta => rw_craprpp.nrdconta
+                                        ,pr_idseqttl => 1
+                                        ,pr_idorigem => 5
+                                        ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                        ,pr_dtmvtolt => pr_dtmvtolt
+                                        ,pr_vlsdrdpp => vr_vlsdrdpp
+                                        ,pr_des_erro => pr_des_erro);
 
-    if vr_vlsdrdpp < 0 then
+         if pr_des_erro is not null then
+           raise vr_exc_erro;
+         end if;
+    end if;
+
+    if vr_vlsdrdpp < 0 or  vr_vlsdrdpp is null then
       vr_vlsdrdpp := 0;
     end if;
     --
@@ -9318,7 +9360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
     Programa: pc_calc_saldo_rpp               Antigo: sistema/generico/includes/b1wgen0006.i
     Autor   : Junior
-    Data    : 12/09/2005                      Ultima atualizacao: 18/01/2011
+    Data    : 12/09/2005                      Ultima atualizacao: 19/07/2018 
 
     Dados referentes ao programa:
 
@@ -9330,6 +9372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                 18/01/2011 - Tratar historico 925 (Db.Trf.Aplic) (Irlan)
                 18/12/2012 - Tratar historico 1115-Transferencia Viacredi/AltoVale (Rosangela).
                 10/04/2013 - Conversão Progress >> Oracle (PLSQL) (Alisson-AMcom)
+                19/07/2018 - Considerar poupança programada nos cálculos
 
   ..............................................................................*/
     DECLARE
@@ -9352,7 +9395,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         AND   craplpp.dtmvtolt >= pr_dtcalcul
         AND   craplpp.dtmvtolt <= pr_dtmvtolt
         AND   craplpp.dtrefere = pr_dtrefere
-        AND   craplpp.cdhistor IN (150,152,154,155,158,496,925,1115);
+        AND   craplpp.cdhistor IN (150,152,154,155,158,496,925,1115)
+        UNION
+        SELECT decode(lac.cdhistor,
+                      cpc.cdhsraap,150,
+                      cpc.cdhsnrap,152,
+                      cpc.cdhsrvap,154,
+                      2747,155,
+                      cpc.cdhsrgap,158,
+                      cpc.cdhsvtap,496
+                      ) cdhistor
+              ,lac.vllanmto
+        FROM craplac lac, craprac rac,crapcpc cpc
+        WHERE rac.cdcooper = pr_cdcooper
+        AND   rac.nrdconta = pr_nrdconta
+        AND   rac.nrctrrpp = pr_nrctrrpp
+        AND   rac.cdcooper = lac.cdcooper
+        AND   rac.nrdconta = lac.nrdconta
+        AND   rac.nraplica = lac.nraplica
+        AND   cpc.cdprodut = rac.cdprodut
+        AND   lac.dtmvtolt between pr_dtcalcul and pr_dtmvtolt
+        AND   lac.cdhistor IN (cpc.cdhsraap,cpc.cdhsnrap,cpc.cdhsrvap,2747,cpc.cdhsrgap,cpc.cdhsvtap);
       
       --Variaveis locais
       vr_vllan150 NUMBER;

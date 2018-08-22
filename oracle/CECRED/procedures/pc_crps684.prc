@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS684 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jean Michel
-   Data    : Setembro/2014                       Ultima atualizacao: 06/02/2015
+   Data    : Setembro/2014                       Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -22,6 +22,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS684 (pr_cdcooper IN crapcop.cdcooper%T
    Alteracoes: 06/02/2015 - Implementado variavel(vr_contapli) para auxiliar
                             na listagem de de resgates para uma mesma aplicacao
                             (Jean Michel).
+
+               06/08/2018 - Desconsiderar aplicações programadas 
+                            Proj. 411.2 - CIS Corporate
+
      ............................................................................. */
 
      DECLARE
@@ -118,18 +122,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS684 (pr_cdcooper IN crapcop.cdcooper%T
        CURSOR cr_craprac(pr_cdcooper IN craprac.cdcooper%TYPE
                         ,pr_nrdconta IN craprac.nrdconta%TYPE
                         ,pr_nraplica IN craprac.nraplica%TYPE) IS
-
          SELECT
             rac.cdcooper
            ,rac.nrdconta
            ,rac.nraplica
            ,rac.vlsldatl
          FROM
-           craprac rac
+           craprac rac, crapcpc cpc
          WHERE
                rac.cdcooper = pr_cdcooper
            AND rac.nrdconta = pr_nrdconta
-           AND rac.nraplica = pr_nraplica;
+           AND rac.nraplica = pr_nraplica
+           AND cpc.cdprodut = rac.cdprodut
+           AND cpc.indplano = 0;  -- Não Aplicação Programadas
        rw_craprac cr_craprac%ROWTYPE;
        
        -- Consulta de PA
@@ -588,4 +593,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS684 (pr_cdcooper IN crapcop.cdcooper%T
      END;
    END pc_crps684;
 /
-

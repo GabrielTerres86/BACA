@@ -364,6 +364,7 @@ BEGIN
 				    ,crapcpc
 						,crapass
 			 WHERE craprac.cdcooper = pr_cdcooper      AND
+             craprac.nrctrrpp < 1                AND
 						 craprac.idsaqtot = 0                AND
 						 crapass.cdcooper = craprac.cdcooper AND
 						 crapass.nrdconta = craprac.nrdconta AND

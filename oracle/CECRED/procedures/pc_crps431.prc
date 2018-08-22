@@ -169,9 +169,11 @@ BEGIN
 		  SELECT rac.nrdconta
 			      ,rac.nraplica
 						,rac.vlsldatl
-			  FROM craprac rac
+			  FROM craprac rac, crapcpc cpc  
 			 WHERE rac.cdcooper = pr_cdcooper
 			   AND rac.idsaqtot = 0
+         AND rac.cdprodut = cpc.cdprodut
+         AND cpc.indplano = 0 -- Não aplicação programada
 				 AND EXISTS (SELECT 1
 				               FROM crapepr epr
 											WHERE epr.cdcooper = rac.cdcooper
@@ -188,12 +190,13 @@ BEGIN
 						,rac.vlsldatl
 						,rac.cdprodut
 						,rac.idblqrgt
-			  FROM craprac rac
+			  FROM craprac rac, crapcpc cpc  
 			 WHERE rac.cdcooper = pr_cdcooper
 			   AND rac.nrdconta = pr_nrdconta
+         AND rac.cdprodut = cpc.cdprodut
+         AND cpc.indplano = 1 -- Não aplicação programada
 				 AND rac.idsaqtot = 0;
 				 
-      
     -- Selecionar Tipo de Aplicacao
     CURSOR cr_crapdtc (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
       SELECT  crapdtc.tpaplrdc
@@ -929,4 +932,3 @@ BEGIN
 
 END pc_crps431;
 /
-

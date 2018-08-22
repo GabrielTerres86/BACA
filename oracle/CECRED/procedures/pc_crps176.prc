@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS176" ( pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS176 ( pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                                           ,pr_flgresta  IN PLS_INTEGER             --> Flag 0/1 para utilização de restar N/S
                                           ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                           ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS176" ( pr_cdcooper  IN crapcop.cdcoop
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Novembro/96.                    Ultima atualizacao: 13/06/2016
+       Data    : Novembro/96.                    Ultima atualizacao: 14/08/2016
 
        Dados referentes ao programa:
 
@@ -55,6 +55,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS176" ( pr_cdcooper  IN crapcop.cdcoop
                   13/06/2016 - Ajustado leitura da contas bloqueadas para utilizar a rotina padrao
                                e o cursor da craptab para utilizar o indice na pesquisa
                               (Douglas - Chamado 454248)
+                              
+                  14/08/2018 - Inclusão da Aplicação Programada
+                               Proj. 411.2 (CIS Corporate)
+             
     ............................................................................ */
 
     DECLARE
@@ -129,6 +133,21 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS176" ( pr_cdcooper  IN crapcop.cdcoop
            AND craplpp.cdhistor IN (158,496)
            AND craplpp.dtmvtolt > pr_dtmvtolt
          GROUP BY craplpp.nrdconta,craplpp.nrctrrpp
+        HAVING Count(*) > 3
+        UNION
+        SELECT rac.nrdconta
+              ,rac.nrctrrpp
+              ,Count(*) qtlancmto
+        FROM crapcpc cpc, craprac rac, craplac lac
+        WHERE rac.cdcooper = pr_cdcooper
+        AND   rac.nrctrrpp > 0                 -- Apenas apl. programadas
+        AND   cpc.cdprodut = rac.cdprodut
+        AND   rac.cdcooper = lac.cdcooper
+        AND   rac.nrdconta = lac.nrdconta
+        AND   rac.nraplica = lac.nraplica 
+        AND   lac.cdhistor in (cpc.cdhsrgap)
+        AND   lac.dtmvtolt > pr_dtmvtolt       
+        GROUP BY rac.nrdconta,rac.nrctrrpp        
         HAVING Count(*) > 3;
 
       -- Contar a quantidade de resgates das contas

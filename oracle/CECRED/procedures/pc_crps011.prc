@@ -123,6 +123,9 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
                             memória somente se o empréstimo está ativo (inliquid = 0)
                             ou está em prejuízo (inprejuz = 1) (SD#748299 - AJFink)
 
+               15/08/2018 - Inclusão das Aplicações Programadas - cursor cr_craprpp
+                            Proj. 411.2 - CIS Corporate
+
     ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -240,7 +243,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
        AND ir.cdhistor (+) = 922
     GROUP BY juros.cdcooper, juros.nrdconta, '926', '922';
        
-  -- Calcula saldo da poupanca programada
+  -- Calcula saldo da poupanca programada e 
   cursor cr_craprpp (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrctares in crapass.nrdconta%type,
                      pr_dtmvtolt in crapdat.dtmvtolt%type) is
@@ -258,6 +261,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
                    craprpp rpp
              where rpp.cdcooper = pr_cdcooper
                and rpp.nrdconta > pr_nrctares
+                   and rpp.cdprodut < 1
                and lpp.cdcooper (+) = rpp.cdcooper
                and lpp.nrdconta (+) = rpp.nrdconta
                and lpp.nrctrrpp (+) = rpp.nrctrrpp
@@ -266,9 +270,36 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
              group by rpp.cdcooper
                      ,rpp.nrdconta
                      ,rpp.nrctrrpp
-                     ,rpp.vlsdrdpp) rppt
-     group by rppt.cdcooper
-             ,rppt.nrdconta;
+                         ,rpp.vlsdrdpp
+                union
+                select rpp.cdcooper,
+                       rpp.nrdconta,
+                       rpp.nrctrrpp,
+                       rpp.vlsdrdpp,
+                       sum(decode(lac.cdhistor,cpc.cdhsraap,lac.vllanmto,cpc.cdhsnrap,lac.vllanmto,lac.vllanmto * -1)) vllanmto_lpp
+                  from craplac lac,
+                       craprac rac,
+                       crapcpc cpc,
+                       craprpp rpp
+                 where rpp.cdcooper = pr_cdcooper
+                   and rpp.nrdconta > pr_nrctares
+                   and rpp.cdcooper = rac.cdcooper
+                   and rpp.nrdconta = rac.nrdconta
+                   and cpc.indplano = 1                                      -- Apenas apl. programadas
+                   and cpc.cdprodut = rac.cdprodut
+                   and rpp.nrctrrpp (+) = rac.nrctrrpp
+                   and lac.cdcooper (+) = rac.cdcooper
+                   and lac.nrdconta (+) = rac.nrdconta
+                   and lac.nraplica (+) = rac.nraplica
+                   and lac.cdhistor in (cpc.cdhsraap,cpc.cdhsnrap,cpc.cdhsnrap,cpc.cdhsrgap,cpc.cdhsvtap)
+                   and lac.dtmvtolt (+) >= add_months(trunc(pr_dtmvtolt, 'yyyy'), 12)
+                 group by rpp.cdcooper
+                         ,rpp.nrdconta
+                         ,rpp.nrctrrpp
+                         ,rpp.vlsdrdpp
+                 ) rppt
+             group by rppt.cdcooper,rppt.nrdconta;
+
   -- Calcula saldo dos emprestimos no final do ano
   cursor cr_crapepr (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrctares in crapass.nrdconta%type) is

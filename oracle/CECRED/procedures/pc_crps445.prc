@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS445" (pr_cdcooper IN crapcop.cdcooper%TYPE
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS445 (pr_cdcooper IN crapcop.cdcooper%TYPE
                                          ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                                                 ,pr_cdagenci  IN PLS_INTEGER DEFAULT 0  --> Código da agência, utilizado no paralelismo
                                                 ,pr_idparale  IN PLS_INTEGER DEFAULT 0  --> Identificador do job executando em paralelo.
@@ -1030,7 +1030,8 @@ BEGIN
               AND crapass.cdagenci = pr_cdagenci
               AND crapass.cdcooper = craprac.cdcooper
               AND crapass.nrdconta = craprac.nrdconta
-              AND crapcpc.cdprodut = craprac.cdprodut;
+              AND crapcpc.cdprodut = craprac.cdprodut
+              AND crapcpc.indplano = 0;                          -- Apenas Aplicações nâo programadas
 
          -- Buscar dados do cadastro de poupança programada
          CURSOR cr_craprpp(pr_cdcooper  IN crapcob.cdcooper%TYPE         --> Código da cooperativa
