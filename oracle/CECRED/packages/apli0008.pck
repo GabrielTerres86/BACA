@@ -236,6 +236,44 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0008 AS
                                            ,pr_nmdcampo OUT VARCHAR2               -- Nome do campo com erro
                                            ,pr_des_erro OUT VARCHAR2);              -- Erros do processo
 
+  /* Recuperar lista das poupancas programadas e aplicações programadas */
+  PROCEDURE pc_lista_poupanca (pr_cdcooper IN crapcop.cdcooper%TYPE            --> Cooperativa
+                              ,pr_cdagenci IN crapage.cdagenci%TYPE            --> Codigo da Agencia
+                              ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE            --> Numero do caixa
+                              ,pr_cdoperad IN craplrg.cdoperad%TYPE            --> Codigo do Operador
+                              ,pr_idorigem IN INTEGER                          --> Identificador da Origem
+                              ,pr_nrdconta IN craprda.nrdconta%TYPE            --> Nro da conta da aplicacao RDCA
+                              ,pr_idseqttl IN INTEGER                          --> Identificador Sequencial
+                              ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE            --> Contrato Poupanca Programada
+                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE            --> Data do movimento atual
+                              ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE            --> Data do proximo movimento
+                              ,pr_inproces IN crapdat.inproces%TYPE            --> Indicador de processo
+                              ,pr_cdprogra IN crapprg.cdprogra%TYPE            --> Nome do programa chamador
+                              ,pr_flgerlog IN BOOLEAN                          --> Flag erro log
+                              ,pr_percenir IN NUMBER                           --> % IR para Calculo Poupanca
+                              ,pr_tpapprog IN INTEGER default 0                --> Tipo de aplicacao poupanca (1 = Poupanca Antiga, 2 = Aplicações Programadas, 0 = Ambas)
+                              ,pr_vlsldrpp OUT NUMBER                          --> Valor saldo total poupanca programada
+                              ,pr_retorno  OUT VARCHAR2                        --> Descricao de erro ou sucesso OK/NOK
+                              ,pr_tab_dados_rpp OUT APLI0001.typ_tab_dados_rpp --> Poupancas Programadas
+                              ,pr_tab_erro      IN OUT NOCOPY GENE0001.typ_tab_erro);  --> Saida com erros;
+
+  /* Recuperar lista das poupancas programadas e aplicações programadas - Mensageria*/
+  PROCEDURE pc_lista_poupanca_web (pr_nrdconta IN craprda.nrdconta%TYPE  -- Nro da conta da aplicacao RDCA
+                                  ,pr_idseqttl IN INTEGER                -- Identificador Sequencial
+                                  ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE  -- Contrato Poupanca Programada
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  -- Data do movimento atual
+                                  ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  -- Data do proximo movimento
+                                  ,pr_inproces IN crapdat.inproces%TYPE  -- Indicador de processo
+                                  ,pr_flgerlog IN INTEGER                -- Flag erro log
+                                  ,pr_percenir IN NUMBER                 -- % IR para Calculo Poupanca
+                                  ,pr_tpapprog IN INTEGER default 0      -- Tipo de aplicacao poupanca (1 = Poupanca Antiga, 2 = Aplicações Programadas, 0 = Ambas)
+                                  ,pr_xmllog   IN VARCHAR2               -- XML com informacoes de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER           -- Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2              -- Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType     -- Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2              -- Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2);            -- Erros do processo
+
 END APLI0008;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
@@ -1775,7 +1813,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                       vr_tab_extrato_temp(vr_ind_extrato).dtmvtolt := rw_craplac.dtmvtolt_lac;
                       vr_tab_extrato_temp(vr_ind_extrato).cdagenci := rw_craplac.cdagenci;
                       vr_tab_extrato_temp(vr_ind_extrato).cdhistor := rw_craphis.cdhistor;
-                      IF rw_craphis.cdhistor IN (rw_craplac.cdhsprap,rw_craplac.cdhsrgap) THEN
+                      IF rw_craphis.cdhistor IN 
+                                             (rw_craplac.cdhsprap
+                                             ,rw_craplac.cdhsrgap
+                                             ,rw_craplac.cdhsrvap
+                                             ,rw_craplac.cdhsrdap
+                                             ,rw_craplac.cdhsirap) THEN
                          vr_tab_extrato_temp(vr_ind_extrato).aghistor := 1; -- Acumula
                       ELSE
                          vr_tab_extrato_temp(vr_ind_extrato).aghistor := 0; -- Nao Acumula
@@ -2853,9 +2896,584 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
 
   END pc_buscar_detalhe_apl_prog_web;
 
+  /* Recuperar lista das poupancas programadas e aplicações programadas */
+  PROCEDURE pc_lista_poupanca (pr_cdcooper IN crapcop.cdcooper%TYPE            --> Cooperativa
+                              ,pr_cdagenci IN crapage.cdagenci%TYPE            --> Codigo da Agencia
+                              ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE            --> Numero do caixa
+                              ,pr_cdoperad IN craplrg.cdoperad%TYPE            --> Codigo do Operador
+                              ,pr_idorigem IN INTEGER                          --> Identificador da Origem
+                              ,pr_nrdconta IN craprda.nrdconta%TYPE            --> Nro da conta da aplicacao RDCA
+                              ,pr_idseqttl IN INTEGER                          --> Identificador Sequencial
+                              ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE            --> Contrato Poupanca Programada
+                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE            --> Data do movimento atual
+                              ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE            --> Data do proximo movimento
+                              ,pr_inproces IN crapdat.inproces%TYPE            --> Indicador de processo
+                              ,pr_cdprogra IN crapprg.cdprogra%TYPE            --> Nome do programa chamador
+                              ,pr_flgerlog IN BOOLEAN                          --> Flag erro log
+                              ,pr_percenir IN NUMBER                           --> % IR para Calculo Poupanca
+                              ,pr_tpapprog IN INTEGER default 0                --> Tipo de aplicacao poupanca (1 = Poupanca Antiga, 2 = Aplicações Programadas, 0 = Ambas)
+                              ,pr_vlsldrpp OUT NUMBER                          --> Valor saldo poupanca programada
+                              ,pr_retorno  OUT VARCHAR2                        --> Descricao de erro ou sucesso OK/NOK
+                              ,pr_tab_dados_rpp OUT APLI0001.typ_tab_dados_rpp --> Poupancas Programadas
+                              ,pr_tab_erro      IN OUT NOCOPY GENE0001.typ_tab_erro) IS  --> Saida com erros;
+  BEGIN
+  /* .............................................................................
+
+   Programa: pc_consulta_pp_ap               
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : CIS Corporate
+   Data    : Agosto/2018.                        Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Rotina para consultar saldo e demais dados de poupancas programadas e aplicações progamadas. Derivado de pc_consulta_poupanca
+
+   Alteracoes: 
+  ............................................................................. */
+    DECLARE
+
+      --Selecionar informacoes das poupancas programadas
+      CURSOR cr_craprpp IS
+        SELECT rpp.nrctrrpp
+              ,rpp.nrdconta
+              ,rpp.cdagenci
+              ,rpp.cdbccxlt
+              ,rpp.nrdolote
+              ,rpp.dtmvtolt
+              ,rpp.dtvctopp
+              ,rpp.dtdebito
+              ,rpp.vlprerpp
+              ,rpp.qtprepag
+              ,rpp.vlprepag
+              ,rpp.vljuracu
+              ,rpp.vlrgtacu
+              ,rpp.dtinirpp
+              ,rpp.dtrnirpp
+              ,rpp.dtaltrpp
+              ,rpp.dtcancel
+              ,rpp.flgctain
+              ,rpp.dtiniper
+              ,rpp.dtfimper
+              ,rpp.vlabcpmf
+              ,rpp.cdsitrpp
+              ,rpp.vlsdrdpp
+              ,rpp.cdprodut
+              ,rpp.ROWID
+              ,To_Char((CASE rpp.cdsitrpp
+                 WHEN 1 THEN 'Ativa'
+                 WHEN 2 THEN 'Suspensa'
+                 WHEN 3 THEN 'Cancelada'
+                 WHEN 4 THEN 'Cancelada'
+                 WHEN 5 THEN 'Vencida'
+                 ELSE ''
+                END ))  dssitrpp
+        FROM craprpp rpp
+        WHERE rpp.cdcooper = pr_cdcooper
+        AND   rpp.nrdconta = pr_nrdconta
+        AND   (pr_nrctrrpp = 0 OR (pr_nrctrrpp > 0 AND rpp.nrctrrpp = pr_nrctrrpp))
+        AND   (pr_tpapprog = 0 OR (pr_tpapprog = 1 AND rpp.cdprodut < 1) OR (pr_tpapprog = 2 and rpp.cdprodut >0));
+      rw_craprpp cr_craprpp%ROWTYPE;
+
+      --Selecionar informacoes dos saldos da poupanca no aniversario
+      CURSOR cr_crapspp (pr_cdcooper IN crapspp.cdcooper%TYPE
+                        ,pr_nrdconta IN crapspp.nrdconta%TYPE
+                        ,pr_nrctrrpp IN crapspp.nrctrrpp%TYPE) IS
+          SELECT MIN(crapspp.dtsldrpp) dtsldrpp
+        FROM crapspp crapspp
+        WHERE crapspp.cdcooper = pr_cdcooper
+        AND   crapspp.nrdconta = pr_nrdconta
+             AND crapspp.nrctrrpp = pr_nrctrrpp;
+      rw_crapspp cr_crapspp%ROWTYPE;
+
+      --Variaveis Locais
+      vr_flgtrans BOOLEAN;
+      vr_vlsdrdpp NUMBER(25,8);
+      vr_vlrgtrpp NUMBER(25,8);
+      vr_qtsaqppr INTEGER;
+      vr_dsblqrpp VARCHAR2(3);
+      vr_dsresgat VARCHAR2(3);
+      vr_dsctainv VARCHAR2(3);
+      vr_dsorigem VARCHAR2(40);
+      vr_dstransa VARCHAR2(100);
+      vr_dsmsgsaq VARCHAR2(4000);
+
+      vr_vlsdappr NUMBER(25,8); -- Saldo total -  aplicacao programada
+      vr_vlrgappr NUMBER(25,8);-- Saldo total para resgate - aplicacao programada
+
+      --Variaveis de retorno de erro
+      vr_des_erro VARCHAR2(4000);
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(4000);
+
+      --Variaveis de Indice para tabela memoria
+      vr_index_tab     NUMBER;
+      vr_index_craptab VARCHAR2(20);
+      vr_index_craplpp VARCHAR2(20);
+      vr_index_craplrg VARCHAR2(20);
+      vr_index_resgate VARCHAR2(25);
 
 
+      -- Rowid para tabela de log
+      vr_nrdrowid ROWID;
 
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION; --ERRO
+      vr_exc_pula EXCEPTION; --NEXT
+      vr_exc_sair EXCEPTION; --LEAVE
+
+    BEGIN
+
+      --Inicializar controle de erro
+      pr_retorno:= 'OK';
+      --Limpar tabela de memoria
+      pr_tab_erro.DELETE;
+      pr_tab_dados_rpp.DELETE;
+
+      --Se for para gerar log
+      IF pr_flgerlog  THEN
+        --Atribuir Descricao da Origem
+        vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
+        --Atribuir Descricao da Transacao
+        vr_dstransa:= 'Consulta de aplicações programadas';
+      END IF;
+
+      --Inicializar variaveis
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+      vr_flgtrans:= TRUE;
+      
+      -- Verifica se o parâmetro é valido
+      if pr_tpapprog not in (0,1,2) THEN
+         vr_dscritic := 'Valor invalido para pr_tpapprog';
+         RAISE vr_exc_erro;
+      END IF;
+      --Selecionar informacoes das poupancas programadas
+      OPEN cr_craprpp;
+      LOOP
+        --Posicionar no proximo registro
+        FETCH cr_craprpp INTO rw_craprpp;
+        --Sair quando nao encontrar mais registros
+        EXIT WHEN cr_craprpp%NOTFOUND;
+
+        --Bloco necessario para controle fluxo
+        BEGIN
+          --Se for vencida e nome da tela for EXTPPR ou ADITIV ou IMPRES ignorar
+          IF pr_cdprogra NOT IN ('EXTPPR','ADITIV','IMPRES') AND
+             rw_craprpp.cdsitrpp = 5 /* Vencida */  THEN
+            RAISE vr_exc_pula;
+          END IF;
+
+          -- Incializar o saldo com o valor da tabela
+          vr_vlsdrdpp := rw_craprpp.vlsdrdpp;
+
+          -- Verificar se é Poupança programada
+          -- As aplicações programadas não serão tratadas linha a linha, mas evitaremos fazer 
+          -- chamadas desnecessárias abaixo
+          
+          If rw_craprpp.cdprodut < 1 Then 
+            --Executar rotina para calcular saldo poupanca programada
+            apli0001.pc_calc_saldo_rpp (pr_cdcooper => pr_cdcooper
+                                       ,pr_cdprogra => pr_cdprogra
+                                       ,pr_inproces => pr_inproces
+                                       ,pr_percenir => pr_percenir
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                       ,pr_dtiniper => rw_craprpp.dtiniper
+                                       ,pr_dtfimper => rw_craprpp.dtfimper
+                                       ,pr_vlabcpmf => rw_craprpp.vlabcpmf
+                                       ,pr_dtmvtolt => pr_dtmvtolt
+                                       ,pr_dtmvtopr => pr_dtmvtopr
+                                       ,pr_vlsdrdpp => vr_vlsdrdpp
+                                       ,pr_des_erro => vr_des_erro);
+                                         
+          Else -- Aplicacao Programada
+              vr_vlsdrdpp := 0;
+              apli0008.pc_calc_saldo_apl_prog(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdprogra => pr_cdprogra
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_idseqttl => pr_idseqttl
+                                             ,pr_idorigem => pr_idorigem
+                                             ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                             ,pr_dtmvtolt => pr_dtmvtolt
+                                             ,pr_vlsdrdpp => vr_vlsdrdpp
+                                             ,pr_des_erro => vr_des_erro);
+                                             
+          End If; -- Aplicacao Programada
+
+          --Se ocorreu erro
+          IF vr_des_erro IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+                      
+          --Ignorar se o saldo for negativo e a origem nao for AYLLOS/INTRANET
+          IF vr_vlsdrdpp < 0 AND pr_idorigem NOT IN (1,5) THEN
+            --Levantar excecao para pular registro
+            RAISE vr_exc_pula;
+          END IF;
+          --Valor do Saldo da poupanca recebe atual + calculado
+          pr_vlsldrpp:= Nvl(pr_vlsldrpp,0) + Nvl(vr_vlsdrdpp,0);
+          --Valor resgatado recebe valor saldo
+          vr_vlrgtrpp:= vr_vlsdrdpp;
+          --Descricao resgate recebe N
+          vr_dsresgat:= 'N';
+          --Zerar quantidade sacada poupanca
+          vr_qtsaqppr:= 0;
+          --Mensagem de saque recebe null
+          vr_dsmsgsaq:= NULL;
+
+          --Selecionar saldo poupanca programada no aniversario
+          OPEN cr_crapspp (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrctrrpp => rw_craprpp.nrctrrpp);
+          --Posicionar no proximo registro
+          FETCH cr_crapspp INTO rw_crapspp;
+          --Se nao encontrar
+          IF cr_crapspp%NOTFOUND THEN
+            rw_crapspp.dtsldrpp:= NULL;
+          END IF;
+          --Fechar Cursor
+          CLOSE cr_crapspp;
+
+          --Se a conta estiver inativa
+          IF rw_craprpp.flgctain = 1 THEN
+            vr_dsctainv:= 'Sim';
+          ELSE
+            vr_dsctainv:= 'Nao';
+          END IF;
+
+          --Encontrar o proximo indice para a tabela
+          vr_index_tab:= pr_tab_dados_rpp.Count+1;
+          --Atualizar informacoes na tabela de memoria
+          pr_tab_dados_rpp(vr_index_tab).nrctrrpp:= rw_craprpp.nrctrrpp;
+          pr_tab_dados_rpp(vr_index_tab).cdagenci:= rw_craprpp.cdagenci;
+          pr_tab_dados_rpp(vr_index_tab).cdbccxlt:= rw_craprpp.cdbccxlt;
+          pr_tab_dados_rpp(vr_index_tab).nrdolote:= rw_craprpp.nrdolote;
+          pr_tab_dados_rpp(vr_index_tab).dtmvtolt:= rw_craprpp.dtmvtolt;
+          pr_tab_dados_rpp(vr_index_tab).dtvctopp:= rw_craprpp.dtvctopp;
+          pr_tab_dados_rpp(vr_index_tab).dtdebito:= rw_craprpp.dtdebito;
+          pr_tab_dados_rpp(vr_index_tab).indiadeb:= To_Number(To_Char(rw_craprpp.dtdebito,'DD'));
+          pr_tab_dados_rpp(vr_index_tab).vlprerpp:= rw_craprpp.vlprerpp;
+          pr_tab_dados_rpp(vr_index_tab).qtprepag:= rw_craprpp.qtprepag;
+          pr_tab_dados_rpp(vr_index_tab).vlprepag:= rw_craprpp.vlprepag;
+          pr_tab_dados_rpp(vr_index_tab).vlsdrdpp:= vr_vlsdrdpp;
+          pr_tab_dados_rpp(vr_index_tab).vlrgtrpp:= vr_vlrgtrpp;
+          pr_tab_dados_rpp(vr_index_tab).vljuracu:= rw_craprpp.vljuracu;
+          pr_tab_dados_rpp(vr_index_tab).vlrgtacu:= rw_craprpp.vlrgtacu;
+          pr_tab_dados_rpp(vr_index_tab).dtinirpp:= rw_craprpp.dtinirpp;
+          pr_tab_dados_rpp(vr_index_tab).dtrnirpp:= rw_craprpp.dtrnirpp;
+          pr_tab_dados_rpp(vr_index_tab).dtaltrpp:= rw_craprpp.dtaltrpp;
+          pr_tab_dados_rpp(vr_index_tab).dtcancel:= rw_craprpp.dtcancel;
+          pr_tab_dados_rpp(vr_index_tab).dssitrpp:= rw_craprpp.dssitrpp;
+          pr_tab_dados_rpp(vr_index_tab).dsblqrpp:= vr_dsblqrpp;
+          pr_tab_dados_rpp(vr_index_tab).dsresgat:= vr_dsresgat;
+          pr_tab_dados_rpp(vr_index_tab).dsctainv:= vr_dsctainv;
+          pr_tab_dados_rpp(vr_index_tab).dsmsgsaq:= vr_dsmsgsaq;
+          pr_tab_dados_rpp(vr_index_tab).cdtiparq:= 0;
+          pr_tab_dados_rpp(vr_index_tab).dtsldrpp:= rw_crapspp.dtsldrpp;
+          pr_tab_dados_rpp(vr_index_tab).cdprodut:= rw_craprpp.cdprodut;          
+          pr_tab_dados_rpp(vr_index_tab).nrdrowid:= rw_craprpp.ROWID;
+          
+
+        EXCEPTION
+          WHEN vr_exc_pula THEN
+            --Atribuir TRUE para flag transacao
+            vr_flgtrans:= TRUE;
+          WHEN vr_exc_sair THEN
+            --Atribuir FALSE para flag transacao pois ocorreu erro
+            vr_flgtrans:= FALSE;
+            --Sair do loop
+            EXIT;
+          WHEN vr_exc_erro THEN
+            --Atribuir FALSE para flag transacao pois ocorreu erro
+            vr_flgtrans:= FALSE;
+            --Sair do loop
+            EXIT;
+        END;
+      END LOOP;  --cr_craprpp
+      --Fechar Cursor
+      CLOSE cr_craprpp;
+
+      --Se nao executou loop craprpp corretamente
+      IF NOT vr_flgtrans THEN
+        --Se nao ocorreu critica
+        IF vr_cdcritic = 0 AND vr_dscritic IS NULL THEN
+          --Atribuir descricao para a critica
+          vr_dscritic:= 'Nao foi possivel consultar as poupancas programadas. Aplicacao: '||rw_craprpp.nrctrrpp;
+        END IF;
+        --Executar rotina geracao erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+        --Se for para gerar log
+        IF pr_flgerlog THEN
+          --Executar rotina geracao log
+          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => SubStr(pr_cdoperad,1,10)
+                              ,pr_dscritic => SubStr(vr_dscritic,1,159)
+                              ,pr_dsorigem => SubStr(vr_dsorigem,1,13)
+                              ,pr_dstransa => SubStr(vr_dstransa,1,121)
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => SubStr(pr_cdprogra,1,12)
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+        END IF;
+        --Indicar que ocorreu erro
+        pr_retorno:= 'NOK';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Se for para gerar log
+      IF pr_flgerlog THEN
+        --Executar rotina geracao log
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => NULL
+                            ,pr_dsorigem => vr_dsorigem
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_cdprogra
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+      END IF;
+      --Indicar que nao ocorreu erro
+      pr_retorno:= 'OK';
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK
+        pr_retorno := 'NOK';
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_retorno := 'NOK';
+        -- Gerar erro montado
+        vr_dscritic := 'APLI0001.pc_consulta_poupanca --> Erro não tratado na rotina: '||sqlerrm;
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => 1
+                             ,pr_nrdcaixa => 999
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => 0 --> Critica 0
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+    END;
+  END pc_lista_poupanca;
+
+  /* Recuperar lista das poupancas programadas e aplicações programadas - Mensageria*/
+  PROCEDURE pc_lista_poupanca_web (pr_nrdconta IN craprda.nrdconta%TYPE  -- Nro da conta da aplicacao RDCA
+                                  ,pr_idseqttl IN INTEGER                -- Identificador Sequencial
+                                  ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE  -- Contrato Poupanca Programada
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  -- Data do movimento atual
+                                  ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  -- Data do proximo movimento
+                                  ,pr_inproces IN crapdat.inproces%TYPE  -- Indicador de processo
+                                  ,pr_flgerlog IN INTEGER                -- Flag erro log
+                                  ,pr_percenir IN NUMBER                 -- % IR para Calculo Poupanca
+                                  ,pr_tpapprog IN INTEGER default 0      -- Tipo de aplicacao poupanca (1 = Poupanca Antiga, 2 = Aplicações Programadas, 0 = Ambas)
+                                  ,pr_xmllog   IN VARCHAR2               -- XML com informacoes de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER           -- Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2              -- Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType     -- Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2              -- Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2)             -- Erros do processo
+   IS BEGIN
+   /* .............................................................................
+
+   Programa: pc_consulta_pp_ap_web
+   Sistema : Novos Produtos de Captação - Aplicação Programada
+   Sigla   : APLI
+   Autor   : CIS Corporate
+   Data    : Agosto/2018.                    Ultima atualizacao: --/--/----
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+
+   Objetivo  : Rotina referente a busca de detalhes de uma aplicação programada - Mensageria. 
+
+   Observacao: -----
+
+   Alteracoes: 
+  ..............................................................................*/                
+
+  DECLARE
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    
+    -- Variaveis auxiliares
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de entrada
+    vr_dtmvtolt Date := TO_DATE(pr_dtmvtolt,'dd/mm/yyyy');  
+
+    vr_vlsldrpp NUMBER;
+    vr_retorno VARCHAR(10);
+    
+
+    -- Variaveis de retorno
+    vr_tab_craptab APLI0001.typ_tab_ctablq;
+    vr_tab_craplpp APLI0001.typ_tab_craplpp;
+    vr_tab_craplrg APLI0001.typ_tab_craplpp;
+    vr_tab_resgate APLI0001.typ_tab_resgate;
+    vr_tab_dados_rpp APLI0001.typ_tab_dados_rpp;
+    vr_tab_erro gene0001.typ_tab_erro;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_tpapprog VARCHAR2(100);
+    vr_flgerlog BOOLEAN := FALSE; 
+    
+
+    -- Variaveis de XML 
+    vr_xml_temp VARCHAR2(32767);
+    vr_clobxmlc CLOB;
+    vr_texto_novo VARCHAR2(1000);
+
+    
+  BEGIN
+     -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;     
+
+    IF pr_flgerlog = 1 THEN
+      vr_flgerlog := TRUE;
+    END IF;
+
+    -- Busca as informações da apl. programada
+    pc_lista_poupanca (pr_cdcooper => vr_cdcooper
+                      ,pr_cdagenci => vr_cdagenci
+                      ,pr_nrdcaixa => vr_nrdcaixa
+                      ,pr_cdoperad => vr_cdoperad
+                      ,pr_idorigem => vr_idorigem
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_idseqttl => pr_idseqttl
+                      ,pr_nrctrrpp => pr_nrctrrpp
+                      ,pr_dtmvtolt => pr_dtmvtolt
+                      ,pr_dtmvtopr => pr_dtmvtopr
+                      ,pr_inproces => pr_inproces
+                      ,pr_cdprogra => vr_nmdatela
+                      ,pr_flgerlog => vr_flgerlog
+                      ,pr_percenir => pr_percenir
+                      ,pr_tpapprog => pr_tpapprog
+                      ,pr_vlsldrpp => vr_vlsldrpp
+                      ,pr_retorno => vr_retorno
+                      ,pr_tab_dados_rpp => vr_tab_dados_rpp
+                      ,pr_tab_erro => vr_tab_erro);
+
+    IF vr_retorno='NOK' THEN
+       RAISE vr_exc_erro;
+    END IF;
+    -- Criar cabeçalho do XML
+    dbms_lob.createtemporary(vr_clobxmlc, TRUE); 
+    dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml (pr_xml            => vr_clobxmlc 
+                            ,pr_texto_completo => vr_xml_temp 
+                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados vlsldrpp="'||vr_vlsldrpp||'"');
+    
+    -- Dados
+    IF vr_tab_dados_rpp.count >0 THEN
+       FOR i1 in vr_tab_dados_rpp.FIRST..vr_tab_dados_rpp.LAST LOOP
+             IF vr_tab_dados_rpp(i1).cdprodut < 0 THEN -- ANTIGO
+                vr_tpapprog := 'RPP';
+             ELSE
+                vr_tpapprog := 'APR';
+             END IF; 
+             vr_texto_novo := vr_texto_novo ||
+                              '<Registro>'||
+                              '<nrctrrpp>'||vr_tab_dados_rpp(i1).nrctrrpp||'</nrctrrpp>'||
+                              '<cdagenci>'||vr_tab_dados_rpp(i1).cdagenci||'</cdagenci>'||  
+                              '<cdbccxlt>'||vr_tab_dados_rpp(i1).cdbccxlt||'</cdbccxlt>'||
+                              '<nrdolote>'||vr_tab_dados_rpp(i1).nrdolote||'</nrdolote>'||
+                              '<dtmvtolt>'||to_char(vr_tab_dados_rpp(i1).dtmvtolt,'dd/mm/yyyy')||'</dtmvtolt>'||
+                              '<dtvctopp>'||to_char(vr_tab_dados_rpp(i1).dtvctopp,'dd/mm/yyyy')||'</dtvctopp>'||
+                              '<dtdebito>'||to_char(vr_tab_dados_rpp(i1).dtdebito,'dd/mm/yyyy')||'</dtdebito>'||
+                              '<indiadeb>'||vr_tab_dados_rpp(i1).indiadeb||'</indiadeb>'||
+                              '<vlprerpp>'||vr_tab_dados_rpp(i1).vlprerpp||'</vlprerpp>'||
+                              '<qtprepag>'||vr_tab_dados_rpp(i1).qtprepag||'</qtprepag>'||
+                              '<vlprepag>'||vr_tab_dados_rpp(i1).vlprepag||'</vlprepag>'||
+                              '<vlsdrdpp>'||vr_tab_dados_rpp(i1).vlsdrdpp||'</vlsdrdpp>'||
+                              '<vlrgtrpp>'||vr_tab_dados_rpp(i1).vlrgtrpp||'</vlrgtrpp>'||
+                              '<vljuracu>'||vr_tab_dados_rpp(i1).vljuracu||'</vljuracu>'||
+                              '<vlrgtacu>'||vr_tab_dados_rpp(i1).vlrgtacu||'</vlrgtacu>'||
+                              '<dtinirpp>'||to_char(vr_tab_dados_rpp(i1).dtinirpp,'dd/mm/yyyy')||'</dtinirpp>'||
+                              '<dtrnirpp>'||to_char(vr_tab_dados_rpp(i1).dtrnirpp,'dd/mm/yyyy')||'</dtrnirpp>'||
+                              '<dtaltrpp>'||to_char(vr_tab_dados_rpp(i1).dtaltrpp,'dd/mm/yyyy')||'</dtaltrpp>'||
+                              '<dtcancel>'||to_char(vr_tab_dados_rpp(i1).dtcancel,'dd/mm/yyyy')||'</dtcancel>'||
+                              '<dssitrpp>'||vr_tab_dados_rpp(i1).dssitrpp||'</dssitrpp>'||
+                              '<dsblqrpp>'||vr_tab_dados_rpp(i1).dsblqrpp||'</dsblqrpp>'||  
+                              '<dsresgat/>'||
+                              '<dsctainv>'||vr_tab_dados_rpp(i1).dsctainv||'</dsctainv>'||
+							                '<dsmsgsaq/>'||
+                              '<nrdrowid>0x021406a03236343639360000000000000000000000000000</nrdrowid>'||
+                              '<cdprodut>'||vr_tab_dados_rpp(i1).cdprodut||'</cdprodut>'||
+                              '</Registro>';
+
+             gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
+                                    ,pr_texto_completo => vr_xml_temp 
+                                    ,pr_texto_novo     => vr_texto_novo);
+             vr_texto_novo :='';                                                           
+       END LOOP;
+    END IF;
+    -- Encerrar a tag raiz 
+    gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                            ,pr_texto_completo => vr_xml_temp 
+                            ,pr_texto_novo     => '</Dados></Root>' 
+                            ,pr_fecha_xml      => TRUE);
+                                 
+    pr_retxml := XMLType.createXML(vr_clobxmlc);
+
+  Exception
+    When vr_exc_erro Then
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        
+    When others Then
+      pr_cdcritic := null; -- não será utilizado
+      pr_dscritic := 'Erro geral em APLI0008.pc_buscar_extrato_apl_prog_web: '||SQLERRM;
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+      
+  END;
+END pc_lista_poupanca_web;
 
 END APLI0008; 
 /
