@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-09T14:18:13 -->
+<!-- 2018-08-21T17:23:33 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_bordero_cheques" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -49,18 +49,6 @@
 		<groupHeader>
 			<band height="26">
 				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-				<textField isStretchWithOverflow="true">
-					<reportElement positionType="Float" x="0" y="0" width="238" height="8" uuid="f3b60e2e-b8d4-4186-af99-904ddebcd9ac">
-						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					</reportElement>
-					<textElement textAlignment="Justified" markup="html">
-						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
-					</textElement>
-					<textFieldExpression><![CDATA["Tipo de Cobrança: " + ( $F{flgregis}==1 ? "REGISTRADA":"SEM REGISTRO" )]]></textFieldExpression>
-				</textField>
 				<staticText>
 					<reportElement x="0" y="16" width="50" height="8" uuid="816a70aa-eb54-4562-92a1-980bfde72f55">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>

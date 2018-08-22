@@ -4165,7 +4165,7 @@ END pc_inserir_lancamento_bordero;
                                      ,pr_cdcooper
                                      ,3 -- desconto de titulo
                                      ,2 -- apenas ativo
-                                     ,to_char(pr_dtmvtolt, 'DD/MM/RRRR')
+                                     ,pr_dtmvtolt
                                      --------> OUT <--------
                                      ,vr_tab_dados_limite
                                      ,vr_cdcritic
@@ -5625,7 +5625,7 @@ END pc_inserir_lancamento_bordero;
                                                  ,vr_cdcooper
                                                  ,3 -- desconto de titulo
                                                  ,2 -- apenas ativo
-                                                 ,to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')
+                                                 ,rw_crapdat.dtmvtolt
                                                  --------> OUT <--------
                                                  ,vr_tab_dados_limite
                                                  ,vr_cdcritic

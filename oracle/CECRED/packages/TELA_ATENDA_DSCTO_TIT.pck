@@ -448,11 +448,11 @@ PROCEDURE pc_buscar_titulos_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Có
                                   ,pr_cdagenci IN INTEGER                --> Agencia de operação
                                   ,pr_nrdcaixa IN INTEGER                --> Número do caixa
                                   ,pr_cdoperad IN VARCHAR2               --> Operador
-                                  ,pr_dtmvtolt IN VARCHAR2               --> Data da Movimentação
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data da Movimentação
                                   ,pr_idorigem IN INTEGER                --> Identificação de origem
                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Filtro de Tela de Inscricao do Pagador
                                   ,pr_vltitulo IN crapcob.vltitulo%TYPE  --> Filtro de Tela de Valor do titulo
-                                  ,pr_dtvencto IN VARCHAR2               --> Filtro de Tela de Data de vencimento
+                                  ,pr_dtvencto IN crapcob.dtvencto%TYPE  --> Filtro de Tela de Data de vencimento
                                   ,pr_nrnosnum IN crapcob.nrnosnum%TYPE  --> Filtro de Tela de Nosso Numero
                                   ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                   ,pr_insitlim IN craplim.insitlim%TYPE  --> Status
@@ -491,7 +491,7 @@ PROCEDURE pc_busca_dados_limite (pr_nrdconta IN craplim.nrdconta%TYPE
                                    ,pr_cdcooper IN craplim.cdcooper%TYPE
                                    ,pr_tpctrlim IN craplim.tpctrlim%TYPE
                                    ,pr_insitlim IN craplim.insitlim%TYPE
-                                   ,pr_dtmvtolt IN VARCHAR2
+                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                    --------> OUT <--------
                                    ,pr_tab_dados_limite   out  typ_tab_dados_limite --> Tabela de retorno
                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -731,7 +731,7 @@ PROCEDURE pc_titulos_resumo_resgatar_web (pr_nrdconta           in crapass.nrdco
 
 PROCEDURE pc_busca_borderos (pr_nrdconta IN crapbdt.nrdconta%TYPE
                                  ,pr_cdcooper IN crapbdt.cdcooper%TYPE
-                                 ,pr_dtmvtolt IN VARCHAR2
+                                 ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                      --------> OUT <--------
                                  ,pr_qtregist OUT INTEGER
                                  ,pr_tab_borderos   out  typ_tab_borderos --> Tabela de retorno
@@ -3750,11 +3750,11 @@ END pc_obtem_proposta_aciona_web;
                                   ,pr_cdagenci IN INTEGER                --> Agencia de operação
                                   ,pr_nrdcaixa IN INTEGER                --> Número do caixa
                                   ,pr_cdoperad IN VARCHAR2               --> Operador
-                                  ,pr_dtmvtolt IN VARCHAR2               --> Data da Movimentação
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data da Movimentação
                                   ,pr_idorigem IN INTEGER                --> Identificação de origem
                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Filtro de Tela de Inscricao do Pagador
                                   ,pr_vltitulo IN crapcob.vltitulo%TYPE  --> Filtro de Tela de Valor do titulo
-                                  ,pr_dtvencto IN VARCHAR2               --> Filtro de Tela de Data de vencimento
+                                  ,pr_dtvencto IN crapcob.dtvencto%TYPE  --> Filtro de Tela de Data de vencimento
                                   ,pr_nrnosnum IN crapcob.nrnosnum%TYPE  --> Filtro de Tela de Nosso Numero
                                   ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                   ,pr_insitlim IN craplim.insitlim%TYPE  --> Status
@@ -3801,8 +3801,6 @@ END pc_obtem_proposta_aciona_web;
    
    vr_vlminsacpj number; -- Valor mínimo permitido por título PJ
    vr_vlminsacpf number; -- Valor mínimo permitido por título PF
-
-   vr_dtmvtolt    DATE;
    vr_dtvencto    DATE;
    vr_idtabtitulo PLS_INTEGER;
 
@@ -3855,9 +3853,9 @@ END pc_obtem_proposta_aciona_web;
          -- Valor da tabela crapcob (vltitulo) está menor do que o valor que está na tab052 (Valor mínimo permitido por título) - vlmintgc 
          AND cob.vltitulo >= decode(cob.cdtpinsc, 1, vr_vlminsacpf, vr_vlminsacpj)
          -- Prazo calculado entre a data de inclusão e o vencimento é menor do que está na tab052 (prazo mínimo) qtprzmin
-         AND (cob.dtvencto - vr_dtmvtolt) >= decode(cob.cdtpinsc, 1, vr_qtprzminpf, vr_qtprzminpj)
+       AND (cob.dtvencto - pr_dtmvtolt) >= decode(cob.cdtpinsc, 1, vr_qtprzminpf, vr_qtprzminpj)
          -- Prazo calculado entre a data de inclusão e o vencimento é maior do que está na tab052 (prazo máximo) qtprzmax
-         AND (cob.dtvencto - vr_dtmvtolt) <= decode(cob.cdtpinsc, 1, vr_qtprzmaxpf, vr_qtprzmaxpj)
+       AND (cob.dtvencto - pr_dtmvtolt) <= decode(cob.cdtpinsc, 1, vr_qtprzmaxpf, vr_qtprzmaxpj)
 
          -- Filtros Variáveis - Tela
          AND (cob.nrinssac = pr_nrinssac OR nvl(pr_nrinssac,0)=0)
@@ -3922,10 +3920,9 @@ END pc_obtem_proposta_aciona_web;
    
       pr_qtregist:= 0; -- zerando a variável de quantidade de registros no cursos
      
-      vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
       vr_dtvencto := null;
        IF (pr_dtvencto IS NOT NULL ) THEN
-         vr_dtvencto := to_date(pr_dtvencto, 'DD/MM/RRRR');
+         vr_dtvencto := pr_dtvencto;
        END IF;
       --carregando os dados de prazo limite da TAB052 
        -- BUSCAR O PRAZO PARA PESSOA FISICA
@@ -3933,7 +3930,7 @@ END pc_obtem_proposta_aciona_web;
                                                  pr_cdagenci, --Agencia de operação
                                                  pr_nrdcaixa, --Número do caixa
                                                  pr_cdoperad, --Operador
-                                                 vr_dtmvtolt, -- Data da Movimentação
+                                                 pr_dtmvtolt, -- Data da Movimentação
                                                  pr_idorigem, --Identificação de origem
                                                  1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
                                                  1, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
@@ -3950,7 +3947,7 @@ END pc_obtem_proposta_aciona_web;
                                                  pr_cdagenci, --Agencia de operação
                                                  pr_nrdcaixa, --Número do caixa
                                                  pr_cdoperad, --Operador
-                                                 vr_dtmvtolt, -- Data da Movimentação
+                                                 pr_dtmvtolt, -- Data da Movimentação
                                                  pr_idorigem, --Identificação de origem
                                                  1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
                                                  2, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
@@ -4050,6 +4047,8 @@ END pc_obtem_proposta_aciona_web;
     vr_exc_erro exception;
   
     vr_qtregist         number;
+    vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+    vr_dtvencto crapcob.dtvencto%TYPE;
     
     -- variaveis de entrada vindas no xml
     vr_cdcooper integer;
@@ -4065,6 +4064,13 @@ END pc_obtem_proposta_aciona_web;
      vr_dscritic varchar2(1000);        --> Desc. Erro
 
     BEGIN
+      vr_dtmvtolt := to_date(pr_dtmvtolt,'DD/MM/RRRR');
+      
+      vr_dtvencto := NULL;
+      IF pr_dtvencto IS NOT NULL THEN
+        vr_dtvencto := to_date(pr_dtvencto,'DD/MM/RRRR');
+      END IF;
+
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
                               , pr_nmdatela => vr_nmdatela
@@ -4080,11 +4086,11 @@ END pc_obtem_proposta_aciona_web;
                                ,pr_cdagenci => vr_cdagenci --> Agencia de operação
                                ,pr_nrdcaixa => vr_nrdcaixa --> Número do caixa
                                ,pr_cdoperad => vr_cdoperad --> Operador
-                               ,pr_dtmvtolt => pr_dtmvtolt --> Data da Movimentação
+                               ,pr_dtmvtolt => vr_dtmvtolt --> Data da Movimentação
                                ,pr_idorigem => vr_idorigem --> Identificação de origem
                                ,pr_nrinssac => pr_nrinssac --> Filtro de Inscricao do Pagador
                                ,pr_vltitulo => pr_vltitulo --> Filtro de Valor do titulo
-                               ,pr_dtvencto => pr_dtvencto --> Filtro de Data de vencimento
+                               ,pr_dtvencto => vr_dtvencto --> Filtro de Data de vencimento
                                ,pr_nrnosnum => pr_nrnosnum --> Filtro de Nosso Numero
                                ,pr_nrctrlim => pr_nrctrlim --> Contrato
                                ,pr_insitlim => pr_insitlim --> Status
@@ -4169,7 +4175,7 @@ END pc_obtem_proposta_aciona_web;
                                      ,pr_cdcooper IN craplim.cdcooper%TYPE
                                      ,pr_tpctrlim IN craplim.tpctrlim%TYPE
                                      ,pr_insitlim IN craplim.insitlim%TYPE
-                                     ,pr_dtmvtolt IN VARCHAR2
+                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                      --------> OUT <--------
                                      ,pr_tab_dados_limite   out  typ_tab_dados_limite --> Tabela de retorno
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -4188,7 +4194,6 @@ END pc_obtem_proposta_aciona_web;
       Objetivo  : Procedure que lista os dados do contrato de limite
     ---------------------------------------------------------------------------------------------------------------------*/
       
-      vr_dtmvtolt    DATE;
       vr_vlutiliz    NUMBER;
       vr_qtutiliz    INTEGER;
       
@@ -4248,12 +4253,10 @@ END pc_obtem_proposta_aciona_web;
         WHERE 
              craptdb.cdcooper = pr_cdcooper
              AND craptdb.nrdconta = pr_nrdconta
-             AND (craptdb.insittit=4 OR (craptdb.insittit=2 AND craptdb.dtdpagto=vr_dtmvtolt));
+             AND (craptdb.insittit=4 OR (craptdb.insittit=2 AND craptdb.dtdpagto=pr_dtmvtolt));
       rw_craptdb cr_craptdb%rowtype;
       BEGIN
         GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DSCTO_TIT',pr_action => NULL);
-        
-        vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
         
         OPEN cr_crapass;
         FETCH cr_crapass INTO rw_crapass;
@@ -4286,7 +4289,7 @@ END pc_obtem_proposta_aciona_web;
                                                  null, --Agencia de operação
                                                  null, --Número do caixa
                                                  null, --Operador
-                                                 vr_dtmvtolt, -- Data da Movimentação
+                                                 pr_dtmvtolt, -- Data da Movimentação
                                                  null, --Identificação de origem
                                                  1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
                                                  rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
@@ -4341,6 +4344,7 @@ END pc_obtem_proposta_aciona_web;
     -
      ------------------------------------------------------------------------------------------------------- */
     pr_tab_dados_limite  typ_tab_dados_limite;          --> retorna dos dados
+    vr_dtmvtolt          crapdat.dtmvtolt%TYPE;
     
     /* tratamento de erro */
     vr_exc_erro exception;
@@ -4374,6 +4378,8 @@ END pc_obtem_proposta_aciona_web;
      vr_dscritic varchar2(1000);        --> Desc. Erro
 
     BEGIN
+     vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
+ 
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
                               , pr_nmdatela => vr_nmdatela
@@ -4388,7 +4394,7 @@ END pc_obtem_proposta_aciona_web;
                               vr_cdcooper,
                               pr_tpctrlim,
                               pr_insitlim,
-                              pr_dtmvtolt,
+                              vr_dtmvtolt,
                               ----OUT----
                               pr_tab_dados_limite,
                               vr_cdcritic,
@@ -6265,7 +6271,7 @@ EXCEPTION
                                            '<root><erro>' || pr_dscritic || '</erro></root>');
       when others then
            /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro nao tratado na tela_titcto.pc_detalhes_tit_bordero_web ' ||sqlerrm;
+           pr_dscritic := 'erro nao tratado na tela_atenda_dscto_tit.pc_detalhes_tit_bordero_web ' ||sqlerrm;
            -- carregar xml padrao para variavel de retorno
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="iso-8859-1" ?> ' ||
                                            '<root><erro>' || pr_dscritic || '</erro></root>');
@@ -6628,7 +6634,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       when others then
            /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro nao tratado na tela_titcto.pc_buscar_titulos_web ' ||sqlerrm;
+           pr_dscritic := 'erro nao tratado na tela_atenda_dscto_tit.pc_buscar_titulos_web ' ||sqlerrm;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -6666,10 +6672,10 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
 
     /* tratamento de erro */
-    vr_exc_erro exception;
-  
-    vr_qtregist         number;
-    vr_vltitulo         number;
+    vr_exc_erro EXCEPTION;
+    vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+    vr_qtregist NUMBER;
+    vr_vltitulo NUMBER;
     -- variaveis de entrada vindas no xml
     vr_cdcooper integer;
     vr_cdoperad varchar2(100);
@@ -6721,6 +6727,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
     
     BEGIN
+      vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
+
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
                               , pr_nmdatela => vr_nmdatela
@@ -6736,7 +6744,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                      ,vr_cdcooper
                                      ,3 -- desconto de titulo
                                      ,2 -- apenas ativo
-                                     ,pr_dtmvtolt
+                                     ,vr_dtmvtolt
                                      --------> OUT <--------
                                      ,vr_tab_dados_limite
                                      ,vr_cdcritic
@@ -6888,7 +6896,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       when others then
            /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro nao tratado na tela_titcto.pc_buscar_dados_bordero_web ' ||sqlerrm;
+           pr_dscritic := 'erro nao tratado na tela_atenda_dscto_tit.pc_buscar_dados_bordero_web ' ||sqlerrm;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -7149,7 +7157,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       when others then
            /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro nao tratado na tela_titcto.pc_validar_titulos_alteracao ' ||sqlerrm;
+           pr_dscritic := 'erro nao tratado na tela_atenda_dscto_tit.pc_validar_titulos_alteracao ' ||sqlerrm;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');            
@@ -7913,7 +7921,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
        when others then
             /* montar descriçao de erro nao tratado */
-            pr_dscritic := 'erro nao tratado na tela_titcto.pc_resgate_titulo_bordero_web ' ||sqlerrm;
+            pr_dscritic := 'erro nao tratado na tela_atenda_dscto_tit.pc_resgate_titulo_bordero_web ' ||sqlerrm;
             -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -7924,11 +7932,11 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                   ,pr_cdagenci IN INTEGER                --> Agencia de operação
                                   ,pr_nrdcaixa IN INTEGER                --> Número do caixa
                                   ,pr_cdoperad IN VARCHAR2               --> Operador
-                                  ,pr_dtmvtolt IN VARCHAR2               --> Data da Movimentação
+                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data da Movimentação
                                   ,pr_idorigem IN INTEGER                --> Identificação de origem
                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Filtro de Tela de Inscricao do Pagador
                                   ,pr_vltitulo IN crapcob.vltitulo%TYPE  --> Filtro de Tela de Valor do titulo
-                                  ,pr_dtvencto IN VARCHAR2               --> Filtro de Tela de Data de vencimento
+                                  ,pr_dtvencto IN crapcob.dtvencto%TYPE  --> Filtro de Tela de Data de vencimento
                                   ,pr_nrnosnum IN crapcob.nrnosnum%TYPE  --> Filtro de Tela de Nosso Numero
                                   ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                   ,pr_nrborder IN crapbdt.nrborder%TYPE  --> Borderô
@@ -7947,9 +7955,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       --------------------------------------------------------------------------------------------------------------------- */
       
       -- Variável de críticas
-      vr_dscritic varchar2(1000);        --> Desc. Erro
-      
-      vr_dtmvtolt    DATE;
+      vr_dscritic    VARCHAR2(1000);        --> Desc. Erro
       vr_dtvencto    DATE;
       vr_idtabtitulo PLS_INTEGER;
       
@@ -7999,7 +8005,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
          AND (tdb.nrborder = pr_nrborder OR nvl(pr_nrborder,0)=0)
          AND tdb.insittit = 4
          AND bdt.insitbdt = 3
-         AND tdb.dtvencto > vr_dtmvtolt
+         AND tdb.dtvencto > pr_dtmvtolt
 --         AND tdb.nrctrlim = pr_nrctrlim
        GROUP BY
          cob.progress_recid,
@@ -8022,12 +8028,11 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
          rw_craptdb cr_craptdb%ROWTYPE;
       
       BEGIN
-        vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
         vr_dtvencto := null;
         IF (pr_dtvencto IS NOT NULL ) THEN
-           vr_dtvencto := to_date(pr_dtvencto, 'DD/MM/RRRR');
+           vr_dtvencto := pr_dtvencto;
            -- Caso a data de vencimento colocada seja menor a data atual -48h
-           IF (vr_dtvencto - 2) <= vr_dtmvtolt THEN
+           IF (vr_dtvencto - 2) <= pr_dtmvtolt THEN
              vr_dscritic := 'Operação não permitida. Prazo para resgate excedido.';
              RAISE vr_exc_erro;
         END IF;
@@ -8093,6 +8098,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     vr_exc_erro exception;
   
     vr_qtregist         number;
+    vr_dtmvtolt DATE;
+    vr_dtvencto DATE;
     
     -- variaveis de entrada vindas no xml
     vr_cdcooper integer;
@@ -8108,6 +8115,13 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
      vr_dscritic varchar2(1000);        --> Desc. Erro
 
     BEGIN
+      vr_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/RRRR');
+
+      vr_dtvencto := null;
+      IF pr_dtvencto IS NOT NULL THEN
+        vr_dtvencto := to_date(pr_dtvencto, 'DD/MM/RRRR');
+      END IF;
+
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
                               , pr_nmdatela => vr_nmdatela
@@ -8123,11 +8137,11 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                        ,vr_cdagenci --> Agencia de operação
                        ,vr_nrdcaixa --> Número do caixa
                        ,vr_cdoperad --> Operador
-                       ,pr_dtmvtolt --> Data da Movimentação
+                       ,vr_dtmvtolt --> Data da Movimentação
                        ,vr_idorigem --> Identificação de origem
                        ,pr_nrinssac --> Filtro de Inscricao do Pagador
                        ,pr_vltitulo --> Filtro de Valor do titulo
-                       ,pr_dtvencto --> Filtro de Data de vencimento
+                       ,vr_dtvencto --> Filtro de Data de vencimento
                        ,pr_nrnosnum --> Filtro de Nosso Numero
                        ,pr_nrctrlim --> Contrato
                        ,pr_nrborder --> Borderô
@@ -8331,7 +8345,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
     PROCEDURE pc_busca_borderos (pr_nrdconta IN crapbdt.nrdconta%TYPE
                                  ,pr_cdcooper IN crapbdt.cdcooper%TYPE
-                                 ,pr_dtmvtolt IN VARCHAR2
+                                 ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                      --------> OUT <--------
                                  ,pr_qtregist OUT INTEGER
                                  ,pr_tab_borderos   out  typ_tab_borderos --> Tabela de retorno
@@ -8429,8 +8443,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         pr_qtregist:= 0; -- zerando a variável de quantidade de registros no cursor
 
 
-        vr_dt_aux_dtmvtolt := to_date(pr_dtmvtolt, 'DD/MM/YYYY') - 120;
-        vr_dt_aux_dtlibbdt := to_date(pr_dtmvtolt, 'DD/MM/YYYY') - 90;
+        vr_dt_aux_dtmvtolt := pr_dtmvtolt - 120;
+        vr_dt_aux_dtlibbdt := pr_dtmvtolt - 90;
 
         -- abrindo cursos de títulos
         OPEN  cr_crapbdt;
@@ -8523,6 +8537,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
     vr_tab_borderos  typ_tab_borderos;          --> retorna dos dados
     vr_index pls_integer;
+    vr_dtmvtolt      crapdat.dtmvtolt%TYPE;
 
 
     /* tratamento de erro */
@@ -8546,6 +8561,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
 
     BEGIN
+      vr_dtmvtolt := to_date(pr_dtmvtolt,'DD/MM/RRRR');
+
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
                               , pr_cdcooper => vr_cdcooper
                               , pr_nmdatela => vr_nmdatela
@@ -8558,7 +8575,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
        pc_busca_borderos (pr_nrdconta,
                           vr_cdcooper,
-                          pr_dtmvtolt,
+                          vr_dtmvtolt,
                           ----OUT----
                           vr_qtregist,
                           vr_tab_borderos,
@@ -8940,7 +8957,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN 
            -- Montar descriçao de erro nao tratado
-           pr_dscritic := 'erro nao tratado na tela_titcto.pc_busca_dados_titulo_web ' ||sqlerrm;
+           pr_dscritic := 'erro nao tratado na tela_atenda_dscto_tit.pc_busca_dados_titulo_web ' ||sqlerrm;
            -- Carregar XML padrao para variavel de retorno
            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                              

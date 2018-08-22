@@ -5,14 +5,13 @@ create or replace package cecred.ESTE0006 is
       Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN para Borderô de Títulos
       Sigla    : CADA
       Autor    : Andrew Albuquerque (GFT)
-      Data     : Abril/2018.                   Ultima atualizacao: 20/04/2018
+      Data     : Abril/2018.                   Ultima atualizacao: 21/08/2018
 
       Dados referentes ao programa:
       Frequencia: Sempre que solicitado
       Objetivo  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
 
-      Alteracoes:
-
+      Alteracoes: 21/08/2018 - Alterações de formato de data na pc_enviar_analise_manual. (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------*/
 
 --> Tratamento de erro
@@ -99,7 +98,7 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crapbdt.cdcooper%type  --> 
                                   ,pr_cdorigem    in integer                --> Origem da operacao
                                   ,pr_nrdconta    in crapbdt.nrdconta%type  --> Numero da conta do cooperado
                                   ,pr_nrborder    in crapbdt.nrborder%type  --> Numero do Borderô de Desconto de Título
-                                  ,pr_dtmvtolt    in VARCHAR2
+                                  ,pr_dtmvtolt  IN crapbdt.dtmvtolt%TYPE
                                   ,pr_nmarquiv  in varchar2                 --> Diretorio e nome do arquivo pdf do borderô
                                   ,vr_flgdebug  IN VARCHAR2                 --> Flag se debug ativo
                                   ,pr_dsmensag OUT VARCHAR2
@@ -981,7 +980,7 @@ END pc_incluir_bordero_esteira;
                                     ,pr_cdorigem  IN INTEGER
                                     ,pr_nrdconta  IN crapbdt.nrdconta%TYPE
                                     ,pr_nrborder  IN crapbdt.nrborder%TYPE
-                                    ,pr_dtmvtolt  IN VARCHAR2
+                                    ,pr_dtmvtolt  IN crapbdt.dtmvtolt%TYPE
                                     ,pr_nmarquiv  IN VARCHAR2
                                     ,vr_flgdebug  IN VARCHAR2
                                      ---- OUT ----
@@ -996,16 +995,15 @@ END pc_incluir_bordero_esteira;
    Sistema  : Conta-Corrente - Cooperativa de Credito
    Sigla    : CRED
    Autor    : Luis Fernando - GFT-Brasil
-   Data     : Março/2018.          Ultima atualizacao: 05/03/2018
+   Data     : Março/2018.          Ultima atualizacao: 21/08/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado
    Objetivo  : Rotina responsavel por gerar a geracao e inclusao do Borderô para a esteira
 
+   Alteracoes: 21/08/2018 - Alterações de formato de data na pc_enviar_analise_manual. (Andrew Albuquerque - GFT)
  ..........................................................................*/
-
- vr_dtmvtolt DATE;
 
  vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
 
@@ -1042,8 +1040,6 @@ END pc_incluir_bordero_esteira;
        vr_dscritic := pr_dsmensag;
        raise vr_exc_erro;
    end if;
-
-  vr_dtmvtolt := TO_DATE(pr_dtmvtolt, 'DD/MM/YYYY');
 
   open  cr_crapass;
   fetch cr_crapass into rw_crapass;
@@ -1089,7 +1085,7 @@ END pc_incluir_bordero_esteira;
                                    pr_tpacionamento         => 0,  --> 0 - DEBUG
                                    pr_dsoperacao            => 'ANTES ENVIAR BORDERO',
                                    pr_dsuriservico          => NULL,
-                                   pr_dtmvtolt              => vr_dtmvtolt,
+                                   pr_dtmvtolt              => pr_dtmvtolt,
                                    pr_cdstatus_http         => 0,
                                    pr_dsconteudo_requisicao => vr_obj_bordero_clob,
                                    pr_dsresposta_requisicao => null,
@@ -1109,7 +1105,7 @@ END pc_incluir_bordero_esteira;
                              ,pr_cdorigem    => pr_cdorigem
                              ,pr_nrdconta    => pr_nrdconta
                              ,pr_nrborder    => pr_nrborder
-                             ,pr_dtmvtolt    => vr_dtmvtolt
+                             ,pr_dtmvtolt    => pr_dtmvtolt
                              ,pr_comprecu    => NULL
                              ,pr_dsmetodo    => 'POST'
                              ,pr_conteudo    => vr_obj_bordero_clob
@@ -1128,7 +1124,7 @@ END pc_incluir_bordero_esteira;
                        ,pr_cdorigem => pr_cdorigem
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_nrborder => pr_nrborder
-                       ,pr_dtmvtolt => vr_dtmvtolt
+                       ,pr_dtmvtolt => pr_dtmvtolt
                        ,pr_flreiflx => 1
                        ,pr_nmarquiv => pr_nmarquiv
                        ,pr_cdcritic => vr_cdcritic
