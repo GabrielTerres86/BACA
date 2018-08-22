@@ -19,10 +19,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   TYPE typ_reg_crawepr IS RECORD(
-    cdcooper        tbrecup_cobranca.cdcooper%TYPE,
+    cdcooper        crawepr.cdcooper%TYPE,
     cdagenci        crapass.cdagenci%TYPE,
-    nrctremp        tbrecup_cobranca.nrctremp%TYPE,
-    nrdconta        tbrecup_cobranca.nrdconta%TYPE,
+    nrctremp        crawepr.nrctremp%TYPE,
+    nrdconta        crawepr.nrdconta%TYPE,
     vlemprst        NUMBER,
     qtpreemp        NUMBER,
     cdlcremp        crawepr.cdlcremp%TYPE,
