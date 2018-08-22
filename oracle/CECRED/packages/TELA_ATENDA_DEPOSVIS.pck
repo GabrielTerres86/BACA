@@ -1100,16 +1100,18 @@ END pc_busca_saldos_devedores;
        END IF;
 
 			 IF vr_vltotpag > 0 THEN
-				 PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
-																		 , pr_nrdconta => pr_nrdconta
-																		 , pr_vlrlanc => vr_vltotpag - nvl(pr_vlrabono,0)
-																		 , pr_dtmvtolt => rw_crapdat.dtmvtolt
-																		 , pr_cdcritic => vr_cdcritic
-																		 , pr_dscritic => vr_dscritic);
+				 IF vr_vltotpag - pr_vlrabono > 0 THEN
+					 PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+																			 , pr_nrdconta => pr_nrdconta
+																			 , pr_vlrlanc => vr_vltotpag - nvl(pr_vlrabono,0)
+																			 , pr_dtmvtolt => rw_crapdat.dtmvtolt
+																			 , pr_cdcritic => vr_cdcritic
+																			 , pr_dscritic => vr_dscritic);
 
-				 IF  nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-					 RAISE vr_exc_erro;
-				 END IF;
+					 IF  nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+						 RAISE vr_exc_erro;
+					 END IF;
+					END IF;
 			 ELSE
 				 vr_dscritic := 'Nenhum valor foi pago.';
 
