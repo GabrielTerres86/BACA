@@ -37,6 +37,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                   dtfimvig       DATE,
                   vllimite       NUMBER(25,2),
                   insitlim       NUMBER(5),
+                  dssitlim       VARCHAR2(30),
                   dhalteracao    DATE,
                   dsmotivo       VARCHAR2(1000));
   TYPE  typ_tab_hist_alt_limites IS TABLE OF typ_rec_hist_alt_limites
@@ -790,8 +791,8 @@ PROCEDURE pc_busca_dados_titulo_web (pr_nrdconta    IN crapass.nrdconta%TYPE -->
                                  
 PROCEDURE pc_busca_hist_alt_limite (pr_cdcooper  IN craplim.cdcooper%TYPE
                                    ,pr_nrdconta  IN craplim.nrdconta%TYPE
-                                   ,pr_tpctrlim  IN craplim.tpctrlim%TYPE DEFAULT 0
-                                   ,pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                                   ,pr_tpctrlim  IN craplim.tpctrlim%TYPE
+                                   ,pr_nrctrlim  IN craplim.nrctrlim%TYPE DEFAULT 0
                                    --------> OUT <--------
                                    ,pr_qtregist         out integer         --> Quantidade de registros encontrados
                                    ,pr_tab_dados_hist   out  typ_tab_hist_alt_limites --> Tabela de retorno
@@ -9097,8 +9098,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
   PROCEDURE pc_busca_hist_alt_limite (pr_cdcooper  IN craplim.cdcooper%TYPE
                                      ,pr_nrdconta  IN craplim.nrdconta%TYPE
-                                     ,pr_tpctrlim  IN craplim.tpctrlim%TYPE DEFAULT 0
-                                     ,pr_nrctrlim  IN craplim.nrctrlim%TYPE
+                                     ,pr_tpctrlim  IN craplim.tpctrlim%TYPE
+                                     ,pr_nrctrlim  IN craplim.nrctrlim%TYPE DEFAULT 0
                                      --------> OUT <--------
                                      ,pr_qtregist         out integer         --> Quantidade de registros encontrados
                                      ,pr_tab_dados_hist   out  typ_tab_hist_alt_limites --> Tabela de retorno
@@ -9141,14 +9142,21 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                l.dtinivig, 
                l.dtfimvig,
                l.vllimite, 
-               l.insitlim, 
+               l.insitlim,
+               case l.insitlim when 1 then 'EM ESTUDO'
+                  when 2 then 'ATIVA'
+                  when 3 then 'CANCELADA'
+                  when 5 then 'APROVADA'
+                  when 6 then 'NAO APROVADA'
+                  else        'DIFERENTE'
+               end as dssitlim,
                l.dhalteracao, 
                l.dsmotivo
           FROM tbdsct_hist_alteracao_limite l
          WHERE l.cdcooper = pr_cdcooper
            AND l.nrdconta = pr_nrdconta
-           AND l.nrctrlim = pr_nrctrlim
-           AND l.tpctrlim = decode(nvl(pr_tpctrlim,0), 0, l.tpctrlim, pr_tpctrlim)  -- Caso seja passado a coop
+           AND l.nrctrlim = decode(nvl(pr_nrctrlim,0), 0, l.nrctrlim, pr_nrctrlim) -- para trazer todos os contratos da conta.
+           AND l.tpctrlim = pr_tpctrlim
          ORDER by l.dhalteracao DESC;
       rw_hist_alt_lim cr_hist_alt_lim%ROWTYPE;
 
@@ -9178,6 +9186,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             pr_tab_dados_hist(vr_idtabhist).dtfimvig     := rw_hist_alt_lim.dtfimvig;
             pr_tab_dados_hist(vr_idtabhist).vllimite     := rw_hist_alt_lim.vllimite;
             pr_tab_dados_hist(vr_idtabhist).insitlim     := rw_hist_alt_lim.insitlim;
+            pr_tab_dados_hist(vr_idtabhist).dssitlim     := rw_hist_alt_lim.dssitlim;
             pr_tab_dados_hist(vr_idtabhist).dhalteracao  := rw_hist_alt_lim.dhalteracao;
             pr_tab_dados_hist(vr_idtabhist).dsmotivo     := rw_hist_alt_lim.dsmotivo;
       END LOOP;
@@ -9288,6 +9297,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                              '<dtfimvig>' ||    	to_char(vr_tab_dados_hist(vr_index).dtfimvig, 'DD/MM/RRRR') || '</dtfimvig>' ||
                              '<vllimite>' ||    	to_char(vr_tab_dados_hist(vr_index).vllimite, 'FM999G999G999G990D00') || '</vllimite>' ||
                              '<insitlim>' ||    	vr_tab_dados_hist(vr_index).insitlim     || '</insitlim>' ||
+                             '<dssitlim>' ||    	vr_tab_dados_hist(vr_index).dssitlim     || '</dssitlim>' ||
                              '<dhalteracao>' || 	to_char(vr_tab_dados_hist(vr_index).dhalteracao, 'DD/MM/RRRR')  || '</dhalteracao>' ||
                              '<dsmotivo>' ||    	vr_tab_dados_hist(vr_index).dsmotivo     || '</dsmotivo>' ||
                           '</inf>');
