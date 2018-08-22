@@ -21,8 +21,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --                           realiza analise completa ou apenas a impeditiva; alterada validação pós restrições, para executar
   --                           apenas quando chamado por análise e para enviar para mesa de checagem ou esteira; Validação de
   --                           contingência movida para verificar antes de enviar dados para a mesa do ibratan.
-  --              17/08/2018 - Realizada alteração na pc_pagar_titulo para que pagamentos de origem 1 e 2 não estourem
-  --                           o saldo disponível da conta - Andrew Albuquerque (GFT)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Constantes
@@ -652,8 +650,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 
                14/05/2018 - Criacao da procedure para trazer os titulos vencidos                              - Vitor Shimada Assanuma (GFT)
                16/05/2018 - Criacao das procedures de trazer o saldo e efetuar pagamento dos titulos vencidos - Vitor Shimada Assanuma (GFT)
-               17/08/2018 - Realizada alteração na pc_pagar_titulo para que pagamentos de origem 1 e 2 não estourem
-                            o saldo disponível da conta - Andrew Albuquerque (GFT)
   ---------------------------------------------------------------------------------------------------------------*/
   -- Cursor genérico de calendário
   rw_crapdat btch0001.cr_crapdat%rowtype;
@@ -7470,9 +7466,6 @@ EXCEPTION
                             2 - ?????
                             3 - Internet
                             4 - TAA
-
-     Alteracoes: 17/08/2018: Realizada alteração para que pagamentos de origem 1 e 2 não estourem
-                             o saldo disponível da conta - Andrew Albuquerque (GFT)
   ..................................................................................*/
 
     /* CURSORES */
@@ -7610,15 +7603,6 @@ EXCEPTION
     vr_nrdolote_lcm craplcm.nrdolote%TYPE;
     vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
 
-    -- Variaveis do calculo de saldo
-    pr_vllimcre crapass.vllimcre%TYPE;
-    pr_des_reto VARCHAR2(5);
-    pr_tab_sald EXTR0001.typ_tab_saldos;
-    pr_tab_erro GENE0001.typ_tab_erro;
-    vr_lancou_encargo INTEGER;
-
-    vr_saldo_disponivel NUMBER(15,2);
-
     /* EXCEÇÕES */
     vr_exc_erro  EXCEPTION;
 
@@ -7738,48 +7722,6 @@ EXCEPTION
     vr_flbaixar := FALSE;
 
     vr_vlpagmto := pr_vlpagmto;
-
-    -- AWAE: Certificando-se que, em caso de Boleto e e origem 1 e 2, não estoure o saldo disponível na conta.
-    -- Limite da conta
-    IF (pr_cdorigpg IN (1,2)) THEN
-      
-      --    Verifica se a data esta cadastrada
-      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-      FETCH btch0001.cr_crapdat into rw_crapdat;
-      IF    btch0001.cr_crapdat%NOTFOUND THEN
-            CLOSE btch0001.cr_crapdat;
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
-            RAISE vr_exc_erro;
-      END   IF;
-      CLOSE btch0001.cr_crapdat;
-
-      SELECT vllimcre INTO pr_vllimcre FROM crapass WHERE nrdconta = pr_nrdconta AND cdcooper = pr_cdcooper;
-
-      extr0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper
-                                 ,pr_rw_crapdat => rw_crapdat
-                                 ,pr_cdagenci   => pr_cdagenci
-                                 ,pr_nrdcaixa   => pr_nrdcaixa
-                                 ,pr_cdoperad   => pr_cdoperad
-                                 ,pr_nrdconta   => pr_nrdconta
-                                 ,pr_vllimcre   => pr_vllimcre
-                                 ,pr_dtrefere   => rw_crapdat.dtmvtolt
-                                 ,pr_flgcrass   => TRUE
-                                 ,pr_tipo_busca => 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
-                                 ,pr_des_reto   => pr_des_reto --> OK ou NOK
-                                 ,pr_tab_sald   => pr_tab_sald
-                                 ,pr_tab_erro   => pr_tab_erro);
-
-      -- Saldo disponível na conta no dia
-      vr_saldo_disponivel := pr_tab_sald(0).vlsddisp + pr_vllimcre;
-
-      /* AWAE: Se valor de pagamento for MAIOR que o valor de saldo disponível, e a origem for:
-               1 - Pagamento (Baixa de cobrança de títulos, ...)
-               2 - Pagamento COBTIT
-               Então o valor a pagar deverá ser igual ao saldo disponível. */
-      IF (vr_vlpagmto > vr_saldo_disponivel)THEN
-        vr_vlpagmto := vr_saldo_disponivel;
-      END IF;
-    END IF;
 
     -- Inicializa as regras de prioridade da raspada
     vr_flraspar := TRUE;
