@@ -95,7 +95,7 @@ function exibeErro($msgErro) {
           $reciprocidade = getByTagName($convenios[$i]->tags, 'idrecipr');
         ?>
           <tr id="convenio<?php echo $i; ?>">
-            <td>
+            <td width="20">
             <?php
                 $checkbox = "<input type='checkbox' ";
                 $checkbox .= " value='". $convenio ."'";
@@ -108,8 +108,8 @@ function exibeErro($msgErro) {
                 echo($checkbox);
             ?>
                         </td>
-            <td><? echo $convenio; ?></td>
-            <td><? echo $tipo; ?></td>
+            <td width="80"><? echo $convenio; ?></td>
+            <td width="200"><? echo $tipo; ?></td>
             <td><? echo $tarifacao; ?></td>
             </tr>
         <?} // Fim do for ?>
@@ -155,7 +155,6 @@ var arrayLargura = new Array();
 arrayLargura[0] = '20px';
 arrayLargura[1] = '80px';
 arrayLargura[2] = '200px';
-arrayLargura[3] = '80px';
 
 
 var arrayAlinha = new Array();

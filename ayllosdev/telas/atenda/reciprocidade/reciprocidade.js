@@ -567,6 +567,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
 		type: "POST",
 		url: UrlSite + "telas/atenda/reciprocidade/consulta-habilita.php",
 		data: {
+            convenios: JSON.stringify(descontoConvenios),
             dsdmesag: dsdmesag,
             nrcnvceb: nrcnvceb,
             nrconven: nrconven,
@@ -1697,12 +1698,7 @@ function acessaAba(id,cddopcao) {
         $("#btnContinuar", "#divOpcaoConsulta").click(function(){validaDadosLimites('true','',cddopcao);});
     }
 
-    if (linkVoltar == 1){
-        document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
-    }else if (linkVoltar == 2){
-        document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
-    }
-
+    document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
     // Removido esta forma de atribuir pois não funciona com modo de compatibilidade
     //$("#btnContinuar").attr("onclick",linkContinuar);
     //$("#btnVoltar").attr("onClick",linkVoltar);
@@ -2703,11 +2699,11 @@ function converteNumero(numero) {
 }
 
 function validaDados() {
-	vDataFimContrato = cDataFimContrato.val();
+	vDataFimContrato = Number(cDataFimContrato.val());
 	vVldesconto_cee = cVldesconto_cee.val();
 	vVldesconto_coo = cVldesconto_coo.val();
-	vDataFimAdicionalCee = cDataFimAdicionalCee.find('option:selected').text();
-	vDataFimAdicionalCoo = cDataFimAdicionalCoo.find('option:selected').text();
+	vDataFimAdicionalCee = Number(cDataFimAdicionalCee.find('option:selected').text());
+	vDataFimAdicionalCoo = Number(cDataFimAdicionalCoo.find('option:selected').text());
     vJustificativaDesc = cJustificativaDesc.val();
 
 	// valida se o campo Data fim do contrato está preenchido
@@ -2716,10 +2712,20 @@ function validaDados() {
 		return false;
 	}
 
-	if ( (cee && vDataFimContrato < vDataFimAdicionalCee) || (coo && vDataFimContrato < vDataFimAdicionalCoo) ) {
+	if ( ( cee && vDataFimContrato < vDataFimAdicionalCee) || (coo && vDataFimContrato < vDataFimAdicionalCoo ) ) {
 		showError("error", "Data fim do contrato n&atilde;o pode ser menor que a data do desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
+
+    if ( ( cee && Number(converteNumero(vVldesconto_cee)) && !vDataFimAdicionalCee ) || ( cee && !Number(converteNumero(vVldesconto_cee)) && vDataFimAdicionalCee ) ) {
+        showError("error", "&Eacute; necess&aacute;rio preencher os dados de desconto adicional CEE.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+    }
+
+    if ( ( coo && Number(converteNumero(vVldesconto_coo)) && !vDataFimAdicionalCoo ) || ( coo && !Number(converteNumero(vVldesconto_coo)) && vDataFimAdicionalCoo ) ) {
+        showError("error", "&Eacute; necess&aacute;rio preencher os dados de desconto adicional COO.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+    }
 
 	if (descontoConvenios && !descontoConvenios.length) {
 		showError("error", "Selecione pelo menos um conv&ecirc;nio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -2727,17 +2733,16 @@ function validaDados() {
 	}
 
     if ( (vDataFimAdicionalCee || vDataFimAdicionalCoo) && !vJustificativaDesc ) {
-        showError("error", "&Eacute; necessário informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
     }
 
+    coo = false;
+    cee = false;
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
-        coo = false;
-        cee = false;
 		if (descontoConvenios[i].flcooexp == 1) {
 			coo = true;
 		}
-        
 		if (descontoConvenios[i].flceeexp == 1) {
 			cee = true;
 		}
@@ -2748,7 +2753,12 @@ function validaDados() {
 		return;
 	}
 
-	// Mostra mensagem de aguardo
+    pedeSenhaCoordenador(2,'incluiDesconto();','divRotina');
+
+}
+
+function incluiDesconto() {
+    // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, salvando registro...");
 
 	if (idcalculo_reciproci) {

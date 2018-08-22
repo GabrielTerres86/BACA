@@ -74,6 +74,7 @@ function retornaFlag($flag) {
     }
 }
 
+$convenios   = json_decode($_POST["convenios"]);
 $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
 $flgregis    = trim($_POST["flgregis"]);
@@ -387,7 +388,13 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                                 <td class="txtNormal clsDesCategoria" numLinha="<?php echo $cont; ?>">
                                                     <?php echo $cat_dscatego; ?>
                                                     <span class='clsTarifas<?php echo $cont; ?>' style="display:none;">
+                                                        <?php
+                                                        foreach ($convenios as $c) {
+                                                        ?>
                                                         <table cellspacing="1" cellpadding="0">
+                                                            <tr style="background-color:#CBD1C5;">
+                                                                <td colspan="3"><span style='width:100%;padding: 10px 5px;text-align: left;font-weight: bolder;color: #60635d;'>Conv&ecirc;nio <?php echo $c->convenio, ' - ',$c->tipo;?></span></td>
+                                                            </tr>
                                                             <tr style="background-color:#6B7984;">
                                                                 <td class="txtBrancoBold" width="76%" style="padding:2px;">Tarifa:</td>
                                                                 <td class="txtBrancoBold" width="12%" style="padding:2px;">Tarifa Original:</td>
@@ -395,12 +402,12 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                                             </tr>
                                                             <?php
                                                                 // Se foi informado convenio
-                                                                if ($nrconven > 0) {
+                                                                if (count($convenios) > 0) {
                                                                     // Montar o xml de Requisicao
                                                                     $xml  = "";
                                                                     $xml .= "<Root>";
                                                                     $xml .= " <Dados>";	
-                                                                    $xml .= "   <nrconven>".$nrconven."</nrconven>";
+                                                                    $xml .= "   <nrconven>".$c->convenio."</nrconven>";
                                                                     $xml .= "   <cdcatego>".$cat_cdcatego."</cdcatego>";
                                                                     $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
                                                                     $xml .= " </Dados>";
@@ -428,6 +435,9 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                                                 }
                                                             ?>
                                                         </table>
+                                                        <?php
+                                                        }
+                                                        ?>
                                                     </span>
                                                 </td>
                                                 <td>
@@ -543,14 +553,17 @@ if ($cco_flrecipr == 1 || $qtapurac > 0) {
 // Div flutuante com as tarifas
 $(".clsDesCategoria").hover(
   function() {
+      debugger;
     var numLinha = $(this).attr('numLinha');
-    var qtdTarif = $('.clsTar' + numLinha).length;
-    for (indTar = 0; indTar < qtdTarif; indTar++) {
-        var vlTarSemDesc = converteMoedaFloat($('.clsTarValorOri' + numLinha + '' + indTar).html());
-        var vlPerDesconto = converteMoedaFloat($('#perdesconto_' + numLinha).val());
-        var vlTarComDesc = vlTarSemDesc * (vlPerDesconto / 100);
-        vlTarComDesc = number_format((vlTarComDesc == 0 ? vlTarSemDesc : (vlTarSemDesc - vlTarComDesc)),2,',','.');
-        $('.clsTarValorDes' + numLinha + '' + indTar).html(vlTarComDesc);
+    for (indTable = 0; indTable < <?php echo count($convenios); ?>; indTable++) {
+        var qtdTarif = $('.clsTar' + numLinha, $(this).find('table')[indTable]).length;
+        for (indTar = 0; indTar < qtdTarif; indTar++) {
+            var vlTarSemDesc = converteMoedaFloat($('.clsTarValorOri' + numLinha + '' + indTar, $(this).find('table')[indTable]).html());
+            var vlPerDesconto = converteMoedaFloat($('#perdesconto_' + numLinha).val());
+            var vlTarComDesc = vlTarSemDesc * (vlPerDesconto / 100);
+            vlTarComDesc = number_format((vlTarComDesc == 0 ? vlTarSemDesc : (vlTarSemDesc - vlTarComDesc)),2,',','.');
+            $('.clsTarValorDes' + numLinha + '' + indTar, $(this).find('table')[indTable]).html(vlTarComDesc);
+        }
     }
     $(this).append("<div class='popbox'>" + $(".clsTarifas" + numLinha).html() + "</div>");
   }, function() {
