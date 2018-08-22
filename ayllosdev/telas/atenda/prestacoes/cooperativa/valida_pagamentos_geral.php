@@ -63,6 +63,7 @@
 	// Diego Simas (AMcom) 
 
 		// Monta o xml de requisição
+		$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "	<Cabecalho>";
 		$xml .= "		<Bo>b1wgen0084b.p</Bo>";

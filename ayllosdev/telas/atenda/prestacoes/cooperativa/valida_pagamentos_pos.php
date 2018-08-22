@@ -57,7 +57,8 @@
 	// Diego Simas (AMcom) 
 
 		// Montar o xml de Requisicao
-		$xml  = "<Root>";
+		$xml  = "";
+		$xml .= "<Root>";
 		$xml .= "	<Dados>";
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
