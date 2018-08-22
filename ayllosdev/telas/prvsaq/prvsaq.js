@@ -1930,6 +1930,11 @@ function validarData(form) {
     } else { //alteracao
         var dtprovisao = $('#dtSaqPagtoAlt', '#frmConsulta').val();
     }
+	
+	// Se o campo data estiver vazio, apenas retornar false, pois a validacao com erro já é feita na hora de salvar
+    if(dtprovisao == ''){
+        return false;
+    }
     
     if (!validaData(dtprovisao)) {
         showError("error", "Data do saque inv&aacute;lida", "Alerta - Ayllos", "$('#dtSaqPagto','#frmInclusao').focus();");

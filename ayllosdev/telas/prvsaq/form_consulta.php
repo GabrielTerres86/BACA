@@ -271,7 +271,7 @@
 			</div>
 			<div id="divDadosAlt" style="display:none">				
 				<label for="dtSaqPagtoAlt" id="lbDtSaqPagtoAlt"><? echo utf8ToHtml('Data do saque:') ?></label>
-				<input id="dtSaqPagtoAlt" name="dtSaqPagtoAlt" class='campo data' type="text" onchange="validarData('alteracao');" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
+				<input id="dtSaqPagtoAlt" name="dtSaqPagtoAlt" class='campo data' type="text" onblur="validarData('alteracao');" value="<? echo utf8ToHtml($dtSaqPagto); ?>"/>
 
 				<label for="hrSaqPagtoAlt" id="lbHrSaqPagtoAlt"><? echo utf8ToHtml('Horário saque:') ?></label>
 				<input id="hrSaqPagtoAlt" name="hrSaqPagtoAlt" class="campo" type="time" maxlength="5" value="<? echo utf8ToHtml($hrSaqPagto); ?>"/>
