@@ -1510,6 +1510,19 @@ DECLARE
      AND lcm.nrdconta   = pr_nrdconta
      AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
 		 AND (pr_dtlimite IS NULL OR lcm.dtmvtolt <= pr_dtlimite)
+		 AND (his.indebcre = 'D' 
+		  OR (his.indebcre = 'C' 
+		 AND NOT EXISTS ( 
+		       SELECT 1
+					   FROM craplcm aux
+						WHERE aux.cdcooper = lcm.cdcooper
+						  AND aux.nrdconta = lcm.nrdconta
+							AND aux.dtmvtolt = lcm.dtmvtolt
+							AND aux.nrdocmto = lcm.nrdocmto
+							AND aux.cdhistor = 2719 
+							AND aux.vllanmto = lcm.vllanmto
+		     )))
+		 AND his.cdhistor   NOT IN (2718, 2719)
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
    ORDER BY dtmvtolt ASC, indebcre DESC;
@@ -1518,7 +1531,7 @@ DECLARE
   -- Busca o limite de crédito atual do cooperado
   CURSOR cr_limite IS
   SELECT nvl(ass.vllimcre,0) vllimcre
-    FROM crapass ass
+    FROM crapass asssss
    WHERE ass.cdcooper = pr_cdcooper
     AND ass.nrdconta = pr_nrdconta;
 
