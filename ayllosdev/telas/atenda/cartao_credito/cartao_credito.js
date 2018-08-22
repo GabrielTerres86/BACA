@@ -62,6 +62,8 @@
  * 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cartão deve ser cancelado através do SIPAGNET. (P364)
  * 044: [01/12/2017] Jonata          (RKAM) : Não permitir acesso a opção de incluir quando conta demitida.
  * 045: [29/03/2018] Lombardi	   (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
+ * 046: [17/08/2018] Fabricio      (AILOS)  : Tratamento na altera_senha_pinpad() para ignorar a AID (application ID) 'A0000001510000'
+ *                                            GP GlobalPlatform (por solicitacao da Cabal) em virtude da geracao dos novos chips - SCTASK0025102. (Fabricio)
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -5229,25 +5231,29 @@ function altera_senha_pinpad() {
                             }
 
                             for (iAPP in aOperacao) {
-                                oRetornoJson = altera_cb(oPinpad, aOperacao[iAPP], sNTexto4, sNumeroCartao);
-// Para cada transacao precisamos fechar a conexao e abrir novamente. (By GERTEC)
-                                if (oRetornoJson.bOK) {
-                                    oPinpad.CloseSerial();
-                                    oPinpad.OpenSerial(sPortaPinpad);
-                                } else {
-                                    fechaConexaoPinpad(oPinpad);
-                                    return;
+                                /* Se application ID diferente de GP GlobalPlatform (solicitado pela Cabal para ignorarmos) - 
+                                   SCTASK0025102 (Fabricio) */
+                                if (aOperacao[iAPP] != 'A0000001510000') {
+                                    oRetornoJson = altera_cb(oPinpad, aOperacao[iAPP], sNTexto4, sNumeroCartao);
+                                    // Para cada transacao precisamos fechar a conexao e abrir novamente. (By GERTEC)
+                                    if (oRetornoJson.bOK) {
+                                        oPinpad.CloseSerial();
+                                        oPinpad.OpenSerial(sPortaPinpad);
+                                    } else {
+                                        fechaConexaoPinpad(oPinpad);
+                                        return;
+                                    }
                                 }
                             }
 
                             fechaConexaoPinpad(oPinpad);
-// Vamos verificar se a acao eh para entregar o cartao ou 2 via da senha
-                            if (nomeacao == 'ENTREGAR_CARTAO') {
-// Efetua a entrega do cartao com CHIP
-                                efetuaEntregaCartaoComChip();
+    // Vamos verificar se a acao eh para entregar o cartao ou 2 via da senha
+                                if (nomeacao == 'ENTREGAR_CARTAO') {
+        // Efetua a entrega do cartao com CHIP
+                                    efetuaEntregaCartaoComChip();
                             } else {
 // Somente volta para a tela de consulta
-                                showError("inform", 'Senha alterada com sucesso.', "Alerta - Ayllos", "acessaOpcaoAba(14,0,'2');");
+                                    showError("inform", 'Senha alterada com sucesso.', "Alerta - Ayllos", "acessaOpcaoAba(14,0,'2');");
                             }
                         } catch (e) {
                             fechaConexaoPinpad(oPinpad);
