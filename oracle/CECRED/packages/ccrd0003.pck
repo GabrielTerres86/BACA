@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/05/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -77,15 +77,15 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --                          ativas para não solicitar relatórios para as inativas (Carlos)
   --
   --             21/09/2017 - Validar ultima linha do arquivo corretamente no pc_crps672 (Lucas Ranghetti #753170)
-  --       
+  --
   --             23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
   --                          (Lucas Ranghetti #847282)
   --
   --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
   --                          (Lucas Ranghetti SCTASK0014662)
-  --       
-  --             13/04/2018 - Incluido o controle de execução de programa
-  --                          Projeto Debitador Unico - Josiane Stiehler (AMcom)
+  --
+  --             30/07/2018 - Adicionado tratamento para não enviar conta PJ caso a mesma ainda não tenha sido criada 
+  --                          no arquivo gerado na procedure pc_crps671 (Reinert).
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6160,6 +6160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             
           END LOOP;
 
+          -- Zerar variável de conta
+		  vr_nrctarg1 := 0;
+
           -- Executa LOOP em registro de Cartões para gravar DETALHE
           FOR rw_crawcrd IN cr_crawcrd(rw_crapcol.cdcooper) LOOP
             BEGIN
@@ -6553,6 +6556,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Tp. Operac.: Inclusão de Cartão
                   vr_tipooper := '01';
 
+                  -- Guarda o número da conta informado no registro tipo 1
+                  vr_nrctarg1 := rw_crawcrd.nrdconta;
+
                   -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
                   gera_linha_registro_tipo1 (rw_crawcrd,
                                              rw_crapcol,
@@ -6597,6 +6603,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- Tp. Operac.: Inclusão de Cartão Adicional
                 vr_tipooper := '04';
                 ELSE
+                  -- Se não for a mesma conta do registro 01 enviado, deve pular o registro
+				  IF NVL(vr_nrctarg1,0) <> NVL(rw_crawcrd.nrdconta,-1) THEN
+					CONTINUE;
+				  END IF;									
+								
                   vr_tipooper := '01';
                 END IF;
 
@@ -6897,7 +6908,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                    23/08/2017 - Alterar o recebimento de informações de alteração de limites. 
                                 (Renato Darosci - Projeto 360)
-                   
+                                
                    23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
                                 (Lucas Ranghetti #847282)
                                 
@@ -8255,17 +8266,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         
         IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',pr_cdcooper,'DB_NAME_PRODUC') THEN --> Produção
     
-        -- Atualizar os registros de majoração
-        UPDATE integradados.sasf_majoracaocartao@sasp maj
-	         SET maj.cdmajorado        = vr_cdmajora
-             , maj.dtmajoracaocartao = SYSTIMESTAMP
-	           , maj.dsexclusao        = vr_dscritic
-	       WHERE maj.cdcooper          = pr_cdcooper
-	         AND maj.nrdconta          = pr_nrdconta
-	         AND maj.nrcontacartao     = pr_nrctacrd
-	         AND maj.cdmajorado        = 4; -- Pendente
+          -- Atualizar os registros de majoração
+          UPDATE integradados.sasf_majoracaocartao@sasp maj
+             SET maj.cdmajorado        = vr_cdmajora
+               , maj.dtmajoracaocartao = SYSTIMESTAMP
+               , maj.dsexclusao        = vr_dscritic
+           WHERE maj.cdcooper          = pr_cdcooper
+             AND maj.nrdconta          = pr_nrdconta
+             AND maj.nrcontacartao     = pr_nrctacrd
+             AND maj.cdmajorado        = 4; -- Pendente
         END IF;
-
+        
       EXCEPTION
         WHEN OTHERS THEN
           pr_des_erro := 'Erro ao atualizar majoracao: '||SQLERRM;
@@ -9592,8 +9603,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                                 IF cr_crawcrd_cdgrafin%ISOPEN THEN
                                   CLOSE cr_crawcrd_cdgrafin;
-                                END IF;
-                                
+                  END IF;
+                
                                 OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
                                                          ,vr_nrdconta                 -- pr_nrdconta
                                                          ,vr_nrdctitg                 -- pr_nrcctitg
@@ -9607,7 +9618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                              , vr_flgdebcc;                                                                                         
                               END IF;
                               
-                            ELSE
+                ELSE
                               CLOSE cr_crawcrd_cancel;
                             END IF;
                                                        
@@ -10533,42 +10544,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_indice := vr_vet_nrdlote.FIRST;
         
         LOOP        
-      -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
-        --> Enviar lote de SMS para o Aymaru
-        pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
+          -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
+          --> Enviar lote de SMS para o Aymaru
+          pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
                             ,pr_idlotsms => vr_vet_nrdlote(vr_indice)
-                          ,pr_dscritic => vr_dscritic
-                          ,pr_cdcritic => vr_cdcritic);
-                    
-        -- Se houve retorno de algum erro      
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Em caso de erro deve setar o lote como FALHA
-         /* BEGIN
-            UPDATE tbgen_sms_lote lot
-               SET lot.idsituacao = 'F' -- Falha
-             WHERE lot.idlote_sms = vr_idlotsms;
-          EXCEPTION 
-            WHEN OTHERS THEN
-              -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
-              RAISE vr_exc_saida;
-          END;  */
-        
-          pc_log_message;
-        END IF;
-        
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_cdcritic => vr_cdcritic);
+                        
+          -- Se houve retorno de algum erro      
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            -- Em caso de erro deve setar o lote como FALHA
+           /* BEGIN
+              UPDATE tbgen_sms_lote lot
+                 SET lot.idsituacao = 'F' -- Falha
+               WHERE lot.idlote_sms = vr_idlotsms;
+            EXCEPTION 
+              WHEN OTHERS THEN
+                -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
+                RAISE vr_exc_saida;
+            END;  */
+            
+            pc_log_message;
+          END IF;
+
           
-        -- Fechar a situação do lote
-       /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
-                                     ,pr_dscritic   => vr_dscritic);
-        
-        -- Se houve retorno de algum erro      
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;
-        END IF;*/
+          -- Fechar a situação do lote
+         /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
+                                       ,pr_dscritic   => vr_dscritic);
+            
+          -- Se houve retorno de algum erro      
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;*/
           EXIT WHEN vr_vet_nrdlote.LAST = vr_indice;
-        
+
           vr_indice := vr_vet_nrdlote.NEXT(vr_indice);
-        
+          
         END LOOP;   
       END IF;
       -- Adiciona a linha ao XML
@@ -10894,9 +10905,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
       ct_hispgfat CONSTANT INTEGER := 1545;
       
-      -- controle execuções programa
-      vr_flultexe     INTEGER;
-      vr_qtdexec      INTEGER;
       
       FUNCTION fn_inicia_exec(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN ROWID IS
       BEGIN
@@ -10965,41 +10973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END fn_encerra_exec;
       
     BEGIN
-      -- Verifica se o programa que chamou é o CRPS674
-      -- para verificar a quantidade de execução programada no debitador
-      -- Faz o controle de execução para saber quando é a última execução
-      -- Projeto debitador único
-      if pr_cdprogra = 'CRPS674' then
-         -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
-         gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper    => pr_cdcooper   --Cooperativa
-                                                     ,pr_cdprocesso => 'PC_'||pr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
-                                                     ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
-         IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_saida;
-         END IF;
-
-         -- registrar a quantidade de execução
-         -- Projeto debitador unico
-         SICR0001.pc_controle_exec_deb (pr_cdcooper   => pr_cdcooper         --> Código da coopertiva
-                                        ,pr_cdtipope  => 'I'                 --> Tipo de operacao I-incrementar e C-Consultar
-                                        ,pr_dtmvtolt  => pr_dtmvtolt         --> Data do movimento
-                                        ,pr_cdprogra  => pr_cdprogra         --> Codigo do programa
-                                        ,pr_flultexe  => vr_flultexe         --> Retorna se é a ultima execução do procedimento
-                                        ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade
-                                        ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro
-                                        ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer
-
-           IF nvl(vr_cdcritic,0) > 0 OR
-              TRIM(vr_dscritic) IS NOT NULL THEN
-             RAISE vr_exc_saida;
-           END IF;
-
-           --Commit para garantir o
-           --controle de execucao do programa
-           COMMIT;
-      end if;
-
-
+     
       --funcao que starta execucao dos debitos somente se os debito anteriores
       --estiverem ok de acordo com parametro da prm
       vr_prmrowid := fn_inicia_exec(pr_cdcooper => pr_cdcooper);
@@ -11009,7 +10983,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
          RAISE vr_exc_saida;
       END IF;        
     
-      vr_dscritic := '';      
+      vr_dscritic := '';
+      --RODANDO VIA JOB validacoes
+      IF upper(pr_cdprogra) = 'REPIQUE' THEN
+         gene0004.pc_executa_job(pr_cdcooper => pr_cdcooper
+                                ,pr_fldiautl => 1
+                                ,pr_flproces => 1
+                                ,pr_dscritic => vr_dscritic);                                
+                               
+         IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;    
+      END IF;    
+    
       --Buscar Transacao
       vr_dstransa:= 'Debito fatura';
 
@@ -11383,8 +11369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         --Mudar situacao da fatura para nao efetuado qdo 
         --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
-        IF pr_cdprogra = 'CRPS674' AND  
-           vr_flultexe = 1 AND -- somente quando for a última execução do debitador  - Projeto Debitador Unico    
+        IF pr_cdprogra = 'CRPS674' AND          
           (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0 AND
            gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                       ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
@@ -11988,8 +11973,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_dsdireto_rlnsv:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
                                                ,pr_cdcooper => pr_cdcooper
                                                ,pr_nmsubdir => 'rlnsv');
-     
-      vr_dsdirarq := vr_dsdireto||'/rl/crrl693_'|| to_char( gene0002.fn_busca_time )||'.lst';
+            
+      vr_dsdirarq := vr_dsdireto||'/rl/crrl693.lst';
             
       -- Submeter o relatório 693
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                                    --> Cooperativa conectada

@@ -20,20 +20,26 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+		$msgErro	= "Acesso n&atilde;o permitido.";
+		exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
+	}
+
 	// Verifica se tela foi chamada pelo mжtodo POST
 	isPostMethod();	
-
-	$cddopcao = $_POST['cddopcao'];
-
-    $msgError = validaPermissao($glbvars["nmdatela"],$glbvars['nmrotina'],$cddopcao, false);
-
-    if ($msgError != '') {
-		exibirErro('error', utf8ToHtml('Acesso não permitido.'), 'Alerta - Ayllos', 'estadoInicial()', false);
-	}
 
     $idhora_processamento = $_POST['idhora_processamento'];
     $dhprocessamento = $_POST['dhprocessamento'];
     $operacao = $_POST['operacao'];
+
+	/*$msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'C');
+
+	if (!empty($msgError)) {		
+		exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+	}*/
 
 	if ($operacao == 'INCLUIR_HORARIO') {
 		if (empty($dhprocessamento)) {

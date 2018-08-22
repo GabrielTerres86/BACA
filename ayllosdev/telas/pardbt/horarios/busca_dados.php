@@ -21,10 +21,13 @@
 
     $cddopcao = $_POST['cddopcao'];
 
-    $msgError = validaPermissao($glbvars["nmdatela"],$glbvars['nmrotina'],$cddopcao, false);
 
-    if ($msgError != '') {
-		exibirErro('error', utf8ToHtml('Acesso não permitido.'), 'Alerta - Ayllos', 'estadoInicial()', false);
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+		$msgErro	= "Acesso n&atilde;o permitido.";
+		exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
 	}	
 
     // Monta o xml de requisição
