@@ -89,7 +89,7 @@ $flcooexp    = retornaFlag($_POST["flcooexp"]);
 $flceeexp    = retornaFlag($_POST["flceeexp"]);
 $flserasa    = retornaFlag($_POST["flserasa"]);
 $cddbanco	 = trim($_POST["cddbanco"]);
-$flgcebhm    = retornaFlag(trim($_POST["flgcebhm"]));
+$flgcebhm    = retornaFlag(isset($_POST["flgcebhm"]) ? trim($_POST["flgcebhm"]) : 1);
 $cddopcao    = trim($_POST["cddopcao"]);
 $dsdmesag    = $_POST["dsdmesag"];
 $titulares   = $_POST["titulares"];
@@ -183,7 +183,6 @@ if ($cddopcao == "I" || ($cddopcao == "A" && empty($qtdecprz))) {
     // Conforme solicitado no projeto 431 o campo passa a ser padrão SIM
     $flgregis = 'SIM';
 }
-
 
 if ($cco_flprotes == 1 && $cco_insrvprt == 1 && ($qtlimmip == 0 || $qtlimaxp == 0)){
     $qtlimmip   = $cco_qtlimmip;

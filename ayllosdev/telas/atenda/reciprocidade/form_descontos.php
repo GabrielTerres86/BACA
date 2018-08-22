@@ -312,9 +312,9 @@ descontoConvenios = [];
 		<tr class="corPar">
 			<td width="60%">Desconto adicional COO</td>
 			<td align="right" width="40%">
-				<span>R$</span>
+				<span>%</span>
 				<input name="vldesconto_coo_old" id="vldesconto_coo_old" type="hidden" value="<?php echo $vr_vldesconto_adicional_coo; ?>" />
-				<input name="vldesconto_coo" id="vldesconto_coo" value="<?php echo $vr_vldesconto_adicional_coo; ?>" class="campo campoTelaSemBorda valor" disabled style="width:153px;" />
+				<input name="vldesconto_coo" id="vldesconto_coo" value="<?php echo $vr_vldesconto_adicional_coo; ?>" class="campo campoTelaSemBorda per" disabled style="width:153px;" />
 			</td>
 		</tr>
 		<tr class="corImpar">
@@ -332,8 +332,9 @@ descontoConvenios = [];
 		<tr class="corPar">
 			<td>Desconto adicional CEE</td>
 			<td align="right">
+				<span>%</span>
 				<input name="vldesconto_cee_old" id="vldesconto_cee_old" type="hidden" value="<?php echo $vr_vldesconto_adicional_cee; ?>" />
-				<input name="vldesconto_cee" id="vldesconto_cee" value="<?php echo $vr_vldesconto_adicional_cee; ?>" class="campo campoTelaSemBorda valor" disabled style="width:153px;" />
+				<input name="vldesconto_cee" id="vldesconto_cee" value="<?php echo $vr_vldesconto_adicional_cee; ?>" class="campo campoTelaSemBorda per" disabled style="width:153px;" />
 			</td>
 		</tr>
 		<tr class="corImpar">
@@ -418,6 +419,7 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 
 $('.valor').setMask('DECIMAL', 'zzz.zzz.zzz.zzz.zz9,99', '.', '');
 $('.inteiro').setMask('DECIMAL', 'z.zzz.zzz.zzz.zzz', '.', '');
+$('.per').setMask('DECIMAL','zz0,00',',','');
 
 $('.imgEditar').tooltip();	
 $('.imgExcluir').tooltip();

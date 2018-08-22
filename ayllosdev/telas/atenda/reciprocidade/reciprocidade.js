@@ -127,6 +127,7 @@ function habilitaSetor(setorLogado) {
             $("#divHabilita_SMS").css('display', 'none');
             $("#divTrocaPacote_SMS").css('display', 'none');
             $("#tdConteudoTela>table").prop('width', '650');
+            $("#divConvenios").css('display', 'none');
 
 			$("#divConteudoOpcao").html(response);
             controlaFoco();
