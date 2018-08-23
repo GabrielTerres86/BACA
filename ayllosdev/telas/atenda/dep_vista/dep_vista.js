@@ -1311,7 +1311,7 @@ function efetuaPagamentoPrejuizoCC() {
 			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function (response) {
-			if (response.indexOf('showError("error"') == -1) {
+			if (response.indexOf('showError("error"') != -1) {
 				showError("inform", 'Pagamento de Prejuízo efetuado com sucesso.', "Alerta - Ayllos", mostraDetalhesCT());
 			} else {
 				eval(response);
