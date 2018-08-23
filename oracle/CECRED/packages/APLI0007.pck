@@ -811,6 +811,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            -- Utilizar a maior data entre os dois dias úteis anteriores
            -- e a data de início de envio das aplicações para custódia B3
            AND lap.dtmvtolt >= greatest(pr_dtmvtolt,pr_dtinictd)
+           -- E não podem ser do dia atual
+           AND lap.dtmvtolt < pr_dtmvtolt
            --> Aplicação não custodiada ainda
            AND nvl(rda.idaplcus,0) = 0 
            --> Registro não custodiado ainda
@@ -843,6 +845,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            -- Utilizar a maior data entre os dois dias úteis anteriores
            -- e a data de início de envio das aplicações para custódia B3
            AND lac.dtmvtolt >= greatest(pr_dtmvtolt,pr_dtinictd)
+           -- E não podem ser do dia atual
+           AND lac.dtmvtolt < pr_dtmvtolt
            --> Aplicação não custodiada ainda
            AND nvl(rac.idaplcus,0) = 0 
            --> Registro não custodiado ainda           
@@ -2522,7 +2526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             
       --> Saída do comando no OS
       vr_typ_saida  VARCHAR2(3);      
-      vr_dsdaviso   VARCHAR2(4000);
+      vr_dsdaviso   VARCHAR2(32767);
       
     BEGIN
   	  -- Inclusão do módulo e ação logado
@@ -2835,7 +2839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_flignore BOOLEAN;
       -- Alertas
       vr_idtiparq NUMBER;
-      vr_dsdaviso VARCHAR2(4000);
+      vr_dsdaviso VARCHAR2(32767);
     BEGIN
   	  -- Inclusão do módulo e ação logado
     	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_checar_recebe_cd');   
