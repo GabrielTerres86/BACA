@@ -24,6 +24,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 04/04/2018 - Ajuste no retorno das críticas na operação 'pc_detalhes_tit_bordero' (Leonardo Oliveira (GFT)) 
                 26/04/2018 - Ajuste no retorno das propostas 'pc_obtem_dados_proposta_web' (Leonardo Oliveira (GFT))
                 22/08/2018 - Inclusão das procedures pc_busca_hist_alt_limite e pc_busca_hist_alt_limite_web (Andrew Albuquerque - GFT)        
+                22/08/2018 - Inclusão da procedure pc_gravar_hist_alt_limite (Paulo Penteado (GFT))
+                23/08/2018 - Alteraçao na procedure pc_efetivar_proposta / Registrar na tabela de histórico de alteraçao 
+                             de contrato de limite (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
   /* Tabela de retorno do histórico de alteração dos contratos de limite*/
@@ -835,6 +838,15 @@ PROCEDURE pc_busca_hist_alt_limite_web (pr_nrdconta  IN craplim.nrdconta%TYPE
                                        ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                        ,pr_des_erro OUT VARCHAR2              --> Erros do processo 
                                        );
+                                       
+  PROCEDURE pc_gravar_hist_alt_limite(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                     ,pr_nrctrlim  IN crawlim.nrctrlim%type --> Contrato
+                                     ,pr_tpctrlim  IN crawlim.tpctrlim%type --> Tipo de contrato de Limite
+                                     ,pr_dsmotivo  IN tbdsct_hist_alteracao_limite.dsmotivo%TYPE --> Motivo da alteração
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                     ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                     );
 END TELA_ATENDA_DSCTO_TIT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
@@ -866,6 +878,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
       25/04/2018 - Alterado o calculo das porcentagens da Liquidez (Vitor (GFT))
       21/05/2018 - Adicionada procedure para trazer se a esteira e o motor estão em contingencia (Luis Fernando (GFT))
       22/08/2018 - Inclusão das procedures pc_busca_hist_alt_limite e pc_busca_hist_alt_limite_web (Andrew Albuquerque - GFT)
+      22/08/2018 - Inclusão da procedure pc_gravar_hist_alt_limite (Paulo Penteado (GFT))
+      23/08/2018 - Alteraçao na procedure pc_efetivar_proposta / Registrar na tabela de histórico de alteraçao 
+                   de contrato de limite (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -1450,6 +1465,9 @@ BEGIN
   --               Adicionado o insert na tabela craplim, pois quando confirmar a proposta de limite, 
   --               deve-se gerar um contrato. (Paulo Penteado (GFT))
   --
+  --  23/08/2018 - Alteraçao na procedure pc_efetivar_proposta / Registrar na tabela de histórico de alteraçao 
+  --               de contrato de limite (Andrew Albuquerque - GFT)
+  --
   ----------------------------------------------------------------------------------
 DECLARE
    -- Informações de data do sistema
@@ -1467,7 +1485,7 @@ DECLARE
    vr_nrdolote     craplot.nrdolote%type;
    vr_rowid_log    rowid;
    vr_flcraplim    BOOLEAN;
-
+   vr_dsmotivo     VARCHAR2(60);
    -- Variáveis incluídas
    vr_des_erro      varchar2(3);                           -- 'OK' / 'NOK'
    vr_cdbattar      crapbat.cdbattar%type := 'DSTCONTRPF'; -- Default = Pessoa Física
@@ -1760,7 +1778,10 @@ BEGIN
            raise vr_exc_saida;
            return;
        end if;
-
+       
+       -- awae: Gerar histórico de Liberação de Proposta.
+       vr_dsmotivo := 'LIBERAÇÃO DE LIMITE';
+       
        -- Efetua os inserts para apresentacao na tela VERLOG
        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                            ,pr_cdoperad => pr_cdoperad
@@ -1794,6 +1815,13 @@ BEGIN
                vr_dscritic := 'Erro ao atualizar o valor e/ou linha de desconto do contrato de limite de desconto de título: '||sqlerrm;
                raise vr_exc_saida;
        end;
+       
+       IF (rw_crawlim.vllimite > rw_craplim.vllimite) THEN
+         vr_dsmotivo := 'MAJORAÇÃO DE LIMITE';
+       ELSE
+         vr_dsmotivo := 'MANUTENÇÃO DE LIMITE';
+       END IF;
+       
    end if;
 
    -- Atualiza a Proposta de Limite de Desconto de Título
@@ -1814,6 +1842,20 @@ BEGIN
            vr_dscritic := 'Erro ao atualizar a proposta de limite de desconto de título. ' || sqlerrm;
            raise vr_exc_saida;
    end;
+   
+   -- awae: Gerar histórico de Majoração/manutenção de Proposta.
+   pc_gravar_hist_alt_limite(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrctrlim => pr_nrctrlim
+                            ,pr_tpctrlim => pr_tpctrlim
+                            ,pr_dsmotivo => vr_dsmotivo
+                            ,pr_cdcritic => vr_cdcritic 
+                            ,pr_dscritic => vr_dscritic 
+                            );
+
+   if  vr_cdcritic > 0 or trim(vr_dscritic) is not null then
+      raise vr_exc_saida;
+   end if;
 
    --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a 
    --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
@@ -1857,7 +1899,6 @@ EXCEPTION
         ROLLBACK;
 END;
 END pc_efetivar_proposta;
-
 
 PROCEDURE pc_efetivar_proposta_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
                                   ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE --> Contrato
@@ -2321,7 +2362,7 @@ BEGIN
            vr_dscritic := 'Erro ao cancelar a proposta de limite de desconto de título. ' || sqlerrm;
            raise vr_exc_saida;
    end;
-
+   
    -- Efetua os inserts para apresentacao na tela VERLOG
    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                        ,pr_cdoperad => pr_cdoperad
@@ -5143,6 +5184,7 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
 
     Alteração : 18/05/2018 - Criação, separado da procedure pc_insere_bordero_web (Paulo Penteado (GFT))
                 15/06/2018 - Retorno se o bordero teve criticas ou nao ao inserir. [Vitor Shimada Assanuma (GFT)]
+                23/08/2018 - Inserção do bordero com risco 2 (A) [Vitor Shimada Assanuma (GFT)]
   ---------------------------------------------------------------------------------------------------------------------*/
    -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -9311,7 +9353,7 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
                l.cdcooper, 
                l.nrdconta, 
                l.tpctrlim, 
-               l.nrctrlim, 
+               l.nrctrlim,
                l.dtinivig, 
                l.dtfimvig,
                l.vllimite, 
@@ -9330,7 +9372,7 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
            AND l.nrdconta = pr_nrdconta
            AND l.nrctrlim = decode(nvl(pr_nrctrlim,0), 0, l.nrctrlim, pr_nrctrlim) -- para trazer todos os contratos da conta.
            AND l.tpctrlim = pr_tpctrlim
-         ORDER by l.dhalteracao DESC;
+         ORDER by l.idhistaltlim DESC;
       rw_hist_alt_lim cr_hist_alt_lim%ROWTYPE;
 
     BEGIN
@@ -9541,10 +9583,15 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
     vr_exc_erro EXCEPTION;
     
     CURSOR cr_crawlim IS
-    SELECT lim.dtinivig
+    SELECT NVL(lim.dtinivig,lim.dtpropos) as dtinivig
           ,lim.dtfimvig
           ,lim.vllimite
           ,lim.insitlim
+          ,case when nvl(lim.nrctrmnt,0) > 0 then lim.nrctrmnt
+             else lim.nrctrlim 
+           end nrctrlim_nvl
+          ,lim.nrctrlim
+          ,lim.nrctrmnt
       FROM crawlim lim
      WHERE lim.cdcooper = pr_cdcooper
        AND lim.nrdconta = pr_nrdconta
@@ -9577,7 +9624,7 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
       VALUES (/*01*/ pr_cdcooper
              ,/*02*/ pr_nrdconta
              ,/*03*/ pr_tpctrlim
-             ,/*04*/ pr_nrctrlim
+             ,/*04*/ rw_crawlim.nrctrlim_nvl
              ,/*05*/ rw_crawlim.dtinivig
              ,/*06*/ rw_crawlim.dtfimvig
              ,/*07*/ rw_crawlim.vllimite
