@@ -7842,10 +7842,9 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     vr_cdtipdoc        INTEGER;
     vr_cdageqrc        INTEGER;
     vr_dstextab        craptab.dstextab%TYPE;
-    vr_qrcode          VARCHAR2(200);
-    vr_counttit        INTEGER;
     vr_vldebito        tbdsct_lancamento_bordero.vllanmto%TYPE;
     vr_vlcredito       tbdsct_lancamento_bordero.vllanmto%TYPE;
+    vr_vlsaldo         NUMBER(25,2);
     
     --> Buscar dados da cooperativa
     CURSOR cr_crapcop IS
@@ -7871,7 +7870,9 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
    
     --> Buscar dados dos titulos
     CURSOR cr_craptdb IS
-      SELECT *
+      SELECT 
+        tdb.*,
+        DENSE_RANK() OVER (PARTITION BY tdb.nrdconta ORDER BY tdb.nrtitulo) AS seq
       FROM craptdb tdb
       WHERE tdb.cdcooper = pr_cdcooper
         AND tdb.nrdconta = pr_nrdconta
@@ -7891,7 +7892,9 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         tdb.dtvencto - tlb.dtmvtolt AS qtdiaatr,
         his.cdhistor,
         his.dshistor,
-        his.indebcre
+        his.indebcre,
+        CASE WHEN (his.indebcre = 'D') THEN tlb.vllanmto ELSE (tlb.vllanmto - tlb.vllanmto*2) END AS vlconvertido,
+        DENSE_RANK() OVER (PARTITION BY tlb.nrdconta ORDER BY tlb.nrtitulo)-1 AS seq
       FROM tbdsct_lancamento_bordero tlb
         LEFT JOIN craptdb tdb ON tlb.cdcooper = tdb.cdcooper AND tlb.nrdconta = tdb.nrdconta AND tlb.nrborder = tdb.nrborder AND tlb.nrtitulo = tdb.nrtitulo
         INNER JOIN craphis his ON tlb.cdcooper = his.cdcooper AND tlb.cdhistor = his.cdhistor
@@ -7937,7 +7940,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
                                          ,pr_cdcooper => pr_cdcooper
                                          ,pr_nmsubdir => '/rl');
 
-    vr_nmarquiv := 'crrl519_'||pr_dsiduser;
+    vr_nmarquiv := 'crrl750_'||pr_dsiduser;
       
     --> Remover arquivo existente   
     vr_dscomand := 'rm '||vr_dsdireto||'/'||vr_nmarquiv||'* 2>/dev/null';
@@ -7979,29 +7982,16 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     dbms_lob.createtemporary(vr_des_xml, TRUE);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
 
-    --Incluir no QRcode a agencia onde foi criado o contrato.
-    IF nvl(rw_crapbdt.cdageori,0) = 0 THEN
-      vr_cdageqrc := rw_crapbdt.cdagenci;
-    ELSE
-      vr_cdageqrc := rw_crapbdt.cdageori;
-    END IF;
-          
-    vr_qrcode   := pr_cdcooper ||'_'||
-                   vr_cdageqrc ||'_'||
-                   TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
-                   TRIM(gene0002.fn_mask_contrato(pr_nrborder)) ||'_'||
-                   0           ||'_'||
-                   0           ||'_'||
-                   vr_cdtipdoc;
     --> INICIO
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
 
+    -- XML dos dados do BORDERO
     pc_escreve_xml('<Bordero>'||
                       '<nmrescop>'|| TRIM(rw_crapcop.nmrescop)                             ||'</nmrescop>' ||
+                      '<nmextcop>'|| TRIM(rw_crapcop.nmextcop)                             ||'</nmextcop>' ||
                       '<dtmvtolt>'|| to_char(pr_dtmvtolt, 'DD/MM/RRRR')                    ||'</dtmvtolt>' ||
                       '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta))             ||'</nrdconta>' ||
                       '<cdagenci>'|| rw_crapbdt.cdagenci                                   ||'</cdagenci>' ||
-                      '<dsqrcode>'|| vr_qrcode                                             ||'</dsqrcode>' ||
                       '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder))          ||'</nrborder>' ||
                       '<dsdlinha>'|| rw_crapbdt.dsdlinha                                   ||'</dsdlinha>' ||
                       '<qttitbor>'|| rw_crapbdt.qttitbor                                   ||'</qttitbor>' ||
@@ -8011,15 +8001,15 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
                       '<vltxmult>'|| to_char(rw_crapbdt.vltxmult, 'fm999G999G999G990D00')  ||'</vltxmult>' ||
                       '<dtlibbdt>'|| to_char(rw_crapbdt.dtlibbdt, 'DD/MM/RRRR')            ||'</dtlibbdt>' 
                   );
-    vr_counttit := 0;
+    
+    -- XML dos TITULOS
     pc_escreve_xml('<titulos>');
     OPEN cr_craptdb();
     LOOP 
       FETCH cr_craptdb INTO rw_craptdb;
       EXIT  WHEN cr_craptdb%NOTFOUND;
-      vr_counttit := vr_counttit + 1;
       pc_escreve_xml('<titulo>' ||
-                         '<counttit>'|| vr_counttit                                            ||'</counttit>' ||
+                         '<nrseqtit>'|| rw_craptdb.seq                                         ||'</nrseqtit>' ||
                          '<dtvencto>'|| to_char(rw_craptdb.dtvencto, 'DD/MM/RRRR')             ||'</dtvencto>' ||
                          '<vltitulo>'|| to_char(rw_craptdb.vltitulo, 'fm999G999G999G990D00')   ||'</vltitulo>' ||
                          '<insittit>'|| DSCT0003.fn_busca_situacao_titulo(rw_craptdb.insittit) ||'</insittit>' ||
@@ -8028,12 +8018,15 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     END LOOP;
     pc_escreve_xml('</titulos>');
         
+    -- XML dos Lançamentos
     pc_escreve_xml('<bdtlancs>');
+    vr_vlsaldo := 0;
     OPEN cr_craptlb();
     LOOP 
       FETCH cr_craptlb INTO rw_craptlb;
       EXIT  WHEN cr_craptlb%NOTFOUND;
-      vr_counttit := vr_counttit + 1;
+      -- Atualiza o saldo
+      vr_vlsaldo := vr_vlsaldo + rw_craptlb.vlconvertido;
       
       -- Caso seja Debito colocar o valor no débito e zerar crédito.
       IF rw_craptlb.indebcre = 'D' THEN
@@ -8044,14 +8037,20 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         vr_vlcredito := rw_craptlb.vllanmto;
       END IF;
       
+      -- Caso os dias de atraso seja positivo (Nao esta em atraso), entao zera.
+      IF rw_craptlb.qtdiaatr > 0 THEN
+        rw_craptlb.qtdiaatr := 0;
+      END IF;
+      
       pc_escreve_xml('<bdtlanc>' ||
+                         '<nrseqtit>'|| rw_craptlb.seq                                ||'</nrseqtit>' ||
                          '<dtmvtolt>'|| to_char(rw_craptlb.dtmvtolt, 'DD/MM/RRRR')    ||'</dtmvtolt>' ||
                          '<dshistor>'|| rw_craptlb.dshistor                           ||'</dshistor>' ||
-                         '<qtdiaatr>'|| rw_craptlb.qtdiaatr                           ||'</qtdiaatr>' ||
+                         '<qtdiaatr>'|| ABS(rw_craptlb.qtdiaatr)                      ||'</qtdiaatr>' ||
                          '<nrtitulo>'|| rw_craptlb.nrtitulo                           ||'</nrtitulo>' ||
                          '<vldebito>'|| to_char(vr_vldebito, 'fm999G999G999G990D00')  ||'</vldebito>' ||
                          '<vlcredit>'|| to_char(vr_vlcredito, 'fm999G999G999G990D00') ||'</vlcredit>' ||
-                         '<vldsaldo>'|| to_char(0, 'fm999G999G999G990D00')            ||'</vldsaldo>' ||
+                         '<vldsaldo>'|| to_char(vr_vlsaldo, 'fm999G999G999G990D00')   ||'</vldsaldo>' ||
                      '</bdtlanc>'
                     );
     END LOOP;
@@ -8064,10 +8063,10 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
                                , pr_dtmvtolt  => pr_dtmvtolt
                                , pr_dsxml     => vr_des_xml
                                , pr_dsxmlnode => '/raiz/Bordero'
-                               , pr_dsjasper  => 'crrl519_bordero_extrato.jasper'
+                               , pr_dsjasper  => 'crrl750_bordero_extrato.jasper'
                                , pr_dsparams  => null
                                , pr_dsarqsaid => vr_dsdireto||'/'||pr_nmarqpdf
-                               , pr_cdrelato => 519
+                               , pr_cdrelato => 750
                                , pr_flg_gerar => 'S'
                                , pr_qtcoluna  => 132
                                , pr_sqcabrel  => 1
