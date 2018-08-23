@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Última Alteração: 20/08/2018 ***//
+	//*** Data : Julho/2007                   Ãšltima AlteraÃ§Ã£o: 20/08/2018 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
@@ -35,8 +35,8 @@
 	//***						   configuracoes de producao criptografadas***//
 	//***						   (Carlos Rafael Tanholi) SD 489051       ***//	
 	//***																   ***//	
-	//***             20/08/2018 - Criação de variaveis para conexao ao    ***//
-	//***                          serviço FIPE (Marcos-Envolti)           ***//
+	//***             20/08/2018 - CriaÃ§Ã£o de variaveis para conexao ao    ***//
+	//***                          serviÃ§o FIPE (Marcos-Envolti)           ***//
 	//************************************************************************//
 	
 	// carrega o arquivo .cfg de dados do sistema Ayllos
@@ -55,7 +55,7 @@
 
 	// valida a existencia do servidor e da configuracao para o mesmo no arquivo config.cfg
 	if ( trim($serverCFG) == '' || array_key_exists($serverCFG, $array_dados_ini) == false ) {
-		echo 'Configuração inexistente para o servidor ' . $serverCFG . ' no arquivo de configurações (config.cfg)';
+		echo 'ConfiguraÃ§Ã£o inexistente para o servidor ' . $serverCFG . ' no arquivo de configuraÃ§Ãµes (config.cfg)';
 		exit();
 	}
 
@@ -96,7 +96,8 @@
 	
 	// Variaveis para Fipe
 	// PROD
-	// $UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+	//$UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  //$AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
 	// Homol 
 	$UrlFipe = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
 	$AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";

@@ -1,3 +1,4 @@
+var errorMessage = "";
 $(function(){
 	$('#vlrdobem').maskMoney();
 	$('#vlrdobem').val($('#vlrdobem').val()).trigger('mask.maskMoney');
@@ -10,31 +11,31 @@ function TrataDados(){
 }
 function validaCamposAditiv(){
 	var invalidos=0;
+	errorMessage = "";
 	if(!validaCampo($('#dscatbem', '#frmTipo'))){invalidos=invalidos+1;}
 	if(!validaCampo($('#dstipbem', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo($('#dsmarbem', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo($('#dsbemfin', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo($('#nrmodbem', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo($('#nranobem', '#frmTipo'))){invalidos=invalidos+1;}	
+	if(!validaCampo($('#vlrdobem', '#frmTipo'))){invalidos=invalidos+1;}
+
 	if(!validaCampo($('#tpchassi', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo($('#dschassi', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo($('#dscorbem', '#frmTipo'))){invalidos=invalidos+1;}
 
 	if(!$('#ufdplaca').prop( "disabled"))
 	{
 		if(!validaCampo($('#ufdplaca', '#frmTipo'))){invalidos=invalidos+1;}
-		if(!validaCampo($('#nrrenava', '#frmTipo'))){invalidos=invalidos+1;}
 		if(!validaCampo($('#nrdplaca', '#frmTipo'))){invalidos=invalidos+1;}
+		if(!validaCampo($('#nrrenava', '#frmTipo'))){invalidos=invalidos+1;}
 	}
-	if(!validaCampo($('#dsbemfin', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#vlfipbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#vlrdobem', '#frmTipo'))){invalidos=invalidos+1;}
-
-	if(!validaCampo($('#dschassi', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#dscorbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#dsmarbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#nrmodbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#nranobem', '#frmTipo'))){invalidos=invalidos+1;}	
 	if(!validaRadio($('input[name=nrbem]'))){invalidos=invalidos+1;}
-
 
 	if(invalidos>0)
 	{
 		$("#msgErro").show();
+		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Ayllos','');
 		return false;
 	}
 	else{
@@ -67,10 +68,10 @@ function bloqueiaCamposVeiculoZero(valor)
 function validaCampo(obj){
 	var value = obj.val();	
 	var valido =true;
-	
-	if(value===null||value==="")
+	if(value===null||value===""||value=="R$ 0,00")
 	{
 		addErroCampo(obj);	
+		addMensageError(obj);
 		valido =false;
 	}
 	else{
@@ -99,6 +100,15 @@ function addErroCampo(obj){
 		label.addClass('errorLabel');
 	}	
 }
+function addMensageError(obj)
+{
+	var name =obj.attr('name');		
+	var label =$("label[for='"+name+"']");
+	if(label.text()!="")
+	{
+		errorMessage = errorMessage + "	 "+label.text().replace(":","")+ "<br/>";
+	}
+}
 function validaRadio(obj)
 {
 	var radios = obj;
@@ -114,6 +124,7 @@ function validaRadio(obj)
 	if(!check)
 	{
 		$('.table_alie_veiculo').addClass('errorInput');
+		errorMessage = errorMessage + "	 * Bem a ser substituido<br/>";
 		return false;
 	}
 	else {		
