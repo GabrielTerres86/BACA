@@ -586,6 +586,30 @@ PROCEDURE pc_titulos_resumo_resgatar_web (pr_nrdconta           in crapass.nrdco
                               ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                               ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                             );
+PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                   ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                   ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                   ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                   ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
+                                     
+PROCEDURE pc_grava_motivo_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                  ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                  ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                  ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                  ,pr_cdmotivo  IN VARCHAR2
+                                  ,pr_dsmotivo  IN VARCHAR2 
+                                  ,pr_dsobservacao IN VARCHAR2                                   
+                                  ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                  ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                  ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                  ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                  ,pr_des_erro  OUT VARCHAR2); --> Erros do processo                                                         
 END TELA_ATENDA_DSCTO_TIT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
@@ -613,6 +637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
                    Alterado as procedures pc_confirmar_novo_limite e pc_negar_proposta. Alterações necessárias para adaptação 
                    do processo de criação de proposta de limite de desconto de títulos (Paulo Penteado (GFT) KE00726701-304)
       13/04/2018 - Criadas funcionalidades de inclusão, alteração e resgate de borderôes (Luis Fernando (GFT)
+	  23/08/2018 - PRJ 438 - Gravar, Alterar e Consultar motivos de anulação - Paulo Martins - Mouts
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -2032,6 +2057,14 @@ BEGIN
    fetch cr_crawlim into rw_crawlim;
    close cr_crawlim; 
 
+   -- Verifica se a situação está Anulada
+   -- PRJ 438 - Paulo Martins - Mouts - INICIO
+   if  rw_crawlim.insitlim = 9 then
+       vr_dscritic := 'Esta Proposta esta "Anulada"';
+       raise vr_exc_saida;
+   end if; 
+   -- PRJ 438 - Paulo Martins - Mouts - FIM
+
    --  Verifica se a situação está 'Ativo' ou 'Cancelado'
    if  rw_crawlim.insitlim in (2,3) then
        vr_dscritic := 'Para esta operação, a situação da Proposta não deve ser "Ativa"';-- ou "Cancelada".';
@@ -3065,7 +3098,8 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                             when 3 then 'CANCELADA'
                             when 5 then 'APROVADA'
                             when 6 then 'NAO APROVADA'
-                            when 8 then 'EXPIRADA DECURSO DE PRAZO'
+                            when 8 then 'EXPIRADA DECURSO DE PRAZO'	  
+                            when 9 then 'ANULADA' -- PRJ438 -- Paulo Martins (Mouts)
                             else        'DIFERENTE'
           end dssitlim
          ,lim.insitest
@@ -3113,7 +3147,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                                                  and    lim_ativo.nrdconta = pr_nrdconta
                                                                  and    lim_ativo.cdcooper = pr_cdcooper)) then 1
                --   mostrar todas as demais
-               when lim.insitlim in (4,7) then 1
+               when lim.insitlim in (4,7,9) then 1 -- Incluído 9 - PRJ 438 -- Paulo Martins - Mouts
                else 0
           end = 1
    and    lim.tpctrlim = pr_tpctrlim
@@ -7523,5 +7557,172 @@ PROCEDURE pc_buscar_tit_bordero_web (
               pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END pc_titulos_resumo_resgatar_web;
+PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                     ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                     ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                     ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                     ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                     ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                     ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                     ,pr_des_erro  OUT VARCHAR2) IS --> Erros do processo
+
+    /* .............................................................................
+    
+    Programa: pc_busca_motivos_anulacao
+    Sistema : Rotinas referentes ao PRJ438
+    Sigla   : 
+    Autor   : Paulo Martins (Mouts)
+    Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Buscar todos os motivos de anulação de emprestimos e limite de crédito
+    
+    Observacao: -----
+    ..............................................................................*/
+                                     
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;        
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+    
+  BEGIN
+  
+      EMPR0001.pc_busca_motivos_anulacao(pr_tpproduto    => pr_tpproduto, 
+                                         pr_nrdconta     => pr_nrdconta, 
+                                         pr_nrctrato     => pr_nrctrato, 
+                                         pr_tpctrlim     => pr_tpctrlim, 
+                                         pr_xmllog       => pr_xmllog, 
+                                         pr_cdcritic     => vr_cdcritic, 
+                                         pr_dscritic     => vr_dscritic, 
+                                         pr_retxml       => pr_retxml, 
+                                         pr_nmdcampo     => pr_nmdcampo, 
+                                         pr_des_erro     => pr_des_erro);
+                                        
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;                                          
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+        
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+        
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');      
+    WHEN OTHERS THEN
+        
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral em TELA_ATENDA_DSCTO_TIT.pc_busca_motivos_anulacao: ' || SQLERRM;
+        
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+                                                                      
+  END pc_busca_motivos_anulacao;
+  PROCEDURE pc_grava_motivo_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE --> Tipo do produto
+                                    ,pr_nrdconta  IN tbmotivo_anulacao.nrdconta%TYPE
+                                    ,pr_nrctrato  IN tbmotivo_anulacao.nrctrato%TYPE
+                                    ,pr_tpctrlim  IN tbmotivo_anulacao.tpctrlim%TYPE
+                                    ,pr_cdmotivo  IN VARCHAR2
+                                    ,pr_dsmotivo  IN VARCHAR2 
+                                    ,pr_dsobservacao IN VARCHAR2                                   
+                                    ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
+                                    ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                    ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                                    ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
+                                    ,pr_des_erro  OUT VARCHAR2) IS --> Erros do processo  
+
+    /* .............................................................................
+    
+    Programa: pc_grava_motivos_anulacao
+    Sistema : Rotinas referentes ao PRJ438
+    Sigla   : 
+    Autor   : Paulo Martins (Mouts)
+    Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    
+    Objetivo  : Gravar o motivo de anulação de emprestimos e limite de crédito informado em tela 
+    
+    Observacao: -----
+    ..............................................................................*/                                    
+                                    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;        
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+                                           
+  BEGIN
+  
+      EMPR0001.pc_grava_motivo_anulacao(pr_tpproduto    => pr_tpproduto, 
+                                        pr_nrdconta     => pr_nrdconta, 
+                                        pr_nrctrato     => pr_nrctrato, 
+                                        pr_tpctrlim     => pr_tpctrlim, 
+                                        pr_cdmotivo     => pr_cdmotivo, 
+                                        pr_dsmotivo     => pr_dsmotivo, 
+                                        pr_dsobservacao => pr_dsobservacao, 
+                                        pr_xmllog       => pr_xmllog, 
+                                        pr_cdcritic     => vr_cdcritic, 
+                                        pr_dscritic     => vr_dscritic, 
+                                        pr_retxml       => pr_retxml, 
+                                        pr_nmdcampo     => pr_nmdcampo, 
+                                        pr_des_erro     => pr_des_erro);
+                                        
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;                                          
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+        
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+        
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');      
+    WHEN OTHERS THEN
+        
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral em TELA_ATENDA_DSCTO_TIT.pc_grava_motivo_anulacao: ' || SQLERRM;
+        
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+  END pc_grava_motivo_anulacao;                                       
 END TELA_ATENDA_DSCTO_TIT;
 /

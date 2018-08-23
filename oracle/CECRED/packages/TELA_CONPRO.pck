@@ -583,6 +583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 														 ,3,'Analise@Finalizada'
 														 ,4,'Expirado'
 														 ,5,'Expirado Dec. Prazo' -- PJ 438 - Márcio (Mouts)                            
+														 ,6,'Anulada' -- PJ 438 - Paulo Martins (Mouts)                                  
                              ,'') situacao_ayllos
                        -- Parecer esteira
                       ,

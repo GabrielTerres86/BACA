@@ -1494,7 +1494,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        WHERE w.cdcooper = pr_cdcooper
          AND w.nrdconta = pr_nrdconta
          AND w.insitapr IN(1,3)        -- já estao aprovadas
-         AND w.insitest NOT IN(4,5)    -- 4 - Expiradas - 5 - Expirada por decurso de prazo -- PJ 438 - Márcio (Mouts)
+         AND w.insitest NOT IN(4,5,6)  -- 4 - Expiradas - 5 - Expirada por decurso de prazo -- PJ 438 - Márcio (Mouts) - 6 - Anulação -- PJ438 - Paulo Martins - Mouts
          AND w.nrctremp <> pr_nrctremp -- desconsiderar a proposta que esta sendo enviada no momento
          AND NOT EXISTS ( SELECT 1
                             FROM crapepr p
