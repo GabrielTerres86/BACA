@@ -185,7 +185,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS223 (pr_cdcooper in craptab.cdcooper%t
 		       lac.cdhistor,
 		       SUM(lac.vllanmto) vllanmto
 		  FROM craplac lac,craprac rac, crapcpc cpc
-		 WHERE lac.cdcooper = 11
+		 WHERE lac.cdcooper = pr_cdcooper
 			 AND lac.dtmvtolt >= pr_dtinimes
 			 AND lac.dtmvtolt <= pr_dtfimmes
 			 AND lac.cdhistor = pr_cdhistor
