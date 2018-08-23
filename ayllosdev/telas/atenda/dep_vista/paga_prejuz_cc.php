@@ -58,11 +58,11 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
 	}else{
-		if ($acao == "GERA_LCM") then {
-			exibirErro('inform',utf8_encode('Valor disponibilizado para pagamento automático em lote!'),'Alerta - Ayllos',"",false);
+		if ($vlrabono > 0) {
+			exibirErro('inform',utf8_encode('Pagamento de Prejuízo efetuado com sucesso!'),'Alerta - Ayllos',"mostraDetalhesCT(",false);
 		}
 		else {
-			exibirErro('inform',utf8_encode('Pagamento de Prejuízo efetuado com sucesso!'),'Alerta - Ayllos',"",false);
+			exibirErro('inform',utf8_encode('Valor disponibilizado para pagamento automático em lote!'),'Alerta - Ayllos',"mostraDetalhesCT(",false);
 		}
 	}	
 	
