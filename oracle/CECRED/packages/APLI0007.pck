@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
   -- Sistema : Conta-Corrente - Cooperativa de Credito
   -- Sigla   : CRED
   -- 
-  -- Autor   : Marcos - Envolti
+  -- Autor   : Marcos - Envolti 
   -- Data    : Março/2018                       Ultima atualizacao: 
   -- 
   -- Dados referentes ao programa:
