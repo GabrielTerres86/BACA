@@ -95,6 +95,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADRES IS
 															,pr_nmdcampo            OUT VARCHAR2                                           -- Nome do campo com erro
 															,pr_des_erro            OUT VARCHAR2                                           -- Erros do processo
 		                          );
+  --
+  PROCEDURE pc_valida_alcada(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+                            ,pr_xmllog              IN  VARCHAR2                                           -- XML com informações de LOG
+                            ,pr_cdcritic            OUT PLS_INTEGER                                        -- Código da crítica
+                            ,pr_dscritic            OUT VARCHAR2                                           -- Descrição da crítica
+                            ,pr_retxml              IN OUT NOCOPY xmltype                                  -- Arquivo de retorno do XML
+                            ,pr_nmdcampo            OUT VARCHAR2                                           -- Nome do campo com erro
+                            ,pr_des_erro            OUT VARCHAR2                                           -- Erros do processo
+                            );
 	--
 END TELA_CADRES;
 /
@@ -2062,5 +2071,134 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			ROLLBACK;
 	END pc_aprova_contrato;
 	--
+  PROCEDURE pc_valida_alcada(pr_cdcooper            IN  tbrecip_param_workflow.cdcooper%TYPE               -- Identificador da cooperativa
+                            ,pr_xmllog              IN  VARCHAR2                                           -- XML com informações de LOG
+                            ,pr_cdcritic            OUT PLS_INTEGER                                        -- Código da crítica
+                            ,pr_dscritic            OUT VARCHAR2                                           -- Descrição da crítica
+                            ,pr_retxml              IN OUT NOCOPY xmltype                                  -- Arquivo de retorno do XML
+                            ,pr_nmdcampo            OUT VARCHAR2                                           -- Nome do campo com erro
+                            ,pr_des_erro            OUT VARCHAR2                                           -- Erros do processo
+                            ) IS
+    /* .............................................................................
+
+    Programa: pc_valida_alcada
+    Sistema : Ayllos Web
+    Autor   : Andre Clemer - Supero
+    Data    : 23/08/2018                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para validar se existe alcada de aprovação.
+
+    Alteracoes: 
+    
+    ..............................................................................*/
+    
+		CURSOR cr_alcada IS
+      SELECT COUNT(1)
+        FROM tbrecip_param_workflow tpw
+            ,tbcobran_dominio_campo tdc
+       WHERE tpw.cdalcada_aprovacao = tdc.cddominio
+         AND tdc.nmdominio          = 'IDALCADA_RECIPR'
+         AND tpw.flregra_aprovacao  = 1 -- Ativo
+         AND tpw.cdcooper           = pr_cdcooper
+		ORDER BY tpw.cdalcada_aprovacao;
+		
+    rw_alcada cr_alcada%ROWTYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+    
+    -- Variáveis gerais
+    vr_qtalcada INTEGER;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    --
+  BEGIN
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'CADRES'
+                              ,pr_action => null); 
+    
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+														);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+			--
+      RAISE vr_exc_erro;
+			--
+    END IF;
+    --
+		OPEN cr_alcada;
+    FETCH cr_alcada INTO vr_qtalcada;
+    --
+    CLOSE cr_alcada;
+		--
+    IF vr_qtalcada = 0 THEN
+			--
+			vr_dscritic := 'Nenhuma alcada encontrada. Verifique o cadastro e realize novamente a operacao.';
+      RAISE vr_exc_erro;
+			--
+		END IF;
+		--
+  EXCEPTION
+		WHEN vr_exc_erro THEN
+			IF vr_cdcritic <> 0 THEN
+				--
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+				--
+			ELSE
+				--
+				pr_cdcritic := vr_cdcritic;
+				pr_dscritic := vr_dscritic;
+				--
+			END IF;
+      --
+      IF cr_alcada%ISOPEN THEN
+         CLOSE cr_alcada;
+      END IF;
+			
+			-- Carregar XML padrão para variável de retorno não utilizada.
+			-- Existe para satisfazer exigência da interface.
+			pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																		 '<Root><Erro>' || pr_dscritic ||
+																		 '</Erro></Root>');
+		WHEN OTHERS THEN
+			pr_cdcritic := vr_cdcritic;
+			pr_dscritic := 'Erro geral na rotina da tela CADRES: ' || SQLERRM;
+      --
+      IF cr_alcada%ISOPEN THEN
+         CLOSE cr_alcada;
+      END IF;
+
+			-- Carregar XML padrão para variável de retorno não utilizada.
+			-- Existe para satisfazer exigência da interface.
+			pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																		 '<Root><Erro>' || pr_dscritic ||
+																		 '</Erro></Root>');
+  END pc_valida_alcada;
 END TELA_CADRES;
 /
