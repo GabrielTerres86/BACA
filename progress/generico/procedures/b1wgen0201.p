@@ -899,6 +899,7 @@ PROCEDURE integra_dados_avalista:
                  aux_tdccjav1 = tt-avalista.tpdoccon
                  aux_doccjav1 = tt-avalista.nrdoccon
                  aux_ende1av1 = tt-avalista.dsendere
+                 aux_ende2av1 = tt-avalista.dsbairro
                  aux_nrfonav1 = tt-avalista.nrtelefo
                  aux_emailav1 = tt-avalista.dsdemail
                  aux_nmcidav1 = tt-avalista.dscidade
@@ -934,6 +935,7 @@ PROCEDURE integra_dados_avalista:
                  aux_tdccjav2 = tt-avalista.tpdoccon
                  aux_doccjav2 = tt-avalista.nrdoccon
                  aux_ende1av2 = tt-avalista.dsendere
+                 aux_ende2av2 = tt-avalista.dsbairro
                  aux_nrfonav2 = tt-avalista.nrtelefo
                  aux_emailav2 = tt-avalista.dsdemail
                  aux_nmcidav2 = tt-avalista.dscidade
@@ -987,7 +989,7 @@ PROCEDURE integra_dados_avalista:
              INPUT aux_tdccjav1,
              INPUT aux_doccjav1,
              INPUT aux_ende1av1,
-             INPUT "",
+             INPUT aux_ende2av1,
              INPUT aux_nrfonav1,
              INPUT aux_emailav1,
              INPUT aux_nmcidav1,
@@ -1010,7 +1012,7 @@ PROCEDURE integra_dados_avalista:
              INPUT aux_tdccjav2,
              INPUT aux_doccjav2,
              INPUT aux_ende1av2,
-             INPUT "",
+             INPUT aux_ende2av2,
              INPUT aux_nrfonav2,
              INPUT aux_emailav2,
              INPUT aux_nmcidav2,
