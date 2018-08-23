@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Mirtes
-       Data    : Dezembro/2003.                  Ultima atualizacao: 14/08/2018
+       Data    : Dezembro/2003.                  Ultima atualizacao: 28/06/2016
        Dados referentes ao programa:
 
        Frequencia: Diario.
@@ -88,9 +88,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
 
                  27/06/2016 - M325 - Tributacao Juros ao Capital
                               Nao gerar pc_imposto para inpessoa 3 (Guilherme/SUPERO)
-                              
-                 14/08/2018 - Inclusão da Aplicaçã Programada (CRAPLPP e CRAPLAC)
-                              Proj. 411.2 - CIS Corporate                              
     ............................................................................ */
 
     DECLARE
@@ -313,28 +310,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
              craplac.cdhistor,
              craplac.vllanmto
         FROM craplac,
-             crapass,
-             crapcpc,
-             craprac
+             crapass
        WHERE craplac.cdcooper  = pr_cdcooper                         AND
              craplac.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim AND
              craplac.cdhistor  = pr_cdhistor                         AND
              crapass.cdcooper  = craplac.cdcooper                    AND
-             crapass.nrdconta  = craplac.nrdconta                    AND
-             craprac.cdcooper  = craplac.cdcooper                    AND
-             craprac.nrdconta  = craplac.nrdconta                    AND
-             craprac.nraplica  = craplac.nraplica                    AND
-             crapcpc.cdprodut  = craprac.cdprodut                    AND
-             crapcpc.indplano = 0;                                    -- aplicacao não programada
+             crapass.nrdconta  = craplac.nrdconta;
+
 
       /* Buscar dados das aplicações programadas em poupança */
       CURSOR cr_craplppass(pr_cdcooper    IN craplpp.cdcooper%TYPE     --> Código da cooperativa
                           ,pr_data_inicio IN craplpp.dtmvtolt%TYPE     --> Data inicial
                           ,pr_data_fim    IN craplpp.dtmvtolt%TYPE) IS --> Data final
-        SELECT inpessoa
-              ,cdhistor
-              ,vllanmto
-        FROM (
         SELECT cs.inpessoa
               ,cp.cdhistor
               ,cp.vllanmto
@@ -343,23 +330,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
           AND cp.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim
           AND cp.cdhistor IN (863, 151, 870)
           AND cs.cdcooper = cp.cdcooper
-                AND cs.nrdconta = cp.nrdconta
-              UNION
-              SELECT asn.inpessoa
-                    ,decode (lac.cdhistor,cpc.cdhsirap,863,cpc.cdhsrdap,151) cdhistor --De para dinamico
-                    ,lac.vllanmto
-              FROM crapass asn,craprac rac,craplac lac,crapcpc cpc
-              WHERE lac.cdcooper = pr_cdcooper
-                AND lac.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim
-                AND lac.cdhistor IN (cpc.cdhsirap,cpc.cdhsrdap)
-                AND asn.cdcooper = lac.cdcooper
-                AND asn.nrdconta = lac.nrdconta
-                AND rac.cdcooper = lac.cdcooper
-                AND rac.nrdconta = lac.nrdconta
-                AND rac.nraplica = lac.nraplica
-                AND cpc.cdprodut = rac.cdprodut
-                AND cpc.indplano = 1 -- Aplicacoes programadas
-        );
+          AND cs.nrdconta = cp.nrdconta;
 
       /* Busca dados de lançamentos de cotas/capital */
       CURSOR cr_craplct(pr_cdcooper    IN craplct.cdcooper%TYPE     --> Código da cooperativa
