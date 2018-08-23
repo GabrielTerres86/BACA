@@ -1338,14 +1338,10 @@ BEGIN
                 RAISE vr_iterar;
               END IF;
 
-              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
-                -- Buscar próximo índice
-                vr_idxindc := vr_tab_craprpp.next(vr_idxindc);
-
-                RAISE vr_iterar;
-              END IF;
-
               -- Calcular o saldo até a data do movimento
+              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
+              	      vr_rpp_vlsdrdpp := vr_tab_craprpp(vr_idxindc).vlslfmes;
+	     ELSE
               apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
                                        ,pr_dstextab  => vr_dextabi
                                        ,pr_cdprogra  => vr_cdprogra
@@ -1356,6 +1352,7 @@ BEGIN
                                        ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
                                        ,pr_cdcritic  => vr_cdcritic
                                        ,pr_des_erro  => vr_dscritic);
+              END IF;
 
               -- Se encontrar erros na execução
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
