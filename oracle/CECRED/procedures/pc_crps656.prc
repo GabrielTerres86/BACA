@@ -7,11 +7,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps656(pr_cdcooper IN crapcop.cdcooper%TY
 BEGIN
   /* ..........................................................................
 
-     Programa: PC_CRPS656   (Fontes/crps656.p)
+     Programa: pc_crps656   (Fontes/crps656.p)
      Sistema : CRIA/ATUALIZA PREJUIZO CYBER
      Sigla   : CRED
      Autor   : James Prust Junior
-     Data    : Agosto/2013.                     Ultima atualizacao: 14/08/2015
+     Data    : Agosto/2013.                     Ultima atualizacao: 22/08/2018
 
      Dados referentes ao programa:
 
@@ -29,29 +29,33 @@ BEGIN
                               vip no cyber (James).
 
                  18/12/2013 -  Conversão Progress >> PLSQL (Petter-Supero)
-                 
+
                  20/12/2013 - Ajuste para atualizar oValor do Prejuízo (James).
-                 
-                 17/01/2014 - Alteracao referente a integracao Progress X 
-                              Dataserver Oracle 
+
+                 17/01/2014 - Alteracao referente a integracao Progress X
+                              Dataserver Oracle
                               Inclusao do VALIDATE ( Andre Euzebio / SUPERO)
-                              
+
                  05/02/2014 - Ajuste de atualização de valores no CYBER. (James)
-                
+
                  08/05/2014 - Ajuste no cursor cr_crapepr para buscar todos os emprestimos
                               que a cooperativa for diferente que a CECRED. (James)
 
                  23/10/2014 - Alteração no cursor "cr_crapcol" para filtrar somente
                               as cooperativas ativas campo "flgativo". (Jaison)
-                              
+
                  14/08/2015 - Projeto Provisao. (James)
 
                  07/06/2017 - Ajuste da regra que define a origem a ser utilizada. Adequacao
                               da regra para que fique igual a regra existente no pc_crps280_i.
                               Heitor (Mouts) - Chamado 681595
-                              
+
                  15/07/2018 - Incluir dados de prejuizo no cursor de empréstimos
-                              Renato Cordeiro (AMcom)                              
+                              Renato Cordeiro (AMcom)
+
+                 22/08/2018 - Correção para gravação dos dados da conta corrente
+                              transferida para prejuízo.
+                              P450 - Reginaldo/AMcom
 
   ............................................................................. */
 
@@ -142,18 +146,19 @@ BEGIN
         AND cop.flgativo = 1
      ORDER BY cop.cdcooper;
 
-   /* Busca dados dos empréstimos com índice de prejuízo zero por cooperativa */
+   /* Busca contratos e contas em prejuízo por cooperativa */
    CURSOR cr_crapepr(pr_cdcooper IN crapcyb.cdcooper%TYPE) IS
      SELECT prej.cdcooper,
             prej.nrdconta,
-            prej.nrdconta           nrctremp,
+            prej.nrdconta          nrctremp,
             0                      cdlcremp,
             prej.dtinclusao        dtprejuz, --
-            prej.vlsdprej + prej.vljur60_ctneg + 
-			prej.vljur60_lcred + 
-			prej.vljuprej          vlsdprej,
+            prej.vlsdprej + prej.vljur60_ctneg +
+			      prej.vljur60_lcred +
+		        prej.vljuprej +
+						nvl(sld.vliofmes,0)    vlsdprej,
             0                      cdfinemp,
-            prej.dtinclusao        dtmvtolt, --
+						sld.dtrisclq           dtmvtolt, --
             prej.vldivida_original vlemprst, --
             1                      qtpreemp, --
             0                      tpdescto, --
@@ -163,12 +168,15 @@ BEGIN
             0                      inliquid, --
             0                      vlsdeved, --
             0                      qtprecal, -- qtd prestações pagas
-            0                      vlpreemp, --
+            prej.vldivida_original vlpreemp, --
             0                      txjuremp, --
-            0                      txmensal 
+            0                      txmensal
      FROM tbcc_prejuizo prej
-        WHERE prej.dtliquidacao is null
-		  AND prej.cdcooper <> pr_cdcooper 
+		    , crapsld sld
+        WHERE prej.dtliquidacao is NULL
+				  AND sld.cdcooper = prej.cdcooper
+					AND sld.nrdconta = prej.nrdconta
+		  AND prej.cdcooper <> pr_cdcooper
      UNION
      SELECT cer.cdcooper
            ,cer.nrdconta
@@ -190,9 +198,9 @@ BEGIN
            ,cer.vlpreemp
            ,cer.txjuremp
            ,cer.txmensal
-     FROM crapepr cer
-     WHERE cer.inprejuz > 0
-       AND cer.cdcooper <> pr_cdcooper
+      FROM crapepr cer
+      WHERE cer.inprejuz > 0
+        AND cer.cdcooper <> pr_cdcooper
      ORDER BY 1;
 
     /* Buscar todos os registros do sistema CYBER */
@@ -326,7 +334,7 @@ BEGIN
           vr_contador := vr_contador + 1;
         END IF;
       END IF;
-      
+
       -- Carregar valores na PL Table
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).cdcooper := reg.cdcooper;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).nrdconta := reg.nrdconta;
@@ -366,7 +374,7 @@ BEGIN
                          ,pr_cdempres => 0
                          ,pr_cdacesso => 'PROVISAOCL'
                          ,pr_tpregist => NULL) LOOP
-                         
+
       -- Montar índice com demarcação de registro pai
       IF vr_index IS NULL THEN
         vr_index := LPAD(reg.cdcooper, 3, '0');
@@ -378,7 +386,7 @@ BEGIN
           vr_contador := vr_contador + 1;
         END IF;
       END IF;
-      
+
       -- Carregar valores
       vr_craptabpro(vr_index || LPAD(vr_contador, 10, '0')).dstextab := reg.dstextab;
       vr_craptabpro(vr_index || LPAD(vr_contador, 10, '0')).cdcooper := reg.cdcooper;
@@ -448,7 +456,12 @@ BEGIN
                    vr_tab_crapepr(vr_index).cdlcremp = 900)) THEN
             vr_cdorigem := 2; -- Desconto
           ELSE
-            vr_cdorigem := 3;
+						IF vr_tab_crapepr(vr_index).nrdconta = vr_tab_crapepr(vr_index).nrctremp AND
+							 vr_tab_crapepr(vr_index).cdlcremp = 0 THEN
+							vr_cdorigem := 1;
+						ELSE
+							vr_cdorigem := 3;
+						END IF;
           END IF;
 
           -- Validar dados para CRAPTAB de provisão
@@ -476,11 +489,11 @@ BEGIN
           -- Reinicia o nível do risco e a quantidade de dias para o risco
           vr_dsdrisco(10) := 'H';
           vr_nivrisco     := '';
-          vr_qtdiaris     := 0;          
-          
+          vr_qtdiaris     := 0;
+
           -- Valida busca por dados de risco
           IF vr_craptabris.exists(LPAD(vr_tab_crapepr(vr_index).cdcooper, 3, '0') || LPAD('0', 10, '0')) THEN
-            
+
             -- Buscar datas para a cooperativa de operação
             OPEN btch0001.cr_crapdat(pr_cdcooper => vr_tab_crapepr(vr_index).cdcooper);
             FETCH btch0001.cr_crapdat INTO rw_crapdatc;
@@ -488,7 +501,7 @@ BEGIN
             vr_dtrefere := rw_crapdatc.dtultdma;
             -- Vamo fechar o cursor
             CLOSE btch0001.cr_crapdat;
-                
+
             vr_vlrarras := SUBSTR(vr_craptabris(LPAD(vr_tab_crapepr(vr_index).cdcooper, 3, '0') ||
                                                 LPAD('0', 10, '0')).dstextab, 3, 9);
 
@@ -497,42 +510,42 @@ BEGIN
                            ,pr_nrdconta => vr_tab_crapepr(vr_index).nrdconta
                            ,pr_dtrefere => vr_dtrefere
                            ,pr_vlrarras => vr_vlrarras);
-                               
+
             FETCH cr_crapris INTO rw_crapris;
             -- Testa se a tupla retornou registros
             IF cr_crapris%FOUND THEN
               CLOSE cr_crapris;
               vr_nivrisco := vr_dsdrisco(rw_crapris.innivris);
-              vr_qtdiaris := rw_crapdat.dtmvtolt - rw_crapris.dtdrisco;                  
+              vr_qtdiaris := rw_crapdat.dtmvtolt - rw_crapris.dtdrisco;
             ELSE
-              CLOSE cr_crapris; 
+              CLOSE cr_crapris;
               -- Busca informações de risco
               OPEN cr_crapris(pr_cdcooper => vr_tab_crapepr(vr_index).cdcooper
                              ,pr_nrdconta => vr_tab_crapepr(vr_index).nrdconta
                              ,pr_dtrefere => vr_dtrefere
                              ,pr_vlrarras => NULL);
-                                 
+
               FETCH cr_crapris INTO rw_crapris;
               -- Testa se a tupla retornou registros
-              IF cr_crapris%FOUND THEN                    
+              IF cr_crapris%FOUND THEN
                 CLOSE cr_crapris;
-                    
+
                 /* Quando possuir operacao em Prejuizo, o risco da central sera H */
                 IF rw_crapris.innivris = 10 THEN
                   vr_nivrisco := vr_dsdrisco(rw_crapris.innivris);
                 ELSE
                   vr_nivrisco := vr_dsdrisco(2);
-                END IF;                    
-                    
+                END IF;
+
                 vr_qtdiaris := rw_crapdat.dtmvtolt - rw_crapris.dtdrisco;
               ELSE
                 CLOSE cr_crapris;
               END IF;
-                  
+
             END IF;
-                
+
           END IF;
-              
+
           -- Entrou em prejuizo no dia
           IF vr_tab_crapepr(vr_index).dtprejuz = rw_crapdat.dtmvtolt AND vr_tab_crapepr(vr_index).vlsdprej > 0 THEN
             -- Verificar sistema CYBER.
@@ -554,7 +567,7 @@ BEGIN
                                  ,cdlcremp
                                  ,cdfinemp
                                  ,dtefetiv
-                                 ,vlemprst                                
+                                 ,vlemprst
                                  ,qtpreemp
                                  ,flgconsg
                                  ,flgfolha
@@ -568,7 +581,7 @@ BEGIN
                       ,vr_tab_crapepr(vr_index).cdlcremp
                       ,vr_tab_crapepr(vr_index).cdfinemp
                       ,vr_tab_crapepr(vr_index).dtmvtolt
-                      ,vr_tab_crapepr(vr_index).vlemprst                      
+                      ,vr_tab_crapepr(vr_index).vlemprst
                       ,vr_tab_crapepr(vr_index).qtpreemp
                       ,vr_flagup
                       ,vr_tab_crapepr(vr_index).flgpagto
@@ -639,7 +652,7 @@ BEGIN
 
             -- Consiste indicador de prejuízo
             IF vr_tab_crapepr(vr_index).inprejuz = 1 THEN
-                            
+
               -- Atribuir valores do nível e quantidade de dias do risco
               BEGIN
                 UPDATE crapcyb cyb
@@ -709,7 +722,7 @@ BEGIN
               ELSE
                 vr_flagup := 0;
               END IF;
-            
+
               -- Atualizar valores do sistema CYBER com informações coletadas do risco e prejuízo calculado
               BEGIN
                 UPDATE crapcyb cyb
