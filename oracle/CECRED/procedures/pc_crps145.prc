@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Marco/96.                       Ultima atualizacao: 20/03/2014
+       Data    : Marco/96.                       Ultima atualizacao: 09/03/2018
 
        Dados referentes ao programa:
 
@@ -97,6 +97,16 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 craprej, crablot e craplci (Carlos)
                                 
                    20/03/2014 - Conversão Progress >> PLSQL (Edison-AMcom).
+
+				   24/04/2017 - Nao considerar valores bloqueados para composicao do saldo disponivel
+				                Heitor (Mouts) - Melhoria 440
+
+                   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+         			                  crapass, crapttl, crapjur 
+                  							(Adriano - P339).
+                   
+                   09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
+                                Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                                 
 
     ............................................................................. */
 
@@ -187,7 +197,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE) IS 
         SELECT crapttl.cdempres
               ,crapttl.nrdconta
-              ,crapttl.nmdsecao
               ,crapttl.cdturnos
         FROM   crapttl 
         WHERE  crapttl.cdcooper = pr_cdcooper      
@@ -334,7 +343,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --tipo para armazenar a estrutura do cadastro de titulares
       TYPE typ_reg_crapttl IS 
         RECORD( cdempres crapttl.cdempres%TYPE
-               ,nmdsecao crapttl.nmdsecao%TYPE
                ,cdturnos crapttl.cdturnos%TYPE
         );
       --estrutura do cadastro de titulares
@@ -744,7 +752,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --carrega a tabela temporaria de titulares
       FOR rw_crapttl IN cr_crapttl(pr_cdcooper => pr_cdcooper) LOOP
         vr_tab_crapttl(rw_crapttl.nrdconta).cdempres := rw_crapttl.cdempres;
-        vr_tab_crapttl(rw_crapttl.nrdconta).nmdsecao := rw_crapttl.nmdsecao;
         vr_tab_crapttl(rw_crapttl.nrdconta).cdturnos := rw_crapttl.cdturnos;
       END LOOP;  
 
@@ -846,10 +853,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           END IF;
           
           --acumulando o valor total do saldo
-          vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsdblfp + 
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlsdbloq +
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlsdblpr + 
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp +
+          vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp +
                          vr_tab_crapass(rw_craprpp.nrdconta).vllimcre - 
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfap - 
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfpg;
@@ -909,8 +913,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             END IF;
             
             --verifica o indicador de indicador de incidencia do IPMF  
-            IF vr_inhistor = 1 OR vr_inhistor = 3 OR
-               vr_inhistor = 4 OR vr_inhistor = 5 THEN
+            IF vr_inhistor = 1 THEN
               /* Inicia tratamento CPMF */
               IF vr_indoipmf = 2 THEN
                 --acumula o saldo
@@ -921,8 +924,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
               END IF;
             END IF;
              
-            IF vr_inhistor = 11 OR vr_inhistor = 13 OR
-               vr_inhistor = 14 OR vr_inhistor = 15 THEN
+            IF vr_inhistor = 11 THEN
               /* Inicia tratamento CPMF */
               IF vr_indoipmf = 2 THEN
                 --acumula o saldo
@@ -1130,7 +1132,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
             --atualizando as demais informações do lote 8384
             BEGIN
-              UPDATE craplot SET craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
+              UPDATE craplot SET craplot.nrseqdig = CRAPLOT_8384_SEQ.NEXTVAL
                                 ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
                                 ,craplot.qtinfoln = nvl(craplot.qtcompln,0) + 1
                                 ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + nvl(rw_craprpp.vlprerpp,0)
@@ -1501,5 +1503,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
     END;
 
   END pc_crps145;
-/
-
