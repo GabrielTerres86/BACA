@@ -72,6 +72,9 @@ BEGIN
                               
                  16/05/2017 - P408 - Considerar riscos com inddocto = 5 - Garantias Prestadas
                               (Andrei-Mouts)                                                                
+
+                 17/08/2018 - PJ450 - Inclusão de Limite NÃO Utilizado nas Informações Agregadas
+                              (Renato Cordeiro - AMcom)
                               
   ............................................................................ */
 
@@ -1157,7 +1160,8 @@ BEGIN
         vr_tab_rowid.delete;
       END IF;  
       -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
-      IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
+      -- Incluido inddocto=3 abaixo, Limite não utilizado (Renato Cordeiro AMcom)
+      IF rw_crapris.inddocto IN (1,3,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
 				IF rw_crapris.cdorigem <> 1 THEN
            vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
 				ELSE
