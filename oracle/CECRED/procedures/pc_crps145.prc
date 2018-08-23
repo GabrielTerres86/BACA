@@ -128,6 +128,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
        vr_inrestar  INTEGER:= 0;
        vr_dsrestar  crapres.dsrestar%TYPE;
 
+      -- Temp Table
+      vr_tab_care APLI0005.typ_tab_care;
+
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -157,8 +160,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
               ,craprpp.vlabdiof
               ,craprpp.dtinirpp
               ,craprpp.dtfimper
+              ,craprpp.dtvctopp
               ,craprpp.indebito
               ,craprpp.flgctain
+              ,craprpp.cdbccxlt
+              ,craprpp.cdprodut
               ,craprpp.rowid
         FROM   craprpp 
         WHERE  craprpp.cdcooper  = pr_cdcooper 
@@ -166,7 +172,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
         AND    craprpp.nrctrrpp  > pr_nrctrrpp 
         AND   (craprpp.cdsitrpp  = 1 OR craprpp.cdsitrpp  = 2)
         AND    craprpp.dtdebito <= pr_dtdebito
-        AND    craprpp.indebito  = 0;
+        AND    craprpp.indebito  = 0
+        AND    craprpp.cdprodut > 0;
 
       --seleciona os saldos das contas dos cooperados
       CURSOR cr_crapsld ( pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -235,30 +242,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
               ,craphis.indoipmf
         FROM   craphis
         WHERE  craphis.cdcooper = pr_cdcooper;
-
-      --seleciona os lotes pelo numero do lote
-      CURSOR cr_craplot( pr_cdcooper IN crapcop.cdcooper%TYPE
-                        ,pr_dtmvtolt IN DATE
-                        ,pr_nrdolote IN craplot.nrdolote%TYPE) IS   
-        SELECT craplot.rowid
-              ,craplot.cdagenci
-              ,craplot.cdbccxlt
-              ,craplot.nrdolote
-              ,craplot.nrseqdig
-        FROM   craplot 
-        WHERE  craplot.cdcooper = pr_cdcooper 
-        AND    craplot.dtmvtolt = pr_dtmvtolt 
-        AND    craplot.cdagenci = 1            
-        AND    craplot.cdbccxlt = 100          
-        AND    craplot.nrdolote = pr_nrdolote;
-      --rowtype do lote 8470 
-      rw_craplot_8470 cr_craplot%ROWTYPE;
-      --rowtype do lote 8384 
-      rw_craplot_8384 cr_craplot%ROWTYPE;
-      --rowtype do lote 10105
-      rw_craplot_10105 cr_craplot%ROWTYPE;
-      --rowtype do lote 10104
-      rw_craplot_10104 cr_craplot%ROWTYPE;
 
       --informacoes de aviso de debito em conta-corrente
       CURSOR cr_crapavs ( pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -377,6 +360,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_dstextab     craptab.dstextab%TYPE;
       vr_tab_dtiniiof DATE;
       vr_tab_dtfimiof DATE;
+      vr_nraplica     NUMBER;
       vr_tab_txiofrda NUMBER;
       vr_dtinipmf     DATE;
       vr_dtfimpmf     DATE;
@@ -405,195 +389,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_texto_completo  VARCHAR2(32600);
             
       --------------------------- SUBROTINAS INTERNAS --------------------------
-
-      --subrotina para gravar dados na tabela craplci
-      PROCEDURE pc_gera_lancamentos_craplci( pr_rw_craprpp cr_craprpp%ROWTYPE
-                                            ,pr_nrdocmto IN NUMBER) IS
-      BEGIN
-        IF pr_rw_craprpp.flgctain = 1 THEN  -- Nova aplicacao - Gera lanc. Transf. 
-
-          --se o lote 10105 não existir, será criado
-          IF rw_craplot_10105.rowid IS NULL THEN
-            --criando o novo lote 
-            BEGIN
-              INSERT INTO craplot(dtmvtolt
-                                  ,cdagenci
-                                  ,cdbccxlt
-                                  ,nrdolote
-                                  ,tplotmov
-                                  ,cdcooper
-              )VALUES ( rw_crapdat.dtmvtolt --craplot.dtmvtolt  
-                       ,1                  --craplot.cdagenci
-                       ,100                --craplot.cdbccxlt
-                       ,10105              --craplot.nrdolote
-                       ,29                  --craplot.tplotmov  
-                       ,pr_cdcooper        --craplot.cdcooper 
-              )RETURNING craplot.rowid 
-                        ,craplot.cdagenci
-                        ,craplot.cdbccxlt
-                        ,craplot.nrdolote
-                        ,craplot.nrseqdig
-              INTO       rw_craplot_10105.rowid
-                        ,rw_craplot_10105.cdagenci
-                        ,rw_craplot_10105.cdbccxlt
-                        ,rw_craplot_10105.nrdolote
-                        ,rw_craplot_10105.nrseqdig;
-
-            EXCEPTION
-              WHEN OTHERS THEN
-                --descricao da critica
-                vr_dscritic := 'Erro ao criar lote 10105. '||SQLERRM;
-                --aborta a execucao
-                RAISE vr_exc_saida;
-            END;                  
-          END IF;  
-          --criando registro na tabela craplci 
-          BEGIN
-            INSERT INTO craplci( dtmvtolt
-                                ,cdagenci
-                                ,cdbccxlt
-                                ,nrdolote
-                                ,nrdconta
-                                ,nrdocmto
-                                ,cdhistor
-                                ,vllanmto
-                                ,nrseqdig
-                                ,cdcooper
-            ) VALUES ( rw_crapdat.dtmvtolt      --craplci.dtmvtolt
-                      ,rw_craplot_10105.cdagenci      --craplci.cdagenci
-                      ,rw_craplot_10105.cdbccxlt      --craplci.cdbccxlt
-                      ,rw_craplot_10105.nrdolote      --craplci.nrdolote
-                      ,pr_rw_craprpp.nrdconta         --craplci.nrdconta
-                      ,pr_nrdocmto                    --craplci.nrdocmto
-                      ,150                            --craplci.cdhistor
-                      ,pr_rw_craprpp.vlprerpp         --craplci.vllanmto
-                      ,rw_craplot_10105.nrseqdig + 1  --craplci.nrseqdig
-                      ,pr_cdcooper                    --craplci.cdcooper
-            );                                 
-          EXCEPTION
-            WHEN OTHERS THEN
-              --descricao da critica
-              vr_dscritic := 'Erro ao criar registro na tabela craplci para o lote 10105. '||SQLERRM;
-              --aborta a execucao
-              RAISE vr_exc_saida;
-          END;  
-          
-          --atualizando as demais informações do lote 10105
-          BEGIN
-            UPDATE craplot SET craplot.nrseqdig = rw_craplot_10105.nrseqdig + 1
-                              ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                              ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                              ,craplot.vlinfocr = nvl(craplot.vlinfocr,0) + nvl(pr_rw_craprpp.vlprerpp,0)
-                              ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + nvl(pr_rw_craprpp.vlprerpp,0)
-            WHERE craplot.rowid = rw_craplot_10105.rowid
-            RETURNING  craplot.cdagenci
-                      ,craplot.cdbccxlt
-                      ,craplot.nrdolote
-                      ,craplot.nrseqdig
-            INTO       rw_craplot_10105.cdagenci
-                      ,rw_craplot_10105.cdbccxlt
-                      ,rw_craplot_10105.nrdolote
-                      ,rw_craplot_10105.nrseqdig;
-          EXCEPTION
-            WHEN OTHERS THEN
-              --descricao da critica
-              vr_dscritic := 'Erro ao atualizar craplot para o lote 10105. '||SQLERRM;
-              --aborta a execucao
-              RAISE vr_exc_saida;
-          END;    
-
-          --  Gera lancamentos Conta Investmento  - Debito  Transf.    
-          --se o lote 10104 não existir, será criado
-          IF rw_craplot_10104.rowid IS NULL THEN
-            --criando o novo lote 
-            BEGIN
-              INSERT INTO craplot(dtmvtolt
-                                  ,cdagenci
-                                  ,cdbccxlt
-                                  ,nrdolote
-                                  ,tplotmov
-                                  ,cdcooper
-              )VALUES ( rw_crapdat.dtmvtolt --craplot.dtmvtolt  
-                       ,1                  --craplot.cdagenci
-                       ,100                --craplot.cdbccxlt
-                       ,10104              --craplot.nrdolote
-                       ,29                  --craplot.tplotmov  
-                       ,pr_cdcooper        --craplot.cdcooper 
-              )RETURNING craplot.rowid 
-                        ,craplot.cdagenci
-                        ,craplot.cdbccxlt
-                        ,craplot.nrdolote
-                        ,craplot.nrseqdig
-              INTO       rw_craplot_10104.rowid
-                        ,rw_craplot_10104.cdagenci
-                        ,rw_craplot_10104.cdbccxlt
-                        ,rw_craplot_10104.nrdolote
-                        ,rw_craplot_10104.nrseqdig;
-            EXCEPTION
-              WHEN OTHERS THEN
-                --descricao da critica
-                vr_dscritic := 'Erro ao criar lote 10104. '||SQLERRM;
-                --aborta a execucao
-                RAISE vr_exc_saida;
-            END;                  
-          END IF;  
-          
-          --criando registro na tabela craplci 
-          BEGIN
-            INSERT INTO craplci( dtmvtolt
-                                ,cdagenci
-                                ,cdbccxlt
-                                ,nrdolote
-                                ,nrdconta
-                                ,nrdocmto
-                                ,cdhistor
-                                ,vllanmto
-                                ,nrseqdig
-                                ,cdcooper
-            ) VALUES ( rw_crapdat.dtmvtolt            --craplci.dtmvtolt
-                      ,rw_craplot_10104.cdagenci      --craplci.cdagenci
-                      ,rw_craplot_10104.cdbccxlt      --craplci.cdbccxlt
-                      ,rw_craplot_10104.nrdolote      --craplci.nrdolote
-                      ,pr_rw_craprpp.nrdconta         --craplci.nrdconta
-                      ,pr_nrdocmto                    --craplci.nrdocmto
-                      ,488                            --craplci.cdhistor
-                      ,pr_rw_craprpp.vlprerpp            --craplci.vllanmto
-                      ,nvl(rw_craplot_10104.nrseqdig,0) + 1  --craplci.nrseqdig
-                      ,pr_cdcooper                    --craplci.cdcooper
-            );                                 
-          EXCEPTION
-            WHEN OTHERS THEN
-              --descricao da critica
-              vr_dscritic := 'Erro ao criar registro na tabela craplci para o lote 10105. '||SQLERRM;
-              --aborta a execucao
-              RAISE vr_exc_saida;
-          END;  
-
-          --atualizando as demais informações do lote 10105
-          BEGIN
-            UPDATE craplot SET craplot.nrseqdig = rw_craplot_10104.nrseqdig + 1
-                              ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                              ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                              ,craplot.vlinfodb = nvl(craplot.vlinfodb,0) + nvl(pr_rw_craprpp.vlprerpp,0)
-                              ,craplot.vlcompdb = nvl(craplot.vlcompdb,0) + nvl(pr_rw_craprpp.vlprerpp,0)
-            WHERE craplot.rowid = rw_craplot_10104.rowid
-            RETURNING  craplot.cdagenci
-                      ,craplot.cdbccxlt
-                      ,craplot.nrdolote
-                      ,craplot.nrseqdig
-            INTO       rw_craplot_10104.cdagenci
-                      ,rw_craplot_10104.cdbccxlt
-                      ,rw_craplot_10104.nrdolote
-                      ,rw_craplot_10104.nrseqdig;
-          EXCEPTION
-            WHEN OTHERS THEN
-              --descricao da critica
-              vr_dscritic := 'Erro ao atualizar craplot para o lote 10105. '||SQLERRM;
-              --aborta a execucao
-              RAISE vr_exc_saida;
-          END; 
-        END IF; --IF pr_rw_craprpp.flgctain = 1 THEN  -- Nova aplicacao - Gera lanc. Transf.        
-      END; 
 
       --limpa as tabelas temporarias
       PROCEDURE pc_limpa_tabela IS
@@ -720,7 +515,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
                              ,pr_dtiniabo => vr_dtiniabo
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
-                             
       /*tabelas temporarias*/
 
       --limpando as tabelas temporarias
@@ -767,38 +561,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         vr_tab_craphis(rw_craphis.cdhistor).indoipmf := rw_craphis.indoipmf;
       END LOOP; 
 
-      --verifica se existe o lote 8470
-      OPEN cr_craplot ( pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                       ,pr_nrdolote => 8470);   
-      FETCH cr_craplot INTO rw_craplot_8470;
-      --fecha o cursor
-      CLOSE cr_craplot;
       
-      --verifica se existe o lote 
-      OPEN cr_craplot ( pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt   
-                       ,pr_nrdolote => 8384);   
-      FETCH cr_craplot INTO rw_craplot_8384;
-      --fecha o cursor
-      CLOSE cr_craplot;
-
-      --verifica se existe o lote 10105
-      OPEN cr_craplot ( pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                       ,pr_nrdolote => 10105);   
-      FETCH cr_craplot INTO rw_craplot_10105;
-      --fecha o cursor
-      CLOSE cr_craplot;
-
-      --verifica se existe o lote 10104
-      OPEN cr_craplot ( pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                       ,pr_nrdolote => 10104);   
-      FETCH cr_craplot INTO rw_craplot_10104;
-      --fecha o cursor
-      CLOSE cr_craplot;
-
       --inicializando a variavel de controle de commit para o restart
       vr_commit := 0;
       --percorre os lancamentos de poupanca programada
@@ -852,9 +615,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
             RAISE vr_exc_saida;
           END IF;
           
+          
           --acumulando o valor total do saldo
           vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp +
-                         vr_tab_crapass(rw_craprpp.nrdconta).vllimcre - 
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfap - 
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfpg;
 
@@ -900,6 +663,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                   vr_indoipmf := 1;
                   vr_txdoipmf := 0;
                 END IF;           
+                
               END IF;  
             END IF;
             --se abono zero e historico dentro da lista abaixo
@@ -934,126 +698,46 @@ CREATE OR REPLACE PROCEDURE CECRED.
                 vr_vlsldtot := nvl(vr_vlsldtot,0) - rw_craplcm.vllanmto;
               END IF;
             END IF;  
+            
           END LOOP;  /* For each craplcm */
 
           --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
           IF rw_craprpp.vlprerpp <= vr_vlsldtot THEN
+                -- Inserir nova aplicação 
+              -- Leitura de carencias do produto informado
+              apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                                         ,pr_cdprodut => rw_craprpp.cdprodut   -- Codigo do Produto 
+                                         ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
+                                         ,pr_dscritic => vr_dscritic   -- Descricao da Critica
+                                         ,pr_tab_care => vr_tab_care); -- Tabela com registros de Carencia do produto    
             
-            --se o lote padrão não existir, será criado
-            IF rw_craplot_8470.rowid IS NULL THEN
-              --criando o novo lote 
-              BEGIN
-                INSERT INTO craplot(dtmvtolt
-                                    ,cdagenci
-                                    ,cdbccxlt
-                                    ,nrdolote
-                                    ,tplotmov
-                                    ,nrseqdig
-                                    ,vlcompcr
-                                    ,vlinfocr
-                                    ,cdcooper
-                )VALUES ( rw_crapdat.dtmvtolt --craplot.dtmvtolt  
-                         ,1                  --craplot.cdagenci
-                         ,100                --craplot.cdbccxlt
-                         ,8470               --craplot.nrdolote
-                         ,1                  --craplot.tplotmov  
-                         ,0                  --craplot.nrseqdig
-                         ,0                  --craplot.vlcompcr
-                         ,0                  --craplot.vlinfocr 
-                         ,pr_cdcooper        --craplot.cdcooper 
-                )RETURNING craplot.rowid 
-                          ,craplot.cdagenci
-                          ,craplot.cdbccxlt
-                          ,craplot.nrdolote
-                          ,craplot.nrseqdig
-                INTO       rw_craplot_8470.rowid
-                          ,rw_craplot_8470.cdagenci
-                          ,rw_craplot_8470.cdbccxlt
-                          ,rw_craplot_8470.nrdolote
-                          ,rw_craplot_8470.nrseqdig;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  --descricao da critica
-                  vr_dscritic := 'Erro ao criar lote 8470. '||SQLERRM;
-                  --aborta a execucao
-                  RAISE vr_exc_saida;
-              END;                  
+               IF vr_dscritic IS NULL THEN
+                apli0005.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper,
+                                              pr_cdoperad => '1',
+                                              pr_nmdatela => 'CRPS145',
+                                              pr_idorigem => 5,
+                                              pr_nrdconta => rw_craprpp.nrdconta,
+                                              pr_idseqttl => 1,
+                                              pr_nrdcaixa => rw_craprpp.cdbccxlt,
+                                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                              pr_cdprodut => rw_craprpp.cdprodut,
+                                              pr_qtdiaapl => vr_tab_care(1).qtdiaprz,
+                                              pr_dtvencto => rw_crapdat.dtmvtolt + vr_tab_care(1).qtdiaprz,
+                                              pr_qtdiacar => vr_tab_care(1).qtdiacar,
+                                              pr_qtdiaprz => vr_tab_care(1).qtdiaprz,
+                                              pr_vlaplica => rw_craprpp.vlprerpp,
+                                              pr_iddebcti => 0,
+                                              pr_idorirec => 0,
+                                              pr_idgerlog => 0,
+                                              pr_nrctrrpp => rw_craprpp.nrctrrpp, -- Número da RPP
+                                              pr_nraplica => vr_nraplica,
+                                              pr_cdcritic => vr_cdcritic,
+                                              pr_dscritic => vr_dscritic);
             END IF;  
-            --atualizando as demais informações do lote
-            BEGIN
-              UPDATE craplot SET craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-                                ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                ,craplot.qtinfoln = nvl(craplot.qtcompln,0) + 1
-                                ,craplot.vlcompdb = nvl(craplot.vlcompdb,0) + nvl(rw_craprpp.vlprerpp,0)
-                                ,craplot.vlinfodb = nvl(craplot.vlcompdb,0) + nvl(rw_craprpp.vlprerpp,0)
-              WHERE craplot.rowid = rw_craplot_8470.rowid
-              RETURNING  craplot.cdagenci
-                        ,craplot.cdbccxlt
-                        ,craplot.nrdolote
-                        ,craplot.nrseqdig
-              INTO       rw_craplot_8470.cdagenci
-                        ,rw_craplot_8470.cdbccxlt
-                        ,rw_craplot_8470.nrdolote
-                        ,rw_craplot_8470.nrseqdig;
-            EXCEPTION
-              WHEN OTHERS THEN
-                --descricao da critica
-                vr_dscritic := 'Erro ao atualizar craplot para o lote 8470. '||SQLERRM;
-                --aborta a execucao
-                RAISE vr_exc_saida;
-            END;    
-            
-            --gerando o numero do documento
-            vr_nrdocmto := '47'||LPAD(rw_craprpp.nrctrrpp,7,'0');
-            
-            --criando o lancamento na craplcm
-            BEGIN
-              INSERT INTO craplcm( cdagenci
-                                  ,cdbccxlt
-                                  ,cdhistor
-                                  ,dtmvtolt
-                                  ,cdpesqbb
-                                  ,nrdconta
-                                  ,nrdctabb
-                                  ,nrdctitg
-                                  ,nrdocmto
-                                  ,nrdolote
-                                  ,nrseqdig
-                                  ,vllanmto
-                                  ,cdcooper
-              )VALUES( rw_craplot_8470.cdagenci --craplcm.cdagenci  
-                      ,rw_craplot_8470.cdbccxlt --craplcm.cdbccxlt  
-                      ,160                 --craplcm.cdhistor  
-                      ,rw_crapdat.dtmvtolt --craplcm.dtmvtolt  
-                      ,' '                 --craplcm.cdpesqbb 
-                      ,rw_craprpp.nrdconta --craplcm.nrdconta  
-                      ,rw_craprpp.nrdconta --craplcm.nrdctabb  
-                      ,LPAD(rw_craprpp.nrdconta,8, '0') --craplcm.nrdctitg
-                      ,vr_nrdocmto                      --craplcm.nrdocmto  
-                      ,rw_craplot_8470.nrdolote              --craplcm.nrdolote  
-                      ,rw_craplot_8470.nrseqdig              --craplcm.nrseqdig  
-                      ,rw_craprpp.vlprerpp              --craplcm.vllanmto  
-                      ,pr_cdcooper                      --craplcm.cdcooper
-              );                    
-            EXCEPTION
-              WHEN OTHERS THEN
-                --descricao da critica
-                vr_dscritic := 'Erro ao inserir movimentacao na tabela craplcm. '||SQLERRM;
-                --aborta a execucao
-                RAISE vr_exc_saida;
-            END;
-            
-            --se abono igual a zero 
-            IF vr_indabono = 0  THEN
-              --seta o valor do cpmf
-              vr_vlabcpmf := rw_craprpp.vlabcpmf + TRUNC(rw_craprpp.vlprerpp * vr_txcpmfcc,2);
-              vr_vlabdiof := rw_craprpp.vlabdiof + TRUNC(rw_craprpp.vlprerpp * vr_tab_txiofrda,2);
-            ELSE
-              --seta o valor do cpmf
-              vr_vlabcpmf := rw_craprpp.vlabcpmf;
-              vr_vlabdiof := rw_craprpp.vlabdiof;
             END IF;  
 
+          --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
+          IF ((rw_craprpp.vlprerpp <= vr_vlsldtot) AND (vr_dscritic IS NULL)) THEN
             --atualiza a tabela craprpp
             BEGIN
               UPDATE craprpp SET vlprepag = rw_craprpp.vlprepag + rw_craprpp.vlprerpp
@@ -1089,116 +773,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
             --fecha o cursor  
             CLOSE cr_crapavs;
 
-            --se o lote 8384 não existir, será criado
-            IF rw_craplot_8384.rowid IS NULL THEN
-              --criando o novo lote 8384
-              BEGIN
-                INSERT INTO craplot(dtmvtolt
-                                    ,cdagenci
-                                    ,cdbccxlt
-                                    ,nrdolote
-                                    ,tplotmov
-                                    ,nrseqdig
-                                    ,vlcompdb
-                                    ,vlinfodb
-                                    ,cdcooper
-                )VALUES ( rw_crapdat.dtmvtolt --craplot.dtmvtolt  
-                         ,1                  --craplot.cdagenci
-                         ,100                --craplot.cdbccxlt
-                         ,8384               --craplot.nrdolote
-                         ,14                 --craplot.tplotmov  
-                         ,0                  --craplot.nrseqdig
-                         ,0                  --craplot.vlcompdb
-                         ,0                  --craplot.vlinfodb 
-                         ,pr_cdcooper        --craplot.cdcooper 
-                )RETURNING craplot.rowid 
-                          ,craplot.cdagenci
-                          ,craplot.cdbccxlt
-                          ,craplot.nrdolote
-                          ,craplot.nrseqdig
-                INTO       rw_craplot_8384.rowid
-                          ,rw_craplot_8384.cdagenci
-                          ,rw_craplot_8384.cdbccxlt
-                          ,rw_craplot_8384.nrdolote
-                          ,rw_craplot_8384.nrseqdig;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  --descricao da critica
-                  vr_dscritic := 'Erro ao criar lote 8384. '||SQLERRM;
-                  --aborta a execucao
-                  RAISE vr_exc_saida;
-              END;                  
-            END IF;  
-
-            --atualizando as demais informações do lote 8384
-            BEGIN
-              UPDATE craplot SET craplot.nrseqdig = CRAPLOT_8384_SEQ.NEXTVAL
-                                ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                                ,craplot.qtinfoln = nvl(craplot.qtcompln,0) + 1
-                                ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + nvl(rw_craprpp.vlprerpp,0)
-                                ,craplot.vlinfocr = nvl(craplot.vlcompcr,0) + nvl(rw_craprpp.vlprerpp,0)
-              WHERE craplot.rowid = rw_craplot_8384.rowid
-              RETURNING  craplot.cdagenci
-                        ,craplot.cdbccxlt
-                        ,craplot.nrdolote
-                        ,craplot.nrseqdig
-              INTO       rw_craplot_8384.cdagenci
-                        ,rw_craplot_8384.cdbccxlt
-                        ,rw_craplot_8384.nrdolote
-                        ,rw_craplot_8384.nrseqdig;
-            EXCEPTION
-              WHEN OTHERS THEN
-                --descricao da critica
-                vr_dscritic := 'Erro ao atualizar craplot para o lote 8384. '||SQLERRM;
-                --aborta a execucao
-                RAISE vr_exc_saida;
-            END;    
-            
-            --gerando o numero do documento
-            vr_nrdocmto := '75'||LPAD(rw_craprpp.nrctrrpp,7,'0');
-
-            --criando novo registro de lancamentos de aplicacoes de poupanca programada
-            BEGIN
-              INSERT INTO craplpp( cdagenci
-                                  ,cdbccxlt
-                                  ,cdhistor
-                                  ,dtmvtolt
-                                  ,dtrefere
-                                  ,nrctrrpp
-                                  ,nrdconta
-                                  ,nrdocmto
-                                  ,nrdolote
-                                  ,nrseqdig
-                                  ,txaplica
-                                  ,txaplmes
-                                  ,vllanmto
-                                  ,cdcooper
-              ) VALUES ( rw_craplot_8384.cdagenci --craplpp.cdagenci
-                        ,rw_craplot_8384.cdbccxlt --craplpp.cdbccxlt  
-                        ,150                      --craplpp.cdhistor    
-                        ,rw_crapdat.dtmvtolt      --craplpp.dtmvtolt   
-                        ,rw_craprpp.dtfimper      --craplpp.dtrefere
-                        ,rw_craprpp.nrctrrpp      --craplpp.nrctrrpp 
-                        ,rw_craprpp.nrdconta      --craplpp.nrdconta
-                        ,vr_nrdocmto              --craplpp.nrdocmto
-                        ,rw_craplot_8384.nrdolote --craplpp.nrdolote
-                        ,rw_craplot_8384.nrseqdig --craplpp.nrseqdig
-                        ,0                        --craplpp.txaplica
-                        ,0                        --craplpp.txaplmes 
-                        ,rw_craprpp.vlprerpp      --craplpp.vllanmto
-                        ,pr_cdcooper              --craplpp.cdcooper
-              ); 
-            EXCEPTION
-              WHEN OTHERS THEN
-                --descricao da critica
-                vr_dscritic := 'Erro ao criar registor na tabela craplpp. '||SQLERRM;
-                --aborta a execucao
-                RAISE vr_exc_saida;
-            END;  
-            
-            --gera os registros na tabela craplci
-            pc_gera_lancamentos_craplci( pr_rw_craprpp => rw_craprpp
-                                        ,pr_nrdocmto   => vr_nrdocmto);
           ELSE
                                
             --criando novo registro de lancamentos de aplicaoes de poupanca programada
@@ -1503,3 +1077,4 @@ CREATE OR REPLACE PROCEDURE CECRED.
     END;
 
   END pc_crps145;
+/
