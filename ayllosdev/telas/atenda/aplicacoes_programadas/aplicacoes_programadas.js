@@ -993,14 +993,21 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
 function imprimirAutorizacao(registro,tparquiv) {
 	registro = registro == "" ? nrdrowid : registro;
 	tparquiv = tparquiv == "" ? cdtiparq : tparquiv;
+
+	if (cdprodut < 1){
+		alert ('Este \u00e9 um plano antigo que n\u00e3o pode ter o termo de ade\u00e3o impresso.');
+		return false;
+	}
 	
 	if (registro == 0 || registro == "") {
 		return false;
 	}
-	
+	showMsgAguardo("Aguarde, imprimindo termo de ades&atilde;o ...");
 	$("#nrdconta","#frmAutorizacao").val(nrdconta);
-	$("#nrdrowid","#frmAutorizacao").val(registro);
-	$("#cdtiparq","#frmAutorizacao").val(tparquiv);				
+	$("#cdtiparq","#frmAutorizacao").val(tparquiv);
+	$("#nrdrowid","#frmAutorizacao").val(nrctrrpp);
+	$("#nrctrrpp","#frmAutorizacao").val(nrctrrpp);
+
 	var action = $("#frmAutorizacao").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
 	
@@ -1008,7 +1015,6 @@ function imprimirAutorizacao(registro,tparquiv) {
 		callafter = callafterPoupanca;
 		callafterPoupanca = '';
 	}
-	
 	carregaImpressaoAyllos("frmAutorizacao",action,callafter);
 	
 }

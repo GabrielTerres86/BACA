@@ -40,8 +40,8 @@
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
-	$nrdrowid = $_POST["nrdrowid"];
 	$cdtiparq = $_POST["cdtiparq"];
+	$nrctrrpp = $_POST["nrdrowid"];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -54,35 +54,27 @@
 		?><script language="javascript">alert('Indicador de proposta inválido.');</script><?php
 		exit();
 	}	
-	
+
+	if (!validaInteiro($nrctrrpp)) {
+		?><script language="javascript">alert('Indicador de contrato inválido.');</script><?php
+		exit();
+	}	
+
 	// Monta o xml de requisição
-	$xmlAutoriza  = "";
-	$xmlAutoriza .= "<Root>";
-	$xmlAutoriza .= "  <Cabecalho>";
-	$xmlAutoriza .= "    <Bo>b1wgen0006.p</Bo>";
-	$xmlAutoriza .= "    <Proc>obtem-dados-autorizacao</Proc>";
-	$xmlAutoriza .= "  </Cabecalho>";
-	$xmlAutoriza .= "  <Dados>";
-	$xmlAutoriza .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlAutoriza .= "    <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlAutoriza .= "    <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlAutoriza .= "    <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlAutoriza .= "    <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlAutoriza .= "    <idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xmlAutoriza .= "    <nrdconta>".$nrdconta."</nrdconta>";
-	$xmlAutoriza .= "    <idseqttl>1</idseqttl>";
-	$xmlAutoriza .= "    <nrdrowid>".$nrdrowid."</nrdrowid>";	
-	$xmlAutoriza .= "    <cdtiparq>".$cdtiparq."</cdtiparq>";
-	$xmlAutoriza .= "    <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
-	$xmlAutoriza .= "  </Dados>";
-	$xmlAutoriza .= "</Root>";
-		
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlAutoriza);
-	
-	// Cria objeto para classe de tratamento de XML
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <idseqttl>1</idseqttl>";
+	$xml .= "   <nrctrrpp>".$nrctrrpp."</nrctrrpp>";
+	$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xml .= "   <flgerlog>0</flgerlog>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml, "APLI0008", "IMPRIME_TERMO_ADESAO_APL_PROG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjAutoriza = getObjectXML($xmlResult);
-	
+
+
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjAutoriza->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjAutoriza->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -90,25 +82,9 @@
 		exit();		
 	}			
 	
-	$xmlTagsAutorizacao = $xmlObjAutoriza->roottag->tags[0]->tags[0]->tags;
+	$nmarqpdf = $xmlObjAutoriza->roottag->tags[0]->tags[0]->tags[0]->cdata;
 	
-	for ($i = 0; $i < count($xmlTagsAutorizacao); $i++) {
-		$dadosAutorizacao[$xmlTagsAutorizacao[$i]->name] = $xmlTagsAutorizacao[$i]->cdata;		
-	}
-	
-	// Classe para geração da declaração em PDF
-	require_once("aplicacoes_programadas_autorizacao_pdf.php");
-
-	// Instancia Objeto para gerar arquivo PDF
-	$pdf = new PDF("P","cm","A4");
-	
-	// Inicia geração da autorização
-	$pdf->geraAutorizacao($dadosAutorizacao);
-	
-	$navegador = CheckNavigator();
-	$tipo = $navegador['navegador'] == 'chrome' ? "I" : "D";
-	
-	// Gera saída do PDF para o Browser
-	$pdf->Output("impressao.pdf",$tipo);	
+	// Chama função para mostrar PDF do impresso gerado no browser
+	visualizaPDF($nmarqpdf);
 	
 ?>
