@@ -68,6 +68,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
        and craprpp.cdcooper  = pr_cdcooper
        and craprpp.dtfimper <= pr_dtmvtopr  
        and craprpp.incalmes  = 0
+       and craprpp.cdprodut < 1 -- apenas poupanças antigas
        and craprpp.cdsitrpp <> 5
        and (pr_qterro = 0 or
            (pr_qterro > 0 and exists (select 1
@@ -96,6 +97,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS148" (pr_cdcooper  IN crapcop.cdcoope
        and crapass.cdagenci  = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
        and craprpp.dtfimper <= pr_dtmvtopr
        and craprpp.incalmes  = 0
+       and craprpp.cdprodut < 1 -- apenas poupanças antigas
        and craprpp.cdsitrpp <> 5
      order by nrdconta,
               nrctrrpp;
