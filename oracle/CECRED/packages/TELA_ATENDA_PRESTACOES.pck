@@ -35,7 +35,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_PRESTACOES IS
                                ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                ,pr_nmdcampo   OUT VARCHAR2 --> Nome do campo com erro
                                ,pr_des_erro   OUT VARCHAR2); --> Erros do processo
-                               
+  
   PROCEDURE pc_consultar_contratos(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada    
                                   ,pr_nrdconta IN crapepr.cdcooper%TYPE --> Número da conta
                                   ,pr_nrctremp IN NUMBER                --> Contrato
@@ -345,7 +345,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
       ROLLBACK;
   END pc_alterar_controle;
   --
-  PROCEDURE pc_consultar_contratos(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada    
+   PROCEDURE pc_consultar_contratos(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada    
                                   ,pr_nrdconta IN crapepr.cdcooper%TYPE --> Número da conta
                                   ,pr_nrctremp IN NUMBER                --> Contrato
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -380,7 +380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
 
       ---------->> CURSORES <<--------      
       cursor cr_consulta_contratos is
-				select  e.cdlcremp
+        select  e.cdlcremp
                ,e.cdfinemp
                ,e.nrdconta
                ,e.nrctremp
@@ -781,6 +781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
      risc0004.pc_dias_atraso_liquidados(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp 
+                                       ,pr_dsliquid => pr_dsliquid
                                        ,pr_qtdatref => vr_qtdatref
                                        ,pr_dscritic => vr_dscritic);
                                        
@@ -795,7 +796,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
         WHERE crapepr.cdcooper = pr_cdcooper
           AND crapepr.nrdconta = pr_nrdconta
           AND crapepr.nrctremp = pr_nrctremp;
-          
        commit;
      exception
        when others then
@@ -805,6 +805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
        -- volta para o programa chamador
        raise vr_exc_saida;
      end;
+    
 
      BEGIN   
       --Grava log
@@ -850,7 +851,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PRESTACOES IS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
   END pc_alterar_contratos_liquid;
-  --
-  
 END TELA_ATENDA_PRESTACOES;
 /

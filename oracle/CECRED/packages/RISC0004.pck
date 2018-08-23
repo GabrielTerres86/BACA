@@ -132,10 +132,11 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
                                   ,pr_dscritic OUT VARCHAR2);
 
   -- Buscar o maior dias atraso dos contratos que estão sendo liquidados
-  PROCEDURE pc_dias_atraso_liquidados(pr_cdcooper IN NUMBER           --> Cooperativa
-                                     ,pr_nrdconta IN NUMBER          --> Conta
-                                     ,pr_nrctremp IN NUMBER          --> Contrato
-                                     ,pr_qtdatref OUT NUMBER       --> Qtde dias atraso refinanciamento
+  PROCEDURE pc_dias_atraso_liquidados(pr_cdcooper IN NUMBER                  --> Cooperativa
+                                     ,pr_nrdconta IN NUMBER                  --> Conta
+                                     ,pr_nrctremp IN NUMBER                  --> Contrato
+                                     ,pr_dsliquid IN VARCHAR2 DEFAULT NULL   --> Lista de contratos liquidados
+                                     ,pr_qtdatref OUT NUMBER                 --> Qtde dias atraso refinanciamento
                                      ,pr_dscritic OUT VARCHAR2);
 
 END RISC0004;
@@ -1111,11 +1112,12 @@ END pc_carrega_tabela_riscos;
 
 
  -- Buscar o maior dias atraso dos contratos que estão sendo liquidados
-  PROCEDURE pc_dias_atraso_liquidados(pr_cdcooper IN NUMBER           --> Cooperativa
-                                     ,pr_nrdconta IN NUMBER          --> Conta
-                                     ,pr_nrctremp IN NUMBER          --> Contrato (proposta)
-                                     ,pr_qtdatref OUT NUMBER         --> Qtde dias atraso refinanciamento
-                                     ,pr_dscritic OUT VARCHAR2) IS   --> Critica
+  PROCEDURE pc_dias_atraso_liquidados(pr_cdcooper IN NUMBER                 --> Cooperativa
+                                     ,pr_nrdconta IN NUMBER                 --> Conta
+                                     ,pr_nrctremp IN NUMBER                 --> Contrato (proposta)
+                                     ,pr_dsliquid IN VARCHAR2 DEFAULT NULL  --> Lista de contratos liquidados
+                                     ,pr_qtdatref OUT NUMBER                --> Qtde dias atraso refinanciamento
+                                     ,pr_dscritic OUT VARCHAR2) IS          --> Critica
     -- cursores
     CURSOR cr_qtdatref (pr_cdcooper   NUMBER
                        ,pr_nrdconta   NUMBER
@@ -1136,23 +1138,107 @@ END pc_carrega_tabela_riscos;
                                           ELSE dat.dtultdma END), '01/01/1980')
                                   FROM crapdat dat
                                  WHERE dat.cdcooper = pr_cdcooper));
-
     rw_qtdatref cr_qtdatref%ROWTYPE;
-
-    -- variaveis
-    -- Variaveis de Erro
+    
+    CURSOR cr_crapepr  (pr_cdcooper   NUMBER
+                       ,pr_nrdconta   NUMBER
+                       ,pr_nrctremp   NUMBER) IS
+      select epr.dtliquid
+        from crapepr epr
+       where epr.cdcooper = pr_cdcooper 
+         and epr.nrdconta = pr_nrdconta
+         and epr.nrctremp = pr_nrctremp;
+    rw_crapepr cr_crapepr%ROWTYPE;
+    
+    CURSOR cr_crapris  (pr_cdcooper   NUMBER
+                       ,pr_nrdconta   NUMBER
+                       ,pr_nrctremp   NUMBER
+                       ,pr_dtrefere   DATE) IS
+      select ris.qtdiaatr
+        from crapris ris
+       where ris.cdcooper = pr_cdcooper 
+         and ris.nrdconta = pr_nrdconta
+         and ris.nrctremp = pr_nrctremp
+         and ris.dtrefere = pr_dtrefere;
+    rw_crapris cr_crapris%ROWTYPE;
+    
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
+    -- Variáveis
+    -- Variáveis de Erro
     vr_cdcritic             crapcri.cdcritic%TYPE;
     vr_dscritic             VARCHAR2(4000);
     vr_exc_erro             EXCEPTION;
+    
+    -- Variáveis para criar uma lista com os contratos
+    -- passados e com os separados nos contratos a liquidar
+    vr_split_pr_dsliquid    GENE0002.typ_split;
+    
+    -- Variáveis de uso comum
+    vr_indice               NUMBER(10) := 1;
+    vr_dtrefere_aux         DATE;
+    vr_dtrefere             DATE;
+    vr_qtdiaatr             crapris.qtdiaatr%type;
 
    BEGIN
+     IF pr_dsliquid IS NULL THEN
+       
+       OPEN cr_qtdatref(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+       FETCH cr_qtdatref INTO rw_qtdatref;
 
-     OPEN cr_qtdatref(pr_cdcooper, pr_nrdconta, pr_nrctremp);
-     FETCH cr_qtdatref INTO rw_qtdatref;
+       pr_qtdatref := nvl(rw_qtdatref.qtdatref,0);
 
-     pr_qtdatref := rw_qtdatref.qtdatref;
+       CLOSE cr_qtdatref;
 
-     CLOSE cr_qtdatref;
+     ELSE
+       
+       -- Efetuar split dos contratos passados para facilitar os testes
+       vr_split_pr_dsliquid := gene0002.fn_quebra_string(replace(rtrim(pr_dsliquid, ','),';',','),',');
+       
+       IF vr_split_pr_dsliquid.count > 0 THEN
+         
+         /* Busca data de movimento */
+         OPEN  btch0001.cr_crapdat(pr_cdcooper);
+         FETCH btch0001.cr_crapdat INTO rw_crapdat;
+         CLOSE btch0001.cr_crapdat;
+         
+         IF to_char(rw_crapdat.dtmvtoan, 'MM') <> to_char(rw_crapdat.dtmvtolt, 'MM') THEN
+           -- Utilizar o final do mês como data
+           vr_dtrefere_aux := rw_crapdat.dtultdma;
+         ELSE
+           -- Utilizar a data atual
+           vr_dtrefere_aux := rw_crapdat.dtmvtoan;
+         END IF;
+         
+         vr_qtdiaatr := 0;
+         
+         LOOP
+     
+           OPEN cr_crapepr(pr_cdcooper, pr_nrdconta, vr_split_pr_dsliquid(vr_indice));
+           FETCH cr_crapepr INTO rw_crapepr;
+           
+           vr_dtrefere := NVL(rw_crapepr.dtliquid, vr_dtrefere_aux);
+           
+           OPEN cr_crapris(pr_cdcooper, pr_nrdconta, vr_split_pr_dsliquid(vr_indice), vr_dtrefere);
+           FETCH cr_crapris INTO rw_crapris;
+           
+           IF vr_qtdiaatr < nvl(rw_crapris.qtdiaatr,0) THEN
+             vr_qtdiaatr := nvl(rw_crapris.qtdiaatr,0);
+           END IF;
+
+           CLOSE cr_crapris;
+           CLOSE cr_crapepr;
+           
+           vr_indice := vr_indice + 1;           
+           
+           EXIT WHEN (vr_split_pr_dsliquid.count = vr_indice - 1);
+         END LOOP;
+         
+         pr_qtdatref := vr_qtdiaatr;
+         
+       END IF;
+     
+     END IF;
 
    EXCEPTION
      WHEN vr_exc_erro THEN
