@@ -4131,7 +4131,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                 craplot.qtcompln = craplot.qtcompln + 1.
 
              FIND FIRST tt-ret-lancto.
-             DISP tt-ret-lancto.
              
              FIND FIRST craplcm 
                 WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm
