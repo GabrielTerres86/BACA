@@ -41,6 +41,7 @@
  * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta.
  * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
  * 026: [26/04/2018] Vitor Shimada Assanuma (GFT): Ajuste na funcao de chamada da proposta e manutencao
+ * 027: [15/08/2018] Adicionado controle para o novo botão 'Anular' e criada uma nova tela 'Motivos'. PRJ 438 (Mateus Z - Mouts)
  */
 
  // variaveis propostas
@@ -766,6 +767,15 @@ function selecionaLimiteTitulosProposta(pr_id, pr_qtlimites, pr_nrctrlim, pr_vll
             $("#trLimite" + idLinhaL).css("background-color","#FFB9AB");
         }
     }
+	
+	// PRJ 438 - Fazer o controle do botão Anular, exibir o botao apenas se o insitapr for "Aprovada"
+    // 1 = APROVADA AUTOMATICAMENTE / 2 = APROVADA MANUAL / 3 = APROVADA
+    if(insitapr == 1 || insitapr == 2 || insitapr == 3) {
+        $("#btnAnular", "#divBotoesTitulosLimite").show();
+    } else {
+        $("#btnAnular", "#divBotoesTitulosLimite").hide();
+    } 
+	
     return false;
 }
 
@@ -2996,3 +3006,75 @@ function mostrarBorderoLiberar() {
     showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
     return false;
 }
+
+// PRJ 438 - Inicio
+function carregaDadosConsultaMotivos() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando motivos ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_consultar_motivos.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrctrlim,
+            redirect: "html_ajax"
+        },      
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            $("#divOpcoesDaOpcao3").html(response);
+        }               
+    });
+    return false;
+}
+
+function formatarTelaConsultaMotivos(){
+
+    $('#frmDadosMotivos').css('width','500px');
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
+    return false;
+}
+
+function gravaMotivosAnulacao(){
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando alterado o motivo");
+
+    var cdmotivo     = $("input[name='cdmotivo']:checked", "#frmDadosMotivos").val();
+    var dsmotivo     = $('#dsmotivo'+cdmotivo,'#frmDadosMotivos').val();
+    var dsobservacao = $('#dsobservacao'+cdmotivo,'#frmDadosMotivos').val();
+
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_grava_motivo.php",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrctrlim,
+            cdmotivo: cdmotivo,
+            dsmotivo: dsmotivo,
+            dsobservacao: dsobservacao,
+            redirect: "script_ajax"
+        }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                eval(response);
+            } catch(error) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }               
+    });
+}
+// PRJ 438 - FIM

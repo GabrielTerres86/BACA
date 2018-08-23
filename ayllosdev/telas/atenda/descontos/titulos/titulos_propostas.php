@@ -35,6 +35,8 @@
 				 26/04/2018 - Ajuste nos valores retornados ao buscar propostas (Leonardo Oliveira - GFT).
 
 				 26/04/2018 - Ajuste na funcao de chamada da proposta e manutencao (Vitor Shimada Assanuma - GFT)
+				 
+				 14/08/2018 - Incluido novo botao 'Anular'. PRJ 438 (Mateus Z - Mouts)
 
 	************************************************************************/
 	
@@ -317,6 +319,17 @@
 			echo 'onClick="efetuarNovoLimite();" ';
 		} ?>/>
 	
+	<input 
+		type="button"
+		class="botao"
+		value="Anular"
+		id="btnAnular"
+		name="btnAnular"
+		<?php if ($qtLimites == 0) {
+			echo 'onClick="return false;"';
+		} else {
+			echo 'onClick="carregaDadosConsultaMotivos();" ';
+		} ?>/>	
 
 </div>
 

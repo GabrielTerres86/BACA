@@ -22,6 +22,7 @@
  * 012: [30/03/2017] Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
  * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
  * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
+ * 014: [14/08/2018] Incluido botão Anular (Mateus Z - Mouts - P438)
  */
 ?>
 
@@ -117,5 +118,7 @@
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
 	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
+	<!-- PRJ 438 -->
+	<a href="#" class="botao" id="btAnular"  onClick="controlaOperacao('MOTIVOS')">Anular</a>
 	
 </div>
