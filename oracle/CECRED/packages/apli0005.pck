@@ -2836,10 +2836,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         RAISE vr_exc_saida;
       END IF;
 
-      -- Verifica valor de aplicacao
-      IF pr_vlaplica < 5 THEN
-        vr_dscritic := 'Valor da aplicacao nao pode ser menor que R$ 5,00.';
-        RAISE vr_exc_saida;
+      -- Pelo batch não deve validar o valor mínimo - tem apliacacao programada com valor de parcela menor que 5 reais.
+      IF pr_nmdatela <> 'CRPS145' THEN
+        -- Verifica valor de aplicacao
+        IF pr_vlaplica < 5 THEN
+          vr_dscritic := 'Valor da aplicacao nao pode ser menor que R$ 5,00.';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       -- Verifica identificador de debito em conta investimento
@@ -5179,7 +5182,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       END IF;
       
-      COMMIT;
+      /* Comitar apenas se não for via batch */ 
+      IF pr_nmdatela <> 'CRPS145' THEN
+      
+        COMMIT;
+      
+      END IF;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
