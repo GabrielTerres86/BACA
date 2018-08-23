@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 27/07/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 15/08/2018
 
    Dados referentes ao programa:
 
@@ -121,17 +121,25 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
 							   
                  07/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				         23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
+     	           23/08/2017 - Alterada procedure pc_validar_limite_resgate para validar senha do operador
 							                pelo AD. (PRJ339 - Reinert)
-                 
-                 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+
+				         18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
                  19/07/2018 - Inclusão de acentuação na procedure pc_horario_limite e inclusão de tratamento
                               para bloquear resgate de aplicação enquanto o processo batch estiver rodando
                               na procedure pc_cad_resgate_aplica (Jean Michel)
 
-                27/07/2018 - Melhoria na validação de horários(pc_horario_limite), Ayllos WEB não é validado (Jean Michel)
+                 27/07/2018 - Melhoria na validação de horários(pc_horario_limite), Ayllos WEB não é validado (Jean Michel)
 
+                 15/08/2018 - Inclusão do código de crítica 1282 na procedure pc_horario_limite,
+                              Prj. 427 - URA (Jean Michel)
+
+                 15/08/2018 - Inclusão do código de crítica 1284 na procedure pc_valida_limite_internet,
+                              pc_obtem_taxa_aplicacao Prj. 427 - URA (Jean Michel) 
+
+                 15/08/2018 - Inclusão do código de crítica 1283 na procedure pc_validar_nova_aplicacao,
+                              Prj. 427 - URA (Jean Michel)
   ............................................................................*/
 
   /* Tipo que compreende o registro da tab. temporária tt-carencia-aplicacao */
@@ -1119,8 +1127,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_dtmvtopr OUT crapdat.dtmvtopr%TYPE   --> Proxima data movimento
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
+														
 
-  
   PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                  --> Numero do Caixa
@@ -1208,7 +1216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 30/07/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 15/08/2018
 
    Dados referentes ao programa:
 
@@ -1403,8 +1411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              a disponivel (Lucas Ranghetti #492125)        
                              
                 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+			                       crapass, crapttl, crapjur (Adriano - P339).
                              
                 09/05/2017 - Implementei o tratamento de erro na pc_efetua_resgate_online para o retorno da rotina
                              apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)                             
@@ -1412,25 +1419,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 16/05/2017 - Validacao na data de vencimento de agendamentos de aplicacoes calculando a 
                              mesma caso necessario na pc_incluir_novo_agendmto SD 670255. (Carlos Rafael Tanholi)
 
-			    14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).
+			          14/11/2017 - Ajuste para considerar lançamento de devolução de capital (Jonata - RKAM P364).
 
-			    19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
+			          19/11/2017 - Ajutes para colocar data no filtro de pesquisa da craplcm (Jonata - RKAM P364).
 
-				21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
+				        21/11/2017 - Incluido format de data na consulta da lct e lcm (Jonata - RKAM P364).
 
                 30/11/2017 - Incluido update na crapsli quando dinheiro para aplicacao nova vem da conta investimento. 
-							 (M460 BACENJUD - Thiago Rodrigues).
+							               (M460 BACENJUD - Thiago Rodrigues).
                
-                30/11/2017 - Ao incluir nova apl, atualiza saldo CI caso origem dinheiro seja CI(conta investimento) M460 BacenJud(Thiago Rodrigues)
+                30/11/2017 - Ao incluir nova apl, atualiza saldo CI caso origem dinheiro seja CI(conta investimento) 
+                             M460 BacenJud(Thiago Rodrigues)
 
                 05/12/2017 - Alterei a procedure pc_cad_resgate_aplica para gravacao do lote de forma autonoma. Criei
                              a procedure pc_processa_lote_regt. (SD 799728 - Carlos Rafael Tanholi)
 
                 04/01/2018 - Correcao nos campos utilizados para atualizacao da CRAPLOT quando inserida nova aplicacao
-                             com debito em Conta Investimento.
-                             Heitor (Mouts) - Chamado 821010.
+                             com debito em Conta Investimento. Heitor (Mouts) - Chamado 821010.
 
-                19/07/2018 - Inclusão de acentuação na procedure pc_horario_limite e inclusão de tratamento
+				        19/07/2018 - Inclusão de acentuação na procedure pc_horario_limite e inclusão de tratamento
                              para bloquear resgate de aplicação enquanto o processo batch estiver rodando
                              na procedure pc_cad_resgate_aplica (Jean Michel)             
 
@@ -1438,8 +1445,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              Ayllos WEB não é validado (Jean Michel)
 
                 30/07/2018 - Inclusão de validação de horários para transações de 
-                             aplicações(pc_excluir_agendmto) (Jean Michel)             
+                             aplicações(pc_excluir_agendmto) (Jean Michel)   
 
+                15/08/2018 - Inclusão do código de crítica 1282 na procedure pc_horario_limite,
+                             Prj. 427 - URA (Jean Michel)
+             
+                15/08/2018 - Inclusão do código de crítica 1284 na procedure pc_valida_limite_internet,
+                             pc_obtem_taxa_aplicacao Prj. 427 - URA (Jean Michel)
+
+                15/08/2018 - Inclusão do código de crítica 1283 na procedure pc_validar_nova_aplicacao,
+                             Prj. 427 - URA (Jean Michel)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -2376,7 +2391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 09/06/2016
+   Data    : Maio/2014                          Ultima atualizacao: 15/08/2018
 
    Dados referentes ao programa:
 
@@ -2395,6 +2410,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                            - Ajustado para carregar as aplicacoes bloqueadas da conta com 
                              a rotina pradrao TABE0001.pc_carrega_ctabloq
                              (Douglas - Chamado 454248)
+
+                15/05/2018 - Inclusão do código de crítica 1284, Prj. 427 - URA (Jean Michel)             
+
   .......................................................................................*/
   PROCEDURE pc_obtem_taxa_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                    ,pr_cdageope IN crapage.cdagenci%TYPE
@@ -2634,10 +2652,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         vr_cdcritic := NULL;
         
         IF pr_idorigem <> 3 THEN
-          vr_dscritic := 'Valor da aplicacao nao pode ser menor que R$' ||
-                         TO_CHAR(rw_crapdtc.vlminapl,'999G999G990d00');
+          vr_cdcritic := 1284;
+          vr_dscritic := 'Valor da aplicacao nao pode ser menor que R$ ' || TRIM(TO_CHAR(rw_crapdtc.vlminapl,'999G999G990d00'));
         ELSE
-          vr_dscritic := 'Valor a ser aplicado e menor que o limite permitido.'; 
+          vr_cdcritic := 1284;
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         END IF;
         
         -- Gera exceção
@@ -2649,8 +2668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          
         -- Monta critica
         vr_cdcritic := NULL;
-        vr_dscritic := 'Valor da aplicacao nao pode ser maior que R$' || '' || 
-                       TO_CHAR(rw_crapdtc.vlmaxapl,'999G999G990d00'); 
+        vr_dscritic := 'Valor da aplicacao nao pode ser maior que R$ ' || TRIM(TO_CHAR(rw_crapdtc.vlmaxapl,'999G999G990d00')); 
         
         -- Gera exceção
         RAISE vr_exc_erro;
@@ -3221,7 +3239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 14/10/2014
+   Data    : Maio/2014                          Ultima atualizacao: 15/08/2018
 
    Dados referentes ao programa:
 
@@ -3237,8 +3255,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              (Adriano).
                              
                 14/10/2014 - Retirado o uso da variável vr_tpregist pois não é mais utilizada
-                            (Adriano).             
-                  
+                             (Adriano).             
+                
+                15/05/2018 - Inclusão do código de crítica 1283, Prj. 427 - URA (Jean Michel)
+
   .......................................................................................*/
   PROCEDURE pc_validar_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -3412,7 +3432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_hrlimini INTEGER;
 	    vr_hrlimfim INTEGER;
 			vr_idesthor INTEGER;
-
+      
       -- Rowid tabela de log
       vr_nrdrowid ROWID;
     
@@ -4054,8 +4074,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             AND pr_cdcooper <> 3 THEN
                  
               -- Monta critica
-              vr_cdcritic := 0;
-              vr_dscritic := 'Saldo CC insuficiente para operacao.';
+              vr_cdcritic := 1283;
+              vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
               
               -- Gera exceção
               RAISE vr_exc_erro;    
@@ -4070,8 +4090,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               -- RDCPOS
               IF pr_tpaplica = 8 THEN
                 -- Monta critica
-                vr_cdcritic := 0;
-                vr_dscritic := 'Saldo CC insuficiente para operacao.';
+                vr_cdcritic := 1283;
+                vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                 
                 -- Gera exceção
                 RAISE vr_exc_erro;    
@@ -4159,7 +4179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                para serem chamadas diretamente atraves de rotinas progress   
 
    Alteracoes:  07/05/2014 - Conversão Progress para Oracle (Adriano)
-                
+
   .......................................................................................*/
   PROCEDURE pc_validar_nova_aplic_wt(pr_cdcooper IN crapcop.cdcooper%TYPE
                                         ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -6239,20 +6259,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
               vr_dsinfor1:= 'Aplicacao Pos'; 
               
-            vr_dsinfor2:= vr_nmextttl ||'#' ||
-                          'Conta/dv: ' ||vr_nrdconta ||' - '||
-                          rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
-                          ' - '|| rw_crapcop.nmrescop;
-            vr_dsinfor3:= 'Data da Aplicacao: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')              || '#' ||
-                          'Numero da Aplicacao: ' || TO_CHAR(rw_craprda.nraplica,'9G999G990')       || '#' ||
-                          'Taxa Contratada: '     || TO_CHAR(NVL(vr_txaplica, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
-                          'Taxa Minima: '         || TO_CHAR(NVL(vr_txaplmes, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
-                          'Vencimento: '          || TO_CHAR(vr_dtfimper,'dd/mm/yyyy')               || '#' ||
-                          'Carencia: '            || TO_CHAR(pr_qtdiacar,'99990') || ' DIA(S)'       || '#' ||
-                          'Data da Carencia: '    || TO_CHAR(pr_dtmvtolt + pr_qtdiacar,'dd/mm/yyyy') || '#' ||
-                          'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
-                          'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
-                          UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
+              vr_dsinfor2:= vr_nmextttl ||'#' ||
+                            'Conta/dv: ' ||vr_nrdconta ||' - '||
+                            rw_crapass.nmprimtl||'#'|| gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
+                            ' - '|| rw_crapcop.nmrescop;
+              vr_dsinfor3:= 'Data da Aplicacao: '   || TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy')              || '#' ||
+                            'Numero da Aplicacao: ' || TO_CHAR(rw_craprda.nraplica,'9G999G990')       || '#' ||
+                            'Taxa Contratada: '     || TO_CHAR(NVL(vr_txaplica, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
+                            'Taxa Minima: '         || TO_CHAR(NVL(vr_txaplmes, '0'), 'fm990D00') || '% DO CDI ' || '#' ||
+                            'Vencimento: '          || TO_CHAR(vr_dtfimper,'dd/mm/yyyy')               || '#' ||
+                            'Carencia: '            || TO_CHAR(pr_qtdiacar,'99990') || ' DIA(S)'       || '#' ||
+                            'Data da Carencia: '    || TO_CHAR(pr_dtmvtolt + pr_qtdiacar,'dd/mm/yyyy') || '#' ||
+                            'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
+                            'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
+                            UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
               
             END IF;            
 
@@ -6333,7 +6353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       pr_nrdocmto := vr_nrdocmto;
 			-- e o protocolo
 			pr_dsprotoc := vr_dsprotoc;
-
+      
       --Gerar log                                                  
       IF pr_flgerlog = 1 THEN
             
@@ -9779,12 +9799,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 23/05/2016 - Ajuste para utilizar rotina genérico para buscar registros na craptab
                             (Adriano - 452932).
                 
-                19/12/2017 - adicionada chamada para a procedure pc_ver_val_bloqueio_aplica para 
+	            19/12/2017 - adicionada chamada para a procedure pc_ver_val_bloqueio_aplica para 
                              Validar bloqueios para resgate de aplicacao. PRJ404 (Lombardi)
                              
                 04/04/2018 - Ajuste para quando for Resgate, validar se existe saldo disponivel de aplicacao. 
                             (Anderson P285)
-                
+    
+                15/05/2018 - Inclusão do código de crítica 1284, Prj. 427 - URA (Jean Michel)
   .......................................................................................*/
   PROCEDURE pc_valida_limite_internet(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                      ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -10032,7 +10053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           ELSE
             vr_cdcritic := 0;
             vr_dscritic := 'Retorno "NOK" na APLI0002.pc_ver_val_bloqueio_aplica e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
-      END IF;
+          END IF;
           -- Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
@@ -10061,8 +10082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               
         IF pr_vlaplica < vr_vllimmin THEN
           -- Monta critica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Valor a ser aplicado e menor que o limite permitido.'; 
+          vr_cdcritic := 1284;
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           -- Gera exceção
           RAISE vr_exc_erro;
         END IF;
@@ -10078,7 +10099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         ELSE
           CLOSE btch0001.cr_crapdat;
         END IF;
-      
+        /*
         APLI0005.pc_busca_saldo_total_resgate(pr_cdcooper => pr_cdcooper
                                              ,pr_cdoperad => pr_cdoperad
                                              ,pr_nmdatela => pr_nmdatela
@@ -10100,11 +10121,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_dscritic := 'Problemas foram encontrados durante a busca do saldo aplicado.'; 
           RAISE vr_exc_erro;
         END if;
-        
+        */
         -- Valida se existe saldo disponivel para resgate
         IF pr_vlaplica > vr_sldresga THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'ATENÇÃO: O valor de resgate não pode ser maior que o valor do saldo disponível para resgate.'; 
+          vr_cdcritic := 1287;
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
           RAISE vr_exc_erro;
         END IF;
 
@@ -10129,7 +10150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 27/07/2018
+   Data    : Maio/2014                          Ultima atualizacao: 15/08/2018
 
    Dados referentes ao programa:
 
@@ -10138,10 +10159,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
    Alteracoes: 06/06/2016 - Ajuste para utilizar rotina generica ao ler craptab
                             (Adriano  - SD 452932).
-                
-               19/07/2018 - Inclusão de acentuação (Jean Michel)
+
+			         19/07/2018 - Inclusão de acentuação (Jean Michel)
 
                27/07/2018 - Melhoria na validação de horários, Ayllos WEB não é validado (Jean Michel)
+ 	
+               15/08/2018 - Inclusão do código de crítica 1282, Prj. 427 - URA (Jean Michel)
                 
   .......................................................................................*/
   PROCEDURE pc_horario_limite(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
@@ -10202,13 +10225,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         
         IF pr_tpvalida = 1 THEN   
           -- Montar mensagem de critica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Sistema indisponível para acesso as operações de aplicação.';
+          vr_cdcritic := 1285;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
               
           -- Gera exceção
           RAISE vr_exc_erro;
         END IF;
-      ELSE
+      ELSE 
         IF pr_idorigem <> 5 THEN
           /** Obtem limites da cooperativa **/
           vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -10217,59 +10240,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                   ,pr_cdempres => 00
                                                   ,pr_cdacesso => 'HRPLANCAPI'
                                                   ,pr_tpregist => pr_cdagenci);
-
+  	
           --Se nao encontrou
           IF vr_dstextab IS NULL THEN
             -- Monta critica
             vr_cdcritic := 55;
-            vr_dscritic := '';
-                  
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+  	              
             -- Gera execeção
             RAISE vr_exc_erro;
           END IF;
-          
+  	  
           pr_idesthor := 2; --Dentro do limite (padrão)
-
+  	
           -- Pega o valor parametrizado através da tela CADPAC de acordo com a cooperativa em 
           -- em questão e utilizada para restringir o horário mínimo para utilização de operações
           -- referentes a aplicação.
           pr_hrlimini := TO_CHAR(GENE0002.fn_busca_entrada(pr_postext => 3
                                                           ,pr_dstext  => vr_dstextab
                                                           ,pr_delimitador => ' '));
-                                                          
+                                                        
           -- Pega o valor parametrizado através da tela CADPAC de acordo com a cooperativa em 
           -- em questão e utilizada para restringir o horário máximo para utilização de operações
           -- referentes a aplicação.
           pr_hrlimfim := TO_CHAR(GENE0002.fn_busca_entrada(pr_postext => 2
                                                           ,pr_dstext  => vr_dstextab
                                                           ,pr_delimitador => ' '));
-                                                          
+                                                        
           -- Busca dados da execução do processo
-            OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-            FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-            
-            -- Se não encontrar
-            IF BTCH0001.cr_crapdat%NOTFOUND THEN
-              
-              -- Fechar o cursor pois haverá raise
-              CLOSE BTCH0001.cr_crapdat;
-              
-              -- Montar mensagem de critica
-              vr_cdcritic := 1;
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-              
-              -- Gera exceção
-              RAISE vr_exc_erro;
-              
-            ELSE
-              -- Apenas fechar o cursor
-              CLOSE BTCH0001.cr_crapdat;
+          OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+          FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    			
+          -- Se não encontrar
+          IF BTCH0001.cr_crapdat%NOTFOUND THEN
+    			
+          -- Fechar o cursor pois haverá raise
+          CLOSE BTCH0001.cr_crapdat;
+    			
+          -- Montar mensagem de critica
+          vr_cdcritic := 1;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    			
+          -- Gera exceção
+          RAISE vr_exc_erro;
+    			
+          ELSE
+            -- Apenas fechar o cursor
+            CLOSE BTCH0001.cr_crapdat;
           END IF;
-
+  			
           IF (rw_crapdat.inproces >= 3) OR -- processo rodando
              (TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini)  OR
-              TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim)) THEN -- estouro de horário						
-              pr_idesthor := 1; -- fora do limite
+             TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim)) THEN -- estouro de horário						
+             pr_idesthor := 1; -- fora do limite
           END IF;
 
           -- Verifica se o processo ainda esta rodando e valida os horarios limites
@@ -10279,19 +10302,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim) THEN
 
               -- Monta critica
-              vr_cdcritic := 0;
-              vr_dscritic := 'Horário esgotado para acesso as operações de aplicação.';
+              vr_cdcritic := 1282;
+              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
               -- Gera exceção
               RAISE vr_exc_erro;
               
             END IF;
-                    
-          END IF;
-
-        END IF;
-      END IF;
             
+          END IF;
+        
+          END IF;      
+        END IF;      
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
 
@@ -15915,9 +15938,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     --             06/06/2016 - Ajuste para utilizar UPPER nos campos de indice ao ler a tabela
     --                          craptab
     --                          (Adriano - SD 452932).       
-		--
-		--             07/05/2018 - Retirado validação de bloqueio da aplicação - 669 (SM404).
-		--
+	--
+	--             07/05/2018 - Retirado validação de bloqueio da aplicação - 669 (SM404).
+	--
     -- .......................................................................................*/
     ------------------------------- CURSORES ---------------------------------
     
@@ -16185,7 +16208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       END IF; -- Fim if crapdtc.tpaplrdc  
       
     END IF;  -- fim if craprda.tpaplica
-    
+        
     IF pr_flcadrgt = 1/*TRUE*/  THEN
       -- Não verifica o bloqueio da aplicação se a rotina for chamada pela tela ATENDA do Ayllos Web (SM404)
 			IF NOT (pr_idorigem = 5 AND -- Ayllos Web
@@ -16233,8 +16256,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       -- verificar se possui saldo para resgate
       IF vr_glb_sldpresg < vr_vlrresga THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Saldo insuficiente para resgate.';
+        vr_cdcritic := 1288;
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         raise vr_exc_erro;  
       END IF;  
       
@@ -17586,7 +17609,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 													 );
        -- SM404
 			 vr_sltotres := vr_sltotgar;
-			 --
+			 -- 
+/*
        BLOQ0001.pc_calc_bloqueio_garantia ( pr_cdcooper => pr_cdcooper
                                             ,pr_nrdconta => pr_nrdconta
                                             ,pr_vlsldpou => vr_sltotres -- SM404
@@ -17601,7 +17625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_dscritic := 'Erro ao verificar bloqueios de garantia Conta ' || pr_nrdconta || '-->'||vr_dscritic;
           RAISE vr_exc_erro;
         END IF;
-
+*/
         -- Se há valor a bloquear de garantia em aplicações
         IF pr_innivblq IN(0,2) AND vr_vlblqapl > 0 Then
           IF vr_vlresgat > (nvl(vr_sltotres,0) + nvl(pr_vlsldinv,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqapl,0)) THEN
@@ -17703,7 +17727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
      Frequencia: Sempre que for chamado
 
      Objetivo  : Rotina referente a validação de resgate
-
+  
      Observacao: -----
 
      Alteracoes: -----
@@ -17958,7 +17982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_nrdolote craplot.nrdolote%TYPE;
       vr_cdhistor craplot.cdhistor%TYPE;
       vr_dtmvtopg craplau.dtmvtopg%TYPE;
-
+      
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Selecionar dados dos agendamentos
@@ -17978,7 +18002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            AND ((pr_cdsitaar = 0) OR                       -- Retornar todas situações
                 (pr_cdsitaar = 6 AND aar.cdsitaar <> 3) OR -- Desprezar cancelados
                 (aar.cdsitaar = pr_cdsitaar));             -- Retornar situação específica
-
+                
       rw_crapaar cr_crapaar%ROWTYPE;          
 
       -- Selecionar dados dos agendamentos
@@ -18104,7 +18128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar.dstipaar;
-
+          
         END LOOP;
 
         CLOSE cr_crapaar;
@@ -19003,7 +19027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              o valor a ser resgatado é superior a disponivel (Lucas Ranghetti #492125)
                              
                 05/12/2017 - Alterei a gravacao do lote pois a tabela CRAPLOT estava ficando alocada
-                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)   
+                             por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)             
 
                 19/07/2018 - Inclusão de tratamento para bloquear resgate de aplicação enquanto o
                              processo batch estiver rodando (Jean Michel)
@@ -19136,7 +19160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     vr_exc_saida       EXCEPTION;
     vr_exc_desvio      EXCEPTION;
     vr_exc_erro        EXCEPTION;
-      
+    
     vr_hrlimini INTEGER;
     vr_hrlimfim INTEGER;
 	  vr_idesthor INTEGER;
@@ -19311,6 +19335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         -- Validar o valor informado para o resgate
         IF pr_vlresgat <= 0 THEN
           -- Definir crítica
+          vr_cdcritic := 1286;
           vr_dscritic := 'Informe o valor para resgate. Valor: ' || TO_CHAR(pr_vlresgat);
           RAISE vr_exc_desvio;
         END IF;
@@ -19335,8 +19360,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         -- Se o valor total de resgate for maior que o saldo
         IF vr_vlrresga > vr_glb_sldpresg  THEN
           -- Definir mensagens de erro
-          vr_cdcritic := 0;
-          vr_dscritic := 'Saldo insuficiente para resgate.';
+          vr_cdcritic := 1288;
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           RAISE vr_exc_desvio;
         END IF;
 
@@ -19682,9 +19707,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       IF vr_des_reto = 'NOK' THEN
         RAISE vr_exc_erro;        
-      END IF;   
+        END IF;
+        
       
-
       BEGIN
         
         -- Inserir lancamento do resgate solicitado
@@ -20844,7 +20869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     BEGIN
    
       vr_nrdocsrc := TO_CHAR(pr_nrdolote,'fm00000')||TO_CHAR(pr_nrdocmto,'fm0000000000')||'%';
-
+      
       OPEN cr_crapaar(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_nrdocmto => pr_nrdocmto);
@@ -21454,7 +21479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       --Registro do tipo calendario
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
- 
+
       vr_hrlimini INTEGER;
       vr_hrlimfim INTEGER;
   	  vr_idesthor INTEGER;
@@ -22136,7 +22161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
       vr_hrlimini INTEGER;
       vr_hrlimfim INTEGER;
-	    vr_idesthor INTEGER;
+	  vr_idesthor INTEGER;
 
     BEGIN
 
@@ -22914,7 +22939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_dscritic := 'Nao foi possivel resgatar. Ha valores bloqueados judicialmente';
       RAISE vr_exc_erro;
     END IF;
-
+/*
     BLOQ0001.pc_calc_bloqueio_garantia
                                     (pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
@@ -22932,7 +22957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       RAISE vr_exc_erro;
     END IF;
 
-
+*/
     -- Se há valor a bloquear de Garantia em Poupança
     IF vr_vlblqpou > 0 then
       IF vr_vlresgat > (nvl(vr_vlsldtot,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqpou,0)) THEN
@@ -22987,7 +23012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              ,pr_nrdrowid => vr_nrdrowid);
       END IF;
       
-      IF vr_dscritic IS NULL AND vr_cdcritic > 0 THEN
+      IF TRIM(vr_dscritic) IS NULL AND NVL(vr_cdcritic,0) > 0 THEN
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
 
@@ -23109,7 +23134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           pr_cdcritic := 0;
           pr_dscritic := 'Erro ao ' || vr_dscritic || ' - APLI0002.pc_processa_lote_resgt: '||SQLERRM;
       END;  
-
+      
   END pc_processa_lote_resgt;
   
 	-- Rotina para retornar se a aplicação está bloqueada

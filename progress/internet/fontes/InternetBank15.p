@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Julho/2007.                       Ultima atualizacao: 29/11/2017
+   Data    : Julho/2007.                       Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -61,23 +61,20 @@
                05/02/2015 - Inclusao do campo idtipapl na tt-saldo-rdca e ajuste
                             na leitura do XML (Jean Michel).
 	           
-			   05/02/2015 - Inclusao do campo dtcarenc na tt-saldo-rdca e ajuste
+               05/02/2015 - Inclusao do campo dtcarenc na tt-saldo-rdca e ajuste
                             na leitura do XML SD 266191 (Kelvin).
 	           
-			   17/12/2015 - Ajuste na regra para liberar cancelamento de aplicação
+               17/12/2015 - Ajuste na regra para liberar cancelamento de aplicação
                             (Dionathan).
                             
-               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
-                            PRJ404 - Garantia.(Odirlei-AMcom)             
-
-               12/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
-                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
-
                09/04/2018 - Ajuste para retornar o valor total disponível para
                             resgate através do canal de autoatendimento.
                             Ou seja, somando apenas RDCPOS (Anderson P285).
 
                28/06/2018 - Inserido tag <SALDORESGATEPOU>
+               
+               14/08/2018 - Inclusao da TAG <cdmsgerr> nos retornos de erro do XML,
+                            Prj.427 - URA (Jean Michel)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -119,8 +116,6 @@ DEF VAR aux_vlblqapl_gar  AS DECI                                      NO-UNDO.
 DEF VAR aux_vlblqpou_gar  AS DECI                                      NO-UNDO.
 DEF VAR aux_vltotrpp AS DECI DECIMALS 8                                NO-UNDO.
 
-/*DEF VAR aux_intipapl AS CHAR										   NO-UNDO.*/
-
 /* Variaveis para o XML */ 
 DEF VAR xDoc          AS HANDLE   NO-UNDO.   
 DEF VAR xDoc2          AS HANDLE   NO-UNDO.  
@@ -138,7 +133,6 @@ DEF INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                     NO-UNDO.
 DEF INPUT PARAM par_intipapl AS INT                                    NO-UNDO.
 /*  Projeto 363 - Novo ATM */
 DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
-
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -167,12 +161,11 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
            aux_vlsldisp = 0
            aux_vlsldblq = 0
            aux_vlsldnew = 0
-           aux_vlblqapl_gar = 0
-           aux_vlblqpou_gar = 0
+           aux_vlblqapl_gar = 1000
+           aux_vlblqpou_gar = 2000
            aux_vlsldaat = 0.
     
-    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
-                             NO-LOCK NO-ERROR.
+    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
     
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -207,30 +200,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
     IF VALID-HANDLE(h-b1wgen0155) THEN
       DELETE PROCEDURE h-b1wgen0155.
-    
-    
-    /*** Busca Saldo Bloqueado Garantia ***/
-    IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
-        RUN sistema/generico/procedures/b1wgen0112.p 
-            PERSISTENT SET h-b1wgen0112.
-
-    RUN calcula_bloq_garantia IN h-b1wgen0112
-                             ( INPUT par_cdcooper,
-                               INPUT par_nrdconta,                                             
-                              OUTPUT aux_vlblqapl_gar,
-                              OUTPUT aux_vlblqpou_gar,
-                              OUTPUT aux_dscritic).
-
-    IF aux_dscritic <> "" THEN
-    DO:
-       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".          
-       RETURN "NOK".
-
-    END.
         
-    IF  VALID-HANDLE(h-b1wgen0112) THEN
-        DELETE PROCEDURE h-b1wgen0112.    
-    
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
     
     RUN STORED-PROCEDURE pc_horario_limite
@@ -261,27 +231,23 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                               WHEN pc_horario_limite.pr_hrlimfim <> ?
            aux_cdcritic = pc_horario_limite.pr_cdcritic 
                               WHEN pc_horario_limite.pr_cdcritic <> ?
-           aux_dscritic = pc_horario_limite.pr_dscritic
+           aux_dscritic = TRIM(pc_horario_limite.pr_dscritic)
                               WHEN pc_horario_limite.pr_dscritic <> ?. 
 
-    IF aux_cdcritic <> 0   OR
-       aux_dscritic <> ""  THEN
+    IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
        DO:
-          IF aux_dscritic = "" THEN
+          IF TRIM(aux_dscritic) = "" THEN
              DO:
-                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                   NO-LOCK NO-ERROR.
+                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
                 
-                IF AVAIL crapcri THEN
+                IF AVAILABLE crapcri THEN
                    ASSIGN aux_dscritic = crapcri.dscritic.
                 ELSE
-                   ASSIGN aux_dscritic =  "Nao foi possivel validar o horario " +
-                                          "limite.".
-    
+                   ASSIGN aux_dscritic =  "Nao foi possivel validar o horario limite.".
              END.
     
-          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                                "</dsmsgerr>".  
+          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
     
           RETURN "NOK".
     
@@ -290,12 +256,8 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
     CREATE xml_operacao.
     
     ASSIGN xml_operacao.dslinxml = "<HORARIO>" + 
-                                        "<hrlimini>" +  
-                                               TRIM(STRING(aux_hrlimini,"HH:MM")) +
-                                        "</hrlimini>" + 
-                                        "<hrlimfim>" +  
-                                               TRIM(STRING(aux_hrlimfim,"HH:MM")) +
-                                        "</hrlimfim>" +
+                                        "<hrlimini>" + TRIM(STRING(aux_hrlimini,"HH:MM")) + "</hrlimini>" + 
+                                        "<hrlimfim>" + TRIM(STRING(aux_hrlimfim,"HH:MM")) + "</hrlimfim>" +
                                    "</HORARIO>".
     
     /********NOVA CONSULTA APLICACOOES*********/
@@ -343,25 +305,33 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
            aux_dscritic = ""
            aux_cdcritic = pc_lista_aplicacoes_car.pr_cdcritic 
                          WHEN pc_lista_aplicacoes_car.pr_cdcritic <> ?
-           aux_dscritic = pc_lista_aplicacoes_car.pr_dscritic 
+           aux_dscritic = TRIM(pc_lista_aplicacoes_car.pr_dscritic)
                          WHEN pc_lista_aplicacoes_car.pr_dscritic <> ?.
 
-    IF aux_cdcritic <> 0 OR
-       aux_dscritic <> "" THEN
+    IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
       DO:
 
-        ASSIGN aux_dscritic = "Nao foi possivel consultar aplicacoes.".
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        IF TRIM(aux_dscritic) = "" THEN
+          DO:
+            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
+            
+            IF AVAILABLE crapcri THEN
+               ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
+            ELSE
+               ASSIGN aux_dscritic = "Nao foi possivel consultar aplicacoes.".
+          END.
+        
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                              "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
+        
         RUN proc_geracao_log (INPUT FALSE).
          
         RETURN "NOK".    
 
-      END.
-    
+      END.    
 
     /*Leitura do XML de retorno da proc e criacao dos registros na tt-saldo-rdca
-    para visualizacao dos registros na tela */
-    
+    para visualizacao dos registros na tela */    
 
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_req = pc_lista_aplicacoes_car.pr_clobxmlc. 
@@ -441,7 +411,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
       
       ASSIGN aux_vlsldtot = aux_vlsldtot + tt-saldo-rdca.sldresga
              aux_flgstapl = FALSE
-			 aux_rsgtdisp = TRUE.
+             aux_rsgtdisp = TRUE.
 
       IF tt-saldo-rdca.tpaplica <> 0 THEN
           DO:
@@ -454,33 +424,35 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                                 INPUT tt-saldo-rdca.tpaplica,
                                                 INPUT tt-saldo-rdca.nraplica,
                                                 INPUT par_dtmvtolt,
-        										INPUT tt-saldo-rdca.idtipapl, /*aux_intipapl*/
+                                                INPUT tt-saldo-rdca.idtipapl,
                                                OUTPUT aux_flgstapl,
                                                OUTPUT TABLE tt-erro).
         
-              IF  RETURN-VALUE = "NOK"  THEN
-                  DO:
+              IF RETURN-VALUE = "NOK" THEN
+                DO:
+                  
+                    /* Se ocorrer erro, fechar a tag de DADOS */
+                    CREATE xml_operacao.
+                    ASSIGN xml_operacao.dslinxml = "</DADOS>".
+                        
+                    /* Deletar a BO*/
+                    DELETE PROCEDURE h-b1wgen0148.
                     
-                      /* Se ocorrer erro, fechar a tag de DADOS */
-                      CREATE xml_operacao.
-                      ASSIGN xml_operacao.dslinxml = "</DADOS>".
-                          
-                      /* Deletar a BO*/
-                      DELETE PROCEDURE h-b1wgen0148.
-                      
-                      FIND FIRST tt-erro NO-LOCK NO-ERROR.
-        
-                      IF AVAILABLE tt-erro  THEN
-                         ASSIGN aux_dscritic = tt-erro.dscritic.
-                      ELSE
-                         ASSIGN aux_dscritic = "Nao foi possivel consultar aplicacoes.".
-        
-                      ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-        
-                      RUN proc_geracao_log (INPUT FALSE).
-        
-                      RETURN "NOK".
-                  END.
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+                    IF AVAILABLE tt-erro  THEN
+                       ASSIGN aux_dscritic = TRIM(tt-erro.dscritic)
+                              aux_cdcritic = tt-erro.cdcritic.
+                    ELSE
+                       ASSIGN aux_dscritic = "Nao foi possivel consultar aplicacoes.".
+      
+                    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                          "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
+      
+                    RUN proc_geracao_log (INPUT FALSE).
+      
+                    RETURN "NOK".
+                END.
           END.
 
           /* Verificacao: 
@@ -507,12 +479,11 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
          
          /* Saldo resgatavel nos canais de autoatendimento
             Mesma condicao da tag <apli_disp_resg> */
-         IF aux_rsgtdisp                 AND  /* Disponivel para resgate */
-            tt-saldo-rdca.tpaplica = 8   AND  /* Aplicacaoo RDCPOS        */
+         IF aux_rsgtdisp                 AND  /* Disponível para resgate */
+            tt-saldo-rdca.tpaplica = 8   AND  /* Aplicação RDCPOS        */
             tt-saldo-rdca.idtipapl = 'A' THEN /* Produto Antigo          */
-            ASSIGN aux_vlsldaat = aux_vlsldaat + tt-saldo-rdca.sldresga.
+            ASSIGN aux_vlsldaat = aux_vlsldaat + tt-saldo-rdca.sldresga.	 
 
-         
       CREATE xml_operacao.
       
       ASSIGN xml_operacao.dslinxml = "<APLICACAO>" + 
@@ -582,7 +553,6 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                    STRING(tt-saldo-rdca.dtcarenc,"99/99/9999") +
                "</dtcarenc>" + 
                "</APLICACAO>".
-                   
     END.
     
     IF VALID-HANDLE(h-b1wgen0148) THEN
@@ -617,14 +587,19 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
             IF  RETURN-VALUE = "NOK"  THEN
                 DO:
+                    ASSIGN aux_dscritic = ""
+                           aux_cdcritic = 0.
+                    
                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                    IF  AVAILABLE tt-erro  THEN
-                        aux_dscritic = tt-erro.dscritic.
+                    IF AVAILABLE tt-erro  THEN
+                      ASSIGN aux_dscritic = TRIM(tt-erro.dscritic)
+                             aux_cdcritic = tt-erro.cdcritic.
                     ELSE
-                        aux_dscritic = "Nao foi possivel carregar os saldos poupanca.".
+                      ASSIGN aux_dscritic = "Nao foi possivel carregar os saldos poupanca.".
 
-                    xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+                    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                          "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
                     RUN proc_geracao_log (INPUT FALSE).
 
@@ -668,7 +643,7 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                                  TRIM(STRING(aux_vlsldnew,"zzz,zzz,zz9.99-")) +
                                           "</vlsldnew>" + 
                                      "</SALDOAPLINOVA>".
-      
+                                     
       CREATE xml_operacao.
       ASSIGN xml_operacao.dslinxml = "<SALDOBLOQ_GARANTIA>" + 
                                           "<vlblqapl_gar>" +
@@ -682,12 +657,12 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                      "</SALDOBLOQ_GARANTIA>".
                                      
       CREATE xml_operacao.
-	  ASSIGN xml_operacao.dslinxml = "<SALDORESGATEAUTOATEND>" + 
+      ASSIGN xml_operacao.dslinxml = "<SALDORESGATEAUTOATEND>" + 
                                           "<vlsldaat>" +  
                                                  TRIM(STRING(aux_vlsldaat,"zzz,zzz,zz9.99-")) +
                                           "</vlsldaat>" + 
                                      "</SALDORESGATEAUTOATEND>".
-
+                                     
       CREATE xml_operacao.
       ASSIGN xml_operacao.dslinxml = "<SALDORESGATEPOU>" + 
                                           "<vlsldpou>" +  
@@ -729,5 +704,3 @@ PROCEDURE proc_geracao_log:
 END PROCEDURE.
 
 /*............................................................................*/
-
-

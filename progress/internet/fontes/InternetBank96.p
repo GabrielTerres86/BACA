@@ -6,7 +6,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Agosto/2014.                       Ultima atualizacao: 
+   Data    : Agosto/2014.                       Ultima atualizacao: 14/08/2018
    
    Dados referentes ao programa:
    
@@ -14,7 +14,8 @@
    Objetivo  : Valida o horario limite de inicio/fim para utilizacao de
                operacoes pertinentes a aplicacao.
    
-   Alteracoes: 
+   Alteracoes: 14/08/2018 - Inclusao da TAG <cdmsgerr> nos retornos de erro do XML,
+                            Prj.427 - URA (Jean Michel)
 
 ..............................................................................*/
 
@@ -71,27 +72,23 @@ ASSIGN aux_cdcritic = 0
                           WHEN pc_horario_limite.pr_idesthor <> ?
        aux_cdcritic = pc_horario_limite.pr_cdcritic 
                           WHEN pc_horario_limite.pr_cdcritic <> ?
-       aux_dscritic = pc_horario_limite.pr_dscritic
+       aux_dscritic = TRIM(pc_horario_limite.pr_dscritic)
                           WHEN pc_horario_limite.pr_dscritic <> ?. 
 
-IF aux_cdcritic <> 0   OR
-   aux_dscritic <> ""  THEN
+IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> ""  THEN
    DO:
-      IF aux_dscritic = "" THEN
+      IF TRIM(aux_dscritic) = "" THEN
          DO:
-            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                               NO-LOCK NO-ERROR.
+            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
             
-            IF AVAIL crapcri THEN
-               ASSIGN aux_dscritic = crapcri.dscritic.
+            IF AVAILABLE crapcri THEN
+               ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
             ELSE
-               ASSIGN aux_dscritic =  "Nao foi possivel validar o horario " +
-                                      "limite.".
-
+               ASSIGN aux_dscritic =  "Nao foi possivel validar o horario limite.".
          END.
 
-      ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                            "</dsmsgerr>".  
+      ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                            "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
       RETURN "NOK".
 
@@ -100,20 +97,11 @@ IF aux_cdcritic <> 0   OR
 CREATE xml_operacao.
 
 ASSIGN xml_operacao.dslinxml = "<HORARIO>" + 
-                                    "<hrlimini>" +  
-                                           TRIM(STRING(aux_hrlimini,"HH:MM:SS")) +
-                                    "</hrlimini>" + 
-                                    "<hrlimfim>" +  
-                                           TRIM(STRING(aux_hrlimfim,"HH:MM:SS")) +
-                                    "</hrlimfim>" +
-                                    "<idesthor>" +  
-                                           TRIM(STRING(aux_idesthor)) +
-                                    "</idesthor>" +
+                                    "<hrlimini>" + TRIM(STRING(aux_hrlimini,"HH:MM:SS")) + "</hrlimini>" + 
+                                    "<hrlimfim>" + TRIM(STRING(aux_hrlimfim,"HH:MM:SS")) + "</hrlimfim>" +
+                                    "<idesthor>" + TRIM(STRING(aux_idesthor))            + "</idesthor>" +
                                "</HORARIO>".
 
 RETURN "OK".
 
 /*............................................................................*/
-
-
-
