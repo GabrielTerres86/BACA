@@ -134,6 +134,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
   --
   --             08/08/2018 - Ajustes pagamento de Empréstimo
   --                          PJ 450 - Diego Simas - AMcom
+  --                          
+  --             23/08/2018 - Apresentar mensagem quando o valor do pagamento
+  --                          é maior que o saldo devedor do empréstimo
+  --                          PJ 450 - Diego Simas - AMcom                            
+  --
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -363,7 +368,7 @@ DECLARE
                               pr_des_erro => vr_dscritic);
 
        vr_saldo_devedor_total := vr_saldo_devedor_59dias +
-			                           vr_vljuros60 +
+                                 vr_vljuros60 +
                                  vr_valor_iof_debitar;
 
        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -613,7 +618,7 @@ END pc_busca_saldos_devedores;
 
     --Variaveis Locais
     vr_despreju VARCHAR2(200);
-		vr_inprejuz INTEGER;
+    vr_inprejuz INTEGER;
 
     --Variaveis de Indice
     vr_index PLS_INTEGER;
@@ -763,15 +768,12 @@ END pc_busca_saldos_devedores;
     CURSOR cr_tbcc_prejuizo(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE,
                             pr_nrdconta tbcc_prejuizo.nrdconta%TYPE)IS
       SELECT prej.vlsdprej
-			     , prej.vljur60_ctneg
-					 , prej.vljur60_lcred
-			     , prej.vljuprej
-					 , sld.vliofmes
-					 , prej.nrdiarefju
-					 , prej.nrmesrefju
-					 , prej.nranorefju
-					 , prej.idprejuizo
-					 , prej.dtinclusao
+           , prej.vljur60_ctneg
+           , prej.vljur60_lcred
+           , prej.vljuprej
+           , sld.vliofmes
+           , prej.idprejuizo
+           , prej.dtinclusao
         FROM tbcc_prejuizo prej
         LEFT JOIN crapsld sld
                ON sld.nrdconta = prej.nrdconta
@@ -786,10 +788,6 @@ END pc_busca_saldos_devedores;
     vr_vlttjurs           tbcc_prejuizo.vljuprej%TYPE;
     vr_vltotiof           crapsld.vliofmes%TYPE := 0;
 
-		vr_diarefju  number(2);
-    vr_mesrefju  number(2);
-    vr_anorefju  number(4);
-
     vr_vljupre_prov NUMBER:=0;
 
     -- erros
@@ -799,40 +797,31 @@ END pc_busca_saldos_devedores;
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000);        --> Desc. Erro
 
-		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
-		 OPEN BTCH0001.cr_crapdat(pr_cdcooper);
-		 FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-		 CLOSE BTCH0001.cr_crapdat;
-		 
-		 OPEN cr_tbcc_prejuizo(pr_cdcooper => pr_cdcooper,
+     OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+     CLOSE BTCH0001.cr_crapdat;
+
+     OPEN cr_tbcc_prejuizo(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta);
      FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
 
-	   -- Calcula os juros remuneratórios desde a última data de pagamento/débito até o dia atual
-			vr_diarefju  := nvl(rw_tbcc_prejuizo.nrdiarefju, to_char(rw_tbcc_prejuizo.dtinclusao, 'DD'));
-			vr_mesrefju  := nvl(rw_tbcc_prejuizo.nrmesrefju, to_char(rw_tbcc_prejuizo.dtinclusao, 'MM'));
-			vr_anorefju  := nvl(rw_tbcc_prejuizo.nranorefju, to_char(rw_tbcc_prejuizo.dtinclusao, 'YYYY'));
+		 IF cr_tbcc_prejuizo%FOUND THEN
+			 PREJ0003.pc_calc_juros_remun_prov(pr_cdcooper => pr_cdcooper
+			                                 , pr_nrdconta => pr_nrdconta
+																			 , pr_vljuprov => vr_vljupre_prov
+																			 , pr_cdcritic => vr_cdcritic
+																			 , pr_dscritic => vr_dscritic);
 
-			prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
-																					pr_ehmensal => FALSE,
-																					pr_dtdpagto => rw_crapdat.dtmvtolt,
-																					pr_idprejuizo => rw_tbcc_prejuizo.idprejuizo,
-																					pr_vljpreju => vr_vljupre_prov,
-																					pr_diarefju => vr_diarefju,
-																					pr_mesrefju => vr_mesrefju,
-																					pr_anorefju => vr_anorefju,
-																					pr_des_reto => vr_dscritic);
+				vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej +
+											 rw_tbcc_prejuizo.vljur60_ctneg +
+											 rw_tbcc_prejuizo.vljur60_lcred;
+				vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
+				vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
+		 END IF;
 
-    IF cr_tbcc_prejuizo%FOUND THEN
-      vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej +
-			               rw_tbcc_prejuizo.vljur60_ctneg +
-										 rw_tbcc_prejuizo.vljur60_lcred;
-      vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
-      vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
-    END IF;
-		
-		CLOSE cr_tbcc_prejuizo;
+    CLOSE cr_tbcc_prejuizo;
 
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -874,10 +863,10 @@ END pc_busca_saldos_devedores;
                           ,pr_tag_pai  => 'Dados'
                           ,pr_posicao  => 0
                           ,pr_tag_nova => 'juremune'
-                          ,pr_tag_cont => to_char(vr_vljupre_prov,
+                          ,pr_tag_cont => to_char(vr_vljupre_prov + vr_vlttjurs,
                                                  '9G999G990D00',
                                                  'nls_numeric_characters='',.''')
-                          ,pr_des_erro => vr_dscritic);                      
+                          ,pr_des_erro => vr_dscritic);
 
     EXCEPTION
         WHEN vr_exc_erro THEN
@@ -899,17 +888,15 @@ END pc_busca_saldos_devedores;
      Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
      Sigla   : EMPR
      Autor   : Marcel Kohls
-     Data    : Junho/2018.                    Ultima atualizacao: 22/08/2018
+     Data    : Junho/2018.                    Ultima atualizacao:
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que for chamado
 
-     Objetivo  : Efetua pagamento de conta em prejuizo
+     Objetivo  : efetua pagamento de conta em prejuizo
 
-     Alteracoes: Ajustado para envio de codigo de critica e descricao correta
-				 PJ 450 - Diego Simas - AMcom
-
+     Alteracoes:
      ..............................................................................*/
   PROCEDURE pc_paga_prejuz_cc ( pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
                                      ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
@@ -922,17 +909,17 @@ END pc_busca_saldos_devedores;
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2)  IS
 
-	  CURSOR cr_prejuizo IS
-		SELECT prj.vlsdprej
-		     , prj.vljuprej
-				 , prj.vljur60_ctneg
-				 , prj.vljur60_lcred
-				 , prj.vlsldlib
-		  FROM tbcc_prejuizo prj
-		 WHERE prj.cdcooper = pr_cdcooper
-		   AND prj.nrdconta = pr_nrdconta
-			 AND prj.dtliquidacao IS NULL;
-		rw_prejuizo cr_prejuizo%ROWTYPE;
+    CURSOR cr_prejuizo IS
+    SELECT prj.vlsdprej
+         , prj.vljuprej
+         , prj.vljur60_ctneg
+         , prj.vljur60_lcred
+         , prj.vlsldlib
+      FROM tbcc_prejuizo prj
+     WHERE prj.cdcooper = pr_cdcooper
+       AND prj.nrdconta = pr_nrdconta
+       AND prj.dtliquidacao IS NULL;
+    rw_prejuizo cr_prejuizo%ROWTYPE;
 
     -- erros
     vr_exc_erro EXCEPTION;
@@ -941,13 +928,14 @@ END pc_busca_saldos_devedores;
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000);        --> Desc. Erro
 
-		vr_slddev NUMBER;
+    vr_slddev NUMBER;
+		vr_juprej_prov NUMBER;
 
-		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
-		OPEN BTCH0001.cr_crapdat(pr_cdcooper);
-		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-		CLOSE BTCH0001.cr_crapdat;
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
 
     pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -958,61 +946,73 @@ END pc_busca_saldos_devedores;
                           ,pr_tag_cont => NULL
                           ,pr_des_erro => vr_dscritic);
 
-		OPEN cr_prejuizo;
-		FETCH cr_prejuizo INTO rw_prejuizo;
-		CLOSE cr_prejuizo;
+    OPEN cr_prejuizo;
+    FETCH cr_prejuizo INTO rw_prejuizo;
+    CLOSE cr_prejuizo;
 
-		vr_slddev := rw_prejuizo.vlsdprej +
-		             rw_prejuizo.vljuprej +
-								 rw_prejuizo.vljur60_ctneg +
-								 rw_prejuizo.vljur60_lcred;
+		PREJ0003.pc_calc_juros_remun_prov(pr_cdcooper => pr_cdcooper
+		                                , pr_nrdconta => pr_nrdconta
+																		, pr_vljuprov => vr_juprej_prov
+																		, pr_cdcritic => vr_cdcritic
+																		, pr_dscritic => vr_dscritic);
 
-		IF (pr_vlrpagto + nvl(pr_vlrabono, 0)) > vr_slddev THEN
-			vr_dscritic := 'O valor total informado para pagamento é maior que o saldo devedor.';
+    vr_slddev := rw_prejuizo.vlsdprej +
+                 rw_prejuizo.vljuprej +
+                 rw_prejuizo.vljur60_ctneg +
+                 rw_prejuizo.vljur60_lcred +
+								 vr_juprej_prov;
 
-			RAISE vr_exc_erro;
+    IF (pr_vlrpagto + nvl(pr_vlrabono, 0)) > vr_slddev THEN
+      vr_dscritic := 'O valor total informado para pagamento é maior que o saldo devedor.';
+
+      RAISE vr_exc_erro;
+    END IF;
+
+		IF pr_vlrpagto > PREJ0003.fn_sld_cta_prj(pr_cdcooper, pr_nrdconta) THEN
+			vr_dscritic := 'O valor informado para pagamento é maior que o saldo disponível.';
+
+      RAISE vr_exc_erro;
 		END IF;
 
-		IF pr_vlrpagto > rw_prejuizo.vlsldlib THEN
-			vr_dscritic := 'O valor informado para pagamento é maior que o saldo liberado para operações na conta.';
-
-			RAISE vr_exc_erro;
-		END IF;
-
-		PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
-		                           , pr_nrdconta => pr_nrdconta
-															 , pr_cdoperad => '1'
-															 , pr_vllanmto => pr_vlrpagto
-															 , pr_dtmvtolt => rw_crapdat.dtmvtolt
-															 , pr_cdcritic => vr_cdcritic
-															 , pr_dscritic => vr_dscritic);
-
-		IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-			RAISE vr_exc_erro;
-		END IF;
-
-    PREJ0003.pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
-		                            , pr_nrdconta => pr_nrdconta
-																, pr_vlrpagto => pr_vlrpagto
-																, pr_vlrabono => pr_vlrabono
-																, pr_cdcritic => vr_cdcritic
-																, pr_dscritic => vr_dscritic);
+    PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => pr_nrdconta
+                               , pr_cdoperad => '1'
+                               , pr_vllanmto => pr_vlrpagto
+                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                               , pr_cdcritic => vr_cdcritic
+                               , pr_dscritic => vr_dscritic);
 
     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-			RAISE vr_exc_erro;
-		END IF;
+      RAISE vr_exc_erro;
+    END IF;
 
-		COMMIT;
+    PREJ0003.pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
+                                , pr_nrdconta => pr_nrdconta
+                                , pr_vlrpagto => pr_vlrpagto
+                                , pr_vlrabono => pr_vlrabono
+                                , pr_cdcritic => vr_cdcritic
+                                , pr_dscritic => vr_dscritic);
+
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    COMMIT;
 
     EXCEPTION
-        EXCEPTION
         WHEN vr_exc_erro THEN
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
+
+					pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
           ROLLBACK;
         WHEN OTHERS THEN
           pr_cdcritic := 0;
           pr_dscritic := 'Não foi possível efetuar o pagamento do prejuízo. ERRO -> ' || SQLERRM ;
+
+					pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
           ROLLBACK;
   END pc_paga_prejuz_cc;
 
@@ -1033,7 +1033,7 @@ END pc_busca_saldos_devedores;
   Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
   Sigla   : EMPR
   Autor   : Diego Simas
-  Data    : Agosto/2018.                    Ultima atualizacao:
+  Data    : Agosto/2018.                    Ultima atualizacao: 23/08/2018
 
   Dados referentes ao programa:
 
@@ -1041,24 +1041,59 @@ END pc_busca_saldos_devedores;
 
   Objetivo  : Efetua pagamento de empréstimo.
 
-  Alteracoes:
+  Alteracoes: 23/08/2018 - Apresentar mensagem quando o valor do pagamento
+                           é maior que o saldo devedor do empréstimo
+                           PJ 450 - Diego Simas - AMcom   
 
   ..............................................................................*/
 
     -- erros
     vr_exc_erro EXCEPTION;
 
-    --Variaveis de calculo
-      vr_idvlrmin  NUMBER;
-      vr_vltotpag  NUMBER;
+    --Variaveis de trabalho
+    vr_idvlrmin  NUMBER;
+    vr_vltotpag  NUMBER;
+    vr_qtregist  NUMBER;
+    vr_tab_dados_epr empr0001.typ_tab_dados_epr;
+    vr_tab_erro  gene0001.typ_tab_erro;
+    vr_des_reto VARCHAR2(3);
+    vr_vlaliqui crapepr.vlsdeved%TYPE;
+    vr_index INTEGER;
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(1000);        --> Desc. Erro
 
-		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    -- Variáveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
-		   cecred.gene0001.pc_informa_acesso('TELA_ATENDA_DEPOSVIS.pc_paga_emprestimo_ct');
+    
+       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                                pr_cdcooper => vr_cdcooper,
+                                pr_nmdatela => vr_nmdatela,
+                                pr_nmeacao  => vr_nmeacao,
+                                pr_cdagenci => vr_cdagenci,
+                                pr_nrdcaixa => vr_nrdcaixa,
+                                pr_idorigem => vr_idorigem,
+                                pr_cdoperad => vr_cdoperad,
+                                pr_dscritic => vr_dscritic);
+
+       -- Se retornou alguma crítica
+       IF TRIM(vr_dscritic) IS NOT NULL THEN
+         -- Levanta exceção
+         vr_cdcritic := 0;
+         RAISE vr_exc_erro;
+       END IF;
+       
+       cecred.gene0001.pc_informa_acesso('TELA_ATENDA_DEPOSVIS.pc_paga_emprestimo_ct');
        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -1068,27 +1103,82 @@ END pc_busca_saldos_devedores;
                           ,pr_tag_cont => NULL
                           ,pr_des_erro => vr_dscritic);
 
-				OPEN BTCH0001.cr_crapdat(pr_cdcooper);
-				FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-				CLOSE BTCH0001.cr_crapdat;
+        OPEN BTCH0001.cr_crapdat(pr_cdcooper);
+        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        CLOSE BTCH0001.cr_crapdat;
 
-			  IF pr_vlrpagto > PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta) THEN
-					vr_dscritic := 'Valor informado para pagamento é maior que o saldo disponível.';
+        -- PJ 450 -- Diego Simas (AMcom) -- Início
+        
+        /* Procedure para obter dados de emprestimos do associado */
+        EMPR0001.pc_obtem_dados_empresti(pr_cdcooper   => vr_cdcooper               --> Cooperativa conectada
+                                        ,pr_cdagenci   => to_number(vr_cdagenci, 0) --> Código da agência
+                                        ,pr_nrdcaixa   => to_number(vr_nrdcaixa, 0) --> Número do caixa
+                                        ,pr_cdoperad   => vr_cdoperad               --> Código do operador
+                                        ,pr_nmdatela   => 'ATENDA'                  --> Nome datela conectada
+                                        ,pr_idorigem   => to_number(vr_idorigem, 0) --> Indicador da origem da chamada
+                                        ,pr_nrdconta   => pr_nrdconta               --> Conta do associado
+                                        ,pr_idseqttl   => 1                         --> Sequencia de titularidade da conta
+                                        ,pr_rw_crapdat => rw_crapdat                --> Vetor com dados de parâmetro (CRAPDAT)
+                                        ,pr_dtcalcul   => rw_crapdat.dtmvtolt       --> Data solicitada do calculo
+                                        ,pr_nrctremp   => nvl(pr_nrctremp,0)    --> Número contrato empréstimo
+                                        ,pr_cdprogra   => 'ATENDA'              --> Programa conectado
+                                        ,pr_inusatab   => false                 --> Indicador de utilização da tabela
+                                        ,pr_flgerlog   => 'S'                   --> Gerar log S/N
+                                        ,pr_flgcondc   => false                 --> Mostrar emprestimos liquidados sem prejuizo
+                                        ,pr_nmprimtl   => null                  --> Nome Primeiro Titular
+                                        ,pr_tab_parempctl  => null              --> Dados tabela parametro
+                                        ,pr_tab_digitaliza => null              --> Dados tabela parametro
+                                        ,pr_nriniseq       => 1                 --> Numero inicial da paginacao
+                                        ,pr_nrregist       => 1                 --> Numero de registros por pagina
+                                        ,pr_qtregist       => vr_qtregist       --> Qtde total de registros
+                                        ,pr_tab_dados_epr  => vr_tab_dados_epr  --> Saida com os dados do empréstimo
+                                        ,pr_des_reto       => vr_des_reto       --> Retorno OK / NOK
+                                        ,pr_tab_erro       => vr_tab_erro);     --> Tabela com possíves erros
 
-					RAISE vr_exc_erro;
-				END IF;
-				
-				vr_idvlrmin := 0;
+       IF vr_des_reto = 'NOK' THEN
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+             vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+             vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          ELSE
+             vr_cdcritic := 0;
+             vr_dscritic := 'Não foi possivel obter dados de emprestimos.';
+          END IF;
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- ler os registros de emprestimos e incluir no xml
+        vr_index := vr_tab_dados_epr.first;
+
+        vr_vlaliqui := vr_tab_dados_epr(vr_index).vlsdeved +
+                       vr_tab_dados_epr(vr_index).vlmtapar +
+                       vr_tab_dados_epr(vr_index).vlmrapar +
+                       vr_tab_dados_epr(vr_index).vliofcpl;
+
+        IF pr_vlrpagto > vr_vlaliqui THEN
+           vr_cdcritic := 0;
+           vr_dscritic := 'Valor superior ao saldo devedor! Valor Máximo permitido: ' || 
+                          to_char(vr_vlaliqui, '9G999G990D00', 'nls_numeric_characters='',.''');
+           RAISE vr_exc_erro;
+        END IF;
+        -- PJ 450 -- Diego Simas (AMcom) -- Fim
+
+        IF pr_vlrpagto > PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta) THEN
+          vr_dscritic := 'Valor informado para pagamento é maior que o saldo disponível.';
+
+          RAISE vr_exc_erro;
+        END IF;
+
+        vr_idvlrmin := 0;
 
         PREJ0003.pc_pagar_contrato_emprestimo(pr_cdcooper =>  pr_cdcooper,
                                                       pr_nrdconta => pr_nrdconta,
-                                                      pr_cdagenci => 1, 
+                                                      pr_cdagenci => 1,
                                                       pr_nrctremp => pr_nrctremp,
-                                                      pr_nrparcel => 1, 
+                                                      pr_nrparcel => 1,
                                                       pr_cdoperad => '1',
                                                       pr_vlrpagto => pr_vlrpagto,
-																											pr_vlrabono => pr_vlrabono,
-                                                      pr_idorigem => 1,  
+                                                      pr_vlrabono => pr_vlrabono,
+                                                      pr_idorigem => 1,
                                                       pr_idvlrmin => vr_idvlrmin,
                                                       pr_vltotpag => vr_vltotpag,
                                                       pr_cdcritic => vr_cdcritic,
@@ -1098,49 +1188,49 @@ END pc_busca_saldos_devedores;
          RAISE vr_exc_erro;
        END IF;
 
-			 IF vr_vltotpag > 0 THEN
-				 IF vr_vltotpag - pr_vlrabono > 0 THEN
-					 PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
-																			 , pr_nrdconta => pr_nrdconta
-																			 , pr_vlrlanc => vr_vltotpag - nvl(pr_vlrabono,0)
-																			 , pr_dtmvtolt => rw_crapdat.dtmvtolt
-																			 , pr_cdcritic => vr_cdcritic
-																			 , pr_dscritic => vr_dscritic);
+       IF vr_vltotpag > 0 THEN
+         IF vr_vltotpag - pr_vlrabono > 0 THEN
+           PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
+                                       , pr_nrdconta => pr_nrdconta
+                                       , pr_vlrlanc => vr_vltotpag - nvl(pr_vlrabono,0)
+                                       , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                       , pr_cdcritic => vr_cdcritic
+                                       , pr_dscritic => vr_dscritic);
 
-					 IF  nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-						 RAISE vr_exc_erro;
-					 END IF;
-					END IF;
-			 ELSE
-				 vr_dscritic := 'Nenhum valor foi pago.';
+           IF  nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_erro;
+           END IF;
+          END IF;
+       ELSE
+         vr_dscritic := 'Nenhum valor foi pago.';
 
-				 RAISE vr_exc_erro;
-			 END IF;
+         RAISE vr_exc_erro;
+       END IF;
 
-			 COMMIT;
-			 
-			 GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+       COMMIT;
+
+       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
                           ,pr_posicao  => 0
                           ,pr_tag_nova => 'msg'
                           ,pr_tag_cont => 'Pagamento efetuado no valor de: ' ||
-													                to_char(vr_vltotpag,
+                                          to_char(vr_vltotpag,
                                                  '9G999G990D00',
                                                  'nls_numeric_characters='',.''')
                           ,pr_des_erro => vr_dscritic);
     EXCEPTION
         WHEN vr_exc_erro THEN
-					pr_cdcritic := vr_cdcritic;
-					pr_dscritic := vr_dscritic;
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
 
           pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
-				  ROLLBACK;
+          ROLLBACK;
         WHEN OTHERS THEN
           pr_cdcritic := 0;
-					pr_dscritic := 'Erro não tratado na rotina TELA_ATENDA_DEPOSVIS.pc_paga_emprestimo_ct: ' || SQLERRM;
+          pr_dscritic := 'Erro não tratado na rotina TELA_ATENDA_DEPOSVIS.pc_paga_emprestimo_ct: ' || SQLERRM;
 
-					pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
           ROLLBACK;
   END pc_paga_emprestimo_ct;
@@ -1233,7 +1323,7 @@ END pc_busca_saldos_devedores;
   vr_despreju VARCHAR2(200);
   vr_dataprej DATE;
   vr_dataatua DATE;
-	vr_inprejuz INTEGER;
+  vr_inprejuz INTEGER;
 
   --Variaveis de Indice
   vr_index PLS_INTEGER;
@@ -1453,25 +1543,25 @@ DECLARE
 
   vr_exc_saida  EXCEPTION;  --> Exceção para o caso de saldo indisponível na base de dados
   vr_qtddiaatr  INTEGER;                 --> Quantidade de dias de atraso da conta
-	vr_jur60_cneg NUMBER;                 --> Juros +60 (Hist. 37 + Hist. 57)
-	vr_jur60_cesp NUMBER;                 --> Juros +60 (Hist. 38)
-	vr_cdcritic   crapcri.cdcritic%TYPE;
-	vr_dscritic   crapcri.dscritic%TYPE;
+  vr_jur60_cneg NUMBER;                 --> Juros +60 (Hist. 37 + Hist. 57)
+  vr_jur60_cesp NUMBER;                 --> Juros +60 (Hist. 38)
+  vr_cdcritic   crapcri.cdcritic%TYPE;
+  vr_dscritic   crapcri.dscritic%TYPE;
 BEGIN
     pc_busca_saldos_juros60_det(pr_cdcooper => pr_cdcooper
-		                         , pr_nrdconta => pr_nrdconta
-														 , pr_qtdiaatr => pr_qtdiaatr
-														 , pr_vlsld59d => pr_vlsld59d
-														 , pr_vljucneg => vr_jur60_cneg
-														 , pr_vljucesp => vr_jur60_cesp
-														 , pr_cdcritic => vr_cdcritic
-														 , pr_dscritic => vr_dscritic);
+                             , pr_nrdconta => pr_nrdconta
+                             , pr_qtdiaatr => pr_qtdiaatr
+                             , pr_vlsld59d => pr_vlsld59d
+                             , pr_vljucneg => vr_jur60_cneg
+                             , pr_vljucesp => vr_jur60_cesp
+                             , pr_cdcritic => vr_cdcritic
+                             , pr_dscritic => vr_dscritic);
 
-		IF vr_cdcritic >0 OR vr_dscritic IS NOT NULL THEN
-			RAISE vr_exc_saida;
-		END IF;
+    IF vr_cdcritic >0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
 
-		pr_vljuro60 := vr_jur60_cneg + vr_jur60_cesp;
+    pr_vljuro60 := vr_jur60_cneg + vr_jur60_cesp;
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_cdcritic := vr_cdcritic;
@@ -1486,10 +1576,10 @@ END pc_busca_saldos_juros60;
 PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> Código da cooperativa
                                     , pr_nrdconta IN crapris.nrdconta%TYPE --> Conta do cooperado
                                     , pr_qtdiaatr IN NUMBER DEFAULT NULL --> Quantidade de dias de atraso (se não informado, a procedure recupera da base)
-																		, pr_dtlimite IN DATE   DEFAULT NULL --> Data limite para filtro dos lançamentos na CRAPLCM
+                                    , pr_dtlimite IN DATE   DEFAULT NULL --> Data limite para filtro dos lançamentos na CRAPLCM
                                     , pr_vlsld59d OUT NUMBER             --> Saldo até 59 dias (saldo devedor - juros +60)
                                     , pr_vljucneg OUT NUMBER             --> Juros +60 (Hist. 37 + 57 + 2718)
-																  	, pr_vljucesp OUT NUMBER             -- Juros + 60 (Hist. 38)
+                                    , pr_vljucesp OUT NUMBER             -- Juros + 60 (Hist. 38)
                                     , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     , pr_dscritic OUT crapcri.dscritic%TYPE)  IS          --> Valor dos juros +60
 
@@ -1501,36 +1591,36 @@ DECLARE
   SELECT lcm.vllanmto
        , lcm.dtmvtolt
        , his.indebcre
-			 , his.dshistor
-			 , his.cdhistor
+       , his.dshistor
+       , his.cdhistor
     FROM craplcm lcm
        , craphis his
    WHERE lcm.cdcooper   = pr_cdcooper
      AND lcm.nrdconta   = pr_nrdconta
      AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
-		 AND (pr_dtlimite IS NULL OR lcm.dtmvtolt <= pr_dtlimite)
-		 AND (his.indebcre = 'D' 
-		  OR (his.indebcre = 'C' 
-		 AND NOT EXISTS ( 
-		       SELECT 1
-					   FROM craplcm aux
-						WHERE aux.cdcooper = lcm.cdcooper
-						  AND aux.nrdconta = lcm.nrdconta
-							AND aux.dtmvtolt = lcm.dtmvtolt
-							AND aux.nrdocmto = lcm.nrdocmto
-							AND aux.cdhistor = 2719 
-							AND aux.vllanmto = lcm.vllanmto
-		     )))
-		 AND his.cdhistor   NOT IN (2718, 2719)
+     AND (pr_dtlimite IS NULL OR lcm.dtmvtolt <= pr_dtlimite)
+     AND (his.indebcre = 'D'
+      OR (his.indebcre = 'C'
+     AND NOT EXISTS (
+           SELECT 1
+             FROM craplcm aux
+            WHERE aux.cdcooper = lcm.cdcooper
+              AND aux.nrdconta = lcm.nrdconta
+              AND aux.dtmvtolt = lcm.dtmvtolt
+              AND aux.nrdocmto = lcm.nrdocmto
+              AND aux.cdhistor = 2719
+              AND aux.vllanmto = lcm.vllanmto
+         )))
+     AND his.cdhistor   NOT IN (2718, 2719)
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
    ORDER BY dtmvtolt ASC, indebcre DESC;
   rw_craplcm cr_craplcm%ROWTYPE;
-	
+
   -- Busca o limite de crédito atual do cooperado
   CURSOR cr_limite IS
   SELECT nvl(ass.vllimcre,0) vllimcre
-    FROM crapass asssss
+    FROM crapass ass
    WHERE ass.cdcooper = pr_cdcooper
     AND ass.nrdconta = pr_nrdconta;
 
@@ -1565,10 +1655,10 @@ DECLARE
   vr_data_corte_dias_uteis DATE; --> Data de corte para contagem de dias de atraso em dias corridos
   vr_dtcorte_rendaprop     DATE; --> Data de corte de implantação do Rendas a Apropriar (não apropriação de receita dos juros +60)
   vr_data_59dias_atraso    DATE; --> Data em que a conta atingiu 59 dias de atraso (ADP)
-	vr_jur60_37              NUMBER;
-	vr_jur60_57              NUMBER;
-	vr_jur60_2718            NUMBER;
-	vr_jur60_38              NUMBER;
+  vr_jur60_37              NUMBER;
+  vr_jur60_57              NUMBER;
+  vr_jur60_2718            NUMBER;
+  vr_jur60_38              NUMBER;
 
   vr_vlrlimite NUMBER;
 
@@ -1611,7 +1701,7 @@ BEGIN
     END IF;
 
     pr_vljucneg := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
-		pr_vljucesp := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
+    pr_vljucesp := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
 
     IF rw_saldos.dtrisclq IS NULL THEN -- Se a conta não está em atraso
       pr_vlsld59d := 0;
@@ -1643,36 +1733,36 @@ BEGIN
 
             -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
             FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso) LOOP
-							IF rw_craplcm.cdhistor IN (37,57,2718) THEN
-								pr_vljucneg := pr_vljucneg + rw_craplcm.vllanmto;
-							ELSIF rw_craplcm.cdhistor = 38 THEN
-								pr_vljucesp := pr_vljucesp + rw_craplcm.vllanmto;
-							ELSIF rw_craplcm.indebcre = 'D' THEN
-								pr_vlsld59d := pr_vlsld59d + rw_craplcm.vllanmto;
-							ELSE
-								IF pr_vljucneg > 0 THEN
+              IF rw_craplcm.cdhistor IN (37,57,2718) THEN
+                pr_vljucneg := pr_vljucneg + rw_craplcm.vllanmto;
+              ELSIF rw_craplcm.cdhistor = 38 THEN
+                pr_vljucesp := pr_vljucesp + rw_craplcm.vllanmto;
+              ELSIF rw_craplcm.indebcre = 'D' THEN
+                pr_vlsld59d := pr_vlsld59d + rw_craplcm.vllanmto;
+              ELSE
+                IF pr_vljucneg > 0 THEN
                   -- Amortiza os juros + 60 (Hist. 37 + Hist. 57)
                   IF rw_craplcm.vllanmto >= pr_vljucneg THEN
                     rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vljucneg;
-										pr_vljucneg := 0;
+                    pr_vljucneg := 0;
                   ELSE
                     pr_vljucneg := pr_vljucneg - rw_craplcm.vllanmto;
                     rw_craplcm.vllanmto := 0;
                   END IF;
                 END IF;
 
-								IF rw_craplcm.vllanmto > 0 THEN
-									IF pr_vljucesp > 0 THEN
-										-- Amortiza os juros + 60 (Hist. 38)
-										IF rw_craplcm.vllanmto >= pr_vljucesp THEN
-											rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vljucesp;
-											pr_vljucesp := 0;
-										ELSE
-											pr_vljucesp := pr_vljucesp - rw_craplcm.vllanmto;
-											rw_craplcm.vllanmto := 0;
-										END IF;
-									END IF;
-								END IF;
+                IF rw_craplcm.vllanmto > 0 THEN
+                  IF pr_vljucesp > 0 THEN
+                    -- Amortiza os juros + 60 (Hist. 38)
+                    IF rw_craplcm.vllanmto >= pr_vljucesp THEN
+                      rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vljucesp;
+                      pr_vljucesp := 0;
+                    ELSE
+                      pr_vljucesp := pr_vljucesp - rw_craplcm.vllanmto;
+                      rw_craplcm.vllanmto := 0;
+                    END IF;
+                  END IF;
+                END IF;
 
                 IF rw_craplcm.vllanmto > 0 THEN
                   -- Amortiza o saldo devedor até 59 dias
@@ -1682,7 +1772,7 @@ BEGIN
                     pr_vlsld59d := pr_vlsld59d - rw_craplcm.vllanmto;
                   END IF;
                 END IF;
-							END IF;
+              END IF;
             END LOOP;
          END IF;
       END IF;
