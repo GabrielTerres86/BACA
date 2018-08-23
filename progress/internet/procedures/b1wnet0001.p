@@ -288,6 +288,13 @@
                16/06/2018 - Ajuste na procedure grava-boleto para utilizar o convenio
                             por parametro quando o codigo da carteira for 5-Quanta ou 
                             6-Recuperacao de Credito. (PRJ468 - Previdencia - Rafael)   
+               
+               23/08/2018 - Alteraçao na gerencia-sacados para quando houver alteraçao 
+                            de dados do sacado, e existem títulos deste sacado com atraso
+                            (CYBER), sinalizar na tabela CRAPCYB que ocorreram alteraçoes 
+                            cadastrais, para cada um dos títulos deste sacado em atraso
+                            (Andrew Albuquerque - GFT)
+                             
 
 .............................................................................*/
 
@@ -3827,6 +3834,35 @@ PROCEDURE gerencia-sacados:
                             END.
 
                     END.
+
+                    /* AWAE: Se houve alteraçao de dados do sacado, e existem títulos deste sacado 
+                             com atraso (CYBER), sinalizar na tabela CRAPCYB que ocorreram alteraçoes
+                             cadastrais, para cada um dos títulos deste sacado em atraso. */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+                    RUN STORED-PROCEDURE pc_atualiza_dtmancad_cyber
+                        aux_handproc = PROC-HANDLE NO-ERROR
+                                                (INPUT par_cdcooper,
+                                                 INPUT par_nrdconta,
+                                                 INPUT par_nrinssac,
+                                                OUTPUT 0,   /* pr_cdcritic */
+                                                OUTPUT ""). /* pr_dscritic */
+
+                    CLOSE STORED-PROC pc_atualiza_dtmancad_cyber
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                    ASSIGN aux_cdcritic = pc_atualiza_dtmancad_cyber.pr_cdcritic
+                                              WHEN pc_atualiza_dtmancad_cyber.pr_cdcritic <> ?
+                           aux_dscritic = pc_busca_emails_pagador.pr_dscritic
+                                              WHEN pc_busca_emails_pagador.pr_dscritic <> ?.
+
+                    IF  TRIM(aux_dscritic) <> "" THEN
+                        DO:
+                            ASSIGN aux_cdcritic = 0.
+                            UNDO TRANSACAO, LEAVE TRANSACAO.
+                        END.
 
                     /* Inicio - Rotina para cobranca tarifa */
 
