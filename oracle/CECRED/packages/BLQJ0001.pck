@@ -2200,9 +2200,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
               vr_inserlcm := TRUE;
 
           if rw_crapblj.inpessoa = 1 then
-             vr_cdhistor := 1402;
+             vr_cdhistor := 1404;
           else
-             vr_cdhistor := 1403;
+             vr_cdhistor := 1405;
           end if;
 
           lanc0001.pc_gerar_lancamento_conta(
