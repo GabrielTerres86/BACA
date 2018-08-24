@@ -1322,7 +1322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 12/12/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 24/08/2018
   
       Dados referentes ao programa:
   
@@ -1365,6 +1365,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                                pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+                               
+                  24/08/2018 - Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE - TIAGO)                 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -2370,6 +2372,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
     --Fim Bacenjud - SM 1
 	
+    --Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE)    
+    IF pr_nrcpfcgc = pr_nrcpffav THEN    
+      AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_crapcop.cdcooper
+                                    ,pr_nrdconta   => pr_nrdconta
+                                    ,pr_idseqttl   => pr_idseqttl
+                                    ,pr_vlrtotal   => pr_vldocmto
+                                    ,pr_flgagend   => CASE pr_idagenda WHEN 1 THEN 0 ELSE 1 END
+                                    ,pr_idorigem   => pr_idorigem
+                                    ,pr_cdoperacao => 12 --TED
+                                    ,pr_idanalis   => vr_idanalise_fraude
+                                    ,pr_cdcritic   => vr_cdcritic
+                                    ,pr_dscritic   => vr_dscritic);                                     
+                                    
+    END IF;
+
     --> Caso possua processo de analise de fraude, não deve enviar a TED para a cabine
     --> Processo ocorrerá apos o retorno da analise
     IF nvl(vr_idanalise_fraude,0) = 0 THEN 
