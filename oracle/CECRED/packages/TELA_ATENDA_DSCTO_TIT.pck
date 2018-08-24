@@ -9372,7 +9372,8 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
            AND l.nrdconta = pr_nrdconta
            AND l.nrctrlim = decode(nvl(pr_nrctrlim,0), 0, l.nrctrlim, pr_nrctrlim) -- para trazer todos os contratos da conta.
            AND l.tpctrlim = pr_tpctrlim
-         ORDER by l.idhistaltlim DESC;
+         ORDER by l.dtinivig desc, idhistaltlim desc; 
+
       rw_hist_alt_lim cr_hist_alt_lim%ROWTYPE;
 
     BEGIN
@@ -9626,7 +9627,7 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
              ,/*03*/ pr_tpctrlim
              ,/*04*/ rw_crawlim.nrctrlim_nvl
              ,/*05*/ rw_crawlim.dtinivig
-             ,/*06*/ rw_crawlim.dtfimvig
+             ,/*06*/ decode(rw_crawlim.insitlim, 3,SYSDATE,rw_crawlim.dtfimvig) -- Se for Cancelamento, fim é a mesma data de Alteração.
              ,/*07*/ rw_crawlim.vllimite
              ,/*08*/ rw_crawlim.insitlim
              ,/*09*/ SYSDATE
