@@ -781,6 +781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       
       -- Busca dos lançamentos de aplicação dos ultimos 2 dias
       CURSOR cr_lctos(pr_cdcooper NUMBER
+                     ,pr_dtmvtoan DATE
                      ,pr_dtmvtolt DATE
                      ,pr_dtinictd DATE
                      ,pr_vlminctd NUMBER) IS
@@ -810,7 +811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            AND hst.cdhistorico = lap.cdhistor
            -- Utilizar a maior data entre os dois dias úteis anteriores
            -- e a data de início de envio das aplicações para custódia B3
-           AND lap.dtmvtolt >= greatest(pr_dtmvtolt,pr_dtinictd)
+           AND lap.dtmvtolt >= greatest(pr_dtmvtoan,pr_dtinictd)
 		   -- E não podem ser do dia atual
            AND lap.dtmvtolt < pr_dtmvtolt
            --> Aplicação não custodiada ainda
@@ -844,7 +845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            AND hst.cdhistorico = lac.cdhistor
            -- Utilizar a maior data entre os dois dias úteis anteriores
            -- e a data de início de envio das aplicações para custódia B3
-           AND lac.dtmvtolt >= greatest(pr_dtmvtolt,pr_dtinictd)
+           AND lac.dtmvtolt >= greatest(pr_dtmvtoan,pr_dtinictd)
 		   -- E não podem ser do dia atual
            AND lac.dtmvtolt < pr_dtmvtolt
            --> Aplicação não custodiada ainda
@@ -932,7 +933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                    AND ( lac.dtmvtolt < rac.dtvencto OR hst.idtipo_lancto = 3 )
                    -- Utilizar a maior data entre os dois dias úteis anteriores
                    -- e a data de início de envio das aplicações para custódia B3
-                   AND lac.dtmvtolt >= greatest(pr_dtmvtolt,pr_dtinictd)
+                   AND lac.dtmvtolt >= greatest(pr_dtmvtoan,pr_dtinictd)
                    -- E não podem ser do dia atual
                    AND lac.dtmvtolt < pr_dtmvtolt
                    -- Históricos de Resgate
@@ -1055,7 +1056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         IF pr_flenvreg = 'S' THEN 
           -- Buscar todos os movimentos de aplicação dos últimos 2 dias  
           -- que ainda não estejam marcados para envio (idlctcus is null)
-          FOR rw_lcto IN cr_lctos(rw_cop.cdcooper,vr_dtmvto2a,vr_dtinictd,vr_vlinictd) LOOP
+          FOR rw_lcto IN cr_lctos(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd,vr_vlinictd) LOOP
             -- Converter valor aplicação em contas
             vr_qtcotas := fn_converte_valor_em_cota(rw_lcto.vllanmto);
             -- Devemos gerar o registro de Custódia Aplicação
