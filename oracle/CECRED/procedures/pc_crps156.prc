@@ -1086,7 +1086,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
             vr_cdcritic := 484;
           ELSE
               vr_cdcritic := 0;
-              IF (rw_craprpp.cdprodut < 0) THEN
+              IF (rw_craprpp.cdprodut < 1) THEN
             /* Rotina de calculo do saldo da aplicac?o ate a data do movimento */
             APLI0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper,        --> Cooperativa
                                       pr_dstextab  => vr_dstextab_apli,         --> Percentual de IR da aplicac?o
