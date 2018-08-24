@@ -12,7 +12,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jean Michel
-   Data    : Setembro/2014                       Ultima atualizacao: 07/12/2017
+   Data    : Setembro/2014                       Ultima atualizacao: 11/07/2018
   
    Dados referentes ao programa:
   
@@ -26,6 +26,12 @@ BEGIN
                07/12/2017 - Checar a nova forma de bloqueio e aproveitar o processo que ja
                             existe para resgate de conta investimento para reaplicacao.
                             (Jaison/Marcos Martini - PRJ404)
+
+               11/07/2018 - PJ450 Regulatório de Credito - Substituido o Insert na tabela craplcm 
+                            pela chamada da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)  
+
+               15/07/2018 - Desconsiderar Aplicações Programadas
+                            Proj. 411.2 - CIS Corporate
 
   .................................................................................... */
 
@@ -107,6 +113,7 @@ BEGIN
        WHERE rac.cdcooper = pr_cdcooper
          AND rac.cdprodut = cpc.cdprodut
          AND rac.idsaqtot = pr_idsaqtot -- 0 - Ativa / 1 - Encerrada
+         AND cpc.indplano = 0           -- Apenas não programadas
          AND rac.dtvencto <= pr_dtmvtopr;
   
     rw_craprac cr_craprac%ROWTYPE;
@@ -116,17 +123,21 @@ BEGIN
                       pr_nrdconta IN craplac.nrdconta%TYPE,
                       pr_nraplica IN craplac.nraplica%TYPE,
                       pr_dtmvtolt IN craplac.dtmvtolt%TYPE) IS
-    
       SELECT lac.vllanmto,
              lac.cdcooper,
              lac.nrdconta,
              lac.nraplica,
              lac.dtmvtolt
-        FROM craplac lac
+        FROM craplac lac, craprac rac, crapcpc cpc
        WHERE lac.cdcooper = pr_cdcooper
          AND lac.nrdconta = pr_nrdconta
          AND lac.nraplica = pr_nraplica
-         AND lac.dtmvtolt = pr_dtmvtolt;
+         AND lac.dtmvtolt = pr_dtmvtolt
+         AND rac.cdcooper = lac.cdcooper
+         AND rac.nrdconta = lac.nrdconta
+         AND rac.nraplica = lac.nraplica
+         AND cpc.cdprodut = rac.cdprodut
+         AND cpc.indplano = 0; -- Apenas não programadas
   
     rw_craplac cr_craplac%ROWTYPE;
   
@@ -224,6 +235,7 @@ BEGIN
        WHERE rac.cdcooper = pr_cdcooper
          AND rac.cdprodut = cpc.cdprodut
          AND rac.idsaqtot = 0
+         AND cpc.indplano = 0    -- Apenas aplicações não programadas
          AND rac.dtvencto > pr_dtvenini
          AND rac.dtvencto <= pr_dtvenfin;
   
@@ -661,6 +673,7 @@ BEGIN
                                                 pr_cddindex => rw_craprac.cddindex,
                                                 pr_qtdiacar => rw_craprac.qtdiacar,
                                                 pr_idgravir => vr_idgravir,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_craprac.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => vr_idtipbas,
@@ -693,6 +706,7 @@ BEGIN
                                                 pr_cddindex => rw_craprac.cddindex,
                                                 pr_qtdiacar => rw_craprac.qtdiacar,
                                                 pr_idgravir => vr_idgravir,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_craprac.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => vr_idtipbas,
@@ -1606,6 +1620,7 @@ BEGIN
                                                 pr_cddindex => rw_crapcpc.cddindex,
                                                 pr_qtdiacar => rw_crapcpc.qtdiacar,
                                                 pr_idgravir => 1,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_crapcpc.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => 2,
@@ -1632,6 +1647,7 @@ BEGIN
                                                 pr_cddindex => rw_crapcpc.cddindex,
                                                 pr_qtdiacar => rw_crapcpc.qtdiacar,
                                                 pr_idgravir => 1,
+                                                pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
                                                 pr_dtinical => rw_crapcpc.dtmvtolt,
                                                 pr_dtfimcal => rw_crapdat.dtmvtopr,
                                                 pr_idtipbas => 2,

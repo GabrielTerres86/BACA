@@ -107,7 +107,6 @@ $xml .= '</Root>';
 
 $xmlResult = getDataXML($xml);
 $xmlObjeto = getObjectXML($xmlResult);
-
 //----------------------------------------------------------------------------------------------------------------------------------	
 // Controle de Erros
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -131,7 +130,6 @@ if ($operacao == 'VO') {
     echo "cDtrefere.val('" . $dtrefere . "');";
     echo "cDtreffim.val('" . $dtreffim . "');";
 }
-
 if (($cddopcao == 'I' and $operacao == 'VO')) {
 
     $dsextrat = $xmlObjeto->roottag->tags[0]->attributes['DSEXTRAT'];

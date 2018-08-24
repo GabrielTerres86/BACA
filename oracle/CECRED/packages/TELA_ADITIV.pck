@@ -198,7 +198,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela ADITIV
   --
-  -- Alteracoes:
+  -- Alteracoes: 17/08/2018 - Inclusão Apl. Programada
+  --                          Proj. 411.2 - CIS Corporate
   --
   ---------------------------------------------------------------------------
   
@@ -270,15 +271,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     CURSOR cr_craplpp (pr_cdcooper IN craplpp.cdcooper%TYPE
                       ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE
                       ,pr_nrdconta IN crapcop.nrdconta%TYPE) IS
-      SELECT lpp.nrdconta
-            ,lpp.nrctrrpp
+      SELECT craplpp.nrdconta
+            ,craplpp.nrctrrpp
             ,Count(*) qtlancmto
-      FROM craplpp lpp
-      WHERE lpp.cdcooper = pr_cdcooper
-      AND lpp.cdhistor IN (158,496)
-      AND lpp.dtmvtolt > pr_dtmvtolt
-      AND lpp.nrdconta = pr_nrdconta
-      GROUP BY lpp.nrdconta,lpp.nrctrrpp;
+        FROM craplpp craplpp
+       WHERE craplpp.cdcooper = pr_cdcooper 
+         AND craplpp.nrdconta = pr_nrdconta
+         AND craplpp.cdhistor IN (158,496)
+         AND craplpp.dtmvtolt > pr_dtmvtolt
+       GROUP BY craplpp.nrdconta,craplpp.nrctrrpp
+      HAVING Count(*) > 3
+      UNION
+      SELECT rac.nrdconta
+            ,rac.nrctrrpp
+            ,Count(*) qtlancmto
+      FROM crapcpc cpc, craprac rac, craplac lac
+      WHERE rac.cdcooper = pr_cdcooper
+      AND   rac.nrdconta = pr_nrdconta 
+      AND   rac.nrctrrpp > 0                 -- Apenas apl. programadas
+      AND   cpc.cdprodut = rac.cdprodut
+      AND   rac.cdcooper = lac.cdcooper
+      AND   rac.nrdconta = lac.nrdconta
+      AND   rac.nraplica = lac.nraplica 
+      AND   lac.cdhistor in (cpc.cdhsrgap)
+      AND   lac.dtmvtolt > pr_dtmvtolt       
+      GROUP BY rac.nrdconta,rac.nrctrrpp        
+      HAVING Count(*) > 3;
 
     --Contar a quantidade de resgates das contas
     CURSOR cr_craplrg_saque (pr_cdcooper IN craplrg.cdcooper%TYPE

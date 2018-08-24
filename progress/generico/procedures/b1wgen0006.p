@@ -27,7 +27,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0006.p                  
     Autora  : Junior
-    Data    : 12/09/2005                      Ultima atualizacao: 07/02/2018
+    Data    : 12/09/2005                      Ultima atualizacao: 19/07/2018
 
     Dados referentes ao programa:
 
@@ -141,6 +141,8 @@
 
                 18/05/2018 - Validar bloqueio de poupança programada (SM404);
 
+                19/07/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
+				
 ..............................................................................*/
 
 
@@ -269,6 +271,8 @@ PROCEDURE consulta-poupanca:
                 craprpp.cdsitrpp = 5 /* Vencida */  THEN
                 NEXT.
     
+			IF craprpp.cdprodut < 1 THEN
+				DO:
             { sistema/generico/includes/b1wgen0006.i }
                                                              
             IF  aux_vlsdrdpp < 0                        AND
@@ -280,6 +284,41 @@ PROCEDURE consulta-poupanca:
                    aux_dsresgat = "N"         
                    aux_qtsaqppr = 0
                    aux_dsmsgsaq = "".
+				END.
+
+			ELSE
+				DO:
+				
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+					  /* Efetuar a chamada a rotina Oracle */
+					 RUN STORED-PROCEDURE pc_calc_saldo_apl_prog
+
+					 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper /* Código da Cooperativa */
+														 ,INPUT par_cdprogra /* Código do Programa */
+														 ,INPUT par_cdoperad /* Número da Conta */
+														 ,INPUT par_nrdconta /* Número da Conta */
+														 ,INPUT par_idseqttl /* Titular da Conta */
+														 ,INPUT par_idorigem /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+														 ,INPUT craprpp.nrctrrpp /* Número de RPP */
+														 ,INPUT par_dtmvtolt /* Data de Movimento */
+														 ,OUTPUT 0           /* Valor de Saldo RPP    */
+														 ,OUTPUT "").        /* Descrição da crítica */
+                                             
+					/* Fechar o procedimento para buscarmos o resultado */ 
+					 CLOSE STORED-PROC pc_calc_saldo_apl_prog
+						   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+					 
+					 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+				
+					ASSIGN par_vlsldrpp = par_vlsldrpp + pc_calc_saldo_apl_prog.pr_vlsdrdpp
+							   aux_vlsdrdpp = pc_calc_saldo_apl_prog.pr_vlsdrdpp
+							   aux_vlrgtrpp = pc_calc_saldo_apl_prog.pr_vlsdrdpp
+							   aux_dsresgat = "N"         
+							   aux_qtsaqppr = 0
+							   aux_dsmsgsaq = "".
+				END.
 
             /** Totalizar valores de resgate **/
             FOR EACH craplrg WHERE 
@@ -391,6 +430,7 @@ PROCEDURE consulta-poupanca:
                                                "Nao"
                    tt-dados-rpp.dsmsgsaq = aux_dsmsgsaq
                    tt-dados-rpp.cdtiparq = 0
+				   tt-dados-rpp.cdprodut = craprpp.cdprodut
                    tt-dados-rpp.dtsldrpp = IF   AVAIL crabspp THEN 
                                                 crabspp.dtsldrpp
                                            ELSE ?
@@ -622,11 +662,26 @@ PROCEDURE consulta-extrato-poupanca:
     DEF VAR aux_vlstotal AS DECI                                    NO-UNDO.
     DEF VAR aux_vlsldant AS DECI                                    NO-UNDO.
     
+    DEF VAR aux_txaplmes AS DECI                                    NO-UNDO.
+    DEF VAR aux_txaplica AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrdocmto AS INTE                                    NO-UNDO.
+
     DEF VAR aux_listahis AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtiniimu AS DATE                                    NO-UNDO.
     DEF VAR aux_dtfimimu AS DATE                                    NO-UNDO.
     DEF VAR aux_dshistor AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsextrat AS CHAR                                    NO-UNDO.
+
+    /* Variáveis utilizadas para receber clob da rotina no oracle */
+    DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+    DEF VAR xField        AS HANDLE   NO-UNDO. 
+    DEF VAR xText         AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.    
     EMPTY TEMP-TABLE tt-extr-rpp.
@@ -697,6 +752,149 @@ PROCEDURE consulta-extrato-poupanca:
             RETURN "NOK".
         END.
 
+
+    IF  craprpp.cdprodut > 0  THEN
+		DO:
+			/* Inicializando objetos para leitura do XML */ 
+			CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+			CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
+			CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */ 
+			CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+			CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
+
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+			  /* Efetuar a chamada a rotina Oracle */
+			 RUN STORED-PROCEDURE pc_buscar_extrato_apl_prog_car
+				aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper /* Código da Cooperativa */
+												 ,INPUT par_cdoperad /* Código de Operador */
+												 ,INPUT par_nmdatela /* Nome da Tela */
+												 ,INPUT par_idorigem /* Código de Origem */
+												 ,INPUT par_nrdconta /* Número da Conta */
+												 ,INPUT par_idseqttl /* Titular da Conta */
+    											 ,INPUT par_nrctrrpp /* Número da Aplicação */
+												 ,INPUT par_dtiniper /* Data de Movimento Inicial */
+												 ,INPUT par_dtfimper /* Data de Movimento Final */
+												 ,INPUT 0 			 /* Identificador de Listagem de Todos Históricos (Fixo na chamada, 0 – Não / 1 – Sim) */
+												 ,INPUT 0 			 /* Identificador de Log (Fixo na chamada, 0 – Não / 1 – Sim) */
+												 ,INPUT "" 		     /* XML com informacoes de LOG */
+												 ,OUTPUT 0           /* Código da crítica */
+                                                 ,OUTPUT ""          /* Descrição da crítica */
+												 ,OUTPUT ?           /* Descrição da crítica */
+												 ,OUTPUT ""          /* Nome do campo com erro */
+												 ,OUTPUT "").        /* Erros do processo */
+
+
+			/* Fechar o procedimento para buscarmos o resultado */ 
+			 CLOSE STORED-PROC pc_buscar_extrato_apl_prog_car
+				   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+			 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+
+			  /* Busca possíveis erros */ 
+			 ASSIGN aux_cdcritic = 0
+					aux_dscritic = ""
+					aux_cdcritic = pc_buscar_extrato_apl_prog_car.pr_cdcritic 
+								   WHEN pc_buscar_extrato_apl_prog_car.pr_cdcritic <> ?
+					aux_dscritic = pc_buscar_extrato_apl_prog_car.pr_dscritic 
+								   WHEN pc_buscar_extrato_apl_prog_car.pr_dscritic <> ?.
+
+
+			 IF aux_cdcritic > 0 OR 
+				aux_dscritic <> "" THEN
+			 DO:
+				RUN gera_erro (INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT 1,            /** Sequencia **/
+							   INPUT aux_cdcritic,
+							   INPUT-OUTPUT aux_dscritic).
+									   
+				IF  par_flgerlog  THEN
+					RUN proc_gerar_log (INPUT par_cdcooper,
+										INPUT par_cdoperad,
+										INPUT aux_dscritic,
+										INPUT aux_dsorigem,
+										INPUT aux_dstransa,
+										INPUT FALSE,
+										INPUT par_idseqttl,
+										INPUT par_nmdatela,
+										INPUT par_nrdconta,
+									   OUTPUT aux_nrdrowid).
+	
+				RETURN "NOK".
+			 END.
+			
+
+			/* Buscar o XML na tabela de retorno da procedure Progress */ 
+			 ASSIGN xml_req = pc_buscar_extrato_apl_prog_car.pr_clobxmlc.
+			
+			 /* Efetuar a leitura do XML*/ 
+			 SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+			 PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+
+			/* Efetuar a leitura do XML*/ 
+			 SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+			 PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+			 xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+			 xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+			 xRoot:GET-CHILD(xRoot,1).
+			 DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+				 xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+
+				IF xRoot2:SUBTYPE <> "ELEMENT"   THEN 
+				  NEXT. 
+
+
+				 IF xRoot2:NUM-CHILDREN > 0 THEN
+					CREATE tt-extr-rpp.
+
+				 DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+					 xRoot2:GET-CHILD(xField,aux_cont).
+
+					 IF xField:SUBTYPE <> "ELEMENT" THEN 
+						 NEXT. 
+
+					 xField:GET-CHILD(xText,1).                   
+
+					ASSIGN aux_txaplmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplmes"
+						    aux_txaplica = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplica"
+						    aux_nrdocmto = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdocmto". 
+
+					ASSIGN tt-extr-rpp.cdagenci = INTE(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci"                               
+							tt-extr-rpp.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt"                               
+						    tt-extr-rpp.txaplmes = IF  aux_txaplmes > 0  THEN
+													  aux_txaplmes 
+												  ELSE 
+													  0
+						    tt-extr-rpp.txaplica = IF  aux_txaplica > 0 THEN
+													  aux_txaplica 
+												  ELSE 
+													  0
+							tt-extr-rpp.cdbccxlt = INTE(xText:NODE-VALUE) WHEN xField:NAME = "cdbccxlt"
+							tt-extr-rpp.dshistor = xText:NODE-VALUE WHEN xField:NAME = "dshistor"
+						    tt-extr-rpp.nrdocmto = IF aux_nrdocmto <> ? THEN
+													  aux_nrdocmto 
+												  ELSE 
+													  0
+							tt-extr-rpp.indebcre = xText:NODE-VALUE WHEN xField:NAME = "indebcre"
+							tt-extr-rpp.vllanmto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllanmto"
+							tt-extr-rpp.vlsldppr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsldppr"
+							tt-extr-rpp.nrdolote = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdolote"
+							tt-extr-rpp.dsextrat = xText:NODE-VALUE WHEN xField:NAME = "dsextrat".
+
+				END.            
+			END.
+        END.
+	ELSE
+		DO:
+		
     RUN gera-saldo-anterior (INPUT par_cdcooper,
                              INPUT par_nrdconta,
                              INPUT par_nrctrrpp,
@@ -901,7 +1099,7 @@ PROCEDURE consulta-extrato-poupanca:
                tt-extr-rpp.dsextrat = aux_dsextrat.
                                          
     END. /** Fim do FOR EACH craplpp **/
-
+		END.
     IF  par_flgerlog  THEN
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,
@@ -1823,6 +2021,304 @@ PROCEDURE reativar-poupanca:
                                                        "zzz,zzz,zz9"))).
 
             /** Situacao da Poupanca **/
+            IF  aux_cdsitrpp <> craprpp.cdsitrpp  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "cdsitrpp",
+                                         INPUT STRING(aux_cdsitrpp),
+                                         INPUT STRING(craprpp.cdsitrpp)).
+
+            /** Data da Alteracao **/
+            IF  aux_dtaltrpp <> craprpp.dtaltrpp  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtaltrpp",
+                                         INPUT IF  aux_dtaltrpp = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(aux_dtaltrpp,
+                                                      "99/99/9999"),
+                                         INPUT STRING(craprpp.dtaltrpp,
+                                                      "99/99/9999")).
+
+            /** Data do Reinicio **/
+            IF  aux_dtrnirpp <> craprpp.dtrnirpp  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtrnirpp",
+                                         INPUT IF  aux_dtrnirpp = ?  THEN 
+                                                   ""
+                                               ELSE 
+                                                   STRING(aux_dtrnirpp,
+                                                          "99/99/9999"),
+                                         INPUT IF  craprpp.dtrnirpp = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(craprpp.dtrnirpp,
+                                                          "99/99/9999")).
+
+            /** Data do Cancelamento **/
+            IF  aux_dtcancel <> craprpp.dtcancel  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtcancel",
+                                         INPUT IF  aux_dtcancel = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(aux_dtcancel,
+                                                         "99/99/9999"),
+                                         INPUT IF  craprpp.dtcancel = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(craprpp.dtcancel,
+                                                          "99/99/9999")).
+
+            /** Data do Debito **/
+            IF  aux_dtdebito <> craprpp.dtdebito  THEN
+                RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                         INPUT "dtdebito",
+                                         INPUT IF  aux_dtdebito = ?  THEN
+                                                   ""
+                                               ELSE
+                                                   STRING(aux_dtdebito,
+                                                         "99/99/9999"),
+                                         INPUT IF  craprpp.dtdebito = ?  THEN
+                                                   ""
+                                               ELSE 
+                                                   STRING(craprpp.dtdebito,
+                                                          "99/99/9999")).
+        END.
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+/******************************************************************************/
+/**              Procedure para reativar a aplicacao programada              **/
+/******************************************************************************/
+PROCEDURE reativar-aplicacao-programada:
+ 
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctrrpp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+	
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_cdsitrpp AS INTE                                    NO-UNDO.
+
+    DEF VAR aux_dtaltrpp AS DATE                                    NO-UNDO.
+    DEF VAR aux_dtcancel AS DATE                                    NO-UNDO.
+    DEF VAR aux_dtdebito AS DATE                                    NO-UNDO.
+    DEF VAR aux_dtrnirpp AS DATE                                    NO-UNDO.
+
+    DEF VAR aux_vlmaxppr AS DECI                                    NO-UNDO.
+    
+    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.    
+    
+    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Reativar aplicacao programada"
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+        
+    TRANS_POUP:
+
+    DO TRANSACTION ON ERROR  UNDO TRANS_POUP, LEAVE TRANS_POUP 
+                   ON ENDKEY UNDO TRANS_POUP, LEAVE TRANS_POUP:
+
+        DO aux_contador = 1 TO 10:
+
+            FIND craprpp WHERE craprpp.cdcooper = par_cdcooper AND
+                               craprpp.nrdconta = par_nrdconta AND
+                               craprpp.nrctrrpp = par_nrctrrpp 
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+            IF  NOT AVAILABLE craprpp  THEN
+                DO:
+                    IF  LOCKED craprpp  THEN
+                        DO:
+                            IF  aux_contador = 10  THEN
+                                DO:
+                                    FIND craprpp WHERE 
+                                         craprpp.cdcooper = par_cdcooper AND
+                                         craprpp.nrdconta = par_nrdconta AND
+                                         craprpp.nrctrrpp = par_nrctrrpp 
+                                         NO-LOCK NO-ERROR.
+                                    
+                                    RUN critica-lock (INPUT RECID(craprpp),
+                                                      INPUT "banco",
+                                                      INPUT "craprpp").
+                                END.
+                            ELSE
+                                DO:
+                                    PAUSE 1 NO-MESSAGE.
+                                    NEXT.
+                                END.
+                        END.
+                    ELSE
+                        ASSIGN aux_cdcritic = 495.
+                END.
+
+            LEAVE.
+
+        END. /** Fim do DO ... TO **/
+
+        IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+            UNDO TRANS_POUP, LEAVE TRANS_POUP.
+
+        IF  craprpp.cdsitrpp = 5  THEN
+            DO:
+                ASSIGN aux_cdcritic = 919
+                       aux_dscritic = "".
+                
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+    
+        IF  (craprpp.cdsitrpp = 3 OR craprpp.cdsitrpp = 4) AND craprpp.cdprodut = 0  THEN 
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Este e um plano antigo que nao pode ser reativado. Cadastre um novo plano".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+
+        IF  craprpp.cdsitrpp = 1  THEN
+            DO:
+                ASSIGN aux_cdcritic = 483
+                       aux_dscritic = "".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+			
+        IF  NOT craprpp.flgctain  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Aplicacao programada nao pode ser reativada.".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+
+        ASSIGN aux_vlmaxppr = ValorMaximoPrestacao(INPUT par_cdcooper).
+                                  
+        IF  craprpp.vlprerpp > aux_vlmaxppr  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Valor acima do permitido. Maximo de " +
+                           TRIM(STRING(aux_vlmaxppr,"zzz,zzz,zz9.99")) + ".".
+
+                UNDO TRANS_POUP, LEAVE TRANS_POUP.
+            END.
+
+        IF  craprpp.cdsitrpp = 2  THEN
+            ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                   aux_dtaltrpp     = craprpp.dtaltrpp
+                   aux_dtrnirpp     = craprpp.dtrnirpp
+                   craprpp.cdsitrpp = 1
+                   craprpp.dtaltrpp = par_dtmvtolt
+                   craprpp.dtrnirpp = ?.
+        ELSE
+        IF  craprpp.cdsitrpp = 3  THEN
+            ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                   aux_dtaltrpp     = craprpp.dtaltrpp
+                   aux_dtcancel     = craprpp.dtcancel
+                   aux_dtdebito     = craprpp.dtdebito
+                   craprpp.cdsitrpp = 1
+                   craprpp.dtaltrpp = par_dtmvtolt
+                   craprpp.dtcancel = ?
+                   craprpp.dtdebito = craprpp.dtfimper.
+        ELSE
+        IF  craprpp.cdsitrpp = 4  THEN
+            DO:
+                IF  craprpp.dtrnirpp < par_dtmvtolt  THEN
+                    ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                           aux_dtaltrpp     = craprpp.dtaltrpp
+                           aux_dtrnirpp     = craprpp.dtrnirpp
+                           aux_dtcancel     = craprpp.dtcancel
+                           aux_dtdebito     = craprpp.dtdebito
+                           craprpp.cdsitrpp = 1
+                           craprpp.dtaltrpp = par_dtmvtolt
+                           craprpp.dtrnirpp = ?
+                           craprpp.dtcancel = ?
+                           craprpp.dtdebito = craprpp.dtfimper.
+                ELSE
+                    ASSIGN aux_cdsitrpp     = craprpp.cdsitrpp
+                           aux_dtaltrpp     = craprpp.dtaltrpp
+                           aux_dtcancel     = craprpp.dtcancel
+                           craprpp.cdsitrpp = 2
+                           craprpp.dtaltrpp = par_dtmvtolt
+                           craprpp.dtcancel = ?.
+            END.
+
+        FIND CURRENT craprpp NO-LOCK NO-ERROR.
+
+        ASSIGN aux_flgtrans = TRUE.
+
+    END. /** Fim do DO TRANSACTION - TRANS_POUP **/
+    
+    IF  NOT aux_flgtrans  THEN
+        DO: 
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel reativar a aplicacao " +
+                                      "programada.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                   
+            IF  par_flgerlog  THEN
+                DO:
+                    RUN proc_gerar_log (INPUT par_cdcooper,
+                                        INPUT par_cdoperad,
+                                        INPUT aux_dscritic,
+                                        INPUT aux_dsorigem,
+                                        INPUT aux_dstransa,
+                                        INPUT FALSE,
+                                        INPUT par_idseqttl,
+                                        INPUT par_nmdatela,
+                                        INPUT par_nrdconta,
+                                       OUTPUT aux_nrdrowid).
+
+                    /** Numero de Contrato da Poupanca **/
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "nrctrrpp",
+                                             INPUT "",
+                                             INPUT TRIM(STRING(par_nrctrrpp,
+                                                               "zzz,zzz,zz9"))).
+                END.
+
+            RETURN "NOK".
+        END.
+
+    IF  par_flgerlog  THEN
+        DO:
+            RUN proc_gerar_log (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT "",
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT TRUE,
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                               OUTPUT aux_nrdrowid).
+
+            /** Numero de Contrato da Aplicacao **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "nrctrrpp",
+                                     INPUT "",
+                                     INPUT TRIM(STRING(par_nrctrrpp,
+                                                       "zzz,zzz,zz9"))).
+
+            /** Situacao da Aplicacao **/
             IF  aux_cdsitrpp <> craprpp.cdsitrpp  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
                                          INPUT "cdsitrpp",
@@ -3791,6 +4287,319 @@ PROCEDURE incluir-poupanca-programada:
 
 END PROCEDURE.
 
+/******************************************************************************/
+/**                Procedure para incluir aplicacao programada                **/
+/******************************************************************************/
+PROCEDURE incluir-aplicacao-programada:
+ 
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtinirpp AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_mesdtvct AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_anodtvct AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlprerpp AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_tpemiext AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdprodut AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dsfinali AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_flgteimo AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgdbpar AS INTE                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_nrdrowid AS ROWID                           NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_nrseqdig AS INTE                                    NO-UNDO.
+    DEF VAR aux_nrrdcapp LIKE crapmat.nrrdcapp                      NO-UNDO.
+
+    EMPTY TEMP-TABLE tt-erro.    
+    
+    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           /* Caso seja efetuada alguma alteracao na descricao deste log,
+              devera ser tratado o relatorio de "demonstrativo produtos por
+              colaborador" da tela CONGPR. (Fabricio - 04/05/2012) */
+           aux_dstransa = "Incluir poupanca programada"
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+
+    TRANS_POUP:
+
+    DO TRANSACTION ON ERROR  UNDO TRANS_POUP, LEAVE TRANS_POUP 
+                   ON ENDKEY UNDO TRANS_POUP, LEAVE TRANS_POUP:
+
+        
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper   AND
+                           crapass.nrdconta = par_nrdconta
+                           NO-LOCK NO-ERROR.
+
+        IF   NOT AVAIL crapass   THEN
+             DO:
+                 aux_cdcritic = 9.
+                 LEAVE TRANS_POUP.
+             END.
+
+        /* Vamos buscar a proxima sequencia do campo crapmat.nrrdcapp */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPMAT"
+                                            ,INPUT "NRRDCAPP"
+                                            ,INPUT STRING(par_cdcooper)
+                                            ,INPUT "N"
+                                            ,"").
+       
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+        ASSIGN aux_nrrdcapp = INTE(pc_sequence_progress.pr_sequence)
+                              WHEN pc_sequence_progress.pr_sequence <> ?.
+
+        DO aux_contador = 1 TO 10:
+
+            FIND craplot WHERE craplot.cdcooper = par_cdcooper       AND
+                               craplot.dtmvtolt = par_dtmvtolt       AND
+                               craplot.cdagenci = crapass.cdagenci   AND
+                               craplot.cdbccxlt = 200                AND
+                               craplot.nrdolote = 1537                                                         
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+            IF   NOT AVAIL craplot   THEN
+                 DO:
+                     IF   LOCKED craplot   THEN
+                          DO:
+                              IF   aux_contador = 10   THEN
+                                   DO:
+                                       FIND craplot WHERE 
+                                            craplot.cdcooper = par_cdcooper       AND
+                                            craplot.dtmvtolt = par_dtmvtolt       AND
+                                            craplot.cdagenci = crapass.cdagenci   AND
+                                            craplot.cdbccxlt = 200                AND
+                                            craplot.nrdolote = 1537
+                                            NO-LOCK NO-ERROR.
+
+                                       RUN critica-lock (INPUT RECID(craplot),
+                                                         INPUT "banco",
+                                                         INPUT "craplot").
+                                   END.
+                              ELSE
+                                   DO:
+                                       PAUSE 1 NO-MESSAGE.
+                                       NEXT.
+                                   END.
+                          END.
+                     ELSE
+                          DO:
+                              CREATE craplot.
+                              ASSIGN craplot.cdcooper = par_cdcooper
+                                     craplot.dtmvtolt = par_dtmvtolt
+                                     craplot.cdagenci = crapass.cdagenci
+                                     craplot.cdbccxlt = 200
+                                     craplot.nrdolote = 1537
+                                     craplot.tplotmov = 14
+                                     craplot.nrseqdig = 1
+                                     craplot.tpdmoeda = 1
+                                     craplot.flgltsis = TRUE.
+                          END.
+                 END.
+
+            LEAVE.
+
+        END.
+
+        IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+            UNDO TRANS_POUP, LEAVE TRANS_POUP.
+
+        ASSIGN aux_nrseqdig = 1.
+
+        /* Controle da chave unica craprpp3 */
+        FOR EACH craprpp WHERE craprpp.cdcooper = par_cdcooper      AND
+                               craprpp.dtmvtolt = par_dtmvtolt      AND
+                               craprpp.cdagenci = craplot.cdagenci  AND
+                               craprpp.cdbccxlt = craplot.cdbccxlt  AND
+                               craprpp.nrdolote = 1537              NO-LOCK
+                               BREAK BY craprpp.nrseqdig:
+
+            IF   LAST-OF (craprpp.nrseqdig) THEN
+                 ASSIGN aux_nrseqdig = craprpp.nrseqdig + 1.
+
+        END.
+
+        ASSIGN craplot.qtcompln = craplot.qtcompln + 1
+               craplot.qtinfoln = craplot.qtinfoln + 1
+               craplot.vlcompcr = craplot.vlcompcr + par_vlprerpp
+               craplot.vlinfocr = craplot.vlinfocr + par_vlprerpp.
+
+        VALIDATE craplot.
+
+        CREATE craprpp.
+
+        /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+        IF par_cdagenci = 0 THEN
+          ASSIGN par_cdagenci = glb_cdagenci.
+        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+
+        ASSIGN craprpp.cdcooper = par_cdcooper
+               craprpp.cdageass = crapass.cdagenci
+               craprpp.cdagenci = craplot.cdagenci
+               craprpp.cdbccxlt = craplot.cdbccxlt
+               craprpp.cdsecext = crapass.cdsecext
+               craprpp.cdsitrpp = 1
+               craprpp.dtaltrpp = ?
+               craprpp.dtcalcul = ?
+               craprpp.dtrnirpp = ?
+               craprpp.tpemiext = par_tpemiext  
+               craprpp.dtdebito = par_dtinirpp                
+               craprpp.dtiniper = par_dtinirpp
+               craprpp.dtiniext = par_dtinirpp
+               craprpp.dtfimext = par_dtinirpp 
+               craprpp.dtsdppan = par_dtinirpp
+               craprpp.dtsppant = par_dtinirpp
+               craprpp.dtsppext = par_dtinirpp 
+                       
+               craprpp.dtinirpp = par_dtinirpp
+               craprpp.dtvctopp = DATE(par_mesdtvct,
+                                       DAY(par_dtinirpp),
+                                       par_anodtvct)
+            
+               craprpp.dtmvtolt = par_dtmvtolt 
+               craprpp.nrctrrpp = aux_nrrdcapp
+               craprpp.flgctain = TRUE
+               craprpp.nrdconta = par_nrdconta
+               craprpp.nrdolote = craplot.nrdolote
+               craprpp.nrseqdig = aux_nrseqdig
+               craprpp.vlprerpp = par_vlprerpp
+               craprpp.dtimpcrt = ?
+              /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+               craprpp.cdopeori = par_cdoperad
+               craprpp.cdageori = par_cdagenci
+               craprpp.dtinsori = TODAY
+              /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+              /* Inicio - Alteracoes referentes ao proj. 411.2 - (CIS Corporate) */
+               craprpp.cdprodut = par_cdprodut
+               craprpp.dsfinali = par_dsfinali
+               craprpp.flgteimo = par_flgteimo
+               craprpp.flgdbpar = par_flgdbpar
+              /* Fim - Alteracoes referentes ao proj. 411.2 - (CIS Corporate) */
+               craprpp.indebito = 0.
+
+        ASSIGN craprpp.dtfimper = IF   MONTH(par_dtinirpp) = 12 THEN
+                                       DATE(1,DAY(par_dtinirpp),
+                                       YEAR(par_dtinirpp) + 1)
+                                  ELSE
+                                       DATE(MONTH(par_dtinirpp) + 1,
+                                            DAY(par_dtinirpp),
+                                            YEAR(par_dtinirpp)) NO-ERROR. 
+    
+        IF   ERROR-STATUS:ERROR   THEN
+             IF   MONTH(par_dtinirpp) = 11 THEN  
+                  craprpp.dtfimper = DATE(1, 1,(YEAR(par_dtinirpp) + 1)).
+             ELSE
+             IF   MONTH(par_dtinirpp) = 12 THEN
+                  craprpp.dtfimper = DATE(2, 1,(YEAR(par_dtinirpp) + 1)).
+             ELSE
+                  craprpp.dtfimper = DATE((MONTH(par_dtinirpp) + 2), 1, 
+                                        YEAR(par_dtinirpp)).
+                                            
+        /* Saldo da Aplicacao */
+        CREATE crapspp.
+        ASSIGN crapspp.cdcooper = par_cdcooper
+               crapspp.nrdconta = par_nrdconta
+               crapspp.nrctrrpp = craprpp.nrctrrpp
+               crapspp.dtsldrpp = craprpp.dtdebito
+               crapspp.vlsldrpp = 0
+               crapspp.dtmvtolt = par_dtmvtolt.
+
+        VALIDATE craprpp.
+        VALIDATE crapspp.
+
+        FIND CURRENT craplot NO-LOCK NO-ERROR.
+        FIND CURRENT craprpp NO-LOCK NO-ERROR.
+        FIND CURRENT crapspp NO-LOCK NO-ERROR.
+
+        ASSIGN par_nrdrowid = ROWID(craprpp)
+               aux_flgtrans = TRUE.
+
+    END. /** Fim do DO TRANSACTION - TRANS_POUP **/
+
+    IF  NOT aux_flgtrans  THEN
+        DO: 
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel incluir a poupanca.".
+                    
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            IF  par_flgerlog  THEN
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT aux_dstransa,
+                                    INPUT FALSE,
+                                    INPUT par_idseqttl,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid).
+
+            RETURN "NOK".
+        END.
+
+    IF  par_flgerlog  THEN
+        DO:
+            RUN proc_gerar_log (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT "",
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT TRUE,
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                               OUTPUT aux_nrdrowid).
+
+            /** Numero de Contrato da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "nrctrrpp",
+                                     INPUT "",
+                                     INPUT TRIM(STRING(craprpp.nrctrrpp,
+                                                       "zzz,zzz,zz9"))).
+
+            /** Data de Inicio da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "dtinirpp",
+                                     INPUT "",
+                                     INPUT STRING(craprpp.dtinirpp,
+                                                  "99/99/9999")).
+
+            /** Valor da Prestacao da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "vlprerpp",
+                                     INPUT "",
+                                     INPUT TRIM(STRING(craprpp.vlprerpp,
+                                                "zzz,zzz,zz9.99"))).
+
+            /** Data de Vencimento da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "dtvctopp",
+                                     INPUT "",
+                                     INPUT STRING(craprpp.dtvctopp,
+                                                  "99/99/9999")).
+        END.
+
+    RETURN "OK".
+
+END PROCEDURE.
 
 PROCEDURE ver-valores-bloqueados-poup:
 

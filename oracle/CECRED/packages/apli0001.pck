@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 29/01/2018
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 27/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -93,6 +93,13 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 29/01/2018 - #770327 Na rotina pc_consulta_aplicacoes, inclusão do INTERNETBANK para filtrar os 
   --              lançamentos no período informado (Carlos)
+  --
+  -- 18/07/2018 - P411.2 Tratamento das rotinas de Poupança Programada X Aplicação Programada - CIS Corporate
+  --              Desconsiderar as aplicações automática no cálculo das aplicações tradicionais 
+  --              Proc. pc_acumula_aplicacoes
+  -- 19/07/2018 - Recuperar código do produto (CRAPCPC) na proc. pc_calc_poupanca
+  --               
+
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -182,6 +189,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
          ,dsmsgsaq VARCHAR2(40)
          ,cdtiparq INTEGER
          ,dtsldrpp crapdat.dtmvtolt%TYPE
+         ,cdprodut crapcpc.cdprodut%TYPE
          ,nrdrowid ROWID);
 
   --Definicao do tipo de tabela para poupanca-programada
@@ -688,7 +696,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                                       pr_cdcritic   OUT crapcri.cdcritic%type,     --> Codigo de Erro
                                       pr_dscritic   OUT VARCHAR2);                 --> Descricao de Erro
 
-  /* Procedure para consultar saldo e demais dados de poupancas programadas */
+  /* Procedure para consultar saldo e demais dados de aplicacoes programadas */
   PROCEDURE pc_consulta_poupanca (pr_cdcooper IN crapcop.cdcooper%TYPE            --> Cooperativa
                                  ,pr_cdagenci IN crapage.cdagenci%TYPE            --> Codigo da Agencia
                                  ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE            --> Numero do caixa
@@ -711,6 +719,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
                                  ,pr_retorno  OUT VARCHAR2                        --> Descricao de erro ou sucesso OK/NOK
                                  ,pr_tab_dados_rpp OUT APLI0001.typ_tab_dados_rpp --> Poupancas Programadas
                                  ,pr_tab_erro      IN OUT NOCOPY GENE0001.typ_tab_erro);  --> Saida com erros;
+
 
   PROCEDURE pc_insere_tab_wrk(pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type 
                              ,pr_nrdconta     in tbgen_batch_relatorio_wrk.nrdconta%type
@@ -5301,7 +5310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Marco/96.                       Ultima atualizacao: 23/06/2018
+   Data    : Marco/96.                       Ultima atualizacao: 19/07/2018
 
    Dados referentes ao programa:
 
@@ -5390,6 +5399,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                23/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
                             Incluido crps147 na lista de programas que nao gravam CRAPTRD             
                                                       
+               19/07/2018 - Proj. 411.2 - Aplicação programada
+                            Alteração na pc_calc_poupanca para levar em consideração a nova apl. programada     
+                                   
+                                                      
 ................................................................................................... */
     -- Variaveis para auxiliar nos calculos
     vr_percenir         number(8,4);
@@ -5444,28 +5457,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
              craprpp.nrdconta,
              craprpp.nrctrrpp,
              craprpp.vlabdiof,
-             craprpp.dtmvtolt
+             craprpp.dtmvtolt,
+             craprpp.cdprodut
         from craprpp
        where craprpp.rowid = pr_rowid;
     rw_craprpp     cr_craprpp%rowtype;
     -- Lançamentos da poupança programada
     cursor cr_craplpp is
-      select nvl(SUM(decode(craplpp.cdhistor,150,vllanmto,0)),0) vllan150,
-             nvl(SUM(decode(craplpp.cdhistor,152,vllanmto,
-                                         154,vllanmto,
-                                         155,vllanmto*-1,0)),0) vllan152,
-             nvl(SUM(decode(craplpp.cdhistor,158,vllanmto,
-                                         496,vllanmto,0)),0) vllan158,
-             nvl(SUM(decode(craplpp.cdhistor,925,vllanmto,
-                                        1115,vllanmto,0)),0) vllan925
-        from craplpp
-       where craplpp.cdcooper  = pr_cdcooper
-         and craplpp.nrdconta  = rw_craprpp.nrdconta
-         and craplpp.nrctrrpp  = rw_craprpp.nrctrrpp
-         and craplpp.dtmvtolt >= vr_dtcalcul
-         and craplpp.dtmvtolt <= vr_dtmvtolt
-         and craplpp.dtrefere  = vr_dtrefere
-         AND craplpp.cdhistor IN (150,152,154,155,158,496,925,1115);
+      select nvl(SUM(decode(cdhistor,150,vllanmto,0)),0) vllan150,
+             nvl(SUM(decode(cdhistor,152,vllanmto,154,vllanmto,155,vllanmto*-1,0)),0) vllan152,
+             nvl(SUM(decode(cdhistor,158,vllanmto,496,vllanmto,0)),0) vllan158,
+             nvl(SUM(decode(cdhistor,925,vllanmto,1115,vllanmto,0)),0) vllan925
+      from(
+            select lpp.cdhistor cdhistor,
+                   lpp.vllanmto vllanmto
+              from craplpp lpp
+             where lpp.cdcooper  = pr_cdcooper
+               and lpp.nrdconta  = rw_craprpp.nrdconta
+               and lpp.nrctrrpp  = rw_craprpp.nrctrrpp
+               and lpp.dtmvtolt >= vr_dtcalcul
+               and lpp.dtmvtolt <= vr_dtmvtolt
+               and lpp.dtrefere  = vr_dtrefere
+               and lpp.cdhistor IN (150,152,154,155,158,496,925,1115)
+      union         
+      select decode(lac.cdhistor,
+                    cpc.cdhsraap,150,
+                    cpc.cdhsnrap,152,
+                    cpc.cdhsrvap,154,
+                    2747,155,
+                    cpc.cdhsrgap,158,
+                    cpc.cdhsvtap,496
+                    ) cdhistor
+             ,lac.vllanmto vllanmto
+        FROM  craplac lac, craprac rac,crapcpc cpc
+        WHERE rac.cdcooper = pr_cdcooper
+        AND   rac.nrdconta = rw_craprpp.nrdconta
+        AND   rac.nrctrrpp = rw_craprpp.nrctrrpp
+        AND   rac.cdcooper = lac.cdcooper
+        AND   rac.nrdconta = lac.nrdconta
+        AND   rac.nraplica = lac.nraplica
+        AND   cpc.cdprodut = rac.cdprodut
+        AND   lac.dtmvtolt between vr_dtcalcul and vr_dtmvtolt
+        AND   lac.cdhistor IN (cpc.cdhsraap,cpc.cdhsnrap,cpc.cdhsrvap,2747,cpc.cdhsrgap,cpc.cdhsvtap)
+       );
+         
     rw_craplpp cr_craplpp%ROWTYPE;
 
     -- Taxas de RDCA
@@ -5556,6 +5591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     end if;
 
     -- Leitura dos lançamentos da aplicação
+    if rw_craprpp.cdprodut < 1 then -- aplicacao antiga 
     OPEN cr_craplpp;
     FETCH cr_craplpp INTO rw_craplpp;
     IF cr_craplpp%FOUND THEN
@@ -5565,11 +5601,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vllan925 := vr_vllan925 + rw_craplpp.vllan925;
     END IF;
     CLOSE cr_craplpp;
-
-    -- Calcula o saldo da poupança programada
+        -- Calcula o saldo da poupança
     vr_vlsdrdpp := vr_vlsdrdpp + vr_vllan150 - vr_vllan158 - vr_vllan925;
+    else -- Apl. Prog
+        apli0008.pc_calc_saldo_apl_prog (pr_cdcooper => pr_cdcooper
+                                        ,pr_cdprogra => pr_cdprogra
+                                        ,pr_cdoperad => '1'
+                                        ,pr_nrdconta => rw_craprpp.nrdconta
+                                        ,pr_idseqttl => 1
+                                        ,pr_idorigem => 5
+                                        ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                        ,pr_dtmvtolt => pr_dtmvtolt
+                                        ,pr_vlsdrdpp => vr_vlsdrdpp
+                                        ,pr_des_erro => pr_des_erro);
 
-    if vr_vlsdrdpp < 0 then
+         if pr_des_erro is not null then
+           raise vr_exc_erro;
+         end if;
+    end if;
+
+    if vr_vlsdrdpp < 0 or  vr_vlsdrdpp is null then
       vr_vlsdrdpp := 0;
     end if;
     --
@@ -7288,10 +7339,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        END LOOP;
 
        -- Atribui valores as variaveis truncando ou arredondando os valores
-       vr_vlrenmlt := TRUNC(vr_vlrenmlt, 2);
+       vr_vlrenmlt := fn_round(vr_vlrenmlt, 2); -- trunc
        pr_vlrenrgt := vr_vlrenmlt;
        vr_vlrgtsol := fn_round(vr_vlrgtsol, 2);
-       pr_vlrdirrf := TRUNC((pr_vlrenrgt * vr_perirrgt / 100), 2);
+       pr_vlrdirrf := fn_round((pr_vlrenrgt * vr_perirrgt / 100), 2); --trunc
        pr_perirrgt := vr_perirrgt;
 
        /* Procedure para verificar imunidade tributaria e inserir valor de insenção */
@@ -7300,8 +7351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                             ,pr_dtmvtolt  => pr_dtmvtolt  --> Data movimento
                                             ,pr_flgrvvlr  => pr_flggrvir  --> Identificador se deve gravar valor
                                             ,pr_cdinsenc  => 5            --> Codigo da insenção
-                                            ,pr_vlinsenc  => TRUNC((pr_vlrenrgt *
-                                                                    pr_perirrgt / 100),2)--> Valor insento
+                                            ,pr_vlinsenc  => fn_round((pr_vlrenrgt *
+                                                                       pr_perirrgt / 100),2)--> Valor insento -- trunc
                                             ,pr_flgimune  => vr_flgimune  --> Identificador se é imune
                                             ,pr_dsreturn  => pr_des_reto  --> Descricao Critica
                                             ,pr_tab_erro  => pr_tab_erro);--> Tabela erros
@@ -7335,7 +7386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        IF vr_flgimune THEN
          pr_vlrgttot := fn_round(pr_vlsddrgt, 2);
        ELSE
-         pr_vlrgttot := fn_round(pr_vlsddrgt - TRUNC(((pr_vlrenrgt * pr_perirrgt) / 100), 2), 2);
+         --pr_vlrgttot := fn_round(pr_vlsddrgt - TRUNC(((pr_vlrenrgt * pr_perirrgt) / 100), 2), 2); 
+         pr_vlrgttot := fn_round(pr_vlsddrgt - fn_round(((pr_vlrenrgt * pr_perirrgt) / 100), 2), 2); 
        END IF;
 
        pr_des_reto := 'OK';
@@ -9308,7 +9360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
     Programa: pc_calc_saldo_rpp               Antigo: sistema/generico/includes/b1wgen0006.i
     Autor   : Junior
-    Data    : 12/09/2005                      Ultima atualizacao: 18/01/2011
+    Data    : 12/09/2005                      Ultima atualizacao: 19/07/2018 
 
     Dados referentes ao programa:
 
@@ -9320,6 +9372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                 18/01/2011 - Tratar historico 925 (Db.Trf.Aplic) (Irlan)
                 18/12/2012 - Tratar historico 1115-Transferencia Viacredi/AltoVale (Rosangela).
                 10/04/2013 - Conversão Progress >> Oracle (PLSQL) (Alisson-AMcom)
+                19/07/2018 - Considerar poupança programada nos cálculos
 
   ..............................................................................*/
     DECLARE
@@ -9342,7 +9395,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         AND   craplpp.dtmvtolt >= pr_dtcalcul
         AND   craplpp.dtmvtolt <= pr_dtmvtolt
         AND   craplpp.dtrefere = pr_dtrefere
-        AND   craplpp.cdhistor IN (150,152,154,155,158,496,925,1115);
+        AND   craplpp.cdhistor IN (150,152,154,155,158,496,925,1115)
+        UNION
+        SELECT decode(lac.cdhistor,
+                      cpc.cdhsraap,150,
+                      cpc.cdhsnrap,152,
+                      cpc.cdhsrvap,154,
+                      2747,155,
+                      cpc.cdhsrgap,158,
+                      cpc.cdhsvtap,496
+                      ) cdhistor
+              ,lac.vllanmto
+        FROM craplac lac, craprac rac,crapcpc cpc
+        WHERE rac.cdcooper = pr_cdcooper
+        AND   rac.nrdconta = pr_nrdconta
+        AND   rac.nrctrrpp = pr_nrctrrpp
+        AND   rac.cdcooper = lac.cdcooper
+        AND   rac.nrdconta = lac.nrdconta
+        AND   rac.nraplica = lac.nraplica
+        AND   cpc.cdprodut = rac.cdprodut
+        AND   lac.dtmvtolt between pr_dtcalcul and pr_dtmvtolt
+        AND   lac.cdhistor IN (cpc.cdhsraap,cpc.cdhsnrap,cpc.cdhsrvap,2747,cpc.cdhsrgap,cpc.cdhsvtap);
       
       --Variaveis locais
       vr_vllan150 NUMBER;
@@ -9540,6 +9613,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
               14/08/2013 - Remover prefixo da package ao chamar as rotinas desta (Marcos-Supero)
 
+              26/07/2018 - Inclusão da Aplicação Programada - Proj 411.2 (CIS Corporate)
+
   ............................................................................. */
     DECLARE
 
@@ -9570,6 +9645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               ,craprpp.vlabcpmf
               ,craprpp.cdsitrpp
               ,craprpp.vlsdrdpp
+              ,craprpp.cdprodut
               ,craprpp.ROWID
               ,To_Char((CASE craprpp.cdsitrpp
                  WHEN 1 THEN 'Ativa'
@@ -9596,7 +9672,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
              AND crapspp.nrctrrpp = pr_nrctrrpp;
       rw_crapspp cr_crapspp%ROWTYPE;
 
-
       --Variaveis Locais
       vr_flgtrans BOOLEAN;
       vr_vlsdrdpp NUMBER(25,8);
@@ -9608,6 +9683,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_dsorigem VARCHAR2(40);
       vr_dstransa VARCHAR2(100);
       vr_dsmsgsaq VARCHAR2(4000);
+
+      vr_vlsdappr NUMBER(25,8); -- Saldo total -  aplicacao programada
+      vr_vlrgappr NUMBER(25,8);-- Saldo total para resgate - aplicacao programada
 
       --Variaveis de retorno de erro
       vr_des_erro VARCHAR2(4000);
@@ -9643,7 +9721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         --Atribuir Descricao da Origem
         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
         --Atribuir Descricao da Transacao
-        vr_dstransa:= 'Consulta de poupanca programada';
+        vr_dstransa:= 'Consulta de aplicações programadas';
       END IF;
 
       --Inicializar variaveis
@@ -9672,6 +9750,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           -- Incializar o saldo com o valor da tabela
           vr_vlsdrdpp := rw_craprpp.vlsdrdpp;
 
+          -- Verificar se é Poupança programada
+          -- As aplicações programadas não serão tratadas linha a linha, mas evitaremos fazer 
+          -- chamadas desnecessárias abaixo
+          
+          If rw_craprpp.cdprodut < 1 Then 
           --Executar rotina para calcular saldo poupanca programada
           pc_calc_saldo_rpp (pr_cdcooper => pr_cdcooper
                             ,pr_cdprogra => pr_cdprogra
@@ -9687,11 +9770,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                             ,pr_vlsdrdpp => vr_vlsdrdpp
                             ,pr_des_erro => vr_des_erro);
 
+          Else -- Aplicacao Programada
+              vr_vlsdrdpp := 0;
+              apli0008.pc_calc_saldo_apl_prog(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdprogra => pr_cdprogra
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_idseqttl => pr_idseqttl
+                                             ,pr_idorigem => pr_idorigem
+                                             ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                             ,pr_dtmvtolt => pr_dtmvtolt
+                                             ,pr_vlsdrdpp => vr_vlsdrdpp
+                                             ,pr_des_erro => vr_des_erro);
+                                             
+          End If; -- Aplicacao Programada
+
           --Se ocorreu erro
           IF vr_des_erro IS NOT NULL THEN
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
+                      
           --Ignorar se o saldo for negativo e a origem nao for AYLLOS/INTRANET
           IF vr_vlsdrdpp < 0 AND pr_idorigem NOT IN (1,5) THEN
             --Levantar excecao para pular registro
@@ -9804,7 +9903,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
           pr_tab_dados_rpp(vr_index_tab).dsmsgsaq:= vr_dsmsgsaq;
           pr_tab_dados_rpp(vr_index_tab).cdtiparq:= 0;
           pr_tab_dados_rpp(vr_index_tab).dtsldrpp:= rw_crapspp.dtsldrpp;
+          pr_tab_dados_rpp(vr_index_tab).cdprodut:= rw_craprpp.cdprodut;          
           pr_tab_dados_rpp(vr_index_tab).nrdrowid:= rw_craprpp.ROWID;
+
 
         EXCEPTION
           WHEN vr_exc_pula THEN
@@ -9955,6 +10056,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
                01/12/2014 - Alterado a ordenação da tabela crapmfx. (Jean Michel)
 
+               15/07/2018 - Não soma as aplicações programadas nesta rotina
+                            Claudio - CIS Corporate
+
   ............................................................................. */
     DECLARE
 
@@ -10033,6 +10137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         WHERE rac.cdcooper = pr_cdcooper
               AND rac.nrdconta = pr_nrdconta
               AND rac.idsaqtot = pr_idsaqtot
+              AND rac.nrctrrpp = 0 -- Apenas Aplicações Não Programadas
               AND (pr_nraplica = 0 OR (pr_nraplica <> 0 AND pr_nraplica <> rac.nraplica));
       rw_craprac cr_craprac%ROWTYPE;
 

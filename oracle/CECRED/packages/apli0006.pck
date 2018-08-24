@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
   --  Sistema  : Rotinas genericas referente a calculos de aplicacao
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 19/08/2014
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 27/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -15,6 +15,9 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
 
   -- Alteracoes: 19/08/2014 - Inclusao das procedures pc_taxa_acumulada_aplicacao_pos
   --                          e pc_taxa_acumulada_aplicacao_pre (Jean Michel).
+  --
+  --             27/07/2018 - P411.2 Tratamento das rotinas de Poupança Programada X Aplicação Programada
+  --                          Cláudio - CIS Corporate
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -28,6 +31,7 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
                                           ,pr_cddindex IN crapcpc.cddindex%TYPE --> Código do Indexador
                                           ,pr_qtdiacar IN craprac.qtdiacar%TYPE --> Dias de Carência
                                           ,pr_idgravir IN PLS_INTEGER           --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                          ,pr_idaplpgm IN PLS_INTEGER DEFAULT 0 --> Aplicacao Programada (0-Não/1-Sim)
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -52,6 +56,7 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
                                           ,pr_cddindex IN crapcpc.cddindex%TYPE --> Código do Indexador
                                           ,pr_qtdiacar IN craprac.qtdiacar%TYPE --> Dias de Carência
                                           ,pr_idgravir IN PLS_INTEGER           --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                          ,pr_idaplpgm IN PLS_INTEGER DEFAULT 0 --> Aplicacao Programada (0-Não/1-Sim)
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -107,7 +112,6 @@ CREATE OR REPLACE PACKAGE CECRED.apli0006 IS
                                  ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
 END apli0006;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
   -- Rotina referente a calculo para obter saldo atualizado de aplicacao pós
@@ -120,6 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
                                           ,pr_cddindex IN crapcpc.cddindex%TYPE --> Código do Indexador
                                           ,pr_qtdiacar IN craprac.qtdiacar%TYPE --> Dias de Carência
                                           ,pr_idgravir IN PLS_INTEGER           --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                          ,pr_idaplpgm IN PLS_INTEGER DEFAULT 0 --> Aplicacao Programada (0-Não/1-Sim)
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -141,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Julho/14.                    Ultima atualizacao: 15/07/2014
+     Data    : Julho/14.                    Ultima atualizacao: 15/07/2018
 
      Dados referentes ao programa:
 
@@ -151,7 +156,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 15/07/2018 - Inclusao de novo parametro para indicao de apl. programada
+                              Cláudio - CIS Corporate
     ..............................................................................*/
     DECLARE
 
@@ -600,6 +606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
                                           ,pr_cddindex IN crapcpc.cddindex%TYPE --> Código do Indexador
                                           ,pr_qtdiacar IN craprac.qtdiacar%TYPE --> Dias de Carência
                                           ,pr_idgravir IN PLS_INTEGER           --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                          ,pr_idaplpgm IN PLS_INTEGER DEFAULT 0 --> Aplicacao Programada (0-Não/1-Sim)
                                           ,pr_dtinical IN DATE                  --> Data Inicial Cálculo
                                           ,pr_dtfimcal IN DATE                  --> Data Final Cálculo
                                           ,pr_idtipbas IN PLS_INTEGER           --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -631,7 +638,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 15/07/2018 - Inclusao de novo parametro para indicao de apl. programada
+                              Cláudio - CIS Corporate
+
     ..............................................................................*/
     DECLARE
 
@@ -1664,4 +1673,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.apli0006 IS
 
 END apli0006;
 /
-

@@ -6,7 +6,7 @@ create or replace package cecred.APLI0003 is
   --  Sistema  : Rotinas genericas referente a tela PCAPTA
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Maio - 2014.                   Ultima atualizacao: 10/06/2014
+  --  Data     : Maio - 2014.                   Ultima atualizacao: 15/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -14,6 +14,8 @@ create or replace package cecred.APLI0003 is
   -- Objetivo  : Agrupar rotinas genericas referente a tela PCAPTA
 
   -- Alteracoes: Incluida procedure pc_carrega_produto utilizada na tela PCAPTA (Jean Michel)
+  --
+  --             15/07/2018 Inclusão da Aplicação Programada - Cláudio (CIS Corporate)
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -232,7 +234,6 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
 
 end APLI0003;
 /
-
 create or replace package body cecred.APLI0003 is
 
   /* Rotina referente a consulta de produtos cadastrados */
@@ -270,6 +271,10 @@ create or replace package body cecred.APLI0003 is
                  
                  Alteracao no cursor cr_crapcpc para trazer todos os produtos sem
                  filtro de situacao {Carlos Rafael Tanholi}
+                 
+                 15/07/2018 - Inclusão do parâmetro pr_idaplpgm em pc_lista_movimentacao_carteira
+			                        Claudio - CIS Corporate
+                
      ..............................................................................*/ 
     DECLARE
           
@@ -1116,6 +1121,7 @@ create or replace package body cecred.APLI0003 is
                                                      ,pr_cddindex => rw_craprac.cddindex --> Código do Indexador
                                                      ,pr_qtdiacar => rw_craprac.qtdiacar --> Dias de Carência
                                                      ,pr_idgravir => 0                   --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                     ,pr_idaplpgm => 0                   --> Aplicação Programada  (0-Não/1-Sim)
                                                      ,pr_dtinical => rw_craprac.dtmvtolt --> Data Inicial Cálculo
                                                      ,pr_dtfimcal => vr_dtmvtolt         --> Data Final Cálculo
                                                      ,pr_idtipbas => 2                   --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1141,6 +1147,7 @@ create or replace package body cecred.APLI0003 is
                                                      ,pr_cddindex => rw_craprac.cddindex --> Código do Indexador
                                                      ,pr_qtdiacar => rw_craprac.qtdiacar --> Dias de Carência
                                                      ,pr_idgravir => 0                   --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                     ,pr_idaplpgm => 0                   --> Aplicação Programada  (0-Não/1-Sim)
                                                      ,pr_dtinical => rw_craprac.dtmvtolt --> Data Inicial Cálculo
                                                      ,pr_dtfimcal => vr_dtmvtolt         --> Data Final Cálculo
                                                      ,pr_idtipbas => 2                   --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -4365,4 +4372,3 @@ PROCEDURE pc_manter_historico_produto(pr_cddopcao IN VARCHAR2              --> C
 
 end APLI0003;
 /
-

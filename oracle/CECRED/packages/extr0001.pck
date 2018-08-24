@@ -42,6 +42,12 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             a operacao 12 do IB (Anderson - P285).
                                                         
                30/05/2018 - Adinionado campo dscomple na pl_table typ_reg_extrato_conta (Alcemir Mout's - Prj. 467).            
+
+               09/08/2018 - Considerar aplicacoes programadas na pc_ver_saldos - Proj. 411.2 (CIS Corporate).
+
+			   14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+							(Reinert)
+							 
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -795,6 +801,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          
          30/05/2018 - Incluido na pc_consulta_extrato carregar historicos, na pc_gera_registro_estrato
                       tratar complemento para incluir na pl_table (Alcemir Mout's - Prj 467).
+         
+         09/08/2018 - Considerar aplicacoes programadas na pc_ver_saldos - Proj. 411.2 (CIS Corporate).
+                      
+		 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+				      (Reinert)
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -3415,21 +3426,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           IF rw_crapdpb.inlibera = 1 THEN
             -- Guardar a data
             IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-              vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
-            ELSE
+            vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
+          ELSE
               vr_dslibera := to_char(rw_crapdpb.dtliblan,'dd/mm/RRRR');
             END IF;
           ELSE
             -- INdicar que há estorno
             IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-              vr_dslibera := '(Estorno)';
-            END IF;
+            vr_dslibera := '(Estorno)';
+          END IF;
           END IF;
         ELSE
           -- Usar descrição padrão
           IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-            vr_dslibera := '(**/**)';
-          END IF;
+          vr_dslibera := '(**/**)';
+        END IF;
         END IF;
         -- Fechar o cursor
         CLOSE cr_crapdpb;
@@ -3595,7 +3606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_extr(vr_ind_tab).cdcoptfn := vr_cdcoptfn;
         pr_tab_extr(vr_ind_tab).dsprotoc := ''; 
         pr_tab_extr(vr_ind_tab).flgdetal := 0;               
-        
+                
         IF TRIM(vr_dslibera) IS NOT NULL OR TRIM(vr_dsidenti) IS NOT NULL THEN
           pr_tab_extr(vr_ind_tab).flgdetal := 1;
         END IF;
@@ -5655,7 +5666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema : Conta-Corrente - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Adriano
-        Data    : Maio/2014                         Ultima atualizacao: 27/08/2014
+        Data    : Maio/2014                         Ultima atualizacao: 09/08/2018
 
         Dados referetes ao programa:
 
@@ -5666,6 +5677,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                     27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes
                                  (Jean Michel).
+
+                    09/08/2018 - Correcoes nas validacoes
+                                           Inicializar saldo com 0 para permitir soma com outros valores
+                                           Saldo da poupança (não programada) calculada de forma equivocada (saldo atual - todos os resgates) 
+                                 Somar saldo de Aplicação Programada ao saldo da Poupança
+                                 Proj. 411.2 - (CIS Corporate)
 
     */
     DECLARE
@@ -5759,6 +5776,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             ,rpp.vlsdrdpp
             ,rpp.nrdconta
             ,rpp.nrctrrpp
+            ,rpp.cdprodut
+            ,rpp.dtsdppan
         FROM craprpp rpp
        WHERE rpp.cdcooper = pr_cdcooper
          AND rpp.nrdconta = pr_nrdconta
@@ -5768,13 +5787,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Cursor para encontrar Cadastro de lancamentos de aplicacoes de poupanca
       CURSOR cr_craplpp(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE
-                       ,pr_nrctrrpp IN craplpp.nrctrrpp%TYPE) IS
-      SELECT lpp.vllanmto
+                       ,pr_nrctrrpp IN craplpp.nrctrrpp%TYPE
+                       ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE) IS
+      SELECT lpp.vllanmto,lpp.cdhistor
         FROM craplpp lpp
        WHERE lpp.cdcooper = pr_cdcooper
          AND lpp.nrdconta = pr_nrdconta
          AND lpp.nrctrrpp = pr_nrctrrpp
-         AND (lpp.cdhistor = 496 OR lpp.cdhistor = 158);
+         AND lpp.dtmvtolt > pr_dtmvtolt; -- Apenas movimentos apóss último cálculo
       rw_craplpp cr_craplpp%ROWTYPE;
 
       -- Cursor para encontrar a folha de cheques
@@ -5839,7 +5859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_dscritic VARCHAR2(4000);
 
       -- Valor do saldo
-      vr_vldsaldo NUMBER;
+      vr_vldsaldo NUMBER :=0;
 
       -- Data
       vr_datdodia DATE;
@@ -6058,23 +6078,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         END IF;
 
         vr_sldresga := vr_sldpresg;
-
         IF vr_sldresga = 0 THEN
-
           IF rw_craprda.tpaplica = 3 THEN
-
             vr_sldresga := vr_vlsdrdca;
-
           ELSIF rw_craprda.tpaplica = 5 THEN
-
             vr_sldresga := vr_vlsdrdca;
-
           ELSE
-
             vr_sldresga := 0;
-
           END IF;
-
         END IF;
 
         vr_vldsaldo := vr_vldsaldo + vr_sldresga + vr_vlsldrgt;
@@ -6173,7 +6184,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_vldsaldo := vr_vldsaldo + vr_sldresga;
 
       END LOOP;
-
       IF vr_vldsaldo > 0 THEN
 
         -- Monta critica
@@ -6238,29 +6248,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       FOR rw_craprpp IN cr_craprpp(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta) LOOP
 
+        IF rw_craprpp.cdprodut > 0 THEN -- Nova aplicação programada
+            apli0008.pc_calc_saldo_apl_prog(pr_cdcooper => pr_cdcooper,
+                                            pr_cdprogra => pr_cdprogra,
+                                            pr_cdoperad => '0',
+                                            pr_nrdconta => pr_nrdconta,
+                                            pr_idseqttl => 1,
+                                            pr_idorigem => 5,
+                                            pr_nrctrrpp => rw_craprpp.nrctrrpp,
+                                            pr_dtmvtolt => pr_dtmvtolt,
+                                            pr_vlsdrdpp => vr_vldsaldo,
+                                            pr_des_erro => vr_dscritic);
+        
+        ELSE -- Poupança Programada (Antiga) 
         vr_vldsaldo := rw_craprpp.vlsdrdpp;
-
         -- Encontrar Cadastro de lancamentos de aplicacoes de poupanca
         FOR rw_craplpp IN cr_craplpp(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => rw_craprpp.nrdconta
-                                    ,pr_nrctrrpp => rw_craprpp.nrctrrpp) LOOP
+                                      ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                                      ,pr_dtmvtolt => rw_craprpp.dtsdppan) LOOP
 
+            IF rw_craplpp.cdhistor IN (496,158) THEN -- Resgates Efetuados
           vr_vldsaldo := vr_vldsaldo - rw_craplpp.vllanmto;
-
+            ELSE 
+               vr_vldsaldo := vr_vldsaldo + rw_craplpp.vllanmto;
+            END IF;
         END LOOP;
-
+        END IF;
+        END LOOP;
         IF vr_vldsaldo > 0 THEN
-
           -- Monta critica
           vr_cdcritic := NULL;
           vr_dscritic := 'POUPANCA PROGRAMADA COM SALDO.';
-
           -- Gera exceção
           RAISE vr_exc_erro;
-
         END IF;
-
-      END LOOP;
 
       -- Encontra folhas de cheque
       FOR rw_crapfdc IN cr_crapfdc(pr_cdcooper => pr_cdcooper
@@ -7432,7 +7454,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         
         --Percorrer todos os beneficiarios
         WHILE vr_index IS NOT NULL LOOP
-          
           vr_string:= '<extrato>'||
                         '<nrdconta>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).nrdconta),' ')|| '</nrdconta>'|| 
                         '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).dtmvtolt,'DD/MM/YYYY'),' ')|| '</dtmvtolt>'|| 

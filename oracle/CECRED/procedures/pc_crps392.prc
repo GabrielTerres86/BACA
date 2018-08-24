@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Abril/2004.                     Ultima atualizacao: 25/04/2017
+   Data    : Abril/2004.                     Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -75,6 +75,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
 			   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+              
+               14/08/2018 - Inclusão da Aplicação Programada - cursor cr_craplpp2
+                            Proj. 411.2 - CIS Corporate 
               
 ............................................................................. */
   
@@ -319,22 +322,47 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
   CURSOR cr_craplpp2(pr_nrdconta  craplpp.nrdconta%TYPE
                     ,pr_dtiniper  craplpp.dtmvtolt%TYPE
                     ,pr_dtfimper  craplpp.dtmvtolt%TYPE) IS
-    SELECT craplpp.cdhistor
-         , craplpp.vllanmto
-         , craplpp.nrctrrpp
-      FROM craplpp 
-     WHERE craplpp.cdcooper  = pr_cdcooper
-       AND craplpp.nrdconta  = pr_nrdconta
-       AND craplpp.dtmvtolt BETWEEN pr_dtiniper AND pr_dtfimper
-       AND craplpp.cdhistor IN (113,116,118,119,121,126,143,144,176,178,179,183,262
+    SELECT cdhistor
+         , vllanmto
+         , nrctrrpp
+    FROM
+    (
+        SELECT lpp.cdhistor
+             , lpp.vllanmto
+             , lpp.nrctrrpp
+             , lpp.dtmvtolt
+          FROM craplpp lpp 
+         WHERE lpp.cdcooper  = pr_cdcooper
+           AND lpp.nrdconta  = pr_nrdconta
+           AND lpp.dtmvtolt BETWEEN pr_dtiniper AND pr_dtfimper
+           AND lpp.cdhistor IN (113,116,118,119,121,126,143,144,176,178,179,183,262
                                ,264,861,862,868,871,150,151,158,863,870,492,493,494
                                ,495,496,482,484,485,486,487,488,489,490,491,647,648)
-     ORDER BY craplpp.cdcooper
-            , craplpp.nrdconta
-            , craplpp.dtmvtolt
-            , craplpp.cdhistor
-            , craplpp.nrdocmto
-            , craplpp.progress_recid;  
+              
+        UNION
+        SELECT decode (lac.cdhistor
+                      ,cpc.cdhsraap,150
+                      ,cpc.cdhsnrap,150
+                      ,cpc.cdhsirap,863
+                      ,cpc.cdhsrgap,496)
+               cdhistor
+             , lac.vllanmto
+             , rac.nrctrrpp
+             , lac.dtmvtolt
+          FROM crapcpc cpc, craprac rac, craplac lac 
+         WHERE rac.cdcooper  = pr_cdcooper
+           AND rac.nrdconta  = pr_nrdconta
+           AND rac.cdcooper = lac.cdcooper
+           AND rac.nrdconta = lac.nrdconta
+           AND rac.nraplica = lac.nraplica
+           AND cpc.cdprodut = rac.cdprodut
+           AND cpc.indplano = 1 -- Aplicações Programadas
+           AND lac.dtmvtolt BETWEEN pr_dtiniper AND pr_dtfimper
+           AND lac.cdhistor IN (cpc.cdhscacc,cpc.cdhsvrcc,cpc.cdhsraap,cpc.cdhsnrap,cpc.cdhsprap,
+                                cpc.cdhsrvap,cpc.cdhsrdap,cpc.cdhsirap,cpc.cdhsrgap,cpc.cdhsvtap)
+
+    )
+    ORDER BY dtmvtolt,cdhistor;
   
   -- Buscar o cadastro de poupanca programada
   CURSOR cr_craprpp2(pr_nrdconta  craplpp.nrdconta%TYPE

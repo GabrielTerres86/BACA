@@ -2386,6 +2386,7 @@ PROCEDURE cadastra-aplicacao-novo:
                                             INPUT INT(tel_flgdebci), /* Identificador de Débito na Conta Investimento (Identificador informado em tela) */
                                             INPUT INT(tel_flgrecno), /*IF tel_flgrecno = "S" THEN 1 ELSE 0,  Identificador de Origem do Recurso (Identificador informado em tela) */
                                             INPUT 1, /* Identificador de Log (Fixo no código, 0 – Não / 1 - Sim) */
+											INPUT 0, /* plano de aplicacao programada */
                                             OUTPUT 0, /* Numero da aplicacao cadastrado*/
                                             OUTPUT 0,
                                             OUTPUT "").

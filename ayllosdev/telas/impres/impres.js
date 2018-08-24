@@ -19,6 +19,7 @@
 
   08/08/2016 - Guilherme      (SUPERO): M325 - Informe de Rendimentos Trimestral PJ
  * 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * 19/08/2018 - Inclusão de novos relatórios para Poupança Programada / Aplicação Programada
  * --------------
  */
 
@@ -74,7 +75,7 @@ function estadoInicial() {
     arrayTipo[2] = new Array('nranoref', 'flgemiss');
     arrayTipo[3] = new Array('inselext', 'nrctremp', 'flgemiss');
     arrayTipo[4] = new Array('dtrefere', 'inselext', 'nraplica', 'flgemiss', 'tpmodelo', 'dtreffim');
-    arrayTipo[5] = new Array('dtrefere', 'dtreffim', 'inselext', 'nraplica', 'flgemiss');
+    arrayTipo[5] = new Array('dtrefere', 'dtreffim', 'inselext', 'nraplica', 'flgemiss','inrelext');
     arrayTipo[6] = new Array('tpinform','nrperiod','nranoref', 'flgemiss');
     arrayTipo[7] = new Array('dtrefere', 'flgemiss');
     arrayTipo[8] = new Array('dtrefere');
@@ -111,7 +112,6 @@ function estadoInicial() {
 }
 
 function ocultaCampos(tipo) {
-
     if (tipo == 4) {
         var newOptions = {
             '1': '1-Especifico',
@@ -119,13 +119,27 @@ function ocultaCampos(tipo) {
             '3': '3-Com Saldo',
             '4': '4-Sem Saldo'
         };
-
         $('#divTodos0').css({ 'display': 'block' }); //Tipo Relat
         $('#divTodos1').css({ 'display': 'none' });
         $('#divTodos2').css({ 'display': 'none' });
     }
+    else {
+        if (tipo == 5) {
+            var v_tpRelat = {
+                '1': '1-Extrato Consolidado',
+                '2': '2-Apl. Programada Sintetico',
+                '3': '3-Apl. Programada Analitico'
+            };
+        }
     else
-        if (tipo == 0) {
+        {
+            var v_tpRelat = {
+                '1': '1-Somente Extrato',
+                '2': '2-Cheques',
+                '3': '3-Dep Identificados',
+                '4': '4-Todos'
+            };
+        }
             var newOptions = {
                 '1': '1-Especifico',
                 '2': '2-Todos'
@@ -134,20 +148,11 @@ function ocultaCampos(tipo) {
             $('#divTodos1').css({ 'display': 'block' });
             $('#divTodos2').css({ 'display': 'block' });
         }
-        else {
-            var newOptions = {
-                '1': '1-Especifico',
-                '2': '2-Todos'
-            };
-            $('#divTodos0').css({ 'display': 'none' }); //Tipo Relat
-            $('#divTodos1').css({ 'display': 'block' });
-            $('#divTodos2').css({ 'display': 'block' });
-        }
+
     if (tipo != 6) {
         $('#divTipo6').hide();
         $('#divPeriodo').hide();
     }else {$('#divTipo6').show();}
-
 
     var selectedOption = '2';
 
@@ -165,6 +170,22 @@ function ocultaCampos(tipo) {
     });
     cInselext.val(selectedOption);
 
+    if  (tipo != 4) {
+        var selectedOption = '1';
+        if (cInrelext.prop) {
+            var options = cInrelext.prop('options');
+        }
+        else {
+            var options = cInrelext.attr('options');
+        }
+
+        $('option', cInrelext).remove();
+
+        $.each(v_tpRelat, function (val, text) {
+            options[options.length] = new Option(text, val);
+        });
+        cInrelext.val(selectedOption);
+    }
 }
 
 function estadoCabecalho() {

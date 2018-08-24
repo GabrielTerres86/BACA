@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Marco/2002                        Ultima atualizacao: 25/08/2014
+   Data    : Marco/2002                        Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -59,6 +59,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
 							              colunas de DEP. A PRAZO e TOTAL DE DEPOSITOS do crrl274.
 														(Reinert)
 
+							 14/08/2018 - Excluir aplicações programadas do cácula da nova captaçã0
+                            Proj. 411.2 - CIS Corporate  
+               
      ............................................................................. */
 
      DECLARE
@@ -152,7 +155,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
 				       ,rac.nrdconta
 							 ,rac.nraplica
 					 FROM craprac rac
-					WHERE rac.cdcooper = pr_cdcooper;
+					WHERE rac.cdcooper = pr_cdcooper
+            AND rac.nrctrrpp < 1; -- Apenas aplicações não programadas
 						
        --Selecionar informacoes dos associados
        CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE) IS
@@ -734,4 +738,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps323 (pr_cdcooper  IN crapcop.cdcooper%
      END;
    END pc_crps323;
 /
-

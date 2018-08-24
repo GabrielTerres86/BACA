@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps425(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Novembro/2004.                    Ultima atualizacao: 28/08/2014
+   Data    : Novembro/2004.                    Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -66,6 +66,9 @@ create or replace procedure cecred.pc_crps425(pr_cdcooper  in craptab.cdcooper%t
 							 28/08/2014 - Adicionado tratamento para lançamentos de produtos
 							              de captação (Reinert)
                
+							 14/08/2018 - Inclusa da Aplicação Programada
+                            Proj. 411.2 - CIS Corporate
+
   ............................................................................. */
 
   -- Buscar os dados da cooperativa
@@ -110,16 +113,21 @@ create or replace procedure cecred.pc_crps425(pr_cdcooper  in craptab.cdcooper%t
   CURSOR cr_craplac (pr_cdcooper in crapcop.cdcooper%type,
                      pr_dtliminf in crapdat.dtmvtolt%type,
                      pr_dtlimsup in crapdat.dtmvtolt%type) IS
-
-    
     SELECT ass.cdagenci
 		      ,lac.cdhistor
 					,COUNT(1) qtlancto
       FROM craplac lac,
-           crapass ass
+           crapass ass,
+           craprac rac,
+           crapcpc cpc
 		 WHERE lac.cdcooper = pr_cdcooper
        AND lac.cdcooper = ass.cdcooper
        AND lac.nrdconta = ass.nrdconta    
+       AND rac.cdcooper = lac.cdcooper
+       AND rac.nrdconta = lac.nrdconta
+       AND rac.nraplica = lac.nraplica
+       AND cpc.cdprodut = rac.cdprodut
+       AND cpc.indplano = 0 -- não aplicações programadas
 		   AND lac.dtmvtolt BETWEEN pr_dtliminf AND pr_dtlimsup
 		 GROUP BY ass.cdagenci,
               lac.nrdconta,
@@ -243,8 +251,28 @@ create or replace procedure cecred.pc_crps425(pr_cdcooper  in craptab.cdcooper%t
        and tab.cdcooper = ass.cdcooper
        and tab.nrdconta = ass.nrdconta
        and tab.dtmvtolt between pr_dtliminf and pr_dtlimsup
-     group by ass.cdagenci,
-              tab.cdhistor;
+     group by ass.cdagenci,tab.cdhistor
+    union 
+    select ass.cdagenci,
+           tab.cdhistor,
+           count(*) qtlancto
+      from crapass ass,
+           craplac tab,
+           crapcpc cpc,
+           craprac rac
+     where ass.cdcooper = pr_cdcooper
+       and tab.cdcooper = ass.cdcooper
+       and tab.nrdconta = ass.nrdconta
+       and tab.dtmvtolt between pr_dtliminf and pr_dtlimsup
+       and ass.cdcooper = rac.cdcooper 
+       and ass.nrdconta = rac.nrdconta
+       and rac.cdcooper = tab.cdcooper
+       and rac.nrdconta = tab.nrdconta
+       and rac.nraplica = tab.nraplica
+       and cpc.cdprodut = rac.cdprodut
+       and cpc.indplano = 1 -- aplicações programadas       
+     group by ass.cdagenci,tab.cdhistor;
+
   -- Log das transacoes efetuadas nos caixas e cash dispensers
   cursor cr_crapltr (pr_cdcooper in crapcop.cdcooper%type,
                      pr_dtliminf in crapdat.dtmvtolt%type,
@@ -883,4 +911,3 @@ exception
     rollback;
 end;
 /
-

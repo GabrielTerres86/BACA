@@ -11,7 +11,7 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   -- Sistema : Conta-Corrente - Cooperativa de Credito
   -- Sigla   : CRED
   -- Autor   : Jean Michel
-  -- Data    : Maio/2015.                     Ultima atualizacao: 04/05/2015
+  -- Data    : Maio/2015.                     Ultima atualizacao: 17/07/2018
 
   -- Dados referentes ao programa:
 
@@ -29,6 +29,8 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   --
   -- Alteracoes: 17/11/2016 -  Correção do campo pr_tpproapl (1 - NOVO / 2 - ANTIGO ) era ((2 - NOVO / 1 - ANTIGO )
   --                           foi criado invertido, sendo assim não trazia as informações SD555414- Vanessa Klein
+  --             17/07/2018 -  Não considerar as aplicações programadas nas novas captações
+  --                           Proj. 411.2 - CIS Corporate
   --
   -- .............................................................................
 
@@ -55,6 +57,7 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
     WHERE     rac.cdcooper = pr_cdcooper
           AND rac.nrdconta = pr_nrdconta
           AND rac.nraplica = pr_nraplica
+          AND cpc.indplano = 0              -- apenas não programadas
           AND rac.cdprodut = cpc.cdprodut;
 
   rw_craprac cr_craprac%ROWTYPE;

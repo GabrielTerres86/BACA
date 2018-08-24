@@ -551,7 +551,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 			}
 			case "POUP. PROG": {
 				$nomeRotina = "Poupan&ccedil;a Programada"; 
-                $urlRotina = "poupanca_programada";
+                $urlRotina = "aplicacoes_programadas";
                 $strValue = ( isset($valores[4]->cdata) ) ? number_format(str_replace(",", ".", $valores[4]->cdata), 2, ",", ".") : '';
 				$telaPermitadaAcessoBacen = 1;
 				break;	

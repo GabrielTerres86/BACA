@@ -14,7 +14,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/93.                       Ultima atualizacao: 05/03/2018
+   Data    : Fevereiro/93.                       Ultima atualizacao: 11/08/2018
 
    Dados referentes ao programa:
 
@@ -115,6 +115,8 @@ BEGIN
                             o append, não ocasionando mais "Erro ao efetuar Mv do relatório" e 
                             duplicação de conteúdo em um mesmo relatório (Carlos)               
 
+               11/08/2018 - Inclusão de aplicações programadas - cursor cr_craplpp - (Proj. 411.2 CIS Corporate)                                     
+
   ............................................................................. */
 
   DECLARE
@@ -162,7 +164,7 @@ BEGIN
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-    -- Selecionar quantidade de saques em poupanca nos ultimos 6 meses
+    -- Selecionar quantidade de saques em poupanca e aplicacoes programadas nos ultimos 6 meses
     CURSOR cr_craplpp (pr_cdcooper IN craplpp.cdcooper%TYPE
                       ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE
                       ,pr_nrdconta IN craplpp.nrdconta%TYPE
@@ -183,8 +185,28 @@ BEGIN
        AND lpp.nrdconta = crapass.nrdconta
        AND lpp.cdcooper = crapass.cdcooper
        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
-           GROUP BY lpp.nrdconta,lpp.nrctrrpp;
+    GROUP BY lpp.nrdconta,lpp.nrctrrpp
+    UNION
+    SELECT rac.nrdconta
+           ,rac.nrctrrpp
+           ,Count(*) qtlancmto
+      FROM crapcpc cpc, craprac rac, craplac lac,crapass asn
+      WHERE rac.cdcooper = pr_cdcooper
+        AND rac.nrdconta = pr_nrdconta
+        AND rac.nrctrrpp > 0                 -- Apenas apl. programadas
+        AND cpc.cdprodut = rac.cdprodut
+        AND rac.cdcooper = lac.cdcooper
+        AND rac.nrdconta = lac.nrdconta
+        AND rac.nraplica = lac.nraplica 
+        AND rac.nrdconta = asn.nrdconta
+        AND rac.cdcooper = asn.cdcooper
+        AND asn.cdagenci = decode(pr_cdagenci,0,asn.cdagenci,pr_cdagenci)
+        AND lac.cdhistor in (cpc.cdhsrgap)
+        AND lac.dtmvtolt > pr_dtmvtolt       
+    GROUP BY rac.nrdconta,rac.nrctrrpp;        
+           
     rw_craplpp cr_craplpp%ROWTYPE;
+                
                 
     --Contar a quantidade de resgates das contas
     CURSOR cr_craplrg_saque (pr_cdcooper IN craplrg.cdcooper%TYPE

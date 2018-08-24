@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Abril/96.                       Ultima atualizacao: 27/05/2018
+   Data    : Abril/96.                       Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -345,6 +345,7 @@ BEGIN
         AND cp.nrdconta = ass.nrdconta
         AND ass.cdagenci = DECODE(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
         AND cp.cdcooper = pr_cdcooper
+        AND cp.cdprodut <= 0
         AND cp.cdsitrpp <> 5        
       ORDER BY cp.nrdconta, cp.nrctrrpp;
     -- PLTABLE para fazer bulk collect e acelerar as leituras  
@@ -1117,7 +1118,8 @@ BEGIN
                                  ||to_char(rw_rpp(idx).dtfimper,'DD/MM/RRRR')||';');
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[CRRL147]: ' || SQLERRM;
+                        vr_cdcritic := 0;
+                        vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[CRRL147] Conta '||rw_rpp(idx).nrdconta||' Aplicacao '||rw_rpp(idx).nrctrrpp||' --> ' || SQLERRM;
                         RAISE vr_exc_saida;
                     END;
                   END IF;
@@ -1157,7 +1159,7 @@ BEGIN
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic := 0;
-                vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
+                vr_dscritic := 'Erro ao atualizar CRAPRPP IDX '||idx||'--> ' || SQLERRM;
                   RAISE vr_exc_saida;
             END;
           END IF;
@@ -1174,7 +1176,7 @@ BEGIN
           EXCEPTION
             WHEN OTHERS THEN
               vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
+              vr_dscritic := 'Erro ao atualizar CRAPRPP Rowid '||rw_rpp(idx).rowid||'--> ' || SQLERRM;
                 RAISE vr_exc_saida;
           END;
 
@@ -1655,7 +1657,7 @@ BEGIN
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
+            vr_dscritic := 'Erro ao atualizar CRAPRPP Conta '||vr_tab_cta_bndes(vr_idx_bndes).nrdconta||'--> ' || SQLERRM;
               RAISE vr_exc_saida;
         END;
       END IF;
@@ -1810,6 +1812,7 @@ BEGIN
         -- Se ocorrer erros no processo
         IF vr_dscritic IS NOT NULL THEN
           vr_cdcritic := 0;
+          vr_dscritic := 'Conta '||rw_lpp(idx).nrdconta|| ' Poup '||rw_lpp(idx).nrctrrpp|| ' --> '||vr_dscritic;
             RAISE vr_exc_saida;
       END IF;
 
