@@ -402,9 +402,14 @@ cDataFimContrato.change(function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
 
-$('#vldesconto_cee, #vldesconto_coo, #dtfimadicional_cee, #dtfimadicional_coo, #txtjustificativa').bind('enter input', function (){
+$('#vldesconto_cee, #vldesconto_coo, #txtjustificativa').bind('blur', function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
+
+$('#dtfimadicional_cee, #dtfimadicional_coo').bind('change', function (){
+	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
+});
+
 
 controlaLayout('divConveniosRegistros');
 

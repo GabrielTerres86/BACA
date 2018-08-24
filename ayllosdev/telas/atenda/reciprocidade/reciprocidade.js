@@ -2877,6 +2877,26 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		cJustificativaDesc.removeClass('campoTelaSemBorda');
 		cJustificativaDesc.prop('disabled', false);
 
+		$.ajax({
+		    dataType: "html",
+		    type: "POST",
+		    url: UrlSite + "telas/cadres/valida_alcada.php",
+		    data: {
+		        redirect: "script_ajax"
+		    },
+		    success: function (response) {
+		        if (response) {
+		            eval(response);
+		            btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
+		            btnContinuar.prop('disabled', true);
+		            btnContinuar.attr('onclick', 'return false;');
+		            btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
+		            btnAprovacao.prop('disabled', true);
+		            btnAprovacao.attr('onclick', 'return false;');
+		        }
+		    }
+		});
+
 	} else {
 		btnContinuar.removeClass('botaoDesativado');
 		btnContinuar.prop('disabled', false);

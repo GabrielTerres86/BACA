@@ -22,7 +22,7 @@ $cdcooper    = (!empty($_POST['cdcooper']))    ? $_POST['cdcooper'] : $glbvars['
 $cdalcada    = (!empty($_POST['cdalcada']))    ? $_POST['cdalcada'] : '';
 $dsemail     = (!empty($_POST['dsemail']))     ? $_POST['dsemail'] : '';
 $cdaprovador = (!empty($_POST['cdaprovador'])) ? $_POST['cdaprovador'] : '';
-$flregra     = (!isset($_POST['flregra']))     ? (int)$_POST['flregra'] : 0;
+$flregra     = (isset($_POST['flregra']))      ? (int)$_POST['flregra'] : 0;
 
 $flofesms    = (isset($_POST['flofesms']))    ? $_POST['flofesms'] : 0;
 $dtiniofe    = (isset($_POST['dtiniofe']))    ? $_POST['dtiniofe'] : '';
@@ -68,13 +68,13 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
     $html = '';
     //echo "$('#div_opcao_a').html('<div class=\"divRegistros\"></div>'); ";
     
-    $html .='<div class="divRegistros">';
+    $html .='<div class="divRegistros" style="height: auto;overflow-y: auto;max-height: 150px">';
     $html .='<div class="divCabecalhoPesquisa" style="width:100%">';
     $html .='   <table><thead style="display:table-header-group">';
     $html .='   <tr>';
-    $html .='       <th style="padding:0 5px" width="56">&nbsp;</th>';
+    $html .='       <th style="padding:0 5px" width="35">&nbsp;</th>';
     $html .='       <th style="padding:0 5px" width="361" align="left">Al&ccedil;ada</th>';
-    $html .='       <th style="padding:0 5px" width="266">&nbsp;</th>';
+    $html .='       <th style="padding:0 5px" width="200">&nbsp;</th>';
     $html .='   </tr>';
     $html .='   </thead></table>';
     $html .='</div>';
@@ -91,9 +91,9 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
         $disabled     = ( ( ( $countReg === 0 && $cdalcada == 1 ) || $cddopcao == 'C' ) ? 'disabled' : '' );
         
         $html .= "<tr>";
-        $html .= "  <td width=\"56\" align=\"center\"> <input type=\"checkbox\" $flgregra id=\"alcada_$i\" name=\"chkalcada\" value=\"$cdalcada\" $disabled ></td>";
+        $html .= "  <td width=\"35\" align=\"center\"> <input type=\"checkbox\" $flgregra id=\"alcada_$i\" name=\"chkalcada\" value=\"$cdalcada\" $disabled ></td>";
         $html .= "  <td width=\"361\"> $dsalcada </td>";
-        $html .= "  <td width=\"266\" align=\"center\"> <a href=\"#\" class=\"botao ".($disabled && $cddopcao == 'A' ? 'botaoDesativado' : '')."\" style=\"margin:3px 0\" onclick=\"Grid.onClick_Aprovadores($cdalcada)\" $disabled>Aprovadores</a></td>";
+        $html .= "  <td width=\"200\" align=\"center\"> <a href=\"#\" class=\"botao ".($disabled && $cddopcao == 'A' ? 'botaoDesativado' : '')."\" style=\"margin:3px 0\" onclick=\"Grid.onClick_Aprovadores($cdalcada)\" $disabled>Aprovadores</a></td>";
         $html .= '</tr>';
     }
     $html .= '</tbody></table>';
@@ -101,9 +101,9 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
     $html .= '</div>';
     $html .= '<div id="divBotoes" style="margin-bottom: 10px;">';
     $html .= '  <a href="#" class="botao" id="btVoltar" onclick="estadoInicial(); return false;">Voltar</a>';
-    if ($cddopcao == 'A') {
-        $html .= '  <a href="#" class="botao" id="btProsseguir" onclick="FormularioPacote.onClick_Prosseguir();">Gravar</a>';
-    }
+    // if ($cddopcao == 'A') {
+    //     $html .= '  <a href="#" class="botao" id="btProsseguir" onclick="FormularioPacote.onClick_Prosseguir();">Gravar</a>';
+    // }
     $html .= '</div>';
 
     //echo "hideMsgAguardo();";
