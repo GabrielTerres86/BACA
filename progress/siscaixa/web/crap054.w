@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 10/10/2016
+   Data    : Marco/2001                      Ultima atualizacao: 24/08/2018
 
    Dados referentes ao programa:
 
@@ -49,7 +49,13 @@
                             de movimentacao em especie (Lucas Ranghetti #463572)
                             
                06/12/2017 - Melhorias 458 -  Ajustes da melhoria - Antonio R. Jr (mouts)
-............................................................................ */
+               
+               24/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom).
+
+               24/08/2018 - P450 - Permitir saque conta em prejuizo (Guilherme/AMcom)
+
+............................................................................**/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -158,6 +164,7 @@ DEF VAR i-campo      AS INT NO-UNDO.
 DEF VAR de-valor     AS DEC NO-UNDO.
 DEF VAR p-nrcartao   AS DEC NO-UNDO.
 DEF VAR p-idtipcar   AS INT NO-UNDO.
+DEF VAR p-inprejuz   AS LOGICAL NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -653,7 +660,9 @@ PROCEDURE process-web-request :
                                                         OUTPUT v_nome,
                                                         OUTPUT v_msgtrf,
                                                         OUTPUT p-nrcartao,
-                                                        OUTPUT p-idtipcar).
+                                                        OUTPUT p-idtipcar,
+                                                        OUTPUT p-inprejuz
+                                                        ).
                     DELETE PROCEDURE h-b1crap54.
 
                     IF  RETURN-VALUE <> "OK" THEN DO:
@@ -665,7 +674,7 @@ PROCEDURE process-web-request :
                         {include/i-erro.i}
                     END.
                         
-                    ELSE DO:
+                    ELSE DO: /*valida-cheque-avulso-conta*/
                         
                         ASSIGN v_conta = STRING(p-conta,"zzzz,zzz,9")
                             v_nrdocard = STRING(p-nrcartao).
@@ -688,15 +697,14 @@ PROCEDURE process-web-request :
                                    v_senha     = "".
                             {include/i-erro.i}
                         END.
-                            
                         ELSE DO:
-                            
-                            
-
                             ASSIGN lValorOk = YES.
                             IF v_action <> 'LeaveConta'   AND 
                                v_action <> 'LeaveCartao'  THEN DO:
+                                /* Quando aperta o botao de OK */
                                 RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
+                             
+                                /* apenas pra validar se o valor é zero ou menor */
                                 RUN valida-cheque-avulso-valor IN h-b1crap54(
                                                          INPUT v_coop,      
                                                          INPUT INT(v_pac),
@@ -712,7 +720,9 @@ PROCEDURE process-web-request :
                                 END.
                             END.
 
+                            /* Indica que o valor da tela é maior que zero */
                             IF lValorOk THEN DO:
+                                
                                 RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
                                 
                                 RUN valida-saldo-conta IN h-b1crap54(
@@ -721,6 +731,7 @@ PROCEDURE process-web-request :
                                                INPUT  INT(v_caixa),
                                                INPUT  DEC(v_conta),
                                                INPUT  DEC(v_valor),
+                                               INPUT  p-inprejuz,
                                                OUTPUT cMsgAux,
                                                OUTPUT p-valor-disponivel).
                                 DELETE PROCEDURE h-b1crap54.
@@ -732,20 +743,31 @@ PROCEDURE process-web-request :
                                     {include/i-erro.i}
                                 END.
                                 ELSE DO:
-                                    IF cMsgAux <> ""  THEN
-                                     DO: 
+                                    /* Se voltou cMsgAux eh pq nao tem saldo
+                                       suficiente */
+                                    IF  cMsgAux <> ""
+                                    AND NOT p-inprejuz
+                                         THEN DO: 
+                                        /* Porem, se nao esta em Prejuizo
+                                           mostra senha coordenador.
+                                           
+                                           Se esta, nao vai mostrar
+                                           senha.*/
                                           ASSIGN v_habilita = 'yes'
                                                v_mensagem = cMsgAux.
-                                               
                                     END.
-                                              
                                     ELSE 
                                         ASSIGN  v_habilita = 'no'.
 
+                                    IF  p-inprejuz THEN
+                                        v_mensagem = cMsgAux.
+
                                     IF v_action = 'LeaveConta' THEN DO:
+                                        /* Apenas digitou a conta, consultou cooperado */
                                         ASSIGN v_action = ''.                          
                                     END.
                                     ELSE DO:
+                                        /* apertou OK */
                                         IF get-value("ok") <> "" THEN DO:
 
                                             ASSIGN v_mensagem_bkp = v_mensagem.
@@ -754,9 +776,12 @@ PROCEDURE process-web-request :
                                             IF v_habilita <> 'yes' THEN
                                                ASSIGN v_mensagem = "".
                                                       
+                                            IF  p-inprejuz THEN
+                                                v_mensagem = "".
+                                                      
                                             RUN dbo/b1crap54.p 
                                                 PERSISTENT SET h-b1crap54.
-                                            
+                                            /* validar senha de coordenador */
                                             RUN valida-permissao-saldo-conta 
                                                 IN h-b1crap54(
                                                    INPUT  v_coop,       
@@ -807,7 +832,6 @@ PROCEDURE process-web-request :
                                                            
                                                     {include/i-erro.i}
                                                 END.
-                                                
                                                 ELSE DO:
                                                     IF p-solicita <> "" THEN
                                                       DO:
@@ -815,6 +839,7 @@ PROCEDURE process-web-request :
                                                       END.
                                                     ELSE
                                                         ASSIGN v_habilita = 'no'.
+                                                    
                                                     IF v_action = 'LeaveConta' THEN DO:
                                                         ASSIGN v_action = ''.
                                                     END.
@@ -847,6 +872,25 @@ PROCEDURE process-web-request :
                                                 RUN dbo/b1crap54.p 
                                                   PERSISTENT SET h-b1crap54.
                                               
+                                                IF  p-inprejuz THEN DO:
+                                                    RUN atualiza-cheque-avulso-prejuizo
+                                                        IN h-b1crap54(
+                                                             INPUT v_coop,       
+                                                             INPUT INT(v_pac),
+                                                             INPUT INT(v_caixa),
+                                                             INPUT v_operador,
+                                                             INPUT v_cod,
+                                                             INPUT v_opcao,
+                                                             INPUT p-nrcartao,
+                                                             INPUT p-idtipcar,
+                                                             INPUT DEC(v_conta),
+                                                             INPUT DEC(v_valor),
+                                                            OUTPUT p-nrdocmto,
+                                                            OUTPUT p-literal,
+                                                            OUTPUT p-ult-sequencia).
+                                                END.
+                                                ELSE DO:
+                                                
                                                 RUN atualiza-cheque-avulso
                                                     IN h-b1crap54(
                                                          INPUT v_coop,       
@@ -862,8 +906,11 @@ PROCEDURE process-web-request :
                                                         OUTPUT p-nrdocmto,
                                                         OUTPUT p-literal,
                                                         OUTPUT p-ult-sequencia).
+                                                END.
 
                                                 DELETE PROCEDURE h-b1crap54.
+
+
 
                                                 IF RETURN-VALUE = "NOK" THEN DO:
                                                    ASSIGN l-houve-erro = YES.
@@ -974,7 +1021,7 @@ PROCEDURE process-web-request :
                                 END.
                             END.
                         END.
-                    END.
+                    END. /*valida-cheque-avulso-conta*/
                 END.
 
             END.
