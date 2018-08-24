@@ -120,7 +120,7 @@
 						   na camada do progress (INC0018113).
 						   
 	          30/07/2018 - Feito a inversao das chamadas da procedures pc_revalida_nome_cad_unc e pc_revalida_cnpj_cad_unc. (Kelvin)
-            
+							
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
