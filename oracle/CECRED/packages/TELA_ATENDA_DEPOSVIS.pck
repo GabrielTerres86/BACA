@@ -807,19 +807,19 @@ END pc_busca_saldos_devedores;
                           pr_nrdconta => pr_nrdconta);
      FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
 
-		 IF cr_tbcc_prejuizo%FOUND THEN
-			 PREJ0003.pc_calc_juros_remun_prov(pr_cdcooper => pr_cdcooper
-			                                 , pr_nrdconta => pr_nrdconta
-																			 , pr_vljuprov => vr_vljupre_prov
-																			 , pr_cdcritic => vr_cdcritic
-																			 , pr_dscritic => vr_dscritic);
+     IF cr_tbcc_prejuizo%FOUND THEN
+       PREJ0003.pc_calc_juros_remun_prov(pr_cdcooper => pr_cdcooper
+                                       , pr_nrdconta => pr_nrdconta
+                                       , pr_vljuprov => vr_vljupre_prov
+                                       , pr_cdcritic => vr_cdcritic
+                                       , pr_dscritic => vr_dscritic);
 
-				vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej +
-											 rw_tbcc_prejuizo.vljur60_ctneg +
-											 rw_tbcc_prejuizo.vljur60_lcred;
-				vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
-				vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
-		 END IF;
+        vr_vlsdprej := rw_tbcc_prejuizo.vlsdprej +
+                       rw_tbcc_prejuizo.vljur60_ctneg +
+                       rw_tbcc_prejuizo.vljur60_lcred;
+        vr_vlttjurs := rw_tbcc_prejuizo.vljuprej;
+        vr_vltotiof := rw_tbcc_prejuizo.vliofmes;
+     END IF;
 
     CLOSE cr_tbcc_prejuizo;
 
@@ -929,7 +929,7 @@ END pc_busca_saldos_devedores;
     vr_dscritic VARCHAR2(1000);        --> Desc. Erro
 
     vr_slddev NUMBER;
-		vr_juprej_prov NUMBER;
+    vr_juprej_prov NUMBER;
 
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
@@ -950,17 +950,17 @@ END pc_busca_saldos_devedores;
     FETCH cr_prejuizo INTO rw_prejuizo;
     CLOSE cr_prejuizo;
 
-		PREJ0003.pc_calc_juros_remun_prov(pr_cdcooper => pr_cdcooper
-		                                , pr_nrdconta => pr_nrdconta
-																		, pr_vljuprov => vr_juprej_prov
-																		, pr_cdcritic => vr_cdcritic
-																		, pr_dscritic => vr_dscritic);
+    PREJ0003.pc_calc_juros_remun_prov(pr_cdcooper => pr_cdcooper
+                                    , pr_nrdconta => pr_nrdconta
+                                    , pr_vljuprov => vr_juprej_prov
+                                    , pr_cdcritic => vr_cdcritic
+                                    , pr_dscritic => vr_dscritic);
 
     vr_slddev := rw_prejuizo.vlsdprej +
                  rw_prejuizo.vljuprej +
                  rw_prejuizo.vljur60_ctneg +
                  rw_prejuizo.vljur60_lcred +
-								 vr_juprej_prov;
+                 vr_juprej_prov;
 
     IF (pr_vlrpagto + nvl(pr_vlrabono, 0)) > vr_slddev THEN
       vr_dscritic := 'O valor total informado para pagamento é maior que o saldo devedor.';
@@ -968,11 +968,11 @@ END pc_busca_saldos_devedores;
       RAISE vr_exc_erro;
     END IF;
 
-		IF pr_vlrpagto > PREJ0003.fn_sld_cta_prj(pr_cdcooper, pr_nrdconta) THEN
-			vr_dscritic := 'O valor informado para pagamento é maior que o saldo disponível.';
+    IF pr_vlrpagto > PREJ0003.fn_sld_cta_prj(pr_cdcooper, pr_nrdconta) THEN
+      vr_dscritic := 'O valor informado para pagamento é maior que o saldo disponível.';
 
       RAISE vr_exc_erro;
-		END IF;
+    END IF;
 
     PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
                                , pr_nrdconta => pr_nrdconta
@@ -1004,14 +1004,14 @@ END pc_busca_saldos_devedores;
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
 
-					pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
           ROLLBACK;
         WHEN OTHERS THEN
           pr_cdcritic := 0;
           pr_dscritic := 'Não foi possível efetuar o pagamento do prejuízo. ERRO -> ' || SQLERRM ;
 
-					pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
           ROLLBACK;
   END pc_paga_prejuz_cc;
@@ -1047,7 +1047,7 @@ END pc_busca_saldos_devedores;
 
   ..............................................................................*/
 
-	-- Cursores                       
+    -- Cursores                       
     CURSOR cr_crapepr(pr_cdcooper IN crapris.cdcooper%TYPE,
                       pr_nrdconta IN crapris.nrdconta%TYPE,
                       pr_nrctremp IN crapris.nrctremp%TYPE) IS
@@ -1070,7 +1070,7 @@ END pc_busca_saldos_devedores;
     vr_des_reto VARCHAR2(3);
     vr_vlaliqui crapepr.vlsdeved%TYPE;
     vr_index INTEGER;
-	vr_sldpreju crapepr.vlsdeved%TYPE;
+  vr_sldpreju crapepr.vlsdeved%TYPE;
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1630,6 +1630,7 @@ DECLARE
        , his.indebcre
        , his.dshistor
        , his.cdhistor
+			 , his.progress_recid
     FROM craplcm lcm
        , craphis his
    WHERE lcm.cdcooper   = pr_cdcooper
@@ -1648,10 +1649,10 @@ DECLARE
               AND aux.cdhistor = 2719
               AND aux.vllanmto = lcm.vllanmto
          )))
-     AND his.cdhistor   NOT IN (2718, 2719)
+     AND his.cdhistor   NOT IN (2719)
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
-   ORDER BY dtmvtolt ASC, indebcre DESC;
+   ORDER BY progress_recid DESC;
   rw_craplcm cr_craplcm%ROWTYPE;
 
   -- Busca o limite de crédito atual do cooperado
