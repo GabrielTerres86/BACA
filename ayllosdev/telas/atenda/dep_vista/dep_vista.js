@@ -1273,7 +1273,7 @@ function calcularSaldo() {
 	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
 	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0;
 
-	var vlsaldo = (vlsdprej + vltotiof) - (vlpagto + vlabono);
+	var vlsaldo = (vlsdprej + vltotiof + juremune) - (vlpagto + vlabono);
 	
 	$('#vlsaldo', '#frmPagPrejCC').val(numberToReal(vlsaldo));
 }
