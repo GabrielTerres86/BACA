@@ -5545,7 +5545,7 @@ END pc_calc_app_programada;
                    '<postoAtendimento>'||rw_info.cdagenci   ||'</postoAtendimento>'||
                    '<cidade>'       || rw_info.nmcidade     ||'</cidade>'||
                    '<uf>'           || rw_info.cdufdcop     ||'</uf>'||
-                   '<dataInicio>'   || to_date(rw_info.dtinirpp,'dd/mm/yyyy') ||'</dataInicio>'||
+                   '<dataInicio>'   || to_char(rw_info.dtinirpp,'dd/mm/yyyy') ||'</dataInicio>'||
                    '<diaDebito>'    || rw_info.indiadeb     ||'</diaDebito>');    
     --> Descarregar buffer    
     pc_escreve_xml(' ',TRUE); 

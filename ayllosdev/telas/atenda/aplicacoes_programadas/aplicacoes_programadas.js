@@ -995,7 +995,7 @@ function imprimirAutorizacao(registro,tparquiv) {
 	tparquiv = tparquiv == "" ? cdtiparq : tparquiv;
 
 	if (cdprodut < 1){
-		alert ('Este \u00e9 um plano antigo que n\u00e3o pode ter o termo de ade\u00e3o impresso.');
+		alert ('Este \u00e9 um plano antigo que n\u00e3o pode ter o termo de ades\u00e3o impresso.');
 		return false;
 	}
 	
