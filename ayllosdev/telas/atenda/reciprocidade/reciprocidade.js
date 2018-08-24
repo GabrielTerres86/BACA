@@ -1391,7 +1391,9 @@ function controlaLayout(nomeForm) {
         var divRegistro = $('div.divRegistros', '#' + nomeForm);
         var tabela = $('table', divRegistro);
 
-        divRegistro.css('height', '165px');
+        divRegistro.css('min-height', '65px');
+        divRegistro.css('height', 'auto');
+        divRegistro.css('overflow-y', 'auto');
 
 		var ordemInicial = new Array();
 
@@ -1808,6 +1810,7 @@ function atualizarConvenios(cddopcao) {
     descontoConvenios[index] = convenio;
     validaEmiteExpede(true);
     sairDescontoConvenio();
+    calcula_desconto();
 }
 
 // Funcao para ocultar/exibir as categorias
@@ -2653,6 +2656,7 @@ function excluirConvenio(nrconven) {
     validaEmiteExpede(true);
     // atualizar tabela de convenios
     sairDescontoConvenio();
+    calcula_desconto();
 }
 
 function validaEmiteExpede(limparCampos) {
@@ -3043,6 +3047,57 @@ function acessaTarifa(tipo) {
                 $("#divConvenios").css('display', 'block');
                 controlaFoco();
                 controlaLayout("");
+            }
+    });
+}
+
+function calcula_desconto() {
+    $('#vldescontoconcedido_cee', '.tabelaDesconto').val(0);
+    $('#vldescontoconcedido_coo', '.tabelaDesconto').val(0);
+
+    if (descontoConvenios.length == 0) {
+        return false;
+    }
+
+    var convenios = [];
+    var cee = 0, coo = 0;
+    for (var i = 0, len = descontoConvenios.length; i < len; ++i) {
+        convenios.push(descontoConvenios[i].convenio);
+        if (descontoConvenios[i].flcooexp == 1) {
+            coo = 1;
+        }
+        if (descontoConvenios[i].flceeexp == 1) {
+            cee = 1;
+        }
+    }
+
+    showMsgAguardo("Aguarde, carregando ...");
+    // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
+    $.ajax({
+            dataType: "json",
+            type: "POST",
+            url: UrlSite + "telas/atenda/reciprocidade/desconto_calculo.php",
+            data: {
+                convenios: convenios,
+                boletos_liquidados:  $('#qtdboletos_liquidados', '.tabelaDesconto').val(),
+                volume_liquidacao:   $('#valvolume_liquidacao', '.tabelaDesconto').val(),
+                qtdfloat:            $('#qtdfloat', '.tabelaDesconto').val(),
+                vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
+                idvinculacao:        $('#idvinculacao', '.tabelaDesconto').val(),
+                idcoo:               coo,
+                idcee:               cee,
+                redirect:            "script_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                var vldesconto_cee = converteNumero(response.vldesconto_cee);
+                var vldesconto_coo = converteNumero(response.vldedconto_coo);
+                $('#vldescontoconcedido_cee', '.tabelaDesconto').val(vldesconto_cee*100);
+                $('#vldescontoconcedido_coo', '.tabelaDesconto').val(vldesconto_coo*100);
             }
     });
 }

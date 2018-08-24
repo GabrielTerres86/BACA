@@ -213,7 +213,7 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 				<?php
 				}
 				?>
-			</tbody>		
+			</tbody>
 		</table>
 	</div>
 </div>
@@ -232,21 +232,20 @@ descontoConvenios = [];
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">
 			<span>Qtd</span>
-			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;text-align:left" />
+			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro calculo" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;text-align:left" />
 		</td>
 	</tr>
 	<tr class="corImpar">
 		<td>Volume liquida&ccedil;&atilde;o</td>
 		<td align="right">
 			<span>R$</span>
-			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor" value="<?php echo $vr_volume_liquidacao; ?>" style="width:153px;" />
+			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor calculo" value="<?php echo $vr_volume_liquidacao; ?>" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
 		<td>Floating</td>
 		<td align="right">
-			<select class="campo" style="width:153px" id="qtdfloat" name="qtdfloat">
-			<option value=""></option>
+			<select class="campo calculo" style="width:153px" id="qtdfloat" name="qtdfloat">
 			<?php foreach($floats as $float) {
 				echo '<option ' . (($vr_qtdfloat == getByTagName($float->tags,"dscodigo")) ? 'selected' : '') . ' value="' . getByTagName($float->tags,"cddominio") . '">' . getByTagName($float->tags,"dscodigo") . '</option>';
 			} ?>
@@ -264,7 +263,7 @@ descontoConvenios = [];
 		<td>Aplica&ccedil;&otilde;es</td>
 		<td align="right">
 			<span>R$</span>
-			<input class="campo valor" value="<?php echo $vr_aplicacoes; ?>" id="vlaplicacoes" name="vlaplicacoes" style="width:153px;" />
+			<input class="campo valor calculo" value="<?php echo $vr_aplicacoes; ?>" id="vlaplicacoes" name="vlaplicacoes" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corImpar">
@@ -295,14 +294,14 @@ descontoConvenios = [];
 		<td>Desconto concedido COO</td>
 		<td align="right">
 			<span>%</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
+			<input name="" id="vldescontoconcedido_coo" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
 		<td>Desconto concedido CEE</td>
 		<td align="right">
 			<span>%</span>
-			<input name="" id="" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
+			<input name="" id="vldescontoconcedido_cee" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 </table>
@@ -397,6 +396,7 @@ cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
 
 validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 validaEmiteExpede(false);
+<?php if ($cddopcao != 'I') { echo 'calcula_desconto();'; } ?>
 
 cDataFimContrato.change(function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
@@ -428,5 +428,16 @@ $('.per').setMask('DECIMAL','zz0,00',',','');
 
 $('.imgEditar').tooltip();	
 $('.imgExcluir').tooltip();
+
+
+$("input.calculo").blur(function() {
+  calcula_desconto();
+});
+
+
+$("select.calculo").change(function() {
+  calcula_desconto();
+});
+
 
 </script>

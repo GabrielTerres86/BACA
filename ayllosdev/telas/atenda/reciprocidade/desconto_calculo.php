@@ -27,34 +27,15 @@ require_once("../../../class/xmlfile.php");
 // Carrega permissões do operador
 include("../../../includes/carrega_permissoes.php");  
 
-if (!isset($_POST["tipo"]) || !isset($_POST["inpessoa"]) || !isset($_POST["convenios"])) {
-  exibeErro("Par&acirc;metros incorretos.");
-} 
-  
-$tipo = $_POST["tipo"];
-$inpessoa = $_POST["inpessoa"];
-$convenios = $_POST["convenios"];
-
-if (!validaInteiro($tipo)) {
-  exibeErro("Tipo de tarifa inv&aacute;lido.");
-}
-
-if (!validaInteiro($inpessoa)) {
-  exibeErro("Tipo de pessoa inv&aacute;lido.");
-}
-
-// tipo == 0 (COO)
-// tipo == 1 (CEE)
-$desTipo = "";
-if ($tipo == 0) {
-  $cdcatego_liq = array(20, 18);
-  $cdcatego_reg = array(24);
-  $desTipo = "COO";
-} else {
-  $cdcatego_liq = array(19);
-  $cdcatego_reg = array(23);
-  $desTipo = "CEE";
-}
+$ls_nrconvenio = ( (!empty($_POST['convenios'])) ? $_POST['convenios'] : '' );
+$qtboletos_liquidados = ( (!empty($_POST['boletos_liquidados'])) ? $_POST['boletos_liquidados'] : 0 );
+$vlliquidados = ( (!empty($_POST['volume_liquidacao'])) ? $_POST['volume_liquidacao'] : 0 );
+$idfloating = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : '');
+$idvinculacao = ( (!empty($_POST['idvinculacao'])) ? $_POST['idvinculacao'] : 0 );
+$vlaplicacoes = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : 0 );
+$vldeposito = 0;
+$idcoo = ( (!empty($_POST['idcoo'])) ? $_POST['idcoo'] : 0 );
+$idcee = ( (!empty($_POST['idcee'])) ? $_POST['idcee'] : 0 );
 
 // Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 function exibeErro($msgErro) {
@@ -65,126 +46,40 @@ function exibeErro($msgErro) {
   exit();
 }
 
-function buscaTarifas($nrconven, $cdcatego, $inpessoa) {
-  global $glbvars;
-  $xml  = "";
-  $xml .= "<Root>";
-  $xml .= " <Dados>";	
-  $xml .= "   <nrconven>".$nrconven."</nrconven>";
-  $xml .= "   <cdcatego>".$cdcatego."</cdcatego>";
-  $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
-  $xml .= " </Dados>";
-  $xml .= "</Root>";
+$xml  = "";
+$xml .= "<Root>";
+$xml .= " <Dados>";	
+$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+$xml .= "   <ls_nrconvenio>".implode(",", $ls_nrconvenio)."</ls_nrconvenio>";
+$xml .= "   <qtboletos_liquidados>".converteFloat($qtboletos_liquidados)."</qtboletos_liquidados>";
+$xml .= "   <vlliquidados>".converteFloat($vlliquidados)."</vlliquidados>";
+$xml .= "   <idfloating>".$idfloating."</idfloating>";
+$xml .= "   <idvinculacao>".$idvinculacao."</idvinculacao>";
+$xml .= "   <vlaplicacoes>".converteFloat($vlaplicacoes)."</vlaplicacoes>";
+$xml .= "   <vldeposito>".converteFloat($vldeposito)."</vldeposito>";
+$xml .= "   <idcoo>".$idcoo."</idcoo>";
+$xml .= "   <idcee>".$idcee."</idcee>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
 
-  $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "BUSCA_TARIFAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-  $xmlObject = getObjectXML($xmlResult);
+$xmlResult = mensageria($xml, "SIMCRP", "CALCULA_RECIPROCIDADE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObject = getObjectXML($xmlResult);
+//print_r($xmlObject);
 
-  if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
-    exibeErro(utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata));
-  }
-
-  return $xmlObject->roottag->tags[0]->tags;
+if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+  exibeErro(utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata));
 }
 
+$result = $xmlObject->roottag->tags[0]->tags[0]->tags;
+
+$vldesconto_cee =  getByTagName($result,'VLDESCONTO_CEE');
+$vldedconto_coo =  getByTagName($result,'VLDEDCONTO_COO');
+
+echo json_encode(
+    array(
+        'vldesconto_cee' => $vldesconto_cee,
+        'vldedconto_coo' => $vldedconto_coo
+    )
+);
+
 ?>
-<div id="divResultado">
-  <div class="divRegistros" style="height: auto; max-height: 285px; overflow-y:auto;">
-  <?php
-  $contTar = 0;
-  foreach ($convenios as $convenio) {
-    echo "<div style='padding: 10px 5px;text-align: left;background-color: #CBD1C5;font-weight: bolder;color: #60635d;'>Conv&ecirc;nio $convenio - $desTipo</div>";
-    foreach ($cdcatego_liq as $cdcatego) {
-  ?>
-    <table cellspacing="1" cellpadding="0" bgcolor="#CBD1C5" style="border-collapse: separate;">
-      <tr style="background-color:#6B7984;">
-          <td class="txtBrancoBold" width="76%" style="color:#fff;padding:2px;">Tarifa: Liquida&ccedil;&atilde;o</td>
-          <td class="txtBrancoBold" width="12%" style="color:#fff;padding:2px;">Tarifa Original:</td>
-          <td class="txtBrancoBold" width="12%" style="color:#fff;padding:2px;">Tarifa c/ Desc.:</td>
-      </tr>
-      <?php
-        // Listagem das tarifas de liquidação
-          $xmlTarifaLiq = buscaTarifas($convenio, $cdcatego, $inpessoa);
-          foreach ($xmlTarifaLiq as $tar) {
-            $tar_cdtarifa = getByTagName($tar->tags,'CDTARIFA');
-            $tar_dstarifa = getByTagName($tar->tags,'DSTARIFA');
-            $tar_vltarifa = getByTagName($tar->tags,'VLTARIFA');
-            ?>
-            <tr style="background-color:#FFFFFF;" class="clsTar<?php echo $contTar; ?>">
-                <td class="txtNormal"><?php echo $tar_cdtarifa.' - '.$tar_dstarifa; ?></td>
-                <td class="txtNormal clsTarValorOri<?php echo $contTar; ?>"><?php echo formataMoeda($tar_vltarifa); ?></td>
-                <td class="txtNormal clsTarValorDes<?php echo $contTar; ?>">0,00</td>
-            </tr>
-            <?php
-            $contTar++;
-          }
-        ?>
-      </table>
-  <?php 
-    }
-  foreach ($cdcatego_reg as $cdcatego) {
-  ?>
-    <table cellspacing="1" cellpadding="0" bgcolor="#CBD1C5" style="border-collapse: separate;">
-      <tr style="background-color:#6B7984;">
-          <td class="txtBrancoBold" width="76%" style="color:#fff;padding:2px;">Tarifa: Registro</td>
-          <td class="txtBrancoBold" width="12%" style="color:#fff;padding:2px;">Tarifa Original:</td>
-          <td class="txtBrancoBold" width="12%" style="color:#fff;padding:2px;">Tarifa c/ Desc.:</td>
-      </tr>
-      <?php
-        // Listagem das tarifas de liquidação
-          $xmlTarifaLiq = buscaTarifas($convenio, $cdcatego, $inpessoa);
-          foreach ($xmlTarifaLiq as $tar) {
-            $tar_cdtarifa = getByTagName($tar->tags,'CDTARIFA');
-            $tar_dstarifa = getByTagName($tar->tags,'DSTARIFA');
-            $tar_vltarifa = getByTagName($tar->tags,'VLTARIFA');
-            ?>
-            <tr style="background-color:#FFFFFF;" class="clsTar<?php echo $contTar; ?>">
-                <td class="txtNormal"><?php echo $tar_cdtarifa.' - '.$tar_dstarifa; ?></td>
-                <td class="txtNormal clsTarValorOri<?php echo $contTar; ?>"><?php echo formataMoeda($tar_vltarifa); ?></td>
-                <td class="txtNormal clsTarValorDes<?php echo $contTar; ?>">0,00</td>
-            </tr>
-            <?php
-            $contTar++;
-          }
-        ?>
-      </table>
-  <?php 
-    }
-  }
-  ?>
-  </div>
-</div>
-
-<div id="divBotoes">
-  <a href="#" class="botao" onclick="sairDescontoConvenio(); return false;">Voltar</a>
-</div>
-
-<script type="text/javascript">
-
-// Esconde mensagem de aguardo
-hideMsgAguardo();
-
-// Bloqueia conte&uacute;do que est&aacute; &aacute;tras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
-
-var ordemInicial = new Array();
-
-var arrayLargura = new Array();
-arrayLargura[0] = '20px';
-arrayLargura[1] = '80px';
-arrayLargura[2] = '200px';
-arrayLargura[3] = '80px';
-
-
-var arrayAlinha = new Array();
-arrayAlinha[0] = 'center';
-arrayAlinha[1] = 'center';
-arrayAlinha[2] = 'left';
-arrayAlinha[3] = 'left';
-
-$(document).bind('keydown', function (ev) {
-  if (ev.keyCode == 27) {
-    sairDescontoConvenio(); 
-    return false;
-  }
-});
-</script>
