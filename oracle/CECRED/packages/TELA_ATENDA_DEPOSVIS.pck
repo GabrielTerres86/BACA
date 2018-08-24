@@ -1172,7 +1172,6 @@ END pc_busca_saldos_devedores;
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_nrctremp => nvl(pr_nrctremp,0));
         FETCH cr_crapepr INTO rw_crapepr;
-        CLOSE cr_crapepr;
         
         IF cr_crapepr%FOUND THEN 
            CLOSE cr_crapepr;
