@@ -49,7 +49,7 @@
 	list($serverCFG, $dominioCFG, $tipoCFG, $paisCFG) = explode('.', SERVERNAMEAPP);
 
 	// torna unico o indice de configuracao para os servidores de PRODUCAO
-	if ( in_array($serverCFG, array('0303appweb02', '0303appweb03', '0302appweb02', '0302appweb03')) ) {
+	if ( in_array($serverCFG, array('0303appweb01', '0303appweb02', '0303appweb03', '0302appweb01', '0302appweb02', '0302appweb03')) ) {
 		$serverCFG = 'PRODUCAO';
 	}
 
@@ -95,13 +95,9 @@
 	$GEDServidor = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR']) : $array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR'];
 	
 	// Variaveis para Fipe
-	// PROD
-	//$UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
-  //$AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
-	// Homol 
-	$UrlFipe = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
-	$AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
-	
+	$UrlFipe = ( SERVERNAMECFG == 'PRODUCAO' ) ? "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/" : "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  $AuthFipe = ( SERVERNAMECFG == 'PRODUCAO' ) ? "Basic YXlsbG9zOlBhJCQ0bGwwcy4yMDE4" : "Basic aWJzdnJjb3JlOndlbGNvbWUx";
+  
 	// Identificador dos grupos de usuarios nas maquinas HP-UX
 	$gidNumbers[0] = 103; // Cecred
 	$gidNumbers[1] = 902; // Desenvolvimento
