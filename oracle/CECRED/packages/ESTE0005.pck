@@ -3503,9 +3503,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     -- Enviaremos os dados básicos encontrados na tabela
     IF vr_inpessoa = 1 THEN
-      vr_obj_generico.put('documento'      ,gene0002.fn_mask(pr_rw_crapavt.nrcpfcgc,'99999999999'));
+      vr_obj_generico.put('documento'      ,gene0002.fn_mask(NVL(pr_rw_crapavt.nrcpfcgc,0),'99999999999'));
     ELSE
-      vr_obj_generico.put('documento'      ,gene0002.fn_mask(pr_rw_crapavt.nrcpfcgc,'99999999999999'));
+      vr_obj_generico.put('documento'      ,gene0002.fn_mask(NVL(pr_rw_crapavt.nrcpfcgc,0),'99999999999999'));
     END IF;
 
     -- Para Pessoas Fisicas
@@ -4275,7 +4275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de conjugue
-          vr_obj_conjuge.put('documento',gene0002.fn_mask(rw_crapcje.nrcpfcjg,'99999999999'));
+          vr_obj_conjuge.put('documento',gene0002.fn_mask(NVL(rw_crapcje.nrcpfcjg,0),'99999999999'));
           vr_obj_conjuge.put('tipoPessoa','FISICA');
           vr_obj_conjuge.put('nome',rw_crapcje.nmconjug);
           vr_obj_conjuge.put('dataNascimento',este0002.fn_Data_ibra_motor(rw_crapcje.dtnasccj));
@@ -4464,7 +4464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
          ELSE
            -- Enviaremos os dados básicos encontrados na tabela de responsável legal
-           vr_obj_responsav.put('documento'      ,gene0002.fn_mask(rw_crapcrl.nrcpfcgc,'99999999999'));
+           vr_obj_responsav.put('documento'      ,gene0002.fn_mask(NVL(rw_crapcrl.nrcpfcgc,0),'99999999999'));
            vr_obj_responsav.put('tipoPessoa'     ,'FISICA');
            vr_obj_responsav.put('nome'           ,rw_crapcrl.nmrespon);
 
@@ -4630,7 +4630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de Participações
-          vr_obj_particip.put('documento'      ,gene0002.fn_mask(rw_crapepa.nrdocsoc,'99999999999999'));
+          vr_obj_particip.put('documento'      ,gene0002.fn_mask(NVL(rw_crapepa.nrdocsoc,0),'99999999999999'));
           vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
           vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
 
