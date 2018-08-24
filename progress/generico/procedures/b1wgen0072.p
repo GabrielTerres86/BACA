@@ -775,7 +775,7 @@ PROCEDURE Busca_Dados_Cto:
                    tt-crapcrl.cddosexo = crabttl.cdsexotl
                    tt-crapcrl.cdestciv = crabttl.cdestcvl
                    tt-crapcrl.cdnacion = crabttl.cdnacion
-                   tt-crapcrl.dsnatura = crabttl.dsnatura
+                   tt-crapcrl.dsnatura = replace(crabttl.dsnatura,"'"," ")
                    tt-crapcrl.nmpairsp = crabttl.nmpaittl
                    tt-crapcrl.nmmaersp = crabttl.nmmaettl
                    tt-crapcrl.tpdeiden = crabttl.tpdocttl.
