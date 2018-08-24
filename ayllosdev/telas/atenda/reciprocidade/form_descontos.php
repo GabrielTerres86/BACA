@@ -382,7 +382,7 @@ descontoConvenios = [];
     <a href="#" id="btnContinuar" class="botao">Continuar</a>
     <a href="#" id="btnAprovacao" class="botao">Solicitar aprova&ccedil;&atilde;o</a>
     <a href="#" class="botao" onclick="consulta('A','','',true,'','', 1);return false;">Tarifas instru&ccedil;&atilde;o</a>
-	<a href="#" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>
+	<a href="#" id="btVoltar" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>
 </div>
 
 <script type="text/javascript">

@@ -87,7 +87,7 @@ function buscaTarifas($nrconven, $cdcatego, $inpessoa) {
 }
 
 ?>
-<div id="divResultado">
+<div id="divResultado" class="closeEvent">
   <div class="divRegistros" style="height: auto; max-height: 285px; overflow-y:auto;">
   <?php
   $contTar = 0;
@@ -155,7 +155,7 @@ function buscaTarifas($nrconven, $cdcatego, $inpessoa) {
 </div>
 
 <div id="divBotoes">
-  <a href="#" class="botao" onclick="sairDescontoConvenio(); return false;">Voltar</a>
+  <a href="#" id="btVoltar" class="botao" onclick="sairDescontoConvenio(); return false;">Voltar</a>
 </div>
 
 <script type="text/javascript">
@@ -181,10 +181,10 @@ arrayAlinha[1] = 'center';
 arrayAlinha[2] = 'left';
 arrayAlinha[3] = 'left';
 
-$(document).bind('keydown', function (ev) {
-  if (ev.keyCode == 27) {
-    sairDescontoConvenio(); 
-    return false;
+$('body').bind('click', function (ev) {
+	if (($(ev.target).find('.closeEvent:visible').length && $('#divBloqueio').is(':visible')) || (ev.target.id == 'divBloqueio'))  {
+    sairDescontoConvenio();
   }
-});
+  return false;
+})
 </script>

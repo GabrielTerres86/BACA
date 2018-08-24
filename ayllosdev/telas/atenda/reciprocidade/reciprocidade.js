@@ -335,6 +335,7 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
     controlaFoco();
 
     validaHabilitacaoCamposBtn();
+    blockBackground(parseInt($("#divRotina").css("z-index")));    
 
     return false;
  }
@@ -3094,6 +3095,7 @@ function calcula_desconto() {
             },
             success: function (response) {
                 hideMsgAguardo();
+                blockBackground(parseInt($("#divRotina").css("z-index")));
                 var vldesconto_cee = converteNumero(response.vldesconto_cee);
                 var vldesconto_coo = converteNumero(response.vldedconto_coo);
                 $('#vldescontoconcedido_cee', '.tabelaDesconto').val(vldesconto_cee*100);

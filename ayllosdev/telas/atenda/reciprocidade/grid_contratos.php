@@ -80,7 +80,6 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 
     exibeErro($msgErro);
     exit();
-        
 }
 
 $flsitsms = getByTagName($xmlDados->tags,"flsitsms");
@@ -94,7 +93,7 @@ function exibeErro($msgErro) {
 	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
 	echo '</script>';
 	exit();
-}		
+}
 	
 ?>
 <?/**/?>
@@ -172,6 +171,7 @@ function exibeErro($msgErro) {
     <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
 	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
 	<a href="#" class="botao" onclick="carregaCobranca(); return false;">Recip. Antigo</a>
+	<a href="#" id="btSair"></a>
 	
 	<input type="hidden" id= "flsercco" name="flsercco">
 	
