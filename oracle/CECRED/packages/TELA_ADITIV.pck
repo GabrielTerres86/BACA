@@ -1461,7 +1461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                            'da cidade de '||vr_crapass.nmcidade||'/'||vr_crapass.cdufende||', '||
                            'CEP '||gene0002.fn_mask_cep(vr_crapass.nrcepend)||', '||
                            'titular da conta corrente nº '||gene0002.fn_mask_conta(vr_crapass.nrdconta)||', '||
-                           'na qualidade de COOPERADO ou INTERVENIENTE GARANTIDOR';
+                           'na qualidade de COOPERADO ou INTERVENIENTE GARANTIDOR.';
           end if;
         close cr_crapass;
       else
@@ -1487,8 +1487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                        'bairro '||vr_crapavt.nmbairro||', '||
                        'da cidade de '||vr_crapavt.nmcidade||'/'||vr_crapavt.cdufresd||', '||
                        'CEP '||gene0002.fn_mask_cep(vr_crapavt.nrcepend)||', '||
-                       'titular da conta corrente nº '||gene0002.fn_mask_conta(vr_crapavt.nrdconta)||', '||
-                       'na qualidade de COOPERADO ou INTERVENIENTE GARANTIDOR';
+                       'na qualidade de COOPERADO ou INTERVENIENTE GARANTIDOR.';
       end if;
     close cr_crapavt;
     return(vr_dspropri);
