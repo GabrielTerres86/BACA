@@ -1047,6 +1047,17 @@ END pc_busca_saldos_devedores;
 
   ..............................................................................*/
 
+	-- Cursores                       
+    CURSOR cr_crapepr(pr_cdcooper IN crapris.cdcooper%TYPE,
+                      pr_nrdconta IN crapris.nrdconta%TYPE,
+                      pr_nrctremp IN crapris.nrctremp%TYPE) IS
+    SELECT c.inprejuz         
+      FROM crapepr c
+     WHERE c.cdcooper = pr_cdcooper
+       AND c.nrdconta = pr_nrdconta
+       AND c.nrctremp = pr_nrctremp;
+    rw_crapepr cr_crapepr%ROWTYPE;
+
     -- erros
     vr_exc_erro EXCEPTION;
 
@@ -1059,6 +1070,7 @@ END pc_busca_saldos_devedores;
     vr_des_reto VARCHAR2(3);
     vr_vlaliqui crapepr.vlsdeved%TYPE;
     vr_index INTEGER;
+	vr_sldpreju crapepr.vlsdeved%TYPE;
 
     -- Variável de críticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1145,7 +1157,7 @@ END pc_busca_saldos_devedores;
           END IF;
           RAISE vr_exc_erro;
         END IF;
-
+        
         -- ler os registros de emprestimos e incluir no xml
         vr_index := vr_tab_dados_epr.first;
 
@@ -1153,13 +1165,39 @@ END pc_busca_saldos_devedores;
                        vr_tab_dados_epr(vr_index).vlmtapar +
                        vr_tab_dados_epr(vr_index).vlmrapar +
                        vr_tab_dados_epr(vr_index).vliofcpl;
-
-        IF pr_vlrpagto > vr_vlaliqui THEN
+                       
+        vr_sldpreju := vr_tab_dados_epr(vr_index).vlsdprej;
+        
+        OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctremp => nvl(pr_nrctremp,0));
+        FETCH cr_crapepr INTO rw_crapepr;
+        CLOSE cr_crapepr;
+        
+        IF cr_crapepr%FOUND THEN 
+           CLOSE cr_crapepr;
+           IF rw_crapepr.inprejuz = 0 THEN
+              IF pr_vlrpagto > vr_vlaliqui THEN
+                 vr_cdcritic := 0;
+                 vr_dscritic := 'Valor superior ao saldo devedor! Valor Máximo permitido: ' || 
+                                to_char(vr_vlaliqui, '9G999G990D00', 'nls_numeric_characters='',.''');
+                 RAISE vr_exc_erro;
+              END IF; 
+           ELSE
+              IF pr_vlrpagto > vr_sldpreju THEN
+                 vr_cdcritic := 0;
+                 vr_dscritic := 'Valor superior ao saldo devedor! Valor Máximo permitido: ' || 
+                                to_char(vr_sldpreju, '9G999G990D00', 'nls_numeric_characters='',.''');
+                 RAISE vr_exc_erro;
+              END IF; 
+           END IF;
+        ELSE
+           CLOSE cr_crapepr;    
            vr_cdcritic := 0;
-           vr_dscritic := 'Valor superior ao saldo devedor! Valor Máximo permitido: ' || 
-                          to_char(vr_vlaliqui, '9G999G990D00', 'nls_numeric_characters='',.''');
+           vr_dscritic := 'O Contrato informado não existe!';
            RAISE vr_exc_erro;
         END IF;
+        
         -- PJ 450 -- Diego Simas (AMcom) -- Fim
 
         IF pr_vlrpagto > PREJ0003.fn_sld_cta_prj(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta) THEN
