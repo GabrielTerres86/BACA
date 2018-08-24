@@ -12,6 +12,9 @@ create or replace package cecred.ESTE0006 is
       Objetivo  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
 
       Alteracoes: 21/08/2018 - Alterações de formato de data na pc_enviar_analise_manual. (Andrew Albuquerque - GFT)
+                  24/08/2018 - Alteração na pc_enviar_analise_manual, pois a mensagem de retorno da IBRATAN referente 
+                               a bordero já existente na esteira foi alterada, causando erro no envio de alteração
+                               de bordero/proposta (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------*/
 
 --> Tratamento de erro
@@ -1003,6 +1006,9 @@ END pc_incluir_bordero_esteira;
    Objetivo  : Rotina responsavel por gerar a geracao e inclusao do Borderô para a esteira
 
    Alteracoes: 21/08/2018 - Alterações de formato de data na pc_enviar_analise_manual. (Andrew Albuquerque - GFT)
+               24/08/2018 - Alteração na pc_enviar_analise_manual, pois a mensagem de retorno da IBRATAN referente 
+                            a bordero já existente na esteira foi alterada, causando erro no envio de alteração
+                            de bordero/proposta (Andrew Albuquerque - GFT)
  ..........................................................................*/
 
  vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
@@ -1115,7 +1121,8 @@ END pc_incluir_bordero_esteira;
                              ,pr_dscritic    => vr_dscritic);
 
    --> Caso tenhamos recebido critica de Bordero jah existente na Esteira
-   IF lower(vr_dscritic) LIKE '%bordero%ja existente na esteira%' THEN
+   IF (lower(vr_dscritic) LIKE '%bordero%ja existente na esteira%') OR
+      (lower(vr_dscritic) LIKE '%proposta%ja existente na esteira%') THEN
 
      --> Tentaremos enviar alteraçao com reinício de fluxo para a Esteira
      pc_alterar_bordero(pr_cdcooper => pr_cdcooper
