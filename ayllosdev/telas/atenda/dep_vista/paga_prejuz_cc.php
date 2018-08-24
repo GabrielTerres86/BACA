@@ -20,52 +20,24 @@
 	$vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(",",".",$_POST['vlrpagto']) : 0;
     $vlrabono = (isset($_POST['vlrabono'])) ? str_replace(",",".",$_POST['vlrabono']) : 0;
 
-	if($vlrabono > 0){
-		// pagamento de prejuízo de forma manual
 		
-		$xml2  = "<Root>";
-		$xml2 .= " <Dados>";
-		$xml2 .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xml2 .= "   <nrdconta>".$nrdconta."</nrdconta>";
-		$xml2 .= "   <vlrpagto>".$vlrpagto."</vlrpagto>";
-		$xml2 .= "   <vlrabono>".$vlrabono."</vlrabono>";
-		$xml2 .= " </Dados>";
-		$xml2 .= "</Root>";
+	$xml2  = "<Root>";
+	$xml2 .= " <Dados>";
+	$xml2 .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml2 .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml2 .= "   <vlrpagto>".$vlrpagto."</vlrpagto>";
+	$xml2 .= "   <vlrabono>".$vlrabono."</vlrabono>";
+	$xml2 .= " </Dados>";
+	$xml2 .= "</Root>";
 
-		$acao = "PAGA_PREJUIZO_CC";
+	$acao = "PAGA_PREJUIZO_CC";
 
-		$xmlResult = mensageria($xml2, "TELA_ATENDA_DEPOSVIS", $acao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObjeto = getObjectXML($xmlResult);		
-
-	}else{
-		// pagamento de prejuízo via liberação de saque		
-
-		$xml2  = "<Root>";
-		$xml2 .= " <Dados>";
-		$xml2 .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xml2 .= "   <nrdconta>".$nrdconta."</nrdconta>";
-		$xml2 .= "   <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-		$xml2 .= "   <vlrlanc>".$vlrpagto ."</vlrlanc>";
-		$xml2 .= " </Dados>";
-		$xml2 .= "</Root>";
-
-		$acao = "GERA_LCM";	
-
-		$xmlResult = mensageria($xml2, "PREJ0003", $acao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObjeto = getObjectXML($xmlResult);
-	}	
+	$xmlResult = mensageria($xml2, "TELA_ATENDA_DEPOSVIS", $acao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);		
 
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
+		exibirErro('error',utf8ToHtml($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
 	}else{
-		if ($vlrabono > 0) {
-			exibirErro('inform',utf8_encode('Pagamento de Prejuízo efetuado com sucesso!'),'Alerta - Ayllos',"mostraDetalhesCT(",false);
-		}
-		else {
-			exibirErro('inform',utf8_encode('Valor disponibilizado para pagamento automático em lote!'),'Alerta - Ayllos',"mostraDetalhesCT(",false);
-		}
-	}	
-	
-	
-	
+		exibirErro('inform',utf8ToHtml('Pagamento de Prejuízo efetuado com sucesso!'),'Alerta - Ayllos',"mostraDetalhesCT(",false);
+	}		
 ?>
