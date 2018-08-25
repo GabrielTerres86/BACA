@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --
   --  Programa:  DSCT0003                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : André Ávila - GFT
-  --  Data    : Abril/2018                     Ultima Atualizacao: 10/04/2018
+  --  Data    : Abril/2018                     Ultima Atualizacao: 24/08/2018
   --
   --  Dados referentes ao programa:
   --
@@ -21,6 +21,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --                           realiza analise completa ou apenas a impeditiva; alterada validação pós restrições, para executar
   --                           apenas quando chamado por análise e para enviar para mesa de checagem ou esteira; Validação de
   --                           contingência movida para verificar antes de enviar dados para a mesa do ibratan.
+  --
+  --              24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior (vr_cdhistordsct_creddscttitpgm).
+  --                           Este será usado na pc_pagar_titulo quando o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
   ---------------------------------------------------------------------------------------------------------------
 
   -- Constantes
@@ -47,6 +50,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   vr_cdhistordsct_pgtojurosopc   CONSTANT craphis.cdhistor%TYPE := 2686; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO (operacao credito)
   vr_cdhistordsct_pgtojurosavcc  CONSTANT craphis.cdhistor%TYPE := 2687; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (conta cooperado)
   vr_cdhistordsct_pgtojurosavopc CONSTANT craphis.cdhistor%TYPE := 2688; --PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL (operacao credito)
+  vr_cdhistordsct_creddscttitpgm CONSTANT craphis.cdhistor%TYPE := 2758;-- CREDITO DESCONTO DE TITULO PAGO A MAIOR
 
 
   --Tipo de Desconto de Títulos
@@ -661,6 +665,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 
                14/05/2018 - Criacao da procedure para trazer os titulos vencidos                              - Vitor Shimada Assanuma (GFT)
                16/05/2018 - Criacao das procedures de trazer o saldo e efetuar pagamento dos titulos vencidos - Vitor Shimada Assanuma (GFT)
+               24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior (vr_cdhistordsct_creddscttitpgm).
+                            Este será usado na pc_pagar_titulo quando o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
   ---------------------------------------------------------------------------------------------------------------*/
   -- Cursor genérico de calendário
   rw_crapdat btch0001.cr_crapdat%rowtype;
@@ -7501,6 +7507,11 @@ EXCEPTION
                             2 - ?????
                             3 - Internet
                             4 - TAA
+     
+     Alterações: 24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior 
+                              (vr_cdhistordsct_creddscttitpgm). Este será usado na pc_pagar_titulo quando 
+                              o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
+
   ..................................................................................*/
 
     /* CURSORES */
@@ -8097,7 +8108,7 @@ EXCEPTION
                          ,pr_cdbccxlt => 100
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_vllanmto => vr_vlpagmto
-                         ,pr_cdhistor => vr_cdhistordsct_credito
+                         ,pr_cdhistor => vr_cdhistordsct_creddscttitpgm
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_cdoperad => pr_cdoperad
                          ,pr_nrborder => pr_nrborder
