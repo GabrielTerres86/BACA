@@ -127,8 +127,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
               
                15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)  
               
-               15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
-             
+               15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)  
+
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
               
                08/08/2018 - Inclusão da Apl. Programada - Proj. 411.2 - CIS Corporate
@@ -1343,14 +1343,10 @@ BEGIN
                 RAISE vr_iterar;
               END IF;
 
-              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
-                -- Buscar próximo índice
-                vr_idxindc := vr_tab_craprpp.next(vr_idxindc);
-
-                RAISE vr_iterar;
-              END IF;
-
               -- Calcular o saldo até a data do movimento
+              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
+              	      vr_rpp_vlsdrdpp := vr_tab_craprpp(vr_idxindc).vlslfmes;
+	     ELSE
               apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
                                        ,pr_dstextab  => vr_dextabi
                                        ,pr_cdprogra  => vr_cdprogra
@@ -1361,6 +1357,7 @@ BEGIN
                                        ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
                                        ,pr_cdcritic  => vr_cdcritic
                                        ,pr_des_erro  => vr_dscritic);
+              END IF;
 
               -- Se encontrar erros na execução
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
