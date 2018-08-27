@@ -65,22 +65,13 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibeErro(str_replace('"',"'",$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata));
-	} 
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+	}
 	
 	$motivos = $xmlObjeto->roottag->tags;
 
 	$inaltera = getByTagName($xmlObjeto->roottag->tags[0]->tags,'inaltera');
 	
 	include("titulos_limite_formulario_motivos.php");
-	
-	// Função para exibir erros na tela através de javascript
-	function exibeErro($msgErro) { 
-		echo '<script type="text/javascript">';
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-		echo '</script>';
-		exit();
-	}
 	
 ?>

@@ -41,7 +41,7 @@
  * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta.
  * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
  * 026: [26/04/2018] Vitor Shimada Assanuma (GFT): Ajuste na funcao de chamada da proposta e manutencao
- * 027: [15/08/2018] Adicionado controle para o novo botão 'Anular' e criada uma nova tela 'Motivos'. PRJ 438 (Mateus Z - Mouts)
+ * 027: [15/08/2018] Criada tela 'Motivos' e botão 'Anular'. PRJ 438 (Mateus Z - Mouts)
  */
 
  // variaveis propostas
@@ -767,14 +767,6 @@ function selecionaLimiteTitulosProposta(pr_id, pr_qtlimites, pr_nrctrlim, pr_vll
             $("#trLimite" + idLinhaL).css("background-color","#FFB9AB");
         }
     }
-	
-	// PRJ 438 - Fazer o controle do botão Anular, exibir o botao apenas se o insitapr for "Aprovada"
-    // 1 = APROVADA AUTOMATICAMENTE / 2 = APROVADA MANUAL / 3 = APROVADA
-    if(insitapr == 1 || insitapr == 2 || insitapr == 3) {
-        $("#btnAnular", "#divBotoesTitulosLimite").show();
-    } else {
-        $("#btnAnular", "#divBotoesTitulosLimite").hide();
-    } 
 	
     return false;
 }
@@ -3027,7 +3019,11 @@ function carregaDadosConsultaMotivos() {
             showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
-            $("#divOpcoesDaOpcao3").html(response);
+            if (response.indexOf('showError("error"') == -1) {
+                $("#divOpcoesDaOpcao3").html(response);
+            } else {
+                eval(response);
+            }
         }               
     });
     return false;

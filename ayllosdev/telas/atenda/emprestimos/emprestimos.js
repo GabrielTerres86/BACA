@@ -1932,25 +1932,6 @@ function controlaLayout(operacao) {
 
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
-		
-		// seleciona o registro que é clicado
-		$('table > tbody > tr', divRegistro).click( function() {
-			
-			var insitapr = $('#insitapr' ,$(this)).val();
-
-			console.log('teste' + insitapr);
-
-			// PRJ 438 - Fazer o controle do botão Anular, exibir o botao apenas se o insitapr for "Aprovada"
-		    // 1 = APROVADA AUTOMATICAMENTE / 2 = APROVADA MANUAL
-		    if(insitapr == 1) {
-		        $("#btAnular", "#divBotoes").show();
-		    } else {
-		        $("#btAnular", "#divBotoes").hide();
-		    }
-		});
-
-		// disparar o click para o primeiro registro quando entrar na tela
-		$('table > tbody > tr:eq(0)', divRegistro).click();
 
         // Operação Alterando/Incluindo
     } else if (in_array(operacao, ['TI', 'TE', 'TC', 'TA', 'CF', 'A_NOVA_PROP', 'A_NUMERO', 'I_CONTRATO', 'I_FINALIZA', 'A_FINALIZA', 'I_INICIO', 'A_INICIO', 'A_VALOR', 'A_AVALISTA'])) {
@@ -9988,12 +9969,16 @@ function carregaDadosConsultaMotivos() {
             showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
-            $('#divConteudoOpcao').html(response);
-            layoutPadrao();
-            hideMsgAguardo();
-            formatarTelaConsultaMotivos();
-            divRotina.centralizaRotinaH();
-            bloqueiaFundo(divRotina);
+            if (response.indexOf('showError("error"') == -1) {
+                $('#divConteudoOpcao').html(response);
+	            layoutPadrao();
+	            hideMsgAguardo();
+	            formatarTelaConsultaMotivos();
+	            divRotina.centralizaRotinaH();
+	            bloqueiaFundo(divRotina);
+            } else {
+                eval(response);
+            }
         }               
     });
     return false;
