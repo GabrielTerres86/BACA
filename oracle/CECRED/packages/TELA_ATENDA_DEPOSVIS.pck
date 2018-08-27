@@ -1649,7 +1649,7 @@ DECLARE
               AND aux.cdhistor = 2719
               AND aux.vllanmto = lcm.vllanmto
          )))
-     AND his.cdhistor   NOT IN (2719)
+     AND his.cdhistor   <> 2719
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
    ORDER BY progress_recid;
