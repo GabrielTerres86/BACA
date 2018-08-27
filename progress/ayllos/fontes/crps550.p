@@ -46,6 +46,10 @@
 
                29/05/2018 - Alteracao no layout. Sera gerado respeitando o layout CCF607 da ABBC. 
                             Chamado SCTASK0012791 (Heitor - Mouts)
+			   
+			   27/08/2018 - Inclusão de nova regra para validar o HEADER. Verificar se a data do arquivo 
+							é diferente que a data do movimento anterior, se for, gerar a critica: 
+							"Data invalida no arquivo" e enviar um e-mail para a COMPE. Chamado PRB0040283 (Douglas - Mouts)
 
 ..............................................................................*/
 
