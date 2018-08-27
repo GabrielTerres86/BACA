@@ -2,7 +2,7 @@
  /*!
  * FONTE        : form_impres.php
  * CRIAÇÃO      : Rogerius Militão (DB1)
- * DATA CRIAÇÃO : 31/08/2011 
+ * DATA CRIAÇÃO : 31/08/2011
  * OBJETIVO     : Formulário de exibição da IMPRES
  * --------------
  * ALTERAÇÕES   :
@@ -11,9 +11,9 @@
  * 31/05/2013 - Daniel       (CECRED) : Retirado campo flgtarif.
  * 08/08/2016 - Guilherme    (SUPERO) : M325 - Informe de Rendimentos Trimestral PJ
  * --------------
- */	
+ */
 ?>
-<form name="frmImpres" id="frmImpres" class="formulario" onSubmit="return false;" style="display:none" >	
+<form name="frmImpres" id="frmImpres" class="formulario" onSubmit="return false;" style="display:none" >
 
 	<fieldset>
 
@@ -48,7 +48,6 @@
 		<option value="3">3-Dep Identificados</option>
 		<option value="4">4-Todos</option>
 		</select>
-
 		<label for="nrctremp"><? echo utf8ToHtml('Contrato:') ?></label>
 		<input name="nrctremp" id="nrctremp" type="text" value="<? echo $nrctremp ?>" value="" />
 		<a style="margin-top:5px"><img id="lnrctremp" src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
@@ -78,7 +77,6 @@
 		</select>
         </div>
 </div>
-
 		<label for="nraplica"><? echo utf8ToHtml('Aplicac.:') ?></label>
 		<input name="nraplica" id="nraplica" type="text" value="<? echo $nraplica ?>" value="" />
 		<a style="margin-top:5px"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
@@ -87,16 +85,17 @@
 		<label for="nranoref"><? echo utf8ToHtml('Ano:') ?></label>
 		<input name="nranoref" id="nranoref" type="text" value="<? echo $nranoref ?>" value="" />
     </div>
+	
 <div id="divGeral" style="float:left">
 		<label for="flgemiss"><? echo utf8ToHtml('Quando?:') ?></label>
 		<select name="flgemiss" id="flgemiss">
 		<option value="yes">Agora</option>
-		<option value="no">Processo</option>		
+		<option value="no">Processo</option>
 		</select>
 
-</div>	
-	</fieldset>		
-	
+</div>
+	</fieldset>
+
 </form>
 <script type="text/javascript">
 
@@ -107,9 +106,9 @@ $("#tpmodelo","#frmImpres").change(function() {
     var src   = $(this).val();
 
     if (src == '1') {
-        var dtArray = dtmvtolt.split('/');    
+        var dtArray = dtmvtolt.split('/');
         var dtdozemes = (dtArray[0] + 1) + "/" + dtArray[1] + "/" + (dtArray[2] - 1);
-    
+
         cDtrefere.habilitaCampo();
         cDtreffim.habilitaCampo();
         cDtreffim.val(dtmvtolt);
@@ -152,5 +151,5 @@ $("#tpinform","#frmImpres").change(function() {
 	<input name="nranoref" id="nranoref" type="hidden" value="" />
 	<input name="nrperiod" id="nrperiod" type="hidden" value="" />
 	<input name="tpinform" id="tpinform" type="hidden" value="" />
-</form>	
+</form>
 
