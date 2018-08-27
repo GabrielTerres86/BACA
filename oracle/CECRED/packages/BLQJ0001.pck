@@ -1210,6 +1210,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                   ,pr_dsinfadc    IN VARCHAR2         
                                   ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
     
+  /*.............................................................................
+
+    Programa: pc_inclui_bloqueio_jud
+    Autor   : 
+    Data    :                 Ultima Atualizacao: 27/08/2018
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Incluir bloqueios judiciais
+                 
+    Alteracoes: 27/08/2018 - Alterado para realizar resgate do valor bloqueado em prejuizo.
+                             PRJ450 - Regulatorio(Odirlei-AMcom)
+    
+              
+
+  .............................................................................*/
     -- CURSORES
     -- Buscar dados do cadastro de bloqueio
     CURSOR cr_crapblj(pr_cdcooper  crapblj.cdcooper%TYPE
@@ -1383,7 +1399,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                        VALUES(pr_cdcooper                       -- cdcooper
                              ,rw_crapass.nrdconta               -- nrdconta
                              ,rw_crapass.nrcpfcgc               -- nrcpfcgc
-                             ,TO_NUMBER(vr_tbmodali(vr_indice)) -- cdmodali
+                             --> Gravar modalidade 5 - Bloqueado prejuizo como Conta Corrente
+                             --> pois foi realizado o resgate automatico para conta corrente
+                             ,decode(TO_NUMBER(vr_tbmodali(vr_indice)),
+                                     5,1,
+                                     TO_NUMBER(vr_tbmodali(vr_indice))) -- cdmodali
                              ,TO_NUMBER(vr_tbtipmov(vr_indice)) -- cdtipmov
                              ,vr_flblcrft                       -- flblcrft
                              ,BTCH0001.rw_crapdat.dtmvtolt      -- dtblqini
@@ -1410,8 +1430,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -- Setar a variavel de transação
         vr_flgtrans := TRUE;
         
-        -- Se modalidade 1 e houver valor bloqueado deve criar o lançamento
-        IF TO_NUMBER(vr_tbmodali(vr_indice)) = 1 AND TO_NUMBER(vr_tbbloque(vr_indice)) > 0 THEN
+        -- Se modalidade 1 - Conta Corrente ou 5 - Conta Bloqueada prejuizo
+        -- e houver valor bloqueado deve criar o lançamento
+        IF TO_NUMBER(vr_tbmodali(vr_indice)) IN (1,5) AND TO_NUMBER(vr_tbbloque(vr_indice)) > 0 THEN
+          
+          --> Para Conta bloqueada, deve realizar o resgate do bloqueado prejuizo
+          IF TO_NUMBER(vr_tbmodali(vr_indice)) = (5) THEN
+            PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
+                                          , pr_nrdconta => rw_crapass.nrdconta
+                                          , pr_cdoperad => pr_cdoperad
+                                          , pr_vllanmto => TO_NUMBER(vr_tbbloque(vr_indice))
+                                          , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt                                       
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+                                          
+            IF nvl(vr_cdcritic,0) > 0 OR
+               TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_exp_erro; 
+            END IF;  
+                                          
+          END IF;
+          
           -- Buscar o lote para o lançamento
           OPEN  cr_craplot(pr_cdcooper
                           ,BTCH0001.rw_crapdat.dtmvtolt
