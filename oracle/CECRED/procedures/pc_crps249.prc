@@ -631,6 +631,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             na nova versão da funcionalidade (Paulo Penteado (GFT))
 			   
 			   11/06/2018 - Adicionar filtro para data de liberação diferente de null (Pedro Cruz GFT)
+
+               16/08/2018 - Forçado indice no cursor cr_craplcm5 pois estava fazendo o programa
+                            ficar lento no processo batch (Tiago )
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -1818,7 +1821,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   CURSOR cr_craplcm5 (pr_cdcooper IN craplcm.cdcooper%TYPE,
                       pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
                       pr_cdhistor IN craplcm.cdhistor%TYPE) IS
-    SELECT crapass.cdagenci, craplau.cdempres, crapscn.dsnomcnv, COUNT(*) qtlanmto,
+    SELECT /*+ index (craplau craplau##craplau2)*/ 
+           crapass.cdagenci, craplau.cdempres, crapscn.dsnomcnv, COUNT(*) qtlanmto,
            SUM(craplcm.vllanmto) vllanmto
       FROM craplcm, craplau, crapscn, crapass
       WHERE craplcm.cdcooper = craplau.cdcooper
@@ -11133,7 +11137,7 @@ BEGIN
       --
       vr_linhadet := '999,'||trim(to_char(vr_tdbjurop, '99999999999990.00'));
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-  end if;
+    end if;
   end if;
   --
   vr_vltdbtot := 0;
@@ -12109,7 +12113,7 @@ BEGIN
       --
       vr_linhadet := '999,'||trim(to_char(vr_tdbjurop, '99999999999990.00'));
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-  end if;
+    end if;
   end if;
 
   --
@@ -14145,7 +14149,7 @@ BEGIN
                   TRIM(to_char(vr_vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
-
+  
   pc_proc_lcm_tdb(vr_dtrefere, 'D');
   
   -- Melhoria 324 - Contas de Compensação - Transferencia para prejuizo - Jean (Mout´S) 10/08/2017
