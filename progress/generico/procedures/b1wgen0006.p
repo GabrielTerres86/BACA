@@ -662,11 +662,25 @@ PROCEDURE consulta-extrato-poupanca:
     DEF VAR aux_vlstotal AS DECI                                    NO-UNDO.
     DEF VAR aux_vlsldant AS DECI                                    NO-UNDO.
     
+    DEF VAR aux_txaplmes AS DECI                                    NO-UNDO.
+    DEF VAR aux_txaplica AS DECI                                    NO-UNDO.
+
     DEF VAR aux_listahis AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtiniimu AS DATE                                    NO-UNDO.
     DEF VAR aux_dtfimimu AS DATE                                    NO-UNDO.
     DEF VAR aux_dshistor AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsextrat AS CHAR                                    NO-UNDO.
+
+    /* Variáveis utilizadas para receber clob da rotina no oracle */
+    DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+    DEF VAR xField        AS HANDLE   NO-UNDO. 
+    DEF VAR xText         AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.    
     EMPTY TEMP-TABLE tt-extr-rpp.
@@ -737,6 +751,145 @@ PROCEDURE consulta-extrato-poupanca:
             RETURN "NOK".
         END.
 
+
+    IF  craprpp.cdprodut > 0  THEN
+		DO:
+			/* Inicializando objetos para leitura do XML */ 
+			CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+			CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
+			CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */ 
+			CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+			CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
+
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+			  /* Efetuar a chamada a rotina Oracle */
+			 RUN STORED-PROCEDURE pc_buscar_extrato_apl_prog_car
+				aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper /* Código da Cooperativa */
+												 ,INPUT par_cdoperad /* Código de Operador */
+												 ,INPUT par_nmdatela /* Nome da Tela */
+												 ,INPUT par_idorigem /* Código de Origem */
+												 ,INPUT par_nrdconta /* Número da Conta */
+												 ,INPUT par_idseqttl /* Titular da Conta */
+    											 ,INPUT par_nrctrrpp /* Número da Aplicação */
+												 ,INPUT par_dtiniper /* Data de Movimento Inicial */
+												 ,INPUT par_dtfimper /* Data de Movimento Final */
+												 ,INPUT 0 			 /* Identificador de Listagem de Todos Históricos (Fixo na chamada, 0 – Não / 1 – Sim) */
+												 ,INPUT 0 			 /* Identificador de Log (Fixo na chamada, 0 – Não / 1 – Sim) */
+												 ,INPUT "" 		     /* XML com informacoes de LOG */
+												 ,OUTPUT 0           /* Código da crítica */
+                                                 ,OUTPUT ""          /* Descrição da crítica */
+												 ,OUTPUT ?           /* Descrição da crítica */
+												 ,OUTPUT ""          /* Nome do campo com erro */
+												 ,OUTPUT "").        /* Erros do processo */
+
+
+			/* Fechar o procedimento para buscarmos o resultado */ 
+			 CLOSE STORED-PROC pc_buscar_extrato_apl_prog_car
+				   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+			 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+
+			  /* Busca possíveis erros */ 
+			 ASSIGN aux_cdcritic = 0
+					aux_dscritic = ""
+					aux_cdcritic = pc_buscar_extrato_apl_prog_car.pr_cdcritic 
+								   WHEN pc_buscar_extrato_apl_prog_car.pr_cdcritic <> ?
+					aux_dscritic = pc_buscar_extrato_apl_prog_car.pr_dscritic 
+								   WHEN pc_buscar_extrato_apl_prog_car.pr_dscritic <> ?.
+
+
+			 IF aux_cdcritic > 0 OR 
+				aux_dscritic <> "" THEN
+			 DO:
+				RUN gera_erro (INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT 1,            /** Sequencia **/
+							   INPUT aux_cdcritic,
+							   INPUT-OUTPUT aux_dscritic).
+									   
+				IF  par_flgerlog  THEN
+					RUN proc_gerar_log (INPUT par_cdcooper,
+										INPUT par_cdoperad,
+										INPUT aux_dscritic,
+										INPUT aux_dsorigem,
+										INPUT aux_dstransa,
+										INPUT FALSE,
+										INPUT par_idseqttl,
+										INPUT par_nmdatela,
+										INPUT par_nrdconta,
+									   OUTPUT aux_nrdrowid).
+	
+				RETURN "NOK".
+			 END.
+			
+
+			/* Buscar o XML na tabela de retorno da procedure Progress */ 
+			 ASSIGN xml_req = pc_buscar_extrato_apl_prog_car.pr_clobxmlc.
+			
+			 /* Efetuar a leitura do XML*/ 
+			 SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+			 PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+
+			/* Efetuar a leitura do XML*/ 
+			 SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+			 PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+			 xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+			 xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+			 xRoot:GET-CHILD(xRoot,1).
+			 DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+				 xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+
+				IF xRoot2:SUBTYPE <> "ELEMENT"   THEN 
+				  NEXT. 
+
+
+				 IF xRoot2:NUM-CHILDREN > 0 THEN
+					CREATE tt-extr-rpp.
+
+				 DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+					 xRoot2:GET-CHILD(xField,aux_cont).
+
+					 IF xField:SUBTYPE <> "ELEMENT" THEN 
+						 NEXT. 
+
+					 xField:GET-CHILD(xText,1).                   
+
+					ASSIGN aux_txaplmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplmes"
+						    aux_txaplica = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplica". 
+
+					ASSIGN tt-extr-rpp.cdagenci = INTE(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci"                               
+							tt-extr-rpp.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt"                               
+						    tt-extr-rpp.txaplmes = IF  aux_txaplmes > 0  THEN
+													  aux_txaplmes 
+												  ELSE 
+													  0
+						    tt-extr-rpp.txaplica = IF  aux_txaplica > 0 THEN
+													  aux_txaplica 
+												  ELSE 
+													  0
+							tt-extr-rpp.cdbccxlt = INTE(xText:NODE-VALUE) WHEN xField:NAME = "cdbccxlt"
+							tt-extr-rpp.dshistor = xText:NODE-VALUE WHEN xField:NAME = "dshistor"
+							tt-extr-rpp.nrdocmto = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdocmto"
+							tt-extr-rpp.indebcre = xText:NODE-VALUE WHEN xField:NAME = "indebcre"
+							tt-extr-rpp.vllanmto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllanmto"
+							tt-extr-rpp.vlsldppr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsldppr"
+							tt-extr-rpp.nrdolote = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdolote"
+							tt-extr-rpp.dsextrat = xText:NODE-VALUE WHEN xField:NAME = "dsextrat".
+
+				END.            
+			END.
+        END.
+	ELSE
+		DO:
+		
     RUN gera-saldo-anterior (INPUT par_cdcooper,
                              INPUT par_nrdconta,
                              INPUT par_nrctrrpp,
@@ -941,7 +1094,7 @@ PROCEDURE consulta-extrato-poupanca:
                tt-extr-rpp.dsextrat = aux_dsextrat.
                                          
     END. /** Fim do FOR EACH craplpp **/
-
+		END.
     IF  par_flgerlog  THEN
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,
@@ -2025,7 +2178,7 @@ PROCEDURE reativar-aplicacao-programada:
         IF  (craprpp.cdsitrpp = 3 OR craprpp.cdsitrpp = 4) AND craprpp.cdprodut = 0  THEN 
             DO:
                 ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Este e um fundo antigo que nao pode ser reativado.".
+                       aux_dscritic = "Este e um plano antigo que nao pode ser reativado. Cadastre um novo plano".
 
                 UNDO TRANS_POUP, LEAVE TRANS_POUP.
             END.
