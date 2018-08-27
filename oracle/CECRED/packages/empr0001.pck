@@ -16280,6 +16280,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           and m.cdmotivo = c.cdmotivo
           and c.tpproduto = pr_tpproduto;
 
+       CURSOR c_crawepr(pr_cdcooper in number) IS
+       select e.insitapr
+         from crawepr e 
+        where e.cdcooper = pr_cdcooper
+          and e.nrdconta = pr_nrdconta
+          and e.nrctremp = pr_nrctrato
+          and e.insitapr = 1; -- Aprovada
+          --
+          r_crawepr c_crawepr%rowtype;
+          
+       CURSOR c_crawlim(pr_cdcooper in number) IS
+       select l.insitapr
+         from crawlim l
+        where l.cdcooper = pr_cdcooper
+          and l.nrdconta = pr_nrdconta
+          and l.nrctrlim = pr_nrctrato
+          and l.tpctrlim = pr_tpctrlim
+          and l.insitapr in (1,2,3);  
+          --
+          r_crawlim c_crawlim%rowtype;
+
           
       r_motivos_contrato  c_motivos_contrato%rowtype;      
       
@@ -16339,7 +16360,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;    
-    
+
+      -- Valida Situação das propostas
+      if pr_tpproduto = 1 then -- Empréstimo
+        open c_crawepr(vr_cdcooper);
+         fetch c_crawepr into r_crawepr;
+          if c_crawepr%notfound then
+            close c_crawepr;
+            vr_cdcritic := 0;
+            vr_dscritic := 'Somente proposta aprovada pode ser anulada!';
+            raise vr_exc_saida;              
+          end if;
+        close c_crawepr;
+      elsif pr_tpproduto = 5 then -- Limite de Crédito
+        open c_crawlim(vr_cdcooper);
+         fetch c_crawlim into r_crawlim;
+          if c_crawlim%notfound then
+            close c_crawlim;
+            vr_cdcritic := 0;
+            vr_dscritic := 'Somente proposta aprovada pode ser anulada!';
+            raise vr_exc_saida;              
+          end if;
+        close c_crawlim;        
+      else
+        vr_cdcritic := 0;
+        vr_dscritic := 'Este produto não pode ser anulado.';
+        raise vr_exc_saida;  
+      end if;
+          
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
       
