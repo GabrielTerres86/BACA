@@ -153,7 +153,8 @@ DEF TEMP-TABLE tt-dados-titular NO-UNDO
     FIELD dtlimvrb AS DATE
     FIELD dtblutsh AS DATE
     FIELD dtacemob AS DATE
-    FIELD hracemob AS CHAR.
+    FIELD hracemob AS CHAR
+	FIELD vllimflp AS DECI.
 
 DEF TEMP-TABLE tt-contas-pendentes NO-UNDO
     FIELD flgselec AS LOGICAL

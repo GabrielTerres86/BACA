@@ -8447,7 +8447,8 @@ PROCEDURE cria-registro-titular-conta-conjunta:
 		   tt-dados-titular.dtlimted = ?
 		   tt-dados-titular.dtlimweb = ?
 		   tt-dados-titular.dtlimvrb = ?
-		   tt-dados-titular.dtblutsh = ?.
+		   tt-dados-titular.dtblutsh = ?
+		   tt-dados-titular.vllimflp = cratopi.vllimflp.
 
 END PROCEDURE.
 
@@ -8493,7 +8494,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtlimted = ?
                    tt-dados-titular.dtlimweb = ?
                    tt-dados-titular.dtlimvrb = ?
-                   tt-dados-titular.dtblutsh = ?. 
+                   tt-dados-titular.dtblutsh = ?
+				   tt-dados-titular.vllimflp = 0. 
         END.
     ELSE
         DO: 
@@ -8565,7 +8567,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtlimted = cratsnh.dtlimted
                    tt-dados-titular.dtlimweb = cratsnh.dtlimweb
                    tt-dados-titular.dtlimvrb = cratsnh.dtlimvrb
-                   tt-dados-titular.dtblutsh = cratsnh.dtblutsh. 
+                   tt-dados-titular.dtblutsh = cratsnh.dtblutsh
+				   tt-dados-titular.vllimflp = cratsnh.vllimflp. 
         END.
 
     RETURN "OK".
