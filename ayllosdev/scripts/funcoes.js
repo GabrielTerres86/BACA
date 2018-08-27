@@ -112,7 +112,8 @@
  * 098: [07/04/2018] Renato Darosci   (SUPERO) : Ajustar controle de navegação para que a funcionalidade F1 funcione também na tela GAROPC. (PRJ404). 
  * 099: [16/04/2018] Lombardi 		  (CECRED) : Adicionado função validaValorProduto para verificar se o tipo de conta permite o valor da contratação do produto. (PRJ366)
  * 100: [26/04/2018] Christian		  (CECRED) : Tratativas no controle de tecla ESC. Chamadas a metodos indevidos, causando erros apenas na execucao do Ayllos embarcado no CRM.
-*/ 	 
+ * 101: [27/08/2018] Marco Amorim     (Mout'S) : Criada a Função para remover Todos os Caracteres epeciais e acentos.
+*/
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
 var UrlImagens	= UrlSite + "imagens/"; // Url para imagens     
@@ -2560,6 +2561,11 @@ function removeCaracteresInvalidos(str, flgRemAcentos){
 	else
 	    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\#\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\°\º\ª]/g, "");
 	
+}
+
+//Função para remover Todos os Caracteres epeciais e acentos
+function removeTodosCaracteresInvalidos(str) {
+    return str.replace(/[^\w\s\.]/g, "");
 }
 
 function utf8_decode(str_data) {
