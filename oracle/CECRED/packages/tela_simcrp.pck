@@ -90,14 +90,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_SIMCRP AS
   /* Calcula a reciprocidade */
 	PROCEDURE pc_calcula_reciprocidade(pr_cdcooper             IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
 		                                ,pr_ls_nrconvenio        IN  VARCHAR2                             -- Lista com os número dos convênios
-		                                ,pr_qtboletos_liquidados IN  NUMBER                               -- Quantidade de boletos liquidados
-																		,pr_vlliquidados         IN  NUMBER                               -- Volume (R$) de boletos liquidados
-																		,pr_idfloating           IN  NUMBER                               -- Quantidade de dias de floating
-																		,pr_idvinculacao         IN  NUMBER                               -- Identificador do grau de vinculação do cooperado
-																		,pr_vlaplicacoes         IN  NUMBER                               -- Valor a ser aplicado pelo cooperado
-																		,pr_vldeposito           IN  NUMBER                               -- Valor a ser depositado pelo cooperado
-																		,pr_idcoo                IN  NUMBER                               -- Cooperado emite e expede
-																		,pr_idcee                IN  NUMBER                               -- Cooperativa emite e expede
+		                                ,pr_qtboletos_liquidados IN  INTEGER                               -- Quantidade de boletos liquidados
+																		,pr_vlliquidados         IN  VARCHAR2                               -- Volume (R$) de boletos liquidados
+																		,pr_idfloating           IN  INTEGER                               -- Quantidade de dias de floating
+																		,pr_idvinculacao         IN  INTEGER                               -- Identificador do grau de vinculação do cooperado
+																		,pr_vlaplicacoes         IN  VARCHAR2                               -- Valor a ser aplicado pelo cooperado
+																		,pr_vldeposito           IN  VARCHAR2                               -- Valor a ser depositado pelo cooperado
+																		,pr_idcoo                IN  INTEGER                               -- Cooperado emite e expede
+																		,pr_idcee                IN  INTEGER                               -- Cooperativa emite e expede
 --																		,pr_lsconvenios          IN  VARCHAR2                             -- Lista de convênios
 --																		,pr_vlcustos_coo         IN  NUMBER                               -- Valor dos custos COO
 --																		,pr_vlcustos_cee         IN  NUMBER                               -- Valor dos custos CEE
@@ -1476,14 +1476,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 	-- PRJ431
 	PROCEDURE pc_calcula_reciprocidade(pr_cdcooper             IN  tbrecip_param_workflow.cdcooper%TYPE -- Identificador da cooperativa
 		                                ,pr_ls_nrconvenio        IN  VARCHAR2                             -- Lista com os número dos convênios
-		                                ,pr_qtboletos_liquidados IN  NUMBER                               -- Quantidade de boletos liquidados
-																		,pr_vlliquidados         IN  NUMBER                               -- Volume (R$) de boletos liquidados
-																		,pr_idfloating           IN  NUMBER                               -- Quantidade de dias de floating
-																		,pr_idvinculacao         IN  NUMBER                               -- Identificador do grau de vinculação do cooperado
-																		,pr_vlaplicacoes         IN  NUMBER                               -- Valor a ser aplicado pelo cooperado
-																		,pr_vldeposito           IN  NUMBER                               -- Valor a ser depositado pelo cooperado
-																		,pr_idcoo                IN  NUMBER                               -- Cooperado emite e expede
-																		,pr_idcee                IN  NUMBER                               -- Cooperativa emite e expede
+		                                ,pr_qtboletos_liquidados IN  INTEGER                               -- Quantidade de boletos liquidados
+																		,pr_vlliquidados         IN  VARCHAR2                               -- Volume (R$) de boletos liquidados
+																		,pr_idfloating           IN  INTEGER                               -- Quantidade de dias de floating
+																		,pr_idvinculacao         IN  INTEGER                               -- Identificador do grau de vinculação do cooperado
+																		,pr_vlaplicacoes         IN  VARCHAR2                               -- Valor a ser aplicado pelo cooperado
+																		,pr_vldeposito           IN  VARCHAR2                               -- Valor a ser depositado pelo cooperado
+																		,pr_idcoo                IN  INTEGER                               -- Cooperado emite e expede
+																		,pr_idcee                IN  INTEGER                               -- Cooperativa emite e expede
 																		,pr_xmllog               IN  VARCHAR2                             -- XML com informações de LOG
 																		,pr_cdcritic             OUT PLS_INTEGER                          -- Código da crítica
 																		,pr_dscritic             OUT VARCHAR2                             -- Descrição da crítica
@@ -1594,6 +1594,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 		vr_desconto_ind23_coo NUMBER;
 		vr_desconto_total_coo NUMBER;
 		
+		--
+		vr_vlaplicacoes NUMBER;
+		vr_vlliquidados NUMBER;
+    vr_vldeposito   NUMBER;
+		
 		-- Subrotina para escrever texto na variável CLOB do XML
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2
                             ,pr_fecha_xml IN BOOLEAN DEFAULT FALSE
@@ -1609,6 +1614,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
     END;
 		--
 	BEGIN
+		vr_vlaplicacoes := to_number(pr_vlaplicacoes);
+		vr_vlliquidados :=  to_number(pr_vlliquidados);
+		vr_vldeposito :=  to_number(pr_vldeposito);		
+		
 		-- Incluir nome do módulo logado
     GENE0001.pc_informa_acesso(pr_module => 'TELA_SIMCRP'
                               ,pr_action => null); 
@@ -1650,17 +1659,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 				-- Valor de boletos compensados
 				WHEN 2 THEN
 					--
-					IF pr_vlliquidados < rw_indicador.vlminimo THEN
+					IF vr_vlliquidados < rw_indicador.vlminimo THEN
 						--
 						vr_resultado_ind02 := 0;
 						--
-					ELSIF pr_vlliquidados > rw_indicador.vlmaximo THEN
+					ELSIF vr_vlliquidados > rw_indicador.vlmaximo THEN
 						--
 						vr_resultado_ind02 := rw_indicador.vlpercentual_desconto;
 						--
-					ELSIF pr_vlliquidados BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+					ELSIF vr_vlliquidados BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind02 := (pr_vlliquidados / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						vr_resultado_ind02 := (vr_vlliquidados / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					END IF;
 					--
@@ -1751,17 +1760,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 				-- Quantidade da Aplicação
 				WHEN 22 THEN
 					--
-					IF pr_vlaplicacoes < rw_indicador.vlminimo THEN
+					IF vr_vlaplicacoes < rw_indicador.vlminimo THEN
 						--
 						vr_resultado_ind22 := 0;
 						--
-					ELSIF pr_vlaplicacoes > rw_indicador.vlmaximo THEN
+					ELSIF vr_vlaplicacoes > rw_indicador.vlmaximo THEN
 						--
 						vr_resultado_ind22 := rw_indicador.vlpercentual_desconto;
 						--
-					ELSIF pr_vlaplicacoes BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+					ELSIF vr_vlaplicacoes BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind22 := (pr_vlaplicacoes / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						vr_resultado_ind22 := (vr_vlaplicacoes / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					END IF;
 					--
@@ -1781,17 +1790,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 					-- Só considera este indicador para a cooperativa Viacredi
 					IF pr_cdcooper = 1 THEN
 						--
-						IF pr_vldeposito < rw_indicador.vlminimo THEN
+						IF vr_vldeposito < rw_indicador.vlminimo THEN
 							--
 							vr_resultado_ind23 := 0;
 							--
-						ELSIF pr_vldeposito > rw_indicador.vlmaximo THEN
+						ELSIF vr_vldeposito > rw_indicador.vlmaximo THEN
 							--
 							vr_resultado_ind23 := rw_indicador.vlpercentual_desconto;
 							--
-						ELSIF pr_vldeposito BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
+						ELSIF vr_vldeposito BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 							--
-							vr_resultado_ind23 := (pr_vldeposito / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+							vr_resultado_ind23 := (vr_vldeposito / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 							--
 						END IF;
 						--

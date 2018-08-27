@@ -62,14 +62,14 @@ $vr_flgdebito_reversao = getByTagName($dados->tags,"vr_flgdebito_reversao");
 $vr_qtdfloat           = getByTagName($dados->tags,"vr_qtdfloat");
 $vr_dtfimcontrato      = getByTagName($dados->tags,"vr_dtfimcontrato");
 $vr_aplicacoes         = getByTagName($dados->tags,"vr_aplicacoes");
+$vr_deposito           = getByTagName($dados->tags,"vr_vldeposito");
 $vr_vldesconto_adicional_coo = getByTagName($dados->tags,"vr_vldesconto_adicional_coo");
 $vr_idfim_desc_adicional_coo = getByTagName($dados->tags,"vr_idfim_desc_adicional_coo");
 $vr_vldesconto_adicional_cee = getByTagName($dados->tags,"vr_vldesconto_adicional_cee");
 $vr_idfim_desc_adicional_cee = getByTagName($dados->tags,"vr_idfim_desc_adicional_cee");
 $vr_dsjustificativa_desc_adic = getByTagName($dados->tags,"vr_dsjustificativa_desc_adic");
 $insitceb = getByTagName($dados->tags,"insitceb");
-
-$convenios = $dados->tags[12]->tags;
+$convenios = $dados->tags[13]->tags;
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -239,6 +239,13 @@ descontoConvenios = [];
 		</td>
 	</tr>
 	<tr class="corImpar">
+		<td>Dep&oacute;sito &agrave; vista</td>
+		<td align="right">
+			<span>R$</span>
+			<input class="campo valor calculo <?php echo (($glbvars["cdcooper"] == 16) ? '' : 'campoTelaSemBorda') ?>" <?php echo (($glbvars["cdcooper"] == 16) ? '' : 'disabled') ?> value="<?php echo $vr_deposito; ?>" id="vldeposito" name="vldeposito" style="width:153px;" />
+		</td>
+	</tr>
+	<tr class="corPar">
 		<td>Data fim do contrato</td>
 		<td align="right">
 			<select class="campo" style="width:153px" name="dtfimcontrato" id="dtfimcontrato">
@@ -249,7 +256,7 @@ descontoConvenios = [];
 			</select>
 		</td>
 	</tr>
-	<tr class="corPar">
+	<tr class="corImpar">
 		<td>D&eacute;bito reajuste da tarifa</td>
 		<td align="right">
 			<select class="campo" id="debito_reajuste_reciproci" name="debito_reajuste_reciproci" style="width:153px;">
@@ -262,14 +269,14 @@ descontoConvenios = [];
 		<td>&nbsp;</td>
 		<td>&nbsp;</td>
 	</tr>
-	<tr class="corImpar">
+	<tr class="corPar">
 		<td>Desconto concedido COO</td>
 		<td align="right">
 			<span>%</span>
 			<input name="" id="vldescontoconcedido_coo" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
-	<tr class="corPar">
+	<tr class="corImpar">
 		<td>Desconto concedido CEE</td>
 		<td align="right">
 			<span>%</span>

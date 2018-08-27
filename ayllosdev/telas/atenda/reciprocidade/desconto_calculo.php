@@ -33,7 +33,7 @@ $vlliquidados = ( (!empty($_POST['volume_liquidacao'])) ? $_POST['volume_liquida
 $idfloating = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : '');
 $idvinculacao = ( (!empty($_POST['idvinculacao'])) ? $_POST['idvinculacao'] : 0 );
 $vlaplicacoes = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : 0 );
-$vldeposito = 0;
+$vldeposito = ( (!empty($_POST['vldeposito'])) ? $_POST['vldeposito'] : 0 );
 $idcoo = ( (!empty($_POST['idcoo'])) ? $_POST['idcoo'] : 0 );
 $idcee = ( (!empty($_POST['idcee'])) ? $_POST['idcee'] : 0 );
 

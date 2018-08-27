@@ -2798,6 +2798,7 @@ function incluiDesconto() {
 			volume_liquidacao:   $('#valvolume_liquidacao', '.tabelaDesconto').val(),
 			qtdfloat:            $('#qtdfloat', '.tabelaDesconto').val(),
 			vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
+            vldeposito:          $('#vldeposito', '.tabelaDesconto').val(),
 			dtfimcontrato:       vDataFimContrato,
 			flgdebito_reversao:  $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
             vldesconto_coo:      converteNumero($('#vldesconto_coo', '.tabelaDesconto').val()),
@@ -3087,7 +3088,13 @@ function calcula_desconto() {
     $('#vldescontoconcedido_cee', '.tabelaDesconto').val(0);
     $('#vldescontoconcedido_coo', '.tabelaDesconto').val(0);
 
+    var idvinculacao = $('#idvinculacao', '.tabelaDesconto').val();
+
     if (descontoConvenios.length == 0) {
+        return false;
+    }
+
+    if (typeof idvinculacao == "undefined") {
         return false;
     }
 
@@ -3115,7 +3122,8 @@ function calcula_desconto() {
                 volume_liquidacao:   $('#valvolume_liquidacao', '.tabelaDesconto').val(),
                 qtdfloat:            $('#qtdfloat', '.tabelaDesconto').val(),
                 vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
-                idvinculacao:        $('#idvinculacao', '.tabelaDesconto').val(),
+                vldeposito:          $('#vldeposito', '.tabelaDesconto').val(),
+                idvinculacao:        idvinculacao,
                 idcoo:               coo,
                 idcee:               cee,
                 redirect:            "script_ajax"
