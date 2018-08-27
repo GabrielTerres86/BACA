@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS674"
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS674
                           ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                            ,pr_flgresta IN PLS_INTEGER             --> Flag padrão para utilização de restart
                            ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS674"
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Março/2014.                     Ultima atualizacao: 23/04/2015
+       Data    : Março/2014.                     Ultima atualizacao: 12/04/2018
 
        Dados referentes ao programa:
 
@@ -53,7 +53,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS674"
                                (Lucas Ranghetti #276097)
                                
                   23/04/2015 - Ajustada chamada da pc_obtem_saldo_dia, para melhorar
-                               performace (Odirlei-AMcom)             
+                               performace (Odirlei-AMcom)   
+                  12/04/2018 - Incluido a chamada do programa ccrd0003.pc_debita_fatura 
+                               passando como parametro o nome do programa 'REPIQUE', 
+                               Esse programa será chamado pelo debitador, não sendo mais chamado
+                               pelo JOB e nem na cadeia noturna.
+                               Projeto Debitador Único Josiane Stiehler (AMcom)          
     ............................................................................ */
 
     DECLARE
@@ -74,15 +79,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS674"
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);  
-	  vr_des_erro   VARCHAR2(4000);
+	    vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro; 
      
       
       -- Variáveis locais do bloco
       vr_xml_clobxml       CLOB;
       vr_xml_des_erro      VARCHAR2(4000);
-     
-
+      
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -299,9 +303,24 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS674"
 
       vr_cdcritic := 0;
       vr_dscritic := NULL;
-      
-      --CECRED gera apenas relatorio
+
       IF pr_cdcooper <> 3 THEN
+
+         -- Chama a rotina de debito de fatura - Repique
+         -- Projeto debitador único 
+         ccrd0003.pc_debita_fatura(pr_cdcooper => pr_cdcooper,
+                                   pr_cdprogra => 'REPIQUE',
+                                   pr_cdoperad => 1,
+                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                   pr_fatrowid => NULL,
+                                   pr_cdcritic => vr_cdcritic,
+                                   pr_dscritic => vr_dscritic);
+                                         
+         IF vr_cdcritic > 0 OR
+            vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;
+
          ccrd0003.pc_debita_fatura(pr_cdcooper => pr_cdcooper
                                   ,pr_cdprogra => vr_cdprogra
                                   ,pr_cdoperad => pr_cdoperad
@@ -313,20 +332,24 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS674"
          IF vr_cdcritic > 0 OR
             vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
+         END IF;    
+
+         ccrd0003.pc_rel_nao_efetuados(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdprogra => vr_cdprogra
+                                      ,pr_cdoperad => pr_cdoperad
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt                                    
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);                            
+
+         IF vr_cdcritic > 0 OR
+            vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
          END IF;   
+                 
+         
       END IF;    
       
-      ccrd0003.pc_rel_nao_efetuados(pr_cdcooper => pr_cdcooper
-                                   ,pr_cdprogra => vr_cdprogra
-                                   ,pr_cdoperad => pr_cdoperad
-                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt                                    
-                                   ,pr_cdcritic => vr_cdcritic
-                                   ,pr_dscritic => vr_dscritic);                            
 
-      IF vr_cdcritic > 0 OR
-         vr_dscritic IS NOT NULL THEN
-         RAISE vr_exc_saida;
-      END IF;   
       
       -- Processo OK, devemos chamar a fimprg
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
@@ -387,4 +410,3 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS674"
 		
 END PC_CRPS674;
 /
-

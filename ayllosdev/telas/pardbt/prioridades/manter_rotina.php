@@ -20,16 +20,16 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
-	// Controle de Erros
-	//----------------------------------------------------------------------------------------------------------------------------------
-	if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
-		$msgErro	= "Acesso n&atilde;o permitido.";
-		exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
-	}
-
 	// Verifica se tela foi chamada pelo mжtodo POST
 	isPostMethod();	
+
+	$cddopcao = $_POST['cddopcao'];
+
+    $msgError = validaPermissao($glbvars["nmdatela"],$glbvars['nmrotina'],$cddopcao, false);
+
+    if ($msgError != '') {
+		exibirErro('error', utf8ToHtml('Acesso não permitido.'), 'Alerta - Ayllos', 'estadoInicial()', false);
+	}
 
     $cdprocesso = $_POST['cdprocesso'];
     $nrprioridade = $_POST['nrprioridade'];
@@ -156,8 +156,9 @@
 		}
 
 		$prioridade = getByTagName($xmlObject->roottag->tags[0]->tags, 'nrprioridade');
+		$mensagemRetorno = getByTagName($xmlObject->roottag->tags[0]->tags, 'mensagem');
 
-        exibirErro('inform', 'Hor&aacute;rio(s) de processamento exclu&iacute;do(s).', 'Alerta - Ayllos','fechaRotina($(\'#divUsoGenerico\'),$(\'#divTela\')); $(\'#divUsoGenerico\').empty(); carregarPrioridadesProcessos(' . $prioridade . ');', false);
+        exibirErro('inform', utf8_encode($mensagemRetorno), 'Alerta - Ayllos','fechaRotina($(\'#divUsoGenerico\'),$(\'#divTela\')); $(\'#divUsoGenerico\').empty(); carregarPrioridadesProcessos(' . $prioridade . ');', false);
 	}
     elseif ($operacao == 'INCLUIR_HORARIO_PROC') {
 		if (empty($cdprocesso) || empty($horarios)) {
@@ -188,7 +189,8 @@
 		}
 
 		$prioridade = getByTagName($xmlObject->roottag->tags[0]->tags, 'nrprioridade');
+		$mensagemRetorno = getByTagName($xmlObject->roottag->tags[0]->tags, 'mensagem');
 
-        exibirErro('inform', 'Hor&aacute;rio adicionado.', 'Alerta - Ayllos',"fechaRotina($('#divUsoGenerico'),$('#divTela')); $('#divUsoGenerico').empty(); carregarPrioridadesProcessos(" . $prioridade . ");",false);
+        exibirErro('inform', utf8_encode($mensagemRetorno), 'Alerta - Ayllos',"fechaRotina($('#divUsoGenerico'),$('#divTela')); $('#divUsoGenerico').empty(); carregarPrioridadesProcessos(" . $prioridade . ");",false);
 	}
     
