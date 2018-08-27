@@ -17592,7 +17592,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 23/03/2017
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -17652,6 +17652,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
     --
     --               23/03/2017 - Adicionar NVL no campo de nosso numero (Douglas - Chamado 629181)
+    --
+    --               27/08/2018 - Adicionar NVL nos campos cdbcorec e cdagerec. Incluir pc_internal_exception
+    --                            e informações da conta na exception when others. (PRB0040285-AJFink)
+    --
     -- .........................................................................
 
   BEGIN
@@ -17672,11 +17676,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,crapret.cdmotivo
               ,craprtc.nrremret
               ,crapret.vltarass
-              ,crapret.cdagerec
+              ,nvl(crapret.cdagerec,0) cdagerec
               ,crapret.nrdocmto
               ,crapret.nrnosnum
               ,crapret.vltitulo
-              ,crapret.cdbcorec
+              ,nvl(crapret.cdbcorec,0) cdbcorec
               ,crapret.dtocorre
               ,crapret.dtcredit
               ,crapret.vljurmul
@@ -18456,8 +18460,16 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
         -- Erro
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                    ,pr_compleme => '('||nvl(pr_cdcooper,0)
+                                                  ||','||nvl(pr_nrcnvcob,0)
+                                                  ||','||nvl(pr_nrdconta,0)||')'); --PRB0040285
         pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro na rotina PAGA0001.pc_gera_arq_coop_cnab240. '||sqlerrm;
+        pr_dscritic:= trim(substr(trim('Erro na rotina PAGA0001.pc_gera_arq_coop_cnab240'
+                ||'('||nvl(pr_cdcooper,0)
+                ||','||nvl(pr_nrcnvcob,0)
+                ||','||nvl(pr_nrdconta,0)
+               ||'):'||sqlerrm),1,4000));
     END;
   END pc_gera_arq_coop_cnab240;
 
@@ -18479,7 +18491,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 23/03/2017
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -18520,6 +18532,10 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
     --
     --               23/03/2017 - Adicionar NVL no campo de nosso numero (Douglas - Chamado 629181)
+    --
+    --               27/08/2018 - Adicionar NVL nos campos cdbcorec e cdagerec. Incluir pc_internal_exception
+    --                            e informações da conta na exception when others. (PRB0040285-AJFink)
+    --
     -- .........................................................................
 
   BEGIN
@@ -18540,11 +18556,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,crapret.cdmotivo
               ,craprtc.nrremret
               ,crapret.vltarass
-              ,crapret.cdagerec
+              ,nvl(crapret.cdagerec,0) cdagerec
               ,crapret.nrdocmto
               ,crapret.nrnosnum
               ,crapret.vltitulo
-              ,crapret.cdbcorec
+              ,nvl(crapret.cdbcorec,0) cdbcorec
               ,crapret.dtocorre
               ,crapret.dtcredit
               ,crapret.vljurmul
@@ -19422,8 +19438,16 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
         -- Erro
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                    ,pr_compleme => '('||nvl(pr_cdcooper,0)
+                                                  ||','||nvl(pr_nrcnvcob,0)
+                                                  ||','||nvl(pr_nrdconta,0)||')'); --PRB0040285
         pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro na rotina PAGA0001.pc_gera_arq_coop_cnab400. '||sqlerrm;
+        pr_dscritic:= trim(substr(trim('Erro na rotina PAGA0001.pc_gera_arq_coop_cnab400'
+                ||'('||nvl(pr_cdcooper,0)
+                ||','||nvl(pr_nrcnvcob,0)
+                ||','||nvl(pr_nrdconta,0)
+               ||'):'||sqlerrm),1,4000));
     END;
   END pc_gera_arq_coop_cnab400;
 
@@ -19444,12 +19468,16 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para gerar arquivo cobranca cooperado
+    --
+    --   Alteracoes: 27/08/2018 - Incluir pc_internal_exception e informações da conta na
+    --                            exception when others. (PRB0040285-AJFink)
+    --
   BEGIN
     DECLARE
       --Cursores Locais
@@ -19568,8 +19596,16 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
         -- Erro
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                    ,pr_compleme => '('||nvl(pr_cdcooper,0)
+                                                  ||','||nvl(pr_nrcnvcob,0)
+                                                  ||','||nvl(pr_nrdconta,0)||')'); --PRB0040285
         pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro na rotina PAGA0001.pc_gera_arq_cooperado. '||sqlerrm;
+        pr_dscritic:= trim(substr(trim('Erro na rotina PAGA0001.pc_gera_arq_cooperado'
+                ||'('||nvl(pr_cdcooper,0)
+                ||','||nvl(pr_nrcnvcob,0)
+                ||','||nvl(pr_nrdconta,0)
+               ||'):'||sqlerrm),1,4000));
     END;
   END pc_gera_arq_cooperado;
   /* Procedure para verificar o tipo de retorno do arquivo do cooperado */
