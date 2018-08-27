@@ -843,7 +843,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
               END;
                   
               -- inserir lançamento
-  BEGIN
+              BEGIN
                 INSERT INTO craplcm
                             (craplcm.dtmvtolt
                             ,craplcm.cdagenci
@@ -887,7 +887,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                         pr_flgcreci => pr_flgcreci,
                                         pr_nrdconta => rw_craprpp.nrdconta,
                                         pr_vlresgat => vr_vlresgat);
-
+                                              
             --> Gera lancamento do resgate <--
             -- Buscar dados do lote
             OPEN cr_craplot (pr_cdcooper => pr_cdcooper,
@@ -1086,7 +1086,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
             vr_cdcritic := 484;
           ELSE
               vr_cdcritic := 0;
-              IF (rw_craprpp.cdprodut < 0) THEN
+              IF (rw_craprpp.cdprodut < 1) THEN
             /* Rotina de calculo do saldo da aplicac?o ate a data do movimento */
             APLI0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper,        --> Cooperativa
                                       pr_dstextab  => vr_dstextab_apli,         --> Percentual de IR da aplicac?o
@@ -1257,17 +1257,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 	  /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  (nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828 OR vr_cdcritic = 429) THEN
       
-                      
+
         IF (rw_craprpp.cdprodut <= 0) THEN
            pc_gera_resgate_poup_prog(pr_cdcooper => pr_cdcooper,
                                           pr_flgcreci => rw_craplrg.flgcreci,
                                           pr_vlresgat => vr_vlresgat);
         ELSE
            pc_gera_resgate_app_prog(pr_cdcooper => pr_cdcooper,
-                                        pr_flgcreci => rw_craplrg.flgcreci,
+                                          pr_flgcreci => rw_craplrg.flgcreci,
                                           pr_tpresgat => rw_craplrg.tpresgat,
-                                        pr_vlresgat => vr_vlresgat);
-            END IF;
+                                          pr_vlresgat => vr_vlresgat);
+              END IF;
         IF (vr_dscritic IS NULL) THEN         
             /* Atualizar valor resgatado */
             BEGIN

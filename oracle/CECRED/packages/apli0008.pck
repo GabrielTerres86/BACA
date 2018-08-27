@@ -1029,19 +1029,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
   END pc_incluir_apl_prog_web;
  
    PROCEDURE pc_posicao_saldo_apl_prog (pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cooperativa
-                                   ,pr_cdprogra IN crapres.cdprogra%TYPE     --> Programa que esta executando
-                                   ,pr_cdoperad IN craplrg.cdoperad%TYPE     --> Codigo do Operador
-                                   ,pr_nrdconta IN craprpp.nrdconta%TYPE     --> Numero da conta da aplicacao
-                                   ,pr_idseqttl IN INTEGER                   --> Identificador Sequencial
-                                   ,pr_idorigem IN INTEGER                   --> Identificador da Origem
+                                       ,pr_cdprogra IN crapres.cdprogra%TYPE     --> Programa que esta executando
+                                       ,pr_cdoperad IN craplrg.cdoperad%TYPE     --> Codigo do Operador
+                                       ,pr_nrdconta IN craprpp.nrdconta%TYPE     --> Numero da conta da aplicacao
+                                       ,pr_idseqttl IN INTEGER                   --> Identificador Sequencial
+                                       ,pr_idorigem IN INTEGER                   --> Identificador da Origem
                                        ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE     --> Numero do contrato 
-                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE     --> Data do movimento atual
+                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE     --> Data do movimento atual
                                        ,pr_vlbascal OUT NUMBER                   --> Valor Base Total
                                        ,pr_vlsdtoap OUT NUMBER                   --> Valor de Saldo Total
                                        ,pr_vlsdrgap OUT NUMBER                   --> Valor do saldo disponível para resgate
                                        ,pr_vlrebtap OUT NUMBER                   --> Valor de rendimento bruto total
                                        ,pr_vlrdirrf OUT NUMBER                   --> Valor de IRRF
-                                   ,pr_des_erro OUT VARCHAR2) IS             --> Saida com erros;
+                                       ,pr_des_erro OUT VARCHAR2) IS             --> Saida com erros;
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : pc_posicao_saldo_apl_prog
@@ -1122,7 +1122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       vr_cdcritic INTEGER;
       vr_dscritic VARCHAR2(4000);
       vr_exc_erro  EXCEPTION; -- Com rollback
-
+    
     BEGIN
       pr_vlbascal := 0;
       pr_vlsdtoap := 0;
@@ -4796,6 +4796,27 @@ END pc_calc_app_programada;
         RAISE vr_exc_saida;
       END IF;
 
+          -- Consulta de aplicacoes antigas
+          APLI0001.pc_consulta_aplicacoes(pr_cdcooper   => pr_cdcooper   --> Cooperativa
+                                         ,pr_cdagenci   => pr_cdagenci   --> Codigo da agencia
+                                         ,pr_nrdcaixa   => pr_nrdcaixa   --> Numero do caixa
+                                         ,pr_nrdconta   => pr_nrdconta   --> Conta do associado
+                                         ,pr_nraplica   => pr_nraplica   --> Numero da aplicacao
+                                         ,pr_tpaplica   => 0             --> Tipo de aplicacao
+                                         ,pr_dtinicio   => NULL          --> Data de inicio da aplicacao
+                                         ,pr_dtfim      => NULL          --> Data final da aplicacao
+                                         ,pr_cdprogra   => pr_cdprogra   --> Codigo do programa chamador da rotina
+                                         ,pr_nrorigem   => pr_idorigem   --> Origem da chamada da rotina
+                                         ,pr_saldo_rdca => vr_saldo_rdca --> Tipo de tabela com o saldo RDCA
+                                         ,pr_des_reto   => vr_dscritic   --> OK ou NOK
+                                         ,pr_tab_erro   => vr_tab_erro); --> Tabela com erros
+
+          IF vr_dscritic = 'NOK' THEN
+            -- Se existir erro adiciona na crítica
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            RAISE vr_exc_saida;
+          END IF;                                        
 
       -- Montagem do XML com todas as aplicacoes que deverao ser exibidas na tela atenda
       IF vr_tab_aplica.COUNT > 0 THEN
@@ -4880,7 +4901,6 @@ END pc_calc_app_programada;
 
         EXCEPTION
             WHEN vr_exc_saida THEN
-                
         IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
                     vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
                 END IF;
@@ -4905,9 +4925,7 @@ END pc_calc_app_programada;
                               ,pr_nrdrowid => vr_nrdrowid);
           COMMIT;                    
         END IF;
-
       WHEN OTHERS THEN
-
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
           GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -4926,7 +4944,8 @@ END pc_calc_app_programada;
         END IF;
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro nao tratado na APLI0005.pc_lista_aplicacoes: ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na APLI0008.pc_lista_aplicacoes: ' || SQLERRM;
+
         END;
     END pc_lista_aplicacoes_progr;
 
