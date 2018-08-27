@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
   -- Sistema : Conta-Corrente - Cooperativa de Credito
   -- Sigla   : CRED
   -- 
-  -- Autor   : Marcos - Envolti
+  -- Autor   : Marcos - Envolti 
   -- Data    : Março/2018                       Ultima atualizacao: 
   -- 
   -- Dados referentes ao programa:
@@ -524,7 +524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       -- Caso aplicação nova
       IF pr_tpaplica > 2 THEN
         -- Busca a listagem de aplicacoes 
-        APLI0005.pc_lista_aplicacoes(pr_cdcooper   => pr_cdcooper          -- Código da Cooperativa 
+        APLI0008.pc_lista_aplicacoes_progr(pr_cdcooper   => pr_cdcooper          -- Código da Cooperativa 
                                     ,pr_cdoperad   => '1'                  -- Código do Operador
                                     ,pr_nmdatela   => 'CUSAPL'             -- Nome da Tela
                                     ,pr_idorigem   => 5                    -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA )
@@ -811,7 +811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            -- Utilizar a maior data entre os dois dias úteis anteriores
            -- e a data de início de envio das aplicações para custódia B3
            AND lap.dtmvtolt >= greatest(pr_dtmvtolt,pr_dtinictd)
-           -- E não podem ser do dia atual
+		   -- E não podem ser do dia atual
            AND lap.dtmvtolt < pr_dtmvtolt
            --> Aplicação não custodiada ainda
            AND nvl(rda.idaplcus,0) = 0 
@@ -845,7 +845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
            -- Utilizar a maior data entre os dois dias úteis anteriores
            -- e a data de início de envio das aplicações para custódia B3
            AND lac.dtmvtolt >= greatest(pr_dtmvtolt,pr_dtinictd)
-           -- E não podem ser do dia atual
+		   -- E não podem ser do dia atual
            AND lac.dtmvtolt < pr_dtmvtolt
            --> Aplicação não custodiada ainda
            AND nvl(rac.idaplcus,0) = 0 
@@ -2182,7 +2182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         vr_tbsaldo_rdca.DELETE();
               
         -- Busca a listagem de aplicacoes 
-        APLI0005.pc_lista_aplicacoes(pr_cdcooper   => rw_lct.cdcooper      -- Código da Cooperativa 
+        APLI0008.pc_lista_aplicacoes_progr(pr_cdcooper   => rw_lct.cdcooper      -- Código da Cooperativa 
                                     ,pr_cdoperad   => '1'                  -- Código do Operador
                                     ,pr_nmdatela   => 'EXTRDA'             -- Nome da Tela
                                     ,pr_idorigem   => 5                    -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA )
