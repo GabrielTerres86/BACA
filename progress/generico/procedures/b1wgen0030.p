@@ -4096,10 +4096,10 @@ PROCEDURE busca_dados_proposta:
     ELSE
     IF  par_cddopcao = "A"  THEN
         DO:
-            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3))   THEN
+            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3) or (crawlim.insitlim = 4))   THEN
                 DO:
                     ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA ou CANCELADA".
+                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA ou CANCELADA ou VIGENTE".
                           
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
