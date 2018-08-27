@@ -128,6 +128,11 @@ BEGIN
     vr_dsrestar        VARCHAR2(4000);                 --> String genérica com informações para restart
     vr_inrestar        PLS_INTEGER;                    --> Indicador de Restart
     vr_erro_exec       EXCEPTION;                      --> Controle de erros
+		
+		vr_dstextab craptab.dstextab%TYPE;
+	  vr_pctaxpre NUMBER;
+	  vr_valoraux NUMBER;
+	  vr_txmensal NUMBER;
 
     ------------------------------- CURSORES ---------------------------------
     /* Busca dos dados da cooperativa */
@@ -153,7 +158,8 @@ BEGIN
             prej.nrdconta          nrctremp,
             0                      cdlcremp,
             prej.dtinclusao        dtprejuz, --
-            prej.vlsdprej + prej.vljur60_ctneg +
+            prej.vlsdprej + 
+						prej.vljur60_ctneg +
 			      prej.vljur60_lcred +
 		        prej.vljuprej +
 						nvl(sld.vliofmes,0)    vlsdprej,
@@ -318,6 +324,20 @@ BEGIN
     IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
+		
+		-- Buscar dados da TAB para extração da taxa de juros remuneratórios
+     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 8
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'USUARI'
+                                              ,pr_cdempres => 11
+                                              ,pr_cdacesso => 'PAREMPREST'
+                                              ,pr_tpregist => 01);
+     
+     -- Extrai a taxa de juros remuneratórios cadastrada na tela TAB089                                              
+		 vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
+		 --Calcular Juros
+		 vr_valoraux    := 1 + (vr_pctaxpre / 100);
+		 vr_txmensal := round(POWER(vr_valoraux, 30),2);
 
     vr_index := NULL;
     vr_contador := 0;
@@ -354,8 +374,13 @@ BEGIN
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).vlsdeved := reg.vlsdeved;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).qtprecal := reg.qtprecal;
       vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).vlpreemp := reg.vlpreemp;
-      vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txjuremp := reg.txjuremp;
-      vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txmensal := reg.txmensal;
+			IF reg.nrdconta = reg.nrctremp AND reg.inprejuz = 1 THEN
+				vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txjuremp := vr_pctaxpre;
+        vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txmensal := vr_txmensal;
+			ELSE
+        vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txjuremp := reg.txjuremp;
+        vr_tab_crapepr(vr_index || LPAD(vr_contador, 10, '0')).txmensal := reg.txmensal;
+			END IF;
     END LOOP;
 
     -- Carregar dados da PL Table CRAPCYB
@@ -735,6 +760,7 @@ BEGIN
                    ,cyb.txdiaria = vr_tab_crapepr(vr_index).txjuremp
                    ,cyb.vlpreemp = vr_tab_crapepr(vr_index).vlpreemp
                    ,cyb.flgpreju = vr_tab_crapepr(vr_index).inprejuz
+									 ,cyb.dtprejuz = vr_tab_crapepr(vr_index).dtprejuz
                    ,cyb.flgresid = vr_flagup
                    ,cyb.nivrisat = vr_nivrisco
                    ,cyb.qtdiaris = vr_qtdiaris
