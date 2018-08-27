@@ -1778,7 +1778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                   || ' '                                           -- 17 - Cód. Múltiplas Curvas
                   || ' '                                           -- 18 - Escalonamento
                   || RPAD(' ',200,' ')                             -- 19 - Descrição Adicional (Campo Livre)
-                  || 'S'                                           -- 20 - Condição de Resgate Antecipado
+                  || 'N'                                           -- 20 - Condição de Resgate Antecipado
                   || vr_cdfrmpag                                   -- 21 - Forma de PAgamento
                   /*Forma de Pagamento*/
                   || vr_nrrentab                                   -- 22 - Rentabilidade / Indexador / Taxa
