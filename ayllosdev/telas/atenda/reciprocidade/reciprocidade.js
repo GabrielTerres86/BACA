@@ -81,7 +81,7 @@ var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
     flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails;
 
-
+var erroAlcada = false;
 var cee = false;
 var coo = false;
 var cDataFimContrato, idcalculo_reciproci, cVldesconto_cee, cVldesconto_coo, cDataFimAdicionalCee, cDataFimAdicionalCoo, cJustificativaDesc;
@@ -2703,7 +2703,7 @@ function converteNumero(numero) {
     return numero.replace('.', '').replace(',', '.');
 }
 
-function validaDados() {
+function validaDados(flsolicita) {
 	vDataFimContrato = Number(cDataFimContrato.val());
 	vVldesconto_cee = cVldesconto_cee.val();
 	vVldesconto_coo = cVldesconto_coo.val();
@@ -2758,7 +2758,11 @@ function validaDados() {
 		return;
 	}
 
+    if (flsolicita) {
     pedeSenhaCoordenador(2,'incluiDesconto();','divRotina');
+    }else{
+        showConfirmacao('Confirma a inclus&atilde;o do contrato?', 'Confirma&ccedil;&atilde;o - Ayllos', 'incluiDesconto()', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+    }
 
 }
 
@@ -2865,13 +2869,13 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		cDataFimAdicionalCoo.habilitaCampo();
 	}
 
-	if (	vVldesconto_cee != vVldesconto_ceeOld ||
-			vVldesconto_coo != vVldesconto_cooOld ||
-			vDataFimAdicionalCee != vDataFimAdicionalCeeOld ||
-			vDataFimAdicionalCoo != vDataFimAdicionalCooOld ||
+	if (	(vVldesconto_cee != vVldesconto_ceeOld && vVldesconto_cee) ||
+			(vVldesconto_coo != vVldesconto_cooOld && vVldesconto_coo) ||
+			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
+			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
             vJustificativaDesc ) {
 
-		btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
+		/*btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
 		btnContinuar.prop('disabled', true);
 		btnContinuar.attr('onclick', 'return false;');
 
@@ -2880,7 +2884,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 
 		cJustificativaDesc.removeClass('campoTelaSemBorda');
-		cJustificativaDesc.prop('disabled', false);
+		cJustificativaDesc.prop('disabled', false);*/
 
 		$.ajax({
 		    dataType: "html",
@@ -2891,21 +2895,36 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		    },
 		    success: function (response) {
 		        if (response) {
+                    // se erro ainda não foi exibido
+                    if (!erroAlcada) {
+                        erroAlcada = true;
 		            eval(response);
+                    }
 		            btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
 		            btnContinuar.prop('disabled', true);
 		            btnContinuar.attr('onclick', 'return false;');
+
 		            btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
 		            btnAprovacao.prop('disabled', true);
 		            btnAprovacao.attr('onclick', 'return false;');
+                } else {
+                    btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
+                    btnContinuar.prop('disabled', true);
+                    btnContinuar.attr('onclick', 'return false;');
+
+                    btnAprovacao.removeClass('botaoDesativado');
+                    btnAprovacao.prop('disabled', false);
+                    btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
 		        }
 		    }
 		});
 
 	} else {
+        // reseta variavel para exibir novamente a mensagem de alçada (se houver)
+        erroAlcada = false;
 		btnContinuar.removeClass('botaoDesativado');
 		btnContinuar.prop('disabled', false);
-		btnContinuar.attr('onclick', 'validaDados();return false;');
+		btnContinuar.attr('onclick', 'validaDados(false);return false;');
 
 		btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
 		btnAprovacao.prop('disabled', true);
@@ -2918,7 +2937,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 }
 
 function solicitarAprovacao() {
-	validaDados();
+	validaDados(true);
 }
 
 function editarConvenio(nrconven) {
@@ -2978,7 +2997,7 @@ function editarConvenio(nrconven) {
 	return false;
 }
 
-function abrirAprovacao() {
+function abrirAprovacao(hideBtnDetalhes) {
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
 
     blockBackground(parseInt($("#divRotina").css("z-index")));
@@ -2990,7 +3009,6 @@ function abrirAprovacao() {
         data: {
             cdcooper: cdcooper,
             idrecipr: idrecipr,
-            dsmetodo: "$('#divConteudoOpcao').show();$('#telaAprovacao').hide();",
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -3001,8 +3019,21 @@ function abrirAprovacao() {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function (response) {
+            var telaAprovacao = $('#telaAprovacao');
             $("#divConteudoOpcao").hide();
-            $("#telaAprovacao").html(response);
+            telaAprovacao.html(response);
+            telaAprovacao.find('#btVoltar').click(function (){
+                $('#divConteudoOpcao').show();
+                telaAprovacao.hide();
+            });
+            if (hideBtnDetalhes) {
+                telaAprovacao.find('#btDetalhes').hide();
+            } else {
+                telaAprovacao.find('#btDetalhes').click(function (){
+                    telaAprovacao.hide();
+                    acessaOpcaoDescontos('C');
+                });
+            }
             /*$('#divUsoGenerico').html(response);
             exibeRotina($('#divUsoGenerico'));*/
         }

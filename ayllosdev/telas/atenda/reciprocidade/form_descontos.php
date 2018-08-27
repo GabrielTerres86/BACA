@@ -1,41 +1,12 @@
 <?php
 /*************************************************************************
-	Fonte: principal.php
-	Autor: Gabriel						Ultima atualizacao: 27/03/2017
-	Data : Dezembro/2010
+	Fonte: form_descontos.php
+	Autor: André Clemer - Supero			Ultima atualizacao: --/--/----
+	Data : Julho/2018
 	
-	Objetivo: Listar os convenios de cobranca.
+	Objetivo: Listar os contratos de descontos (Reciprocidade)
 	
-	Alteracoes: 19/05/2011 - Mostrar Cob Registrada (Guilherme).
-
-				14/07/2011 - Alterado para layout padrão (Gabriel - DB1)
-				
-				10/05/2013 - Retirado campo de valor maximo do boleto. 
-						     vllbolet (Jorge)
-
-				19/09/2013 - Inclusao do campo Convenio Homologado (Carlos)
-				
-				28/04/2015 - Incluido campos cooperativa emite e expede e
-							 cooperado emite e expede. (Reinert)
-
-				30/09/2015 - Ajuste para inclusão das novas telas "Produtos"
-						    (Gabriel - Rkam -> Projeto 217).
-						  
-                24/11/2015 - Inclusao do indicador de negativacao pelo Serasa.
-                             (Jaison/Andrino)
-
-				18/02/2016 - PRJ 213 - Reciprocidade. (Jaison/Marcos)
-
-                28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobrança (Odirlei/AMcom)
-
-				25/07/2016 - Corrigi a inicializacao da variavel $emails_titular 
-							 e o retorno de erro do XML de dados.SD 479874 (Carlos R.)
-
-				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
-
-				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)  
-
-                27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
+	Alteracoes: 
 
 *************************************************************************/
 
@@ -96,8 +67,9 @@ $vr_idfim_desc_adicional_coo = getByTagName($dados->tags,"vr_idfim_desc_adiciona
 $vr_vldesconto_adicional_cee = getByTagName($dados->tags,"vr_vldesconto_adicional_cee");
 $vr_idfim_desc_adicional_cee = getByTagName($dados->tags,"vr_idfim_desc_adicional_cee");
 $vr_dsjustificativa_desc_adic = getByTagName($dados->tags,"vr_dsjustificativa_desc_adic");
+$insitceb = getByTagName($dados->tags,"insitceb");
 
-$convenios = $dados->tags[11]->tags;
+$convenios = $dados->tags[12]->tags;
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -380,6 +352,9 @@ descontoConvenios = [];
 
 <div id="divBotoes" style="margin:5px">
     <a href="#" id="btnContinuar" class="botao">Continuar</a>
+	<?php if ($insitceb == 3 && $cddopcao != 'C') { ?>
+    <a href="#" id="btnAbrirAprovacao" class="botao" onclick="abrirAprovacao(true)">Aprovar</a>
+	<?php } ?>
     <a href="#" id="btnAprovacao" class="botao">Solicitar aprova&ccedil;&atilde;o</a>
     <a href="#" class="botao" onclick="consulta('A','','',true,'','', 1);return false;">Tarifas instru&ccedil;&atilde;o</a>
 	<a href="#" id="btVoltar" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>

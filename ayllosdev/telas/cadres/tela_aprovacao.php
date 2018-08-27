@@ -19,7 +19,6 @@ isPostMethod();
 // Recebe a operação que está sendo realizada
 $cdcooper = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
 $idrecipr = (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : '';
-$dsmetodo = (!empty($_POST['dsmetodo'])) ? $_POST['dsmetodo'] : "fechaRotina($('#telaAprovacao'))";
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 	exibeErroNew($msgError);
@@ -84,8 +83,8 @@ function exibeErroNew($msgErro) {
 			</div>
 
 			<div id="divBotoes" style="margin-bottom: 10px;">
-				<a href="#" class="botao" id="btPopupVoltar" onclick="<?php echo $dsmetodo; ?>">Voltar</a>
-				<a href="#" class="botao" id="btPopupAlterar" onclick="">Detalhes da negocia&ccedil;&atilde;o</a>
+				<a href="#" class="botao" id="btVoltar">Voltar</a>
+				<a href="#" class="botao" id="btDetalhes">Detalhes da negocia&ccedil;&atilde;o</a>
 			</div>
 
 		</td>

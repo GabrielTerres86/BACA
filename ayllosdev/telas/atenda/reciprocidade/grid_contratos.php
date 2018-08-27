@@ -159,6 +159,7 @@ function exibeErro($msgErro) {
     <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('I');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
 	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('C');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
 	<a href="#" id="btnAlterarConvenio" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('A');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+    <a href="#" class="botao" onclick="abrirAprovacao(false); return false;" id="btnAbrirAprovacao">Aprovar</a>
 	<?php //Habilitar botão apenas se possuir cobrança ativa
           // e se o serviço estiver ativo ou com algum tipo de alerta
           // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
@@ -167,7 +168,6 @@ function exibeErro($msgErro) {
         		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
 	<?php  } ?>
 	<a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Termo</a>    
-    <a href="#" id="btnAbrirAprovacao" class="botao" onclick="abrirAprovacao(); return false;">Aprovar</a>
     <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
 	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
 	<a href="#" class="botao" onclick="carregaCobranca(); return false;">Recip. Antigo</a>
