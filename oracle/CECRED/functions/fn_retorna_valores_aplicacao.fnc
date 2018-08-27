@@ -30,6 +30,11 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   -- Alteracoes: 17/11/2016 -  Correção do campo pr_tpproapl (1 - NOVO / 2 - ANTIGO ) era ((2 - NOVO / 1 - ANTIGO )
   --                           foi criado invertido, sendo assim não trazia as informações SD555414- Vanessa Klein
   --
+  --             15/07/2018 - Inclusão do parâmetro pr_idaplpgm nas chamadas
+  --                          apli0006.pc_posicao_saldo_aplicacao_pre
+  --                          apli0006.pc_posicao_saldo_aplicacao_pos
+  --                          Claudio - CIS Corporate
+  --
   -- .............................................................................
 
   -- Seleciona produtos e aplicacoes novas
@@ -269,7 +274,7 @@ BEGIN
     FETCH cr_crapdtc INTO rw_crapdtc;
 
     IF cr_crapdtc%NOTFOUND THEN -- Se nao encontrou registro
-      CLOSE cr_crapdtc;
+    CLOSE cr_crapdtc;
     END IF;
 
     -- Nome do produto
@@ -495,6 +500,7 @@ BEGIN
                                              ,pr_cddindex => rw_craprac.cddindex -- Codigo de Indexador
                                              ,pr_qtdiacar => rw_craprac.qtdiacar -- Quantidade de Dias de Carencia
                                              ,pr_idgravir => 0                   -- Imunidade Tributaria
+                                             ,pr_idaplpgm => 0                   -- Aplicação Programada (0-Não / 1-Sim)      
                                              ,pr_dtinical => rw_craprac.dtmvtolt -- Data de Inicio do Calculo
                                              ,pr_dtfimcal => rw_crapdat.dtmvtoan -- Data de Fim do Calculo
                                              ,pr_idtipbas => 2                   -- Tipo Base / 2-Total
@@ -521,6 +527,7 @@ BEGIN
                                              ,pr_cddindex => rw_craprac.cddindex -- Codigo de Indexador
                                              ,pr_qtdiacar => rw_craprac.qtdiacar -- Quantidade de Dias de Carencia
                                              ,pr_idgravir => 0                   -- Imunidade Tributaria
+                                             ,pr_idaplpgm => 0                   -- Aplicação Programada (0-Não / 1-Sim)
                                              ,pr_dtinical => rw_craprac.dtmvtolt -- Data de Inicio do Calculo
                                              ,pr_dtfimcal => rw_crapdat.dtmvtoan         -- Data de Fim do Calculo
                                              ,pr_idtipbas => 2                   -- Tipo Base / 2-Total

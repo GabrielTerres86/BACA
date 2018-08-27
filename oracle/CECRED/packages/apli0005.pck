@@ -49,6 +49,15 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
 	--
   --             18/07/2018 - Ajuste na procedure pc_solicita_resgate para não permitir o resgate de aplicações enquanto
   --                          o processo batch estiver rodando (Jean Michel)
+	--
+  --             18/07/2018 - (Proj. 411.2) (CIS Corporate)
+  --                          Inclusão do parâmetro pr_idaplpgm nas chamadas 
+  --                          Inclusão do parâmetro pr_nrctrrpp na procedure pc_cadastra_aplic
+  --                          Desconsiderar aplicações programadas na proc. pc_busca_aplicacoes
+	--
+  --             21/07/2018 - (Proj. 411.2) (CIS Corporate)
+  --                          Não desfaz todas as transações em pc_obtem_taxa_modalidade 
+
   ---------------------------------------------------------------------------------------------------------------
   
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -181,6 +190,23 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                                      ,pr_cdcritic OUT PLS_INTEGER                    --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);                     --> Descrição da crítica
   
+  -- Rotina referente a consulta de saldos de aplicacao programada
+  PROCEDURE pc_busca_saldo_aplic_prog(pr_cdcooper IN craprac.cdcooper%TYPE           --> Código da Cooperativa
+                                     ,pr_cdoperad IN crapope.cdoperad%TYPE           --> Código do Operador
+                                     ,pr_nmdatela IN craptel.nmdatela%TYPE           --> Nome da Tela
+                                     ,pr_idorigem IN INTEGER                         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
+                                     ,pr_nrdconta IN craprac.nrdconta%TYPE           --> Número da Conta
+                                     ,pr_idseqttl IN crapttl.idseqttl%TYPE           --> Titular da Conta
+                                     ,pr_nraplica IN craprac.nraplica%TYPE DEFAULT 0 --> Número da Aplicação / Parâmetro Opcional
+                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
+                                     ,pr_cdprodut IN craprac.cdprodut%TYPE DEFAULT 0 --> Código do Produto -–> Parâmetro Opcional
+                                     ,pr_idblqrgt IN INTEGER                         --> Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas)
+                                     ,pr_idgerlog IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim)
+                                     ,pr_vlsldtot OUT NUMBER                         --> Saldo Total da Aplicação
+                                     ,pr_vlsldrgt OUT NUMBER                         --> Saldo Total para Resgate
+                                     ,pr_cdcritic OUT PLS_INTEGER                    --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);                     --> Descrição da crítica
+  
   -- Rotina para consulta de carencias das aplicacoes pelo Ayllos WEB
   PROCEDURE pc_obtem_carencias_web(pr_cdcooper IN craprac.cdcooper%TYPE --> Código da Cooperativa
                                   ,pr_cdprodut IN crapcpc.cdprodut%TYPE --> Codigo do Produto
@@ -243,6 +269,19 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                                         ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                         ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+
+  -- Rotina para consulta de taxa de modalidades das aplicacoes via web
+  PROCEDURE pc_obtem_taxa_modalidade_at(pr_cdcooper IN craprac.cdcooper%TYPE      --> Código da Cooperativa
+                                       ,pr_nrdconta IN crapass.nrdconta%TYPE      --> Numero da Conta
+                                       ,pr_cdprodut IN crapcpc.cdprodut%TYPE      --> Codigo do Produto
+                                       ,pr_vlraplic IN NUMBER                     --> Valor da Aplicacao
+                                       ,pr_qtdiacar IN crapmpc.qtdiacar%TYPE      --> Dias de Carencia
+                                       ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE      --> Dias de Prazo
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descrição da crítica
+                                       ,pr_tab_taxa OUT APLI0005.typ_tab_taxa);    --> Tabela com dados de prazos, vencimento e taxas
+
+
 
   -- Rotina geral para validacao de cadastros de aplicacoes
   PROCEDURE pc_valida_cad_aplic(pr_cdcooper IN craprac.cdcooper%TYPE      --> Código da Cooperativa
@@ -322,6 +361,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                              ,pr_iddebcti IN INTEGER                  -- Identificador de Débito na Conta Investimento (Identificador informado na tela, 0 – Não / 1 - Sim)
                              ,pr_idorirec IN INTEGER                  -- Identificador de Origem do Recurso (Identificador informado em tela)
                              ,pr_idgerlog IN INTEGER                  -- Identificador de Log (Fixo no código, 0 – Não / 1 – Sim)
+                             ,pr_nrctrrpp IN craprac.nrctrrpp%TYPE DEFAULT 0 -- Número aplicação programada (Opcional, 0 = Aplicação Não Programada)
                              ,pr_nraplica OUT craprac.nraplica%TYPE        -- Nuemro da aplicacao
                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE   -- Codigo da critica de erro
                              ,pr_dscritic OUT crapcri.dscritic%TYPE); -- Descricao da critica de erro
@@ -346,6 +386,29 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
  
+  -- Rotina geral para cadastros de aplicacoes - Autonomous Transaction
+  PROCEDURE pc_cadastra_aplic_at(pr_cdcooper IN craprac.cdcooper%TYPE    -- Código da Cooperativa
+                                ,pr_cdoperad IN crapope.cdoperad%TYPE    -- Código do Operador
+                                ,pr_nmdatela IN craptel.nmdatela%TYPE    -- Nome da Tela
+                                ,pr_idorigem IN INTEGER                  -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
+                                ,pr_nrdconta IN craprac.nrdconta%TYPE    -- Número da Conta
+                                ,pr_idseqttl IN crapttl.idseqttl%TYPE    -- Titular da Conta
+                                ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE    -- Numero de caixa
+                                ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE    -- Data de Movimento
+                                ,pr_cdprodut IN crapcpc.cdprodut%TYPE    -- Código do Produto (Produto selecionado na tela)
+                                ,pr_qtdiaapl IN INTEGER                  -- Dias da Aplicação (Dias informados em tela)
+                                ,pr_dtvencto IN DATE                     -- Data de Vencimento da Aplicação (Data informada em tela)
+                                ,pr_qtdiacar IN INTEGER                  -- Carência da Aplicação (Carência informada em tela)
+                                ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE    -- Prazo da Aplicação (Prazo selecionado na tela)
+                                ,pr_vlaplica IN NUMBER                   -- Valor da Aplicação (Valor informado em tela)
+                                ,pr_iddebcti IN INTEGER                  -- Identificador de Débito na Conta Investimento (Identificador informado na tela, 0 – Não / 1 - Sim)
+                                ,pr_idorirec IN INTEGER                  -- Identificador de Origem do Recurso (Identificador informado em tela)
+                                ,pr_idgerlog IN INTEGER                  -- Identificador de Log (Fixo no código, 0 – Não / 1 – Sim)
+                                ,pr_nrctrrpp IN craprac.nrctrrpp%TYPE DEFAULT 0 -- Número aplicação programada (Opcional, 0 = Aplicação Não Programada)
+                                ,pr_nraplica OUT craprac.nraplica%TYPE        -- Nuemro da aplicacao
+                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE   -- Codigo da critica de erro
+                                ,pr_dscritic OUT crapcri.dscritic%TYPE); -- Descricao da critica de erro
+                                
   -- Rotina geral para excluir aplicacoes
   PROCEDURE pc_exclui_aplicacao(pr_cdcooper IN craprac.cdcooper%TYPE    -- Código da Cooperativa
                                ,pr_cdoperad IN crapope.cdoperad%TYPE    -- Código do Operador
@@ -899,7 +962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
      Autor   : Jean Michel
-     Data    : Julho/14.                    Ultima atualizacao: 22/07/2014
+     Data    : Julho/14.                    Ultima atualizacao:
 
      Dados referentes ao programa:
 
@@ -909,7 +972,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 
+
     ..............................................................................*/
     DECLARE
 
@@ -958,6 +1022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
           AND rac.nrdconta = pr_nrdconta
           AND (rac.nraplica = pr_nraplica OR pr_nraplica = 0)
           AND (rac.cdprodut = pr_cdprodut OR pr_cdprodut = 0)
+          AND rac.nrctrrpp = 0 -- Apenas Aplicações não programadas
           AND rac.idsaqtot = 0          
           AND ((rac.idblqrgt >= 0 AND pr_idblqrgt = 1)
            OR (rac.idblqrgt >  0  AND pr_idblqrgt = 2)
@@ -1145,6 +1210,277 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
   END pc_busca_saldo_aplicacoes;
 
+  -- Rotina referente a consulta de saldos de aplicacao
+  PROCEDURE pc_busca_saldo_aplic_prog(pr_cdcooper IN craprac.cdcooper%TYPE           --> Código da Cooperativa
+                                     ,pr_cdoperad IN crapope.cdoperad%TYPE           --> Código do Operador
+                                     ,pr_nmdatela IN craptel.nmdatela%TYPE           --> Nome da Tela
+                                     ,pr_idorigem IN INTEGER                         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
+                                     ,pr_nrdconta IN craprac.nrdconta%TYPE           --> Número da Conta
+                                     ,pr_idseqttl IN crapttl.idseqttl%TYPE           --> Titular da Conta
+                                     ,pr_nraplica IN craprac.nraplica%TYPE DEFAULT 0 --> Número da Aplicação / Parâmetro Opcional
+                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
+                                     ,pr_cdprodut IN craprac.cdprodut%TYPE DEFAULT 0 --> Código do Produto -–> Parâmetro Opcional
+                                     ,pr_idblqrgt IN INTEGER                         --> Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas)
+                                     ,pr_idgerlog IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim)
+                                     ,pr_vlsldtot OUT NUMBER                         --> Saldo Total da Aplicação
+                                     ,pr_vlsldrgt OUT NUMBER                         --> Saldo Total para Resgate
+                                     ,pr_cdcritic OUT PLS_INTEGER                    --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2) IS                   --> Descrição da crítica
+  BEGIN
+
+    /* .............................................................................
+
+     Programa: pc_busca_saldo_aplic_prog
+     Sistema : Novos Produtos de Captação
+     Sigla   : APLI
+     Autor   : CIS Corporate
+     Data    : Julho/18.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina referente a consulta de saldo de aplicacoes programadas.
+
+     Observacao: -----
+
+     Alteracoes: 
+
+    ..............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      vr_vlbascal NUMBER := 0; -- Base de Calculo
+      vr_vlsldtot NUMBER := 0; -- Saldo Total
+      vr_vlsldrgt NUMBER := 0; -- Saldo de Resgate
+      vr_vlultren NUMBER := 0; -- Ultimo Rendimento
+      vr_vlrentot NUMBER := 0; -- Rendimento Total
+      vr_vlrevers NUMBER := 0; -- Valor de Reversão
+      vr_vlrdirrf NUMBER := 0; -- Valor de IRRF
+      vr_percirrf NUMBER := 0; -- Percentual de IRRF
+      vr_auxconta INTEGER := 0; -- Contador de aplicacoes
+
+      --Variáveis locais
+      vr_dstransa VARCHAR2(100) := 'Consulta de aplicacao num: ' || pr_nraplica;
+      vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+      vr_nrdrowid ROWID;
+
+      -- Selecionar dados da aplicacao
+      CURSOR cr_craprac(pr_cdcooper IN craprac.cdcooper%TYPE --> Código da Cooperativa
+                       ,pr_nrdconta IN craprac.nrdconta%TYPE --> Número da Conta
+                       ,pr_nraplica IN craprac.nraplica%TYPE --> Número da Aplicação
+                       ,pr_cdprodut IN craprac.cdprodut%TYPE --> Codigo do Produto
+                       ,pr_idblqrgt IN craprac.idblqrgt%TYPE --> Indice de Bloqueio de Resgate
+                       ) IS
+
+        SELECT
+          rac.cdcooper
+         ,rac.nrdconta
+         ,rac.nraplica
+         ,rac.dtmvtolt
+         ,rac.txaplica
+         ,rac.qtdiacar
+         ,rac.cdprodut
+        FROM
+          craprac rac
+        WHERE
+              rac.cdcooper = pr_cdcooper
+          AND rac.nrdconta = pr_nrdconta
+          AND (rac.nraplica = pr_nraplica OR pr_nraplica = 0)
+          AND (rac.cdprodut = pr_cdprodut OR pr_cdprodut = 0)
+          AND rac.nrctrrpp > 0 -- Apenas Aplicações programadas
+          AND rac.idsaqtot = 0          
+          AND ((rac.idblqrgt >= 0 AND pr_idblqrgt = 1)
+           OR (rac.idblqrgt >  0  AND pr_idblqrgt = 2)
+           OR (rac.idblqrgt =  0  AND pr_idblqrgt = 3));
+
+      rw_craprac cr_craprac%ROWTYPE;
+
+      -- Selecionar dados de produtos
+      CURSOR cr_crapcpc(pr_cdprodut IN crapcpc.cdprodut%TYPE) IS --> Codigo do Produto
+
+        SELECT
+          cpc.idtxfixa
+         ,cpc.cddindex
+         ,cpc.idtippro
+        FROM
+          crapcpc cpc
+        WHERE
+          cpc.cdprodut = pr_cdprodut;
+
+      rw_crapcpc cr_crapcpc%ROWTYPE;
+
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    BEGIN
+
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+        INTO rw_crapdat;
+
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+      FOR rw_craprac IN  cr_craprac(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+                                   ,pr_nrdconta => pr_nrdconta   --> Número da Conta
+                                   ,pr_nraplica => pr_nraplica   --> Número da Aplicação
+                                   ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
+                                   ,pr_idblqrgt => pr_idblqrgt) --> Indice de Bloqueio de Resgate
+
+      LOOP
+
+        OPEN cr_crapcpc(pr_cdprodut => rw_craprac.cdprodut);
+
+        FETCH cr_crapcpc INTO rw_crapcpc;
+
+        IF cr_crapcpc%NOTFOUND THEN
+          CLOSE cr_crapcpc;
+          vr_dscritic := 'Erro ao consulta produto APLI0005.pc_busca_saldo_aplic_prog';
+          RAISE vr_exc_saida;
+        ELSE
+          CLOSE cr_crapcpc;
+        END IF;
+
+        -- Valor de base de calculo
+        vr_vlbascal := 0;
+
+        -- Verifica tipo do produto de aplicacao
+        IF rw_crapcpc.idtippro = 1 THEN -- Pre-Fixada
+
+          -- Consulta saldo de aplicacao pre
+          apli0006.pc_posicao_saldo_aplicacao_pre(pr_cdcooper => rw_craprac.cdcooper -- Codigo da Cooperativa
+                                                 ,pr_nrdconta => rw_craprac.nrdconta -- Conta do Cooperado
+                                                 ,pr_nraplica => rw_craprac.nraplica -- Numero da Aplicacao
+                                                 ,pr_dtiniapl => rw_craprac.dtmvtolt -- Data de Movimento
+                                                 ,pr_txaplica => rw_craprac.txaplica -- Taxa de Aplicacao
+                                                 ,pr_idtxfixa => rw_crapcpc.idtxfixa -- Taxa Fixa (0-Nao / 1-Sim)
+                                                 ,pr_cddindex => rw_crapcpc.cddindex -- Codigo de Indexador
+                                                 ,pr_qtdiacar => rw_craprac.qtdiacar -- Quantidade de Dias de Carencia
+                                                 ,pr_idgravir => 0                   -- Imunidade Tributaria
+                                                 ,pr_dtinical => rw_craprac.dtmvtolt -- Data de Inicio do Calculo
+                                                 ,pr_dtfimcal => pr_dtmvtolt         -- Data de Fim do Calculo
+                                                 ,pr_idtipbas => 2                   -- Tipo Base / 2-Total
+                                                 ,pr_vlbascal => vr_vlbascal         -- Valor de Base
+                                                 ,pr_vlsldtot => vr_vlsldtot         -- Valor de Saldo Total
+                                                 ,pr_vlsldrgt => vr_vlsldrgt         -- Valor de Saldo p/ Resgate
+                                                 ,pr_vlultren => vr_vlultren         -- Valor do ultimo rendimento
+                                                 ,pr_vlrentot => vr_vlrentot         -- Valor de rendimento total
+                                                 ,pr_vlrevers => vr_vlrevers         -- Valor de reversao
+                                                 ,pr_vlrdirrf => vr_vlrdirrf         -- Valor de IRRF
+                                                 ,pr_percirrf => vr_percirrf         -- Percentual de IRRF
+                                                 ,pr_cdcritic => vr_cdcritic         -- Codigo de Critica
+                                                 ,pr_dscritic => vr_dscritic);       -- Descricao de Critica
+                                     
+        ELSIF rw_crapcpc.idtippro = 2 THEN -- Pos-Fixada
+
+          -- Consulta saldo de aplicacao pos
+          apli0006.pc_posicao_saldo_aplicacao_pos(pr_cdcooper => rw_craprac.cdcooper -- Codigo da Cooperativa
+                                                 ,pr_nrdconta => rw_craprac.nrdconta -- Conta do Cooperado
+                                                 ,pr_nraplica => rw_craprac.nraplica -- Numero da Aplicacao
+                                                 ,pr_dtiniapl => rw_craprac.dtmvtolt -- Data de Movimento
+                                                 ,pr_txaplica => rw_craprac.txaplica -- Taxa de Aplicacao
+                                                 ,pr_idtxfixa => rw_crapcpc.idtxfixa -- Taxa Fixa (0-Nao / 1-Sim)
+                                                 ,pr_cddindex => rw_crapcpc.cddindex -- Codigo de Indexador
+                                                 ,pr_qtdiacar => rw_craprac.qtdiacar -- Quantidade de Dias de Carencia
+                                                 ,pr_idgravir => 0                   -- Imunidade Tributaria
+                                                 ,pr_dtinical => rw_craprac.dtmvtolt -- Data de Inicio do Calculo
+                                                 ,pr_dtfimcal => pr_dtmvtolt         -- Data de Fim do Calculo
+                                                 ,pr_idtipbas => 2                   -- Tipo Base / 2-Total
+                                                 ,pr_vlbascal => vr_vlbascal         -- Valor de Base
+                                                 ,pr_vlsldtot => vr_vlsldtot         -- Valor de Saldo Total
+                                                 ,pr_vlsldrgt => vr_vlsldrgt         -- Valor de Saldo p/ Resgate
+                                                 ,pr_vlultren => vr_vlultren         -- Valor do ultimo rendimento
+                                                 ,pr_vlrentot => vr_vlrentot         -- Valor de rendimento total
+                                                 ,pr_vlrevers => vr_vlrevers         -- Valor de reversao
+                                                 ,pr_vlrdirrf => vr_vlrdirrf         -- Valor de IRRF
+                                                 ,pr_percirrf => vr_percirrf         -- Percentual de IRRF
+                                                 ,pr_cdcritic => vr_cdcritic         -- Codigo de Critica
+                                                 ,pr_dscritic => vr_dscritic);       -- Descricao de Critica
+        END IF;
+         
+        pr_vlsldtot := NVL(pr_vlsldtot,0) + NVL(vr_vlsldtot,0);
+        pr_vlsldrgt := NVL(pr_vlsldrgt,0) + NVL(vr_vlsldrgt,0);
+
+        vr_auxconta := NVL(vr_auxconta,0) + 1;
+
+      END LOOP;
+
+      IF vr_auxconta = 0 THEN
+        pr_vlsldtot := 0;
+        pr_vlsldrgt := 0;
+      END IF;
+
+      -- Verifica se deve gerar log
+      IF pr_idgerlog = 1 THEN
+        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => ''
+                            ,pr_dsorigem => vr_dsorigem
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 1 --> TRUE
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+
+      END IF;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+        ROLLBACK;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Verifica se deve gerar log
+        IF pr_idgerlog = 1 THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => vr_dsorigem
+                              ,pr_dstransa => vr_dstransa
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0 --> FALSE
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+          COMMIT;
+        END IF;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_busca_saldo_aplicacoes: ' ||
+                       SQLERRM;
+        ROLLBACK;
+    END;
+
+  END pc_busca_saldo_aplic_prog;
 
   -- Rotina para consulta de carencias das aplicacoes pelo Ayllos WEB
   PROCEDURE pc_obtem_carencias_web(pr_cdcooper IN craprac.cdcooper%TYPE --> Código da Cooperativa
@@ -2158,6 +2494,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
   END pc_obtem_taxa_modalidade_web;
 
+  -- Rotina geral para consulta de taxa de modalidades das aplicacoes - Com Autonomous Transactions
+  PROCEDURE pc_obtem_taxa_modalidade_at(pr_cdcooper IN craprac.cdcooper%TYPE      --> Código da Cooperativa
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE      --> Numero da Conta
+                                    ,pr_cdprodut IN crapcpc.cdprodut%TYPE      --> Codigo do Produto
+                                    ,pr_vlraplic IN NUMBER                     --> Valor da Aplicacao
+                                    ,pr_qtdiacar IN crapmpc.qtdiacar%TYPE      --> Dias de Carencia
+                                    ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE      --> Dias de Prazo
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE     --> Descrição da crítica
+                                    ,pr_tab_taxa OUT APLI0005.typ_tab_taxa) IS --> Tabela com dados de prazos, vencimento e taxas
+  PRAGMA AUTONOMOUS_TRANSACTION;
+  BEGIN
+
+    /* .............................................................................
+
+     Programa: pc_obtem_taxa_modalidade_at
+     Sistema : Novos Produtos de Captação
+     Sigla   : APLI
+     Autor   : CIS Corporate
+     Data    : Julho/18.                    Ultima atualizacao: 21/07/2018
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina referente a consulta de taxas de modalidade de aplicacoes, com Autonomous Transactions
+
+     Observacao: -----
+
+     Alteracoes: -----
+    ..............................................................................*/
+    
+    BEGIN
+
+      -- Leitura de carencias do produto informado
+      apli0005.pc_obtem_taxa_modalidade(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+                                       ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
+                                       ,pr_cdprodut => pr_cdprodut   --> Codigo do Produto
+                                       ,pr_vlraplic => pr_vlraplic   --> Valor da Aplicacao
+                                       ,pr_qtdiacar => pr_qtdiacar   --> Dias de Carencia
+                                       ,pr_qtdiaprz => pr_qtdiaprz   --> Dias de Prazo
+                                       ,pr_cdcritic => pr_cdcritic   --> Codigo da Critica
+                                       ,pr_dscritic => pr_dscritic   --> Descricao da Critica
+                                       ,pr_tab_taxa => pr_tab_taxa); --> Tabela com dados de taxas, prazo e carencia  
+
+
+    END;
+
+  END pc_obtem_taxa_modalidade_at;
 
   -- Rotina geral para validacao de cadastros de aplicacoes
   PROCEDURE pc_valida_cad_aplic(pr_cdcooper IN craprac.cdcooper%TYPE      --> Código da Cooperativa
@@ -3223,6 +3608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                              ,pr_iddebcti IN INTEGER                    -- Identificador de Débito na Conta Investimento (Identificador informado na tela, 0 – Não / 1 - Sim)
                              ,pr_idorirec IN INTEGER                    -- Identificador de Origem do Recurso (Identificador informado em tela)
                              ,pr_idgerlog IN INTEGER                    -- Identificador de Log (Fixo no código, 0 – Não / 1 – Sim)
+                             ,pr_nrctrrpp IN craprac.nrctrrpp%TYPE DEFAULT 0 -- Número aplicação programada (Opcional, 0 = Aplicação Não Programada)
                              ,pr_nraplica OUT craprac.nraplica%TYPE     -- Numero da aplicacao cadastrada
                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Codigo da critica de erro
                              ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descricao da critica de erro
@@ -3247,6 +3633,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
      Alteracoes: 02/06/2016 - Ajustado os cursores de leitura da craptab para que seja
                               utilizado o indice da tabela, para otimizar a performace
                               na leitura dos dados (Douglas - Chamado 454248)
+                              
+                 18/07/2018 - Grava o numero da aplicação programada na CRAPRAC (0 = Aplicação Tradicional)
+                              Proj. 411.2 - CIS Corporate)
+
+
+
     ..............................................................................*/
 
     DECLARE
@@ -3878,6 +4270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
          ,idsaqtot
          ,idblqrgt
          ,idcalorc
+         ,nrctrrpp
          ,iddebcti
          ,cdoperad)
         VALUES(
@@ -3901,6 +4294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
          ,0           -- Saque Total
          ,0           -- Bloqueio Resgate
          ,0           -- Cálculo Orçamento
+         ,pr_nrctrrpp -- Número da aplicação programada
          ,pr_iddebcti
          ,pr_cdoperad) RETURNING nraplica, ROWID INTO vr_nraplica, vr_rowidtab;
           
@@ -4077,7 +4471,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
           vr_dscritic := 'Erro ao atualizar registro na CRAPLAC.';
           RAISE vr_exc_saida;
       END;
-
       IF pr_iddebcti = 1 THEN -- Recurso da Conta Investimento
 
         OPEN cr_craplot(pr_cdcooper => pr_cdcooper
@@ -4987,6 +5380,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
   END pc_cadastra_aplic_web;
 
+  -- Rotina geral para cadastros de aplicacoes - Autonomous Transaction
+  PROCEDURE pc_cadastra_aplic_at(pr_cdcooper IN craprac.cdcooper%TYPE      -- Código da Cooperativa
+                             ,pr_cdoperad IN crapope.cdoperad%TYPE      -- Código do Operador
+                             ,pr_nmdatela IN craptel.nmdatela%TYPE      -- Nome da Tela
+                             ,pr_idorigem IN INTEGER                    -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA)
+                             ,pr_nrdconta IN craprac.nrdconta%TYPE      -- Número da Conta
+                             ,pr_idseqttl IN crapttl.idseqttl%TYPE      -- Titular da Conta
+                             ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE      -- Numero de caixa
+                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE      -- Data de Movimento
+                             ,pr_cdprodut IN crapcpc.cdprodut%TYPE      -- Código do Produto (Produto selecionado na tela)
+                             ,pr_qtdiaapl IN INTEGER                    -- Dias da Aplicação (Dias informados em tela)
+                             ,pr_dtvencto IN DATE                       -- Data de Vencimento da Aplicação (Data informada em tela)
+                             ,pr_qtdiacar IN INTEGER                    -- Carência da Aplicação (Carência informada em tela)
+                             ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE      -- Prazo da Aplicação (Prazo selecionado na tela)
+                             ,pr_vlaplica IN NUMBER                     -- Valor da Aplicação (Valor informado em tela)
+                             ,pr_iddebcti IN INTEGER                    -- Identificador de Débito na Conta Investimento (Identificador informado na tela, 0 – Não / 1 - Sim)
+                             ,pr_idorirec IN INTEGER                    -- Identificador de Origem do Recurso (Identificador informado em tela)
+                             ,pr_idgerlog IN INTEGER                    -- Identificador de Log (Fixo no código, 0 – Não / 1 – Sim)
+                             ,pr_nrctrrpp IN craprac.nrctrrpp%TYPE DEFAULT 0 -- Número aplicação programada (Opcional, 0 = Aplicação Não Programada)
+                             ,pr_nraplica OUT craprac.nraplica%TYPE     -- Numero da aplicacao cadastrada
+                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Codigo da critica de erro
+                             ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descricao da critica de erro
+  PRAGMA AUTONOMOUS_TRANSACTION;
+  BEGIN
+    /* .............................................................................
+
+     Programa: pc_cadastra_aplic_at
+     Sistema : Novos Produtos de Captação
+     Sigla   : APLI
+     Autor   : CIS Corporate
+     Data    : Julho/18.                    Ultima atualizacao: 21/07/2018
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina geral referente ao cadastro de aplicacoes - Autonomous Transaction.
+
+     Observacao: -----
+
+     Alteracoes: -----
+    ..............................................................................*/
+
+    BEGIN
+         apli0005.pc_cadastra_aplic( pr_cdcooper => pr_cdcooper,
+                                                 pr_cdoperad => pr_cdoperad,
+                                                   pr_nmdatela => pr_nmdatela,
+                                                   pr_idorigem => pr_idorigem,
+                                                   pr_nrdconta => pr_nrdconta,
+                                                   pr_idseqttl => pr_idseqttl,
+                                                   pr_nrdcaixa => pr_nrdcaixa,
+                                                   pr_dtmvtolt => pr_dtmvtolt,
+                                                   pr_cdprodut => pr_cdprodut,
+                                                   pr_qtdiaapl => pr_qtdiaapl,
+                                                   pr_dtvencto => pr_dtvencto,
+                                                   pr_qtdiacar => pr_qtdiacar,
+                                                   pr_qtdiaprz => pr_qtdiaprz,
+                                                   pr_vlaplica => pr_vlaplica,
+                                                   pr_iddebcti => pr_iddebcti,
+                                                   pr_idorirec => pr_idorirec,
+                                                   pr_idgerlog => pr_idgerlog,
+                                                   pr_nrctrrpp => pr_nrctrrpp,
+                                                   pr_nraplica => pr_nraplica,
+                                                   pr_cdcritic => pr_cdcritic,
+                                                   pr_dscritic => pr_dscritic);
+    END;
+  END pc_cadastra_aplic_at;
+  
   -- Rotina geral para excluir aplicacoes
   PROCEDURE pc_exclui_aplicacao(pr_cdcooper IN craprac.cdcooper%TYPE      -- Código da Cooperativa
                                ,pr_cdoperad IN crapope.cdoperad%TYPE      -- Código do Operador
@@ -6048,7 +6509,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
      Observacao: -----
 
-     Alteracoes: -----
+     Alteracoes: 18/07/2018 - 1. Desconsiderar as aplicações programadas 
+                              Proj. 411.2 (Claudio - CIS Corporate)
     ..............................................................................*/												
 		
 		DECLARE
@@ -6094,14 +6556,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 							,rac.idblqrgt
 							,rac.cdoperad
               ,rac.qtdiaapl
-
               ,rga.dtresgat
-              
               ,npc.dsnomenc
-              
 				  FROM craprac rac, craprga rga, crapnpc npc
          WHERE rac.cdcooper = pr_cdcooper AND
 							 rac.nrdconta = pr_nrdconta AND
+               rac.nrctrrpp=0 AND /* Desconsiderar aplicacoes programadas*/ 
 							(pr_nraplica = 0 OR rac.nraplica = pr_nraplica) AND
 							(pr_cdprodut = 0 OR rac.cdprodut = pr_cdprodut) AND
 							( /* Encerradas */
@@ -6113,9 +6573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 							 (rac.idsaqtot = 1 AND rac.dtatlsld = pr_dtmvtolt_cop))) OR
 								/* Ativas ou Resgatadas ou Vencidas */
 							 (rac.idsaqtot = pr_idconsul)
-							)
-              
-               AND
+              ) AND
                  rga.cdcooper (+) = rac.cdcooper AND
                  rga.nrdconta (+) = rac.nrdconta AND
                  rga.nraplica (+) = rac.nraplica AND
@@ -6123,9 +6581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                  (rga.idresgat (+) = 1 AND
                   rga.dtresgat (+) = pr_dtmvtolt_cop AND
                   rga.dtmvtolt (+) = pr_dtmvtolt_cop))
-               
-               AND
-				         npc.cdnomenc (+) = rac.cdnomenc;
+                AND npc.cdnomenc (+) = rac.cdnomenc;
 
 			rw_craprac cr_craprac%ROWTYPE;
 			
@@ -6141,7 +6597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 				 WHERE cpc.cdprodut = pr_cdprodut
            AND cpc.cddindex = ind.cddindex;         
 			rw_crapcpc cr_crapcpc%ROWTYPE;
-			
+	
 			-- Seleciona registro de resgate disponível
 			CURSOR cr_craprga_disp(pr_cdcooper craprga.cdcooper%TYPE
 														,pr_nrdconta craprga.nrdconta%TYPE
@@ -8498,7 +8954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
           -- Levantar excecao
           RAISE vr_exc_saida;
-      END IF;
+        END IF;
       END IF;
       
       -- Valida resgate de aplicacao
@@ -13792,7 +14248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                                            ,pr_vlbloque_poupa => vr_vlbloque_poupa
                                            ,pr_vlbloque_ambos => vr_vlbloque_ambos
                                            ,pr_dscritic => vr_dscritic);
-                                         
+                                   
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;                                 

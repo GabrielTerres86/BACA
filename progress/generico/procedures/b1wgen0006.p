@@ -141,6 +141,8 @@
 
                 18/05/2018 - Validar bloqueio de poupança programada (SM404);
 
+                19/07/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
+				
 ..............................................................................*/
 
 
@@ -391,6 +393,7 @@ PROCEDURE consulta-poupanca:
                                                "Nao"
                    tt-dados-rpp.dsmsgsaq = aux_dsmsgsaq
                    tt-dados-rpp.cdtiparq = 0
+				   tt-dados-rpp.cdprodut = craprpp.cdprodut
                    tt-dados-rpp.dtsldrpp = IF   AVAIL crabspp THEN 
                                                 crabspp.dtsldrpp
                                            ELSE ?
@@ -3791,6 +3794,319 @@ PROCEDURE incluir-poupanca-programada:
 
 END PROCEDURE.
 
+/******************************************************************************/
+/**                Procedure para incluir aplicacao programada                **/
+/******************************************************************************/
+PROCEDURE incluir-aplicacao-programada:
+ 
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtinirpp AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_mesdtvct AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_anodtvct AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlprerpp AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_tpemiext AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_cdprodut AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dsfinali AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_flgteimo AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgdbpar AS INTE                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_nrdrowid AS ROWID                           NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_nrseqdig AS INTE                                    NO-UNDO.
+    DEF VAR aux_nrrdcapp LIKE crapmat.nrrdcapp                      NO-UNDO.
+
+    EMPTY TEMP-TABLE tt-erro.    
+    
+    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           /* Caso seja efetuada alguma alteracao na descricao deste log,
+              devera ser tratado o relatorio de "demonstrativo produtos por
+              colaborador" da tela CONGPR. (Fabricio - 04/05/2012) */
+           aux_dstransa = "Incluir poupanca programada"
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+
+    TRANS_POUP:
+
+    DO TRANSACTION ON ERROR  UNDO TRANS_POUP, LEAVE TRANS_POUP 
+                   ON ENDKEY UNDO TRANS_POUP, LEAVE TRANS_POUP:
+
+        
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper   AND
+                           crapass.nrdconta = par_nrdconta
+                           NO-LOCK NO-ERROR.
+
+        IF   NOT AVAIL crapass   THEN
+             DO:
+                 aux_cdcritic = 9.
+                 LEAVE TRANS_POUP.
+             END.
+
+        /* Vamos buscar a proxima sequencia do campo crapmat.nrrdcapp */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPMAT"
+                                            ,INPUT "NRRDCAPP"
+                                            ,INPUT STRING(par_cdcooper)
+                                            ,INPUT "N"
+                                            ,"").
+       
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+        ASSIGN aux_nrrdcapp = INTE(pc_sequence_progress.pr_sequence)
+                              WHEN pc_sequence_progress.pr_sequence <> ?.
+
+        DO aux_contador = 1 TO 10:
+
+            FIND craplot WHERE craplot.cdcooper = par_cdcooper       AND
+                               craplot.dtmvtolt = par_dtmvtolt       AND
+                               craplot.cdagenci = crapass.cdagenci   AND
+                               craplot.cdbccxlt = 200                AND
+                               craplot.nrdolote = 1537                                                         
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+            IF   NOT AVAIL craplot   THEN
+                 DO:
+                     IF   LOCKED craplot   THEN
+                          DO:
+                              IF   aux_contador = 10   THEN
+                                   DO:
+                                       FIND craplot WHERE 
+                                            craplot.cdcooper = par_cdcooper       AND
+                                            craplot.dtmvtolt = par_dtmvtolt       AND
+                                            craplot.cdagenci = crapass.cdagenci   AND
+                                            craplot.cdbccxlt = 200                AND
+                                            craplot.nrdolote = 1537
+                                            NO-LOCK NO-ERROR.
+
+                                       RUN critica-lock (INPUT RECID(craplot),
+                                                         INPUT "banco",
+                                                         INPUT "craplot").
+                                   END.
+                              ELSE
+                                   DO:
+                                       PAUSE 1 NO-MESSAGE.
+                                       NEXT.
+                                   END.
+                          END.
+                     ELSE
+                          DO:
+                              CREATE craplot.
+                              ASSIGN craplot.cdcooper = par_cdcooper
+                                     craplot.dtmvtolt = par_dtmvtolt
+                                     craplot.cdagenci = crapass.cdagenci
+                                     craplot.cdbccxlt = 200
+                                     craplot.nrdolote = 1537
+                                     craplot.tplotmov = 14
+                                     craplot.nrseqdig = 1
+                                     craplot.tpdmoeda = 1
+                                     craplot.flgltsis = TRUE.
+                          END.
+                 END.
+
+            LEAVE.
+
+        END.
+
+        IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+            UNDO TRANS_POUP, LEAVE TRANS_POUP.
+
+        ASSIGN aux_nrseqdig = 1.
+
+        /* Controle da chave unica craprpp3 */
+        FOR EACH craprpp WHERE craprpp.cdcooper = par_cdcooper      AND
+                               craprpp.dtmvtolt = par_dtmvtolt      AND
+                               craprpp.cdagenci = craplot.cdagenci  AND
+                               craprpp.cdbccxlt = craplot.cdbccxlt  AND
+                               craprpp.nrdolote = 1537              NO-LOCK
+                               BREAK BY craprpp.nrseqdig:
+
+            IF   LAST-OF (craprpp.nrseqdig) THEN
+                 ASSIGN aux_nrseqdig = craprpp.nrseqdig + 1.
+
+        END.
+
+        ASSIGN craplot.qtcompln = craplot.qtcompln + 1
+               craplot.qtinfoln = craplot.qtinfoln + 1
+               craplot.vlcompcr = craplot.vlcompcr + par_vlprerpp
+               craplot.vlinfocr = craplot.vlinfocr + par_vlprerpp.
+
+        VALIDATE craplot.
+
+        CREATE craprpp.
+
+        /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+        IF par_cdagenci = 0 THEN
+          ASSIGN par_cdagenci = glb_cdagenci.
+        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+
+        ASSIGN craprpp.cdcooper = par_cdcooper
+               craprpp.cdageass = crapass.cdagenci
+               craprpp.cdagenci = craplot.cdagenci
+               craprpp.cdbccxlt = craplot.cdbccxlt
+               craprpp.cdsecext = crapass.cdsecext
+               craprpp.cdsitrpp = 1
+               craprpp.dtaltrpp = ?
+               craprpp.dtcalcul = ?
+               craprpp.dtrnirpp = ?
+               craprpp.tpemiext = par_tpemiext  
+               craprpp.dtdebito = par_dtinirpp                
+               craprpp.dtiniper = par_dtinirpp
+               craprpp.dtiniext = par_dtinirpp
+               craprpp.dtfimext = par_dtinirpp 
+               craprpp.dtsdppan = par_dtinirpp
+               craprpp.dtsppant = par_dtinirpp
+               craprpp.dtsppext = par_dtinirpp 
+                       
+               craprpp.dtinirpp = par_dtinirpp
+               craprpp.dtvctopp = DATE(par_mesdtvct,
+                                       DAY(par_dtinirpp),
+                                       par_anodtvct)
+            
+               craprpp.dtmvtolt = par_dtmvtolt 
+               craprpp.nrctrrpp = aux_nrrdcapp
+               craprpp.flgctain = TRUE
+               craprpp.nrdconta = par_nrdconta
+               craprpp.nrdolote = craplot.nrdolote
+               craprpp.nrseqdig = aux_nrseqdig
+               craprpp.vlprerpp = par_vlprerpp
+               craprpp.dtimpcrt = ?
+              /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+               craprpp.cdopeori = par_cdoperad
+               craprpp.cdageori = par_cdagenci
+               craprpp.dtinsori = TODAY
+              /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+              /* Inicio - Alteracoes referentes ao proj. 411.2 - (CIS Corporate) */
+               craprpp.cdprodut = par_cdprodut
+               craprpp.dsfinali = par_dsfinali
+               craprpp.flgteimo = par_flgteimo
+               craprpp.flgdbpar = par_flgdbpar
+              /* Fim - Alteracoes referentes ao proj. 411.2 - (CIS Corporate) */
+               craprpp.indebito = 0.
+
+        ASSIGN craprpp.dtfimper = IF   MONTH(par_dtinirpp) = 12 THEN
+                                       DATE(1,DAY(par_dtinirpp),
+                                       YEAR(par_dtinirpp) + 1)
+                                  ELSE
+                                       DATE(MONTH(par_dtinirpp) + 1,
+                                            DAY(par_dtinirpp),
+                                            YEAR(par_dtinirpp)) NO-ERROR. 
+    
+        IF   ERROR-STATUS:ERROR   THEN
+             IF   MONTH(par_dtinirpp) = 11 THEN  
+                  craprpp.dtfimper = DATE(1, 1,(YEAR(par_dtinirpp) + 1)).
+             ELSE
+             IF   MONTH(par_dtinirpp) = 12 THEN
+                  craprpp.dtfimper = DATE(2, 1,(YEAR(par_dtinirpp) + 1)).
+             ELSE
+                  craprpp.dtfimper = DATE((MONTH(par_dtinirpp) + 2), 1, 
+                                        YEAR(par_dtinirpp)).
+                                            
+        /* Saldo da Aplicacao */
+        CREATE crapspp.
+        ASSIGN crapspp.cdcooper = par_cdcooper
+               crapspp.nrdconta = par_nrdconta
+               crapspp.nrctrrpp = craprpp.nrctrrpp
+               crapspp.dtsldrpp = craprpp.dtdebito
+               crapspp.vlsldrpp = 0
+               crapspp.dtmvtolt = par_dtmvtolt.
+
+        VALIDATE craprpp.
+        VALIDATE crapspp.
+
+        FIND CURRENT craplot NO-LOCK NO-ERROR.
+        FIND CURRENT craprpp NO-LOCK NO-ERROR.
+        FIND CURRENT crapspp NO-LOCK NO-ERROR.
+
+        ASSIGN par_nrdrowid = ROWID(craprpp)
+               aux_flgtrans = TRUE.
+
+    END. /** Fim do DO TRANSACTION - TRANS_POUP **/
+
+    IF  NOT aux_flgtrans  THEN
+        DO: 
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel incluir a poupanca.".
+                    
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            IF  par_flgerlog  THEN
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT aux_dstransa,
+                                    INPUT FALSE,
+                                    INPUT par_idseqttl,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid).
+
+            RETURN "NOK".
+        END.
+
+    IF  par_flgerlog  THEN
+        DO:
+            RUN proc_gerar_log (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT "",
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT TRUE,
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                               OUTPUT aux_nrdrowid).
+
+            /** Numero de Contrato da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "nrctrrpp",
+                                     INPUT "",
+                                     INPUT TRIM(STRING(craprpp.nrctrrpp,
+                                                       "zzz,zzz,zz9"))).
+
+            /** Data de Inicio da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "dtinirpp",
+                                     INPUT "",
+                                     INPUT STRING(craprpp.dtinirpp,
+                                                  "99/99/9999")).
+
+            /** Valor da Prestacao da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "vlprerpp",
+                                     INPUT "",
+                                     INPUT TRIM(STRING(craprpp.vlprerpp,
+                                                "zzz,zzz,zz9.99"))).
+
+            /** Data de Vencimento da Poupanca **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "dtvctopp",
+                                     INPUT "",
+                                     INPUT STRING(craprpp.dtvctopp,
+                                                  "99/99/9999")).
+        END.
+
+    RETURN "OK".
+
+END PROCEDURE.
 
 PROCEDURE ver-valores-bloqueados-poup:
 
@@ -3844,7 +4160,7 @@ PROCEDURE ver-valores-bloqueados-poup:
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
 
     /* Busca possíveis erros */ 
-    ASSIGN aux_cdcritic = 0
+                     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
            aux_cdcritic = pc_ver_val_bloqueio_poup.pr_cdcritic 
                           WHEN pc_ver_val_bloqueio_poup.pr_cdcritic <> ?

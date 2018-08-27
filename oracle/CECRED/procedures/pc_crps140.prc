@@ -127,6 +127,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
               
                15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)  
               
+               15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
+             
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
               
 ............................................................................. */
@@ -977,6 +979,7 @@ BEGIN
                                                  ,pr_cddindex => rw_craprac.cddindex   --> Código do Indexador
                                                  ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                  ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                 ,pr_idaplpgm => 0                     --> Aplicação Programada  (0-Não/1-Sim)
                                                  ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                  ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                  ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1010,6 +1013,7 @@ BEGIN
                                                 ,pr_cddindex => rw_craprac.cddindex   --> Código do Indexador
                                                 ,pr_qtdiacar => rw_craprac.qtdiacar   --> Dias de Carência
                                                 ,pr_idgravir => 0                     --> Gravar Imunidade IRRF (0-Não/1-Sim)
+                                                ,pr_idaplpgm => 0                   --> Aplicação Programada  (0-Não/1-Sim)
                                                 ,pr_dtinical => rw_craprac.dtmvtolt   --> Data Inicial Cálculo
                                                 ,pr_dtfimcal => rw_crapdat.dtmvtolt   --> Data Final Cálculo
                                                 ,pr_idtipbas => 2                     --> Tipo Base Cálculo – 1-Parcial/2-Total)
@@ -1885,14 +1889,14 @@ BEGIN
                                     ,pr_des_erro => vr_dscritic);                        
                                     
       ELSE
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
-        END IF;
+      END IF;
       END IF;
       
       -- Efetuar rollback
