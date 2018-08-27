@@ -79,7 +79,7 @@ $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
 $flgregis    = trim($_POST["flgregis"]);
 $nrcnvceb    = $_POST["nrcnvceb"];
-$nrconven    = $_POST["nrconven"];
+$nrconven    = ((count($convenios)) ? $convenios[0]->convenio : ((!empty($_POST['nrconven'])) ? $convenios[0]->convenio : $_POST['nrconven']));
 $dsorgarq    = trim($_POST["dsorgarq"]);
 $insitceb    = !empty($_POST["insitceb"]) ? trim($_POST["insitceb"]) : 1;
 $inarqcbr    = $_POST["inarqcbr"];
@@ -290,15 +290,15 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
 		                        <input type="hidden" id="insrvprt" value="<?php echo $insrvprt; ?>" />
 		
 		                        <label for="qtlimmip"><? echo utf8ToHtml('Intervalo de Protesto:') ?></label>
-		                        <input name= "qtlimmip" id="qtlimmip" class="<?php echo $campo; ?>" value = " <?php echo $qtlimmip; ?>" <?php if ($flprotes != "SIM" ) { ?> readonly <?php } ?>/>
+		                        <input name= "qtlimmip" id="qtlimmip" class="<?php echo $campo; ?>" value = "<?php echo $qtlimmip; ?>" <?php if ($flprotes != "SIM" ) { ?> readonly <?php } ?>/>
 		
 		                        <label for="qtlimaxp" style="margin-left:10px;"><? echo utf8ToHtml('At&eacute;:') ?></label>		
-		                        <input name= "qtlimaxp" id="qtlimaxp" class="<?php echo $campo; ?>" value = " <?php echo $qtlimaxp; ?>" <?php if ($flprotes != "SIM" ) { ?> readonly <?php } ?>/>
+		                        <input name= "qtlimaxp" id="qtlimaxp" class="<?php echo $campo; ?>" value = "<?php echo $qtlimaxp; ?>" <?php if ($flprotes != "SIM" ) { ?> readonly <?php } ?>/>
 		                        <label style="margin-left:10px;">dias</label>
                             </div>
                         
                             <label for="qtdecprz"><? echo utf8ToHtml('Decurso de Prazo:') ?></label>
-                            <input name= "qtdecprz" id="qtdecprz" class="<?php echo $campo; ?>" value = " <?php echo $qtdecprz; ?>" />
+                            <input name= "qtdecprz" id="qtdecprz" class="<?php echo $campo; ?>" value = "<?php echo $qtdecprz; ?>" />
                             <label style="margin-left:10px;">dias</label>
                             <br />
                             <?php
@@ -621,6 +621,8 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         return false;
     }
 });
+
+onChangeProtesto();
 
 <?php 
     if ($cddopcao == "S") { // Selecionar o convenio
