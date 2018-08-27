@@ -42,9 +42,11 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             a operacao 12 do IB (Anderson - P285).
                                                         
                30/05/2018 - Adinionado campo dscomple na pl_table typ_reg_extrato_conta (Alcemir Mout's - Prj. 467).            
-							 
-							 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
-														(Reinert)
+
+               09/08/2018 - Considerar aplicacoes programadas na pc_ver_saldos - Proj. 411.2 (CIS Corporate).
+
+			   14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+							(Reinert)
 							 
 ..............................................................................*/
 
@@ -799,9 +801,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          
          30/05/2018 - Incluido na pc_consulta_extrato carregar historicos, na pc_gera_registro_estrato
                       tratar complemento para incluir na pl_table (Alcemir Mout's - Prj 467).
-											
-				 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
-				              (Reinert)
+         
+         09/08/2018 - Considerar aplicacoes programadas na pc_ver_saldos - Proj. 411.2 (CIS Corporate).
+                      
+		 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
+				      (Reinert)
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -3437,21 +3441,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           IF rw_crapdpb.inlibera = 1 THEN
             -- Guardar a data
             IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-              vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
-            ELSE
+            vr_dslibera := '('||to_char(rw_crapdpb.dtliblan,'dd/mm')||')';
+          ELSE
               vr_dslibera := to_char(rw_crapdpb.dtliblan,'dd/mm/RRRR');
             END IF;
           ELSE
             -- INdicar que há estorno
             IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-              vr_dslibera := '(Estorno)';
-            END IF;
+            vr_dslibera := '(Estorno)';
+          END IF;
           END IF;
         ELSE
           -- Usar descrição padrão
           IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
-            vr_dslibera := '(**/**)';
-          END IF;
+          vr_dslibera := '(**/**)';
+        END IF;
         END IF;
         -- Fechar o cursor
         CLOSE cr_crapdpb;
@@ -3617,7 +3621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_extr(vr_ind_tab).cdcoptfn := vr_cdcoptfn;
         pr_tab_extr(vr_ind_tab).dsprotoc := ''; 
         pr_tab_extr(vr_ind_tab).flgdetal := 0;               
-        
+                
         IF TRIM(vr_dslibera) IS NOT NULL OR TRIM(vr_dsidenti) IS NOT NULL THEN
           pr_tab_extr(vr_ind_tab).flgdetal := 1;
         END IF;

@@ -196,6 +196,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               26/03/2018 - Ajuste para inclusão de novo filtro por situação, na seleção dos pedidos 
                            de cheques a serem listados no relatório crrl080 - PEDIDOS DE TALONARIOS 
                            NAO RECEBIDOS. (Wagner - CECRED/Sustentação - Chamado 826394).
+                           
+              06/08/2018 - Inclusão da aplicação programada no cursor cr_craplpp (Proj. 411.2 - CIS Corporate).
+                           
     ............................................................................. */
     DECLARE
       TYPE typ_reg_craphis_res IS
@@ -743,7 +746,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
         AND    craplpp.dtmvtolt = pr_dtmvtolt
         AND    craplpp.cdagenci = pr_cdagenci
         AND    craplpp.cdbccxlt = pr_cdbccxlt
-        AND    craplpp.nrdolote = pr_nrdolote;
+        AND    craplpp.nrdolote = pr_nrdolote
+        UNION
+        SELECT craplac.cdhistor
+              ,craplac.vllanmto
+        FROM   craplac
+        WHERE  craplac.cdcooper = pr_cdcooper
+        AND    craplac.dtmvtolt = pr_dtmvtolt
+        AND    craplac.cdagenci = pr_cdagenci
+        AND    craplac.cdbccxlt = pr_cdbccxlt
+        AND    craplac.nrdolote = pr_nrdolote;
 
       -- Seleciona os movimentos correspondente bancário - Banco do Brasil
       CURSOR cr_crapcbb ( pr_cdcooper IN craplot.cdcooper%TYPE
@@ -1319,7 +1331,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               END LOOP;
 
             WHEN 14 THEN -- Poupança Programada
-              -- Seleciona os lançamentos de aplicações RDCA
+              -- Seleciona os lançamentos de aplicações RDCA/Aplicacoes Programadas
               FOR rw_craplpp IN cr_craplpp( pr_cdcooper => pr_cdcooper
                                            ,pr_dtmvtolt => rw_craplot.dtmvtolt
                                            ,pr_cdagenci => rw_craplot.cdagenci

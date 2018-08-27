@@ -21411,6 +21411,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
         AND cpc.cdprodut = rac.cdprodut
         AND rac.cdcooper = lac.cdcooper
         AND rac.nrdconta = lac.nrdconta
+        AND rac.nraplica = lac.nraplica 
         AND lac.cdhistor in (cpc.cdhsrgap)
         AND lac.dtmvtolt > ADD_MONTHS(pr_dtmvtolt,-6)       
    GROUP BY rac.nrdconta,rac.nrctrrpp; 

@@ -126,6 +126,9 @@ AS
                             
                24/07/2015 - Ajustado para ler o limite de saque da conta da nova tabela 
                             TBTAA_LIMITE_SAQUE. (James)
+                            
+               14/08/2018 - Desconsiderar as aplicações programadas das rotinas da nova captação
+                            Proj. 411.2 - CIS Corporate             
     ............................................................................ */
       -- Identificacao do programa
       vr_cdprogra crapprg.cdprogra%type := 'CRPS524';
@@ -748,6 +751,7 @@ AS
 									WHERE crapass.cdcooper = pr_cdcooper
 										AND craprac.cdcooper = crapass.cdcooper
 										AND craprac.nrdconta = crapass.nrdconta
+                    AND craprac.nrctrrpp < 1  -- Não considerar aplicações programadas
 										AND craprac.idsaqtot = 0) aplicacoes
 					 GROUP BY aplicacoes.cdagenci,
 										aplicacoes.inpessoa;
@@ -2245,4 +2249,3 @@ AS
         ROLLBACK;
   END PC_CRPS524;
 /
-

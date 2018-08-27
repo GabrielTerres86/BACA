@@ -59,7 +59,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                    nrdplaca crapadi.nrdplaca%TYPE,
                    dscorbem crapadi.dscorbem%TYPE,
                    nranobem crapadi.nranobem%TYPE,
-                   nrmodbem crapadi.nrmodbem%TYPE,                   
+                   nrmodbem crapadi.nrmodbem%TYPE,
                    dstpcomb crapadi.dstpcomb%TYPE,  
                    vlfipbem crapadi.vlfipbem%TYPE,
                    vlrdobem crapadi.vlrdobem%TYPE,
@@ -282,7 +282,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela ADITIV
   --
-  -- Alteracoes:
+  -- Alteracoes: 17/08/2018 - Inclusão Apl. Programada
+  --                          Proj. 411.2 - CIS Corporate
   --
   ---------------------------------------------------------------------------
   
@@ -354,15 +355,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     CURSOR cr_craplpp (pr_cdcooper IN craplpp.cdcooper%TYPE
                       ,pr_dtmvtolt IN craplpp.dtmvtolt%TYPE
                       ,pr_nrdconta IN crapcop.nrdconta%TYPE) IS
-      SELECT lpp.nrdconta
-            ,lpp.nrctrrpp
+      SELECT craplpp.nrdconta
+            ,craplpp.nrctrrpp
             ,Count(*) qtlancmto
-      FROM craplpp lpp
-      WHERE lpp.cdcooper = pr_cdcooper
-      AND lpp.cdhistor IN (158,496)
-      AND lpp.dtmvtolt > pr_dtmvtolt
-      AND lpp.nrdconta = pr_nrdconta
-      GROUP BY lpp.nrdconta,lpp.nrctrrpp;
+        FROM craplpp craplpp
+       WHERE craplpp.cdcooper = pr_cdcooper 
+         AND craplpp.nrdconta = pr_nrdconta
+         AND craplpp.cdhistor IN (158,496)
+         AND craplpp.dtmvtolt > pr_dtmvtolt
+       GROUP BY craplpp.nrdconta,craplpp.nrctrrpp
+      HAVING Count(*) > 3
+      UNION
+      SELECT rac.nrdconta
+            ,rac.nrctrrpp
+            ,Count(*) qtlancmto
+      FROM crapcpc cpc, craprac rac, craplac lac
+      WHERE rac.cdcooper = pr_cdcooper
+      AND   rac.nrdconta = pr_nrdconta 
+      AND   rac.nrctrrpp > 0                 -- Apenas apl. programadas
+      AND   cpc.cdprodut = rac.cdprodut
+      AND   rac.cdcooper = lac.cdcooper
+      AND   rac.nrdconta = lac.nrdconta
+      AND   rac.nraplica = lac.nraplica 
+      AND   lac.cdhistor in (cpc.cdhsrgap)
+      AND   lac.dtmvtolt > pr_dtmvtolt       
+      GROUP BY rac.nrdconta,rac.nrctrrpp        
+      HAVING Count(*) > 3;
 
     --Contar a quantidade de resgates das contas
     CURSOR cr_craplrg_saque (pr_cdcooper IN craplrg.cdcooper%TYPE
@@ -958,7 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     --
     vr_tab_clau_adi(5).clausula(1) := vr_tab_clau_adi(5).clausula(1)||
                                      'PROPRIETÁRIO(A): '||pr_dspropri;
-    
+
     vr_tab_clau_adi(5).clausula(2) 
                       := /*'CLAUSULA SEGUNDA - Ficam ratificadas todas as demais condições da Cédula de Credito '||
                          'Bancário'||vr_dscontra ||' ora aditado (a), em '||
@@ -985,10 +1003,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                          'indicado, permanecendo, no entanto, responsável por todas as obrigações fiscais relativas ao referido veículo.<br>'||
                          '2. Ficam ratificadas todas as demais cláusulas e condições Cédula de Crédito Bancário Contrato de Crédito Simplificado nº '||pr_nrctremp||
                          ', em tudo o que não expressamente modificado no presente termo.';
-
+                      
     pr_tab_clau_adi := vr_tab_clau_adi;
   END;
-  
+                          
   --> Buscar bens do Aditivo para Substituição
   PROCEDURE pc_busca_bens_aditiv 
                           (pr_nrdconta   IN crapass.nrdconta%TYPE --> Numero da conta
@@ -1550,7 +1568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
 
                     01/11/2017 - Ajustes conforme inclusao do campo tipo de contrato.
                                  (Jaison/Marcos Martini - PRJ404)
-                                 
+
                     30/07/2018 - P442 - Inclusão de campos do projeto (Marcos-Envolti)
 
     ..............................................................................*/
@@ -3214,14 +3232,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_cdc := 'N';
     
     IF pr_cdaditiv < 9 THEN
-      --> Verificar se linha é CDC        
-      OPEN cr_craplcr(pr_cdcooper => pr_cdcooper,
-                      pr_cdlcremp => rw_crawepr.cdlcremp);
-      FETCH cr_craplcr INTO rw_craplcr;
-      CLOSE cr_craplcr;
-      
-      vr_cdc := empr0003.fn_verifica_cdc(pr_cdcooper => pr_cdcooper, 
-                                         pr_dslcremp => rw_craplcr.dslcremp);
+    --> Verificar se linha é CDC        
+    OPEN cr_craplcr(pr_cdcooper => pr_cdcooper,
+                    pr_cdlcremp => rw_crawepr.cdlcremp);
+    FETCH cr_craplcr INTO rw_craplcr;
+    CLOSE cr_craplcr;
+    
+    vr_cdc := empr0003.fn_verifica_cdc(pr_cdcooper => pr_cdcooper, 
+                                       pr_dslcremp => rw_craplcr.dslcremp);
     END IF;
     
     -- Montar mascara CNPJ/CPF
@@ -3331,7 +3349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                    '<nrdconta>' || trim(gene0002.fn_mask_conta(pr_nrdconta)) || '</nrdconta>' ||
                    '<nmprimtl>' || rw_crapass.nmprimtl       || '</nmprimtl>' ||
                    '<nmrescop>' || rw_crapcop.nmextcop       || '</nmrescop>' );    
-
+        
     -- Testar tipo de pessoa quando houver Avalista
     IF vr_tab_aditiv(vr_idxaditi).nrcpfcgc <> 0 THEN
       IF length(vr_tab_aditiv(vr_idxaditi).nrcpfcgc) > 11 THEN  
@@ -3617,7 +3635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                             '<vr_dstelefo_cje>'|| vr_dstelefo_cje ||'</vr_dstelefo_cje>
                           </avalista>');
           END IF; 
-        END IF; 
+        END IF;                          
         
       END IF; 
 
