@@ -25,7 +25,6 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --             15/03/2018 - PC_CANCELA_LIMITE_INADIM  - Cancelar limites de crédito para contas com atraso conforme parâmetro da cooperativa - Daniel(AMcom)
   --
   --             23/05/2018 - PC_CANCELA_LIMITE_CREDITO - Rotina para cancelamento de Limite de Crédito - Daniel(AMcom)
-  --
   --             23/08/2018 - Alteraçao na pc_renova_limdesctit: Registrar a renovação na tabela de histórico de alteraçao 
   --                          de contrato de limite (Andrew Albuquerque - GFT)
   --
@@ -101,7 +100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 23/08/2018
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 23/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -135,7 +134,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                  15/03/2018 - PC_CANCELA_LIMITE_INADIM  - Cancelar limites de crédito para contas com atraso conforme parâmetro da cooperativa - Daniel(AMcom)
   
                  23/05/2018 - PC_CANCELA_LIMITE_CREDITO - Rotina para cancelamento de Limite de Crédito - Daniel(AMcom)
-                 
                  23/08/2018 - Alteraçao na pc_renova_limdesctit: Registrar a renovação na tabela de histórico de alteraçao 
                               de contrato de limite (Andrew Albuquerque - GFT)
   */
@@ -648,7 +646,7 @@ BEGIN
    Sistema : Limite Desconto Titulo - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Paulo Penteado (GFT) 
-   Data    : Março/2018                      Ultima Atualizacao: 09/03/2018
+   Data    : Março/2018                      Ultima Atualizacao: 23/08/2018
    Dados referente ao programa:
 
    Frequencia: Diario.
