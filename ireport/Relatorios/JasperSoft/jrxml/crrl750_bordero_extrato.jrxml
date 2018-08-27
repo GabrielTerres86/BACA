@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-08-23T19:02:45 -->
+<!-- 2018-08-27T14:06:59 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl750_bordero" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="440" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -72,6 +72,15 @@
 	</field>
 	<field name="vltitbor" class="java.lang.String">
 		<fieldDescription><![CDATA[vltitbor]]></fieldDescription>
+	</field>
+	<field name="inprejuz" class="java.lang.String">
+		<fieldDescription><![CDATA[inprejuz]]></fieldDescription>
+	</field>
+	<field name="dtprejuz" class="java.lang.String">
+		<fieldDescription><![CDATA[dtprejuz]]></fieldDescription>
+	</field>
+	<field name="vlprjbor" class="java.lang.String">
+		<fieldDescription><![CDATA[vlprjbor]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -372,7 +381,7 @@
 				<textFieldExpression><![CDATA["Data de Liberação: " + $F{dtlibbdt}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="160">
+		<band height="30">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<subreport>
 				<reportElement positionType="Float" x="58" y="0" width="467" height="10" isRemoveLineWhenBlank="true" uuid="38571a83-2b9e-49b4-bb9a-94d564336bb8">
@@ -394,6 +403,18 @@
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//bdtlancs/bdtlanc")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl750_bordero_extrato_lanc.jasper"]]></subreportExpression>
 			</subreport>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement positionType="Float" x="58" y="22" width="466" height="8" uuid="29a2a2f7-2873-4f0d-8a3e-e8be99b9ca19">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right" markup="html">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Saldo para Liquidação do prejuízo em " + $P{PR_DTMVTOLT} + " R"+'$'+ " "+$F{vlprjbor}]]></textFieldExpression>
+			</textField>
 		</band>
 	</detail>
 </jasperReport>
