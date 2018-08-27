@@ -259,10 +259,10 @@
 								$temp_vllimpgo = number_format(str_replace(",",".",$titulares[$i]->tags[11]->cdata),2,",",".");
 								$temp_vllimted = number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",",".");
 								$temp_vllimvrb = number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",",".");
-								$temp_vllimfol = number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",",".");
+								$temp_vllimfol = number_format(str_replace(",",".",$titulares[$i]->tags[26]->cdata),2,",",".");
 							} else {
 								$temp_vllimtrf = number_format(str_replace(",",".",$titulares[$i]->tags[12]->cdata),2,",",".");
-								$temp_vllimfol = number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",",".");
+								$temp_vllimfol = number_format(str_replace(",",".",$titulares[$i]->tags[26]->cdata),2,",",".");
 								$temp_vllimted = number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",",".");
 								$temp_vllimvrb = number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",",".");
 								$temp_vllimpgo = number_format(str_replace(",",".",$titulares[$i]->tags[11]->cdata),2,",",".");
