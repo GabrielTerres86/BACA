@@ -100,6 +100,8 @@ BEGIN
 
                27/05/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
 
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs)
+
 ............................................................................. */
   DECLARE
   
@@ -191,7 +193,7 @@ BEGIN
     vr_tot_vlrprvfis  NUMBER := 0;                    --> Valor Total de Provisao Mensal de Pessoas Fisicas
     vr_tot_vlrprvjur  NUMBER := 0;                    --> Valor Total de Provisao Mensal de Pessoas Juridica
     
-    --PJ307    
+    -- PJ307    
     vr_tot_vlrajusprv_fis NUMBER := 0;                 --> Valor Total Ajustes Provisão Pessoas Fisicas    
     vr_tot_vlrajusprv_jur NUMBER := 0;                 --> Valor Total Ajustes Provisão Pessoas Juridicas    
     vr_tot_vlrajudprv_fis NUMBER := 0;                 --> Valor Total de Ajustes Provisão Pessoas Fisicas  
@@ -710,9 +712,7 @@ BEGIN
     -- Se não encontrar registros montar mensagem de critica
     IF cr_crapcop%NOTFOUND THEN
       CLOSE cr_crapcop;
-
       vr_cdcritic := 651;
-
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 651);
       RAISE vr_exc_saida;
     ELSE
@@ -918,10 +918,8 @@ BEGIN
         vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
         raise vr_exc_saida;
       end if;    
-    else
+    ELSE
       
-      EXECUTE IMMEDIATE 'Alter session set session_cached_cursors=200';
-    
       if pr_cdagenci <> 0 then
         vr_tpexecucao := 2;
       else
@@ -1026,11 +1024,10 @@ BEGIN
 
               -- Verificar se ocorreram erros no cálculo de poupança
               IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
-                vr_cdcritic := 0;
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratato
-                                          ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' ||
-                                                              vr_dscritic || '. ');
+                IF vr_cdcritic >0 AND vr_dscritic IS NOT NULL THEN
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+                END IF;
+                vr_dscritic := 'Rowid RPP '||rw_rpp(idx).rowid||' --> '||vr_dscritic;
                   RAISE vr_exc_saida;
               END IF;
 
@@ -1634,7 +1631,6 @@ BEGIN
 
     -- Percorrer PL Table de contas do BNDES
     vr_idx_bndes := vr_tab_cta_bndes.first;
-
     LOOP
       EXIT WHEN vr_idx_bndes IS NULL;
 
@@ -2178,7 +2174,7 @@ BEGIN
         DELETE craprej ce WHERE ce.rowid = rw_rej.rowid;
     END LOOP;
 
-    --Senao existir registros apenas envia a tag para montar rel no ireport
+      -- Senao existir registros apenas envia a tag para montar rel no ireport
     IF vr_count = 0 then
         gene0002.pc_escreve_xml(pr_xml            => vr_clob_01
                                ,pr_texto_completo => vr_text_01
@@ -2640,7 +2636,7 @@ BEGIN
          END IF;
        END IF; -- Se total maior que zero
               
-       --Fechar Arquivo
+         -- Fechar Arquivo
          gene0002.pc_escreve_xml(pr_xml            => vr_clob_arq
                                 ,pr_texto_completo => vr_text_arq
                                 ,pr_texto_novo     => ''
@@ -2703,7 +2699,7 @@ BEGIN
                                ,pr_dsxmlnode => '/base'
                                ,pr_dsjasper  => 'crrl123.jasper'
                                ,pr_dsparams  => NULL
-                               ,pr_dsarqsaid => vr_nom_dir || '/crrl123.lst'
+                                 ,pr_dsarqsaid => vr_nom_dir||'/crrl123.lst'
                                  ,pr_flg_gerar => vr_flgerar
                                ,pr_qtcoluna  => 132
                                ,pr_sqcabrel  => 1
@@ -2860,6 +2856,11 @@ BEGIN
                         pr_flgsucesso    => 0,
                         pr_idprglog      => vr_idlog_ini_par);  
                         
+        -- Gera Log no Batch cfme solicitação Rodrigo Siewert
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
+        
         -- Encerrar o job do processamento paralelo dessa agência
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
@@ -2901,6 +2902,12 @@ BEGIN
                         pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_idprglog   => vr_idlog_ini_par,
                         pr_flgsucesso => 0);  
+        
+        -- Gera Log no Batch cfme solicitação Rodrigo Siewert
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
+        
         -- Encerrar o job do processamento paralelo dessa agência
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')

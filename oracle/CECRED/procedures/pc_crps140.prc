@@ -127,8 +127,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
               
                15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)  
               
-               15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)  
-
+               15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
+             
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
+              
                08/08/2018 - Inclusão da Apl. Programada - Proj. 411.2 - CIS Corporate
               
 ............................................................................. */
@@ -900,7 +902,7 @@ BEGIN
                                       ,pr_cdrestart   => null                      -- Controle do registro de restart em caso de erro na execucao
                                       ,pr_nrexecucao  => 1                         -- Numero de identificacao da execucao do programa
                                       ,pr_idcontrole  => vr_idcontrole             -- ID de Controle
-                                      ,pr_cdcritic    => pr_cdcritic               -- Codigo da critica
+                                      ,pr_cdcritic    => vr_cdcritic               -- Codigo da critica
                                       ,pr_dscritic    => vr_dscritic);   
       -- Testar saida com erro
       if vr_dscritic is not null then 
@@ -1019,7 +1021,8 @@ BEGIN
                                                                                                          
           -- Se procedure retornou erro                                        
           IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            vr_dscritic := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pre -> ' || vr_dscritic;
+            vr_dscritic := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pre ' 
+                        || ' Conta '||rw_craprac.nrdconta||' Aplica '||rw_craprac.nraplica||'-> ' || vr_dscritic;
             -- Levanta exceção
             RAISE vr_exc_saida;
           END IF;
@@ -1146,8 +1149,16 @@ BEGIN
 
               -- Verifica se ocorreram erros na execução
               IF vr_dscritic = 'NOK' THEN
-                vr_dscritic := 'Erro em apli0001.pc_consul_saldo_aplic_rdca30.';
-                pr_cdcritic := 0;
+                vr_dscritic := 'Erro em apli0001.pc_consul_saldo_aplic_rdca30 ' 
+                            || ' Conta '||vr_tab_craprda(vr_idxrda).nrdconta||' Aplica '||vr_tab_craprda(vr_idxrda).nraplica||' -> ';
+                -- Se tem erro na tab
+                IF vr_tab_craterr.count() > 0 THEN
+                  vr_cdcritic := vr_tab_craterr(vr_tab_craterr.first).cdcritic;
+                  IF vr_tab_craterr(vr_tab_craterr.first).dscritic IS NULL AND vr_tab_craterr(vr_tab_craterr.first).cdcritic > 0 THEN
+                    vr_tab_craterr(vr_tab_craterr.first).dscritic := gene0001.fn_busca_critica(vr_tab_craterr(vr_tab_craterr.first).cdcritic);
+                  END IF;
+                  vr_dscritic := vr_dscritic || vr_tab_craterr(vr_tab_craterr.first).dscritic;
+                END IF;
 
                 RAISE vr_exc_saida;
               END IF;
@@ -1172,8 +1183,9 @@ BEGIN
 
               -- Verifica se ocorreram erros na execução
               IF vr_dscritic = 'NOK' THEN
-                vr_dscritic := 'Erro em apli0001.pc_calc_aniver_rdca2c.';
-                pr_cdcritic := 0;
+                vr_dscritic := 'Erro em apli0001.pc_calc_aniver_rdca2c Conta '||vr_tab_craprda(vr_idxrda).nrdconta
+                            || ' Aplica '||vr_tab_craprda(vr_idxrda).nraplica ||' -> Nao foi possivel calcular aniversario';
+                vr_cdcritic := 0;
 
                 RAISE vr_exc_saida;
               END IF;
@@ -1187,16 +1199,9 @@ BEGIN
                 -- Se não existir registro gera crítica e aborta execução
                 IF NOT vr_tab_crapdtc.exists(vr_tab_craprda(vr_idxrda).tpaplica) THEN
                   vr_cdcritic := 346;
-                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratato
-                                            ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||' --> '||
-                                                                vr_dscritic||'. '||' Conta/DV: '||
-                                                                GENE0002.fn_mask_conta(pr_nrdconta => vr_tab_craprda(vr_idxrda).nrdconta) ||
-                                                                ' - Nr. aplicação: ' ||
-                                                                GENE0002.fn_mask(pr_dsorigi => vr_tab_craprda(vr_idxrda).nraplica,pr_dsforma => 'zzz.zz9'));
-
+                  vr_dscritic := ' Conta/DV: '||vr_tab_craprda(vr_idxrda).nrdconta
+                              || ' - Nr. aplicação: ' ||vr_tab_craprda(vr_idxrda).nraplica
+                              || ' --> '||gene0001.fn_busca_critica(vr_cdcritic);
                   RAISE vr_exc_saida;
                 END IF;
 
@@ -1223,13 +1228,13 @@ BEGIN
 
                   -- Caso encontre erros
                   IF vr_dscritic = 'NOK' THEN
-                    vr_cdcritic := 0;
-                    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                                              ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' ||
-                                                                  vr_dscritic || '. ' || vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC ||
-                                                                  ' - ' || vr_tab_craterr(vr_tab_craterr.FIRST).DSCRITIC);
-
+                    vr_cdcritic := vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC;
+                    IF vr_tab_craterr(vr_tab_craterr.FIRST).dsCRITIC IS NULL AND vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC > 0 THEN
+                      vr_tab_craterr(vr_tab_craterr.FIRST).dsCRITIC := gene0001.fn_busca_critica(vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC);
+                    END IF;
+                    vr_dscritic := ' Conta/DV: '||vr_tab_craprda(vr_idxrda).nrdconta
+                                || ' - Nr. aplicação: ' ||vr_tab_craprda(vr_idxrda).nraplica
+                                || ' --> '||vr_tab_craterr(vr_tab_craterr.FIRST).DSCRITIC;
                     RAISE vr_exc_saida;
                   END IF;
                 -- Para RDCPOS
@@ -1254,13 +1259,13 @@ BEGIN
 
                   -- Verifica se ocorreram erros na execução
                   IF vr_dscritic = 'NOK' THEN
-                    vr_cdcritic := 0;
-                    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                                              ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' ||
-                                                                  vr_dscritic || '. ' || vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC ||
-                                                                  ' - ' || vr_tab_craterr(vr_tab_craterr.FIRST).DSCRITIC);
-
+                    vr_cdcritic := vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC;
+                    IF vr_tab_craterr(vr_tab_craterr.FIRST).dsCRITIC IS NULL AND vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC > 0 THEN
+                      vr_tab_craterr(vr_tab_craterr.FIRST).dsCRITIC := gene0001.fn_busca_critica(vr_tab_craterr(vr_tab_craterr.FIRST).CDCRITIC);
+                    END IF;
+                    vr_dscritic := ' Conta/DV: '||vr_tab_craprda(vr_idxrda).nrdconta
+                                || ' - Nr. aplicação: ' ||vr_tab_craprda(vr_idxrda).nraplica
+                                || ' --> '||vr_tab_craterr(vr_tab_craterr.FIRST).DSCRITIC;
                     RAISE vr_exc_saida;
                   END IF;
                 END IF;
@@ -1311,7 +1316,7 @@ BEGIN
               END IF;
             WHEN others THEN
               vr_cdcritic := 0;
-              vr_dscritic := 'Erro: ' || SQLERRM;
+              vr_dscritic := 'Erro nao tratado vr_idxrda = '||vr_idxrda||' --> ' || SQLERRM;
               RAISE vr_exc_saida;
           END;
         END LOOP;
@@ -1338,10 +1343,14 @@ BEGIN
                 RAISE vr_iterar;
               END IF;
 
-              -- Calcular o saldo até a data do movimento
               IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
-              	      vr_rpp_vlsdrdpp := vr_tab_craprpp(vr_idxindc).vlslfmes;
-	     ELSE
+                -- Buscar próximo índice
+                vr_idxindc := vr_tab_craprpp.next(vr_idxindc);
+
+                RAISE vr_iterar;
+              END IF;
+
+              -- Calcular o saldo até a data do movimento
               apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
                                        ,pr_dstextab  => vr_dextabi
                                        ,pr_cdprogra  => vr_cdprogra
@@ -1352,7 +1361,6 @@ BEGIN
                                        ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
                                        ,pr_cdcritic  => vr_cdcritic
                                        ,pr_des_erro  => vr_dscritic);
-              END IF;
 
               -- Se encontrar erros na execução
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
@@ -1902,6 +1910,11 @@ BEGIN
                         pr_flgsucesso    => 0,
                         pr_idprglog      => vr_idlog_ini_par);  
                         
+        -- Gera Log no Batch cfme solicitação Rodrigo Siewert
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
+                        
         -- Encerrar o job do processamento paralelo dessa agência
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
@@ -1944,6 +1957,10 @@ BEGIN
                         pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_idprglog   => vr_idlog_ini_par,
                         pr_flgsucesso => 0);  
+        -- Gera Log no Batch cfme solicitação Rodrigo Siewert
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
         -- Encerrar o job do processamento paralelo dessa agência
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
