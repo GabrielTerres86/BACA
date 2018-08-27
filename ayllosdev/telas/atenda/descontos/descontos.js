@@ -57,6 +57,8 @@
 
 			 22/08/2018 - Adicionado abas na tela de títulos e histórico de contrato de limite. (Vitor Shimada Assanuma - GFT)
 
+			 25/08/2018 - Adicionado tela de prejuizo de bordero e campo na tela detalhes de titulo. (Cassia de Oliveira - GFT)
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -1571,6 +1573,7 @@ function formataLayout(nomeForm){
 		var Ldiasdatr = $('label[for="diasdatr"]','#'+nomeForm);
 		var Lvljrmora = $('label[for="vljrmora"]','#'+nomeForm);
 		var Lvlorpago = $('label[for="vlorpago"]','#'+nomeForm);
+		var Lvlsdprej = $('label[for="vlsdprej"]','#'+nomeForm);
 
 		var Cnrborder = $('#nrborder','#'+nomeForm);
 		var Cnrnosnum = $('#nrnosnum','#'+nomeForm);
@@ -1586,6 +1589,7 @@ function formataLayout(nomeForm){
 		var Cdiasdatr = $('#diasdatr','#'+nomeForm);
 		var Cvljrmora = $('#vljrmora','#'+nomeForm);
 		var Cvlorpago = $('#vlorpago','#'+nomeForm);
+		var Cvlsdprej = $('#vlsdprej','#'+nomeForm);
 
 		Lnrborder.addClass('rotulo').css('width','120px');
 		Ldtdvenct.addClass('rotulo-linha').css('width','140px');
@@ -1597,6 +1601,7 @@ function formataLayout(nomeForm){
 		Lvljrmora.addClass('rotulo-linha').css('width','140px');
 		Lvliofatr.addClass('rotulo').css('width','120px');
 		Lvlorpago.addClass('rotulo-linha').css('width','140px');
+		Lvlsdprej.addClass('rotulo-linha').css('width','140px');
 		Lvlslddvd.addClass('rotulo').css('width','120px');
 		Lnrctrcyb.addClass('rotulo').css('width','120px');
 		Lnmdpagad.addClass('rotulo').css('width','120px');
@@ -1612,6 +1617,7 @@ function formataLayout(nomeForm){
 		Cvljrmora.css({'width':'80px','text-align':'right'});
 		Cvliofatr.css({'width':'80px','text-align':'right'});
 		Cvlorpago.css({'width':'80px','text-align':'right'});
+		Cvlsdprej.css({'width':'80px','text-align':'right'});
 		Cvlslddvd.css({'width':'80px','text-align':'right'});
 		Cnrctrcyb.css({'width':'80px','text-align':'right'});
 		Cnmdpagad.css({'width':'308px','text-align':'left'});
@@ -1631,6 +1637,7 @@ function formataLayout(nomeForm){
 		Cdiasdatr.desabilitaCampo();
 		Cvljrmora.desabilitaCampo();
 		Cvlorpago.desabilitaCampo();
+		Cvlsdprej.desabilitaCampo();
 	}else if ( nomeForm == 'divResumoBordero' ){
 	
 		$('#'+nomeForm).css('width','940px');
@@ -1729,6 +1736,77 @@ function formataLayout(nomeForm){
 		layoutPadrao();
 		ajustarCentralizacao();
 	
+	}else if ( nomeForm == 'formDetalhePrejuizo' ){
+		$('#'+nomeForm).css('width','500px');
+		var Ldtprejuz = $('label[for="dtprejuz"]','#'+nomeForm);
+		var Ltoprejuz = $('label[for="toprejuz"]','#'+nomeForm);
+		var Ltosdprej = $('label[for="tosdprej"]','#'+nomeForm);
+		var Ltopgmupr = $('label[for="topgmupr"]','#'+nomeForm);
+		var Ltottmupr = $('label[for="tottmupr"]','#'+nomeForm);
+		var Ltopgjmpr = $('label[for="topgjmpr"]','#'+nomeForm);
+		var Ltosprjat = $('label[for="tosprjat"]','#'+nomeForm);
+		var Ldiasatrs = $('label[for="diasatrs"]','#'+nomeForm);
+		var Lvlaboprj = $('label[for="vlaboprj"]','#'+nomeForm);
+		var Ltojrmprj = $('label[for="tojrmprj"]','#'+nomeForm);
+		var Ltojraprj = $('label[for="tojraprj"]','#'+nomeForm);
+		var Lvlacrprj = $('label[for="vlacrprj"]','#'+nomeForm);
+		var Ltottjmpr = $('label[for="tottjmpr"]','#'+nomeForm);
+
+		var Cdtprejuz = $('#dtprejuz','#'+nomeForm);
+		var Ctoprejuz = $('#toprejuz','#'+nomeForm);
+		var Ctosdprej = $('#tosdprej','#'+nomeForm);
+		var Ctopgmupr = $('#topgmupr','#'+nomeForm);
+		var Ctottmupr = $('#tottmupr','#'+nomeForm);
+		var Ctopgjmpr = $('#topgjmpr','#'+nomeForm);
+		var Ctosprjat = $('#tosprjat','#'+nomeForm);
+		var Cdiasatrs = $('#diasatrs','#'+nomeForm);
+		var Cvlaboprj = $('#vlaboprj','#'+nomeForm);
+		var Ctojrmprj = $('#tojrmprj','#'+nomeForm);
+		var Ctojraprj = $('#tojraprj','#'+nomeForm);
+		var Cvlacrprj = $('#vlacrprj','#'+nomeForm);
+		var Ctottjmpr = $('#tottjmpr','#'+nomeForm);
+
+		Ldtprejuz.addClass('rotulo').css('width','190px');
+		Lvlaboprj.addClass('rotulo-linha').css('width','130px');
+		Ltoprejuz.addClass('rotulo').css('width','190px');
+		Ltojrmprj.addClass('rotulo-linha').css('width','130px');
+		Ltosdprej.addClass('rotulo').css('width','190px');
+		Ltojraprj.addClass('rotulo-linha').css('width','130px');
+		Ltopgmupr.addClass('rotulo').css('width','190px');
+		Lvlacrprj.addClass('rotulo-linha').css('width','130px');
+		Ltottmupr.addClass('rotulo').css('width','190px');
+		Ltottjmpr.addClass('rotulo-linha').css('width','130px');
+		Ltopgjmpr.addClass('rotulo').css('width','190px');
+		Ltosprjat.addClass('rotulo-linha').css('width','130px');
+		Ldiasatrs.addClass('rotulo').css('width','190px');
+
+		Cdtprejuz.css({'width':'70px','text-align':'right'});
+		Cvlaboprj.css({'width':'70px','text-align':'right'});
+		Ctoprejuz.css({'width':'70px','text-align':'right'});
+		Ctojrmprj.css({'width':'70px','text-align':'right'});
+		Ctosdprej.css({'width':'70px','text-align':'right'});
+		Ctojraprj.css({'width':'70px','text-align':'right'});
+		Ctopgmupr.css({'width':'70px','text-align':'right'});
+		Cvlacrprj.css({'width':'70px','text-align':'right'});
+		Ctottmupr.css({'width':'70px','text-align':'right'});
+		Ctottjmpr.css({'width':'70px','text-align':'right'});
+		Ctopgjmpr.css({'width':'70px','text-align':'right'});
+		Ctosprjat.css({'width':'70px','text-align':'right'});
+		Cdiasatrs.css({'width':'70px','text-align':'right'});
+				
+		Cdtprejuz.desabilitaCampo();
+		Ctoprejuz.desabilitaCampo();
+		Ctosdprej.desabilitaCampo();
+		Ctopgmupr.desabilitaCampo();
+		Ctottmupr.desabilitaCampo();
+		Ctopgjmpr.desabilitaCampo();
+		Ctosprjat.desabilitaCampo();
+		Cdiasatrs.desabilitaCampo();
+		Cvlaboprj.desabilitaCampo();
+		Ctojrmprj.desabilitaCampo();
+		Ctojraprj.desabilitaCampo();
+		Cvlacrprj.desabilitaCampo();
+		Ctottjmpr.desabilitaCampo();
 	}
 	return false;
 }

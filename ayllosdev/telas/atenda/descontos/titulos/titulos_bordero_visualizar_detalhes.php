@@ -6,7 +6,9 @@
 	 Data : 13/08/2018                Última Alteração: 14/08/2018
 	                                                                  
 	 Objetivo  : Detalhes do título do borderô
-	 Alterações: 
+	 Alterações: 25/08/2018 - Adicionado campo Saldo Prejuizo (Cassia de Oliveira - GFT).
+
+
 	
 	************************************************************************/
 	
@@ -123,6 +125,9 @@
 
 		<label for="vlslddvd"><? echo utf8ToHtml('Saldo Devedor:') ?></label>
 		<input type="text" name="vlslddvd" id="vlslddvd" value="<?=$dados->vlpagar?>" />
+
+		<label for="vlsdprej"><? echo utf8ToHtml('Saldo Prejuizo:') ?></label>
+		<input type="text" name="vlsdprej" id="vlsdprej" value="<?=$dados->vlsdprej?>" />
 		<br />
 
 		<label for="nrctrcyb"><? echo utf8ToHtml('Nº Contrato Cyber:') ?></label>

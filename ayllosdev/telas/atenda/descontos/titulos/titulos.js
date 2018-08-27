@@ -45,6 +45,7 @@
  * 028: [30/05/2018] Vitor Shimada Assanuma (GFT): Inclusão do css para alinhar a direita na Manutenção e 
  * 029: [02/06/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao calculaValoresResumoBordero() para calculo do resumo dos valores do bordero
  * 030: [09/08/2018] Vitor Shimada Assanuma (GFT): Validação do parâmetro da #TAB052 de quantidade máxima de títulos ao incluir um título ao borderô
+ * 031: [25/08/2018] Cassia de Oliveira (GFT): Criacao da funcao visualizarDetalhesPrejuizo()
  */
 
  // variaveis propostas
@@ -3468,4 +3469,27 @@ function formataTabelaCriticas(div){
     var tabela = div.find("table");
     div.zebraTabela();
     tabela.css("text-align","center");
+}
+
+function visualizarDetalhesPrejuizo(){
+    showMsgAguardo("Aguarde, carregando dados do preju&iacute;zo...");
+
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_prejuizo.php",
+        dataType: "html",
+        data: {
+            nrdconta    : nrdconta,
+            nrborder    : nrbordero,
+            redirect    : "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao4").html(response);
+        }
+    });
+    return false;
 }
