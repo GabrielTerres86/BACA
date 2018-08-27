@@ -288,6 +288,7 @@ BEGIN
     TYPE typ_reg_craprpp IS
       RECORD(nrdconta  craprpp.nrdconta%TYPE
             ,cdsitrpp  craprpp.cdsitrpp%TYPE
+            ,cdprodut  craprpp.cdprodut%TYPE
             ,vlslfmes  craprpp.vlslfmes%TYPE
             ,rowid     VARCHAR2(50));
 
@@ -961,6 +962,7 @@ BEGIN
         vr_tab_craprpp(vr_idxindc).nrdconta := vr_craprpp.nrdconta;
         vr_tab_craprpp(vr_idxindc).cdsitrpp := vr_craprpp.cdsitrpp;
         vr_tab_craprpp(vr_idxindc).vlslfmes := vr_vlsldtot;
+        vr_tab_craprpp(vr_idxindc).cdprodut := vr_craprpp.cdprodut;
         vr_tab_craprpp(vr_idxindc).rowid := vr_craprpp.rowid;
       END LOOP;
 
@@ -1335,6 +1337,13 @@ BEGIN
             IF vr_tab_craprpp(vr_idxindc).nrdconta = rw_crapass.nrdconta THEN
               -- Passa para o próximo registro
               IF vr_tab_craprpp(vr_idxindc).cdsitrpp = 5 THEN
+                -- Buscar próximo índice
+                vr_idxindc := vr_tab_craprpp.next(vr_idxindc);
+
+                RAISE vr_iterar;
+              END IF;
+
+              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
                 -- Buscar próximo índice
                 vr_idxindc := vr_tab_craprpp.next(vr_idxindc);
 

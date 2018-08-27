@@ -2274,7 +2274,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_listahis:= '150,151,158,496,863,870,925,1115';
         END IF;        
       END IF;  
-
         -- RPP 
         OPEN cr_craplpp (pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -2283,7 +2282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                    ,pr_dtfimper => pr_dtfimper
                         ,pr_listahis => vr_listahis); 
       ELSE
-        -- Aplicacao Programada -- Fix Me - Remover o que não precisa da lista de histórico
+          -- Aplicacao Programada
         OPEN cr_crapcpc (pr_cdprodut => rw_craprpp.cdprodut);
         FETCH cr_crapcpc INTO rw_crapcpc;
         CLOSE cr_crapcpc;  -- Se não existisse o produto, um erro já teria estourado antes. 
@@ -2293,7 +2292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
             vr_listahis:= '150,151,152,154,155,158,496,863,925,1115';
           ELSE
-            vr_listahis:= '150,151,158,496,863,925,1115'; --CDHSNRAP,?,?,CDHSRGAP,CDHSIRAP,?,?
+              vr_listahis:= '150,151,158,496,863,925,1115'; 
           END IF; 
         ELSE
           --Usuario TI
@@ -2304,6 +2303,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END IF;        
         END IF;
         vr_listahis:= vr_listahis || ','|| rw_crapcpc.cdhsnrap || ','|| rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;      
+          vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsprap || ',' || rw_crapcpc.cdhsrvap || ','|| rw_crapcpc.cdhsrdap;  
+											     
         vr_dtiniper := pr_dtiniper;
         OPEN cr_craplac (pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => pr_nrdconta
@@ -2414,11 +2415,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_tab_extrato_rpp(vr_index).cdbccxlt:= rw_lancam.cdbccxlt;
         vr_tab_extrato_rpp(vr_index).nrdolote:= rw_lancam.nrdolote;
         vr_tab_extrato_rpp(vr_index).cdhistor:= rw_lancam.cdhistor;
+        -- Agrupar no extrato (apenas novas)
         IF rw_craphis.cdhistor IN 
                 (rw_lancam.cdhsprap,rw_lancam.cdhsrgap
                 ,rw_lancam.cdhsrvap,rw_lancam.cdhsrdap
-                ,rw_lancam.cdhsirap) THEN
-
+          ,rw_lancam.cdhsirap) 
+          AND vr_apl_prog = 1 THEN
            vr_tab_extrato_rpp(vr_index).aghistor := 1; -- Acumula
         ELSE
            vr_tab_extrato_rpp(vr_index).aghistor := 0; -- Nao Acumula
@@ -2461,7 +2463,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             AND (vr_tab_extrato_rpp(vr_index_temp).cdhistor = pr_tab_extrato_rpp(vr_index).cdhistor) THEN -- Acumular
                 pr_tab_extrato_rpp(vr_index).nrdocmto := null;
                 pr_tab_extrato_rpp(vr_index).vllanmto := pr_tab_extrato_rpp(vr_index).vllanmto + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                IF vr_tab_extrato_rpp(vr_index_temp).indebcre = 'C' THEN
                 pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+            ELSE
+                   pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr - vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                END IF;
             ELSE
                 vr_index:= pr_tab_extrato_rpp.COUNT + 1;
                 pr_tab_extrato_rpp(vr_index).dtmvtolt:= vr_tab_extrato_rpp(vr_index_temp).dtmvtolt;
@@ -2474,6 +2480,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 pr_tab_extrato_rpp(vr_index).indebcre:= vr_tab_extrato_rpp(vr_index_temp).indebcre;
                 pr_tab_extrato_rpp(vr_index).vllanmto:= vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 pr_tab_extrato_rpp(vr_index).vlsldppr:= vr_tab_extrato_rpp(vr_index_temp).vlsldppr;
+                pr_tab_extrato_rpp(vr_index).txaplmes:= vr_tab_extrato_rpp(vr_index_temp).txaplmes;
+                pr_tab_extrato_rpp(vr_index).txaplica:= vr_tab_extrato_rpp(vr_index_temp).txaplica;
                 pr_tab_extrato_rpp(vr_index).dsextrat:= vr_tab_extrato_rpp(vr_index_temp).dsextrat;
              END IF;
         END LOOP;
@@ -2909,6 +2917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END IF;        
         END IF;
         vr_listahis:= vr_listahis || ','|| rw_crapcpc.cdhsnrap || ','|| rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;      
+        vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsprap || ',' || rw_crapcpc.cdhsrvap || ','|| rw_crapcpc.cdhsrdap;  
         vr_dtiniper := pr_dtiniper;
         OPEN cr_craplac (pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => pr_nrdconta
@@ -3062,7 +3071,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             AND (vr_tab_extrato_rpp(vr_index_temp).cdhistor = pr_tab_extrato_rpp(vr_index).cdhistor) THEN -- Acumular
                 pr_tab_extrato_rpp(vr_index).nrdocmto := null;
                 pr_tab_extrato_rpp(vr_index).vllanmto := pr_tab_extrato_rpp(vr_index).vllanmto + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                IF vr_tab_extrato_rpp(vr_index_temp).indebcre = 'C' THEN
                 pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+            ELSE
+                   pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr - vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                END IF;
             ELSE
                 vr_index:= pr_tab_extrato_rpp.COUNT + 1;
                 pr_tab_extrato_rpp(vr_index).dtmvtolt:= vr_tab_extrato_rpp(vr_index_temp).dtmvtolt;
@@ -17338,7 +17351,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-                    
+         
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -20569,6 +20582,8 @@ END pc_consulta_ir_pj_trim;
       --Variaveis de Excecoes
       vr_exc_erro EXCEPTION;
         
+      vr_tpapprog NUMBER;
+        
       BEGIN
         
         --Limpar parametros erro
@@ -21099,7 +21114,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
         
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;        
-        
+    
     vr_dsparame VARCHAR2(4000);
         
     -- Selecionar quantidade de saques em poupanca nos ultimos 6 meses
