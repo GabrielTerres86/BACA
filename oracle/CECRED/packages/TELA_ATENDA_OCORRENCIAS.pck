@@ -305,9 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
            , cb.nrcpfcgc
            , cb.inrisctl
            , cb.dtrisctl
-           , DECODE(cb.inpessoa, 1,
-                     to_char(cb.nrcpfcgc, 'fm00000000000'),
-                     substr(to_char(cb.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
+           , cb.nrcpfcnpj_base nrcpfcgc_compara
         FROM crapass cb
        WHERE cb.cdcooper = pr_cdcooper
          AND cb.nrdconta = pr_nrdconta;
@@ -321,58 +319,105 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                , ass.inpessoa
                , to_char(ass.nrcpfcgc,
                                     DECODE(ass.inpessoa, 1, 'fm00000000000','fm00000000000000')) nrcpfcgc
-               , DECODE(ass.inpessoa, 1,
-                     to_char(ass.nrcpfcgc, 'fm00000000000'),
-                     substr(to_char(ass.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
+               , ass.nrcpfcnpj_base nrcpfcgc_compara
                , ass.dsnivris
             FROM crapass ass
            WHERE cdcooper = rw_cbase.cdcooper
              AND inpessoa = rw_cbase.inpessoa
-        )
-      SELECT c.cdcooper
-           , c.nrdconta
-                   , c.nrcpfcgc
-           , c.inpessoa
-           , c.dsnivris
-                   , DECODE(c.nrdconta, rw_cbase.nrdconta, 0, 1) ordem
-        FROM contas c
-        WHERE c.nrcpfcgc_compara = rw_cbase.nrcpfcgc_compara
-       ORDER BY ordem;
+            )
+          SELECT c.cdcooper
+               , c.nrdconta
+               , c.nrcpfcgc
+               , c.inpessoa
+               , c.dsnivris
+               , DECODE(c.nrdconta, rw_cbase.nrdconta, 0, 1) ordem
+            FROM contas c
+            WHERE c.nrcpfcgc_compara = rw_cbase.nrcpfcgc_compara
+           ORDER BY ordem;
       rw_contas_do_titular cr_contas_do_titular%ROWTYPE;
+
+      ---- LISTAR O GRUPO QUE A CONTA ESTÁ
+      CURSOR cr_grupo_conta (rw_cbase IN cr_base%ROWTYPE) IS
+        SELECT *
+          FROM (SELECT 2 tipo, i.idgrupo nrdgrupo
+                     , i.nrdconta, i.nrcpfcgc
+                     , DECODE(i.tppessoa,1,i.nrcpfcgc,to_number(SUBSTR(to_char(i.nrcpfcgc,'FM00000000000000'),1,8) ) ) CPF_BASE
+                     , x.inrisco_grupo innivrge
+                  FROM tbcc_grupo_economico_integ i,  tbcc_grupo_economico x
+                 WHERE i.cdcooper = rw_cbase.cdcooper
+                   AND i.dtexclusao IS NULL
+                   AND i.idgrupo  = x.idgrupo
+                UNION ALL
+                SELECT 1 tipo, t.idgrupo
+                     , t.nrdconta, a.nrcpfcgc
+                     , DECODE(a.inpessoa,1,a.nrcpfcgc,to_number(SUBSTR(to_char(a.nrcpfcgc,'FM00000000000000'),1,8) ) ) CPF_BASE
+                     , t.inrisco_grupo innivrge
+                  FROM tbcc_grupo_economico t, crapass a
+                 WHERE t.cdcooper = rw_cbase.cdcooper
+                   AND a.cdcooper = t.cdcooper
+                   AND a.nrdconta = t.nrdconta
+                   AND a.dtelimin IS NULL
+        ) tmp
+          WHERE nrdconta = rw_cbase.nrdconta
+        ORDER BY nrdgrupo, tipo;
+      rw_grupo_conta cr_grupo_conta%ROWTYPE;
+      
+      CURSOR cr_contas_grupo (pr_cdcooper  crapcop.cdcooper%TYPE
+                             ,pr_nrdconta  crapass.nrdconta%TYPE
+                             ,pr_idgrupo IN tbcc_grupo_economico.idgrupo%TYPE) IS
+        SELECT *
+          FROM (SELECT 2 tipo, i.idgrupo, i.nrdconta,i.nrcpfcgc
+                  FROM tbcc_grupo_economico_integ i,  tbcc_grupo_economico x
+                 WHERE i.cdcooper = pr_cdcooper
+                   AND i.dtexclusao IS NULL
+                   AND i.idgrupo = x.idgrupo
+                UNION ALL
+                SELECT 1 tipo, t.idgrupo, t.nrdconta,a.nrcpfcgc
+                  FROM tbcc_grupo_economico t, crapass a
+                 WHERE t.cdcooper = pr_cdcooper
+                   AND a.cdcooper = t.cdcooper
+                   AND a.nrdconta = t.nrdconta
+                   AND a.dtelimin IS NULL
+                 ) tmp
+          WHERE idgrupo = pr_idgrupo
+            AND nrdconta <> pr_nrdconta
+        ORDER BY idgrupo, tipo, nrdconta;    
+      
+    
 
     -- Contas dos grupos econômicos aos quais o titular da conta base está ligado
     -- Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
     CURSOR cr_contas_grupo_economico(rw_cbase IN cr_base%ROWTYPE) IS
-/*    SELECT *
-      FROM (
-    SELECT i.idgrupo nrdgrupo
-             , i.nrdconta
-             , decode(x.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
-                                      ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') innivrge
-             , i.nrcpfcgc
-             , i.tppessoa inpessoa
-          FROM tbcc_grupo_economico_integ i,  tbcc_grupo_economico x
-         WHERE i.cdcooper = rw_cbase.cdcooper
-           AND i.dtexclusao IS NULL
-           AND i.idgrupo = x.idgrupo
-           AND x.nrdconta = rw_cbase.nrdconta
-        UNION ALL
-        SELECT t.idgrupo
-             , t.nrdconta
-             , decode(t.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
-                                      ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') innivrge
-             , a.nrcpfcgc
-             , a.inpessoa
-          FROM tbcc_grupo_economico t, crapass a
-         WHERE t.cdcooper = rw_cbase.cdcooper
-           AND t.nrdconta = rw_cbase.nrdconta
-           AND a.cdcooper = t.cdcooper
-           AND a.nrdconta = t.nrdconta
-           AND a.dtelimin IS NULL
-        ) grp
-    WHERE DECODE(grp.inpessoa, 1, to_char(grp.nrcpfcgc, 'fm00000000000'),
-                                      substr(to_char(grp.nrcpfcgc, 'fm00000000000000'), 1, 8)) <> rw_cbase.nrcpfcgc_compara;
-*/
+      SELECT *
+        FROM (
+              SELECT i.idgrupo nrdgrupo
+                       , i.nrdconta
+                       , decode(x.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
+                                                ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') innivrge
+                       , i.nrcpfcgc
+                       , i.tppessoa inpessoa
+                    FROM tbcc_grupo_economico_integ i,  tbcc_grupo_economico x
+                   WHERE i.cdcooper = rw_cbase.cdcooper
+                     AND i.dtexclusao IS NULL
+                     AND i.idgrupo = x.idgrupo
+                     AND x.nrdconta = rw_cbase.nrdconta
+                  UNION ALL
+                  SELECT t.idgrupo
+                       , t.nrdconta
+                       , decode(t.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
+                                                ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') innivrge
+                       , a.nrcpfcgc
+                       , a.inpessoa
+                    FROM tbcc_grupo_economico t, crapass a
+                   WHERE t.cdcooper = rw_cbase.cdcooper
+                     AND t.nrdconta = rw_cbase.nrdconta
+                     AND a.cdcooper = t.cdcooper
+                     AND a.nrdconta = t.nrdconta
+                     AND a.dtelimin IS NULL
+                  ) grp
+      WHERE DECODE(grp.inpessoa, 1, to_char(grp.nrcpfcgc, 'fm00000000000'),
+                        substr(to_char(grp.nrcpfcgc, 'fm00000000000000'), 1, 8)) <> rw_cbase.nrcpfcgc_compara;
+/*
     WITH grupos AS (
         SELECT gr.cdcooper
              , gr.nrdconta
@@ -412,6 +457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
        WHERE grp.nrcpfcgc_nrdconta <> rw_cbase.nrcpfcgc_compara
          AND grp.nrcpfcgc_nrctasoc <> rw_cbase.nrcpfcgc_compara
          ;
+*/
     rw_contas_grupo_economico cr_contas_grupo_economico%ROWTYPE;
 
     -- Dados dos riscos
@@ -539,12 +585,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       CLOSE cr_base;
 
       -- Percorre contas de mesmo CPF/CNPJ da conta base
-      FOR rw_contas_do_titular
-       IN cr_contas_do_titular(rw_cbase) LOOP
-          FOR rw_tabrisco_central
-            IN cr_tbrisco_central(pr_cdcooper
-                                , rw_contas_do_titular.nrdconta
-                                , rw_dat.dtmvtoan) LOOP
+      FOR rw_contas_do_titular IN cr_contas_do_titular(rw_cbase) LOOP
+
+          FOR rw_tabrisco_central IN cr_tbrisco_central(pr_cdcooper
+                                                      , rw_contas_do_titular.nrdconta
+                                                      , rw_dat.dtmvtoan) LOOP
 
                 -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
@@ -570,35 +615,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
          END LOOP; -- contratos
       END LOOP; -- contas de mesmo titular
+      
+      
+      -- Identificar qual o grupo a conta pertence.
+      OPEN cr_grupo_conta(rw_cbase);
+      FETCH cr_grupo_conta INTO rw_grupo_conta;
+       CLOSE cr_grupo_conta;
 
-      -- Percorre contas dos grupos econômicos em que o titular da conta base faz parte
-      FOR rw_contas_grupo_economico
-        IN cr_contas_grupo_economico(rw_cbase) LOOP
 
-        FOR rw_tabrisco_central
-            IN cr_tbrisco_central(pr_cdcooper
-                                , rw_contas_grupo_economico.nrdconta
-                                , rw_dat.dtmvtoan) LOOP
+      -- Listar contas do mesmo Grupo Economico      
+      FOR rw_contas_grupo IN cr_contas_grupo(pr_cdcooper
+                                            ,rw_grupo_conta.nrdconta
+                                            ,rw_grupo_conta.nrdgrupo) LOOP
+        
+        FOR rw_tabrisco_central IN cr_tbrisco_central(pr_cdcooper
+                                                    , rw_contas_grupo.nrdconta
+                                                    , rw_dat.dtmvtoan) LOOP
 
                 -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
                                      , vr_auxconta
                                      , vr_dscritic
-                                     , rw_contas_grupo_economico.nrdconta
-                                     , rw_contas_grupo_economico.nrcpfcgc
-                                   , rw_tabrisco_central.nrctremp
-                                   , rw_tabrisco_central.risco_inclusao
-                                   , rw_tabrisco_central.risco_grupo
-                                   , rw_tabrisco_central.risco_rating
-                                   , rw_tabrisco_central.risco_atraso
-                                   , rw_tabrisco_central.risco_refin
-                                   , rw_tabrisco_central.risco_agravado
-                                   , rw_tabrisco_central.risco_operacao
-                                   , rw_tabrisco_central.risco_cpf
-                                   , rw_tabrisco_central.nrdgrupo
-                                   , rw_tabrisco_central.risco_melhora
-                                   , rw_tabrisco_central.risco_final
-                                   , rw_tabrisco_central.tipo_registro
+                                     , rw_contas_grupo.nrdconta
+                                     , rw_contas_grupo.nrcpfcgc
+                                     , rw_tabrisco_central.nrctremp
+                                     , rw_tabrisco_central.risco_inclusao
+                                     , rw_tabrisco_central.risco_grupo
+                                     , rw_tabrisco_central.risco_rating
+                                     , rw_tabrisco_central.risco_atraso
+                                     , rw_tabrisco_central.risco_refin
+                                     , rw_tabrisco_central.risco_agravado
+                                     , rw_tabrisco_central.risco_operacao
+                                     , rw_tabrisco_central.risco_cpf
+                                     , rw_tabrisco_central.nrdgrupo
+                                     , rw_tabrisco_central.risco_melhora
+                                     , rw_tabrisco_central.risco_final
+                                     , rw_tabrisco_central.tipo_registro
                                    );
 
                vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
@@ -965,9 +1017,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
         vr_iof := 0;
 				
-				vr_saldodev := (rw_prejuizo.vlpgprej + rw_prejuizo.vlrabono) - 
-				                (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + 
-												 rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred);
+				vr_saldodev := (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + 
+												 rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred) * (-1);											
+			        
 
         IF cr_crapsld%FOUND THEN
           CLOSE cr_crapsld;
