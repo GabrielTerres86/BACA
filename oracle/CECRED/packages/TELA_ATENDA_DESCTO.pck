@@ -12,6 +12,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
   --
   -- Alteracoes: 
   --
+  --       11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+  --
   ---------------------------------------------------------------------------
   
   PROCEDURE pc_ren_lim_desc_cheque_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
@@ -145,6 +147,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DESCTO IS
 														   ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
 														   ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
 														   ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
+  
+  PROCEDURE pc_busca_cheques_cust_hj(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
+																		,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+																		,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+																		,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+																		,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+																		,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+																		,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+																		,pr_des_erro  OUT VARCHAR2);            --> Erros do processo														   
   
 END TELA_ATENDA_DESCTO;
 /
@@ -471,6 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
               ,qtrenova
               ,nrctaav1
               ,nrctaav2
+              ,idcobope
           FROM craplim
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta 
@@ -913,6 +925,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
             RAISE vr_exc_saida;
         END;
         
+        -- Efetuar o bloqueio de possíveis coberturas vinculadas ao limite anterior
+        BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_nmdatela => 'ATENDA'
+                                             ,pr_idcobertura => rw_craplim_ctr.idcobope
+                                             ,pr_inbloq_desbloq => 'B'
+                                             ,pr_cdoperador => vr_cdoperad
+                                             ,pr_flgerar_log => 'S'
+                                             ,pr_dscritic => vr_dscritic);
+       
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
         -- Verifica se ja existe contrato microfilmado
         OPEN cr_crapmcr (pr_cdcooper => vr_cdcooper
                         ,pr_nrdconta => rw_craplim_ctr.nrdconta
@@ -1314,7 +1338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
          AND ass.cdcooper = cop.cdcooper
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass_2  cr_crapass_2%ROWTYPE;
-    
+		
     /* Cursor generico de parametrizacao */
     CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
                      ,pr_nmsistem IN craptab.nmsistem%TYPE
@@ -1375,7 +1399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
 		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
 		CLOSE BTCH0001.cr_crapdat;
-		
+					
     IF pr_cddopcao <> 'R' THEN
       
 		OPEN cr_craplim(pr_cdcooper => vr_cdcooper
@@ -2749,7 +2773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
   END pc_aprovar_reprovar_chq;
 	
-	PROCEDURE pc_efetiva_desconto_bordero(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
+  PROCEDURE pc_efetiva_desconto_bordero(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
 																			 ,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
 																			 ,pr_cdopcolb  IN crapbdc.cdopcolb%TYPE  --> Operador Liberação
 																			 ,pr_flresghj  IN INTEGER DEFAULT 0      --> Flag para resgatar cheques custodiados hoje
@@ -2763,7 +2787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     Programa: pc_efetiva_desconto_bordero
     Sistema : Ayllos Web
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao:
+    Data    : Dezembro/2016                 Ultima atualizacao: 20/08/2018
 
     Dados referentes ao programa:
 
@@ -2776,7 +2800,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
     Alteracoes: 02/06/2017 - Ajustes para resgatar cheques custodiados no dia de hoje
                              que não foram aprovados.
-                             PRJ300 - Desconto de cheque(Odirlei-AMcom) 
+                             PRJ300 - Desconto de cheque(Odirlei-AMcom)
+
+				20/08/2018 - Ajuste na performace para liberar borderôs (Andrey Formigari - Mouts)
   ..............................................................................*/
 	
     -- Variavel de criticas
@@ -2794,55 +2820,121 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+	vr_dsdmensg VARCHAR2(300);
+    vr_rowid_log ROWID;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1;
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+
+	CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+       SELECT nmrescop
+         FROM crapcop
+        WHERE cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
 	
 	BEGIN
-    -- Incluir nome do modulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
-                              ,pr_action => NULL);	
+		-- Incluir nome do modulo logado
+		GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
+								  ,pr_action => NULL);	
 		
 		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-														,pr_cdcooper => vr_cdcooper
-														,pr_nmdatela => vr_nmdatela
-														,pr_nmeacao  => vr_nmeacao
-														,pr_cdagenci => vr_cdagenci
-														,pr_nrdcaixa => vr_nrdcaixa
-														,pr_idorigem => vr_idorigem
-														,pr_cdoperad => vr_cdoperad
-														,pr_dscritic => vr_dscritic);	  
+								,pr_cdcooper => vr_cdcooper
+								,pr_nmdatela => vr_nmdatela
+								,pr_nmeacao  => vr_nmeacao
+								,pr_cdagenci => vr_cdagenci
+								,pr_nrdcaixa => vr_nrdcaixa
+								,pr_idorigem => vr_idorigem
+								,pr_cdoperad => vr_cdoperad
+								,pr_dscritic => vr_dscritic);	  
 														
 		
-    IF pr_flresghj = 1 THEN
-      --> Resgatar cheques custodiados no dia de movimento
-      DSCC0001.pc_resgata_cheques_cust_hj
-                                (pr_cdcooper => vr_cdcooper  --> Cooperativa
-                                ,pr_cdagenci => vr_cdagenci  --> Agencia
-                                ,pr_nrdconta => pr_nrdconta  --> Nr. da Conta
-                                ,pr_nrborder => pr_nrborder  --> Nr. Borderô
-                                ,pr_cdoperad => vr_cdoperad  --> Cód. operador
-                                ,pr_flreprov => 1            --> Resgatar apenas os reprovados
-                                ,pr_cdcritic => vr_cdcritic  --> Crítica
-                                ,pr_dscritic => vr_dscritic);  --> Desc. da crítica
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-    END IF;
+		IF pr_flresghj = 1 THEN
+		  --> Resgatar cheques custodiados no dia de movimento
+		  DSCC0001.pc_resgata_cheques_cust_hj
+									(pr_cdcooper => vr_cdcooper  --> Cooperativa
+									,pr_cdagenci => vr_cdagenci  --> Agencia
+									,pr_nrdconta => pr_nrdconta  --> Nr. da Conta
+									,pr_nrborder => pr_nrborder  --> Nr. Borderô
+									,pr_cdoperad => vr_cdoperad  --> Cód. operador
+									,pr_flreprov => 1            --> Resgatar apenas os reprovados
+									,pr_cdcritic => vr_cdcritic  --> Crítica
+									,pr_dscritic => vr_dscritic);  --> Desc. da crítica
+		  IF vr_dscritic IS NOT NULL THEN
+			RAISE vr_exc_erro;
+		  END IF;
+		END IF;
 														
 		-- Efetivar desconto do bordero
-    DSCC0001.pc_efetiva_desconto_bordero(pr_cdcooper => vr_cdcooper
-		                                    ,pr_nrdconta => pr_nrdconta
-																				,pr_nrborder => pr_nrborder
-																				,pr_cdoperad => vr_cdoperad
-																				,pr_cdagenci => vr_cdagenci
-																				,pr_cdopcolb => pr_cdopcolb
-																				,pr_cdcritic => vr_cdcritic
-																				,pr_dscritic => vr_dscritic);
+		DSCC0001.pc_efetiva_desconto_bordero(pr_cdcooper => vr_cdcooper
+											,pr_nrdconta => pr_nrdconta
+											,pr_nrborder => pr_nrborder
+											,pr_cdoperad => vr_cdoperad
+											,pr_cdagenci => vr_cdagenci
+											,pr_cdopcolb => pr_cdopcolb
+											,pr_cdcritic => vr_cdcritic
+											,pr_dscritic => vr_dscritic);
 		-- Se retornou alguma crítica															
 		IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 			-- Levantar exceção
 			RAISE vr_exc_erro;
 		END IF;
+
+		OPEN cr_crapcop(vr_cdcooper);
+		FETCH cr_crapcop INTO rw_crapcop;
+		IF cr_crapcop%NOTFOUND THEN
+		  vr_cdcritic := 651;
+		  RAISE vr_exc_erro;
+		END IF;
+    
+		vr_dsdmensg := 'Seu borderô de desconto de cheque nº ' || pr_nrborder || 
+					   ' foi liberado.' || '\n' ||
+					   ' Em caso de dúvidas, favor dirigir-se ao seu PA de relacionamento.';
+
+		-- Insere na tabela de mensagens (CRAPMSG)
+		GENE0003.pc_gerar_mensagem(pr_cdcooper => vr_cdcooper
+								  ,pr_nrdconta => pr_nrdconta
+								  ,pr_idseqttl => 0 /* Titular */
+								  ,pr_cdprogra => 'DESCTO' /* Programa */
+								  ,pr_inpriori => 0
+								  ,pr_dsdmensg => vr_dsdmensg /* corpo da mensagem */
+								  ,pr_dsdassun => 'Borderô de Desconto de Cheque Liberado' /* Assunto */
+								  ,pr_dsdremet => rw_crapcop.nmrescop 
+								  ,pr_dsdplchv => 'Desconto de Cheque'
+								  ,pr_cdoperad => vr_cdoperad
+								  ,pr_cdcadmsg => 0
+								  ,pr_dscritic => vr_dscritic);
+    
+		-- Se ocorrer erro
+		IF vr_dscritic IS NOT NULL THEN
+		  vr_cdcritic := 0;
+		  RAISE vr_exc_erro;
+		END IF;
+		-- 
+		vr_variaveis_notif('#numbordero') := to_char(pr_nrborder);
+
+		-- Cria uma notificação
+		noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+									,pr_cdmotivo_mensagem => vr_notif_motivo
+									,pr_cdcooper => vr_cdcooper
+									,pr_nrdconta => pr_nrdconta
+									,pr_variaveis => vr_variaveis_notif);    
+    
+		-- Efetua os inserts para apresentacao na tela VERLOG
+		gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+							,pr_cdoperad => vr_cdoperad
+							,pr_dscritic => ' '
+							,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+							,pr_dstransa => 'Liberado desconto do bordero Nro.: ' || pr_nrborder || '.'
+							,pr_dttransa => trunc(SYSDATE)
+							,pr_flgtrans => 1
+							,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+							,pr_idseqttl => 1
+							,pr_nmdatela => 'ATENDA_DESCT'
+							,pr_nrdconta => pr_nrdconta
+							,pr_nrdrowid => vr_rowid_log);
+
 		
-	  -- Efetuar commit
+		-- Efetuar commit
 		COMMIT;
 		
 	EXCEPTION
@@ -3597,6 +3689,191 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_valida_valor_saldo;
+
+  --> Resgatar cheques custodiados no dia de movimento
+	PROCEDURE pc_busca_cheques_cust_hj(pr_nrdconta  IN craplim.nrdconta%TYPE  --> Conta
+																		,pr_nrborder  IN crapcdb.nrborder%TYPE  --> Bordero
+																		,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+																		,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+																		,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+																		,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+																		,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+																		,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  /* .............................................................................
+    Programa: pc_busca_cheques_cust_hj
+    Sistema : CECRED
+    Autor   : Mateus Zimmermann - Mouts
+    Data    : Janeiro/2018                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Resgatar cheques custodiados no dia de movimento
+
+    Alteracoes: 
+                             
+  ..............................................................................*/																			 
+	-- Variável de críticas
+	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+	vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
+	-- Tratamento de erros
+	vr_exc_erro        EXCEPTION;    
+	
+	-- Variáveis auxiliares
+	vr_dstextab craptab.dstextab%TYPE;
+	vr_qtdiasut INTEGER;
+	vr_qtdiasli INTEGER;
+	vr_hrlimite INTEGER;
+	vr_nrdocmto NUMBER;
+	vr_dtjurtab DATE;
+	vr_tab_resgate_erro cust0001.typ_erro_resgate;
+  
+  -- Variaveis de log
+  vr_cdcooper INTEGER;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+  
+  vr_dscheque VARCHAR(200);
+  vr_dsdocmc7 VARCHAR(1000);
+	
+	rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  
+  vr_tab_cheques dscc0001.typ_tab_cheques;
+	vr_index_cheque NUMBER;
+  vr_flgaprov NUMBER;
+	
+	-- Buscar cheques custodiados na data de hoje
+	CURSOR cr_crapcdb(pr_cdcooper IN crapbdc.cdcooper%TYPE
+	                 ,pr_nrdconta IN crapbdc.nrdconta%TYPE
+									 ,pr_nrborder IN crapbdc.nrborder%TYPE
+                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+		SELECT cdb.vlcheque,
+           cdb.dsdocmc7,
+           cdb.nrcheque
+		  FROM crapcdb cdb,
+           crapcst cst
+		 WHERE cdb.cdcooper = pr_cdcooper
+		   AND cdb.nrdconta = pr_nrdconta
+			 AND cdb.nrborder = pr_nrborder
+       AND cst.cdcooper = cdb.cdcooper
+       AND cst.nrdconta = cdb.nrdconta
+       AND cst.nrborder = cdb.nrborder
+       AND cst.cdcmpchq = cdb.cdcmpchq
+       AND cst.cdbanchq = cdb.cdbanchq
+       AND cst.cdagechq = cdb.cdagechq
+       AND cst.nrcheque = cdb.nrcheque
+       AND cst.nrctachq = cdb.nrctachq
+       --> Cheques ainda nao resgatados
+       AND cst.dtdevolu IS NULL
+			 AND cst.insitchq = 0
+       AND cdb.insitana = 2		
+       AND cst.dtmvtolt = pr_dtmvtolt;
+		
+    -- Verificar se cheque foi resgatado na data de hoje
+    CURSOR cr_crapcst_resg_hoje (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                ,pr_dsdocmc7 IN VARCHAR2
+                                ,pr_dtmvtolt IN DATE) IS
+      SELECT cst.vlcheque
+            ,cst.dtlibera
+            ,cst.insitchq
+        FROM crapcst cst
+       WHERE cst.cdcooper = pr_cdcooper
+         AND UPPER(cst.dsdocmc7) = UPPER(pr_dsdocmc7)
+         AND cst.dtdevolu = pr_dtmvtolt;
+    rw_crapcst_resg_hoje cr_crapcst_resg_hoje%ROWTYPE;
+
+	BEGIN
+    
+    -- Incluir nome do modulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
+                              ,pr_action => NULL);	
+		
+		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+														,pr_cdcooper => vr_cdcooper
+														,pr_nmdatela => vr_nmdatela
+														,pr_nmeacao  => vr_nmeacao
+														,pr_cdagenci => vr_cdagenci
+														,pr_nrdcaixa => vr_nrdcaixa
+														,pr_idorigem => vr_idorigem
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => vr_dscritic);
+  
+		-- Busca a data do sistema
+		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;
+	
+    --> Buscar cheques do bosrdero custodiados do dia atual
+    FOR rw_crapcdb IN cr_crapcdb (pr_cdcooper => vr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrborder => pr_nrborder
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+    
+      -- Verificar se cheque foi resgatado hoje
+      OPEN cr_crapcst_resg_hoje(pr_cdcooper => vr_cdcooper
+                               ,pr_dsdocmc7 => rw_crapcdb.dsdocmc7
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+      FETCH cr_crapcst_resg_hoje INTO rw_crapcst_resg_hoje;
+
+      IF cr_crapcst_resg_hoje%FOUND THEN
+        -- Gera crítica
+        vr_cdcritic := 673;
+        -- Fecha Cursor
+        CLOSE cr_crapcst_resg_hoje;
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      ELSE
+        -- Fecha Cursor
+        CLOSE cr_crapcst_resg_hoje;
+      END IF;
+      
+      -- Se retornou alguma crítica
+      IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN      
+        -- Levantar exceção
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_dscheque IS NOT NULL THEN
+         vr_dscheque := vr_dscheque || '|';  
+      END IF;
+      
+      vr_dscheque := vr_dscheque || rw_crapcdb.nrcheque;
+      vr_dscheque := vr_dscheque || ';' || rw_crapcdb.vlcheque;
+      vr_dscheque := vr_dscheque || ';' || rw_crapcdb.dsdocmc7;
+      
+      IF vr_dsdocmc7 IS NOT NULL THEN
+         vr_dsdocmc7 := vr_dsdocmc7 || '|';  
+      END IF;     
+      
+      vr_dsdocmc7 := vr_dsdocmc7 || rw_crapcdb.dsdocmc7; 
+          
+    END LOOP;   
+    
+    
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Dados',pr_tag_cont => NULL,pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Dados',pr_posicao => 0,pr_tag_nova => 'dscheque',pr_tag_cont => vr_dscheque,pr_des_erro => vr_dscritic);  
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Dados',pr_posicao => 0,pr_tag_nova => 'dsdocmc7',pr_tag_cont => vr_dsdocmc7,pr_des_erro => vr_dscritic);  
+        
+	EXCEPTION    
+    WHEN vr_exc_erro THEN      
+      IF NVL(vr_cdcritic,0) <> 0 AND 
+         TRIM(vr_dscritic) IS NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+			ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := REPLACE(REPLACE(vr_dscritic,chr(13)),chr(10));
+      END IF;
+    WHEN OTHERS THEN      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := REPLACE(REPLACE('Nao foi possivel buscar os cheques custodiados no dia de hoje: ' || SQLERRM, chr(13)),chr(10));																							 																			 		
+	END pc_busca_cheques_cust_hj;
 
 END TELA_ATENDA_DESCTO;
 /

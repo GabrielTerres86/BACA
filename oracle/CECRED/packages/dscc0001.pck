@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 20/08/2018
   --
   --  Dados referentes ao programa:
   --
@@ -15,6 +15,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   --			  16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
   --
   -- 		      12/07/2017 - Chamado 687332 - Alteração da gravação da coluna CDSEQTEL na CRAPLAU - Jean (Mout´S)
+  --
+  --			  20/08/2018 - Ajuste na performace para liberar borderôs (Andrey Formigari - Mouts)
   --------------------------------------------------------------------------------------------------------------*/
 
 	TYPE typ_reg_cstdsc IS
@@ -7388,31 +7390,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                 
   ..............................................................................*/																			 
 	-- Variável de críticas
-	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
-	vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
-	-- Tratamento de erros
-	vr_exc_erro        EXCEPTION;    
+  vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+  vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
+  -- Tratamento de erros
+  vr_exc_erro        EXCEPTION;    
 																			 
   vr_nrdconta_ver_cheque crapass.nrdconta%TYPE;
-	vr_dsdaviso VARCHAR2(1000); 
+  vr_dsdaviso VARCHAR2(1000); 
 																			 
-	-- Variáveis auxiliares
-	vr_index_cheque     PLS_INTEGER;
-	vr_tab_cheques      typ_tab_cheques;
-	vr_nrdocmto         NUMBER;
+  -- Variáveis auxiliares
+  vr_index_cheque     PLS_INTEGER;
+  vr_tab_cheques      typ_tab_cheques;
+  vr_nrdocmto         NUMBER;
   vr_vlborder         NUMBER;
-	vr_nrseqdig         NUMBER;
+  vr_nrseqdig         NUMBER;
   --vr_dtiniiof         DATE;
-	--vr_dtfimiof         DATE;
+  --vr_dtfimiof         DATE;
   --vr_txccdiof         NUMBER;
-	vr_flgimune         PLS_INTEGER;
-	vr_dsreturn         VARCHAR2(10);
+  vr_flgimune         PLS_INTEGER;
+  vr_dsreturn         VARCHAR2(10);
   vr_tab_erro         gene0001.typ_tab_erro;
-	vr_cdpactra         NUMBER;
-	vr_nrdrowid         ROWID;
-	vr_vllanmto         NUMBER;
-	vr_tab_lim_desconto typ_tab_lim_desconto;
-  vr_dsdmensg         VARCHAR2(300);
+  vr_cdpactra         NUMBER;
+  vr_nrdrowid         ROWID;
+  vr_vllanmto         NUMBER;
+  vr_tab_lim_desconto typ_tab_lim_desconto;
   vr_rowid_log        ROWID;
   vr_vltaxa_iof_principal NUMBER(25,8);
   
@@ -7435,18 +7436,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   vr_dtprzmin         DATE;   -- Data prazo mínimo
   vr_dtprzmax         DATE;   -- Data prazo máximo
   vr_przmxcmp         NUMBER; -- Data prazo máximo
-  
-  -- Objetos para armazenar as variáveis da notificação
-  vr_variaveis_notif NOTI0001.typ_variaveis_notif;
-  vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
-  vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1; 
-  
-  -- Buscar Cooperativa
-  CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-    SELECT nmrescop
-      FROM crapcop
-     WHERE cdcooper = pr_cdcooper;
-  rw_crapcop cr_crapcop%ROWTYPE;
   
 	-- Buscar borderô de desconto
 	CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
@@ -8497,59 +8486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         END IF;
 		END IF;
     
-    OPEN cr_crapcop(pr_cdcooper);
-    FETCH cr_crapcop INTO rw_crapcop;
-    IF cr_crapcop%NOTFOUND THEN
-      vr_cdcritic := 651;
-      RAISE vr_exc_erro;
-    END IF;
-    
-    vr_dsdmensg := 'Seu borderô de desconto de cheque nº ' || pr_nrborder || 
-                   ' foi liberado.' || '\n' ||
-                   ' Em caso de dúvidas, favor dirigir-se ao seu PA de relacionamento.';
-
-    -- Insere na tabela de mensagens (CRAPMSG)
-    GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_idseqttl => 0 /* Titular */
-                              ,pr_cdprogra => 'DESCTO' /* Programa */
-                              ,pr_inpriori => 0
-                              ,pr_dsdmensg => vr_dsdmensg /* corpo da mensagem */
-                              ,pr_dsdassun => 'Borderô de Desconto de Cheque Liberado' /* Assunto */
-                              ,pr_dsdremet => rw_crapcop.nmrescop 
-                              ,pr_dsdplchv => 'Desconto de Cheque'
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_cdcadmsg => 0
-                              ,pr_dscritic => vr_dscritic);
-    
-    -- Se ocorrer erro
-    IF vr_dscritic IS NOT NULL THEN
-      vr_cdcritic := 0;
-      RAISE vr_exc_erro;
-    END IF;
-    -- 
-    vr_variaveis_notif('#numbordero') := to_char(pr_nrborder);
-
-    -- Cria uma notificação
-    noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
-                                ,pr_cdmotivo_mensagem => vr_notif_motivo
-                                ,pr_cdcooper => pr_cdcooper
-                                ,pr_nrdconta => pr_nrdconta
-                                ,pr_variaveis => vr_variaveis_notif);    
-    
-    -- Efetua os inserts para apresentacao na tela VERLOG
-    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                        ,pr_cdoperad => pr_cdoperad
-                        ,pr_dscritic => ' '
-                        ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
-                        ,pr_dstransa => 'Liberado desconto do bordero Nro.: ' || pr_nrborder || '.'
-                        ,pr_dttransa => trunc(SYSDATE)
-                        ,pr_flgtrans => 1
-                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
-                        ,pr_idseqttl => 1
-                        ,pr_nmdatela => 'ATENDA_DESCT'
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_nrdrowid => vr_rowid_log);
+		COMMIT;
     
     
 	EXCEPTION    
