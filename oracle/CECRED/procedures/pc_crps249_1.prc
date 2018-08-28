@@ -76,6 +76,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
 
                01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
 
+               25/08/2018 - Adicionado contabilização das operações de créditos dos borderôs de desconto de titulos
+                            (Paulo Penteado GFT )
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
   cursor cr_crapepr (pr_cdcooper in crapepr.cdcooper%type,
@@ -696,21 +698,41 @@ BEGIN
     vr_nmcolsql := ' ,trim(replace(x.cdpesqbb,''.'','''')) ';
   END IF;
 
-  -- Define a query do cursor dinâmico
-  vr_cursor := 'select x.cdagenci,'||
-                     ' x.cdbccxlt,'||
-                     ' x.nrdolote,'||
-                     ' x.nrdconta,'||
-                     ' x.nrdocmto,'||
-                     ' x.vllanmto,'||
-                     ' c.cdagenci,'||
-                     ' c.inpessoa' || vr_nmcolsql ||
-                ' from crapass c, '||pr_nmestrut||' x'||
-               ' where x.cdcooper = '||pr_cdcooper||
-                 ' and x.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
-                 ' and x.cdhistor = '||pr_cdhistor||
-                 ' and c.cdcooper = x.cdcooper'||
-                 ' and c.nrdconta = x.nrdconta';
+  -- Lançamentos de operação de crédito do borderô de desconto de títulos
+  IF upper(pr_nmestrut) = 'TBDSCT_LANCAMENTO_BORDERO'  THEN
+    vr_cursor :=   ' select ass.cdagenci '||
+                   '       ,100 cdbccxlt '||
+                   '       ,lcb.nrdconta '||
+                   '       ,9999 nrdolote '||
+                   '       ,lcb.nrdocmto '||
+                   '       ,lcb.vllanmto '||
+                   '       ,ass.cdagenci '||
+                   '       ,ass.inpessoa '||
+                   ' from  tbdsct_lancamento_bordero lcb '||
+                   '      ,crapass ass '||
+                   ' where  lcb.cdcooper = '||pr_cdcooper||
+                   '  and   lcb.cdhistor = '||pr_cdhistor||
+                   '  and   lcb.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
+                   '  and   ass.cdcooper = lcb.cdcooper '||
+                   '  and   ass.nrdconta = lcb.nrdconta ';
+
+  ELSE
+    -- Define a query do cursor dinâmico
+    vr_cursor := 'select x.cdagenci,'||
+                       ' x.cdbccxlt,'||
+                       ' x.nrdolote,'||
+                       ' x.nrdconta,'||
+                       ' x.nrdocmto,'||
+                       ' x.vllanmto,'||
+                       ' c.cdagenci,'||
+                       ' c.inpessoa' || vr_nmcolsql ||
+                  ' from crapass c, '||pr_nmestrut||' x'||
+                 ' where x.cdcooper = '||pr_cdcooper||
+                   ' and x.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
+                   ' and x.cdhistor = '||pr_cdhistor||
+                   ' and c.cdcooper = x.cdcooper'||
+                   ' and c.nrdconta = x.nrdconta';
+  END IF;
   -- Cria cursor dinâmico
   vr_num_cursor := dbms_sql.open_cursor;
 
@@ -1407,7 +1429,8 @@ BEGIN
   END LOOP;   
  
 exception
-  when others then
+  when others THEN
+    pr_cdcritic := 0;
     pr_dscritic := 'Erro PC_CRPS249_1: '||SQLERRM;
 END PC_CRPS249_1;
 /
