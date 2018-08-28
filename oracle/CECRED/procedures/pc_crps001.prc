@@ -2899,7 +2899,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              RAISE vr_exc_saida;
            END IF;
 					 
-					 vr_vlblqprj := PREJ0003.fn_sld_cta_prj(pr_cdcooper, rw_crapsld.nrdconta);
+					 vr_vlblqprj := PREJ0003.fn_sld_cta_prj(pr_cdcooper, rw_crapsld.nrdconta, 0);
 
            --Proximo indice na tabela
            vr_index_crapsda:= vr_tab_crapsda2.count+1;
