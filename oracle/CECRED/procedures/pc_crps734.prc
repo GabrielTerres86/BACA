@@ -52,9 +52,45 @@ BEGIN
     ;
 
     --  Busca todos os títulos liberados que estão vencidos
+    
     CURSOR cr_craptdb(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                      ,pr_cdagenci IN crapbdt.cdagenci%TYPE) IS
+      SELECT 
+        x.*,
+        CASE WHEN (maisvencido+60) <= pr_dtmvtolt THEN 1 ELSE 0 END AS possui60
+      FROM (
+        SELECT craptdb.ROWID,
+                     craptdb.nrdconta,
+                     craptdb.dtvencto,
+                     craptdb.nrborder,
+                     craptdb.cdbandoc,
+                     craptdb.nrcnvcob,
+                     craptdb.nrdctabb,
+                     craptdb.vlmratit,
+                     craptdb.vljura60,
+                     craptdb.nrdocmto,
+                     craptdb.vlsldtit,
+                     (SELECT 
+                               MIN(dtvencto)
+                             FROM craptdb tdb
+                             WHERE  tdb.insittit = 4 
+                                          AND tdb.cdcooper=pr_cdcooper 
+                                          AND tdb.nrborder=craptdb.nrborder
+                                        ) AS  maisvencido, -- verifica se o bordero desse titulo possui 1 titulo vencido ha mais de 60 dias
+                     (POWER((crapbdt.txmensal / 100) + 1,(1 / 30)) - 1) AS txdiariamora
+                FROM craptdb, crapbdt
+               WHERE craptdb.cdcooper =  crapbdt.cdcooper
+                 AND craptdb.nrdconta =  crapbdt.nrdconta
+                 AND craptdb.nrborder =  crapbdt.nrborder
+                 AND craptdb.cdcooper =  pr_cdcooper
+                 AND craptdb.insittit =  4  -- liberado
+                 AND crapbdt.flverbor =  1 -- bordero liberado na nova versão
+                 ORDER BY craptdb.cdcooper,craptdb.nrdconta,craptdb.nrborder
+        ) x
+      WHERE 
+        (dtvencto <= pr_dtmvtolt OR (maisvencido+60)<= pr_dtmvtolt);
+    /*                     
       SELECT craptdb.ROWID,
              craptdb.nrdconta,
              craptdb.dtvencto,
@@ -86,7 +122,7 @@ BEGIN
          AND craptdb.insittit =  4  -- liberado
          AND crapbdt.cdagenci = nvl(pr_cdagenci,crapbdt.cdagenci)
          AND crapbdt.flverbor =  1; -- bordero liberado na nova versão
-    
+    */
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
     TYPE typ_reg_craptdb IS RECORD
@@ -239,39 +275,38 @@ BEGIN
           vr_datacalc := rw_crapdat.dtmvtopr;
         END IF;
         
-        
-        
-      -- Calcula os valores de atraso do título    
-      DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper    
-                                    ,pr_nrdconta => rw_craptdb.nrdconta    
-                                    ,pr_nrborder => rw_craptdb.nrborder    
-                                    ,pr_cdbandoc => rw_craptdb.cdbandoc    
-                                    ,pr_nrdctabb => rw_craptdb.nrdctabb    
-                                    ,pr_nrcnvcob => rw_craptdb.nrcnvcob    
-                                    ,pr_nrdocmto => rw_craptdb.nrdocmto    
+      vr_index := vr_tab_craptdb.COUNT + 1;   
+      IF (rw_craptdb.dtvencto<=rw_crapdat.dtmvtolt) THEN -- titulo em atraso
+        -- Calcula os valores de atraso do título    
+        DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper    
+                                      ,pr_nrdconta => rw_craptdb.nrdconta    
+                                      ,pr_nrborder => rw_craptdb.nrborder    
+                                      ,pr_cdbandoc => rw_craptdb.cdbandoc    
+                                      ,pr_nrdctabb => rw_craptdb.nrdctabb    
+                                      ,pr_nrcnvcob => rw_craptdb.nrcnvcob    
+                                      ,pr_nrdocmto => rw_craptdb.nrdocmto    
                                       ,pr_dtmvtolt => vr_datacalc    
-                                    ,pr_vlmtatit => vr_vlmtatit    
-                                    ,pr_vlmratit => vr_vlmratit    
-                                    ,pr_vlioftit => vr_vlioftit    
-                                    ,pr_cdcritic => vr_cdcritic    
-                                    ,pr_dscritic => vr_dscritic);
-      
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
+                                      ,pr_vlmtatit => vr_vlmtatit    
+                                      ,pr_vlmratit => vr_vlmratit    
+                                      ,pr_vlioftit => vr_vlioftit    
+                                      ,pr_cdcritic => vr_cdcritic    
+                                      ,pr_dscritic => vr_dscritic);
+        
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+              
+        vr_tab_craptdb(vr_index).vlmtatit := vr_vlmtatit;
+        vr_tab_craptdb(vr_index).vlmratit := vr_vlmratit;
+        vr_tab_craptdb(vr_index).vlioftit := vr_vlioftit;
       END IF;
-      
-      vr_index := vr_tab_craptdb.COUNT + 1;
       
       -- Realiza o cálculo dos juros + 60 de mora do título
       IF (rw_craptdb.possui60 = 1) THEN
-        vr_tab_craptdb(vr_index).vljura60 := rw_craptdb.vljura60 + (vr_vlmratit - rw_craptdb.vlmratit);  
+         vr_tab_craptdb(vr_index).vljura60 := ROUND(rw_craptdb.vlsldtit*rw_craptdb.txdiariamora*(rw_crapdat.dtmvtolt-(rw_craptdb.maisvencido+59)),2);
       ELSE
         vr_tab_craptdb(vr_index).vljura60 := 0;
       END IF;
-      
-      vr_tab_craptdb(vr_index).vlmtatit := vr_vlmtatit;
-      vr_tab_craptdb(vr_index).vlmratit := vr_vlmratit;
-      vr_tab_craptdb(vr_index).vlioftit := vr_vlioftit;
       vr_tab_craptdb(vr_index).vr_rowid := rw_craptdb.ROWID;   
     END LOOP;
     
