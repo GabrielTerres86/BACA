@@ -160,6 +160,7 @@ foreach($emails as $email) {
 								<div id="divAbaTarifas"></div>
 								<div id="divConvenios"></div>
 								<div id="telaAprovacao"></div>
+								<div id="telaRejeicao"></div>
 							</td>							
 						</tr>
 						

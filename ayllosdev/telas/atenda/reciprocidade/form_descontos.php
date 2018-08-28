@@ -35,6 +35,19 @@ function exibeErro($msgErro) {
 	exit();
 }
 
+function getArrayByTagName( $xml, $tagName ) {
+	$resultado = "";
+	if ( $xml != ''){
+		foreach( $xml as $tag ) {
+			if ( strtoupper($tag->name) == strtoupper($tagName) ) {
+				$resultado = $tag;
+				break;
+			}
+		}
+	}
+	return $resultado->tags;
+}
+
 $idcalculo_reciproci = (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcalculo_reciproci'] : '';
 $cdcooper            = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
 $cddopcao            = (!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'C';
@@ -69,7 +82,8 @@ $vr_vldesconto_adicional_cee = getByTagName($dados->tags,"vr_vldesconto_adiciona
 $vr_idfim_desc_adicional_cee = getByTagName($dados->tags,"vr_idfim_desc_adicional_cee");
 $vr_dsjustificativa_desc_adic = getByTagName($dados->tags,"vr_dsjustificativa_desc_adic");
 $insitceb = getByTagName($dados->tags,"insitceb");
-$convenios = $dados->tags[13]->tags;
+
+$convenios = getArrayByTagName($dados->tags,"convenios");
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -298,7 +312,7 @@ descontoConvenios = [];
 		<tr class="corImpar">
 			<td>Data fim desc. Adicional COO</td>
 			<td align="right">
-				<input name="dtfimadicional_coo_old" id="dtfimadicional_coo_old" type="hidden" value="" />
+				<input name="dtfimadicional_coo_old" id="dtfimadicional_coo_old" type="hidden" value="<?php echo $vr_idfim_desc_adicional_coo; ?>" />
 				<select name="dtfimadicional_coo" id="dtfimadicional_coo" class="campo campoTelaSemBorda" disabled style="width:153px">
 					<option value=""></option>
 					<?php foreach($meses as $mes) {
@@ -318,7 +332,7 @@ descontoConvenios = [];
 		<tr class="corImpar">
 			<td>Data fim desc. Adicional CEE</td>
 			<td align="right">
-				<input name="dtfimadicional_cee_old" id="dtfimadicional_cee_old" type="hidden" value="" />
+				<input name="dtfimadicional_cee_old" id="dtfimadicional_cee_old" type="hidden" value="<?php echo $vr_idfim_desc_adicional_cee; ?>" />
 				<select name="dtfimadicional_cee" id="dtfimadicional_cee" class="campo campoTelaSemBorda" disabled style="width:153px">
 					<option value=""></option>
 					<?php foreach($meses as $mes) {
@@ -350,6 +364,7 @@ descontoConvenios = [];
 	<table width="100%" class="tabelaDesconto">
 		<tr class="corPar">
 			<td>
+				<textarea name="txtjustificativa_old" id="txtjustificativa_old" style="display:none"><?php echo $vr_dsjustificativa_desc_adic; ?></textarea>
 				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"><?php echo $vr_dsjustificativa_desc_adic; ?></textarea>
 			</td>
 		</tr>
@@ -359,8 +374,9 @@ descontoConvenios = [];
 
 <div id="divBotoes" style="margin:5px">
     <a href="#" id="btnContinuar" class="botao">Continuar</a>
-	<?php if ($insitceb == 3 && $cddopcao != 'C') { ?>
+	<?php if ($insitceb == 3) { ?>
     <a href="#" id="btnAbrirAprovacao" class="botao" onclick="abrirAprovacao(true)">Aprovar</a>
+	<a href="#" id="btnAbrirRejeicao" class="botao" onclick="abrirRejeicao()">Rejeitar</a>
 	<?php } ?>
     <a href="#" id="btnAprovacao" class="botao">Solicitar aprova&ccedil;&atilde;o</a>
     <a href="#" class="botao" onclick="consulta('A','','',true,'','', 1);return false;">Tarifas instru&ccedil;&atilde;o</a>

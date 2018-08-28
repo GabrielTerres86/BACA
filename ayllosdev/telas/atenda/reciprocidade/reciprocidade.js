@@ -251,12 +251,14 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
     $("#insitceb", "#divConteudoOpcao").val(insitceb);
 
     $('#btnAbrirAprovacao').hide();
+    $('#btnAbrirRejeicao').hide();
 
     if (insitceb == '2') {
         $("#btnAlterarConvenio").hide();
     } else if (insitceb == '3') {
-        $("#btnAlterarConvenio").show();
+        $("#btnAlterarConvenio").hide();
         $('#btnAbrirAprovacao').show();
+        $('#btnAbrirRejeicao').show();
     } else {
         $("#btnAlterarConvenio").show();
     }
@@ -2837,6 +2839,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 	var cDataFimAdicionalCoo    = $('#dtfimadicional_coo', '.tabelaDesconto');
 	var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
 	var cJustificativaDesc      = $('#txtjustificativa', '.tabelaDesconto');
+	var cJustificativaDescOld   = $('#txtjustificativa_old', '.tabelaDesconto');
 
 	var vVldesconto_cee         = Number(converteNumero(cVldesconto_cee.val()));
 	var vVldesconto_ceeOld      = Number(converteNumero(cVldesconto_ceeOld.val()));
@@ -2847,6 +2850,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 	var vDataFimAdicionalCoo    = cDataFimAdicionalCoo.find('option:selected').text();
 	var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
 	var vJustificativaDesc      = cJustificativaDesc.val();
+	var vJustificativaDescOld   = cJustificativaDescOld.val();
 
     if (!cee && !coo) {
         cJustificativaDesc.desabilitaCampo();
@@ -2874,7 +2878,7 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vVldesconto_coo != vVldesconto_cooOld && vVldesconto_coo) ||
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
-            vJustificativaDesc ) {
+            (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ) {
 
 		/*btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
 		btnContinuar.prop('disabled', true);
@@ -3037,6 +3041,39 @@ function abrirAprovacao(hideBtnDetalhes) {
             }
             /*$('#divUsoGenerico').html(response);
             exibeRotina($('#divUsoGenerico'));*/
+        }
+    });
+}
+
+function abrirRejeicao() {
+    var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+
+    blockBackground(parseInt($("#divRotina").css("z-index")));
+
+    $.ajax({
+        type: "POST",
+        dataType: 'html',
+        url: UrlSite + "telas/cadres/tela_rejeicao.php",
+        data: {
+            cdcooper: cdcooper,
+            idrecipr: idrecipr,
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + objExcept.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+        },
+        beforeSend: function () {
+            showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
+        },
+        success: function (response) {
+            var telaRejeicao = $('#telaRejeicao');
+            $("#divConteudoOpcao").hide();
+            telaRejeicao.html(response);
+            telaRejeicao.find('#btVoltar').click(function (){
+                $('#divConteudoOpcao').show();
+                telaRejeicao.hide();
+            });
         }
     });
 }

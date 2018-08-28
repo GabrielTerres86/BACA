@@ -160,6 +160,7 @@ function exibeErro($msgErro) {
 	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('C');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
 	<a href="#" id="btnAlterarConvenio" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('A');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
     <a href="#" class="botao" onclick="abrirAprovacao(false); return false;" id="btnAbrirAprovacao">Aprovar</a>
+	<a href="#" class="botao" onclick="abrirRejeicao(); return false;" id="btnAbrirRejeicao">Rejeitar</a>
 	<?php //Habilitar botão apenas se possuir cobrança ativa
           // e se o serviço estiver ativo ou com algum tipo de alerta
           // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          

@@ -17,7 +17,7 @@ isPostMethod();
 
 // Recebe a operação que está sendo realizada
 $cdcooper = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
-$idrecipr = (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : '7925'; //debug @TODO: buscar variavel
+$idrecipr = (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : '';
 $cdalcada = (!empty($_POST['cdalcada'])) ? $_POST['cdalcada'] : '';
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
@@ -28,70 +28,46 @@ function exibeErroNew($msgErro) {
     exit('hideMsgAguardo();showError("error","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");');
 }
 ?>
-<table id="telaRejeicao" cellpadding="0" cellspacing="0" border="0" width="100%">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr>
-		<td align="center">
-			<table border="0" cellpadding="0" cellspacing="0" width="500">
+		<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
+			<table width="100%" border="0" cellpadding="0" cellspacing="0">
 				<tr>
-					<td>
-						<table width="100%" border="0" cellspacing="0" cellpadding="0">
-							<tr>
-								<td width="11"><img src="<? echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold" background="<? echo $UrlImagens; ?>background/tit_tela_fundo.gif"><span class="tituloJanelaPesquisa">Rejei&ccedil;&atilde;o</span></td>
-								<td width="12" id="tdTitTela" background="<? echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a class="fecharPesquisa" onclick="fechaRotina($('#telaRejeicao'));return false;"><img src="<? echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
-								<td width="8"><img src="<? echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
-							</tr>
-						</table>     
-					</td>
-				</tr>
-				<tr>
-					<td class="tdConteudoTela" align="center">
-						<table width="100%" border="0" cellspacing="0" cellpadding="0">
-							<tr>
-								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
-									<table width="100%" border="0" cellpadding="0" cellspacing="0">
-										<tr>
-											<td align="center">
+					<td align="center">
 
-												<!-- CABECALHO DO RESULTADO DA CONSULTA -->
-												<div id="divCabecalhoAprovacao" class="divCabecalhoPesquisa">
-													<table width="100%" border="0" cellpadding="0" cellspacing="0">
-														<thead>
-															<tr>
-																<td width="70%" style="font-size:11px;">Informe o motivo</td>
-																<td width="30%" style="font-size:11px;">Usu&aacute;rio</td>
-															</tr>
-														</thead>
-													</table>
-												</div>
+						<!-- CABECALHO DO RESULTADO DA CONSULTA -->
+						<div id="divCabecalhoAprovacao" class="divCabecalhoPesquisa">
+							<table width="100%" border="0" cellpadding="0" cellspacing="0">
+								<thead>
+									<tr>
+										<td width="70%" style="font-size:11px;">Informe o motivo</td>
+										<td width="30%" style="font-size:11px;">Usu&aacute;rio</td>
+									</tr>
+								</thead>
+							</table>
+						</div>
 
-												<!-- DIV DO RESULTADO DA CONSULTA -->
-												<div id="divResultadoAprovacao" class="divResultadoPesquisa" style="height:auto">
-													<table width="100%" border="0" cellpadding="0" cellspacing="0">
-														<tbody>
-															<tr>
-																<td width="70%" style="font-size:11px">
-                                                                    <textarea id="dsjustificativa" class="textarea" style="height:60px;width:100%"></textarea>
-                                                                </td>
-																<td width="30%" style="padding:2px 4px;height:25px;font-size:11px">
-                                                                    <?php echo $glbvars["nmoperad"]; ?>
-                                                                </td>
-															</tr>
-														</tbody>
-													</table>
-												</div>
+						<!-- DIV DO RESULTADO DA CONSULTA -->
+						<div id="divResultadoAprovacao" class="divResultadoPesquisa" style="height:auto">
+							<table width="100%" border="0" cellpadding="0" cellspacing="0">
+								<tbody>
+									<tr>
+										<td width="70%" style="font-size:11px">
+											<textarea id="dsjustificativa" class="textarea" style="height:60px;width:100%"></textarea>
+										</td>
+										<td width="30%" style="padding:2px 4px;height:25px;font-size:11px">
+											<?php echo $glbvars["nmoperad"]; ?>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
 
-												<div id="divBotoes" style="margin-bottom: 10px;">
-													<a href="#" class="botao" id="btPopupVoltar" onclick="fechaRotina($('#telaRejeicao'));">Voltar</a>
-													<a href="#" class="botaoDesativado" id="btPopupRejeitar" onclick="rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $cdalcada; ?>,<?php echo $idrecipr; ?>)">Enviar</a>
-												</div>
+						<div id="divBotoes" style="margin-bottom: 10px;">
+							<a href="#" class="botao" id="btVoltar">Voltar</a>
+							<a href="#" class="botaoDesativado" id="btPopupRejeitar" onclick="rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $cdalcada; ?>,<?php echo $idrecipr; ?>)">Enviar</a>
+						</div>
 
-											</td>
-										</tr>
-									</table>
-								</td>
-							</tr>
-						</table>
 					</td>
 				</tr>
 			</table>
@@ -100,8 +76,8 @@ function exibeErroNew($msgErro) {
 </table>
 <script>
 	hideMsgAguardo();
-	// exibe tela de aprovação
-	$('#telaRejeicao').css('visibility','visible').setCenterPosition();
+	// exibe tela de rejeicao
+	$('#telaRejeicao').show().setCenterPosition();
 
 	// bloqueia div "pai"
 	blockBackground(parseInt($("#divRotina").css("z-index")));
