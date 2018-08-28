@@ -49,7 +49,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                 - Inclusão de Exception na inserção da tabela tbhist_ativo_probl (Fernando Ornelas AMcom)
                                 - Criacao de regra de data de corte para considerar a Tag '<Inf Tp="1998" />' do
                                   Colateral Financeiro - Heckmann (AMcom)
-
+                     28/08/2018 - Instruido por jaison  (Ornelas AMCom)
+                                - Quando o Juros60 for maior que o valor da divida, enviar o valor da divida, senao subtrair do valor da divida o Juros60. 
 .............................................................................................................................*/
 
     DECLARE
@@ -6453,9 +6454,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
               -- estejam em Prejuízo (innivris = 10)
               IF vr_tab_individ(vr_idx_individ).cdorigem = 3 AND vr_tab_individ(vr_idx_individ).innivris = 10 THEN
-                vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
-                                                                        ,pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
-                                                                        ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp)),0);
+
+
+                   -- Quando o Juros60 for maior que o valor da divida, enviar o valor da divida, senao subtrair do valor da divida o Juros60
+                   if nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => vr_tab_agreg(vr_indice_agreg).nrdconta
+                                                      ,pr_nrctremp => vr_tab_agreg(vr_indice_agreg).nrctremp)),0) < vr_vldivnor then
+
+                          vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                                                  ,pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
+                                                                                  ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp)),0);
+                   END IF;
               END IF;
 
               -- Enviar vencimento
@@ -7174,9 +7183,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                 -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
                 -- estejam em Prejuízo (innivris = 10)
                 IF vr_tab_agreg(vr_indice_agreg).cdorigem = 3 AND vr_tab_agreg(vr_indice_agreg).innivris = 10 THEN
-                   vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                   -- Quando o Juros60 for maior que o valor da divida, enviar o valor da divida, senao subtrair do valor da divida o Juros60
+                   if nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => vr_tab_agreg(vr_indice_agreg).nrdconta
+                                                      ,pr_nrctremp => vr_tab_agreg(vr_indice_agreg).nrctremp)),0) < vr_vldivnor then
+                        vr_vldivnor := vr_vldivnor - nvl((PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
                                                                                ,pr_nrdconta => vr_tab_agreg(vr_indice_agreg).nrdconta
                                                                                ,pr_nrctremp => vr_tab_agreg(vr_indice_agreg).nrctremp)),0);
+                    end if;
                 END IF;
 
                 IF vr_tpexecucao = 2 Then
