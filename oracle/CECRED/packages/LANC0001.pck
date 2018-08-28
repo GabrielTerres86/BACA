@@ -195,6 +195,12 @@ PROCEDURE pc_incluir_lote(pr_dtmvtolt   IN  craplot.dtmvtolt%TYPE DEFAULT NULL
                         , pr_rw_craplot OUT cr_craplot%ROWTYPE -- Retorna o registro inserido na CRAPLOT
                         , pr_cdcritic   OUT PLS_INTEGER
                         , pr_dscritic   OUT VARCHAR2);
+                        
+FUNCTION fn_retorna_val_bloq_transf(pr_cdcooper craplcm.cdcooper%TYPE
+                                  , pr_nrdconta craplcm.nrdconta%TYPE
+                                  , pr_cdhistor craplcm.cdhistor%TYPE
+                                  , pr_dtmvtolt craplcm.dtmvtolt%TYPE DEFAULT NULL)
+  RETURN  tbblqj_ordem_transf.vlordem%TYPE;                        
 
 END LANC0001;
 /
@@ -274,10 +280,8 @@ BEGIN
 
        vr_tab_historico(vr_chvhist).indebcre := rw_historico.indebcre;
        vr_tab_historico(vr_chvhist).indebprj := rw_historico.indebprj;
-			 vr_tab_historico(vr_chvhist).intransf_cred_prejuizo := rw_historico.intransf_cred_prejuizo;
 			 vr_reg_historico.indebcre := rw_historico.indebcre;
 			 vr_reg_historico.indebprj := rw_historico.indebprj;
-			 vr_reg_historico.intransf_cred_prejuizo := rw_historico.intransf_cred_prejuizo;
      END IF;
 
      RETURN vr_reg_historico;
@@ -464,7 +468,7 @@ DECLARE
     vr_flgcredi       BOOLEAN;                 -- Flag indicadora para Crédito/Débito
 		vr_inprejuz       BOOLEAN;                 -- Indicador de conta em prejuízo
 		vr_vlsldblq       tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; -- Saldo bloqueado por BACENJUD (somente para Créditos)
-		vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)
+		vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)    
 
     vr_exc_erro       EXCEPTION;
 BEGIN
@@ -614,7 +618,7 @@ BEGIN
 			-- Identifica se a conta está em prejuízo
   		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
 
-			IF vr_inprejuz AND vr_reg_historico.intransf_cred_prejuizo = 1  
+			IF vr_inprejuz AND vr_reg_historico.intransf_cred_prejuizo = 1
 			AND vr_inatvprj THEN
 				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
 
@@ -631,6 +635,17 @@ BEGIN
 						vr_vltransf := 0;
 					END IF;
 			  END IF;
+        
+        --> Verificar se for os historicos de desbloqueio
+        IF pr_cdhistor IN (1404,1405) THEN
+        
+          -- Verificar se possui TED de bloqueio judicial pendente e retornar saldo 
+          -- para bloquio prejuixo caso possua
+          vr_vltransf :=  fn_retorna_val_bloq_transf( pr_cdcooper => pr_cdcooper
+                                                    , pr_nrdconta => pr_nrdconta
+                                                    , pr_cdhistor => pr_cdhistor
+                                                    , pr_dtmvtolt => pr_dtmvtolt);
+        END IF;
 
 				-- Se há valor a transferir após verificação de bloqueio por BACENJUD
 				IF vr_vltransf > 0 THEN
@@ -640,8 +655,6 @@ BEGIN
                                     ,pr_dsdchave => to_char(pr_cdcooper)||';'||
                                     to_char(pr_dtmvtolt, 'DD/MM/RRRR')||';'||
                                     '1;100;650009');
-
-
 
 					-- Efetua débito do valor que será transferido para a Conta Transitória (créditos bloqueados por prejuízo em conta)
 					INSERT INTO craplcm (
@@ -1266,6 +1279,75 @@ BEGIN
       pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || ' pc_incluir_lote - ' || SQLERRM || ')';
   END;
 END pc_incluir_lote;
+
+FUNCTION fn_retorna_val_bloq_transf(pr_cdcooper craplcm.cdcooper%TYPE
+                                  , pr_nrdconta craplcm.nrdconta%TYPE
+                                  , pr_cdhistor craplcm.cdhistor%TYPE
+                                  , pr_dtmvtolt craplcm.dtmvtolt%TYPE DEFAULT NULL)
+  RETURN  tbblqj_ordem_transf.vlordem%TYPE AS vr_vlbloq tbblqj_ordem_transf.vlordem%TYPE;
+  
+  /* .............................................................................
+
+    Programa: fn_retorna_val_bloq_transf
+    Sistema :
+    Sigla   : LANC
+    Autor   : Heckmann - AMcom
+    Data    : Agosto/2018.                  Ultima atualizacao: 28/08/2018
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para identificar se o valor de credito se refere a TED
+                para bloqueio judicial e se sobrará saldo que deverá ir para o bloqueado prejuizo..
+
+    Alteracoes:
+
+    ..............................................................................*/ 
+
+ 
+  -- Cursores
+  CURSOR cr_vlordem IS
+    SELECT Sum(b.vlordem) vlordem
+      FROM tbblqj_ordem_transf b
+          ,tbblqj_ordem_online a
+     WHERE a.tpordem = 4 -- Ted
+       AND a.instatus = 1 -- Pendente
+       AND b.idordem = a.idordem
+       AND a.cdcooper = pr_cdcooper
+       AND b.nrdconta = pr_nrdconta;
+    rw_vlordem cr_vlordem%ROWTYPE;
+    
+  CURSOR cr_craplcm IS
+    SELECT sum(craplcm.vllanmto) vllanmto 
+      FROM craplcm craplcm
+     WHERE craplcm.cdcooper = pr_cdcooper
+       AND craplcm.nrdconta = pr_nrdconta
+       AND craplcm.cdhistor = pr_cdhistor
+       AND craplcm.dtmvtolt = pr_dtmvtolt;
+    rw_craplcm cr_craplcm%ROWTYPE;
+  
+BEGIN
+  
+  --> Buscar ordens de Transferencias pendentes
+  OPEN cr_vlordem;
+  FETCH cr_vlordem INTO rw_vlordem;
+  CLOSE cr_vlordem;
+  
+  --> Buscar lançamentos no dia
+  OPEN cr_craplcm;
+  FETCH cr_craplcm INTO rw_craplcm;
+  CLOSE cr_craplcm;
+  
+  -- Caso o valor de lançamentos for maior que o total de ordens está diferença deve ser 
+  -- transferida para o bloqueado prejuízo                          
+  IF nvl(rw_craplcm.vllanmto,0) > nvl(rw_vlordem.vlordem,0) THEN
+    vr_vlbloq := nvl(rw_craplcm.vllanmto,0) - nvl(rw_vlordem.vlordem,0);                      
+  END IF;
+  
+  RETURN vr_vlbloq;
+  
+END fn_retorna_val_bloq_transf;
 
 END LANC0001;
 /
