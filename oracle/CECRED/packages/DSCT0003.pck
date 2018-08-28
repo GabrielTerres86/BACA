@@ -54,6 +54,35 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
 
 
   --Tipo de Desconto de Títulos
+  TYPE typ_prejuizo IS RECORD(
+       dtliqprj DATE
+      ,dtprejuz DATE
+      ,diasatrs INTEGER
+      ,vlaboprj NUMBER(25,2)
+      ,vlacrprj NUMBER(25,2)
+      ,inprejuz NUMBER(25,2)
+      ,tojraprj NUMBER(25,2)
+      ,tojrmprj NUMBER(25,2)
+      ,topgjmpr NUMBER(25,2)
+      ,topgmupr NUMBER(25,2)
+      ,toprejuz NUMBER(25,2)
+      ,tosdprej NUMBER(25,2)
+      ,tosprjat NUMBER(25,2)
+      ,tottjmpr NUMBER(25,2)
+      ,tottmupr NUMBER(25,2)
+      ,vljraprj NUMBER(25,2)
+      ,vljrmprj NUMBER(25,2)
+      ,vlpgjmpr NUMBER(25,2)
+      ,vlpgmupr NUMBER(25,2)
+      ,vlprejuz NUMBER(25,2)
+      ,vlsdprej NUMBER(25,2)
+      ,vlsprjat NUMBER(25,2)
+      ,vlttjmpr NUMBER(25,2)
+      ,vlttmupr NUMBER(25,2)
+      );
+  TYPE typ_tab_preju IS TABLE OF typ_prejuizo INDEX BY PLS_INTEGER;
+  
+  --Tipo de Desconto de Títulos
   TYPE typ_desconto_titulos IS RECORD --(b1wgen0030.p/tt-desconto_titulos)
       (nrctrlim NUMBER
       ,dtinivig craplim.dtinivig%TYPE
@@ -633,6 +662,27 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                      ,pr_cdcritic OUT PLS_INTEGER                 --> código da crítica
                                      ,pr_dscritic OUT VARCHAR2                    --> descrição da crítica
                                      );
+
+  PROCEDURE pc_busca_dados_prejuizo(pr_cdcooper  IN crapbdt.cdcooper%TYPE
+                                   ,pr_nrdconta  IN crapbdt.nrdconta%TYPE
+                                   ,pr_nrborder  IN crapbdt.nrborder%TYPE
+                                   ,pr_chave     IN VARCHAR2 DEFAULT NULL
+                                   -- OUT --
+                                   ,pr_tab_prej OUT typ_tab_preju
+                                   ,pr_cdcritic OUT PLS_INTEGER
+                                   ,pr_dscritic OUT VARCHAR2
+                                   );
+                                   
+  PROCEDURE pc_busca_dados_prejuizo_web (pr_nrdconta    IN crapass.nrdconta%TYPE --> conta do associado
+                                        ,pr_nrborder    IN crapbdt.nrborder%TYPE --> numero do bordero
+                                        ,pr_xmllog      IN VARCHAR2              --> xml com informações de log
+                                        --------> OUT <--------
+                                        ,pr_cdcritic OUT PLS_INTEGER             --> código da crítica
+                                        ,pr_dscritic OUT VARCHAR2                --> descrição da crítica
+                                        ,pr_retxml   IN OUT NOCOPY xmltype       --> arquivo de retorno do xml
+                                        ,pr_nmdcampo OUT VARCHAR2                --> nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2                --> erros do processo
+                                        );                                     
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -643,7 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     Sistema  : Procedimentos envolvendo liberação de borderôs
     Sigla    : CRED
     Autor    : André Ávila - GFT
-    Data     : Abril/2018.                   Ultima atualizacao: 10/04/2018
+    Data     : Abril/2018.                   Ultima atualizacao: 24/08/2018
 
    Dados referentes ao programa:
 
@@ -1539,6 +1589,7 @@ END pc_inserir_lancamento_bordero;
          ,crapbdt.insitapr
          ,crapbdt.dtenvmch
          ,crapbdt.dtanabor
+         ,crapbdt.inprejuz
    FROM   crapbdt
    WHERE  crapbdt.cdcooper = pr_cdcooper
    AND    crapbdt.nrborder = pr_nrborder;
@@ -1601,6 +1652,12 @@ END pc_inserir_lancamento_bordero;
                    CLOSE cr_crapbdt;
                    RAISE vr_exc_erro;
                END IF;
+             END IF;
+           ELSIF pr_cddeacao = 'PREJUIZO' THEN
+             IF rw_crapbdt.inprejuz <> 1 THEN
+                vr_dscritic := 'O Borderô não está em Prejuizo.';
+                CLOSE cr_crapbdt;
+                RAISE vr_exc_erro;
              END IF;
            ELSE
                  vr_dscritic := 'Opção inválida informada para o parâmetro pr_cddeacao da dsct0003.pc_valida_bordero';
@@ -8108,7 +8165,7 @@ EXCEPTION
                          ,pr_cdbccxlt => 100
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_vllanmto => vr_vlpagmto
-                         ,pr_cdhistor => vr_cdhistordsct_creddscttitpgm
+                         ,pr_cdhistor => vr_cdhistordsct_creddscttitpgm -- awae: vr_cdhistordsct_credito
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_cdoperad => pr_cdoperad
                          ,pr_nrborder => pr_nrborder
@@ -8982,6 +9039,7 @@ EXCEPTION
     vr_inrisccalculado number := 2; -- começa como A
     vr_riscoatual      number := 2; -- começa como A
     vr_dias            number := 0; -- dias do vencimento até a data de movimento
+    vr_qtrisccalculado NUMBER := 0;
 
     CURSOR cr_crapbdt IS
     SELECT 
@@ -8989,9 +9047,9 @@ EXCEPTION
       bdt.nrborder,
       bdt.nrinrisc,
       bdt.qtdirisc,
-      bdt.insitbdt
-    FROM
-      crapbdt bdt
+      bdt.insitbdt,
+      bdt.dtmvtolt
+    FROM crapbdt bdt
     WHERE
       bdt.nrborder = pr_nrborder
       AND bdt.cdcooper = pr_cdcooper
@@ -9001,6 +9059,7 @@ EXCEPTION
     CURSOR cr_craptdb IS
     SELECT 
       tdb.dtvencto,
+      tdb.dtlibbdt,
       tdb.insittit
     FROM 
       craptdb tdb 
@@ -9052,18 +9111,22 @@ EXCEPTION
         -- Calcula o pior risco dos títulos e guarda para o bordero 
         IF (vr_riscoatual>vr_inrisccalculado) THEN
           vr_inrisccalculado := vr_riscoatual;
+          vr_qtrisccalculado := vr_dias;
         END IF;
       END LOOP;
       CLOSE cr_craptdb;
       
-      -- Atualiza bordero
-      IF (vr_inrisccalculado <> rw_crapbdt.nrinrisc) THEN -- se mudou o risco, atualiza o parametro para a tabela e zera a data
-        rw_crapbdt.nrinrisc := vr_inrisccalculado;
-        rw_crapbdt.qtdirisc := 0;
-      ELSE                                                -- se o risco é o mesmo, soma mais um dia na data
-        rw_crapbdt.nrinrisc := vr_inrisccalculado;
-        rw_crapbdt.qtdirisc := rw_crapbdt.qtdirisc +1 ;
-      END IF;
+      rw_crapbdt.nrinrisc := vr_inrisccalculado;
+      rw_crapbdt.qtdirisc := CASE 
+                        WHEN (vr_inrisccalculado = 2) THEN rw_crapdat.dtmvtolt - rw_crapbdt.dtmvtolt
+                        WHEN (vr_inrisccalculado = 3) THEN vr_dias-15 -- entre 15 e 31
+                        WHEN (vr_inrisccalculado = 4) THEN vr_dias-30 -- entre 31 e 60
+                        WHEN (vr_inrisccalculado = 5) THEN vr_dias-60 -- entre 61 e 90
+                        WHEN (vr_inrisccalculado = 6) THEN vr_dias-90 -- entre 91 e 120
+                        WHEN (vr_inrisccalculado = 7) THEN vr_dias-120 -- entre 121 e 150
+                        WHEN (vr_inrisccalculado = 8) THEN vr_dias-150 -- entre 151 e 180
+                        ELSE  vr_dias-181 -- a partir de 181 dias
+                      END ;
 
       UPDATE
         crapbdt
@@ -9085,5 +9148,296 @@ EXCEPTION
         WHEN OTHERS THEN 
           pr_dscritic := 'Erro nao tratado na DSCT0003.pc_calcula_risco_bordero ' ||SQLERRM;
   END pc_calcula_risco_bordero;
+  
+  PROCEDURE pc_busca_dados_prejuizo(pr_cdcooper  IN crapbdt.cdcooper%TYPE
+                                   ,pr_nrdconta  IN crapbdt.nrdconta%TYPE
+                                   ,pr_nrborder  IN crapbdt.nrborder%TYPE
+                                   ,pr_chave     IN VARCHAR2 DEFAULT NULL
+                                   -- OUT --
+                                   ,pr_tab_prej OUT typ_tab_preju
+                                   ,pr_cdcritic OUT PLS_INTEGER
+                                   ,pr_dscritic OUT VARCHAR2
+                                   ) IS
+   /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_dados_prejuizo
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Vitor Shimada Assanuma (GFT)
+      Data     : 24/08/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Buscar os valores de prejuizo do bordero e titulos
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Tratamento de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> cód. erro
+    vr_dscritic VARCHAR2(1000);        --> desc. erro
+    
+    -- Vetor da chave do titulo
+    vr_tab_chaves  gene0002.typ_split;
+    vr_index INTEGER;
+    
+    -- Cursor Bordero somatório
+    CURSOR cr_crapbdt IS
+      SELECT
+        bdt.dtliqprj
+        ,bdt.dtprejuz
+        ,bdt.inprejuz
+        ,bdt.vlaboprj
+        ,/*Ver com a contabilidade */0 AS vlacrprj
+        ,SUM(tdb.vljraprj)        AS tojraprj
+        ,SUM(tdb.vljrmprj)        AS tojrmprj
+        ,SUM(tdb.vlpgjmpr)        AS topgjmpr
+        ,SUM(tdb.vlpgmupr)        AS topgmupr
+        ,SUM(tdb.vlprejuz)        AS toprejuz
+        ,SUM(tdb.vlsdprej)        AS tosdprej
+        ,SUM(tdb.vlsprjat)        AS tosprjat
+        ,SUM(tdb.vlttjmpr)        AS tottjmpr
+        ,SUM(tdb.vlttmupr)        AS tottmupr
+        ,MIN(tdb.dtvencto)        AS dtminven
+      FROM crapbdt bdt
+        INNER JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+      WHERE bdt.cdcooper = pr_cdcooper
+        AND bdt.nrdconta = pr_nrdconta
+        AND bdt.nrborder = pr_nrborder
+      GROUP BY
+        bdt.dtliqprj, bdt.dtprejuz, bdt.inprejuz, bdt.vlaboprj
+    ;rw_crapbdt cr_crapbdt%ROWTYPE;
+    
+    -- Cursor que retorna um titulo em específico
+    CURSOR cr_craptdb (pr_nrdocmto IN craptdb.nrdocmto%TYPE
+                      ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE
+                      ,pr_nrdctabb IN craptdb.nrdctabb%TYPE
+                      ,pr_cdbandoc IN craptdb.cdbandoc%TYPE) IS
+      SELECT
+        bdt.dtliqprj
+        ,bdt.dtprejuz
+        ,bdt.inprejuz
+        ,bdt.vlaboprj
+        /*Ver com a contabilidade*/,0 AS vlacrprj
+        ,tdb.vljraprj
+        ,tdb.vljrmprj
+        ,tdb.vlpgjmpr
+        ,tdb.vlpgmupr
+        ,tdb.vlprejuz
+        ,tdb.vlsdprej
+        ,tdb.vlsprjat
+        ,tdb.vlttjmpr
+        ,tdb.vlttmupr
+      FROM crapbdt bdt
+        INNER JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
+      WHERE tdb.cdcooper = pr_cdcooper
+        AND tdb.nrdconta = pr_nrdconta
+        AND tdb.nrborder = pr_nrborder
+        AND tdb.nrdocmto = pr_nrdocmto
+        AND tdb.nrcnvcob = pr_nrcnvcob
+        AND tdb.nrdctabb = pr_nrdctabb
+        AND tdb.cdbandoc = pr_cdbandoc
+    ;rw_craptdb cr_craptdb%ROWTYPE;
+    
+    BEGIN
+      --    Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      
+      vr_index := 0;
+      -- Caso tenha passado uma chave, então retorna apenas o titulo, senão retorna o somatório para o bordero.
+      IF pr_chave IS NOT NULL THEN 
+        vr_tab_chaves := gene0002.fn_quebra_string(pr_string  => pr_chave,
+                                                   pr_delimit => ';');
+        OPEN cr_craptdb (vr_tab_chaves(4), -- Conta
+                         vr_tab_chaves(3), -- Convenio
+                         vr_tab_chaves(2), -- Conta base do banco
+                         vr_tab_chaves(1)  -- Codigo do banco
+                         );
+        FETCH cr_craptdb INTO rw_craptdb;    
+        IF cr_craptdb%NOTFOUND THEN
+          CLOSE cr_craptdb;
+          vr_dscritic := 'Titulo não encontrado.';
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_craptdb;
+        pr_tab_prej(vr_index).dtliqprj := rw_craptdb.dtliqprj;
+        pr_tab_prej(vr_index).dtprejuz := rw_craptdb.dtprejuz;
+        pr_tab_prej(vr_index).vlacrprj := rw_craptdb.vlacrprj;
+        pr_tab_prej(vr_index).vlaboprj := rw_craptdb.vlaboprj;
+        pr_tab_prej(vr_index).vljraprj := rw_craptdb.vljraprj;
+        pr_tab_prej(vr_index).vljrmprj := rw_craptdb.vljrmprj;
+        pr_tab_prej(vr_index).vlpgjmpr := rw_craptdb.vlpgjmpr;
+        pr_tab_prej(vr_index).vlpgmupr := rw_craptdb.vlpgmupr;
+        pr_tab_prej(vr_index).vlprejuz := rw_craptdb.vlprejuz;
+        pr_tab_prej(vr_index).vlsdprej := rw_craptdb.vlsdprej;
+        pr_tab_prej(vr_index).vlsprjat := rw_craptdb.vlsprjat;
+        pr_tab_prej(vr_index).vlttjmpr := rw_craptdb.vlttjmpr;
+        pr_tab_prej(vr_index).vlttmupr := rw_craptdb.vlttmupr;                                       
+      ELSE
+        OPEN cr_crapbdt;
+        FETCH cr_crapbdt INTO rw_crapbdt;
+        
+        IF cr_crapbdt%NOTFOUND THEN
+          CLOSE cr_crapbdt;
+          vr_dscritic := 'Bordero não encontrado.';
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_crapbdt;
+        pr_tab_prej(vr_index).dtliqprj := rw_crapbdt.dtliqprj;
+        pr_tab_prej(vr_index).dtprejuz := rw_crapbdt.dtprejuz;
+        pr_tab_prej(vr_index).diasatrs := rw_crapbdt.dtminven - rw_crapdat.dtmvtolt;
+        pr_tab_prej(vr_index).vlacrprj := rw_crapbdt.vlacrprj;
+        pr_tab_prej(vr_index).inprejuz := rw_crapbdt.inprejuz;
+        pr_tab_prej(vr_index).vlaboprj := rw_crapbdt.vlaboprj;
+        pr_tab_prej(vr_index).tojraprj := rw_crapbdt.tojraprj;
+        pr_tab_prej(vr_index).tojrmprj := rw_crapbdt.tojrmprj;
+        pr_tab_prej(vr_index).topgjmpr := rw_crapbdt.topgjmpr;
+        pr_tab_prej(vr_index).topgmupr := rw_crapbdt.topgmupr;
+        pr_tab_prej(vr_index).toprejuz := rw_crapbdt.toprejuz;
+        pr_tab_prej(vr_index).tosdprej := rw_crapbdt.tosdprej;
+        pr_tab_prej(vr_index).tosprjat := rw_crapbdt.tosprjat;
+        pr_tab_prej(vr_index).tottjmpr := rw_crapbdt.tottjmpr;
+        pr_tab_prej(vr_index).tottmupr := rw_crapbdt.tottmupr;
+      END IF;
+    EXCEPTION
+      WHEN vr_exc_erro THEN 
+        IF  nvl(vr_cdcritic,0) <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral na rotina DSCT0003.pc_busca_dados_prejuizo: '||SQLERRM;
+    
+  END pc_busca_dados_prejuizo;
+  
+  PROCEDURE pc_busca_dados_prejuizo_web (pr_nrdconta    IN crapass.nrdconta%TYPE --> conta do associado
+                                        ,pr_nrborder    IN crapbdt.nrborder%TYPE --> numero do bordero
+                                        ,pr_xmllog      IN VARCHAR2              --> xml com informações de log
+                                        --------> OUT <--------
+                                        ,pr_cdcritic OUT PLS_INTEGER             --> código da crítica
+                                        ,pr_dscritic OUT VARCHAR2                --> descrição da crítica
+                                        ,pr_retxml   IN OUT NOCOPY xmltype       --> arquivo de retorno do xml
+                                        ,pr_nmdcampo OUT VARCHAR2                --> nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2                --> erros do processo
+                                        ) IS
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_dados_prejuizo_web
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Vitor Shimada Assanuma (GFT)
+      Data     : 24/08/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Buscar os valores de prejuizo do bordero e titulos
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Tratamento de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> cód. erro
+    vr_dscritic VARCHAR2(1000);        --> desc. erro
+        
+    -- Variaveis de entrada vindas no xml
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);        
+    
+    -- Retorno da tabela de prejuizo
+    vr_tab_prej typ_tab_preju;
+     
+    BEGIN
+      pr_des_erro := 'OK';
+      pr_nmdcampo := NULL;
+      
+      gene0004.pc_extrai_dados( pr_xml      => pr_retxml
+                              , pr_cdcooper => vr_cdcooper
+                              , pr_nmdatela => vr_nmdatela
+                              , pr_nmeacao  => vr_nmeacao
+                              , pr_cdagenci => vr_cdagenci
+                              , pr_nrdcaixa => vr_nrdcaixa
+                              , pr_idorigem => vr_idorigem
+                              , pr_cdoperad => vr_cdoperad
+                              , pr_dscritic => vr_dscritic);
+                              
+      -- Verifica se o Bordero está em prejuizo
+      pc_valida_bordero(pr_cdcooper => vr_cdcooper
+                       ,pr_nrborder => pr_nrborder
+                       ,pr_cddeacao => 'PREJUIZO'
+                       ,pr_dscritic => vr_dscritic);
+      IF (vr_dscritic IS NOT NULL) THEN
+         RAISE vr_exc_erro;
+      END IF;
+      
+      -- Busca as informações do bordero em prejuizo
+      pc_busca_dados_prejuizo(pr_cdcooper => vr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nrborder => pr_nrborder
+                             -- OUT --
+                             ,pr_tab_prej => vr_tab_prej
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+      IF (vr_dscritic IS NOT NULL) THEN
+         raise vr_exc_erro;
+      END IF;
+      
+      -- Inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      
+      -- inicilizar as informaçoes do xml
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                            '<root><dados>');
+      pc_escreve_xml('<dtliqprj>' || to_char(vr_tab_prej(0).dtliqprj, 'DD/MM/RRRR') || '</dtliqprj>' ||      
+                     '<dtprejuz>' || to_char(vr_tab_prej(0).dtprejuz, 'DD/MM/RRRR') || '</dtprejuz>' ||
+                     '<inprejuz>' || vr_tab_prej(0).inprejuz                        || '</inprejuz>' ||
+                     '<diasatrs>' || vr_tab_prej(0).diasatrs                        || '</diasatrs>' ||
+                     '<vlacrprj>' || to_char(vr_tab_prej(0).vlacrprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</vlacrprj>' ||
+                     '<vlaboprj>' || to_char(vr_tab_prej(0).vlaboprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</vlaboprj>' ||
+                     '<tojraprj>' || to_char(vr_tab_prej(0).tojraprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tojraprj>' ||
+                     '<tojrmprj>' || to_char(vr_tab_prej(0).tojrmprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tojrmprj>' ||
+                     '<topgjmpr>' || to_char(vr_tab_prej(0).topgjmpr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</topgjmpr>' ||
+                     '<topgmupr>' || to_char(vr_tab_prej(0).topgmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</topgmupr>' ||
+                     '<toprejuz>' || to_char(vr_tab_prej(0).toprejuz, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</toprejuz>' ||
+                     '<tosdprej>' || to_char(vr_tab_prej(0).tosdprej, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tosdprej>' ||
+                     '<tosprjat>' || to_char(vr_tab_prej(0).tosprjat, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tosprjat>' ||
+                     '<tottjmpr>' || to_char(vr_tab_prej(0).tottjmpr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tottjmpr>' ||
+                     '<tottmupr>' || to_char(vr_tab_prej(0).tottmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tottmupr>' 
+                    );                            
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+    EXCEPTION 
+      WHEN vr_exc_erro THEN 
+        pr_des_erro := 'NOK';
+        -- Se foi retornado apenas código busca a descrição
+        IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN 
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        -- Variavel de erro recebe erro ocorrido
+        pr_cdcritic := nvl(vr_cdcritic,0);
+        pr_dscritic := vr_dscritic;
+           
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN 
+        pr_des_erro := 'NOK';
+        -- Montar descriçao de erro nao tratado
+        pr_dscritic := 'erro nao tratado na tela.pc_busca_dados_prejuizo ' ||sqlerrm;
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');  
+  END pc_busca_dados_prejuizo_web;
+  
 END DSCT0003;
 /

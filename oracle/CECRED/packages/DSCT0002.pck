@@ -191,7 +191,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   cdtipdoc  VARCHAR2(80),
                   dsopecoo  VARCHAR2(100),
                   innivris  VARCHAR2(1), 
-                  qtdiaatr  NUMBER
+                  qtdiaatr  NUMBER,
+                  inprejuz  INTEGER
                   );
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
        INDEX BY PLS_INTEGER;  
@@ -2383,6 +2384,7 @@ END fn_letra_risco;
     --
     --   Alteração : 25/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
     --               03/08/2018 - Inserção dos campos de Risco (Vitor Shimada Assanuma - GFT)
+    --               24/08/2018 - Inserção dos campo de Prejuizo (Vitor Shimada Assanuma - GFT)
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
@@ -2405,7 +2407,8 @@ END fn_letra_risco;
              bdt.cdopcolb,
              bdt.cdopcoan,
              DSCT0003.fn_retorna_rating(bdt.nrinrisc) AS dsinrisc ,
-             bdt.qtdirisc
+             bdt.qtdirisc,
+             bdt.inprejuz
         FROM crapbdt bdt
         LEFT JOIN crapris ris ON ris.cdcooper = bdt.cdcooper 
                              AND ris.nrdconta = bdt.nrdconta 
@@ -2626,6 +2629,7 @@ END fn_letra_risco;
     pr_tab_dados_border(vr_idxborde).cdtipdoc := vr_cdtipdoc;
     pr_tab_dados_border(vr_idxborde).innivris := rw_crapbdt.dsinrisc;
     pr_tab_dados_border(vr_idxborde).qtdiaatr := NVL(rw_crapbdt.qtdirisc, 0);
+    pr_tab_dados_border(vr_idxborde).inprejuz := rw_crapbdt.inprejuz;
     
     -- Verifica se tem operador coordenador de liberacao ou analise
     IF TRIM(rw_crapbdt.cdopcolb) IS NOT NULL THEN
@@ -2788,8 +2792,9 @@ END fn_letra_risco;
                             '<flgdigit>' || vr_tab_dados_border(vr_index).flgdigit || '</flgdigit>' ||
                             '<dsopecoo>' || vr_tab_dados_border(vr_index).dsopecoo || '</dsopecoo>' ||
                             '<cdtipdoc>' || vr_tab_dados_border(vr_index).cdtipdoc || '</cdtipdoc>' ||
-                            '<innivris>' || vr_tab_dados_border(vr_index).innivris  || '</innivris>' ||
+                            '<innivris>' || vr_tab_dados_border(vr_index).innivris || '</innivris>' ||
                             '<qtdiaatr>' || vr_tab_dados_border(vr_index).qtdiaatr || '</qtdiaatr>' ||
+                            '<inprejuz>' || vr_tab_dados_border(vr_index).inprejuz || '</inprejuz>' ||
                         '</inf>'
                       );
          vr_index := vr_tab_dados_border.next(vr_index);
@@ -7819,6 +7824,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     --
     --   Alteração :
     --    16/08/2018 - Vitor Shimada Assanuma (GFT) - Retirando os históricos: 2666 (Rendas à apropriar) e 2678 (Baixa da carteira ao resgatar título)
+    --    27/08/2018 - Vitor Shimada Asasnuma (GFT) - Incluir mensagem quando bordero em Prejuizo.
     -- .........................................................................*/
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7860,7 +7866,8 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
         ldc.dsdlinha,
         ldc.txjurmor,
         (SELECT COUNT(1)      FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder) AS qttitbor,
-        (SELECT SUM(vltitulo) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insittit <> 1 AND insitapr <> 2) AS vltitbor
+        (SELECT SUM(vltitulo) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insittit <> 1 AND insitapr <> 2) AS vltitbor,
+        (SELECT SUM(vlsdprej) FROM craptdb WHERE cdcooper = bdt.cdcooper AND nrdconta = bdt.nrdconta AND nrborder = bdt.nrborder AND insitapr <> 2) AS vlprjbor
       FROM crapbdt bdt
         INNER JOIN crapldc ldc ON bdt.cdcooper = ldc.cdcooper AND bdt.cddlinha = ldc.cddlinha AND ldc.tpdescto = 3
       WHERE bdt.cdcooper = pr_cdcooper
@@ -7872,7 +7879,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
     CURSOR cr_craptdb IS
       SELECT 
         tdb.*,
-        DENSE_RANK() OVER (PARTITION BY tdb.nrdconta ORDER BY tdb.nrtitulo) AS seq
+        DENSE_RANK() OVER (PARTITION BY tdb.nrdconta ORDER BY tdb.dtvencto, tdb.nrtitulo) AS seq
       FROM craptdb tdb
       WHERE tdb.cdcooper = pr_cdcooper
         AND tdb.nrdconta = pr_nrdconta
@@ -7901,7 +7908,7 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
       WHERE tlb.cdcooper = pr_cdcooper
         AND tlb.nrdconta = pr_nrdconta
         AND tlb.nrborder = pr_nrborder
-        AND his.cdhistor NOT IN (2666, 2678) -- 2666 (Rendas à apropriar) E 2678 (Baixa da carteira ao resgatar título)
+        AND his.cdhistor NOT IN (2666, 2667, 2678) -- 2666 (Rendas à apropriar) E 2678 (Baixa da carteira ao resgatar título)
       ORDER BY tlb.dtmvtolt, tlb.nrtitulo 
     ;rw_craptlb cr_craptlb%ROWTYPE;
     
@@ -7993,6 +8000,9 @@ PROCEDURE pc_gera_extrato_bordero( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
                       '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta))             ||'</nrdconta>' ||
                       '<cdagenci>'|| rw_crapbdt.cdagenci                                   ||'</cdagenci>' ||
                       '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder))          ||'</nrborder>' ||
+                      '<inprejuz>'|| rw_crapbdt.inprejuz                                   ||'</inprejuz>' ||
+                      '<dtprejuz>'|| to_char(rw_crapbdt.dtprejuz, 'DD/MM/RRRR')            ||'</dtprejuz>' ||
+                      '<vlprjbor>'|| to_char(rw_crapbdt.vlprjbor, 'fm999G999G999G990D00')  ||'</vlprjbor>' ||
                       '<dsdlinha>'|| rw_crapbdt.dsdlinha                                   ||'</dsdlinha>' ||
                       '<qttitbor>'|| rw_crapbdt.qttitbor                                   ||'</qttitbor>' ||
                       '<vltitbor>'|| to_char(rw_crapbdt.vltitbor, 'fm999G999G999G990D00')  ||'</vltitbor>' ||

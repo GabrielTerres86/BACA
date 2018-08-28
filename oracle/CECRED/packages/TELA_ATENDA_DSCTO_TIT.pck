@@ -5479,7 +5479,8 @@ BEGIN
            ,/*22*/ cdopcoan
            ,/*23*/ dtrefatu
            ,/*24*/ nrseqtdb
-           ,/*25*/ flverbor )
+           ,/*25*/ flverbor
+           ,/*26*/ nrinrisc )
     VALUES (/*01*/ vr_nrborder
            ,/*02*/ rw_craplim.nrctrlim
            ,/*03*/ pr_cdoperad
@@ -5504,7 +5505,8 @@ BEGIN
            ,/*22*/ pr_cdagenci
            ,/*23*/ NULL
            ,/*24*/ vr_qtregist
-           ,/*25*/ 1 );
+           ,/*25*/ 1 
+           ,/*26*/ 2);
 
       pr_tab_borderos(1).nrborder := vr_nrborder;
                 
@@ -9045,6 +9047,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       Data     : 14/08/2018
       Frequencia: Sempre que for chamado
       Objetivo  : Listar as informações de um título
+      Alterações:
+        - 24/08/2018 - Vitor Shimada Assanuma (GFT) - Inserção dos campos de prejuizo
     ---------------------------------------------------------------------------------------------------------------------*/
     -- Tratamento de erro
     vr_exc_erro exception;
@@ -9063,9 +9067,10 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     vr_idorigem varchar2(100);   
     
     vr_tab_titulo typ_tab_titulo;
+    vr_tab_prej   DSCT0003.typ_tab_preju;
    
     BEGIN
-      pr_des_erro := 'NOK';
+      pr_des_erro := 'OK';
       pr_nmdcampo := NULL;
       -- Extrai os dados
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
@@ -9087,6 +9092,22 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                           ,pr_tab_titulo => vr_tab_titulo
                           ,pr_cdcritic   => vr_cdcritic
                           ,pr_dscritic   => vr_dscritic);
+     IF (vr_dscritic IS NOT NULL) THEN
+        raise vr_exc_erro;
+     END IF;
+      
+     -- Busca as informações do titulo em prejuizo
+     DSCT0003.pc_busca_dados_prejuizo(pr_cdcooper => vr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrborder => pr_nrborder
+         	                           ,pr_chave    => pr_chave
+                                     -- OUT --
+                                     ,pr_tab_prej => vr_tab_prej
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+     IF (vr_dscritic IS NOT NULL) THEN
+        raise vr_exc_erro;
+     END IF;
       
       -- Inicializar o clob
       vr_des_xml := null;
@@ -9112,7 +9133,20 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                      '<nrinssac>' || vr_tab_titulo(0).nrinssac                                  || '</nrinssac>' ||
                      '<nrctrdsc>' || vr_tab_titulo(0).nrctrdsc                                  || '</nrctrdsc>' ||
                      '<cdtpinsc>' || vr_tab_titulo(0).cdtpinsc                                  || '</cdtpinsc>' ||
-                     '<dtvencto>' || to_char(vr_tab_titulo(0).dtvencto, 'DD/MM/RRRR')           || '</dtvencto>'
+                     '<dtvencto>' || to_char(vr_tab_titulo(0).dtvencto, 'DD/MM/RRRR')           || '</dtvencto>' ||
+                     '<dtliqprj>' || to_char(vr_tab_prej(0).dtliqprj, 'DD/MM/RRRR')             || '</dtliqprj>' ||
+                     '<dtprejuz>' || to_char(vr_tab_prej(0).dtprejuz, 'DD/MM/RRRR')             || '</dtprejuz>' ||
+                     '<inprejuz>' || vr_tab_prej(0).inprejuz                                    || '</inprejuz>' ||
+                     '<vlaboprj>' || to_char(vr_tab_prej(0).vlaboprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlaboprj>' ||
+                     '<vljraprj>' || to_char(vr_tab_prej(0).vljraprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vljraprj>' ||
+                     '<vljrmprj>' || to_char(vr_tab_prej(0).vljrmprj, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vljrmprj>' ||
+                     '<vlpgjmpr>' || to_char(vr_tab_prej(0).vlpgjmpr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlpgjmpr>' ||
+                     '<vlpgmupr>' || to_char(vr_tab_prej(0).vlpgmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlpgmupr>' ||
+                     '<vlprejuz>' || to_char(vr_tab_prej(0).vlprejuz, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlprejuz>' ||
+                     '<vlsdprej>' || to_char(vr_tab_prej(0).vlsdprej, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlsdprej>' ||
+                     '<vlsprjat>' || to_char(vr_tab_prej(0).vlsprjat, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlsprjat>' ||
+                     '<vlttjmpr>' || to_char(vr_tab_prej(0).vlttjmpr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlttjmpr>' ||
+                     '<vlttmupr>' || to_char(vr_tab_prej(0).vlttmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''') || '</vlttmupr>' 
                      );                                       
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
