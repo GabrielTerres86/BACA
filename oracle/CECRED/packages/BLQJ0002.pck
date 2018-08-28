@@ -3798,9 +3798,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 													               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
 													               ,pr_cdcritic => vr_cdcritic
 													               ,pr_dscritic => vr_dscritic);
-                   IF vr_dscritic <> NULL THEN
+                   IF nvl(vr_cdcritic,0) > 0 OR 
+                      TRIM(vr_dscritic) IS NOT NULL THEN
                    	  RAISE vr_exc_saida;
-               		 END IF;         
+               	   END IF;        
                 ELSIF vr_sld_cta_prj > nvl(vr_saldo,0) THEN
                    PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_monitoramento.cdcooper
 			                                   ,pr_nrdconta => rw_monitoramento.nrdconta
@@ -3809,9 +3810,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 													               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
 													               ,pr_cdcritic => vr_cdcritic
 													               ,pr_dscritic => vr_dscritic);
-                   IF vr_dscritic <> NULL THEN
-                   	  RAISE vr_exc_saida;
-               		 END IF;         
+                   IF nvl(vr_cdcritic,0) > 0 OR 
+                      TRIM(vr_dscritic) IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+               	   END IF;         
                 END IF;
              END IF;                                                       
           END IF;            
