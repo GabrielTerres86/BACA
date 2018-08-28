@@ -12,6 +12,7 @@
 							   (Jonatha - RKAM M273).
  *
  *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ *                28/08/2018 - Adicionado campo bordero para desconto de titulo. (Cássia de Oliveira - GFT)
  * --------------
  */
 ?>
@@ -48,8 +49,14 @@
 	<option value="9">9 - Tarifas</option>
 	<option value="10">10 - Saldo p/ Resgate de Apli.</option>
 	<option value="12">12 - Tarifas Op. de Cr&eacute;dito</option>
+	<option id="desctit" value="13">13 - Desconto de t&iacutetulos</option>
 	</select>
 	<a href="#" class="botao" id="btnOK2">OK</a>
+	<div id="nrborder">
+		<label for="nrdborde">Border&ocirc:</label>
+		<input type="text" id="nrdborde" name="nrdborde" />
+		<a href="#" class="botao" id="btnOK4">OK</a>
+	</div>
 	<br style="clear:both" />	
 	
 </form>

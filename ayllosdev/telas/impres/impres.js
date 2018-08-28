@@ -19,6 +19,7 @@
 
   08/08/2016 - Guilherme      (SUPERO): M325 - Informe de Rendimentos Trimestral PJ
  * 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * 28/08/2018 - Cassia de Oliveira (GFT): Adicionado funcionalidade de extrato de Desconto de Títulos
  * --------------
  */
 
@@ -38,8 +39,8 @@ var dadosDc = '';
 var nrJanelas = 0;
 
 //Labels/Campos do cabeçalho
-var rCddopcao, rNrdconta, rTpextrat,
-	cCddopcao, cNrdconta, cTpextrat, cTodosCabecalho, btnOK1, btnOK2;
+var rCddopcao, rNrdconta, rTpextrat, rNrdborde,
+	cCddopcao, cNrdconta, cTpextrat, cNrdborde,cTodosCabecalho, btnOK1, btnOK2, btnOK4;
 
 
 var rDtrefere, rDtreffim, rFlgtarif, rInrelext, rInselext, rNrctremp, rNraplica, rNranoref, rFlgemiss,
@@ -101,6 +102,7 @@ function estadoInicial() {
     cDtrefere.val('');
     cDtreffim.val('');
     cTpinform.val(0);
+    cNrdborde.val('');
 
     removeOpacidade('divTela');
     ocultaCampos(cTpextrat.val());
@@ -181,6 +183,7 @@ function estadoCabecalho() {
     cNrdconta.focus();
     cNrdconta.val('');
     cTpextrat.val('');
+    cNrdborde.val('');
 
     // Seta os valores caso tenha vindo do CRM
     if ($("#crm_inacesso","#frmCab").val() == 1) {
@@ -204,14 +207,17 @@ function atualizaSeletor() {
     rCddopcao = $('label[for="cddopcao"]', '#' + frmCab);
     rNrdconta = $('label[for="nrdconta"]', '#' + frmCab);
     rTpextrat = $('label[for="tpextrat"]', '#' + frmCab);
+    rNrdborde = $('label[for="nrdborde"]', '#' + frmCab);
 
     cCddopcao = $('#cddopcao', '#' + frmCab);
     cNrdconta = $('#nrdconta', '#' + frmCab);
     cTpextrat = $('#tpextrat', '#' + frmCab);
+    cNrdborde = $('#nrdborde', '#' + frmCab);
 
     cTodosCabecalho = $('input[type="text"],select', '#' + frmCab);
     btnOK1 = $('#btnOK1', '#' + frmCab);
     btnOK2 = $('#btnOK2', '#' + frmCab);
+    btnOK4 = $('#btnOK4', '#' + frmCab);
 
 
     rDtrefere = $('label[for="dtrefere"]', '#' + frmDados);
@@ -474,12 +480,14 @@ function formataCabecalho() {
 
     // cabecalho
     rCddopcao.addClass('rotulo').css({ 'width': '42px' });
-    rNrdconta.addClass('rotulo-linha').css({ 'width': '48px' });
+    rNrdconta.addClass('rotulo-linha').css({ 'width': '45px' });
     rTpextrat.addClass('rotulo-linha').css({ 'width': '39px' });
+    rNrdborde.addClass('rotulo-linha').css({ 'width': '170px' });
 
     cCddopcao.css({ 'width': '400px' })
     cNrdconta.addClass('conta pesquisa').css({ 'width': '75px' });
     cTpextrat.css({ 'width': '275px' });
+    cNrdborde.css({ 'width': '75px' });
 
     if ($.browser.msie) {
         //	cTpextrat.css({'width':'280px'});
@@ -501,6 +509,13 @@ function formataCabecalho() {
     btnOK2.unbind('click').bind('click', function () {
 
         controlaOk(2);
+        return false;
+
+    });
+
+    btnOK4.unbind('click').bind('click', function () {
+
+        controlaOk(4);
         return false;
 
     });
@@ -549,6 +564,23 @@ function formataCabecalho() {
         }
 
     });
+
+    // Enter Bordero
+    $('#nrdborde', '#frmCab').unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+        if (!$('#cddopcao', '#frmCab').hasClass('campoTelaSemBorda')) { return false; }
+
+        // Se é a tecla ENTER,
+        if (e.keyCode == 9 || e.keyCode == 13) {
+
+            controlaOk(4);
+            return false;
+        }
+
+    });
+
+    $('#nrborder').hide();
 
     layoutPadrao();
     controlaPesquisas();
@@ -1371,6 +1403,12 @@ function controlaOk(opcao) {
 
         cddopcao = cCddopcao.val();
 
+        if (cddopcao == 'E') {
+            ($("#desctit", "#tpextrat")).hide();
+        }else{
+            ($("#desctit", "#tpextrat")).show();
+        }
+
         if (cddopcao == 'I' || cddopcao == 'E') {
             estadoCabecalho();
 
@@ -1388,7 +1426,7 @@ function controlaOk(opcao) {
     }
 
     if (opcao == 2) {
-
+                
         if (divError.css('display') == 'block') { return false; }
         if (cNrdconta.hasClass('campoTelaSemBorda')) { return false; }
 
@@ -1406,13 +1444,16 @@ function controlaOk(opcao) {
 
         cTpmodelo.val('1');
         cTodosCabecalho.removeClass('campoErro');
-        manterRotina('VD');
+        if (cTpextrat.val() == '13'){
+            $("#nrborder").show();
+        }else{
+            manterRotina('VD');
+        }
 
         if (cddopcao == 'C') {
             $("#btSalvar", "#divBotoes").hide();
 
         }
-
 
     }
 
@@ -1421,6 +1462,38 @@ function controlaOk(opcao) {
         manterRotina('VO');
 
         ocultaCampos(cTpextrat.val());
+        return false;
+    }
+
+    if (opcao == 4) {
+        // Verifica se a conta é válida
+        if (!validaNroConta(normalizaNumero(cNrdconta.val()))) {
+            showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Ayllos', 'focaCampoErro(\'nrdconta\',\'' + frmCab + '\');');
+            return false;
+        }
+
+        // Verifica se a conta é válida
+        if (cTpextrat.val() == '0') {
+            showError('error', 'Selecione um tipo.', 'Alerta - Ayllos', 'focaCampoErro(\'tpextrat\',\'' + frmCab + '\');');
+            return false;
+        }
+
+        // Verifica se o bordero é válido
+        if (cNrdborde.val() == '') {
+            showError('error', 'Border&ocirc inv&aacute;lido.', 'Alerta - Ayllos', 'focaCampoErro(\'nrdborde\',\'' + frmCab + '\');');
+            return false;
+        }
+
+        $("#nrdconta","#frmImprimir").val(normalizaNumero(cNrdconta.val()));
+        $("#idimpres","#frmImprimir").val('11');
+        $("#flgemail","#frmImprimir").val('no');
+        $("#nrctrlim","#frmImprimir").val('0');
+        $("#nrborder","#frmImprimir").val(normalizaNumero(cNrdborde.val()));     
+        $("#limorbor","#frmImprimir").val('3');
+
+        var action = UrlSite + 'telas/atenda/descontos/titulos/imprimir_dados_dsctit.php';
+        
+        carregaImpressaoAyllos("frmImprimir",action);
         return false;
     }
 }
@@ -1815,7 +1888,6 @@ function controlaFoco(cddopcao) {
             }
 
         });
-
-
     }
+    
 }
