@@ -90,39 +90,7 @@ BEGIN
         ) x
       WHERE 
         (dtvencto <= pr_dtmvtolt OR (maisvencido+60)<= pr_dtmvtolt);
-    /*                     
-      SELECT craptdb.ROWID,
-             craptdb.nrdconta,
-             craptdb.dtvencto,
-             craptdb.nrborder,
-             craptdb.cdbandoc,
-             craptdb.nrcnvcob,
-             craptdb.nrdctabb,
-             craptdb.vlmratit,
-             craptdb.vljura60,
-             craptdb.nrdocmto,
-             CASE 
-               WHEN (SELECT 
-                       COUNT(1)
-                     FROM craptdb tdb
-                     WHERE (tdb.dtvencto+60) < pr_dtmvtolt
-                                  AND tdb.insittit = 4 
-                                  AND tdb.cdcooper=pr_cdcooper 
-                                  AND tdb.nrborder=craptdb.nrborder
-                                  AND tdb.insittit = 4
-                                ) > 0 THEN 1 
-               ELSE 0 
-             END AS possui60 -- verifica se o bordero desse titulo possui 1 titulo vencido ha mais de 60 dias
-        FROM craptdb, crapbdt
-       WHERE craptdb.cdcooper =  crapbdt.cdcooper
-         AND craptdb.nrdconta =  crapbdt.nrdconta
-         AND craptdb.nrborder =  crapbdt.nrborder
-         AND craptdb.cdcooper =  pr_cdcooper
-         AND craptdb.dtvencto <= pr_dtmvtolt
-         AND craptdb.insittit =  4  -- liberado
-         AND crapbdt.cdagenci = nvl(pr_cdagenci,crapbdt.cdagenci)
-         AND crapbdt.flverbor =  1; -- bordero liberado na nova versão
-    */
+        
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
     TYPE typ_reg_craptdb IS RECORD
