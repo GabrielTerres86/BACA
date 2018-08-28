@@ -44,6 +44,7 @@ $dtfimadicional_coo  = ( (!empty($_POST['dtfimadicional_coo'])) ? $_POST['dtfima
 $vldesconto_cee      = ( (!empty($_POST['vldesconto_cee'])) ? floatval($_POST['vldesconto_cee']) : 0 );
 $dtfimadicional_cee  = ( (!empty($_POST['dtfimadicional_cee'])) ? $_POST['dtfimadicional_cee'] : null );
 $txtjustificativa    = ( (!empty($_POST['txtjustificativa'])) ? $_POST['txtjustificativa'] : null );
+$idvinculacao        = ( (!empty($_POST['idvinculacao'])) ? $_POST['idvinculacao'] : null );
 
 $arrConvenios = array();
 if (count($convenios)) {
@@ -76,6 +77,7 @@ $xml .= "   <dtfimadicional_coo>".$dtfimadicional_coo."</dtfimadicional_coo>";
 $xml .= "   <vldesconto_cee>".$vldesconto_cee."</vldesconto_cee>";
 $xml .= "   <dtfimadicional_cee>".$dtfimadicional_cee."</dtfimadicional_cee>";
 $xml .= "   <txtjustificativa>".$txtjustificativa."</txtjustificativa>";
+$xml .= "   <idvinculacao>".$idvinculacao."</idvinculacao>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

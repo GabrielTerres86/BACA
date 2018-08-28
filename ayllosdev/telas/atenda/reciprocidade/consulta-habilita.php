@@ -79,7 +79,11 @@ $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
 $flgregis    = trim($_POST["flgregis"]);
 $nrcnvceb    = $_POST["nrcnvceb"];
-$nrconven    = ((count($convenios)) ? $convenios[0]->convenio : ((!empty($_POST['nrconven'])) ? $convenios[0]->convenio : $_POST['nrconven']));
+if ($idaba === 1) {
+    $nrconven = ((count($convenios)) ? $convenios[0]->convenio : ((!empty($_POST['nrconven'])) ? $convenios[0]->convenio : $_POST['nrconven']));
+}else {
+    $nrconven = (!empty($_POST['nrconven']) ? $_POST['nrconven'] : 0);
+}
 $dsorgarq    = trim($_POST["dsorgarq"]);
 $insitceb    = !empty($_POST["insitceb"]) ? trim($_POST["insitceb"]) : 1;
 $inarqcbr    = $_POST["inarqcbr"];

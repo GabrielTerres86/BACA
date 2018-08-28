@@ -2801,6 +2801,7 @@ function incluiDesconto() {
 			qtdfloat:            $('#qtdfloat', '.tabelaDesconto').val(),
 			vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
             vldeposito:          $('#vldeposito', '.tabelaDesconto').val(),
+            idvinculacao:        $('#idvinculacao', '.tabelaDesconto').val(),
 			dtfimcontrato:       vDataFimContrato,
 			flgdebito_reversao:  $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
             vldesconto_coo:      converteNumero($('#vldesconto_coo', '.tabelaDesconto').val()),
