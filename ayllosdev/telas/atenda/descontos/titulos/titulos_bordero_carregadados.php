@@ -53,6 +53,8 @@
 
 				25/08/2018 - Adicionado botão prejuizo. (Cassia de Oliveira - GFT)
 
+				27/08/2018 - Adicionada informação mostrando borderô em prejuízo - Luis Fernando (GFT)
+
 	************************************************************************/
 	
 	session_start();
@@ -184,7 +186,9 @@
 
 	<fieldset>
 		<legend><? echo utf8ToHtml('Borderô:') ?></legend>
-		
+    <?php if ($bordero[18]->cdata == 1){ ?>
+	<label for="dsprejuz"><? echo utf8ToHtml('Borderô em prejuízo') ?></label>
+	<? } ?>	
 	<label for="dspesqui"><? echo utf8ToHtml('Pesquisa:') ?></label>
 	<input type="text" name="dspesqui" id="dspesqui" value="<?php echo $bordero[9]->cdata; ?>" />
 	<br />

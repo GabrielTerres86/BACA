@@ -58,6 +58,8 @@
 			 22/08/2018 - Adicionado abas na tela de títulos e histórico de contrato de limite. (Vitor Shimada Assanuma - GFT)
 
 			 25/08/2018 - Adicionado tela de prejuizo de bordero e campo na tela detalhes de titulo. (Cassia de Oliveira - GFT)
+             
+			 27/08/2018 - Adicionada informação mostrando borderô em prejuízo - Luis Fernando (GFT)
 
 ************************************************************************/
 
@@ -628,6 +630,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'frmBordero' ){
 	
+		var Ldsprejuz = $('label[for="dsprejuz"]','#'+nomeForm);
 		var Ldspesqui = $('label[for="dspesqui"]','#'+nomeForm);
 		var Lnrborder = $('label[for="nrborder"]','#'+nomeForm);
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
@@ -661,6 +664,7 @@ function formataLayout(nomeForm){
 		$('#'+nomeForm).css('width','480px');
 		
 		Ldspesqui.addClass('rotulo').css('width','170px');
+		Ldsprejuz.addClass('rotulo').css({'width':'450px','text-align':'center'});
 		Lnrborder.addClass('rotulo').css('width','170px');
 		Lnrctrlim.css('width','72px');
 		Ldsdlinha.addClass('rotulo').css('width','170px');
