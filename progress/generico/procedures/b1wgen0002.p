@@ -785,6 +785,9 @@
           12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).     
               
           19/07/2018 - Chamar nova rotina para validar perda de aprovaçao quando alterado valor ou valor da prestaçao ou Rating (PRJ 438 - Rafael - Mouts).
+          
+          29/08/2018 - Adicionado retorno do 'insitest' na PROC 'obtem-propostas-emprestimo' PRJ 438 (Mateus Z - Mouts)
+          
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2344,7 +2347,9 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.err_efet = aux_err_efet	
                tt-proposta-epr.idcobope = crawepr.idcobope
                tt-proposta-epr.vlfinanc = 0
-               tt-proposta-epr.vlrtotal = 0.
+               tt-proposta-epr.vlrtotal = 0
+               /* PRJ 438 */
+               tt-proposta-epr.insitest = crawepr.insitest.
 
                IF crawepr.idfiniof > 0 THEN
                   DO:

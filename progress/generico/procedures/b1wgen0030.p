@@ -557,7 +557,9 @@
                             Projeto 366 (Lombardi).
 
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-
+        
+               29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
+               
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -4098,10 +4100,11 @@ PROCEDURE busca_dados_proposta:
     ELSE
     IF  par_cddopcao = "A"  THEN
         DO:
-            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3))   THEN
+            /* PRJ 438 - Adicionado controle para situaçao ANULADA */
+            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3) or (crawlim.insitlim = 9))   THEN
                 DO:
                     ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA ou CANCELADA".
+                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA, CANCELADA ou ANULADA".
                           
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT par_cdagenci,

@@ -137,7 +137,7 @@
 *                   e habilitado na "Valor da proposta e data de vencimento". (Mateus Z / Mouts - PRJ 438)
 * 110: [13/07/2018] Criada função processaPerdaAprovacao para verificar se haverá perda de aprovacao ao fazer alteração 
 *                   na opção "Valor da proposta de data e vencimento" (Mateus Z / Mouts - PRJ 438)
-* 111: [15/08/2018] Adicionado controle para o novo botão 'Anular' e criada uma nova tela 'Motivos'. PRJ 438 (Mateus Z - Mouts)
+* 111: [15/08/2018] Criada tela 'Motivos', botão 'Anular' e controle para não permitir alterar e analisar com situação ANULADA. PRJ 438 (Mateus Z - Mouts)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -568,6 +568,11 @@ function controlaOperacao(operacao) {
             return false;
             break;
         case 'TA':
+			// PRJ 438 - Adicionado controle para situação ANULADA
+        	if (insitest == 6) {
+        	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Ayllos', '');
+        		return false;
+        	}
             booPrimeiroBen = false; //809763
             idSocio = 0;
             if (msgDsdidade != '') {
@@ -1257,8 +1262,13 @@ function controlaOperacao(operacao) {
             mensagem = 'Carregando Altera&ccedil;&atilde;o de Portabilidade...';
             break;
         case 'ENV_ESTEIRA':
-			      insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
-			      dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
+			// PRJ 438 - Adicionado controle para situação ANULADA
+        	if (insitest == 6) {
+        		showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Ayllos', '');
+        		return false;
+        	}
+			insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+			dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
             mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
 			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
 				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');

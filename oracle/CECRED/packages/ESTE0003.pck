@@ -14,6 +14,8 @@ create or replace package cecred.ESTE0003 is
       Alteracoes: 23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
                                Referentes a proposta. (Lindon Carlos Pecile - GFT)
                   14/04/2018 - Adicionado a procedure pc_crps703 (Paulo Penteado (GFT)) 
+				  29/08/2018 - Adicionado verificação para não permir Analisar proposta 
+                             com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -945,7 +947,8 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento para verificar as regras da esteira 
     
-    Alteraçao : 
+    Alteraçao : 29/08/2018 - Adicionado verificação para não permir Analisar proposta 
+                             com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
         
   ..........................................................................*/
     -----------> CURSORES <-----------
@@ -954,6 +957,7 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
       select lim.insitest
            , lim.cdopeapr
            , lim.insitapr
+		   , lim.insitlim
       from   crawlim lim
       where  lim.cdcooper = pr_cdcooper
       and    lim.nrdconta = pr_nrdconta
@@ -976,6 +980,12 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
             CLOSE cr_crawlim;
             vr_cdcritic := 535; --> 535 - Proposta nao encontrada.
             RAISE vr_exc_erro;
+      END IF;
+	  
+	  -- PRJ 438 - Verifica se a situação está Anulada
+      IF  rw_crawlim.insitlim = 9 THEN
+          vr_dscritic := 'A proposta está \"Anulada\"';
+          RAISE vr_exc_erro;
       END IF;
       
       --> Somente permitirá se ainda nao enviada 
