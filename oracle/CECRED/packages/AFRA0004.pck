@@ -54,6 +54,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0004 is
                                 ,pr_cdagenci IN  INTEGER                -- Codigo da agencia
                                 ,pr_dtmvtocd IN  DATE                   -- Data do movimento
                                 ,pr_dtmvtolt IN  DATE                   -- Data de pagamento 
+                                ,pr_flgpgdda IN  craptit.flgpgdda%TYPE  -- DDA 
                                 ,pr_cdcritic OUT INTEGER                -- Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 );            -- Descricao critica
                                  
@@ -386,7 +387,7 @@ create or replace package body CECRED.AFRA0004 is
         Sistema  : Rotinas referentes a monitoracao de Analise de Fraude
         Sigla    : CRED
         Autor    : Teobaldo Jamunda - AMcom
-        Data     : Abril/2018.                    Ultima atualizacao: 16/04/2018
+        Data     : Abril/2018.                    Ultima atualizacao: 28/08/2018
 
         Dados referentes ao programa:
 
@@ -395,8 +396,8 @@ create or replace package body CECRED.AFRA0004 is
                     devida conforme o codigo de operacao
                     (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
 
-        Alteracoes:  
-        
+        Alteracoes: 28/08/2018 - Quando cdoperacao for 7 DDA monitorar como se fosse
+                                 titulo passando a descricao DDA (Tiago RITM0025395)        
     ----------------------------------------------------------------------------*/
 
     -- Variaveis de Erro
@@ -456,7 +457,7 @@ create or replace package body CECRED.AFRA0004 is
       
     --> chama rotina conforme codigo Operacao (tbcc_dominio_campo, dominio: CDOPERAC_ANALISE_FRAUDE)
     CASE 
-      WHEN pr_cdoperacao = 1  THEN  /* TITULOS */
+      WHEN pr_cdoperacao IN (1, 7)  THEN  /* TITULOS, DDA */
         IF pr_idanalis > 0 THEN
           OPEN cr_craptit (pr_idanalis => pr_idanalis);
           FETCH cr_craptit INTO rw_craptit;
@@ -471,9 +472,10 @@ create or replace package body CECRED.AFRA0004 is
                                ,pr_cdagenci => vr_cdagenci           -- Codigo da agencia
                                ,pr_dtmvtocd => rw_crapdat.dtmvtocd   -- Data do movimento
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt   -- Data de pagamento 
+                               ,pr_flgpgdda => CASE pr_cdoperacao WHEN 7 THEN 1 ELSE 0 END --Tipo titulo
                                ,pr_cdcritic => pr_cdcritic           -- retorno codigo critica 
                                ,pr_dscritic => pr_dscritic);         -- retorno descricao critica
-                                      
+                    
       WHEN pr_cdoperacao in (2, 6)  THEN  /* CONVENIOS */
         IF pr_idanalis > 0 THEN
           OPEN cr_craplft (pr_idanalis => pr_idanalis);
@@ -1635,6 +1637,7 @@ create or replace package body CECRED.AFRA0004 is
                                 ,pr_cdagenci IN  INTEGER                -- Codigo da agencia
                                 ,pr_dtmvtocd IN  DATE                   -- Data do movimento
                                 ,pr_dtmvtolt IN  DATE                   -- Data de pagamento 
+                                ,pr_flgpgdda IN  craptit.flgpgdda%TYPE  -- DDA 
                                 ,pr_cdcritic OUT INTEGER                -- Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 ) IS          -- Descricao critica
                                 
@@ -1644,7 +1647,7 @@ create or replace package body CECRED.AFRA0004 is
         Sistema  : Rotinas referentes a monitoracao de Analise de Fraude
         Sigla    : CRED
         Autor    : Teobaldo Jamunda - AMcom
-        Data     : Abril/2018.                    Ultima atualizacao: __/__/2018
+        Data     : Abril/2018.                    Ultima atualizacao: 28/08/2018
 
         Dados referentes ao programa:
 
@@ -1652,7 +1655,7 @@ create or replace package body CECRED.AFRA0004 is
         Objetivo  : Realizar a monitoracao de pagamento de titulos (PAGA0001)
                     (PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
 
-        Alteracoes:  
+        Alteracoes: 28/08/2018 - Inserido parametro com descricao do tipo de titulo (Tiago - RITM0025395) 
         
     ----------------------------------------------------------------------------*/
 
@@ -1834,8 +1837,9 @@ create or replace package body CECRED.AFRA0004 is
                                      ,pr_dtmvtolt => pr_dtmvtocd /* era: rw_crapdat.dtmvtocd */
                                      ,pr_cdtippro => 2) LOOP     /* 2 - Pagamento */
           --Verificar se precisa ignorar registro
-          IF InStr(rw_crappro.dsinform##2,'#Banco:') = 0 OR
-             InStr(Upper(rw_crappro.dsprotoc),'ESTORNADO') > 0 THEN
+          IF pr_flgpgdda = 0 AND  
+            (InStr(rw_crappro.dsinform##2,'#Banco:') = 0 OR
+             InStr(Upper(rw_crappro.dsprotoc),'ESTORNADO') > 0) THEN
             --Ignorar registro
             CONTINUE;
           END IF;
@@ -1868,7 +1872,7 @@ create or replace package body CECRED.AFRA0004 is
           --Posicionar no proximo registro
           FETCH cr_craptit INTO rw_craptit;
           --Se nao encontrar
-          IF cr_craptit%FOUND AND rw_craptit.flgpgdda = 0 THEN
+          IF cr_craptit%FOUND THEN
             --Codigo banco Caixa
             vr_cdbccxlt:= to_number(SUBSTR(rw_craptit.dscodbar,1,3));
             IF  vr_cdbccxlt IN (1,85)  THEN
@@ -2159,7 +2163,7 @@ create or replace package body CECRED.AFRA0004 is
 
 
         --Determinar Assunto
-        vr_des_assunto:= 'PAGTO TITULOS '||rw_crapcop.nmrescop ||' '||
+        vr_des_assunto:= 'PAGTO '||CASE pr_flgpgdda WHEN 0 THEN 'TITULOS ' ELSE 'DDA ' END||rw_crapcop.nmrescop ||' '||
                          GENE0002.fn_mask_conta(pr_nrdconta)|| ' R$ '||
                          TRIM(to_char(pr_vllanmto,'fm999g999g999g999d99'));
 

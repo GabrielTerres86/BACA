@@ -8645,7 +8645,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 23/03/2018
+    --  Data     : Junho/2013.                   Ultima atualizacao: 28/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -8698,6 +8698,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                             (Lucas Ranghetti #511679)                      
     --
     --                23/03/2018 - Incluido validações de valores negativos ou zerados de pagamento (Tiago/Jean INC0010838)                    
+    --
+    --                28/08/2018 - Incluido monitoração para pagementos DDA tambem com as mesmas reagras dos titulos (Tiago RITM0025395)
     -- ..........................................................................
 
   BEGIN
@@ -9923,7 +9925,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       /** ------------------------------------------------------------- **
        ** Monitoracao Pagamentos - Antes de alterar verificar com David **
        ** ------------------------------------------------------------- **
-       ** Envio de monitoracao sera enviado se for pagto via Internet,  **
+       ** Envio de monitoracao sera enviado se for pagto via Internet ou**
        ** se nao for pagto via DDA, se nao for pagto proveniente de     **
        ** agendamento, se nao for boleto de cobranca registrada da      **
        ** cooperativa, se o valor individual ou total pago no dia pelo  **
@@ -9937,55 +9939,55 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
        ** verificado o IP anterior, caso seja diferente, envia email.   **
        ** ------------------------------------------------------------- **/
 
-      IF vr_cdagenci = 90 AND pr_idtitdda = 0 AND pr_flgagend = 0 /*false*/ AND
+      IF vr_cdagenci = 90 AND pr_flgagend = 0 /*false*/ AND
          nvl(vr_idanalise_fraude,0) = 0 THEN
-          BEGIN
-         AFRA0004.pc_monitora_operacao (pr_cdcooper   => pr_cdcooper   -- Codigo da cooperativa
-                                       ,pr_nrdconta   => pr_nrdconta   -- Numero da conta
-                                       ,pr_idseqttl   => pr_idseqttl   -- Sequencial titular
-                                       ,pr_vlrtotal   => pr_vlfatura   -- Valor fatura
-                                       ,pr_flgagend   => pr_flgagend   -- Flag agendado /* 1-True, 0-False */ 
-                                       ,pr_idorigem   => pr_idorigem   -- Indicador de origem
-                                       ,pr_cdoperacao => 1             -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
-                                       ,pr_idanalis   => NULL          -- ID Analise Fraude
-                                       ,pr_lgprowid   => NULL          -- Rowid craplgp
-                                       ,pr_cdcritic   => vr_cdcritic   -- Codigo da critica
-                                       ,pr_dscritic   => vr_dscritic); -- Descricao da critica
-          IF nvl(vr_cdcritic,0) > 0 OR                                    
-             TRIM(vr_dscritic) IS NOT NULL THEN
-            RAISE vr_exc_erro;   
-                  END IF;
+        BEGIN
+            AFRA0004.pc_monitora_operacao (pr_cdcooper   => pr_cdcooper   -- Codigo da cooperativa
+                                          ,pr_nrdconta   => pr_nrdconta   -- Numero da conta
+                                          ,pr_idseqttl   => pr_idseqttl   -- Sequencial titular
+                                          ,pr_vlrtotal   => pr_vlfatura   -- Valor fatura
+                                          ,pr_flgagend   => pr_flgagend   -- Flag agendado /* 1-True, 0-False */ 
+                                          ,pr_idorigem   => pr_idorigem   -- Indicador de origem
+                                          ,pr_cdoperacao => CASE pr_idtitdda WHEN 0 THEN 1 ELSE 7 END -- Codigo operacao (tbcc_dominio_campo-CDOPERAC_ANALISE_FRAUDE)
+                                          ,pr_idanalis   => NULL          -- ID Analise Fraude
+                                          ,pr_lgprowid   => NULL          -- Rowid craplgp
+                                           ,pr_cdcritic   => vr_cdcritic   -- Codigo da critica
+                                          ,pr_dscritic   => vr_dscritic); -- Descricao da critica
+            IF nvl(vr_cdcritic,0) > 0 OR                                    
+               TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_exc_erro;   
+            END IF;
 
-          EXCEPTION
+        EXCEPTION
           WHEN vr_exc_erro THEN
-            vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                       pr_ind_tipo_log => 2, --> erro tratado
-                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - '||vr_cdprogra ||' --> ' || 
-                                                          vr_cdcritic||' -> '||vr_dscritic,
-                                       pr_nmarqlog     => vr_nmarqlog);
-
-            vr_cdcritic := NULL;                         
-            vr_dscritic := NULL;    
-            WHEN OTHERS THEN
               vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
               btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                          pr_ind_tipo_log => 2, --> erro tratado
                                          pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - '||vr_cdprogra ||' --> ' || sqlerrm,
+                                                            ' - '||vr_cdprogra ||' --> ' || 
+                                                            vr_cdcritic||' -> '||vr_dscritic,
                                          pr_nmarqlog     => vr_nmarqlog);
-                                              
-              vr_cdcritic := NULL;                         
-              vr_dscritic := NULL;                         
-          END;
 
-          IF vr_dscritic IS NOT NULL THEN
-            vr_cdcritic:= 0;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
+              vr_cdcritic := NULL;                         
+              vr_dscritic := NULL;    
+          WHEN OTHERS THEN
+                vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+                btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                           pr_ind_tipo_log => 2, --> erro tratado
+                                           pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                            ' - '||vr_cdprogra ||' --> ' || sqlerrm,
+                                           pr_nmarqlog     => vr_nmarqlog);
+                                                
+                vr_cdcritic := NULL;                         
+                vr_dscritic := NULL;                         
+        END;
+
+        IF vr_dscritic IS NOT NULL THEN
+          vr_cdcritic:= 0;
+          --Levantar Excecao
+          RAISE vr_exc_erro;
         END IF;
+      END IF;
 
       IF vr_indpagto <> 0 THEN
 

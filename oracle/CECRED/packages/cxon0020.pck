@@ -1322,7 +1322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 24/08/2018
+      Data     : Junho/2015.                   Ultima atualizacao: 28/08/2018
   
       Dados referentes ao programa:
   
@@ -1352,8 +1352,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                movi a chamada da procedure gera_log_ope_cartao para antes do UPDATE na craplot.
                                SD 535051. (Carlos Rafael Tanholi).
                  
-				 14/11/2016 - Alterado cdorigem 9 para 10, novo cdorigem especifico para mobile
-	                          PRJ335 - Analise de Fraude(Odirlei-AMcom) 
+				          14/11/2016 - Alterado cdorigem 9 para 10, novo cdorigem especifico para mobile
+	                             PRJ335 - Analise de Fraude(Odirlei-AMcom) 
 
                   21/11/2016 - Tratamento para gerar analise de fraude das TEDs.
                                PRJ335 - Analise de Fraude(Odirlei-AMcom) 
@@ -1361,12 +1361,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   26/04/2017 - Ajustado para nao realizar analise de fraude para efetivações
                                de agendamento. PRJ335 - Analise de Fraude(Odirlei-AMcom)               
 
-				  15/08/2017 - Ajuste para devolver critica através de parâmetros (Jonata - RKAM / P364).
+				          15/08/2017 - Ajuste para devolver critica através de parâmetros (Jonata - RKAM / P364).
 
                   12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                                pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
                                
                   24/08/2018 - Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE - TIAGO)                 
+                  
+                  28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -2374,16 +2376,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	
     --Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE)    
     IF pr_nrcpfcgc = pr_nrcpffav THEN    
-      AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_crapcop.cdcooper
-                                    ,pr_nrdconta   => pr_nrdconta
-                                    ,pr_idseqttl   => pr_idseqttl
-                                    ,pr_vlrtotal   => pr_vldocmto
-                                    ,pr_flgagend   => CASE pr_idagenda WHEN 1 THEN 0 ELSE 1 END
-                                    ,pr_idorigem   => pr_idorigem
-                                    ,pr_cdoperacao => 12 --TED
-                                    ,pr_idanalis   => vr_idanalise_fraude
-                                    ,pr_cdcritic   => vr_cdcritic
-                                    ,pr_dscritic   => vr_dscritic);                                     
+      BEGIN
+        AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_crapcop.cdcooper
+                                      ,pr_nrdconta   => pr_nrdconta
+                                      ,pr_idseqttl   => pr_idseqttl
+                                      ,pr_vlrtotal   => pr_vldocmto
+                                      ,pr_flgagend   => CASE pr_idagenda WHEN 1 THEN 0 ELSE 1 END
+                                      ,pr_idorigem   => pr_idorigem
+                                      ,pr_cdoperacao => 12 --TED
+                                      ,pr_idanalis   => vr_idanalise_fraude
+                                      ,pr_cdcritic   => vr_cdcritic
+                                      ,pr_dscritic   => vr_dscritic);  
+                                    
+        IF nvl(vr_cdcritic,0) > 0 OR                                    
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;   
+        END IF;
+
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+            vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 2, --> erro tratado
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - CXON0020.pc_enviar_ted --> ' || 
+                                                          vr_cdcritic||' -> '||vr_dscritic,
+                                       pr_nmarqlog     => vr_nmarqlog);
+
+            vr_cdcritic := NULL;                         
+            vr_dscritic := NULL;    
+        WHEN OTHERS THEN
+              vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - CXON0020.pc_enviar_ted --> ' || sqlerrm,
+                                         pr_nmarqlog     => vr_nmarqlog);
+                                                
+              vr_cdcritic := NULL;                         
+              vr_dscritic := NULL;                         
+      END;
+                                                                       
                                     
     END IF;
 
