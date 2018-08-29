@@ -236,9 +236,6 @@ BEGIN
       -- #################################################################################################        
       -- se o titulo vencer no último dia útil do ano e também no dia útil anterior,
       -- entao "não" deverá debitar o título
-      IF(rw_craptdb.nrborder = 29795) THEN
-      NULL;
-      END IF;
       IF rw_craptdb.dtvencto = vr_dtultdia AND
          rw_craptdb.dtvencto = rw_crapdat.dtmvtoan THEN
          CONTINUE;
