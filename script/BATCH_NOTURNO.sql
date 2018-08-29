@@ -45,9 +45,10 @@ DECLARE
   
   PROCEDURE pc_gera_log_batch(pr_dslog IN VARCHAR2) IS
   BEGIN
+    -- diretório do log: \\pkghomol3\coop\"nome da cooperativa"\log\proc_batch.log
     btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                               ,pr_ind_tipo_log => 2 -- Erro tratado
-                              ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR HH24:MI:SS')||': '||' '||
+                              ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR HH24:MI:SS')||': '||
                                                   vr_cdcooper||' '||
                                                   to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||' --> '||
                                                   pr_dslog );
