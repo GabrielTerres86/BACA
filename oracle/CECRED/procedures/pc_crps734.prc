@@ -271,7 +271,7 @@ BEGIN
       
       -- Realiza o cálculo dos juros + 60 de mora do título
       IF (rw_craptdb.possui60 = 1) THEN
-         vr_tab_craptdb(vr_index).vljura60 := ROUND(rw_craptdb.vlsldtit*rw_craptdb.txdiariamora*(vr_datacalc-(rw_craptdb.maisvencido+59)),2);
+         vr_tab_craptdb(vr_index).vljura60 := ROUND(rw_craptdb.vlsldtit*rw_craptdb.txdiariamora*(vr_datacalc-(rw_craptdb.maisvencido+60)),2);
       ELSE
         vr_tab_craptdb(vr_index).vljura60 := 0;
       END IF;
