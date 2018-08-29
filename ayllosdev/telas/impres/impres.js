@@ -485,9 +485,9 @@ function formataCabecalho() {
     rNrdborde.addClass('rotulo-linha').css({ 'width': '170px' });
 
     cCddopcao.css({ 'width': '400px' })
-    cNrdconta.addClass('conta pesquisa').css({ 'width': '75px' });
+    cNrdconta.addClass('conta pesquisa').css({ 'width': '70px' });
     cTpextrat.css({ 'width': '275px' });
-    cNrdborde.css({ 'width': '75px' });
+    cNrdborde.css({ 'width': '70px' });
 
     if ($.browser.msie) {
         //	cTpextrat.css({'width':'280px'});
