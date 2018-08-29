@@ -52,6 +52,9 @@
                30/08/2016 - Inclusao dos campos de último acesso via Mobile na
                             tt-dados-titular - PRJ286.5 - Cecred Mobile (Dionathan)
 
+			   29/08/2018 - Foi adicionado um campo na tabela tt-dados-titular para retornar o
+						    Valor limite folha de pagamento (Felipe Fronza Mout`s)
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-limite                                                NO-UNDO
