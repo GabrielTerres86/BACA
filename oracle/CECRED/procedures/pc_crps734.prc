@@ -78,7 +78,7 @@ BEGIN
                                           AND tdb.cdcooper=pr_cdcooper 
                                           AND tdb.nrborder=craptdb.nrborder
                                         ) AS  maisvencido, -- verifica se o bordero desse titulo possui 1 titulo vencido ha mais de 60 dias
-                     (POWER((crapbdt.txmensal / 100) + 1,(1 / 30)) - 1) AS txdiariamora
+                     (POWER((crapbdt.vltxmora / 100) + 1,(1 / 30)) - 1) AS txdiariamora
                 FROM craptdb, crapbdt
                WHERE craptdb.cdcooper =  crapbdt.cdcooper
                  AND craptdb.nrdconta =  crapbdt.nrdconta
@@ -217,9 +217,14 @@ BEGIN
       ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
     END CASE;
     
+    IF (rw_crapdat.inproces=1) THEN
+      vr_datacalc := rw_crapdat.dtmvtolt;
+    ELSE 
+      vr_datacalc := rw_crapdat.dtmvtopr;
+    END IF;
     -- Loop principal dos títulos vencidos
     FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
-                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_dtmvtolt => vr_datacalc
                                   ,pr_cdagenci => pr_cdagenci) LOOP
       
       -- #################################################################################################
@@ -231,20 +236,18 @@ BEGIN
       -- #################################################################################################        
       -- se o titulo vencer no último dia útil do ano e também no dia útil anterior,
       -- entao "não" deverá debitar o título
+      IF(rw_craptdb.nrborder = 29795) THEN
+      NULL;
+      END IF;
       IF rw_craptdb.dtvencto = vr_dtultdia AND
          rw_craptdb.dtvencto = rw_crapdat.dtmvtoan THEN
          CONTINUE;
       END IF;
       -- #################################################################################################
       
-        IF (rw_crapdat.inproces=1) THEN
-          vr_datacalc := rw_crapdat.dtmvtolt;
-        ELSE 
-          vr_datacalc := rw_crapdat.dtmvtopr;
-        END IF;
         
       vr_index := vr_tab_craptdb.COUNT + 1;   
-      IF (rw_craptdb.dtvencto<=rw_crapdat.dtmvtolt) THEN -- titulo em atraso
+      IF (rw_craptdb.dtvencto<=vr_datacalc) THEN -- titulo em atraso
         -- Calcula os valores de atraso do título    
         DSCT0003.pc_calcula_atraso_tit(pr_cdcooper => pr_cdcooper    
                                       ,pr_nrdconta => rw_craptdb.nrdconta    
@@ -271,7 +274,7 @@ BEGIN
       
       -- Realiza o cálculo dos juros + 60 de mora do título
       IF (rw_craptdb.possui60 = 1) THEN
-         vr_tab_craptdb(vr_index).vljura60 := ROUND(rw_craptdb.vlsldtit*rw_craptdb.txdiariamora*(rw_crapdat.dtmvtolt-(rw_craptdb.maisvencido+59)),2);
+         vr_tab_craptdb(vr_index).vljura60 := ROUND(rw_craptdb.vlsldtit*rw_craptdb.txdiariamora*(vr_datacalc-(rw_craptdb.maisvencido+59)),2);
       ELSE
         vr_tab_craptdb(vr_index).vljura60 := 0;
       END IF;
@@ -282,15 +285,15 @@ BEGIN
     BEGIN
       FORALL idx IN INDICES OF vr_tab_craptdb SAVE EXCEPTIONS
         UPDATE craptdb
-           SET craptdb.vlmtatit = vr_tab_craptdb(idx).vlmtatit,    
-               craptdb.vljura60 = vr_tab_craptdb(idx).vljura60,    
-               craptdb.vlmratit = vr_tab_craptdb(idx).vlmratit,    
-               craptdb.vliofcpl = vr_tab_craptdb(idx).vlioftit   
+           SET craptdb.vlmtatit = nvl(vr_tab_craptdb(idx).vlmtatit,craptdb.vlmtatit),
+               craptdb.vljura60 = nvl(vr_tab_craptdb(idx).vljura60,craptdb.vljura60),
+               craptdb.vlmratit = nvl(vr_tab_craptdb(idx).vlmratit,craptdb.vlmratit),
+               craptdb.vliofcpl = nvl(vr_tab_craptdb(idx).vlioftit,craptdb.vliofcpl)
          WHERE ROWID = vr_tab_craptdb(idx).vr_rowid;
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao atualizar craptdb: ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+        vr_dscritic := 'Erro ao atualizar craptdb: ' || SQLERRM;
         RAISE vr_exc_saida;
     END;
 
