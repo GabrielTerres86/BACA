@@ -1,82 +1,83 @@
 /*!
 * FONTE        : cartao_credito.php
-* CRIA��O      : Guilherme
-* DATA CRIA��O : Mar�o/2008
-* OBJETIVO     : Biblioteca de fun��es da rotina Cart�o Cr�dito da tela ATENDA
+ * CRIAÇÃO      : Guilherme
+ * DATA CRIAÇÃO : Março/2008
+ * OBJETIVO     : Biblioteca de funções da rotina Cartão Crédito da tela ATENDA
 * --------------
-* ALTERA��ES   :
+ * ALTERAÇÕES   :
 * --------------
-* 000: [04/09/2008] David         (CECRED) : Adapta��o para solicita��o de 2 via de senha de cart�o de cr�dito
-* 000: [21/11/2008] David           (CECRED) : N�o permitir solicita��o de 2via quando n�mero do cart�o estiver zerado
-* 000: [23/04/2009] David         (CECRED) : Acerto no acesso as op��es Alterar, Canc/Bloq e 2via e op��es que alteram a validade do cart�o
-* 000: [22/10/2010] David         (CECRED) : Altera��o na fun��o acessaOpcaoAba e adapta��es para PJ
-* 000: [30/11/2010] Gabriel       (DB1)    : Transferencia de PAC
+ * 000: [04/09/2008] David         (CECRED) : Adaptação para solicitação de 2 via de senha de cartão de crédito
+ * 000: [21/11/2008] David	       (CECRED) : Não permitir solicitação de 2via quando número do cartão estiver zerado
+ * 000: [23/04/2009] David         (CECRED) : Acerto no acesso as opções Alterar, Canc/Bloq e 2via e opções que alteram a validade do cartão
+ * 000: [22/10/2010] David         (CECRED) : Alteração na função acessaOpcaoAba e adaptações para PJ
+ * 000: [30/11/2010] Gabriel       (DB1) 	: Transferencia de PAC
 * 000: [01/02/2011] Jorge         (CECRED) : Numero do cartao de credito, alterado de 4 campos para 1
-* 000: [23/03/2011] Jorge         (CECRED) : Fun��es de encerramento do cartao de credito e alterado condicoes na parte de Imprimir
-* 001: [05/04/2011] Rodolpho      (DB1)    : Adapta��o para o Zoom Endere�o e Avalistas gen�rico
-* 001: [08/07/2011] Gabriel       (DB1)    : Alterado para layout padr�o
+ * 000: [23/03/2011] Jorge         (CECRED) : Funções de encerramento do cartao de credito e alterado condicoes na parte de Imprimir
+ * 001: [05/04/2011] Rodolpho      (DB1) 	: Adaptação para o Zoom Endereço e Avalistas genérico
+ * 001: [08/07/2011] Gabriel       (DB1) 	: Alterado para layout padrão
 * 002: [18/07/2011] Guilherme     (Supero) : Incluida funcao para Extrato
 * 003: [24/10/2011] Fabricio      (CECRED) : Incluido a funcao alteraDtVencimento()
 * 004: [31/10/2011] Adriano       (CECRED) : Ajuste para Lista Negra
-* 005: [15/12/2011] Adriano       (CECRED) : Ajuste para a tabela de listagens dos extratos de cartao credito.
-* 006: [04/01/2012] Adriano       (CECRED) : Ajuste na fun��o validaDadosExtrato para validar o periodo do extrato para ano atual + 1
+ * 005: [15/12/2011] Adriano  	   (CECRED) : Ajuste para a tabela de listagens dos extratos de cartao credito.
+ * 006: [04/01/2012] Adriano       (CECRED) : Ajuste na função validaDadosExtrato para validar o periodo do extrato para ano atual + 1
 * 007: [03/02/2012] Tiago         (CECRED) : Retirada mascara do campo Titular
 * 008: [26/06/2012] Jorge         (CECRED) : Adequacao para submeter para impressao em funcao gerarImpressao() e ImprimeExtratoCartao2(), retirado funcao ImprimeExtratoCartao()
-* 009: [10/07/2012] Guilherme Maba(CECRED) : Ajuste de classe, css e valor para o campo nmextttl, tamb�m inclu�do na postagem para requisi��o em "../cadastrar_novo_cartao.php".
-* 010: [11/04/2013] Adriano       (CECRED) : Retirado o par�metro alertafraude e o tratamento do mesmo na fun��o gerarImpressao.
-* 011: [12/08/2013] Carlos        (CECRED) : Altera��o da sigla PAC para PA.
-* 012: [26/03/2014] Jean Michel   (CECRED) : Altera��o de valida��es e novas fun��es p/ projeto cart�es Bancoob.
-* 013: [15/05/2014] James           (CECRED) : Cria��o e altera��o das fun��es de alteracao de senha para o cartao com chip.
-* 014: [01/07/2014] Lucas Lunelli (CECRED) : Corre��o para n�o realizar valida��o ao clicar em voltar.
-* 015: [14/07/2014] Lucas Lunelli (CECRED) : Apenas habilitar bot�o de Exclus�o para cart�es Bancoob caso situa��o for 1 (Aprovado)
-* 016: [28/07/2014] Daniel           (CECRED) : Incluso tratamento no caso de cartao MAESTRO.
-* 017: [20/08/2014] Daniel           (CECRED) : Incluso ajustes solicitacao cartao pessoa juridica. SoftDesk 188116.
-* 018: [03/09/2014] James           (CECRED) : Ajustes na altera��o de senha do cart�o Bancoob.
-* 019: [24/09/2014] Renato-Supero (CECRED) : Adicionar parametro nmempres no cadastro de novos cart�es
-* 020: [01/10/2014] Vanessa       (CECRED) : Retirada da op��o habilitar para cart�es Bancoob
-* 021: [05/10/2014] Oscar         (CECRED) : Colocar AID'S cart�o Cabal, fixo at� atualizar firmware do PINPAD.
+ * 009: [10/07/2012] Guilherme Maba(CECRED) : Ajuste de classe, css e valor para o campo nmextttl, também incluído na postagem para requisição em "../cadastrar_novo_cartao.php".
+ * 010: [11/04/2013] Adriano	   (CECRED) : Retirado o parâmetro alertafraude e o tratamento do mesmo na função gerarImpressao.
+ * 011: [12/08/2013] Carlos        (CECRED) : Alteração da sigla PAC para PA.
+ * 012: [26/03/2014] Jean Michel   (CECRED) : Alteração de validações e novas funções p/ projeto cartões Bancoob.
+ * 013: [15/05/2014] James		   (CECRED) : Criação e alteração das funções de alteracao de senha para o cartao com chip.
+ * 014: [01/07/2014] Lucas Lunelli (CECRED) : Correção para não realizar validação ao clicar em voltar.
+ * 015: [14/07/2014] Lucas Lunelli (CECRED) : Apenas habilitar botão de Exclusão para cartões Bancoob caso situação for 1 (Aprovado)
+ * 016: [28/07/2014] Daniel		   (CECRED) : Incluso tratamento no caso de cartao MAESTRO.
+ * 017: [20/08/2014] Daniel		   (CECRED) : Incluso ajustes solicitacao cartao pessoa juridica. SoftDesk 188116.
+ * 018: [03/09/2014] James		   (CECRED) : Ajustes na alteração de senha do cartão Bancoob.
+ * 019: [24/09/2014] Renato-Supero (CECRED) : Adicionar parametro nmempres no cadastro de novos cartões
+ * 020: [01/10/2014] Vanessa       (CECRED) : Retirada da opção habilitar para cartões Bancoob
+ * 021: [05/10/2014] Oscar         (CECRED) : Colocar AID'S cartão Cabal, fixo até atualizar firmware do PINPAD.
 * 022: [20/11/2014] Oscar         (CECRED) : Ajustar tamanho retorno do script de senha.
-* 023: [01/12/2014] James           (CECRED) : Ajuste para trocar a senha do cart�o CABAL.
-* 024: [04/12/2014] Renato-Supero (CECRED) : Ajuste na regra de limite para cart�o bancoob, afim de permitir limite zero e ajustar valores conforme progress, conforme SD 226052.
-* 025: [15/12/2014] Renato-Supero (CECRED) : Zerar o valor de limite quando for selecionado um Cart�o MAESTRO, conforme SD 234067.
-* 026: [22/12/2014] Vanessa       (CECRED) : Liberar o campo Forma de Pagamento e obrigar a sua sele��o, conforme SD 236434.
-* 027: [24/06/2015] James           (CECRED) : Ajuste para quando o cartao de credito estiver com a situacao "Solicitado", fazer a inclusao do cartao de credito. (James)
-* 028: [03/07/2015] Renato Darosci(CECRED) : Impedir que seja poss�vel informar limite para cart�o somente d�bito
-* 029: [15/07/2015] Carlos        (CECRED) : #308949 Corre��o de habilita��o/desabilita��o do campo Lim. D�bito e Forma de pagamento, atrav�s
-*                                            da indica��o "temDebito", extra�da do campo Administradora (Carlos)
-* 030: [29/07/2015] James           (CECRED) : Ajuste na entrega do cartao para permitir informar o limite de saque no TAA, e incluir a opcao TAA.
+ * 023: [01/12/2014] James	 	   (CECRED) : Ajuste para trocar a senha do cartão CABAL.
+ * 024: [04/12/2014] Renato-Supero (CECRED) : Ajuste na regra de limite para cartão bancoob, afim de permitir limite zero e ajustar valores conforme progress, conforme SD 226052.
+ * 025: [15/12/2014] Renato-Supero (CECRED) : Zerar o valor de limite quando for selecionado um Cartão MAESTRO, conforme SD 234067.
+ * 026: [22/12/2014] Vanessa 	   (CECRED) : Liberar o campo Forma de Pagamento e obrigar a sua seleção, conforme SD 236434.
+ * 027: [24/06/2015] James 	       (CECRED) : Ajuste para quando o cartao de credito estiver com a situacao "Solicitado", fazer a inclusao do cartao de credito. (James) 
+ * 028: [03/07/2015] Renato Darosci(CECRED) : Impedir que seja possível informar limite para cartão somente débito
+ * 029: [15/07/2015] Carlos        (CECRED) : #308949 Correção de habilitação/desabilitação do campo Lim. Débito e Forma de pagamento, através 
+ *                                            da indicação "temDebito", extraída do campo Administradora (Carlos)
+ * 030: [29/07/2015] James 		   (CECRED) : Ajuste na entrega do cartao para permitir informar o limite de saque no TAA, e incluir a opcao TAA.
 * 031: [07/10/2015] Fabricio      (CECRED) : Setar fixo Debito CC Total como Forma de Pagamento quando for solicitado novo cartao BB - alteraDiaDebito.
 *                                            (Chamado 332457)
-* 032: [08/10/2015] James           (CECRED) : Desenvolvimento do projeto 126.
+ * 032: [08/10/2015] James		   (CECRED) : Desenvolvimento do projeto 126.
 * 033: [09/10/2015] Gabriel       (RKAM)   : Reformulacao cadastral.
 * 034: [14/10/2015] Jean Michel   (CECRED) : Alterado o width dos campo e label nmopetaa PRJ 215.
-* 035: [29/06/2016] Kelvin           (CECRED)    : Ajuste para que o campo "Plastico da Empresa" seja obrigat�rio. SD 476461
+ * 035: [29/06/2016] Kelvin		   (CECRED)	: Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461 
 * 036: [08/08/2016] Fabricio      (CECRED) : Alterado id do form utilizado na function ImprimeExtratoCartao2 (chamado 477696).
-* 037: [05/10/2016] Kelvin           (CECRED) : Ajuste feito ao realizar o cadastro de um novo cart�o no campo  "habilita funcao debito"
+ * 037: [05/10/2016] Kelvin		   (CECRED) : Ajuste feito ao realizar o cadastro de um novo cartão no campo  "habilita funcao debito"
 *                                            conforme solicitado no chamado 508426. (Kelvin)
-* 038: [09/12/2016] Kelvin           (CECRED) : Ajuste realizado conforme solicitado no chamado 574068.
-* 039: [31/08/2017] Lucas Ranghetti(CECRED): Na Fun��o lerCartaoChip, instanciar AIDGet para podermos enviar a Aplica��o para a funcao SMC_EMV_TagsGet.
-* 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para n�o permitir solicitar cart�o com n�mero no campo "Empresa do Pl�stico" (Chamado 781013)
-* 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para n�o permitir solicitar cart�o PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
-* 042: [24/08/2017] Renato Darosci(SUPERO) : Realizar ajustes para incluir a tela de vizualiza��o do hist�rico de altera��o de limites (P360)
-* 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cart�o deve ser cancelado atrav�s do SIPAGNET. (P364)
-* 044: [01/12/2017] Jonata          (RKAM) : N�o permitir acesso a op��o de incluir quando conta demitida.
-* 045: [10/07/2018] Paulo Silva (SUPERO): Alterada variável protocolo para não receber valor 0. Alterada função reenviaEsteira para inclusão do parâmetro glbadc na chamada do fonte solicitar_cartao_bancoob.
+ * 038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
+ * 039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
+ * 040: [08/11/2017] Douglas       (CECRED) : Adicionado tratamento para não permitir solicitar cartão com número no campo "Empresa do Plástico" (Chamado 781013)
+ * 041: [10/11/2017] Tiago         (CECRED) : Adicionado tratamento para não permitir solicitar cartão PF com numero de Identidade maior que 15 posicoes (Chamado 761563)
+ * 042: [24/08/2017] Renato Darosci(SUPERO) : Realizar ajustes para incluir a tela de vizualização do histórico de alteração de limites (P360)
+ * 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cartão deve ser cancelado através do SIPAGNET. (P364)
+ * 044: [01/12/2017] Jonata          (RKAM) : Não permitir acesso a opção de incluir quando conta demitida.
+ * 045: [29/03/2018] Lombardi	   (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
 */
 
-var idAnt = 999; // Vari�vel para o controle de cart�o selecionado
-var corAnt = "";  // Vari�vel para o controle de cor de cart�o selecionado
-var flgativo = "";  // Vari�vel que indica se cart�o PJ est� habilitado
-var nrctrhcj = 0;   // Vari�vel para armanezar n�mero da proposta para pessoa jur�dica
-var nrctrcrd = 0;   // Vari�vel para guardar o n�mero de contrato do cart�o de cr�dito
-var cdadmcrd = 0;   // Vari�vel para guardar o c�digo da administradora do cart�o de cr�dito
-var nrcrcard = 0;   // Vari�vel para guardar o c�digo n�mero do cart�o de cr�dito
-var flgcchip = 0;  // Vari�vel para guardar se o cart�o eh com Chip ou n�o.
+var idAnt = 999; // Variável para o controle de cartão selecionado
+var corAnt = "";  // Variável para o controle de cor de cartão selecionado
+var flgativo = "";  // Variável que indica se cartão PJ está habilitado
+var nrctrhcj = 0;   // Variável para armanezar número da proposta para pessoa jurídica
+var nrctrcrd = 0;   // Variável para guardar o número de contrato do cartão de crédito
+var cdadmcrd = 0;   // Variável para guardar o código da administradora do cartão de crédito
+var nrcrcard = 0;   // Variável para guardar o código número do cartão de crédito
+var flgcchip = 0;  // Variável para guardar se o cartão eh com Chip ou não.
 var callafterCartaoCredito = '';
 var metOpcaoAba = '';
 var nomeacao = '';
 var bCartaoSituacaoSolicitado = false;
-// Vari�veis para armazenar CPF dos representantes informados na op��o habilita��o
+
+// Variáveis para armazenar CPF dos representantes informados na opção habilitação
 var cpfpriat = "";
 var cpfsegat = "";
 var cpfterat = "";
@@ -88,8 +89,8 @@ var flpurcrd = 0;
 var insitcrd = 0;
 var idastcjt = 0;
 
-// ALTERA��O 001 - Vari�veis globais que s�o utilizadas pelas fun��es do script "avalista.js"
-var nomeForm = '';                    // Vari�vel para guardar o nome do formul�rio corrente
+// ALTERAÇÃO 001 - Variáveis globais que são utilizadas pelas funções do script "avalista.js"
+var nomeForm = '';                    // Variável para guardar o nome do formulário corrente
 var boAvalista = 'b1wgen0028.p';        // BO para esta rotina
 var procAvalista = 'carrega_avalista';    // Nome da procedures que busca os avalistas
 var operacao = '';
@@ -120,23 +121,22 @@ var contigenciaAtiva = false;
 $.getScript(UrlSite + 'includes/avalistas/avalistas.js');
 
 /******************************************************************************************************************/
-/*****************************************       FUN��ES GERAIS       *********************************************/
+/*****************************************       FUNÇÕES GERAIS       *********************************************/
 /******************************************************************************************************************/
-
-// Fun��o para acessar op��es da rotina
+// Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde carregando cart&otilde;es de cr&eacute;dito ...");
 
     callafterCartaoCredito = '';
 
-// Atribui cor de destaque para aba da op��o
+	// Atribui cor de destaque para aba da opção
     $("#linkAba0").attr("class", "txtBrancoBold");
     $("#imgAbaEsq0").attr("src", UrlImagens + "background/mnu_sle.gif");
     $("#imgAbaDir0").attr("src", UrlImagens + "background/mnu_sld.gif");
     $("#imgAbaCen0").css("background-color", "#969FA9");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -162,7 +162,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
     });
 }
 
-//Fun��o para controle de navega��o
+//Função para controle de navegação
 function controlaFoco() {
     $('#divConteudoOpcao #divCartoes').each(function () {
         $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
@@ -183,10 +183,10 @@ function controlaFoco() {
 }
 
 function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira) {
-
+    
 	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"'); }, 600);";
     if (id != idAnt) {
-// Armazena o n�mero do contrato/proposta, n�mero cart�o, c�d adm do cart�o selecionado eme variaveis GLOBAIS
+        // Armazena o número do contrato/proposta, número cartão, cód adm do cartão selecionado eme variaveis GLOBAIS
         nrctrcrd = nrCtrCartao;
         nrcrcard = nrCartao.replace(/\./g, "");
         cdadmcrd = cdAdmCartao;
@@ -236,7 +236,6 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 
             $("#btnence").prop("disabled", true);
             $("#btnence").css('cursor', 'default');
-			
 
             if (!(situacao == "ESTUDO" && decisaoMotorEsteira == 'SEM APROVACAO')) {
                 $("#btnexcl").prop("disabled", true);
@@ -271,7 +270,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 
             $("#btnextr").prop("disabled", true);
             $("#btnextr").css('cursor', 'default');
-
+            
             $("#btnimpr").prop("disabled", true);
             $("#btnimpr").css('cursor', 'default');
 
@@ -281,7 +280,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
             }
         }
 
-//Se estiver executando a rotina de impedimentos e o cart�o for CECRED deve deixar habilitado, pois ao clicar no bot�o de canelcar, dever� apresentar alerta
+        //Se estiver executando a rotina de impedimentos e o cartão for CECRED deve deixar habilitado, pois ao clicar no botão de canelcar, deverá apresentar alerta
         //informando que o cartão deve ser cancelado através do SIPAGNET.
         if (executandoImpedimentos &&
             (cdadmcrd == 3 ||
@@ -302,7 +301,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
     return false;
 }
 
-// Fun��o para voltar para o div anterior conforme par�metros
+// Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder, mostrar, qtdade, novotam) {
     if (novotam == undefined) {
         var tamanho = 220;
@@ -328,8 +327,8 @@ function voltaDiv(esconder, mostrar, qtdade, novotam) {
 }
 
 /*!
-* OBJETIVO : Fun��o para validar avalistas
-* ALTERA��O 001: Padronizado o recebimento de valores
+ * OBJETIVO : Função para validar avalistas 
+ * ALTERAÇÃO 001: Padronizado o recebimento de valores 
 */
 function validarAvalistas(tipoacao) {
 
@@ -408,7 +407,7 @@ function controlaLayout(nomeForm) {
 
         $("#divDadosEntrega").css("display", "block");
 
-// Esconde os cart�es e avalistas
+		// Esconde os cartões e avalistas
         $("#divOpcoesDaOpcao2").css("display", "none");
         $("#divDadosAvalistasEntrega").css("display", "none");
 
@@ -593,7 +592,7 @@ function controlaLayout(nomeForm) {
         var Cdtacetaa = $('#dtacetaa', '#' + nomeForm);
         var Cnmopetaa = $('#nmopetaa', '#' + nomeForm);
 
-//Pessoa F�sica e Jur�dica
+		//Pessoa Física e Jurídica
         var Ldsparent = $('label[for="dsparent"]', '#' + nomeForm);
         var Ldssituac = $('label[for="dssituac"]', '#' + nomeForm);
         var Lvlsalari = $('label[for="vlsalari"]', '#' + nomeForm);
@@ -626,7 +625,7 @@ function controlaLayout(nomeForm) {
 
         var cTodos = $('input', '#' + nomeForm);
 
-//Controle dos labels que s�o comuns para pessoa Fis. e Jur.
+		//Controle dos labels que são comuns para pessoa Fis. e Jur.
         Lnrcrcard.addClass('rotulo').css('width', '74px');
         Lnmextttl.addClass('rotulo').css('width', '74px');
         Lnmtitcrd.addClass('rotulo').css('width', '105px');
@@ -678,7 +677,7 @@ function controlaLayout(nomeForm) {
         Cdsgraupr.css({'width': '130px'});
         Cdsdpagto.css({'width': '96px'});
 
-//Pessoa F�sica e Jur�dica
+		//Pessoa Física e Jurídica
         Ldsparent.addClass('rotulo').css('width', '74px');
         Lvlalugue.addClass('rotulo').css('width', '74px');
 
@@ -958,7 +957,7 @@ function controlaLayout(nomeForm) {
         Cnrcpfcpf.css({'width': '120px'});
         Cdsrepinc.css({'width': '298px'});
 
-//Pessoa Jur�dica
+		//Pessoa Jurídica
         if (inpessoa == 2) {
             Cvlsalari.css("display", "none");
             Lvlsalari.css("display", "none");
@@ -1261,8 +1260,7 @@ function controlaLayout(nomeForm) {
 }
 
 /******************************************************************************************************************/
-/*****************************************         OP��O NOVO         *********************************************/
-
+/*****************************************         OPÇÃO NOVO         *********************************************/
 /******************************************************************************************************************/
 function opcaoNovo(cdcooper) {
 
@@ -1272,7 +1270,7 @@ function opcaoNovo(cdcooper) {
         return false;
     }
 
-// ALTERA��O 001
+	// ALTERAÇÃO 001
     nomeForm = 'frmNovoCartao';
 
     var flgliber = $('#flgliber', '#divCartoes').val();
@@ -1287,7 +1285,7 @@ function opcaoNovo(cdcooper) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -1461,7 +1459,7 @@ console.log('cdtipcta: '+cdtipcta+ ' nrcpfstl: '+nrcpfstl+ ' inpessoa: '+inpesso
 
     if (cdadmcrd >= 10 && cdadmcrd < 81) {
 		
-        /*Tratamento para busca limite, dia de d�bito, proposto, forma de pagamento, envio*/
+		/*Tratamento para busca limite, dia de débito, proposto, forma de pagamento, envio*/	
         if (escolha == 6 || escolha == 7 || escolha == 8) {
 
             if (nrcpfau == 0) {
@@ -1519,25 +1517,25 @@ function alteraDiaDebito() {
 
     var objSelectDiaDebito = document.frmNovoCartao.dddebito;
     var objSelectAdmCrd = document.frmNovoCartao.dsadmcrd;
-// Remove as op��es
+         // Remove as opções
     for (i = objSelectDiaDebito.options.length; i >= 0; i--) {
         objSelectDiaDebito.remove(i);
     }
-// pega o value da op��o selecionada
+         // pega o value da opção selecionada
     var dadosAdministradora = objSelectAdmCrd.options[objSelectAdmCrd.options.selectedIndex].value;
 
-// pega o c�d da adm
+         // pega o cód da adm
     var codAdm = dadosAdministradora.slice(0, dadosAdministradora.search(";"));
-// pega os dias do d�bito na op��o selecionada
+         // pega os dias do débito na opção selecionada
     var diasDebito = dadosAdministradora.slice(dadosAdministradora.search(";") + 1);
 
 // var dados  = objSelectAdmCrd.options[objSelectAdmCrd.options.selectedIndex].value;
 
     var nmbandei = dadosAdministradora.split(";")[3];
 
-//tira o identificador se tem d�bito ou n�o e fica s� com os dias do d�bito
+         //tira o identificador se tem débito ou não e fica só com os dias do débito
     var xDiasDebito = diasDebito.slice(0, diasDebito.search(";"));
-//Dias do d�bito
+		 //Dias do débito
     var sDiasDebito = xDiasDebito.split(",");
     for (i = 0; i < sDiasDebito.length; i++) {
 
@@ -1608,7 +1606,7 @@ function atualizaCampoLimiteProposto(aOpcao) {
 
     var objSelectLimiteProposto = document.frmNovoCartao.vllimpro;
 
-// Remove as op��es
+    // Remove as opções
     for (i = objSelectLimiteProposto.options.length; i >= 0; i--) {
         objSelectLimiteProposto.remove(i);
     }
@@ -1665,7 +1663,7 @@ function verificaEfetuaGravacao() {
     }
 }
 
-// Fun��o para validar novo cart�o de cr�dito
+// Função para validar novo cartão de crédito
 function validarNovoCartao() {
     try {
 // Mostra mensagem de aguardo
@@ -1777,7 +1775,7 @@ function validarNovoCartao() {
             return false;
         }
 
-// Valida��es para cart�o PJ
+        // Validações para cartão PJ
         if (inpessoa == 2 && (codadmct >= 10 && codadmct <= 80)) {
 // Nome da Empresa deve estar preenchido
             if (nmempres.trim() == "") {
@@ -1785,14 +1783,14 @@ function validarNovoCartao() {
                 showError("error", "Empresa do Plastico deve ser informada.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
                 return false;
             }
-// Nome da Empresa n�o pode conter mais de 23 caracteres
+		// Nome da Empresa não pode conter mais de 23 caracteres
             if (nmempres.length > 23) {
                 hideMsgAguardo();
                 showError("error", "Empresa do Plastico nao pode ter mais de 23 letras.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
                 return false;
             }
 
-// Nome da Empresa n�o pode conter numeros
+// Nome da Empresa não pode conter numeros
             if (/[0-9]/gm.test(nmempres)) {
                 hideMsgAguardo();
                 showError("error", "Empresa do Plastico n&atilde;o pode conter n&uacute;meros.", "Alerta - Ayllos", "$('#nmempres','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -1917,9 +1915,9 @@ function senhaCoordenador(executaDepois) {
 }
 
 /*!
-* OBJETIVO : Fun��o para cadastrar nova proposta de cart�o de cr�dito
-* ALTERA��O 001: Padronizado o recebimento de valores e incluso o recebimento dos campos
-*                n�mero, complemento e caixa postal para os avalistas 1 e 2
+ * OBJETIVO : Função para cadastrar nova proposta de cartão de crédito
+ * ALTERAÇÃO 001: Padronizado o recebimento de valores e incluso o recebimento dos campos
+ *                número, complemento e caixa postal para os avalistas 1 e 2
 */
 function cadastrarNovoCartao() {
 
@@ -2066,10 +2064,10 @@ function cadastrarNovoCartao() {
 }
 
 /*******************************************************************************************************************/
-/*****************************************          OP��O IMPRIMIR    **********************************************/
+/*****************************************          OPÇÃO IMPRIMIR	**********************************************/
 /******************************************************************************************************************/
 
-// Fun��o para mostrar a op��o Imprimir do cart�o
+// Função para mostrar a opção Imprimir do cartão
 function opcaoImprimir() {
     if ((inpessoa == 1 && nrctrcrd == 0) ||
         (inpessoa == 2 && nrctrhcj == 0)) {
@@ -2080,7 +2078,7 @@ function opcaoImprimir() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Imprimir ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/imprimir.php",
@@ -2101,7 +2099,7 @@ function opcaoImprimir() {
 
 }
 
-// Fun��o para gerar impress�o em PDF
+// Função para gerar impressão em PDF
 function gerarImpressao(tpimpressao, idimpres, administradora, nrcontrato, codmotivo) {
 
 // Se impressao for chamada pela opcao imprimir
@@ -2109,7 +2107,7 @@ function gerarImpressao(tpimpressao, idimpres, administradora, nrcontrato, codmo
         if (inpessoa == 1) {
             var contrato = nrctrcrd;
         } else {
-// Se for termo de emiss�o PJ e n�o existir nenhum cart�o cadastrado n�o gera impress�o
+			// Se for termo de emissão PJ e não existir nenhum cartão cadastrado não gera impressão
             if (idimpres == 10) {
                 if (nrctrcrd == 0) {
                     return false;
@@ -2124,7 +2122,7 @@ function gerarImpressao(tpimpressao, idimpres, administradora, nrcontrato, codmo
         var contrato = nrcontrato;
     }
 
-// Se administrador vier em branco � porque deve ser pego do cart�o selecionado - altera��o limite cr�dito
+	// Se administrador vier em branco é porque deve ser pego do cartão selecionado - alteração limite crédito
     if (administradora == 0 || administradora == "") {
         administradora = cdadmcrd;
     }
@@ -2195,10 +2193,10 @@ function gerarImpressao(tpimpressao, idimpres, administradora, nrcontrato, codmo
 }
 
 /*******************************************************************************************************************/
-/*****************************************          OP��O CONSULTAR         *********************************************/
+/*****************************************          OPÇÃO CONSULTAR         *********************************************/
 /******************************************************************************************************************/
 
-// Fun��o para consultar cart�o de cr�dito
+// Função para consultar cartão de crédito
 function consultaCartao() {
     if (nrctrcrd == 0) {
         hideMsgAguardo();
@@ -2208,7 +2206,7 @@ function consultaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, consultando dados do cart&atilde;o de cr&eacute;dito ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/consultar_dados_cartao.php",
@@ -2228,16 +2226,16 @@ function consultaCartao() {
     });
 }
 
-// Fun��o para mostrar os avalistas na consulta de um cart�o de cr�dito
+// Função para mostrar os avalistas na consulta de um cartão de crédito
 function mostraAvais() {
 
-// ALTERA��O 001
+	// ALTERAÇÃO 001
     nomeForm = 'frmDadosCartaoAvais';
 
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando avalistas do cart&atilde;o de cr&eacute;dito ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/consultar_dados_cartao_avais.php",
@@ -2257,12 +2255,12 @@ function mostraAvais() {
     });
 }
 
-//Fun��o para mostrar os ultimos d�bitos na consulta de um cart�o
+//Função para mostrar os ultimos débitos na consulta de um cartão
 function mostraUltDebitos() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando &uacute;ltimos d&eacute;bitos do cart&atilde;o de cr&eacute;dito ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/consultar_dados_cartao_ultimos_debitos.php",
@@ -2283,8 +2281,7 @@ function mostraUltDebitos() {
 }
 
 /***************************************************************************************************************/
-/*****************************************          OP��O LIBERAR         *********************************************/
-
+/*****************************************          OPÇÃO LIBERAR         *********************************************/
 /**************************************************************************************************************/
 function opcaoLiberar() {
 
@@ -2305,7 +2302,7 @@ function opcaoLiberar() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Liberar ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/liberar.php",
@@ -2326,7 +2323,7 @@ function opcaoLiberar() {
 
 }
 
-//Fun��o para fazer libera��o do cart�o
+//Função para fazer liberação do cartão
 //se idconfir = 1 ele executa o script php pra confirmar com mensagem diferenciada para conta encerrada
 function liberacaoCartao(idconfir) {
 
@@ -2335,7 +2332,7 @@ function liberacaoCartao(idconfir) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, confirmando libera&ccedil;&atilde;o do cart&atilde;o de cr&eacute;dito ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/liberar_liberacao.php",
@@ -2357,12 +2354,12 @@ function liberacaoCartao(idconfir) {
     });
 }
 
-// Fun��o para desfazer Libera��o do cart�o de cr�dito
+// Função para desfazer Liberação do cartão de crédito
 function desfazLiberacaoCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, desfazendo libera&ccedil;&atilde;o do cart&atilde;o de cr&eacute;dito ...");
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/liberar_desfaz_liberacao.php",
@@ -2387,8 +2384,7 @@ function desfazLiberacaoCartao() {
 }
 
 /***************************************************************************************************************/
-/*****************************************      OP��O  ENTREGAR        *********************************************/
-
+/*****************************************      OPÇÃO  ENTREGAR        *********************************************/
 /**************************************************************************************************************/
 function opcaoEntregar() {
 
@@ -2419,7 +2415,7 @@ function opcaoEntregar() {
 /* Funcao para carregar o formulario de entrega de cartao com Chip/Sem Chip */
 function opcaoEntregarCartaoBancoob() {
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/entregar_cartao_bancoob.php",
@@ -2437,7 +2433,7 @@ function opcaoEntregarCartaoBancoob() {
 /* Funcao para carregar o formulario de entrega de cartao sem chip */
 function opcaoEntregarCartaoNormal() {
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/entregar.php",
@@ -2458,12 +2454,12 @@ function opcaoEntregarCartaoNormal() {
     });
 }
 
-// Fun��o para mostrar a op��o de informar os dados do cart�o| numero e data de validade
+// Função para mostrar a opção de informar os dados do cartão| numero e data de validade
 function dadosEntrega() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados da entrega do cart&atilde;o de cr&eacute;dito ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/entregar_dados.php",
@@ -2484,14 +2480,14 @@ function dadosEntrega() {
     });
 }
 
-// Fun��o para validar os dados informados do cart�o| numero do cart�o
+// Função para validar os dados informados do cartão| numero do cartão
 function confirmaDadosEntrega() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando informa&ccedil;&otilde;es ...");
 
     var repsolic = inpessoa == 1 ? "" : $("#repsolic option:selected", "#frmEntregarDados").text();
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/entregar_dados_confirma.php",
@@ -2514,14 +2510,14 @@ function confirmaDadosEntrega() {
     });
 }
 
-// Fun��o para validar entrega cart�o de cr�dito
+// Função para validar entrega cartão de crédito
 function entregaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando entrega do cart&atilde;o de cr&eacute;dito ...");
 
     var repsolic = inpessoa == 1 ? "" : $("#repsolic option:selected", "#frmEntregarDados").text();
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/entregar_valida_entrega.php",
@@ -2549,7 +2545,7 @@ function entregaCartao() {
     });
 }
 
-/*    Entrega do Cart�o Bradesco/... */
+/*	Entrega do Cartão Bradesco/... */
 function efetuaEntregaCartaoNormal() {
     iNumeroCPF = inpessoa == 1 ? "0" : $("#repsolic", "#frmEntregarDados").val();
     iNumeroCartao = retiraCaracteres($("#cfseqca", "#frmEntregarDados").val(), "0123456789", true);
@@ -2557,7 +2553,7 @@ function efetuaEntregaCartaoNormal() {
     efetuaEntregaCartao();
 }
 
-/*    Entrega do Cart�o CECRED */
+/*	Entrega do Cartão CECRED */
 function efetuaEntregaCartaoComChip() {
     iNumeroCPF = 0;
     iNumeroCartao = retiraCaracteres($("#nrcrcard", "#frmEntregaCartaoBancoob").val(), "0123456789", true);
@@ -2572,7 +2568,7 @@ function efetuaEntregaCartaoComChip() {
     }
 }
 
-/*    Entrega do Cart�o CECRED */
+/*	Entrega do Cartão CECRED */
 function efetuaEntregaCartaoSemChip() {
     iNumeroCPF = 0;
     iNumeroCartao = retiraCaracteres($("#nrcrcard", "#frmEntregaCartaoBancoob").val(), "0123456789", true);
@@ -2587,7 +2583,7 @@ function efetuaEntregaCartaoSemChip() {
     }
 }
 
-// Efetua entrega do cart�o de cr�dito
+// Efetua entrega do cartão de crédito
 function efetuaEntregaCartao() {
 
     var nrcpfcgc = normalizaNumero($("#nrcpfcgc", "#frmCabAtenda").val());
@@ -2595,7 +2591,7 @@ function efetuaEntregaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando entrega do cart&atilde;o de cr&eacute;dito ...");
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/entregar_entregarcartao.php",
@@ -2625,12 +2621,12 @@ function efetuaEntregaCartao() {
     });
 }
 
-// Desfaz entrega do cart�o de cr�dito
+// Desfaz entrega do cartão de crédito
 function desfazEntregaCartao(idconfir) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, desfazendo entrega do cart&atilde;o de cr&eacute;dito ...");
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/entregar_desfazentrega.php",
@@ -2656,10 +2652,9 @@ function desfazEntregaCartao(idconfir) {
 }
 
 /**************************************************************************************************************/
-/*****************************************          OP��O ALTERAR         ********************************************/
+/*****************************************          OPÇÃO ALTERAR         ********************************************/
 /**************************************************************************************************************/
-
-// Fun��o para mostrar a op��o Alterar do cart�o
+// Função para mostrar a opção Alterar do cartão
 function opcaoAlterar() {
 
     var flgliber = $('#flgliber', '#divCartoes').val();
@@ -2679,7 +2674,7 @@ function opcaoAlterar() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Alterar ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar.php",
@@ -2699,12 +2694,12 @@ function opcaoAlterar() {
     });
 }
 
-// Fun��o para mostrar a op��o de alterar o Limite de d�bito
+// Função para mostrar a opção de alterar o Limite de débito
 function alteraLimiteDebito() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es do Limite de D&eacute;bito do cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar_limitedebito_carregadados.php",
@@ -2725,7 +2720,7 @@ function alteraLimiteDebito() {
     });
 }
 
-// Fun��o para alterar limite de d�bito do cart�o
+// Função para alterar limite de débito do cartão
 function alteraLimDeb() {
 
     var nrcpfcgc = normalizaNumero($("#nrcpfcgc", "#frmCabAtenda").val());
@@ -2733,7 +2728,7 @@ function alteraLimDeb() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, alterando limite de d&eacute;bito informado ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar_limitedebito_alterar.php",
@@ -2759,16 +2754,16 @@ function alteraLimDeb() {
     });
 }
 
-// Fun��o para mostrar a op��o de alterar o Limite de cr�dito
+// Função para mostrar a opção de alterar o Limite de crédito
 function alteraLimiteCredito() {
 
-// ALTERA��O 001
+	// ALTERAÇÃO 001
     nomeForm = 'frmValorLimCre';
 
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es do limite de cr&eacute;dito do cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar_limitecredito_carregadados.php",
@@ -2790,12 +2785,12 @@ function alteraLimiteCredito() {
     });
 }
 
-// Fun��o para validar limite de cr�dito do cart�o e mostrar os avalistas
+// Função para validar limite de crédito do cartão e mostrar os avalistas
 function validaLimCre() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando limite de cr&eacute;dito do cart&atilde;o de cr&eacute;dito ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar_limitecredito_validalimite.php",
@@ -2822,7 +2817,7 @@ function validaLimCre() {
     });
 }
 
-// Fun��o para alterar o limite de cr�dito do cart�o de cr�dito
+// Função para alterar o limite de crédito do cartão de crédito
 function alteraLimCre() {
 
     var nrcpfcgc = normalizaNumero($("#nrcpfcgc", "#frmCabAtenda").val());
@@ -2830,7 +2825,7 @@ function alteraLimCre() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, alterando limite de cr&eacute;dito do cart&atilde;o ...");
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar_limitecredito_alterar.php",
@@ -2900,12 +2895,12 @@ function alteraLimCre() {
     });
 }
 
-// Fun��o para mostrar a op��o de alterar a Data de vencimento
+// Função para mostrar a opção de alterar a Data de vencimento
 function alteraDtVencimento(segundaVia) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es da Data de Vencimento do cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar_dtvenc_carregadados.php",
@@ -2929,7 +2924,7 @@ function alteraDtVencimento(segundaVia) {
     });
 }
 
-// Fun��o para efetuar a troca da data de vencimento
+// Função para efetuar a troca da data de vencimento
 function alterarDataDeVencimento() {
 
     var nrcpfcgc = normalizaNumero($('#nrcpfcgc', '#frmCabAtenda').val());
@@ -2937,7 +2932,7 @@ function alterarDataDeVencimento() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, alterando dia do d&eacute;bito do cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/alterar_dtvenc_alterar.php",
@@ -2967,10 +2962,9 @@ function alterarDataDeVencimento() {
 }
 
 /******************************************************************************************************/
-/*****************************************      OP��O SEGUNDA VIA      ********************************/
+/*****************************************      OPÇÃO SEGUNDA VIA      ********************************/
 /******************************************************************************************************/
-
-// Fun��o para mostrar a op��o 2via
+// Função para mostrar a opção 2via
 function opcao2via() {
 
     var flgliber = $('#flgliber', '#divCartoes').val();
@@ -2990,7 +2984,7 @@ function opcao2via() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Segunda Via ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via.php",
@@ -3018,7 +3012,7 @@ function opcao2via() {
     });
 }
 
-// Fun��o para mostrar a op��o 2via do cart�o
+// Função para mostrar a opção 2via do cartão
 function opcao2viaCartao() {
     if (nrctrcrd == 0) {
         hideMsgAguardo();
@@ -3029,7 +3023,7 @@ function opcao2viaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&otilde;es para Segunda Via do Cart&atilde;o...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_cartao.php",
@@ -3047,7 +3041,7 @@ function opcao2viaCartao() {
     });
 }
 
-// Fun��o para mostrar a op��o 2via de Senha
+// Função para mostrar a opção 2via de Senha
 function opcao2viaSenha() {
     if (nrctrcrd == 0) {
         hideMsgAguardo();
@@ -3058,7 +3052,7 @@ function opcao2viaSenha() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&otilde;es para Segunda Via da Senha...");
 
-// Cart�o Bancoob
+	// Cartão Bancoob
     if ((cdadmcrd >= 10) && (cdadmcrd <= 80)) {
         if (flgcchip) {
             opcao2viaSenhaCartaoChip();
@@ -3073,7 +3067,7 @@ function opcao2viaSenha() {
 }
 
 function opcao2viaSenhaNormal() {
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_senha.php",
@@ -3093,7 +3087,7 @@ function opcao2viaSenhaNormal() {
 }
 
 function opcao2viaSenhaCartaoChip() {
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_senha_cartao_chip.php",
@@ -3108,12 +3102,12 @@ function opcao2viaSenhaCartaoChip() {
     });
 }
 
-// Fun��o para carregar op��o de solicita��o de segunda via de senha
+// Função para carregar opção de solicitação de segunda via de senha
 function solicitar2viaSenha() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados para Segunda Via da Senha...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_senha_solicitacao_carregadados.php",
@@ -3132,12 +3126,12 @@ function solicitar2viaSenha() {
     });
 }
 
-// Fun��o para solicita��o da segunda via da senha
+// Função para solicitação da segunda via da senha
 function efetuaSolicitacao2viaSenha() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando solicita&ccedil;&atilde;o de Segunda Via da Senha ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_senha_solicitacao_efetuar.php",
@@ -3165,12 +3159,12 @@ function efetuaSolicitacao2viaSenha() {
     });
 }
 
-// Fun��o para carregar o motivos  da solicita��o  da segunda via do cart�o
+// Função para carregar o motivos  da solicitação  da segunda via do cartão
 function solicita2viaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados para solicita&ccedil;&atilde;o de Segunda Via do Cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_solicitacao_carregadados.php",
@@ -3190,11 +3184,11 @@ function solicita2viaCartao() {
     });
 }
 
-//Fun��o para alterar propriedades
+//Função para alterar propriedades
 function alteraMotivo() {
     var objSelectSolicitacao = document.frmSolicitacao.slmotivo;
 
-// pega o value da op��o selecionada
+	// pega o value da opção selecionada
     var motivo = objSelectSolicitacao.options[objSelectSolicitacao.options.selectedIndex].value;
     var metodoBlock = "blockBackground(parseInt($('#divRotina').css('z-index')))";
 
@@ -3212,7 +3206,7 @@ function alteraMotivo() {
             showConfirmacao('Deseja efetuar a solicita&ccedil;&atilde;o de segunda via do cart&atilde;o de cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuaSolicitacao2viaCartao(' + motivo + ')', metodoBlock, 'sim.gif', 'nao.gif');
             return false;
         });
-    } else if (motivo == 5) { //mudan�a de nome
+    } else if (motivo == 5) { //mudança de nome
         $("#linkTela", "#frmSolicitacao").attr("src", UrlImagens + "botoes/prosseguir.gif");
         $("#linkTela", "#frmSolicitacao").unbind("click");
         $("#linkTela", "#frmSolicitacao").bind("click", function () {
@@ -3236,7 +3230,7 @@ function efetuaSolicitacao2viaCartao(motivo) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando solicita&ccedil;&atilde;o de Segunda Via do Cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_solicitacao_efetuar.php",
@@ -3266,16 +3260,16 @@ function efetuaSolicitacao2viaCartao(motivo) {
     });
 }
 
-// Fun��o para mostrar a op��o da entrega da segunda via do cart�o
+// Função para mostrar a opção da entrega da segunda via do cartão
 function entrega2viaCartao() {
 
-// ALTERA��O 001
+	// ALTERAÇÃO 001
     nomeForm = 'frmEntrega2via';
 
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados para entrega da Segunda Via do Cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_entrega_carregadados.php",
@@ -3295,12 +3289,12 @@ function entrega2viaCartao() {
     });
 }
 
-// Fun��o para validar os dados informados e mostrar os dados dos avalistas
+// Função para validar os dados informados e mostrar os dados dos avalistas
 function validaMostraavaisEntrega2viaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando informa&ccedil;&otilde;es ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_entrega_validadados.php",
@@ -3329,12 +3323,12 @@ function validaMostraavaisEntrega2viaCartao() {
     });
 }
 
-// Efetuar a entrega da segunda via do cart�o
+// Efetuar a entrega da segunda via do cartão
 function efetuaEntrega2viaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando entrega da Segunda Via do Cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_entrega_efetuar.php",
@@ -3406,12 +3400,12 @@ function efetuaEntrega2viaCartao() {
     });
 }
 
-// Desfazer solicita��o da segunda via do cart�o
+// Desfazer solicitação da segunda via do cartão
 function desfazSolicitacao2viaCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, desfazendo solicita&ccedil;&atilde;o de Segunda Via do Cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_desfazsolicitacao.php",
@@ -3435,12 +3429,12 @@ function desfazSolicitacao2viaCartao() {
     });
 }
 
-// Desfazer solicita��o da segunda via da senha
+// Desfazer solicitação da segunda via da senha
 function desfazSolicitacao2viaSenha() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, desfazendo solicita&ccedil;&atilde;o de Segunda Via do Cart&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/2via_senha_desfazsolicitacao.php",
@@ -3465,13 +3459,12 @@ function desfazSolicitacao2viaSenha() {
 }
 
 /***************************************************************************************************************/
-/*****************************************          OP��O RENOVAR         ********************************************/
+/*****************************************          OPÇÃO RENOVAR         ********************************************/
 /**************************************************************************************************************/
-
-// Fun��o para mostrar a op��o de renova��o do cart�o
+// Função para mostrar a opção de renovação do cartão
 function opcaoRenovar() {
 
-// ALTERA��O 001
+	// ALTERAÇÃO 001
     nomeForm = 'frmNovaValidade';
 
     var flgliber = $('#flgliber', '#divCartoes').val();
@@ -3491,7 +3484,7 @@ function opcaoRenovar() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados de renova&ccedil;&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/renovar_carregadados.php",
@@ -3517,7 +3510,7 @@ function validaDadosRenovacao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando dados de renova&ccedil;&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/renovar_valida_mostraavais.php",
@@ -3550,7 +3543,7 @@ function efetuaRenovacaoCartao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando renova&ccedil;&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/renovar_efetuarenovacao.php",
@@ -3621,10 +3614,9 @@ function efetuaRenovacaoCartao() {
 }
 
 /**************************************************************************************************************/
-/*********************************          OP��O ENCERRAMENTO         *********************************/
+/*********************************          OPÇÃO ENCERRAMENTO         *********************************/
 /*************************************************************************************************************/
-
-// Fun��o para mostrar a op��o Encerrar do cart�o
+// Função para mostrar a opção Encerrar do cartão
 function opcaoEncerrar() {
 
     var flgliber = $('#flgliber', '#divCartoes').val();
@@ -3644,7 +3636,7 @@ function opcaoEncerrar() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Encerramento ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/encerramento.php",
@@ -3670,7 +3662,7 @@ function desfazEncCartao(indposic) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, desfazendo encerramento do cart&atilde;o de cr&eacute;dito ...");
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/encerramento_desfazer.php",
@@ -3695,13 +3687,13 @@ function desfazEncCartao(indposic) {
     });
 }
 
-// Fun��o para realizar o encerramento do cartao
+// Função para realizar o encerramento do cartao
 function encerrarCart(indposic) {
 
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando motivos de encerramento ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/encerramento_infos.php",
@@ -3757,7 +3749,7 @@ function encerramentoCartao(indposic) {
 }
 
 /**************************************************************************************************************/
-/*********************************          OP��O CANCELAMENTO/BLOQUEIO         *********************************/
+/*********************************          OPÇÃO CANCELAMENTO/BLOQUEIO         *********************************/
 /*************************************************************************************************************/
 
 function cancelaContrato(){
@@ -3786,7 +3778,7 @@ function cancelaContrato(){
 }
 
 
-// Fun��o para mostrar a op��o CancBloq do cart�o
+// Função para mostrar a opção CancBloq do cartão
 function opcaoCancBloq() {
 	
 	
@@ -3797,7 +3789,7 @@ function opcaoCancBloq() {
 	}
     var flgliber = $('#flgliber', '#divCartoes').val();
 
-    if (executandoImpedimentos) {
+    if (executandoImpedimentos){
         hideMsgAguardo();
         showError("error", "O cancelamento do cart&atilde;o deve ser efetuado via SIPAGNET.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
@@ -3818,7 +3810,7 @@ function opcaoCancBloq() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Cancelamento/Bloqueio ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/cancelamento_bloqueio.php",
@@ -3838,7 +3830,7 @@ function opcaoCancBloq() {
     });
 }
 
-// Fun��o para mostrar a op��o de escolher o tipo de Cancelamento/Bloqueio
+// Função para mostrar a opção de escolher o tipo de Cancelamento/Bloqueio
 function tipoCancBlq(cancbloq) {
     if (cancbloq == 1) {
         var msgCancBlq = "cancelamento";
@@ -3849,7 +3841,7 @@ function tipoCancBlq(cancbloq) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando motivos de " + msgCancBlq + " ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/cancelamento_bloqueio_tipodecancblq.php",
@@ -3918,7 +3910,7 @@ function desfazCancBlqCartao(indposic) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, " + msgCancBlq + " cart&atilde;o de cr&eacute;dito ...");
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/cancelamento_bloqueio_desfazcancblq.php",
@@ -3944,10 +3936,9 @@ function desfazCancBlqCartao(indposic) {
 }
 
 /**************************************************************************************************************/
-/*****************************************      OP��O EXCLUIR      ********************************************/
+/*****************************************      OPÇÃO EXCLUIR      ********************************************/
 /**************************************************************************************************************/
-
-// Fun��o para fazer a chamada da exclus�o
+// Função para fazer a chamada da exclusão
 function opcaoExcluir() {
 
     var flgliber = $('#flgliber', '#divCartoes').val();
@@ -3964,16 +3955,16 @@ function opcaoExcluir() {
         return false;
     }
 
-    showConfirmacao("Deseja excluir o cart&atilde;o de cr&eacute;dito?", "Confirma&ccedil;&atilde;o - Ayllos", "excluiCartao();", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja excluir o cart&atilde;o de cr&eacute;dito?", "Confirma&ccedil;&atilde;o - Ayllos", "excluiCartao("+nrctrcrd+");", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 
 }
 
-// Fun��o para excluir cart�o de cr�dito
-function excluiCartao() {
+// Função para excluir cartão de crédito
+function excluiCartao(contrato) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, excluindo cart&atilde;o de cr&eacute;dito ...");
 
-// Executa script de cadastro de proposta de cart�o atrav�s de ajax
+	// Executa script de cadastro de proposta de cartão através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/excluir_cartao.php",
@@ -3999,13 +3990,13 @@ function excluiCartao() {
 }
 
 /******************************************************************************************************************/
-/*****************************************      OP��O HABILITAR      **********************************************/
+/*****************************************      OPÇÃO HABILITAR      **********************************************/
 /******************************************************************************************************************/
 
-// Fun��o para mostrar a op��o Imprimir do cart�o
+// Função para mostrar a opção Imprimir do cartão
 function opcaoHabilitar() {
 
-// ALTERA��O 001
+	// ALTERAÇÃO 001
     nomeForm = 'frmHabilitaCartao';
 
     var flgliber = $('#flgliber', '#divCartoes').val();
@@ -4019,7 +4010,7 @@ function opcaoHabilitar() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Habilitar ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/habilitar.php",
@@ -4038,18 +4029,19 @@ function opcaoHabilitar() {
     });
 }
 
-// Fun��o para carregar dados do representante
+// Função para carregar dados do representante
 function carregarRepresentante(cddopcao, idrepres, nrcpfrep) {
-// Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, verificando representante ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
 	if(inpessoa == 2)
 		return;
+	// Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, verificando representante ...");
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/representantes_carregar.php",
-        async: false,
+		// Anderson - Comentei para verificar as testar as liberações 13/08/2018
+		// async: false,
         data: {
             cddopcao: cddopcao,
             idrepres: idrepres,
@@ -4073,7 +4065,7 @@ function carregarRepresentante(cddopcao, idrepres, nrcpfrep) {
     });
 }
 
-// Fun��o para validar dados da habilita��o
+// Função para validar dados da habilitação
 function validarDadosHabilita() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando dados ...");
@@ -4132,7 +4124,7 @@ function validarDadosHabilita() {
         return false;
     }
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/habilitar_validar.php",
@@ -4170,14 +4162,14 @@ function gravarDadosHabilitacao() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, gravando dados de habilita&ccedil;&atilde;o ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/habilitar_gravar.php",
         data: {
             nrdconta: nrdconta,
 
-            /** Dados de habilita��o **/
+			/** Dados de habilitação **/ 
             vllimglb: retiraCaracteres($("#vllimglb", "#frmHabilitaCartao").val(), "0123456789,", true),
             flgativo: $("#flgativo", "#frmHabilitaCartao").val(),
             nrcpfpri: normalizaNumero($("#nrcpfpri", "#frmHabilitaCartao").val()),
@@ -4253,7 +4245,7 @@ function mostraDivDadosHabilita() {
     $("#divDadosAvalistas").css("display", "none");
     $("#divDadosHabilita").css("display", "block");
 
-// Aumenta tamanho do div onde o conte�do da op��o ser� visualizado
+	// Aumenta tamanho do div onde o conteúdo da opção será visualizado
 //$("#divConteudoOpcao").css("height","310");
 }
 
@@ -4262,10 +4254,9 @@ function metodoBlock() {
 }
 
 /**************************************************************************************************************/
-/*************************************          OP��O EXTRATO          ****************************************/
+/*************************************          OPÇÃO EXTRATO          ****************************************/
 /**************************************************************************************************************/
-
-// Fun��o para mostrar a op��o de Extrato do cart�o
+// Função para mostrar a opção de Extrato do cartão
 function opcaoExtrato() {
 
     nomeForm = 'frmExtrato';
@@ -4300,7 +4291,7 @@ return false;
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando tela do Extrato ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/extrato_parametros.php",
@@ -4334,7 +4325,7 @@ function validaDadosExtrato(anoHoje) {
         hideMsgAguardo();
         showError("error", "Per&iacute;odo informado &eacute; inv&aacute;lido. " + dtextrat, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     } else {
-// Carrega conte�do da op��o atrav�s de ajax
+		// Carrega conteúdo da opção através de ajax
         $.ajax({
             type: "POST",
             url: UrlSite + "telas/atenda/cartao_credito/extrato_exibir.php",
@@ -4428,7 +4419,7 @@ function validaTitular() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando titular...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/validar_titular.php",
@@ -4449,7 +4440,6 @@ function validaTitular() {
 }
 
 function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
-
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando dados...");
 
@@ -4526,7 +4516,7 @@ function opcaoAlteraAdm() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o Upgrade / Downgrade ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/upgrade_downgrade.php",
@@ -4547,7 +4537,7 @@ function opcaoAlteraAdm() {
 }
 
 
-function atualizaUpgradeDowngrade()
+function atualizaUpgradeDowngrade(contrato)
 {
 	//showMsgAguardo("Aguarde, atualizando justificativa...");
 	var codaadmi = $("#hdncodadm").val();
@@ -4576,7 +4566,7 @@ function atualizaUpgradeDowngrade()
         data: {
 			cdcooper  : cdcooper,
             nrdconta  : nrdconta,
-            nrctrcrd  : nrctrcrd,
+            nrctrcrd  : contrato,
 			ds_justif : dsjustificativa,
 			cdadmnov  : codnadmi,
 			inupgrad  : 1
@@ -4593,7 +4583,7 @@ function atualizaUpgradeDowngrade()
     });
 }
 
-function validarUpDown() {
+function validarUpDown(contrato) {
 
     var codaadmi = $("#hdncodadm").val();
     var codnadmi = $("#dsadmant").val();
@@ -4614,7 +4604,7 @@ function validarUpDown() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando dados...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/altera_administradora.php",
@@ -4624,7 +4614,7 @@ function validarUpDown() {
             codnadmi: codnadmi,
             nrdconta: nrdconta,
             nrcrcard: nrcrcard,
-            nrctrcrd: nrctrcrd,
+            nrctrcrd: contrato,
 			dsjustificativa:dsjustificativa,
             redirect: "html_ajax"
         },
@@ -4635,8 +4625,8 @@ function validarUpDown() {
             eval(response);
 			if(!error)
 				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
-				if(iPiloto == 1){
-					atualizaUpgradeDowngrade();
+			    if (iPiloto == 1) {
+					atualizaUpgradeDowngrade(contrato);
 				} else {					
 					showError("inform","Operacao realizada com sucesso.","Alerta - Ayllos","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
 				}
@@ -4652,7 +4642,7 @@ function buscaTitulares(nrdconta, escolha) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando dados...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/busca_titulares.php",
@@ -4752,7 +4742,7 @@ function carregaRepresentantes() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando representantes...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/busca_representantes.php",
@@ -4785,7 +4775,7 @@ function opcaoTAA() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/verifica_acesso_tela_taa.php",
@@ -4808,7 +4798,7 @@ function opcaoTAA() {
 }
 
 /**
- * Fun��o para ler o CHIP do cart�o de cr�dito
+* Função para ler o CHIP do cartão de crédito
  */
 function lerCartaoChip() {
 
@@ -4929,7 +4919,7 @@ function lerCartaoChip() {
                     sTagDataValidade = oRetornoJson.szTagsData;
                 }
 
-// Carrega conte�do da op��o atrav�s de ajax
+				// Carrega conteúdo da opção através de ajax
                 $.ajax({
                     type: "POST",
                     url: UrlSite + "telas/atenda/cartao_credito/processa_leitura_cartao_chip.php",
@@ -4966,7 +4956,7 @@ function lerCartaoChip() {
 }
 
 /**
- * Fun��o para ler o cart�o de cr�dito magnetico
+* Função para ler o cartão de crédito magnetico
  */
 function lerCartaoMagnetico() {
 
@@ -5077,15 +5067,15 @@ function valida_dados_cartao_bancoob() {
 
     showMsgAguardo("Aguarde, validando dados cart&atilde;o...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+	// Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/valida_dados_cartao_bancoob.php",
         async: false,
         data: {
-            nrdconta: nrdconta, // N�mero da conta
-            nrctrcrd: nrctrcrd, // N�mero da proposta
-            nrcrcard: retiraCaracteres(oNrcrcard.val(), "0123456789", true), // N�mero do cart�o de cr�dito
+			nrdconta: nrdconta, // Número da conta
+			nrctrcrd: nrctrcrd, // Número da proposta
+            nrcrcard: retiraCaracteres(oNrcrcard.val(), "0123456789", true), // Número do cartão de crédito
             dtvalida: oDtvalida.val(), // Data de Validade
             flgcchip: flgcchip,
             flag2via: ((nomeacao == '2VIA_CARTAO_CHIP') ? true : false),
@@ -5119,7 +5109,7 @@ function altera_senha_pinpad() {
     var sNTexto4 = 0;
     var aOperacao = new Array();
     var bErro = false;
-    var aCabalAPP = {CABAL_CREDIT: 'A0000004421010', CABAL_DEBIT: 'A0000004422010'};
+    var aCabalAPP = { CABAL_CREDIT: 'A0000004421010', CABAL_DEBIT: 'A0000004422010' };
 
 // Abre a conexao com o PINPAD
     if (!abrePortaPinpad(oPinpad)) {
@@ -5141,7 +5131,7 @@ function altera_senha_pinpad() {
                 $('#nrcarfor', '#frmEntregaCartaoBancoob').val('');
                 $('#dtvalida', '#frmEntregaCartaoBancoob').val('');
                 $("#btnProsseguir").hide();
-                throw {message: 'Favor inserir o cart&atilde;o no PINPAD.'};
+				throw { message: 'Favor inserir o cart&atilde;o no PINPAD.' };			
             }
 
             /* Limpa tela  */
@@ -5153,12 +5143,12 @@ function altera_senha_pinpad() {
                 url: UrlSite + "telas/atenda/cartao_credito/retorna_ct.php",
                 async: false,
                 error: function (objAjax, responseError, objExcept) {
-                    throw {message: 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.'};
+                    throw { message: 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.' };
                 },
                 success: function (response) {
                     eval("var oRetornoJson = " + response);
                     if (parseInt(oRetornoJson.bErro)) {
-                        throw {message: oRetornoJson.retorno};
+							throw { message: oRetornoJson.retorno };
                     }
                     sWTexto3 = oRetornoJson.retorno;
                 }
@@ -5186,7 +5176,7 @@ function altera_senha_pinpad() {
 
 // Conferir se as duas senha informadas, conferem
                     if (sSTexto1 != sSTexto2) {
-                        throw {message: 'Senha informada n&atilde;o conferem.'};
+						throw { message: 'Senha informada n&atilde;o conferem.' };
                     }
 
                     showMsgAguardo("Processando...");
@@ -5207,12 +5197,12 @@ function altera_senha_pinpad() {
                                     redirect: "script_ajax"
                                 },
                                 error: function (objAjax, responseError, objExcept) {
-                                    throw {message: 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.'};
+										throw { message: 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.' };
                                 },
                                 success: function (response) {
                                     eval("var oRetornoJson = " + response);
                                     if (parseInt(oRetornoJson.bErro)) {
-                                        throw {message: oRetornoJson.retorno};
+											throw { message: oRetornoJson.retorno };
                                     }
                                     sNTexto4 = oRetornoJson.retorno;
                                 }
@@ -5226,7 +5216,7 @@ function altera_senha_pinpad() {
                                 for (iAPP in aCabalAPP) {
 
                                     oRetornoJson = oPinpad.ResetSMC(0);
-                                    /* Verificar as aplica��es presentes no chip */
+	                           	/* Verificar as aplicações presentes no chip */
                                     oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "84", aCabalAPP[iAPP]);
                                     eval("oRetornoJson = " + oRetornoJson);
 
@@ -5348,7 +5338,7 @@ function altera_cb(oPinpad, sAID, sNTexto4, sNumeroCartao) {
         }
     });
 
-    return {'bOK': bRetorno};
+    return { 'bOK': bRetorno };
 }
 
 function confirma_cb(sIdentificadorTransacao, sNumeroCartao) {
@@ -5376,7 +5366,7 @@ function confirma_cb(sIdentificadorTransacao, sNumeroCartao) {
 }
 
 /**
- * Fun��o para abrir a porta do PINPAD
+* Função para abrir a porta do PINPAD
  * @param Object PINPAD
  */
 function abrePortaPinpad(oPinpad) {
@@ -5398,7 +5388,7 @@ function abrePortaPinpad(oPinpad) {
     sPortaPinpad = 'COM' + oRetornoJson.pbPort[0];
     oRetornoJson = oPinpad.OpenSerial(sPortaPinpad);
     eval("oRetornoJson = " + oRetornoJson);
-    /* Verifica se o Pinpad est� conectado na Porta */
+	/* Verifica se o Pinpad está conectado na Porta */
     if (oRetornoJson.dwResult != 0) {
         hideMsgAguardo();
         showError("error", "Erro ao conectar no PINPAD.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -5782,7 +5772,7 @@ function carregaSelecionarRepresentantes() {
     showMsgAguardo('Aguarde, carregando os representantes...');
     exibeRotina($('#divUsoGenerico'));
 
-// Executa script de confirma��o atrav�s de ajax
+	// Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -5793,7 +5783,7 @@ function carregaSelecionarRepresentantes() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N�o foi poss�vel concluir a requisi��o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1) {
@@ -5810,7 +5800,7 @@ function controlaLayoutRepresentantes() {
     var divRegistro = $('#divSelecaoAvalista');
     var tabela = $('table', divRegistro);
     var linha = $('table > tbody > tr', divRegistro);
-    divRegistro.css({'height': '100px'});
+    divRegistro.css({ 'height': '100px' });
 
     var ordemInicial = new Array();
     ordemInicial = [[0, 0]];
@@ -5830,10 +5820,10 @@ function controlaLayoutRepresentantes() {
     return false;
 }
 
-// Fun��o para mostrar o hist�rico de altera��o de limite de cr�dito
+// Função para mostrar o histórico de alteração de limite de crédito
 function mostraHisLimite() {
 
-// ALTERA��O
+    // ALTERAÇÃO
     var nomeForm = 'frmHistoricoLimite';
     var nrcctitg = $('#nrcctitg', '#frmDadosCartao').val();
 	if(nrcctitg == undefined){
@@ -5842,7 +5832,7 @@ function mostraHisLimite() {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando hist&oacute;rico de limite de cr&eacute;dito ...");
 
-// Carrega conte�do da op��o atrav�s de ajax
+    // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/consultar_historico_limite.php",
@@ -5862,7 +5852,7 @@ function mostraHisLimite() {
     });
 }
 
-function carregaHistorico(type) {
+function carregaHistorico(type,contrato) {
     showMsgAguardo("Aguarde, carregando hist&oacute;rico ...");
 	var sitcrd = $("#dssituac").val();
     $.ajax({
@@ -5872,7 +5862,7 @@ function carregaHistorico(type) {
         data: {
             nrcrcard: nrcrcard,
             nrdconta: nrdconta,
-            nrctrcrd: nrctrcrd,
+            nrctrcrd: contrato,
             type: type,
 			dssituac : sitcrd
         },
@@ -5901,8 +5891,11 @@ function validarSenha(nrctrcrd) {
 	
 	
     idacionamento = $("#idacionamento","#frmNovoCartao").val();
-    log4console("5608 - protocolo : "+protocolo);
-    atualizaContrato(nrctrcrd,protocolo,"S", function(){
+    log4console("prj cartoes protocolo : "+protocolo);
+	log4console("prj cartoes idacionamento : "+idacionamento);
+	if(idacionamento == undefined && protocolo)
+		idacionamento = protocolo;
+    atualizaContrato(nrctrcrd,idacionamento,"S", function(){
         log4console(' add trigger back');
         $(".btnVoltar").attr('onclick','voltarParaTelaPrincipal();');
 		//|| idastcjt !=1
@@ -5928,24 +5921,24 @@ function validarSenha(nrctrcrd) {
 
 }
 
-function solicitaSenha(nrctrcrd,cdAdmCartao) {
+function solicitaSenha(contrato,cdAdmCartao) {
 	if(cdAdmCartao != undefined){
 		cdadmcrd = cdAdmCartao;
 	}
     try{
-    if($("#btnsaveRequest").attr('onclick') != 'solicitaSenha('+nrctrcrd+')'){
-        $("#btnsaveRequest").attr('onclick','solicitaSenha('+nrctrcrd+')');
+    if($("#btnsaveRequest").attr('onclick') != 'solicitaSenha('+contrato+')'){
+        $("#btnsaveRequest").attr('onclick','solicitaSenha('+contrato+')');
     }}catch(e){
         console.log('estamos fora da tela novo');
     }
 	//|| idastcjt !=1  inpessoa == 1
     //if (false) {
 	if( inpessoa == 1 ){
-        validarSenha(nrctrcrd);
+        validarSenha(contrato);
         return;
     }
     showMsgAguardo("Aguarde ...");
-    atualizaContrato(nrctrcrd,protocolo,"S", function(){
+    atualizaContrato(contrato,protocolo,"S", function(){
 	var chklen =  $('input[name="dsadmcrdcc"]').length;
 	var outros = false;
     for(j = 0; j< chklen; j++){	
@@ -5963,7 +5956,7 @@ function solicitaSenha(nrctrcrd,cdAdmCartao) {
         data: {
             tpacao: 'montagrid',
             nrdconta : nrdconta,
-            nrctrcrd : nrctrcrd,
+            nrctrcrd : contrato,
 			cdadmcrd : cdadmcrd,
 			esteira  : esteira
         },
@@ -6205,7 +6198,6 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
             }
         }
     }
-
     if(idacionamento == undefined)
         idacionamento = "";
     log4console("Executando a chamada atualiza_contrato");
@@ -6356,7 +6348,7 @@ function verificaRetornoBancoob(nrctrcrd){
         });
 }
 
-function alterarBancoob(autorizado,inpessoa,tipo){
+function alterarBancoob(autorizado,inpessoa,tipo, contrato){
     
 
     var vlsugmot = $("#vlsugmot").val();
@@ -6385,7 +6377,7 @@ function alterarBancoob(autorizado,inpessoa,tipo){
             data: {
                 tpacao: 'alterar',
                 nrdconta      :   nrdconta,
-                nrctrcrd      :   nrctrcrd,
+                nrctrcrd      :   contrato,
                 vlsugmot      :   vlsugmot,
                 inpessoa      :   inpessoa,
                 tipo          :   tipo,
