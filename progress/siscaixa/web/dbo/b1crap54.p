@@ -402,7 +402,7 @@ PROCEDURE valida-saldo-conta:
         MESSAGE "BO54 - valida-saldo-conta - voltou chamar oracle - "
                 "p-valor: " p-valor
                 "de-valor-liberado: " de-valor-liberado.
-
+        /* Disponivel MENOR Valor Saque */
         IF  de-valor-liberado < p-valor THEN DO:
                 
             ASSIGN p-valor-disponivel = 
@@ -420,6 +420,18 @@ PROCEDURE valida-saldo-conta:
                         .
             /* Se valor do saque superior ao disponivel
               nao permite sacar (return nok) */
+             ASSIGN i-cod-erro  = 0
+                    c-desc-erro = p-mensagem.           
+             RUN cria-erro (INPUT p-cooper,
+                            INPUT p-cod-agencia,
+                            INPUT p-nro-caixa,
+                            INPUT i-cod-erro,
+                            INPUT c-desc-erro,
+                            INPUT YES).
+            ASSIGN p-mensagem         = 
+                        "CTA EM PREJUIZO - Saldo Prj:" +
+                        TRIM(STRING(de-valor-liberado,
+                             "zzz,zzz,zzz,zz9.99-")).
             RETURN "NOK". 
         END.
         ELSE

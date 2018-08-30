@@ -736,11 +736,17 @@ PROCEDURE process-web-request :
                                                OUTPUT p-valor-disponivel).
                                 DELETE PROCEDURE h-b1crap54.
                                 
+                                /* p-valor-disponivel:
+                                   se esta em prejuizo, vai retornar
+                                   o disponivel da conta prej. **/
+                                IF p-inprejuz THEN
+                                    ASSIGN v_mensagem = cMsgAux.
+
                                 IF RETURN-VALUE = "NOK" THEN DO:
-                                    ASSIGN v_cod   = ""
-                                           v_senha = "".
-                                    
                                     {include/i-erro.i}
+                                    ASSIGN v_cod       = ""
+                                           v_senha     = "" 
+                                           lValorOk = NO.
                                 END.
                                 ELSE DO:
                                     /* Se voltou cMsgAux eh pq nao tem saldo
@@ -823,7 +829,6 @@ PROCEDURE process-web-request :
                                                                                    INPUT DEC(v_valor),
                                                                                    INPUT "", /* cmc7 */
                                                                                    OUTPUT p-solicita).
-
                                                 DELETE PROCEDURE h-b1crap54.
                                                 
                                                 IF RETURN-VALUE = "NOK" THEN DO:
