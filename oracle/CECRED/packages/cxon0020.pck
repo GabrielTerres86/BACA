@@ -1322,7 +1322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 24/08/2018
+      Data     : Junho/2015.                   Ultima atualizacao: 28/08/2018
   
       Dados referentes ao programa:
   
@@ -1367,6 +1367,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
                                
                   24/08/2018 - Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE - TIAGO)                 
+                  
+                  28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -2374,6 +2376,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	
     --Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE)    
     IF pr_nrcpfcgc = pr_nrcpffav THEN    
+      BEGIN
       AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_crapcop.cdcooper
                                     ,pr_nrdconta   => pr_nrdconta
                                     ,pr_idseqttl   => pr_idseqttl
@@ -2384,6 +2387,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                     ,pr_idanalis   => vr_idanalise_fraude
                                     ,pr_cdcritic   => vr_cdcritic
                                     ,pr_dscritic   => vr_dscritic);                                     
+                                    
+        IF nvl(vr_cdcritic,0) > 0 OR                                    
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;   
+        END IF;
+
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+            vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 2, --> erro tratado
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - CXON0020.pc_enviar_ted --> ' || 
+                                                          vr_cdcritic||' -> '||vr_dscritic,
+                                       pr_nmarqlog     => vr_nmarqlog);
+
+            vr_cdcritic := NULL;                         
+            vr_dscritic := NULL;    
+        WHEN OTHERS THEN
+              vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - CXON0020.pc_enviar_ted --> ' || sqlerrm,
+                                         pr_nmarqlog     => vr_nmarqlog);
+                                                
+              vr_cdcritic := NULL;                         
+              vr_dscritic := NULL;                         
+      END;
+                                                                       
                                     
     END IF;
 
