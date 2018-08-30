@@ -4741,6 +4741,7 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
     when others then
       pr_cdcritic := 0;
       pr_des_erro := 'Erro ao fazer o cálculo da aplicação programada para a conta '||rw_craprpp.nrdconta||': '||sqlerrm;
+
 END pc_calc_app_programada;
 
   PROCEDURE pc_lista_aplicacoes_progr(pr_cdcooper    IN craprac.cdcooper%TYPE           --> Código da Cooperativa
