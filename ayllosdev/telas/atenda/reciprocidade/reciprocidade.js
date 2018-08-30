@@ -77,6 +77,9 @@ var tpdtermo_imprimir = 1;
 //Lista de Convenios para desconto
 var descontoConvenios = [];
 
+// Lista dos descontos das tarifas de instrução
+var perdescontos = [];
+
 var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
     flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails;
@@ -1682,7 +1685,6 @@ function acessaAba(id,cddopcao) {
     var linkContinuar = 1;
     var linkVoltar = 1;
 
-
     // Se foi clicado para acessar a segunda aba
     if (id == 1) {
         linkContinuar = 2;
@@ -1698,11 +1700,12 @@ function acessaAba(id,cddopcao) {
 
     if (linkContinuar == 1){
         $("#btnContinuar", "#divOpcaoConsulta").click(function(){atualizarConvenios(cddopcao);});
+        document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
     }else if (linkContinuar == 2){
         $("#btnContinuar", "#divOpcaoConsulta").click(function(){validaDadosLimites('true','',cddopcao);});
+        document.getElementById("btnVoltar").onclick=function(){atualizarDescontos();}
     }
 
-    document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
     // Removido esta forma de atribuir pois não funciona com modo de compatibilidade
     //$("#btnContinuar").attr("onclick",linkContinuar);
     //$("#btnVoltar").attr("onClick",linkVoltar);
@@ -2808,6 +2811,7 @@ function incluiDesconto() {
             vldesconto_cee:      converteNumero($('#vldesconto_cee', '.tabelaDesconto').val()),
             dtfimadicional_cee:  parseInt(dtfimadicional_cee),
             txtjustificativa:    vJustificativaDesc,
+            perdesconto:         JSON.stringify(perdescontos),
 			redirect:            "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
@@ -3217,4 +3221,16 @@ function calcula_desconto() {
                 $('#vldescontoconcedido_coo', '.tabelaDesconto').val(vldesconto_coo*100);
             }
     });
+}
+
+function atualizarDescontos() {
+    var qtdeDescontos = $('#qtdeDescontos', '#frmConsulta').val();
+    perdescontos = [];
+    for (var i = 0; i < qtdeDescontos; i++) {
+        var $item = $('#perdesconto_' + i, "#frmConsulta");
+        if ($item.val() != "" && $item.val() != "0,00") {
+            perdescontos.push($item.attr('cdcatego') + "#" + converteNumero($item.val()));
+        }
+    }
+    voltarParaDesconto();
 }

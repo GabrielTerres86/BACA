@@ -32,6 +32,7 @@ $idcalculo_reciproci = ( (!empty($_POST['idcalculo_reciproci'])) ? $_POST['idcal
 $cdcooper            = ( (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'] );
 $nrdconta            = ( (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : $glbvars['nrdconta'] );
 $convenios           = ( (!empty($_POST['convenios'])) ? json_decode($_POST['convenios']) : '' );
+$perdesconto         = ( (!empty($_POST['perdesconto'])) ? json_decode($_POST['perdesconto']) : '' );
 $boletos_liquidados  = ( (!empty($_POST['boletos_liquidados'])) ? $_POST['boletos_liquidados'] : null );
 $volume_liquidacao   = ( (!empty($_POST['volume_liquidacao'])) ? $_POST['volume_liquidacao'] : null );
 $qtdfloat            = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : null );
@@ -78,6 +79,7 @@ $xml .= "   <vldesconto_cee>".$vldesconto_cee."</vldesconto_cee>";
 $xml .= "   <dtfimadicional_cee>".$dtfimadicional_cee."</dtfimadicional_cee>";
 $xml .= "   <txtjustificativa>".$txtjustificativa."</txtjustificativa>";
 $xml .= "   <idvinculacao>".$idvinculacao."</idvinculacao>";
+$xml .= "   <perdesconto>".implode("|", $perdesconto)."</perdesconto>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

@@ -83,7 +83,33 @@ $vr_idfim_desc_adicional_cee = getByTagName($dados->tags,"vr_idfim_desc_adiciona
 $vr_dsjustificativa_desc_adic = getByTagName($dados->tags,"vr_dsjustificativa_desc_adic");
 $insitceb = getByTagName($dados->tags,"insitceb");
 
+$nrconven = 0;
 $convenios = getArrayByTagName($dados->tags,"convenios");
+if (count($convenios)) {
+	$nrconven = $convenios[0]->tags[0]->cdata;
+}
+
+// Montar o xml de Requisicao
+$xml  = "";
+$xml .= "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+$xml .= "   <nrconven>".$nrconven."</nrconven>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "BUSCA_CATEGORIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObject = getObjectXML($xmlResult);
+$xmlSubGru = $xmlObject->roottag->tags[0]->tags;
+
+$perdescontos = array();
+foreach ($xmlSubGru as $sgr) {
+	foreach ($sgr->tags as $cat) {
+		if (getByTagName($cat->tags,'PERDESCONTO') != "" && getByTagName($cat->tags,'PERDESCONTO') != "0") {
+			$perdescontos[] = getByTagName($cat->tags,'CDCATEGO') . "#" . getByTagName($cat->tags,'PERDESCONTO');
+		}
+	}
+}
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -205,8 +231,12 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 </div>
 <script>
 descontoConvenios = [];
-<?php if (count($cnv)) { ?>
+perdescontos = [];
+<?php if (count($aux)) { ?>
 	descontoConvenios = <?php echo json_encode($aux); ?>;
+<?php }?>
+<?php if (count($perdescontos)) { ?>
+	perdescontos = <?php echo json_encode($perdescontos); ?>;
 <?php }?>
 </script>
 <table width="100%" class="tabelaDesconto">
