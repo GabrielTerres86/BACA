@@ -177,7 +177,7 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 			<thead>
 				<tr><th>Conv&ecirc;nio</th>
 					<th>&nbsp;</th>
-				</tr>			
+				</tr>
 			</thead>
 			<tbody>
 				<?php
@@ -190,8 +190,8 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 					$aux[] = $cnv;
 				?>
 				<tr>
-					<td width="60%"><?php echo $convenio->tags[0]->cdata, ' - ', $convenio->tags[1]->cdata ?></td>
-					<td width="40%">
+					<td width="330"><?php echo $convenio->tags[0]->cdata, ' - ', $convenio->tags[1]->cdata ?></td>
+					<td>
 						<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" style="margin-right:5px;width:14px;margin-top:1px"/></a>
 						<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.gif" style="width:15px;margin-top:1px"/></a>
 					</td>

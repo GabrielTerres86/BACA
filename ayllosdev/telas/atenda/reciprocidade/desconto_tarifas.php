@@ -109,7 +109,7 @@ function buscaTarifas($nrconven, $cdcatego, $inpessoa) {
             $tar_dstarifa = getByTagName($tar->tags,'DSTARIFA');
             $tar_vltarifa = getByTagName($tar->tags,'VLTARIFA');
             ?>
-            <tr style="background-color:#FFFFFF;" class="clsTar<?php echo $contTar; ?>">
+            <tr style="background-color:#FFFFFF;" class="clsTar<?php echo $desTipo; ?> clsTar<?php echo $contTar; ?>">
                 <td class="txtNormal"><?php echo $tar_cdtarifa.' - '.$tar_dstarifa; ?></td>
                 <td class="txtNormal clsTarValorOri<?php echo $contTar; ?>"><?php echo formataMoeda($tar_vltarifa); ?></td>
                 <td class="txtNormal clsTarValorDes<?php echo $contTar; ?>">0,00</td>
@@ -137,7 +137,7 @@ function buscaTarifas($nrconven, $cdcatego, $inpessoa) {
             $tar_dstarifa = getByTagName($tar->tags,'DSTARIFA');
             $tar_vltarifa = getByTagName($tar->tags,'VLTARIFA');
             ?>
-            <tr style="background-color:#FFFFFF;" class="clsTar<?php echo $contTar; ?>">
+            <tr style="background-color:#FFFFFF;" class="clsTar<?php echo $desTipo; ?> clsTar<?php echo $contTar; ?>">
                 <td class="txtNormal"><?php echo $tar_cdtarifa.' - '.$tar_dstarifa; ?></td>
                 <td class="txtNormal clsTarValorOri<?php echo $contTar; ?>"><?php echo formataMoeda($tar_vltarifa); ?></td>
                 <td class="txtNormal clsTarValorDes<?php echo $contTar; ?>">0,00</td>

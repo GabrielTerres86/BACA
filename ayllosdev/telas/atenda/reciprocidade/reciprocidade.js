@@ -1401,8 +1401,7 @@ function controlaLayout(nomeForm) {
 		var ordemInicial = new Array();
 
 		var arrayLargura = new Array();
-		arrayLargura[0] = '220px';
-		arrayLargura[1] = '65px';
+		arrayLargura[0] = '330px';
 
 
 		var arrayAlinha = new Array();
@@ -3118,8 +3117,47 @@ function acessaTarifa(tipo) {
                 $("#divConvenios").css('display', 'block');
                 controlaFoco();
                 controlaLayout("");
+                calcula_tarifas(tipo);
             }
     });
+}
+
+function calcula_tarifas(tipo) {
+
+    function calculaFormataTipo (elm, vldesconto, vldesconto_adic) {
+        vldesconto = converteMoedaFloat(vldesconto) + converteMoedaFloat(vldesconto_adic);
+
+        for (var i = 0; i < elm.length; ++i){
+            var $elm = $(elm[i]);
+            var valor = converteMoedaFloat($elm.find('[class*="clsTarValorOri"]').html()),
+                campo = $elm.find('[class*="clsTarValorDes"]');
+
+            var total  = ( valor - (valor * (vldesconto/100)) );
+
+            campo.html(number_format(total, 2, ',', '.'));
+        }
+    }
+
+    // COO
+    if (tipo == 0) {
+
+        var tipoCoo             = $('.clsTarCOO');
+        var vldesconto_coo      = $('#vldescontoconcedido_coo', '.tabelaDesconto').val();
+        var vldesconto_coo_adic = $('#vldesconto_coo', '.tabelaDesconto').val();
+
+        calculaFormataTipo(tipoCoo, vldesconto_coo, vldesconto_coo_adic);
+        
+    // CEE    
+    } else if (tipo == 1) {
+    
+        var tipoCee             = $('.clsTarCEE');
+        var vldesconto_cee      = $('#vldescontoconcedido_cee', '.tabelaDesconto').val();
+        var vldesconto_cee_adic = $('#vldesconto_cee', '.tabelaDesconto').val();
+
+        calculaFormataTipo(tipoCee, vldesconto_cee, vldesconto_cee_adic);
+
+    }
+    
 }
 
 function calcula_desconto() {
