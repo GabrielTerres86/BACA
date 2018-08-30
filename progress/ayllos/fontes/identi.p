@@ -333,6 +333,7 @@ DO WHILE TRUE ON ENDKEY UNDO, RETRY:
                                    INPUT tel_cdoperad,
                                    INPUT 0,
                                    INPUT tel_cdpactra,
+                                   INPUT ?,
                                    OUTPUT TABLE tt-erro). 
 
    IF  RETURN-VALUE = "NOK"  THEN

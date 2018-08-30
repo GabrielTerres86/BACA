@@ -32,6 +32,7 @@ DEF VAR aux_nmdatela AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmrotina AS CHAR                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdopelib AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsdemail AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_vldsenha AS LOGI                                           NO-UNDO.
 DEF VAR aux_flgerlog AS LOGI                                           NO-UNDO.
@@ -70,6 +71,8 @@ PROCEDURE valores_entrada:
             WHEN "cdopelib" THEN aux_cdopelib = tt-param.valorCampo.
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
             WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).
+            WHEN "dsdemail" THEN aux_dsdemail = tt-param.valorCampo.
+
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -90,6 +93,7 @@ PROCEDURE efetua_login:
                              INPUT aux_vldsenha,
                              INPUT aux_cddsenha,
                              INPUT aux_cdpactra,
+                             INPUT aux_dsdemail,
                             OUTPUT TABLE tt-login,
                             OUTPUT TABLE tt-erro).
                              

@@ -141,6 +141,7 @@ ix_1 [DAT_TRANSACAO]
         $mtccsistema          = $atributos[0]["mtccsistema"][0];
         $mtccserver           = $atributos[0]["mtccserver"];
         $mtccacessoexporadico = $atributos[0]["mtccacessoexporadico"][0]; // Formato YYYYMMDDHHIIHHII
+		$email = $atributos[0]["mail"][0];
 
         if ($mtccshadowflag == 1) { // Usuário Bloqueado
             $msgErro = "Usuário não habilitado.";
@@ -226,6 +227,7 @@ ix_1 [DAT_TRANSACAO]
                     <form name="frmRedirect" id="frmRedirect" action="<?php echo $urlLogin; ?>" method="post">
                     <input type="hidden" name="cdcooper" id="cdcooper" value="<?php echo $COD_COOPER; ?>">
                     <input type="hidden" name="gidnumber" id="gidnumber" value="<?php echo $gidnumber; ?>">
+					<input type="hidden" name="email" id="email" value="<?php echo $email; ?>">
                     <?php for ($i = 0; $i < count($mtccserver); $i++) { ?>
                     <input type="hidden" name="mtccserver[]" id="mtccserver[]" value="<?php echo $mtccserver[$i]; ?>">
                     <?php } ?>
