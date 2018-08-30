@@ -62,6 +62,68 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
                        ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                        ,pr_nmdcampo   OUT VARCHAR2 --> Nome do campo com erro
                        ,pr_des_erro   OUT VARCHAR2); --> Erros do processo
+                       
+  PROCEDURE pc_busca_mtv_anulacao(pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2); --> Saida OK/NOK
+
+  PROCEDURE pc_insere_mtv_anulacao(pr_dsmotivo     IN tbcadast_motivo_anulacao.dsmotivo%TYPE     --> Descrição do motivo
+						      								,pr_tpproduto    IN tbcadast_motivo_anulacao.tpproduto%TYPE    --> Tipo do produto
+									      					,pr_inobservacao IN tbcadast_motivo_anulacao.inobservacao%TYPE --> Exige observacao (0-Nao/1-Sim)
+      														,pr_xmllog       IN VARCHAR2                                   --> XML com informações de LOG
+			      											,pr_cdcritic     OUT PLS_INTEGER                               --> Código da crítica
+						      								,pr_dscritic     OUT VARCHAR2                                  --> Descrição da crítica
+									      					,pr_retxml       IN OUT NOCOPY xmltype                         --> Arquivo de retorno do XML
+      														,pr_nmdcampo     OUT VARCHAR2                                  --> Nome do Campo
+			      											,pr_des_erro     OUT VARCHAR2);                                --> Saida OK/NOK
+
+  PROCEDURE pc_atualiza_mtv_anulacao(pr_cdmotivo     IN tbcadast_motivo_anulacao.cdmotivo%TYPE     --> Código do motivo
+  						      								,pr_tpproduto    IN tbcadast_motivo_anulacao.tpproduto%TYPE    --> Tipo do produto
+                                    ,pr_dsmotivo     IN tbcadast_motivo_anulacao.dsmotivo%TYPE     --> Descrição do motivo
+  									      					,pr_inobservacao IN tbcadast_motivo_anulacao.inobservacao%TYPE --> Exige observacao (0-Nao/1-Sim)
+                                    ,pr_idativo      IN tbcadast_motivo_anulacao.idativo%TYPE      --> Identificador de ativa (0-nao / 1-sim)                                        
+         													  ,pr_xmllog       IN VARCHAR2                                   --> XML com informações de LOG
+       	 													  ,pr_cdcritic     OUT PLS_INTEGER                               --> Código da crítica
+														        ,pr_dscritic     OUT VARCHAR2                                  --> Descrição da crítica
+       														  ,pr_retxml       IN OUT NOCOPY xmltype                         --> Arquivo de retorno do XML
+			      											  ,pr_nmdcampo     OUT VARCHAR2                                  --> Nome do Campo
+						      								  ,pr_des_erro     OUT VARCHAR2);                                --> Saida OK/NOK                                                   
+                                    
+  PROCEDURE pc_busca_email_proposta(pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                   ,pr_des_erro OUT VARCHAR2); --> Saida OK/NOK
+
+  PROCEDURE pc_insere_email_proposta(pr_tpproduto        IN tbcadast_email_proposta.tpproduto%TYPE        --> Tipo do produto
+  									      					,pr_qt_periodicidade IN tbcadast_email_proposta.qt_periodicidade%TYPE --> Quantidade de dias entre cada notificacao do operador
+                                    ,pr_qt_envio         IN tbcadast_email_proposta.qt_envio%TYPE         --> Quantidade de envios realizadas no dia da notificacao
+  									      					,pr_ds_assunto       IN tbcadast_email_proposta.ds_assunto%TYPE       --> Descricao do Assunto do E-mail
+                                    ,pr_ds_corpo         IN tbcadast_email_proposta.ds_corpo%TYPE         --> Descricao do corpo do E-mail
+        														,pr_xmllog           IN VARCHAR2 --> XML com informações de LOG
+			        											,pr_cdcritic         OUT PLS_INTEGER --> Código da crítica
+				  		      								,pr_dscritic         OUT VARCHAR2 --> Descrição da crítica
+					  				      					,pr_retxml           IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+      			  											,pr_nmdcampo         OUT VARCHAR2 --> Nome do Campo
+			      	  										,pr_des_erro         OUT VARCHAR2);                                --> Saida OK/NOK
+
+  PROCEDURE pc_atualiza_email_proposta(pr_tpproduto        IN tbcadast_email_proposta.tpproduto%TYPE        --> Tipo do produto
+    									      					,pr_qt_periodicidade IN tbcadast_email_proposta.qt_periodicidade%TYPE --> Quantidade de dias entre cada notificacao do operador
+                                      ,pr_qt_envio         IN tbcadast_email_proposta.qt_envio%TYPE         --> Quantidade de envios realizadas no dia da notificacao
+  		  							      					,pr_ds_assunto       IN tbcadast_email_proposta.ds_assunto%TYPE       --> Descricao do Assunto do E-mail
+                                      ,pr_ds_corpo         IN tbcadast_email_proposta.ds_corpo%TYPE         --> Descricao do corpo do E-mail
+                                      ,pr_idativo          IN NUMBER                                     --> Identificador de ativa (0-nao / 1-sim)                                                                                                                    
+           													  ,pr_xmllog           IN VARCHAR2                                   --> XML com informações de LOG
+       	   													  ,pr_cdcritic         OUT PLS_INTEGER                               --> Código da crítica
+					  									        ,pr_dscritic         OUT VARCHAR2                                  --> Descrição da crítica
+       			  											  ,pr_retxml           IN OUT NOCOPY xmltype                         --> Arquivo de retorno do XML
+			      	  										  ,pr_nmdcampo         OUT VARCHAR2                                  --> Nome do Campo
+						        								  ,pr_des_erro         OUT VARCHAR2);                                --> Saida OK/NOK                                                   
+                                    
 
 END TELA_TAB089;
 /
@@ -868,5 +930,1127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       ROLLBACK;
   END pc_alterar;
 
+  PROCEDURE pc_busca_mtv_anulacao(pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2) IS --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_busca_mtv_anulacao
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Márcio (Mouts)
+    Data    : Agosto/2018                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar os motivos de anulação do emprestimo (tabela CECRED.TBCADAST_MOTIVO_ANULACAO)
+    
+    Alteracoes: 
+    ............................................................................. */
+  
+    --Cursor para pegar motivos de anulação
+    CURSOR cr_motivo_anulacao(vr_cdcooper IN CRAPCOP.CDCOOPER%TYPE) IS
+      SELECT t.cdcooper,
+             t.cdmotivo,
+             t.dsmotivo,
+             t.tpproduto,
+             decode(t.tpproduto,1,'1 - Empréstimos/Financiamento'
+                               ,2,'2 - Desconto Cheques - Limite'
+                               ,3,'3 - Desconto Títulos - Limite'
+                               ,4,'4 - Cartão de Crédito'
+                               ,5,'5 - Limite de Crédito'
+                               ,6,'6 - Desconto Cheque – Borderô'
+                               ,7,'7 - Desconto de Título – Borderô'
+                               ,t.tpproduto||'- Tipo não definido') dsproduto,
+             to_char(t.dtcadastro,'DD/MM/YYYY') dtcadastro,
+             t.inobservacao,
+             t.idativo
+        FROM tbcadast_motivo_anulacao t
+       WHERE t.cdcooper = vr_cdcooper
+        order by t.cdcooper,t.tpproduto,t.cdmotivo;
+
+    rw_motivo_anulacao cr_motivo_anulacao%ROWTYPE;
+  
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+
+    -- Variaveis locais
+    vr_contador INTEGER := 0;
+      
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+  
+  BEGIN
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic); 
+                             
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;                                
+    --   
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+    --
+    -- Carregar arquivo com a tabela tbcadast_motivo_anulacao
+    FOR rw_motivo_anulacao IN cr_motivo_anulacao(vr_cdcooper) LOOP
+      --Escrever no XML
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Dados',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'motivo',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'motivo',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'cdmotivo',
+                               pr_tag_cont => rw_motivo_anulacao.cdmotivo,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'motivo',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'dsmotivo',
+                               pr_tag_cont => rw_motivo_anulacao.dsmotivo,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'motivo',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'tpproduto',
+                               pr_tag_cont => rw_motivo_anulacao.tpproduto,
+                               pr_des_erro => vr_dscritic);                       
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'motivo',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'dsproduto',
+                               pr_tag_cont => rw_motivo_anulacao.dsproduto,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'motivo',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'dtcadastro',
+                               pr_tag_cont => rw_motivo_anulacao.dtcadastro,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'motivo',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'inobservacao',
+                               pr_tag_cont => rw_motivo_anulacao.inobservacao,
+                               pr_des_erro => vr_dscritic);  
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'motivo',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'idativo',
+                               pr_tag_cont => rw_motivo_anulacao.idativo,
+                               pr_des_erro => vr_dscritic);  
+
+        vr_contador := vr_contador + 1;
+        --
+    END LOOP;
+    --
+    pr_des_erro := 'OK';
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+    
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_TAB089.pc_busca_mtv_anulacao --> ' ||
+                     SQLERRM;
+                                  
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+  END pc_busca_mtv_anulacao;
+
+  PROCEDURE pc_insere_mtv_anulacao(pr_dsmotivo     IN tbcadast_motivo_anulacao.dsmotivo%TYPE     --> Descrição do motivo
+						      								,pr_tpproduto    IN tbcadast_motivo_anulacao.tpproduto%TYPE    --> Tipo do produto
+									      					,pr_inobservacao IN tbcadast_motivo_anulacao.inobservacao%TYPE --> Exige observacao (0-Nao/1-Sim)
+      														,pr_xmllog       IN VARCHAR2 --> XML com informações de LOG
+			      											,pr_cdcritic     OUT PLS_INTEGER --> Código da crítica
+						      								,pr_dscritic     OUT VARCHAR2 --> Descrição da crítica
+									      					,pr_retxml       IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+      														,pr_nmdcampo     OUT VARCHAR2 --> Nome do Campo
+			      											,pr_des_erro     OUT VARCHAR2) IS --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_insere_mtv_anulacao
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Márcio (Mouts)
+    Data    : Agosto/2018                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para inserir os motivos de anulação do emprestimo (tabela CECRED.TBCADAST_MOTIVO_ANULACAO)
+    
+    Alteracoes: 
+    ............................................................................. */
+    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+   
+	  -- Vairáveis auxliares
+	  vr_cdmotivo tbcadast_motivo_anulacao.cdmotivo%TYPE;
+		
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);    
+    
+    vr_nrdrowid ROWID;     
+  
+  BEGIN
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);       
+    --
+    pr_des_erro := 'NOK';
+    --
+    BEGIN
+    -- Busca o proximo Código
+		vr_cdmotivo := fn_sequence(pr_nmtabela => 'tbcadast_motivo_anulacao'
+															,pr_nmdcampo => 'cdmotivo'
+															,pr_dsdchave => vr_cdcooper || ';' || pr_tpproduto);
+															
+    INSERT INTO tbcadast_motivo_anulacao 
+      (cdcooper,
+       cdmotivo,
+       dsmotivo,
+       tpproduto,
+       dtcadastro,
+       inobservacao,
+       idativo
+      )
+    VALUES
+      (vr_cdcooper
+      ,vr_cdmotivo
+			,pr_dsmotivo
+      ,pr_tpproduto
+      ,sysdate
+      ,pr_inobservacao
+      ,1
+      );
+    EXCEPTION
+      WHEN dup_val_on_index THEN
+         vr_dscritic := 'Registro ja existente!';
+         RAISE vr_exc_erro;
+      WHEN OTHERS THEN
+         vr_dscritic := 'Erro ao inserir registro!';
+         RAISE vr_exc_erro;
+    END;
+    -- Gravar LOG
+    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => vr_dscritic
+                        ,pr_dsorigem => vr_idorigem
+                        ,pr_dstransa => 'Tela TAB089 - Inclusão do motivo de anulação do empréstimo - tbcadast_motivo_anulacao'
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 0
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 0
+                        ,pr_nmdatela => vr_nmdatela
+                        ,pr_nrdconta => 0
+                        ,pr_nrdrowid => vr_nrdrowid);
+          
+    -- Gravar Item do LOG
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cooperativa'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => vr_cdcooper);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Tipo de Produto'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_tpproduto);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cód. Motivo'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => vr_cdmotivo);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Desc. Motivo'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_dsmotivo);		  
+                                                            
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Data Cadastro'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => sysdate);		                               
+                               
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Exige observação'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_inobservacao);	
+                               
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Identificador de ativa'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => 1);	
+    --  
+    COMMIT;
+    --
+    pr_des_erro := 'OK';
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+    
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic || '-' ||
+                                     pr_dscritic || '</Erro></Root>');
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_TAB089.pc_insere_mtv_anulacao --> ' ||
+                     SQLERRM;
+      
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+  
+  END pc_insere_mtv_anulacao;
+
+  PROCEDURE pc_atualiza_mtv_anulacao(pr_cdmotivo     IN tbcadast_motivo_anulacao.cdmotivo%TYPE     --> Código do motivo
+  						      								,pr_tpproduto    IN tbcadast_motivo_anulacao.tpproduto%TYPE    --> Tipo do produto
+                                    ,pr_dsmotivo     IN tbcadast_motivo_anulacao.dsmotivo%TYPE     --> Descrição do motivo
+  									      					,pr_inobservacao IN tbcadast_motivo_anulacao.inobservacao%TYPE --> Exige observacao (0-Nao/1-Sim)
+                                    ,pr_idativo      IN tbcadast_motivo_anulacao.idativo%TYPE      --> Identificador de ativa (0-nao / 1-sim)                                        
+         													  ,pr_xmllog       IN VARCHAR2                                   --> XML com informações de LOG
+       	 													  ,pr_cdcritic     OUT PLS_INTEGER                               --> Código da crítica
+														        ,pr_dscritic     OUT VARCHAR2                                  --> Descrição da crítica
+       														  ,pr_retxml       IN OUT NOCOPY xmltype                         --> Arquivo de retorno do XML
+			      											  ,pr_nmdcampo     OUT VARCHAR2                                  --> Nome do Campo
+						      								  ,pr_des_erro     OUT VARCHAR2) IS                              --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_atualiza_mtv_anulacao
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Márcio (Mouts)
+    Data    : Agosto/2018                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para atualizar os motivos de anulação do emprestimo (tabela CECRED.TBCADAST_MOTIVO_ANULACAO)
+    
+    Alteracoes: 
+    ............................................................................. */
+
+    CURSOR cr_motivo_anulacao(pr_cdcooper  IN tbcadast_motivo_anulacao.cdcooper%TYPE) IS
+      SELECT t.cdmotivo,
+			       t.dsmotivo,
+						 t.inobservacao,
+             t.idativo
+        FROM tbcadast_motivo_anulacao t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.cdmotivo  = pr_cdmotivo
+         AND t.tpproduto = pr_tpproduto;
+       
+    rw_motivo_anulacao cr_motivo_anulacao%ROWTYPE;
+    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+  
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);    
+    
+    vr_nrdrowid ROWID;    
+  
+  BEGIN
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);   
+                             
+    pr_des_erro := 'NOK';
+   
+    -- Abre indicador 
+    OPEN cr_motivo_anulacao(vr_cdcooper);
+    FETCH cr_motivo_anulacao INTO rw_motivo_anulacao;
+		
+    -- Se não existe
+    IF cr_motivo_anulacao%NOTFOUND THEN
+        -- Fecha cursor
+        CLOSE cr_motivo_anulacao;
+        -- Gera crítica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Motivo não encontrado!';
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+    END IF;
+
+    -- Fecha cursor
+    CLOSE cr_motivo_anulacao;
+    
+    BEGIN
+      --
+      UPDATE tbcadast_motivo_anulacao t
+         SET t.dsmotivo     = pr_dsmotivo,
+             t.inobservacao = pr_inobservacao,
+             t.idativo      = pr_idativo
+       WHERE t.cdcooper     = vr_cdcooper
+         AND t.cdmotivo     = pr_cdmotivo
+         AND t.tpproduto    = pr_tpproduto;
+       --
+    EXCEPTION
+      WHEN OTHERS THEN
+         vr_dscritic := 'Erro ao atualizar registro!';
+         RAISE vr_exc_erro;
+    END;
+    
+    IF SQL%ROWCOUNT = 0 THEN
+     vr_dscritic := 'Registro não encontrado!';
+     RAISE vr_exc_erro;
+    END IF;
+    --    
+    -- Gravar LOG
+    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => vr_dscritic
+                        ,pr_dsorigem => vr_idorigem
+                        ,pr_dstransa => 'Tela TAB089 - Alteração do motivo de anulação do empréstimo - tbcadast_motivo_anulacao'
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 0
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 0
+                        ,pr_nmdatela => vr_nmdatela
+                        ,pr_nrdconta => 0
+                        ,pr_nrdrowid => vr_nrdrowid);
+          
+    -- Gravar Item do LOG
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cooperativa'
+                               ,pr_dsdadant => vr_cdcooper
+                               ,pr_dsdadatu => vr_cdcooper);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Tipo de Produto'
+                               ,pr_dsdadant => pr_tpproduto
+                               ,pr_dsdadatu => pr_tpproduto);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cód. Motivo'
+                               ,pr_dsdadant => pr_cdmotivo
+                               ,pr_dsdadatu => pr_cdmotivo);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Desc. Motivo'
+                               ,pr_dsdadant => rw_motivo_anulacao.dsmotivo
+                               ,pr_dsdadatu => pr_dsmotivo);		  
+                                                            
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Exige observação'
+                               ,pr_dsdadant => rw_motivo_anulacao.inobservacao
+                               ,pr_dsdadatu => pr_inobservacao);	
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Identificador de ativa'
+                               ,pr_dsdadant => rw_motivo_anulacao.idativo
+                               ,pr_dsdadatu => pr_idativo);	
+
+                               
+    COMMIT;
+    pr_des_erro := 'OK';
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic || '-' ||
+                                     pr_dscritic || '</Erro></Root>');
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_TAB089.pc_atualiza_mtv_anulacao --> ' ||
+                     SQLERRM;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic || '-' ||
+                                     pr_dscritic || '</Erro></Root>');
+    
+  END pc_atualiza_mtv_anulacao;
+
+  PROCEDURE pc_busca_email_proposta(pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2 --> Nome do Campo
+                                   ,pr_des_erro OUT VARCHAR2) IS --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_busca_email_proposta
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Márcio (Mouts)
+    Data    : Agosto/2018                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar os parâmetros de envio do e-mail de proposta (tabela CECRED.TBCADAST_EMAIL_PROPOSTA)
+    
+    Alteracoes: 
+    ............................................................................. */
+  
+    --Cursor para pegar motivos de anulação
+    CURSOR cr_email_proposta(vr_cdcooper IN CRAPCOP.CDCOOPER%TYPE) IS
+      SELECT t.cdcooper,
+             t.tpproduto,
+             decode(t.tpproduto,1,'1 - Empréstimos/Financiamento'
+                               ,2,'2 - Desconto Cheques - Limite'
+                               ,3,'3 - Desconto Títulos - Limite'
+                               ,4,'4 - Cartão de Crédito'
+                               ,5,'5 - Limite de Crédito'
+                               ,6,'6 - Desconto Cheque – Borderô'
+                               ,7,'7 - Desconto de Título – Borderô'
+                               ,t.tpproduto||'- Tipo não definido') dsproduto,
+             t.qt_periodicidade,
+             t.qt_envio,
+             t.ds_assunto,
+             t.ds_corpo,
+             t.idativo
+        FROM tbcadast_email_proposta t
+       WHERE t.cdcooper = vr_cdcooper
+        order by t.cdcooper,t.tpproduto;
+
+    rw_email_proposta cr_email_proposta%ROWTYPE;
+  
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+
+    -- Variaveis locais
+    vr_contador INTEGER := 0;
+      
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+  
+  BEGIN
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic); 
+                             
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;                                
+    --   
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+    --
+    -- Carregar arquivo com a tabela tbcadast_email_proposta
+    FOR rw_email_proposta IN cr_email_proposta(vr_cdcooper) LOOP
+      --Escrever no XML
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Dados',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'parametro',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'parametro',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'tpproduto',
+                               pr_tag_cont => rw_email_proposta.tpproduto,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'parametro',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'dsproduto',
+                               pr_tag_cont => rw_email_proposta.dsproduto,
+                               pr_des_erro => vr_dscritic);	                                     
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'parametro',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'qt_periodicidade',
+                               pr_tag_cont => rw_email_proposta.qt_periodicidade,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'parametro',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'qt_envio',
+                               pr_tag_cont => rw_email_proposta.qt_envio,
+                               pr_des_erro => vr_dscritic);  
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'parametro',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'ds_assunto',
+                               pr_tag_cont => rw_email_proposta.ds_assunto,
+                               pr_des_erro => vr_dscritic);
+
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'parametro',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'ds_corpo',
+                               pr_tag_cont => rw_email_proposta.ds_corpo,
+                               pr_des_erro => vr_dscritic);
+                               
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'parametro',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'idativo',
+                               pr_tag_cont => rw_email_proposta.idativo,
+                               pr_des_erro => vr_dscritic);                                
+                               
+
+        vr_contador := vr_contador + 1;
+        --
+    END LOOP;
+    --
+    pr_des_erro := 'OK';
+    --gene0002.pc_XML_para_arquivo(pr_retxml
+    --                           ,'/usr/coop/cecred/'
+    --                           ,'TESTE.xml'
+    --                           ,pr_dscritic );    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+    
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_TAB089.pc_busca_email_proposta --> ' ||
+                     SQLERRM;
+                                  
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+    
+  END pc_busca_email_proposta;
+  
+  PROCEDURE pc_insere_email_proposta(pr_tpproduto        IN tbcadast_email_proposta.tpproduto%TYPE        --> Tipo do produto
+  									      					,pr_qt_periodicidade IN tbcadast_email_proposta.qt_periodicidade%TYPE --> Quantidade de dias entre cada notificacao do operador
+                                    ,pr_qt_envio         IN tbcadast_email_proposta.qt_envio%TYPE         --> Quantidade de envios realizadas no dia da notificacao
+  									      					,pr_ds_assunto       IN tbcadast_email_proposta.ds_assunto%TYPE       --> Descricao do Assunto do E-mail
+                                    ,pr_ds_corpo         IN tbcadast_email_proposta.ds_corpo%TYPE         --> Descricao do corpo do E-mail
+        														,pr_xmllog           IN VARCHAR2 --> XML com informações de LOG
+			        											,pr_cdcritic         OUT PLS_INTEGER --> Código da crítica
+				  		      								,pr_dscritic         OUT VARCHAR2 --> Descrição da crítica
+					  				      					,pr_retxml           IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+      			  											,pr_nmdcampo         OUT VARCHAR2 --> Nome do Campo
+			      	  										,pr_des_erro         OUT VARCHAR2) IS --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_insere_email_proposta
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Márcio (Mouts)
+    Data    : Agosto/2018                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para inserir os parâmetros de envio do e-mail de proposta (tabela CECRED.TBCADAST_EMAIL_PROPOSTA)
+    
+    Alteracoes: 
+    ............................................................................. */
+    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+   
+	  -- Vairáveis auxliares
+		
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);    
+    
+    vr_nrdrowid ROWID;     
+  
+  BEGIN
+    pr_des_erro := 'OK';    
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);       
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;    
+    --
+    BEGIN
+															
+    INSERT INTO tbcadast_email_proposta
+      (cdcooper,
+       tpproduto,
+       qt_periodicidade,
+       qt_envio,
+       ds_assunto,
+       ds_corpo,
+       idativo
+      )
+    VALUES
+      (vr_cdcooper,
+       pr_tpproduto,
+       pr_qt_periodicidade,
+       pr_qt_envio,
+       pr_ds_assunto,
+       pr_ds_corpo,
+       1
+      );
+    EXCEPTION
+      WHEN dup_val_on_index THEN
+         vr_dscritic := 'Registro ja existente!';
+         RAISE vr_exc_erro;
+      WHEN OTHERS THEN
+         vr_dscritic := 'Erro ao inserir registro!';
+         RAISE vr_exc_erro;
+    END;
+    -- Gravar LOG
+    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => vr_dscritic
+                        ,pr_dsorigem => vr_idorigem
+                        ,pr_dstransa => 'Tela TAB089 - Inclusão dos parâmeros de envio do E-mail da Proposta - tbcadast_email_proposta'
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 0
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 0
+                        ,pr_nmdatela => vr_nmdatela
+                        ,pr_nrdconta => 0
+                        ,pr_nrdrowid => vr_nrdrowid);
+          
+    -- Gravar Item do LOG
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cooperativa'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => vr_cdcooper);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Tipo de Produto'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_tpproduto);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Periodicidade'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_qt_periodicidade);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Qtde. De Envios'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_qt_envio);		  
+                                                            
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Assunto do E-mail'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_ds_assunto);		                               
+                               
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Corpo do E-mail'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => pr_ds_corpo);	
+                               
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Identificador de ativa'
+                               ,pr_dsdadant => null
+                               ,pr_dsdadatu => 1);	                               
+                               
+    --  
+    COMMIT;
+    --
+    pr_des_erro := 'OK';
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+    
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic || '-' ||
+                                     pr_dscritic || '</Erro></Root>');
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_TAB089.pc_insere_email_proposta --> ' ||
+                     SQLERRM;
+      
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                     
+  
+  END pc_insere_email_proposta;
+
+  PROCEDURE pc_atualiza_email_proposta(pr_tpproduto        IN tbcadast_email_proposta.tpproduto%TYPE        --> Tipo do produto
+    									      					,pr_qt_periodicidade IN tbcadast_email_proposta.qt_periodicidade%TYPE --> Quantidade de dias entre cada notificacao do operador
+                                      ,pr_qt_envio         IN tbcadast_email_proposta.qt_envio%TYPE         --> Quantidade de envios realizadas no dia da notificacao
+  		  							      					,pr_ds_assunto       IN tbcadast_email_proposta.ds_assunto%TYPE       --> Descricao do Assunto do E-mail
+                                      ,pr_ds_corpo         IN tbcadast_email_proposta.ds_corpo%TYPE         --> Descricao do corpo do E-mail
+                                      ,pr_idativo          IN NUMBER                                     --> Identificador de ativa (0-nao / 1-sim)                                                                              
+           													  ,pr_xmllog           IN VARCHAR2                                   --> XML com informações de LOG
+       	   													  ,pr_cdcritic         OUT PLS_INTEGER                               --> Código da crítica
+					  									        ,pr_dscritic         OUT VARCHAR2                                  --> Descrição da crítica
+       			  											  ,pr_retxml           IN OUT NOCOPY xmltype                         --> Arquivo de retorno do XML
+			      	  										  ,pr_nmdcampo         OUT VARCHAR2                                  --> Nome do Campo
+						        								  ,pr_des_erro         OUT VARCHAR2) IS                              --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_atualiza_email_proposta
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Márcio (Mouts)
+    Data    : Agosto/2018                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para atualizar os parâmetros de envio do e-mail de proposta (tabela CECRED.TBCADAST_EMAIL_PROPOSTA)
+    
+    Alteracoes: 
+    ............................................................................. */
+
+    CURSOR cr_email_proposta(pr_cdcooper  IN tbcadast_motivo_anulacao.cdcooper%TYPE) IS
+      SELECT t.qt_periodicidade
+            ,t.qt_envio
+    				,t.ds_assunto
+            ,t.ds_corpo
+            ,t.idativo
+        FROM tbcadast_email_proposta t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.tpproduto = pr_tpproduto;
+       
+    rw_email_proposta cr_email_proposta%ROWTYPE;
+    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+  
+    --Controle de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);    
+    
+    vr_nrdrowid ROWID;    
+  
+  BEGIN
+    pr_des_erro := 'OK';    
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);       
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+   
+    -- Abre indicador 
+    OPEN cr_email_proposta(vr_cdcooper);
+    FETCH cr_email_proposta INTO rw_email_proposta;
+		
+    -- Se não existe
+    IF cr_email_proposta%NOTFOUND THEN
+        -- Fecha cursor
+        CLOSE cr_email_proposta;
+        -- Gera crítica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Parâmetro de envio de E-mail não encontrado!';
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+    END IF;
+
+    -- Fecha cursor
+    CLOSE cr_email_proposta;
+    
+    BEGIN
+      --
+      UPDATE tbcadast_email_proposta t
+         SET t.qt_periodicidade = pr_qt_periodicidade
+            ,t.qt_envio         = pr_qt_envio
+    				,t.ds_assunto       = pr_ds_assunto
+            ,t.ds_corpo         = pr_ds_corpo
+            ,t.idativo          = pr_idativo
+       WHERE t.cdcooper     = vr_cdcooper
+         AND t.tpproduto    = pr_tpproduto;
+       --
+    EXCEPTION
+      WHEN OTHERS THEN
+         vr_dscritic := 'Erro ao atualizar registro!';
+         RAISE vr_exc_erro;
+    END;
+    
+    IF SQL%ROWCOUNT = 0 THEN
+     vr_dscritic := 'Registro não encontrado!';
+     RAISE vr_exc_erro;
+    END IF;
+    --    
+    -- Gravar LOG
+    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => vr_dscritic
+                        ,pr_dsorigem => vr_idorigem
+                        ,pr_dstransa => 'Tela TAB089 - Alteração dos parâmetros do E-mail da Proposta - tbcadast_email_proposta'
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 0
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 0
+                        ,pr_nmdatela => vr_nmdatela
+                        ,pr_nrdconta => 0
+                        ,pr_nrdrowid => vr_nrdrowid);
+          
+    -- Gravar Item do LOG
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cooperativa'
+                               ,pr_dsdadant => vr_cdcooper
+                               ,pr_dsdadatu => vr_cdcooper);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Tipo de Produto'
+                               ,pr_dsdadant => pr_tpproduto
+                               ,pr_dsdadatu => pr_tpproduto);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Periodicidade'
+                               ,pr_dsdadant => rw_email_proposta.qt_periodicidade
+                               ,pr_dsdadatu => pr_qt_periodicidade);		
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Qtde. De Envios'
+                               ,pr_dsdadant => rw_email_proposta.qt_envio
+                               ,pr_dsdadatu => pr_qt_envio);		  
+                                                            
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Assunto do E-mail'
+                               ,pr_dsdadant => rw_email_proposta.ds_assunto
+                               ,pr_dsdadatu => pr_ds_assunto);		                               
+                               
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Corpo do E-mail'
+                               ,pr_dsdadant => rw_email_proposta.ds_corpo
+                               ,pr_dsdadatu => pr_ds_corpo);	
+                               
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Identificador de ativa'
+                               ,pr_dsdadant => rw_email_proposta.idativo
+                               ,pr_dsdadatu => pr_idativo);	                               
+                               
+    COMMIT;
+    pr_des_erro := 'OK';
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic || '-' ||
+                                     pr_dscritic || '</Erro></Root>');
+    
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro := 'NOK';
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TELA_TAB089.pc_atualiza_email_proposta --> ' ||
+                     SQLERRM;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic || '-' ||
+                                     pr_dscritic || '</Erro></Root>');
+    
+  END pc_atualiza_email_proposta;
+
+----------------------------------
 END TELA_TAB089;
 /
