@@ -74,16 +74,18 @@ function retornaFlag($flag) {
     }
 }
 
+$idaba       = isset($_POST["idaba"]) ? (int)$_POST["idaba"] : 0;
 $convenios   = json_decode($_POST["convenios"]);
 $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
 $flgregis    = trim($_POST["flgregis"]);
 $nrcnvceb    = $_POST["nrcnvceb"];
 if ($idaba === 1) {
-    $nrconven = ((count($convenios)) ? $convenios[0]->convenio : ((!empty($_POST['nrconven'])) ? $convenios[0]->convenio : $_POST['nrconven']));
+    $nrconven = ((count($convenios) > 0) ? $convenios[0]->convenio : ((!empty($_POST['nrconven'])) ? $_POST['nrconven'] : 0));
 }else {
     $nrconven = (!empty($_POST['nrconven']) ? $_POST['nrconven'] : 0);
 }
+
 $dsorgarq    = trim($_POST["dsorgarq"]);
 $insitceb    = !empty($_POST["insitceb"]) ? trim($_POST["insitceb"]) : 1;
 $inarqcbr    = $_POST["inarqcbr"];
@@ -94,7 +96,7 @@ $flcooexp    = retornaFlag($_POST["flcooexp"]);
 $flceeexp    = retornaFlag($_POST["flceeexp"]);
 $flserasa    = retornaFlag($_POST["flserasa"]);
 $cddbanco	 = trim($_POST["cddbanco"]);
-$flgcebhm    = retornaFlag(isset($_POST["flgcebhm"]) ? trim($_POST["flgcebhm"]) : 1);
+$flgcebhm    = retornaFlag(isset($_POST["flgcebhm"]) ? trim($_POST["flgcebhm"]) : 0);
 $cddopcao    = trim($_POST["cddopcao"]);
 $dsdmesag    = $_POST["dsdmesag"];
 $titulares   = $_POST["titulares"];
@@ -110,7 +112,6 @@ $insrvprt    = trim($_POST["insrvprt"]);
 $qtdecprz    = trim($_POST["qtdecprz"]);
 $idrecipr	 = trim($_POST["idrecipr"]);
 $inenvcob	 = trim($_POST["inenvcob"]);
-$idaba       = isset($_POST["idaba"]) ? (int)$_POST["idaba"] : 0;
 
 // Monta o xml de requisição
 $xml  = "";
@@ -471,6 +472,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     ?>
                     <input type="hidden" id="tot_percdesc" value="<?php echo $tot_percdesc; ?>" />
 					<input type="hidden" id="tot_percdesc_recipr" value="<?php echo $tot_percdesc_recipr; ?>" />
+					<input type="hidden" id="qtdeDescontos" value="<?php echo $cont; ?>" />
 					<div align="left">
 						<span style="line-height:25px; margin-left:5px;" class="txtNormal">* Desconto via c&aacute;lculo Reciprocidade</span>
 						<br>
@@ -557,7 +559,6 @@ if ($cco_flrecipr == 1 || $qtapurac > 0) {
 // Div flutuante com as tarifas
 $(".clsDesCategoria").hover(
   function() {
-      debugger;
     var numLinha = $(this).attr('numLinha');
     for (indTable = 0; indTable < <?php echo count($convenios); ?>; indTable++) {
         var qtdTarif = $('.clsTar' + numLinha, $(this).find('table')[indTable]).length;

@@ -185,7 +185,7 @@ foreach($emails as $email) {
 		// Mostra a Aba Principal com lista dos Conv&ecirc;nios
 		<?php echo "acessaOpcaoContratos();"; ?>
 	}else {
-		<?php echo "acessaOpcaoDescontos();"; ?>
+		<?php echo "acessaOpcaoDescontos('I');"; ?>
 	}
 	
 
