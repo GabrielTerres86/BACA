@@ -4741,7 +4741,6 @@ procedure pc_calc_app_programada (pr_cdcooper  in crapcop.cdcooper%type,        
     when others then
       pr_cdcritic := 0;
       pr_des_erro := 'Erro ao fazer o cálculo da aplicação programada para a conta '||rw_craprpp.nrdconta||': '||sqlerrm;
-
 END pc_calc_app_programada;
 
   PROCEDURE pc_lista_aplicacoes_progr(pr_cdcooper    IN craprac.cdcooper%TYPE           --> Código da Cooperativa
@@ -5426,7 +5425,7 @@ END pc_calc_app_programada;
         ass.cdagenci, -- numero da PA
         ass.nmprimtl,
         ass.nrcpfcgc,
-        rpp.dtinirpp,
+        rpp.dtmvtolt,
         rpp.vlprerpp,
         Extract(day from rpp.dtdebito) indiadeb
      FROM 
@@ -5565,7 +5564,7 @@ END pc_calc_app_programada;
                    '<postoAtendimento>'||rw_info.cdagenci   ||'</postoAtendimento>'||
                    '<cidade>'       || rw_info.nmcidade     ||'</cidade>'||
                    '<uf>'           || rw_info.cdufdcop     ||'</uf>'||
-                   '<dataInicio>'   || to_char(rw_info.dtinirpp,'dd/mm/yyyy') ||'</dataInicio>'||
+                   '<dataInicio>'   || to_char(rw_info.dtmvtolt,'dd/mm/yyyy') ||'</dataInicio>'||
                    '<diaDebito>'    || rw_info.indiadeb     ||'</diaDebito>');    
     --> Descarregar buffer    
     pc_escreve_xml(' ',TRUE); 

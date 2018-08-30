@@ -217,7 +217,7 @@
 					
 					<tr id="trPoupanca<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
-						<td><?php echo $poupancas[$i]->tags[15]->cdata; ?></td>
+						<td><?php echo $poupancas[$i]->tags[4]->cdata; ?></td>
 						
 						<td><?php echo $poupancas[$i]->tags[5]->cdata; ?></td>
 						
