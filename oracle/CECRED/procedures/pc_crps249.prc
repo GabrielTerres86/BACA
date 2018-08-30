@@ -628,6 +628,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             tarifas de arrecadações (Lucas Ranghetti #INC0017254)
 
                09/08/2018 -  8666:Contabilização da transferência de conta para prejuízo Rangel Decker (AMcom)
+               
+               30/08//2018 - Correção bug não contabiliza histórico 2408
+                             (Renato Cordeiro - AMCom)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -686,7 +689,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                        'CRAPLFT',
                                        'CRAPTVL',
                                        'CRAPLAC',
-                                       'TBCC_CONTA_PREJUIZO');
+                                       'TBCC_PREJUIZO_DETALHE');
 
   rw_craphis    cr_craphis%rowtype;
   -- Buscar as tarifas do histórico
@@ -8531,7 +8534,7 @@ BEGIN
       vr_cdestrut := '50';
     elsif UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'COMPBB' then
       vr_cdestrut := '51';
-    elsif UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'TBCC_CONTA_PREJUIZO' then
+    elsif UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'TBCC_PREJUIZO_DETALHE' then
       vr_cdestrut := '50';    --Rangel Decker
     end if;
     -- Salva informações no arquivo
