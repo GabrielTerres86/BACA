@@ -4043,8 +4043,72 @@ PROCEDURE grava_efetivacao_proposta:
              
       IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
          UNDO EFETIVACAO , LEAVE EFETIVACAO.
-         
+      /* Inicio P438 */
+      /* Se for PP */
+      IF  crawepr.tpemprst = 1  THEN
+          DO:
+              /* Caso NAO seja Refinanciamento efetua credito na conta  */
+              IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                                         AND crawepr.nrdconta = par_nrdconta
+                                         AND crawepr.nrctremp = par_nrctremp
+                                         AND (crawepr.nrctrliq[1]  > 0   OR
+                                              crawepr.nrctrliq[2]  > 0   OR
+                                              crawepr.nrctrliq[3]  > 0   OR
+                                              crawepr.nrctrliq[4]  > 0   OR
+                                              crawepr.nrctrliq[5]  > 0   OR
+                                              crawepr.nrctrliq[6]  > 0   OR
+                                              crawepr.nrctrliq[7]  > 0   OR
+                                              crawepr.nrctrliq[8]  > 0   OR
+                                              crawepr.nrctrliq[9]  > 0   OR
+                                              crawepr.nrctrliq[10] > 0)) THEN
+                  DO:
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                              
+                      /* Efetuar a chamada a rotina Oracle  */
+                      RUN STORED-PROCEDURE pc_credito_online_pp
+                          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                               INPUT par_nrdconta,
+                                                               INPUT par_nrctremp,
+                                                               INPUT par_nmdatela,
+                                                               INPUT crapass.inpessoa,
+                                                               INPUT par_cdagenci,
+                                                               INPUT par_nrdcaixa,
+                                                               INPUT par_cdagenci, /* pr_cdpactra */
+                                                               INPUT par_cdoperad,
+                                                              OUTPUT 0,   /* pr_vltottar */
+                                                              OUTPUT 0,   /* pr_vltariof */
+                                                              OUTPUT 0,   /* pr_cdcritic */
+                                                              OUTPUT ""). /* pr_dscritic */
 
+                      /* Fechar o procedimento para buscarmos o resultado */ 
+                      CLOSE STORED-PROC pc_credito_online_pp
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                      
+                      ASSIGN aux_vltottar = 0
+                             aux_vltariof = 0
+                             aux_cdcritic = 0
+                             aux_dscritic = ""
+                             aux_vltottar = pc_credito_online_pp.pr_vltottar
+                                            WHEN pc_credito_online_pp.pr_vltottar <> ?
+                             aux_vltariof = pc_credito_online_pp.pr_vltariof
+                                            WHEN pc_credito_online_pp.pr_vltariof <> ?
+                             aux_cdcritic = INT(pc_credito_online_pp.pr_cdcritic) 
+                                            WHEN pc_credito_online_pp.pr_cdcritic <> ?
+                             aux_dscritic = pc_credito_online_pp.pr_dscritic
+                                            WHEN pc_credito_online_pp.pr_dscritic <> ?
+                             aux_vltarifa = aux_vltottar.
+
+                      IF   aux_cdcritic <> 0    OR
+                           aux_dscritic <> ""   THEN
+                           UNDO EFETIVACAO , LEAVE EFETIVACAO.
+
+                  END. /* NOT CAN-FIND */
+
+          END. /* crawepr.tpemprst = 1 */
+      /* Fim P438 */
+      /**/
       /* Se for Pos-Fixado */
       IF  crawepr.tpemprst = 2  THEN
           DO:
@@ -4176,7 +4240,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.qtmesdec = 0
               crapepr.qtprecal = 0
               crapepr.dtinipag = ?
-              crapepr.tpdescto = crawepr.tpdescto
+              crapepr.tpdescto = crawepr.tpdescto 
               crapepr.vliofepr = aux_vltotiof
               crapepr.vlpagiof = aux_vliofpri
               crapepr.vliofadc = aux_vliofadi
@@ -4184,7 +4248,8 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.qttolatr = crawepr.qttolatr
               crapepr.vltarifa = aux_vltarifa
               crapepr.vlaqiofc = aux_vlaqiofc
-              crapepr.vltariof = (IF crawepr.tpemprst = 2 THEN aux_vltariof ELSE aux_vltotiof)
+              /*P438 Incluir a tratativa para PP*/
+              crapepr.vltariof = (IF CAN-DO("1,2", STRING(crawepr.tpemprst)) THEN aux_vltariof ELSE aux_vltotiof)
               crapepr.iddcarga = aux_idcarga
               crapepr.idfiniof = crawepr.idfiniof.
 				
