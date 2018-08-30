@@ -75,6 +75,9 @@ $result = $xmlObject->roottag->tags[0]->tags[0]->tags;
 $vldesconto_cee =  getByTagName($result,'VLDESCONTO_CEE');
 $vldedconto_coo =  getByTagName($result,'VLDEDCONTO_COO');
 
+$vldesconto_cee = floatval(str_replace(',', '.', $vldesconto_cee))*100;
+$vldedconto_coo = floatval(str_replace(',', '.', $vldedconto_coo))*100;
+
 echo json_encode(
     array(
         'vldesconto_cee' => $vldesconto_cee,

@@ -3130,6 +3130,9 @@ function calcula_tarifas(tipo) {
 
     function calculaFormataTipo (elm, vldesconto, vldesconto_adic) {
         vldesconto = converteMoedaFloat(vldesconto) + converteMoedaFloat(vldesconto_adic);
+        if (vldesconto > 100) {
+            vldesconto = 100;
+        }
 
         for (var i = 0; i < elm.length; ++i){
             var $elm = $(elm[i]);
@@ -3215,10 +3218,8 @@ function calcula_desconto() {
             success: function (response) {
                 hideMsgAguardo();
                 blockBackground(parseInt($("#divRotina").css("z-index")));
-                var vldesconto_cee = converteNumero(response.vldesconto_cee);
-                var vldesconto_coo = converteNumero(response.vldedconto_coo);
-                $('#vldescontoconcedido_cee', '.tabelaDesconto').val(vldesconto_cee*100);
-                $('#vldescontoconcedido_coo', '.tabelaDesconto').val(vldesconto_coo*100);
+                $('#vldescontoconcedido_cee', '.tabelaDesconto').val(number_format(response.vldesconto_cee, 2, ',', '.'));
+                $('#vldescontoconcedido_coo', '.tabelaDesconto').val(number_format(response.vldedconto_coo, 2, ',', '.'));
             }
     });
 }
