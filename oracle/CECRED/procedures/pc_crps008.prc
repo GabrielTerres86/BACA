@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 28/06/2018
+   Data    : Janeiro/92.                     Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -155,6 +155,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                             atualização do saldo - Daniel(AMcom)		
 
                28/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+                            
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
                             
      ............................................................................. */
 
@@ -1096,6 +1098,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
              IF rw_crapsld(idx).ass_nrdconta IS NULL THEN
                --Montar mensagem de erro com base na critica
                vr_cdcritic:= 251;
+             vr_dscritic := 'Idx '||idx||' --> '||gene0001.fn_busca_critica(vr_cdcritic);
                --Sair do programa
                RAISE vr_exc_saida;
              END IF;
@@ -1186,7 +1189,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                  IF NOT vr_tab_craplrt.EXISTS(rw_craplim.cddlinha) THEN
                    --Buscar mensagem de erro da critica
                    vr_cdcritic := 363;
-                   vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+                   vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)|| ' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                    --Sair do programa
                    RAISE vr_exc_saida;
                  END IF;
@@ -1218,7 +1221,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
              IF rw_crapsld(idx).rowidcot IS NULL THEN
                --Buscar mensagem de erro da critica
                vr_cdcritic := 169;
-               vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+               vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ;
 
                --Sair do programa
                RAISE vr_exc_saida;
@@ -1283,7 +1286,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                  IF cr_crapneg2%NOTFOUND  THEN
                    --Buscar mensagem de erro da critica
                    vr_cdcritic := 419;
-                   vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+                   vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                    -- Fechar Cursor
                    CLOSE cr_crapneg2;
                    --Sair do programa
@@ -1312,7 +1315,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                   WHERE crapcot.ROWID = vr_crapcot;
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_dscritic := 'Erro ao inserir na tabela crapcot. '||SQLERRM;
+                 vr_dscritic := 'Erro ao Atualizar tabela crapcot Rowid '||vr_crapcot||' --> '||SQLERRM;
                    --Sair do programa
                    RAISE vr_exc_saida;
                END;
@@ -1340,14 +1343,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                     -- Tenta buscar o erro no vetor de erro
                     IF vr_tab_erro.COUNT > 0 THEN
                       vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-                      vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_crapsld(idx).nrdconta;
+                      vr_dscritic:= ' Conta: '||rw_crapsld(idx).nrdconta || ' --> '||vr_tab_erro(vr_tab_erro.FIRST).dscritic;
                     ELSE
                       vr_cdcritic:= 0;
-                      vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapsld(idx).nrdconta;
-                    END IF;
-                                      
-                    IF vr_cdcritic <> 0 THEN
-                      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' Conta: '||rw_crapsld(idx).nrdconta;
+                      vr_dscritic:= 'Conta: '||rw_crapsld(idx).nrdconta||' --> Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro';
                     END IF;                              
 
                     --Levantar Excecao
@@ -1359,7 +1358,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                   IF vr_tab_saldo.Count = 0 THEN
                     --Montar mensagem erro
                     vr_cdcritic:= 0;
-                    vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';                                              
+                  vr_dscritic:= ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Nao foi possivel consultar o saldo para a operacao.';                                              
                     --Levantar Excecao
                     RAISE vr_exc_saida;
                   ELSE
@@ -1413,7 +1412,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                            INTO vr_idlancto; 
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir craplau: '||SQLERRM;
+                      vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir craplau: '||SQLERRM;
                         RAISE vr_exc_saida;
                     END;
                          
@@ -1441,7 +1440,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                                        ,37);
                        EXCEPTION  
                          WHEN OTHERS THEN
-                          vr_dscritic := 'Erro ao inserir cr_tbcc_lautom_controle: '||SQLERRM;
+                        vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir cr_tbcc_lautom_controle: '||SQLERRM;
                           RAISE vr_exc_saida;
                       END;
                            
@@ -1492,7 +1491,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
 
                    EXCEPTION
                      WHEN OTHERS THEN
-                       vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
+                   vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir na tabela craplcm. '||SQLERRM;
                        --Sair do programa
                        RAISE vr_exc_saida;
                    END;
@@ -1566,7 +1565,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
 
                  EXCEPTION
                    WHEN OTHERS THEN
-                     vr_dscritic := 'Erro ao inserir na tabela craplcm. '||SQLERRM;
+                   vr_dscritic := ' Conta: '||rw_crapsld(idx).nrdconta || ' --> Erro ao inserir na tabela craplcm. '||SQLERRM;
                      --Sair do programa
                      RAISE vr_exc_saida;
                  END;
@@ -1634,15 +1633,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                                ,pr_cdcooper);
                          EXCEPTION
                            WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao inserir na tabela crapipm. '||SQLERRM;
+                         vr_dscritic := ' Conta: '||rw_craplcm.nrdconta || ' --> Erro ao inserir na tabela crapipm. '||SQLERRM;
                            --Sair do programa
                            RAISE vr_exc_saida;
                          END;
                        END IF;
 
                      EXCEPTION
+                     WHEN vr_exc_saida THEN
+                       RAISE vr_exc_saida;
                        WHEN OTHERS THEN
-                         vr_dscritic := 'Erro ao atualizar tabela crapipm. '||SQLERRM;
+                       vr_dscritic := ' Conta: '||rw_craplcm.nrdconta || ' --> Erro ao atualizar tabela crapipm. '||SQLERRM;
                          --Sair do programa
                          RAISE vr_exc_saida;
                      END;
@@ -1677,13 +1678,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                      IF SQL%ROWCOUNT = 0 THEN
                        --Buscar mensagem de erro da critica
                        vr_cdcritic := 419;
-                       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+                       vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                        --Sair do programa
                        RAISE vr_exc_saida;
                      END IF;
                    EXCEPTION
+                   WHEN vr_exc_saida THEN
+                     RAISE vr_Exc_saida;
                      WHEN OTHERS THEN
-                       vr_dscritic := 'Erro ao atualizar tabela crapneg. '||SQLERRM;
+                     vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> Erro ao atualizar tabela crapneg. '||SQLERRM;
                        --Sair do programa
                        RAISE vr_exc_saida;
                    END;
@@ -1726,7 +1729,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                          ,pr_cdcooper);
                    EXCEPTION
                      WHEN OTHERS THEN
-                     vr_dscritic := 'Erro ao  inserir na tabela crapneg. Cdhisest=5 '||SQLERRM;
+                   vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).ass_nrdconta)||' --> Erro ao  inserir na tabela crapneg. Cdhisest=5 '||SQLERRM;
                      --Levantar Exceção
                      RAISE vr_exc_saida;
                    END;
@@ -1816,7 +1819,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                            ,pr_cdcooper);
                      EXCEPTION
                        WHEN OTHERS THEN
-                       vr_dscritic := 'Erro ao  inserir na tabela crapneg. Cdhisest=4 '||SQLERRM;
+                     vr_dscritic := 'Conta '||rw_crapsld(idx).ass_nrdconta ||' --> Erro ao  inserir na tabela crapneg. Cdhisest=4 '||SQLERRM;
                        --Levantar Exceção
                        RAISE vr_exc_saida;
                      END;
@@ -1926,7 +1929,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                          WHERE craplcm.ROWID = rw_craplcm.ROWID;
                        EXCEPTION
                          WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao atualizar tabela craplcm. '||SQLERRM;
+                         vr_dscritic := 'Erro ao atualizar tabela craplcm Rowid '||rw_craplcm.ROWID||' --> '||SQLERRM;
                            --Sair do programa
                            RAISE vr_exc_saida;
                        END;
@@ -1945,7 +1948,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                            WHERE craplcm.ROWID = rw_craplcm.ROWID;
                          EXCEPTION
                            WHEN OTHERS THEN
-                             vr_dscritic := 'Erro ao atualizar tabela craplcm. '||SQLERRM;
+                           vr_dscritic :=  'Erro ao atualizar tabela craplcm Rowid '||rw_craplcm.ROWID||' --> '||SQLERRM;
                              --Sair do programa
                              RAISE vr_exc_saida;
                          END;
@@ -1972,7 +1975,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                          WHERE craplcm.ROWID = rw_craplcm.ROWID;
                        EXCEPTION
                          WHEN OTHERS THEN
-                           vr_dscritic := 'Erro ao excluir lancamento. '||SQLERRM;
+                         vr_dscritic := 'Erro ao excluir lancamento Rowid '||rw_craplcm.ROWID||' --> '||SQLERRM;
                            --Sair do programa
                            RAISE vr_exc_saida;
                        END;
@@ -1998,15 +2001,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                            --Se não atualizou nada
                            IF SQL%ROWCOUNT = 0 THEN
                              --Buscar mensagem de erro da critica
-                             vr_dscritic :=  'ERRO! - CRAPIPM NAO ENCONTRADO -'||
-                                             ' CONTA: '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||
-                                             ' PERIODO: '||To_Char(rw_crapper.dtdebito,'DD/MM/YYYY');
+                           vr_dscritic :=  ' CONTA: '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||
+                                           ' PERIODO: '||To_Char(rw_crapper.dtdebito,'DD/MM/YYYY')||
+                                           ' --> ERRO! - CRAPIPM NAO ENCONTRADO -';
                              --Sair do programa
                              RAISE vr_exc_saida;
                            END IF;
                          EXCEPTION
+                         WHEN vr_exc_saida THEN
+                           RAISE vr_Exc_saida;
                            WHEN OTHERS THEN
-                             vr_dscritic := 'Erro ao atualizar crapipm. '||SQLERRM;
+                           vr_dscritic := ' CONTA: '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> Erro ao atualizar crapipm. '||SQLERRM;
                              --Sair do programa
                              RAISE vr_exc_saida;
                          END;
@@ -2151,7 +2156,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                ELSE
                  --Buscar mensagem de erro da critica
                  vr_cdcritic:= 10;
-                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+                 vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                  --Sair do programa
                  RAISE vr_exc_saida;
                END IF;
@@ -2162,7 +2167,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                ELSE
                  --Buscar mensagem de erro da critica
                  vr_cdcritic := 10;
-                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA == '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta);
+                 vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                  --Sair do programa
                  RAISE vr_exc_saida;
                END IF;
@@ -2220,6 +2225,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                      
                  -- Condicao para verificar se houve critica                             
                  IF vr_dscritic IS NOT NULL THEN
+                 vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||vr_dscritic;
                    RAISE vr_exc_saida;
                  END IF;
                    
@@ -2241,7 +2247,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                 WHERE crapcot.ROWID = vr_crapcot;
              EXCEPTION
                WHEN OTHERS THEN
-               vr_dscritic := 'Erro ao atualizar tabela crapcot. '||SQLERRM;
+             vr_dscritic := 'Erro ao atualizar tabela crapcot Rowid '||vr_crapcot||' --> '||SQLERRM;
                --Sair do programa
                RAISE vr_exc_saida;
              END;
@@ -2254,7 +2260,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                AND   crapsda.dtmvtolt = rw_crapdat.dtmvtolt;
              EXCEPTION
                WHEN OTHERS THEN
-               vr_dscritic := 'Erro ao atualizar tabela crapsda. '||SQLERRM;
+             vr_dscritic := 'Conta '||rw_crapsld(idx).nrdconta||' --> Erro ao atualizar tabela crapsda: '||SQLERRM;
                --Sair do programa
                RAISE vr_exc_saida;
              END;
@@ -2859,16 +2865,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                       ,pr_des_erro => vr_dscritic);                        
                                       
-        ELSE
-          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || vr_dscritic );
           END IF;
-        END IF;
         
         -- Efetuar rollback
         ROLLBACK;
@@ -2895,6 +2892,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                           pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                           pr_idprglog   => vr_idlog_ini_par,
                           pr_flgsucesso => 0);  
+                          
           -- Encerrar o job do processamento paralelo dessa agência
           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')

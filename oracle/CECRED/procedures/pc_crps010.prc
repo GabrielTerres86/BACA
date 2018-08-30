@@ -13,7 +13,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 02/07/2018
+ Data    : Janeiro/92.                         Ultima atualizacao: 06/08/2018
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -168,6 +168,10 @@ BEGIN
           06/02/2018 - #842836 Inclusão do hint FULL no cursor cr_craplem para melhoria de performance (Carlos)
           
           02/07/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+          
+		  01/08/2018 - Remoção de Hint com problema de lentidão - Andreatta (MOUTs)
+      
+      06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
           
    ............................................................................. */
    DECLARE
@@ -925,8 +929,7 @@ BEGIN
      CURSOR cr_craptdb (pr_cdcooper IN crapcob.cdcooper%TYPE
                        ,pr_dtpagto  IN craptdb.dtdpagto%TYPE
                        ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
-       SELECT /*+ INDEX (craptdb craptdb##craptdb2) */
-              craptdb.cdbandoc
+       SELECT craptdb.cdbandoc
              ,craptdb.nrdctabb
              ,craptdb.nrcnvcob
              ,craptdb.nrdconta
@@ -3618,8 +3621,6 @@ BEGIN
         end if;    
       else
         
-        EXECUTE IMMEDIATE 'Alter session set session_cached_cursors=200';
-      
         if pr_cdagenci <> 0 then
           vr_tpexecucao := 2;
         else
@@ -3930,6 +3931,7 @@ BEGIN
                     -- Se ocorreu erro
                     IF vr_dscritic IS NOT NULL THEN
                        -- Levantar Excecao
+                     vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
                        RAISE vr_exc_saida;
                     END IF;
 
@@ -3969,6 +3971,7 @@ BEGIN
                     -- Montar mensagem de critica
                     vr_cdcritic:= 10;
                     vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                    vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
                     -- Levantar Excecao
                     RAISE vr_exc_saida;
                  END IF;
@@ -4085,6 +4088,7 @@ BEGIN
                     -- Montar mensagem de critica
                     vr_cdcritic:= 169;
                     vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                    vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
                     -- Levantar Exceção
                     RAISE vr_exc_saida;
                  ELSE
@@ -4646,6 +4650,7 @@ BEGIN
 
                        -- Se retornou erro
                        IF vr_dscritic IS NOT NULL THEN
+                        vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
                           -- Levantar Excecao
                           RAISE vr_exc_saida;
                        END IF;
@@ -4770,6 +4775,8 @@ BEGIN
               EXCEPTION
                  WHEN vr_exc_pula THEN
                     NULL;
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                  WHEN OTHERS THEN
                     cecred.pc_internal_exception;
                     vr_dscritic:= 'Erro ao selecionar associado. '||SQLERRM;
@@ -5588,16 +5595,7 @@ BEGIN
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                       ,pr_des_erro => vr_dscritic);                        
                                       
-        ELSE
-          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || vr_dscritic );
           END IF;
-        END IF;
         
         -- Efetuar rollback
         ROLLBACK;
@@ -5628,6 +5626,7 @@ BEGIN
                           pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                           pr_idprglog   => vr_idlog_ini_par,
                           pr_flgsucesso => 0);  
+
           -- Encerrar o job do processamento paralelo dessa agência
           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')

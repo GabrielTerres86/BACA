@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Abril/96.                       Ultima atualizacao: 27/05/2018
+   Data    : Abril/96.                       Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -99,6 +99,8 @@ BEGIN
                             lançamentos de novos históricos para o arquivo Rdar ou Matera (Jonatas - Supero)                
 
                27/05/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs)
 
 ............................................................................. */
   DECLARE
@@ -709,7 +711,9 @@ BEGIN
     -- Se não encontrar registros montar mensagem de critica
     IF cr_crapcop%NOTFOUND THEN
       CLOSE cr_crapcop;
+
       vr_cdcritic := 651;
+
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 651);
       RAISE vr_exc_saida;
     ELSE
@@ -915,9 +919,7 @@ BEGIN
         vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
         raise vr_exc_saida;
       end if;    
-    else
-      
-      EXECUTE IMMEDIATE 'Alter session set session_cached_cursors=200';
+    ELSE
     
       if pr_cdagenci <> 0 then
         vr_tpexecucao := 2;
@@ -1023,11 +1025,10 @@ BEGIN
 
                 -- Verificar se ocorreram erros no cálculo de poupança
                 IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
-                  vr_cdcritic := 0;
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratato
-                                            ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - ' || vr_cdprogra || ' --> ' ||
-                                                                vr_dscritic || '. ');
+                IF vr_cdcritic >0 AND vr_dscritic IS NOT NULL THEN
+                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+                END IF;
+                vr_dscritic := 'Rowid RPP '||rw_rpp(idx).rowid||' --> '||vr_dscritic;
                   RAISE vr_exc_saida;
                 END IF;
 
@@ -1115,7 +1116,8 @@ BEGIN
                                  ||to_char(rw_rpp(idx).dtfimper,'DD/MM/RRRR')||';');
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[CRRL147]: ' || SQLERRM;
+                        vr_cdcritic := 0;
+                        vr_dscritic := 'Erro ao inserir dados na tbgen_batch_relatorio_wrk[CRRL147] Conta '||rw_rpp(idx).nrdconta||' Aplicacao '||rw_rpp(idx).nrctrrpp||' --> ' || SQLERRM;
                         RAISE vr_exc_saida;
                     END;
                   END IF;
@@ -1155,7 +1157,7 @@ BEGIN
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_cdcritic := 0;
-                  vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
+                vr_dscritic := 'Erro ao atualizar CRAPRPP IDX '||idx||'--> ' || SQLERRM;
                   RAISE vr_exc_saida;
               END;
             END IF;
@@ -1172,7 +1174,7 @@ BEGIN
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic := 0;
-                vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
+              vr_dscritic := 'Erro ao atualizar CRAPRPP Rowid '||rw_rpp(idx).rowid||'--> ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
 
@@ -1630,6 +1632,7 @@ BEGIN
 
       -- Percorrer PL Table de contas do BNDES
       vr_idx_bndes := vr_tab_cta_bndes.first;
+
       LOOP
         EXIT WHEN vr_idx_bndes IS NULL;
 
@@ -1652,7 +1655,7 @@ BEGIN
           EXCEPTION
             WHEN OTHERS THEN
               vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao atualizar CRAPRPP: ' || SQLERRM;
+            vr_dscritic := 'Erro ao atualizar CRAPRPP Conta '||vr_tab_cta_bndes(vr_idx_bndes).nrdconta||'--> ' || SQLERRM;
               RAISE vr_exc_saida;
           END;
         END IF;
@@ -1807,6 +1810,7 @@ BEGIN
           -- Se ocorrer erros no processo
           IF vr_dscritic IS NOT NULL THEN
             vr_cdcritic := 0;
+          vr_dscritic := 'Conta '||rw_lpp(idx).nrdconta|| ' Poup '||rw_lpp(idx).nrctrrpp|| ' --> '||vr_dscritic;
             RAISE vr_exc_saida;
           END IF;
 
@@ -2859,16 +2863,7 @@ BEGIN
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                     ,pr_des_erro => vr_dscritic);                        
                                     
-      ELSE
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic );
         END IF;
-      END IF;
 
       -- Efetuar rollback
       ROLLBACK;
@@ -2888,6 +2883,7 @@ BEGIN
                         pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
                                                  'pr_dscritic:'||pr_dscritic,
                         PR_IDPRGLOG           => vr_idlog_ini_par); 
+        
         --Grava data fim para o JOB na tabela de LOG 
         pc_log_programa(pr_dstiplog   => 'F',    
                         pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
@@ -2895,6 +2891,7 @@ BEGIN
                         pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_idprglog   => vr_idlog_ini_par,
                         pr_flgsucesso => 0);  
+        
         -- Encerrar o job do processamento paralelo dessa agência
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')

@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS168(pr_cdcooper  IN crapcop.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/96                      Ultima atualizacao: 27/05/2018
+   Data    : Setembro/96                      Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -64,6 +64,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS168(pr_cdcooper  IN crapcop.cdcooper%t
                             (Tiago Castro - RKAM).
 
                17/05/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
 
 ............................................................................. */
   
@@ -785,7 +787,7 @@ BEGIN
                                                    ,pr_dscritic => vr_dscritic);         --> Descrição da crítica
             -- Se procedure retornou erro																				
             IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              vr_dscritic := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pre -> ' || vr_dscritic;
+              vr_dscritic := 'Conta '||rw_craprac.nrdconta||' --> Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pre -> ' || vr_dscritic;
               -- Levanta exceção
               RAISE vr_exc_saida;
             END IF;
@@ -816,7 +818,7 @@ BEGIN
     																									
             -- Se procedure retornou erro																				
             IF vr_cdcritic <> 0 OR TRIM(vr_des_erro) IS NOT NULL THEN
-              vr_des_erro := 'Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pos -> ' || vr_des_erro;
+              vr_des_erro := 'Conta '||rw_craprac.nrdconta||' --> Erro na chamada da procedure APLI0006.pc_posicao_saldo_aplicacao_pos -> ' || vr_des_erro;
               -- Levanta exceção
               RAISE vr_exc_saida;
             END IF;
@@ -851,6 +853,7 @@ BEGIN
                                     ,pr_cdcritic => vr_cdcritic          --> Codigo da critica de erro
                                     ,pr_des_erro => vr_dscritic);        --> Descricao do erro encontrado
           if vr_dscritic is not null or vr_cdcritic is not null then
+            vr_dscritic := 'Rowid RPP '||rw_craprpp.rowid||' --> '||vr_dscritic;
             raise vr_exc_saida;
           end if;
           -- Se encontrou saldo, acumula valor e quantidade
@@ -1206,16 +1209,7 @@ EXCEPTION
                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                   ,pr_des_erro => vr_dscritic);                        
                                     
-    ELSE
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
       END IF;
-    END IF;
     
     -- Efetuar rollback
     ROLLBACK;
@@ -1243,6 +1237,7 @@ EXCEPTION
                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                       pr_idprglog   => vr_idlog_ini_par,
                       pr_flgsucesso => 0);  
+
       -- Encerrar o job do processamento paralelo dessa agência
       gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                   ,pr_idprogra => LPAD(pr_cdagenci,3,'0')

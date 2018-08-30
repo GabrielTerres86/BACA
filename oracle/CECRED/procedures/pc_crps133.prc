@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/95                      Ultima atualizacao: 17/05/2018
+   Data    : Setembro/95                      Ultima atualizacao: 06/08/2018
 
    Dados referentes ao programa:
 
@@ -105,6 +105,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
                             modalidade do tipo de conta diferente de "2" e "3". PRJ366. (Lombardi)
 
                17/05/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+
+               06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
 
 ............................................................................. */
 BEGIN
@@ -225,7 +227,6 @@ BEGIN
     TYPE typ_reg_crapljd IS RECORD(cdhistor NUMBER
                                   ,vlrestit NUMBER);   
     TYPE typ_tab_crapljd IS TABLE OF typ_reg_crapljd INDEX BY PLS_INTEGER;
-    
     TYPE typ_reg_ljdass IS RECORD(vr_tab_crapljd typ_tab_crapljd);
     TYPE typ_tab_ljdass IS TABLE OF typ_reg_ljdass INDEX BY PLS_INTEGER;
     vr_tab_ljdass typ_tab_ljdass;
@@ -1945,6 +1946,8 @@ BEGIN
             end;
           end if;
         exception
+                when vr_exc_saida then
+            raise vr_exc_saida;
           when others then
             vr_dscritic := 'Erro ao alterar vr_vllanmto por agência (acumulado): '||sqlerrm;
             raise vr_exc_saida;
@@ -2033,6 +2036,8 @@ BEGIN
             end;
           end if;
         exception
+            when vr_exc_saida then
+            raise vr_exc_saida;
           when others then
             vr_dscritic := 'Erro ao alterar informações gerenciais (crapger): '||sqlerrm;
             raise vr_exc_saida;
@@ -2080,6 +2085,8 @@ BEGIN
             end;
           end if;
         exception
+            when vr_exc_saida then
+            raise vr_exc_saida;
           when others then
             vr_dscritic := 'Erro ao alterar vr_vllanmto para empresa '||rw_wkemp.cdempres||': '||sqlerrm;
             raise vr_exc_saida;
@@ -2121,6 +2128,8 @@ BEGIN
             end;
           end if;
         exception
+            when vr_exc_saida then
+            raise vr_exc_saida;
           when others then
             vr_dscritic := 'Erro ao alterar vr_vllanmto por empresa (acumulado): '||sqlerrm;
             raise vr_exc_saida;
@@ -2209,6 +2218,8 @@ BEGIN
             end;
           end if;
         exception
+          when vr_exc_saida then
+            raise vr_exc_saida;
           when others then
             vr_dscritic := 'Erro ao alterar informações gerenciais (crapger): '||sqlerrm;
             raise vr_exc_saida;
@@ -2284,21 +2295,6 @@ BEGIN
 
   exception
     when vr_exc_fimprg then
-      -- se foi retornado apenas código
-      if nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
-        -- buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      end if;
-      
-      -- se foi gerada critica para envio ao log
-      if vr_cdcritic > 0 or vr_dscritic is not null then
-        -- envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
-      end if;
       -- chamamos a fimprg para encerrarmos o processo sem parar a cadeia
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                                ,pr_cdprogra => vr_cdprogra
@@ -2319,7 +2315,6 @@ BEGIN
       
       -- Na execução paralela
       IF nvl(pr_idparale,0) <> 0 THEN
-
         --Grava data fim para o JOB na tabela de LOG 
         pc_log_programa(pr_dstiplog   => 'F',    
                         pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
@@ -2327,7 +2322,6 @@ BEGIN
                         pr_tpexecucao => vr_tpexecucao, -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_idprglog   => vr_idlog_ini_par,
                         pr_flgsucesso => 0);                                     
-        
         -- Grava LOG de erro com as críticas retornadas                           
         pc_log_programa(pr_dstiplog      => 'E', 
                         pr_cdprograma    => vr_cdprogra||'_'||pr_cdagenci,
@@ -2344,20 +2338,10 @@ BEGIN
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                     ,pr_des_erro => vr_dscritic);                        
-                                    
-      ELSE
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic );
         END IF;
-      END IF;
       -- efetuar rollback
       rollback;
-    when others THEN
+  when others then
       -- efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;    
@@ -2373,6 +2357,7 @@ BEGIN
                         pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
                                                  'pr_dscritic:'||pr_dscritic,
                         PR_IDPRGLOG           => vr_idlog_ini_par); 
+                        
         --Grava data fim para o JOB na tabela de LOG 
         pc_log_programa(pr_dstiplog   => 'F',    
                         pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
@@ -2380,6 +2365,7 @@ BEGIN
                         pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                         pr_idprglog   => vr_idlog_ini_par,
                         pr_flgsucesso => 0);  
+
         -- Encerrar o job do processamento paralelo dessa agência
         gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                     ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
