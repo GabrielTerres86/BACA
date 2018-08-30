@@ -135,8 +135,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       -- Busca dos dados da cooperativa
       CURSOR cr_crapcop IS
-        SELECT cop.nmrescop
-              ,cop.nmextcop
+      SELECT cop.nmrescop, cop.nmextcop
           FROM crapcop cop
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
@@ -144,28 +143,28 @@ CREATE OR REPLACE PROCEDURE CECRED.
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
       
       --informaoes de poupanca programada
-      CURSOR cr_craprpp( pr_cdcooper IN crapcop.cdcooper%TYPE
-                        ,pr_nrctares IN craprpp.nrdconta%TYPE
-                        ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE
-                        ,pr_dtdebito IN DATE) IS
-        SELECT craprpp.nrdconta 
-              ,craprpp.cdsitrpp
-              ,craprpp.dtdebito
-              ,craprpp.dtrnirpp
-              ,craprpp.vlprerpp
-              ,craprpp.nrctrrpp
-              ,craprpp.vlprepag
-              ,craprpp.qtprepag
-              ,craprpp.vlabcpmf
-              ,craprpp.vlabdiof
-              ,craprpp.dtinirpp
-              ,craprpp.dtfimper
-              ,craprpp.dtvctopp
-              ,craprpp.indebito
-              ,craprpp.flgctain
-              ,craprpp.cdbccxlt
-              ,craprpp.cdprodut
-              ,craprpp.rowid
+    CURSOR cr_craprpp(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                      pr_nrctares IN craprpp.nrdconta%TYPE,
+                      pr_nrctrrpp IN craprpp.nrctrrpp%TYPE,
+                      pr_dtdebito IN DATE) IS
+      SELECT craprpp.nrdconta,
+             craprpp.cdsitrpp,
+             craprpp.dtdebito,
+             craprpp.dtrnirpp,
+             craprpp.vlprerpp,
+             craprpp.nrctrrpp,
+             craprpp.vlprepag,
+             craprpp.qtprepag,
+             craprpp.vlabcpmf,
+             craprpp.vlabdiof,
+             craprpp.dtinirpp,
+             craprpp.dtfimper,
+             craprpp.dtvctopp,
+             craprpp.indebito,
+             craprpp.flgctain,
+             craprpp.cdbccxlt,
+             craprpp.cdprodut,
+             craprpp.rowid
         FROM   craprpp 
         WHERE  craprpp.cdcooper  = pr_cdcooper 
         AND    craprpp.nrdconta >= pr_nrctares 
@@ -177,80 +176,69 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       --seleciona os saldos das contas dos cooperados
       CURSOR cr_crapsld ( pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-        SELECT crapsld.nrdconta
-              ,crapsld.vlsdblfp 
-              ,crapsld.vlsdbloq 
-              ,crapsld.vlsdblpr 
-              ,crapsld.vlsddisp
-              ,crapsld.vlipmfap
-              ,crapsld.vlipmfpg
-              ,crapsld.rowid
+      SELECT crapsld.nrdconta,
+             crapsld.vlsdblfp,
+             crapsld.vlsdbloq,
+             crapsld.vlsdblpr,
+             crapsld.vlsddisp,
+             crapsld.vlipmfap,
+             crapsld.vlipmfpg,
+             crapsld.rowid
         FROM   crapsld       
         WHERE crapsld.cdcooper = pr_cdcooper;
         
       --seleciona os cooperados
       CURSOR cr_crapass ( pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-        SELECT crapass.nrdconta
-              ,crapass.inpessoa
-              ,crapass.vllimcre
-              ,crapass.cdagenci
-              ,crapass.cdsecext
-              ,crapass.nrramemp
-              ,crapass.nmprimtl
+      SELECT crapass.nrdconta,
+             crapass.inpessoa,
+             crapass.vllimcre,
+             crapass.cdagenci,
+             crapass.cdsecext,
+             crapass.nrramemp,
+             crapass.nmprimtl
         FROM   crapass       
         WHERE crapass.cdcooper = pr_cdcooper;
       
       -- cadastro de titulares da conta
       CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE) IS 
-        SELECT crapttl.cdempres
-              ,crapttl.nrdconta
-              ,crapttl.cdturnos
+      SELECT crapttl.cdempres, crapttl.nrdconta, crapttl.cdturnos
         FROM   crapttl 
         WHERE  crapttl.cdcooper = pr_cdcooper      
         AND    crapttl.idseqttl = 1;
 
       -- cadastro de pessoas juridicas
       CURSOR cr_crapjur (pr_cdcooper IN crapcop.cdcooper%TYPE) IS 
-        SELECT crapjur.cdempres
-              ,crapjur.nrdconta
+      SELECT crapjur.cdempres, crapjur.nrdconta
         FROM   crapjur 
         WHERE  crapjur.cdcooper = pr_cdcooper;      
         
       --cadastro de lancamentos da conta do associado com 
       --historico diferente de 289
-      CURSOR cr_craplcm ( pr_cdcooper IN crapcop.cdcooper%TYPE 
-                         ,pr_nrdconta IN craplcm.nrdconta%TYPE
-                         ,pr_dtmvtolt IN DATE) IS
-        SELECT craplcm.cdhistor
-              ,craplcm.vllanmto
-              ,craplcm.rowid
+    CURSOR cr_craplcm(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                      pr_nrdconta IN craplcm.nrdconta%TYPE,
+                      pr_dtmvtolt IN DATE) IS
+      SELECT craplcm.cdhistor, craplcm.vllanmto, craplcm.rowid
         FROM   craplcm 
         WHERE  craplcm.cdcooper = pr_cdcooper     
         AND    craplcm.nrdconta = pr_nrdconta 
         AND    craplcm.dtmvtolt = pr_dtmvtolt     
         AND    craplcm.cdhistor <> 289
-        ORDER BY cdcooper
-                ,nrdconta
-                ,dtmvtolt
-                ,cdhistor
-                ,nrdocmto;
+       ORDER BY cdcooper, nrdconta, dtmvtolt, cdhistor, nrdocmto;
 
       --cadastro de historicos da cooperativa
       CURSOR cr_craphis(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-        SELECT craphis.cdhistor
-              ,craphis.inhistor
-              ,craphis.indoipmf
+      SELECT craphis.cdhistor, craphis.inhistor, craphis.indoipmf
         FROM   craphis
         WHERE  craphis.cdcooper = pr_cdcooper;
 
       --informacoes de aviso de debito em conta-corrente
-      CURSOR cr_crapavs ( pr_cdcooper IN crapcop.cdcooper%TYPE
-                         ,pr_nrdconta IN crapass.nrdconta%TYPE
-                         ,pr_dtrefere IN DATE
-                         ,pr_cdempres IN NUMBER
-                         ,pr_cdagenci IN crapass.cdagenci%TYPE
-                         ,pr_cdsecext IN crapass.cdsecext%TYPE
-                         ,pr_nrdocmto IN craprpp.nrctrrpp%TYPE) IS
+    CURSOR cr_crapavs(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                      pr_nrdconta IN crapass.nrdconta%TYPE,
+                      pr_dtrefere IN DATE,
+                      pr_cdempres IN NUMBER,
+                      pr_cdagenci IN crapass.cdagenci%TYPE,
+                      pr_cdsecext IN crapass.cdsecext%TYPE,
+                      pr_nrdocmto IN craprpp.nrctrrpp%TYPE) IS
         SELECT crapavs.rowid
         FROM   crapavs 
         WHERE  crapavs.cdcooper = pr_cdcooper     
@@ -269,36 +257,32 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --seleciona arquivos rejeitados na integracao do banco/caixa 145
       --com codigo de rejeicao informando debito nao efetuado
       CURSOR cr_craprej(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-        SELECT craprej.cdagenci
-              ,craprej.nrdconta
-              ,craprej.nraplica
-              ,craprej.dtmvtolt
-              ,craprej.vllanmto
-              ,crapage.nmresage
-              ,craprej.rowid
-        FROM   craprej
-              ,crapage 
+      SELECT craprej.cdagenci,
+             craprej.nrdconta,
+             craprej.nraplica,
+             craprej.dtmvtolt,
+             craprej.vllanmto,
+             crapage.nmresage,
+             craprej.rowid
+        FROM craprej, crapage
         WHERE  craprej.cdcooper = pr_cdcooper 
         AND    craprej.cdbccxlt = 145          
         AND    craprej.cdcritic = 485 --485 - Debito nao efetuado.
         AND    craprej.cdcooper = crapage.cdcooper(+)
         AND    craprej.cdagenci = crapage.cdagenci(+)
-        ORDER BY craprej.cdagenci
-                ,craprej.nrdconta
-                ,craprej.nraplica;
+       ORDER BY craprej.cdagenci, craprej.nrdconta, craprej.nraplica;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
       --estrutura de registro para armazenar os saldos das contas
-      TYPE typ_reg_crapsld IS
-        RECORD( nrdconta crapsld.nrdconta%TYPE
-               ,vlsdblfp crapsld.vlsdblfp%TYPE 
-               ,vlsdbloq crapsld.vlsdbloq%TYPE 
-               ,vlsdblpr crapsld.vlsdblpr%TYPE 
-               ,vlsddisp crapsld.vlsddisp%TYPE
-               ,vlipmfap crapsld.vlipmfap%TYPE
-               ,vlipmfpg crapsld.vlipmfpg%TYPE
-               ,id       ROWID
-        );
+    TYPE typ_reg_crapsld IS RECORD(
+      nrdconta crapsld.nrdconta%TYPE,
+      vlsdblfp crapsld.vlsdblfp%TYPE,
+      vlsdbloq crapsld.vlsdbloq%TYPE,
+      vlsdblpr crapsld.vlsdblpr%TYPE,
+      vlsddisp crapsld.vlsddisp%TYPE,
+      vlipmfap crapsld.vlipmfap%TYPE,
+      vlipmfpg crapsld.vlipmfpg%TYPE,
+      id       ROWID);
       
       -- tipo de registro para armazenar os saldos das contas
       TYPE typ_tab_crapsld IS TABLE OF typ_reg_crapsld INDEX BY PLS_INTEGER; 
@@ -307,15 +291,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_tab_crapsld typ_tab_crapsld;
       
       --estrutura de registro para armazenar os cooperados
-      TYPE typ_reg_crapass IS
-        RECORD( nrdconta crapass.nrdconta%TYPE
-               ,inpessoa crapass.inpessoa%TYPE
-               ,vllimcre crapass.vllimcre%TYPE
-               ,cdagenci crapass.cdagenci%TYPE
-               ,cdsecext crapass.cdsecext%TYPE
-               ,nrramemp crapass.nrramemp%TYPE
-               ,nmprimtl crapass.nmprimtl%TYPE
-        );
+    TYPE typ_reg_crapass IS RECORD(
+      nrdconta crapass.nrdconta%TYPE,
+      inpessoa crapass.inpessoa%TYPE,
+      vllimcre crapass.vllimcre%TYPE,
+      cdagenci crapass.cdagenci%TYPE,
+      cdsecext crapass.cdsecext%TYPE,
+      nrramemp crapass.nrramemp%TYPE,
+      nmprimtl crapass.nmprimtl%TYPE);
       
       -- tipo de registro para armazenar os cooperados
       TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER; 
@@ -324,30 +307,27 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_tab_crapass typ_tab_crapass;
 
       --tipo para armazenar a estrutura do cadastro de titulares
-      TYPE typ_reg_crapttl IS 
-        RECORD( cdempres crapttl.cdempres%TYPE
-               ,cdturnos crapttl.cdturnos%TYPE
-        );
+    TYPE typ_reg_crapttl IS RECORD(
+      cdempres crapttl.cdempres%TYPE,
+      cdturnos crapttl.cdturnos%TYPE);
       --estrutura do cadastro de titulares
       TYPE typ_tab_crapttl IS TABLE OF typ_reg_crapttl INDEX BY PLS_INTEGER;
       --tabela temporaria para armazenar as informacoes dos titulares
       vr_tab_crapttl typ_tab_crapttl; 
 
       --estrutura para armazenar o cadastro de pessoas juridicas
-      TYPE typ_reg_crapjur IS 
-        RECORD( cdempres crapjur.cdempres%TYPE
-        );
+    TYPE typ_reg_crapjur IS RECORD(
+      cdempres crapjur.cdempres%TYPE);
       --tipo de registro do cadastro de pessoas juridicas
       TYPE typ_tab_crapjur IS TABLE OF typ_reg_crapjur INDEX BY PLS_INTEGER;
       --tabela temporaria para armazenar as informacoes de pessoas juridicas
       vr_tab_crapjur typ_tab_crapjur; 
 
       --estrutura para armazenar o cadastro de historicos
-      TYPE typ_reg_craphis IS         
-        RECORD( cdhistor craphis.cdhistor%TYPE
-               ,inhistor craphis.inhistor%TYPE 
-               ,indoipmf craphis.indoipmf%TYPE
-        );
+    TYPE typ_reg_craphis IS RECORD(
+      cdhistor craphis.cdhistor%TYPE,
+      inhistor craphis.inhistor%TYPE,
+      indoipmf craphis.indoipmf%TYPE);
         
       --tipo de registro para armazenar o cadastro de historicos
       TYPE typ_tab_craphis IS TABLE OF typ_reg_craphis INDEX BY PLS_INTEGER;         
@@ -410,11 +390,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --------------- VALIDACOES INICIAIS -----------------
 
       -- Incluir nome do módulo logado
-      GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
-                                ,pr_action => null);
+    GENE0001.pc_informa_acesso(pr_module => 'PC_' || vr_cdprogra,
+                               pr_action => null);
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop;
-      FETCH cr_crapcop INTO rw_crapcop;
+    FETCH cr_crapcop
+      INTO rw_crapcop;
       -- Se não encontrar
       IF cr_crapcop%NOTFOUND THEN
         -- Fechar o cursor pois haverá raise
@@ -429,7 +410,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    FETCH btch0001.cr_crapdat
+      INTO rw_crapdat;
       -- Se não encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois efetuaremos raise
@@ -443,11 +425,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
       END IF;
 
       -- Validações iniciais do programa
-      BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
-                               ,pr_flgbatch => 1
-                               ,pr_cdprogra => vr_cdprogra
-                               ,pr_infimsol => pr_infimsol
-                               ,pr_cdcritic => vr_cdcritic);
+    BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper,
+                              pr_flgbatch => 1,
+                              pr_cdprogra => vr_cdprogra,
+                              pr_infimsol => pr_infimsol,
+                              pr_cdcritic => vr_cdcritic);
       -- Se a variavel de erro é <> 0
       IF vr_cdcritic <> 0 THEN
         -- Envio centralizado de log de erro
@@ -455,14 +437,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
       END IF;
 
       /* Tratamento e retorno de valores de restart */
-      BTCH0001 .pc_valida_restart(pr_cdcooper => pr_cdcooper
-                                ,pr_cdprogra => vr_cdprogra
-                                ,pr_flgresta => pr_flgresta
-                                ,pr_nrctares => vr_nrctares
-                                ,pr_dsrestar => vr_dsrestar
-                                ,pr_inrestar => vr_inrestar
-                                ,pr_cdcritic => vr_cdcritic
-                                ,pr_des_erro => vr_dscritic);
+    BTCH0001.pc_valida_restart(pr_cdcooper => pr_cdcooper,
+                               pr_cdprogra => vr_cdprogra,
+                               pr_flgresta => pr_flgresta,
+                               pr_nrctares => vr_nrctares,
+                               pr_dsrestar => vr_dsrestar,
+                               pr_inrestar => vr_inrestar,
+                               pr_cdcritic => vr_cdcritic,
+                               pr_des_erro => vr_dscritic);
         
       --Se ocrreu erro na validacao do restart
       IF vr_dscritic IS NOT NULL THEN
@@ -475,12 +457,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_dtrefere := TRUNC(rw_crapdat.dtmvtolt,'MONTH') - 1;
       
       /*  Tabela com a taxa do IOF */
-      vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper
-                                                ,pr_nmsistem => 'CRED'
-                                                ,pr_tptabela => 'USUARI'
-                                                ,pr_cdempres => 11
-                                                ,pr_cdacesso => 'CTRIOFRDCA'
-                                                ,pr_tpregist => 1);
+    vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
+                                              pr_nmsistem => 'CRED',
+                                              pr_tptabela => 'USUARI',
+                                              pr_cdempres => 11,
+                                              pr_cdacesso => 'CTRIOFRDCA',
+                                              pr_tpregist => 1);
 
       -- se nao encontrar o parametro, aborta a execucao
       IF TRIM(vr_dstextab) IS NULL THEN
@@ -505,16 +487,16 @@ CREATE OR REPLACE PROCEDURE CECRED.
       END IF;  
 
       --busca informacoes da cpmf
-      GENE0005.pc_busca_cpmf( pr_cdcooper => pr_cdcooper
-                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                             ,pr_dtinipmf => vr_dtinipmf
-                             ,pr_dtfimpmf => vr_dtfimpmf
-                             ,pr_txcpmfcc => vr_txcpmfcc 
-                             ,pr_txrdcpmf => vr_txrdcpmf
-                             ,pr_indabono => vr_indabono
-                             ,pr_dtiniabo => vr_dtiniabo
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic);
+    GENE0005.pc_busca_cpmf(pr_cdcooper => pr_cdcooper,
+                           pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                           pr_dtinipmf => vr_dtinipmf,
+                           pr_dtfimpmf => vr_dtfimpmf,
+                           pr_txcpmfcc => vr_txcpmfcc,
+                           pr_txrdcpmf => vr_txrdcpmf,
+                           pr_indabono => vr_indabono,
+                           pr_dtiniabo => vr_dtiniabo,
+                           pr_cdcritic => vr_cdcritic,
+                           pr_dscritic => vr_dscritic);
       /*tabelas temporarias*/
 
       --limpando as tabelas temporarias
@@ -561,15 +543,13 @@ CREATE OR REPLACE PROCEDURE CECRED.
         vr_tab_craphis(rw_craphis.cdhistor).indoipmf := rw_craphis.indoipmf;
       END LOOP; 
 
-
       --inicializando a variavel de controle de commit para o restart
       vr_commit := 0;
       --percorre os lancamentos de poupanca programada
-      FOR rw_craprpp IN cr_craprpp( pr_cdcooper => pr_cdcooper
-                                   ,pr_nrctares => nvl(vr_nrctares,0)
-                                   ,pr_nrctrrpp => nvl(vr_nrctares,0)
-                                   ,pr_dtdebito => rw_crapdat.dtmvtolt) 
-      LOOP
+    FOR rw_craprpp IN cr_craprpp(pr_cdcooper => pr_cdcooper,
+                                 pr_nrctares => nvl(vr_nrctares, 0),
+                                 pr_nrctrrpp => nvl(vr_nrctares, 0),
+                                 pr_dtdebito => rw_crapdat.dtmvtolt) LOOP
         --armazenando a situacao poupanca programada 
         vr_cdsitrpp := rw_craprpp.cdsitrpp;
 
@@ -602,7 +582,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                 --armazena o codigo da empresa
                 vr_cdempres := vr_tab_crapttl(rw_craprpp.nrdconta).cdempres;
               END IF;     
-            ELSE--busca no cadastro de pessoa juridica
+          ELSE
+            --busca no cadastro de pessoa juridica
               IF vr_tab_crapjur.EXISTS(rw_craprpp.nrdconta) THEN
                 --armazena o codigo da empresa
                 vr_cdempres := vr_tab_crapjur(rw_craprpp.nrdconta).cdempres;
@@ -615,21 +596,19 @@ CREATE OR REPLACE PROCEDURE CECRED.
             RAISE vr_exc_saida;
           END IF;
           
-          
           --acumulando o valor total do saldo
-          vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp +
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfap - 
-                         vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfpg;
+        vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp + vr_tab_crapsld(rw_craprpp.nrdconta)
+                       .vlipmfap - vr_tab_crapsld(rw_craprpp.nrdconta)
+                       .vlipmfpg;
 
           --inicializando a variavel de controle
           vr_cdhistor := 0;
           
           --verifica todos os lancamentos do associado com historicos 
           --diferente de 289
-          FOR rw_craplcm IN cr_craplcm( pr_cdcooper =>  pr_cdcooper
-                                       ,pr_nrdconta =>  rw_craprpp.nrdconta
-                                       ,pr_dtmvtolt =>  rw_crapdat.dtmvtolt) 
-          LOOP
+        FOR rw_craplcm IN cr_craplcm(pr_cdcooper => pr_cdcooper,
+                                     pr_nrdconta => rw_craprpp.nrdconta,
+                                     pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
             --verifica se é quebra de historico
             IF vr_cdhistor <> rw_craplcm.cdhistor THEN
 
@@ -639,7 +618,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                 vr_cdcritic := 83;
                 
                 -- Buscar a descrição
-                vr_dscritic := LPAD(rw_craplcm.cdhistor,4,'0') || ' ' || gene0001.fn_busca_critica(vr_cdcritic);
+              vr_dscritic := LPAD(rw_craplcm.cdhistor, 4, '0') || ' ' ||
+                             gene0001.fn_busca_critica(vr_cdcritic);
 
                 --atribui o codigo do historico para a variavel de controle
                 vr_cdhistor := rw_craplcm.cdhistor;
@@ -659,7 +639,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                 vr_txdoipmf := vr_txcpmfcc;
 
                 --se o abono = 0 e historico estiver na lista abaixo 
-                IF vr_indabono = 0 AND rw_craplcm.cdhistor IN (114,127,160,177) THEN
+              IF vr_indabono = 0 AND
+                 rw_craplcm.cdhistor IN (114, 127, 160, 177) THEN
                   vr_indoipmf := 1;
                   vr_txdoipmf := 0;
                 END IF;           
@@ -668,12 +649,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
             END IF;
             --se abono zero e historico dentro da lista abaixo
             IF vr_indabono = 0   AND
-               (rw_craplcm.cdhistor = 186 OR
-                rw_craplcm.cdhistor = 498 OR
-                rw_craplcm.cdhistor = 187 OR
-                rw_craplcm.cdhistor = 500) THEN
+             (rw_craplcm.cdhistor = 186 OR rw_craplcm.cdhistor = 498 OR
+             rw_craplcm.cdhistor = 187 OR rw_craplcm.cdhistor = 500) THEN
               --acumula o saldo    
-              vr_vlsldtot := nvl(vr_vlsldtot,0) - (TRUNC((rw_craplcm.vllanmto * vr_txcpmfcc),2));
+            vr_vlsldtot := nvl(vr_vlsldtot, 0) -
+                           (TRUNC((rw_craplcm.vllanmto * vr_txcpmfcc), 2));
             END IF;
             
             --verifica o indicador de indicador de incidencia do IPMF  
@@ -681,7 +661,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
               /* Inicia tratamento CPMF */
               IF vr_indoipmf = 2 THEN
                 --acumula o saldo
-                vr_vlsldtot := nvl(vr_vlsldtot,0) + (TRUNC(rw_craplcm.vllanmto *(1 + vr_txdoipmf),2));
+              vr_vlsldtot := nvl(vr_vlsldtot, 0) +
+                             (TRUNC(rw_craplcm.vllanmto * (1 + vr_txdoipmf),
+                                    2));
               ELSE
                 /* Termina tratamento CPMF */
                 vr_vlsldtot := nvl(vr_vlsldtot,0) + rw_craplcm.vllanmto;
@@ -692,7 +674,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
               /* Inicia tratamento CPMF */
               IF vr_indoipmf = 2 THEN
                 --acumula o saldo
-                vr_vlsldtot := nvl(vr_vlsldtot,0) - (TRUNC(rw_craplcm.vllanmto * (1 + vr_txdoipmf),2));
+              vr_vlsldtot := nvl(vr_vlsldtot, 0) -
+                             (TRUNC(rw_craplcm.vllanmto * (1 + vr_txdoipmf),
+                                    2));
               ELSE
                 /* Termina tratamento CPMF */
                 vr_vlsldtot := nvl(vr_vlsldtot,0) - rw_craplcm.vllanmto;
@@ -705,6 +689,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
           IF rw_craprpp.vlprerpp <= vr_vlsldtot THEN
                 -- Inserir nova aplicação 
               -- Leitura de carencias do produto informado
+          vr_cdcritic := NULL;
+          vr_dscritic := NULL;
+          
               apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                          ,pr_cdprodut => rw_craprpp.cdprodut   -- Codigo do Produto 
                                          ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
@@ -712,27 +699,27 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                          ,pr_tab_care => vr_tab_care); -- Tabela com registros de Carencia do produto    
 
                IF vr_dscritic IS NULL THEN
-                apli0005.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper,
-                                              pr_cdoperad => '1',
-                                              pr_nmdatela => 'CRPS145',
-                                              pr_idorigem => 5,
-                                              pr_nrdconta => rw_craprpp.nrdconta,
-                                              pr_idseqttl => 1,
-                                              pr_nrdcaixa => rw_craprpp.cdbccxlt,
-                                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                              pr_cdprodut => rw_craprpp.cdprodut,
-                                              pr_qtdiaapl => vr_tab_care(1).qtdiaprz,
-                                              pr_dtvencto => rw_crapdat.dtmvtolt + vr_tab_care(1).qtdiaprz,
-                                              pr_qtdiacar => vr_tab_care(1).qtdiacar,
-                                              pr_qtdiaprz => vr_tab_care(1).qtdiaprz,
-                                              pr_vlaplica => rw_craprpp.vlprerpp,
-                                              pr_iddebcti => 0,
-                                              pr_idorirec => 0,
-                                              pr_idgerlog => 0,
-                                              pr_nrctrrpp => rw_craprpp.nrctrrpp, -- Número da RPP
-                                              pr_nraplica => vr_nraplica,
-                                              pr_cdcritic => vr_cdcritic,
-                                              pr_dscritic => vr_dscritic);
+            apli0005.pc_cadastra_aplic (pr_cdcooper => pr_cdcooper
+                                       ,pr_cdoperad => '1'
+                                       ,pr_nmdatela => 'CRPS145'
+                                       ,pr_idorigem => 5
+                                       ,pr_nrdconta => rw_craprpp.nrdconta
+                                       ,pr_idseqttl => 1
+                                       ,pr_nrdcaixa => rw_craprpp.cdbccxlt
+                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                       ,pr_cdprodut => rw_craprpp.cdprodut
+                                       ,pr_qtdiaapl => vr_tab_care(1).qtdiaprz
+                                       ,pr_dtvencto => rw_crapdat.dtmvtolt + vr_tab_care(1).qtdiaprz
+                                       ,pr_qtdiacar => vr_tab_care(1).qtdiacar
+                                       ,pr_qtdiaprz => vr_tab_care(1).qtdiaprz
+                                       ,pr_vlaplica => rw_craprpp.vlprerpp
+                                       ,pr_iddebcti => 0
+                                       ,pr_idorirec => 0
+                                       ,pr_idgerlog => 1
+                                       ,pr_nrctrrpp => rw_craprpp.nrctrrpp -- Número da RPP
+                                       ,pr_nraplica => vr_nraplica
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
             END IF;  
             END IF;  
 
@@ -740,15 +727,17 @@ CREATE OR REPLACE PROCEDURE CECRED.
           IF ((rw_craprpp.vlprerpp <= vr_vlsldtot) AND (vr_dscritic IS NULL)) THEN
             --atualiza a tabela craprpp
             BEGIN
-              UPDATE craprpp SET vlprepag = rw_craprpp.vlprepag + rw_craprpp.vlprerpp
-                                ,qtprepag = rw_craprpp.qtprepag + 1
-                                ,vlabcpmf = vr_vlabcpmf
-                                ,vlabdiof = vr_vlabdiof
+            UPDATE craprpp
+               SET vlprepag = rw_craprpp.vlprepag + rw_craprpp.vlprerpp,
+                   qtprepag = rw_craprpp.qtprepag + 1,
+                   vlabcpmf = vr_vlabcpmf,
+                   vlabdiof = vr_vlabdiof
               WHERE ROWID = rw_craprpp.rowid;                             
             EXCEPTION                                
               WHEN OTHERS THEN
                 --descricao da critica
-                vr_dscritic := 'Erro ao atualizar a tabela craprpp. '||SQLERRM;
+              vr_dscritic := 'Erro ao atualizar a tabela craprpp. ' ||
+                             SQLERRM;
                 --aborta a execucao
                 RAISE vr_exc_saida;
             END;  
@@ -756,14 +745,17 @@ CREATE OR REPLACE PROCEDURE CECRED.
             vr_geraavis := TRUE;
             
             --verifica os avisos de debito
-            OPEN cr_crapavs ( pr_cdcooper => pr_cdcooper
-                             ,pr_nrdconta => rw_craprpp.nrdconta
-                             ,pr_dtrefere => vr_dtrefere
-                             ,pr_cdempres => vr_cdempres
-                             ,pr_cdagenci => vr_tab_crapass(rw_craprpp.nrdconta).cdagenci
-                             ,pr_cdsecext => vr_tab_crapass(rw_craprpp.nrdconta).cdsecext
-                             ,pr_nrdocmto => rw_craprpp.nrctrrpp);
-            FETCH cr_crapavs INTO rw_crapavs;
+          OPEN cr_crapavs(pr_cdcooper => pr_cdcooper,
+                          pr_nrdconta => rw_craprpp.nrdconta,
+                          pr_dtrefere => vr_dtrefere,
+                          pr_cdempres => vr_cdempres,
+                          pr_cdagenci => vr_tab_crapass(rw_craprpp.nrdconta)
+                                         .cdagenci,
+                          pr_cdsecext => vr_tab_crapass(rw_craprpp.nrdconta)
+                                         .cdsecext,
+                          pr_nrdocmto => rw_craprpp.nrctrrpp);
+          FETCH cr_crapavs
+            INTO rw_crapavs;
             
             --se existir o aviso de debito
             IF cr_crapavs%FOUND THEN
@@ -773,19 +765,20 @@ CREATE OR REPLACE PROCEDURE CECRED.
             --fecha o cursor  
             CLOSE cr_crapavs;
 
-          ELSE
-                               
+        ELSE -- erro na inclusão da aplicação
             --criando novo registro de lancamentos de aplicaoes de poupanca programada
             BEGIN
-              INSERT INTO craprej( dtmvtolt
-                                  ,cdagenci
-                                  ,cdbccxlt
-                                  ,nrdconta
-                                  ,nraplica
-                                  ,vllanmto
-                                  ,cdcritic
-                                  ,cdcooper
-              ) VALUES ( rw_craprpp.dtdebito                          --craprej.dtmvtolt
+            INSERT INTO craprej
+              (dtmvtolt,
+               cdagenci,
+               cdbccxlt,
+               nrdconta,
+               nraplica,
+               vllanmto,
+               cdcritic,
+               cdcooper)
+            VALUES
+              (rw_craprpp.dtdebito --craprej.dtmvtolt
                         ,vr_tab_crapass(rw_craprpp.nrdconta).cdagenci --craprej.cdagenci
                         ,145                                          --craprej.cdbccxlt
                         ,rw_craprpp.nrdconta                          --craprej.nrdconta
@@ -797,24 +790,28 @@ CREATE OR REPLACE PROCEDURE CECRED.
             EXCEPTION
               WHEN OTHERS THEN
                 --descricao da critica
-                vr_dscritic := 'Erro ao criar registro na tabela craprej. '||SQLERRM;
+              vr_dscritic := 'Erro ao criar registro na tabela craprej. ' ||
+                             SQLERRM;
                 --aborta a execucao
                 RAISE vr_exc_saida;
             END;  
 
           END IF;  --IF rw_ craprpp.vlprerpp <= vr_vlsldtot THEN
-        END IF; /* IF vr_cdsitrpp  = 1 THEN */
+      END IF; -- Poupanca ativa
 
         IF TO_NUMBER(TO_CHAR(rw_craprpp.dtinirpp, 'DD')) < 11 THEN 
           --verifica os avisos de debito
-          OPEN cr_crapavs ( pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => rw_craprpp.nrdconta
-                           ,pr_dtrefere => vr_dtrefere
-                           ,pr_cdempres => vr_cdempres
-                           ,pr_cdagenci => vr_tab_crapass(rw_craprpp.nrdconta).cdagenci
-                           ,pr_cdsecext => vr_tab_crapass(rw_craprpp.nrdconta).cdsecext
-                           ,pr_nrdocmto => rw_craprpp.nrctrrpp);
-          FETCH cr_crapavs INTO rw_crapavs;
+        OPEN cr_crapavs(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => rw_craprpp.nrdconta,
+                        pr_dtrefere => vr_dtrefere,
+                        pr_cdempres => vr_cdempres,
+                        pr_cdagenci => vr_tab_crapass(rw_craprpp.nrdconta)
+                                       .cdagenci,
+                        pr_cdsecext => vr_tab_crapass(rw_craprpp.nrdconta)
+                                       .cdsecext,
+                        pr_nrdocmto => rw_craprpp.nrctrrpp);
+        FETCH cr_crapavs
+          INTO rw_crapavs;
               
           --se existir o aviso de debito
           IF cr_crapavs%FOUND THEN
@@ -823,7 +820,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
             
             --atualizando o flag da tabela de avisos de debito para true
             BEGIN
-              UPDATE crapavs SET crapavs.flgproce = 1
+            UPDATE crapavs
+               SET crapavs.flgproce = 1
               WHERE  crapavs.rowid = rw_crapavs.rowid;
             EXCEPTION
               WHEN OTHERS THEN
@@ -840,7 +838,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END IF;--IF TO_NUMBER(TO_CHAR(rw_craprpp.dtinirpp, 'DD')) < 11 THEN 
         
         -- se o mes/ano do debito for igual a data do movimento
-        IF TO_CHAR(rw_craprpp.dtdebito,'MMYYYY') = TO_CHAR(rw_crapdat.dtmvtolt,'MMYYYY') THEN  
+      IF TO_CHAR(rw_craprpp.dtdebito, 'MMYYYY') =
+         TO_CHAR(rw_crapdat.dtmvtolt, 'MMYYYY') THEN
           vr_indebito := 0;
         --se a data do debito eh menor que a data do movimento e maior que a 
         --data do movimento do ultimo movimento
@@ -852,25 +851,30 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END IF;   
         
         --atualizado a tabela de poupanca programada
+      IF vr_dscritic IS NULL THEN
         BEGIN
-          UPDATE craprpp SET indebito = vr_indebito
-                            ,cdsitrpp = vr_cdsitrpp
-                            ,dtdebito = add_months(dtdebito, 1)
+            UPDATE craprpp
+               SET indebito = vr_indebito,
+                   cdsitrpp = vr_cdsitrpp,
+                   dtdebito = add_months(dtdebito, 1)
           WHERE craprpp.rowid = rw_craprpp.rowid;                    
         EXCEPTION
           WHEN OTHERS THEN
             --gerando a critica
-            vr_dscritic := 'Erro ao atualizar a tabela craprpp para a conta '||rw_craprpp.nrdconta||'. '||SQLERRM;
+              vr_dscritic := 'Erro ao atualizar a tabela craprpp para a conta ' ||
+                             rw_craprpp.nrdconta || '. ' || SQLERRM;
             --abortando o sistema
             RAISE vr_exc_saida;
         END;                  
+      END IF;
         
         --se o programa controla restart, atualiza o numero da conta processada
         IF pr_flgresta = 1 THEN
           --Atualizar tabela de restart
           BEGIN
             
-            UPDATE crapres SET crapres.nrdconta = LPAD(rw_craprpp.nrdconta,7,'0')
+          UPDATE crapres
+             SET crapres.nrdconta = LPAD(rw_craprpp.nrdconta, 7, '0')
             WHERE crapres.cdcooper = pr_cdcooper
             AND   upper(crapres.cdprogra) = vr_cdprogra;
             
@@ -878,23 +882,25 @@ CREATE OR REPLACE PROCEDURE CECRED.
             IF SQL%ROWCOUNT = 0 THEN
               --Buscar mensagem de erro da critica
               vr_cdcritic := 151;
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' CONTA = '||gene0002.fn_mask_conta(rw_craprpp.nrdconta);
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           ' CONTA = ' ||
+                           gene0002.fn_mask_conta(rw_craprpp.nrdconta);
               --Sair do programa
-              RAISE vr_exc_saida;
+            -- RAISE vr_exc_saida;
             END IF;
             
           EXCEPTION
             WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar tabela crapres. '||SQLERRM;
             --Sair do programa
-            RAISE vr_exc_saida;
+            -- RAISE vr_exc_saida;
           END;
-
           -- faz commit a cada mil registros
           IF MOD(vr_commit, 1000) = 0 THEN
             --grava as informacoes processadas ateh o momento
             COMMIT;
           END IF;  
+
         END IF;  
         
         --contador para controlar o commit do controle de restart
@@ -911,11 +917,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
       -- iniciando o xml
       gene0002.pc_escreve_xml(vr_des_xml,
                               vr_texto_completo,
-                              '<?xml version="1.0" encoding="utf-8"?><crrl120>'||chr(13));
+                            '<?xml version="1.0" encoding="utf-8"?><crrl120>' ||
+                            chr(13));
       
       --busca os debitos rejeitados
-      FOR rw_craprej IN cr_craprej(pr_cdcooper => pr_cdcooper)
-      LOOP
+    FOR rw_craprej IN cr_craprej(pr_cdcooper => pr_cdcooper) LOOP
         --inicializando a variavel
         vr_cdturnos := NULL;
         
@@ -935,7 +941,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
             vr_cdempres := vr_tab_crapttl(rw_craprej.nrdconta).cdempres;
             vr_cdturnos := vr_tab_crapttl(rw_craprej.nrdconta).cdturnos;
           END IF;     
-        ELSE--busca no cadastro de pessoa juridica
+      ELSE
+        --busca no cadastro de pessoa juridica
           IF vr_tab_crapjur.EXISTS(rw_craprej.nrdconta) THEN
             --armazena o codigo da empresa
             vr_cdempres := vr_tab_crapjur(rw_craprej.nrdconta).cdempres;
@@ -945,17 +952,27 @@ CREATE OR REPLACE PROCEDURE CECRED.
         gene0002.pc_escreve_xml(vr_des_xml,
                                 vr_texto_completo,
                                 '<registro idregistro="'||rw_craprej.rowid||'">'||
-                                  '<cdagenci>'||rw_craprej.cdagenci||'</cdagenci>'||
-                                  '<dsagenci>'||lpad(rw_craprej.cdagenci,3,' ')||' - '||nvl(rw_craprej.nmresage,'PA NAO CADASTRADO')||'</dsagenci>'||
-                                  '<nrdconta>'||TO_CHAR(rw_craprej.nrdconta,'9999G999G9')||'</nrdconta>'||
-                                  '<cdempres>'||vr_cdempres||'</cdempres>'||
-                                  '<cdturnos>'||vr_cdturnos||'</cdturnos>'||
-                                  '<dtmvtolt>'||rw_craprej.dtmvtolt||'</dtmvtolt>'||
-                                  '<nrramemp>'||nvl(vr_tab_crapass(rw_craprej.nrdconta).nrramemp,'0')||'</nrramemp>'||
-                                  '<nraplica>'||gene0002.fn_mask(rw_craprej.nraplica,'zzz.zzz.zz9')||'</nraplica>'||
-                                  '<vllanmto>'||rw_craprej.vllanmto||'</vllanmto>'||
-                                  '<nmprimtl>'||vr_tab_crapass(rw_craprej.nrdconta).nmprimtl||'</nmprimtl>'||
-                                '</registro>'||chr(13));
+                               '<cdagenci>' || rw_craprej.cdagenci ||
+                               '</cdagenci>' || '<dsagenci>' ||
+                               lpad(rw_craprej.cdagenci, 3, ' ') || ' - ' ||
+                               nvl(rw_craprej.nmresage, 'PA NAO CADASTRADO') ||
+                               '</dsagenci>' || '<nrdconta>' ||
+                               TO_CHAR(rw_craprej.nrdconta, '9999G999G9') ||
+                               '</nrdconta>' || '<cdempres>' || vr_cdempres ||
+                               '</cdempres>' || '<cdturnos>' || vr_cdturnos ||
+                               '</cdturnos>' || '<dtmvtolt>' ||
+                               rw_craprej.dtmvtolt || '</dtmvtolt>' ||
+                               '<nrramemp>' || nvl(vr_tab_crapass(rw_craprej.nrdconta)
+                                                   .nrramemp,
+                                                   '0') || '</nrramemp>' ||
+                               '<nraplica>' ||
+                               gene0002.fn_mask(rw_craprej.nraplica,
+                                                'zzz.zzz.zz9') ||
+                               '</nraplica>' || '<vllanmto>' ||
+                               rw_craprej.vllanmto || '</vllanmto>' ||
+                               '<nmprimtl>' || vr_tab_crapass(rw_craprej.nrdconta)
+                              .nmprimtl || '</nmprimtl>' || '</registro>' ||
+                               chr(13));
       END LOOP;  
       
       --excluindo informacoes da tabela de rejeicoes
@@ -967,7 +984,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
       EXCEPTION
         WHEN OTHERS THEN
           --gerando critica
-          vr_dscritic := 'Erro ao excluir os registro de debitos rejeitados. '||SQLERRM;
+        vr_dscritic := 'Erro ao excluir os registro de debitos rejeitados. ' ||
+                       SQLERRM;
           --abortando a execucao
           RAISE vr_exc_saida;
       END;  
@@ -975,28 +993,31 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --finalizando o xml
       gene0002.pc_escreve_xml(vr_des_xml,
                               vr_texto_completo,
-                              '</crrl120>'||chr(13), TRUE);
+                            '</crrl120>' || chr(13),
+                            TRUE);
       
       -- Busca do diretório base da cooperativa e a subpasta de relatórios
       vr_path_arquivo := gene0001.fn_diretorio( pr_tpdireto => 'C' -- /usr/coop
-                                                ,pr_cdcooper => pr_cdcooper
-                                                ,pr_nmsubdir => '/rl'); --> Gerado no diretorio /rl
+                                            ,
+                                             pr_cdcooper => pr_cdcooper,
+                                             pr_nmsubdir => '/rl'); --> Gerado no diretorio /rl
       -- Gerando o relatório 
-      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
-                                 ,pr_cdprogra  => vr_cdprogra
-                                 ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                 ,pr_dsxml     => vr_des_xml
-                                 ,pr_dsxmlnode => '/crrl120/registro'
-                                 ,pr_dsjasper  => 'crrl120.jasper'
-                                 ,pr_dsparams  => ''
-                                 ,pr_dsarqsaid => vr_path_arquivo || '/crrl120.lst'
-                                 ,pr_flg_gerar => 'N'
-                                 ,pr_qtcoluna  => 132
-                                 ,pr_sqcabrel  => 1
-                                 ,pr_flg_impri => 'N'
-                                 ,pr_nmformul  => ''
-                                 ,pr_nrcopias  => 1
-                                 ,pr_des_erro  => vr_dscritic);
+    gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,
+                                pr_cdprogra  => vr_cdprogra,
+                                pr_dtmvtolt  => rw_crapdat.dtmvtolt,
+                                pr_dsxml     => vr_des_xml,
+                                pr_dsxmlnode => '/crrl120/registro',
+                                pr_dsjasper  => 'crrl120.jasper',
+                                pr_dsparams  => '',
+                                pr_dsarqsaid => vr_path_arquivo ||
+                                                '/crrl120.lst',
+                                pr_flg_gerar => 'N',
+                                pr_qtcoluna  => 132,
+                                pr_sqcabrel  => 1,
+                                pr_flg_impri => 'N',
+                                pr_nmformul  => '',
+                                pr_nrcopias  => 1,
+                                pr_des_erro  => vr_dscritic);
 
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_des_xml);
@@ -1008,10 +1029,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
       pc_limpa_tabela;
 
       /* Eliminação dos registros de restart */
-      BTCH0001.pc_elimina_restart(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdprogra => vr_cdprogra
-                                 ,pr_flgresta => pr_flgresta
-                                 ,pr_des_erro => vr_dscritic);
+    BTCH0001.pc_elimina_restart(pr_cdcooper => pr_cdcooper,
+                                pr_cdprogra => vr_cdprogra,
+                                pr_flgresta => pr_flgresta,
+                                pr_des_erro => vr_dscritic);
       --Se ocorreu erro
       IF vr_dscritic IS NOT NULL THEN
         --Levantar Exceção
@@ -1019,10 +1040,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
       END IF;
       
       -- Processo OK, devemos chamar a fimprg
-      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                               ,pr_cdprogra => vr_cdprogra
-                               ,pr_infimsol => pr_infimsol
-                               ,pr_stprogra => pr_stprogra);
+    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
+                              pr_cdprogra => vr_cdprogra,
+                              pr_infimsol => pr_infimsol,
+                              pr_stprogra => pr_stprogra);
 
       -- Salvar informações atualizadas
       COMMIT;
@@ -1041,14 +1062,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
+                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
+                                                     ' - ' || vr_cdprogra ||
+                                                     ' --> ' || vr_dscritic);
         -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-        btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdprogra => vr_cdprogra
-                                 ,pr_infimsol => pr_infimsol
-                                 ,pr_stprogra => pr_stprogra);
+      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
+                                pr_cdprogra => vr_cdprogra,
+                                pr_infimsol => pr_infimsol,
+                                pr_stprogra => pr_stprogra);
         -- Efetuar commit
         COMMIT;
       WHEN vr_exc_saida THEN

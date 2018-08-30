@@ -1790,17 +1790,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
 					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 				END IF;
-
-        ROLLBACK;
-
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_obtem_carencias: ' ||
-                       SQLERRM;
-        ROLLBACK;
+        pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_obtem_carencias: ' || SQLERRM;
     END;
 
   END pc_obtem_carencias;
@@ -2836,10 +2831,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         RAISE vr_exc_saida;
       END IF;
 
+      -- Pelo batch não deve validar o valor mínimo - tem apliacacao programada com valor de parcela menor que 5 reais.
+      IF upper(pr_nmdatela) <> 'CRPS145' THEN
       -- Verifica valor de aplicacao
       IF pr_vlaplica < 5 THEN
         vr_dscritic := 'Valor da aplicacao nao pode ser menor que R$ 5,00.';
         RAISE vr_exc_saida;
+      END IF;
       END IF;
 
       -- Verifica identificador de debito em conta investimento
@@ -3185,6 +3183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
     EXCEPTION
 
       WHEN vr_exc_saida THEN
+
         ROLLBACK;
 
          -- Se veio apenas o código
@@ -3215,14 +3214,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
-
+          /* Comitar apenas se não for via batch */ 
+          IF upper(pr_nmdatela) <> 'CRPS145' THEN
           COMMIT;
+          END IF;
         END IF;
 
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em Consulta de Saldo APLI0005.pc_valida_cad_aplic: ' || SQLERRM;
+        /* Desfazer apenas se não for via batch */ 
+        IF upper(pr_nmdatela) <> 'CRPS145' THEN
         ROLLBACK;
+        END IF;
+
 
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
@@ -3239,7 +3244,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
 
+          /* Comitar apenas se não for via batch */ 
+          IF upper(pr_nmdatela) <> 'CRPS145' THEN
           COMMIT;
+          END IF;
         END IF;
     END;
 
@@ -5179,7 +5187,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       END IF;
       
+      /* Comitar apenas se não for via batch */ 
+      IF upper(pr_nmdatela) <> 'CRPS145' THEN
       COMMIT;
+      END IF;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -5190,7 +5201,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
+        /* Desfazer apenas se não for via batch */ 
+        IF upper(pr_nmdatela) <> 'CRPS145' THEN
         ROLLBACK;
+        END IF;
         
         -- Verifica se deve gerar log
         IF pr_idgerlog = 1 THEN
@@ -5206,8 +5220,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
-          
+          /* Comitar apenas se não for via batch */ 
+          IF upper(pr_nmdatela) <> 'CRPS145' THEN
           COMMIT;                      
+          END IF;
         END IF;
 
       WHEN OTHERS THEN
@@ -5229,7 +5245,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
                   
+          /* Comitar apenas se não for via batch */ 
+          IF upper(pr_nmdatela) <> 'CRPS145' THEN
           COMMIT;                      
+          END IF;
         END IF;
     END;
 
