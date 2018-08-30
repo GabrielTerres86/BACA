@@ -78,6 +78,8 @@ tbcc_prejuizo_detalhe
                
                09/08/2018 - 8666:Contabilização da transferência de conta para prejuízo - Rangel Decker (AMcom)
 
+               30/08//2018 - Correção bug não contabiliza histórico 2408
+                             (Renato Cordeiro - AMCom)
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
   cursor cr_crapepr (pr_cdcooper in crapepr.cdcooper%type,
@@ -699,7 +701,7 @@ BEGIN
   END IF;
 
    -- Transferencia do prejuizo c.c para arquivo contabil
-  IF pr_nmestrut = upper('TBCC_CONTA_PREJUIZO')  THEN
+  IF pr_nmestrut = upper('TBCC_PREJUIZO_DETALHE')  THEN
     vr_cursor :=   ' select c.cdagenci,  '||
                    '       100 cdbccxlt, '||
                    '       pd.nrdconta,   '|| 
