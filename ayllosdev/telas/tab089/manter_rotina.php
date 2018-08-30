@@ -80,7 +80,7 @@ if ($cdopcao == 'C') {
 	$xml .= "   <qtdibaut>".$qtdibaut."</qtdibaut>";
     $xml .= "   <qtdibapl>".$qtdibapl."</qtdibapl>";
     $xml .= "   <qtdibsem>".$qtdibsem."</qtdibsem>";
-
+	
 	$xml .= "   <qtditava>".$qtditava."</qtditava>"; // PJ438 - Márcio (Mouts)
 	$xml .= "   <qtditapl>".$qtditapl."</qtditapl>"; // PJ438 - Márcio (Mouts)
 	$xml .= "   <qtditsem>".$qtditsem."</qtditsem>"; // PJ438 - Márcio (Mouts)	

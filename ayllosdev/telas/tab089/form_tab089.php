@@ -8,7 +8,7 @@
  */
 ?>
 
-<form name="frmTab089" id="frmTab089" class="formulario" style="display:block;">	
+<form name="frmTab089" id="frmTab089" class="formulario">	
     <br style="clear:both" />
 	<input type="hidden" id="dsdepart" name="dsdepart" value="<?php echo $glbvars["dsdepart"]; ?>" />
     <input type="hidden" id="idctrlab" name="idctrlaba" value="COOPER" />
@@ -73,7 +73,7 @@
 		<input type="text" id="qtdpaapl" name="qtdpaapl" value="<?php echo $qtdpaapl == 0 ? '' : $qtdpaapl ?>" maxlength="3" style="text-align:right;"/>	
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
-
+	
 		<label for="qtdpasem" class='labelPri'>Opera&ccedil;&atilde;o sem garantia</label>
 		<input type="text" id="qtdpasem" name="qtdpasem" value="<?php echo $qtdpasem == 0 ? '' : $qtdpasem ?>" maxlength="3" style="text-align:right;"/>	
 		<label>&nbsp;dia(s)</label>
@@ -105,7 +105,7 @@
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
 	</fieldset>    
-    <!-- Início PJ438 - Márcio (Mouts)-->	
+    <!-- Início PJ438 - Márcio (Mouts)-->	  
 	<fieldset>
 		<legend>Limite de Descontos de T&iacute;tulos - Prazo de validade da an&aacute;lise para efetiva&ccedil;&atilde;o</legend>
 		
@@ -126,3 +126,10 @@
 	</fieldset>    
     <!-- Fim PJ438 - Márcio (Mouts)-->	
 </form>
+
+<div id="divBotoes" name="divBotoes" style="margin-bottom:5px">
+	<a href="#" class="botao" id="btVoltar"  onclick="estadoInicial();
+	return false;">Voltar</a>
+	<a href="#" class="botao" id="btContinuar"  onClick="confirmaOperacao();
+	return false;">Alterar</a>
+</div>
