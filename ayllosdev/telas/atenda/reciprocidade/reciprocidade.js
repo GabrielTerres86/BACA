@@ -129,7 +129,7 @@ function habilitaSetor(setorLogado) {
             $("#divServSMS").css('display', 'none');
             $("#divHabilita_SMS").css('display', 'none');
             $("#divTrocaPacote_SMS").css('display', 'none');
-            $("#tdConteudoTela>table").prop('width', '650');
+            $("#tdConteudoTela>table").prop('width', '600');
             $("#divConvenios").css('display', 'none');
 
 			$("#divConteudoOpcao").html(response);
@@ -1116,7 +1116,8 @@ function onChangeProtesto() {
 function confirmaImpressao(flgregis, dsdtitul) {
 
 	var callafterCobranca = 'blockBackground(parseInt($("#divRotina").css("z-index")));';
-    var nrconven = $("#nrconven","#divConteudoOpcao").val();
+    //$("#idrecipr", "#divConteudoOpcao").val(idrecipr);
+    var nrconven = $("#convenios", "#divConteudoOpcao").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
 
 	if (nrconven == "") {
@@ -1434,7 +1435,7 @@ function controlaLayout(nomeForm) {
 
 		tabela.zebraTabela(0);
 
-        $('#' + nomeForm).css('width', '750px');
+        $('#' + nomeForm).css('width', '820px');
         divRegistro.css('height', '365px');
 
 		var ordemInicial = new Array();
@@ -2112,6 +2113,11 @@ function ativarConvenio(){
 function carregaLogCeb(){
 
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+    if (idrecipr == '') {
+        hideMsgAguardo();
+        showError("error","Selecione um contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return;
+    }
 
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando ...");
@@ -2145,6 +2151,11 @@ function carregaLogCeb(){
 function carregaLogNegociacao(){
 
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+    if (idrecipr == '') {
+        hideMsgAguardo();
+        showError("error","Selecione um contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return;
+    }
 
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando ...");
@@ -3240,4 +3251,43 @@ function atualizarDescontos() {
         }
     }
     voltarParaDesconto();
+}
+
+function confirmaCancelarContrato() {    
+
+    var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+    var insitceb = $("#insitceb", "#divConteudoOpcao").val();
+    if (idrecipr == '') {
+        showError("error","Selecione um contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return;
+    }
+
+    if (insitceb != "1") {
+        showError("error","O contrato deve estar ativo para ser cancelado.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return;
+    }
+
+    showConfirmacao('Confirma o cancelamento do contrato?', 'Confirma&ccedil;&atilde;o - Ayllos', 'cancelarContrato('+idrecipr+')', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+}
+
+function cancelarContrato(idrecipr) {
+    showMsgAguardo("Aguarde, carregando ...");
+    $.ajax({
+            dataType: "html",
+            type: "POST",
+            url: UrlSite + "telas/atenda/reciprocidade/cancelar_desconto.php",
+            data: {
+                idrecipr: idrecipr,
+                redirect: "script_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                eval(response);
+                blockBackground(parseInt($("#divRotina").css("z-index")));
+            }
+    });
 }

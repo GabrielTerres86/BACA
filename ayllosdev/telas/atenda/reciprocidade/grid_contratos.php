@@ -154,6 +154,7 @@ function exibeErro($msgErro) {
 <div id="divBotoes">
 	<input type="hidden" id="dsdmesag" name="dsdmesag" value="<?php echo $dsdmesag; ?>">
 	<input type="hidden" id="idrecipr" name="idrecipr">
+	<input type="hidden" id="insitceb" name="insitceb">
 	<input type="hidden" id="convenios" name="convenios">
     
     <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('I');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
@@ -172,6 +173,7 @@ function exibeErro($msgErro) {
     <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
 	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
 	<a href="#" class="botao" onclick="carregaCobranca(); return false;">Recip. Antigo</a>
+	<a href="#" class="botao" onclick="confirmaCancelarContrato(); return false;">Cancelar</a>
 	<a href="#" id="btSair"></a>
 	
 	<input type="hidden" id= "flsercco" name="flsercco">
