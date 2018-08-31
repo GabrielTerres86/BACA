@@ -461,6 +461,11 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
 
 	gFlginclu = flginclu;
 
+    if (descontoConvenios.length == 0) {
+        showError("error", "Selecione ao menos um conv&ecirc;nio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return false;
+    }
+
     /*var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
     var inarqcbr = $("#inarqcbr", "#divConteudoOpcao").val();
@@ -574,6 +579,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
 		url: UrlSite + "telas/atenda/reciprocidade/consulta-habilita.php",
 		data: {
             convenios: JSON.stringify(descontoConvenios),
+            perdescontos: JSON.stringify(perdescontos),
             dsdmesag: dsdmesag,
             nrcnvceb: nrcnvceb,
             nrconven: nrconven,

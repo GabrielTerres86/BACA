@@ -80,8 +80,18 @@ $nrdconta    = $_POST["nrdconta"];
 $inpessoa    = $_POST["inpessoa"];
 $flgregis    = trim($_POST["flgregis"]);
 $nrcnvceb    = $_POST["nrcnvceb"];
+
+$perdescontos = array();
+$perdescontosMap = array();
+if (isset($_POST["perdescontos"])) {
+    $perdescontos = json_decode($_POST["perdescontos"]);
+}
 if ($idaba === 1) {
     $nrconven = ((count($convenios) > 0) ? $convenios[0]->convenio : ((!empty($_POST['nrconven'])) ? $_POST['nrconven'] : 0));
+    foreach ($perdescontos as $perdesconto) {
+        $aux = explode("#", $perdesconto);
+        $perdescontosMap[$aux[0]] = $aux[1];
+    }
 }else {
     $nrconven = (!empty($_POST['nrconven']) ? $_POST['nrconven'] : 0);
 }
@@ -386,8 +396,9 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                             $cat_flcatcee = getByTagName($cat->tags,'FLCATCEE');
                                             // $cat_fldesman = getByTagName($cat->tags,'FLDESMAN');
                                             $cat_fldesman = 1;
-                                            $cat_flrecipr = getByTagName($cat->tags,'FLRECIPR');
-                                            $cat_percdesc = getByTagName($cat->tags,'PERDESCONTO');
+                                            $cat_flrecipr = getByTagName($cat->tags,'FLRECIPR');                                            
+                                            $cat_percdesc = isset($perdescontosMap[$cat_cdcatego]) ? $perdescontosMap[$cat_cdcatego] : getByTagName($cat->tags,'PERDESCONTO');
+
                                             ?>
                                             <tr id="<?php echo 'linCat'.$cont.'_'.$cat_flcatcoo.'_'.$cat_flcatcee; ?>">
                                                 <td class="txtNormal clsDesCategoria" numLinha="<?php echo $cont; ?>">
