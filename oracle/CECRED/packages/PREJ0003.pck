@@ -3722,52 +3722,21 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
     -- Pagamento de Prejuizo
     IF rw_crapepr.inprejuz = 1 THEN
-      IF pr_vlrabono > 0 THEN
-        pc_crps780_1(pr_cdcooper =>  pr_cdcooper,
-                      pr_nrdconta => pr_nrdconta,
-                      pr_nrctremp => pr_nrctremp,
-                      pr_vlpagmto => vr_vlpagmto,
-                      pr_vldabono => pr_vlrabono,
-                      pr_cdagenci => 1,
-                      pr_cdoperad => pr_cdoperad,
-                      pr_cdcritic => vr_cdcritic,
-                      pr_dscritic => vr_dscritic);
+			pc_crps780_1(pr_cdcooper =>  pr_cdcooper,
+										pr_nrdconta => pr_nrdconta,
+										pr_nrctremp => pr_nrctremp,
+										pr_vlpagmto => vr_vlpagmto,
+										pr_vldabono => pr_vlrabono,
+										pr_cdagenci => 1,
+										pr_cdoperad => pr_cdoperad,
+										pr_cdcritic => vr_cdcritic,
+										pr_dscritic => vr_dscritic);
 
-         IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-           RAISE vr_exp_erro;
-         ELSE
-           pr_vltotpag := vr_vlpagmto + pr_vlrabono;
-         END IF;
-      ELSE
-        -- Realizar a chamada da rotina para pagamento de prejuizo
-        EMPR9999.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_cdagenci => pr_cdagenci
-                                    ,pr_crapdat  => rw_crapdat
-                                    ,pr_nrctremp => pr_nrctremp
-                                    ,pr_tpemprst => rw_crapepr.tpemprst
-                                    ,pr_vlprejuz => rw_crapepr.vlprejuz
-                                    ,pr_vlsdprej => rw_crapepr.vlsdprej
-                                    ,pr_vlsprjat => rw_crapepr.vlsprjat
-                                    ,pr_vlpreemp => rw_crapepr.vlpreemp
-                                    ,pr_vlttmupr => rw_crapepr.vlttmupr
-                                    ,pr_vlpgmupr => rw_crapepr.vlpgmupr
-                                    ,pr_vlttjmpr => rw_crapepr.vlttjmpr
-                                    ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
-                                    ,pr_nrparcel => pr_nrparcel
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_vlparcel => vr_vlpagmto
-                                    ,pr_nmtelant => 'BLQPREJU'
-                                    ,pr_vliofcpl => rw_crapepr.vliofcpl
-                                    ,pr_vltotpag => pr_vltotpag -- Retorno do total pago
-                                    ,pr_cdcritic => vr_cdcritic
-                                    ,pr_dscritic => vr_dscritic);
-        -- Se retornar erro da rotina
-        IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-          RAISE vr_exp_erro;
-        END IF;
-      END IF;
-
+			 IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+				 RAISE vr_exp_erro;
+			 ELSE
+				 pr_vltotpag := vr_vlpagmto + pr_vlrabono;
+			 END IF;
     -- Folha de Pagamento
     ELSIF rw_crapepr.flgpagto = 1 THEN
       -- Realizar a chamada da rotina para pagamento de prejuizo
