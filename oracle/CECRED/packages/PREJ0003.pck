@@ -785,7 +785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 				 CLOSE cr_crapcyc;
 
 				  vr_cdcritic := 0;
-          vr_dscritic := 'A conta encontra-se marcada como "Determinação Judicial" no MOTCIN da CADCYB.';
+          vr_dscritic := 'A conta encontra-se marcada como "Determinação Judicial" na CADCYB.';
 
           RAISE vr_exc_saida;
 			 END IF;
