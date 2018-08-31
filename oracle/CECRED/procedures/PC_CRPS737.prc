@@ -1183,7 +1183,7 @@ BEGIN
                    || '  wpr_cdcritic NUMBER;' || chr(13) 
                    || '  wpr_dscritic VARCHAR2(1500);' || chr(13) 
                    || 'BEGIN' || chr(13) 
-                   || '  PC_CRPS737_APPPROG_COMPLETO('|| pr_cdcooper 
+                     || '  PC_CRPS737('|| pr_cdcooper 
                    || '            ,'|| rw_age.cdagenci 
                    || '            ,'|| vr_idparale 
                    || '            ,wpr_stprogra, wpr_infimsol, wpr_cdcritic, wpr_dscritic);' 
