@@ -881,7 +881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
 
       -- Se existir boletos em aberto e for 
       ELSIF pr_flposbol = 1 THEN
-
+        
         BEGIN
           UPDATE crapcob cob
              SET cob.flserasa = 0 
@@ -891,15 +891,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
              AND cob.incobran = 0 
              AND cob.inserasa IN (0,6)
              AND cob.cddespec IN (1,2,3) -- (01-DM,02-DS,03-NP)
-             AND (
-               SELECT COUNT(1) FROM craptdb tdb -- Verifica se a cobrança está em um bordero não rejeitado
+             AND NOT EXISTS (
+               SELECT 1 FROM craptdb tdb -- Verifica se a cobrança está em um bordero não rejeitado
                  INNER JOIN crapbdt bdt ON tdb.cdcooper = bdt.cdcooper AND tdb.nrborder = bdt.nrborder
                WHERE tdb.cdcooper = vr_cdcooper 
                  AND tdb.nrdconta = pr_nrdconta
                  AND tdb.nrcnvcob = pr_nrconven 
                  AND tdb.nrdocmto = cob.nrdocmto
                  AND bdt.insitbdt <> 5
-             ) = 0;
+             );
         EXCEPTION
           WHEN OTHERS THEN
           vr_dscritic := 'Problema ao alterar dados (crapcob): ' || SQLERRM;
