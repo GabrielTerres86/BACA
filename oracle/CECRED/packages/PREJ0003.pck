@@ -79,6 +79,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                 , pr_vllanmto IN NUMBER
                                 , pr_dtmvtolt IN DATE
                                 , pr_versaldo IN INTEGER DEFAULT 1 -- Se deve validar o saldo disponível
+																, pr_atsldlib IN INTEGER DEFAULT 1 -- Se deve atualizar o saldo disponível para operações na conta corrente (VLSLDLIB)
                                 , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -1469,6 +1470,7 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
                                 , pr_vllanmto IN NUMBER
                                 , pr_dtmvtolt IN DATE
                                 , pr_versaldo IN INTEGER DEFAULT 1 -- Se deve validar o saldo disponível
+																, pr_atsldlib IN INTEGER DEFAULT 1 -- Se deve atualizar o saldo disponível para operações na conta corrente (VLSLDLIB)
                                 , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
@@ -1568,12 +1570,14 @@ PROCEDURE pc_gera_lcm_cta_prj(pr_cdcooper  IN NUMBER             --> Código da C
         END IF;
       END IF;
 
-      -- Atualiza o valor do saldo disponível para operações na C/C
-      UPDATE tbcc_prejuizo
-         SET vlsldlib = vlsldlib + pr_vllanmto
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta
-         AND dtliquidacao IS NULL;
+      IF pr_atsldlib = 1 THEN
+				-- Atualiza o valor do saldo disponível para operações na C/C
+				UPDATE tbcc_prejuizo
+					 SET vlsldlib = vlsldlib + pr_vllanmto
+				 WHERE cdcooper = pr_cdcooper
+					 AND nrdconta = pr_nrdconta
+					 AND dtliquidacao IS NULL;
+			END IF;
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_cdcritic := vr_cdcritic;

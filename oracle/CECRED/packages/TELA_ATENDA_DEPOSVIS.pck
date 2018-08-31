@@ -915,10 +915,14 @@ END pc_busca_saldos_devedores;
          , prj.vljur60_ctneg
          , prj.vljur60_lcred
          , prj.vlsldlib
+				 , sld.vliofmes
       FROM tbcc_prejuizo prj
+			   , crapsld sld
      WHERE prj.cdcooper = pr_cdcooper
        AND prj.nrdconta = pr_nrdconta
-       AND prj.dtliquidacao IS NULL;
+       AND prj.dtliquidacao IS NULL
+			 AND sld.cdcooper = prj.cdcooper
+			 AND sld.nrdconta = prj.nrdconta;
     rw_prejuizo cr_prejuizo%ROWTYPE;
 
     -- erros
@@ -960,6 +964,7 @@ END pc_busca_saldos_devedores;
                  rw_prejuizo.vljuprej +
                  rw_prejuizo.vljur60_ctneg +
                  rw_prejuizo.vljur60_lcred +
+								 rw_prejuizo.vliofmes +
                  vr_juprej_prov;
 
     IF (pr_vlrpagto + nvl(pr_vlrabono, 0)) > vr_slddev THEN
@@ -973,18 +978,13 @@ END pc_busca_saldos_devedores;
 
       RAISE vr_exc_erro;
     END IF;
-
-    PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
-                               , pr_nrdconta => pr_nrdconta
-                               , pr_cdoperad => '1'
-                               , pr_vllanmto => pr_vlrpagto
-                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                               , pr_cdcritic => vr_cdcritic
-                               , pr_dscritic => vr_dscritic);
-
-    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
+		
+		-- Atualiza o saldo liberado para operações na conta corrente
+		UPDATE tbcc_prejuizo
+		   SET vlsldlib = vlsldlib + pr_vlrpagto
+		 WHERE cdcooper = pr_cdcooper
+		   AND nrdconta = pr_nrdconta
+			 AND dtliquidacao IS NULL;
 
     PREJ0003.pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
                                 , pr_nrdconta => pr_nrdconta
@@ -992,6 +992,19 @@ END pc_busca_saldos_devedores;
                                 , pr_vlrabono => pr_vlrabono
                                 , pr_cdcritic => vr_cdcritic
                                 , pr_dscritic => vr_dscritic);
+
+    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+		
+		PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => pr_nrdconta
+                               , pr_cdoperad => '1'
+                               , pr_vllanmto => pr_vlrpagto
+                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
+															 , pr_atsldlib => 0 -- Não atualiza o saldo liberado para operações (já foi atualizado no início do processo)
+                               , pr_cdcritic => vr_cdcritic
+                               , pr_dscritic => vr_dscritic);
 
     IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
@@ -1512,78 +1525,15 @@ PROCEDURE pc_busca_saldos_juros60(pr_cdcooper IN crapris.cdcooper%TYPE --> Códig
 BEGIN
 
 DECLARE
-  -- Recupera a soma dos lançamentos de juros +60 da conta
-  CURSOR cr_craplcm_ccjuros60(pr_dt59datr IN crapris.dtinictr%TYPE) IS
-  SELECT  nvl(sum(lcm.vllanmto),0) vl_juros60
-    FROM craplcm lcm
-   WHERE lcm.cdhistor IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
-     AND lcm.cdcooper   = pr_cdcooper
-     AND lcm.nrdconta   = pr_nrdconta
-     AND lcm.dtmvtolt   > pr_dt59datr; -- Data em que completou 59 dias em ADP
-
-  -- Recupera os lançamentos que não são juros +60 ocorridos após 60 dias de atraso da conta
-  CURSOR cr_craplcm_outros(pr_dt59datr IN crapris.dtinictr%TYPE) IS
-  SELECT lcm.vllanmto
-       , lcm.dtmvtolt
-       , his.indebcre
-    FROM craplcm lcm
-       , craphis his
-   WHERE lcm.cdhistor NOT IN (37,38,57)    -- INCLUIR histórico dos juros remuneratórios do prejuízo
-     AND lcm.cdcooper   = pr_cdcooper
-     AND lcm.nrdconta   = pr_nrdconta
-     AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
-     AND his.cdcooper   = lcm.cdcooper
-     AND his.cdhistor   = lcm.cdhistor
-   ORDER BY indebcre DESC;
-  rw_craplcm_outros cr_craplcm_outros%ROWTYPE;
-
-  -- Busca o limite de crédito atual do cooperado
-  CURSOR cr_limite IS
-  SELECT nvl(ass.vllimcre,0) vllimcre
-    FROM crapass ass
-   WHERE ass.cdcooper = pr_cdcooper
-    AND ass.nrdconta = pr_nrdconta;
-
-  -- Informações de saldo atual da conta corrente
-  CURSOR cr_saldos(pr_cdcooper NUMBER
-                 , pr_nrdconta NUMBER) IS
-  SELECT abs(sld.vlsddisp) vlsddisp
-       , sld.dtrisclq
-       , sld.qtddsdev
-       , sld.vliofmes
-    FROM crapsld sld
-   WHERE sld.cdcooper = pr_cdcooper
-     AND sld.nrdconta = pr_nrdconta;
-  rw_saldos cr_saldos%ROWTYPE;
-
-  -- Histórico do saldo da conta
-  CURSOR cr_crapsda(pr_dtmvtolt DATE) IS
-  SELECT * FROM (
-  SELECT abs(sda.vlsddisp) vlsddisp
-       , ROWNUM
-    FROM crapsda sda
-   WHERE sda.cdcooper = pr_cdcooper
-     AND sda.nrdconta = pr_nrdconta
-     AND sda.dtmvtolt >= pr_dtmvtolt
-  ORDER BY dtmvtolt)
-  WHERE rownum = 1;
-  rw_crapsda cr_crapsda%ROWTYPE;
-
   -- Calendário da cooperativa
   rw_crapdat btch0001.rw_crapdat%TYPE;
 
-  vr_data_corte_dias_uteis DATE; --> Data de corte para contagem de dias de atraso em dias corridos
-  vr_dtcorte_rendaprop     DATE; --> Data de corte de implantação do Rendas a Apropriar (não apropriação de receita dos juros +60)
-  vr_data_59dias_atraso    DATE; --> Data em que a conta atingiu 59 dias de atraso (ADP)
-
-  vr_vlrlimite NUMBER;
-
   vr_exc_saida  EXCEPTION;  --> Exceção para o caso de saldo indisponível na base de dados
-  vr_qtddiaatr  INTEGER;                 --> Quantidade de dias de atraso da conta
-  vr_jur60_cneg NUMBER;                 --> Juros +60 (Hist. 37 + Hist. 57)
-  vr_jur60_cesp NUMBER;                 --> Juros +60 (Hist. 38)
   vr_cdcritic   crapcri.cdcritic%TYPE;
   vr_dscritic   crapcri.dscritic%TYPE;
+	
+	vr_jur60_cneg NUMBER;
+	vr_jur60_cesp NUMBER;
 BEGIN
     pc_busca_saldos_juros60_det(pr_cdcooper => pr_cdcooper
                              , pr_nrdconta => pr_nrdconta
@@ -1649,10 +1599,10 @@ DECLARE
               AND aux.cdhistor = 2719
               AND aux.vllanmto = lcm.vllanmto
          )))
-     AND his.cdhistor   <> 2719
+     AND his.cdhistor   NOT IN (2719)
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
-   ORDER BY progress_recid;
+   ORDER BY lcm.progress_recid;
   rw_craplcm cr_craplcm%ROWTYPE;
 
   -- Busca o limite de crédito atual do cooperado
