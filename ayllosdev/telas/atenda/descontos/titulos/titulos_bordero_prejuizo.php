@@ -100,10 +100,6 @@
 		<input type="text" name="topgmupr" id="topgmupr" value="<?=$dados->topgmupr ?>" />
 		<br />
 
-		<label for="vlacrprj"><? echo utf8ToHtml('Acréscimos:') ?></label>
-		<input type="text" name="vlacrprj" id="vlacrprj" value="<?=$dados->vlacrprj?>" />
-		<br />
-
 		<label for="tottmupr"><? echo utf8ToHtml('Multa:') ?></label>
 		<input type="text" name="tottmupr" id="tottmupr" value="<?=$dados->tottmupr?>" />
 		<br />

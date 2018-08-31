@@ -9111,21 +9111,23 @@ EXCEPTION
         -- Calcula o pior risco dos títulos e guarda para o bordero 
         IF (vr_riscoatual>vr_inrisccalculado) THEN
           vr_inrisccalculado := vr_riscoatual;
+        END IF;
+        IF (vr_qtrisccalculado<vr_dias) THEN
           vr_qtrisccalculado := vr_dias;
         END IF;
       END LOOP;
       CLOSE cr_craptdb;
-      
+      vr_qtrisccalculado := ABS(vr_qtrisccalculado);
       rw_crapbdt.nrinrisc := vr_inrisccalculado;
       rw_crapbdt.qtdirisc := CASE 
                         WHEN (vr_inrisccalculado = 2) THEN rw_crapdat.dtmvtolt - rw_crapbdt.dtmvtolt
-                        WHEN (vr_inrisccalculado = 3) THEN vr_dias-15 -- entre 15 e 31
-                        WHEN (vr_inrisccalculado = 4) THEN vr_dias-30 -- entre 31 e 60
-                        WHEN (vr_inrisccalculado = 5) THEN vr_dias-60 -- entre 61 e 90
-                        WHEN (vr_inrisccalculado = 6) THEN vr_dias-90 -- entre 91 e 120
-                        WHEN (vr_inrisccalculado = 7) THEN vr_dias-120 -- entre 121 e 150
-                        WHEN (vr_inrisccalculado = 8) THEN vr_dias-150 -- entre 151 e 180
-                        ELSE  vr_dias-181 -- a partir de 181 dias
+                        WHEN (vr_inrisccalculado = 3) THEN vr_qtrisccalculado-15 -- entre 15 e 31
+                        WHEN (vr_inrisccalculado = 4) THEN vr_qtrisccalculado-30 -- entre 31 e 60
+                        WHEN (vr_inrisccalculado = 5) THEN vr_qtrisccalculado-60 -- entre 61 e 90
+                        WHEN (vr_inrisccalculado = 6) THEN vr_qtrisccalculado-90 -- entre 91 e 120
+                        WHEN (vr_inrisccalculado = 7) THEN vr_qtrisccalculado-120 -- entre 121 e 150
+                        WHEN (vr_inrisccalculado = 8) THEN vr_qtrisccalculado-150 -- entre 151 e 180
+                        ELSE  vr_qtrisccalculado-181 -- a partir de 181 dias
                       END ;
 
       UPDATE
@@ -9185,7 +9187,7 @@ EXCEPTION
         ,bdt.dtprejuz
         ,bdt.inprejuz
         ,bdt.vlaboprj
-        ,/*Ver com a contabilidade */0 AS vlacrprj
+        ,bdt.qtdirisc
         ,SUM(tdb.vljraprj)        AS tojraprj
         ,SUM(tdb.vljrmprj)        AS tojrmprj
         ,SUM(tdb.vlpgjmpr)        AS topgjmpr
@@ -9202,7 +9204,7 @@ EXCEPTION
         AND bdt.nrdconta = pr_nrdconta
         AND bdt.nrborder = pr_nrborder
       GROUP BY
-        bdt.dtliqprj, bdt.dtprejuz, bdt.inprejuz, bdt.vlaboprj
+        bdt.dtliqprj, bdt.dtprejuz, bdt.inprejuz, bdt.vlaboprj, bdt.qtdirisc
     ;rw_crapbdt cr_crapbdt%ROWTYPE;
     
     -- Cursor que retorna um titulo em específico
@@ -9215,7 +9217,7 @@ EXCEPTION
         ,bdt.dtprejuz
         ,bdt.inprejuz
         ,bdt.vlaboprj
-        /*Ver com a contabilidade*/,0 AS vlacrprj
+        ,bdt.qtdirisc
         ,tdb.vljraprj
         ,tdb.vljrmprj
         ,tdb.vlpgjmpr
@@ -9261,7 +9263,6 @@ EXCEPTION
         CLOSE cr_craptdb;
         pr_tab_prej(vr_index).dtliqprj := rw_craptdb.dtliqprj;
         pr_tab_prej(vr_index).dtprejuz := rw_craptdb.dtprejuz;
-        pr_tab_prej(vr_index).vlacrprj := rw_craptdb.vlacrprj;
         pr_tab_prej(vr_index).vlaboprj := rw_craptdb.vlaboprj;
         pr_tab_prej(vr_index).vljraprj := rw_craptdb.vljraprj;
         pr_tab_prej(vr_index).vljrmprj := rw_craptdb.vljrmprj;
@@ -9284,8 +9285,7 @@ EXCEPTION
         CLOSE cr_crapbdt;
         pr_tab_prej(vr_index).dtliqprj := rw_crapbdt.dtliqprj;
         pr_tab_prej(vr_index).dtprejuz := rw_crapbdt.dtprejuz;
-        pr_tab_prej(vr_index).diasatrs := rw_crapbdt.dtminven - rw_crapdat.dtmvtolt;
-        pr_tab_prej(vr_index).vlacrprj := rw_crapbdt.vlacrprj;
+        pr_tab_prej(vr_index).diasatrs := rw_crapdat.dtmvtolt - rw_crapbdt.dtminven;
         pr_tab_prej(vr_index).inprejuz := rw_crapbdt.inprejuz;
         pr_tab_prej(vr_index).vlaboprj := rw_crapbdt.vlaboprj;
         pr_tab_prej(vr_index).tojraprj := rw_crapbdt.tojraprj;
