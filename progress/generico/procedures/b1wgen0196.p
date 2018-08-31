@@ -13,10 +13,10 @@
                22/06/2017 - Ajuste para calcular o risco da operacao de acordo
                             com a quantidade de dias em atraso. (Anderson)
 
-               15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+               15/12/2017 - Inserçao do campo idcobope. PRJ404 (Lombardi)
 
- 	             12/10/2017 - Projeto 410 - passar como parametro da calcula_iof o
-			                      numero do contrato (Jean - Mout´s)
+	           12/10/2017 - Projeto 410 - passar como parametro da calcula_iof o
+			                numero do contrato (Jean - Mout´s)
 
                21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                             grava-proposta-completa. PRJ402 - Integracao CDC
@@ -313,7 +313,8 @@ PROCEDURE grava_dados:
                                              INPUT "", /* cdmodali */
                                              INPUT ?, /* par_idcarenc */
                                              INPUT ?, /* par_dtcarenc */
-											 INPUT 0, /* par_idfiniof */
+											                       INPUT 0, /* par_idfiniof */
+                                             INPUT 5, /* par_idquapro */ /* cessao de cartao */
                                              OUTPUT TABLE tt-erro,
                                              OUTPUT TABLE tt-msg-confirma,
                                              OUTPUT TABLE tt-ge-epr,
@@ -442,6 +443,7 @@ PROCEDURE grava_dados:
                                             INPUT FALSE,      /* par_flgerlog */
                                             INPUT 0,          /* par_nrctremp */
                                             INPUT par_cdlcremp,
+                                            INPUT par_cdfinemp,
                                             INPUT par_vlemprst,
                                             INPUT 1,
                                             INPUT par_dtmvtolt,
@@ -789,14 +791,32 @@ END PROCEDURE. /* END grava_dados */
                            crawepr.nrctremp = par_nrctremp 
                            NO-LOCK.
         IF NOT AVAIL crawepr THEN DO:
-          MESSAGE "Nao encontrado registro na crapepr".
-          UNDO TRANS_1, LEAVE TRANS_1.
+          
+          ASSIGN aux_cdcritic = 535
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
+          
         END.
 
         FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND craplcr.cdlcremp = par_cdlcremp NO-LOCK.
         IF NOT AVAIL craplcr THEN DO:
-          MESSAGE "Nao encontrado registro na craplcr".
-           UNDO TRANS_1, LEAVE TRANS_1.
+          ASSIGN aux_cdcritic = 363
+                 aux_dscritic = "".
+
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          UNDO TRANS_1, RETURN "NOK".
         END.
 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -965,6 +985,7 @@ END PROCEDURE. /* END grava_dados */
                                                 ,INPUT ""
                                                 ,INPUT crawepr.idfiniof
                                                 ,INPUT ""
+                                                ,INPUT "S" /* Gravar valor por parcela no cadastro de parcelas */
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
@@ -1097,12 +1118,22 @@ END PROCEDURE. /* END grava_dados */
                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
                /* Se retornou erro */
-               ASSIGN aux_dscritic = ""
+               ASSIGN aux_cdcritic = 0
+                      aux_cdcritic = INTE(pc_insere_iof.pr_cdcritic) WHEN pc_insere_iof.pr_cdcritic <> ?
+                      aux_dscritic = ""
                       aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
                 
-               IF aux_dscritic <> "" THEN
-                  RETURN "NOK".
+               IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                  DO:
                   
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                    UNDO TRANS_1, RETURN "NOK".
+                  END.
                
                /* Atualiza IOF pago e base de calculo no crapcot */
                DO WHILE TRUE:
