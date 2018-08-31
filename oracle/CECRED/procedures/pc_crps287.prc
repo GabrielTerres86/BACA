@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Maio/2000.                      Ultima atualizacao: 06/06/2017
+   Data    : Maio/2000.                      Ultima atualizacao: 19/04/2018
 
    Dados referentes ao programa:
 
@@ -105,6 +105,21 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                             (Ana - Envolti - Chamado 746134)
                12/01/2018 - Melhoria na gravacao de LOG ao gerar criticas no processamento dos cheques
                             Heitor (Mouts) - Chamado 827706
+
+               16/03/2018 - Para  contas com  mais de um cheque  processado  em no mesmo dia, 
+			                caso o último cheque lido fosse executado com crítica, o  sistema 
+							não lançava nenhum dos cheques na craplcm e craplot porém marcava
+							os cheques  executados sem crítica  como situação 2 (Processado).
+							Ajuste feito no script para que estes lançamentos sejam feitos.
+                            Gabriel (Mouts) - Chamado 862302
+
+               19/04/2018 - Cheques da própria cooperativa custodiados entre cooperados da mesma, 
+                            ao serem creditados na conta do beneficiário na "data boa" do cheque 
+                            fiquem bloqueados por 24h (Conforme cálculo já realizado pelo sitema).
+                            Além disso, aproveitamos a manutenção para remover o conceito de praças
+                            menor e maior, e deixar tudo consolidado em "CHEQUES OUTROS BANCOS".
+                            (#Chamado 857696 - Wagner/Sustenção).
+                                                        
      ............................................................................. */
 
      DECLARE
@@ -327,7 +342,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        rw_craplcm craplcm%ROWTYPE;
 
        --Variaveis Locais
-       vr_tab_vlchqmai NUMBER;
        vr_tab_incrdcta INTEGER;
        vr_nrdconta     INTEGER;
        vr_nrdocmto     INTEGER;
@@ -403,13 +417,13 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_tot_vllibera NUMBER:= 0;
        vr_tot_vldeschq NUMBER:= 0;
        vr_dtlibchq     DATE;
-       vr_tpcheque     INTEGER;
        vr_descrica     VARCHAR2(200);
        vr_cdhistor     INTEGER;
        vr_res_dschqcop VARCHAR2(29);
        vr_cdpesqbb     VARCHAR2(200);
        vr_cdprogra     VARCHAR2(10);
        vr_cdcritic     INTEGER;
+       vr_aux_dta_libera VARCHAR2(100);
 
        --Variaveis de Controle de Restart
        vr_nrctares  INTEGER:= 0;
@@ -570,6 +584,69 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
      END pc_log;
      --
 
+       -- Controlar em um único ponto os dados armazenados em memoria para geração do
+       -- relatório 234 ao final do processo e geração dos lançamentos
+       PROCEDURE pc_tabela_cheque (prm_tpo_cheque          IN NUMBER,
+                                   prm_nrd_conta           IN NUMBER,
+                                   prm_dta_libchq          IN DATE,
+                                   prm_vlr_cheque          IN NUMBER,
+                                   prm_flg_forca_qtde_zero IN VARCHAR2 DEFAULT 'N') IS
+       BEGIN
+
+         --Montar Indice para tabela memoria cheques
+         vr_index_cheques:= LPad(prm_nrd_conta,10,'0')||
+                            LPad(prm_tpo_cheque,10,'0')||
+                            To_Char(prm_dta_libchq,'YYYYMMDD');
+         --Verificar se o cheque ja existe
+         IF NOT vr_tab_cheques.EXISTS(vr_index_cheques) THEN
+
+           /*************************************************************/
+           /* Se ja existe cheque bloqueado para o tipo de cheque mas   */
+           /* para uma data de liberacao diferente incrementa documento */
+           /* pois os lancamentos sao gerados por data de liberacao.    */
+           /*************************************************************/
+
+           --Percorrer tabela memoria procurando pela conta e documento em outra data
+           vr_index_docmto:= vr_tab_cheques.FIRST;
+           WHILE vr_index_docmto IS NOT NULL LOOP
+             --Verificar conta e cheque
+             IF vr_tab_cheques(vr_index_docmto).nrdconta = prm_nrd_conta AND
+               vr_tab_cheques(vr_index_docmto).nrdocmto = prm_tpo_cheque THEN
+               --Incrementar documentos por tipo cheque
+               vr_tab_doctpchq(prm_tpo_cheque):= nvl(vr_tab_doctpchq(prm_tpo_cheque),0) + 1;
+               --Sair Loop
+               vr_index_docmto:= NULL;
+             ELSE
+               --Encontrar proximo registro
+               vr_index_docmto:= vr_tab_cheques.NEXT(vr_index_docmto);
+             END IF;
+           END LOOP;
+           
+           --Criar Cheque
+           vr_tab_cheques(vr_index_cheques).nrdconta:= prm_nrd_conta;
+           vr_tab_cheques(vr_index_cheques).nrdocmto:= prm_tpo_cheque;
+           vr_tab_cheques(vr_index_cheques).dtlibera:= prm_dta_libchq;
+           vr_tab_cheques(vr_index_cheques).nrdeposi:= vr_tab_doctpchq(prm_tpo_cheque);
+           vr_tab_cheques(vr_index_cheques).vlcompel:= prm_vlr_cheque;
+           IF prm_flg_forca_qtde_zero = 'N' THEN
+             vr_tab_cheques(vr_index_cheques).qtcheque:= 1;
+           ELSE
+             vr_tab_cheques(vr_index_cheques).qtcheque:= 0;  
+           END IF;  
+         ELSE
+           --Incrementar valor compensado e quantidade cheques
+           vr_tab_cheques(vr_index_cheques).vlcompel:= Nvl(vr_tab_cheques(vr_index_cheques).vlcompel,0) + prm_vlr_cheque;
+           vr_tab_cheques(vr_index_cheques).qtcheque:= Nvl(vr_tab_cheques(vr_index_cheques).qtcheque,0) + 1;
+         END IF;
+         
+       EXCEPTION
+         WHEN OTHERS THEN
+           --Variavel de erro recebe erro ocorrido
+           vr_des_erro:= 'Erro ao adicionar registros em memória. Rotina pc_crps287.pc_tabela_cheque. '||SQLERRM;
+           --Sair do programa
+           RAISE vr_exc_erro;
+       END pc_tabela_cheque;         
+
      ---------------------------------------
      -- Inicio Bloco Principal pc_crps287
      ---------------------------------------
@@ -691,9 +768,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          vr_des_erro:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
          vr_des_erro:= vr_des_erro||' CRED-USUARI-11-MAIORESCHQ-001';
          RAISE vr_exc_erro;
-       ELSE
-         --Valor maior cheque
-         vr_tab_vlchqmai:= TO_NUMBER(SUBSTR(vr_dstextab_cheque,1,15));
        END IF;
 
        /* Tratamento e retorno de valores de restart */
@@ -758,15 +832,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              /* Indices do array foram definidos com base nos tipos  */
              /* de depositos efetuados na rotina 51 do caixa on-line */
              /* Tipo 2 -> Cheque da cooperativa                      */
-             /* Tipo 3 -> Cheque menor praca                         */
-             /* Tipo 4 -> Cheque maior praca                         */
-             /* Tipo 5 -> Cheque menor fora praca                    */
-             /* Tipo 6 -> Cheque maior fora praca                    */
+             /* Tipo 6 -> Cheques outros bancos                      */
              /********************************************************/
              vr_tab_doctpchq(2):= vr_nrdocmto + 100000;
-             vr_tab_doctpchq(3):= vr_nrdocmto + 200000;
-             vr_tab_doctpchq(4):= vr_nrdocmto + 300000;
-             vr_tab_doctpchq(5):= vr_nrdocmto + 400000;
              vr_tab_doctpchq(6):= vr_nrdocmto + 500000;
 
              --Numero da Conta
@@ -909,6 +977,55 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                      --Levantar Excecao
                      RAISE vr_exc_erro;
                  END;
+                 
+                 -- Obter a data de liberação do cheque, quando da própria cooperativa
+                 -- Limpar tabela erros
+                 vr_tab_erro.DELETE;
+                 -- Calcular Bloqueio Cheques
+                 CCAF0001.pc_calcula_bloqueio_cheque (pr_cdcooper => rw_crapcop.cdcooper  --Codigo Cooperativa
+                                                     ,pr_dtrefere => rw_crapdat.dtmvtopr  --Data Deposito Cheque
+                                                     ,pr_cdagenci => rw_crapage.cdagenci  --Codigo Agencia
+                                                     ,pr_cdbanchq => rw_crapcst.cdbanchq  --Codigo Banco cheque
+                                                     ,pr_cdagechq => rw_crapcst.cdagechq  --Codigo Agencia cheque
+                                                     ,pr_vlcheque => rw_crapcst.vlcheque  --Valor Cheque
+                                                     ,pr_dstextab => vr_dstextab_cheque   --Parametro Maiores Cheques
+                                                     ,pr_dtblqchq => vr_dtlibchq          --Data Liberacao Bloq. Cheque
+                                                     ,pr_cdcritic => vr_cdcritic          --Codigo erro
+                                                     ,pr_dscritic => vr_des_erro          --Descricao erro
+                                                     ,pr_tab_erro => vr_tab_erro);        --Tabela de erros
+                 -- Se ocorreu erros
+                 IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+                   --Se possui erro na tabela erros
+                   IF vr_tab_erro.Count > 0 THEN                     
+                      -- Ignora descrição não tratada pois ela foi montada - ch 665812
+                      if vr_cdcritic <> 9999 then
+                          vr_des_erro:= vr_tab_erro(vr_tab_erro.LAST).dscritic;
+                      end if;
+               ELSE
+                     vr_des_erro:= 'Erro no calculo do bloqueio do cheque.';
+                   END IF;
+                   --Complementar mensagem erro
+                   vr_des_erro:= vr_des_erro || ' - nrdconta: '||rw_crapcst.nrdconta||
+                                              ' ,cdbanchq: '||rw_crapcst.cdbanchq||
+                                              ' ,cdagechq: '||rw_crapcst.cdagechq||
+                                              ' ,nrctachq: '||rw_crapcst.nrctachq||
+                                              ' ,dsdocmc7: '||rw_crapcst.dsdocmc7||
+                                              ' ,vlcheque: '||To_Char(rw_crapcst.vlcheque,'999g999g999g990d00');
+
+                   --Escrever erro log
+                   pc_log;                                                                                  
+                   --Continuar processamento com proximo registro
+                   CONTINUE loop_crapcst;
+                 END IF;                 
+                 -- fim da obtenção da data de liberação do cheque.    
+                 
+                 -- Novo controle de multi-data de liberação para cooperativa
+                 pc_tabela_cheque (prm_tpo_cheque => 2, /* CHEQ. DA PROPRIA COOPERATIVA */
+                                   prm_nrd_conta  => vr_nrdconta,
+                                   prm_dta_libchq => vr_dtlibchq,
+                                   prm_vlr_cheque => rw_crapcst.vlcheque);                 
+                 -- fim do controle de multi-data             
+                 
                ELSE
 
                  --Incrementa cheques compensados
@@ -929,7 +1046,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                                                      ,pr_cdcritic => vr_cdcritic          --Codigo erro
                                                      ,pr_dscritic => vr_des_erro          --Descricao erro
                                                      ,pr_tab_erro => vr_tab_erro);        --Tabela de erros
-
                  --Se Ocorreu erro
                  IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
                    --Se possui erro na tabela erros
@@ -962,62 +1078,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
 
                  /* RUN deposito-bloqueado. */
 
-                 --Se Codigo Compensacao Cheque for o mesmo da agencia
-                 IF rw_crapcst.cdcmpchq = rw_crapage.cdcomchq  THEN
-                   /* Cheque praca */
-                   IF rw_crapcst.vlcheque < vr_tab_vlchqmai THEN
-                     vr_tpcheque:= 3;  /* Menor praca */
-                   ELSE
-                     vr_tpcheque:= 4;  /* Maior praca */
-                   END IF;
-                 ELSE
-                   /* Cheque fora praca */
-                   IF rw_crapcst.vlcheque < vr_tab_vlchqmai  THEN
-                     vr_tpcheque:= 5;  /* Menor fora praca */
-                   ELSE
-                     vr_tpcheque:= 6;  /* Maior fora praca */
-                   END IF;
-                 END IF;
-                 --Montar Indice para tabela memoria cheques
-                 vr_index_cheques:= LPad(vr_nrdconta,10,'0')||
-                                    LPad(vr_tpcheque,10,'0')||
-                                    To_Char(vr_dtlibchq,'YYYYMMDD');
-                 --Verificar se o cheque ja existe
-                 IF NOT vr_tab_cheques.EXISTS(vr_index_cheques) THEN
+                 /*Eliminado o conceito de praças e menores e maiores
+                   considerado tudo como sendo "6 - CHEQ. OUTROS BANCOS".
+                   Utilizei a consolidação no tipo "6".*/                   
+                 pc_tabela_cheque (prm_tpo_cheque => 6, /* CHEQ. OUTROS BANCOS */
+                                   prm_nrd_conta  => vr_nrdconta,
+                                   prm_dta_libchq => vr_dtlibchq,
+                                   prm_vlr_cheque => rw_crapcst.vlcheque);
 
-                   /*************************************************************/
-                   /* Se ja existe cheque bloqueado para o tipo de cheque mas   */
-                   /* para uma data de liberacao diferente incrementa documento */
-                   /* pois os lancamentos sao gerados por data de liberacao.    */
-                   /*************************************************************/
-
-                   --Percorrer tabela memoria procurando pela conta e documento em outra data
-                   vr_index_docmto:= vr_tab_cheques.FIRST;
-                   WHILE vr_index_docmto IS NOT NULL LOOP
-                     --Verificar conta e cheque
-                     IF vr_tab_cheques(vr_index_docmto).nrdconta = vr_nrdconta AND
-                       vr_tab_cheques(vr_index_docmto).nrdocmto = vr_tpcheque THEN
-                       --Incrementar documentos por tipo cheque
-                       vr_tab_doctpchq(vr_tpcheque):= nvl(vr_tab_doctpchq(vr_tpcheque),0) + 1;
-                       --Sair Loop
-                       vr_index_docmto:= NULL;
-                     ELSE
-                       --Encontrar proximo registro
-                       vr_index_docmto:= vr_tab_cheques.NEXT(vr_index_docmto);
-                     END IF;
-                   END LOOP;
-                   --Criar Cheque
-                   vr_tab_cheques(vr_index_cheques).nrdconta:= vr_nrdconta;
-                   vr_tab_cheques(vr_index_cheques).nrdocmto:= vr_tpcheque;
-                   vr_tab_cheques(vr_index_cheques).dtlibera:= vr_dtlibchq;
-                   vr_tab_cheques(vr_index_cheques).nrdeposi:= vr_tab_doctpchq(vr_tpcheque);
-                   vr_tab_cheques(vr_index_cheques).vlcompel:= rw_crapcst.vlcheque;
-                   vr_tab_cheques(vr_index_cheques).qtcheque:= 1;
-                 ELSE
-                   --Incrementar valor compensado e quantidade cheques
-                   vr_tab_cheques(vr_index_cheques).vlcompel:= Nvl(vr_tab_cheques(vr_index_cheques).vlcompel,0) + rw_crapcst.vlcheque;
-                   vr_tab_cheques(vr_index_cheques).qtcheque:= Nvl(vr_tab_cheques(vr_index_cheques).qtcheque,0) + 1;
-                 END IF;
                  --Atualizar Custodia
                  BEGIN
                    UPDATE crapcst SET crapcst.nrdocmto = vr_tab_cheques(vr_index_cheques).nrdeposi
@@ -1048,388 +1116,461 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              vr_tot_vldescon:= Nvl(vr_tot_vldescon,0) - rw_crapcst.vlcheque;
            END IF;
 
-           ---------------------------------------------
-           -- LAST-OF
-           ---------------------------------------------
-           --Se for o ultimo registro da conta (last-of)
-           IF rw_crapcst.qtdreg = rw_crapcst.nrseqreg THEN
-             --Verificar se a conta esta bloqueada
-             IF vr_flgbloqu THEN
-               vr_dsbloqueio:= '(CONTA BLOQUEADA)';
-             ELSE
-               vr_dsbloqueio:= NULL;
-             END IF;
-             --Montar tag da conta para arquivo XML
-             pc_escreve_xml
-             ('<conta>
-                <cta_nrdconta>'||GENE0002.fn_mask_conta(vr_nrdconta)||'</cta_nrdconta>
-                <cta_nmprimtl>'||vr_nmprimtl||'</cta_nmprimtl>
-                <cta_flgbloqu>'||vr_dsbloqueio||'</cta_flgbloqu>
-                <cta_tot_qtproces>'||vr_tot_qtproces||'</cta_tot_qtproces>
-                <cta_tot_vlproces>'||vr_tot_vlproces||'</cta_tot_vlproces>
-                <cta_tot_qtresgat>'||vr_tot_qtresgat||'</cta_tot_qtresgat>
-                <cta_tot_vlresgat>'||vr_tot_vlresgat||'</cta_tot_vlresgat>
-                <cta_tot_qtcontra>'||vr_tot_qtcontra||'</cta_tot_qtcontra>
-                <cta_tot_vlcontra>'||vr_tot_vlcontra||'</cta_tot_vlcontra>
-                <cta_tot_qtdescon>'||vr_tot_qtdescon||'</cta_tot_qtdescon>
-                <cta_tot_vldescon>'||vr_tot_vldescon||'</cta_tot_vldescon>
-                <cta_res_dschqcop>'||vr_res_dschqcop||'</cta_res_dschqcop>
-                <cta_tot_qtchqcrh>'||vr_tot_qtchqcrh||'</cta_tot_qtchqcrh>
-                <cta_tot_vlchqcrh>'||vr_tot_vlchqcrh||'</cta_tot_vlchqcrh>');
+         ---------------------------------------------
+         -- LAST-OF
+         ---------------------------------------------
+         --Se for o ultimo registro da conta (last-of)
+         IF rw_crapcst.qtdreg = rw_crapcst.nrseqreg THEN
+			   --Verificar se a conta esta bloqueada
+			   IF vr_flgbloqu THEN
+				 vr_dsbloqueio:= '(CONTA BLOQUEADA)';
+			   ELSE
+				 vr_dsbloqueio:= NULL;
+			   END IF;
+             
+			   --Montar tag da conta para arquivo XML
+			   pc_escreve_xml
+			   ('<conta>
+				  <cta_nrdconta>'||GENE0002.fn_mask_conta(vr_nrdconta)||'</cta_nrdconta>
+				  <cta_nmprimtl>'||vr_nmprimtl||'</cta_nmprimtl>
+				  <cta_flgbloqu>'||vr_dsbloqueio||'</cta_flgbloqu>
+				  <cta_tot_qtproces>'||vr_tot_qtproces||'</cta_tot_qtproces>
+				  <cta_tot_vlproces>'||vr_tot_vlproces||'</cta_tot_vlproces>
+				  <cta_tot_qtresgat>'||vr_tot_qtresgat||'</cta_tot_qtresgat>
+				  <cta_tot_vlresgat>'||vr_tot_vlresgat||'</cta_tot_vlresgat>
+				  <cta_tot_qtcontra>'||vr_tot_qtcontra||'</cta_tot_qtcontra>
+				  <cta_tot_vlcontra>'||vr_tot_vlcontra||'</cta_tot_vlcontra>
+				  <cta_tot_qtdescon>'||vr_tot_qtdescon||'</cta_tot_qtdescon>
+				  <cta_tot_vldescon>'||vr_tot_vldescon||'</cta_tot_vldescon>
+				  <cta_res_dschqcop>'||vr_res_dschqcop||'</cta_res_dschqcop>
+				  <cta_tot_qtchqcrh>'||vr_tot_qtchqcrh||'</cta_tot_qtchqcrh>
+				  <cta_tot_vlchqcrh>'||vr_tot_vlchqcrh||'</cta_tot_vlchqcrh>');
 
-             --Criar indice para registro total
-             vr_index_crawtot:= LPad(vr_nrdconta,10,'0');
-             --Criar registro total
-             vr_tab_crawtot(vr_index_crawtot).dtmvtolt:= rw_crapdat.dtmvtolt;
-             vr_tab_crawtot(vr_index_crawtot).nrdconta:= vr_nrdconta;
-             vr_tab_crawtot(vr_index_crawtot).qtproces:= vr_tot_qtproces;
-             vr_tab_crawtot(vr_index_crawtot).vlproces:= vr_tot_vlproces;
-             vr_tab_crawtot(vr_index_crawtot).qtresgat:= vr_tot_qtresgat + vr_tot_qtdescon;
-             vr_tab_crawtot(vr_index_crawtot).vlresgat:= vr_tot_vlresgat + vr_tot_vldescon;
-             vr_tab_crawtot(vr_index_crawtot).qtcredit:= vr_tot_qtcredit;
-             vr_tab_crawtot(vr_index_crawtot).vlcredit:= vr_tot_vlcredit;
-             vr_tab_crawtot(vr_index_crawtot).qtcontra:= vr_tot_qtcontra;
-             vr_tab_crawtot(vr_index_crawtot).vlcontra:= vr_tot_vlcontra;
+			   --Criar indice para registro total
+			   vr_index_crawtot:= LPad(vr_nrdconta,10,'0');
+			   --Criar registro total
+			   vr_tab_crawtot(vr_index_crawtot).dtmvtolt:= rw_crapdat.dtmvtolt;
+			   vr_tab_crawtot(vr_index_crawtot).nrdconta:= vr_nrdconta;
+			   vr_tab_crawtot(vr_index_crawtot).qtproces:= vr_tot_qtproces;
+			   vr_tab_crawtot(vr_index_crawtot).vlproces:= vr_tot_vlproces;
+			   vr_tab_crawtot(vr_index_crawtot).qtresgat:= vr_tot_qtresgat + vr_tot_qtdescon;
+			   vr_tab_crawtot(vr_index_crawtot).vlresgat:= vr_tot_vlresgat + vr_tot_vldescon;
+			   vr_tab_crawtot(vr_index_crawtot).qtcredit:= vr_tot_qtcredit;
+			   vr_tab_crawtot(vr_index_crawtot).vlcredit:= vr_tot_vlcredit;
+			   vr_tab_crawtot(vr_index_crawtot).qtcontra:= vr_tot_qtcontra;
+			   vr_tab_crawtot(vr_index_crawtot).vlcontra:= vr_tot_vlcontra;
 
-             pc_escreve_xml('<descricoes>');
-             --Percorrer tabela memoria procurando pela conta
-             vr_index_docmto:= vr_tab_cheques.FIRST;
-             WHILE vr_index_docmto IS NOT NULL LOOP
-               --Verificar conta
-               IF vr_tab_cheques(vr_index_docmto).nrdconta = vr_nrdconta THEN
-                 --Verificar numero documento para determinar descricao
-                 CASE vr_tab_cheques(vr_index_docmto).nrdocmto
-                   WHEN 3 THEN vr_descrica:= '     CHEQUES MENOR PRACA:';
-                   WHEN 4 THEN vr_descrica:= '     CHEQUES MAIOR PRACA:';
-                   WHEN 5 THEN vr_descrica:= 'CHEQUES MENOR FORA PRACA:';
-                   WHEN 6 THEN vr_descrica:= 'CHEQUES MAIOR FORA PRACA:';
-                   ELSE NULL;
-                 END CASE;
-
-                 --Escrever linha descricao no relatorio
-
-                 pc_escreve_xml
-                 ('<descricao>
-                   <descrica>'||vr_descrica||'</descrica>
-                   <qtcheque>'||To_Char(vr_tab_cheques(vr_index_docmto).qtcheque,'999g990')||'</qtcheque>
-                   <vlcompel>'||trim(To_Char(vr_tab_cheques(vr_index_docmto).vlcompel,'99g999g999g990d00'))||'</vlcompel>
-                   <dtlibera>'||To_Char(vr_tab_cheques(vr_index_docmto).dtlibera,'DD/MM/YYYY')||'</dtlibera>
-                  </descricao>');
-               END IF;
-               --Encontrar proximo registro
-               vr_index_docmto:= vr_tab_cheques.NEXT(vr_index_docmto);
-             END LOOP;
-             --Finalizar tag descricoes
-             pc_escreve_xml('</descricoes>');
-             --Mostrar total
-             pc_escreve_xml
-             ('<cta_tot_qtchcomp>'||To_Char(vr_tot_qtchcomp,'999g990')||'</cta_tot_qtchcomp>
-               <cta_tot_vlchcomp>'||To_Char(vr_tot_vlchcomp,'99g999g999g990d00')||'</cta_tot_vlchcomp>
-               <cta_tot_qtcredit>'||To_Char(vr_tot_qtcredit,'999g990')||'</cta_tot_qtcredit>
-               <cta_tot_vlcredit>'||To_Char(vr_tot_vlcredit,'99g999g999g990d00')||'</cta_tot_vlcredit>
-             ');
-             --Finalizar tag totais
-             pc_escreve_xml('</conta>');
-
-             /* Creditar na conta */
-             IF vr_tab_incrdcta = 1 AND vr_nrctares < rw_crapcst.nrdconta THEN
-               --Se o lote nao existe
-               IF vr_flgcraplot = FALSE THEN
-
-                 /* Leitura do lote */
-                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                                 ,pr_dtmvtolt => rw_crapdat.dtmvtopr
-                                 ,pr_cdagenci => 1
-                                 ,pr_cdbccxlt => 100
-                                 ,pr_nrdolote => 4500);
-                 --Posicionar no proximo registro
-                 FETCH cr_craplot INTO rw_craplot;
-                 --Se encontrou registro
-                 IF cr_craplot%NOTFOUND THEN
-                   --Criar lote
-                   BEGIN
-                     INSERT INTO craplot
-                             (craplot.cdcooper
-                             ,craplot.dtmvtolt
-                             ,craplot.cdagenci
-                             ,craplot.cdbccxlt
-                             ,craplot.nrdolote
-                             ,craplot.tpdmoeda
-                             ,craplot.cdoperad
-                             ,craplot.tplotmov)
-                     VALUES  (pr_cdcooper
-                             ,rw_crapdat.dtmvtopr
-                             ,1
-                             ,100
-                             ,4500
-                             ,1
-                             ,'1'
-                             ,1)
-                     RETURNING
-                          ROWID
-                         ,craplot.dtmvtolt
-                         ,craplot.cdagenci
-                         ,craplot.cdbccxlt
-                         ,craplot.nrdolote
-                         ,craplot.tpdmoeda
-                         ,craplot.cdoperad
-                         ,craplot.tplotmov
-                         ,craplot.nrseqdig
-                     INTO rw_craplot.ROWID
-                         ,rw_craplot.dtmvtolt
-                         ,rw_craplot.cdagenci
-                         ,rw_craplot.cdbccxlt
-                         ,rw_craplot.nrdolote
-                         ,rw_craplot.tpdmoeda
-                         ,rw_craplot.cdoperad
-                         ,rw_craplot.tplotmov
-                         ,rw_craplot.nrseqdig;
-                   EXCEPTION
-                     WHEN Dup_Val_On_Index THEN
-                       pr_cdcritic:= 0;
-                       pr_dscritic:= 'Lote ja cadastrado.';
-                       RAISE vr_exc_erro;
-                     WHEN OTHERS THEN
-                       pr_cdcritic:= 0;
-                       pr_dscritic:= 'Erro ao inserir na tabela de lotes. '||sqlerrm;
-                       RAISE vr_exc_erro;
-                   END;
+			   pc_escreve_xml('<descricoes>');
+             
+             -- Por conta, garante que existe pelo menos uma linha 
+             -- totalizando os cheques da propria cooperativa em zeros no relatorio
+             IF vr_tot_qtchqcrh = 0 THEN
+               pc_tabela_cheque (prm_tpo_cheque          => 2, /* CHEQ. DA PROPRIA COOPERATIVA */
+                                 prm_nrd_conta           => vr_nrdconta,
+                                 prm_dta_libchq          => SYSDATE, -- Não será usado
+                                 prm_vlr_cheque          => 0,       -- Não será usado            
+                                 prm_flg_forca_qtde_zero => 'S');
+             END IF;                    
+             -- fim 
+             
+			   --Percorrer tabela memoria procurando pela conta
+			   vr_index_docmto:= vr_tab_cheques.FIRST;
+			   WHILE vr_index_docmto IS NOT NULL LOOP
+				 --Verificar conta
+				 IF vr_tab_cheques(vr_index_docmto).nrdconta = vr_nrdconta THEN
+				   --Verificar numero documento para determinar descricao
+                 IF vr_tab_cheques(vr_index_docmto).nrdocmto = 6 THEN
+                   vr_descrica:= 'CHEQUES OUTROS BANCOS:';
+                 ELSIF vr_tab_cheques(vr_index_docmto).nrdocmto = 2 THEN
+                   vr_descrica:= 'CHEQUES COOPERATIVA:';
+                 ELSE
+                   vr_descrica:= 'NAO TRATADO!';   
                  END IF;
-                 --Fechar Cursor
-                 CLOSE cr_craplot;
-                 --Marcar que o lote existe
-                 vr_flgcraplot:= TRUE;
-               END IF; --vr_flgcraplot=FALSE
+                 
+                 -- Controle da data de liberação
+                 vr_aux_dta_libera := ' ';             
+                 IF vr_tab_cheques(vr_index_docmto).qtcheque > 0 THEN
+                   vr_aux_dta_libera := 'PARA '||To_Char(vr_tab_cheques(vr_index_docmto).dtlibera,'DD/MM/YYYY');
+                 END IF;               
+                 -- Fim do controle
 
-              --Se valor total cheques maior 0
-               IF vr_tot_vlchqcrh > 0 THEN
-                 --Criar Lancamento
-                 BEGIN
-                   INSERT INTO craplcm
-                     (craplcm.dtmvtolt
-                     ,craplcm.cdagenci
-                     ,craplcm.cdbccxlt
-                     ,craplcm.nrdolote
-                     ,craplcm.nrdconta
-                     ,craplcm.nrdctabb
-                     ,craplcm.nrdctitg
-                     ,craplcm.cdhistor
-                     ,craplcm.nrseqdig
-                     ,craplcm.nrdocmto
-                     ,craplcm.vllanmto
-                     ,craplcm.cdpesqbb
-                     ,craplcm.cdcooper)
-                  VALUES
-                     (rw_craplot.dtmvtolt
-                     ,rw_craplot.cdagenci
-                     ,rw_craplot.cdbccxlt
-                     ,rw_craplot.nrdolote
-                     ,vr_nrdconta
-                     ,vr_nrdconta
-                     ,GENE0002.fn_mask(vr_nrdconta,'99999999')
-                     ,356
-                     ,Nvl(rw_craplot.nrseqdig,0) + 1
-                     ,vr_tab_doctpchq(2)
-                     ,vr_tot_vlchqcrh
-                     ,' '
-                     ,pr_cdcooper)
-                   RETURNING craplcm.vllanmto
-                   INTO      rw_craplcm.vllanmto;
-                 EXCEPTION
-                   WHEN Others THEN
-                     vr_cdcritic:= 0;
+				   --Escrever linha descricao no relatorio
+				   pc_escreve_xml
+				   ('<descricao>
+					 <descrica>'||vr_descrica||'</descrica>
+					 <qtcheque>'||To_Char(vr_tab_cheques(vr_index_docmto).qtcheque,'999g990')||'</qtcheque>
+					 <vlcompel>'||trim(To_Char(vr_tab_cheques(vr_index_docmto).vlcompel,'99g999g999g990d00'))||'</vlcompel>
+                 <dtlibera>'||vr_aux_dta_libera||'</dtlibera>
+					</descricao>');
+				 END IF;
+				 --Encontrar proximo registro
+				 vr_index_docmto:= vr_tab_cheques.NEXT(vr_index_docmto);
+			   END LOOP;
+             
+			   --Finalizar tag descricoes
+			   pc_escreve_xml('</descricoes>');
+			   --Mostrar total
+			   pc_escreve_xml
+			   ('<cta_tot_qtchcomp>'||To_Char(vr_tot_qtchcomp,'999g990')||'</cta_tot_qtchcomp>
+				 <cta_tot_vlchcomp>'||To_Char(vr_tot_vlchcomp,'99g999g999g990d00')||'</cta_tot_vlchcomp>
+				 <cta_tot_qtcredit>'||To_Char(vr_tot_qtcredit,'999g990')||'</cta_tot_qtcredit>
+				 <cta_tot_vlcredit>'||To_Char(vr_tot_vlcredit,'99g999g999g990d00')||'</cta_tot_vlcredit>
+			   ');
+			   --Finalizar tag totais
+			   pc_escreve_xml('</conta>');
 
-                     vr_des_erro:= 'Erro ao inserir na tabela craplcm(1). '||sqlerrm;
-                     --Levantar Excecao
+			   /* Creditar na conta */
+			   IF vr_tab_incrdcta = 1 AND vr_nrctares < rw_crapcst.nrdconta THEN
+				 --Se o lote nao existe
+				 IF vr_flgcraplot = FALSE THEN
+
+				   /* Leitura do lote */
+				   OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+								   ,pr_dtmvtolt => rw_crapdat.dtmvtopr
+								   ,pr_cdagenci => 1
+								   ,pr_cdbccxlt => 100
+								   ,pr_nrdolote => 4500);
+				   --Posicionar no proximo registro
+				   FETCH cr_craplot INTO rw_craplot;
+				   --Se encontrou registro
+				   IF cr_craplot%NOTFOUND THEN
+					 --Criar lote
+					 BEGIN
+					   INSERT INTO craplot
+							   (craplot.cdcooper
+							   ,craplot.dtmvtolt
+							   ,craplot.cdagenci
+							   ,craplot.cdbccxlt
+							   ,craplot.nrdolote
+							   ,craplot.tpdmoeda
+							   ,craplot.cdoperad
+							   ,craplot.tplotmov)
+					   VALUES  (pr_cdcooper
+							   ,rw_crapdat.dtmvtopr
+							   ,1
+							   ,100
+							   ,4500
+							   ,1
+							   ,'1'
+							   ,1)
+					   RETURNING
+							ROWID
+						   ,craplot.dtmvtolt
+						   ,craplot.cdagenci
+						   ,craplot.cdbccxlt
+						   ,craplot.nrdolote
+						   ,craplot.tpdmoeda
+						   ,craplot.cdoperad
+						   ,craplot.tplotmov
+						   ,craplot.nrseqdig
+					   INTO rw_craplot.ROWID
+						   ,rw_craplot.dtmvtolt
+						   ,rw_craplot.cdagenci
+						   ,rw_craplot.cdbccxlt
+						   ,rw_craplot.nrdolote
+						   ,rw_craplot.tpdmoeda
+						   ,rw_craplot.cdoperad
+						   ,rw_craplot.tplotmov
+						   ,rw_craplot.nrseqdig;
+					 EXCEPTION
+					   WHEN Dup_Val_On_Index THEN
+						 pr_cdcritic:= 0;
+						 pr_dscritic:= 'Lote ja cadastrado.';
+                       RAISE vr_exc_erro;
+					   WHEN OTHERS THEN
+						 pr_cdcritic:= 0;
+						 pr_dscritic:= 'Erro ao inserir na tabela de lotes. '||sqlerrm;
+                       RAISE vr_exc_erro;
+					 END;
+				   END IF;
+				   --Fechar Cursor
+				   CLOSE cr_craplot;
+				   --Marcar que o lote existe
+				   vr_flgcraplot:= TRUE;
+				 END IF; --vr_flgcraplot=FALSE
+
+				--Se valor total cheques maior 0
+				 IF vr_tot_vlchqcrh > 0 THEN
+                 --Criar Lancamento (cheques custodiados da mesma cooperativa)
+				   BEGIN
+					 INSERT INTO craplcm
+					   (craplcm.dtmvtolt
+					   ,craplcm.cdagenci
+					   ,craplcm.cdbccxlt
+					   ,craplcm.nrdolote
+					   ,craplcm.nrdconta
+					   ,craplcm.nrdctabb
+					   ,craplcm.nrdctitg
+					   ,craplcm.cdhistor
+					   ,craplcm.nrseqdig
+					   ,craplcm.nrdocmto
+					   ,craplcm.vllanmto
+					   ,craplcm.cdpesqbb
+					   ,craplcm.cdcooper)
+					VALUES
+					   (rw_craplot.dtmvtolt
+					   ,rw_craplot.cdagenci
+					   ,rw_craplot.cdbccxlt
+					   ,rw_craplot.nrdolote
+					   ,vr_nrdconta
+					   ,vr_nrdconta
+					   ,GENE0002.fn_mask(vr_nrdconta,'99999999')
+                   ,2662 -- DEP. CUSTODIA (Bloqueado por 1 dia)
+					   ,Nvl(rw_craplot.nrseqdig,0) + 1
+					   ,vr_tab_doctpchq(2)
+					   ,vr_tot_vlchqcrh
+					   ,' '
+					   ,pr_cdcooper)
+                 RETURNING
+                     craplcm.vllanmto
+                    ,craplcm.nrdconta
+                    ,craplcm.cdhistor
+                    ,craplcm.nrdocmto
+                    ,craplcm.dtmvtolt
+                    ,craplcm.cdagenci
+                    ,craplcm.cdbccxlt
+                    ,craplcm.nrdolote
+                   INTO rw_craplcm.vllanmto
+                    ,rw_craplcm.nrdconta
+                    ,rw_craplcm.cdhistor
+                    ,rw_craplcm.nrdocmto
+                    ,rw_craplcm.dtmvtolt
+                    ,rw_craplcm.cdagenci
+                    ,rw_craplcm.cdbccxlt
+                    ,rw_craplcm.nrdolote;
+				   EXCEPTION
+                   WHEN others THEN
+					   vr_cdcritic:= 0;
+                     vr_des_erro:= 'Erro ao inserir na tabela craplcm(1). '||SQLERRM;
+					   --Levantar Excecao
                      RAISE vr_exc_erro;
-                 END;
-                 --Atualizar Lotes
-                 BEGIN
-                   UPDATE craplot SET craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
-                                   ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
-                                   ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                   ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                   ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
-                   WHERE craplot.ROWID = rw_craplot.ROWID
-                   RETURNING
-                         craplot.nrseqdig
-                        ,craplot.vlinfocr
-                        ,craplot.vlcompcr
-                        ,craplot.qtinfoln
-                        ,craplot.qtcompln
-                    INTO rw_craplot.nrseqdig
-                        ,rw_craplot.vlinfocr
-                        ,rw_craplot.vlcompcr
-                        ,rw_craplot.qtinfoln
-                        ,rw_craplot.qtcompln;
-                 EXCEPTION
-                   WHEN Others THEN
+				   END;
+                 
+				   --Atualizar Lotes
+				   BEGIN
+					 UPDATE craplot SET craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
+									 ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
+									 ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+									 ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+									 ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
+					 WHERE craplot.ROWID = rw_craplot.ROWID
+					 RETURNING
+						   craplot.nrseqdig
+						  ,craplot.vlinfocr
+						  ,craplot.vlcompcr
+						  ,craplot.qtinfoln
+						  ,craplot.qtcompln
+					  INTO rw_craplot.nrseqdig
+						  ,rw_craplot.vlinfocr
+						  ,rw_craplot.vlcompcr
+						  ,rw_craplot.qtinfoln
+						  ,rw_craplot.qtcompln;
+				   EXCEPTION
+                   WHEN others THEN
                      vr_cdcritic:= 0;
-                     vr_des_erro:= 'Erro ao atualizar tabela lote. '||sqlerrm;
+                     vr_des_erro:= 'Erro ao atualizar tabela lote. '||SQLERRM;
                      --Levantar Excecao
-                     RAISE vr_exc_erro;
+                     RAISE vr_last_chq;
                  END;
-               END IF;
+                 
+                 --Inserir tabela crapdpb (bloqueio do lançamento)
+                 BEGIN
+                   INSERT INTO crapdpb
+                   (crapdpb.nrdconta
+                   ,crapdpb.dtliblan
+                   ,crapdpb.cdhistor
+                   ,crapdpb.nrdocmto
+                   ,crapdpb.dtmvtolt
+                   ,crapdpb.cdagenci
+                   ,crapdpb.cdbccxlt
+                   ,crapdpb.nrdolote
+                   ,crapdpb.vllanmto
+                   ,crapdpb.inlibera
+                   ,crapdpb.cdcooper)
+                   VALUES
+                   (rw_craplcm.nrdconta
+                   ,vr_dtlibchq
+                   ,rw_craplcm.cdhistor
+                   ,rw_craplcm.nrdocmto
+                   ,rw_craplcm.dtmvtolt
+                   ,rw_craplcm.cdagenci
+                   ,rw_craplcm.cdbccxlt
+                   ,rw_craplcm.nrdolote
+                   ,rw_craplcm.vllanmto
+                   ,1
+                   ,pr_cdcooper);
+                 EXCEPTION
+                   WHEN others THEN
+					   vr_cdcritic:= 0;
+                     vr_des_erro:= 'Erro ao inserir na tabela crapdpb (cdhistor 356). '||SQLERRM;
+					   --Levantar Excecao
+                     RAISE vr_exc_erro;
+				   END;
+                 
+				 END IF;
 
-               /* Cheques Praca e Fora Praca */
+				 /* Cheques Praca e Fora Praca */
 
-               --Percorrer tabela memoria procurando pela conta
-               vr_index_docmto:= vr_tab_cheques.FIRST;
-               WHILE vr_index_docmto IS NOT NULL LOOP
-                 --Verificar conta
-                 IF vr_tab_cheques(vr_index_docmto).nrdconta = vr_nrdconta THEN
-                   --Criar Lancamento
-                   BEGIN
-                     INSERT INTO craplcm
-                       (craplcm.dtmvtolt
-                       ,craplcm.cdagenci
-                       ,craplcm.cdbccxlt
-                       ,craplcm.nrdolote
-                       ,craplcm.nrdconta
-                       ,craplcm.nrdctabb
-                       ,craplcm.nrdctitg
-                       ,craplcm.cdhistor
-                       ,craplcm.nrseqdig
-                       ,craplcm.nrdocmto
-                       ,craplcm.vllanmto
-                       ,craplcm.cdpesqbb
-                       ,craplcm.cdcooper)
-                     VALUES
-                       (rw_craplot.dtmvtolt
-                       ,rw_craplot.cdagenci
-                       ,rw_craplot.cdbccxlt
-                       ,rw_craplot.nrdolote
-                       ,vr_nrdconta
-                       ,vr_nrdconta
-                       ,GENE0002.fn_mask(vr_nrdconta,'99999999')
-                       ,vr_cdhistor
-                       ,Nvl(rw_craplot.nrseqdig,0) + 1
-                       ,vr_tab_cheques(vr_index_docmto).nrdeposi
-                       ,vr_tab_cheques(vr_index_docmto).vlcompel
-                       ,' '
-                       ,pr_cdcooper)
-                     RETURNING
-                           craplcm.vllanmto
-                          ,craplcm.nrdconta
-                          ,craplcm.cdhistor
-                          ,craplcm.nrdocmto
-                          ,craplcm.dtmvtolt
-                          ,craplcm.cdagenci
-                          ,craplcm.cdbccxlt
-                          ,craplcm.nrdolote
-                          ,craplcm.vllanmto
-                     INTO  rw_craplcm.vllanmto
-                          ,rw_craplcm.nrdconta
-                          ,rw_craplcm.cdhistor
-                          ,rw_craplcm.nrdocmto
-                          ,rw_craplcm.dtmvtolt
-                          ,rw_craplcm.cdagenci
-                          ,rw_craplcm.cdbccxlt
-                          ,rw_craplcm.nrdolote
-                          ,rw_craplcm.vllanmto;
-                   EXCEPTION
-                     WHEN Others THEN
-                       vr_cdcritic:= 0;
+				 --Percorrer tabela memoria procurando pela conta
+				 vr_index_docmto:= vr_tab_cheques.FIRST;
+				 WHILE vr_index_docmto IS NOT NULL LOOP
+                 -- Verificar conta e 
+                 -- ignora os cheques da propria cooperativa, já tratados antes
+                 -- deste ponto.
+                 IF vr_tab_cheques(vr_index_docmto).nrdconta = vr_nrdconta AND 
+                    vr_tab_cheques(vr_index_docmto).nrdocmto <> 2 THEN
+					 --Criar Lancamento
+					 BEGIN
+					   INSERT INTO craplcm
+						 (craplcm.dtmvtolt
+						 ,craplcm.cdagenci
+						 ,craplcm.cdbccxlt
+						 ,craplcm.nrdolote
+						 ,craplcm.nrdconta
+						 ,craplcm.nrdctabb
+						 ,craplcm.nrdctitg
+						 ,craplcm.cdhistor
+						 ,craplcm.nrseqdig
+						 ,craplcm.nrdocmto
+						 ,craplcm.vllanmto
+						 ,craplcm.cdpesqbb
+						 ,craplcm.cdcooper)
+					   VALUES
+						 (rw_craplot.dtmvtolt
+						 ,rw_craplot.cdagenci
+						 ,rw_craplot.cdbccxlt
+						 ,rw_craplot.nrdolote
+						 ,vr_nrdconta
+						 ,vr_nrdconta
+						 ,GENE0002.fn_mask(vr_nrdconta,'99999999')
+						 ,vr_cdhistor
+						 ,Nvl(rw_craplot.nrseqdig,0) + 1
+						 ,vr_tab_cheques(vr_index_docmto).nrdeposi
+						 ,vr_tab_cheques(vr_index_docmto).vlcompel
+						 ,' '
+						 ,pr_cdcooper)
+					   RETURNING
+							 craplcm.vllanmto
+							,craplcm.nrdconta
+							,craplcm.cdhistor
+							,craplcm.nrdocmto
+							,craplcm.dtmvtolt
+							,craplcm.cdagenci
+							,craplcm.cdbccxlt
+							,craplcm.nrdolote
+							,craplcm.vllanmto
+					   INTO  rw_craplcm.vllanmto
+							,rw_craplcm.nrdconta
+							,rw_craplcm.cdhistor
+							,rw_craplcm.nrdocmto
+							,rw_craplcm.dtmvtolt
+							,rw_craplcm.cdagenci
+							,rw_craplcm.cdbccxlt
+							,rw_craplcm.nrdolote
+							,rw_craplcm.vllanmto;
+					 EXCEPTION
+					   WHEN Others THEN
+						 vr_cdcritic:= 0;
 
-                       vr_des_erro:= 'Erro ao inserir na tabela craplcm(2). '||sqlerrm;
-                       --Levantar Excecao
+						 vr_des_erro:= 'Erro ao inserir na tabela craplcm(2). '||sqlerrm;
+						 --Levantar Excecao
                        RAISE vr_exc_erro;
-                   END;
-                   --Atualizar Lotes
-                   BEGIN
-                     UPDATE craplot SET craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
-                                     ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
-                                     ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                     ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                     ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
-                     WHERE craplot.ROWID = rw_craplot.ROWID
-                     RETURNING
-                           craplot.nrseqdig
-                          ,craplot.vlinfocr
-                          ,craplot.vlcompcr
-                          ,craplot.qtinfoln
-                          ,craplot.qtcompln
-                      INTO rw_craplot.nrseqdig
-                          ,rw_craplot.vlinfocr
-                          ,rw_craplot.vlcompcr
-                          ,rw_craplot.qtinfoln
-                          ,rw_craplot.qtcompln;
-                   EXCEPTION
-                     WHEN Others THEN
-                       vr_cdcritic:= 0;
-                       vr_des_erro:= 'Erro ao atualizar tabela lote. '||sqlerrm;
-                       --Levantar Excecao
+					 END;
+					 --Atualizar Lotes
+					 BEGIN
+					   UPDATE craplot SET craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
+									   ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
+									   ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+									   ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+									   ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
+					   WHERE craplot.ROWID = rw_craplot.ROWID
+					   RETURNING
+							 craplot.nrseqdig
+							,craplot.vlinfocr
+							,craplot.vlcompcr
+							,craplot.qtinfoln
+							,craplot.qtcompln
+						INTO rw_craplot.nrseqdig
+							,rw_craplot.vlinfocr
+							,rw_craplot.vlcompcr
+							,rw_craplot.qtinfoln
+							,rw_craplot.qtcompln;
+					 EXCEPTION
+					   WHEN Others THEN
+						 vr_cdcritic:= 0;
+						 vr_des_erro:= 'Erro ao atualizar tabela lote. '||sqlerrm;
+						 --Levantar Excecao
                        RAISE vr_exc_erro;
-                   END;
-                   --Inserir tabela crapdpb
-                   BEGIN
-                     INSERT INTO crapdpb
-                       (crapdpb.nrdconta
-                       ,crapdpb.dtliblan
-                       ,crapdpb.cdhistor
-                       ,crapdpb.nrdocmto
-                       ,crapdpb.dtmvtolt
-                       ,crapdpb.cdagenci
-                       ,crapdpb.cdbccxlt
-                       ,crapdpb.nrdolote
-                       ,crapdpb.vllanmto
-                       ,crapdpb.inlibera
-                       ,crapdpb.cdcooper)
-                     VALUES
-                       (rw_craplcm.nrdconta
-                       ,vr_tab_cheques(vr_index_docmto).dtlibera
-                       ,rw_craplcm.cdhistor
-                       ,rw_craplcm.nrdocmto
-                       ,rw_craplcm.dtmvtolt
-                       ,rw_craplcm.cdagenci
-                       ,rw_craplcm.cdbccxlt
-                       ,rw_craplcm.nrdolote
-                       ,rw_craplcm.vllanmto
-                       ,1
-                       ,pr_cdcooper);
-                   EXCEPTION
-                     WHEN Others THEN
-                       vr_cdcritic:= 0;
+					 END;
+					 --Inserir tabela crapdpb
+					 BEGIN
+					   INSERT INTO crapdpb
+						 (crapdpb.nrdconta
+						 ,crapdpb.dtliblan
+						 ,crapdpb.cdhistor
+						 ,crapdpb.nrdocmto
+						 ,crapdpb.dtmvtolt
+						 ,crapdpb.cdagenci
+						 ,crapdpb.cdbccxlt
+						 ,crapdpb.nrdolote
+						 ,crapdpb.vllanmto
+						 ,crapdpb.inlibera
+						 ,crapdpb.cdcooper)
+					   VALUES
+						 (rw_craplcm.nrdconta
+						 ,vr_tab_cheques(vr_index_docmto).dtlibera
+						 ,rw_craplcm.cdhistor
+						 ,rw_craplcm.nrdocmto
+						 ,rw_craplcm.dtmvtolt
+						 ,rw_craplcm.cdagenci
+						 ,rw_craplcm.cdbccxlt
+						 ,rw_craplcm.nrdolote
+						 ,rw_craplcm.vllanmto
+						 ,1
+						 ,pr_cdcooper);
+					 EXCEPTION
+					   WHEN Others THEN
+						 vr_cdcritic:= 0;
 
-                       vr_des_erro:= 'Erro ao inserir na tabela crapdpb. '||sqlerrm;
-                       --Levantar Excecao
+						 vr_des_erro:= 'Erro ao inserir na tabela crapdpb. '||sqlerrm;
+						 --Levantar Excecao
                        RAISE vr_exc_erro;
-                   END;
-                 END IF;
-                 --Selecionar proximo registro tabela memoria
-                 vr_index_docmto:= vr_tab_cheques.NEXT(vr_index_docmto);
-               END LOOP;
-             END IF;
+					 END;
+				   END IF;
+				   --Selecionar proximo registro tabela memoria
+				   vr_index_docmto:= vr_tab_cheques.NEXT(vr_index_docmto);
+				 END LOOP;
+			   END IF;
 
-             -- Atualizar restart se a flag estiver ativa
-             IF pr_flgresta = 1 THEN
-               BEGIN
-                 --Atualizar tabela de restart
-                 UPDATE crapres SET crapres.nrdconta = rw_crapcst.nrdconta
-                                 ,crapres.dsrestar = vr_nrdocmto
-                 WHERE crapres.cdcooper = pr_cdcooper
-                 AND   crapres.cdprogra = vr_cdprogra;
-               EXCEPTION
-                 WHEN Others THEN
-                   vr_cdcritic:= 0;
-                   vr_des_erro:= 'Erro ao atualizar tabela crapres. '||sqlerrm;
-                   --Levantar Excecao
+			   -- Atualizar restart se a flag estiver ativa
+			   IF pr_flgresta = 1 THEN
+				 BEGIN
+				   --Atualizar tabela de restart
+				   UPDATE crapres SET crapres.nrdconta = rw_crapcst.nrdconta
+								   ,crapres.dsrestar = vr_nrdocmto
+				   WHERE crapres.cdcooper = pr_cdcooper
+				   AND   crapres.cdprogra = vr_cdprogra;
+				 EXCEPTION
+				   WHEN Others THEN
+					 vr_cdcritic:= 0;
+					 vr_des_erro:= 'Erro ao atualizar tabela crapres. '||sqlerrm;
+					 --Levantar Excecao
                    RAISE vr_exc_erro;
-               END;
+				 END;
 
-               --Salvar Informações no banco
-               COMMIT;
-             END IF;
+				 --Salvar Informações no banco
+				 COMMIT;
+			   END IF;
            END IF; --last-of nrdconta
-         EXCEPTION
+           EXCEPTION
            WHEN vr_exc_erro THEN
-             -- Gera log
-             pc_log;
+               -- Gera log
+               pc_log;
              ROLLBACK TO SAVEPOINT sv_crapcst;
              --Levantar Excecao
              --Nao executar raise e pular para o proximo cheque
              --RAISE vr_exc_erro;
-         END;
+           END;   
        END LOOP;   --rw_crapcst
 
        --Fechar tag contas e abrir tag cheques liberados
@@ -1760,15 +1901,15 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                                    ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
                                    ,pr_dsxmlnode => '/crrl234'          --> N? base do XML para leitura dos dados
                                    ,pr_dsjasper  => 'crrl234.jasper'    --> Arquivo de layout do iReport
-                                   ,pr_dsparams  => NULL                --> Titulo do relat?rio
+                                   ,pr_dsparams  => NULL                --> Titulo do relatorio
                                    ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final
                                    ,pr_qtcoluna  => 132                 --> 132 colunas
                                    ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
-                                   ,pr_flg_impri => 'S'                 --> Chamar a impress?o (Imprim.p)
-                                   ,pr_nmformul  => NULL                --> Nome do formul?rio para impress?o
-                                   ,pr_nrcopias  => 1                   --> N?mero de c?pias
+                                   ,pr_flg_impri => 'S'                 --> Chamar a impressao (Imprim.p)
+                                   ,pr_nmformul  => NULL                --> Nome do formulario para impress?o
+                                   ,pr_nrcopias  => 1                   --> N?mero de copias
                                    ,pr_flg_gerar => 'N'                 --> gerar PDF
-                                   ,pr_des_erro  => vr_des_erro);       --> Sa?da com erro
+                                   ,pr_des_erro  => vr_des_erro);       --> Saida com erro
 
        -- Testar se houve erro
        IF vr_des_erro IS NOT NULL THEN
