@@ -397,10 +397,6 @@ function selecionaTabela(tr) {
     dslinha1 = $('#dslinha1', tr).val();
     dslinha2 = $('#dslinha2', tr).val();
     dslinha3 = $('#dslinha3', tr).val();
-    dtinsbor = $('#dtinsbor', tr).val();
-    hrinsbor = $('#hrinsbor', tr).val();
-    qttitbor = $('#qttitbor', tr).val();
-    vltotbor = $('#vltotbor', tr).val();
 
     return false;
 }
@@ -443,10 +439,6 @@ function mostraProtocolo() {
             lndigita: lndigita,
             nrseqaut: nrseqaut,
             nrdocmto: nrdocmto,
-            dtinsbor: dtinsbor,
-            hrinsbor: hrinsbor,
-            qttitbor: qttitbor,
-            vltotbor: vltotbor,
             dslinha1: dslinha1,
             dslinha2: dslinha2,
             dslinha3: dslinha3,
@@ -546,7 +538,6 @@ function formataVerpro() {
 
     
     rNrborder = $('label[for="nrborder"]', '#' + frmDados);
-    rQttitbor = $('label[for="qttitbor"]', '#' + frmDados);
     
     
 
@@ -623,7 +614,6 @@ function formataVerpro() {
     
     
     rNrborder.addClass('rotulo').css({'width': '115px'});
-    rQttitbor.addClass('rotulo').css({'width': '115px'});
     
     
     // campos
@@ -701,7 +691,6 @@ function formataVerpro() {
     
     
     cNrborder = $('#nrborder', '#' + frmDados);
-    cQttitbor = $('#qttitbor', '#' + frmDados);
     
 
     cNmprepos.css({'width': '440px'});
@@ -775,7 +764,6 @@ function formataVerpro() {
     
     
     cNrborder.css({'width': '440px'});
-    cQttitbor.css({'width': '440px'});
     
     
     // label protocolo pacote de tarifas

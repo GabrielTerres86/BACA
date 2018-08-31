@@ -64,10 +64,7 @@ $dslinha2 = $_POST['dslinha2'];
 $dslinha3 = $_POST['dslinha3'];
 
 //Bordero
-$dtinsbor = $_POST['dtinsbor'];
-$hrinsbor = $_POST['hrinsbor'];
-$qttitbor = $_POST['qttitbor'];
-$vltotbor = $_POST['vltotbor'];
+$qttitbor = $_POST['dslinha2'];
 
 $aux_dslinha1 = explode('#', $dslinha1);
 $aux_dslinha2 = explode('#', $dslinha2);

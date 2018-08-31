@@ -56,10 +56,7 @@
   								  <input type="hidden" id="lndigita" name="lndigita" value="<? echo getByTagName($r->tags,'lndigita') ?>" />								  
   								  <input type="hidden" id="nrseqaut" name="nrseqaut" value="<? echo getByTagName($r->tags,'nrseqaut') ?>" />								  
   								  <input type="hidden" id="nrdocmto" name="nrdocmto" value="<? echo getByTagName($r->tags,'nrdocmto') ?>" />								  
-  								  <input type="hidden" id="flgpagto" name="flgpagto" value="<? echo getByTagName($r->tags,'flgpagto') ?>" />								  								  								  
-  								  <!-- Campos de bordero -->							  			
-  								  <input type="hidden" id="qttitbor" name="qttitbor" value="<? echo getByTagName($r->tags,'qttitbor') ?>" />	
-  								  <input type="hidden" id="vltotbor" name="vltotbor" value="<? echo getByTagName($r->tags,'vltotbor') ?>" />								  								  								  
+  								  <input type="hidden" id="flgpagto" name="flgpagto" value="<? echo getByTagName($r->tags,'flgpagto') ?>" />								  								  					
   								  <input type="hidden" id="dslinha1" name="dslinha1" value="<? echo getByTagName($r->tags[12]->tags,'dsinform.1') ?>" />								  
   								  <input type="hidden" id="dslinha2" name="dslinha2" value="<? echo getByTagName($r->tags[12]->tags,'dsinform.2') ?>" />								  
   								  <input type="hidden" id="dslinha3" name="dslinha3" value="<? echo getByTagName($r->tags[12]->tags,'dsinform.3') ?>" />								  

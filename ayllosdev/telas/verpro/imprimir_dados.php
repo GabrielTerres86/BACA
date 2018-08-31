@@ -112,7 +112,7 @@
 	$hrrecarga    = $_POST['hrrecarga'];
 	$dtdebito     = $_POST['dtdebito'];
 	$nsuopera     = $_POST['nsuopera'];
-	$qttitbor     = $_POST['qttitbor'];
+	$qttitbor     = $_POST['dslinha2'];
 	
 	$dsiduser 	= session_id();	
 
