@@ -287,6 +287,9 @@ BEGIN
 
              17/07/2018 - Ler mensagem str0004R2 para AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza (Mouts)
              
+             08/08/2018 - INC0021763 - Ajustar a regra de devolução de TEDs para que a mesma seja devolvidas 
+                          automáticamente para contas encerradas, independente do tipo. (Renato Darosci)				
+             
              10/08/2018 - Salvar arquivos STR0004R2 recusados e gravar historico nulo nas mensagens
                           STR0004R2 e STR0006R2. PRJ486 (Lombardi)
                   
@@ -974,10 +977,11 @@ BEGIN
         ELSIF rw_crapass.dtelimin IS NOT NULL THEN
           pr_cdcritic := 1;  /* Conta encerrada */
           RETURN;
-        ELSIF vr_aux_CodMsg IN('PAG0108R2','PAG0143R2')-- TED
-        AND rw_crapass.cdsitdct = 4  THEN
+          
+        ELSIF rw_crapass.cdsitdct = 4  THEN -- INC0021763 - Removida a validação dos tipos de TEDs
           pr_cdcritic := 1;  /* Conta encerrada */
           RETURN; 
+        
         ELSE
           CLOSE cr_crapass;
           -- Para PF
