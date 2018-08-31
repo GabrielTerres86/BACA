@@ -54,7 +54,7 @@
 	
 		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 			$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			exibirErro('error',utf8ToHtml($msgErro),'Alerta - Ayllos','unblockBackground()',false);
+			exibirErro('error',addslashes(utf8_encode($msgErro)),'Alerta - Ayllos','unblockBackground()',false);
 		}else{
 			echo 'hideMsgAguardo();';
 			echo 'showError("inform","Transferência a prejuízo de conta corrente efetuada com sucesso.","Alerta - Ayllos","trocaBotao(\'estadoInicial()\',\'ajustaBotaoContinuar()\',\'Continuar\');$(\'#nrctremp\',\'#frmEstornoPrejuizo\').focus();");';
