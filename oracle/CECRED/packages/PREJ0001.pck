@@ -389,32 +389,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
   FUNCTION fn_juros60_emprej(pr_cdcooper IN  crapris.cdcooper%TYPE
                             ,pr_nrdconta IN  crapris.nrdconta%TYPE
                             ,pr_nrctremp IN  crapris.nrctremp%TYPE) RETURN NUMBER IS
-    -- Cursor Juros+60 --
-    CURSOR cr_juro60 (pr_cdcooper crapris.cdcooper%TYPE
-                     ,pr_nrdconta crapris.nrdconta%TYPE
-                     ,pr_nrctremp crapris.nrctremp%TYPE) IS
-     SELECT nvl(ris.vljura60,0) vljura60
-        FROM crapris ris
-       WHERE ris.cdcooper  = pr_cdcooper
-         AND ris.nrdconta  = pr_nrdconta
-         AND ris.nrctremp  = decode((SELECT epr.cdlcremp
-                                       FROM crapepr epr
-                                      WHERE epr.cdcooper = pr_cdcooper
-                                        AND epr.nrdconta = pr_nrdconta
-                                        AND epr.nrctremp = pr_nrctremp)
-                                    , 100, ris.nrdconta, pr_nrctremp)
-         AND ris.innivris  = 9
-         AND ris.dtrefere <= (SELECT dtultdma FROM crapdat WHERE cdcooper = pr_cdcooper)
-         AND ROWNUM        = 1
-      ORDER BY ris.dtrefere DESC;
-    rw_juro60 cr_juro60%ROWTYPE;
 		
 		CURSOR cr_juro60_pagos (pr_cdcooper crapris.cdcooper%TYPE
                      ,pr_nrdconta crapris.nrdconta%TYPE
                      ,pr_nrctremp crapris.nrctremp%TYPE) IS
 		SELECT sum(CASE WHEN h.cdhistor = 2473 THEN h.vllanmto
                ELSE 0 END) 
-         - sum(CASE WHEN h.cdhistor = 2474 THEN h.vllanmto
+          - sum(CASE WHEN h.cdhistor = 2474 THEN h.vllanmto
                ELSE 0 END) vllanmto
 			FROM craplem h
 		 WHERE h.cdhistor IN(2473, 2474)
@@ -427,13 +408,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     CURSOR cr_juro60_lem (pr_cdcooper crapris.cdcooper%TYPE
                          ,pr_nrdconta crapris.nrdconta%TYPE
                          ,pr_nrctremp crapris.nrctremp%TYPE) IS
-      SELECT 1 id_lem
+       SELECT nvl(SUM(h.vllanmto),0) vljura60
         FROM craplem h
        WHERE h.cdcooper = pr_cdcooper
 		  	 AND h.nrdconta = pr_nrdconta
 			   AND h.nrctremp = pr_nrctremp
-         AND h.cdhistor IN(2402, 2406, 2382, 2397)         
-         AND rownum     = 1;
+          AND h.cdhistor IN(2402, 2406, 2382, 2397);         
+       
     rw_juro60_lem cr_juro60_lem%ROWTYPE;     
 		
   BEGIN
@@ -444,32 +425,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
    CLOSE cr_juro60_lem;
    
     -- Se existem lançamentos para os históricos específicos
-    IF NVL(rw_juro60_lem.id_lem,0) = 1 THEN        
-      -- Abre cursor cr_juro60
-     OPEN cr_juro60(pr_cdcooper, pr_nrdconta, pr_nrctremp);
-   FETCH cr_juro60
-    INTO rw_juro60;
-   CLOSE cr_juro60;
-   --
-   -- Verifica se encontrou juros60
-   IF NVL(rw_juro60.vljura60,0) > 0 THEN
-        -- Abre cursor cr_juro60_pagos
+     IF NVL(rw_juro60_lem.vljura60,0) > 0 THEN        
+    
         OPEN cr_juro60_pagos(pr_cdcooper, pr_nrdconta, pr_nrctremp); 
        FETCH cr_juro60_pagos  
         INTO rw_juro60_pagos;
        CLOSE cr_juro60_pagos; 
         --
-        RETURN(rw_juro60.vljura60 - nvl(rw_juro60_pagos.vllanmto, 0));
-      ELSE
-        RETURN(0);  -- Garante retorno zero se não houver valor      
-      END IF;
+         RETURN(rw_juro60_lem.vljura60 - nvl(rw_juro60_pagos.vllanmto, 0));
   ELSE
     RETURN(0);  -- Garante retorno zero se não houver valor
   END IF;
   --
   END fn_juros60_emprej;
 
-  --
    PROCEDURE pc_grava_prm_trp(pr_dsvlrprm1 IN VARCHAR2  -- Data de inicio da vigência
                              ,pr_dsvlrprm2 IN VARCHAR2  -- produto
                              ,pr_dsvlprmgl IN VARCHAR2  -- Parametro geral

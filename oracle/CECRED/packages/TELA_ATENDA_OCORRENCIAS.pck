@@ -281,7 +281,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       vr_auxconta          INTEGER := 0;           -- Contador auxiliar para posicão no XML
       vr_risco_ult_central crawepr.dsnivris%TYPE;  -- Risco da última central
       vr_data_risco_final  crapris.dtdrisco%TYPE;  -- Data do risco final
-			vr_valor_arrasto     NUMBER;
 
       ---------->> CURSORES <<--------
 
@@ -295,8 +294,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 					 , cb.inrisctl
 					 , cb.dtrisctl
 					 , DECODE(cb.inpessoa, 1,
-										 to_char(cb.nrcpfcgc, '00000000000'),
-										 substr(to_char(cb.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+										 to_char(cb.nrcpfcgc, 'fm00000000000'),
+										 substr(to_char(cb.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
 				FROM crapass cb
 			 WHERE cb.cdcooper = pr_cdcooper
 				 AND cb.nrdconta = pr_nrdconta;
@@ -309,10 +308,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 							 , ass.nrdconta
 							 , ass.inpessoa
 							 , to_char(ass.nrcpfcgc,
-																		DECODE(ass.inpessoa, 1, '00000000000','00000000000000')) nrcpfcgc
+										DECODE(ass.inpessoa, 1, 'fm00000000000','fm00000000000000')) nrcpfcgc
 							 , DECODE(ass.inpessoa, 1,
-										 to_char(ass.nrcpfcgc, '00000000000'),
-										 substr(to_char(ass.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+										 to_char(ass.nrcpfcgc, 'fm00000000000'),
+										 substr(to_char(ass.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
 							 , ass.dsnivris
 						FROM crapass ass
 					 WHERE cdcooper = rw_cbase.cdcooper
@@ -337,18 +336,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 						 , gr.nrctasoc
 						 , gr.inpessoa
 						 , (SELECT to_char(nrcpfcgc,
-																	DECODE(inpessoa, 1, '00000000000','00000000000000')) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc
+                                  DECODE(inpessoa, 1, 'fm00000000000','fm00000000000000')) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc
 						 , DECODE(gr.inpessoa, 1,
-													 to_char(gr.nrcpfcgc, '00000000000'),
-													 substr(to_char(gr.nrcpfcgc, '00000000000000'), 1, 8)) nrcpfcgc_compara
+                           to_char(gr.nrcpfcgc, 'fm00000000000'),
+                           substr(to_char(gr.nrcpfcgc, 'fm00000000000000'), 1, 8)) nrcpfcgc_compara
 						 , gr.nrdgrupo
 						 , gr.dsdrisgp
 						 , (SELECT DECODE(inpessoa, 1,
-													 to_char(nrcpfcgc, '00000000000'),
-													 substr(to_char(nrcpfcgc, '00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc_nrdconta
+                           to_char(nrcpfcgc, 'fm00000000000'),
+                           substr(to_char(nrcpfcgc, 'fm00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrdconta) nrcpfcgc_nrdconta
 						 , (SELECT DECODE(inpessoa, 1,
-													 to_char(nrcpfcgc, '00000000000'),
-													 substr(to_char(nrcpfcgc, '00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrctasoc) nrcpfcgc_nrctasoc
+                           to_char(nrcpfcgc, 'fm00000000000'),
+                           substr(to_char(nrcpfcgc, 'fm00000000000000'), 1, 8)) FROM crapass WHERE cdcooper = gr.cdcooper AND nrdconta = gr.nrctasoc) nrcpfcgc_nrctasoc
 					FROM crapgrp gr
 				 WHERE gr.cdcooper = rw_cbase.cdcooper
 					 AND gr.nrdgrupo IN (
@@ -356,8 +355,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                  FROM crapgrp aux
                 WHERE aux.cdcooper = rw_cbase.cdcooper
                   AND DECODE(aux.inpessoa, 1,
-															 to_char(aux.nrcpfcgc, '00000000000'),
-															 substr(to_char(aux.nrcpfcgc, '00000000000000'), 1, 8)) =
+                               to_char(aux.nrcpfcgc, 'fm00000000000'),
+                               substr(to_char(aux.nrcpfcgc, 'fm00000000000000'), 1, 8)) =
 															 rw_cbase.nrcpfcgc_compara
 					)
 			)
@@ -390,8 +389,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 				 , RISC0004.fn_traduz_risco(ris.inrisco_cpf) risco_cpf
 				 , RISC0004.fn_traduz_risco(ris.inrisco_grupo) risco_grupo
 				 , RISC0004.fn_traduz_risco(ris.inrisco_final) risco_final
+                 , ris.cdmodali as ris_cdmodali
 				 , decode (ris.cdmodali
-				         , 0, 'CTA'
+                 , 0, 'CTA' -- Apenas para compatibilidade com dados pré-existentes (foi mantido apenas o '999')
 				         , 101, 'CTA'
 								 , 201, 'LIM'
 								 , 1901, 'LIM'
@@ -404,7 +404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 		 WHERE ris.cdcooper = pr_cdcooper
 		   AND ris.nrdconta = pr_nrdconta
 			 AND ris.dtrefere = pr_dtmvtoan
-		 ORDER BY decode(ris.cdmodali, 0, 0, 1);
+     ORDER BY decode(ris.cdmodali, 0, 0, 999, 0, 1);
 		rw_tbrisco_central cr_tbrisco_central%ROWTYPE;
 
     -- Calendário da cooperativa selecionada
@@ -475,39 +475,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       FETCH cr_tab INTO rw_tab;
       CLOSE cr_tab;
 
-      vr_valor_arrasto := TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), ',', '.'));
-
       -- Busca dados da conta base
       OPEN cr_base(pr_cdcooper, pr_nrdconta);
       FETCH cr_base INTO rw_cbase;
       CLOSE cr_base;
 
       -- Percorre contas de mesmo CPF/CNPJ da conta base
-      FOR rw_contas_do_titular
-       IN cr_contas_do_titular(rw_cbase) LOOP
-          FOR rw_tabrisco_central
-						IN cr_tbrisco_central(pr_cdcooper
-                                        , rw_contas_do_titular.nrdconta
-																 , rw_dat.dtmvtoan) LOOP
+      FOR rw_contas_do_titular IN cr_contas_do_titular(rw_cbase) LOOP
+
+          FOR rw_tabrisco_central IN cr_tbrisco_central(pr_cdcooper
+                                                      , rw_contas_do_titular.nrdconta
+                                                      , rw_dat.dtmvtoan) LOOP
+
 					      -- Adiciona registro para a conta/contrato no XML de retorno
                 pc_monta_reg_conta_xml(pr_retxml
                                      , vr_auxconta
                                      , vr_dscritic
                                      , rw_contas_do_titular.nrdconta
                                      , rw_contas_do_titular.nrcpfcgc
-																	 , rw_tabrisco_central.nrctremp
-																	 , rw_tabrisco_central.risco_inclusao
-																	 , rw_tabrisco_central.risco_grupo
-																	 , rw_tabrisco_central.risco_rating
-																	 , rw_tabrisco_central.risco_atraso
-																	 , rw_tabrisco_central.risco_refin
-																	 , rw_tabrisco_central.risco_agravado
-																	 , rw_tabrisco_central.risco_operacao
-																	 , rw_tabrisco_central.risco_cpf
-																	 , rw_tabrisco_central.nrdgrupo
-																	 , rw_tabrisco_central.risco_melhora
-																	 , rw_tabrisco_central.risco_final
-																	 , rw_tabrisco_central.tipo_registro);
+                                     , rw_tabrisco_central.nrctremp
+                                     , rw_tabrisco_central.risco_inclusao
+                                     , rw_tabrisco_central.risco_grupo
+                                     , rw_tabrisco_central.risco_rating
+                                     , rw_tabrisco_central.risco_atraso
+                                     , rw_tabrisco_central.risco_refin
+                                     , rw_tabrisco_central.risco_agravado
+                                     , rw_tabrisco_central.risco_operacao
+                                     , rw_tabrisco_central.risco_cpf
+                                     , rw_tabrisco_central.nrdgrupo
+                                     , rw_tabrisco_central.risco_melhora
+                                     , rw_tabrisco_central.risco_final
+                                     , rw_tabrisco_central.tipo_registro
+                                   );
 
 					   vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 			   END LOOP; -- contratos
@@ -539,7 +538,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																	 , rw_tabrisco_central.nrdgrupo
 																	 , rw_tabrisco_central.risco_melhora
 																	 , rw_tabrisco_central.risco_final
-																	 , rw_tabrisco_central.tipo_registro);
+                                     , rw_tabrisco_central.tipo_registro
+                                   );
 
 					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 			   END LOOP; -- contratos
@@ -548,12 +548,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       -- Busca o risco da última central de riscos (último fechamento)
       vr_risco_ult_central := RISC0004.fn_busca_risco_ult_central(pr_cdcooper
                                                        , pr_nrdconta
-                                                       , rw_dat.dtultdma
-																											 , vr_valor_arrasto);
+                                                       , rw_dat.dtultdma);
 			vr_data_risco_final := RISC0004.fn_busca_data_risco(pr_cdcooper
                                                , pr_nrdconta
-                                               , rw_dat.dtmvtoan
-																							 , vr_valor_arrasto);
+                                               , rw_dat.dtmvtoan);
 
       -- Adiciona registro com dados da central de riscos no XML de retorno
       pc_monta_reg_central_risco(pr_retxml

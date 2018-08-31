@@ -1172,7 +1172,7 @@ END pc_busca_saldos_devedores;
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_nrctremp => nvl(pr_nrctremp,0));
         FETCH cr_crapepr INTO rw_crapepr;
-        
+
         IF cr_crapepr%FOUND THEN 
            CLOSE cr_crapepr;
            IF rw_crapepr.inprejuz = 0 THEN
@@ -1630,7 +1630,6 @@ DECLARE
        , his.indebcre
        , his.dshistor
        , his.cdhistor
-       , his.progress_recid
     FROM craplcm lcm
        , craphis his
    WHERE lcm.cdcooper   = pr_cdcooper
@@ -1649,10 +1648,10 @@ DECLARE
               AND aux.cdhistor = 2719
               AND aux.vllanmto = lcm.vllanmto
          )))
-     AND his.cdhistor  <> 2719
+     AND his.cdhistor   NOT IN (2718, 2719)
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
-   ORDER BY progress_recid;
+   ORDER BY dtmvtolt ASC, indebcre DESC;
   rw_craplcm cr_craplcm%ROWTYPE;
 
   -- Busca o limite de crédito atual do cooperado
