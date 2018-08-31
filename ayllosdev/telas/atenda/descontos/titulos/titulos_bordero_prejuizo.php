@@ -100,21 +100,22 @@
 		<input type="text" name="topgmupr" id="topgmupr" value="<?=$dados->topgmupr ?>" />
 		<br />
 
+		<label for="tottjmpr"><? echo utf8ToHtml('Juros de mora:') ?></label>
+		<input type="text" name="tottjmpr" id="tottjmpr" value="<?=$dados->tottjmpr?>" />
+		<br />
+
 		<label for="tottmupr"><? echo utf8ToHtml('Multa:') ?></label>
 		<input type="text" name="tottmupr" id="tottmupr" value="<?=$dados->tottmupr?>" />
 		<br />
-
-		<label for="tottjmpr"><? echo utf8ToHtml('Juros de mora:') ?></label>
-		<input type="text" name="tottjmpr" id="tottjmpr" value="<?=$dados->tottjmpr?>" />
+		
+		<label for="tosprjat"><? echo utf8ToHtml('Saldo atualizado:') ?></label>
+		<input type="text" name="tosprjat" id="tosprjat" value="<?=$dados->tosprjat?>" />
 		<br />
 
 		<label for="topgjmpr"><? echo utf8ToHtml('Valores pagos de Juros de mora:') ?></label>
 		<input type="text" name="topgjmpr" id="topgjmpr" value="<?=$dados->topgjmpr?>" />
 		<br />
 
-		<label for="tosprjat"><? echo utf8ToHtml('Saldo atualizado:') ?></label>
-		<input type="text" name="tosprjat" id="tosprjat" value="<?=$dados->tosprjat?>" />
-		<br />
 
 		<label for="diasatrs"><? echo utf8ToHtml('Dias em atraso:') ?></label>
 		<input type="text" name="diasatrs" id="diasatrs" value="<?=$dados->diasatrs ?>" />
