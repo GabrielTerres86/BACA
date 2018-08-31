@@ -303,7 +303,10 @@
               
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
               
-              15/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
+              27/06/2018 - P450 - Calculo e gravacao Risco Refin no emprestimo
+                           (Guilherme/AMcom)
+                           
+              16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
                            PJ 450 - Diego Simas (AMcom)
                            
 ............................................................................. */
@@ -3347,6 +3350,8 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vltrfgar AS DECI                                      NO-UNDO.    
     DEF VAR aux_vltarifa AS DECI                                      NO-UNDO.
     DEF VAR aux_vltaxiof AS DECI                                      NO-UNDO.    
+    DEF VAR aux_dtrisref AS DATE /* DATA RISCO REFIN */               NO-UNDO.
+    DEF VAR aux_qtdiaatr AS INTE                                      NO-UNDO.
 
     DEF BUFFER b-crawepr FOR crawepr.
 
@@ -3486,9 +3491,11 @@ PROCEDURE grava_efetivacao_proposta:
             END.
        ****/
 
-       FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin) WHERE crappre.cdcooper = par_cdcooper     
+       FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin)
+           WHERE crappre.cdcooper = par_cdcooper     
                                                               AND crappre.inpessoa = crapass.inpessoa
-                                                              AND crappre.cdfinemp = crawepr.cdfinemp NO-LOCK: END.
+             AND crappre.cdfinemp = crawepr.cdfinemp NO-LOCK:
+       END.
                                                               /*AND (crappre.cdfinemp = crawepr.cdfinemp
                                                                OR crawepr.flgpreap = TRUE) NO-LOCK: END.*/
 
@@ -3721,8 +3728,7 @@ PROCEDURE grava_efetivacao_proposta:
      
      
      /* Se for Pos-Fixado */
-     IF  crawepr.tpemprst = 2  THEN
-                     DO:
+     IF  crawepr.tpemprst = 2  THEN DO:
              ASSIGN aux_nrdolote_cred = 650004.
 
              IF   aux_floperac   THEN             /* Financiamento*/
@@ -4142,6 +4148,51 @@ PROCEDURE grava_efetivacao_proposta:
                  END.
 
           END.
+       /***********************
+          CALCULO DATA RISCO REFIN
+          Se houve alguma liquidacao de contrato
+       ***********************/
+       IF (crawepr.nrctrliq[1]  > 0
+       OR  crawepr.nrctrliq[2]  > 0
+       OR  crawepr.nrctrliq[3]  > 0
+       OR  crawepr.nrctrliq[4]  > 0
+       OR  crawepr.nrctrliq[5]  > 0
+       OR  crawepr.nrctrliq[6]  > 0
+       OR  crawepr.nrctrliq[7]  > 0
+       OR  crawepr.nrctrliq[8]  > 0
+       OR  crawepr.nrctrliq[9]  > 0
+       OR  crawepr.nrctrliq[10] > 0
+       OR  crawepr.nrliquid     > 0) THEN DO:
+
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+           /* Verifica se ha contratos de acordo */
+           RUN STORED-PROCEDURE pc_dias_atraso_liquidados
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                 ,INPUT par_nrdconta
+                                                 ,INPUT crawepr.nrctremp
+                                                 ,OUTPUT 0
+                                                 ,OUTPUT "").
+    
+           CLOSE STORED-PROC pc_dias_atraso_liquidados
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+           ASSIGN aux_qtdiaatr = 0
+                  aux_dscritic = ""
+                  aux_dscritic = pc_dias_atraso_liquidados.pr_dscritic WHEN pc_dias_atraso_liquidados.pr_dscritic <> ?
+                  aux_qtdiaatr = INT(pc_dias_atraso_liquidados.pr_qtdatref).
+            
+           IF (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+              ASSIGN aux_dtrisref = par_dtmvtolt
+                     aux_qtdiaatr = 0.
+    
+           ASSIGN aux_dtrisref = par_dtmvtolt - aux_qtdiaatr.
+       END.
+       ELSE 
+           ASSIGN aux_dtrisref = ?.
+       /***********************/
           
        /* Diego Simas (AMcom) - PJ 450                       */
        /* Início                                             */
@@ -4205,7 +4256,7 @@ PROCEDURE grava_efetivacao_proposta:
            
        /* Requalifica a operacao na proposta                 */
        /* INICIO                                             */       
-       FIND FIRST
+       FIND FIRST b-crawepr
           WHERE b-crawepr.cdcooper = par_cdcooper AND
                 b-crawepr.nrdconta = par_nrdconta AND
                 b-crawepr.nrctremp = par_nrctremp
@@ -4215,7 +4266,6 @@ PROCEDURE grava_efetivacao_proposta:
           ASSIGN b-crawepr.idquapro = pc_proc_qualif_operacao.pr_idquapro.
        /* FIM                                                */
        /* Requalifica a operacao na proposta                 */
-       
        
        /* Fim                                                */    
        /* Diego Simas (AMcom) - PJ 450                       */
@@ -4268,10 +4318,11 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vlaqiofc = aux_vlaqiofc
               crapepr.vltariof = (IF crawepr.tpemprst = 2 THEN aux_vltariof ELSE aux_vltotiof)
               crapepr.iddcarga = aux_idcarga
-              crapepr.idfiniof = crawepr.idfiniof.
+              crapepr.idfiniof = crawepr.idfiniof
+              crapepr.dtinicio_atraso_refin = aux_dtrisref
+              .
                                 
-                          if crawepr.idfiniof > 0 then
-                          do:
+              if crawepr.idfiniof > 0 then do:
                              assign crapepr.vlsdeved = crawepr.vlemprst + aux_vltotiof + aux_vltarifa.
                                     crapepr.vlemprst = crawepr.vlemprst + aux_vltotiof + aux_vltarifa.
                           end.
