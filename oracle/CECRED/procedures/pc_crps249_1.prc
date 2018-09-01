@@ -700,21 +700,22 @@ BEGIN
 
   -- Lançamentos de operação de crédito do borderô de desconto de títulos
   IF upper(pr_nmestrut) = 'TBDSCT_LANCAMENTO_BORDERO'  THEN
-    vr_cursor :=   ' select ass.cdagenci '||
-                   '       ,100 cdbccxlt '||
-                   '       ,lcb.nrdconta '||
-                   '       ,9999 nrdolote '||
-                   '       ,lcb.nrdocmto '||
-                   '       ,lcb.vllanmto '||
-                   '       ,ass.cdagenci '||
-                   '       ,ass.inpessoa '||
-                   ' from  tbdsct_lancamento_bordero lcb '||
+    vr_cursor :=   'SELECT ass.cdagenci '||
+                   '      ,100 cdbccxlt '||
+                   '      ,lcb.nrdconta '||
+                   '      ,9999 nrdolote '||
+                   '      ,lcb.nrdocmto '||
+                   '      ,lcb.vllanmto '||
+                   '      ,ass.cdagenci '||
+                   '      ,ass.inpessoa '||
+                   ' FROM  tbdsct_lancamento_bordero lcb '||
                    '      ,crapass ass '||
-                   ' where  lcb.cdcooper = '||pr_cdcooper||
-                   '  and   lcb.cdhistor = '||pr_cdhistor||
-                   '  and   lcb.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
-                   '  and   ass.cdcooper = lcb.cdcooper '||
-                   '  and   ass.nrdconta = lcb.nrdconta ';
+                   ' WHERE lcb.cdhistor IN (2667,2668,2669)  '||
+                   '   AND lcb.cdcooper = '||pr_cdcooper||
+                   '   AND lcb.cdhistor = '||pr_cdhistor||
+                   '   AND lcb.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
+                   '   AND ass.cdcooper = lcb.cdcooper '||
+                   '   AND ass.nrdconta = lcb.nrdconta ';
 
   ELSE
     -- Define a query do cursor dinâmico

@@ -85,10 +85,14 @@ BEGIN
            ljt.nrborder,
            SUM(ljt.vldjuros) vldjuros
       FROM crapass ass,
+           crapbdt bdt,
            crapljt ljt
      WHERE ass.cdagenci = nvl(pr_cdagenci,ass.cdagenci)
        AND ass.cdcooper = ljt.cdcooper
        AND ass.nrdconta = ljt.nrdconta
+       AND bdt.flverbor = 1
+       AND bdt.nrborder = ljt.nrborder
+       AND bdt.cdcooper = ljt.cdcooper
        AND ljt.cdcooper = pr_cdcooper
        AND ljt.dtrefere = pr_dtmvtolt
      GROUP BY ljt.nrdconta,
@@ -223,7 +227,7 @@ BEGIN
     
       -- Buscar e registrar Apropriação Juros Remuneratórios
       FOR rw_crapljt IN cr_crapljt(pr_cdcooper => pr_cdcooper,
-                                   pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+                                   pr_dtmvtolt => last_day(rw_crapdat.dtmvtolt)) LOOP
         DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
                                               ,pr_nrdconta => rw_crapljt.nrdconta
                                               ,pr_nrborder => rw_crapljt.nrborder
