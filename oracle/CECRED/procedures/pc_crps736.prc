@@ -22,6 +22,10 @@ BEGIN
      Alteracoes: 
                07/08/2018 - Alterado para paralelismo - Luis Fernando (GFT)
 
+               27/08/2018 - Adicionado leitura da crapljt para inserir registros no lançamento de borderô com o 
+                            histórico ctb 2667 (Apropriação Juros Remuneratórios), assim pode ser consultado os 
+                            valores na tela LISLOT (Paulo Penteado GFT)
+
   ............................................................................ */
   DECLARE
 
@@ -74,6 +78,25 @@ BEGIN
          AND craptdb.insittit =  4  -- liberado
          AND crapbdt.cdagenci = nvl(pr_cdagenci,crapbdt.cdagenci)
          AND crapbdt.flverbor =  1; -- bordero liberado na nova versão
+    
+    CURSOR cr_crapljt(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                      pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+    SELECT ljt.nrdconta,
+           ljt.nrborder,
+           SUM(ljt.vldjuros) vldjuros
+      FROM crapass ass,
+           crapbdt bdt,
+           crapljt ljt
+     WHERE ass.cdagenci = nvl(pr_cdagenci,ass.cdagenci)
+       AND ass.cdcooper = ljt.cdcooper
+       AND ass.nrdconta = ljt.nrdconta
+       AND bdt.flverbor = 1
+       AND bdt.nrborder = ljt.nrborder
+       AND bdt.cdcooper = ljt.cdcooper
+       AND ljt.cdcooper = pr_cdcooper
+       AND ljt.dtrefere = pr_dtmvtolt
+     GROUP BY ljt.nrdconta,
+              ljt.nrborder;
     
   BEGIN
     -- ainda não comecou a rodar o paralelismo
@@ -154,7 +177,6 @@ BEGIN
       -- Leitura do calendario
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-      
       IF BTCH0001.cr_crapdat%NOTFOUND THEN
         vr_cdcritic := 1;
         CLOSE BTCH0001.cr_crapdat;
@@ -201,6 +223,23 @@ BEGIN
           RAISE vr_exc_saida;
         END IF;
           
+      END LOOP;
+    
+      -- Buscar e registrar Apropriação Juros Remuneratórios
+      FOR rw_crapljt IN cr_crapljt(pr_cdcooper => pr_cdcooper,
+                                   pr_dtmvtolt => last_day(rw_crapdat.dtmvtolt)) LOOP
+        DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                              ,pr_nrdconta => rw_crapljt.nrdconta
+                                              ,pr_nrborder => rw_crapljt.nrborder
+                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                              ,pr_cdorigem => 7 -- batch
+                                              ,pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurrem
+                                              ,pr_vllanmto => rw_crapljt.vldjuros
+                                              ,pr_dscritic => vr_dscritic );
+      
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
       END LOOP;
       
       -- Processo OK, devemos chamar a fimprg

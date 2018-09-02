@@ -1767,12 +1767,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 5563;
 
     -- CONTAS JUROS +60
-    -- vr_tab_risco('A') := 2;
-    -- Adicionado o nivél 2 pois o cursor cr_crapris_60 estava retornando esse nivel (Paulo Penteado GFT)
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('2').nrdconta := 9302;
-    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('2').nrdconta := 3333;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('2').nrdconta := 9302;
-    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('2').nrdconta := 3333;
     -- vr_tab_risco('B') := 3;
     vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('3').nrdconta := 9302;
     vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('3').nrdconta := 3333;
@@ -6483,7 +6477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5562,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',8447,5526,' ||
                      TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
                      ',1434,' || '"(risco) PROVISAO DESCONTO TITULO PESSOA FISICA"';
       pc_gravar_linha(vr_linhadet);

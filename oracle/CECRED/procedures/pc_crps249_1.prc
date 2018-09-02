@@ -76,7 +76,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
 
                01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
 
-               20/12/2017 - Inclusão de novos históricos(2013,2014), Prj. 402 (Jean Michel)
+               20/12/2017 - Inclusão de novos históricos(2013,2014), Prj. 402 (Jean Michel)	
+
+               25/08/2018 - Adicionado contabilização das operações de créditos dos borderôs de desconto de titulos
+                            (Paulo Penteado GFT ) 
 
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
@@ -698,6 +701,26 @@ BEGIN
     vr_nmcolsql := ' ,trim(replace(x.cdpesqbb,''.'','''')) ';
   END IF;
 
+  -- Lançamentos de operação de crédito do borderô de desconto de títulos
+  IF upper(pr_nmestrut) = 'TBDSCT_LANCAMENTO_BORDERO'  THEN
+    vr_cursor :=   'SELECT ass.cdagenci '||
+                   '      ,100 cdbccxlt '||
+                   '      ,lcb.nrdconta '||
+                   '      ,9999 nrdolote '||
+                   '      ,lcb.nrdocmto '||
+                   '      ,lcb.vllanmto '||
+                   '      ,ass.cdagenci '||
+                   '      ,ass.inpessoa '||
+                   ' FROM  tbdsct_lancamento_bordero lcb '||
+                   '      ,crapass ass '||
+                   ' WHERE lcb.cdhistor IN (2667,2668,2669)  '||
+                   '   AND lcb.cdcooper = '||pr_cdcooper||
+                   '   AND lcb.cdhistor = '||pr_cdhistor||
+                   '   AND lcb.dtmvtolt = to_date('''||to_char(pr_dtmvtolt, 'ddmmyyyy')||''', ''ddmmyyyy'')'||
+                   '   AND ass.cdcooper = lcb.cdcooper '||
+                   '   AND ass.nrdconta = lcb.nrdconta ';
+
+  ELSE
   -- Define a query do cursor dinâmico
   vr_cursor := 'select x.cdagenci,'||
                      ' x.cdbccxlt,'||
@@ -713,6 +736,7 @@ BEGIN
                  ' and x.cdhistor = '||pr_cdhistor||
                  ' and c.cdcooper = x.cdcooper'||
                  ' and c.nrdconta = x.nrdconta';
+  END IF;
   -- Cria cursor dinâmico
   vr_num_cursor := dbms_sql.open_cursor;
 
