@@ -1,7 +1,7 @@
 <?php
 
 /*************************************************************************
-	Fonte: incluir_desconto.php
+	Fonte: alterar_desconto.php
 	Autor: André Clemer - Supero			Ultima atualizacao: --/--/----
 	Data : Julho/2018
 	
@@ -82,7 +82,7 @@ $xml .= "   <idvinculacao>".$idvinculacao."</idvinculacao>";
 $xml .= "   <perdesconto>".implode("|", $perdesconto)."</perdesconto>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
-
+//exit('hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'); // debug
 $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "ALTERA_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
 

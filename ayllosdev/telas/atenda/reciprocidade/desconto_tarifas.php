@@ -181,10 +181,10 @@ arrayAlinha[1] = 'center';
 arrayAlinha[2] = 'left';
 arrayAlinha[3] = 'left';
 
-$('body').bind('click', function (ev) {
+$('body').unbind('click').bind('click', function (ev) {
 	if (($(ev.target).find('.closeEvent:visible').length && $('#divBloqueio').is(':visible')) || (ev.target.id == 'divBloqueio'))  {
     sairDescontoConvenio();
   }
-  return false;
+  // return false;
 })
 </script>

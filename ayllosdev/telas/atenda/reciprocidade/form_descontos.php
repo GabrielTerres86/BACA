@@ -214,12 +214,31 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 						$cnv[strtolower($value->name)] = $value->cdata;
 					}
 					$aux[] = $cnv;
+
+					// quantidade de boletos emitidos
+					$cnv_qtbolcob = (int) getByTagName($convenio->tags, 'qtbolcob');
+					$cnv_insitceb = (int) getByTagName($convenio->tags, 'insitceb');
+					$cnv_nrconven = (int) getByTagName($convenio->tags, 'convenio');
+					$cnv_tipoconv = getByTagName($convenio->tags, 'tipo');
+					
+					$title = 'Excluir Conv&ecirc;nio';
+					$fnc = 'excluirConvenio('.$cnv_nrconven.', true);';
+					$img = $UrlImagens.'geral/excluir.gif';
+
+					if ($cnv_insitceb === 1 && $cnv_qtbolcob > 0) {
+						$title = 'Inativar Conv&ecirc;nio';
+						$fnc = 'inativarConvenio('.$cnv_nrconven.',true);return false;';
+					} elseif ($cnv_insitceb === 2) {
+						$title = 'Ativar Conv&ecirc;nio';
+						$fnc = 'ativarConvenio('.$cnv_nrconven.',true);return false;';
+						$img = $UrlImagens.'geral/btn_excluir.gif';
+					}
 				?>
-				<tr>
-					<td width="330"><?php echo $convenio->tags[0]->cdata, ' - ', $convenio->tags[1]->cdata ?></td>
+				<tr id="convenio_<?php echo $cnv_nrconven; ?>">
+					<td width="330"><?php echo $cnv_nrconven, ' - ', $cnv_tipoconv; ?></td>
 					<td>
-						<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" style="margin-right:5px;width:14px;margin-top:1px"/></a>
-						<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(<?php echo $convenio->tags[0]->cdata ?>); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.gif" style="width:15px;margin-top:1px"/></a>
+						<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(<?php echo $cnv_nrconven; ?>); return false;"><img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" style="margin-right:5px;width:14px;margin-top:1px"/></a>
+						<a class="imgExcluir" title="<?php echo $title; ?>" onclick="<?php echo $fnc; ?>"><img src="<?php echo $img; ?>" style="width:15px;margin-top:1px"/></a>
 					</td>
 				</tr>
 				<?php
@@ -247,6 +266,7 @@ perdescontos = [];
 	<tr class="corPar">
 		<td width="60%">Boletos liquidados</td>
 		<td align="right" width="40%">
+			<input type="hidden" id="qtdboletos_liquidados_old" value="<?php echo $vr_boletos_liquidados; ?>">
 			<span>Qtd</span>
 			<input name="qtdboletos_liquidados" id="qtdboletos_liquidados" class="campo inteiro calculo" value="<?php echo $vr_boletos_liquidados; ?>" style="width:153px;text-align:left" />
 		</td>
@@ -254,6 +274,7 @@ perdescontos = [];
 	<tr class="corImpar">
 		<td>Volume liquida&ccedil;&atilde;o</td>
 		<td align="right">
+			<input type="hidden" id="valvolume_liquidacao_old" value="<?php echo $vr_volume_liquidacao; ?>">
 			<span>R$</span>
 			<input name="valvolume_liquidacao" id="valvolume_liquidacao" class="campo valor calculo" value="<?php echo $vr_volume_liquidacao; ?>" style="width:153px;" />
 		</td>
@@ -261,6 +282,7 @@ perdescontos = [];
 	<tr class="corPar">
 		<td>Floating</td>
 		<td align="right">
+			<input type="hidden" id="qtdfloat_old" value="<?php echo $vr_qtdfloat; ?>">
 			<select class="campo calculo" style="width:153px" id="qtdfloat" name="qtdfloat">
 			<?php foreach($floats as $float) {
 				echo '<option ' . (($vr_qtdfloat == getByTagName($float->tags,"dscodigo")) ? 'selected' : '') . ' value="' . getByTagName($float->tags,"cddominio") . '">' . getByTagName($float->tags,"dscodigo") . '</option>';
@@ -278,6 +300,7 @@ perdescontos = [];
 	<tr class="corPar">
 		<td>Aplica&ccedil;&otilde;es</td>
 		<td align="right">
+			<input type="hidden" id="vlaplicacoes_old" value="<?php echo $vr_aplicacoes; ?>">
 			<span>R$</span>
 			<input class="campo valor calculo" value="<?php echo $vr_aplicacoes; ?>" id="vlaplicacoes" name="vlaplicacoes" style="width:153px;" />
 		</td>
@@ -285,6 +308,7 @@ perdescontos = [];
 	<tr class="corImpar">
 		<td>Dep&oacute;sito &agrave; vista</td>
 		<td align="right">
+			<input type="hidden" id="vldeposito_old" value="<?php echo $vr_deposito; ?>">
 			<span>R$</span>
 			<input class="campo valor calculo <?php echo (($glbvars["cdcooper"] == 16) ? '' : 'campoTelaSemBorda') ?>" <?php echo (($glbvars["cdcooper"] == 16) ? '' : 'disabled') ?> value="<?php echo $vr_deposito; ?>" id="vldeposito" name="vldeposito" style="width:153px;" />
 		</td>
@@ -292,6 +316,7 @@ perdescontos = [];
 	<tr class="corPar">
 		<td>Data fim do contrato</td>
 		<td align="right">
+			<input type="hidden" id="dtfimcontrato_old" value="<?php echo $vr_dtfimcontrato; ?>">
 			<select class="campo" style="width:153px" name="dtfimcontrato" id="dtfimcontrato">
 			<option value=""></option>
 			<?php foreach($meses as $mes) {
@@ -303,6 +328,7 @@ perdescontos = [];
 	<tr class="corImpar">
 		<td>D&eacute;bito reajuste da tarifa</td>
 		<td align="right">
+			<input type="hidden" id="debito_reajuste_reciproci_old" value="<?php echo $vr_flgdebito_reversao; ?>">
 			<select class="campo" id="debito_reajuste_reciproci" name="debito_reajuste_reciproci" style="width:153px;">
 				<option value="1" <?php echo (($vr_flgdebito_reversao == "1" ? 'selected' : ''))?>>Sim</option>
 				<option value="0" <?php echo (($vr_flgdebito_reversao == "0" ? 'selected' : ((!$vr_flgdebito_reversao ? 'selected' : ''))))?>>N&atilde;o</option>

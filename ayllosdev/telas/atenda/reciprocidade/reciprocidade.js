@@ -82,7 +82,7 @@ var perdescontos = [];
 
 var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
-    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails;
+    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob;
 
 var erroAlcada = false;
 var cee = false;
@@ -315,14 +315,31 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
     $('<th>&nbsp;</th>').appendTo(tr);
     
     for (var i = 0, len = descontoConvenios.length; i < len; ++i) {
-        var tr = $('<tr></tr>').appendTo(table);
         var nrconven = descontoConvenios[i].convenio;
         var tipo = descontoConvenios[i].tipo;
 
+        var tr = $('<tr></tr>').appendTo(table);
+        tr.attr({id : 'convenio_' + nrconven});
+        
+        // seta valores padrões
+        var titExcluir = 'Excluir Conv&ecirc;nio';
+        var fncExcluir = 'excluirConvenio(' + nrconven + ', true); return false;';
+        var imgExcluir = UrlImagens + 'geral/excluir.gif';
+
+        // convenio ativo e quantidade de boletos emitidos maior que zero
+        if (parseInt(descontoConvenios[i].insitceb) === 1 && descontoConvenios[i].qtbolcob > 0) {
+            titExcluir = 'Inativar Conv&ecirc;nio';
+            fncExcluir = 'inativarConvenio(' + nrconven + ', true); return false;';
+        } else if (parseInt(descontoConvenios[i].insitceb) === 2) {
+            titExcluir = 'Ativar Conv&ecirc;nio';
+            fncExcluir = 'ativarConvenio(' + nrconven + ', true); return false;';
+            imgExcluir = UrlImagens + 'geral/btn_excluir.gif';
+        }
+        
         $('<td>' + nrconven + ' - ' + tipo + '</td>').appendTo(tr);
         $('<td>' +
             '<a class="imgEditar" title="Editar Conv&ecirc;nio" onclick="editarConvenio(' + nrconven + '); return false;"><img src="' + $('#imgEditar').val() + '" style="margin-right:5px;width:14px;margin-top:1px" /></a>' +
-			'<a class="imgExcluir" title="Excluir Conv&ecirc;nio" onclick="excluirConvenio(' + nrconven + '); return false;"><img src="' + $('#imgExcluir').val() + '" style="width:15px;margin-top:1px" border="0"/></a>' +
+			'<a class="imgExcluir" title="' + titExcluir  + '" onclick="'+fncExcluir+'"><img src="' + imgExcluir + '" style="width:15px;margin-top:1px" border="0"/></a>' +
         '</td>').appendTo(tr);
     }
 
@@ -350,7 +367,7 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
       var checkboxes = $('#divConvenios input[type="checkbox"]');
 
       if(checkboxes.length==0){
-          showError("error", "&#201; necess&#225;rio selecionar pelo menos um conv&#234;nio;.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+          showError("error", "&Eacute; necess&aacute;rio selecionar pelo menos um conv&ecirc;nio;.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
           return false;
       }
       //Valida dois convenios do mesmo tipo ao mesmo tempo.
@@ -366,7 +383,7 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
 
       });
       if(foundMesmoTipo){
-        showError("error", "N&#227;o &#233; poss&#237;vel selecionar mais de um conv&#234;nio de INTERNET.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "N&atilde;o &eacute; poss&iacute;vel selecionar mais de um conv&ecirc;nio de INTERNET.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
       }
 
@@ -466,32 +483,6 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
         return false;
     }
 
-    /*var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
-    var insitceb = $("#insitceb", "#divConteudoOpcao").val();
-    var inarqcbr = $("#inarqcbr", "#divConteudoOpcao").val();
-    var cddemail = $("#cddemail", "#divConteudoOpcao").val();
-    var dsdemail = $("#dsdemail", "#divConteudoOpcao").val();
-    var flgcruni = $("#flgcruni", "#divConteudoOpcao").val();
-    var flgcebhm = $("#flgcebhm", "#divConteudoOpcao").val();
-    var qtTitulares = $("#qtTitulares", "#divConteudoOpcao").val();
-    var titulares = $("#titulares", "#divConteudoOpcao").val();
-    var dsdmesag = $("#dsdmesag", "#divConteudoOpcao").val();
-    var flgregon = $("#flgregon", "#divConteudoOpcao").val();
-    var flgpgdiv = $("#flgpgdiv", "#divConteudoOpcao").val();
-    var flcooexp = $("#flcooexp", "#divConteudoOpcao").val();
-    var flceeexp = $("#flceeexp", "#divConteudoOpcao").val();
-    var flserasa = $("#flserasa", "#divConteudoOpcao").val();
-    var qtdfloat = $("#qtdfloat", "#divConteudoOpcao").val();
-    var flprotes = $("#flprotes", "#divConteudoOpcao").val();
-    var qtlimmip = $("#qtlimmip", "#divConteudoOpcao").val();
-    var qtlimaxp = $("#qtlimaxp", "#divConteudoOpcao").val();
-    var qtdecprz = $("#qtdecprz", "#divConteudoOpcao").val();
-    var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
-	var inenvcob = $("#inenvcob", "#divConteudoOpcao").val();
-	var emails;
-
-	var flsercco = $("#flsercco","#divConteudoOpcao").val();*/
-
     // Situacao nao permite alteracao da cobranca
     if (cddopcao == "A" &&
        (insitceb == 3 ||  // Pendente
@@ -570,6 +561,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
         qtdfloat = "";
         qtlimaxp = item.qtlimaxp;
         qtlimmip = item.qtlimmip;
+        qtbolcob = item.qtbolcob;
     }
 
     // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
@@ -609,6 +601,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
 			inenvcob: inenvcob,
             nrdconta: nrdconta,
             inpessoa: inpessoa,
+            qtbolcob: qtbolcob,
             idaba: idaba,
 			redirect: "script_ajax"
 		},
@@ -1065,8 +1058,8 @@ function realizaHabilitacao(idrecipr, cddopcao) {
 			flgregis: flgregis,
             flgregon: flgregon,
             flgpgdiv: flgpgdiv,
-			flcooexp: 1,        // debug será setado após "criação" da tela de paramêtros
-			flceeexp: flceeexp, // debug será setado após "criação" da tela de paramêtros
+			flcooexp: flcooexp,
+			flceeexp: flceeexp,
 			flserasa: flserasa,
 			flseralt: flseralt,
 			flposbol: flposbol,
@@ -1721,10 +1714,11 @@ function acessaAba(id,cddopcao) {
 
 
 function atualizarConvenios(cddopcao) {
-    var flcooexp = ($("#flcooexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
-    var flceeexp = ($("#flceeexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
+    var flcooexp     = ($("#flcooexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
+    var flceeexp     = ($("#flceeexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
 	var qtlimmip_val = $("#qtlimmip", "#frmConsulta").val();
     var qtlimaxp_val = $("#qtlimaxp", "#frmConsulta").val();
+    var qtbolcob     = $("#qtbolcob", "#frmConsulta").val();
 
     if (flcooexp == 0 && flceeexp == 0) {
         showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
@@ -1817,7 +1811,8 @@ function atualizarConvenios(cddopcao) {
         inenvcob: inenvcob,
         cddemail: cddemail,
         divCnvHomol: divCnvHomol,
-        flgcebhm: flgcebhm
+        flgcebhm: flgcebhm,
+        qtbolcob: qtbolcob
     };
     descontoConvenios[index] = convenio;
     validaEmiteExpede(true);
@@ -2066,15 +2061,20 @@ function geraImpressao(arquivo) {
 	carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
 }
 
-function confirmaAtivacao() {
+function ativarConvenio(nrconven, confirm){
+    if (confirm) {
+        showConfirmacao("Deseja ativar este conv&ecirc;nio?", 'Confirma&ccedil;&atilde;o - Ayllos', 'ativarConvenio('+nrconven+', false)', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+        return;
+    }
 
-    var dsmensagem = "Deseja ativar este conv&ecirc;nio?";
-    showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'ativarConvenio()', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+    var idx = retornaIndice(descontoConvenios, 'convenio', nrconven);
 
-}
+    descontoConvenios[idx].insitceb = 1;
 
-function ativarConvenio(){
-    var nrconven = $("#nrconven", "#divConteudoOpcao").val();
+    sairDescontoConvenio();
+    return;
+
+    /*var nrconven = $("#nrconven", "#divConteudoOpcao").val();
     var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
     var flgregis = $("#flgregis", "#divOpcaoConsulta").val();
 
@@ -2105,7 +2105,7 @@ function ativarConvenio(){
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}
-	});
+	});*/
 
 }
 
@@ -2638,17 +2638,33 @@ function HabilitaSMS() {
     }
 }
 
-function validarExclusaoConvenio() {
-    if (!confirm('Confirma a exclus&atilde;o do conv&ecirc;nio ?')) {
-        return false;
+function inativarConvenio(nrconven, confirm) {
+
+    if (confirm) {
+        showConfirmacao('Existem boletos cadastrados para este convenio CEB. Deseja inativar o conv&ecirc;nio?', 'Confirma&ccedil;&atilde;o - Ayllos', 'inativarConvenio('+nrconven+', false)', 'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))', 'sim.gif', 'nao.gif');
+        return;
     }
+
+    var idx = retornaIndice(descontoConvenios, 'convenio', nrconven);
+
+    descontoConvenios[idx].insitceb = 2;
+
+    blockBackground(parseInt($('#divRotina').css('z-index')));
+
+    sairDescontoConvenio();
+
+    //$('tr#convenio_' + descontoConvenios[idx].convenio);
+
+    /*var idrecipr = $('#idcalculo_reciproci', '#divConteudoOpcao').val();
 
     $.ajax({
         type: "POST",
-        async: false,
         dataType: 'html',
-        url: UrlSite + "telas/atenda/reciprocidade/consulta_convenio.php",
+        url: UrlSite + "telas/atenda/reciprocidade/excluir_convenio.php",
         data: {
+            nrdconta: nrdconta,
+            nrconven: nrconven,
+            idrecipr: idrecipr,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {
@@ -2659,16 +2675,18 @@ function validarExclusaoConvenio() {
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
         },
         success: function(response) {
-            if (response) {
-                excluirConvenio();
-            }
+            eval(response);
         }
-    });
+    });*/
 }
 
-function excluirConvenio(nrconven) {
+function excluirConvenio(nrconven, confirm) {
     var idx = retornaIndice(descontoConvenios, 'convenio', nrconven);
 
+    if (confirm) {
+        showConfirmacao('Confirma a exclus&atilde;o do conv&ecirc;nio?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirConvenio('+nrconven+', false)', 'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))', 'sim.gif', 'nao.gif');
+        return;
+    }
     // remove do array
     descontoConvenios.splice(idx, 1);
 
@@ -2724,7 +2742,7 @@ function converteNumero(numero) {
     return numero.replace('.', '').replace(',', '.');
 }
 
-function validaDados(flsolicita) {
+function validaDados(pedeSenha) {
 	vDataFimContrato = Number(cDataFimContrato.val());
 	vVldesconto_cee = cVldesconto_cee.val();
 	vVldesconto_coo = cVldesconto_coo.val();
@@ -2753,11 +2771,6 @@ function validaDados(flsolicita) {
 		return false;
     }
 
-	if (descontoConvenios && !descontoConvenios.length) {
-		showError("error", "Selecione pelo menos um conv&ecirc;nio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-
     if ( (vDataFimAdicionalCee || vDataFimAdicionalCoo) && !vJustificativaDesc ) {
         showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
@@ -2765,13 +2778,29 @@ function validaDados(flsolicita) {
 
     coo = false;
     cee = false;
+    ativo = false;
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
-		if (descontoConvenios[i].flcooexp == 1) {
-			coo = true;
-		}
-		if (descontoConvenios[i].flceeexp == 1) {
-			cee = true;
-		}
+        // 'undefined' = novo / 0 = novo, 1 = ativo
+        if (typeof descontoConvenios[i].insitceb === 'undefined' || parseInt(descontoConvenios[i].insitceb) < 2) {
+            ativo = true;
+        }
+		if (descontoConvenios[i].flcooexp == 1 || descontoConvenios[i].flceeexp == 1) {
+			if (descontoConvenios[i].flcooexp == 1) {
+                coo = true;
+            }
+            if (descontoConvenios[i].flceeexp == 1) {
+                cee = true;
+            }
+		}else {
+            coo = false;
+            cee = false;
+            break;
+        }
+	}
+
+    if (descontoConvenios && !ativo) {
+		showError("error", "&Eacute; necess&aacute;rio ter pelo menos um conv&ecirc;nio ativo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
 	}
 
 	if (coo == false && cee == false) {
@@ -2779,22 +2808,40 @@ function validaDados(flsolicita) {
 		return;
 	}
 
-    if (flsolicita) {
-    pedeSenhaCoordenador(2,'incluiDesconto();','divRotina');
+    // define se houve alteracao nos campos do contrato
+    var houveAlteracao = false;
+
+    if (idcalculo_reciproci) {
+        $('#qtdboletos_liquidados,#valvolume_liquidacao,#qtdfloat,#vlaplicacoes,#vldeposito,#dtfimcontrato,#debito_reajuste_reciproci').each(function (key, elem){
+            var val = $(elem).val(),
+                prevVal = $('#'+elem.id+'_old').val();
+
+            if (prevVal != val){
+                houveAlteracao = true;
+            }
+        });
+    }
+
+    if (pedeSenha) {
+        pedeSenhaCoordenador(2,'incluiDesconto(true);','divRotina');
     }else{
-        showConfirmacao('Confirma a inclus&atilde;o do contrato?', 'Confirma&ccedil;&atilde;o - Ayllos', 'incluiDesconto()', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+        var msg = 'Confirma a atualiza&ccedil;&atilde;o do contrato?';
+        if (houveAlteracao || !idcalculo_reciproci){
+            msg = 'Confirma a inclus&atilde;o do novo contrato?';
+        }
+        showConfirmacao(msg, 'Confirma&ccedil;&atilde;o - Ayllos', 'incluiDesconto('+houveAlteracao+')', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
     }
 
 }
 
-function incluiDesconto() {
+function incluiDesconto(houveAlteracao) {
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, salvando registro...");
 
-	if (idcalculo_reciproci) {
-		var url = UrlSite + "telas/atenda/reciprocidade/alterar_desconto.php"
-	} else {
+	if (houveAlteracao || !idcalculo_reciproci) {
 		var url = UrlSite + "telas/atenda/reciprocidade/incluir_desconto.php";
+	} else {
+		var url = UrlSite + "telas/atenda/reciprocidade/alterar_desconto.php"
 	}
 
     var dtfimadicional_coo = $('#dtfimadicional_coo', '.tabelaDesconto').val();
@@ -2901,17 +2948,6 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ) {
 
-		/*btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
-		btnContinuar.prop('disabled', true);
-		btnContinuar.attr('onclick', 'return false;');
-
-		btnAprovacao.removeClass('botaoDesativado');
-		btnAprovacao.prop('disabled', false);
-		btnAprovacao.attr('onclick', 'solicitarAprovacao();return false;');
-
-		cJustificativaDesc.removeClass('campoTelaSemBorda');
-		cJustificativaDesc.prop('disabled', false);*/
-
 		$.ajax({
 		    dataType: "html",
 		    type: "POST",
@@ -2955,9 +2991,6 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 		btnAprovacao.removeClass('botaoDesativado').addClass('botaoDesativado');
 		btnAprovacao.prop('disabled', true);
 		btnAprovacao.attr('onclick', 'return false;');
-
-		//cJustificativaDesc.removeClass('campoTelaSemBorda').addClass('campoTelaSemBorda');
-		//cJustificativaDesc.prop('disabled', true);
 	}
 
 }

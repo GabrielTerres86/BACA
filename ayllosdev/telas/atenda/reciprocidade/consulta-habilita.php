@@ -97,7 +97,7 @@ if ($idaba === 1) {
 }
 
 $dsorgarq    = trim($_POST["dsorgarq"]);
-$insitceb    = !empty($_POST["insitceb"]) ? trim($_POST["insitceb"]) : 1;
+$insitceb    = !empty($_POST["insitceb"]) ? trim($_POST["insitceb"]) : 0;
 $inarqcbr    = $_POST["inarqcbr"];
 $cddemail    = $_POST["cddemail"];
 $flgregon    = retornaFlag($_POST["flgregon"]);
@@ -122,6 +122,7 @@ $insrvprt    = trim($_POST["insrvprt"]);
 $qtdecprz    = trim($_POST["qtdecprz"]);
 $idrecipr	 = trim($_POST["idrecipr"]);
 $inenvcob	 = trim($_POST["inenvcob"]);
+$qtbolcob	 = trim($_POST["qtbolcob"]);
 
 // Monta o xml de requisição
 $xml  = "";
@@ -248,8 +249,9 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
     <input type="hidden" name="glb_desmensagem"            id="glb_desmensagem" />
     <input type="hidden" name="glb_perdesconto"            id="glb_perdesconto" />
     <input type="hidden" name="glb_idreciproci"            id="glb_idreciproci" />
-    <input type="hidden" name= "flgregis"                  id="flgregis"                   value="<?php echo $flgregis; ?>" />
-    <input type="hidden" name= "insitceb"                  id="insitceb"                   value="<?php echo $insitceb; ?>" />    
+    <input type="hidden" name="flgregis"                   id="flgregis"                   value="<?php echo $flgregis; ?>" />
+    <input type="hidden" name="insitceb"                   id="insitceb"                   value="<?php echo $insitceb; ?>" />    
+    <input type="hidden" name="qtbolcob"                   id="qtbolcob"                   value="<?php echo $qtbolcob; ?>" />    
 
 	<fieldset>
 		<legend><? echo utf8ToHtml($dstitulo) ?></legend>
