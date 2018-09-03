@@ -37,7 +37,7 @@
 		<label for="tpproduto">Tipo Produto:</label>
 		<select name="tpproduto" id="tpproduto">
 			<option value="1"><? echo utf8ToHtml('Empréstimos') ?></option>
-			<option value="5"><? echo utf8ToHtml('Limite de Descontos de Títulos') ?></option>
+			<option value="3"><? echo utf8ToHtml('Desconto Títulos - Limite') ?></option>
 		</select>
 
 		<br style="clear:both" />
