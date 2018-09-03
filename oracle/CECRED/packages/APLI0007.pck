@@ -112,6 +112,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     RETURN vr_nmprodut;
   END;
   
+  -- Retornar true caso a aplicação esteja em carencia
+  FUNCTION fn_tem_carencia(pr_dtmvtapl crapdat.dtmvtolt%type
+                          ,pr_qtdiacar craprac.qtdiacar%TYPE
+                          ,pr_dtmvtres crapdat.dtmvtolt%TYPE) RETURN VARCHAR2 IS
+  BEGIN
+    -- Se a data enviada menos a data do movimento da aplicacao, for inferior a quantidade de dias da aplicacao
+    IF (pr_dtmvtres - pr_dtmvtapl) < pr_qtdiacar THEN
+      -- Tem carencia
+      RETURN 'S';
+    ELSE
+      -- Não satisfez nenhuma condicao, não tem carencia
+      RETURN 'N';
+    END IF;
+  END;
+
   -- Função para transformar hora atual em texto para LOGS
   FUNCTION fn_get_time_char RETURN VARCHAR2 IS
   BEGIN 
@@ -875,6 +890,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,hst.idtipo_lancto
                       ,hst.cdoperacao_b3
                       ,capl.qtcotas
+                      ,capl.vlpreco_registro
+                      ,rda.dtmvtolt dtmvtapl
+                      ,decode(capl.tpaplicacao,1,rda.qtdiaapl,rda.qtdiauti) qtdiacar
                       ,lap.progress_recid
                   FROM craplap lap
                       ,craprda rda
@@ -919,6 +937,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                       ,hst.idtipo_lancto
                       ,hst.cdoperacao_b3 
                       ,capl.qtcotas
+                      ,capl.vlpreco_registro
+                      ,rac.dtmvtolt dtmvtapl
+                      ,rac.qtdiacar
                       ,lac.progress_recid
                   FROM craplac lac
                       ,craprac rac
@@ -1211,50 +1232,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           FOR rw_lcto IN cr_lctos_rgt(rw_cop.cdcooper,vr_dtmvto2a,rw_crapdat.dtmvtolt,vr_dtinictd) LOOP
             -- Se mudou data, conta ou aplicação
             IF vr_dtmvtolt <> rw_lcto.dtmvtolt OR vr_nrdconta <> rw_lcto.nrdconta OR vr_nraplica <> rw_lcto.nraplica THEN
-              -- Armazenar quantidade de cotas e calcular saldo da aplicação anteriormente ao(s) resgates
+              -- Armazenar quantidade de cotas 
               vr_qtcotas := rw_lcto.qtcotas;
-              vr_sldaplic := 0;
-              pc_busca_saldo_anterior(pr_cdcooper  => rw_cop.cdcooper         --> Cooperativa
-                                     ,pr_nrdconta  => rw_lcto.nrdconta        --> Conta
-                                     ,pr_nraplica  => rw_lcto.nraplica        --> Aplicação
-                                     ,pr_tpaplica  => rw_lcto.tpaplrdc        --> Tipo aplicação
-                                     ,pr_cdprodut  => rw_lcto.cdprodut        --> Codigo produto 
-                                     ,pr_dtmvtolt  => rw_crapdat.dtmvtolt     --> Data movimento
-                                     ,pr_dtmvtsld  => rw_lcto.dtmvtolt        --> Data do saldo desejado
-                                     ,pr_tpconsul  => 'R'                     --> Resgates
-                                     ,pr_sldaplic  => vr_sldaplic             --> Saldo na data
-                                     ,pr_idcritic => vr_idcritic              --> Identificador critica
-                                     ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
-                                     ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
-              -- Código comum, para gravação do LOG independente de sucesso ou não
-              IF vr_dscritic IS NOT NULL THEN
-                -- Houve erro
-                vr_dscritic := 'Nao foi possivel buscar saldo Anterior Cooper '||rw_cop.cdcooper
-                            || ',Conta '||rw_lcto.nrdconta
-                            || ',Aplica '||rw_lcto.nraplica
-                            || ',Data Solicitada '||rw_lcto.dtmvtolt
-                            ||' -> '|| vr_dscritic;
-                RAISE vr_exc_saida;
+              -- Quando não houver carencia
+              IF fn_tem_carencia(pr_dtmvtapl => rw_lcto.dtmvtapl
+                                ,pr_qtdiacar => rw_lcto.qtdiacar
+                                ,pr_dtmvtres => rw_lcto.dtmvtolt) = 'N' THEN  
+                -- Calcular saldo da aplicação anteriormente ao(s) resgates
+                vr_sldaplic := 0;
+                pc_busca_saldo_anterior(pr_cdcooper  => rw_cop.cdcooper         --> Cooperativa
+                                       ,pr_nrdconta  => rw_lcto.nrdconta        --> Conta
+                                       ,pr_nraplica  => rw_lcto.nraplica        --> Aplicação
+                                       ,pr_tpaplica  => rw_lcto.tpaplrdc        --> Tipo aplicação
+                                       ,pr_cdprodut  => rw_lcto.cdprodut        --> Codigo produto 
+                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt     --> Data movimento
+                                       ,pr_dtmvtsld  => rw_lcto.dtmvtolt        --> Data do saldo desejado
+                                       ,pr_tpconsul  => 'R'                     --> Resgates
+                                       ,pr_sldaplic  => vr_sldaplic             --> Saldo na data
+                                       ,pr_idcritic => vr_idcritic              --> Identificador critica
+                                       ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
+                                       ,pr_dscritic => vr_dscritic);            --> Retorno de críticaca
+                -- Código comum, para gravação do LOG independente de sucesso ou não
+                IF vr_dscritic IS NOT NULL THEN
+                  -- Houve erro
+                  vr_dscritic := 'Nao foi possivel buscar saldo Anterior Cooper '||rw_cop.cdcooper
+                              || ',Conta '||rw_lcto.nrdconta
+                              || ',Aplica '||rw_lcto.nraplica
+                              || ',Data Solicitada '||rw_lcto.dtmvtolt
+                              ||' -> '|| vr_dscritic;
+                  RAISE vr_exc_saida;
+                END IF;
+                -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
+                -- o valor dos resgates efetuados neste dia para a conta e aplicação
+                IF vr_sldaplic = 0 THEN
+                  OPEN cr_resgat(pr_cdcooper  => rw_cop.cdcooper    --> Cooperativa
+                                ,pr_nrdconta  => rw_lcto.nrdconta   --> Conta
+                                ,pr_nraplica  => rw_lcto.nraplica   --> Aplicação
+                                ,pr_tpaplrdc  => rw_lcto.tpaplrdc   --> TIpo da aplicação
+                                ,pr_dtmvtolt  => rw_lcto.dtmvtolt); --> Data
+                  
+                  FETCH cr_resgat 
+                   INTO vr_sldaplic;
+                  CLOSE cr_resgat;
+                END IF; 
+                -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
+                IF vr_sldaplic = 0 THEN
+                  vr_sldaplic := rw_lcto.vllanmto;
+                END IF;
+                -- Calcular preço unitário
+                vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
+              ELSE
+                -- Quando carencia usar sempre a pu da emissão
+                vr_vlpreco_unit := rw_lcto.vlpreco_registro;
               END IF;
-              -- Se o saldo for zero, significa que houve um resgate total, então precisamos buscar 
-              -- o valor dos resgates efetuados neste dia para a conta e aplicação
-              IF vr_sldaplic = 0 THEN
-                OPEN cr_resgat(pr_cdcooper  => rw_cop.cdcooper    --> Cooperativa
-                              ,pr_nrdconta  => rw_lcto.nrdconta   --> Conta
-                              ,pr_nraplica  => rw_lcto.nraplica   --> Aplicação
-                              ,pr_tpaplrdc  => rw_lcto.tpaplrdc   --> TIpo da aplicação
-                              ,pr_dtmvtolt  => rw_lcto.dtmvtolt); --> Data
-                
-                FETCH cr_resgat 
-                 INTO vr_sldaplic;
-                CLOSE cr_resgat;
-              END IF; 
-              -- Se mesmo assim ainda está zero, vamos usar o próprio valor do lançamento como saldo
-              IF vr_sldaplic = 0 THEN
-                vr_sldaplic := rw_lcto.vllanmto;
-              END IF;
-              -- Calcular preço unitário
-              vr_vlpreco_unit := vr_sldaplic / vr_qtcotas;
               -- Armazena informações do registro atual
               vr_dtmvtolt := rw_lcto.dtmvtolt;
               vr_nrdconta := rw_lcto.nrdconta;
