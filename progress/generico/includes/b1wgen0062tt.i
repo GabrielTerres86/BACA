@@ -77,7 +77,7 @@ DEFINE TEMP-TABLE tt-fcad NO-UNDO
     FIELD dtabrres AS CHAR
     FIELD dstemres AS CHAR
     FIELD dscidade LIKE crapmun.dscidade
-	FIELD nmsocial LIKE crapass.nmsocial.
+	  FIELD nmsocial LIKE crapttl.nmsocial.
 
 DEFINE TEMP-TABLE tt-fcad-telef NO-UNDO
     /* f_telefones */
