@@ -67,7 +67,8 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
       Objetivo  : Rotinas referentes expurgo de dados para a base historica.
 
       Alteracoes:
-
+                  31/08/2018 - Realizar melhorias nas rotinas de expurgo, para que sejam permitidas as cópias de 
+                               tabelas que possuem campos LONG ( Renato Darosci - Supero )
   ---------------------------------------------------------------------------------------------------------------*/
   
   
@@ -646,7 +647,12 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
         
     ..........................................................................*/
     -----------> CURSORES <-----------
-    
+    CURSOR cr_campo_long IS
+      SELECT 1
+        FROM all_tab_columns t
+       WHERE t.OWNER      = UPPER(pr_nmowner)
+         AND t.TABLE_NAME = UPPER(pr_nmtabela)
+         AND t.DATA_TYPE  = 'LONG';
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -658,6 +664,7 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
     vr_dsdfrom  VARCHAR2(3000);
     vr_dsdwhere VARCHAR2(10000);
     vr_tab_campos cecred.gene0002.typ_split;
+    vr_indlong  NUMBER;
     
     
     vr_qtregcop INTEGER;
@@ -711,6 +718,16 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
     --> REALIZAR COPIA para as opçoes 1- Somente copia e 2-Copia e Exclui
     IF pr_tpoperacao IN (1,2) THEN
     
+      -- Inicializa a variável que indicará existencia de campo LONG na tabela
+      vr_indlong := 0;
+    
+      -- Antes de tentar o insert com select, deve verificar se há colunas do tipo LONG na tabela
+      OPEN  cr_campo_long;
+      FETCH cr_campo_long INTO vr_indlong;
+      CLOSE cr_campo_long;
+      
+      -- Se não existir campo LONG, faz o insert com select puramente
+      IF vr_indlong = 0 THEN
       --> Montar comando de copia
       vr_dscmdsql := ' INSERT INTO '  ||pr_nmowner||'.'||pr_nmtabela||'@'||vr_dblink_hist||
                      ' SELECT * FROM '||vr_dsdfrom || vr_dsdwhere;
@@ -723,8 +740,39 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
           RAISE vr_exc_erro;
       END;
       
+        -- Quantidade de registros copiados
       vr_qtregcop := SQL%ROWCOUNT;
-      pr_qtdregis                    := vr_qtregcop;
+        
+      ELSE
+        /****
+          Caso a tabela possua algum campo do tipo LONG, será necessário usar uma script utilizando 
+          FOR...LOOP para copiar os registros, visto que campos LONG não podem ser usados diretamente
+          nos inserts e selects.
+        ****/
+        
+        -- bloco pl para cópia
+        vr_dscmdsql := 'DECLARE '||
+                       '  vr_qtregist  NUMBER := 0; '||
+                       'BEGIN '||
+                       '  FOR registro in (SELECT * FROM '||vr_dsdfrom || vr_dsdwhere ||' ) LOOP '||
+                       '    INSERT INTO '||pr_nmowner||'.'||pr_nmtabela||'@'||vr_dblink_hist|| ' VALUES registro; '||
+                       '    vr_qtregist := vr_qtregist + 1; '||
+                       '  END LOOP; '||
+                       '  :ret := vr_qtregist; '||
+                       'END; ';
+        
+        BEGIN
+          -- Executa e retorna a quantidade de registros copiados
+          EXECUTE IMMEDIATE vr_dscmdsql USING OUT vr_qtregcop;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao efetuar copia (Long column): '||SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+        
+      END IF;
+      
+      pr_qtdregis := vr_qtregcop;
     END IF;
     
     --> MONTAR COMANDO DE EXCLUSÃO as opçoes 2-Copia e Exclui e 3-Apenas Exclui
