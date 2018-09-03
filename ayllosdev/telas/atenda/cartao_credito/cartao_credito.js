@@ -66,6 +66,7 @@
  *                                            para evitar travamento na entrega do cartão.
  * 046: [17/08/2018] Fabricio      (AILOS)  : Tratamento na altera_senha_pinpad() para ignorar a AID (application ID) 'A0000001510000'
  *                                            GP GlobalPlatform (por solicitacao da Cabal) em virtude da geracao dos novos chips - SCTASK0025102. (Fabricio)
+ * 048: [22/08/2018] Ranghetti     (AILOS)  : Habilitar botao de impressao para cartoes BB - INC0022408.
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -283,7 +284,12 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
                 $("#btnupdo").prop("disabled", false);
                 $("#btnupdo").css('cursor', 'default');
             }
+        }else{
+			// Habilitar botao de impressao para cartoes BB
+			$("#btnimpr").prop("disabled", false);            
+			$("#btnimpr").css('cursor', 'pointer');
         }
+			
 
         //Se estiver executando a rotina de impedimentos e o cartão for CECRED deve deixar habilitado, pois ao clicar no botão de canelcar, deverá apresentar alerta
         //informando que o cartão deve ser cancelado através do SIPAGNET.
