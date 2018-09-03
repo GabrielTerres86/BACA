@@ -804,7 +804,8 @@ EXCEPTION
     END;
 
   END  pc_imp_proposta_seg_pres_web;
-------------------------------------                                                      
+------------------------------------    
+                                                  
   PROCEDURE pc_validar_prestamista(pr_cdcooper in crapcop.cdcooper%type,
                                    pr_nrdconta in crapass.nrdconta%type,
                                    pr_nrctremp in crapepr.nrctremp%type,
@@ -839,7 +840,8 @@ EXCEPTION
                                      
   -- Dados Cooperado
    CURSOR cr_crapass IS
-      SELECT d.dtnasctl
+      SELECT d.dtnasctl,
+             d.inpessoa
       FROM crapass d
       WHERE d.cdcooper = pr_cdcooper
       AND   d.nrdconta = pr_nrdconta;
@@ -875,7 +877,8 @@ EXCEPTION
   vr_nrdeanos_aux PLS_INTEGER;  
   vr_nrdmeses     PLS_INTEGER;
   vr_dsdidade     VARCHAR2(50);  
-  vr_dtnasctl     crawseg.dtnascsg%type;   
+  vr_dtnasctl     crawseg.dtnascsg%type;  
+  vr_inpessoa     crapass.inpessoa%type; 
       
   BEGIN
   
@@ -930,7 +933,7 @@ EXCEPTION
   -- Buscar data de Nascimento - Proposta
   OPEN cr_crapass;
   FETCH cr_crapass
-   INTO vr_dtnasctl;
+   INTO vr_dtnasctl,vr_inpessoa;
   CLOSE cr_crapass;  
   
   -- Leitura do calendário da cooperativa
@@ -999,6 +1002,10 @@ EXCEPTION
 
     end if;
 
+    /*Prestamista somente para pessoa física*/
+    if vr_inpessoa != 1 then
+      pr_flgprestamista := 'N';
+    end if;
   
     pr_sld_devedor := vr_sld_devedor;
   
@@ -1021,7 +1028,7 @@ EXCEPTION
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
       ROLLBACK;  
-  END pc_validar_prestamista; 
+  END pc_validar_prestamista;
 
   PROCEDURE pc_cria_proposta_sp(pr_cdcooper in crapcop.cdcooper%type,
                                 pr_nrdconta in crapass.nrdconta%type,

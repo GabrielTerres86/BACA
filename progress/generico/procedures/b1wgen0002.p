@@ -787,6 +787,8 @@
           19/07/2018 - Chamar nova rotina para validar perda de aprovaçao quando alterado valor ou valor da prestaçao ou Rating (PRJ 438 - Rafael - Mouts).
           
           29/08/2018 - Adicionado retorno do 'insitest' na PROC 'obtem-propostas-emprestimo' PRJ 438 (Mateus Z - Mouts)
+
+         31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts          
           
  ..............................................................................*/
 
@@ -6347,6 +6349,7 @@ PROCEDURE verifica-outras-propostas:
           /* Somar no Valor Total do Emprestimo */
           ASSIGN aux_vltotemp = aux_vltotemp + aux_vlsdeved.
         
+          /* Retirado em 31/08/2018 - PRJ438 - Seguro Prestamista será criado automaticamente - Paulo Martins       
           /* Valor desta proposta               + Valor dos emprestimos atuais  + */
           /* Valor de todas as outras propostas - valor anterior desta proposta   */
           IF (par_vlemprst + aux_vltotemp + aux_vlestudo - par_vleprori) >=
@@ -6361,6 +6364,7 @@ PROCEDURE verifica-outras-propostas:
                                                    "PRESTAMISTA!".
         
               END.
+           */
         
 	      FIND b1-crapass WHERE b1-crapass.cdcooper = par_cdcooper
 		                    AND b1-crapass.nrdconta = par_nrdconta
@@ -7898,6 +7902,8 @@ PROCEDURE grava-proposta-completa:
         END.     
         
         /*Valida a criaçao de seguro prestamista - PRJ438 - Paulo Martins (Mouts)*/
+        IF par_inpessoa = 1 THEN
+        DO:
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         RUN STORED-PROCEDURE pc_cria_proposta_sp
                              aux_handproc = PROC-HANDLE NO-ERROR
@@ -7916,12 +7922,13 @@ PROCEDURE grava-proposta-completa:
            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
      
-        ASSIGN par_cdcritic = pc_cria_proposta_sp.pr_cdcritic
+        ASSIGN aux_cdcritic = pc_cria_proposta_sp.pr_cdcritic
                                  WHEN pc_cria_proposta_sp.pr_cdcritic <> ?
-               par_dscritic = pc_cria_proposta_sp.pr_dscritic
+               aux_dscritic = pc_cria_proposta_sp.pr_dscritic
                                  WHEN pc_cria_proposta_sp.pr_dscritic <> ?.
         IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-           RETURN "NOK".                                
+           RETURN "NOK".    
+        END.
     
     RETURN "OK".
 

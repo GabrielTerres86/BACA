@@ -302,6 +302,8 @@
 			  02/04/2018 - Corrigir para não apresentar no extrato de empréstimo histórico do IOF zerado. (James)
               
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+              
+              31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts              
                            
 ............................................................................. */
 
@@ -4676,6 +4678,8 @@ PROCEDURE grava_efetivacao_proposta:
         END.
         
     /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
+    IF crapass.inpessoa = 1 THEN
+    DO:
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_efetiva_proposta_sp
                          aux_handproc = PROC-HANDLE NO-ERROR
@@ -4694,12 +4698,13 @@ PROCEDURE grava_efetivacao_proposta:
        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
  
-    ASSIGN par_cdcritic = pc_efetiva_proposta_sp.pr_cdcritic
+    ASSIGN aux_cdcritic = pc_efetiva_proposta_sp.pr_cdcritic
                              WHEN pc_efetiva_proposta_sp.pr_cdcritic <> ?
-           par_dscritic = pc_efetiva_proposta_sp.pr_dscritic
+           aux_dscritic = pc_efetiva_proposta_sp.pr_dscritic
                              WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
         IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
            RETURN "NOK".                                
+    END.                               
 
     RETURN "OK".
 
