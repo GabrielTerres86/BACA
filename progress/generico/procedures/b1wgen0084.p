@@ -3364,6 +3364,7 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vltaxiof AS DECI                                      NO-UNDO.    
     DEF VAR aux_dtrisref AS DATE /* DATA RISCO REFIN */               NO-UNDO.
     DEF VAR aux_qtdiaatr AS INTE                                      NO-UNDO.
+    DEF VAR aux_idquapro AS INTE                                      NO-UNDO.
 
     DEF BUFFER b-crawepr FOR crawepr.
 
@@ -4249,10 +4250,13 @@ PROCEDURE grava_efetivacao_proposta:
        
        ASSIGN aux_cdcritic = 0
               aux_dscritic = ""
+              aux_idquapro = 1
               aux_cdcritic = pc_proc_qualif_operacao.pr_cdcritic 
                              WHEN pc_proc_qualif_operacao.pr_cdcritic <> ?
               aux_dscritic = pc_proc_qualif_operacao.pr_dscritic 
-                             WHEN pc_proc_qualif_operacao.pr_dscritic <> ?.
+                             WHEN pc_proc_qualif_operacao.pr_dscritic <> ?
+              aux_idquapro = pc_proc_qualif_operacao.pr_idquapro 
+                             WHEN pc_proc_qualif_operacao.pr_idquapro <> ?.
            
        IF  aux_cdcritic <> 0   OR
            aux_dscritic <> ""  THEN
@@ -4272,7 +4276,7 @@ PROCEDURE grava_efetivacao_proposta:
                 EXCLUSIVE-LOCK NO-ERROR.
        
        IF AVAIL b-crawepr THEN
-          ASSIGN b-crawepr.idquapro = pc_proc_qualif_operacao.pr_idquapro.
+          ASSIGN b-crawepr.idquapro = aux_idquapro.
        /* FIM                                                */
        /* Requalifica a operacao na proposta                 */
        
@@ -4311,7 +4315,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.nrcadast = crapass.nrcadast
               /* PJ 450 - Diego Simas (AMcom)  */
               /* Requalificar a Operacao       */
-              crapepr.idquaprc = pc_proc_qualif_operacao.pr_idquapro
+              crapepr.idquaprc = aux_idquapro
               crapepr.flgpagto = FALSE
               crapepr.dtdpagto = par_dtdpagto
               crapepr.qtmesdec = 0
