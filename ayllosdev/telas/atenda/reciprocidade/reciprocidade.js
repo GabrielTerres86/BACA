@@ -89,6 +89,7 @@ var erroAlcada = false;
 var cee = false;
 var coo = false;
 var cDataFimContrato, idcalculo_reciproci, cVldesconto_cee, cVldesconto_coo, cDataFimAdicionalCee, cDataFimAdicionalCoo, cJustificativaDesc;
+var incluindoConvenio = false;
 
 function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
@@ -2691,6 +2692,11 @@ function excluirConvenio(nrconven, confirm) {
     // remove do array
     descontoConvenios.splice(idx, 1);
 
+    var idxNovo = novosConvenios.indexOf(nrconven);
+    if (i >= 0) {
+        novosConvenios.splice(i, 1);
+    }
+
     // remove tooltip
     $('#tooltip').hide();
 
@@ -2827,7 +2833,7 @@ function validaDados(pedeSenha) {
         pedeSenhaCoordenador(2,'incluiDesconto(true);','divRotina');
     }else{
         var msg = 'Confirma a atualiza&ccedil;&atilde;o do contrato?';
-        if (houveAlteracao || !idcalculo_reciproci){
+        if (houveAlteracao || !idcalculo_reciproci || novosConvenios.length){
             msg = 'Confirma a inclus&atilde;o do novo contrato?';
         }
         showConfirmacao(msg, 'Confirma&ccedil;&atilde;o - Ayllos', 'incluiDesconto('+houveAlteracao+')', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
@@ -2839,7 +2845,7 @@ function incluiDesconto(houveAlteracao) {
     // Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, salvando registro...");
 
-	if (houveAlteracao || !idcalculo_reciproci) {
+	if (houveAlteracao || !idcalculo_reciproci || novosConvenios.length) {
 		var url = UrlSite + "telas/atenda/reciprocidade/incluir_desconto.php";
 	} else {
 		var url = UrlSite + "telas/atenda/reciprocidade/alterar_desconto.php"
@@ -3338,3 +3344,16 @@ function cancelarContrato(idrecipr) {
             }
     });
 }
+
+var novosConvenios = [];
+$('body').delegate('#divConvenios input[type="checkbox"]', 'change', function (){
+    var idx = retornaIndice(descontoConvenios, 'convenio', $(this).val());
+
+    var i = novosConvenios.indexOf($(this).val());
+    if (idx === null && $(this).is(':checked')) {
+        novosConvenios.push($(this).val());
+    } else if (!$(this).is(':checked') && i >= 0) {
+        novosConvenios.splice(i, 1);
+    }
+    console.log(novosConvenios.length);
+});
