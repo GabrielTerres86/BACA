@@ -234,7 +234,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                qttitula  integer,
                cdclcnae  crapass.cdclcnae%TYPE,
                cdsitdct  crapass.cdsitdct%TYPE,
-			   nmsocial  crapass.nmsocial%TYPE);
+			   nmsocial  crapttl.nmsocial%TYPE);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
   
