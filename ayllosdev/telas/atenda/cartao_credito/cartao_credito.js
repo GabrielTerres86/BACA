@@ -1677,7 +1677,8 @@ function validarNovoCartao() {
             var dsrepinc = "";
         } else {
             var dsgraupr = "";
-            var nrdoccrd = "";
+            //var nrdoccrd = ""; //AjusteDoc
+			var nrdoccrd = $("#nrdoccrd", "#frmNovoCartao").val(); //AjusteDoc
             var flgimpnp = "yes";
             var dsrepinc = $("#dsrepinc option:selected", "#frmNovoCartao").text();
             var nmempres = $("#nmempres", "#frmNovoCartao").val();
@@ -1926,7 +1927,8 @@ function cadastrarNovoCartao() {
 	log4console("montando nova requisição");
 // Recebendo valores
     var dsgraupr = (inpessoa == 1) ? $('#dsgraupr option:selected', '#' + nomeForm).text() : '';
-    var nrdoccrd = (inpessoa == 1) ? $('#nrdoccrd', '#' + nomeForm).val() : '';
+    //var nrdoccrd = (inpessoa == 1) ? $('#nrdoccrd', '#' + nomeForm).val() : ''; //AjusteDoc
+	var nrdoccrd = $('#nrdoccrd', '#' + nomeForm).val();
     var flgimpnp = (inpessoa == 1) ? $('#flgimpnp', '#' + nomeForm).val() : 'yes';
     var vlsalari = (inpessoa == 1) ? normalizaNumero($('#vlsalari', '#' + nomeForm).val()) : '0,00';
     var vlsalcon = (inpessoa == 1) ? normalizaNumero($('#vlsalcon', '#' + nomeForm).val()) : '0,00';
