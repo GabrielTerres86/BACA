@@ -160,6 +160,7 @@ function exibeErro($msgErro) {
     <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('I');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
 	<a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('C');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
 	<a href="#" id="btnAlterarConvenio" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="acessaOpcaoDescontos('A');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+	<a href="#" class="botao" onclick="confirmaCancelarContrato(); return false;">Cancelar</a>
     <a href="#" class="botao" onclick="abrirAprovacao(false); return false;" id="btnAbrirAprovacao">Aprovar</a>
 	<a href="#" class="botao" onclick="abrirRejeicao(); return false;" id="btnAbrirRejeicao">Rejeitar</a>
 	<?php //Habilitar botão apenas se possuir cobrança ativa
@@ -173,7 +174,6 @@ function exibeErro($msgErro) {
     <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
 	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
 	<a href="#" class="botao" onclick="carregaCobranca(); return false;">Recip. Antigo</a>
-	<a href="#" class="botao" onclick="confirmaCancelarContrato(); return false;">Cancelar</a>
 	<a href="#" id="btSair"></a>
 	
 	<input type="hidden" id= "flsercco" name="flsercco">

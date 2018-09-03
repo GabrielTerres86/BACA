@@ -3058,6 +3058,10 @@ function editarConvenio(nrconven) {
 
 function abrirAprovacao(hideBtnDetalhes) {
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+    if (idrecipr == '') {
+        showError("error","Selecione um contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return;
+    }
 
     blockBackground(parseInt($("#divRotina").css("z-index")));
 
@@ -3101,6 +3105,10 @@ function abrirAprovacao(hideBtnDetalhes) {
 
 function abrirRejeicao() {
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+    if (idrecipr == '') {
+        showError("error","Selecione um contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+        return;
+    }
 
     blockBackground(parseInt($("#divRotina").css("z-index")));
 
