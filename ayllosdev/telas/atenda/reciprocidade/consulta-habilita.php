@@ -398,7 +398,8 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                             $cat_flcatcee = getByTagName($cat->tags,'FLCATCEE');
                                             // $cat_fldesman = getByTagName($cat->tags,'FLDESMAN');
                                             $cat_fldesman = 1;
-                                            $cat_flrecipr = getByTagName($cat->tags,'FLRECIPR');                                            
+                                            $cat_flrecipr = getByTagName($cat->tags,'FLRECIPR');                                       
+                                            $cat_percdesc_old = getByTagName($cat->tags,'PERDESCONTO');     
                                             $cat_percdesc = isset($perdescontosMap[$cat_cdcatego]) ? $perdescontosMap[$cat_cdcatego] : getByTagName($cat->tags,'PERDESCONTO');
 
                                             ?>
@@ -459,7 +460,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <input name="perdesconto_<?php echo $cont; ?>" id="perdesconto_<?php echo $cont; ?>" cdcatego="<?php echo $cat_cdcatego; ?>" class="<?php echo $campo; ?> clsPerDesconto clsCatFlrecipr<?php echo $cat_flrecipr; ?>" value="<?php echo formataMoeda($cat_percdesc); ?>" onblur="validaPerDesconto('<?php echo $cont; ?>','<?php echo $cco_perdctmx; ?>','<?php echo $cat_dscatego; ?>');" /> 
+                                                    <input name="perdesconto_<?php echo $cont; ?>" id="perdesconto_<?php echo $cont; ?>" cdcatego="<?php echo $cat_cdcatego; ?>" class="<?php echo $campo; ?> clsPerDesconto clsCatFlrecipr<?php echo $cat_flrecipr; ?>" value="<?php echo formataMoeda($cat_percdesc); ?>" oldvalue="<?php echo formataMoeda($cat_percdesc_old); ?>" onblur="validaPerDesconto('<?php echo $cont; ?>','<?php echo $cco_perdctmx; ?>','<?php echo $cat_dscatego; ?>');" /> 
                                                     <?php
                                                         // Caso nao tenha permissao de desconto manual na categoria ou convenio
                                                         if ($cat_fldesman == 0 || $cco_fldctman == 0) {

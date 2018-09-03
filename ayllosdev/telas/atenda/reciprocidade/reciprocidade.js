@@ -79,6 +79,7 @@ var descontoConvenios = [];
 
 // Lista dos descontos das tarifas de instrução
 var perdescontos = [];
+var atualizacaoDesconto = false;
 
 var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
@@ -2946,7 +2947,8 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vVldesconto_coo != vVldesconto_cooOld && vVldesconto_coo) ||
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
-            (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ) {
+            (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc ) ||
+            (atualizacaoDesconto) ) {
 
 		$.ajax({
 		    dataType: "html",
@@ -3285,9 +3287,13 @@ function calcula_desconto() {
 function atualizarDescontos() {
     var qtdeDescontos = $('#qtdeDescontos', '#frmConsulta').val();
     perdescontos = [];
+    atualizacaoDesconto = false;
     for (var i = 0; i < qtdeDescontos; i++) {
         var $item = $('#perdesconto_' + i, "#frmConsulta");
         if ($item.val() != "" && $item.val() != "0,00") {
+            if ($item.val() != $item.attr('oldvalue')) {
+                atualizacaoDesconto = true;
+            }
             perdescontos.push($item.attr('cdcatego') + "#" + converteNumero($item.val()));
         }
     }
