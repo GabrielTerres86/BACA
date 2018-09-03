@@ -71,7 +71,7 @@ foreach ($registros as $r) {
 
     <tr>
         <td><?= getByTagName($r->tags, 'dthorlog'); ?></td>
-        <td class="msghist"><?= utf8_encode(str_replace(array('[br]', '[b]', '[/b]'), array('</br>', '<b>', '</b>'), getByTagName($r->tags, 'dscdolog'))); ?></td>
+        <td class="msghist"><?= str_replace(array('[br]', '[b]', '[/b]'), array('</br>', '<b>', '</b>'), getByTagName($r->tags, 'dscdolog')); ?></td>
         <td><?= getByTagName($r->tags, 'nmoperad'); ?></td>	
     </tr>
 <?php

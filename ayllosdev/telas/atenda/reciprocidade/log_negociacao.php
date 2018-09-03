@@ -56,7 +56,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
             <thead>
             <tr>
             <th>Data/Hora</th>
-            <th>Descri&ccedil;&atilde;o</th>
+            <th>Justificativa</th>
             <th>Status</th>
             <th>Operador</th>
             </tr>
