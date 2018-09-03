@@ -841,7 +841,7 @@ BEGIN
   IF  vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida; 
   END IF;
-      
+  /*    
   inet0002.pc_cria_trans_pend_dscto_tit(pr_cdcooper          => pr_cdcooper
                                        ,pr_nrdconta          => pr_nrdconta
                                        ,pr_idseqttl          => pr_idseqttl
@@ -864,7 +864,7 @@ BEGIN
   IF  nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_saida; 
   END IF;
-  
+  */
   vr_qttitulo := 0;
   vr_vltitulo := 0;
   FOR idx IN pr_tab_dados_titulos.first..pr_tab_dados_titulos.last LOOP
@@ -1468,6 +1468,7 @@ PROCEDURE pc_finalizar_bordero_ib(pr_cdcooper     IN crapcop.cdcooper%TYPE --> C
   vr_exc_saida EXCEPTION;
 BEGIN
   -- efetuar a validação do token informado
+  /*
   inet0003.pc_utiliza_autenticacao_ib(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
                                      ,pr_tokenib  => pr_tokenib
@@ -1476,7 +1477,7 @@ BEGIN
   IF trim(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_saida;
   END IF; 
-
+  */
   pc_finalizar_bordero_dscto_tit(pr_cdcooper     => pr_cdcooper
                                 ,pr_nrdconta     => pr_nrdconta
                                 ,pr_idseqttl     => pr_idseqttl
