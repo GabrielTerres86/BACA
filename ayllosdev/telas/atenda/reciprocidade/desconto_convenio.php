@@ -94,6 +94,7 @@ function exibeErro($msgErro) {
           $tarifacao = getByTagName($convenios[$i]->tags, 'dstarifacao');
           $reciprocidade = getByTagName($convenios[$i]->tags, 'idrecipr');
           $qtbolcob = getByTagName($convenios[$i]->tags, 'qtbolcob');
+          $situacao = (int)getByTagName($convenios[$i]->tags, 'situacao');
         ?>
           <tr id="convenio<?php echo $i; ?>">
             <td width="20">
@@ -105,7 +106,7 @@ function exibeErro($msgErro) {
                 if($idrecipr!=0&&$idrecipr==$reciprocidade){
                     $checkbox .= " checked ";
                 }
-                if($qtbolcob>0){
+                if($qtbolcob>0&&$situacao>0){
                     $checkbox .= " disabled";
                 }
                 $checkbox .= " >";
