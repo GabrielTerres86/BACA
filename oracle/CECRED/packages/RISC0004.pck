@@ -138,8 +138,6 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
                                      ,pr_qtdatref OUT NUMBER                 --> Qtde dias atraso refinanciamento
                                      ,pr_dscritic OUT VARCHAR2);
 
-                                     ,pr_dscritic OUT VARCHAR2);
-
 END RISC0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
