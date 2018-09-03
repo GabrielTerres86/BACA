@@ -3784,6 +3784,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           -- INÍCIO                           --
           vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => rw_monitoramento.cdcooper
                                                          ,pr_nrdconta => rw_monitoramento.nrdconta);
+          
+          --> Verificar se possui lançamento pendente, para nao resgatar indevidamente
+          OPEN cr_lancamento(rw_monitoramento.cdcooper,
+                             rw_monitoramento.nrdconta,
+                             rw_crapdat.dtmvtolt,
+                             rw_monitoramento.progress_recid_mon);
+          FETCH cr_lancamento INTO rw_lancamento;
+          IF cr_lancamento%FOUND THEN
+            -- Caso encontre, marca como false para nao verificar saldo
+            vr_inprejuz := FALSE;
+          END IF;
+          CLOSE cr_lancamento;                    
+          
           -- Se a conta estiver em prejuízo
           IF vr_inprejuz = TRUE THEN
              -- Busca saldo do bloqueado prejuízo
