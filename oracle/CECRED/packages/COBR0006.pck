@@ -10353,13 +10353,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
-    vr_exc_erro   EXCEPTION;
-    vr_exc_saida  EXCEPTION;
-    vr_cdcritic   PLS_INTEGER;
-    vr_dscritic   VARCHAR2(4000);
-    vr_dscritic2  VARCHAR2(4000);
-    vr_des_reto   VARCHAR2(400);
-    vr_nrdoccri   crapcob.nrdocmto%TYPE;
+    vr_exc_erro     EXCEPTION;
+    vr_exc_saida    EXCEPTION;
+    vr_cdcritic     PLS_INTEGER;
+    vr_dscritic     VARCHAR2(4000);
+    vr_dscritic2    VARCHAR2(4000);
+    vr_des_reto     VARCHAR2(400);
+	vr_rej_cdmotivo VARCHAR2(2);
+    vr_nrdoccri     crapcob.nrdocmto%TYPE;
 
     ------------------------------- CURSORES ---------------------------------
 
