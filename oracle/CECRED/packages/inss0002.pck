@@ -455,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 27/08/2018
+   Data     : 27/08/2015                        Ultima atualizacao: 29/08/2018
 
    Dados referentes ao programa:
 
@@ -531,6 +531,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                            
                27/08/2018 - Tratar insert na craplgp, incluir DUP_VAL_ON_INDEX na 
                             pc_atualiza_pagamento (Lucas Ranghetti INC0022069)
+                            
+               29/08/2018 - Incluir envio de e-mail para a validação e arrecadacao
+                            do GPS WebService Sicredi em mais um lugar 
+                            (Lucas Ranghetti INC0022952)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1831,6 +1835,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       OR pr_dscritic LIKE '%hibernate.exception%' THEN
          pr_dscritic := 'ATENÇÃO: Falha na execucao do metodo de Validar GPS! ERR-SVC';
       END IF;
+
+        -- Enviar e-mail para a area de convenios caso ocorra algum erro inesperado com o 
+        -- WebService Sicredi
+        OPEN cr_crapsle(pr_cdprogra => 'INSS0002',
+                        pr_dtmvtolt => trunc(SYSDATE), 
+                        pr_dsassunt => 'ERRO - Validacao GPS WebService Sicredi');
+        FETCH cr_crapsle INTO rw_crapsle;
+
+        IF cr_crapsle%FOUND THEN
+          CLOSE cr_crapsle;
+          
+          -- Limitado a 5 e-mails
+          IF rw_crapsle.qtdemail < 5 THEN
+            vr_envemail:= TRUE; -- Enviar e-mail caso seja menor que 5 ja enviados
+          ELSE
+            vr_envemail:= FALSE; -- Não enviar e-mail caso seja maior que 5 ja enviados
+          END IF;
+        ELSE
+          CLOSE cr_crapsle;
+          vr_envemail:= TRUE; -- enviar e-mail caso seja o primeiro do dia
+        END IF;
+
+        IF vr_envemail THEN
+          -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
+          gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
+                                    ,pr_des_destino => 'convenios@ailos.coop.br'
+                                    ,pr_des_assunto => 'ERRO - Validacao GPS WebService Sicredi'
+                                    ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
+                                                     ||' WebService do Sicredi.</br></br>'
+                                                     ||'<b>Servico indisponivel!</b>'
+                                    ,pr_des_anexo   => vr_msgenvio||';'||vr_msgreceb
+                                    ,pr_des_erro    => vr_critigps);
+        END IF;
 
       RAISE vr_exc_saida;
     END IF;
@@ -7769,6 +7806,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       OR pr_dscritic LIKE '%hibernate.exception%' THEN
          pr_dscritic := 'ATENÇÃO: Falha na execucao do metodo de Validar GPS! ERR-SVC';
       END IF;
+
+        -- Enviar e-mail para a area de convenios caso ocorra algum erro inesperado com o 
+        -- WebService Sicredi
+        OPEN cr_crapsle(pr_cdprogra => 'INSS0002',
+                        pr_dtmvtolt => trunc(SYSDATE), 
+                        pr_dsassunt => 'ERRO - Arrecadacao GPS WebService Sicredi');
+        FETCH cr_crapsle INTO rw_crapsle;
+
+        IF cr_crapsle%FOUND THEN
+          CLOSE cr_crapsle;
+                    
+          -- Limitado a 5 e-mails
+          IF rw_crapsle.qtdemail < 5 THEN
+            vr_envemail:= TRUE; -- Enviar e-mail caso seja menor que 5 ja enviados
+          ELSE
+            vr_envemail:= FALSE; -- Não enviar e-mail caso seja maior que 5 ja enviados
+          END IF;
+        ELSE
+          CLOSE cr_crapsle;
+          vr_envemail:= TRUE; -- enviar e-mail caso seja o primeiro do dia
+        END IF;
+
+        IF vr_envemail THEN
+          -- Enviar e-mail para a area de convenios dizendo que serviço está indisponível
+          gene0003.pc_solicita_email(pr_cdprogra    => 'INSS0002'
+                                    ,pr_des_destino => 'convenios@ailos.coop.br'
+                                    ,pr_des_assunto => 'ERRO - Arrecadacao GPS WebService Sicredi'
+                                    ,pr_des_corpo   => 'Erro ao efetuar validacao do xml com o'
+                                                     ||' WebService do Sicredi.</br></br>'
+                                                     ||'<b>Servico indisponivel!</b>'
+                                    ,pr_des_anexo   => pr_msgenvio||';'||pr_msgreceb
+                                    ,pr_des_erro    => vr_critigps);
+        END IF;
 
       RAISE vr_exc_saida;
     END IF;
