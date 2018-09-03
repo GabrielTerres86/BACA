@@ -455,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 09/07/2018
+   Data     : 27/08/2015                        Ultima atualizacao: 27/08/2018
 
    Dados referentes ao programa:
 
@@ -528,6 +528,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
                09/07/2018 - Ajustar envio de e-mail para a validação e arrecadacao
                            do GPS WebService Sicredi (Lucas Ranghetti INC0018243)
+                           
+               27/08/2018 - Tratar insert na craplgp, incluir DUP_VAL_ON_INDEX na 
+                            pc_atualiza_pagamento (Lucas Ranghetti INC0022069)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -977,78 +980,90 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      pr_craplot.cdhistor := 1414;
      pr_craplot.nrseqdig := paga0001.fn_seq_parale_craplcm();                     
    end if;
-    --
-    INSERT INTO craplgp
-               (cdcooper
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,cdopecxa
-               ,nrdcaixa
-               ,nrdmaqui
-               ,cdidenti
-               ,cdidenti2
-               ,tpleitur
-               ,cddpagto
-               ,mmaacomp
-               ,vlrdinss
-               ,vlrouent
-               ,vlrjuros
-               ,vlrtotal
-               ,nrseqdig
-               ,hrtransa
-               ,flgenvio
-               ,tpdpagto
-               ,cdbarras
-               ,dslindig
-               ,nrctapag
-               ,inpesgps
-               ,dtvencto
-               ,dstiparr
-               ,nrseqagp
-               ,flgativo
-               ,idanafrd )
-        VALUES (pr_cdcooper
-               ,pr_craplot.dtmvtolt
-               ,pr_craplot.cdagenci
-               ,pr_craplot.cdbccxlt
-               ,pr_craplot.nrdolote
-               ,pr_cdoperad
-               ,pr_nrdcaixa
-               ,pr_nrdcaixa
-               ,TO_NUMBER(pr_cdidenti)
-               ,pr_cdidenti
-               ,pr_idleitur
-               ,pr_cddpagto
-               ,pr_mmaacomp
-               ,pr_vlrdinss
-               ,pr_vlrouent
-               ,pr_vlrjuros
-               ,pr_vlrtotal
-               ,pr_craplot.nrseqdig
-               ,to_number(to_char(SYSDATE, 'SSSSS'))
-               ,1
-               ,pr_tpdpagto
-               ,NVL(pr_cdbarras,' ')
-               ,NVL(pr_dslindig,' ')
-               ,NVL(pr_nrdconta,0)
-               ,pr_inpesgps
-               ,pr_dtvencto
-               ,pr_dstiparr
-               ,pr_nrseqagp
-               ,1 -- flgativo
-               ,nullif(pr_idanalis,0) )
-             RETURNING ROWID
-             INTO pr_craplgp_rowid;
+
+   BEGIN
+     INSERT INTO craplgp
+                (cdcooper
+                ,dtmvtolt
+                ,cdagenci
+                ,cdbccxlt
+                ,nrdolote
+                ,cdopecxa
+                ,nrdcaixa
+                ,nrdmaqui
+                ,cdidenti
+                ,cdidenti2
+                ,tpleitur
+                ,cddpagto
+                ,mmaacomp
+                ,vlrdinss
+                ,vlrouent
+                ,vlrjuros
+                ,vlrtotal
+                ,nrseqdig
+                ,hrtransa
+                ,flgenvio
+                ,tpdpagto
+                ,cdbarras
+                ,dslindig
+                ,nrctapag
+                ,inpesgps
+                ,dtvencto
+                ,dstiparr
+                ,nrseqagp
+                ,flgativo
+                ,idanafrd )
+         VALUES (pr_cdcooper
+                ,pr_craplot.dtmvtolt
+                ,pr_craplot.cdagenci
+                ,pr_craplot.cdbccxlt
+                ,pr_craplot.nrdolote
+                ,pr_cdoperad
+                ,pr_nrdcaixa
+                ,pr_nrdcaixa
+                ,TO_NUMBER(pr_cdidenti)
+                ,pr_cdidenti
+                ,pr_idleitur
+                ,pr_cddpagto
+                ,pr_mmaacomp
+                ,pr_vlrdinss
+                ,pr_vlrouent
+                ,pr_vlrjuros
+                ,pr_vlrtotal
+                ,pr_craplot.nrseqdig
+                ,to_number(to_char(SYSDATE, 'SSSSS'))
+                ,1
+                ,pr_tpdpagto
+                ,NVL(pr_cdbarras,' ')
+                ,NVL(pr_dslindig,' ')
+                ,NVL(pr_nrdconta,0)
+                ,pr_inpesgps
+                ,pr_dtvencto
+                ,pr_dstiparr
+                ,pr_nrseqagp
+                ,1 -- flgativo
+                ,nullif(pr_idanalis,0) )
+              RETURNING ROWID
+              INTO pr_craplgp_rowid;
+    EXCEPTION
+      WHEN DUP_VAL_ON_INDEX THEN
+        -- Montar mensagem de critica
+        pr_cdcritic := 92;
+        -- Busca critica
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+        RAISE vr_exc_saida;
+      WHEN OTHERS THEN
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+    END;
 
     -- se encontrou erro ao buscar lote, abortar programa
     IF pr_dscritic IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_saida;
     END IF;
-
-
 
     /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
        PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
