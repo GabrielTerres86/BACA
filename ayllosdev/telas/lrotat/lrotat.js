@@ -1,5 +1,5 @@
 /*!
- * FONTE        : lrotat.js                                 Última alteração: 12/07/2016
+ * FONTE        : lrotat.js                                 Última alteração: 24/08/2018
  * CRIAÇÃO      : Otto - RKAM
  * DATA CRIAÇÃO : 06/07/2016
  * OBJETIVO     : Biblioteca de funções da tela LROTAT
@@ -11,6 +11,8 @@
  *                             para tratar pelo código do mesmo (Renato Darosci)
  *
  *				  10/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
+ *
+ *                24/08/2018 - inc0022526 ativação do campo qtvcapce Ailos na opção Alterar (Carlos)
  * --------------
  */
 
@@ -210,7 +212,6 @@ function formataFormularioLrotat(){
 
 	        $("#tpdlinha", "#frmLrotat").desabilitaCampo();
 	        $("#dssitlcr", "#frmLrotat").desabilitaCampo();
-	        $("#qtvcapce", "#frmLrotat").desabilitaCampo();
 	        $("#txmensal", "#frmLrotat").desabilitaCampo();
 	        $("#tpctrato", "#frmLrotat").desabilitaCampo();
 	        $("#permingr", "#frmLrotat").desabilitaCampo();
