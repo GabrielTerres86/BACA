@@ -21,8 +21,8 @@
 	isPostMethod();
 
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
-	$vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(",",".",$_POST['vlrpagto']) : 0;
-    $vlrabono = (isset($_POST['vlrabono'])) ? str_replace(",",".",$_POST['vlrabono']) : 0;
+	$vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(",",".", str_replace(".", "", $_POST['vlrpagto'])) : 0;
+    $vlrabono = (isset($_POST['vlrabono'])) ? str_replace(",",".", str_replace(".", "", $_POST['vlrabono'])) : 0;
 
 		
 	$xml2  = "<Root>";
