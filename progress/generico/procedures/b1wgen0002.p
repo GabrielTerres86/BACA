@@ -7927,9 +7927,13 @@ PROCEDURE grava-proposta-completa:
                aux_dscritic = pc_cria_proposta_sp.pr_dscritic
                                  WHEN pc_cria_proposta_sp.pr_dscritic <> ?.
         IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-           RETURN "NOK".    
+          DO:
+			      CREATE tt-erro.
+			      ASSIGN tt-erro.cdcritic = aux_cdcritic
+					         tt-erro.dscritic = aux_dscritic.
+    			  RETURN "NOK".
+   		    END.
         END.
-    
     RETURN "OK".
 
 END PROCEDURE.  /* grava proposta completa */
