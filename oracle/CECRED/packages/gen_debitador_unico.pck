@@ -1335,7 +1335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
           gene0001.pc_submit_job(pr_cdcooper  => r_cooperativa.cdcooper
                                 ,pr_cdprogra  => vr_nm_job
                                 ,pr_dsplsql   => vr_ds_bloco_plsql
-                                ,pr_dthrexe   => To_TimeStamp(vr_dthrexe,'dd/mm/rrrr hh24:mi:ss')
+                                ,pr_dthrexe   => TO_TIMESTAMP_TZ(vr_dthrexe||' America/Sao_Paulo','DD/MM/RRRR HH24:MI:SS TZR')
                                 ,pr_interva   => 'SYSDATE+1'
                                 ,pr_jobname   => vr_nm_job
                                 ,pr_des_erro  => vr_dscritic);
@@ -1743,7 +1743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
         gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper
                               ,pr_cdprogra  => vr_nm_job
                               ,pr_dsplsql   => vr_ds_bloco_plsql
-                              ,pr_dthrexe   => To_TimeStamp(To_Char(SYSDATE + (vr_minutos/60/24),'dd/mm/rrrr hh24:mi:ss'),'dd/mm/rrrr hh24:mi:ss')
+                              ,pr_dthrexe   => To_TimeStamp_TZ(To_Char(SYSDATE + (vr_minutos/60/24),'dd/mm/rrrr hh24:mi:ss')||' America/Sao_Paulo','DD/MM/RRRR HH24:MI:SS TZR')
                               ,pr_interva   => NULL
                               ,pr_jobname   => vr_nm_job
                               ,pr_des_erro  => vr_dscritic);
