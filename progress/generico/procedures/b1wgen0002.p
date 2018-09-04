@@ -3134,14 +3134,6 @@ PROCEDURE obtem-dados-proposta-emprestimo:
 					   tt-proposta-epr.idfiniof = crawepr.idfiniof
                        tt-proposta-epr.flintcdc = crapcop.flintcdc.
 
-					   DO i = 1 TO 10:
-						IF  crawepr.nrctrliq[i] > 0  THEN
-							tt-proposta-epr.dsctrliq = tt-proposta-epr.dsctrliq + 
-														(IF tt-proposta-epr.dsctrliq = "" THEN TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))
-														ELSE
-															", " + TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))).
-						END. /** Fim do DO ... TO **/
-                
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                 RUN STORED-PROCEDURE pc_verifica_contingencia_cdc
