@@ -154,7 +154,7 @@
 				</tr>
 				<tr>
 					<td><label for="dsadmant"><? echo utf8ToHtml('Nova Administradora:') ?></label></td>
-					<td>
+          <td>
 						<select name="dsadmant" id="dsadmant" class="campo" onchange="triggerAdm();">
 							<option value="0">Selecione uma Administradora</option>
 							<?php
@@ -184,7 +184,7 @@
 			
 			<div id="divBotoes" >
 				<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0,1,4);return false;">
-				<input type="image" id="btSalvar" src="<?echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarUpDown();return false;">
+				<input type="image" id="btSalvar" src="<?echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarUpDown(<? echo $nrctrcrd;?>);return false;">
 			</div>
 		</fieldset>
 	</div>
@@ -194,8 +194,8 @@
 var justificativa=[];
 //upgrade
 justificativa[0] = {
-		'<?php echo ("Modalidade do cartao nao atende as necessidades."); ?>':"<?php echo ("Modalidade do cartao nao atende as necessidades."); ?>",
-		'<?php echo ("Beneficios do produto nao atendem as necessidades."); ?>':"<?php echo ("Beneficios do produto nao atendem as necessidades."); ?>",
+  '<?php echo ("Modalidade do cartao nao atende as necessidades."); ?>':"<?php echo ("Modalidade do cartao nao atende as necessidades."); ?>",
+  '<?php echo ("Beneficios do produto nao atendem as necessidades."); ?>':"<?php echo ("Beneficios do produto nao atendem as necessidades."); ?>",
 		'<?php echo ("Atualizacao da Renda."); ?>':"<?php echo ("Atualizacao da Renda."); ?>"	
 };
 //downgrade
