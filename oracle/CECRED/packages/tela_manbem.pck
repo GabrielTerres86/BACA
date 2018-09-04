@@ -1560,9 +1560,9 @@ create or replace package body cecred.tela_manbem is
       v_nrrenava := par_nrrenava;
       v_ufdplaca := par_ufdplaca;
     else
-      v_nrdplaca := null;
+      v_nrdplaca := ' ';
       v_nrrenava := 0;
-      v_ufdplaca := null;
+      v_ufdplaca := ' ';
     end if;
     
     
