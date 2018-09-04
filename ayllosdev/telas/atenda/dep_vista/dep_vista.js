@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  �ltima Altera��o: 21/08/2018
+   Data : Fevereiro/2007                  �ltima Altera��o: 04/09/2018
 
    Objetivo  : Biblioteca de fun��es da rotina Dep. Vista da tela
                ATENDA
@@ -32,6 +32,8 @@
                             P450 - Diego Simas - AMcom
                21/08/2018 - Incluído campo Juros referente ao juros remuneratório da conta transitória.
 				  		    PJ450 - Diego Simas - AMcom 
+			   04/09/2018 - Ajuste na mensagem de pagamento de prejuizo em conta sem saldo
+			   			    PJ450 - Diego Simas - AMcom
 
  ***********************************************************************/
 
@@ -1286,9 +1288,9 @@ function numberToReal(numero) {
 
 function efetuaPagamentoPrejuizoCC() {
 
-	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
-	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0; 
-
+  var vlpagto = $('#vlpagto', '#frmPagPrejCC').val() || 0;
+	var vlabono = $('#vlabono', '#frmPagPrejCC').val() || 0;
+  
 	if (validaPagamentoPreju() == false) {
 		return false;
 	}	
@@ -1311,12 +1313,7 @@ function efetuaPagamentoPrejuizoCC() {
 			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function (response) {
-			console.log(response);
-			if (response.indexOf('showError("error"') != -1) {
-				showError("inform", 'Pagamento de Prejuízo efetuado com sucesso.', "Alerta - Ayllos", mostraDetalhesCT());
-			} else {
-				eval(response);
-			}
+			eval(response);			
 		}
 	});
 

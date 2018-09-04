@@ -5,7 +5,11 @@
  * CRIAÇÃO      : Marcel Kohls (AMCom)
  * DATA CRIAÇÃO : 29/06/2018
  * OBJETIVO     : Realizar pagamento de prejuizo de conta corrente.
-   ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 
+ *
+ *			      04/09/2018 - Ajuste na mensagem de pagamento de prejuizo em conta sem saldo
+ *        	   		           PJ450 - Diego Simas - AMcom 
+ *
  */
 
 	session_start();
@@ -36,7 +40,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);		
 
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',utf8ToHtml($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
+		exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"",false);
 	}else{
 		exibirErro('inform',utf8ToHtml('Pagamento de Prejuízo efetuado com sucesso!'),'Alerta - Ayllos',"mostraDetalhesCT()",false);
 	}		
