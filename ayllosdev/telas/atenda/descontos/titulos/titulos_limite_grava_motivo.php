@@ -72,7 +72,7 @@
 	} 	
 	
 	$msgErro = 'Motivo salvo com sucesso.';
-	exibirErro('inform',$msgErro,'Alerta - Ayllos','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\');',false);
+	exibirErro('inform',$msgErro,'Alerta - Ayllos','carregaLimitesTitulosPropostas();',false);
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

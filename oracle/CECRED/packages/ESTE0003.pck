@@ -292,6 +292,21 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  crawlim.cdcooper%type      
 BEGIN
    pr_des_erro := 'OK';
    vr_tpenvest := pr_tpenvest;
+   
+   open  cr_crawlim;
+   fetch cr_crawlim into rw_crawlim;
+   if    cr_crawlim%notfound then
+         close cr_crawlim;
+         vr_dscritic := 'Associado nao possui proposta de limite de credito. Conta: ' || pr_nrdconta || '.Proposta: ' || pr_nrctrlim;
+         raise vr_exc_saida;
+   end   if;
+   close cr_crawlim;
+   
+   -- PRJ 438 - Verifica se a situação está Anulada
+   IF  rw_crawlim.insitlim = 9 THEN
+       vr_dscritic := 'A proposta está \"Anulada\"';
+       RAISE vr_exc_saida;
+   END IF;
   
    pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper    --> Codigo da Cooperativa
                               ,pr_flctgmot => vr_flctgmot    --> Flag de contingencia flag de 
@@ -947,8 +962,7 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento para verificar as regras da esteira 
     
-    Alteraçao : 29/08/2018 - Adicionado verificação para não permir Analisar proposta 
-                             com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
+    Alteraçao : 
         
   ..........................................................................*/
     -----------> CURSORES <-----------
@@ -980,12 +994,6 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
             CLOSE cr_crawlim;
             vr_cdcritic := 535; --> 535 - Proposta nao encontrada.
             RAISE vr_exc_erro;
-      END IF;
-	  
-	  -- PRJ 438 - Verifica se a situação está Anulada
-      IF  rw_crawlim.insitlim = 9 THEN
-          vr_dscritic := 'A proposta está \"Anulada\"';
-          RAISE vr_exc_erro;
       END IF;
       
       --> Somente permitirá se ainda nao enviada 

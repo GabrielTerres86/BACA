@@ -3073,4 +3073,16 @@ function gravaMotivosAnulacao(){
         }               
     });
 }
+
+function controlarMotivos(cdMotivo){
+    if($('#cdmotivo'+cdMotivo,'#frmDadosMotivos').is(':checked')) {
+        // Desabilitar todos os outros campos de observação
+        $('input[type=text]', '#frmDadosMotivos').each(function() {
+            $($(this), '#frmDadosMotivos').desabilitaCampo();
+            $($(this), '#frmDadosMotivos').val('');
+        });
+        // Habilitar somente o campo de observação do motivo selecionado
+        $('#dsobservacao'+cdMotivo,'#frmDadosMotivos').habilitaCampo();
+    }
+}
 // PRJ 438 - FIM

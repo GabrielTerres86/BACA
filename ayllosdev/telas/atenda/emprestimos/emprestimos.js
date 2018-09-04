@@ -462,6 +462,7 @@ function controlaOperacao(operacao) {
                 nrdrecid = $('#nrdrecid', $(this)).val();
                 dsctrliq = $('#dsctrliq', $(this)).val();
                 idcobope = $('#idcobope', $(this)).val();
+				insitest = $('#insitest', $(this)).val();
 
                 nomeAcaoCall = ''; // Reseta a global
             }
@@ -10047,5 +10048,17 @@ function fechaMotivos(encerrarRotina) {
     exibeRotina($('#divRotina'));
     controlaOperacao('');
     return false;
+}
+
+function controlarMotivos(cdMotivo){
+	if($('#cdmotivo'+cdMotivo,'#frmDadosMotivos').is(':checked')) {
+		// Desabilitar todos os outros campos de observação
+		$('input[type=text]', '#frmDadosMotivos').each(function() {
+            $($(this), '#frmDadosMotivos').desabilitaCampo();
+            $($(this), '#frmDadosMotivos').val('');
+        });
+        // Habilitar somente o campo de observação do motivo selecionado
+		$('#dsobservacao'+cdMotivo,'#frmDadosMotivos').habilitaCampo();
+    }
 }
 // PRJ 438 - FIM
