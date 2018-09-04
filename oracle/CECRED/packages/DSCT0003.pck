@@ -79,6 +79,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
       ,vlsprjat NUMBER(25,2)
       ,vlttjmpr NUMBER(25,2)
       ,vlttmupr NUMBER(25,2)
+      ,totsdatu NUMBER(25,2)
       );
   TYPE typ_tab_preju IS TABLE OF typ_prejuizo INDEX BY PLS_INTEGER;
   
@@ -9168,6 +9169,8 @@ EXCEPTION
       Data     : 24/08/2018
       Frequencia: Sempre que for chamado
       Objetivo  : Buscar os valores de prejuizo do bordero e titulos
+      Alterações:
+        - 04/09/2018 - Vitor Shimada Assanuma (GFT) - Alteração no saldo do prejuizo.
     ---------------------------------------------------------------------------------------------------------------------*/
     -- Tratamento de erro
     vr_exc_erro EXCEPTION;
@@ -9188,16 +9191,17 @@ EXCEPTION
         ,bdt.inprejuz
         ,bdt.vlaboprj
         ,bdt.qtdirisc
-        ,SUM(tdb.vljraprj)        AS tojraprj
-        ,SUM(tdb.vljrmprj)        AS tojrmprj
-        ,SUM(tdb.vlpgjmpr)        AS topgjmpr
-        ,SUM(tdb.vlpgmupr)        AS topgmupr
-        ,SUM(tdb.vlprejuz)        AS toprejuz
-        ,SUM(tdb.vlsdprej)        AS tosdprej
-        ,SUM(tdb.vlsprjat)        AS tosprjat
-        ,SUM(tdb.vlttjmpr)        AS tottjmpr
-        ,SUM(tdb.vlttmupr)        AS tottmupr
-        ,MIN(tdb.dtvencto)        AS dtminven
+        ,SUM(tdb.vljraprj)        AS tojraprj -- juros acumulados no prejuizo. 
+        ,SUM(tdb.vljrmprj)        AS tojrmprj -- valor dos juros calculados no mes em prejuizo. 
+        ,SUM(tdb.vlpgjmpr)        AS topgjmpr -- valor total pago dos juros de mora em prejuizo. 
+        ,SUM(tdb.vlpgmupr)        AS topgmupr -- valor total pago da multa em prejuizo. 
+        ,SUM(tdb.vlprejuz)        AS toprejuz -- valor total do prejuizo. 
+        ,SUM(tdb.vlsldtit)        AS tosdprej -- saldo em prejuizo sem multa e mora (ORIGINAL)
+        ,SUM(tdb.vlsprjat)        AS tosprjat -- saldo em prejuizo do dia anterior. 
+        ,SUM(tdb.vlttjmpr)        AS tottjmpr -- valor total da mora em prejuizo.  
+        ,SUM(tdb.vlttmupr)        AS tottmupr -- valor total da multa em prejuizo. 
+        ,SUM(tdb.vlsdprej)        AS totsdatu -- Saldo atualizado do prejuizo.
+        ,MIN(tdb.dtvencto)        AS dtminven -- Data do titulo mais vencido
       FROM crapbdt bdt
         INNER JOIN craptdb tdb ON bdt.cdcooper = tdb.cdcooper AND bdt.nrdconta = tdb.nrdconta AND bdt.nrborder = tdb.nrborder
       WHERE bdt.cdcooper = pr_cdcooper
@@ -9297,6 +9301,7 @@ EXCEPTION
         pr_tab_prej(vr_index).tosprjat := rw_crapbdt.tosprjat;
         pr_tab_prej(vr_index).tottjmpr := rw_crapbdt.tottjmpr;
         pr_tab_prej(vr_index).tottmupr := rw_crapbdt.tottmupr;
+        pr_tab_prej(vr_index).totsdatu := rw_crapbdt.totsdatu;
       END IF;
     EXCEPTION
       WHEN vr_exc_erro THEN 
@@ -9331,6 +9336,8 @@ EXCEPTION
       Data     : 24/08/2018
       Frequencia: Sempre que for chamado
       Objetivo  : Buscar os valores de prejuizo do bordero e titulos
+      Alterações:
+        - 04/09/2018 - Vitor Shimada Assanuma (GFT) - Alteração no saldo do prejuizo.
     ---------------------------------------------------------------------------------------------------------------------*/
     -- Tratamento de erro
     vr_exc_erro EXCEPTION;
@@ -9408,7 +9415,8 @@ EXCEPTION
                      '<tosdprej>' || to_char(vr_tab_prej(0).tosdprej, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tosdprej>' ||
                      '<tosprjat>' || to_char(vr_tab_prej(0).tosprjat, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tosprjat>' ||
                      '<tottjmpr>' || to_char(vr_tab_prej(0).tottjmpr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tottjmpr>' ||
-                     '<tottmupr>' || to_char(vr_tab_prej(0).tottmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tottmupr>' 
+                     '<tottmupr>' || to_char(vr_tab_prej(0).tottmupr, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</tottmupr>' ||
+                     '<totsdatu>' || to_char(vr_tab_prej(0).totsdatu, 'FM999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS = '',.''')  || '</totsdatu>' 
                     );                            
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);

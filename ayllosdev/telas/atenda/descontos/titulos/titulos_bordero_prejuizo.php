@@ -7,6 +7,7 @@
 	                                                                  
 	 Objetivo  : Detalhes do prejuizo do borderô
 	 Alterações: 
+	 - 04/09/2018 - Alteração do saldo do prejuizo [Vitor Shimada Assanuma (GFT)]
 	
 	************************************************************************/
 	
@@ -108,8 +109,8 @@
 		<input type="text" name="tottmupr" id="tottmupr" value="<?=$dados->tottmupr?>" />
 		<br />
 		
-		<label for="tosprjat"><? echo utf8ToHtml('Saldo atualizado:') ?></label>
-		<input type="text" name="tosprjat" id="tosprjat" value="<?=$dados->tosprjat?>" />
+		<label for="totsdatu"><? echo utf8ToHtml('Saldo atualizado:') ?></label>
+		<input type="text" name="totsdatu" id="totsdatu" value="<?=$dados->totsdatu?>" />
 		<br />
 
 		<label for="topgjmpr"><? echo utf8ToHtml('Valores pagos de Juros de mora:') ?></label>

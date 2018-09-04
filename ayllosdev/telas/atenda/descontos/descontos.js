@@ -60,6 +60,8 @@
 			 25/08/2018 - Adicionado tela de prejuizo de bordero e campo na tela detalhes de titulo. (Cassia de Oliveira - GFT)
              
 			 27/08/2018 - Adicionada informação mostrando borderô em prejuízo - Luis Fernando (GFT)
+	        
+	         04/09/2018 - Alteração do saldo do prejuizo - Vitor Shimada Assanuma (GFT)
 
 ************************************************************************/
 
@@ -1748,7 +1750,7 @@ function formataLayout(nomeForm){
 		var Ltopgmupr = $('label[for="topgmupr"]','#'+nomeForm);
 		var Ltottmupr = $('label[for="tottmupr"]','#'+nomeForm);
 		var Ltopgjmpr = $('label[for="topgjmpr"]','#'+nomeForm);
-		var Ltosprjat = $('label[for="tosprjat"]','#'+nomeForm);
+		var Ltotsdatu = $('label[for="totsdatu"]','#'+nomeForm);
 		var Ldiasatrs = $('label[for="diasatrs"]','#'+nomeForm);
 		var Lvlaboprj = $('label[for="vlaboprj"]','#'+nomeForm);
 		var Ltojrmprj = $('label[for="tojrmprj"]','#'+nomeForm);
@@ -1762,7 +1764,7 @@ function formataLayout(nomeForm){
 		var Ctopgmupr = $('#topgmupr','#'+nomeForm);
 		var Ctottmupr = $('#tottmupr','#'+nomeForm);
 		var Ctopgjmpr = $('#topgjmpr','#'+nomeForm);
-		var Ctosprjat = $('#tosprjat','#'+nomeForm);
+		var Ctotsdatu = $('#totsdatu','#'+nomeForm);
 		var Cdiasatrs = $('#diasatrs','#'+nomeForm);
 		var Cvlaboprj = $('#vlaboprj','#'+nomeForm);
 		var Ctojrmprj = $('#tojrmprj','#'+nomeForm);
@@ -1781,7 +1783,7 @@ function formataLayout(nomeForm){
 		Ltottmupr.addClass('rotulo').css('width','190px');
 		Ltottjmpr.addClass('rotulo-linha').css('width','130px');
 		Ltopgjmpr.addClass('rotulo').css('width','190px');
-		Ltosprjat.addClass('rotulo-linha').css('width','130px');
+		Ltotsdatu.addClass('rotulo-linha').css('width','130px');
 		Ldiasatrs.addClass('rotulo').css('width','190px');
 
 		Cdtprejuz.css({'width':'70px','text-align':'right'});
@@ -1795,7 +1797,7 @@ function formataLayout(nomeForm){
 		Ctottmupr.css({'width':'70px','text-align':'right'});
 		Ctottjmpr.css({'width':'70px','text-align':'right'});
 		Ctopgjmpr.css({'width':'70px','text-align':'right'});
-		Ctosprjat.css({'width':'70px','text-align':'right'});
+		Ctotsdatu.css({'width':'70px','text-align':'right'});
 		Cdiasatrs.css({'width':'70px','text-align':'right'});
 				
 		Cdtprejuz.desabilitaCampo();
@@ -1804,7 +1806,7 @@ function formataLayout(nomeForm){
 		Ctopgmupr.desabilitaCampo();
 		Ctottmupr.desabilitaCampo();
 		Ctopgjmpr.desabilitaCampo();
-		Ctosprjat.desabilitaCampo();
+		Ctotsdatu.desabilitaCampo();
 		Cdiasatrs.desabilitaCampo();
 		Cvlaboprj.desabilitaCampo();
 		Ctojrmprj.desabilitaCampo();
