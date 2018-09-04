@@ -665,7 +665,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   -- e das estruturas listadas abaixo
   cursor cr_craphis (pr_cdcooper in craphis.cdcooper%TYPE) is
     select upper(craphis.nmestrut) nmestrut,
-           decode(craphis.cdhistor,2412,2408,craphis.cdhistor) cdhistor, 
+           craphis.cdhistor cdhistor,
+--           decode(craphis.cdhistor,2412,2408,craphis.cdhistor) cdhistor,
            craphis.tpctbcxa,
            craphis.tpctbccu,
            craphis.nrctacrd,
@@ -5837,6 +5838,34 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(37).nrctades_jur := 7013;
         vr_tab_historico(37).dsrefere_jur := 'TAXA SOBRE SALDO EM C/C NEGATIVO - PESSOA JURIDICA';
 
+        vr_tab_historico(2408).nrctaori_fis := 8447;
+        vr_tab_historico(2408).nrctades_fis := 8442;
+        vr_tab_historico(2408).dsrefere_fis := 'TRANSFERENCIA CONTA CORRENTE P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2408).nrctaori_jur := 8448;
+        vr_tab_historico(2408).nrctades_jur := 8442;
+        vr_tab_historico(2408).dsrefere_jur := 'TRANSFERENCIA CONTA CORRENTE P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2412).nrctaori_fis := 8447;
+        vr_tab_historico(2412).nrctades_fis := 8442;
+        vr_tab_historico(2412).dsrefere_fis := 'TRANSFERENCIA CONTA CORRENTE P/ PREJUIZO C/ SUSPEITA DE FRAUDE - PESSOA FISICA';
+        vr_tab_historico(2412).nrctaori_jur := 8448;
+        vr_tab_historico(2412).nrctades_jur := 8442;
+        vr_tab_historico(2412).dsrefere_jur := 'TRANSFERENCIA CONTA CORRENTE P/ PREJUIZO C/ SUSPEITA DE FRAUDE - PESSOA JURIDICA';
+
+        vr_tab_historico(2716).nrctaori_fis := 7012;
+        vr_tab_historico(2716).nrctades_fis := 7113;
+        vr_tab_historico(2716).dsrefere_fis := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2716).nrctaori_jur := 7013;
+        vr_tab_historico(2716).nrctades_jur := 7113;
+        vr_tab_historico(2716).dsrefere_jur := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+
+        vr_tab_historico(2717).nrctaori_fis := 7014;
+        vr_tab_historico(2717).nrctades_fis := 7118;
+        vr_tab_historico(2717).dsrefere_fis := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
+        vr_tab_historico(2717).nrctaori_jur := 7015;
+        vr_tab_historico(2717).nrctades_jur := 7118;
+        vr_tab_historico(2717).dsrefere_jur := 'REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
+
         vr_tab_historico(57).nrctaori_fis := 7113;
         vr_tab_historico(57).nrctades_fis := 7012;
         vr_tab_historico(57).dsrefere_fis := 'JUROS SOBRE SAQUE DE DEPOSITO BLOQUEADO - PESSOA FISICA';
@@ -7650,6 +7679,14 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
         vr_tab_historico(2408).nrctaori_jur := 8442;
         vr_tab_historico(2408).nrctades_jur := 4112;
         vr_tab_historico(2408).dsrefere_jur := 'SALDO DEVEDOR C/C TRANSFERIDO PARA PREJUIZO - PESSOA JURIDICA';
+
+        --Rangel Decker TRF. PREJUIZO
+        vr_tab_historico(2412).nrctaori_fis := 8442;
+        vr_tab_historico(2412).nrctades_fis := 4112;
+        vr_tab_historico(2412).dsrefere_fis := 'SALDO DEVEDOR C/C TRANSFERIDO PARA PREJUIZO FRAUDE - PESSOA FISICA';
+        vr_tab_historico(2412).nrctaori_jur := 8442;
+        vr_tab_historico(2412).nrctades_jur := 4112;
+        vr_tab_historico(2412).dsrefere_jur := 'SALDO DEVEDOR C/C TRANSFERIDO PARA PREJUIZO FRAUDE - PESSOA JURIDICA';
 
        --Rangel Decker TRF.PREJ JURO
         vr_tab_historico(2716).nrctaori_fis := 7113;
@@ -13495,7 +13532,7 @@ BEGIN
 
    end if;
 
-
+ vr_vllanmto := 0;
 
  open cr_juros60 (pr_cdcooper,
                     vr_dtmvtolt);
