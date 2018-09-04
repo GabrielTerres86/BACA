@@ -16570,6 +16570,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         and m.nrdconta = pr_nrdconta
         and m.nrctrato = pr_nrctrato
         and nvl(m.tpctrlim,0) = nvl(pr_tpctrlim,0);
+        
+     CURSOR cr_motivo (prc_cdcooper IN tbcadast_motivo_anulacao.cdcooper%TYPE,
+                       prc_cdmotivo IN tbcadast_motivo_anulacao.cdmotivo%TYPE,
+                       prc_tpproduto IN tbcadast_motivo_anulacao.tpproduto%TYPE) IS
+       SELECT 1
+         FROM tbcadast_motivo_anulacao t
+        WHERE t.cdcooper  = prc_cdcooper
+          AND t.cdmotivo  = prc_cdmotivo
+          AND t.tpproduto = prc_tpproduto
+          AND t.inobservacao = 1
+        ;            
         --
         r_motivo_atual c_motivo_atual%rowtype;
 
@@ -16591,6 +16602,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_cdagenci VARCHAR2(100);
         vr_nrdcaixa VARCHAR2(100);
         vr_idorigem VARCHAR2(100);
+        vr_exigeobs NUMBER;
+        vr_dstpproduto VARCHAR2(25);
+        
+        vr_nrdrowid ROWID;
    
     BEGIN
       
@@ -16630,12 +16645,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Regras para alteração
       --1 dsobservacao (Opçãoes com observação) mínimo 10 máximo 50 caracteres
       --2 Alteração somente no mesmo dia
-      
-      if length(pr_dsobservacao) < 10 or length(pr_dsobservacao) > 50 then
+      vr_exigeobs := 0;
+      FOR rw_motivo IN cr_motivo(vr_cdcooper,
+                                 pr_cdmotivo,
+                                 pr_tpproduto) LOOP
+        vr_exigeobs := 1;
+      END LOOP;
+      --
+      IF vr_exigeobs = 1 AND (length(pr_dsobservacao) < 10 OR length(pr_dsobservacao) > 50 OR
+         TRIM(pr_dsobservacao) IS NULL) THEN
          vr_cdcritic := 1289;
-         raise vr_exc_saida;        
-      end if;
-
+         RAISE vr_exc_saida;        
+      END IF;
+      IF pr_tpproduto = 1 THEN
+        vr_dstpproduto := 'EMPRESTIMO';
+      ELSE
+        vr_dstpproduto := 'LIMITE DESCTO TITULO';
+      END IF;
       open c_motivo_atual(vr_cdcooper);
        fetch c_motivo_atual into r_motivo_atual;
         if c_motivo_atual%found then
@@ -16645,6 +16671,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             vr_cdcritic := 1290;
             raise vr_exc_saida;
           end if;
+          --
+          -- Gravar LOG
+          GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => vr_idorigem
+                              ,pr_dstransa => 'Atualizacao do motivo de Anulacao'
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0
+                              ,pr_hrtransa => gene0002.fn_busca_time
+                              ,pr_idseqttl => 0
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);    
+	                                    
           --Motivo é o mesmo atualiza
           if pr_cdmotivo = r_motivo_atual.cdmotivo then
             begin
@@ -16659,107 +16700,185 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                vr_dscritic := 'Erro ao atualizar motivo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
                raise vr_exc_saida;                
             end;
+            --
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Cod Motivo'
+                                     ,pr_dsdadant => pr_cdmotivo
+                                     ,pr_dsdadatu => pr_cdmotivo); 
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Desc. Motivo'
+                                     ,pr_dsdadant => pr_dsmotivo
+                                     ,pr_dsdadatu => pr_dsmotivo);                                      
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Observacao'
+                                     ,pr_dsdadant => nvl(r_motivo_atual.dsobservacao,' ')
+                                     ,pr_dsdadatu => nvl(pr_dsobservacao,' '));
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Tipo Produto'
+                                     ,pr_dsdadant => ' '
+                                     ,pr_dsdadatu => vr_dstpproduto);                                      
+                                                                                                                	            
           else
-             --deleta o motivo atual e insere o novo
-             begin
-               delete from tbmotivo_anulacao where rowid = r_motivo_atual.rowid;
-             exception
+            --deleta o motivo atual e insere o novo
+            begin
+              delete from tbmotivo_anulacao where rowid = r_motivo_atual.rowid;
+            exception
+             when others then
+              close c_motivo_atual;
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao deletar motivo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
+              raise vr_exc_saida;              
+            end;
+            -- Insere o motivo
+            begin
+              insert into tbmotivo_anulacao(cdcooper,
+                                            nrdconta,
+                                            nrctrato,
+                                            tpctrlim,
+                                            dtcadastro,
+                                            cdmotivo,
+                                            dsmotivo,
+                                            dsobservacao,
+                                            cdoperad) values (vr_cdcooper,
+                                                              pr_nrdconta,
+                                                              pr_nrctrato,
+                                                              pr_tpctrlim,
+                                                              rw_crapdat.dtmvtolt,
+                                                              pr_cdmotivo,
+                                                              pr_dsmotivo,
+                                                              pr_dsobservacao,
+                                                              vr_cdoperad);
+            exception
               when others then
-               close c_motivo_atual;
-               vr_cdcritic := 0;
-               vr_dscritic := 'Erro ao deletar motivo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
-               raise vr_exc_saida;              
-             end;
-             -- Insere o motivo
-             begin
-               insert into tbmotivo_anulacao(cdcooper,
-                                             nrdconta,
-                                             nrctrato,
-                                             tpctrlim,
-                                             dtcadastro,
-                                             cdmotivo,
-                                             dsmotivo,
-                                             dsobservacao,
-                                             cdoperad) values (vr_cdcooper,
-                                                               pr_nrdconta,
-                                                               pr_nrctrato,
-                                                               pr_tpctrlim,
-                                                               rw_crapdat.dtmvtolt,
-                                                               pr_cdmotivo,
-                                                               pr_dsmotivo,
-                                                               pr_dsobservacao,
-                                                               vr_cdoperad);
-             exception
-               when others then
-                 close c_motivo_atual;             
-                 vr_cdcritic := 0;
-                 vr_dscritic := 'Erro ao inserir motivo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
-                 raise vr_exc_saida;
-             end;
+                close c_motivo_atual;             
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao inserir motivo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
+                raise vr_exc_saida;
+            end;
+            --
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Cod Motivo'
+                                     ,pr_dsdadant => r_motivo_atual.cdmotivo
+                                     ,pr_dsdadatu => pr_cdmotivo); 
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Desc. Motivo'
+                                     ,pr_dsdadant => r_motivo_atual.dsmotivo
+                                     ,pr_dsdadatu => pr_dsmotivo);                                      
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Observacao'
+                                     ,pr_dsdadant => nvl(r_motivo_atual.dsobservacao,' ')
+                                     ,pr_dsdadatu => nvl(pr_dsobservacao,' '));
+            -- Gravar Item do LOG                                     
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Tipo Produto'
+                                     ,pr_dsdadant => ' '
+                                     ,pr_dsdadatu => vr_dstpproduto);                                                  
           end if;
         else
-         -- Insere o motivo
-         begin
-           insert into tbmotivo_anulacao(cdcooper,
-                                         nrdconta,
-                                         nrctrato,
-                                         tpctrlim,
-                                         dtcadastro,
-                                         cdmotivo,
-                                         dsmotivo,
-                                         dsobservacao,
-                                         cdoperad) values (vr_cdcooper,
-                                                           pr_nrdconta,
-                                                           pr_nrctrato,
-                                                           pr_tpctrlim,
-                                                           rw_crapdat.dtmvtolt,
-                                                           pr_cdmotivo,
-                                                           pr_dsmotivo,
-                                                           pr_dsobservacao,
-                                                           vr_cdoperad);
-         exception
-           when others then
-             close c_motivo_atual;             
-             vr_cdcritic := 0;
-             vr_dscritic := 'Erro ao inserir motivo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
-             raise vr_exc_saida;
-         end;
-         if pr_tpproduto = 1 then -- Empréstimo
-           begin
-             update crawepr e
-                set e.dtanulac = rw_crapdat.dtmvtolt,
-                    e.insitest = 6 -- Anulada
-              where e.cdcooper = vr_cdcooper
-                and e.nrdconta = pr_nrdconta
-                and e.nrctremp = pr_nrctrato;
-           exception
-             when others then
-               close c_motivo_atual;             
-               vr_cdcritic := 0;
-               vr_dscritic := 'Erro ao atualizar emprestimo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
-               raise vr_exc_saida;             
-           end;
-         elsif pr_tpproduto = 5 then -- Limite de Crédito
-           begin
-             update crawlim l
-                set l.dtanulac = rw_crapdat.dtmvtolt,
-                    l.insitlim = 9 -- Anulada
-              where l.cdcooper = vr_cdcooper
-                and l.nrdconta = pr_nrdconta
-                and l.nrctrlim = pr_nrctrato
-                and l.tpctrlim = pr_tpctrlim;
-           exception
-             when others then
-               close c_motivo_atual;             
-               vr_cdcritic := 0;
-               vr_dscritic := 'Erro ao atualizar limite de crédito EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
-               raise vr_exc_saida;             
-           end;           
-         end if;
+          -- Insere o motivo
+          BEGIN
+            insert into tbmotivo_anulacao(cdcooper,
+                                          nrdconta,
+                                          nrctrato,
+                                          tpctrlim,
+                                          dtcadastro,
+                                          cdmotivo,
+                                          dsmotivo,
+                                          dsobservacao,
+                                          cdoperad) values (vr_cdcooper,
+                                                            pr_nrdconta,
+                                                            pr_nrctrato,
+                                                            pr_tpctrlim,
+                                                            rw_crapdat.dtmvtolt,
+                                                            pr_cdmotivo,
+                                                            pr_dsmotivo,
+                                                            pr_dsobservacao,
+                                                            vr_cdoperad);
+          EXCEPTION
+            when others then
+              close c_motivo_atual;             
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao inserir motivo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
+              raise vr_exc_saida;
+          end;
+          if pr_tpproduto = 1 then -- Empréstimo
+            begin
+              update crawepr e
+                 set e.dtanulac = rw_crapdat.dtmvtolt,
+                     e.insitest = 6 -- Anulada
+               where e.cdcooper = vr_cdcooper
+                 and e.nrdconta = pr_nrdconta
+                 and e.nrctremp = pr_nrctrato;
+            exception
+              when others then
+                close c_motivo_atual;             
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao atualizar emprestimo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
+                raise vr_exc_saida;             
+            end;
+          elsif pr_tpproduto = 5 then -- Limite de Crédito
+            begin
+              update crawlim l
+                 set l.dtanulac = rw_crapdat.dtmvtolt,
+                     l.insitlim = 9 -- Anulada
+               where l.cdcooper = vr_cdcooper
+                 and l.nrdconta = pr_nrdconta
+                 and l.nrctrlim = pr_nrctrato
+                 and l.tpctrlim = pr_tpctrlim;
+            exception
+              when others then
+                close c_motivo_atual;             
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao atualizar limite de crédito EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
+                raise vr_exc_saida;             
+            end;           
+          end if;
+          -- Gravar LOG
+          GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => vr_idorigem
+                              ,pr_dstransa => 'Inclusao do motivo de anulacao'
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0
+                              ,pr_hrtransa => gene0002.fn_busca_time
+                              ,pr_idseqttl => 0
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);    
+
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Cod Motivo'
+                                     ,pr_dsdadant => ' '
+                                     ,pr_dsdadatu => pr_cdmotivo); 
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Desc. Motivo'
+                                     ,pr_dsdadant => ' '
+                                     ,pr_dsdadatu => pr_dsmotivo);                                      
+            -- Gravar Item do LOG
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Observacao'
+                                     ,pr_dsdadant => ' '
+                                     ,pr_dsdadatu => NVL(pr_dsobservacao,' '));
+            -- Gravar Item do LOG                                     
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Tipo Produto'
+                                     ,pr_dsdadant => ' '
+                                     ,pr_dsdadatu => vr_dstpproduto);                                                                                 
         end if;  
       close c_motivo_atual;
     --Salva  
-    commit;    
+    COMMIT;    
+    --
     EXCEPTION
       WHEN vr_exc_saida THEN
       

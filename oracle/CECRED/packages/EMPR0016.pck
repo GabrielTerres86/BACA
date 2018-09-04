@@ -658,7 +658,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
     -- Retorna as tarifas
     pr_vltottar := NVL(vr_vltottar, 0);
     pr_vltariof := NVL(vr_vltariof, 0);      
-          
+    
+    COMMIT;
+    
   EXCEPTION
     WHEN vr_exc_erro THEN -- Exceção para tratar erros
       -- Apenas retornar a variavel de saida

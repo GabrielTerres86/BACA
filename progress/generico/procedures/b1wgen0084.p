@@ -4703,12 +4703,7 @@ PROCEDURE grava_efetivacao_proposta:
            aux_dscritic = pc_efetiva_proposta_sp.pr_dscritic
                              WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
         IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-          DO:
-			     CREATE tt-erro.
-			     ASSIGN tt-erro.cdcritic = aux_cdcritic
-					        tt-erro.dscritic = aux_dscritic.
-   			   RETURN "NOK".
- 		      END.                 
+           RETURN "NOK".                                
     END.                               
 
     RETURN "OK".
@@ -4861,7 +4856,8 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
          END.
 
     /* Se for Pos-Fixado */
-    IF  crapepr.tpemprst = 2  THEN
+    /*INICIO P438*/
+    IF CAN-DO("1,2", STRING(crapepr.tpemprst)) THEN
         DO:
            /* Caso NAO seja Refinanciamento, exibe critica  */
            IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
@@ -4893,7 +4889,7 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
                END. /* NOT CAN-FIND */
 
         END. /* crapepr.tpemprst = 2 */
-
+        /*FIM P438*/
     FIND   FIRST craplem NO-LOCK WHERE
                  craplem.cdcooper = crapepr.cdcooper AND
                  craplem.dtmvtolt = crapepr.dtmvtolt AND
@@ -5082,6 +5078,30 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                ASSIGN aux_dscritic = "Ja possui lancamento em conta".
                UNDO Desfaz , LEAVE Desfaz.
            END.
+        /* INICIO P438 - Se for PP */
+        IF  crapepr.tpemprst = 1  THEN
+            DO:
+               /* Caso NAO seja Refinanciamento, exibe critica  */
+               IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                                          AND crawepr.nrdconta = par_nrdconta
+                                          AND crawepr.nrctremp = par_nrctremp
+                                          AND (crawepr.nrctrliq[1]  > 0   OR
+                                               crawepr.nrctrliq[2]  > 0   OR
+                                               crawepr.nrctrliq[3]  > 0   OR
+                                               crawepr.nrctrliq[4]  > 0   OR
+                                               crawepr.nrctrliq[5]  > 0   OR
+                                               crawepr.nrctrliq[6]  > 0   OR
+                                               crawepr.nrctrliq[7]  > 0   OR
+                                               crawepr.nrctrliq[8]  > 0   OR
+                                               crawepr.nrctrliq[9]  > 0   OR
+                                               crawepr.nrctrliq[10] > 0)) THEN
+                   DO:
+                       ASSIGN aux_dscritic = "Operacao nao permitida para emprestimo do tipo PP.".
+                       UNDO Desfaz , LEAVE Desfaz.
+
+                   END. /* NOT CAN-FIND */
+
+            END. /* FIM P438 crapepr.tpemprst = 1 */           
 
         /* Se for Pos-Fixado */
         IF  crapepr.tpemprst = 2  THEN
