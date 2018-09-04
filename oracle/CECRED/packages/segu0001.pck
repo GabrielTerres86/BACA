@@ -623,8 +623,10 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                                          pr_nrctrato in crawseg.nrctrato%type,
                                          pr_cdoperad in crapope.cdoperad%type,
                                          pr_cdagenci in crapseg.cdagenci%type,
+                                         pr_vlslddev in crapseg.vlslddev%type,
+                                         pr_idimpdps in varchar2,
                                          pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
-                                         pr_dscritic out crapcri.dscritic%type);                                     
+                                         pr_dscritic out crapcri.dscritic%type);   --> Descricao da critica                                    
 
 END SEGU0001;
 /
@@ -8375,6 +8377,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                            pr_nrctrato in crawseg.nrctrato%type,
                                            pr_cdoperad in crapope.cdoperad%type,
                                            pr_cdagenci in crapseg.cdagenci%type,
+                                           pr_vlslddev in crapseg.vlslddev%type,
+                                           pr_idimpdps in varchar2,
                                            pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
                                            pr_dscritic out crapcri.dscritic%type) IS --> Descricao da critica
 
@@ -8470,7 +8474,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                            crapseg.vlpremio,
                            crapseg.cdopeori,
                            crapseg.cdageori,
-                           crapseg.dtinsori) values (pr_cdcooper
+                           crapseg.dtinsori,
+                           crapseg.vlslddev,
+                           crapseg.idimpdps) values (pr_cdcooper
                                                     ,pr_cdoperad
                                                     ,rw_crapdat.dtmvtolt
                                                     ,r_crawseg.nrctrseg
@@ -8499,7 +8505,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                                     ,r_crawseg.vlpremio
                                                     ,pr_cdoperad
                                                     ,pr_cdagenci
-                                                    ,sysdate);
+                                                    ,sysdate
+                                                    ,pr_vlslddev
+                                                    ,decode(pr_idimpdps,'S',1,'N',0));
      exception
        when others then
         vr_cdcritic := 0;
