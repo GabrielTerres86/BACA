@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 16/11/2017
+   Data    : Junho/95.                       Ultima atualizacao: 03/05/2018
 
    Dados referentes ao programa:
 
@@ -242,6 +242,8 @@ BEGIN
                  16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
 							  (Mauricio - Mouts)
 
+                 02/05/2018 - Ajuste no nome do arquivo gerado no relatorio (Projeto Debitador Unico - Fabiano B. Dias - AMcom).	
+
   ............................................................................................*/
   
   DECLARE
@@ -263,7 +265,7 @@ BEGIN
 
     -- DIVERSAS
     vr_dsintegr VARCHAR2(50);
-    vr_dsarquiv VARCHAR2(200) := '/rl/crrl101.lst';
+    vr_dsarquiv VARCHAR2(200) := '/rl/crrl101_'||to_char( gene0002.fn_busca_time )||'.lst'; -- debitador
     vr_nrdolot1 INTEGER;
     vr_nrdolot2 INTEGER;
     vr_nrdolote INTEGER;
