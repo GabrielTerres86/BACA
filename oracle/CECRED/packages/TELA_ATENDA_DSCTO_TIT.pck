@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
     Programa : TELA_ATENDA_DSCTO_TIT
     Sistema  : Ayllos Web
     Autor    : Paulo Penteado (GFT) / Gustavo Sene (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 22/08/2018
+    Data     : Março - 2018                 Ultima atualizacao: 04/09/2018
 
     Dados referentes ao programa:
 
@@ -27,6 +27,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 22/08/2018 - Inclusão da procedure pc_gravar_hist_alt_limite (Paulo Penteado (GFT))
                 23/08/2018 - Alteraçao na procedure pc_efetivar_proposta / Registrar na tabela de histórico de alteraçao 
                              de contrato de limite (Andrew Albuquerque - GFT)
+                04/09/2018 - Alteração do type de retorno dos históricos de limite, e da data de inclusão quando é Cancelamento de Limite (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
   /* Tabela de retorno do histórico de alteração dos contratos de limite*/
@@ -44,7 +45,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                   dhalteracao    DATE,
                   dsmotivo       VARCHAR2(1000));
   TYPE  typ_tab_hist_alt_limites IS TABLE OF typ_rec_hist_alt_limites
-    INDEX BY VARCHAR2(50);
+    INDEX BY binary_integer;
     
   /*Tabela de retorno dos titulos do bordero*/
   TYPE typ_rec_tit_bordero
@@ -881,6 +882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
       22/08/2018 - Inclusão da procedure pc_gravar_hist_alt_limite (Paulo Penteado (GFT))
       23/08/2018 - Alteraçao na procedure pc_efetivar_proposta / Registrar na tabela de histórico de alteraçao 
                    de contrato de limite (Andrew Albuquerque - GFT)
+      04/09/2018 - Alteração do type de retorno dos históricos de limite, e da data de inclusão quando é Cancelamento de Limite (Andrew Albuquerque - GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -9622,7 +9624,8 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
       Objetivo  : Gravar as informações de histórico de alteração do limite
   
       Alteração : 22/08/2018 - Criação (Paulo Penteado (GFT))
-  
+                  04/09/2018 - Alteração do type de retorno dos históricos de limite, e da data de inclusão quando é 
+                               Cancelamento de Limite (Andrew Albuquerque - GFT)  
     ----------------------------------------------------------------------------------------------------------*/
   
     -- Variável de críticas
@@ -9633,7 +9636,9 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
     vr_exc_erro EXCEPTION;
     
     CURSOR cr_crawlim IS
-    SELECT NVL(lim.dtinivig,lim.dtpropos) as dtinivig
+    SELECT CASE 
+             WHEN lim.insitlim = 3 THEN plim.dtcancel
+             ELSE NVL(lim.dtinivig,lim.dtpropos) END as dtinivig
           ,lim.dtfimvig
           ,lim.vllimite
           ,lim.insitlim
@@ -9643,6 +9648,10 @@ PROCEDURE pc_busca_motivos_anulacao(pr_tpproduto IN tbcadast_motivo_anulacao.tpp
           ,lim.nrctrlim
           ,lim.nrctrmnt
       FROM crawlim lim
+      LEFT JOIN craplim plim
+        ON lim.cdcooper = plim.cdcooper
+       AND lim.nrdconta = plim.nrdconta
+       AND lim.nrctrlim = plim.nrctrlim
      WHERE lim.cdcooper = pr_cdcooper
        AND lim.nrdconta = pr_nrdconta
        AND lim.tpctrlim = pr_tpctrlim
