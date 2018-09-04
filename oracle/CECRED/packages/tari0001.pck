@@ -8620,9 +8620,9 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       --> Definir tarifas para CDC
       IF rw_craplcr.inlcrcdc = 1 THEN
         IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
-          vr_cdmotivo := 'C4';
+          vr_cdmotivo := 'Q4';
         ELSE --> Emprestimo
-          vr_cdmotivo := 'C5';
+          vr_cdmotivo := 'Q2';
         END IF;
       END IF;
     
@@ -8771,9 +8771,9 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
           -- se for CDC busca nova tarifa
           IF rw_craplcr.inlcrcdc = 1 THEN
              IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
-               vr_cdbattar := 'CDCFALBMPF'; -- Financiamento Tarifa alienação PF	354
+               vr_cdbattar := 'CDCFALBMPF'; -- Financiamento Tarifa alienação PF	386
              ELSE -- EMPRESTIMO
-               vr_cdbattar := 'CDCEALBMPF'; -- Tarifa alienação PF	350
+               vr_cdbattar := 'CDCEALBMPF'; -- Tarifa alienação PF	381
              END IF;
           END IF;
         ELSE -- Juridica
@@ -8782,9 +8782,9 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
           -- se for CDC busca nova tarifa
           IF rw_craplcr.inlcrcdc = 1 THEN
              IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
-               vr_cdbattar := 'CDCFALBMPJ'; -- Financiamento Tarifa alienação PJ	355
+               vr_cdbattar := 'CDCFALBMPJ'; -- Financiamento Tarifa alienação PJ	387
              ELSE -- EMPRESTIMO
-               vr_cdbattar := 'CDCEALBMPJ'; -- Tarifa alienação PJ	351
+               vr_cdbattar := 'CDCEALBMPJ'; -- Tarifa alienação PJ	382
         END IF;
           END IF;
         END IF;
