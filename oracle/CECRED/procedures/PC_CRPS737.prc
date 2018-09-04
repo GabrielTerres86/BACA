@@ -26,6 +26,9 @@ BEGIN
   
     --- ################################ Variáveis ################################# ----
   
+    rw_dat            btch0001.cr_crapdat%rowtype;    --> Dados para fetch de cursor genérico 
+        
+  
     vr_exc_p1         EXCEPTION;                      --> Controle de exceção de LOOP interno
     vr_exc_p2         EXCEPTION;                      --> Controle de exceção de LOOP externo
     vr_exc_erro       EXCEPTION;                      --> Controle de exceção personalizada
@@ -93,7 +96,6 @@ BEGIN
 
     vr_nom_dir        VARCHAR2(100);                  --> Nome da pasta
     vr_cdcritic       NUMBER := 0;                    --> Código da crítica
-    rw_dat            btch0001.cr_crapdat%rowtype;    --> Dados para fetch de cursor genérico
     vr_rpp_vlsdrdpp   craprpp.vlsdrdpp%type := 0;     --> Valor de poupança acumulado
     vr_clob_01        CLOB;                           --> Variável para armazenar XML de dados
     vr_text_01        VARCHAR2(32767);                --> Variável para armazenar Temporativamente texto do XML de dados
@@ -308,6 +310,7 @@ BEGIN
             ,cp.vlslfmes
             ,cp.vlabcpmf
             ,cp.dtvctopp
+            ,cp.qtmesext
       FROM craprpp cp
           ,crapass ass
       WHERE cp.cdcooper = ass.cdcooper
@@ -617,6 +620,7 @@ BEGIN
       PROCEDURE pc_processa_aplicacao(pr_cdcooper IN craprac.cdcooper%TYPE
                                            ,pr_nrdconta IN craprac.nrdconta%TYPE
                                            ,pr_nrctrrpp IN craprac.nrctrrpp%TYPE
+                                      ,pr_idxrpp IN NUMBER
                                            ,pr_vlsdapprpp OUT NUMBER) IS
 
 
@@ -641,7 +645,6 @@ BEGIN
         DECLARE
       -- variaveis de retorno do calculo de provisao
 
-      vr_dscritic       VARCHAR2(4000);
       vr_idtipbas NUMBER := 2; -- tipo base de calculo
       vr_vlbascal NUMBER := 0; -- valor base de calculo
       vr_vlsldtot NUMBER := 0;
@@ -651,15 +654,20 @@ BEGIN
       vr_vlrevers NUMBER := 0;
       vr_vlrdirrf NUMBER := 0;
       vr_percirrf NUMBER := 0;
+      vr_qtmesext NUMBER := 0;
+      vr_vlrenrpp NUMBER := 0;
+      vr_vlrirrpp NUMBER := 0;
 
       -- valor de saldo anterior
       vr_vlsldant craprac.vlsldant%TYPE;
       -- data do saldo anterior
       vr_dtsldant craprac.dtsldant%TYPE;
     
+      vr_dtrefere DATE := rw_rpp(pr_idxrpp).dtfimper;
 
     BEGIN
     pr_vlsdapprpp := 0;
+         
           -- filtra as aplicacoes da cooperativa     
          FOR rw_craprac IN cr_craprac(pr_cdcooper => pr_cdcooper,
                            pr_nrdconta => pr_nrdconta,
@@ -680,7 +688,11 @@ BEGIN
              CONTINUE;       
            
            END IF;
-    
+           IF (rw_craprac.dtmvtolt = rw_dat.dtmvtolt) THEN
+              vr_vlultren := 0;
+              vr_vlrentot := 0;
+              vr_vlrdirrf := 0;
+           ELSE
                   APLI0006.pc_posicao_saldo_aplicacao_pos(pr_cdcooper => rw_craprac.cdcooper, 
                                                           pr_nrdconta => rw_craprac.nrdconta,
                                                           pr_nraplica => rw_craprac.nraplica, 
@@ -709,8 +721,10 @@ BEGIN
                        RAISE vr_exc_erro;
                     END IF;
                 -- valida o ultimo rendimento
-                
+           END IF; 
         pr_vlsdapprpp := pr_vlsdapprpp + (rw_craprac.vlsldatl + vr_vlultren);
+           vr_vlrenrpp := vr_vlrenrpp + vr_vlrentot;
+           vr_vlrirrpp := vr_vlrirrpp + vr_vlrdirrf;
         
                 IF vr_vlultren > 0 THEN    
     
@@ -817,11 +831,159 @@ BEGIN
                 END;
             END LOOP;
 
+        --
+        vr_qtmesext := rw_rpp(pr_idxrpp).qtmesext + 1;
+        if vr_qtmesext = 4 then
+          vr_qtmesext := 1;
+        end if;
+        if to_char(rw_rpp(pr_idxrpp).dtfimper, 'mm') = '12' then
+          vr_qtmesext := 3;
+        end if;
+
+        -- Atualiza poupança programada
+        begin
+          update craprpp
+             set craprpp.qtmesext = vr_qtmesext,
+                 craprpp.dtiniext = decode(vr_qtmesext,
+                                           1, craprpp.dtfimext,
+                                           craprpp.dtiniext),
+                 craprpp.dtsdppan = decode(vr_qtmesext,
+                                           1, craprpp.dtiniper,
+                                           craprpp.dtsdppan),
+                 craprpp.vlsdppan = decode(vr_qtmesext,
+                                           1, craprpp.vlsdrdpp,
+                                           craprpp.vlsdppan),
+                 craprpp.incalmes = 0,
+                 indebito = 0,
+                 craprpp.dtfimext = craprpp.dtfimper,
+                 craprpp.dtiniper = craprpp.dtfimper,
+                 craprpp.dtfimper = add_months(craprpp.dtfimper, 1),
+                 craprpp.vlsdrdpp = pr_vlsdapprpp - vr_vlrirrpp,
+                 craprpp.dtcalcul = rw_dat.dtmvtopr
+           where craprpp.rowid = rw_rpp(pr_idxrpp).rowid;
+
+          update crapspp
+             set crapspp.vlsldrpp = pr_vlsdapprpp - vr_vlrirrpp,
+                 crapspp.dtmvtolt = rw_dat.dtmvtolt
+           where crapspp.cdcooper = pr_cdcooper
+             and crapspp.nrdconta = pr_nrdconta
+             and crapspp.nrctrrpp = pr_nrctrrpp
+             and crapspp.dtsldrpp = rw_rpp(pr_idxrpp).dtfimper;
+          --
+          if sql%rowcount = 0 then
+            -- Não encontrou registro para atualizar, portanto deve incluir um novo
+              insert into crapspp (cdcooper,
+                                   nrdconta,
+                                   nrctrrpp,
+                                   dtsldrpp,
+                                   vlsldrpp,
+                                   dtmvtolt)
+              values (pr_cdcooper,
+                      pr_nrdconta,
+                      pr_nrctrrpp,
+                      rw_rpp(pr_idxrpp).dtfimper,
+                      pr_vlsdapprpp - vr_vlrirrpp,
+                      rw_dat.dtmvtolt);
+    end if;
+        if vr_vlrenrpp > 0 then
+          -- Atualiza os juros acumulados da poupança programada
+            update craprpp
+               set craprpp.vljuracu = craprpp.vljuracu + vr_vlrenrpp
+             where craprpp.rowid = rw_rpp(pr_idxrpp).rowid;
+
+          -- Atualiza cotas e recursos (somente os campos correspondentes ao mês de referência)
+            update crapcot
+               set crapcot.vlrenrpp = crapcot.vlrenrpp + vr_vlrenrpp,
+                   crapcot.vlrenrpp_ir##1 = crapcot.vlrenrpp_ir##1 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '01', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##1 = crapcot.vlrentot##1 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '01', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##2 = crapcot.vlrenrpp_ir##2 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '02', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##2 = crapcot.vlrentot##2 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '02', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##3 = crapcot.vlrenrpp_ir##3 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '03', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##3 = crapcot.vlrentot##3 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '03', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##4 = crapcot.vlrenrpp_ir##4 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '04', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##4 = crapcot.vlrentot##4 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '04', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##5 = crapcot.vlrenrpp_ir##5 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '05', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##5 = crapcot.vlrentot##5 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '05', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##6 = crapcot.vlrenrpp_ir##6 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '06', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##6 = crapcot.vlrentot##6 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '06', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##7 = crapcot.vlrenrpp_ir##7 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '07', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##7 = crapcot.vlrentot##7 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '07', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##8 = crapcot.vlrenrpp_ir##8 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '08', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##8 = crapcot.vlrentot##8 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '08', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##9 = crapcot.vlrenrpp_ir##9 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '09', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##9 = crapcot.vlrentot##9 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '09', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##10 = crapcot.vlrenrpp_ir##10 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '10', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##10 = crapcot.vlrentot##10 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '10', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##11 = crapcot.vlrenrpp_ir##11 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '11', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##11 = crapcot.vlrentot##11 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '11', vr_vlrenrpp,
+                                                                      0),
+                   crapcot.vlrenrpp_ir##12 = crapcot.vlrenrpp_ir##12 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                            '12', vr_vlrenrpp,
+                                                                            0),
+                   crapcot.vlrentot##12 = crapcot.vlrentot##12 + decode(to_char(vr_dtrefere, 'mm'),
+                                                                      '12', vr_vlrentot,
+                                                                      0)
+             where crapcot.cdcooper = pr_cdcooper
+                   and crapcot.nrdconta = pr_nrdconta;
+        end if;
+
+        exception
+          when others then
+            vr_dscritic := 'Erro ao atualizar informações da aplicação programada: '||sqlerrm;
+            raise vr_exc_erro;
+        end;
+
+         
+
       EXCEPTION
        WHEN vr_exc_p1 THEN
          vr_cdcritic := 0;
          RAISE vr_exc_p2;
        when vr_exc_erro then
+         vr_cdcritic := 0;
          raise vr_exc_erro;
        WHEN OTHERS THEN
          vr_cdcritic := 0;
@@ -1407,20 +1569,12 @@ BEGIN
               -- Cálculo da aplicação
                 vr_rpp_vlsdrdpp :=0;
                 vr_cdcritic := null;
-                APLI0008.pc_calc_app_programada(pr_cdcooper  => pr_cdcooper
-                               ,pr_dstextab  => vr_dextabi
-                               ,pr_cdprogra  => vr_cdprogra
-                                 ,pr_inproces  => rw_dat.inproces
-                                 ,pr_dtmvtolt  => rw_dat.dtmvtolt
-                                 ,pr_dtmvtopr  => rw_dat.dtmvtopr
-                                 ,pr_rpp_rowid => rw_rpp(idx).rowid
-                               ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
-                               ,pr_cdcritic  => vr_cdcritic
-                               ,pr_des_erro  => vr_dscritic);
+                vr_dscritic := null;
 
                 pc_processa_aplicacao(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => rw_rpp(idx).nrdconta
                                            ,pr_nrctrrpp => rw_rpp(idx).nrctrrpp
+                                      ,pr_idxrpp => idx
                                            ,pr_vlsdapprpp => vr_rpp_vlsdrdpp);
 
               -- Verificar se ocorreram erros no cálculo de poupança

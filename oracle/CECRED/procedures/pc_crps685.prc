@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Carlos Rafael Tanholi
-     Data    : Setembro/2014                       Ultima atualizacao: 26/09/2014
+     Data    : Setembro/2014                       Ultima atualizacao: 15/07/2018
 
      Dados referentes ao programa:
 
@@ -167,23 +167,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
       
       -- Busca aplicacoes ativas
       CURSOR cr_craprac(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-        SELECT craprac.cdcooper
-              ,craprac.cdprodut
-              ,craprac.nrdconta
-              ,craprac.nraplica
-              ,craprac.dtmvtolt
-              ,craprac.dtatlsld
-              ,craprac.txaplica
-              ,craprac.qtdiacar
-              ,craprac.vlsldant
-              ,craprac.dtsldant
-              ,craprac.vlsldatl
-              ,NVL(craprac.vlslfmes,0) vlslfmes
-              ,craprac.qtdiaapl
-              ,craprac.rowid
-          FROM craprac 
-         WHERE craprac.cdcooper = pr_cdcooper                 
-           AND craprac.idsaqtot = 0; /* Ativa */
+        SELECT rac.cdcooper
+              ,rac.cdprodut
+              ,rac.nrdconta
+              ,rac.nraplica
+              ,rac.dtmvtolt
+              ,rac.dtatlsld
+              ,rac.txaplica
+              ,rac.qtdiacar
+              ,rac.vlsldant
+              ,rac.dtsldant
+              ,rac.vlsldatl
+              ,NVL(rac.vlslfmes,0) vlslfmes
+              ,rac.qtdiaapl
+              ,rac.rowid
+          FROM craprac rac, crapcpc cpc
+         WHERE rac.cdcooper = pr_cdcooper                 
+           AND rac.idsaqtot = 0 -- ativa
+           AND rac.cdprodut = cpc.cdprodut
+           AND cpc.indplano = 0; -- apenas não programadas
 
       rw_craprac cr_craprac%ROWTYPE;
 
@@ -193,11 +195,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
                        ,pr_nraplica IN craprac.nraplica%TYPE
                        ,pr_dtmvtolt IN craprac.dtmvtolt%TYPE) IS
         SELECT lac.cdcooper
-          FROM craplac lac
+          FROM craplac lac, craprac rac, crapcpc cpc
          WHERE lac.cdcooper = pr_cdcooper
            AND lac.nrdconta = pr_nrdconta
            AND lac.nraplica = pr_nraplica
-           AND lac.dtmvtolt = pr_dtmvtolt;
+           AND lac.dtmvtolt = pr_dtmvtolt
+           AND cpc.indplano = 0 -- apenas não programadas
+           AND cpc.cdprodut = rac.cdprodut
+           AND rac.cdcooper = lac.cdcooper
+           AND rac.nrdconta = lac.nrdconta
+           AND rac.nraplica = lac.nraplica;
 
       rw_craplac cr_craplac%ROWTYPE;
 
@@ -263,6 +270,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
           AND lac.nraplica = rac.nraplica
           AND lac.cdcooper = pr_cdcooper
           AND lac.dtmvtolt BETWEEN trunc(pr_dtmvtolt,'mm') AND pr_dtmvtolt
+          AND rac.nrctrrpp < 1 --  Apenas não programadas (não utilizar cpc.indplano)
           AND (rac.cdprodut = pr_cdprodut OR pr_cdprodut = 0);      
        
       -- cursor usado para carregar dados de produtos de captacao na PLTABLE
@@ -284,7 +292,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS685 (pr_cdcooper IN crapcop.cdcooper%T
             ,cdhsirap
             ,cdhsrgap
             ,cdhsvtap
-        FROM crapcpc cpc;
+        FROM crapcpc cpc
+       WHERE indplano = 0; -- Apenas não programadas
       
        rw_crapcpc cr_crapcpc%ROWTYPE;    
 

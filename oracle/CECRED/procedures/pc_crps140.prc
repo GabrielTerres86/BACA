@@ -1339,19 +1339,19 @@ BEGIN
               END IF;
 
               -- Calcular o saldo até a data do movimento
-              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
+              IF vr_tab_craprpp(vr_idxindc).cdprodut < 1 THEN
               	      vr_rpp_vlsdrdpp := vr_tab_craprpp(vr_idxindc).vlslfmes;
-	     ELSE
-              apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
-                                       ,pr_dstextab  => vr_dextabi
-                                       ,pr_cdprogra  => vr_cdprogra
-                                       ,pr_inproces  => rw_crapdat.inproces
-                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                       ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
-                                       ,pr_rpp_rowid => vr_tab_craprpp(vr_idxindc).rowid
-                                       ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
-                                       ,pr_cdcritic  => vr_cdcritic
-                                       ,pr_des_erro  => vr_dscritic);
+	          ELSE
+                      apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
+                                               ,pr_dstextab  => vr_dextabi
+                                               ,pr_cdprogra  => vr_cdprogra
+                                               ,pr_inproces  => rw_crapdat.inproces
+                                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                               ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
+                                               ,pr_rpp_rowid => vr_tab_craprpp(vr_idxindc).rowid
+                                               ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
+                                               ,pr_cdcritic  => vr_cdcritic
+                                               ,pr_des_erro  => vr_dscritic);
               END IF;
 
               -- Se encontrar erros na execução
