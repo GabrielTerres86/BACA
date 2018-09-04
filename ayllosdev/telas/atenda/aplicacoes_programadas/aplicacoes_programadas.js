@@ -878,6 +878,8 @@ function validarInclusaoPoupanca() {
 	var anodtvct = $("#anodtvct","#frmDadosPoupanca").val();
 	var vlprerpp = $("#vlprerpp","#frmDadosPoupanca").val().replace(/\./g,"");
 	var tpemiext = $("#tpemiext","#frmDadosPoupanca").val();
+	var cdprodut = $("#cdprodut","#frmDadosPoupanca").val();
+	
 
 	//Limpa o campo de Erro anterior
 	$('input, select','#frmDadosPoupanca' ).removeClass('campoErro');
@@ -936,7 +938,8 @@ function validarInclusaoPoupanca() {
 			mesdtvct: mesdtvct,
 			anodtvct: anodtvct,
 			vlprerpp: vlprerpp,	
-			tpemiext: tpemiext, 				
+			tpemiext: tpemiext,
+		    cdprodut: cdprodut,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -972,6 +975,7 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
 			anodtvct: anodtvct,
 			vlprerpp: vlprerpp,
 			tpemiext: tpemiext,
+			cdprodut: cdprodut,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {

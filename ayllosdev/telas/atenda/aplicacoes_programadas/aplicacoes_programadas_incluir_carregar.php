@@ -114,6 +114,22 @@
 		exibeErro($xmlObjIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
+	// Montar o xml de Requisicao - Recupera produto padrao
+	$xmlProd  = "";
+	$xmlProd .= "<Root>";
+	$xmlProd .= " <Dados/>";	
+	$xmlProd .= "</Root>";
+	
+	$xmlResultProd = mensageria($xmlProd, "APLI0008", "RECUPERA_APL_PGM_PADRAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");	
+	$xmlObjectProd = getObjectXML($xmlResultProd);
+
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjectProd->roottag->tags[0]->name) == "ERRO") {
+ 		$msgErro = $xmlObjectProd->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
+	$cdprodut = $xmlObjectProd->roottag->tags[0]->cdata;
+	
 	$dia = $mes = $ano = '';
 
 	$aux_dtinirpp = ( isset($xmlObjIncluir->roottag->tags[0]->attributes["DTINIRPP"]) ) ? $xmlObjIncluir->roottag->tags[0]->attributes["DTINIRPP"] : '';
@@ -156,14 +172,13 @@
 		<label for="vlprerpp">Valor da Presta&ccedil;&atilde;o:</label>
 		<input name="vlprerpp" type="text" class="campo" id="vlprerpp" value="0,00" />
 		<br />
-		
 		<label for="tpemiext">Tipo de impress&atilde;o do extrato:</label>
 		<select name="tpemiext" id="tpemiext" class="campo">
 			<option value="1">Individual</option>
 			<option value="2">Todas</option>
 			<option value="3" selected>N&atilde;o emite</option>			
 		</select>					
-		
+		<input name="cdprodut" type="hidden" class="campo" id="cdprodut" value="<?php echo $cdprodut; ?>">
 	</fieldset>
 </form>
 <div id="divBotoes">

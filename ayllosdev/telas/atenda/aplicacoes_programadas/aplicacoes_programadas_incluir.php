@@ -32,7 +32,7 @@
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["dtinirpp"]) || !isset($_POST["diadtvct"]) ||
 	    !isset($_POST["mesdtvct"]) || !isset($_POST["anodtvct"]) || !isset($_POST["vlprerpp"]) ||
-		!isset($_POST["tpemiext"])) {
+		!isset($_POST["tpemiext"]) || !isset($_POST["cdprodut"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
@@ -43,6 +43,8 @@
 	$anodtvct = $_POST["anodtvct"];	
 	$vlprerpp = $_POST["vlprerpp"];	
 	$tpemiext = $_POST["tpemiext"];
+	$cdprodut = $_POST["cdprodut"];
+
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -84,22 +86,11 @@
 		exibeErro("Tipo de impressao do extrato inv&aacute;lido.");			
 	}
 	
-	// Montar o xml de Requisicao - Recupera produto padrao
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= " <Dados/>";	
-	$xml .= "</Root>";
+	// Verifica se o produto é válido
+	if (!validaInteiro($cdprodut) || $cdprodut < 1 ) {
+		exibeErro("Aplica&ccedil;&atilde;o programada inv&aacute;lida.");			
+	}	
 	
-	$xmlResult = mensageria($xml, "APLI0008", "RECUPERA_APL_PGM_PADRAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");	
-	$xmlObject = getObjectXML($xmlResult);
-
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
- 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibeErro(utf8_encode($msgErro));
-	}
-	$cdproduto = $xmlObject->roottag->tags[0]->cdata;
-
 	// Monta o xml de requisição
 	$xmlIncluir  = ""; 
 	$xmlIncluir .= "<Root>";
@@ -122,7 +113,7 @@
 	$xmlIncluir .= "		<anodtvct>".$anodtvct."</anodtvct>";	
 	$xmlIncluir .= "		<vlprerpp>".$vlprerpp."</vlprerpp>"; 	
 	$xmlIncluir .= "		<tpemiext>".$tpemiext."</tpemiext>";
-	$xmlIncluir .= "		<cdprodut>".$cdproduto."</cdprodut>";	
+	$xmlIncluir .= "		<cdprodut>".$cdprodut."</cdprodut>";	
 	$xmlIncluir .= "		<dsfinali></dsfinali>"; 	
 	$xmlIncluir .= "		<flgteimo>0</flgteimo>";
 	$xmlIncluir .= "		<flgdbpar>0</flgdbpar>";
