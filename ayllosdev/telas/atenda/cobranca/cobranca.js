@@ -68,6 +68,7 @@ var nrconven = 0;   // Variavel para guardar o convenio no inclui-altera.php
 var mensagem = "Deseja efetuar impress&atilde;o do termo de ades&atilde;o ?"; // Mensagem de confirmacao de impressao
 var callafterCobranca = '';
 var gFlginclu = false;
+var confirmaCancelamentoSustacao = false;
 
 // Numero do convenio que deve ser impresso
 var nrconven_imprimir = 0; 
@@ -210,7 +211,6 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
 
 // Confirmar a exclusao do convenio CEB
 function confirmaExclusao() {
-
     var flgregis = $("#flgregis", "#divConteudoOpcao").val();
 
     if (flgregis == 'SIM') {
@@ -632,7 +632,6 @@ function confirmaInativacaoProtesto(cddopcao) {
 
 // imprimir
 function imprimeRelatorio() {
-
     if (confirmaCancelamentoSustacao) {
         var nmprimtl = $('#nmprimtl', '#frmCabAtenda').val(),
             cdagenci = $('#cdagenci', '#frmCabAtenda').val(),
@@ -899,7 +898,6 @@ function onChangeProtesto() {
 
 // Perguntar se quer fazer a impressao do termo
 function confirmaImpressao(flgregis, dsdtitul) {
-
 	var callafterCobranca = 'blockBackground(parseInt($("#divRotina").css("z-index")));';
     var nrconven = $("#nrconven","#divConteudoOpcao").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
@@ -1376,14 +1374,14 @@ function confirmaImpressaoCancelamento(flgregis, callafterFnc) {
     } else {
         callafterCobranca = callafterFnc;
 
-        nmrotina = "imprimirTermoCancelamentoProtesto";
+        nmrotina = "'imprimirTermoCancelamentoProtesto'";
     }
 
     aux_mensagem = "Deseja efetuar impress&atilde;o do termo de cancelamento ?"; // Mensagem de confirmacao de impressao;
 
     showConfirmacao(aux_mensagem,
 					'Confirma&ccedil;&atilde;o - Ayllos',
-					'testemunhasCancelamento("' + flgregis + '", "' + nmrotina + '");blockBackground(parseInt($("#divRotina").css("z-index")));',
+					'testemunhasCancelamento("' + flgregis + '", ' + nmrotina + ');blockBackground(parseInt($("#divRotina").css("z-index")));',
 					callafterCobranca,
 					'sim.gif',
 					'nao.gif');
@@ -1391,7 +1389,7 @@ function confirmaImpressaoCancelamento(flgregis, callafterFnc) {
 
 function testemunhasCancelamento(flgregis, pNmrotina) {
 
-    var nmrotina = pNmrotina ? pNmrotina : "imprimirTermoCancelamento";
+    var pNmrotina = pNmrotina ? pNmrotina : "imprimirTermoCancelamento";
 
     // Carrega conteúdo da opção através do Ajax
     $.ajax({
@@ -1399,7 +1397,7 @@ function testemunhasCancelamento(flgregis, pNmrotina) {
         dataType: 'html',
         url: UrlSite + 'telas/atenda/dda/testemunhas.php',
         data: {
-            nmrotina: nmrotina,
+            nmrotina: pNmrotina,
             flgregis: flgregis,
             redirect: 'ajax_html'
         },
