@@ -431,6 +431,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND (  bdt.insitbdt = 4 OR (bdt.insitbdt = 3 AND bdt.dtlibbdt <= pr_dtrefere) )
            -- Titulos Situação 4-Liberado OU 2-Processado com data igual a de processo
            AND (  tdb.insittit = 4 OR (tdb.insittit = 2 AND tdb.dtdpagto = pr_rw_crapdat.dtmvtolt) )
+           AND bdt.inprejuz = 0
          GROUP BY bdt.nrdconta;
 
       -- Busca de todos os empréstimos em aberto com prejuizo
@@ -640,6 +641,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            -- Titulos Situação 4-Liberado OU 2-Processado com data igual a de processo
            AND (  tdb.insittit = 4 OR (tdb.insittit = 2 AND tdb.dtdpagto = pr_rw_crapdat.dtmvtolt) )
            AND ( tdb.insitapr = 1 OR bdt.flverbor = 0 )
+           AND bdt.inprejuz = 0
          ORDER BY bdt.nrborder
                  ,cob.flgregis
                  ,bdt.progress_recid;
