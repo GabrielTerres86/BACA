@@ -4373,6 +4373,7 @@ END pc_obtem_proposta_aciona_web;
         OPEN cr_crapass;
         FETCH cr_crapass INTO rw_crapass;
         IF (cr_crapass%NOTFOUND) THEN
+          CLOSE cr_crapass;
           vr_dscritic := 'Cooperado não cadastrado';
           raise vr_exc_erro;
         END IF;
@@ -4380,6 +4381,7 @@ END pc_obtem_proposta_aciona_web;
         OPEN cr_craplim;
         FETCH cr_craplim INTO rw_craplim;
         IF (cr_craplim%NOTFOUND) THEN
+         CLOSE cr_craplim;
          vr_dscritic := 'Conta não possui contrato de limite ativo.';
          raise vr_exc_erro;
         END IF;
@@ -5304,6 +5306,7 @@ BEGIN
       OPEN cr_craplim;
       FETCH cr_craplim INTO rw_craplim;
       IF (cr_craplim%NOTFOUND) THEN
+        CLOSE cr_craplim;
         vr_dscritic := 'Contrato não encontrado.';
         raise vr_exc_erro;
       END IF;
@@ -5313,6 +5316,7 @@ BEGIN
       OPEN cr_crapldc;
       FETCH cr_crapldc INTO rw_crapldc;
       IF (cr_crapldc%NOTFOUND) THEN
+         CLOSE cr_crapldc;
          vr_dscritic := 'Linha de crédito não encontrada.';
          raise vr_exc_erro;
       END IF;
@@ -5326,6 +5330,7 @@ BEGIN
      OPEN cr_crapass;
      FETCH cr_crapass INTO rw_crapass;
      IF (cr_crapass%NOTFOUND) THEN
+        CLOSE cr_crapass;
         vr_dscritic := 'Cooperado não cadastrado';
         raise vr_exc_erro;
      END IF;
@@ -5362,6 +5367,7 @@ BEGIN
                               );
              fetch cr_craptdb into rw_craptdb;
              if  cr_craptdb%found AND rw_craptdb.insitapr <> 2 then
+               CLOSE cr_craptdb;
                vr_dscritic := 'Título ' ||rw_craptdb.nrdocmto || ' já selecionado em outro borderô';
                RAISE vr_exc_erro;
              end if;
@@ -6908,6 +6914,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       open cr_crapbdt;
       fetch cr_crapbdt into rw_crapbdt;
       IF (cr_crapbdt%NOTFOUND) THEN
+        CLOSE cr_crapbdt;
         vr_dscritic := 'Borderô inválido';
         raise vr_exc_erro;
       END IF;
@@ -7504,6 +7511,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         OPEN cr_craplim;
         FETCH cr_craplim INTO rw_craplim;
         IF (cr_craplim%NOTFOUND) THEN
+          CLOSE cr_craplim;
           vr_dscritic := 'Contrato não encontrado ou inativo.';
           raise vr_exc_erro;
         END IF;
@@ -7512,6 +7520,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         OPEN cr_crapldc;
         FETCH cr_crapldc INTO rw_crapldc;
         IF (cr_crapldc%NOTFOUND) THEN
+           CLOSE cr_crapldc;
            vr_dscritic := 'Linha de crédito não encontrada.';
            raise vr_exc_erro;
         END IF;
@@ -7525,6 +7534,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
        OPEN cr_crapass;
        FETCH cr_crapass INTO rw_crapass;
        IF (cr_crapass%NOTFOUND) THEN
+          CLOSE cr_crapass;
           vr_dscritic := 'Cooperado não cadastrado';
           raise vr_exc_erro;
        END IF;
@@ -7590,6 +7600,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         OPEN cr_crapbdt;
         FETCH cr_crapbdt INTO rw_crapbdt;
         IF cr_crapbdt%NOTFOUND THEN
+          CLOSE cr_crapbdt;
           vr_dscritic := 'Ocorreu um erro ao carregar o borderô para alteração';
           raise vr_exc_erro;
         END IF;
@@ -7734,7 +7745,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             vr_index  := vr_tab_dados_titulos.next(vr_index);
         END   LOOP;
 
- --       IF vr_inseriu  THEN
            UPDATE
               crapbdt
            SET
@@ -7748,17 +7758,6 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
               AND crapbdt.cdcooper = vr_cdcooper
               AND crapbdt.nrdconta = pr_nrdconta
            ;
-/*        ELSE
-           UPDATE
-              crapbdt
-           SET
-              insitbdt = 1, --Em Estudo
-              insitapr = 0
-           WHERE
-              crapbdt.nrborder = pr_nrborder
-              AND crapbdt.cdcooper = vr_cdcooper
-              AND crapbdt.nrdconta = pr_nrdconta
-        END IF;*/
 
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Erro tratato
@@ -7975,6 +7974,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
          OPEN cr_crapass;
          FETCH cr_crapass INTO rw_crapass;
          IF (cr_crapass%NOTFOUND) THEN
+            CLOSE cr_crapass;
             vr_dscritic := 'Cooperado não cadastrado';
             raise vr_exc_erro;
          END IF;
@@ -8027,6 +8027,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                OPEN cr_crapbdt;
                FETCH cr_crapbdt INTO rw_crapbdt;
                IF (cr_crapbdt%NOTFOUND) THEN
+                  CLOSE cr_crapbdt;
                   vr_dscritic := 'Borderô ' || vr_nrborder || ' não cadastrado';
                   raise vr_exc_erro;
                END IF;
@@ -8941,6 +8942,17 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                                  ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
                                  ,pr_dscritic     OUT VARCHAR2              --> Descrição da crítica
                                  ) IS 
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_busca_dados_titulo
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Vitor Shimada Assanuma (GFT)
+      Data     : 14/08/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Listar as informações de um título
+      Alterações:
+        - 04/09/2018 - Vitor Shimada Assanuma (GFT) - Fix dos dias de atraso
+    ---------------------------------------------------------------------------------------------------------------------*/
     -- Tratamento de erro
     vr_exc_erro exception;
     
@@ -9016,7 +9028,10 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     pr_tab_titulo(0).nrinssac := rw_craptdb.nrinssac;
     pr_tab_titulo(0).nmdsacad := rw_craptdb.nmdsacad;
     pr_tab_titulo(0).cdtpinsc := rw_craptdb.cdtpinsc;
-    pr_tab_titulo(0).diasatr  := ccet0001.fn_diff_datas(rw_crapdat.dtmvtolt, rw_craptdb.dtvencto);
+    pr_tab_titulo(0).diasatr  := ccet0001.fn_diff_datas(rw_craptdb.dtvencto, rw_crapdat.dtmvtolt);
+    IF pr_tab_titulo(0).diasatr < 0 THEN
+      pr_tab_titulo(0).diasatr := 0;
+    END IF;
     pr_tab_titulo(0).diasprz  := ccet0001.fn_diff_datas(rw_craptdb.dtlibbdt, rw_craptdb.dtvencto);
     
     EXCEPTION
