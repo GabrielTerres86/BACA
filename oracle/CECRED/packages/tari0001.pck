@@ -8622,7 +8622,7 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
         IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
           vr_cdmotivo := 'C4';
         ELSE --> Emprestimo
-          vr_cdmotivo := 'C2';
+          vr_cdmotivo := 'C5';
         END IF;
       END IF;
     
