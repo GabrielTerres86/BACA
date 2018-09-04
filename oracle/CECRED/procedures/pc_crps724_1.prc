@@ -2,6 +2,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps724_1(pr_cdcooper  IN crapcop.cdcooper
                                                ,pr_idparale  IN crappar.idparale%TYPE     --> Indicador de processo paralelo
                                                ,pr_cdagenci  IN crapage.cdagenci%TYPE     --> Codigo Agencia
                                                ,pr_cdrestart IN tbgen_batch_controle.cdrestart%TYPE --> Controle do registro de restart em caso de erro na execucao
+                                               ,pr_qtdexec   IN NUMBER DEFAULT 1          --> numero da execucao no dia (debitador unico)
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
                                                ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
 BEGIN
@@ -11,7 +12,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Agosto/2017                     Ultima atualizacao: 
+     Data    : Agosto/2017                     Ultima atualizacao: 29/08/2018
 
      Dados referentes ao programa:
 
@@ -19,7 +20,9 @@ BEGIN
      Objetivo  : Pagar as parcelas dos contratos do produto Pos-Fixado.
 
      Alteracoes: 
-
+     29/08/2018 - permitir executar mais de uma vez e deve paralelizar somente na primeira execucao.
+                - Projeto Debitador Unico - Fabiano B. Dias (AMcom).
+				
   ............................................................................ */
 
   DECLARE
@@ -70,6 +73,10 @@ BEGIN
             ,crappep.dtultpag
             ,crappep.vlpagmta
             ,crappep.vltaxatu
+            ,crappep.vlpagpar
+            ,crappep.vldstrem
+            ,crappep.vldstcor
+            ,crappep.dtdstjur
             ,crapass.vllimcre
             ,crawepr.dtdpagto
             ,crapepr.dtrefcor
@@ -90,7 +97,7 @@ BEGIN
           ON crapass.cdcooper = crapepr.cdcooper
          AND crapass.nrdconta = crapepr.nrdconta
        WHERE crapepr.cdcooper = pr_cdcooper
-         AND crapepr.cdagenci = pr_cdagenci
+         AND crapepr.cdagenci = decode(pr_cdagenci, 0, crapepr.cdagenci, pr_cdagenci) -- 29/08/2018. 
          AND crapepr.nrdconta > NVL(pr_cdrestart,0)
          AND crapepr.tpemprst = 2 -- Pos-Fixado
          AND crappep.inliquid = 0 -- Pendente
@@ -175,7 +182,7 @@ BEGIN
                                       ,pr_tpagrupador => 1 -- PA
                                       ,pr_cdagrupador => pr_cdagenci
                                       ,pr_cdrestart   => pr_cdrestart
-                                      ,pr_nrexecucao  => 1
+                                      ,pr_nrexecucao  => pr_qtdexec
                                       ,pr_idcontrole  => vr_idcontrole
                                       ,pr_cdcritic    => vr_cdcritic
                                       ,pr_dscritic    => vr_dscritic);
@@ -354,6 +361,11 @@ BEGIN
                                            ,pr_ehmensal => vr_flmensal
                                            ,pr_vlsldisp => vr_vlsldisp
                                            ,pr_dtrefcor => rw_epr_pep.dtrefcor
+                                           ,pr_txmensal => rw_epr_pep.txmensal
+                                           ,pr_dtdstjur => rw_epr_pep.dtdstjur
+                                           ,pr_vlpagpar_atu => NVL(rw_epr_pep.vlpagpar,0) + 
+                                                               NVL(rw_epr_pep.vldstrem,0) + 
+                                                               NVL(rw_epr_pep.vldstcor,0)
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
         -- Se houve erro
@@ -626,26 +638,30 @@ BEGIN
 
     END LOOP; -- cr_epr_pep
 
-    -- Grava os dados restantes conforme PL Table
-    pc_grava_dados(pr_cdrestart => vr_ultconta);
+    IF pr_cdagenci <> 0 THEN -- 29/08/2018
+	
+      -- Grava os dados restantes conforme PL Table
+      pc_grava_dados(pr_cdrestart => vr_ultconta);
     
-    -- Finaliza agencia no controle do batch
-    GENE0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole
-                                       ,pr_cdcritic   => vr_cdcritic
-                                       ,pr_dscritic   => vr_dscritic);
-    -- Se houve erro
-    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
+      -- Finaliza agencia no controle do batch
+      GENE0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole
+                                         ,pr_cdcritic   => vr_cdcritic
+                                         ,pr_dscritic   => vr_dscritic);
+      -- Se houve erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
 
-    -- Encerrar o job do processamento paralelo dessa agencia
-    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
-                                ,pr_idprogra => pr_cdagenci
-                                ,pr_des_erro => vr_dscritic);
-    -- Se houve erro
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
+      -- Encerrar o job do processamento paralelo dessa agencia
+      GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => pr_cdagenci
+                                  ,pr_des_erro => vr_dscritic);
+      -- Se houve erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+    END IF; -- pr_cdagenci <> 0 THEN -- 29/08/2018
     
     -- Processo OK, devemos chamar a fimprg
     BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
