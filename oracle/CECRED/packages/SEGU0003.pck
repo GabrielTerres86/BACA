@@ -334,8 +334,8 @@ EXCEPTION
     --> Buscar informações da proposta efetivada
     CURSOR cr_crapseg(prr_nrctrseg IN crawseg.nrctrseg%TYPE) IS
       select 
-             0 vl_saldo_devedor, --cs.vl_saldo_devedor
-             1 id_imprime_DPS -- Indicador se imprime DPS ou não
+             cs.vlslddev, 
+             cs.idimpdps
       from 
              crapseg cs
       where 
@@ -475,8 +475,8 @@ EXCEPTION
         -- Se proposta de seguro estiver efetivada, buscar da tabela o valor do saldo e o indicador de DPS   
         --> Buscar dados para impressao da Proposta de Seguro de Vida Prestamista
         CLOSE cr_crapseg;
-        vr_saldodevedor   := rw_crapseg.vl_saldo_devedor;
-        vr_id_imprime_dsp := rw_crapseg.id_imprime_dps;
+        vr_saldodevedor   := rw_crapseg.vlslddev;
+        vr_id_imprime_dsp := rw_crapseg.idimpdps;
       END IF;
 
       -- Inicializar o CLOB
@@ -804,8 +804,7 @@ EXCEPTION
     END;
 
   END  pc_imp_proposta_seg_pres_web;
-------------------------------------    
-                                                  
+------------------------------------                                                      
   PROCEDURE pc_validar_prestamista(pr_cdcooper in crapcop.cdcooper%type,
                                    pr_nrdconta in crapass.nrdconta%type,
                                    pr_nrctremp in crapepr.nrctremp%type,
@@ -840,8 +839,7 @@ EXCEPTION
                                      
   -- Dados Cooperado
    CURSOR cr_crapass IS
-      SELECT d.dtnasctl,
-             d.inpessoa
+      SELECT d.dtnasctl
       FROM crapass d
       WHERE d.cdcooper = pr_cdcooper
       AND   d.nrdconta = pr_nrdconta;
@@ -877,8 +875,7 @@ EXCEPTION
   vr_nrdeanos_aux PLS_INTEGER;  
   vr_nrdmeses     PLS_INTEGER;
   vr_dsdidade     VARCHAR2(50);  
-  vr_dtnasctl     crawseg.dtnascsg%type;  
-  vr_inpessoa     crapass.inpessoa%type; 
+  vr_dtnasctl     crawseg.dtnascsg%type;   
       
   BEGIN
   
@@ -933,7 +930,7 @@ EXCEPTION
   -- Buscar data de Nascimento - Proposta
   OPEN cr_crapass;
   FETCH cr_crapass
-   INTO vr_dtnasctl,vr_inpessoa;
+   INTO vr_dtnasctl;
   CLOSE cr_crapass;  
   
   -- Leitura do calendário da cooperativa
@@ -1002,10 +999,6 @@ EXCEPTION
 
     end if;
 
-    /*Prestamista somente para pessoa física*/
-    if vr_inpessoa != 1 then
-      pr_flgprestamista := 'N';
-    end if;
   
     pr_sld_devedor := vr_sld_devedor;
   
@@ -1028,7 +1021,7 @@ EXCEPTION
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
       ROLLBACK;  
-  END pc_validar_prestamista;
+  END pc_validar_prestamista; 
 
   PROCEDURE pc_cria_proposta_sp(pr_cdcooper in crapcop.cdcooper%type,
                                 pr_nrdconta in crapass.nrdconta%type,
@@ -1213,9 +1206,6 @@ EXCEPTION
      end if;
 
     close c_proposta;
-    
-  
-                                                               
                                       
    --Cria proposta
    if vr_flgprestamista = 'S' then
@@ -1224,6 +1214,8 @@ EXCEPTION
                                          , pr_nrctrato => pr_nrctrato
                                          , pr_cdoperad => pr_cdoperad
                                          , pr_cdagenci => pr_cdagenci
+                                         , pr_vlslddev => vr_vlproposta
+                                         , pr_idimpdps => vr_flgdps 
                                          , pr_cdcritic => vr_cdcritic
                                          , pr_dscritic => vr_dscritic);
 

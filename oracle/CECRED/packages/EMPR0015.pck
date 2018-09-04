@@ -778,7 +778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       vr_qtdpasem    NUMBER(5):= 0;
       vr_qtdpameq    NUMBER(5):= 0;
       vr_idencgar    NUMBER(1):= 0; -- Variável que define que encontrou garantia
-      vr_qtdiaute    NUMBER(5):= 0; -- Guarda a quantidade de dias úteis entre a data de aprovação e a data atual
+      vr_qtdiacor    NUMBER(5):= 0; -- Guarda a quantidade de dias CORRIDOS entre a data de aprovação e a data atual
       
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
 
@@ -809,7 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             -- Inicia a variável com zero pois está dentro do loop
             vr_qtddiexp := 0;
             vr_idencgar := 0;            
-            vr_qtdiaute := 0;
+            vr_qtdiacor := 0;
             -- Com base no retorno das propostas lidas deverá ser verificado se existem garantias, conforme abaixo:
             
             -- Garantia de Imóvel
@@ -892,14 +892,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             IF vr_idencgar = 0 THEN
               vr_qtddiexp:= vr_qtdpasem;
             END IF;
-            -- Verificar a quantidade de dias úteis entre a data de aprovação da proposta e a data atual
-            vr_qtdiaute:= GENE0005.fn_calc_qtd_dias_uteis(rw_crapcop.cdcooper,
-                                                          rw_crawepr.dtaprova,
-                                                          rw_crapdat.dtmvtolt);
+            -- Verificar a quantidade de dias CORRIDOS entre a data de aprovação da proposta e a data atual
+            vr_qtdiacor:= rw_crapdat.dtmvtolt - rw_crawepr.dtaprova;
+            
             -- Se a quantidade de dias úteis entre a data de aprovação e a data atual
             -- for maior que a quantidade de dias de expiração, o sistema deverá realizar
             -- a alteração da situação da proposta para 5 - " expirada por decurso de prazo ".            
-            IF vr_qtdiaute > vr_qtddiexp THEN
+            IF vr_qtdiacor > vr_qtddiexp THEN
               BEGIN
                 UPDATE
                      crawepr c
@@ -1024,7 +1023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
     vr_qtdpasem    NUMBER := 0;
     vr_qtdiatab    NUMBER := 0;
     vr_dstextab    craptab.dstextab%TYPE;
-    vr_qtdiaute    NUMBER(5):= 0; -- Guarda a quantidade de dias úteis entre a data de aprovação e a data atual
+    vr_qtdiacor    NUMBER(5):= 0; -- Guarda a quantidade de CORRIDOS úteis entre a data de aprovação e a data atual
     vr_controle    NUMBER;
     --
     rw_crapdat     btch0001.cr_crapdat%rowtype;  
@@ -1106,12 +1105,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
         END IF;
       
         -- Verificar a quantidade de dias úteis entre a data de aprovação da proposta e a data atual
-        vr_qtdiaute:= GENE0005.fn_calc_qtd_dias_uteis(rw_crapcop.cdcooper,
-                                                      rw_crawlim.dtaprova,
-                                                      rw_crapdat.dtmvtolt);      
+        vr_qtdiacor:= rw_crapdat.dtmvtolt - rw_crawlim.dtaprova;
         --
         -- Data calculada conforme regras de garantia e tab089 maior que data atual sistema, recebe expiração
-        IF vr_qtdiaute > vr_qtdiatab THEN
+        IF vr_qtdiacor > vr_qtdiatab THEN
           BEGIN
             -- Realizar a expiração do contrato   
             UPDATE crawlim lim
