@@ -110,23 +110,29 @@
 		exit();
 	}	
 	
-	// Verifica se o borderô deve ser utilizado no sistema novo ou no antigo
-	$xml = "<Root>";
-	$xml .= " <Dados>";
-	$xml .= " <nrborder>".$nrborder."</nrborder>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";
-	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getClassXML($xmlResult);
-	$root = $xmlObj->roottag;
-	// Se ocorrer um erro, mostra crítica
-	if ($root->erro){
-		exibeErro(htmlentities($root->erro->registro->dscritic));
-		exit;
+	if ($nrborder > 0) {
+		// Verifica se o borderô deve ser utilizado no sistema novo ou no antigo
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= " <nrborder>".$nrborder."</nrborder>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+		$root = $xmlObj->roottag;
+		// Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+		$flgverbor = $root->dados->flgverbor->cdata;
+		$flgnewbor = $root->dados->flgnewbor->cdata;
 	}
-	$flgverbor = $root->dados->flgverbor->cdata;
-	$flgnewbor = $root->dados->flgnewbor->cdata;
-		
+	else{
+		$flgverbor = 0;
+		$flgnewbor = 0;
+	}
+	
     if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
