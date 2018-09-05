@@ -83,7 +83,8 @@
 			<select id="inStatusSMS" name="inStatusSMS">
 			<option value="0"><? echo utf8ToHtml('Todos');  	    ?></option>			
 			<option value="4"><? echo utf8ToHtml('Enviados com Sucesso');  ?></option>
-			<option value="3"><? echo utf8ToHtml('Erro');  	?></option>
+			<option value="3"><? echo utf8ToHtml('Não Enviados');  	?></option>
+			<option value="5"><? echo utf8ToHtml('Agendados'); ?></option>
 			</select>
 		</div>
 		
@@ -111,6 +112,7 @@
 <div id="divBotoes" style="padding-bottom:10px">
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
 	<a href="#" class="botao" onclick="btnContinuar(); return false;" >Prosseguir</a>
+	<a href="#" style="display:none" class="botao" id="btGeraCSV" onclick="Gera_CSV(); return false;" >Exportar para CSV</a>
 </div>
 
 

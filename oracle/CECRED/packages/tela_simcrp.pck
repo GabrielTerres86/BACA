@@ -1517,8 +1517,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						,tpic.vlmaximo
 						,(tpic.vlpercentual_peso / 100) vlpercentual_peso
 						,(tpic.vlpercentual_desconto / 100) vlpercentual_desconto
-						,tpc.vldesconto_maximo_cee
-						,tpc.vldesconto_maximo_coo
+						,(tpc.vldesconto_maximo_cee / 100) vldesconto_maximo_cee
+						,(tpc.vldesconto_maximo_coo / 100) vldesconto_maximo_coo
 						,tpc.idparame_reciproci
 				FROM crapcco
 						,tbrecip_parame_indica_calculo tpic
@@ -1665,11 +1665,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						--
 					ELSIF vr_vlliquidados > rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind02 := rw_indicador.vlpercentual_desconto;
+						vr_resultado_ind02 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					ELSIF vr_vlliquidados BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind02 := (vr_vlliquidados / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						vr_resultado_ind02 := ((vr_vlliquidados - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					END IF;
 					--
@@ -1693,11 +1693,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						--
 					ELSIF pr_qtboletos_liquidados > rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind03 := rw_indicador.vlpercentual_desconto;
+						vr_resultado_ind03 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					ELSIF pr_qtboletos_liquidados BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind03 := (pr_qtboletos_liquidados / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						vr_resultado_ind03 := ((pr_qtboletos_liquidados - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					END IF;
 					--
@@ -1738,11 +1738,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						--
 					ELSIF vr_qtfloating > rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind21 := rw_indicador.vlpercentual_desconto;
+						vr_resultado_ind21 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					ELSIF vr_qtfloating BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind21 := (vr_qtfloating / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						vr_resultado_ind21 := ((vr_qtfloating - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					END IF;
 					--
@@ -1766,11 +1766,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						--
 					ELSIF vr_vlaplicacoes > rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind22 := rw_indicador.vlpercentual_desconto;
+						vr_resultado_ind22 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					ELSIF vr_vlaplicacoes BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 						--
-						vr_resultado_ind22 := (vr_vlaplicacoes / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+						vr_resultado_ind22 := ((vr_vlaplicacoes - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 						--
 					END IF;
 					--
@@ -1786,9 +1786,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						--
 					END IF;
 				-- Quantidade de Depósito à Vista
-				WHEN 23 THEN
+				WHEN 25 THEN
 					-- Só considera este indicador para a cooperativa Viacredi
-					IF pr_cdcooper = 1 THEN
+					IF pr_cdcooper = 16 THEN
 						--
 						IF vr_vldeposito < rw_indicador.vlminimo THEN
 							--
@@ -1796,11 +1796,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 							--
 						ELSIF vr_vldeposito > rw_indicador.vlmaximo THEN
 							--
-							vr_resultado_ind23 := rw_indicador.vlpercentual_desconto;
+							vr_resultado_ind23 := (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 							--
 						ELSIF vr_vldeposito BETWEEN rw_indicador.vlminimo AND rw_indicador.vlmaximo THEN
 							--
-							vr_resultado_ind23 := (vr_vldeposito / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
+							vr_resultado_ind23 := ((vr_vldeposito - rw_indicador.vlminimo) / (rw_indicador.vlmaximo - rw_indicador.vlminimo)) * (rw_indicador.vlpercentual_peso * rw_indicador.vlpercentual_desconto);
 							--
 						END IF;
 						--

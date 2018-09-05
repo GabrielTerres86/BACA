@@ -240,6 +240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
             ,crapope
        WHERE tpa.cdcooper           = crapope.cdcooper
          AND tpa.cdaprovador        = crapope.cdoperad
+				 AND tpa.flativo            = 1 -- Ativo
          AND tpa.cdcooper           = pr_cdcooper
          AND tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao;
     --
@@ -855,6 +856,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
+		--
+		vr_qtregistro NUMBER;
 		
 		-- Variável de críticas
 		vr_cdcritic crapcri.cdcritic%TYPE;
@@ -886,25 +889,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
       RAISE vr_exc_erro;
 			--
     END IF;
-		--
+		-- Verifica se o aprovador já foi inserido
 		BEGIN
 			--
-			INSERT INTO tbrecip_param_aprovador(cdcooper
-			                                   ,cdalcada_aprovacao
-																				 ,cdaprovador
-																				 ,dsemail_aprovador
-																				 )
-																	 VALUES(pr_cdcooper
-																	       ,pr_cdalcada_aprovacao
-																				 ,pr_cdaprovador
-																				 ,pr_dsemail_aprovador
-																				 );
+			SELECT COUNT(1)
+			  INTO vr_qtregistro
+				FROM tbrecip_param_aprovador tpa
+			 WHERE tpa.cdaprovador = pr_cdaprovador;
 			--
 		EXCEPTION
 			WHEN OTHERS THEN
-				vr_dscritic := 'Erro ao inserir o aprovador ' || pr_cdaprovador || ': ' || SQLERRM;
+				vr_dscritic := 'Erro ao buscar o aprovador ' || pr_cdaprovador || ': ' || SQLERRM;
 				RAISE vr_exc_erro;
 		END;
+		--
+		IF nvl(vr_qtregistro, 0) = 0 THEN
+			--
+			BEGIN
+				--
+				INSERT INTO tbrecip_param_aprovador(cdcooper
+																					 ,cdalcada_aprovacao
+																					 ,cdaprovador
+																					 ,dsemail_aprovador
+																					 ,flativo
+																					 )
+																		 VALUES(pr_cdcooper
+																					 ,pr_cdalcada_aprovacao
+																					 ,pr_cdaprovador
+																					 ,pr_dsemail_aprovador
+																					 ,1 -- Ativo
+																					 );
+				--
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Erro ao inserir o aprovador ' || pr_cdaprovador || ': ' || SQLERRM;
+					RAISE vr_exc_erro;
+			END;
+			--
+		ELSE
+			--
+			BEGIN
+				--
+				UPDATE tbrecip_param_aprovador tpa
+				   SET tpa.cdcooper           = pr_cdcooper
+					    ,tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao
+							,tpa.dsemail_aprovador  = pr_dsemail_aprovador
+							,tpa.flativo            = 1 -- Ativo
+				 WHERE tpa.cdaprovador = pr_cdaprovador;
+				--
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Erro ao atualizar o aprovador ' || pr_cdaprovador || ': ' || SQLERRM;
+					RAISE vr_exc_erro;
+			END;
+			--
+		END IF;
 		--
 		COMMIT;
 		--
@@ -1009,14 +1048,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 		--
 		BEGIN
 			--
-			DELETE FROM tbrecip_param_aprovador tpa
-			      WHERE tpa.cdcooper           = pr_cdcooper
-			        AND tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao
-							AND tpa.cdaprovador        = pr_cdaprovador;
+			UPDATE tbrecip_param_aprovador tpa
+			   SET tpa.flativo = 0 -- Inativo
+			 WHERE tpa.cdcooper           = pr_cdcooper
+			   AND tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao
+				 AND tpa.cdaprovador        = pr_cdaprovador;
 			--
 		EXCEPTION
 			WHEN OTHERS THEN
-				vr_dscritic := 'Erro ao excluir o aprovador ' || pr_cdaprovador || ': ' || SQLERRM;
+				vr_dscritic := 'Erro ao inativar o aprovador ' || pr_cdaprovador || ': ' || SQLERRM;
 				RAISE vr_exc_erro;
 		END;
 		--
@@ -1093,6 +1133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				    ,crapope
 			 WHERE tpa.cdcooper           = crapope.cdcooper
 			   AND tpa.cdaprovador        = crapope.cdoperad
+				 AND tpa.flativo            = 1 -- Ativo
 				 AND tpa.cdaprovador        = nvl(pr_cdaprovador, tpa.cdaprovador)
 				 AND tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao
 				 AND tpa.cdcooper           =	pr_cdcooper;
@@ -1285,7 +1326,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 									AND NOT EXISTS(SELECT 1
 																	 FROM tbrecip_param_aprovador tpa
 																	WHERE tpa.cdcooper    = crapope.cdcooper
-																		AND tpa.cdaprovador = crapope.cdoperad)
+																		AND tpa.cdaprovador = crapope.cdoperad
+																		AND tpa.flativo     = 1 -- Ativo
+																)
 						ORDER BY crapope.nmoperad)
 				 WHERE (rnum >= pr_nriniseq AND 
                 rnum <= (pr_nriniseq + pr_nrregist-1))
@@ -1600,6 +1643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 											 FROM tbrecip_param_aprovador tpa
 											WHERE tpa.cdcooper           = tpw.cdcooper
 												AND tpa.cdalcada_aprovacao = tpw.cdalcada_aprovacao
+												AND tpa.flativo            = 1 -- Ativo
 												AND tpa.cdaprovador        = pr_cdoperad) > 0 THEN
 								 1 -- True
 							 ELSE
@@ -1798,10 +1842,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 															,pr_cdaprovador        tbrecip_param_aprovador.cdaprovador%TYPE
 		                          ) IS
       SELECT tpa.cdaprovador
+			      ,tpa.cdalcada_aprovacao
 				FROM tbrecip_param_aprovador tpa
 			 WHERE tpa.cdcooper           = pr_cdcooper
-				 AND tpa.cdalcada_aprovacao = pr_cdalcada_aprovacao
-				 AND tpa.cdaprovador        = pr_cdaprovador;
+				 AND tpa.cdalcada_aprovacao = nvl(pr_cdalcada_aprovacao, tpa.cdalcada_aprovacao)
+				 AND tpa.cdaprovador        = pr_cdaprovador
+				 AND tpa.flativo            = 1 -- Ativo
+				 ;
 		
 		rw_valida_aprovador cr_valida_aprovador%ROWTYPE;
 		
@@ -1902,7 +1949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																					 ,cdoperador
 																					 )
 																		 VALUES(pr_cdcooper
-																		       ,pr_cdalcada_aprovacao
+																		       ,rw_valida_aprovador.cdalcada_aprovacao --pr_cdalcada_aprovacao
 																		       ,pr_idcalculo_reciproci
 																					 ,vr_cdoperad
 																					 ,pr_idstatus

@@ -2243,6 +2243,7 @@ function controlaLayoutR() {
     //Inicializar layout
     $('#divInserasa').css({ 'display': 'none' });
     $('#divStatusSMS').css({ 'display': 'none' });
+	$('#btGeraCSV').css({ 'display': 'none' });
     cCdagenci.css({ 'display': 'block' });
     rCdagenci.css({ 'display': 'block' });
     rCdstatus.css({ 'display': 'block' });
@@ -2282,7 +2283,8 @@ function controlaLayoutR() {
         rCdagenci.css({ 'display': 'none' });
         rCdstatus.css({ 'display': 'none' });
         cCdstatus.css({ 'display': 'none' });
-        $('#divStatusSMS').css({ 'display': 'block' });      
+        $('#divStatusSMS').css({ 'display': 'block' });  
+		$('#btGeraCSV').css({ 'display': 'inline-block' });		
         cInStatusSMS.habilitaCampo();        
         
         cInidtmvt.val($('#dtmvtolt', '#' + frmOpcao).val());
@@ -2386,6 +2388,32 @@ function formataTabOpS(frmOpcao) {
     return false;
 }
 
+// imprimir
+function Gera_CSV(nmarqcsv) {
+
+    if (cNrdconta.val() == '') {
+        cNrdconta.habilitaCampo();
+        showError('error', 'Informe a conta.', 'Alerta - Ayllos', '$(\'#nrdconta\',\'#frmOpcao\').focus();');
+        return false;
+    }
+
+    cTodosOpcao.habilitaCampo();
+
+    $('#cddopcao', '#' + frmOpcao).val(cddopcao);
+    $('#nmarqcsv', '#' + frmOpcao).val(nmarqcsv);
+
+    var action = UrlSite + 'telas/cobran/imprimir_consulta_sms_csv.php';
+    var callafter = "";
+
+    if (cddopcao == 'R') {
+		if (!flgimped){
+        callafter = "estadoInicial();";
+    }
+    }
+
+    carregaImpressaoAyllos(frmOpcao, action, callafter);
+
+}
 
 // imprimir
 function Gera_Impressao(nmarqpdf) {
