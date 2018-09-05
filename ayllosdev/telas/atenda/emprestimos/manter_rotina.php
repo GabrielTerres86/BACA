@@ -235,8 +235,16 @@
               $operamail   = 'Alterar Avalista do Emprestimo';
               $i_mensagens = 1;
 	}
+  
+  else if ($cddopcao == 'I') {
+    $metodoErro = 'controlaOperacao(\'I_INICIO\');';
+  }
+  
+  else if ($cddopcao == 'A') {
+    $metodoErro = 'controlaOperacao(\'A_INICIO\');';
+  }
 
-	//Tratado separa paranão ter que "zerar" todas as outras variaveis
+	//Tratado separa para não ter que "zerar" todas as outras variaveis
 	else if ( $operacao == 'E'        ) {
 		$procedure = 'excluir-proposta';
 		$cddopcao = 'E';

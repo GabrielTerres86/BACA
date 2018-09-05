@@ -63,6 +63,12 @@
           <label for="qtmeschq">Dev. Cheques:</label>
           <input type="text" id="qtmeschq" name="qtmeschq">
         
+          <label for="qtmeschqal11">Dev. Cheques al. 11:</label>
+          <input type="text" id="qtmeschqal11" name="qtmeschqal11">
+		  
+          <label for="qtmeschqal12">Dev. Cheques al. 12:</label>
+          <input type="text" id="qtmeschqal12" name="qtmeschqal12">
+        
           <br style="clear:both" />	
         
           <label for="qtmesest">Estouros:</label>
@@ -124,8 +130,14 @@
           <label class="rotulo nparaTodos" style="width:300px" >Quantidade de meses para:</label>        
           <br style="clear:both" class="nparaTodos"/>	
 
-          <label class="nparaTodos" style="width: 300px; " for="qtmeschq">Dev. Cheques:</label>
+          <label class="nparaTodos" style="width: 50px; " for="qtmeschq">Dev. Cheques:</label>
           <input type="text" id="qtmeschq" name="qtmeschq" class="campo nparaTodos">
+
+          <label class="nparaTodos" style="width: 50px; " for="qtmeschqal11">Dev. Cheques al. 11:</label>
+          <input type="text" id="qtmeschqal11" name="qtmeschqal11" class="campo nparaTodos">
+
+          <label class="nparaTodos" style="width: 50px; " for="qtmeschqal12">Dev. Cheques al. 12:</label>
+          <input type="text" id="qtmeschqal12" name="qtmeschqal12" class="campo nparaTodos">
         
           <br style="clear:both" class="nparaTodos"/>	
         

@@ -714,6 +714,9 @@
                               de analise de fraude. 
                               PRJ381 - AntiFraude (Odirlei-AMcom)
 
+                 16/04/2018 - Ajustes para o novo sistema do caixa eletronico 
+                              PRJ363 - Douglas Quisinski
+
 				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
                               ObterDetalheTituloCobranca (PRJ285 - Novo IB)
                
@@ -1318,6 +1321,19 @@ DEF VAR aux_idlancto LIKE craplau.idlancto NO-UNDO.
 DEF VAR aux_vlcontra AS DECI                         NO-UNDO.
 DEF VAR aux_cddchave AS INTE                         NO-UNDO.
 
+/* Projeto 363 - Novo caixa eletronico */ 
+/* Identificacao do CANAL que esta fazendo a requisicao */
+DEF VAR canal_cdorigem AS INTE NO-UNDO.
+DEF VAR canal_dsorigem AS CHAR NO-UNDO.
+DEF VAR canal_cdagenci AS INTE NO-UNDO.
+DEF VAR canal_nrdcaixa AS INTE NO-UNDO.
+DEF VAR canal_nmprogra AS CHAR NO-UNDO.
+DEF VAR canal_cdcoptfn AS INTE NO-UNDO.
+DEF VAR canal_cdagetfn AS INTE NO-UNDO.
+DEF VAR canal_nrterfin AS INTE NO-UNDO.
+DEF VAR aux_nrcartao AS DECI NO-UNDO.
+DEF VAR token_autenticacao AS CHAR NO-UNDO.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -1595,6 +1611,37 @@ PROCEDURE process-web-request :
                               DECI(GET-VALUE("nrcpfope"))
            aux_nripuser = GET-VALUE("nripuser").
 
+		    /* Projeto 363 - Novo caixa eletronico */
+        /* CANAL que esta fazendo a requisicao sempre sera enviado */
+        IF  GET-VALUE("aux_cdorigem") <> "" AND 
+            GET-VALUE("aux_cdorigem") <> ? THEN
+        DO:
+            ASSIGN canal_cdorigem = INTE(GET-VALUE("aux_cdorigem"))
+                   canal_dsorigem = GET-VALUE("aux_dsorigem")
+                   canal_cdagenci = INTE(GET-VALUE("aux_cdagenci"))
+                   canal_nrdcaixa = INTE(GET-VALUE("aux_nrdcaixa"))
+                   canal_nmprogra = GET-VALUE("aux_nmprogra")
+                   canal_cdcoptfn = INTE(GET-VALUE("aux_cdcoptfn"))
+                   canal_cdagetfn = INTE(GET-VALUE("aux_cdagetfn"))
+                   canal_nrterfin = INTE(GET-VALUE("aux_nrterfin"))
+                   aux_nrcartao   = DECI(GET-VALUE("aux_nrcartao"))
+                   token_autenticacao = GET-VALUE("aux_token_aut").
+        END.
+        ELSE
+            DO: 
+                /* Se nao foi informado o canal de origem, será considerado como IB */
+                ASSIGN canal_cdorigem = 3
+                       canal_dsorigem = "INTERNET"
+                       canal_cdagenci = 90
+                       canal_nrdcaixa = 900
+                       canal_nmprogra = "INTERNETBANK"
+                       canal_cdcoptfn = 0
+                       canal_cdagetfn = 0
+                       canal_nrterfin = 0
+                       aux_nrcartao   = 0
+                       token_autenticacao = "".
+            END.
+        
         /** Se parametro flmobile nao foi informado, considerar que a requisicao
         não originou do mobile **/
     IF  GET-VALUE("flmobile") <> "yes"  AND 
@@ -8492,6 +8539,13 @@ PROCEDURE proc_operacao182:
                                                    INPUT aux_nrcpfope,
                                                    INPUT aux_dtmvtocd,                                                   
                                                    INPUT aux_flmobile,                                                   
+                                                   /* Projeto 363 - Novo ATM */
+                                                   INPUT canal_cdorigem,
+                                                   INPUT canal_dsorigem,
+                                                   INPUT canal_cdagenci,
+                                                   INPUT canal_nrdcaixa,
+                                                   INPUT canal_nmprogra,
+                                                   /* Projeto 363 - Novo ATM */                                                     
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 

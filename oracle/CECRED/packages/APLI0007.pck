@@ -127,6 +127,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     END IF;
   END;
 
+  -- Função para transformar a taxa ao dia em taxa anual
+  -- Exemplo: Taxa ao dia: 0,024583 -> taxa anual: 6,39
+  FUNCTION fn_get_taxa_anual (pr_txapldia craplap.txaplica%TYPE) RETURN NUMBER IS
+  BEGIN 
+    RETURN round((power(1+pr_txapldia/100,252)-1)*100,4);
+  END;
+
   -- Função para transformar hora atual em texto para LOGS
   FUNCTION fn_get_time_char RETURN VARCHAR2 IS
   BEGIN 
@@ -1768,6 +1775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
         vr_prtaxflt := '       ';
         -- Retornar ao valor original
         vr_txaplica := TRUNC(vr_txaplica * 100,8);
+		-- Converte para taxa anual
+        vr_txaplica := fn_get_taxa_anual(vr_txaplica);
         vr_vltxjrsp := REPLACE(REPLACE(TO_CHAR(vr_txaplica,'fm0000d0000'),',',''),'.','');
       ELSE
         vr_cdfrmpag := '01';

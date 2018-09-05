@@ -1,5 +1,5 @@
 /*!
- * FONTE        : lrotat.js                                 Última alteração: 12/07/2016
+ * FONTE        : lrotat.js                                 Última alteração: 24/08/2018
  * CRIAÇÃO      : Otto - RKAM
  * DATA CRIAÇÃO : 06/07/2016
  * OBJETIVO     : Biblioteca de funções da tela LROTAT
@@ -11,6 +11,8 @@
  *                             para tratar pelo código do mesmo (Renato Darosci)
  *
  *				  10/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
+ *
+ *                24/08/2018 - inc0022526 ativação do campo qtvcapce Ailos na opção Alterar (Carlos)
  * --------------
  */
 
@@ -26,7 +28,7 @@ $(document).ready(function() {
 function estadoInicial() {
 
     $('#divTela').fadeTo(0, 0.1);
-    removeOpacidade('divTela');
+	removeOpacidade('divTela');
 
 	formataCabecalho();
 
@@ -35,10 +37,10 @@ function estadoInicial() {
 	$('#frmCab').css({ 'display': 'block' });
 	$('#divTela').css({ 'width': '700px', 'padding-bottom': '2px' });
 	$('#divTabela').html('').css('display','none');
-    
+
 	$('#divBotoesFiltro').css('display', 'none');
 	$('#frmFiltro').css('display', 'none');
-    
+
 	$("#cddopcao", "#frmCab").focus();
 
 }
@@ -71,7 +73,7 @@ function formataCabecalho() {
         // Se esta desabilitado o campo 
         if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
             return false;
-        }
+}
 
         formataFormularioFiltro();
 
@@ -181,7 +183,7 @@ function formataFormularioLrotat(){
     $('#divBotoesFiltroLrotat').css('display', 'block');
 
 	switch (cddopcao) {
-
+	       
 	    case 'C':
 
 	        layoutPadrao();
@@ -194,7 +196,7 @@ function formataFormularioLrotat(){
 	       
             trocaBotao('showConfirmacao(\'Deseja prosseguir com a opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'bloqlibLinhaDesconto();\',\'\',\'sim.gif\',\'nao.gif\')', 'btnVoltar(2)');
 	        layoutPadrao();
-
+	        
 	        break;
 
 	    case 'L':
@@ -210,7 +212,6 @@ function formataFormularioLrotat(){
 
 	        $("#tpdlinha", "#frmLrotat").desabilitaCampo();
 	        $("#dssitlcr", "#frmLrotat").desabilitaCampo();
-	        $("#qtvcapce", "#frmLrotat").desabilitaCampo();
 	        $("#txmensal", "#frmLrotat").desabilitaCampo();
 	        $("#tpctrato", "#frmLrotat").desabilitaCampo();
 	        $("#permingr", "#frmLrotat").desabilitaCampo();
@@ -358,7 +359,7 @@ function formataFormularioLrotat(){
 				if (divError.css('display') == 'block') { return false; }
 
 				$('input,select').removeClass('campoErro');
-				
+
 				// Se é a tecla ENTER, TAB, F1
 				if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 					/*
@@ -371,8 +372,8 @@ function formataFormularioLrotat(){
 	                $(this).nextAll('.campo:first').focus();
 					return false;
 				}
-			});
-			
+	        });
+
 	        $("#permingr", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
 
 	            if (divError.css('display') == 'block') { return false; }
@@ -472,7 +473,7 @@ function formataFormularioLrotat(){
 	                procedure = 'BUSCAMOD';
 	                titulo = 'Modalidades';
 	                qtReg = '30';
-	                
+
 	                $(this).removeClass('campoErro');
 	                buscaDescricao(bo, procedure, titulo, 'cdmodali', 'dsmodali', $('#cdmodali', '#frmLrotat').val(), 'dsmodali', 'nriniseq|1;nrregist|30', 'frmLrotat');
 
@@ -594,7 +595,7 @@ function formataFormularioLrotat(){
 	            $("#dsencfin3", "#frmLrotat").habilitaCampo();
 
 	        }
-        
+
 	        trocaBotao('showConfirmacao(\'Deseja prosseguir com a opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'calculaTaxa();\',\'\',\'sim.gif\',\'nao.gif\')', 'btnVoltar(2)');
 
 	        layoutPadrao();
@@ -785,7 +786,7 @@ function formataFormularioLrotat(){
 					$("#permingr", "#frmLrotat").val('100,00').habilitaCampo();
 				} else {
 					$("#permingr", "#frmLrotat").val('0,00').desabilitaCampo();
-				}
+	            }
 			});
 
 			$("#tpctrato", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
@@ -806,8 +807,8 @@ function formataFormularioLrotat(){
 	                $(this).nextAll('.campo:first').focus();
 					return false;
 				}
-			});
-			
+	        });
+
 	        $("#permingr", "#frmLrotat").unbind('keypress').bind('keypress', function (e) {
 
 	            if (divError.css('display') == 'block') { return false; }
@@ -907,7 +908,7 @@ function formataFormularioLrotat(){
 	                procedure = 'BUSCAMOD';
 	                titulo = 'Modalidades';
 	                qtReg = '30';
-	                
+
 	                $(this).removeClass('campoErro');
 	                buscaDescricao(bo, procedure, titulo, 'cdmodali', 'dsmodali', $('#cdmodali', '#frmLrotat').val(), 'dsmodali', 'nriniseq|1;nrregist|30', 'frmLrotat');
 
@@ -980,7 +981,7 @@ function btnVoltar(op) {
             $('#divTabela').css('display','none');
             formataFormularioFiltro();
             
-        break;
+	        break;
 
     }
 
@@ -1338,7 +1339,7 @@ function controlaPesquisa(valor) {
 
     }
 
-}
+    }
 
 function controlaPesquisaLinha() {
 

@@ -188,6 +188,8 @@
                 04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct). 
                              PRJ366 (Lombardi).		
 
+				13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)	
+
 .............................................................................*/
                                                      
 
@@ -301,6 +303,8 @@ PROCEDURE Grava_Dados :
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 	
+	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
+	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -413,6 +417,7 @@ PROCEDURE Grava_Dados :
                              INPUT par_hrinicad,
                              INPUT par_idorigee,
                              INPUT par_nrlicamb,
+							 INPUT par_nmsocial,
                             OUTPUT par_rowidass,
                             OUTPUT aux_rowidttl,               
                             OUTPUT aux_rowidjur,
@@ -4252,6 +4257,7 @@ PROCEDURE Inclui PRIVATE :
     DEF  INPUT PARAM par_hrinicad AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
+	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM par_rowidass AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM par_rowidttl AS ROWID                          NO-UNDO.
@@ -4629,6 +4635,7 @@ PROCEDURE Inclui PRIVATE :
                       INPUT par_nrcpfcgc,
                       INPUT par_inhabmen,
                       INPUT par_dthabmen,
+					  INPUT par_nmsocial,
                      OUTPUT par_rowidttl,
                      OUTPUT crabass.dsproftl,
                      OUTPUT par_cdcritic,
@@ -5180,6 +5187,7 @@ PROCEDURE Inclui_Fis PRIVATE :
     DEF  INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
     DEF  INPUT PARAM par_inhabmen AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM par_rowidttl AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM par_dsproftl AS CHAR                           NO-UNDO.
@@ -5348,6 +5356,7 @@ PROCEDURE Inclui_Fis PRIVATE :
                               crabttl.flgimpri = TRUE 
                               crabttl.inpolexp = 0
                               crabttl.nrcpfcgc = par_nrcpfcgc 
+							  crabttl.nmsocial = par_nmsocial  
                               NO-ERROR.
     
                           IF  ERROR-STATUS:ERROR THEN

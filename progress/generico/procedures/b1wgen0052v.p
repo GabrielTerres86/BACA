@@ -1734,7 +1734,16 @@ PROCEDURE Produtos_Servicos_Ativos:
 		  		   tt-prod_serv_ativos.nmproser = "Conta ITG.".
            END.
 
-        ASSIGN aux_returnvl = "OK".
+        /********************* Convenio cdc *****************************/ 
+        IF CAN-FIND(FIRST crapcdr WHERE crapcdr.cdcooper = par_cdcooper 
+                                    AND crapcdr.nrdconta = par_nrdconta 
+                                    AND crapcdr.flgconve = TRUE) THEN
+        DO: 
+          ASSIGN aux_cdseqcia = aux_cdseqcia + 1. 
+          CREATE tt-prod_serv_ativos. 
+          ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia 
+                 tt-prod_serv_ativos.nmproser = "Convenio CDC".
+        END.
 
         LEAVE Produtos_Servicos_Ativos.
 		
@@ -1742,6 +1751,8 @@ PROCEDURE Produtos_Servicos_Ativos:
 
     IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
         ASSIGN aux_returnvl = "NOK".
+    ELSE
+  	  ASSIGN aux_returnvl = "OK".
 
     RETURN aux_returnvl.
 

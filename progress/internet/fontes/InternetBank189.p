@@ -49,6 +49,8 @@ DEF VAR aux_idcontra        AS INT                                       NO-UNDO
 DEF VAR aux_vltarifa        AS DEC                                       NO-UNDO.
 DEF VAR aux_flposcob        AS INT                                       NO-UNDO.
 DEF VAR aux_idcontrato      AS INT                                       NO-UNDO.
+DEF VAR aux_tpcontra        AS INT                                       NO-UNDO.
+DEF VAR aux_vlpacote        AS DEC                                       NO-UNDO.
 DEF VAR aux_nmarqpdf        AS CHAR                                      NO-UNDO.
 DEF VAR aux_dssrvarq        AS CHAR                                      NO-UNDO.
 DEF VAR aux_dsdirarq        AS CHAR                                      NO-UNDO.
@@ -622,7 +624,9 @@ ELSE IF par_cddopcao = "C" THEN
                                             ,OUTPUT ""           /* pr_dspacote */ 
                                             ,OUTPUT ?            /* pr_dhadesao */ 
                                             ,OUTPUT 0            /* pr_idcontrato */
+                                            ,OUTPUT 0            /* pr_tpcontrato */
                                             ,OUTPUT 0            /* pr_vltarifa */ 
+                                            ,OUTPUT 0            /* pr_vlpacote */
                                             ,OUTPUT 0            /* pr_flsitsms */ 
                                             ,OUTPUT ""           /* pr_dsalerta */ 
                                             ,OUTPUT 0            /* pr_qtsmspct */
@@ -686,7 +690,9 @@ ELSE IF par_cddopcao = "C" THEN
            aux_dspacote = ""
            aux_dhadesao = ?
            aux_idcontra = 0
+           aux_tpcontra = 0
            aux_vltarifa = 0
+           aux_vlpacote = 0
            aux_qtsmspct = 0
            aux_qtsmsusd = 0
            aux_dsmsgsemlinddig = ""
@@ -710,8 +716,12 @@ ELSE IF par_cddopcao = "C" THEN
                           WHEN pc_ret_dados_serv_sms.pr_dhadesao <> ?
            aux_idcontra = pc_ret_dados_serv_sms.pr_idcontrato 
                           WHEN pc_ret_dados_serv_sms.pr_idcontrato <> ?
+           aux_tpcontra = pc_ret_dados_serv_sms.pr_tpcontrato 
+                          WHEN pc_ret_dados_serv_sms.pr_tpcontrato <> ?                          
            aux_vltarifa = pc_ret_dados_serv_sms.pr_vltarifa 
                           WHEN pc_ret_dados_serv_sms.pr_vltarifa <> ?
+           aux_vlpacote = pc_ret_dados_serv_sms.pr_vlpacote 
+                          WHEN pc_ret_dados_serv_sms.pr_vlpacote <> ?               
            aux_qtsmspct = pc_ret_dados_serv_sms.pr_qtsmspct 
                           WHEN pc_ret_dados_serv_sms.pr_qtsmspct <> ?
            aux_qtsmsusd = pc_ret_dados_serv_sms.pr_qtsmsusd 
@@ -740,7 +750,9 @@ ELSE IF par_cddopcao = "C" THEN
                                    '<qtsmspct>' + STRING(aux_qtsmspct) + '</qtsmspct>' + 
                                    '<qtsmsusd>' + STRING(aux_qtsmsusd) + '</qtsmsusd>' +
                                    '<dsmsgsemlinddig>' + STRING(aux_dsmsgsemlinddig) + '</dsmsgsemlinddig>' +
-                                   '<dsmsgcomlinddig>' + STRING(aux_dsmsgcomlinddig) + '</dsmsgcomlinddig>'.
+                                   '<dsmsgcomlinddig>' + STRING(aux_dsmsgcomlinddig) + '</dsmsgcomlinddig>' +
+                                   '<tpcontra>' + STRING(aux_tpcontra) + '</tpcontra>' + 
+                                   '<vlpacote>' + STRING(aux_vlpacote,'zzz,zzz,zz9.99') + '</vlpacote>'.
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '</dados>'.

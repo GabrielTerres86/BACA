@@ -22,22 +22,47 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
 
      02/01/2017 - #778808 Filtro das cooperativas ativas para não gerar logs desnecessários (Carlos)
 
+     28/08/2018 - Inclusão de commit após select para liberar as transações abertas no sql server
+                  com objetivo de melhorar a performance do processo. Ajuste na clausula where
+                  do cursor cr_jd e também do delete da procedure pc_excluir_registros_jd
+                  incluindo todos os campos com índice nas tabelas do sql server.
+                  (INC0020759-AJFink)
+
   ............................................................................ */
 
-  ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
-
-  -- Código do programa
   vr_cdprogra   CONSTANT crapprg.cdprogra%TYPE := 'CRPS711';
-  vr_cdcooper   NUMBER;
-
-  -- Tratamento de erros
+  vr_nomdojob   CONSTANT VARCHAR2(40) := 'JBCOBRAN_BAIXA_OPERACIONAL';
   vr_exc_saida  EXCEPTION;
   vr_exc_fimprg EXCEPTION;
-  vr_cdcritic   PLS_INTEGER;
-  vr_dscritic   VARCHAR2(4000);
 
-  TYPE tt_tbcobran_baixa_operac IS TABLE OF tbcobran_baixa_operac%ROWTYPE INDEX BY PLS_INTEGER;
-  vr_baixa_operac tt_tbcobran_baixa_operac;
+  type reg_tbcobran_baixa_operac is record
+    (dtmvtolt         tbcobran_baixa_operac.dtmvtolt%type
+    ,idispbadministr  number(8)
+    ,nroperac_jd      tbcobran_baixa_operac.nroperac_jd%type
+    ,nrtit_legado     tbcobran_baixa_operac.nrtit_legado%type
+    ,cdleg            varchar2(10)
+    ,nroperac_legado  tbcobran_baixa_operac.nroperac_legado%type
+    ,cdcooper         tbcobran_baixa_operac.cdcooper%type
+    ,nrdconta         tbcobran_baixa_operac.nrdconta%type
+    ,nrcnvcob         tbcobran_baixa_operac.nrcnvcob%type
+    ,nrdocmto         tbcobran_baixa_operac.nrdocmto%type
+    ,nrdident         tbcobran_baixa_operac.nrdident%type
+    ,dtcredito        tbcobran_baixa_operac.dtcredito%type
+    ,dhoperac_jd      tbcobran_baixa_operac.dhoperac_jd%type
+    ,tpoperac_jd      tbcobran_baixa_operac.tpoperac_jd%type
+    ,nrbaixa_operac   tbcobran_baixa_operac.nrbaixa_operac%type
+    ,tpbxoper         tbcobran_baixa_operac.tpbxoper%type
+    ,nrispbif         tbcobran_baixa_operac.nrispbif%type
+    ,cddbanco         tbcobran_baixa_operac.cddbanco%type
+    ,inpessoa         tbcobran_baixa_operac.inpessoa%type
+    ,nrcpfcgc         tbcobran_baixa_operac.nrcpfcgc%type
+    ,dtproc_baixa     tbcobran_baixa_operac.dtproc_baixa%type
+    ,vlbaixa          tbcobran_baixa_operac.vlbaixa%type
+    ,dscodbar         tbcobran_baixa_operac.dscodbar%type
+    ,tpcanal_pag      tbcobran_baixa_operac.tpcanal_pag%type
+    ,tpmeio_pag       tbcobran_baixa_operac.tpmeio_pag%type
+    ,insitpag         tbcobran_baixa_operac.insitpag%type);
+  type tt_tbcobran_baixa_operac is table of reg_tbcobran_baixa_operac index by pls_integer;
   
   -- PL/Table para armazenar os borderôs
   type typ_tot_baixa_por_coop IS record (vr_tot_qtd_baixas_opera NUMBER,
@@ -46,51 +71,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
                                          vr_tot_vlr_cancelamentos NUMBER);
 
   type typ_tab_tot_baixas is table of typ_tot_baixa_por_coop index BY PLS_INTEGER;
-  vr_tab_tot_baixas typ_tab_tot_baixas;  
   
-  vr_inicio_job DATE;
-  vr_fim_job DATE;
-  
-  ------------------------------- CURSORES ---------------------------------
-  -- Cursor de leitura de boletos
-  CURSOR cr_crapcob (pr_nrdconta IN crapcob.nrdconta%TYPE
-                    ,pr_nrcnvcob IN crapcco.nrconven%TYPE
-                    ,pr_nrdocmto IN crapcob.nrdocmto%TYPE) IS
-                    
-		SELECT cob.cdcooper
-          ,cob.nrdconta
-          ,cob.nrcnvcob
-          ,cob.nrdocmto
-          ,cob.nrdctabb
-          ,cob.cdbandoc 
-      FROM crapcob cob, crapcco cco, crapcop cop
-		 WHERE cco.nrconven = pr_nrcnvcob
-		   AND cob.cdcooper = cco.cdcooper
-		   AND cob.nrcnvcob = cco.nrconven		   
-		   AND cob.nrdconta = pr_nrdconta
-		   AND cob.nrdocmto = pr_nrdocmto
-		   AND cob.nrdctabb = cco.nrdctabb
-		   AND cob.cdbandoc = cco.cddbanco
-		   AND cop.cdcooper = cco.cdcooper
-		   AND cop.flgativo = 1;
-  rw_crapcob cr_crapcob%ROWTYPE;             
-  
-  -- Cursor genérico de calendário
-  rw_crapdat btch0001.cr_crapdat%ROWTYPE;  
-   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
-  ------------------------------- VARIAVEIS -------------------------------
-  vr_index PLS_INTEGER;
-
-  -- Flag para verificar se o título ja foi descontado
-  vr_titulo_descontado BOOLEAN := FALSE;
-  
-
   --------------------------- SUBROTINAS INTERNAS --------------------------
-
-  vr_nomdojob    VARCHAR2(40) := 'JBCOBRAN_BAIXA_OPERACIONAL';
-  vr_flgerlog    BOOLEAN := FALSE;
+  vr_flgerlog  BOOLEAN := FALSE;
   
   -- Envia e-mail de erro para Cobranca@cecred.coop.br
   PROCEDURE pc_enviar_email_erro (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -271,81 +256,95 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
   END fn_verifica_desconto_titulo;
   
   -- Copia os registros da Cabine JD (SQL Server) para um Temp Table
-  PROCEDURE pc_copiar_regsitros_jd (pr_baixa_operac IN OUT tt_tbcobran_baixa_operac
+  PROCEDURE pc_copiar_registros_jd (pr_baixa_operac IN OUT nocopy tt_tbcobran_baixa_operac
+                                   ,pr_dtmvtocd IN crapdat.dtmvtocd%TYPE
                                    ,pr_data_filtro IN crapdat.dtmvtoan%TYPE)  IS
   BEGIN
     DECLARE
-       -- Cursor de leitura de dados da JD
-       CURSOR cr_jd (pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) IS
-           SELECT rownum,
+      -- Cursor de leitura de dados da JD
+      CURSOR cr_jd (pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) IS
+           SELECT ctrl."ISPBAdministrado" idispbadministrado,
+                  ctrl."IdOpJD" nroperac_jd,
+                  to_number(trim(ctrl."IdTituloLeg")) nrtit_legado,
                   ctrl."CdLeg" cdleg,
-                  optit."IdOpLeg" idopleg,
-                  ctrl."IdTituloLeg" idtituloleg,
-                  ctrl."IdOpJD" idopjd,
-                  optit."NumIdentcTit" numidentctit,
-                  optit."DtHrOpJD" dthropjd,
-                  optit."TpOpJD" tpopjd,
-                  optit."NumIdentcBaixaOperac" numidentcbaixaoperac,
-                  optit."TpBaixaOperac" tpbaixaoperac,
-                  optit."ISPBPartRecbdrBaixaOperac" ispbpartrecbdrbaixaoperac,
-                  optit."CodPartRecbdrBaixaOperac" codpartrecbdrbaixaoperac,
-                  optit."TpPessoaPort" tppessoaport,
-                  optit."CNPJ_CPFPort" cnpj_cpfport,
-                  optit."DtProcBaixaOperac" dtprocbaixaoperac,
-                  optit."VlrBaixaOperacTit" vlrbaixaoperactit,
-                  optit."NumCodBarrasBaixaOperac" numcodbarrasbaixaoperac,
-                  optit."CanPgto" canpgto,
-                  optit."MeioPgto" meiopgto,
-                  optit."SitTitPgto" sittitpgto,
+                  nvl(optit."IdOpLeg",0) nroperac_legado,
                   cob.cdcooper,
                   cob.nrdconta,
-                  cob.nrcnvcob,                  
-                  cob.nrdocmto
---                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",20,6))) nrcnvcob, -- numero do convenio
---                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",26,8))) nrdconta, -- numero da conta do cooperado
---                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",34,9))) nrdocmto -- numero do boleto           
-             FROM TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcbisql ctrl
-       INNER JOIN TBJDNPCDSTLEG_JD2LG_OpTit@jdnpcbisql optit
-               ON optit."CdLeg" = ctrl."CdLeg"
-              AND optit."IdTituloLeg" = ctrl."IdTituloLeg"
-              AND optit."IdOpJD" = ctrl."IdOpJD"
-       INNER JOIN crapcob cob
-               ON cob.idtitleg = ctrl."IdTituloLeg"
-            WHERE optit."TpOpJD" IN ('BO','CB')
-              AND TO_DATE(optit."DtHrOpJD",'YYYYMMDDhh24miss') >= pr_dtmvtoan;
-         rw_jd cr_jd%ROWTYPE;         
-    
+                  cob.nrcnvcob,
+                  cob.nrdocmto,
+                  optit."NumIdentcTit" nrdident,
+                  to_date(optit."DtHrOpJD",'YYYYMMDDhh24miss') dhoperac_jd,
+                  optit."TpOpJD" tpoperac_jd,
+                  optit."NumIdentcBaixaOperac" nrbaixa_operac,
+                  to_number(trim(optit."TpBaixaOperac")) tpbxoper,
+                  optit."ISPBPartRecbdrBaixaOperac" nrispbif,
+                  optit."CodPartRecbdrBaixaOperac" cddbanco,
+                  case trim(upper(optit."TpPessoaPort")) when 'F' then 1 else 2 end inpessoa,
+                  optit."CNPJ_CPFPort" nrcpfcgc,
+                  to_date(optit."DtProcBaixaOperac",'YYYYMMDDhh24miss') dtproc_baixa,
+                  optit."VlrBaixaOperacTit" vlbaixa,
+                  optit."NumCodBarrasBaixaOperac" dscodbar,
+                  optit."CanPgto" tpcanal_pag,
+                  optit."MeioPgto" tpmeio_pag,
+                  to_number(trim(optit."SitTitPgto")) insitpag
+           from crapcob cob
+               ,tbjdnpcdstleg_jd2lg_optit_ctrl@jdnpcbisql ctrl
+               ,tbjdnpcdstleg_jd2lg_optit@jdnpcbisql optit
+           where cob.idtitleg = ctrl."IdTituloLeg"
+             --
+             and ctrl."CdLeg" = optit."CdLeg"
+             and ctrl."IdTituloLeg" = optit."IdTituloLeg"
+             and ctrl."IdOpJD" = optit."IdOpJD"
+             and ctrl."ISPBAdministrado" = optit."ISPBAdministrado"
+             --
+             and optit."TpOpJD" IN ('BO', 'CB')
+             and optit."DtHrOpJD" >= to_number(to_char(pr_dtmvtoan,'YYYYMMDD')||'000000');
+      --
+      vr_index number(10);
+      --
     BEGIN
-      
-    FOR rw_jd IN cr_jd (pr_dtmvtoan => pr_data_filtro) LOOP
-       pr_baixa_operac(rw_jd.rownum).cdcooper := rw_jd.cdcooper;
-       pr_baixa_operac(rw_jd.rownum).dtmvtolt := rw_crapdat.dtmvtocd;
-       pr_baixa_operac(rw_jd.rownum).nrtit_legado := rw_jd.idtituloleg;
-       pr_baixa_operac(rw_jd.rownum).nroperac_legado := nvl(rw_jd.idopleg,0);
-       pr_baixa_operac(rw_jd.rownum).nroperac_jd := rw_jd.idopjd;
-       pr_baixa_operac(rw_jd.rownum).nrdconta := rw_jd.nrdconta;
-       pr_baixa_operac(rw_jd.rownum).nrcnvcob := rw_jd.nrcnvcob;
-       pr_baixa_operac(rw_jd.rownum).nrdocmto := rw_jd.nrdocmto;
-       pr_baixa_operac(rw_jd.rownum).nrdident := rw_jd.numidentctit;
-       pr_baixa_operac(rw_jd.rownum).dhoperac_jd := TO_DATE(rw_jd.dthropjd,'YYYYMMDDhh24miss');
-       pr_baixa_operac(rw_jd.rownum).tpoperac_jd := rw_jd.tpopjd;
-       pr_baixa_operac(rw_jd.rownum).nrbaixa_operac := rw_jd.numidentcbaixaoperac;
-       pr_baixa_operac(rw_jd.rownum).tpbxoper := rw_jd.tpbaixaoperac;
-       pr_baixa_operac(rw_jd.rownum).nrispbif := rw_jd.ispbpartrecbdrbaixaoperac;
-       pr_baixa_operac(rw_jd.rownum).cddbanco := rw_jd.codpartrecbdrbaixaoperac;
-       pr_baixa_operac(rw_jd.rownum).inpessoa := CASE rw_jd.tppessoaport WHEN 'F' THEN 1 ELSE 2 END;
-       pr_baixa_operac(rw_jd.rownum).nrcpfcgc := rw_jd.cnpj_cpfport;
-       pr_baixa_operac(rw_jd.rownum).dtproc_baixa := TO_DATE(rw_jd.dtprocbaixaoperac,'YYYYMMDDhh24miss');
-       pr_baixa_operac(rw_jd.rownum).vlbaixa := rw_jd.vlrbaixaoperactit;
-       pr_baixa_operac(rw_jd.rownum).dscodbar := rw_jd.numcodbarrasbaixaoperac;
-       pr_baixa_operac(rw_jd.rownum).tpcanal_pag := rw_jd.canpgto;
-       pr_baixa_operac(rw_jd.rownum).tpmeio_pag := rw_jd.meiopgto;
-       pr_baixa_operac(rw_jd.rownum).insitpag := rw_jd.sittitpgto;
-    END LOOP;    
-    
+      --
+      pr_baixa_operac.delete;
+      --
+      for rw_jd in cr_jd(pr_dtmvtoan => pr_data_filtro)
+      loop
+        --
+        vr_index := nvl(pr_baixa_operac.count,0)+1;
+        --
+        pr_baixa_operac(vr_index).dtmvtolt := pr_dtmvtocd;
+        pr_baixa_operac(vr_index).idispbadministr := rw_jd.idispbadministrado;
+        pr_baixa_operac(vr_index).nroperac_jd := rw_jd.nroperac_jd;
+        pr_baixa_operac(vr_index).nrtit_legado := rw_jd.nrtit_legado;
+        pr_baixa_operac(vr_index).cdleg := rw_jd.cdleg;
+        pr_baixa_operac(vr_index).nroperac_legado := rw_jd.nroperac_legado;
+        pr_baixa_operac(vr_index).cdcooper := rw_jd.cdcooper;
+        pr_baixa_operac(vr_index).nrdconta := rw_jd.nrdconta;
+        pr_baixa_operac(vr_index).nrcnvcob := rw_jd.nrcnvcob;
+        pr_baixa_operac(vr_index).nrdocmto := rw_jd.nrdocmto;
+        pr_baixa_operac(vr_index).nrdident := rw_jd.nrdident;
+        pr_baixa_operac(vr_index).dhoperac_jd := rw_jd.dhoperac_jd;
+        pr_baixa_operac(vr_index).tpoperac_jd := rw_jd.tpoperac_jd;
+        pr_baixa_operac(vr_index).nrbaixa_operac := rw_jd.nrbaixa_operac;
+        pr_baixa_operac(vr_index).tpbxoper := rw_jd.tpbxoper;
+        pr_baixa_operac(vr_index).nrispbif := rw_jd.nrispbif;
+        pr_baixa_operac(vr_index).cddbanco := rw_jd.cddbanco;
+        pr_baixa_operac(vr_index).inpessoa := rw_jd.inpessoa;
+        pr_baixa_operac(vr_index).nrcpfcgc := rw_jd.nrcpfcgc;
+        pr_baixa_operac(vr_index).dtproc_baixa := rw_jd.dtproc_baixa;
+        pr_baixa_operac(vr_index).vlbaixa := rw_jd.vlbaixa;
+        pr_baixa_operac(vr_index).dscodbar := rw_jd.dscodbar;
+        pr_baixa_operac(vr_index).tpcanal_pag := rw_jd.tpcanal_pag;
+        pr_baixa_operac(vr_index).tpmeio_pag := rw_jd.tpmeio_pag;
+        pr_baixa_operac(vr_index).insitpag := rw_jd.insitpag;
+        --
+      end loop;
+      --
+      --inclusão de commit após o select para liberar as transações abertas no sql server
+      --com objetivo de melhorar a performance do processo
+      commit;
+      --
     END;
-
-  END pc_copiar_regsitros_jd;
+  END pc_copiar_registros_jd;
   
   -- Salva os registros lidos da Cabine JD que estão na Temp Table para tabela no Oracle
   PROCEDURE pc_salvar_registros (pr_tab_baixa_operac IN tt_tbcobran_baixa_operac
@@ -407,6 +406,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
       
   EXCEPTION
     WHEN others THEN
+      cecred.pc_internal_exception(pr_cdcooper => 3);
       pr_cdcritic := 0;
       pr_dscritic := 'Erro ao inserir na tabela crapris. '||
                       SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
@@ -417,24 +417,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
   PROCEDURE pc_excluir_registros_jd (pr_tab_baixa_operac IN tt_tbcobran_baixa_operac
                                     ,pr_cdcritic     OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic     OUT crapcri.dscritic%TYPE) IS
+    vr_idtituloleg varchar2(32);
   BEGIN
-    DECLARE
-      vr_index PLS_INTEGER;
-      vr_idtitleg VARCHAR2(25);
-      BEGIN
-        FOR vr_index IN pr_tab_baixa_operac.FIRST..pr_tab_baixa_operac.LAST LOOP
-          vr_idtitleg := to_char(pr_tab_baixa_operac(vr_index).NRTIT_LEGADO);
+    BEGIN
+      if nvl(pr_tab_baixa_operac.count,0) > 0 then
+        FOR i IN pr_tab_baixa_operac.FIRST..pr_tab_baixa_operac.LAST LOOP
+          --
+          vr_idtituloleg := to_char(pr_tab_baixa_operac(i).nrtit_legado);
+          --
           DELETE TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcbisql ctrl
-           WHERE ctrl."IdTituloLeg"  = vr_idtitleg;
+          WHERE ctrl."CdLeg"  = pr_tab_baixa_operac(i).cdleg
+            AND ctrl."IdTituloLeg"  = vr_idtituloleg
+            AND ctrl."IdOpJD"  = pr_tab_baixa_operac(i).nroperac_jd
+            AND ctrl."ISPBAdministrado"  = pr_tab_baixa_operac(i).idispbadministr;
+          --
         END LOOP;
-        
-      EXCEPTION
-        WHEN others THEN
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro excluir da tabela TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcsql ctrl: '|| SQLERRM;
-          RAISE vr_exc_saida;        
-      END;
-  
+      end if;
+    EXCEPTION
+      WHEN others THEN
+        cecred.pc_internal_exception(pr_cdcooper => 3,pr_compleme => vr_idtituloleg);
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro excluir da tabela TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcsql ctrl: '|| SQLERRM;
+        RAISE vr_exc_saida;        
+    END;
   END pc_excluir_registros_jd;
       
   -- Função para calcular a data de crédito
@@ -494,59 +499,92 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
     
   END fn_calcular_data_credito;
 
-  BEGIN
-
-  --------------- VALIDACOES INICIAIS -----------------
-
-  -- Incluir nome do módulo logado
-  GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
-                            ,pr_action => null);
-                            
-  -- Log de início da execução
-  pc_controla_log_batch('I');                            
-  
-  pc_inicializa_contador_baixas(pr_totbaixas => vr_tab_tot_baixas);
-
-  vr_inicio_job := SYSDATE;
-
-  ----------------- INICIO DO PROGRAMA -------------------                            
-
-   vr_cdcooper := 3;
-
-   OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-   FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-   IF BTCH0001.cr_crapdat%NOTFOUND THEN     
-     CLOSE BTCH0001.cr_crapdat;
-     vr_cdcritic:= 1;
-     vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-     RAISE vr_exc_saida;
-   ELSE
-     CLOSE BTCH0001.cr_crapdat;
-   END IF;    
-                 
-   -- Copia os registros da cabine JD para uma Temp Table
-   pc_copiar_regsitros_jd(vr_baixa_operac, rw_crapdat.dtmvtoan);
-   
-   vr_index := vr_baixa_operac.FIRST;
-   
-   IF vr_index IS NOT NULL THEN
-   
-     FOR vr_index IN vr_baixa_operac.FIRST..vr_baixa_operac.LAST LOOP
-     
-         OPEN cr_crapcob (pr_nrdconta => vr_baixa_operac(vr_index).nrdconta
-                         ,pr_nrcnvcob => vr_baixa_operac(vr_index).nrcnvcob
-                         ,pr_nrdocmto => vr_baixa_operac(vr_index).nrdocmto);
+BEGIN
+  --
+  declare
+    --
+    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
+    -- Tratamento de erros
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);
+    --
+    vr_inicio_job DATE;
+    vr_fim_job DATE;
+    --
+    -- Flag para verificar se o título ja foi descontado
+    vr_titulo_descontado BOOLEAN := FALSE;
+    vr_cdcooper   NUMBER;
+    vr_baixa_operac tt_tbcobran_baixa_operac;
+    vr_tab_tot_baixas typ_tab_tot_baixas;  
+    --
+    ------------------------------- CURSORES ---------------------------------
+    -- Cursor de leitura de boletos
+    CURSOR cr_crapcob (pr_nrdconta IN crapcob.nrdconta%TYPE
+                      ,pr_nrcnvcob IN crapcco.nrconven%TYPE
+                      ,pr_nrdocmto IN crapcob.nrdocmto%TYPE) IS
+      SELECT cob.cdcooper
+            ,cob.nrdconta
+            ,cob.nrcnvcob
+            ,cob.nrdocmto
+            ,cob.nrdctabb
+            ,cob.cdbandoc 
+        FROM crapcob cob, crapcco cco, crapcop cop
+       WHERE cco.nrconven = pr_nrcnvcob
+         AND cob.cdcooper = cco.cdcooper
+         AND cob.nrcnvcob = cco.nrconven		   
+         AND cob.nrdconta = pr_nrdconta
+         AND cob.nrdocmto = pr_nrdocmto
+         AND cob.nrdctabb = cco.nrdctabb
+         AND cob.cdbandoc = cco.cddbanco
+         AND cop.cdcooper = cco.cdcooper
+         AND cop.flgativo = 1;
+    rw_crapcob cr_crapcob%ROWTYPE;
+    --
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;  
+    --
+  begin
+    --------------- VALIDACOES INICIAIS -----------------
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                              ,pr_action => null);
+    -- Log de início da execução
+    pc_controla_log_batch('I');                            
+    pc_inicializa_contador_baixas(pr_totbaixas => vr_tab_tot_baixas);
+    vr_inicio_job := SYSDATE;
+    ----------------- INICIO DO PROGRAMA -------------------                            
+    vr_cdcooper := 3;
+    --
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN     
+      CLOSE BTCH0001.cr_crapdat;
+      vr_cdcritic:= 1;
+      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;    
+                     
+    -- Copia os registros da cabine JD para uma Temp Table
+    pc_copiar_registros_jd(vr_baixa_operac, rw_crapdat.dtmvtocd, rw_crapdat.dtmvtoan);
+       
+    IF nvl(vr_baixa_operac.count,0) > 0 THEN
+       
+      FOR vr_index IN vr_baixa_operac.FIRST..vr_baixa_operac.LAST LOOP
+         
+        OPEN cr_crapcob (pr_nrdconta => vr_baixa_operac(vr_index).nrdconta
+                        ,pr_nrcnvcob => vr_baixa_operac(vr_index).nrcnvcob
+                        ,pr_nrdocmto => vr_baixa_operac(vr_index).nrdocmto);
         FETCH cr_crapcob INTO rw_crapcob;
-        
         IF cr_crapcob%NOTFOUND THEN
           CLOSE cr_crapcob;
           CONTINUE;
         END IF;
-
         CLOSE cr_crapcob;
-        
+
         vr_cdcooper := rw_crapcob.cdcooper;
-        
+            
         -- Pega data da cooperativa específica
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
         FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -558,11 +596,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
         ELSE
           CLOSE BTCH0001.cr_crapdat;
         END IF;          
-        
+            
         -- Atribui a cooperativa a partir do boleto
         vr_baixa_operac(vr_index).cdcooper := vr_cdcooper;      
         vr_baixa_operac(vr_index).dtmvtolt := rw_crapdat.dtmvtocd;
-        
         -- Totalizacao para os Logs
         IF vr_baixa_operac(vr_index).tpoperac_jd = 'BO' THEN
           vr_tab_tot_baixas(vr_cdcooper).vr_tot_qtd_baixas_opera := vr_tab_tot_baixas(vr_cdcooper).vr_tot_qtd_baixas_opera + 1;
@@ -571,7 +608,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
           vr_tab_tot_baixas(vr_cdcooper).vr_tot_qtd_cancelamentos := vr_tab_tot_baixas(vr_cdcooper).vr_tot_qtd_cancelamentos + 1;
           vr_tab_tot_baixas(vr_cdcooper).vr_tot_vlr_cancelamentos := vr_tab_tot_baixas(vr_cdcooper).vr_tot_vlr_cancelamentos + vr_baixa_operac(vr_index).vlbaixa;
         END IF;
-
         -- Verifica se possui titulo descontado
         vr_titulo_descontado := fn_verifica_desconto_titulo(pr_cdcooper => vr_cdcooper
                                                            ,pr_nrdconta => rw_crapcob.nrdconta
@@ -583,87 +619,76 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
         IF vr_titulo_descontado = TRUE THEN
           CONTINUE;
         END IF;
-        
         -- Cacula a data para crédito
         vr_baixa_operac(vr_index).dtcredito := fn_calcular_data_credito(pr_cdcooper => vr_cdcooper
                                                                        ,pr_nrdconta => rw_crapcob.nrdconta
                                                                        ,pr_nrconven => rw_crapcob.nrcnvcob
                                                                        ,pr_vlbaixa  => vr_baixa_operac(vr_index).vlbaixa
                                                                        ,pr_dtprbaix => rw_crapdat.dtmvtocd);
-        
-     END LOOP;
-   
-   END IF;
-   -- se não existir registros na JD apenas gera log
-   IF vr_baixa_operac.count = 0 THEN
-     vr_cdcritic:= 0;
-     vr_dscritic:= 'Não há registros na cabine JD para serem importados';
-     
-     pc_gera_log_erro(pr_cdcooper => vr_cdcooper
+      END LOOP;
+
+    END IF;
+    -- se não existir registros na JD apenas gera log
+    IF vr_baixa_operac.count = 0 THEN
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Não há registros na cabine JD para serem importados';
+      pc_gera_log_erro(pr_cdcooper => vr_cdcooper
                       ,pr_dscritic => vr_dscritic);
-                      
-     vr_dscritic := NULL;
-          
-   ELSE
-   
-   -- Salva os registros na tabela do Oracle
-   pc_salvar_registros (pr_tab_baixa_operac => vr_baixa_operac
-                       ,pr_cdcritic         => vr_cdcritic
-                       ,pr_dscritic         => vr_dscritic);   
-                        
-   -- Exclui os registros importados da Cabine JD
-   pc_excluir_registros_jd(pr_tab_baixa_operac => vr_baixa_operac
+      vr_dscritic := NULL;
+    ELSE
+      -- Salva os registros na tabela do Oracle
+      pc_salvar_registros (pr_tab_baixa_operac => vr_baixa_operac
                           ,pr_cdcritic         => vr_cdcritic
-                          ,pr_dscritic         => vr_dscritic);  
-                          
-   END IF;
-   
-   --> Verificar se possui titulos pagos em contigencia pendentes de envio para a JD  
-   NPCB0002.pc_proc_tit_contigencia(pr_cdcooper   => 0                   --> Codigo da cooperativa
-                                   ,pr_dtmvtolt   => rw_crapdat.dtmvtocd --> Numer da conta do cooperado
-                                   ,pr_cdcritic   => vr_cdcritic         --> Codigo da critico
-                                   ,pr_dscritic   => vr_dscritic);       --> Descrição da critica
-   IF nvl(vr_cdcritic,0) > 0 OR
-      TRIM(vr_dscritic) IS NOT NULL THEN
-     RAISE vr_exc_saida; 
-   END IF;   
-  
-  ----------------- ENCERRAMENTO DO PROGRAMA -------------------
- 
-  vr_fim_job := SYSDATE;
+                          ,pr_dscritic         => vr_dscritic);   
+      -- Exclui os registros importados da Cabine JD
+      pc_excluir_registros_jd(pr_tab_baixa_operac => vr_baixa_operac
+                             ,pr_cdcritic         => vr_cdcritic
+                             ,pr_dscritic         => vr_dscritic);  
+    END IF;
+    --> Verificar se possui titulos pagos em contigencia pendentes de envio para a JD  
+    NPCB0002.pc_proc_tit_contigencia(pr_cdcooper   => 0                   --> Codigo da cooperativa
+                                    ,pr_dtmvtolt   => rw_crapdat.dtmvtocd --> Numer da conta do cooperado
+                                    ,pr_cdcritic   => vr_cdcritic         --> Codigo da critico
+                                    ,pr_dscritic   => vr_dscritic);       --> Descrição da critica
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exc_saida; 
+    END IF;   
+    ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+    vr_fim_job := SYSDATE;
+    -- Gera o Log por cooperativa
+    pc_gera_log_execucao(pr_iniciojob => vr_inicio_job
+                        ,pr_fimjob    => vr_fim_job
+                        ,pr_totbaixas => vr_tab_tot_baixas);
+    -- Log de fim da execução
+    pc_controla_log_batch('F');
 
-  -- Gera o Log por cooperativa
-  pc_gera_log_execucao(pr_iniciojob => vr_inicio_job
-                      ,pr_fimjob    => vr_fim_job
-                      ,pr_totbaixas => vr_tab_tot_baixas);
-
-  -- Log de fim da execução
-  pc_controla_log_batch('F');
-
-  COMMIT;
+    COMMIT;
 
   EXCEPTION
     WHEN vr_exc_saida THEN
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
-      
+
       pc_gera_log_erro(pr_cdcooper => vr_cdcooper
                       ,pr_dscritic => vr_dscritic);
 
       ROLLBACK;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper);
       vr_dscritic := sqlerrm;
       vr_flgerlog := TRUE;
       pc_controla_log_batch('E', vr_dscritic);
 
       pc_gera_log_erro(pr_cdcooper => vr_cdcooper
                       ,pr_dscritic => vr_dscritic);    
-                      
+                          
       pc_enviar_email_erro(pr_cdcooper => vr_cdcooper
                           ,pr_dscritic => vr_dscritic);
-                        
+                            
       ROLLBACK;
-
+  END;
+  --
 END pc_crps711;
 /

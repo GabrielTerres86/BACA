@@ -331,9 +331,11 @@
                 06/06/2018 - SCTASK0016914 Na rotina efetua_batimento_ged_cadastro quando,
                              chamada pelo crps620, verifica os documentos digitalizados do
                              dia apenas (Carlos)
-
+							 
 				06/08/2018 - Adicionando novos documentos (132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 167, 168, 169). (RITM0021012 - Kelvin)
-				
+
+                11/06/2018 - No cursor crapbdt filtrar data de liberação que não seja null
+
 .............................................................................*/
 
 
@@ -1447,7 +1449,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 62. /*DECLARAÇÃO DE OBRIGAÇÃO FISCAL NO EXTERIOR - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
                     WHEN 63 THEN
                         ASSIGN aux_conttabs = 63. /*DOCUMENTO NIF - SÓCIO*//*-- Projeto 414 - Marcelo Telles Coelho - Mouts*/
-
+					
 					WHEN 65 THEN
                         ASSIGN aux_conttabs = 65. /*Comprovante de Renda - Admissão de Cooperados*/
 					WHEN 66 THEN
@@ -5131,6 +5133,7 @@ PROCEDURE retorna_docs_liberados:
 
                     FOR EACH craptdb WHERE craptdb.cdcooper = crapbdt.cdcooper AND  
                                            craptdb.nrdconta = crapbdt.nrdconta AND 
+										   craptdb.dtlibbdt <> ?               AND
                                            craptdb.nrborder = crapbdt.nrborder NO-LOCK:
                         
                         aux_vltittot = aux_vltittot + craptdb.vltitulo.
@@ -5900,6 +5903,5 @@ PROCEDURE  gera_pend_digitalizacao_seqdoc:
 END PROCEDURE.
 
 /*...........................................................................*/
-
 
 

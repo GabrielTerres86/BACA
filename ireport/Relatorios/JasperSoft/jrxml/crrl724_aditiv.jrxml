@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-06T17:43:07 -->
+<!-- 2018-08-22T11:11:19 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="aditiv" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="aditiv"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -51,6 +51,9 @@
 	</field>
 	<field name="nrcpfcgc_adit" class="java.lang.String">
 		<fieldDescription><![CDATA[nrcpfcgc_adit]]></fieldDescription>
+	</field>
+	<field name="nmprimtl_adit" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl_adit]]></fieldDescription>
 	</field>
 	<field name="dsqrcode" class="java.lang.String">
 		<fieldDescription><![CDATA[dsqrcode]]></fieldDescription>
@@ -165,7 +168,7 @@
 				<subreportExpression><![CDATA["crrl724_aditiv_clausula.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
-		<band height="294">
+		<band height="294" splitType="Prevent">
 			<textField isStretchWithOverflow="true">
 				<reportElement x="20" y="0" width="450" height="22" uuid="ebf59c5b-bf56-45c2-9079-1b098604d48e">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -177,7 +180,7 @@
 				<textFieldExpression><![CDATA["E por estarem, assim, justos e contratados, assinam o presente instrumento em 02 (duas) vias de igual teor e forma, para um só efeito."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement x="20" y="33" width="376" height="11" uuid="3cc50f6d-2194-4194-8ba5-f59bcb7ae26c">
+				<reportElement x="20" y="33" width="449" height="11" uuid="3cc50f6d-2194-4194-8ba5-f59bcb7ae26c">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
@@ -237,7 +240,7 @@
 				</staticText>
 			</frame>
 			<subreport>
-				<reportElement x="20" y="88" width="460" height="11" uuid="e92e6b25-2198-4368-8293-3ed6542a22bd">
+				<reportElement x="20" y="88" width="449" height="11" isRemoveLineWhenBlank="true" uuid="e92e6b25-2198-4368-8293-3ed6542a22bd">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -246,12 +249,12 @@
 				<subreportExpression><![CDATA["crrl724_aditiv_assi_aval.jasper"]]></subreportExpression>
 			</subreport>
 			<frame>
-				<reportElement positionType="Float" x="20" y="110" width="400" height="22" isRemoveLineWhenBlank="true" uuid="2d205e0b-e33e-4b07-b8e3-f40f6dabbd28">
+				<reportElement positionType="Float" x="20" y="121" width="449" height="44" isRemoveLineWhenBlank="true" uuid="2d205e0b-e33e-4b07-b8e3-f40f6dabbd28">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{cdaditiv} == "3" || ( $F{cdaditiv} == "5" && $F{nrcpfcgc} != "0" && $F{nrcpfcgc} != $F{nrcpfcgc_adit})]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{cdaditiv} == "3" || ( $F{cdaditiv} == "5" && $F{nrcpfcgc_adit} != "0" && $F{nrcpfcgc} != $F{nrcpfcgc_adit})]]></printWhenExpression>
 				</reportElement>
 				<line>
 					<reportElement x="0" y="0" width="148" height="1" uuid="b379eef9-3075-427a-b38b-45adc8ff2bd4">
@@ -274,9 +277,32 @@
 					</textElement>
 					<text><![CDATA[Interveniente garantidor]]></text>
 				</staticText>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="0" y="12" width="220" height="11" uuid="a642ee94-ff3f-4d86-88ab-2306a9c53db6">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" markup="html">
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmprimtl_adit}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement x="0" y="23" width="220" height="11" uuid="d03e02aa-3f5a-4a4b-9713-08f3261f0953">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" markup="html">
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nrcpfcgc_adit}]]></textFieldExpression>
+				</textField>
 			</frame>
 			<frame>
-				<reportElement positionType="Float" x="20" y="132" width="388" height="33" uuid="d565f51c-93d4-47be-96d6-381f89e2b299">
+				<reportElement positionType="Float" x="20" y="178" width="449" height="55" uuid="d565f51c-93d4-47be-96d6-381f89e2b299">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>

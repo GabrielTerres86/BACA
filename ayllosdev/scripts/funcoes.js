@@ -105,6 +105,7 @@
  * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
  * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
  * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
+ * 094: [15/12/2017] Jean Michel      (CECRED) : Inclusão da classe coordenadas para campo.
  * 095: [06/02/2018] Lombardi 		  (CECRED) : Colocado tratativa para tirar o background quando o type for 'radio'. (PRJ366)
  * 096: [21/03/2018] Reinert		  (CECRED) : Adicionado divUsoGAROPC na lista de divs reposicionaveis. 
  * 097: [02/04/2018] Lombardi 		  (CECRED) : Adicionado função validaAdesaoProduto para verificar se o tipo de conta permite a contratação do produto. (PRJ366)
@@ -1436,9 +1437,10 @@ function layoutPadrao() {
 	$('label'				).addClass("txtNormalBold");
 	$('input.codigo'		).attr('maxlength','4');	
 	$('a[class!="botao"]','.formulario').attr('tabindex','-1');	
+	$('input.coordenadas').attr('alt', 'n2x0c9a').css('text-align', 'right').autoNumeric().trigger('blur');
 
 	// Alinhando os campos para direita
-	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual').css('text-align','right');	
+	$('.inteiro,.porcento,.numerocasa,.caixapostal,.cep,.conta,.contrato,.contrato2,.contrato3,.contaitg,.cnpj,.cpf,.matricula,.cadempresa,.insc_estadual,.coordenadas').css('text-align','right');	
 	
 	/*!
 	 * ALTERAÇÃO  : 023

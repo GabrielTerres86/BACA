@@ -29,6 +29,10 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --	          29/05/2018 - Ajuste no comando que envia arquivos .LOG e .ERR para servidor ftp.
   --                           Chamado INC0015743 - Gabriel (Mouts).
   --
+  --			  20/08/2018 - Foi incluido a validação do segmento Q
+  --						   (Felipe - Mouts).
+
+
   ---------------------------------------------------------------------------------------------------------------
     
   --> type para armazenar arquivos a serem processados b1wgen0010tt.i/crawaux
@@ -10342,17 +10346,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
                                 (SD#791193 - AJFink)
 
+				   20/08/2018 - Foi incluido a validação do segmento Q
+							    (Felipe - Mouts).
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
-    vr_exc_erro   EXCEPTION;
-    vr_exc_saida  EXCEPTION;
-    vr_cdcritic   PLS_INTEGER;
-    vr_dscritic   VARCHAR2(4000);
-    vr_dscritic2  VARCHAR2(4000);
-    vr_des_reto   VARCHAR2(400);
-    vr_nrdoccri   crapcob.nrdocmto%TYPE;
+    vr_exc_erro     EXCEPTION;
+    vr_exc_saida    EXCEPTION;
+    vr_cdcritic     PLS_INTEGER;
+    vr_dscritic     VARCHAR2(4000);
+    vr_dscritic2    VARCHAR2(4000);
+    vr_des_reto     VARCHAR2(400);
+	vr_rej_cdmotivo VARCHAR2(2);
+    vr_nrdoccri     crapcob.nrdocmto%TYPE;
 
     ------------------------------- CURSORES ---------------------------------
 
@@ -10395,7 +10403,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_contador     INTEGER := 0;
     vr_idxarq       PLS_INTEGER;
     vr_flgfirst     BOOLEAN := FALSE;
-    
+	vr_flgseqq      BOOLEAN := FALSE;
+
     vr_qtbloque     INTEGER := 0;
     vr_qtdregis     INTEGER := 0;
     vr_qtdinstr     INTEGER := 0;
@@ -10601,6 +10610,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
    			     END IF;
           END IF;
           
+		  -- Validação do segmento Q, Após o segundo segmento P ele verifica se 
+          -- o segmento P anterior teve segmento Q
+          IF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'P' AND vr_idlinha > 3 AND NOT vr_flgseqq THEN
+            vr_rej_cdmotivo := '03'; 
+            pc_valida_grava_rejeitado(pr_cdcooper      => vr_rec_cobranca.cdcooper --> Codigo da Cooperativa
+                               ,pr_nrdconta      => vr_rec_cobranca.nrdconta --> Numero da Conta
+                               ,pr_nrcnvcob      => vr_rec_cobranca.nrcnvcob --> Numero do Convenio
+                               ,pr_vltitulo      => vr_rec_cobranca.vltitulo --> Valor do Titulo
+                               ,pr_cdbcoctl      => vr_rec_header.cdbcoctl   --> Codigo do banco na central
+                               ,pr_cdagectl      => vr_rec_header.cdagectl   --> Codigo da Agencial na central
+                               ,pr_nrnosnum      => vr_rec_cobranca.dsnosnum --> Nosso Numero
+                               ,pr_dsdoccop      => vr_rec_cobranca.dsdoccop --> Descricao do Documento
+                               ,pr_nrremass      => vr_rec_header.nrremass   --> Numero da Remessa
+                               ,pr_dtvencto      => vr_rec_cobranca.dtvencto --> Data de Vencimento
+                               ,pr_dtmvtolt      => pr_dtmvtolt              --> Data de Movimento
+                               ,pr_cdoperad      => pr_cdoperad              --> Operador
+                               ,pr_cdocorre      => vr_rec_cobranca.cdocorre --> Codigo da Ocorrencia
+                               ,pr_cdmotivo      => vr_rej_cdmotivo          --> Motivo da Rejeicao
+                               ,pr_tab_rejeitado => vr_tab_rejeitado);       --> Tabela de Rejeitados
+          END IF;
+
+
           -------------------  Header do Arquivo --------------------
           IF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'HA' THEN 
             
@@ -10687,6 +10718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'P' THEN    
           
+		    vr_flgseqq := FALSE;
             -- Processar o Segmento "P"            
             pc_trata_segmento_p_240_85(pr_cdcooper      => pr_cdcooper,               --> Codigo da cooperativa
                                        pr_nrdconta      => pr_nrdconta,               --> Numero da conta do cooperado
@@ -10709,7 +10741,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'Q' THEN
-            
+             
+			 vr_flgseqq := TRUE;
             -- Verificar se a cobranca foi rejeitada
             IF NOT vr_rec_cobranca.flgrejei THEN
               -- Processar apenas se não foi rejeitado a cobranca
@@ -10816,6 +10849,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           END IF;
           
         END LOOP; --> Fim linhas arquivo
+
+		-- verifica o segmento Q, como ele verifica o segmento P anterior, ao final
+		-- do loop e necessario validar o ultimo segmento processado
+        IF NOT vr_flgseqq THEN 
+          
+          vr_rej_cdmotivo := '03'; 
+          pc_valida_grava_rejeitado(pr_cdcooper      => vr_rec_cobranca.cdcooper --> Codigo da Cooperativa
+                               ,pr_nrdconta      => vr_rec_cobranca.nrdconta --> Numero da Conta
+                               ,pr_nrcnvcob      => vr_rec_cobranca.nrcnvcob --> Numero do Convenio
+                               ,pr_vltitulo      => vr_rec_cobranca.vltitulo --> Valor do Titulo
+                               ,pr_cdbcoctl      => vr_rec_header.cdbcoctl   --> Codigo do banco na central
+                               ,pr_cdagectl      => vr_rec_header.cdagectl   --> Codigo da Agencial na central
+                               ,pr_nrnosnum      => vr_rec_cobranca.dsnosnum --> Nosso Numero
+                               ,pr_dsdoccop      => vr_rec_cobranca.dsdoccop --> Descricao do Documento
+                               ,pr_nrremass      => vr_rec_header.nrremass   --> Numero da Remessa
+                               ,pr_dtvencto      => vr_rec_cobranca.dtvencto --> Data de Vencimento
+                               ,pr_dtmvtolt      => pr_dtmvtolt              --> Data de Movimento
+                               ,pr_cdoperad      => pr_cdoperad              --> Operador
+                               ,pr_cdocorre      => vr_rec_cobranca.cdocorre --> Codigo da Ocorrencia
+                               ,pr_cdmotivo      => vr_rej_cdmotivo          --> Motivo da Rejeicao
+                               ,pr_tab_rejeitado => vr_tab_rejeitado);       --> Tabela de Rejeitados
+          vr_rec_cobranca.flgrejei:= TRUE;
+      
+        END IF; 
+
         
         -- Após finalizar as linhas do arquivo, temos que validar o ultimo titulo processado
         --> Cria o ultimo boleto ou gera instrucao apenas se nao tiver erros 

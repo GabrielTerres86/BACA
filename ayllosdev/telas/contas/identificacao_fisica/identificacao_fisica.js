@@ -28,9 +28,12 @@
  * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  * 019: [08/01/2018] Evandro G.(Mout's)  : Ajuste para carregar nome do titular do cadastro unificado e 
                                            não permitir alterar caso possua cadastro completo.(P339)
- * 020:[26/02/2018] Odirlei(AMcom)       : Permitir alterar nome do talao do segundo titular (Andrino-mouts)
+ * 020: [26/02/2018] Odirlei(AMcom)      : Permitir alterar nome do talao do segundo titular (Andrino-mouts)
+ * 021: [10/04/2018] Kelvin 			 : Adicionado validacao ao sair do campo tipo nacionalidade para que caso		
+										   seja selecionado estrangeiro desabiilite o campo U.F da naturalidade e 
+										   fixe o valor "EX" conforme funciona na tela matric. (INC001315 - Kelvin)
+ * 022: [18/07/2018] Andrey Formigari	 : Novo campo Nome Social (#SCTASK0017525 - Mouts) 
                                 
- 
  */
 
 
@@ -362,8 +365,8 @@ function liberaOperacao() {
 	var cNomeTitular	= $('#nmextttl','#'+nomeForm);
 	var cNatureza		= $('#inpessoa','#'+nomeForm);
 	var cUfNatural      = $('#cdufnatu','#'+nomeForm);
-	var camposGrupo1	= $('#cdgraupr, #nrcpfcgc','#'+nomeForm);
-	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#qtfoltal,input[name=\'cdsexotl\']','#'+nomeForm);
+	var camposGrupo1	= $('#cdgraupr,#nrcpfcgc','#'+nomeForm);
+	var camposGrupo2	= $('#nmextttl,#nmsocial,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#qtfoltal,input[name=\'cdsexotl\']','#'+nomeForm);
     var camposGrupo3	= $('#nmtalttl','#'+nomeForm);	
     
 
@@ -399,6 +402,9 @@ function liberaOperacao() {
             camposGrupo3.habilitaCampo(); 
 		}
 
+		if ($("#tpnacion").val() != 1) 
+            $("#cdufnatu").val("EX").desabilitaCampo();
+                
 	// INCLUSÃO
 	} else if ( operacao == 'CI') {
 
@@ -445,7 +451,8 @@ function manterRotina() {
 	// Recebendo valores do formulário
 	var cdgraupr = $('#cdgraupr','#'+nomeForm).val();
 	var nrcpfcgc = $('#nrcpfcgc','#'+nomeForm).val();
-	var nmextttl = $('#nmextttl','#'+nomeForm).val();
+	var nmextttl = $('#nmextttl','#' + nomeForm).val();
+	var nmsocial = $('#nmsocial','#' + nomeForm).val();
 	var cdsitcpf = $('#cdsitcpf','#'+nomeForm).val();
 	var dtcnscpf = $('#dtcnscpf','#'+nomeForm).val();
 	var tpdocttl = $('#tpdocttl','#'+nomeForm).val();
@@ -485,6 +492,7 @@ function manterRotina() {
 	nrctattl = normalizaNumero( nrctattl );
 
 	nmextttl = trim( nmextttl );
+	nmsocial = trim( nmsocial );
 	nrdocttl = trim( nrdocttl );
 	cdoedttl = trim( cdoedttl );
 	nmtalttl = trim( nmtalttl );
@@ -510,7 +518,7 @@ function manterRotina() {
 			tpnacion: tpnacion, cdnacion: cdnacion, dtnasttl: dtnasttl,	dsnatura: dsnatura, inhabmen: inhabmen, dthabmen: dthabmen,
 			cdestcvl: cdestcvl, grescola: grescola, cdfrmttl: cdfrmttl,	nmcertif: nmcertif, nmtalttl: nmtalttl, qtfoltal: qtfoltal,
 			cdsexotl: cdsexotl,	operacao: operacao, nrctattl: nrctattl,	cdnatopc: cdnatopc, cdocpttl: cdocpttl, tpcttrab: tpcttrab,
-			nmextemp: nmextemp, nrcpfemp: nrcpfemp, dsproftl: dsproftl,	cdnvlcgo: cdnvlcgo, cdturnos: cdturnos,
+			nmextemp: nmextemp, nrcpfemp: nrcpfemp, dsproftl: dsproftl,	cdnvlcgo: cdnvlcgo, cdturnos: cdturnos, nmsocial: nmsocial,
 			dtadmemp: dtadmemp, vlsalari: vlsalari, verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, flgcadas: flgcadas,
 			flgContinuar: flgContinuar, arrayFilhos: arrayFilhos,     redirect: 'script_ajax'
 		},
@@ -540,13 +548,14 @@ function manterRotina() {
 function controlaLayout() {
 
 	$('#divConteudoOpcao').fadeTo(1,0.01);
-	$('#divConteudoOpcao').css('height','400px');
+	$('#divConteudoOpcao').css('height','420px');
 	$('#divConteudoOpcao').css('width','540px');
 
 	// FIELDSET IDENTIFICAÇÃO
 	var rRotulos_1		= $('label[for=\'cdgraupr\'],label[for=\'nmextttl\'],label[for=\'cdsitcpf\'],label[for=\'tpdocttl\']','#'+nomeForm);
 	var rRelacionamento = $('label[for=\'cdgraupr\']','#'+nomeForm);
-	var rNomeTitular 	= $('label[for=\'nmextttl\']','#'+nomeForm);
+	var rNomeTitular    = $('label[for=\'nmextttl\']', '#' + nomeForm);
+	var rNomeSocial     = $('label[for=\'nmsocial\']', '#' + nomeForm);
 	var rSituacao		= $('label[for=\'cdsitcpf\']','#'+nomeForm);
 	var rDocumento		= $('label[for=\'tpdocttl\']','#'+nomeForm);
 	var rCPF 			= $('label[for=\'nrcpfcgc\']','#'+nomeForm);
@@ -557,7 +566,8 @@ function controlaLayout() {
 	var rDtEmissao		= $('label[for=\'dtemdttl\']','#'+nomeForm);
 
 	rRotulos_1.addClass('rotulo');
-	rNomeTitular.css('width','73px');
+	rNomeTitular.css('width', '73px');
+	rNomeSocial.css('width', '73px');
 	rSituacao.css('width','73px');
 	rDocumento.css('width','73px');
 	rRelacionamento.css('width','223px');
@@ -570,7 +580,8 @@ function controlaLayout() {
 	// var cRelacionamento	= $('select[name=\'cdgraupr\']','#'+nomeForm);
 	var cRelacionamento	= $('#cdgraupr','#'+nomeForm);
 	var cCPF			= $('#nrcpfcgc','#'+nomeForm);
-	var cNomeTitular	= $('#nmextttl','#'+nomeForm);
+	var cNomeTitular    = $('#nmextttl','#' + nomeForm);
+	var cNomeSocial     = $('#nmsocial','#' + nomeForm);
 	var cSituacao		= $('#cdsitcpf','#'+nomeForm);
 	var cDtConsulta		= $('#dtcnscpf','#'+nomeForm);
 	var cNatureza		= $('#inpessoa','#'+nomeForm);
@@ -582,7 +593,8 @@ function controlaLayout() {
 
 	cRelacionamento.css('width','148px');
 	cCPF.addClass('cpf').css('width','100px');
-	cNomeTitular.addClass('alphanum').css('width','445px').attr('maxlength','50');
+	cNomeTitular.addClass('alphanum').css('width', '445px').attr('maxlength', '50');
+	cNomeSocial.addClass('alphanum').css('width', '445px').attr('maxlength', '40');
 	cSituacao.css('width','125px');
 	cDtConsulta.addClass('data').css('width','68px');
 	cNatureza.css('width','73px');
@@ -635,7 +647,7 @@ function controlaLayout() {
 
 	// DEFININDO OS GRUPOS DE VARIÁVEIS
 	var camposGrupo1	= $('#cdgraupr, #nrcpfcgc','#'+nomeForm);
-	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#qtfoltal','#'+nomeForm);
+	var camposGrupo2	= $('#nmextttl,#nmsocial,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#qtfoltal','#'+nomeForm);
     var camposGrupo3	= $('#nmtalttl','#'+nomeForm);
 	var nrctattl 		= $('#nrctattl','#'+nomeForm).val();
 
@@ -936,6 +948,24 @@ function controlaPesquisas() {
 	/*-------------------------------------*/
 	/*   CONTROLE DAS BUSCA DESCRIÇÕES     */
 	/*-------------------------------------*/
+
+	$('#tpnacion','#'+nomeForm).unbind('blur').bind('blur',function() {
+		 if ($(this).val() == 1) { // Se for brasileiro/a
+            $("#cdufnatu").val("").habilitaCampo();
+            $("#cdnacion").val("42");
+			$("#dsnacion").val("BRASILEIRA");            
+            $("#dsnatura").focus();
+        }
+        else {
+            $("#cdufnatu").val("EX").desabilitaCampo();
+            if ($("#dsnacion").val() == "BRASILEIRA") {
+                $("#cdnacion").val("");
+                $("#dsnacion").val("");
+            }
+			$("#cdnacion").focus();            
+        }
+		return false;
+	});
 
 	// Tipo Nacionalidade
 	$('#tpnacion','#'+nomeForm).unbind('change').bind('change',function() {

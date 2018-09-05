@@ -2,6 +2,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps724_1(pr_cdcooper  IN crapcop.cdcooper
                                                ,pr_idparale  IN crappar.idparale%TYPE     --> Indicador de processo paralelo
                                                ,pr_cdagenci  IN crapage.cdagenci%TYPE     --> Codigo Agencia
                                                ,pr_cdrestart IN tbgen_batch_controle.cdrestart%TYPE --> Controle do registro de restart em caso de erro na execucao
+                                               ,pr_qtdexec   IN NUMBER DEFAULT 1          --> numero da execucao no dia (debitador unico)
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
                                                ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
 BEGIN
@@ -11,7 +12,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Agosto/2017                     Ultima atualizacao: 
+     Data    : Agosto/2017                     Ultima atualizacao: 29/08/2018
 
      Dados referentes ao programa:
 
@@ -19,6 +20,8 @@ BEGIN
      Objetivo  : Pagar as parcelas dos contratos do produto Pos-Fixado.
 
      Alteracoes: 
+     29/08/2018 - permitir executar mais de uma vez e deve paralelizar somente na primeira execucao.
+                - Projeto Debitador Unico - Fabiano B. Dias (AMcom).
 
   ............................................................................ */
 
@@ -94,7 +97,7 @@ BEGIN
           ON crapass.cdcooper = crapepr.cdcooper
          AND crapass.nrdconta = crapepr.nrdconta
        WHERE crapepr.cdcooper = pr_cdcooper
-         AND crapepr.cdagenci = pr_cdagenci
+         AND crapepr.cdagenci = decode(pr_cdagenci, 0, crapepr.cdagenci, pr_cdagenci) -- 29/08/2018. 
          AND crapepr.nrdconta > NVL(pr_cdrestart,0)
          AND crapepr.tpemprst = 2 -- Pos-Fixado
          AND crappep.inliquid = 0 -- Pendente
@@ -179,7 +182,7 @@ BEGIN
                                       ,pr_tpagrupador => 1 -- PA
                                       ,pr_cdagrupador => pr_cdagenci
                                       ,pr_cdrestart   => pr_cdrestart
-                                      ,pr_nrexecucao  => 1
+                                      ,pr_nrexecucao  => pr_qtdexec
                                       ,pr_idcontrole  => vr_idcontrole
                                       ,pr_cdcritic    => vr_cdcritic
                                       ,pr_dscritic    => vr_dscritic);
@@ -635,6 +638,8 @@ BEGIN
 
     END LOOP; -- cr_epr_pep
 
+    IF pr_cdagenci <> 0 THEN -- 29/08/2018
+	
     -- Grava os dados restantes conforme PL Table
     pc_grava_dados(pr_cdrestart => vr_ultconta);
     
@@ -655,6 +660,8 @@ BEGIN
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
+    
+    END IF; -- pr_cdagenci <> 0 THEN -- 29/08/2018
     
     -- Processo OK, devemos chamar a fimprg
     BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper

@@ -13,6 +13,7 @@ var operacao = '';
 
 var frmCab = 'frmCab';
 var frmParest = 'frmParest';
+var frmParest04 = 'frmParest04';
 
 var cTodosCabecalho = '';
 var cTodosFiltro = '';
@@ -75,6 +76,7 @@ function controlaLayout() {
 	
     formataCabecalho();
     formataParametros();    
+	formataParametros4();    
     controlaFoco();
 	
 	layoutPadrao();
@@ -130,6 +132,8 @@ function formataParametros() {
     rNmregmpj = $('label[for="nmregmpj"]', '#' + frmParest);
     rQtsstime = $('label[for="qtsstime"]', '#' + frmParest);
     rQtmeschq = $('label[for="qtmeschq"]', '#' + frmParest);
+    rQtmeschqal11 = $('label[for="qtmeschqal11"]', '#' + frmParest);
+    rQtmeschqal12 = $('label[for="qtmeschqal12"]', '#' + frmParest);
     rQtmesest = $('label[for="qtmesest"]', '#' + frmParest);
     rQtmesemp = $('label[for="qtmesemp"]', '#' + frmParest);
 
@@ -140,6 +144,8 @@ function formataParametros() {
     rNmregmpj.css('width', '300px');
     rQtsstime.css('width', '300px');
     rQtmeschq.css('width', '300px');
+    rQtmeschqal11.css('width', '120px');
+    rQtmeschqal12.css('width', '120px');
     rQtmesest.css('width', '300px');
     rQtmesemp.css('width', '300px');
 
@@ -150,6 +156,8 @@ function formataParametros() {
     cNmregmpj = $('#nmregmpj', '#' + frmParest);
     cQtsstime = $('#qtsstime', '#' + frmParest);
     cQtmeschq = $('#qtmeschq', '#' + frmParest);
+    cQtmeschqal11 = $('#qtmeschqal11', '#' + frmParest);
+    cQtmeschqal12 = $('#qtmeschqal12', '#' + frmParest);
     cQtmesest = $('#qtmesest', '#' + frmParest);
     cQtmesemp = $('#qtmesemp', '#' + frmParest);
     
@@ -157,10 +165,14 @@ function formataParametros() {
     cNmregmpj.css('width', '300px').attr('maxlength', '250');	
     cQtsstime.addClass('inteiro').css('width', '48px');
     cQtmeschq.addClass('inteiro').css('width', '48px');
+    cQtmeschqal11.addClass('inteiro').css('width', '48px');
+    cQtmeschqal12.addClass('inteiro').css('width', '48px');
     cQtmesest.addClass('inteiro').css('width', '48px');
     cQtmesemp.addClass('inteiro').css('width', '48px');
     cQtsstime.attr('maxlength', '3');
     cQtmeschq.attr('maxlength', '2');
+    cQtmeschqal11.attr('maxlength', '2');
+    cQtmeschqal12.attr('maxlength', '2');
     cQtmesest.attr('maxlength', '2');
     cQtmesemp.attr('maxlength', '2');
 
@@ -170,6 +182,64 @@ function formataParametros() {
     return false;
 }
 
+function formataParametros4() {
+
+    rIncomite = $('label[for="incomite"]', '#' + frmParest04);
+    rContigen = $('label[for="contigen"]', '#' + frmParest04);
+    rAnlautom = $('label[for="anlautom"]', '#' + frmParest04);
+    rNmregmpf = $('label[for="nmregmpf"]', '#' + frmParest04);
+    rNmregmpj = $('label[for="nmregmpj"]', '#' + frmParest04);
+    rQtsstime = $('label[for="qtsstime"]', '#' + frmParest04);
+    rQtmeschq = $('label[for="qtmeschq"]', '#' + frmParest04);
+    rQtmeschqal11 = $('label[for="qtmeschqal11"]', '#' + frmParest04);
+    rQtmeschqal12 = $('label[for="qtmeschqal12"]', '#' + frmParest04);
+    rQtmesest = $('label[for="qtmesest"]', '#' + frmParest04);
+    rQtmesemp = $('label[for="qtmesemp"]', '#' + frmParest04);
+
+    rIncomite.css('width', '300px');
+    rContigen.css('width', '300px');
+    rAnlautom.css('width', '300px');
+    rNmregmpf.css('width', '300px');
+    rNmregmpj.css('width', '300px');
+    rQtsstime.css('width', '300px');
+    rQtmeschq.css('width', '300px');
+    rQtmeschqal11.css('width', '120px');
+    rQtmeschqal12.css('width', '120px');
+    rQtmesest.css('width', '300px');
+    rQtmesemp.css('width', '300px');
+
+    cIncomite = $('#incomite', '#' + frmParest04);
+    cContigen = $('#contigen', '#' + frmParest04);
+    cAnlautom = $('#anlautom', '#' + frmParest04);
+    cNmregmpf = $('#nmregmpf', '#' + frmParest04);
+    cNmregmpj = $('#nmregmpj', '#' + frmParest04);
+    cQtsstime = $('#qtsstime', '#' + frmParest04);
+    cQtmeschq = $('#qtmeschq', '#' + frmParest04);
+    cQtmeschqal11 = $('#qtmeschqal11', '#' + frmParest04);
+    cQtmeschqal12 = $('#qtmeschqal12', '#' + frmParest04);
+    cQtmesest = $('#qtmesest', '#' + frmParest04);
+    cQtmesemp = $('#qtmesemp', '#' + frmParest04);
+    
+    cNmregmpf.css('width', '300px').attr('maxlength', '250');	
+    cNmregmpj.css('width', '300px').attr('maxlength', '250');	
+    cQtsstime.addClass('inteiro').css('width', '48px');
+    cQtmeschq.addClass('inteiro').css('width', '48px');
+    cQtmeschqal11.addClass('inteiro').css('width', '48px');
+    cQtmeschqal12.addClass('inteiro').css('width', '48px');
+    cQtmesest.addClass('inteiro').css('width', '48px');
+    cQtmesemp.addClass('inteiro').css('width', '48px');
+    cQtsstime.attr('maxlength', '3');
+    cQtmeschq.attr('maxlength', '2');
+    cQtmeschqal11.attr('maxlength', '2');
+    cQtmeschqal12.attr('maxlength', '2');
+    cQtmesest.attr('maxlength', '2');
+    cQtmesemp.attr('maxlength', '2');
+
+    cTodosFiltro.habilitaCampo();
+		
+	layoutPadrao();
+    return false;
+}
 
 
 function controlaFoco() {
@@ -260,6 +330,21 @@ function controlaFoco() {
 	$('#qtmeschq', '#divAlteracao').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 			
+			$('#qtmeschqal11', '#divAlteracao').focus();
+            return false;
+        }
+    });
+	
+	$('#qtmeschqal11', '#divAlteracao').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+			
+			$('#qtmeschqal12', '#divAlteracao').focus();
+            return false;
+        }
+    });
+	$('#qtmeschqal12', '#divAlteracao').unbind('keypress').bind('keypress', function(e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+			
 			$('#qtmesest', '#divAlteracao').focus();
             return false;
         }
@@ -299,12 +384,16 @@ function controlaFoco() {
           $('#nmregmpj', '#divAlteracao').desabilitaCampo();
           $('#qtsstime', '#divAlteracao').desabilitaCampo();
           $('#qtmeschq', '#divAlteracao').desabilitaCampo();
+          $('#qtmeschqal11', '#divAlteracao').desabilitaCampo();
+          $('#qtmeschqal12', '#divAlteracao').desabilitaCampo();
           $('#qtmesest', '#divAlteracao').desabilitaCampo();
           $('#qtmesemp', '#divAlteracao').desabilitaCampo();
           $('#nmregmpf', '#divAlteracao').val('');
           $('#nmregmpj', '#divAlteracao').val('');
           $('#qtsstime', '#divAlteracao').val('0');
           $('#qtmeschq', '#divAlteracao').val('0');
+          $('#qtmeschqal11', '#divAlteracao').val('0');
+          $('#qtmeschqal12', '#divAlteracao').val('0');
           $('#qtmesest', '#divAlteracao').val('0');
           $('#qtmesemp', '#divAlteracao').val('0');
 	    } else {
@@ -312,6 +401,8 @@ function controlaFoco() {
           $('#nmregmpj', '#divAlteracao').habilitaCampo();
           $('#qtsstime', '#divAlteracao').habilitaCampo();
           $('#qtmeschq', '#divAlteracao').habilitaCampo();
+          $('#qtmeschqal11', '#divAlteracao').habilitaCampo();
+          $('#qtmeschqal12', '#divAlteracao').habilitaCampo();
           $('#qtmesest', '#divAlteracao').habilitaCampo();
           $('#qtmesemp', '#divAlteracao').habilitaCampo();
 	    }
@@ -325,12 +416,16 @@ function controlaFoco() {
           $('#nmregmpj', '#divAlteracao04').desabilitaCampo();
           $('#qtsstime', '#divAlteracao04').desabilitaCampo();
           $('#qtmeschq', '#divAlteracao04').desabilitaCampo();
+          $('#qtmeschqal11', '#divAlteracao04').desabilitaCampo();
+          $('#qtmeschqal12', '#divAlteracao04').desabilitaCampo();
           $('#qtmesest', '#divAlteracao04').desabilitaCampo();
           $('#qtmesemp', '#divAlteracao04').desabilitaCampo();
 	      $('#nmregmpf', '#divAlteracao04').val('');
           $('#nmregmpj', '#divAlteracao04').val('');
           $('#qtsstime', '#divAlteracao04').val('0');
           $('#qtmeschq', '#divAlteracao04').val('0');
+          $('#qtmeschqal11', '#divAlteracao04').val('0');
+          $('#qtmeschqal12', '#divAlteracao04').val('0');
           $('#qtmesest', '#divAlteracao04').val('0');
           $('#qtmesemp', '#divAlteracao04').val('0');
 	    } else {
@@ -338,6 +433,8 @@ function controlaFoco() {
           $('#nmregmpj', '#divAlteracao04').habilitaCampo();
           $('#qtsstime', '#divAlteracao04').habilitaCampo();
           $('#qtmeschq', '#divAlteracao04').habilitaCampo();
+          $('#qtmeschqal11', '#divAlteracao04').habilitaCampo();
+          $('#qtmeschqal12', '#divAlteracao04').habilitaCampo();
           $('#qtmesest', '#divAlteracao04').habilitaCampo();
           $('#qtmesemp', '#divAlteracao04').habilitaCampo();
 	    }
@@ -452,6 +549,8 @@ function manterRotina(cdopcao) {
         var nmregmpj = $('#nmregmpj', '#' + frmParest).val();
         var qtsstime = $('#qtsstime', '#' + frmParest).val();
         var qtmeschq = $('#qtmeschq', '#' + frmParest).val();
+    var qtmeschqal11 = $('#qtmeschqal11', '#' + frmParest).val();
+    var qtmeschqal12 = $('#qtmeschqal12', '#' + frmParest).val();
         var qtmesest = $('#qtmesest', '#' + frmParest).val();
         var qtmesemp = $('#qtmesemp', '#' + frmParest).val();
     }else if(tpproduto == '4'){
@@ -462,6 +561,8 @@ function manterRotina(cdopcao) {
         var nmregmpj = $('#nmregmpj', '#frmParest04').val();
         var qtsstime = $('#qtsstime', '#frmParest04').val();
         var qtmeschq = $('#qtmeschq', '#frmParest04').val();
+		var qtmeschqal11 = $('#qtmeschqal11', '#frmParest04').val();
+        var qtmeschqal12 = $('#qtmeschqal12', '#frmParest04').val();
         var qtmesest = $('#qtmesest', '#frmParest04').val();
         var qtmesemp = $('#qtmesemp', '#frmParest04').val();
 
@@ -483,6 +584,8 @@ function manterRotina(cdopcao) {
             nmregmpj: nmregmpj,
             qtsstime: qtsstime,
             qtmeschq: qtmeschq,
+            qtmeschqal11: qtmeschqal11,
+            qtmeschqal12: qtmeschqal12,
             qtmesest: qtmesest,
             qtmesemp: qtmesemp,
             tpproduto: tpproduto,

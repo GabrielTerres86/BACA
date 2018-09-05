@@ -12,6 +12,9 @@
 
                01/09/2015 - Adicionado os campos de assessoria e motivo CIN
                             (Douglas - Melhoria 12)
+
+         09/07/2018 - Projeto 403 - Adicionando tratamento para desconto de títulos (Lucas - GFT)
+  
 .............................................................................*/
 
 DEF TEMP-TABLE tt-crapcyc NO-UNDO
@@ -31,7 +34,10 @@ DEF TEMP-TABLE tt-crapcyc NO-UNDO
     FIELD cdassess AS INTE
     FIELD nmassess AS CHAR
     FIELD cdmotcin AS INTE
-    FIELD dsmotcin AS CHAR.
+    FIELD dsmotcin AS CHAR
+    FIELD nrborder AS INTE
+    FIELD nrtitulo AS INTE
+    FIELD nrdocmto AS INTE.
 
 DEF TEMP-TABLE tt-msg NO-UNDO
     FIELD nrdconta AS INT

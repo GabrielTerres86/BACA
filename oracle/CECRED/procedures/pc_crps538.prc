@@ -22,6 +22,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Frequencia: Diario (Batch).
    Objetivo  : Integrar arquivos de TITULOS da Nossa Remessa - Conciliacao.
 
+               'EMPRESTIMO'         - COBEMP
+               'ACORDOS'            - Acordo
+               'DESCONTO DE TITULO' - COBTIT
+
    Alteracoes: 27/05/2010 - Alterar a data utilizada no FIND para a data que
                             esta no HEADER do arquivo e incluir um resumo ao
                             fim do relatorio de Rejeitados, Integrados e
@@ -373,6 +377,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             que apresentaram critica no loop de processamento das linhas
                             do arquivo. (SD#726081-AJFink)
 
+
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
                             o nome do arquivo apos processamento, iremos gerar o arquivo
                             _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
@@ -422,6 +427,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             
                27/04/2018 - ao chamar DSCT0001 informar a agencia do PA do Associado referente ao paralelismo (AMcom-Mario).
                            
+               18/06/2018 - Adicionado o procedimento dsct0003.pc_processa_liquidacao_cobtit para efetuar baixa de titulos gerados
+                            pela COBTIT (Paulo Penteado (GFT))
+
                11/07/2018 - Incluir log de verificação da quantidade de tarifas a serem lançadas.
                             Ajuste no cursor cr_lcm_consolidada com to_number do cdhistor.
                             Alteração na ordem de commit e encerra_paralelo. INC0018458 (AJFink)
@@ -749,6 +757,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                ,crapcob.vldpagto
                ,crapcob.inserasa
                ,crapcob.dtvctori
+               ,crapcob.nrdctabb
+               ,crapcob.nrctasac
          FROM crapcob
          WHERE crapcob.cdcooper = pr_cdcooper
          AND   crapcob.cdbandoc = pr_cdbandoc
@@ -963,7 +973,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                 cob.rowid cob_rowid
            FROM crapret ret,
                 crapcob cob,
-                tbepr_cobranca cde,
+                tbrecup_cobranca cde,
                 crapass ass,
                 crapcco cco
           WHERE ret.cdcooper = pr_cdcooper
@@ -977,6 +987,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             AND cco.cdcooper = cde.cdcooper
             AND cco.nrconven = cde.nrcnvcob
             AND cob.nrctremp > 0
+            AND cde.tpproduto = 0
             AND cde.cdcooper = cob.cdcooper
             AND cde.nrdconta_cob = cob.nrdconta
             AND cde.nrcnvcob = cob.nrcnvcob
@@ -989,6 +1000,56 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
             ORDER BY cde.nrdconta, cde.nrctremp;
        rw_cde cr_cde%ROWTYPE;
+
+       -- buscar boletos da COBTIT pagos na cobranca para serem regularizados
+       CURSOR cr_tit (pr_cdcooper IN crapret.cdcooper%TYPE
+                     ,pr_nrcnvcob IN crapret.nrcnvcob%TYPE
+                     ,pr_dtocorre IN crapret.dtocorre%TYPE
+                     ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
+         -- Desconto de Titulos COBTIT
+         SELECT ass.cdagenci,
+                cde.cdcooper,
+                cde.nrdconta_cob nrdconta,
+                cde.nrctremp,
+                cde.nrcnvcob,
+                cde.nrboleto,
+                cde.tpparcela,
+                cob.dsdoccop,
+                cob.dtvencto,
+                cob.vltitulo,
+                ret.vlrpagto,
+                ret.flcredit,
+                cob.rowid cob_rowid,
+                cob.indpagto,
+                cob.nrctasac
+           FROM crapret ret,
+                crapcob cob,
+                tbrecup_cobranca cde,
+                crapass ass,
+                crapcco cco
+          WHERE ret.cdcooper = pr_cdcooper
+            AND ret.nrcnvcob = pr_nrcnvcob
+            AND ret.dtocorre = pr_dtocorre
+            AND ret.cdocorre IN (6,76) -- liquidacao normal COO/CEE
+            AND cob.cdcooper = ret.cdcooper
+            AND cob.nrcnvcob = ret.nrcnvcob
+            AND cob.nrdconta = ret.nrdconta
+            AND cob.nrdocmto = ret.nrdocmto
+            AND cco.cdcooper = cde.cdcooper
+            AND cco.nrconven = cde.nrcnvcob
+            AND nvl(cob.nrctremp,0) = 0
+            AND cde.tpproduto = 3 -- COBTIT
+            AND cde.cdcooper = cob.cdcooper
+            AND cde.nrdconta_cob = cob.nrdconta
+            AND cde.nrcnvcob = cob.nrcnvcob
+            AND cde.nrboleto = cob.nrdocmto
+            AND cob.cdbandoc = cco.cddbanco
+            AND cob.nrdctabb = cco.nrdctabb
+            AND ass.cdcooper = cde.cdcooper
+            AND ass.nrdconta = cde.nrdconta
+            --Inclusão do controle de paralelismo
+            AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
+            ORDER BY cde.nrdconta, cde.nrctremp;
 
        -- Buscar boletos dos acordos pagos na cobranca para serem regularizados
        CURSOR cr_boletos_pagos_acordos (pr_cdcooper IN crapret.cdcooper%TYPE
@@ -1746,6 +1807,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              vr_caminho_rl_3:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
                                                     ,pr_cdcooper => 3
                                                     ,pr_nmsubdir => 'rl');
+
              -- Finalizar tag XML
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</dados></crrl618>',true);
 
@@ -1921,6 +1983,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                vr_nmarqimp:= 'crrl706.lst';
              END IF;
            
+
              --Descricao da Origem
              vr_nmorigem:= '';
 
@@ -2337,7 +2400,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              pr_tab_lcm_consolidada(vr_index_cratlcm).nrdocmto := rw_lcm_consolidada.nrdocmto;
 
            END LOOP;
-
          EXCEPTION
            WHEN OTHERS THEN
              -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
@@ -2421,8 +2483,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              ** PROCESSAMENTO DE ARQUIVOS DE REPROC. ESTE TIPO DE PROCESSAMENTO É   ** 
              ** ATIPICO E OCORRERÁ APENAS EM SITUAÇÕES MUITO PONTUAIS.              **
              ************************************************************************/
-             -- Se for emprestimo ou acordo e estiver processando em modo de REPROC
-             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO') AND vr_inreproc THEN
+             -- Se for emprestimo ou acordo ou desconto de titulos e estiver processando em modo de REPROC
+             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO','DESCONTO DE TITULO') AND vr_inreproc THEN
                -- Atualizar os registros da CRAPRET para não processar em duplicidade
                BEGIN
                  UPDATE crapret 
@@ -2492,8 +2554,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              ** PROCESSAMENTO DE ARQUIVOS DE REPROC. ESTE TIPO DE PROCESSAMENTO É   ** 
              ** ATIPICO E OCORRERÁ APENAS EM SITUAÇÕES MUITO PONTUAIS.              **
              ************************************************************************/
-             -- Se for emprestimo ou acordo e estiver processando em modo de REPROC
-             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO') AND vr_inreproc THEN
+             -- Se for emprestimo ou acordo ou desconto de titulos e estiver processando em modo de REPROC
+             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO','DESCONTO DE TITULO') AND vr_inreproc THEN
                -- Atualizar os registros da CRAPRET para não processar em duplicidade
                BEGIN
                  UPDATE crapret 
@@ -2639,8 +2701,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              ** PROCESSAMENTO DE ARQUIVOS DE REPROC. ESTE TIPO DE PROCESSAMENTO É   ** 
              ** ATIPICO E OCORRERÁ APENAS EM SITUAÇÕES MUITO PONTUAIS.              **
              ************************************************************************/
-             -- Se for emprestimo ou acordo e estiver processando em modo de REPROC
-             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO') AND vr_inreproc THEN
+             -- Se for emprestimo ou acordo ou desconto de titulos e estiver processando em modo de REPROC
+             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO','DESCONTO DE TITULO') AND vr_inreproc THEN
                -- Atualizar os registros da CRAPRET para não processar em duplicidade
                BEGIN
                  UPDATE crapret 
@@ -2857,6 +2919,103 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  END IF;			  
 
                END LOOP;  
+
+             ELSIF rw_crapcco.dsorgarq = 'DESCONTO DE TITULO' THEN
+
+               FOR rw_tit IN cr_tit (pr_cdcooper => rw_crapcco.cdcooper
+                                    ,pr_nrcnvcob => rw_crapcco.nrconven
+                                    ,pr_dtocorre => vr_dtcredit
+                                    ,pr_cdagenci => pr_cdagenci ) 
+               LOOP      
+                 IF pr_nmtelant = 'COMPEFORA' AND NOT vr_email_compefora THEN
+                  
+                   vr_email_proc_cred := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                                   pr_cdcooper => pr_cdcooper,
+                                                                   pr_cdacesso => 'EMAIL_PROCESSUAL_CREDITO');
+                   
+                   -- Se não encontrar e-mail cadastrado no parametro, deve mandar 
+                   -- para o e-mail do processual de credito
+                   IF vr_email_proc_cred IS NULL THEN
+                     vr_email_proc_cred := 'processualdecredito@ailos.coop.br';
+             END IF;
+                   
+                   /* Envio do arquivo detalhado via e-mail */
+                   gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                             ,pr_cdprogra        => vr_cdprogra
+                                             ,pr_des_destino     => vr_email_proc_cred
+                                             ,pr_des_assunto     => 'Pagtos de títulos com boleto (COMPEFORA) - ' || rw_crapcop.nmrescop
+                                             ,pr_des_corpo       => 'Favor verificar pagtos de títulos com boleto atraves dos relatorios do BI.'
+                                             ,pr_des_anexo       => NULL
+                                             ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                             ,pr_flg_remete_coop => 'N' --> Se o envio será do e-mail da Cooperativa
+                                             ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                             ,pr_des_erro        => vr_dscritic);                  
+                    
+                   vr_email_compefora := TRUE;
+                 END IF;
+                  
+                 -- se o pagto do boleto foi creditado, entao pagar o contrato                     
+                 IF rw_tit.flcredit = 1 THEN                    
+                   BEGIN
+                     dsct0003.pc_processa_liquidacao_cobtit(pr_cdcooper => rw_tit.cdcooper
+                                                           ,pr_nrdconta => rw_tit.nrdconta
+                                                           ,pr_nrcnvcob => rw_tit.nrcnvcob
+                                                           ,pr_nrctasac => rw_tit.nrctasac
+                                                           ,pr_nrdocmto => rw_tit.nrboleto
+                                                           ,pr_vlpagmto => rw_tit.vlrpagto
+                                                           ,pr_indpagto => rw_tit.indpagto
+                                                           ,pr_cdoperad => '1'
+                                                           ,pr_cdagenci => 0
+                                                           ,pr_nrdcaixa => 0
+                                                           ,pr_idorigem => 7 -- Batch
+                                                           ,pr_cdcritic => vr_cdcritic
+                                                           ,pr_dscritic => vr_dscritic);
+
+                     IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
+                       RAISE vr_exc_sair;
+                     END IF; 
+
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                       -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
+                       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+                       -- Erro
+                       vr_cdcritic:= 0;
+                       vr_dscritic:= 'Erro nao tratado - '||sqlerrm;
+                   END;                    
+                 ELSE
+                   vr_cdcritic := 0;
+                   vr_dscritic := 'Boleto nao creditado';
+                 END IF;
+
+                 -- se ocorreu alguma critica de pagto de emprestimo, registrar no boleto
+                 IF vr_dscritic IS NOT NULL THEN
+                   paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_tit.cob_rowid               --ROWID da Cobranca
+                                                ,pr_cdoperad => 'PAGATIT'                      --Operador
+                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
+                                                ,pr_dsmensag => 'Erro: ' || substr(vr_dscritic,1,100) --Descricao Mensagem
+                                                ,pr_des_erro => vr_des_erro                    --Indicador erro
+                                                ,pr_dscritic => vr_dscritic2);                  --Descricao erro
+                 ELSE
+                   paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_tit.cob_rowid               --ROWID da Cobranca
+                                                ,pr_cdoperad => vr_cdoperad                    --Operador
+                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
+                                                ,pr_dsmensag => 'Pagto realizado ref ao contrato ' ||
+                                                                to_char(rw_tit.nrboleto) || (CASE WHEN TRIM(pr_nmtelant) IS NULL THEN ' ' ELSE ' - COMPEFORA' END) --Descricao Mensagem
+                                                ,pr_des_erro => vr_des_erro                    --Indicador erro
+                                                ,pr_dscritic => vr_dscritic2);                  --Descricao erro                                                  
+                 END IF;
+
+                 --Atribui descricao da critica
+                 IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN                                         
+                   vr_dscritic := 'Erro: ' || substr(nvl(vr_dscritic,' '),1,90);
+                 ELSE
+                   vr_dscritic := 'OK';
+                 END IF;
+
+                 vr_cdcritic := NULL;
+                 vr_dscritic := NULL;                  
+               END LOOP;
              END IF;
              /************************************************************************
              *****      ###############  TRATAMENTO REPROC  ###############      *****
@@ -2865,8 +3024,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              ** PROCESSAMENTO DE ARQUIVOS DE REPROC. ESTE TIPO DE PROCESSAMENTO É   ** 
              ** ATIPICO E OCORRERÁ APENAS EM SITUAÇÕES MUITO PONTUAIS.              **
              ************************************************************************/
-             -- Se for emprestimo ou acordo e estiver processando em modo de REPROC
-             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO') AND vr_inreproc THEN
+             -- Se for emprestimo ou acordo ou desconto de titulos e estiver processando em modo de REPROC
+             IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','ACORDO','DESCONTO DE TITULO') AND vr_inreproc THEN
                -- Atualizar os registros da CRAPRET para não processar em duplicidade
                BEGIN
                  UPDATE crapret 
@@ -3050,6 +3209,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
            -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
            pc_controla_log_batch(2, vr_dscritic|| ' - Arquivo: integra/'||vr_nmarqret);           
+
            --Levantar Excecao pois nao tem arquivo para processar
            IF nvl(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                         pr_cdcooper => 0, 
@@ -3058,6 +3218,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            ELSE
              RAISE vr_exc_final;
            END IF;
+
          END IF;
          /*  Fim da verificacao se deve executar  */
 
@@ -4181,6 +4342,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                    --Escrever mensagem de integracao no log
                    vr_flgrejei:= TRUE;                   
+
                    vr_cdcritic:= 592;
 
                    /* Criacao da tabela generica gncptit - utilizada na conciliacao */
@@ -4504,7 +4666,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                  -- se o boleto de emprestimo ja foi pago ou baixado, será devolvido no crrl574
                  IF rw_crapcob.incobran IN (3,5) AND 
-                    vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO') THEN
+                    vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','ACORDO','DESCONTO DE TITULO') THEN
                     
                    /* Criacao da tabela generica gncptit - utilizada na conciliacao */
                    BEGIN
@@ -5019,9 +5181,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    END IF;
                  END IF; --vr_flgvenci
 
-                 /* se pagou valor menor ou vencido e é do convenio EMPRESTIMO */
+                 /* se pagou valor menor ou vencido e é do convenio EMPRESTIMO ou Desconto de Titulo */
                  IF (TRUNC(vr_vlliquid,2) < TRUNC(vr_vlfatura,2) OR vr_flgvenci) AND
-                    vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'EMPRESTIMO' THEN
+                    vr_tab_crapcco(vr_index_crapcco).dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') THEN
                     
                    /* Criacao da tabela generica gncptit - utilizada na conciliacao */
                    BEGIN
@@ -6605,6 +6767,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
      -- Inicio Bloco Principal pc_CRPS538
      -----------------------------------------
      BEGIN
+
        --Limpar parametros saida
        pr_cdcritic:= NULL;
        pr_dscritic:= NULL;
@@ -6685,6 +6848,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             IF cr_cco_impresso%ISOPEN THEN
                CLOSE cr_cco_impresso;
             END IF;
+
          END IF;
 
        END LOOP;

@@ -28,6 +28,7 @@
  * 013: [22/03/2018] Daniel (Cecred) : Ajustes referente a geracao automatica do numero do contrato.
  * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
  * 015: [16/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
+ * 016: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
  */
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
@@ -345,20 +346,40 @@
 	
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
+			/*Motor em contingencia*/
+			if(flctgmot){
 			$('#divBotoesRenda').css('display','none');
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			}
+			else{
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
+			}
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
 		} else {
+			/*Motor em contingencia*/
+			if(flctgmot){
 			$('#divBotoesRenda').css('display','none');
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+		}
+			else{
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
+			}
 		}
 		return false;
 	});
 	
 	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
+		if(flctgmot){
 		dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
+		}
+		else{
+			$('#divBotoesRenda').css('display','block');
+			dscShowHideDiv('divDscTit_Renda','divDscTit_Observacao;divBotoesObs');
+		}
 		return false;
 	});
 	

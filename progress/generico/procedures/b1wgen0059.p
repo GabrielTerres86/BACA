@@ -3,11 +3,11 @@
                            ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-------------------------------------+----------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                  |
+  | Rotina Progress                     | Rotina Oracle PLSQL                    |
   +-------------------------------------+----------------------------------------+
-  | busca-crapope			            | ZOOM0001.pc_busca_operadores         |
-  | busca-crapban					    | ZOOM0001.pc_busca_bancos             |
-  | busca-historico                     | ZOOM0001.pc_busca_historico          |
+  | busca-crapope			            | ZOOM0001.pc_busca_operadores           |
+  | busca-crapban					    | ZOOM0001.pc_busca_bancos               |
+  | busca-historico                     | ZOOM0001.pc_busca_historico            |
   | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
   | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
   | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
@@ -207,12 +207,13 @@
 
                 31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
 
-                13/03/2018 - Removida procedure "busca-craptip" pois nao e mais usada.
-                             PRJ366 (Lombardi).
+        13/03/2018 - Removida procedure "busca-craptip" pois nao e mais usada.
+                     PRJ366 (Lombardi).
 
 				10/05/2018 - P404 - Inclusao do tipo 4 aplicacao na descricao na da garantia 
 				             na procedure busca-craplcr (Lucas Skroch - Supero)
 
+                08/08/2018 - Adicionado para não permitir listagem do convenio de desconto de títulos para a inserção de convenio para o cooperado (Luis Fernando - GFT)
 .............................................................................*/
 
 
@@ -3019,7 +3020,8 @@ PROCEDURE busca-crapcco:
                            crapcco.flgativo = TRUE         AND /* ATIVOS */
                            crapcco.dsorgarq <> "MIGRACAO"  AND 
                            crapcco.dsorgarq <> "EMPRESTIMO" AND
-						   crapcco.dsorgarq <> "ACORDO" NO-LOCK
+                           crapcco.dsorgarq <> "ACORDO"  AND
+                           crapcco.dsorgarq <> "DESCONTO DE TITULO" NO-LOCK
                            BY crapcco.nmdbanco:
 
         IF   par_nrconven <> 0   THEN

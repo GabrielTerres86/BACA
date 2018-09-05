@@ -568,6 +568,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                               ,pr_dtmvtolt      DATE          --Data Lancamento
                               ,pr_cdcritic      OUT INTEGER   --Codigo Critica
                               ,pr_dscritic      OUT VARCHAR2);--Descricao Critica                              
+  PROCEDURE pc_envia_email_tarifa(pr_rowid  IN rowid,pr_des_erro OUT varchar2);
 END TARI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
@@ -1640,6 +1641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       CURSOR cr_craplcr (pr_cdcooper IN craplcr.cdcooper%TYPE
                         ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
         SELECT craplcr.flgtarif
+              ,decode(craplcr.cdhistor,2013,1,2014,1,0) inlcrcdc
         FROM craplcr
         WHERE craplcr.cdcooper = pr_cdcooper
         AND   craplcr.cdlcremp = pr_cdlcremp;
@@ -4918,8 +4920,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         FETCH cr_craptar INTO rw_craptar;
         --Se nao encontrar
         IF cr_craptar%NOTFOUND THEN
-          --Fechar Cursor
+          --PRB0040208
           CLOSE cr_craptar;
+          -- Envia e-mail para área, relatando tarifa não entontrada
+          pc_envia_email_tarifa(rw_craplat.rowid,vr_dscritic);
+          if vr_dscritic is not null then
+            gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                ,pr_cdoperad => pr_cdoperad
+                                ,pr_dscritic => vr_dscritic
+                                ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                                ,pr_dstransa => '' 
+                                ,pr_dttransa => SYSDATE
+                                ,pr_flgtrans => 0
+                                ,pr_hrtransa => gene0002.fn_busca_time
+                                ,pr_idseqttl => 1
+                                ,pr_nmdatela => pr_nmdatela 
+                                ,pr_nrdconta => 0 
+                                ,pr_nrdrowid => vr_nrdrowid);
+          end if;
+          CONTINUE;
         END IF;
         
         --Fechar Cursor
@@ -8397,7 +8416,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para efetuar o cálculo de tarifa
-    --   Alterações
+    --
+    --   Alterações: 09/07/2018 - Alterado para buscar tarifas diferenciadas para emprestimos CDC
+    --                            PRJ439 - CDC(Odirlei - AMcom)
+    --
+    --
     --
     vr_cdbattar VARCHAR2(100) := ' ';
     vr_cdhistor craphis.cdhistor%TYPE;
@@ -8436,6 +8459,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_cdhiscad_lem craphis.cdhistor%TYPE;
     vr_cdhisgar_lem craphis.cdhistor%TYPE;
     
+    vr_cdmotivo  VARCHAR2(10);
+    
     -- Tabela temporaria para tipos de bens em garantia
     TYPE typ_reg_dscatbem IS
      RECORD(dscatbem crapbpr.dscatbem%TYPE);
@@ -8460,6 +8485,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     CURSOR cr_craplcr (pr_cdcooper in crapass.cdcooper%type,
                        pr_cdlcremp in craplcr.cdlcremp%type) is
        select dsoperac
+              ,decode(craplcr.cdhistor,2013,1,2014,1,0) inlcrcdc
+              ,craplcr.tplcremp
        from   craplcr
        where  cdcooper = pr_cdcooper
        and    cdlcremp = pr_cdlcremp;
@@ -8519,6 +8546,11 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta);
     FETCH cr_crapass INTO rw_crapass;
     CLOSE cr_crapass;
+    
+    open cr_craplcr (pr_cdcooper => pr_cdcooper
+                    ,pr_cdlcremp => pr_cdlcremp);
+    fetch cr_craplcr into rw_craplcr;
+    close cr_craplcr;
     
     IF pr_cdusolcr = 1 THEN
       IF rw_crapass.inpessoa = 1 THEN
@@ -8583,10 +8615,21 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       pr_cdhistor := vr_cdhistor;
       pr_cdfvlcop := vr_cdfvlcop;
     ELSE
+    
+      vr_cdmotivo := 'EM';
+      --> Definir tarifas para CDC
+      IF rw_craplcr.inlcrcdc = 1 THEN
+        IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+          vr_cdmotivo := 'Q4';
+        ELSE --> Emprestimo
+          vr_cdmotivo := 'Q2';
+        END IF;
+      END IF;
+    
       -- Buscar tarifa emprestimo
       TARI0001.pc_carrega_dados_tarifa_empr(pr_cdcooper => pr_cdcooper
                                            ,pr_cdlcremp => pr_cdlcremp
-                                           ,pr_cdmotivo => 'EM'
+                                           ,pr_cdmotivo => vr_cdmotivo
                                            ,pr_inpessoa => rw_crapass.inpessoa
                                            ,pr_vllanmto => pr_vlemprst
                                            ,pr_cdprogra => pr_cdprogra
@@ -8724,8 +8767,26 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       IF pr_tpctrato = 2 THEN -- Ben Movel
         IF rw_crapass.inpessoa = 1 THEN -- Fisica 
           vr_cdbattar := 'AVALBMOVPF'; -- Avaliacao de Garantia de Bem Movel - PF
-        ELSE
+
+          -- se for CDC busca nova tarifa
+          IF rw_craplcr.inlcrcdc = 1 THEN
+             IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+               vr_cdbattar := 'CDCFALBMPF'; -- Financiamento Tarifa alienação PF	386
+             ELSE -- EMPRESTIMO
+               vr_cdbattar := 'CDCEALBMPF'; -- Tarifa alienação PF	381
+             END IF;
+          END IF;
+        ELSE -- Juridica
           vr_cdbattar := 'AVALBMOVPJ'; -- Avaliacao de Garantia de Bem Movel - PJ
+
+          -- se for CDC busca nova tarifa
+          IF rw_craplcr.inlcrcdc = 1 THEN
+             IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+               vr_cdbattar := 'CDCFALBMPJ'; -- Financiamento Tarifa alienação PJ	387
+             ELSE -- EMPRESTIMO
+               vr_cdbattar := 'CDCEALBMPJ'; -- Tarifa alienação PJ	382
+        END IF;
+          END IF;
         END IF;
       ELSE -- Bens Imoveis
         IF rw_crapass.inpessoa = 1 THEN -- Fisica
@@ -8808,10 +8869,6 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       --pr_cdgarlcm := pr_cdhisgar;
     END IF; -- Fim cobranca da tarifa de avaliacao de bens em garantia
     
-    open cr_craplcr (pr_cdcooper => pr_cdcooper
-                    ,pr_cdlcremp => pr_cdlcremp);
-    fetch cr_craplcr into rw_craplcr;
-    close cr_craplcr;
     
     IF pr_idfiniof = 1 THEN
       IF pr_tpemprst = 1 THEN  -- PP
@@ -8908,5 +8965,89 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       -- Efetuar rollback
       ROLLBACK;
   END pc_calcula_tarifa;
+  
+ PROCEDURE pc_envia_email_tarifa(pr_rowid  IN rowid,
+                                 pr_des_erro OUT varchar2) IS
+                              
+    cursor c_dados is 
+    select l.cdcooper,
+           c.nmrescop,
+           l.nrdconta,
+           l.vltarifa,
+           l.cdlantar,
+           l.cdhistor,
+           h.dshistor,
+           l.progress_recid
+      from craplat l,
+           crapcop c,
+           craphis h
+     where l.rowid    = pr_rowid        
+       and l.cdcooper = c.cdcooper
+       and l.cdcooper = h.cdcooper
+       and l.cdhistor = h.cdhistor;    
+   r_dados c_dados%rowtype;                    
+                              
+  vr_des_erro   varchar2(500);
+  vr_exc_erro   exception;
+  vr_assunto    varchar2(4000);
+  vr_prm_emails varchar2(4000) := gene0001.fn_param_sistema('CRED',0,'EMAIL_TARIFAS_NENC');
+  vr_corpo      varchar2(4000);  
+  vr_proxima_linha   varchar2(100) := '<br /><br />';  
+  vr_flg_remove_anex char(1) := 'N';
+  
+
+  BEGIN
+    --    Autor   : Paulo Martins (Mout-s)
+    --    Data    : Julho/2018                         
+    --
+    --    Objetivo  : Caso não encontre tarifa, envia e-mail para área avisando
+    IF vr_prm_emails IS NULL THEN
+       vr_des_erro := 'Não localizou o parâmetro "EMAIL_TARIFAS_NENC" com os e-mails para envio.';
+       RAISE vr_exc_erro;    
+    END IF; 
+    --
+    vr_assunto := 'Não encontrado a tarifa no processo de lançamento na conta do cooperado';      
+    
+    open c_dados;
+     fetch c_dados into r_dados;
+      --
+      vr_corpo := 'Cooperativa: '||r_dados.cdcooper||' -  '||r_dados.nmrescop||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Conta: '||r_dados.nrdconta||vr_proxima_linha;
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Código Lançamento: '||r_dados.cdlantar||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Valor da Tarifa: '||r_dados.vltarifa||vr_proxima_linha;      
+      vr_corpo := vr_corpo||'Código Histórico: '||r_dados.cdhistor||' - '||r_dados.dshistor||vr_proxima_linha;      
+      vr_corpo := vr_corpo||'Data/Hora: '||to_char(sysdate,'dd/mm/rrrr hh24:mi:ss')||vr_proxima_linha;  
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||vr_proxima_linha;
+      vr_corpo := vr_corpo||'Informação para T.I - Progress_recid: '||r_dados.progress_recid;
+      --
+    close c_dados;
+    -- Chamar o agendamento deste e-mail
+    gene0003.pc_solicita_email(pr_cdcooper    => r_dados.cdcooper
+                              ,pr_cdprogra    => 'TARI0001'
+                              ,pr_des_destino => vr_prm_emails
+                              ,pr_flg_remove_anex => 'S' --> Remove os anexos
+                              ,pr_des_assunto => vr_assunto
+                              ,pr_des_corpo   => vr_corpo
+                              ,pr_des_anexo   => Null
+                              ,pr_des_erro    => vr_des_erro);
+    -- Se houver erro
+    IF vr_des_erro IS NOT NULL THEN
+      -- Levantar exceção
+      RAISE vr_exc_erro;
+    END IF;
+  EXCEPTION
+    WHEN vr_exc_erro THEN --> Erro tratado
+      -- Efetuar rollback
+      ROLLBACK;
+      pr_des_erro := 'TARI0001.pc_envia_email_tarifa --> : '|| sqlerrm;                                        
+    WHEN OTHERS THEN -- Gerar log de erro
+      -- Efetuar rollback
+      ROLLBACK;
+      pr_des_erro := 'TARI0001.pc_envia_email_tarifa --> : '|| sqlerrm;
+  END pc_envia_email_tarifa;   
+  
 END TARI0001;
 /

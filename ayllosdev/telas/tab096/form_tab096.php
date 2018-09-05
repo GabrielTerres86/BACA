@@ -8,16 +8,17 @@
  * --------------
  * ALTERAÇÕES   	: 07/03/2017 - Adicao do campo descprej. (P210.2 - Jaison/Daniel)
  * --------------
+ * 20/06/2018 - Adicionado tipo de produto desconto de título - Luis Fernando (GFT)
  */ 
 ?>
 
 <form id="frmTab096" name="frmTab096" class="formulario" style="display:none; border-bottom: 1px solid #777777; ">		
 
-	<label for="nrconven"><? echo utf8ToHtml('Conv&ecirc;nio de Cobran&ccedil;a para Empr&eacute;stimo:') ?></label>					
+	<label for="nrconven"><? echo utf8ToHtml('Conv&ecirc;nio de Cobran&ccedil;a:') ?></label>
 	<select id="nrconven" name="nrconven"></select>	
 	<br style="clear:both" />	
 
-	<label for="nrdconta"><? echo utf8ToHtml('Conta/DV Benefici&aacute;ria de Empr&eacute;stimo:') ?></label>
+	<label for="nrdconta"><? echo utf8ToHtml('Conta/DV Benefici&aacute;ria:') ?></label>
 	<input name="nrdconta" id="nrdconta" type="text" />	
 	<br style="clear:both" />	
 
@@ -31,13 +32,15 @@
 	<label><? echo utf8ToHtml(' dias') ?></label>
 	<br style="clear:both" />
 
-	<label for="vlrminpp"><? echo utf8ToHtml('Valor m&iacute;nimo do boleto - PP:') ?></label>
+	<label for="vlrminpp"><? echo $tpproduto == 3 ? utf8ToHtml('Valor m&iacute;nimo do boleto:') : utf8ToHtml('Valor m&iacute;nimo do boleto - PP:') ?></label>
 	<input name="vlrminpp" id="vlrminpp" type="text" />		
 	<br style="clear:both" />	
 
+	<?php if ($tpproduto == 0 ) {?>
 	<label for="vlrmintr"><? echo utf8ToHtml('Valor m&iacute;nimo do boleto - TR:') ?></label>
 	<input name="vlrmintr" id="vlrmintr" type="text" />				
 	<br style="clear:both" />	
+	<?php } ?>
 
 	<label for="descprej"><? echo utf8ToHtml('Desconto M&aacute;ximo Contrato Preju&iacute;zo:') ?></label>
 	<input name="descprej" id="descprej" type="text" style="margin-right: 5px"/>				

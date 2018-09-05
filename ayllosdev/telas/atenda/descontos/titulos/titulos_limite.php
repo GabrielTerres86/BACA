@@ -30,6 +30,7 @@
 
 				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
 
+				 26/04/2018 - Ajuste no botão de voltar, uso da função generica (Leonardo Oliveira - GFT).
 	************************************************************************/
 	
 	session_start();
@@ -45,7 +46,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	setVarSession("nmrotina","DSC TITS - LIMITE");
+	setVarSession("nmrotina","DSC TITS - CONTRATO");
 
 	// Carrega permissões do operador
 	include("../../../../includes/carrega_permissoes.php");	

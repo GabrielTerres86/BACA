@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 05/07/2018
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 23/08/2018
     
     Dados referente ao programa:
     
@@ -158,6 +158,12 @@
                  
                  05/07/2018 - Alteracao referente a dtfimsus no envio do registro B, validar 
                               final de semana (Lucas Ranghetti INC0018634)
+                              
+                 16/07/2018 - Ajustado relatorio crrl674 para aparecer a referencia com "-"
+                              Lucas Eduardo Ranghetti (INC0019390)
+                              
+                 23/08/2018 - Alterar para chamar a rotina de email do oracle com enviar na hora
+                              setado como nao (Lucas Ranghetti TASK0024332)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -421,7 +427,7 @@ FORM tt-totais-crrl664.dsconsor FORMAT "x(10)"          COLUMN-LABEL "SEGMENTO"
 FORM tt-rel674-cadastro.cdagenci FORMAT "zz9"               COLUMN-LABEL "  PA"
      tt-rel674-cadastro.nrdconta FORMAT "zzzzz,zz9,9"       COLUMN-LABEL "CONTA/DV"
      tt-rel674-cadastro.dsnomcnv FORMAT "x(35)"             COLUMN-LABEL "CONVENIO"
-     tt-rel674-cadastro.cdrefere FORMAT "zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
+     tt-rel674-cadastro.cdrefere FORMAT "-zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
      tt-rel674-cadastro.dsmovmto FORMAT "x(35)"             COLUMN-LABEL "OPERACAO"
     WITH NO-BOX DOWN WIDTH 132 FRAME f_crrl674_cadastro.
 
@@ -429,7 +435,7 @@ FORM tt-rel674-lancamentos.cdagenci FORMAT "zz9"               COLUMN-LABEL "  P
      tt-rel674-lancamentos.nrdconta FORMAT "zzzzz,zz9,9"       COLUMN-LABEL "CONTA/DV" 
      tt-rel674-lancamentos.nrctacns FORMAT "zzz,zz9,9"         COLUMN-LABEL "CT SICREDI"
      tt-rel674-lancamentos.dsnomcnv FORMAT "x(35)"             COLUMN-LABEL "CONVENIO" 
-     tt-rel674-lancamentos.nrdocmto FORMAT "zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
+     tt-rel674-lancamentos.nrdocmto FORMAT "-zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
      tt-rel674-lancamentos.vllanmto FORMAT "zzz,zz9.99"        COLUMN-LABEL "VALOR"
     WITH NO-BOX DOWN WIDTH 132 FRAME f_crrl674_lancamentos.
 
@@ -437,7 +443,7 @@ FORM tt-rel674-lancamentos.cdagenci FORMAT "zz9"               COLUMN-LABEL "  P
      tt-rel674-lancamentos.nrdconta FORMAT "zzzzz,zz9,9"       COLUMN-LABEL "CONTA/DV" 
      tt-rel674-lancamentos.nrctacns FORMAT "zzz,zz9,9"         COLUMN-LABEL "CT SICREDI"
      tt-rel674-lancamentos.dsnomcnv FORMAT "x(28)"             COLUMN-LABEL "CONVENIO" 
-     tt-rel674-lancamentos.nrdocmto FORMAT "zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
+     tt-rel674-lancamentos.nrdocmto FORMAT "-zzzzzzzzzzzzzzzzzzzzzzzz9" COLUMN-LABEL "IDENTIFICACAO"
      tt-rel674-lancamentos.vllanmto FORMAT "zzz,zz9.99"        COLUMN-LABEL "VALOR"
      tt-rel674-lancamentos.dscritic FORMAT "x(38)"             COLUMN-LABEL "CRITICA"
     WITH NO-BOX DOWN WIDTH 132 FRAME f_crrl674_lancamentos_criticas.
@@ -1911,25 +1917,27 @@ FOR EACH crapcop NO-LOCK.
                                   STRING(glb_dtmvtolt, "99/99/9999") + ". " +
                                   "Arquivo: " + aux_nmarqexp.
 
-            IF NOT VALID-HANDLE(h-b1wgen0011) THEN
-                RUN sistema/generico/procedures/b1wgen0011.p 
-                                                PERSISTENT SET h-b1wgen0011.
-             
-            RUN enviar_email_completo IN h-b1wgen0011
-                (INPUT crapcop.cdcooper,
-                 INPUT "crps636",
-                 INPUT "cpd@ailos.coop.br",
-                 INPUT "convenios@ailos.coop.br",
-                 INPUT "Arquivo de arrecadacao de faturas - " + 
-                       crapcop.nmrescop + " - " + aux_nmarqexp,
-                 INPUT "",
-                 INPUT aux_nmarqexp,
-                 INPUT aux_conteudo,
-                 INPUT FALSE).                  
-                      
-            IF VALID-HANDLE(h-b1wgen0011) THEN
-                DELETE PROCEDURE h-b1wgen0011.
+            IF  NOT VALID-HANDLE(h-b1wgen0011) THEN
+                RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
 
+            RUN solicita_email_oracle IN h-b1wgen0011
+                                   ( INPUT crapcop.cdcooper /* par_cdcooper */
+                                    ,INPUT "crps636" /* par_cdprogra */
+                                    ,INPUT "convenios@ailos.coop.br"
+                                    ,INPUT "Arquivo de arrecadacao de faturas - " + 
+                                            crapcop.nmrescop + " - " + aux_nmarqexp
+                                    ,INPUT aux_conteudo /* par_des_corpo */
+                                    ,INPUT aux_nmarqexp /* par_des_anexo */
+                                    ,INPUT "N" /* par_flg_remove_anex */
+                                    ,INPUT "N" /* par_flg_remete_coop */
+                                    ,INPUT "" /* par_des_nome_reply */
+                                    ,INPUT "" /* par_des_email_reply */
+                                    ,INPUT "N" /* par_flg_log_batch */
+                                    ,INPUT "N" /* par_flg_enviar */
+                                    ,OUTPUT aux_dscritic). /* par_des_erro */
+
+            IF  VALID-HANDLE(h-b1wgen0011) THEN
+                DELETE PROCEDURE h-b1wgen0011.
         END.
 
     /* Arquivo Exp. DARF Vazio */
@@ -1956,21 +1964,25 @@ FOR EACH crapcop NO-LOCK.
                                   STRING(glb_dtmvtolt, "99/99/9999") + ". " +
                                   "Arquivo: " + aux_nmarqdar.
 
-            IF NOT VALID-HANDLE(h-b1wgen0011) THEN
+            IF  NOT VALID-HANDLE(h-b1wgen0011) THEN
                 RUN sistema/generico/procedures/b1wgen0011.p 
                                                 PERSISTENT SET h-b1wgen0011.
              
-            RUN enviar_email_completo IN h-b1wgen0011
-                (INPUT crapcop.cdcooper,
-                 INPUT "crps636",
-                 INPUT "cpd@ailos.coop.br",
-                 INPUT "convenios@ailos.coop.br",
-                 INPUT "Arquivo de arrecadacao de DARFs - " + 
-                       crapcop.nmrescop + " - " + aux_nmarqdar,
-                 INPUT "",
-                 INPUT aux_nmarqdar,
-                 INPUT aux_conteudo,
-                 INPUT FALSE).                  
+             RUN solicita_email_oracle IN h-b1wgen0011
+                                   ( INPUT crapcop.cdcooper /* par_cdcooper */
+                                    ,INPUT "crps636" /* par_cdprogra */
+                                    ,INPUT "convenios@ailos.coop.br"
+                                    ,INPUT "Arquivo de arrecadacao de DARFs - " + 
+                                           crapcop.nmrescop + " - " + aux_nmarqdar
+                                    ,INPUT aux_conteudo /* par_des_corpo */
+                                    ,INPUT aux_nmarqdar /* par_des_anexo */
+                                    ,INPUT "N" /* par_flg_remove_anex */
+                                    ,INPUT "N" /* par_flg_remete_coop */
+                                    ,INPUT "" /* par_des_nome_reply */
+                                    ,INPUT "" /* par_des_email_reply */
+                                    ,INPUT "N" /* par_flg_log_batch */
+                                    ,INPUT "N" /* par_flg_enviar */
+                                    ,OUTPUT aux_dscritic). /* par_des_erro */
                       
             IF VALID-HANDLE(h-b1wgen0011) THEN
                 DELETE PROCEDURE h-b1wgen0011.

@@ -13,6 +13,7 @@
  * 004: [23/01/2014] Carlos (CECRED) : Retirada a include de titulos/msg_grupo_economico.php
  * 005: [25/07/2016] Evandro - RKAM : Adicionado classe (SetWindow) - necessaria para navegação com teclado.
  * 006: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
+ * 007: [18/08/2018] GFT: Ajuste Projeto 403 - Reformulação Desconto de Titulo. 
  */	
 
 
@@ -27,7 +28,7 @@
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');	
 	}	
-	
+
 	$cdproduto = $_POST['cdproduto'];
     $labelRot = $_POST['labelRot'];	
 
@@ -71,6 +72,7 @@
 									<div id="divOpcoesDaOpcao2"></div>
 									<div id="divOpcoesDaOpcao3"></div>
 									<div id="divOpcoesDaOpcao4"></div>											
+									<div id="divOpcoesDaOpcao5"></div>
 									<div id="divConteudoOpcao" style="height: 80px;">
 										<!-- Botoes Titulos e Cheque -->
 										

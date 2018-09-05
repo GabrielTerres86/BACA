@@ -82,6 +82,9 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                 23/04/2018 - Inclusao da conta de pagamento para PAG0137 e STR0037
                              (Andrino - Mouts / RITM0011281)
 
+			    10/07/2018 - Inclusao de logs e ajuste na validação de problemas para que erros nao passem
+							 despercebidos. (INC0018421 - Kelvin)
+
 ..............................................................................*/
 
   --criação TempTable
@@ -549,7 +552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       --Registro do tipo data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
       --Variaveis de Excecao
-      vr_exc_erro EXCEPTION;
+      vr_exc_erro  EXCEPTION;
       vr_xml_str VARCHAR2(4000);
 
       --Escrever no arquivo CLOB
@@ -4476,7 +4479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            vr_vlinfodb2 := vr_vlinfodb2 + rw_crapccs.vllanmto;
 
            IF rw_crapccs.nrridlfp > 0 THEN
-              IF vr_cdcritic IS NULL THEN
+              IF vr_cdcritic IS NULL AND vr_dscritic IS NULL THEN
                   BEGIN
                     UPDATE craplfp
                        SET idsitlct = 'C'  --Creditado
@@ -4510,7 +4513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
               END IF;
 
            ELSE
-               IF vr_cdcritic IS NOT NULL THEN
+               IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                   -- Executa a exceção
                   RAISE vr_exc_erro;
                END IF;
@@ -4795,7 +4798,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
       ROLLBACK;
-    WHEN OTHERS THEN
+    WHEN OTHERS THEN      
+      CECRED.pc_internal_exception;
+      
       -- Erro
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro não tratado. '|| SQLERRM;
@@ -5793,14 +5798,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Alterações : 25/09/2017 - Quando receber uma exclução de Banco, vamos gerar um e-mail
     --                            alertando ao financeiro as contas que recebem salário
     --                            no banco que foi inativado (Douglas - Chamado 647346)
-	  --
-	  --               18/04/2018 - Ajuste para truncar o nome do banco ao criar a crapban (Adriano ).
+    --
+    --               18/04/2018 - Ajuste para truncar o nome do banco ao criar a crapban (Adriano ).
+    --
+	--               07/08/2018 - Melhoria referente as condicoes que analisam STR0018 e STR0019.
+	--                            Chamado PRB0040135 (Gabriel - Mouts)
+	--
     ------------------------------------------------------------------------------	
 		DECLARE	
 		
-		  vr_dsdemail VARCHAR2(1000);
-			vr_dscritic VARCHAR2(4000);
-			vr_exc_erro EXCEPTION;
+      vr_dsdemail VARCHAR2(1000);
+      vr_dscritic VARCHAR2(4000);
+      vr_exc_erro EXCEPTION;
+      vr_not_found EXCEPTION;
 		
       vr_cddbanco crapban.cdbccxlt%TYPE;
       vr_emaildst crapprm.dsvlrprm%TYPE;
@@ -5818,8 +5828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                  WHEN pr_cddbanco > 0 THEN
 								 (SELECT ROWID
 										FROM crapban ban
-                    WHERE ban.cdbccxlt = pr_cddbanco
-                      AND ban.nrispbif = pr_nrispbif)
+                    WHERE ban.cdbccxlt = pr_cddbanco)
 							ELSE 
 								 (SELECT ROWID
 									  FROM crapban ban
@@ -5855,55 +5864,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       
 			-- Tratar mensagem STR0019 - Inclusão IF STR
 		  IF (pr_cdmensag = 'STR0019') THEN
-				 -- Busca banco pelo código do banco e número ispb
-				 OPEN cr_crapban;
-				 FETCH cr_crapban INTO rw_crapban;
-				 
-				 -- Se encontrou banco
-				 IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
-					  -- Fecha cursor
-						CLOSE cr_crapban;
-						
-						-- Atualiza IF
-						UPDATE crapban ban
-             SET ban.dtaltstr = CASE
-                                  WHEN ban.flgdispb <> 1 THEN
-                                   trunc(SYSDATE)
-                                  ELSE
-                                   ban.dtaltstr
-                                END,
-                 ban.flgdispb = 1,
-                  ban.nmresbcc = substr(pr_nmdbanco,1,50),
-                  ban.nmextbcc = substr(pr_nmdbanco,1,50),
-                  ban.dtinispb = vr_dtinispb
-						 WHERE ban.rowid = rw_crapban.rowid_ban;
-					ELSE
-            
+            -- Busca banco pelo código do banco e número ispb
+            OPEN cr_crapban;
+            FETCH cr_crapban INTO rw_crapban;
+	 			 
+            -- Se encontrou banco
+            IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
+              -- Fecha cursor
+              CLOSE cr_crapban;
+ 						
+              -- Atualiza IF
+              UPDATE crapban ban
+                 SET ban.dtaltstr = CASE
+                WHEN ban.flgdispb <> 1 THEN
+                     trunc(SYSDATE)
+                ELSE
+                     ban.dtaltstr
+                END,
+                     ban.flgdispb = 1,
+                     ban.nmresbcc = substr(pr_nmdbanco,1,50),
+                     ban.nmextbcc = substr(pr_nmdbanco,1,50),
+                     ban.dtinispb = vr_dtinispb
+               WHERE ban.rowid = rw_crapban.rowid_ban;
+          ELSE
+             
             -- Fecha cursor
-						CLOSE cr_crapban;
+            CLOSE cr_crapban;
             
-						 -- Cria nova IF
-						 INSERT INTO crapban 
-            (cdoperad,
-             dtmvtolt,
-             cdbccxlt,
-             nmresbcc,
-             nmextbcc,
-             nrispbif,
-             flgdispb,
-             dtinispb,
-             dtaltstr)
-                  VALUES('1',
-             trunc(SYSDATE),
-             pr_cddbanco,
-                         substr(pr_nmdbanco,1,50),
-                         substr(pr_nmdbanco,1,50),
-             pr_nrispbif,
-             1,
-                         vr_dtinispb,
-             trunc(SYSDATE));
+            IF pr_cddbanco > 0 THEN
+
+              -- Cria nova IF
+              INSERT INTO crapban 
+                         (cdoperad,
+                          dtmvtolt,
+                          cdbccxlt,
+                          nmresbcc,
+                          nmextbcc,
+                          nrispbif,
+                          flgdispb,
+                          dtinispb,
+                          dtaltstr)
+                   VALUES('1',
+                          trunc(SYSDATE),
+                          pr_cddbanco,
+                          substr(pr_nmdbanco,1,50),
+                          substr(pr_nmdbanco,1,50),
+                          pr_nrispbif,
+                          1,
+                          vr_dtinispb,
+                          trunc(SYSDATE));
                          
-					END IF;
+            ELSE
+
+              vr_dsdemail := 'Nao foi possivel incluir registro de participante no STR: ' ||
+                             'Informacoes da Intituicao Financeira - Codigo: ' || 
+                             pr_cddbanco  || ' Banco: ' || substr(pr_nmdbanco,1,50) ||
+                             ' ISPB: '  || to_char(pr_nrispbif, '00000000');
+              													
+              -- Envia email para o spb
+              gene0003.pc_solicita_email(pr_cdcooper      => 3,
+                                         pr_cdprogra      => pr_cdprogra,
+                                         pr_des_destino   => 'spb@ailos.coop.br',
+                                         pr_des_assunto   => 'STR0019 - Erro na inclusao de participante no STR',
+                                         pr_des_corpo     => vr_dsdemail,
+                                         pr_des_anexo     => '',
+                                         pr_flg_log_batch => 'N', --> Incluir inf. no log
+                                         pr_des_erro      => vr_dscritic);
+              
+              --Se ocorreu erro
+              IF trim(vr_dscritic) IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF; 
+            
+            END IF;
+
+          END IF;
           
       ELSE
         -- Tratar mensagem STR0018 - Exclusão IF STR
@@ -6032,15 +6068,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                      pr_flg_log_batch => 'N' --> Incluir inf. no log
                                     ,
                                      pr_des_erro      => vr_dscritic);
-					--Se ocorreu erro
-					IF trim(vr_dscritic) IS NOT NULL THEN
-						--Levantar Excecao
-						RAISE vr_exc_erro;
-					END IF;
-          
-					-- Retorno NOK
-          pr_des_erro := 'NOK';
-					RETURN;
+                    --Se ocorreu erro
+                    IF trim(vr_dscritic) IS NOT NULL THEN
+                      --Levantar Excecao
+                      RAISE vr_exc_erro;
+                    END IF;
+           
+                    -- Retorno NOK
+                    -- pr_des_erro := 'NOK';
+                    -- RETURN;
+
+                    --Retornar OK e gerar critica
+                    RAISE vr_not_found;
           
 				END IF;
         
@@ -6053,40 +6092,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			COMMIT;
 			
 		EXCEPTION
-			WHEN vr_exc_erro THEN
-				-- Houve erro, retornar NOK
-				pr_des_erro := 'NOK';
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => pr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
-                                   pr_des_log      => TO_CHAR(SYSDATE,
-                                                              'DD/MM/RRRR - HH24:MI:SS') ||
-                                                      ' - ' || pr_cdprogra ||
-                                                      ' - ' || pr_cdmensag ||
-                                                      '            --> ' ||
-                                                      'Arquivo: ' ||
-                                                      pr_nmarqxml ||
-                                                      '. Codigo Erro: Erro ao enviar email ' ||
-                                                      vr_dscritic);
-			WHEN OTHERS THEN
-				-- Houve erro, retornar NOK
-				pr_des_erro := 'NOK';
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => pr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
-                                   pr_des_log      => TO_CHAR(SYSDATE,
-                                                              'DD/MM/RRRR - HH24:MI:SS') ||
-                                                      ' - ' || pr_cdprogra ||
-                                                      ' - ' || pr_cdmensag ||
-                                                      '            --> ' ||
-                                                      'Arquivo: ' ||
-                                                      pr_nmarqxml ||
-                                                      '. Codigo Erro: Atualizacao abortada -> ' ||
-                                                      SQLERRM);
+          WHEN vr_exc_erro THEN
+            -- Houve erro, retornar NOK
+            pr_des_erro := 'NOK';
+            -- Grava erro em log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_nmarqlog     => pr_nmarqlog,
+                                       pr_ind_tipo_log => 1, -- Normal
+                                       pr_des_log      => TO_CHAR(SYSDATE,
+                                                          'DD/MM/RRRR - HH24:MI:SS') ||
+                                                          ' - ' || pr_cdprogra ||
+                                                          ' - ' || pr_cdmensag ||
+                                                          '            --> ' ||
+                                                          'Arquivo: ' ||
+                                                          pr_nmarqxml ||
+                                                          '. Codigo Erro: Erro ao enviar email ' ||
+                                                          vr_dscritic);
 
-				ROLLBACK;
+          WHEN vr_not_found THEN
+            -- Retornar OK e gerar critica
+            pr_des_erro := 'OK';
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_nmarqlog     => pr_nmarqlog,
+                                       pr_ind_tipo_log => 1, -- Normal
+                                       pr_des_log      => 'Nao foi possivel excluir registro de participante no STR: ' ||
+                                                          'Instituicao Financeira nao encontrada - Codigo: ' || 
+                                                          pr_cddbanco  || ' Banco: ' || substr(pr_nmdbanco,1,50) ||
+                                                          ' ISPB: '  || to_char(pr_nrispbif, '00000000'));
+
+          WHEN OTHERS THEN
+            -- Houve erro, retornar NOK
+            pr_des_erro := 'NOK';
+            -- Grava erro em log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_nmarqlog     => pr_nmarqlog,
+                                       pr_ind_tipo_log => 1, -- Normal
+                                       pr_des_log      => TO_CHAR(SYSDATE,
+                                                          'DD/MM/RRRR - HH24:MI:SS') ||
+                                                          ' - ' || pr_cdprogra ||
+                                                          ' - ' || pr_cdmensag ||
+                                                          '            --> ' ||
+                                                          'Arquivo: ' ||
+                                                          pr_nmarqxml ||
+                                                          '. Codigo Erro: Atualizacao abortada -> ' ||
+                                                          SQLERRM);
+ 
+          ROLLBACK;
 	  END;
 	END pc_proc_opera_str;
   

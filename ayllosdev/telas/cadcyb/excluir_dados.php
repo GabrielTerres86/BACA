@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina para excluir as informações da tabela crapcyc
  * --------------
  * ALTERAÇÕES   : 17/09/2015 - Ajustado os parametros enviados para a procedure de exclusão (Douglas - Melhoria 12)
+ *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
  * -------------- 
  */
  
@@ -22,6 +23,8 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 ; 
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0 ; 
 	$cdorigem = (isset($_POST['cdorigem'])) ? $_POST['cdorigem'] : 0 ; 
+	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : 0 ; 
+	$nrtitulo = (isset($_POST['nrtitulo'])) ? $_POST['nrtitulo'] : 0 ; 
 	
 	// Monta o xml dinâmico de acordo com a operação 
 	$xml  = "";
@@ -39,6 +42,8 @@
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
     $xml .= "       <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "       <nrborder>".$nrborder."</nrborder>";
+    $xml .= "       <nrtitulo>".$nrtitulo."</nrtitulo>";
 	$xml .= "       <nrctremp>".$nrctremp."</nrctremp>";
 	$xml .= "       <cdorigem>".$cdorigem."</cdorigem>";
 	$xml .= "	</Dados>";

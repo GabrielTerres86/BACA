@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl670" language="groovy" pageWidth="842" pageHeight="496" whenNoDataType="AllSectionsNoDetail" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
-	<property name="ireport.zoom" value="1.9965000000000073"/>
-	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="0"/>
+	<property name="ireport.zoom" value="5.0"/>
+	<property name="ireport.x" value="287"/>
+	<property name="ireport.y" value="240"/>
 	<subDataset name="dataset1" uuid="0695e938-6a20-48a5-9cc2-5c0937dbf294"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -120,7 +120,7 @@
 					<text><![CDATA[LOTE]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="beaf4f0e-fc1c-49ba-99d4-f99ab4332673" mode="Transparent" x="128" y="0" width="42" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement uuid="beaf4f0e-fc1c-49ba-99d4-f99ab4332673" mode="Transparent" x="128" y="0" width="43" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 						<paragraph lineSpacing="Single"/>
@@ -208,8 +208,8 @@
 					<text><![CDATA[----------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="caba0c89-d004-442f-ab25-5f57db7c5a6a" mode="Transparent" x="128" y="8" width="42" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
-					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<reportElement uuid="caba0c89-d004-442f-ab25-5f57db7c5a6a" mode="Transparent" x="128" y="8" width="43" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 						<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 						<paragraph lineSpacing="Single"/>
 					</textElement>
@@ -337,7 +337,7 @@
 				<textFieldExpression><![CDATA[$F{nrseqlot}]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement uuid="73c6c35e-69a1-4621-9418-baa7c205e7b1" mode="Transparent" x="128" y="0" width="42" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<reportElement uuid="73c6c35e-69a1-4621-9418-baa7c205e7b1" mode="Transparent" x="128" y="0" width="43" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="7" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>

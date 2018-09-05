@@ -113,18 +113,21 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                  pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
                                  pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
                                  pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+                                 pr_cdcliente                IN tbgen_webservice_aciona.cdcliente%TYPE DEFAULT 1, 
                                  pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
                                  pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
                                  pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
+                                 pr_dsmetodo                 IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT 'POST',
                                  pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
                                  pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
                                  pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
                                  pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
                                  pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
-                                 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                                 pr_dsmetodo                 IN varchar2 /*tbgen_webservice_aciona.dsmetodo%TYPE*/ DEFAULT NULL,
-                                 pr_tpconteudo               IN number /*tbgen_webservice_aciona.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
-                                 pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+                                 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL,
+                                 pr_flgreenvia               IN tbgen_webservice_aciona.flgreenvia%TYPE DEFAULT 0,
+                                 pr_nrreenvio                IN tbgen_webservice_aciona.nrreenvio%TYPE DEFAULT 0,
+                                 pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE DEFAULT 1,
+                                 pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0,
                                  pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2);
                                                                  
@@ -970,18 +973,21 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
                                pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
                                pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+                               pr_cdcliente                IN tbgen_webservice_aciona.cdcliente%TYPE DEFAULT 1, 
                                pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
                                pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
                                pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
+                               pr_dsmetodo                 IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT 'POST',
                                pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
                                pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
                                pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
                                pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
                                pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
-                               pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                               pr_dsmetodo                 IN varchar2 /*tbgen_webservice_aciona.dsmetodo%TYPE*/ DEFAULT NULL,
-                               pr_tpconteudo               IN number /*tbgen_webservice_aciona.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
-                               pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+                               pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL,
+                               pr_flgreenvia               IN tbgen_webservice_aciona.flgreenvia%TYPE DEFAULT 0,
+                               pr_nrreenvio                IN tbgen_webservice_aciona.nrreenvio%TYPE DEFAULT 0,
+                               pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE DEFAULT 1,
+                               pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0,
                                pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2) IS
                                  
@@ -998,52 +1004,35 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     Frequencia: Sempre que for chamado
     Objetivo  : Grava registro de log de acionamento
     
-    Alteração : 
+    Alteração : 11/11/2018 - Alterações referentes ao Projeto 402. (Rafael Faria)
         
   ..........................................................................*/
-    PRAGMA AUTONOMOUS_TRANSACTION;
   BEGIN
-  INSERT INTO tbgen_webservice_aciona
-                ( cdcooper, 
-                  cdagenci_acionamento, 
-                  cdoperad, 
-                  cdorigem, 
-                  nrctrprp, 
-                  nrdconta, 
-                  tpacionamento, 
-                  dhacionamento, 
-                  dsoperacao, 
-                  dsuriservico, 
-                  dtmvtolt, 
-                  cdstatus_http, 
-                  dsconteudo_requisicao,
-                  dsresposta_requisicao,
-                --dsmetodo,
-                --tpconteudo,
-                tpproduto,
-									dsprotocolo)  
-          VALUES( pr_cdcooper,        --cdcooper
-                  pr_cdagenci,        -- cdagenci_acionamento, 
-                  pr_cdoperad,        -- cdoperad, 
-                  pr_cdorigem,        -- cdorigem
-                  pr_nrctrprp,        -- nrctrprp
-                  pr_nrdconta,        -- nrdconta
-                  pr_tpacionamento,   -- tpacionamento 
-                  pr_dhacionamento,   -- dhacionamento
-                  pr_dsoperacao,      -- dsoperacao
-                  pr_dsuriservico,    -- dsuriservico
-                  pr_dtmvtolt,        -- dtmvtolt
-                  pr_cdstatus_http,   -- cdstatus_http
-                  pr_dsconteudo_requisicao,
-                  pr_dsresposta_requisicao, --dsresposta_requisicao       
-				  --pr_dsmetodo,
-				  --pr_tpconteudo,
-                  pr_tpproduto,
-                  pr_dsprotocolo)     -- protocolo
-           RETURNING tbgen_webservice_aciona.idacionamento INTO pr_idacionamento;
+     -- Criada rotina generica para manter os acionamentos webservice
+     WEBS0003.pc_grava_acionamento(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci    => pr_cdagenci
+                                  ,pr_cdoperad    => pr_cdoperad
+                                  ,pr_cdorigem    => pr_cdorigem
+                                  ,pr_nrctrprp    => pr_nrctrprp
+                                  ,pr_nrdconta    => pr_nrdconta
+                                  ,pr_cdcliente   => pr_cdcliente
+                                  ,pr_tpacionamento => pr_tpacionamento
+                                  ,pr_dhacionamento => pr_dhacionamento
+                                  ,pr_dsoperacao    => pr_dsoperacao
+                                  ,pr_dsuriservico  => pr_dsuriservico
+                                  ,pr_dsmetodo      => pr_dsmetodo
+                                  ,pr_dtmvtolt      => pr_dtmvtolt
+                                  ,pr_cdstatus_http => pr_cdstatus_http
+                                  ,pr_dsconteudo_requisicao  => pr_dsconteudo_requisicao
+                                  ,pr_dsresposta_requisicao  => pr_dsresposta_requisicao
+                                  ,pr_flgreenvia    => pr_flgreenvia
+                                  ,pr_nrreenvio     => pr_nrreenvio
+                                  ,pr_tpconteudo    => pr_tpconteudo
+                                  ,pr_tpproduto     => pr_tpproduto
+                                  ,pr_dsprotocolo   => pr_dsprotocolo
+                                  ,pr_idacionamento => pr_idacionamento
+                                  ,pr_dscritic      => pr_dscritic);
    
-    --> Commit para garantir que guarde as informações do log de acionamento
-    COMMIT;
   EXCEPTION
     WHEN OTHERS THEN
     pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
@@ -1246,15 +1235,21 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                          pr_cdorigem              => pr_cdorigem,          
                          pr_nrctrprp              => pr_nrctremp,          
                          pr_nrdconta              => pr_nrdconta,          
+                         pr_cdcliente             => 1,          
                          pr_tpacionamento         => 1,  /* 1 - Envio, 2 – Retorno */      
                          pr_dsoperacao            => pr_dsoperacao,       
                          pr_dsuriservico          => vr_host_esteira||vr_recurso_este||pr_comprecu,       
+                         pr_dsmetodo              => pr_dsmetodo,
                          pr_dtmvtolt              => pr_dtmvtolt,       
                          pr_cdstatus_http         => vr_response.status_code,
                          pr_dsconteudo_requisicao => pr_conteudo,
                          pr_dsresposta_requisicao => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
                                                      ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
                                                      ',"Content":'||vr_response.content||'}',
+                         pr_flgreenvia            => 0,
+                         pr_nrreenvio             => 0,
+                         pr_tpconteudo            => 1,
+                         pr_tpproduto             => 0,
                          pr_idacionamento         => vr_idacionamento,
                          pr_dscritic              => vr_dscritic);
                          
@@ -1453,7 +1448,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                WHEN 2 THEN 'POS'
              END tpproduto,
              -- Indica que am linha de credito eh CDC ou C DC
-             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
+             DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
+                                               ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc
         FROM crawepr epr,
              craplcr lcr,
              crapfin fin,
@@ -1689,27 +1685,23 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        5 – Cartão de Crédito 
        6 – Limite de Crédito) */
        
-    -- Se for CDC
-    IF rw_crawepr.inlcrcdc = 1 THEN
+    -- Se for CDC e diversos
+    IF rw_crawepr.cdfinemp = 58 AND rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,0); -- CDC Diversos
       vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'CDC Diversos');
+    -- Se for CDC e veiculos
+    ELSIF rw_crawepr.cdfinemp = 59 AND rw_crawepr.inlcrcdc = 1 THEN
+      vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,1); -- CDC Veiculos
+      vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'CDC Veiculos');
     ELSE
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo' ,2); -- Emprestimos/Financiamento
       vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'Emprestimos/Financiamento');      
     END IF;
     
-    -- Se for CDC
-    IF rw_crawepr.inlcrcdc = 1 THEN    
-      vr_obj_proposta.put('linhaCreditoCodigo'    ,'');
-      vr_obj_proposta.put('linhaCreditoDescricao' ,'');
-      vr_obj_proposta.put('finalidadeCodigo'      ,''); 
-      vr_obj_proposta.put('finalidadeDescricao'   ,'');
-    ELSE
       vr_obj_proposta.put('linhaCreditoCodigo'    ,rw_crawepr.cdlcremp);
       vr_obj_proposta.put('linhaCreditoDescricao' ,rw_crawepr.dslcremp);
       vr_obj_proposta.put('finalidadeCodigo'      ,rw_crawepr.cdfinemp);       
       vr_obj_proposta.put('finalidadeDescricao'   ,rw_crawepr.dsfinemp);      
-    END IF;
     
     vr_obj_proposta.put('tipoProduto'           ,rw_crawepr.tpproduto);
     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_crawepr.tpctrato );
@@ -2157,13 +2149,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO INCLUIR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,    
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2232,13 +2230,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                              pr_cdorigem              => pr_cdorigem,          
                              pr_nrctrprp              => pr_nrctremp,          
                              pr_nrdconta              => pr_nrdconta,          
+                             pr_cdcliente             => 1,
                              pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                              pr_dsoperacao            => 'ANTES ENVIAR PROPOSTA',       
                              pr_dsuriservico          => NULL,       
+                             pr_dsmetodo              => NULL,     
                              pr_dtmvtolt              => pr_dtmvtolt,       
                              pr_cdstatus_http         => 0,
                              pr_dsconteudo_requisicao => vr_obj_proposta_clob,
                              pr_dsresposta_requisicao => null,
+                             pr_flgreenvia            => 0,
+                             pr_nrreenvio             => 0,
+                             pr_tpconteudo            => 1,
+                             pr_tpproduto             => 0,
                              pr_idacionamento         => vr_idaciona,
                              pr_dscritic              => vr_dscritic);
         -- Sem tratamento de exceção para DEBUG                    
@@ -2466,13 +2470,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                              pr_cdorigem              => pr_cdorigem,          
                              pr_nrctrprp              => pr_nrctremp,          
                              pr_nrdconta              => pr_nrdconta,          
+                             pr_cdcliente             => 1,       
                              pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                              pr_dsoperacao            => 'ANTES ENVIAR PROPOSTA',       
                              pr_dsuriservico          => NULL,       
+                             pr_dsmetodo              => NULL,
                              pr_dtmvtolt              => pr_dtmvtolt,       
                              pr_cdstatus_http         => 0,
                              pr_dsconteudo_requisicao => vr_obj_proposta_clob,
                              pr_dsresposta_requisicao => null,
+                             pr_flgreenvia            => 0,
+                             pr_nrreenvio             => 0,
+                             pr_tpconteudo            => 1,
+                             pr_tpproduto             => 0,
                              pr_idacionamento         => vr_idaciona,
                              pr_dscritic              => vr_dscritic);
         -- Sem tratamento de exceção para DEBUG                    
@@ -2561,13 +2571,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1, 
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO INCLUIR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2665,13 +2681,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO ALTERAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,  
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2736,13 +2758,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES ALTERAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,     
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_proposta_clob,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2823,13 +2851,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,   
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO ALTERAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,    
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -2956,13 +2990,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,         
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO ALTERAR NUMERO PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3053,13 +3093,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES ALTERAR NUMERO PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,         
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_alter.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3097,13 +3143,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,                                    
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO ALTERAR NUMERO PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3196,13 +3248,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO DERIVAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3260,13 +3318,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO DERIVAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3419,13 +3483,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO CANCELAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3515,13 +3585,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES CANCELAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3559,13 +3635,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO CANCELAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3709,13 +3791,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO INTERROMPE PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3805,13 +3893,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,      
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES INTERROMPER PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_cancelar.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3852,13 +3946,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO INTERROMPER PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -3919,6 +4019,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
         
                   30/01/2017 - Remocao do campo tipo de emprestimo. (Jaison/James - PRJ298)
 
+       				   20/12/2017 - Incluídos históricos 2013 e 2014 no cursor cr_craplem Prj. 402 (Jean Michel).
     ..........................................................................*/ 
     
     -----------> CURSORES <-----------
@@ -3960,8 +4061,17 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
              ope.nmoperad nmoperad_efet,
              epr.cdagenci cdagenci_efet,             
              -- Indica que am linha de credito eh CDC ou C DC
-             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc,
-             epr.dtmvtolt
+             DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
+                                               ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc,
+             epr.dtmvtolt,
+             epr.vltarifa,
+             epr.vliofepr,
+             epr.vlemprst vlempfin,
+             epr.txmensal,
+             epr.vliofadc,
+             empr0012.fn_retorna_comissao_emp(pr_cdcooper=> epr.cdcooper
+                                             ,pr_nrdconta=> epr.nrdconta
+                                             ,pr_nrctremp=> epr.nrctremp) vlcomissao
         FROM crawepr wepr,
              craplcr lcr,
              crapope ope,
@@ -3975,8 +4085,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND  upper(epr.cdopeefe) = upper(ope.cdoperad(+))
          AND wepr.cdcooper = pr_cdcooper
          AND wepr.nrdconta = pr_nrdconta
-         AND wepr.nrctremp = pr_nrctremp
-         ; 
+         AND wepr.nrctremp = pr_nrctremp; 
     rw_crawepr cr_crawepr%ROWTYPE;   
     
     
@@ -3991,11 +4100,39 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        AND nrdconta = pr_nrdconta
        AND nrctremp = pr_nrctremp
        AND dtmvtolt = pr_dtmvtolt
-       AND cdhistor IN (99, 1032, 1036, 1059) /* Efetivação */
+       AND cdhistor IN (99, 1032, 1036, 1059, 2013, 2014) /* Efetivação */
        AND rownum = 1;
-       
     rw_craplem cr_craplem%ROWTYPE;  
     
+    -- Buscar os bens em garanita na Proposta
+    CURSOR cr_crapbpr (pr_cdcooper crapbpr.cdcooper%type,
+                       pr_nrdconta crapbpr.nrdconta%TYPE,
+                       pr_nrctremp crapbpr.nrctrpro%TYPE ) IS       
+      SELECT crapbpr.vlmerbem
+        FROM crapbpr 
+       WHERE crapbpr.cdcooper = pr_cdcooper
+         AND crapbpr.nrdconta = pr_nrdconta
+         AND crapbpr.nrctrpro = pr_nrctremp   
+         AND crapbpr.tpctrpro = 90
+         AND rownum=1
+         AND trim(crapbpr.dscatbem) is not NULL;
+    rw_crapbpr cr_crapbpr%ROWTYPE;
+    
+    --> verificar se dados do CET já foram gravados
+    CURSOR cr_tbepr_calculo_cet (pr_cdcooper tbepr_calculo_cet.cdcooper%type
+                                ,pr_nrdconta tbepr_calculo_cet.nrdconta%TYPE
+                                ,pr_nrctremp tbepr_calculo_cet.nrctremp%TYPE) IS
+      SELECT t.txmensal
+            ,t.vlrdoiof
+            ,t.vlrdsegu
+            ,t.vlrtarif
+            ,t.txanocet
+        FROM tbepr_calculo_cet t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.nrdconta = pr_nrdconta
+         AND t.nrctremp = pr_nrctremp;
+    rw_tbepr_calculo_cet cr_tbepr_calculo_cet%ROWTYPE;
+
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER := 0;
@@ -4015,6 +4152,13 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
     vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
+    -- variaveis programa
+    vr_txdjuros      NUMBER;
+    vr_vlentbem      NUMBER;
+    vr_vlmerbem      NUMBER;
+    vr_vliofadi      NUMBER;
+    vr_vlpertar      NUMBER;
+    
   BEGIN
     
     -- Se o DEBUG estiver habilitado
@@ -4026,13 +4170,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO EFETIVAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -4117,6 +4267,29 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     END IF;
     
     vr_obj_efetivar.put('numero'                 , pr_nrctremp);
+
+    /*
+      produtoCreditoSegmentoCodigo
+      (0 – CDC Diversos
+     , 1 – CDC Veículos
+     , 2 – Empréstimos /Financiamentos
+     , 3 – Desconto Cheques – Limite
+     , 4 – Desconto Cheques - Borderô
+     , 5 – Desconto Título – Limite
+     , 6 – Desconto de Títulos – Borderô
+     , 7 – Cartão de Crédito
+     , 8 – Limite de Crédito (Conta)
+     , 9 – Consignado)
+     */
+
+    IF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
+      vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 0);
+    ELSIF rw_crawepr.cdfinemp = 59 and rw_crawepr.inlcrcdc = 1 THEN
+      vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 1);
+    ELSE
+      vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 2);  
+    END IF;
+
     vr_obj_efetivar.put('operadorEfetivacaoLogin', rw_crawepr.cdopeefe);
     vr_obj_efetivar.put('operadorEfetivacaoNome' , rw_crawepr.nmoperad_efet) ;
      --> Criar objeto json para agencia do cooperado
@@ -4153,6 +4326,55 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                  
     END IF;
     
+    
+    -----------------------------------------------------------------------------------------------
+    IF rw_crawepr.inlcrcdc = 1 THEN
+
+      OPEN cr_tbepr_calculo_cet (pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_nrctremp => pr_nrctremp);
+      FETCH cr_tbepr_calculo_cet INTO rw_tbepr_calculo_cet;
+      CLOSE cr_tbepr_calculo_cet;
+      
+      vr_obj_efetivar.put('valorCET', ESTE0001.fn_decimal_ibra(rw_tbepr_calculo_cet.txanocet)); 
+      vr_obj_efetivar.put('valorIOF', ESTE0001.fn_decimal_ibra(rw_crawepr.vliofepr));
+      vr_obj_efetivar.put('valorTarifa', ESTE0001.fn_decimal_ibra(rw_crawepr.vltarifa)); 
+      vr_obj_efetivar.put('valorTotalFinanciado', ESTE0001.fn_decimal_ibra(rw_crawepr.vlempfin)); 
+      vr_obj_efetivar.put('valorRepasse', ESTE0001.fn_decimal_ibra(rw_crawepr.vlemprst)); 
+      vr_obj_efetivar.put('multa', ESTE0001.fn_decimal_ibra(2)); --> fixo 2% 
+      vr_obj_efetivar.put('valorSeguro', ESTE0001.fn_decimal_ibra(0)); -- fixo 0 [validar]
+      
+      -- chamar procedure da EMPR0012 com o valor da comissao
+      vr_obj_efetivar.put('valorComissionamento', ESTE0001.fn_decimal_ibra(rw_crawepr.vlcomissao)); -- buscar em procedure CDC
+
+      OPEN cr_crapbpr (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_nrctremp => pr_nrctremp);
+      FETCH cr_crapbpr INTO rw_crapbpr;
+
+      IF cr_crapbpr%FOUND THEN
+        vr_vlmerbem := rw_crapbpr.vlmerbem;
+      ELSE
+        vr_vlmerbem := rw_crawepr.vlemprst;
+      END IF;
+      CLOSE cr_crapbpr;
+      
+      vr_obj_efetivar.put('valorBem', ESTE0001.fn_decimal_ibra(vr_vlmerbem)); --> valor do bem
+
+      vr_vlentbem := vr_vlmerbem - rw_crawepr.vlemprst;
+      vr_obj_efetivar.put('valorEntrada', ESTE0001.fn_decimal_ibra(vr_vlentbem));  -- nao temos [ver com ibratan]    
+
+      vr_txdjuros := ROUND((POWER(1 + (nvl(rw_crawepr.txmensal,0) / 100),12) - 1) * 100,2);
+      vr_obj_efetivar.put('taxaAoAno', ESTE0001.fn_decimal_ibra(vr_txdjuros)); 
+
+      vr_vliofadi := ROUND(((rw_crawepr.vliofadc / rw_crawepr.vlempfin) * 100),2);
+      vr_obj_efetivar.put('percentualIofAdicional', ESTE0001.fn_decimal_ibra(vr_vliofadi)); 
+      
+      vr_vlpertar := ROUND(((rw_crawepr.vltarifa / rw_crawepr.vlempfin) * 100),2);
+      vr_obj_efetivar.put('percentualTarifa', ESTE0001.fn_decimal_ibra(vr_vlpertar)); 
+    END IF;
+    -----------------------------------------------------------------------------------------------
+
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -4162,13 +4384,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES EFETIVAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_efetivar.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -4219,13 +4447,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,        
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO EFETIVAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -4348,13 +4582,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'INICIO CONSULTAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -4424,13 +4664,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'ANTES CONSULTAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => vr_obj_proposta.to_char,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -4457,15 +4703,21 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                          pr_cdorigem              => pr_cdorigem,          
                          pr_nrctrprp              => pr_nrctremp,          
                          pr_nrdconta              => pr_nrdconta,          
+                         pr_cdcliente             => 1,
                          pr_tpacionamento         => 1,  /* 1 - Envio, 2 – Retorno */      
                          pr_dsoperacao            => 'CONSULTA DA PROPOSTA DE ANALISE DE CREDITO',
                          pr_dsuriservico          => vr_recurso_este,       
+                         pr_dsmetodo              => 'GET',      
                          pr_dtmvtolt              => pr_dtmvtolt,       
                          pr_cdstatus_http         => vr_response.status_code,
                          pr_dsconteudo_requisicao => vr_obj_proposta.to_char,
                          pr_dsresposta_requisicao => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
                                                      ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
                                                      ',"Content":'||vr_response.content||'}',
+                         pr_flgreenvia            => 0,
+                         pr_nrreenvio             => 0,
+                         pr_tpconteudo            => 1,
+                         pr_tpproduto             => 0,
                          pr_idacionamento         => vr_idacionamento,
                          pr_dscritic              => vr_dscritic);
                          
@@ -4535,13 +4787,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                            pr_cdorigem              => pr_cdorigem,          
                            pr_nrctrprp              => pr_nrctremp,          
                            pr_nrdconta              => pr_nrdconta,          
+                           pr_cdcliente             => 1,
                            pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                            pr_dsoperacao            => 'TERMINO CONSULTAR PROPOSTA',       
                            pr_dsuriservico          => NULL,       
+                           pr_dsmetodo              => NULL,
                            pr_dtmvtolt              => pr_dtmvtolt,       
                            pr_cdstatus_http         => 0,
                            pr_dsconteudo_requisicao => null,
                            pr_dsresposta_requisicao => null,
+                           pr_flgreenvia            => 0,
+                           pr_nrreenvio             => 0,
+                           pr_tpconteudo            => 1,
+                           pr_tpproduto             => 0,
                            pr_idacionamento         => vr_idaciona,
                            pr_dscritic              => vr_dscritic);
       -- Sem tratamento de exceção para DEBUG                    
@@ -4612,7 +4870,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       -- Cursor para verificar se a linha de crédito não é de Aprovação Automática
       CURSOR cr_craplcr IS
         SELECT lcr.flgdisap
-              ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
+              ,DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => pr_cdcooper
+                                                 ,pr_cdfinemp => pr_cdfinemp),3,1,0) AS inlcrcdc
           FROM craplcr lcr
          WHERE lcr.cdcooper = pr_cdcooper
            AND lcr.cdlcremp = pr_cdlcremp;
@@ -4894,13 +5153,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_cdorigem              => 5,          
                                pr_nrctrprp              => 0,          
                                pr_nrdconta              => 0,          
+                               pr_cdcliente             => 1,          
                                pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                pr_dsoperacao            => 'INICIO SOLICITA RETORNOS',       
                                pr_dsuriservico          => NULL,       
+                               pr_dsmetodo              => NULL,  
                                pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                pr_cdstatus_http         => 0,
                                pr_dsconteudo_requisicao => null,
                                pr_dsresposta_requisicao => null,
+                               pr_flgreenvia            => 0,
+                               pr_nrreenvio             => 0,
+                               pr_tpconteudo            => 1,
+                               pr_tpproduto             => 0,
                                pr_idacionamento         => vr_idaciona,
                                pr_dscritic              => vr_dscritic);
           -- Sem tratamento de exceção para DEBUG                    
@@ -4955,13 +5220,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                  pr_cdorigem              => 5,          
                                  pr_nrctrprp              => rw_crawepr.nrctremp,          
                                  pr_nrdconta              => rw_crawepr.nrdconta,         
+                                 pr_cdcliente             => 1,       
                                  pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                  pr_dsoperacao            => 'ANTES SOLICITA RETORNOS',       
                                  pr_dsuriservico          => NULL,       
+                                 pr_dsmetodo              => NULL,
                                  pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                  pr_cdstatus_http         => 0,
                                  pr_dsconteudo_requisicao => null,
                                  pr_dsresposta_requisicao => null,
+                                 pr_flgreenvia            => 0,
+                                 pr_nrreenvio             => 0,
+                                 pr_tpconteudo            => 1,
+                                 pr_tpproduto             => 0,
                                  pr_idacionamento         => vr_idaciona,
                                  pr_dscritic              => vr_dscritic);
             -- Sem tratamento de exceção para DEBUG                    
@@ -5008,14 +5279,20 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_cdorigem              => 5, /*Ayllos*/
                                pr_nrctrprp              => rw_crawepr.nrctremp,          
                                pr_nrdconta              => rw_crawepr.nrdconta,          
+                               pr_cdcliente             => 1,         
                                pr_tpacionamento         => 2,  /* 1 - Envio, 2 – Retorno */      
                                pr_dsoperacao            => 'RETORNO ANALISE AUTOMATICA DE CREDITO - '||vr_dssitret,
                                pr_dsuriservico          => vr_host_esteira||vr_recurso_este,       
+                               pr_dsmetodo              => 'GET',
                                pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                pr_cdstatus_http         => vr_response.status_code,
                                pr_dsconteudo_requisicao => vr_response.content,
                                pr_dsresposta_requisicao => null,
                                pr_dsprotocolo           => rw_crawepr.dsprotoc,
+                               pr_flgreenvia            => 0,
+                               pr_nrreenvio             => 0,
+                               pr_tpconteudo            => 1,
+                               pr_tpproduto             => 0,
                                pr_idacionamento         => vr_idacionamento,
                                pr_dscritic              => vr_dscritic);
     			                     
@@ -5140,13 +5417,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                    pr_cdorigem              => 5,          
                                    pr_nrctrprp              => rw_crawepr.nrctremp,          
                                    pr_nrdconta              => rw_crawepr.nrdconta,         
+                                   pr_cdcliente             => 1,
                                    pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                    pr_dsoperacao            => 'ANTES PROCESSAMENTO RETORNO',       
                                    pr_dsuriservico          => NULL,       
+                                   pr_dsmetodo              => NULL,
                                    pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                    pr_cdstatus_http         => 0,
                                    pr_dsconteudo_requisicao => null,
                                    pr_dsresposta_requisicao => null,
+                                   pr_flgreenvia            => 0,
+                                   pr_nrreenvio             => 0,
+                                   pr_tpconteudo            => 1,
+                                   pr_tpproduto             => 0,
                                    pr_idacionamento         => vr_idaciona,
                                    pr_dscritic              => vr_dscritic);
               -- Sem tratamento de exceção para DEBUG                    
@@ -5192,13 +5475,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_cdorigem              => 5,          
                                pr_nrctrprp              => 0,          
                                pr_nrdconta              => 0,          
+                               pr_cdcliente             => 1,
                                pr_tpacionamento         => 0,  /* 0 - DEBUG */      
                                pr_dsoperacao            => 'TERMINO SOLICITA RETORNOS',       
                                pr_dsuriservico          => NULL,       
+                               pr_dsmetodo              => NULL,
                                pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
                                pr_cdstatus_http         => 0,
                                pr_dsconteudo_requisicao => null,
                                pr_dsresposta_requisicao => null,
+                               pr_flgreenvia            => 0,
+                               pr_nrreenvio             => 0,
+                               pr_tpconteudo            => 1,
+                               pr_tpproduto             => 0,
                                pr_idacionamento         => vr_idaciona,
                                pr_dscritic              => vr_dscritic);
           -- Sem tratamento de exceção para DEBUG                    

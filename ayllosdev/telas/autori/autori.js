@@ -81,9 +81,13 @@ function controlaOperacao( novaOp ) {
 	
 	// Seta os valores caso tenha vindo do CRM
     if ($("#crm_inacesso","#frmCabAutori").val() == 1) {
-        $("#nrdconta","#frmCabAutori").val($("#crm_nrdconta","#frmCabAutori").val());
-		nrdconta = $("#crm_nrdconta","#frmCabAutori").val();
-		obtemCabecalho();
+				
+		if (normalizaNumero($("#crm_nrdconta","#frmCabAutori").val()) > 0)
+		{
+			$("#nrdconta","#frmCabAutori").val($("#crm_nrdconta","#frmCabAutori").val());			
+			nrdconta = normalizaNumero($("#crm_nrdconta","#frmCabAutori").val());					
+		}
+		//obtemCabecalho();
     }
 	var mensagem = '';
 	var cdhistor = normalizaNumero($('#cdhistor','#frmAutori').val());
@@ -924,7 +928,7 @@ function formataCabecalho() {
 				nrdconta = normalizaNumero( $(this).val() );
 												
 				// Verifica se o número da conta é vazio
-				if ( nrdconta == '' ) { return false; }
+				if ( ( nrdconta == '' ) || ( nrdconta == 0 ) ) { return false; }
 					
 				// Verifica se a conta é válida
 				if ( !validaNroConta(nrdconta) ) { 
@@ -1085,7 +1089,7 @@ function consultaInicial() {
 	nrdconta = normalizaNumero( $('#nrdconta','#frmCabAutori').val() );
 	
 	// Verifica se o número da conta é vazio
-	if ( nrdconta == '' ) { return false; }
+	if ( ( nrdconta == '' ) || ( nrdconta == 0 ) ) { return false; }
 		
 	// Verifica se a conta é válida
 	if ( !validaNroConta(nrdconta) ) {

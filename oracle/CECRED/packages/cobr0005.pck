@@ -330,7 +330,9 @@ PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> 
                                   ,pr_dspacote     OUT tbcobran_sms_pacotes.dspacote%TYPE    --> Descrição do pacote
                                   ,pr_dhadesao     OUT tbcobran_sms_contrato.dhadesao%TYPE   --> Data hora de adesao
                                   ,pr_idcontrato   OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato
+                                  ,pr_tpcontrato   OUT INTEGER                               --> Tipo de contrato (1 - INDIVIDUAL / 2 - PACOTE)
                                   ,pr_vltarifa     OUT crapfco.vltarifa%TYPE                 --> Valor da tarifa
+                                  ,pr_vlpacote     OUT NUMBER                                --> Valor do pacote
                                   ,pr_flsitsms     OUT INTEGER                               --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
                                   ,pr_dsalerta     OUT VARCHAR2                              --> Retorna alerta para o cooperado
                                   ,pr_qtsmspct     OUT tbcobran_sms_contrato.qtdsms_pacote%TYPE --> Retorna quantidade de sms contratada do pacote
@@ -1061,7 +1063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lombardi
-     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
+     Data    : Agosto/2015                     Ultima atualizacao: 16/08/2018
 
      Dados referentes ao programa:
 
@@ -1080,6 +1082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               Inclusão pc_set_modulo
                               Tratamento exceptions
                               (Ana - Envolti - Ch 839539)
+                              
+                 16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).                              
   ............................................................................ */      
 
       vr_cdbarras VARCHAR2(44);
@@ -1286,14 +1290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       END IF;         
      
       /* se inst aut de protesto, cob registrada e banco 085 */
-      IF pr_flgregis = 1 AND 
-         pr_flgdprot = 1 AND 
-         rw_crapcco.cddbanco = 085 THEN 
-         vr_dsdinstr := '** Servico de protesto sera efetuado ' ||  
-                        'pelo Banco do Brasil **';
-      ELSE
+      /* Retirado mensagem de serviço de protesto pelo BB 16/08/2018 */
          vr_dsdinstr := pr_dsdinstr;
-      END IF;
 
         /* se banco emite e expede, nosso num conv+ceb+doctmo -
            Rafael Cechet 29/03/11 */
@@ -1660,6 +1658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                  10/05/2018 - Revitalização
                               Grava tabela de log nas exceptions
                               (Ana - Envolti - Ch REQ0011327)
+
+               16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).                              
   ............................................................................ */      
 
 	DECLARE
@@ -2342,7 +2342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR BOLETO APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS DO VENCIMENTO.';
              ELSIF rw_crapcob.insrvprt = 2 THEN
              pr_tab_cob(vr_ind_cob).dsdinst3 := 'PROTESTAR APOS ' || to_char(rw_crapcob.qtdiaprt,'fm00') || ' DIAS CORRIDOS DO VENCIMENTO.';
-             pr_tab_cob(vr_ind_cob).dsdinst4 := '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***';
+             pr_tab_cob(vr_ind_cob).dsdinst4 := ' ';
           END IF;
           END IF;
                     
@@ -3727,7 +3727,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                   ,pr_dspacote     OUT tbcobran_sms_pacotes.dspacote%TYPE    --> Descrição do pacote
                                   ,pr_dhadesao     OUT tbcobran_sms_contrato.dhadesao%TYPE   --> Data hora de adesao
                                   ,pr_idcontrato   OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato
+                                  ,pr_tpcontrato   OUT INTEGER                               --> Tipo de contrato (1 - INDIVIDUAL / 2 - PACOTE)
                                   ,pr_vltarifa     OUT crapfco.vltarifa%TYPE                 --> Valor da tarifa
+                                  ,pr_vlpacote     OUT NUMBER                                --> Valor do pacote
                                   ,pr_flsitsms     OUT INTEGER                               --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
                                   ,pr_dsalerta     OUT VARCHAR2                              --> Retorna alerta para o cooperado
                                   ,pr_qtsmspct     OUT tbcobran_sms_contrato.qtdsms_pacote%TYPE --> Retorna quantidade de sms contratada do pacote
@@ -3776,6 +3778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --> Buscar dados do contrato de sms     
     CURSOR cr_contrato_sms IS
       SELECT pct.cdtarifa
+            ,pct.perdesconto            
             ,ctr.cdcooper
             ,pct.dspacote
             ,ctr.idpacote
@@ -3784,6 +3787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             ,ctr.dhadesao
             ,ctr.tpnome_emissao
             ,ctr.nmemissao_sms
+            ,ctr.vlpacote
             ,ctr.qtdsms_pacote
             ,ctr.qtdsms_usados
             ,ass.nmprimtl
@@ -3876,13 +3880,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_dspacote   := rw_contrato_sms.dspacote;
       pr_idpacote   := rw_contrato_sms.idpacote;
       pr_idcontrato := rw_contrato_sms.idcontrato;
+      pr_tpcontrato := CASE WHEN NVL(rw_contrato_sms.qtdsms_pacote,0) > 1 THEN 2 ELSE 1 END;
       pr_dhadesao   := rw_contrato_sms.dhadesao;
       
       pr_nmprintl  := rw_contrato_sms.nmprimtl;
       pr_tpnmemis  := rw_contrato_sms.tpnome_emissao;
       pr_nmemisms  := rw_contrato_sms.nmemissao_sms;
       
-      pr_qtsmspct  := rw_contrato_sms.qtdsms_pacote;
+      pr_qtsmspct  := CASE WHEN NVL(rw_contrato_sms.qtdsms_pacote,0) > 1 THEN rw_contrato_sms.qtdsms_pacote ELSE 1 END;
       pr_qtsmsusd  := rw_contrato_sms.qtdsms_usados;
       
       IF rw_contrato_sms.inpessoa = 1 THEN
@@ -3898,45 +3903,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         CLOSE cr_crapjur;      
       END IF;
       
-    -- Definir nome de remetente para o SMS
-    IF rw_contrato_sms.tpnome_emissao = 3 THEN
-      vr_nmremsms := rw_contrato_sms.nmemissao_sms;
-    --> se selecionou Razao social/Nome
-    ELSIF rw_contrato_sms.tpnome_emissao = 1 THEN
-      --> Buscar nome na crapass
-      OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
-                      pr_nrdconta => pr_nrdconta);
-      FETCH cr_crapass INTO vr_nmremsms;
-      CLOSE cr_crapass;
-    -- se selecionou Nome fantasia
-    ELSIF rw_contrato_sms.tpnome_emissao = 2 THEN
-      -- Buscar nome na crapjur
-      OPEN cr_crapjur;
-      FETCH cr_crapjur INTO vr_nmremsms;
-      CLOSE cr_crapjur;              
-    END IF;  
+      -- Definir nome de remetente para o SMS
+      IF rw_contrato_sms.tpnome_emissao = 3 THEN
+        vr_nmremsms := rw_contrato_sms.nmemissao_sms;
+      --> se selecionou Razao social/Nome
+      ELSIF rw_contrato_sms.tpnome_emissao = 1 THEN
+        --> Buscar nome na crapass
+        OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta);
+        FETCH cr_crapass INTO vr_nmremsms;
+        CLOSE cr_crapass;
+      -- se selecionou Nome fantasia
+      ELSIF rw_contrato_sms.tpnome_emissao = 2 THEN
+        -- Buscar nome na crapjur
+        OPEN cr_crapjur;
+        FETCH cr_crapjur INTO vr_nmremsms;
+        CLOSE cr_crapjur;              
+      END IF;  
 
- --> Variavel para SMS
-    vr_valores_dinamicos := '#Nome#=' ||vr_nmremsms ||';'|| 
+      --> Variavel para SMS
+      vr_valores_dinamicos := '#Nome#=' ||vr_nmremsms ||';'|| 
                             '#LinhaDigitavel#='|| '000000000000';
           
-    --> buscar mensagem
-    pr_dsmsgcomlinddig := GENE0003.fn_buscar_mensagem
+      --> buscar mensagem
+      pr_dsmsgcomlinddig := GENE0003.fn_buscar_mensagem
                                (pr_cdcooper        => pr_cdcooper
                                ,pr_cdproduto       => 19
                                ,pr_cdtipo_mensagem => 9
                                ,pr_sms             => 1
                                ,pr_valores_dinamicos => vr_valores_dinamicos);
                                
-    --> buscar mensagem
-    pr_dsmsgsemlinddig := GENE0003.fn_buscar_mensagem
+      --> buscar mensagem
+      pr_dsmsgsemlinddig := GENE0003.fn_buscar_mensagem
                                (pr_cdcooper        => pr_cdcooper
                                ,pr_cdproduto       => 19
                                ,pr_cdtipo_mensagem => 12
                                ,pr_sms             => 1
-                               ,pr_valores_dinamicos => vr_valores_dinamicos);                               
+                               ,pr_valores_dinamicos => vr_valores_dinamicos);   
+                               
+      --> Buscar Valor tarifa
+      IF pr_tpcontrato = 1 THEN
+        IF vr_cdtarifa IS NOT NULL THEN
+          OPEN cr_crapfco(pr_cdcooper => pr_cdcooper ,
+                          pr_cdtarifa => vr_cdtarifa);
+          FETCH cr_crapfco INTO pr_vltarifa;
+          CLOSE cr_crapfco;
+          pr_vlpacote := pr_vltarifa;
+        END IF;                                                     
+      ELSE         
+         pr_vltarifa := rw_contrato_sms.vlpacote / rw_contrato_sms.qtdsms_pacote;
+         pr_vlpacote := rw_contrato_sms.vlpacote;
+      END IF;
 
-	      -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+	    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_ret_dados_serv_sms');
     END IF;
     
@@ -3947,14 +3966,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RETURN;
     ELSE
       pr_flgativo := 1;
-    END IF;
-    
-    --> Buscar Valor tarifa
-    IF vr_cdtarifa IS NOT NULL THEN
-      OPEN cr_crapfco(pr_cdcooper => pr_cdcooper ,
-                      pr_cdtarifa => vr_cdtarifa);
-      FETCH cr_crapfco INTO pr_vltarifa;
-      CLOSE cr_crapfco;
     END IF;
     
     -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
@@ -4028,7 +4039,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dspacote   tbcobran_sms_pacotes.dspacote%TYPE;
     vr_dhadesao   tbcobran_sms_contrato.dhadesao%TYPE;
     vr_idcontrato tbcobran_sms_contrato.idcontrato%TYPE;
+    vr_tpcontrato INTEGER;
     vr_vltarifa   crapfco.vltarifa%TYPE;
+    vr_vlpacote   NUMBER(15,2);
     vr_flsitsms   INTEGER;
     vr_dsalerta   VARCHAR2(4000);
     vr_qtsmspct   tbcobran_sms_contrato.qtdsms_pacote%TYPE;
@@ -4079,7 +4092,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_dspacote  => vr_dspacote   --> Descrição do pacote
                           ,pr_dhadesao  => vr_dhadesao   --> Data hora de adesao
                           ,pr_idcontrato=> vr_idcontrato --> Numero do contrato
+                          ,pr_tpcontrato => vr_tpcontrato --> Tipo do contrato (1 - INDIVIDUAL / 2 - PACOTE)
                           ,pr_vltarifa  => vr_vltarifa   --> Valor da tarifa                          
+                          ,pr_vlpacote  => vr_vlpacote   --> Valor do pacote
                           ,pr_flsitsms  => vr_flsitsms   --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
                           ,pr_dsalerta  => vr_dsalerta   --> Retorna alerta para o cooperado
                           ,pr_qtsmspct  => vr_qtsmspct   --> Retorna quantidade de sms contratada do pacote

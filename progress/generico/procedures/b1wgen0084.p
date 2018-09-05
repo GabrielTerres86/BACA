@@ -8,7 +8,9 @@
   | Dias360                                 | EMPR0001.pc_calc_dias360             |
   | fnBuscaDataDoUltimoDiaUtilMes           | gene0005.fn_valida_dia_util          |
   | busca_parcelas_proposta                 | EMPR0004.pc_busca_parcelas_proposta  |
+  | calcula_emprestimo                      | EMPR0004.pc_calcula_emprestimo       |
   | calcula_data_parcela                    | EMPR0004.pc_calcula_data_parcela     |
+  | gera_parcelas_emprestimo                | EMPR0004.pc_gera_parcelas_emprest    |
   +-----------------------------------------+--------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -29,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 12/04/2018
+    Data    : Fevereiro/2011               ultima Atualizacao: 15/08/2018
 
     Dados referentes ao programa:
 
@@ -302,6 +304,22 @@
 			  02/04/2018 - Corrigir para não apresentar no extrato de empréstimo histórico do IOF zerado. (James)
               
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+                           
+              21/11/2017 - Incluído condiçao na leitura da crappre na procedure
+                           grava_efetivacao_proposta, incluido leitura da crawepr
+                           na procedure desfaz_efetivacao_emprestimo 
+                           (Jean Michel - Prj. 402).
+                           
+              20/12/2017 - Criados novos históricos(2013,2014) para demonstraçao da
+                           parte contábil dos lançamentos de CDC, alteraçao nas
+                           procedures desfaz_efetivacao_emprestimo, busca_desfazer_efetivacao_emprestimo
+                           e grava_efetivacao_proposta, Prj. 402 (Jean Michel).
+
+              27/06/2018 - P450 - Calculo e gravacao Risco Refin no emprestimo
+                           (Guilherme/AMcom)
+                           
+              16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
+                           PJ 450 - Diego Simas (AMcom)
                            
 ............................................................................. */
 
@@ -3344,6 +3362,9 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vltrfgar AS DECI                                      NO-UNDO.    
     DEF VAR aux_vltarifa AS DECI                                      NO-UNDO.
     DEF VAR aux_vltaxiof AS DECI                                      NO-UNDO.    
+    DEF VAR aux_dtrisref AS DATE /* DATA RISCO REFIN */               NO-UNDO.
+    DEF VAR aux_qtdiaatr AS INTE                                      NO-UNDO.
+    DEF VAR aux_idquapro AS INTE                                      NO-UNDO.
 
     DEF BUFFER b-crawepr FOR crawepr.
 
@@ -3485,9 +3506,8 @@ PROCEDURE grava_efetivacao_proposta:
 
        FOR FIRST crappre FIELDS(cdfinemp vlmulpli vllimmin) WHERE crappre.cdcooper = par_cdcooper     
                                                               AND crappre.inpessoa = crapass.inpessoa
-                                                              AND crappre.cdfinemp = crawepr.cdfinemp NO-LOCK: END.
-                                                              /*AND (crappre.cdfinemp = crawepr.cdfinemp
-                                                               OR crawepr.flgpreap = TRUE) NO-LOCK: END.*/
+                                                              AND (crappre.cdfinemp = crawepr.cdfinemp
+                                                               OR crawepr.flgpreap = 1) NO-LOCK: END.
 
        /* Verifica se o emprestimo eh pre-aprovado */
        IF AVAIL crappre THEN
@@ -3718,8 +3738,7 @@ PROCEDURE grava_efetivacao_proposta:
      
      
      /* Se for Pos-Fixado */
-     IF  crawepr.tpemprst = 2  THEN
-		     DO:
+     IF  crawepr.tpemprst = 2  THEN DO:
              ASSIGN aux_nrdolote_cred = 650004.
 
              IF   aux_floperac   THEN             /* Financiamento*/
@@ -4139,6 +4158,130 @@ PROCEDURE grava_efetivacao_proposta:
                  END.
 
           END.
+       /***********************
+          CALCULO DATA RISCO REFIN
+          Se houve alguma liquidacao de contrato
+       ***********************/
+       IF (crawepr.nrctrliq[1]  > 0
+       OR  crawepr.nrctrliq[2]  > 0
+       OR  crawepr.nrctrliq[3]  > 0
+       OR  crawepr.nrctrliq[4]  > 0
+       OR  crawepr.nrctrliq[5]  > 0
+       OR  crawepr.nrctrliq[6]  > 0
+       OR  crawepr.nrctrliq[7]  > 0
+       OR  crawepr.nrctrliq[8]  > 0
+       OR  crawepr.nrctrliq[9]  > 0
+       OR  crawepr.nrctrliq[10] > 0
+       OR  crawepr.nrliquid     > 0) THEN DO:
+
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+           /* Verifica se ha contratos de acordo */
+           RUN STORED-PROCEDURE pc_dias_atraso_liquidados
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                 ,INPUT par_nrdconta
+                                                 ,INPUT crawepr.nrctremp
+                                                 ,OUTPUT 0
+                                                 ,OUTPUT "").
+    
+           CLOSE STORED-PROC pc_dias_atraso_liquidados
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+           ASSIGN aux_qtdiaatr = 0
+                  aux_dscritic = ""
+                  aux_dscritic = pc_dias_atraso_liquidados.pr_dscritic WHEN pc_dias_atraso_liquidados.pr_dscritic <> ?
+                  aux_qtdiaatr = INT(pc_dias_atraso_liquidados.pr_qtdatref).
+            
+           IF (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+              ASSIGN aux_dtrisref = par_dtmvtolt
+                     aux_qtdiaatr = 0.
+    
+           ASSIGN aux_dtrisref = par_dtmvtolt - aux_qtdiaatr.
+       END.
+       ELSE 
+           ASSIGN aux_dtrisref = ?.
+       /***********************/
+          
+       /* Diego Simas (AMcom) - PJ 450                       */
+       /* Início                                             */
+       
+       /* Verifica se existe algum contrato limite/adp       */
+       /* e adiciona a lista de contratos para qualificar    */ 
+       IF aux_dsctrliq <> "" THEN
+          DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
+          END.
+       ELSE
+          DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
+            END.                      
+       
+       /* Acionar rotina que gera a qualificacao da operacao */
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+       RUN STORED-PROCEDURE pc_proc_qualif_operacao
+           aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT par_cdcooper,     /* Cooperativa                      */
+                             INPUT par_cdagenci,     /* Cod Agencia                      */
+                             INPUT par_nrdcaixa,     /* Nr do Caixa                      */
+                             INPUT par_cdoperad,     /* Cod Operador                     */ 
+                             INPUT par_nmdatela,     /* Programa Chamador                */
+                             INPUT par_idorigem,     /* Origem                           */
+                             INPUT par_nrdconta,     /* Conta                            */
+                             INPUT aux_dsctrliq,     /* Contratos Liquidados             */
+                             INPUT par_dtmvtolt,     /* Data do Movimento                */
+                             INPUT par_dtmvtopr,     /* Data do Proximo dia de movimento */
+                            /* -- OUTPUTS -- */
+                            OUTPUT 0,                /* Id Qualif Operacao               */
+                            OUTPUT "",               /* Descricao Qualif Operacao        */
+                            OUTPUT 0,                /* ERRO - Id da critica             */  
+                            OUTPUT "").              /* ERRO - Descricao da critica      */
+
+       CLOSE STORED-PROC pc_proc_qualif_operacao 
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+       
+       ASSIGN aux_cdcritic = 0
+              aux_dscritic = ""
+              aux_idquapro = 1
+              aux_cdcritic = pc_proc_qualif_operacao.pr_cdcritic 
+                             WHEN pc_proc_qualif_operacao.pr_cdcritic <> ?
+              aux_dscritic = pc_proc_qualif_operacao.pr_dscritic 
+                             WHEN pc_proc_qualif_operacao.pr_dscritic <> ?
+              aux_idquapro = pc_proc_qualif_operacao.pr_idquapro 
+                             WHEN pc_proc_qualif_operacao.pr_idquapro <> ?.
+           
+       IF  aux_cdcritic <> 0   OR
+           aux_dscritic <> ""  THEN
+           DO:                                    
+               CREATE tt-erro.
+               ASSIGN tt-erro.cdcritic = aux_cdcritic
+                      tt-erro.dscritic = aux_dscritic.
+               UNDO EFETIVACAO, LEAVE EFETIVACAO.
+           END.
+           
+       /* Requalifica a operacao na proposta                 */
+       /* INICIO                                             */       
+       FIND FIRST b-crawepr
+          WHERE b-crawepr.cdcooper = par_cdcooper AND
+                b-crawepr.nrdconta = par_nrdconta AND
+                b-crawepr.nrctremp = par_nrctremp
+                EXCLUSIVE-LOCK NO-ERROR.
+       
+       IF AVAIL b-crawepr THEN
+          ASSIGN b-crawepr.idquapro = aux_idquapro.
+       /* FIM                                                */
+       /* Requalifica a operacao na proposta                 */
+       
+       /* Fim                                                */    
+       /* Diego Simas (AMcom) - PJ 450                       */
 
        CREATE crapepr.
        ASSIGN crapepr.dtmvtolt = par_dtmvtolt
@@ -4170,7 +4313,9 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.txmensal = crawepr.txmensal
               crapepr.cdempres = aux_cdempres
               crapepr.nrcadast = crapass.nrcadast
-              crapepr.idquaprc = crawepr.idquapro
+              /* PJ 450 - Diego Simas (AMcom)  */
+              /* Requalificar a Operacao       */
+              crapepr.idquaprc = aux_idquapro
               crapepr.flgpagto = FALSE
               crapepr.dtdpagto = par_dtdpagto
               crapepr.qtmesdec = 0
@@ -4178,7 +4323,7 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.dtinipag = ?
               crapepr.tpdescto = crawepr.tpdescto
               crapepr.vliofepr = aux_vltotiof
-              crapepr.vlpagiof = aux_vliofpri
+              crapepr.vliofpri = aux_vliofpri
               crapepr.vliofadc = aux_vliofadi
               crapepr.cdcooper = par_cdcooper
               crapepr.qttolatr = crawepr.qttolatr
@@ -4186,10 +4331,10 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.vlaqiofc = aux_vlaqiofc
               crapepr.vltariof = (IF crawepr.tpemprst = 2 THEN aux_vltariof ELSE aux_vltotiof)
               crapepr.iddcarga = aux_idcarga
-              crapepr.idfiniof = crawepr.idfiniof.
+              crapepr.idfiniof = crawepr.idfiniof
+              crapepr.dtinicio_atraso_refin = aux_dtrisref.
 				
-			  if crawepr.idfiniof > 0 then
-			  do:
+              if crawepr.idfiniof > 0 then do:
 			     assign crapepr.vlsdeved = crawepr.vlemprst + aux_vltotiof + aux_vltarifa.
 			            crapepr.vlemprst = crawepr.vlemprst + aux_vltotiof + aux_vltarifa.
 			  end.
@@ -5025,9 +5170,8 @@ PROCEDURE desfaz_efetivacao_emprestimo.
         
         FOR crappre FIELDS(cdfinemp vlmulpli) WHERE crappre.cdcooper = par_cdcooper
                                                 AND crappre.inpessoa = crapass.inpessoa
-                                                AND crappre.cdfinemp = crapepr.cdfinemp NO-LOCK: END.
-                                                /*AND (crappre.cdfinemp = crapepr.cdfinemp 
-                                                 OR crawepr.flgpreap = TRUE) NO-LOCK: END.*/
+                                                AND (crappre.cdfinemp = crapepr.cdfinemp 
+                                                 OR crawepr.flgpreap = 1) NO-LOCK: END.
 
         /* Verifica se o emprestimo eh pre-aprovado */
         IF AVAIL crappre THEN
@@ -5715,6 +5859,7 @@ PROCEDURE transf_contrato_prejuizo.
 							  crapepr.vliofcpl = aux_vliofcpl          /* valor do IOF complementar de atraso */
                               crapepr.vlpgmupr = 0
                               crapepr.vlpgjmpr = 0
+                              /* crapepr.vlpiofpr = 0 --> Como nao ha estorno de IOF Prejuizo, manter valor pago anteriormente */                                
                               crapepr.vlsdeved = 0
                               crapepr.vlsdevat = 0.
                        /*
@@ -6235,8 +6380,11 @@ PROCEDURE desfaz_transferencia_prejuizo.
                    crapepr.dtprejuz = ?
                    crapepr.vlttmupr = 0
                    crapepr.vlttjmpr = 0
+                   crapepr.vltiofpr = 0
                    crapepr.vlpgmupr = 0
-                   crapepr.vlpgjmpr = 0.
+                   crapepr.vlpgjmpr = 0
+                   /* crapepr.vlpiofpr = 0 --> Como nao ha estorno de IOF Prejuizo, manter valor pago anteriormente */
+                   .
 
             /* Registrar LOG */
             ASSIGN aux_dstransa = STRING(par_dtmvtolt,"99/99/9999") + " - " +

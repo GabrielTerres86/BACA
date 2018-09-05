@@ -36,7 +36,9 @@
                             348989. (Kelvin)   
 
 			   06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
-                            departamento passando a considerar o código (Renato Darosci)
+                            departamento passando a considerar o código (Renato Darosci)  
+
+               18/08/2018 - Incluso busca de istoricos tbdsct_lancamento_bordero (GFT) 
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -596,7 +598,7 @@ PROCEDURE Busca_Cooperado:
                     
                 END.
             ELSE
-                FOR EACH craphis WHERE CAN-DO("craplct,craplcm,craplem,craplpp,craplap,craplac",
+                FOR EACH craphis WHERE CAN-DO("craplct,craplcm,craplem,craplpp,craplap,craplac,tbdsct_lancamento_bordero",
                                                craphis.nmestrut)               AND
                                        craphis.cdcooper = par_cdcooper         AND 
                                        craphis.cdhistor = par_cdhistor         

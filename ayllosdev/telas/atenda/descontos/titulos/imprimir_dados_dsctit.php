@@ -22,9 +22,14 @@
 							   geracao da impressao. (Jaison/Daniel)
           
                   23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
-                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)	
+                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
+
+                  12/04/2018 - Ajustes para adicionar parâmetro para controle da exibição da 
+                  			   restrição no report de borderô de desct. de tít (GFT) 
 
                   28/05/2018 - Incluso impressoa Proposta (GFT)   
+
+                  15/08/2018 - Inserção da verificação se é bordero liberado no processo novo ou antigo. (GFT) 
 
 	************************************************************************/ 
 
@@ -48,7 +53,6 @@
           <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
-
 	// Verifica se parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || 
 		!isset($_POST["nrctrlim"]) || 
@@ -106,11 +110,29 @@
 		exit();
 	}	
 	
-    if ($idimpres == 1 || // COMPLETA
+	// Verifica se o borderô deve ser utilizado no sistema novo ou no antigo
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " <nrborder>".$nrborder."</nrborder>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+	$flgnewbor = $root->dados->flgnewbor->cdata;
+		
+    if (($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7) { // BORDERO DE CHEQUES
+        $idimpres == 7 || // BORDERO DE CHEQUES
+        ) && ($flgnewbor)) {
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
@@ -122,6 +144,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
+        $xml .= "    <flgrestr>0</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 

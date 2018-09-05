@@ -71,6 +71,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#cdfinemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'cdfinemp') . '");
 					$("#dsfinemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
 					$("#percetop","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
+          $("#idfiniof","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'idfiniof') . '");
+
 				  $("#flgpagto","#frmNovaProp").val("no");';
     } else {
         $idfiniof = getByTagName($dados_simulacao[0]->tags, 'idfiniof');

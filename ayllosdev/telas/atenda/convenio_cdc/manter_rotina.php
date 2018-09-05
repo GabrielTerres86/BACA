@@ -29,6 +29,11 @@
     $idcooperado_cdc    = (isset($_POST['idcooperado_cdc']))    ? $_POST['idcooperado_cdc']    : '';
 	$flgconve           = (isset($_POST['flgconve']))           ? $_POST['flgconve']           : '';
 	$dtinicon           = (isset($_POST['dtinicon']))           ? $_POST['dtinicon']           : '';
+	$inmotcan           = (isset($_POST['inmotcan']))           ? $_POST['inmotcan']           : '';
+	$dtcancon           = (isset($_POST['dtcancon']))           ? $_POST['dtcancon']           : '';
+	$dsmotcan           = (isset($_POST['dsmotcan']))           ? $_POST['dsmotcan']           : '';
+	$dtrencon           = (isset($_POST['dtrencon']))           ? $_POST['dtrencon']           : '';  
+	$dttercon           = (isset($_POST['dttercon']))           ? $_POST['dttercon']           : '';  
     $nmfantasia         = (isset($_POST['nmfantasia']))         ? $_POST['nmfantasia']         : '';
     $cdcnae             = (isset($_POST['cdcnae']))             ? $_POST['cdcnae']             : '';
     $dslogradouro       = (isset($_POST['dslogradouro']))       ? $_POST['dslogradouro']       : '';
@@ -39,7 +44,10 @@
     $idcidade           = (isset($_POST['idcidade']))           ? $_POST['idcidade']           : '';
     $dstelefone         = (isset($_POST['dstelefone']))         ? $_POST['dstelefone']         : '';
     $dsemail            = (isset($_POST['dsemail']))            ? $_POST['dsemail']            : '';
-    $dslink_google_maps = (isset($_POST['dslink_google_maps'])) ? $_POST['dslink_google_maps'] : '';
+    $nrlatitude         = (isset($_POST['nrlatitude']))         ? $_POST['nrlatitude']         : '';
+	$nrlongitude        = (isset($_POST['nrlongitude']))        ? $_POST['nrlongitude']        : '';    
+	$idcomissao         = (isset($_POST['idcomissao']))         ? $_POST['idcomissao']         : '';
+	$flgitctr           = (isset($_POST['flgitctr']))           ? $_POST['flgitctr']           : '';
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
@@ -55,6 +63,11 @@
 	$xml .= "		<idcooperado_cdc>".$idcooperado_cdc."</idcooperado_cdc>";
 	$xml .= "		<flgconve>".$flgconve."</flgconve>";
 	$xml .= "		<dtinicon>".$dtinicon."</dtinicon>";
+	$xml .= "		<inmotcan>".$inmotcan."</inmotcan>";
+	$xml .= "		<dtcancon>".$dtcancon."</dtcancon>";
+	$xml .= "		<dsmotcan>".utf8_decode($dsmotcan)."</dsmotcan>";
+	$xml .= "		<dtrencon>".$dtrencon."</dtrencon>";
+	$xml .= "		<dttercon>".$dttercon."</dttercon>";
 	$xml .= "		<nmfantasia>".utf8_decode($nmfantasia)."</nmfantasia>";
 	$xml .= "		<cdcnae>".$cdcnae."</cdcnae>";
 	$xml .= "		<dslogradouro>".utf8_decode($dslogradouro)."</dslogradouro>";
@@ -65,7 +78,10 @@
 	$xml .= "		<idcidade>".$idcidade."</idcidade>";
 	$xml .= "		<dstelefone>".$dstelefone."</dstelefone>";
 	$xml .= "		<dsemail>".$dsemail."</dsemail>";
-	$xml .= "		<dslink_google_maps><![CDATA[".$dslink_google_maps."]]></dslink_google_maps>";
+	$xml .= "		<nrlatitude>".$nrlatitude."</nrlatitude>";
+	$xml .= "		<nrlongitude>".$nrlongitude."</nrlongitude>";
+	$xml .= "		<idcomissao>".$idcomissao."</idcomissao>";
+	$xml .= "		<flgitctr>".$flgitctr."</flgitctr>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 

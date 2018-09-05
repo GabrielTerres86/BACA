@@ -17,18 +17,17 @@
  * 008: [23/08/2013] David                : Incluir campo UF Naturalidade - cdufnatu
  * 009: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral
- * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357) 
+ * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
  * 012: [12/08/2017] Lombardi             : Alterado botão “Dossiê Digidoc” para abrir uma outra tela contendo os botões 
- 
  
  * 013: [20/04/0217] Adriano	          : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur e 
     							            ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
  * 014: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
- * 015: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
- * 016: [28/08/2017] Lucas Reinert		  : Alterado tipos de documento para utilizarem CI, CN, 
+ * 015: [28/08/2017] Lucas Reinert		  : Alterado tipos de documento para utilizarem CI, CN, 
  *										    CH, RE, PP E CT. (PRJ339 - Reinert)
- * 016: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339).
+ * 016: [25/09/2017] Kelvin               : Adicionado uma lista de valores para carregar orgao emissor (PRJ339). 
+ * 017: [18/07/2018] Andrey Formigari	  : Novo campo Nome Social (#SCTASK0017525 - Mouts)
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -69,6 +68,10 @@
 		<input name="nmextttl" id="nmextttl" type="text" value="<? echo getByTagName($IdentFisica,'nmextttl') ?>" />
 		<br />				
 		
+		<label for="nmsocial">Nome Social:</label>
+		<input name="nmsocial" id="nmsocial" type="text" value="<? echo getByTagName($IdentFisica,'nmsocial') ?>" />
+		<br />				
+		
 		<label for="cdsitcpf"><? echo utf8ToHtml('Situação:') ?></label>
 		<select id="cdsitcpf" name="cdsitcpf">
 			<option value=""> - </option>
@@ -104,7 +107,7 @@
 		<input name="cdoedttl" id="cdoedttl" type="text" value="<? echo getByTagName($IdentFisica,'cdoedttl') ?>" />	
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
         <input name="nmoedttl" id="nmoedttl" type="text" style="display:none;" />
-								
+		
 		<label for="cdufdttl" class="rotulo-linha">U.F.:</label>
 		<? echo selectEstado('cdufdttl', getByTagName($IdentFisica,'cdufdttl'),1) ?>
 		

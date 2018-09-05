@@ -229,14 +229,14 @@
 
                13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
                             as informações de Imóveis estejam preenchidas (Renato - Supero)
-
+                            
                30/01/2017 - Nao permitir efetuar lancamento para o produto Pos-Fixado.
                             (Jaison/James - PRJ298)
 
                17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
                             de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                             liberaçao do projeto (Renato - Supero)
-               
+                            
                16/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
                             
 ............................................................................. */
@@ -623,7 +623,7 @@ DO WHILE TRUE:
                         + " analise nao finalizada".
                 NEXT.            
             END.
-
+          
             /* Nao permite efetuar lancamento para o produto Pos-Fixado */
 			IF crawepr.tpemprst = 2 THEN
             DO:
@@ -1219,7 +1219,7 @@ DO WHILE TRUE:
    RELEASE craplot.
    RELEASE crablem.
    RELEASE crabepr.
-   
+
    
    /* Buscar dados do associado */
    FIND FIRST crapass WHERE crapass.cdcooper = glb_cdcooper AND
@@ -1360,7 +1360,7 @@ DO WHILE TRUE:
              crabepr.dtinipag = ?
              crabepr.tpdescto = aux_tpdescto
              crabepr.vliofepr = aux_vltotiof
-             crabepr.vlpagiof = aux_vliofpri
+             crabepr.vliofpri = aux_vliofpri
              crabepr.vliofadc = aux_vliofadi
              crabepr.cdcooper = glb_cdcooper.
 
@@ -1381,61 +1381,61 @@ DO WHILE TRUE:
                          EXCLUSIVE-LOCK NO-ERROR.
 
       IF  AVAIL crawepr THEN
-          DO:      
+          DO:
       
       
-        IF  NOT VALID-HANDLE(h-b1wgen0002) THEN
-            RUN sistema/generico/procedures/b1wgen0002.p
-                PERSISTENT SET h-b1wgen0002.
+              IF  NOT VALID-HANDLE(h-b1wgen0002) THEN
+                  RUN sistema/generico/procedures/b1wgen0002.p
+                      PERSISTENT SET h-b1wgen0002.
 
-        /* Calcular o cet automaticamente */
-        RUN calcula_cet_novo IN h-b1wgen0002(
-                             INPUT glb_cdcooper,
-                             INPUT 0, /* agencia */
-                             INPUT 0, /* caixa */
-                             INPUT glb_cdoperad,
-                             INPUT glb_nmdatela,
-                             INPUT 1, /* ayllos*/
-                             INPUT glb_dtmvtolt,
-                             INPUT tel_nrdconta,
-                             INPUT crapass.inpessoa,
-                             INPUT 2, /* cdusolcr */
-                             INPUT crawepr.cdlcremp,
-                             INPUT crawepr.tpemprst,
-                             INPUT crawepr.nrctremp,
-                             INPUT glb_dtmvtolt,
-                             INPUT tel_vlemprst,
-                             INPUT tel_vlpreemp,
-                             INPUT tel_qtpreemp,
-                             INPUT tel_dtdpagto,
-                             INPUT crawepr.cdfinemp,
+              /* Calcular o cet automaticamente */
+              RUN calcula_cet_novo IN h-b1wgen0002(
+                                   INPUT glb_cdcooper,
+                                   INPUT 0, /* agencia */
+                                   INPUT 0, /* caixa */
+                                   INPUT glb_cdoperad,
+                                   INPUT glb_nmdatela,
+                                   INPUT 1, /* ayllos*/
+                                   INPUT glb_dtmvtolt,
+                                   INPUT tel_nrdconta,
+                                   INPUT crapass.inpessoa,
+                                   INPUT 2, /* cdusolcr */
+                                   INPUT crawepr.cdlcremp,
+                                   INPUT crawepr.tpemprst,
+                                   INPUT crawepr.nrctremp,
+                                   INPUT glb_dtmvtolt,
+                                   INPUT tel_vlemprst,
+                                   INPUT tel_vlpreemp,
+                                   INPUT tel_qtpreemp,
+                                   INPUT tel_dtdpagto,
+                                   INPUT crawepr.cdfinemp,
                              INPUT aux_dscatbem, /* dscatbem */
                              INPUT crawepr.idfiniof, /* IDFINIOF */
                              INPUT aux_par_dsctrliq, /* dsctrliq */
                              INPUT "S",
-                            OUTPUT aux_percetop, /* taxa cet ano */
-                            OUTPUT aux_txcetmes, /* taxa cet mes */
-                            OUTPUT TABLE tt-erro).
+                                  OUTPUT aux_percetop, /* taxa cet ano */
+                                  OUTPUT aux_txcetmes, /* taxa cet mes */
+                                  OUTPUT TABLE tt-erro).
 
-        IF  VALID-HANDLE(h-b1wgen0002) THEN
-            DELETE OBJECT h-b1wgen0002.
+             IF  VALID-HANDLE(h-b1wgen0002) THEN
+                 DELETE OBJECT h-b1wgen0002.
 
-        IF  RETURN-VALUE <> "OK" THEN
-            DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
+             IF  RETURN-VALUE <> "OK" THEN
+                 DO:
+                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                    IF  AVAIL tt-erro THEN
-                        MESSAGE tt-erro.dscritic.
+                     DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                         IF  AVAIL tt-erro THEN
+                             MESSAGE tt-erro.dscritic.
 
-                    PAUSE 3 NO-MESSAGE.
-                    LEAVE.
-                END.
-            END.
+                         PAUSE 3 NO-MESSAGE.
+                         LEAVE.
+                     END.
+                 END.
 
-        ASSIGN crawepr.percetop = aux_percetop.
-      END.
-      
+                 ASSIGN crawepr.percetop = aux_percetop.
+          END.
+
       RUN sistema/generico/procedures/b1wgen0043.p PERSISTENT SET h-b1wgen0043.
 
       RUN obtem_emprestimo_risco IN h-b1wgen0043
@@ -1490,7 +1490,7 @@ DO WHILE TRUE:
              craplot.vlcompdb = craplot.vlcompdb + tel_vlemprst.
 
       VALIDATE crablem.
-      
+
 
       /* Se houve valor de IOF calculado */
       IF aux_vliofpri + aux_vliofadi > 0 THEN

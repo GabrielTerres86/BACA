@@ -96,6 +96,18 @@ abstract class RestServer{
     }
     
     /**
+     * Retorna a URI completa
+     * @return String
+     */
+    protected function getURI(){
+        if (!isset($_SERVER['HTTP_HOST']) || !isset($_SERVER['REQUEST_URI'])){
+            return false;
+        }
+        return $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];        
+    }
+	
+    
+    /**
      * Valida os dados da Requisicao
      * @return boolean
      * @throws RestException

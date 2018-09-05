@@ -46,6 +46,7 @@
  * 035: [13/04/2018] Adicionada verificacao se Tipo de Conta permite empréstimo. PRJ366 (Lombardi).
  * 036: [12/04/2018] P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
  * 037: [16/05/2018] Alterada frase de retorno da verificacao do Tipo de Conta. PRJ366 (Lombardi)
+ * 038: [14/12/2017] Inclusão dos campos: flintcdc e inintegra_cont no array de propostas, Prj. 402 (Jean Michel).
 
  */
 
@@ -251,6 +252,9 @@
 			arrayCooperativa['nralihip'] = '<? echo getByTagName($cooperativa,'nralihip'); ?>';
 			arrayCooperativa['lssemseg'] = '<? echo getByTagName($cooperativa,'lssemseg'); ?>';
 			arrayCooperativa['flginter'] = '<? echo getByTagName($cooperativa,'flginter'); ?>';
+			 // faria integracao cdc 
+			arrayCooperativa['flintcdc'] = '<? echo getByTagName($cooperativa,'flintcdc'); ?>';
+			arrayCooperativa['inintegra_cont'] = '<? echo getByTagName($cooperativa,'inintegra_cont'); ?>';
 
 			var arrayProposta = new Object();
 

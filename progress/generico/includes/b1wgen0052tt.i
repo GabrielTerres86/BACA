@@ -79,6 +79,8 @@
 		       20/09/2017 - Ajuste para incluir os campos de nome do pai/mae 
 					        (Adriano - P339).
 
+			   18/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
+
 .............................................................................*/
 
 /* DEFINICOES PARA MATRIC[N].P */
@@ -413,6 +415,8 @@ DEF TEMP-TABLE tt-contas_demitidas
 	FIELD datadevo AS DATE
 	FIELD mtdemiss LIKE crapass.cdmotdem.
 	
+DEFINE TEMP-TABLE tt-crapttl NO-UNDO
+    FIELD nmsocial AS CHAR.
 	
 /*...........................................................................*/
 

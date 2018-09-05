@@ -4,11 +4,9 @@
  * DATA CRIAÇÃO : Janeiro/2015
  * OBJETIVO     : Biblioteca de funções da rotina Convenio CDC  da tela de CONTAS
  * --------------
- * ALTERAÇÕES   : 09/03/2015 - Incluir o item Convenio CDC - Pessoa Fisica
- *                             (Andre Santos - SUPERO)
+ * ALTERAÇÕES   : 09/03/2015 - Incluir o item Convenio CDC - Pessoa Fisica  (Andre Santos - SUPERO)
  *							   
- *				  24/08/2015 - Projeto Reformulacao cadastral		   
- *						  	  (Tiago Castro - RKAM)			
+ *				  24/08/2015 - Projeto Reformulacao cadastral (Tiago Castro - RKAM)			
  *
  *                25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
  *
@@ -16,39 +14,74 @@
  *                             (Jaison/Anderson)
  *
  *                19/01/2016 - Alterado layout do form de conveio e adicionado lupa para o CEP. (Reinert)
-
-                  27/09/2017 - Ajute para chamar a rotina de consulta do CNAE da package zoom0001
-                              (Adriano - SD 765556).
-
+ *
+ *    		  	  27/09/2017 - Ajute para chamar a rotina de consulta do CNAE da package zoom0001
+ *                             (Adriano - SD 765556).
+ *
+ *				  29/11/2017 - Inclusão de novos campos, Prj. 402(Jean Michel)
+ * 
+ * 				  04/05/2018 - Inclusão de novos campos e funcionalidades 
+ *	                           Reestruturação CDC - Diego Simas - AMcom
+ *
+ *                01/06/2018 - Tratar exibição das abas ao acessar telas filhas.
+ *                             PRJ - Reestruturação CDC (Odirlei-AMcom)
+ *
  * --------------
  */
-
+ 
 var glbIdMatriz = 0, glbIdCooperado_CDC = 0;
 var camposOrigem = 'nrcepend;dslogradouro;nrendereco;complend;nrcxapst;nmbairro;cdufende;dscidade';
-// Função para acessar opções da rotina
-function acessaOpcaoAba() {
-    // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, carregando...");
+var qtdAbas = 4;
+var glb_cdsubsegmento = 0;
+var glb_cdusuario = 0;
 
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({
-        dataType: "html",
-        type: "POST",
-        url: UrlSite + "telas/atenda/convenio_cdc/principal.php",
-        data: {
-            nrdconta: nrdconta,
+// Função para acessar opções da rotina
+function acessaOpcaoAba(cddopcao, id) {
+    
+    exibeAbasCDC();
+    
+	if (cddopcao == "" || cddopcao == null || cddopcao == undefined) {
+		cddopcao = 'P';
+		id = 0;
+	}
+	for (var i = 0; i < qtdAbas; i++) {
+		$("#linkAba" + i).attr("class", "txtNormalBold");
+		$("#imgAbaEsq" + i).attr("src", UrlImagens + "background/mnu_nle.gif");
+		$("#imgAbaDir" + i).attr("src", UrlImagens + "background/mnu_nld.gif");
+		$("#imgAbaCen" + i).css("background-color", "#C6C8CA");
+
+		if (id == i) { // Atribui estilos para foco da op&ccedil;&atilde;o
+			$("#linkAba" + id).attr("class", "txtBrancoBold");
+			$("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
+			$("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
+			$("#imgAbaCen" + id).css("background-color", "#969FA9");
+		}
+	}
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando...");
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		dataType: "html",
+		type: "POST",		
+		url: UrlSite + "telas/atenda/convenio_cdc/principal.php",
+		data: {
+			nrdconta: nrdconta,
             inpessoa: inpessoa,
             idmatriz: 0,
-            redirect: "html_ajax"
-        },
+			cddopcao: cddopcao,
+			redirect: "html_ajax"
+		},
 		error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
+			hideMsgAguardo();
 			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina)); 
-        },
+		},
 		success: function(response) {
-            $('#divConteudoOpcao').html(response);
-}
-    });
+
+			$('#divConteudoOpcao').html(response);
+		}				
+	});
 }
 
 function manterRotina(operacao) {
@@ -56,6 +89,12 @@ function manterRotina(operacao) {
 	var idcooperado_cdc    = $('#idcooperado_cdc',    '#frmConvenioCdc').val();
     var flgconve           = $('#flgconve',           '#frmConvenioCdc').val();
 	var dtinicon           = $('#dtinicon',           '#frmConvenioCdc').val();
+	var inmotcan = $('#inmotcan', '#frmConvenioCdc').val();
+	var dtcancon = $('#dtcancon', '#frmConvenioCdc').val();
+	var dsmotcan = $('#dsmotcan', '#frmConvenioCdc').val();
+	var dtrencon = $('#dtrencon', '#frmConvenioCdc').val();
+	var dttercon = $('#dttercon', '#frmConvenioCdc').val();
+
     var nmfantasia         = $('#nmfantasia',         '#frmConvenioCdc').val();
     var cdcnae             = $('#cdcnae',             '#frmConvenioCdc').val();
     var dslogradouro       = $('#dslogradouro',       '#frmConvenioCdc').val();
@@ -66,7 +105,10 @@ function manterRotina(operacao) {
     var idcidade           = $('#idcidade',           '#frmConvenioCdc').val();
     var dstelefone         = $('#dstelefone',         '#frmConvenioCdc').val();
     var dsemail            = $('#dsemail',            '#frmConvenioCdc').val();
-    var dslink_google_maps = $('#dslink_google_maps', '#frmConvenioCdc').val();
+	var nrlatitude = $('#nrlatitude', '#frmConvenioCdc').val();
+	var nrlongitude = $('#nrlongitude', '#frmConvenioCdc').val();
+	var idcomissao = $('#idcomissao', '#frmConvenioCdc').val();
+	var flgitctr = $('#flgitctr', '#frmConvenioCdc').val();
 
     var fncRetorno  = '';
 	var msgRetorno  = '';
@@ -88,14 +130,21 @@ function manterRotina(operacao) {
 		default: 
 			msgRetorno      = 'Dados alterados com sucesso!';
             msgOperacao     = 'salvando altera&ccedil;&atilde;o';
+            if (glbIdMatriz == 0 || glbIdMatriz == '' ){
+                idmatriz = idcooperado_cdc;
+            }else{
+                idmatriz = glbIdMatriz;
             }
-
+            
+            
+            }
+	
 	showMsgAguardo('Aguarde, ' + msgOperacao + '...');
 
-    $.ajax({
-        type: 'POST',
-        url: UrlSite + 'telas/atenda/convenio_cdc/manter_rotina.php',
-        data: {
+	$.ajax({		
+		type: 'POST',
+		url: UrlSite + 'telas/atenda/convenio_cdc/manter_rotina.php', 		
+		data: {
 			cddopcao           : cddopcao,
             operacao           : operacao,
             nrdconta           : nrdconta,
@@ -104,6 +153,11 @@ function manterRotina(operacao) {
             idcooperado_cdc    : normalizaNumero(idcooperado_cdc),
 			flgconve           : normalizaNumero(flgconve),
 			dtinicon           : dtinicon,
+			inmotcan: inmotcan,
+			dtcancon: dtcancon,
+			dsmotcan: dsmotcan,
+			dtrencon: dtrencon,
+			dttercon: dttercon,
             nmfantasia         : nmfantasia,
             cdcnae             : cdcnae,
             dslogradouro       : dslogradouro,
@@ -114,30 +168,41 @@ function manterRotina(operacao) {
             idcidade           : normalizaNumero(idcidade),
             dstelefone         : dstelefone,
             dsemail            : dsemail,
-            dslink_google_maps : dslink_google_maps,
+			nrlatitude: nrlatitude,
+			nrlongitude: nrlongitude,
+			idcomissao: idcomissao,
+			flgitctr: normalizaNumero(flgitctr),
 			redirect           : 'script_ajax'
-        },
+		},
 		error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
+			hideMsgAguardo();
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
-        },
+		},
 		success: function(response) {
-            hideMsgAguardo();
+			hideMsgAguardo();
 
             // Se NAO possuir matriz volta para tela inicial, caso contratio volta para a listagem de filiais
-            fncRetorno = (idmatriz == 0 ? 'acessaOpcaoAba()' : 'abreFiliais(\'' + idmatriz + '\')');
+			fncRetorno = (idmatriz == idcooperado_cdc ? 'acessaOpcaoAba(\'P\',0)' : 'abreFiliais(\'' + idmatriz + '\')');
 
 			showError('inform',msgRetorno,'Alerta - Ayllos','bloqueiaFundo(divRotina);' + fncRetorno);
-            eval(response);
-
-}
-    });
+			eval(response);
+			
+		}				
+	});
 }
 
 function controlaLayout(operacao) {
 
 	var rFlgconve           = $('label[for="flgconve"]',           '#frmConvenioCdc');
 	var rDtinicon           = $('label[for="dtinicon"]',           '#frmConvenioCdc');
+	var rInmotcan = $('label[for="inmotcan"]', '#frmConvenioCdc');
+	var rDtcancon = $('label[for="dtcancon"]', '#frmConvenioCdc');
+	var rDsmotcan = $('label[for="dsmotcan"]', '#frmConvenioCdc');
+	var rDtrencon = $('label[for="dtrencon"]', '#frmConvenioCdc');
+	var rDttercon = $('label[for="dttercon"]', '#frmConvenioCdc');
+	var rDtacectr = $('label[for="dtacectr"]', '#frmConvenioCdc');
+
+	var rIdcooperado_cdc = $('label[for="idcooperado_cdc"]', '#frmConvenioCdc');
     var rNmfantasia         = $('label[for="nmfantasia"]',         '#frmConvenioCdc');
     var rCdcnae             = $('label[for="cdcnae"]',             '#frmConvenioCdc');
     var rDslogradouro       = $('label[for="dslogradouro"]',       '#frmConvenioCdc');
@@ -150,10 +215,21 @@ function controlaLayout(operacao) {
     var rCdufende           = $('label[for="cdufende"]',           '#frmConvenioCdc');
     var rDstelefone         = $('label[for="dstelefone"]',         '#frmConvenioCdc');
     var rDsemail            = $('label[for="dsemail"]',            '#frmConvenioCdc');
-    var rDslink_google_maps = $('label[for="dslink_google_maps"]', '#frmConvenioCdc');
+	var rIdcomissao = $('label[for="idcomissao"]', '#frmConvenioCdc');
+	var rNrlatitude = $('label[for="nrlatitude"]', '#frmConvenioCdc');
+	var rNrlongitude = $('label[for="nrlongitude"]', '#frmConvenioCdc');
+	var rFlgitctr = $('label[for="flgitctr"]', '#frmConvenioCdc');
+
 
 	var cFlgconve           = $('#flgconve',                       '#frmConvenioCdc');
 	var cDtinicon           = $('#dtinicon',                       '#frmConvenioCdc');
+	var cInmotcan = $('#inmotcan', '#frmConvenioCdc');
+	var cDtcancon = $('#dtcancon', '#frmConvenioCdc');
+	var cDsmotcan = $('#dsmotcan', '#frmConvenioCdc');
+	var cDtrencon = $('#dtrencon', '#frmConvenioCdc');
+	var cDttercon = $('#dttercon', '#frmConvenioCdc');
+	var cDtacectr = $('#dtacectr', '#frmConvenioCdc');
+    var cIdcooperado_cdc = $('#idcooperado_cdc', '#frmConvenioCdc');
     var cNmfantasia         = $('#nmfantasia',                     '#frmConvenioCdc');
     var cCdcnae             = $('#cdcnae',                         '#frmConvenioCdc');
     var cDscnae             = $('#dscnae',                         '#frmConvenioCdc');
@@ -167,13 +243,26 @@ function controlaLayout(operacao) {
 	var cCdufende           = $('#cdufende',           		       '#frmConvenioCdc');
     var cDstelefone         = $('#dstelefone',                     '#frmConvenioCdc');
     var cDsemail            = $('#dsemail',                        '#frmConvenioCdc');
-    var cDslink_google_maps = $('#dslink_google_maps',             '#frmConvenioCdc');
+	var cIdcomissao = $('#idcomissao', '#frmConvenioCdc');
+	var cNmcomissao = $('#nmcomissao', '#frmConvenioCdc');
+	var cNrlatitude = $('#nrlatitude', '#frmConvenioCdc');
+	var cNrlongitude = $('#nrlongitude', '#frmConvenioCdc');
+	var cFlgitctr = $('#flgitctr', '#frmConvenioCdc');
 
 	$('#frmConvenioCdc').css({'padding-top':'5px','padding-bottom':'15px'});
 
 	// Formatação dos rotulos
-	rFlgconve.css('width','150px');		
-	rDtinicon.css('width','150px');
+	rFlgconve.css('width','134px');		
+	rDtinicon.css('width', '69px');
+	rInmotcan.css('width', '46px');
+	rDsmotcan.css('width', '66px');
+	rDtcancon.css('width', '62px');
+	rDtrencon.css('width', '94px');
+	rDttercon.css('width', '85px');
+	rDtacectr.css('width', '90px');
+	rFlgitctr.css('width', '105px');
+    
+    rIdcooperado_cdc.addClass('rotulo').css({ 'width': '110px' });
     rNmfantasia.addClass('rotulo').css({'width': '110px'});
     rCdcnae.addClass('rotulo').css({'width': '110px'});
     rNrcep.addClass('rotulo').css({'width': '110px'});
@@ -185,10 +274,20 @@ function controlaLayout(operacao) {
 	rCdufende.addClass('rotulo-linha').css({'width': '20px'});
     rDstelefone.addClass('rotulo').css({'width': '110px'});
     rDsemail.addClass('rotulo').css({'width': '110px'});
-    rDslink_google_maps.addClass('rotulo').css({'width': '110px'});
+	rIdcomissao.addClass('rotulo').css({ 'width': '110px' });
+	rNrlatitude.addClass('rotulo').css({ 'width': '110px' });
+	rNrlongitude.addClass('rotulo').css({ 'width': '110px' });
 	
 	cFlgconve.addClass('campo').css('width','50px');
-	cDtinicon.addClass('campo').addClass('data').css({'width':'85px'});
+	//cFlgitctr.addClass('campo').css('width', '50px');
+	cDtinicon.addClass('campo').addClass('data').css({ 'width': '70px' });
+	cInmotcan.addClass('campo').css({ 'width': '110px' });
+	cDsmotcan.addClass('campo').css({ 'width': '121px' });
+	cDtcancon.addClass('campo').addClass('data').css({ 'width': '70px' });
+	cDtrencon.addClass('campo').addClass('data').css({ 'width': '70px' });
+	cDttercon.addClass('campo').addClass('data').css({ 'width': '70px' });
+	cDtacectr.addClass('campo').addClass('data').css({ 'width': '70px' });
+    cIdcooperado_cdc.addClass('campo').addClass('inteiro').css({ 'width': '70px' })	
     cNmfantasia.addClass('campo').css({'width':'370px'}).attr('maxlength','500');
     cCdcnae.addClass('campo pesquisa').css({'width':'80px'}).attr('maxlength','10');
     cDscnae.addClass('campo').addClass('data').css({'width':'267px'});
@@ -202,10 +301,18 @@ function controlaLayout(operacao) {
 	cCdufende.addClass('campo').css({'width':'31px'});
     cDstelefone.addClass('campo').css({'width':'370px'}).attr('maxlength','50');
     cDsemail.addClass('campo').css({'width':'370px'}).attr('maxlength','200');
-    cDslink_google_maps.addClass('campo').css({'width':'370px','height':'70px','float':'left','margin':'3px 0px 3px 3px'}).attr('maxlength','500');
+	cIdcomissao.addClass('campo pesquisa').css({ 'width': '60px' }).attr('maxlength', '10').setMask('INTEGER', 'zzzzzzzz', '', '');
+	cNmcomissao.addClass('campo').css({ 'width': '287px' }).attr('maxlength', '200');
 
+	cNrlatitude.addClass('campo').css({ 'width': '150px' });
+	cNrlongitude.addClass('campo').css({ 'width': '150px' });
+	cDtacectr.desabilitaCampo();
+	cDttercon.desabilitaCampo();
+	cDtrencon.desabilitaCampo();
+    cIdcooperado_cdc.desabilitaCampo();
+		
 	highlightObjFocus( $('#frmConvenioCdc') );
-
+				
     switch (operacao) {			
         case 'FCI': // Filial - Consulta para Inclusao
         case 'FCA': // Filial - Consulta para Alteracao
@@ -213,8 +320,8 @@ function controlaLayout(operacao) {
             break;
         default: 
             $('.clsCampos', '#frmConvenioCdc').show();
-    }
-
+	}
+			
 	cFlgconve.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cDtinicon.focus();
@@ -225,14 +332,42 @@ function controlaLayout(operacao) {
 			showConfirmacao('Deseja importar os dados de endere&ccedil;o da Tela CONTAS?','Confirma&ccedil;&atilde;o - Ayllos','buscaInformacoesCadastro();$(\'#dtinicon\',\'#frmConvenioCdc\').focus();','bloqueiaFundo(divRotina);cDtinicon.focus();','sim.gif','nao.gif');
 		}
 	});
-
+	
 	cDtinicon.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
+			cInmotcan.focus();
+			return false;
+		}
+	});
+
+	cInmotcan.unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			cDsmotcan.focus();
+			return false;
+		}
+	});
+
+	cDsmotcan.unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			cDtcancon.focus();
+			return false;
+		}
+	});
+
+	cDtcancon.unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			cFlgitctr.focus();
+			return false;
+		}
+	});
+
+	cFlgitctr.unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
 			cNmfantasia.focus();
 			return false;
 }
-	});
-
+	});	
+	
 	cNmfantasia.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
             // Filial - Consulta para Inclusao ou Filial - Consulta para Alteracao
@@ -242,7 +377,7 @@ function controlaLayout(operacao) {
                 cCdcnae.focus();
             }
 			return false;
-    }
+}
 	});
 
 	cCdcnae.unbind('keypress').bind('keypress', function(e) {
@@ -263,14 +398,14 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-
+	
 	cDslogradouro.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cNrendereco.focus();
 			return false;
 		}
 	});
-	
+
 	cNrendereco.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cDscomplemento.focus();
@@ -284,15 +419,15 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-
+	
 	cNmbairro.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cIdcidade.focus();
 			return false;
 		}
 	});
-
 	
+
 	cIdcidade.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cDstelefone.focus();
@@ -303,18 +438,36 @@ function controlaLayout(operacao) {
 	cDstelefone.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
 			cDsemail.focus();
-            return false;
-        }
-    });
-
+			return false;
+		}
+	});
+	
 	cDsemail.unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {
-			cDslink_google_maps.focus();
-            return false;
-        }
-    });
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {		
+			cNrlatitude.focus();
+			return false;
+		}
+	});
+	
+	cNrlatitude.unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			cNrlongitude.focus();
+			return false;
+		}
+	});
 
-	cDslink_google_maps.unbind('keypress').bind('keypress', function(e) {
+	cNrlatitude.keyup(function () {
+
+		this.value = this.value.replace(/\./g, ',').replace(/[^0-9,.-]/g, '');// Deixa digitar somente hífen, ponto e número
+
+		if ((this.value.match(/^\-$/g) || []).length == 0) //Remove a última ocorrência do hífen
+			this.value = this.value.replace(/\-$/g, '');
+
+		if ((this.value.match(/\,/g) || []).length > 1) //Remove as ocorrências de vírgula (,), deixando apenas a primeira
+			this.value = this.value.replace(/\,$/g, '');
+	});
+
+	cNrlongitude.unbind('keypress').bind('keypress', function (e) {
 		if ( e.keyCode == 9 || (e.keyCode == 13 && !e.shiftKey) ) {
 
             switch (operacao) {
@@ -327,42 +480,48 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-    cDslink_google_maps.bind('input propertychange', function() {
-        var maxLength = $(this).attr('maxlength');
-        if ($(this).val().length > maxLength) {
-            $(this).val($(this).val().substring(0, maxLength));
-    }
-    });
 
+	cNrlongitude.keyup(function () {
+		this.value = this.value.replace(/\./g, ',').replace(/[^0-9,.-]/g, '');// Deixa digitar somente hífen, ponto e número
+
+		if ((this.value.match(/^\-$/g) || []).length == 0) //Remove a última ocorrência do hífen
+			this.value = this.value.replace(/\-$/g, '');
+
+		if ((this.value.match(/\,/g) || []).length > 1) //Remove as ocorrências de vírgula (,), deixando apenas a primeira
+			this.value = this.value.replace(/\,$/g, '');
+
+    });
+	
 	var divRegistro = $('div.divRegistros','#divTitularCDCPrincipal');		
 	var tabela      = $('table', divRegistro );
-
+					
 	divRegistro.css('height','55px');
+					
+	var ordemInicial = new Array();
 
-    var ordemInicial = new Array();
-
-
-    var arrayLargura = new Array();
-    arrayLargura[0] = '70px';
 
     var arrayLargura = new Array();
     arrayLargura[0] = '70px';
-
-    var arrayAlinha = new Array();
-    arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'left';
-
+			
+	var arrayLargura = new Array();
+	arrayLargura[0] = '70px';
+					
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'left';
+							
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
-
+	
 	$('tbody > tr',tabela).each( function() {
 		if ( $(this).hasClass('corSelecao') ) {
-            $(this).focus();
-        }
+			$(this).focus();		
+		}
 	});
 		
     switch (operacao) {
         case 'CA': // Consulta para Alteração
             cDscnae.desabilitaCampo();
+			cNmcomissao.desabilitaCampo();
             cDscidade.desabilitaCampo();
 			cCdufende.desabilitaCampo();
             if (inpessoa == 1) {
@@ -395,6 +554,17 @@ function controlaLayout(operacao) {
 
 function controlaOperacao(operacao) {
 
+	// integracao cdc
+	var flgconve = $('#flgconve', '#frmConvenioCdc').val();
+	var dtcancon = $('#dtcancon', '#frmConvenioCdc').val();
+	var inmotcan = $('#inmotcan', '#frmConvenioCdc').val();
+	var dsmotcan = $('#dsmotcan', '#frmConvenioCdc').val();
+	var idcidade = $('#idcidade', '#frmConvenioCdc').val();
+	var dscidade = $('#dscidade', '#frmConvenioCdc').val();
+	var dtinicon = $('#dtinicon', '#frmConvenioCdc').val();
+
+    exibeAbasCDC();
+    
 	// Verifica permissões de acesso
 	if ( (operacao == 'CA')  && (flgAlterar != '1') ||
          (operacao == 'FCE') && (flgExcluir != '1') ||
@@ -407,15 +577,42 @@ function controlaOperacao(operacao) {
     // Se foi clicado para Excluir ou Alterar filial e nao possui registros
     if ($('#tBodyRegs tr').length == 0 &&
         (operacao == 'FCE' || operacao == 'FCA')) {
+        ocultaAbasCDC();    
         showError('error','Nenhuma filial dispon&iacute;vel.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
 		return false;
     }
 	
-	if ((operacao == 'ALTERAR' || operacao == 'INCLUIR') &&
-		($('#idcidade', '#frmConvenioCdc').val() == 0 &&
-		 $('#dscidade', '#frmConvenioCdc').val() != '')){
+	if (operacao == 'ALTERAR' || operacao == 'INCLUIR') {
+
+		// valida cidade
+		if (idcidade == 0 && dscidade != '') {
 		showError('error','Informe o c&oacute;digo da cidade.','Alerta - Ayllos','bloqueiaFundo(divRotina);$(\'#idcidade\', \'#frmConvenioCdc\').focus();');
 		return false;
+	}
+
+		// valida data de inicio convenio cdc
+		if (flgconve == 1 && (dtinicon == "" || dtinicon == null || dtinicon == undefined)) {
+			showError('error', 'Informe a data de inicio do convenio cdc.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			return false;
+		}
+
+		// valida data de cancelamento
+		if (flgconve == 0 && (dtcancon == "" || dtcancon == null || dtcancon == undefined)) {
+			showError('error', 'Informe a data de cancelamento.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			return false;
+		}
+
+	    // valida motivo de cancelamento
+	    if (flgconve == 0 && inmotcan == 0) {
+			showError('error', 'Selecione o motivo do cancelamento.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			return false;
+		}
+
+		// validq descricao de outros
+		if (flgconve == 0 && inmotcan == 5 && (dsmotcan == "" || dsmotcan == null || dsmotcan == undefined)) {
+			showError('error', 'Preencha o motivo do cancelamento.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			return false;
+		}
 	}
 
 	// Mostra mensagem de aguardo
@@ -443,6 +640,8 @@ function controlaOperacao(operacao) {
 			break;
 		// Carregar tela de filiais
 		case 'FILIAIS':
+            ocultaAbasCDC();
+            
             var idcooperado_cdc = (normalizaNumero(glbIdMatriz) == 0 ? normalizaNumero($('#idcooperado_cdc', '#frmConvenioCdc').val()) : normalizaNumero(glbIdMatriz));
             if (idcooperado_cdc == 0) {
                 showError('error','Antes de acessar as filiais &eacute; necess&aacute;rio gravar os dados da matriz.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
@@ -460,6 +659,7 @@ function controlaOperacao(operacao) {
 			break;
 		// Filial - Consulta para Inclusao
 		case 'FCI':
+            ocultaAbasCDC();
             msgOperacao     = 'abrindo inclus&atilde;o';
             idmatriz        = glbIdMatriz;
             idcooperado_cdc = 0;
@@ -467,10 +667,16 @@ function controlaOperacao(operacao) {
             break;
 		// Filial - Consulta para Alteracao
 		case 'FCA':
+            ocultaAbasCDC();
             msgOperacao     = 'abrindo altera&ccedil;&atilde;o';
             idmatriz        = glbIdMatriz;
             idcooperado_cdc = glbIdCooperado_CDC;
             cddopcao        = 'A';
+			break;
+		// Subsegmento - Cancelar inclusão
+		case 'SCI':
+			showConfirmacao('Deseja cancelar a inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'acessaOpcaoAba(\'S\',0);', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+			return false;
             break;
 		default: 
 			msgOperacao = 'abrindo consulta';
@@ -505,7 +711,7 @@ function controlaOperacao(operacao) {
 			}
 			return false;
 		}				
-	});			
+	});
 }
 
 function controlaPesquisas() {
@@ -521,7 +727,7 @@ function controlaPesquisas() {
 	lupas.each( function(i) {
 	
 		if ( !$(this).prev().hasClass('campoTelaSemBorda') ) $(this).css('cursor','pointer');
-		
+	
 		$(this).unbind("click").bind("click",( function() {
 			if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
 				return false;
@@ -553,6 +759,22 @@ function controlaPesquisas() {
                     colunas     = 'Codigo;idcidade;30%;center|Cidade;dscidade;60%;left|UF;cdestado;10%;center';
                     mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
                     return false;
+				} else if (campoAnterior == 'idcomissao') {
+
+					var idcomissao = $('#idcomissao', '#frmConvenioCdc').val();
+    				var nmcomissao = $('#nmcomissao', '#frmConvenioCdc').val();
+
+					pck = 'zoom0001';
+					acao = 'BUSCA_COMISSAO';
+					titulo = 'Comiss&atildeo';
+					qtReg = '';
+					filtros = 'C&oacuted. Comiss&atildeo;idcomissao;30px;S;' + idcomissao + ';S|Comiss&atildeo;nmcomissao;200px;S;' + nmcomissao + ';S';
+					colunas = 'C&oacuted. Comiss&atildeo;idcomissao;20%;center' +
+							  '|Comiss&atildeo;nmcomissao;48%;left';
+					mostraPesquisa(pck, acao, titulo, qtReg, filtros, colunas);
+					var telaPrincipal = $('#divPesquisa');
+					telaPrincipal.css('zIndex', 4000);
+					return false;
                 }
 			}
 		}));
@@ -601,8 +823,8 @@ function abreFiliais(idmatriz) {
 	bloqueiaFundo(divRotina);	
 	$(this).fadeIn(1000);
 	divRotina.centralizaRotinaH(); 
-			return false;
-		}
+	return false;	
+}
 	});
 }
 
@@ -685,4 +907,345 @@ function buscaInformacoesCadastro(){
             eval(response);
         }
     });		
+}
+
+
+function formataTabelaSegmento() {
+	var divRegistro = $('div.divRegistros', '#divConteudoOpcao');
+	var tabela = $('#tableSegmento', divRegistro);
+
+	divRegistro.css('height', '300px');
+	divRegistro.css('width', '650px');
+
+	var ordemInicial = new Array();
+
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '70px';
+	arrayLargura[1] = '35px';
+	arrayLargura[2] = '120px';
+	arrayLargura[3] = '35px';
+	arrayLargura[4] = '100px';
+	arrayLargura[5] = '75px';	
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'left';
+	arrayAlinha[1] = 'right';
+	arrayAlinha[2] = 'left';
+	arrayAlinha[3] = 'right';
+	arrayAlinha[4] = 'left';
+	arrayAlinha[5] = 'center';
+	arrayAlinha[6] = 'right';
+	arrayAlinha[7] = 'center';
+
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+	$('tbody > tr', tabela).each(function () {
+		if ($(this).hasClass('corSelecao')) {
+			$(this).click();
+			$(this).focus();
+		}
+	});
+}
+
+function formataTabelaVendedores() {
+	var divRegistro = $('div.divRegistros', '#divConteudoOpcao');
+	var tabela = $('#tableVendedores', divRegistro);
+
+	divRegistro.css('height', '300px');
+	divRegistro.css('width', '750px');
+
+	var ordemInicial = new Array();
+
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '44px';
+	arrayLargura[1] = '178px';
+	arrayLargura[2] = '94px';
+	arrayLargura[3] = '144px';
+	arrayLargura[4] = '44px';
+	//arrayLargura[5] = '162px';	
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'left';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'left';
+	arrayAlinha[4] = 'center';
+	arrayAlinha[5] = 'left';
+	
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+	$('tbody > tr', tabela).each(function () {
+		if ($(this).hasClass('corSelecao')) {
+			$(this).click();
+			$(this).focus();
+		}
+	});
+}
+
+function formataTabelaUsuarios() {
+	var divRegistro = $('div.divRegistros', '#divConteudoOpcao');
+	var tabela = $('#tableUsuarios', divRegistro);
+
+	divRegistro.css('height', '300px');
+	divRegistro.css('width', '750px');
+
+	var ordemInicial = new Array();
+
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '24px';
+	arrayLargura[1] = '33px';
+	arrayLargura[2] = '22px';
+	arrayLargura[3] = '47px';
+	arrayLargura[4] = '19px';
+	arrayLargura[5] = '48px';	    
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'left';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+	arrayAlinha[5] = 'left';
+  
+	
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+	$('tbody > tr', tabela).each(function () {
+		if ($(this).hasClass('corSelecao')) {
+			$(this).click();
+			$(this).focus();
+		}
+	});
+}
+
+function controlaPesquisasSegmentos() {
+	// Variável local para guardar o elemento anterior
+	var campoAnterior = '';
+	var bo, procedure, titulo, qtReg, filtros, colunas, filtrosPesq, filtrosDesc, cdsubsegmento, dssubsegmento;
+
+	cdsubsegmento = $('#cdsubsegmento', '#frmIncluiSegCdc').val();
+	dssubsegmento = $('#dssubsegmento', '#frmIncluiSegCdc').val();
+
+	bo = 'TELA_ATENDA_CVNCDC'
+	procedure = 'LISTA_SUBSEGMENTOS';
+	titulo = 'Subsegmentos';
+	qtReg = '20';
+	filtrosPesq = 'Codigo;cdsubsegmento;70px;S;' + cdsubsegmento + ';S;cdsubsegmento|Descricao;dssubsegmento;200px;S;' + dssubsegmento + ';S;descricao|Coop;cdcooper;1px;N;' + cdcooper + ';N;cdcooper'; 
+	colunas = 'Codigo;cdsubsegmento;10%;center|Descricao;dssubsegmento;45%;left|Segmento;dssegmento;45%;center';
+	mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+	return false;
+}
+
+function controlaPesquisaVinculo() {
+	// Variável local para guardar o elemento anterior
+	var campoAnterior = '';
+	var bo, procedure, titulo, qtReg, filtros, colunas, filtrosPesq, filtrosDesc, cdsubsegmento, dssubsegmento;
+
+	idcooperado_cdc = $('#idcooperado_cdc', '#idcooperado_cdc').val();
+
+    cdvinculo = 0;
+	dsvinculo = '';
+
+	bo = 'TELA_ATENDA_CVNCDC'
+	procedure = 'LISTA_VINCULOS';
+	titulo = 'V&iacute;nculos';
+	qtReg = '20';
+	filtrosPesq = 'Codigo;cdvinculo;70px;S;' + cdvinculo + ';S;cdvinculo|'+
+		'Descri&ccedil&atildeo;dsvinculo;200px;S;' + dsvinculo + ';S;dsvinculo|'+
+		';idcooperado_cdc;;N;' + idcooperado_cdc + ';N';		
+	colunas = 'Codigo;cdvinculo;10%;center|Descricao;dsvinculo;45%;left';
+	mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
+	return false;
+}
+
+function manterSubsegmento(cddopcao) {
+	var idcooperado_cdc = 0;
+	var cdsubsegmento = 0;
+
+	if (cddopcao == "I") {
+		idcooperado_cdc = $('#idcooperado_cdc', '#frmIncluiSegCdc').val();
+		cdsubsegmento = $('#cdsubsegmento', '#frmIncluiSegCdc').val();
+	} else if (cddopcao == "E") {
+		idcooperado_cdc = $('#idcooperado_cdc', '#frmSegmentoCdc').val();
+		cdsubsegmento = glb_cdsubsegmento;
+	}
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/convenio_cdc/manter_subsegmento.php',
+		data: {
+			cddopcao: cddopcao,
+			cdsubsegmento: cdsubsegmento,
+			idcooperado_cdc: normalizaNumero(idcooperado_cdc),
+			redirect: "html_ajax"
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			eval(response);
+			return false;
+		}
+	});
+}
+
+function alteraUsuario() {
+
+	var cddopcao = 'A';
+	var senha = $('#senha', '#frmUsuario').val();
+	var tipo = $('#tipo', '#frmUsuario').val();
+	var vinculo = $('#cdvinculo', '#frmUsuario').val();
+	var ativo = $('#ativo', '#frmUsuario').val();
+    var bloqueio = $('#bloqueio', '#frmUsuario').val();
+	var senhaUsuario = $('#senhaUsuario', '#frmUsuario').val();
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/convenio_cdc/manter_usuario.php',
+		data: {
+			cddopcao: cddopcao,
+			senha: senha,
+			tipo: normalizaNumero(tipo),
+			vinculo: normalizaNumero(vinculo),
+			ativo: normalizaNumero(ativo),
+			bloqueio: normalizaNumero(bloqueio),
+			cdusuario: glb_cdusuario,
+			senhaUsuario: senhaUsuario,
+			redirect: "html_ajax"
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			eval(response);
+		}
+	});
+}
+
+function selecionaSubsegmento(cdsubsegmento) {
+	glb_cdsubsegmento = cdsubsegmento;
+}
+
+function selecionaUsuario(cdusuario) {
+	glb_cdusuario = cdusuario;
+}
+
+function mostraFormInclusaoSeg(idcooperado_cdc) {
+
+    idcooperado_cdc = $('#idcooperado_cdc', '#frmSegmentoCdc').val();
+
+	// não deixar incluir segmentos para um lojista desabilitado
+	if (idcooperado_cdc == 0 || idcooperado_cdc==null || idcooperado_cdc==undefined){
+		showError('error', 'Lojista nao esta habilitado!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		return false;
+	}
+
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando...");
+	$.ajax({
+		dataType: 'html',
+		type: 'POST',
+		url: UrlSite + 'telas/atenda/convenio_cdc/form_inclui_segmento_cdc.php',
+		data: {
+			idcooperado_cdc: normalizaNumero(idcooperado_cdc),
+			redirect: "html_ajax"
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			$('#divConteudoOpcao').html(response);
+            ocultaAbasCDC();
+			return false;
+		}
+	});
+}
+
+function mostraFormUsuAlterar(idcooperado_cdc) {
+
+    // Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando...");
+	$.ajax({
+		dataType: 'html',
+		type: 'POST',
+		url: UrlSite + 'telas/atenda/convenio_cdc/form_altera_usuario.php',
+		data: {
+			idcooperado_cdc: normalizaNumero(idcooperado_cdc),
+            idusuario: glb_cdusuario,
+			redirect: "html_ajax"
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			$('#divConteudoOpcao').html(response);
+            ocultaAbasCDC();
+			return false;
+		}
+	});  
+
+}
+
+function formataInclusaoSegmento() {
+
+	/* ABA SEGMENTOS */
+	var rCdsubsegmento = $('label[for="cdsubsegmento"]', '#frmIncluiSegCdc');
+	var cCdsubsegmento = $('#cdsubsegmento', '#frmIncluiSegCdc');
+	var cDssubsegmento = $('#dssubsegmento', '#frmIncluiSegCdc');
+	cCdsubsegmento.addClass('campo').addClass('inteiro').css({ 'width': '35px' });
+	cDssubsegmento.addClass('campo').css({ 'width': '250px' });
+
+	/* SUBSEGMENTO */
+	cCdsubsegmento.unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			controlaPesquisasSegmentos();
+			return false;
+		}
+	});
+
+	cDssubsegmento.unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			controlaPesquisasSegmentos();
+			return false;
+		}
+	});
+
+	layoutPadrao();
+	hideMsgAguardo();
+	bloqueiaFundo(divRotina);
+	$(this).fadeIn(1000);
+	divRotina.centralizaRotinaH();
+
+	return false;
+}
+
+function formataUsuario() {
+  layoutPadrao();
+	hideMsgAguardo();
+	bloqueiaFundo(divRotina);
+	$(this).fadeIn(1000);
+	divRotina.centralizaRotinaH();
+	return false;
+}
+
+// Controlar exibição das abas ao abrir telas filhas
+function ocultaAbasCDC(){
+    
+    $('#tbAbasCDC').css({'display':'none'});
+    return false;
+}
+
+function exibeAbasCDC(){
+    
+    $('#tbAbasCDC').css({'display':'block'});
+    return false;
 }

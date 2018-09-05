@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0151.p
      Autor   : Gabriel Capoia
-     Data    : 26/01/2013                    Ultima atualizacao: 14/05/2018
+     Data    : 26/01/2013                    Ultima atualizacao: 17/08/2018
 
      Objetivo  : BO de Comunicacao XML x BO - Tela CTASAL
 
@@ -20,6 +20,8 @@
            14/05/2018 - Incluido novo campo "Tipo de Conta" (tpctatrf) na tela CTASAL
                               Projeto 479-Catalogo de Servicos SPB (Mateus Z - Mouts)
                               
+				 17/08/2018 - Removendo validacao do titular do javascript e colocando no
+				         	  progress. (SCTASK002723 - Kelvin)				 
 ............................................................................*/
 
 
@@ -180,6 +182,7 @@ PROCEDURE Valida_Dados:
                     INPUT aux_nrdigtrf,
                     INPUT aux_nrcpfcgc,
                     INPUT aux_tpctatrf,
+					INPUT aux_nmfuncio,
                    OUTPUT aux_nmdcampo, 
                    OUTPUT TABLE tt-erro).
     

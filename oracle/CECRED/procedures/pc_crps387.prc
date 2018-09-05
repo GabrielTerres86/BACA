@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 08/06/2018
+   Data    : Abril/2004                        Ultima atualizacao: 21/08/2018
 
    Dados referentes ao programa:
 
@@ -459,6 +459,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                08/06/2018 - Incluir tratamento para caracteres especiais de quebra de XML
                             para o relatório, utilizado a função fn_caract_controle
                             (Lucas Ranghetti #INC0016783)
+                            
+               21/08/2018 - Tratar busca e update da craplau para buscarmos também 
+                            pelo nrcrcard para que possamos cancelar os registros
+                            que vieram no arquivo (Lucas Ranghetti INC0021039)
 ............................................................................ */
 
     DECLARE
@@ -730,7 +734,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            AND (craplau.dtmvtolt = nvl(pr_dtmvtolt, to_date('31122999','ddmmyyyy'))
            OR   craplau.dtmvtopg = pr_dtmvtopg)
            AND  craplau.cdhistor = pr_cdhistor
-           AND  craplau.nrdocmto = pr_nrdocmto
+           AND (craplau.nrdocmto = pr_nrdocmto
+           OR   craplau.nrcrcard = pr_nrdocmto) -- Para cancelamento (duplicados)
            AND  craplau.insitlau <> 3
            AND  craplau.dsorigem <> 'CAIXA'
            AND  craplau.dsorigem <> 'INTERNET'
@@ -1834,7 +1839,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            AND (craplau.dtmvtolt = nvl(null, to_date('31122999','ddmmyyyy'))
            OR   craplau.dtmvtopg = pr_dtmvtopg)
            AND  craplau.cdhistor = pr_cdhistor
-           AND  craplau.nrdocmto = pr_nrdocmto
+           AND (craplau.nrdocmto = pr_nrdocmto
+           OR   craplau.nrcrcard = pr_nrdocmto) -- Para cancelamento (duplicados)
            AND  craplau.vllanaut = pr_vllanaut
            AND  craplau.insitlau <> 3
            AND  craplau.dsorigem <> 'CAIXA'

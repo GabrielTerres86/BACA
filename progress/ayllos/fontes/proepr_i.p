@@ -1930,6 +1930,7 @@ RUN grava-proposta-completa IN h-b1wgen0002
                                 INPUT 0, /* idcobope */
 								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
 								INPUT "", /* par_dscatbem */
+								INPUT 1, /* par_inresapr */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,

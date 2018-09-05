@@ -26,7 +26,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0115.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Setembro/2011                     Ultima atualizacao: 01/11/2017
+    Data    : Setembro/2011                     Ultima atualizacao: 30/07/2018
 
     Objetivo  : Tranformacao BO tela ADITIV
 
@@ -157,10 +157,18 @@
 
                01/11/2017 - Ajustes conforme inclusao do campo tipo de contrato.
                             (Jaison/Marcos Martini - PRJ404)
-							
+
 			   17/07/2018 - Para impressão de aditivos de contratos, se tpctrato = 90, substituir a
                   	        utilizacao da data do contrato pela data do aditivo, se existir (aux_dtcontra)
                             (Ana - Envolti - INC0019463)
+
+               30/07/2018 - P442 - Inclusão de campos do projeto e remocao 
+                            das logicas de aditivos do tipo 5, movidos para
+                            Oracle (Marcos-Envolti)
+
+               08/08/2018 - Ajuste no campo nrdplaca, ufdplaca, uflicenc, dsbemfin e dscorbem para formatar
+                            os caracteres para caracteres maiusculos. Chamado PRB0040116 (Gabriel - Mouts).
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -421,13 +429,19 @@ PROCEDURE Busca_Dados:
                                  tt-aditiv.nmdgaran = xText:NODE-VALUE WHEN xField:NAME = "nmdgaran"
                                  tt-aditiv.flgpagto = LOGICAL(INTE(xText:NODE-VALUE)) WHEN xField:NAME = "flgpagto"
                                  tt-aditiv.dtdpagto = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdpagto"
+                                 tt-aditiv.dscatbem = xText:NODE-VALUE WHEN xField:NAME = "dscatbem"
+                                 tt-aditiv.dsmarbem = xText:NODE-VALUE WHEN xField:NAME = "dsmarbem"
                                  tt-aditiv.dsbemfin = xText:NODE-VALUE WHEN xField:NAME = "dsbemfin"
                                  tt-aditiv.dschassi = xText:NODE-VALUE WHEN xField:NAME = "dschassi"
                                  tt-aditiv.nrdplaca = xText:NODE-VALUE WHEN xField:NAME = "nrdplaca"
                                  tt-aditiv.dscorbem = xText:NODE-VALUE WHEN xField:NAME = "dscorbem"
                                  tt-aditiv.nranobem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nranobem"
                                  tt-aditiv.nrmodbem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrmodbem"
-                                 tt-aditiv.nrrenava = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrrenava"
+                                 tt-aditiv.dstipbem = xText:NODE-VALUE WHEN xField:NAME = "dstipbem"
+                                 tt-aditiv.dstpcomb = xText:NODE-VALUE WHEN xField:NAME = "dstpcomb"
+                                 tt-aditiv.vlrdobem = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlrdobem"                                 
+                                 tt-aditiv.vlfipbem = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlfipbem"
+                                 tt-aditiv.nrrenava = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrrenava"
                                  tt-aditiv.tpchassi = INTE(xText:NODE-VALUE) WHEN xField:NAME = "tpchassi"
                                  tt-aditiv.ufdplaca = xText:NODE-VALUE WHEN xField:NAME = "ufdplaca"
                                  tt-aditiv.uflicenc = xText:NODE-VALUE WHEN xField:NAME = "uflicenc"
@@ -727,56 +741,6 @@ PROCEDURE Valida_Dados:
                             END. /*FOR EACH tt-aplicacoes:*/
 
                         END. /* par_cdaditiv = 3 */
-                    WHEN 5 THEN
-                        DO:
-                            IF  par_dsbemfin = ""                      OR
-                                NOT CAN-DO("1,2",STRING(par_tpchassi)) OR
-                                par_dschassi = ""                      OR
-                                par_dscorbem = ""                      OR
-                                par_nranobem = 0                       OR
-                                par_nrmodbem = 0                       OR
-                                par_uflicenc = "" /* Retirado (Gravames) OR
-                                par_nrrenava = 0                       OR
-                                par_nrdplaca = ""                      OR
-                                par_ufdplaca = ""              */        THEN DO:
-
-                                ASSIGN aux_cdcritic = 375.
-                                LEAVE Valida.
-                            END.
-
-                            /** GRAVAMES - Ou preenche os 3 ou nao preenche nenhum **/
-                            IF  NOT (par_nrdplaca = "" AND
-                                     par_ufdplaca = "" AND
-                                     par_nrrenava = 0)
-                            AND NOT (par_nrdplaca <> "" AND
-                                     par_ufdplaca <> "" AND
-                                     par_nrrenava <> 0) THEN DO:
-
-                                ASSIGN aux_cdcritic = 0
-                                       aux_dscritic = " UF, Placa e Renavam - " +
-                                                      "Preencha os 3 ou nenhum deles!".
-                                LEAVE Valida.
-                            END.
-
-                            IF  par_nrcpfcgc <> 0 THEN DO:
-
-                                FIND FIRST crapavt
-                                     WHERE crapavt.cdcooper = par_cdcooper
-                                       AND crapavt.tpctrato = 9
-                                       AND crapavt.nrdconta = par_nrdconta
-                                       AND crapavt.nrctremp = par_nrctremp
-                                       AND crapavt.nrcpfcgc = par_nrcpfcgc
-                                   NO-LOCK NO-ERROR.
-
-                                IF  NOT AVAIL crapavt THEN DO:
-                                    ASSIGN aux_cdcritic = 0
-                                           aux_dscritic = " CPF Invalido! " +
-                                                          " Verifique Avalistas da Proposta.".
-                                    LEAVE Valida.
-                                END.
-                            END.
-
-                        END. /* par_cdaditiv = 5 */
                     WHEN 6 THEN
                         DO:
                             IF  par_nmdgaran = ""                      OR
@@ -1245,7 +1209,12 @@ PROCEDURE Grava_Dados:
            aux_cdcritic = 0
            aux_returnvl = "NOK"
            aux_uladitiv = par_nraditiv
-           par_dschassi = CAPS(par_dschassi).
+           par_dschassi = CAPS(par_dschassi)
+           par_ufdplaca = CAPS(par_ufdplaca)
+           par_uflicenc = CAPS(par_uflicenc)
+           par_nrdplaca = CAPS(par_nrdplaca)
+           par_dsbemfin = CAPS(par_dsbemfin)
+           par_dscorbem = CAPS(par_dscorbem).
 
     Grava: DO TRANSACTION
         ON ERROR  UNDO Grava, LEAVE Grava
@@ -1781,353 +1750,6 @@ PROCEDURE Grava_Dados:
                             END. /* FOR EACH tt-aplicacoes */
 
                         END. /* par_cdaditiv = 3 */
-                    WHEN 5 THEN  /** Substituicao Veiculo - Opcao I - Tipo 5 **/
-                        DO:
-                            RUN obtem_nro_aditivo
-                                ( INPUT par_cdcooper,
-                                  INPUT par_nrdconta,
-                                  INPUT par_nrctremp,
-                                  INPUT par_tpctrato,
-                                 OUTPUT aux_uladitiv,
-                                 OUTPUT aux_cdcritic).
-
-                            IF  aux_cdcritic <> 0 THEN
-                                UNDO Grava, LEAVE Grava.
-
-                            Contador: DO aux_contador = 1 TO 10:
-
-                                FIND crawepr WHERE
-                                     crawepr.cdcooper = par_cdcooper AND
-                                     crawepr.nrdconta = par_nrdconta AND
-                                     crawepr.nrctremp = par_nrctremp
-                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                                IF  NOT AVAIL crawepr THEN
-                                    DO:
-                                        IF  LOCKED crawepr   THEN
-                                            DO:
-                                                IF  aux_contador = 10 THEN
-                                                    DO:
-                                                        ASSIGN aux_cdcritic = 77.
-                                                        LEAVE Contador.
-                                                    END.
-                                                ELSE
-                                                    DO:
-                                                        PAUSE 1 NO-MESSAGE.
-                                                        NEXT Contador.
-                                                    END.
-                                            END.
-                                        ELSE
-                                            DO:
-                                                ASSIGN aux_cdcritic = 356.
-                                                LEAVE Contador.
-                                            END.
-                                    END.
-                                ELSE
-                                    LEAVE Contador.
-
-                            END. /* Contador */
-
-                            IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-                                UNDO Grava, LEAVE Grava.
-
-                            CREATE crapadt.
-                            ASSIGN crapadt.nrdconta = par_nrdconta
-                                   crapadt.nrctremp = par_nrctremp
-                                   crapadt.nraditiv = aux_uladitiv
-                                   crapadt.cdaditiv = 5
-                                   crapadt.tpctrato = par_tpctrato
-                                   crapadt.dtmvtolt = par_dtmvtolt
-                                   crapadt.cdcooper = par_cdcooper
-                                   crapadt.cdagenci = aux_cdagenci
-                                   crapadt.cdoperad = par_cdoperad
-                                   crapadt.flgdigit = NO.
-                            VALIDATE crapadt.
-
-                            CREATE crapadi.
-                            ASSIGN crapadi.nrdconta = par_nrdconta
-                                   crapadi.nrctremp = par_nrctremp
-                                   crapadi.nraditiv = aux_uladitiv
-                                   crapadi.tpctrato = par_tpctrato
-                                   crapadi.nrsequen = 1
-                                   crapadi.dsbemfin = par_dsbemfin
-                                   crapadi.dschassi = par_dschassi
-                                   crapadi.nrdplaca = par_nrdplaca
-                                   crapadi.dscorbem = par_dscorbem
-                                   crapadi.nranobem = par_nranobem
-                                   crapadi.nrmodbem = par_nrmodbem
-                                   crapadi.nrrenava = par_nrrenava
-                                   crapadi.tpchassi = par_tpchassi
-                                   crapadi.ufdplaca = par_ufdplaca
-                                   crapadi.uflicenc = par_uflicenc
-                                   crapadi.cdcooper = par_cdcooper.
-
-
-
-                            /*** GRAVAMES - Apenas quando tipo 5 ***/
-
-                            /* Verificar o CPF da conta do contrato */
-                            FIND FIRST crapass
-                                 WHERE crapass.cdcooper = par_cdcooper
-                                   AND crapass.nrdconta = par_nrdconta
-                                NO-LOCK NO-ERROR.
-
-                            IF  AVAIL crapass THEN
-                                ASSIGN aux_nrcpfcgc = crapass.nrcpfcgc
-                                       aux_nmdavali = crapass.nmprimtl.
-
-                            IF  par_nrcpfcgc <> 0
-                            AND par_nrcpfcgc <> aux_nrcpfcgc THEN DO:
-                                /** Localiza Nome do Titular CPF */
-                                FIND FIRST crapass
-                                     WHERE crapass.cdcooper = par_cdcooper
-                                       AND crapass.nrcpfcgc = par_nrcpfcgc
-                                    NO-LOCK NO-ERROR.
-                                IF  AVAIL crapass THEN
-                                    ASSIGN aux_nrcpfcgc = crapass.nrcpfcgc
-                                           aux_nmdavali = crapass.nmprimtl.
-                                ELSE DO:
-                                    /* Se nao encontrou ASS, busca Avalistas */
-                                    FIND FIRST crapavt
-                                         WHERE crapavt.cdcooper = par_cdcooper
-                                           AND crapavt.nrcpfcgc = par_nrcpfcgc
-                                       NO-LOCK NO-ERROR.
-
-                                    IF  AVAIL crapavt THEN DO:
-                                        ASSIGN aux_nrcpfcgc = crapavt.nrcpfcgc
-                                               aux_nmdavali = crapavt.nmdavali.
-                                    END.
-                                END.
-                            END.
-                            ELSE
-                                ASSIGN aux_nrcpfcgc = 0 /** Se 0 ou titular, nao guarda cpf */
-                                       aux_nmdavali = crapass.nmprimtl.
-
-                            ASSIGN crapadi.nrcpfcgc = aux_nrcpfcgc
-                                   crapadi.nmdavali = aux_nmdavali.
-                            /** GRAVAMES - Fim busca CPF/Nome para Aditiv */
-
-                            VALIDATE crapadi.
-
-                            IF  par_idseqbem > 0 THEN DO:
-                                Contador:
-                                DO aux_contador = 1 TO 10:
-                                    FIND crapbpr
-                                      WHERE crapbpr.cdcooper = par_cdcooper
-                                        AND crapbpr.nrdconta = par_nrdconta
-                                        AND crapbpr.tpctrpro = 90
-                                        AND crapbpr.nrctrpro = par_nrctremp
-                                        AND crapbpr.idseqbem = par_idseqbem
-                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                                    IF  NOT AVAIL crapbpr THEN DO:
-                                        IF  LOCKED crapbpr   THEN DO:
-                                            IF  aux_contador = 10 THEN DO:
-                                                ASSIGN
-                                                 aux_cdcritic = 77.
-                                                LEAVE Contador.
-                                            END.
-                                            ELSE DO:
-                                                PAUSE 1 NO-MESSAGE.
-                                                NEXT Contador.
-                                            END.
-                                        END.
-                                        ELSE DO:
-                                            ASSIGN aux_cdcritic = 55.
-                                            LEAVE Contador.
-                                        END.
-                                    END.
-                                    ELSE
-                                        LEAVE Contador.
-                                END. /* Contador */
-
-                                /*** GRAVAMES ***/
-                                /* Se BEM estiver "EM PROCESSAMENTO" nao deixa seguir */
-                                IF  AVAIL crapbpr
-                                AND crapbpr.cdsitgrv = 1 THEN
-                                    ASSIGN aux_dscritic =
-                                           " Bem em Processamento Gravames! " +
-                                           " Operacao nao efetuada!".
-                                IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-                                    UNDO Grava, LEAVE Grava.
-
-
-                                IF  AVAIL crapbpr THEN DO:
-                                    ASSIGN aux_dstransa = "Excluir aditivo"
-                                             + " contratual de emprestimo.".
-
-                                    /* Log */
-                                    RUN Gera_Log (INPUT  par_cdcooper,
-                                                  INPUT  par_cdoperad,
-                                                  INPUT  par_nmdatela,
-                                                  INPUT  par_dtmvtolt,
-                                                  INPUT  par_cddopcao,
-                                                  INPUT  par_nrdconta,
-                                                  INPUT  par_nrctremp,
-                                                  INPUT  aux_uladitiv,
-                                                  INPUT  par_cdaditiv,
-                                                  INPUT  par_flgpagto,
-                                                  INPUT  par_dtdpagto,
-                                                  INPUT  0, /* nrctagar */
-                                                  INPUT  0, /* tpaplica */
-                                                  INPUT  0, /* nraplica */
-                                                  INPUT  crapbpr.dsbemfin,
-                                                  INPUT  crapbpr.nrrenava,
-                                                  INPUT  crapbpr.tpchassi,
-                                                  INPUT  crapbpr.dschassi,
-                                                  INPUT  crapbpr.nrdplaca,
-                                                  INPUT  crapbpr.ufdplaca,
-                                                  INPUT  crapbpr.dscorbem,
-                                                  INPUT  crapbpr.nranobem,
-                                                  INPUT  crapbpr.nrmodbem,
-                                                  INPUT  crapbpr.uflicenc,
-                                                  INPUT  "", /* nmdgaran */
-                                                  INPUT  0,  /* nrcpfgar */
-                                                  INPUT  "", /* nrdocgar */
-                                                  INPUT  "", /* nrpromis */
-                                                  INPUT  0,  /* vlpromis */
-                                                  INPUT  0,
-                                                  INPUT  par_tpctrato,
-                                                  INPUT  0). /* idgaropc */
-                                END.
-
-                                /** GRAVAMES - Copia BEM para tipo 99 **/
-                                IF  (par_cdcooper = 1 AND
-                                     par_dtmvtolt >= 11/18/2014)
-                                OR  (par_cdcooper = 4 AND
-                                     par_dtmvtolt >= 07/23/2014)
-                                OR  (par_cdcooper = 7 AND
-                                     par_dtmvtolt >= 10/06/2014)
-                                OR  (NOT CAN-DO("1,4,7",
-                                         STRING(par_cdcooper)) AND
-                                     par_dtmvtolt >= 02/26/2015) THEN DO:
-
-                                    FIND LAST crabbpr
-                                        WHERE crabbpr.cdcooper = par_cdcooper
-                                          AND crabbpr.nrdconta = par_nrdconta
-                                          AND crabbpr.tpctrpro = 99
-                                          AND crabbpr.nrctrpro = par_nrctremp
-                                          NO-LOCK NO-ERROR.
-
-                                    IF  AVAIL crabbpr THEN
-                                        ASSIGN aux_idseqbe2 = crabbpr.idseqbem + 1.
-                                    ELSE
-                                        ASSIGN aux_idseqbe2 = 1.
-
-                                    CREATE crabbpr.
-                                    BUFFER-COPY crapbpr
-                                         EXCEPT crapbpr.tpctrpro
-                                                crapbpr.idseqbem
-                                             TO crabbpr.
-                                    ASSIGN crabbpr.tpctrpro = 99
-                                           crabbpr.flgbaixa = TRUE
-                                           crabbpr.dtdbaixa = par_dtmvtolt
-                                           crabbpr.tpdbaixa = "A"
-                                           crabbpr.flginclu = FALSE
-                                           crabbpr.flcancel = FALSE
-                                           crabbpr.idseqbem = aux_idseqbe2.
-                                END.
-                                /** GRAVAMES - Copia BEM para tipo 99 **/
-
-                                DELETE crapbpr.
-                                VALIDATE crabbpr.
-
-                            END. /* IF  par_idseqbem > 0 */
-
-                            /* Pegar sequencia do bem alienado */
-                            FIND LAST crapbpr WHERE
-                                      crapbpr.cdcooper = par_cdcooper AND
-                                      crapbpr.nrdconta = par_nrdconta AND
-                                      crapbpr.tpctrpro = 90           AND
-                                      crapbpr.nrctrpro = par_nrctremp
-                                      NO-LOCK NO-ERROR.
-
-                            IF  NOT AVAIL crapbpr THEN
-                                ASSIGN aux_idseqbem = 1.
-                            ELSE
-                                ASSIGN aux_idseqbem = crapbpr.idseqbem + 1.
-
-                            ASSIGN aux_dsrelbem = REPLACE(par_dsbemfin,";",",").
-                            ASSIGN aux_dsrelbem = REPLACE(aux_dsrelbem,"|","-").
-
-                            CREATE crapbpr.
-                            ASSIGN crapbpr.cdcooper = par_cdcooper
-                                   crapbpr.nrdconta = par_nrdconta
-                                   crapbpr.tpctrpro = 90
-                                   crapbpr.nrctrpro = par_nrctremp
-                                   crapbpr.flgalien = TRUE
-                                   crapbpr.idseqbem = aux_idseqbem
-                                   crapbpr.dtmvtolt = par_dtmvtolt
-                                   crapbpr.cdoperad = par_cdoperad
-                                   crapbpr.dscatbem = "AUTOMOVEL"
-                                   crapbpr.dsbemfin = aux_dsrelbem
-                                   crapbpr.dschassi = par_dschassi
-                                   crapbpr.nrdplaca = par_nrdplaca
-                                   crapbpr.dscorbem = par_dscorbem
-                                   crapbpr.nranobem = par_nranobem
-                                   crapbpr.nrmodbem = par_nrmodbem
-                                   crapbpr.nrrenava = par_nrrenava
-                                   crapbpr.tpchassi = par_tpchassi
-                                   crapbpr.ufdplaca = par_ufdplaca
-                                   crapbpr.uflicenc = par_uflicenc
-                                   crapbpr.nrcpfbem = par_nrcpfcgc.
-
-                            /** GRAVAMES ***/
-                            IF  (par_cdcooper = 1 AND
-                                 par_dtmvtolt >= 11/18/2014)
-                            OR  (par_cdcooper = 4 AND
-                                 par_dtmvtolt >= 07/23/2014)
-                            OR  (par_cdcooper = 7 AND
-                                 par_dtmvtolt >= 10/06/2014)
-                            OR  (NOT CAN-DO("1,4,7",STRING(par_cdcooper)) AND
-                                 par_dtmvtolt >= 02/26/2015) THEN DO:
-                                ASSIGN crapbpr.flginclu = TRUE
-                                       crapbpr.cdsitgrv = 0
-                                       crapbpr.tpinclus = "A"
-                                       crawepr.flgokgrv = TRUE.
-                            END.
-
-                            VALIDATE crapbpr.
-
-                            ASSIGN  aux_nrdrowid = ?
-                                    aux_dstransa = "Incluir aditivo contratual"
-                                                 + " de emprestimo.".
-
-                            /* Log */
-                            RUN Gera_Log (INPUT  par_cdcooper,
-                                          INPUT  par_cdoperad,
-                                          INPUT  par_nmdatela,
-                                          INPUT  par_dtmvtolt,
-                                          INPUT  par_cddopcao,
-                                          INPUT  par_nrdconta,
-                                          INPUT  par_nrctremp,
-                                          INPUT  aux_uladitiv,
-                                          INPUT  par_cdaditiv,
-                                          INPUT  par_flgpagto,
-                                          INPUT  par_dtdpagto,
-                                          INPUT  0, /* nrctagar */
-                                          INPUT  0, /* tpaplica */
-                                          INPUT  0, /* nraplica */
-                                          INPUT  crapbpr.dsbemfin,
-                                          INPUT  crapbpr.nrrenava,
-                                          INPUT  crapbpr.tpchassi,
-                                          INPUT  crapbpr.dschassi,
-                                          INPUT  crapbpr.nrdplaca,
-                                          INPUT  crapbpr.ufdplaca,
-                                          INPUT  crapbpr.dscorbem,
-                                          INPUT  crapbpr.nranobem,
-                                          INPUT  crapbpr.nrmodbem,
-                                          INPUT  crapbpr.uflicenc,
-                                          INPUT  "", /* nmdgaran */
-                                          INPUT  0,  /* nrcpfgar */
-                                          INPUT  "", /* nrdocgar */
-                                          INPUT  "", /* nrpromis */
-                                          INPUT  0,  /* vlpromis */
-                                          INPUT  0,
-                                          INPUT  par_tpctrato,
-                                          INPUT  0). /* idgaropc */
-                        END. /* par_cdaditiv = 5 */
-
                     WHEN 6 THEN
                         DO:
                             RUN obtem_nro_aditivo
@@ -2917,197 +2539,6 @@ PROCEDURE Grava_Dados:
                             DELETE crapadt.
 
                         END. /* par_cdaditiv = 3 */
-                    WHEN 5 THEN  /** Exclusao do Bem - Opcao "E" - Tipo 5 **/
-                        DO:
-                            Contador: DO aux_contador = 1 TO 10:
-
-                                FIND crapadt WHERE
-                                     crapadt.cdcooper = par_cdcooper AND
-                                     crapadt.nrdconta = par_nrdconta AND
-                                     crapadt.nrctremp = par_nrctremp AND
-                                     crapadt.nraditiv = par_nraditiv
-                                     EXCLUSIVE-LOCK NO-ERROR.
-
-                                IF  NOT AVAIL crapadt THEN
-                                    DO:
-                                        IF  LOCKED crapadt   THEN
-                                            DO:
-                                                IF  aux_contador = 10 THEN
-                                                    DO:
-                                                        ASSIGN aux_cdcritic = 77.
-                                                        LEAVE Contador.
-                                                    END.
-                                                ELSE
-                                                    DO:
-                                                        PAUSE 1 NO-MESSAGE.
-                                                        NEXT Contador.
-                                                    END.
-                                            END.
-                                        ELSE
-                                            DO:
-                                                ASSIGN aux_cdcritic = 55.
-                                                LEAVE Contador.
-                                            END.
-                                    END.
-                                ELSE
-                                    LEAVE Contador.
-                            END. /* Contador */
-
-                            IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-                                UNDO Grava, LEAVE Grava.
-
-                            Contador: DO aux_contador = 1 TO 10:
-
-                                FIND crapadi WHERE
-                                     crapadi.cdcooper = par_cdcooper AND
-                                     crapadi.nrdconta = par_nrdconta AND
-                                     crapadi.nrctremp = par_nrctremp AND
-                                     crapadi.nraditiv = par_nraditiv
-                                     EXCLUSIVE-LOCK NO-ERROR.
-
-                                IF  NOT AVAIL crapadi THEN
-                                    DO:
-                                        IF  LOCKED crapadi   THEN
-                                            DO:
-                                                IF  aux_contador = 10 THEN
-                                                    DO:
-                                                        ASSIGN aux_cdcritic = 77.
-                                                        LEAVE Contador.
-                                                    END.
-                                                ELSE
-                                                    DO:
-                                                        PAUSE 1 NO-MESSAGE.
-                                                        NEXT Contador.
-                                                    END.
-                                            END.
-                                        ELSE
-                                            DO:
-                                                ASSIGN aux_cdcritic = 55.
-                                                LEAVE Contador.
-                                            END.
-                                    END.
-                                ELSE
-                                    LEAVE Contador.
-                            END. /* Contador */
-
-                            IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-                                UNDO Grava, LEAVE Grava.
-
-                            /* Bens alienados */
-                            Bens: FOR EACH crapbpr WHERE
-                                     crapbpr.cdcooper = par_cdcooper AND
-                                     crapbpr.nrdconta = par_nrdconta AND
-                                     crapbpr.tpctrpro = 90           AND
-                                     crapbpr.nrctrpro = par_nrctremp AND
-                                     crapbpr.flgalien = TRUE
-                                     EXCLUSIVE-LOCK:
-
-                                IF  crapbpr.dscatbem = "AUTOMOVEL"  AND
-                                    crapbpr.dsbemfin = par_dsbemfin AND
-                                    crapbpr.dschassi = par_dschassi AND
-                                    crapbpr.nrdplaca = par_nrdplaca AND
-                                    crapbpr.dscorbem = par_dscorbem AND
-                                    crapbpr.nranobem = par_nranobem AND
-                                    crapbpr.nrmodbem = par_nrmodbem AND
-                                    crapbpr.nrrenava = par_nrrenava AND
-                                    crapbpr.tpchassi = par_tpchassi AND
-                                    crapbpr.ufdplaca = par_ufdplaca AND
-                                    crapbpr.uflicenc = par_uflicenc THEN
-                                    DO:
-
-
-                                    /*** GRAVAMES ***/
-                                    /* Se BEM estiver "EM PROCESSAMENTO" nao deixa seguir */
-                                    IF  crapbpr.cdsitgrv = 1 THEN DO:
-                                        ASSIGN aux_dscritic =
-                                            " Bem em Processamento Gravames! " +
-                                            " Operacao nao efetuada!".
-                                        UNDO Grava, LEAVE Grava.
-                                    END.
-
-                                    /* Log */
-                                    RUN Gera_Log (INPUT  par_cdcooper,
-                                                  INPUT  par_cdoperad,
-                                                  INPUT  par_nmdatela,
-                                                  INPUT  par_dtmvtolt,
-                                                  INPUT  par_cddopcao,
-                                                  INPUT  par_nrdconta,
-                                                  INPUT  par_nrctremp,
-                                                  INPUT  par_nraditiv,
-                                                  INPUT  par_cdaditiv,
-                                                  INPUT  NO, /* flgpagto */
-                                                  INPUT  ?, /* dtdpagto */
-                                                  INPUT  0,  /* nrctagar */
-                                                  INPUT  0,  /* tpaplica */
-                                                  INPUT  0,  /* nraplica */
-                                                  INPUT  crapbpr.dsbemfin,
-                                                  INPUT  crapbpr.nrrenava,
-                                                  INPUT  crapbpr.tpchassi,
-                                                  INPUT  crapbpr.dschassi,
-                                                  INPUT  crapbpr.nrdplaca,
-                                                  INPUT  crapbpr.ufdplaca,
-                                                  INPUT  crapbpr.dscorbem,
-                                                  INPUT  crapbpr.nranobem,
-                                                  INPUT  crapbpr.nrmodbem,
-                                                  INPUT  crapbpr.uflicenc,
-                                                  INPUT  "", /* nmdgaran */
-                                                  INPUT  0,  /* nrcpfgar */
-                                                  INPUT  "", /* nrdocgar */
-                                                  INPUT  "", /* nrpromis */
-                                                  INPUT  0,  /* vlpromis */
-                                                  INPUT  0,  /* tpproapl */
-                                                  INPUT  par_tpctrato,
-                                                  INPUT  0). /* idgaropc */
-
-                                        /* GRAVAMES - Copia BEM para tipo 99 */
-                                        IF  (par_cdcooper = 1 AND
-                                             par_dtmvtolt >= 11/18/2014)
-                                        OR  (par_cdcooper = 4 AND
-                                             par_dtmvtolt >= 07/23/2014)
-                                        OR  (par_cdcooper = 7 AND
-                                             par_dtmvtolt >= 10/06/2014)
-                                        OR  (NOT CAN-DO("1,4,7",
-                                                 STRING(par_cdcooper)) AND
-                                             par_dtmvtolt >= 02/26/2015) THEN DO:
-                                            FIND LAST crabbpr
-                                                WHERE crabbpr.cdcooper = par_cdcooper
-                                                  AND crabbpr.nrdconta = par_nrdconta
-                                                  AND crabbpr.tpctrpro = 99
-                                                  AND crabbpr.nrctrpro = par_nrctremp
-                                                  NO-LOCK NO-ERROR.
-
-                                            IF  AVAIL crabbpr THEN
-                                                ASSIGN aux_idseqbe2 = crabbpr.idseqbem + 1.
-                                            ELSE
-                                                ASSIGN aux_idseqbe2 = 1.
-
-                                            CREATE crabbpr.
-                                            BUFFER-COPY crapbpr
-                                                 EXCEPT crapbpr.tpctrpro
-                                                        crapbpr.idseqbem
-                                                     TO crabbpr.
-                                            ASSIGN crabbpr.tpctrpro = 99
-                                                   crabbpr.flgbaixa = TRUE
-                                                   crabbpr.dtdbaixa = par_dtmvtolt
-                                                   crabbpr.tpdbaixa = "A"
-                                                   crabbpr.flginclu = FALSE
-                                                   crabbpr.flcancel = FALSE
-                                                   crabbpr.idseqbem = aux_idseqbe2.
-                                        END.
-                                        /** GRAVAMES - Copia BEM para tipo 99 **/
-
-                                        DELETE crapbpr.
-                                        VALIDATE crabbpr.
-
-                                        LEAVE Bens.
-                                END. /** END do IF da BPR **/
-
-                            END. /* Fim Bens */
-
-                            DELETE crapadt.
-                            DELETE crapadi.
-
-                        END. /* par_cdaditiv = 5 */
                     WHEN 6 THEN
                         DO:
                             Contador: DO aux_contador = 1 TO 10:
@@ -3751,7 +3182,7 @@ PROCEDURE Gera_Impressao:
             END.
             
         IF par_tpctrato = 90 THEN
-          DO:
+           DO:
 
  		    /* Aditivo de contrato - INC0019463 */
             FIND crapadt WHERE crapadt.cdcooper = par_cdcooper   AND
@@ -3767,17 +3198,17 @@ PROCEDURE Gera_Impressao:
 		    ELSE
 		      DO: 
 
-			    /* Proposta de emprestimo */
-                FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
-                                   crawepr.nrdconta = par_nrdconta   AND
-                                   crawepr.nrctremp = par_nrctremp
-                                 NO-LOCK NO-ERROR.
+        /* Proposta de emprestimo */
+        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                           crawepr.nrdconta = par_nrdconta   AND
+                           crawepr.nrctremp = par_nrctremp
+                           NO-LOCK NO-ERROR.
                            
-                ASSIGN aux_dtcontra = crawepr.dtmvtolt.
+              ASSIGN aux_dtcontra = crawepr.dtmvtolt.
 
  	          END.
-          END. 
-		ELSE
+           END.
+        ELSE
            DO:
               /* Contrato de limite */
               FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
@@ -3791,6 +3222,7 @@ PROCEDURE Gera_Impressao:
                            
         IF  aux_dtcontra >= 10/22/2014    THEN
           DO:
+            
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
             RUN STORED-PROCEDURE pc_gera_impressao_aditiv 

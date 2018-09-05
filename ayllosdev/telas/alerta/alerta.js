@@ -1,7 +1,7 @@
 //*********************************************************************************************//
 //*** Fonte: alerta.js                                                                      ***//
 //*** Autor: Adriano                                                                        ***//
-//*** Data : Fevereiro/2013                Última Alteração: 30/05/2014                     ***//
+//*** Data : Fevereiro/2013                Última Alteração: 10/07/2018                   ***//
 //***                                                                                       ***//
 //*** Objetivo  : Biblioteca de funções da tela ALERTA                                      ***//
 //***                                                                                       ***//	 
@@ -13,6 +13,9 @@
 //***						   (Jorge/Rosangela) - Emergencial   							***//
 //***         																				***//
 //***			  15/09/2014 - Chamado 152916 (Jonata-RKAM).                                ***//
+//***																						***//
+//*** 			  10/07/2018 - Ajuste para nao permitir caractere invalido. 				***//
+//*** 						   (PRB0040139 - Kelvin)										***//
 //*********************************************************************************************//
 
 var nrregres;
@@ -1255,10 +1258,10 @@ function incluir(){
 		url: UrlSite + 'telas/alerta/incluir.php',
 		data: {
 			nrcpfcgc: nrcpfcgc,
-			nmpessoa: nmpessoa,
+			nmpessoa: removeCaracteresInvalidos(nmpessoa, true),
 			cdcopsol: cdcopsol,
-			nmpessol: nmpessol, 
-			dsjusinc: dsjusinc,
+			nmpessol: removeCaracteresInvalidos(nmpessol, true), 
+			dsjusinc: removeCaracteresInvalidos(dsjusinc, true),
 			cdbccxlt: cdbccxlt,
 			tporigem: tporigem,
 			redirect: 'script_ajax' // Tipo de retorno do ajax

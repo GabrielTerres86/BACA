@@ -137,6 +137,7 @@
 *                   e habilitado na "Valor da proposta e data de vencimento". (Mateus Z / Mouts - PRJ 438)
 * 110: [13/07/2018] Criada função processaPerdaAprovacao para verificar se haverá perda de aprovacao ao fazer alteração 
 *                   na opção "Valor da proposta de data e vencimento" (Mateus Z / Mouts - PRJ 438)
+* 111: [28/05/2018] P439 - Criado validacoes de contingencia da integracao cdc
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -433,6 +434,32 @@ function controlaOperacao(operacao) {
 
     var simula = false;
 
+	// validacao de contingencia Integracao CDC
+			var flintcdc       = $("#divEmpres table tr.corSelecao").find("input[id='flintcdc']").val();
+			var inintegra_cont = $("#divEmpres table tr.corSelecao").find("input[id='inintegra_cont']").val();
+			var tpfinali       = $("#divEmpres table tr.corSelecao").find("input[id='tpfinali']").val();
+			var cdoperad       = $("#divEmpres table tr.corSelecao").find("input[id='cdoperad']").val();
+
+	if(tpfinali == 3 && cdoperad=='AUTOCDC'){
+		// botao Registrar GRV
+		if (operacao == 'REG_GRAVAMES' || operacao == 'VAL_GRAVAMES'){
+			showError('error', 'Não é permitido registrar solicitação de Gravames, proposta com origem na integração CDC!', 'Alerta - Ayllos', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+			return false;			
+		// botao efetivar
+		}else if (operacao == 'T_EFETIVA'){
+			showError('error', 'Não é permitido efetivar a proposta, proposta com origem na integração CDC!', 'Alerta - Ayllos', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+		    return false;
+		// botao analisar
+		}else if (operacao == 'ENV_ESTEIRA'){
+			showError('error', 'Não é permitido enviar para analise, proposta com origem na integração CDC!', 'Alerta - Ayllos', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+		    return false;
+	    // botao alterar
+	    }else if (operacao == 'TA'){
+			showError('error', 'Alteração não permitida, proposta com origem na integração CDC!', 'Alerta - Ayllos', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
+		    return false;
+			}
+		}
+		
     // Se a operação necessita filtrar somente um registro, então filtro abaixo
     // Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha
     if (in_array(operacao, ['TA', 'TE', 'TC', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'IMP', 'REG_GRAVAMES', 'VAL_GRAVAMES',
@@ -5140,6 +5167,8 @@ function validaDadosGerais() {
     var vlmaxutl = arrayCooperativa['vlmaxutl'];
     var vlmaxleg = arrayCooperativa['vlmaxleg'];
     var vlcnsscr = arrayCooperativa['vlcnsscr'];
+    var flintcdc = arrayCooperativa['flintcdc']; // faria integracao cdc
+    var inintegra_cont = arrayCooperativa['inintegra_cont']; // faria integracao cdc
 
     if (possuiPortabilidade == "S")
         var cdmodali = arrayDadosPortabilidade['cdmodali'];
@@ -5156,6 +5185,13 @@ function validaDadosGerais() {
     {
         hideMsgAguardo();
         showError('error', 'Finalidade não permitida para este tipo de proposta.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
+        return false;
+    }
+
+    //faria integracao cdc nao permite criar propostas de CDC para cooperativas migradas //finalidade CDC
+    if(tpfinali == 3 && flintcdc == 'yes' && inintegra_cont == 0){
+        hideMsgAguardo();
+        showError('error', 'Finalidade não permitida, Cooperativa com integração CDC habilitada', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
         return false;
     }
 
@@ -8363,8 +8399,9 @@ function controlaPesquisas() {
 
                 } else if (campoAnterior == 'cdfinemp') {
                     varAux = $('#cdlcremp', '#' + nomeForm).val();
-                    filtros = 'Finalidade do Empr.;cdfinemp;30px;S;0|Descri&ccedil&atildeo;dsfinemp;200px;S;|;flgstfin;;;1;N|;cdlcrhab;;;' + varAux + ';N';
-                    colunas = 'C&oacutedigo;cdfinemp;20%;right|Finalidade;dsfinemp;80%;left|Flag;flgstfin;0%;left;;N';
+					
+                    filtros = 'Finalidade do Empr.;cdfinemp;30px;S;0|Descri&ccedil&atildeo;dsfinemp;200px;S;|;tpfinali;;;1;N|;flgstfin;;;1;N|;cdlcrhab;;;' + varAux + ';N';
+                    colunas = 'C&oacutedigo;cdfinemp;20%;right|Finalidade;dsfinemp;80%;left|Tipo;tpfinali;0%;left;;N|Flag;flgstfin;0%;left;;N';
                     var vFuncao = (nomeForm == 'frmSimulacao') ? 'habilitaModalidade("")' : '';
                     
                     //Exibir a pesquisa

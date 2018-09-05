@@ -20,6 +20,8 @@
                 
 			   19/11/2017 - Incusao do historico 354 (Jonata - RKAM P364).
                 
+               20/12/2017 - Inclusao dos historicos 2013 e 2014, Prj. 402 (Jean Michel). 
+
                06/04/2018 - Inclusao do historico 2280. PRJ381 - AntiFraude
                             (Odirlei-AMcom)
                 
@@ -85,6 +87,8 @@ DEF VAR aux_histcred  AS INT EXTENT INIT [1032,	/* Contrato Empr */
                                           1734, /* MULTA TR.PREJ */
                                           1735, /* JUR.MORA PREJ */
                                           1736, /* JUR.MORA PREJ */ 
+                                          2013, /* Empréstimo CDC */
+                                          2014, /* Financiamento CDC */ 
                                           2193, /* DB.BLOQ.ACORD */
                                           2194, /* CR.DESB.ACORD */
                                           2180, /* CRED.COB.ACOR */

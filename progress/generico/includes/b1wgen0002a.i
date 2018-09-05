@@ -24,7 +24,7 @@
 
    Programa: b1wgen0002a.i                  
    Autor   : Tiago.
-   Data    : 06/03/2012                        Ultima atualizacao: 19/06/2018
+   Data    : 06/03/2012                        Ultima atualizacao: 07/08/2018
     
    Dados referentes ao programa:
 
@@ -65,6 +65,8 @@
                19/06/2018 - Retirados valores de iof acrescentados no campo 
                             aux_vlsdeved. INC0016637 (Lombardi)
                
+               07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)
+
 ..............................................................................*/
 DEF VAR aux_flgtrans AS LOGI                                        NO-UNDO.
 DEF VAR aux_ehmensal AS LOGI INIT FALSE                             NO-UNDO.
@@ -92,7 +94,7 @@ DEF VAR aux_diainici AS INTE                                        NO-UNDO.
 DEF VAR aux_nrdiamta AS INTE                                        NO-UNDO.
 DEF VAR aux_conthist AS INTE                                        NO-UNDO.
 DEF VAR aux_contlote AS INTE                                        NO-UNDO.
-/* DEF VAR aux_vliofcpl AS DECI                                        NO-UNDO. */
+DEF VAR aux_vliofcpl_tmp AS DECI                                    NO-UNDO. 
 DEF VAR aux_vlbaseiof AS DECI                                        NO-UNDO.
 DEF VAR aux_qtdiaiof AS INTEGER                                     NO-UNDO.
 
@@ -305,6 +307,7 @@ DO ON ERROR UNDO , LEAVE:
                  END. 
                           
                 /* Calcula o valor da do IOF complementar do atraso */
+                ASSIGN aux_vliofcpl_tmp = 0.
                  RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
                     aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2 /* Somente atraso */
                                                         ,INPUT crapepr.cdcooper
@@ -329,7 +332,18 @@ DO ON ERROR UNDO , LEAVE:
 
                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                ASSIGN aux_vliofcpl = aux_vliofcpl + pc_calcula_valor_iof_epr.pr_vliofcpl WHEN pc_calcula_valor_iof_epr.pr_vliofcpl <> ?.
+                ASSIGN aux_vliofcpl_tmp = pc_calcula_valor_iof_epr.pr_vliofcpl.
+                
+                IF aux_vliofcpl_tmp <> ? AND crappep.vlpagiof > 0 THEN
+                DO:
+                  ASSIGN aux_vliofcpl_tmp = aux_vliofcpl_tmp - crappep.vlpagiof.
+                  IF aux_vliofcpl_tmp < 0 THEN
+                  DO:
+                    ASSIGN aux_vliofcpl_tmp = 0.
+                  END.
+                END.
+                
+                ASSIGN aux_vliofcpl = aux_vliofcpl + aux_vliofcpl_tmp WHEN aux_vliofcpl_tmp <> ?.
 
              END. /* END Parcela Vencida */
        ELSE

@@ -46,6 +46,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps273 (pr_cdcooper IN crapcop.cdcooper%T
                                 O erro de Dead Lock esta com a equipe de DB
                                ( Belli - Envolti - Chamados 7774244 e 788269 )                   
 
+                   07/08/2018 - Substituição pc_gera_log_batch por pc_log_programa
+                                (Ana - Envolti - REQ0019777)
+
     ............................................................................ */
     DECLARE
       ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -139,29 +142,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps273 (pr_cdcooper IN crapcop.cdcooper%T
     --  Sistema  : Rotina para gravar logs em tabelas
     --  Sigla    : CRED
     --  Autor    : Ana Lúcia E. Volles - Envolti
-    --  Data     : Novembro/2017           Ultima atualizacao: 20/11/2017
-    --  Chamado  : 788269
+    --  Data     : Novembro/2017           Ultima atualizacao: 07/08/2018
+    --  Chamado  : REQ0019777
     --
     -- Dados referentes ao programa:
     -- Frequencia: Rotina executada em qualquer frequencia.
     -- Objetivo  : Controla gravação de log em tabelas.
     --
-    -- Alteracoes:  
+    -- Alteracoes: 07/08/2018 - Substituição pc_gera_log_batch por pc_log_programa
+    --                          (Ana - Envolti - REQ0019777)
     --             
     ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog    tbgen_prglog.idprglog%TYPE := 0;      
   BEGIN     
     --> Controlar geração de log de execução dos jobs
-    --Como executa na cadeira, utiliza pc_gera_log_batch
-    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper                      
-                              ,pr_ind_tipo_log  => pr_ind_tipo_log
-                              ,pr_nmarqlog      => 'proc_batch.log'                 
-                              ,pr_dstiplog      => NVL(pr_dstiplog,'E')             
-                              ,pr_cdprograma    => vr_cdprogra                      
-                              ,pr_tpexecucao    => 1 -- batch                       
-                              ,pr_cdcriticidade => pr_cdcriticidade                      
-                              ,pr_cdmensagem    => pr_cdmensagem                      
-                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
-                                                  || vr_cdprogra || ' --> '|| pr_dscritic);
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => 1, --Batch --
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem, 
+                           pr_dsmensagem    => pr_dscritic, 
+                           pr_idprglog      => vr_idprglog, 
+                           pr_nmarqlog      => NULL);
+
   EXCEPTION  
     WHEN OTHERS THEN  
       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
@@ -288,11 +293,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps273 (pr_cdcooper IN crapcop.cdcooper%T
       vr_cdcritic := 9999;
       -- monta descrição do erro com os parametros
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || SQLERRM;
-      RAISE vr_exc_saida;
 
+      RAISE vr_exc_saida;
   END prc_processa;
     
-    ---
+  ---
     
   BEGIN
 
@@ -367,7 +372,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps273 (pr_cdcooper IN crapcop.cdcooper%T
     pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                 pr_dstiplog      => 'F');
 
-
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
     -- Processo OK, devemos chamar a fimprg
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
@@ -390,18 +394,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps273 (pr_cdcooper IN crapcop.cdcooper%T
       pr_dscritic := vr_dscritic;
 
       -- Monta se chega erro tratado ou não tratado para apontar o tipo de ocorrencia - Chamado 788269 - 26/10/2017
-      IF pr_cdcritic IN ( 9999, 1035 ) THEN 
-        vr_ind_tipo_log  := 3;
+      IF pr_cdcritic = 9999 THEN 
+        vr_ind_tipo_log  := 2;
         vr_cdcriticidade := 2;
       ELSE 
-        vr_ind_tipo_log  := 2; 
+        vr_ind_tipo_log  := 1; 
         vr_cdcriticidade := 1;
       END IF;
 
       -- Envio centralizado de log de erro
       pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                   pr_dstiplog      => 'E',
-                  pr_dscritic      => vr_dscritic,
+                  pr_dscritic      => vr_dscritic||', pr_cdcooper:'||pr_cdcooper,
                   pr_cdcriticidade => vr_cdcriticidade,
                   pr_cdmensagem    => vr_cdcritic,
                   pr_ind_tipo_log  => vr_ind_tipo_log);
@@ -419,10 +423,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps273 (pr_cdcooper IN crapcop.cdcooper%T
       -- Envio centralizado de log de erro
       pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                   pr_dstiplog      => 'E',
-                  pr_dscritic      => vr_dscritic,
+                  pr_dscritic      => pr_dscritic||', pr_cdcooper:'||pr_cdcooper,
                   pr_cdcriticidade => 2,
-                  pr_cdmensagem    => vr_cdcritic,
-                  pr_ind_tipo_log  => 3);
+                  pr_cdmensagem    => pr_cdcritic,
+                  pr_ind_tipo_log  => 2);
 
       -- Efetuar rollback
       ROLLBACK; 

@@ -45,6 +45,9 @@
 	<field name="dstexinf2" class="java.lang.String">
 		<fieldDescription><![CDATA[ancestor::extratos/@dstexinf2]]></fieldDescription>
 	</field>
+	<field name="dstexinf3" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::extratos/@dstexinf3]]></fieldDescription>
+	</field>
 	<field name="e_cdorigem" class="java.lang.String">
 		<fieldDescription><![CDATA[e_cdorigem]]></fieldDescription>
 	</field>
@@ -237,7 +240,7 @@
 		</band>
 	</detail>
 	<summary>
-		<band height="76">
+		<band height="96">
 			<textField isBlankWhenNull="true">
 				<reportElement uuid="beb6d6c8-a779-442c-9dbe-635c467df072" x="1" y="5" width="440" height="11"/>
 				<textElement>
@@ -258,6 +261,13 @@
 					<font fontName="Courier New" size="8"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dstexinf2}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="beb6d6c8-a779-442c-9dbe-635c467df072" x="1" y="76" width="440" height="20"/>
+				<textElement>
+					<font fontName="Courier New" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dstexinf3}]]></textFieldExpression>
 			</textField>
 		</band>
 	</summary>

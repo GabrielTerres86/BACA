@@ -1164,6 +1164,10 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                         INPUT TRUE,
                                         INPUT "SVP",  /* Alt. Somente Valor */
                                         INPUT tt-proposta-epr.dtlibera,
+										INPUT 0, /*par_idfiniof*/
+										INPUT "", /*par_dscatbem*/
+										INPUT 1, /*par_inresapr*/
+										INPUT glb_dtmvtolt, /*par_dtdpagto*/
                                         OUTPUT aux_flmudfai,
                                         OUTPUT TABLE tt-erro,
                                         OUTPUT TABLE tt-msg-confirma).
@@ -2134,6 +2138,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT 0, /* idcobope */
 								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
 								INPUT "", /* par_dscatbem */
+								INPUT 1, /* par_inresapr */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,

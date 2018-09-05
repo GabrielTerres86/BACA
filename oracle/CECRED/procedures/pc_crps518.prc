@@ -96,6 +96,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
 
                05/07/2017 - #707221 Forçando o index craplim##craplim1 no cursor 
                             cr_craplim_2 (Carlos)
+
+               19/08/2018 - Incluso tratativa para efetuar apenas leitura de 
+                            titulos descontados e liberados (GFT) 
      ............................................................................. */
 
      DECLARE
@@ -260,7 +263,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
          FROM craptdb craptdb
          WHERE craptdb.cdcooper = pr_cdcooper
          AND   craptdb.nrdconta = pr_nrdconta
-         AND   craptdb.nrborder = pr_nrborder;
+         AND   craptdb.nrborder = pr_nrborder
+         AND   craptdb.dtlibbdt is not null;
 
        --Selecionar os titulos do bordero para relatorio crrl494
        CURSOR cr_craptdb_494 (pr_cdcooper IN craptdb.cdcooper%TYPE

@@ -379,6 +379,19 @@
 								<?}?>
 								</td>
 							</tr>
+							<tr>
+								<td>								
+									<label class="checkbox">Conv&ecirc;nio CDC</label>
+								</td>
+								<td>
+									<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgconve')); ?></label>
+								</td>
+								<td style="vertical-align: middle">
+								<?if (getByTagName($regServicos2->tags,'flgconve') == 1){?>														
+									<input class="checkbox" type="checkbox" style="margin-top: 0px" id="24"/>
+								<?}?>
+								</td>
+							</tr>
 						</table>
 						
 				<br style="clear:both" />	

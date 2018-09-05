@@ -11,21 +11,73 @@
  *                19/01/2017 - Alterado layout do form de convenio e adicionado lupa para o CEP. (Reinert)
  *					
  *				  27/03/2017 - Adicionado o botão "Dossie DigiDOC". (Projeto 357 - Reinert)
+	 *					
+	 *				  			29/11/2017 - Inclusão de novas funcionalidades, Prj.402 (Jean Michel)
+	 *               
+	 *                          04/05/2018 - Iclusão de novos campos e funcionalidades Reestruturação CDC - Diego Simas - AMcom
+	 *
  * --------------
  */	
 ?>
 <form name="frmConvenioCdc" id="frmConvenioCdc" class="formulario">
-    <input type="hidden" id="idcooperado_cdc" name="idcooperado_cdc" value="<?php echo $idcooperado_cdc ; ?>" />
+
+    <div id="divDados" class="clsCampos">
+        
     <input type="hidden" id="cdestado" name="cdestado" value="<?php echo ($cdestado ? $cdestado : $cdufende); ?>" />
     <label for="flgconve" class="clsCampos">Possui Convênio CDC:</label>
 	<select id="flgconve" name="flgconve" class="clsCampos">
         <option value="1" <?php echo ($flgconve == 1 ? 'selected' : ''); ?>>Sim</option>
 		<option value="0" <?php echo ($flgconve == 0 ? 'selected' : ''); ?>>Não</option>
 	</select>
-    <label for="dtinicon" class="clsCampos">Data Início Convênio:</label>
+        <label for="dtinicon" class="clsCampos">Data Início:</label>
     <input name="dtinicon" id="dtinicon" type="text" value="<?php echo $dtinicon ; ?>" autocomplete="off" class="clsCampos" />
+        <label for="dtacectr" class="clsCampos">Data Migração:</label>
+        <input name="dtacectr" id="dtacectr" type="text" value="<?php echo $dtacectr ; ?>" autocomplete="off" class="clsCampos" />
+		
+            </br>
+		
+    <fieldset style="padding: 5px">
+			<legend style="margin-top: 10px; padding: 2px 10px 2px 10px">Cancelamento</legend>
+		
+			
+			<label for="inmotcan" class="clsCampos">Motivo:</label>
+            <select id="inmotcan" name="inmotcan" class="clsCampos">
+                <option value="" <?php echo ($inmotcan == 0 ? 'selected' : ''); ?>>-</option>
+                <option value="1" <?php echo ($inmotcan == 1 ? 'selected' : ''); ?>>Inadimplência</option>
+                <option value="2" <?php echo ($inmotcan == 2 ? 'selected' : ''); ?>>Não Utiliza CDC</option>
+                <option value="3" <?php echo ($inmotcan == 3 ? 'selected' : ''); ?>>Empresa Inativa</option>
+                <option value="4" <?php echo ($inmotcan == 4 ? 'selected' : ''); ?>>Conta Demitida</option>
+                <option value="5" <?php echo ($inmotcan == 5 ? 'selected' : ''); ?>>Outros</option>
+            </select>
+
+            <label for="dsmotcan" class="clsCampos">Outro:</label>
+            <input type="text" class="clsCampos" id="dsmotcan" name="dsmotcan" value="<?php echo $dsmotcan; ?>" />
+			
+			<label for="dtcancon" class="clsCampos">Data:</label>
+			<input name="dtcancon" id="dtcancon" type="text" value="<?php echo $dtcancon ; ?>" autocomplete="off" class="clsCampos" />
+		</br>
+		
+		</fieldset>
+			
+            <label for="dtrencon" class="clsCampos">Data Renovação:</label>
+        <input name="dtrencon" id="dtrencon" type="text" value="<?php echo $dtrencon ; ?>" autocomplete="off" class="clsCampos" />
+            
+            <label for="dttercon" class="clsCampos">Data Término:</label>
+        <input name="dttercon" id="dttercon" type="text" value="<?php echo $dttercon ; ?>" autocomplete="off" class="clsCampos" />
+
+        <label for="flgitctr" class="clsCampos">Tarifa Contratual:</label>
+	        <select id="flgitctr" name="flgitctr" class="clsCampos">
+		        <option value="1" <?php echo ($flgitctr == 1 ? 'selected' : ''); ?>>Isentar</option>
+		        <option value="0" <?php echo ($flgitctr == 0 ? 'selected' : ''); ?>>Cobrar</option>
+	        </select>		
+	</div>	
     <fieldset style="padding: 5px">
         <legend style="margin-top: 10px; padding: 2px 10px 2px 10px">Dados para o Site da Cooperativa</legend>
+            
+            <label for="idcooperado_cdc">Código:</label>
+            <input type="text" id="idcooperado_cdc" name="idcooperado_cdc" value="<?php echo $idcooperado_cdc ; ?>" />
+            
+            
         <label for="nmfantasia">Nome fantasia:</label>
         <input type="text" id="nmfantasia" name="nmfantasia" value="<?php echo $nmfantasia; ?>" />
         <label for="cdcnae" class="clsCampos">CNAE:</label>
@@ -53,17 +105,26 @@
         <input type="text" id="dstelefone" name="dstelefone" value="<?php echo $dstelefone; ?>" />
         <label for="dsemail">E-mail:</label>
         <input type="text" id="dsemail" name="dsemail" value="<?php echo $dsemail; ?>" />
-        <label for="dslink_google_maps">Link Google Maps:</label>
-        <textarea name="dslink_google_maps" id="dslink_google_maps"><?php echo $dslink_google_maps; ?></textarea>
+			<br/>  
+				<label for="idcomissao" class="clsCampos">Comissão:</label>
+        <input type="text" id="idcomissao" name="idcomissao" value="<?php echo $idcomissao; ?>"  class="clsCampos"/>
+				<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" class="clsCampos"></a>	
+				<input type="text" id="nmcomissao" name="nmcomissao" class="clsCampos" value="<?php echo $nmcomissao; ?>" />	
+			<br/>      
+			<label for="nrlatitude">Latitude:</label>
+			<input type="text" id="nrlatitude" name="nrlatitude" maxlength="15" value="<?php echo $nrlatitude; ?>" />
+			<br/>
+			<label for="nrlongitude">Longitude:</label>
+			<input type="text" id="nrlongitude" name="nrlongitude" maxlength="15" value="<?php echo $nrlongitude; ?>" />
 	</fieldset>
 </form>
 
 <div id="divBotoes">	
 	<? if ( in_array($operacao,array('AC',''))){ ?>
-		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="fechaRotina(divRotina)" />
+        <input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="encerraRotina(true);return false;" />
 		<input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif"  onClick="controlaOperacao('CA')" />
         <input type="image" id="btFiliais" src="<? echo $UrlImagens; ?>botoes/filiais.png"  onClick="controlaOperacao('FILIAIS')" />
-		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(4);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
+		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(4);return false;" type="image" src="<? echo $UrlImagens; ?>botoes/dossie.gif">
 	<? } else if ( $operacao == 'CA' ){ ?>
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="controlaOperacao('AC')" />		
 		<input type="image" id="btSalvar"  src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="controlaOperacao('ALTERAR')" />

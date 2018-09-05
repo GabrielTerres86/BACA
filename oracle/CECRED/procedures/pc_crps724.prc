@@ -10,7 +10,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Jaison
-     Data    : Agosto/2017                     Ultima atualizacao: 
+     Data    : Agosto/2017                     Ultima atualizacao: 29/08/2018
 
      Dados referentes ao programa:
 
@@ -18,6 +18,8 @@ BEGIN
      Objetivo  : Pagar as parcelas dos contratos do produto Pos-Fixado.
 
      Alteracoes: 
+     29/08/2018 - permitir executar mais de uma vez e deve paralelizar somente na primeira execucao.
+                - Projeto Debitador Unico - Fabiano B. Dias (AMcom).
 
   ............................................................................ */
 
@@ -52,6 +54,18 @@ BEGIN
                         AND crappep.inliquid = 0)
     GROUP BY crapepr.cdagenci;
 
+    -- Alterações na rotina para executar na cadeia noturna além do debitador
+    CURSOR cr_tbgen_param_debit_unico IS
+      SELECT tdp.inexec_cadeia_noturna,
+             tdp.incontrole_exec_prog
+        FROM tbgen_debitador_param  tdp
+       WHERE EXISTS (SELECT 1
+                       FROM tbgen_debitador_horario_proc  tdhp
+                      WHERE tdhp.cdprocesso = tdp.cdprocesso) --Programa deve estar associado a algum horário do Debitador Único
+         AND nrprioridade IS NOT NULL --Programa deve ter prioridade informada
+         AND cdprocesso = 'PC_CRPS724';
+    rw_tbgen_param_debit_unico cr_tbgen_param_debit_unico%ROWTYPE;
+	
     ------------------------------- VARIAVEIS -------------------------------
     vr_flgachou   BOOLEAN;
     vr_idparale   INTEGER;
@@ -60,6 +74,8 @@ BEGIN
     vr_jobname    VARCHAR2(30);
     vr_cdrestart  tbgen_batch_controle.cdrestart%TYPE;
     vr_insituacao tbgen_batch_controle.insituacao%TYPE;
+    vr_flultexe   NUMBER; -- Debitador Unico.
+    vr_qtdexec    NUMBER; -- Debitador Unico.
 
   BEGIN
 
@@ -93,11 +109,55 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
-    -- Gerar o ID para o paralelismo
-    vr_idparale := GENE0001.fn_gera_ID_paralelo;
-
     -- Buscar quantidade parametrizada de Jobs
     vr_qtdjobs := NVL(GENE0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_PARALE_CRPS724'),10);
+
+    -- Debitador Unico - 29/08/2018 - inicio:
+    -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
+    gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
+                                                ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)                              
+                                                ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica  
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
+    SICR0001.pc_controle_exec_deb ( pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
+                                   ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
+                                   ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa                                  
+                                   ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                   ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                   ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                   ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+
+    IF nvl(vr_cdcritic,0) > 0 OR
+    TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_saida; 
+    END IF;             
+
+    --Commit para garantir o controle de execucao do programa.
+    COMMIT;
+
+    -- Buscar parâmetro de execução na cadeia noturna além do debitador único.
+    -- Valida Programa do cadastro do Debitador
+    OPEN cr_tbgen_param_debit_unico;
+    FETCH cr_tbgen_param_debit_unico INTO rw_tbgen_param_debit_unico;
+    IF cr_tbgen_param_debit_unico%notfound THEN
+      CLOSE cr_tbgen_param_debit_unico;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Erro ao buscar parâmetro de indicador de execução do programa do debitor na cadeia noturna';
+      RAISE vr_exc_saida;
+    ELSE
+      CLOSE cr_tbgen_param_debit_unico;
+    END IF;
+	  
+    --  Paralelizar somente na primeira execucao do dia ou se o parametro de execução na cadeia estiver "S" irá executar na cadeia noturna também.
+    IF (vr_qtdexec = 1 OR (rw_crapdat.inproces >= 2 AND NVL(rw_tbgen_param_debit_unico.inexec_cadeia_noturna,'N') = 'S'))
+    AND vr_qtdjobs > 0 THEN
+
+    -- Gerar o ID para o paralelismo
+    vr_idparale := GENE0001.fn_gera_ID_paralelo;
 
     -- Listagem das agencias
     FOR rw_epr_pep IN cr_epr_pep(pr_cdcooper => pr_cdcooper) LOOP
@@ -108,7 +168,7 @@ BEGIN
                                          ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
                                          ,pr_tpagrupador => 1 -- PA
                                          ,pr_cdagrupador => rw_epr_pep.cdagenci
-                                         ,pr_nrexecucao  => 1
+                                           ,pr_nrexecucao  => vr_qtdexec
                                          ,pr_cdrestart   => vr_cdrestart
                                          ,pr_insituacao  => vr_insituacao
                                          ,pr_cdcritic    => vr_cdcritic
@@ -143,6 +203,7 @@ BEGIN
                                       || vr_idparale || ','
                                       || rw_epr_pep.cdagenci || ','
                                       || vr_cdrestart || ','
+                                        || vr_qtdexec || ','									
                                       || 'vr_cdcritic,vr_dscritic);' || chr(13)
                  || 'END;';
 
@@ -188,10 +249,25 @@ BEGIN
     gene0001.pc_valid_batch_controle ( pr_cdcooper   => pr_cdcooper
                                       ,pr_cdprogra   => vr_cdprogra 
                                       ,pr_dtmvtolt   => rw_crapdat.dtmvtolt 
-                                      ,pr_nrexecucao => 1
+                                        ,pr_nrexecucao => vr_qtdexec
                                       ,pr_cdcritic   => vr_cdcritic  
                                       ,pr_dscritic   => vr_dscritic);   
     
+      -- Se houve erro
+      IF TRIM(vr_dscritic) IS NOT NULL OR
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_saida;
+      END IF;
+	  
+    ELSE -- vr_qtdexec > 1 
+
+      pc_crps724_1(pr_cdcooper  => pr_cdcooper
+                  ,pr_idparale  => vr_idparale
+                  ,pr_cdagenci  => 0 -- nao paralelizar
+                  ,pr_cdrestart => vr_cdrestart 
+                  ,pr_qtdexec   => vr_qtdexec
+                  ,pr_cdcritic  => vr_cdcritic
+                  ,pr_dscritic  => vr_dscritic);
 
     -- Se houve erro
     IF TRIM(vr_dscritic) IS NOT NULL OR
@@ -199,6 +275,8 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
 
+    END IF; -- vr_qtdexec = 1 THEN -- Paralelizar somente na primeira execucao. -- Debitador Unico - 29/08/2018.
+    
     -- Processo OK, devemos chamar a fimprg
     BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                              ,pr_cdprogra => vr_cdprogra

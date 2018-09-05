@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --
   --  Programa: CCRD0006
   --  Autor   : Andrei Vieira
-  --  Data    : Junho/2017                     Ultima Atualizacao:
+  --  Data    : Junho/2017                     Ultima Atualizacao: 27/08/2018
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
@@ -12,6 +12,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
   --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
   --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
+  --              27/08/2018 - Ajuste para atualizar a situação do arquivo corretamente ( Adriano - INC0022660 ) 
    
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
@@ -474,6 +475,21 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
 END CCRD0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
+---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa: CCRD0006
+  --  Autor   : Andrei Vieira
+  --  Data    : Junho/2017                     Ultima Atualizacao: 27/08/2018
+  --  Dados referentes ao programa:
+  --
+  --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
+  --
+  --  Alteracoes: 14/06/2017 - Criação da rotina.
+  --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
+  --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
+  --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
+  --              27/08/2018 - Ajuste para atualizar a situação do arquivo corretamente ( Adriano - INC0022660 ) 
+   
   -- Rotina para o processamento do dos carquivos de domicilio bancario
 
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -7890,10 +7906,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
         -- Efetua a atualizacao da situacao na tabela de lancamentos
         BEGIN
-          UPDATE tbdomic_liqtrans_lancto
-             SET insituacao = 1 -- Enviado para CIP/Aguardando Aprovação
-                ,dhprocessamento = SYSDATE
-           WHERE idlancto = rw_lancamento.idlancto;
+
+          UPDATE tbdomic_liqtrans_lancto tllan
+             SET tllan.insituacao      = 1 -- Enviado para CIP/Aguardando Aprovação
+                ,tllan.dhprocessamento = SYSDATE
+           WHERE tllan.idlancto = rw_lancamento.idlancto           
+             AND (SELECT COUNT(*)
+                    FROM tbdomic_liqtrans_pdv        tlpdv
+                        ,tbdomic_liqtrans_centraliza tlcen
+                   WHERE tlpdv.idcentraliza = tlcen.idcentraliza
+                     AND tlcen.idlancto = tllan.idlancto
+                     AND NVL(tlpdv.cdocorrencia,'00') <> '00' -- ainda pendente de processamento
+                  ) = (SELECT COUNT(*)
+                         FROM tbdomic_liqtrans_pdv        tlpdv
+                             ,tbdomic_liqtrans_centraliza tlcen
+                        WHERE tlpdv.idcentraliza = tlcen.idcentraliza
+                          AND tlcen.idlancto = tllan.idlancto);           
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao atualizar tabela tbdomic_liqtrans_lancto: '||SQLERRM;

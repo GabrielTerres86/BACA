@@ -3766,7 +3766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 15/08/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 31/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3785,6 +3785,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298) 
   --
   --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
+  --
+  --              31/07/2018 - P410 - Inclusao de Histórico para não compor Saldo no IOF do Prejuizo (Marcos-Envolti)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Tabela de Memoria primeira parcela
@@ -3976,7 +3978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476) THEN 
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476,2735) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
@@ -3993,7 +3995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            
            /* Multa e Juros de Mora de Prejuizo */
            /* M324 - inclusao dos novos historicos de multas e juros */
-           IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476) THEN
+           IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476,2735) THEN
              pr_extrato_epr(vr_index).flgsaldo := FALSE;
            END IF;  
              
@@ -4615,6 +4617,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              07/05/2018 - Verificacao de impedimento de talionario atraves da proc 
   --                           pc_ind_impede_talonario. PRJ366 (Lombardi)
   -- 
+  --              09/08/2018 - Alterado forma para da busca de lançamentos futuros para emprestimos e 
+  --                           Fatura de cartão de crédito : (Alcemir - Mout's / PRB0040071).  
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4865,7 +4870,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       
       --> Buscar faturas de cartoes 
       CURSOR cr_fatura  (pr_cdcooper IN crapsdc.cdcooper%type
-                        ,pr_nrdconta IN crapsdc.nrdconta%TYPE) IS
+                        ,pr_nrdconta IN crapsdc.nrdconta%TYPE
+                        ,pr_dtiniper IN tbcrd_fatura.dtvencimento%TYPE
+						            ,pr_dtfimper IN tbcrd_fatura.dtvencimento%TYPE) IS
         SELECT fatura.dtvencimento
               ,fatura.dsdocumento
               ,fatura.vlpendente
@@ -4875,7 +4882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND fatura.nrdconta = pr_nrdconta
          AND fatura.insituacao = 1
          AND fatura.vlpendente > 0
-         AND ((fatura.dtvencimento >= pr_dtiniper
+         AND ((fatura.dtvencimento > pr_dtiniper
          AND fatura.dtvencimento <= pr_dtfimper) 
           OR pr_dtiniper IS NULL 
          AND pr_dtfimper IS NULL); 
@@ -5268,6 +5275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_vldpagto NUMBER;
       vr_qtdpagto INTEGER;
       vr_dtfatura DATE;
+      vr_dtiniper DATE;
       vr_dtiniper01 DATE;
       vr_dtfimper01 DATE;
       vr_dscedent VARCHAR(300);
@@ -6117,6 +6125,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         RAISE vr_exc_erro;
       END IF;  
            
+      
+      IF pr_dtiniper IS NOT NULL THEN 
+         vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');    
+      END IF;
+           
       --Buscar primeiro registro da tabela de emprestimos
       vr_index_epr:= vr_tab_dados_epr.FIRST;
       --Se Retornou Dados
@@ -6138,9 +6151,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             /* Valor da parcela vencida */
             IF vr_tab_dados_epr(vr_index_epr).vlprvenc > 0 THEN
               -- Se os periodos foram informados, filtrar por eles
-              IF (pr_dtiniper IS NULL   AND
+              IF (vr_dtiniper IS NULL   AND
                   pr_dtfimper IS NULL)  OR
-                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
+                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >  vr_dtiniper   AND
                   vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN  
                             
               --Incrementar contador lancamentos na tabela
@@ -6165,9 +6178,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                     TO_CHAR(rw_crapdat.dtmvtolt,'MMYYYY'),'DDMMYYYY');
               
               -- Se os periodos foram informados, filtrar por eles
-              IF (pr_dtiniper IS NULL   AND
+              IF (vr_dtiniper IS NULL   AND
                   pr_dtfimper IS NULL)  OR
-                  (vr_dtdpagto >= pr_dtiniper   AND
+                  (vr_dtdpagto >  vr_dtiniper   AND
                    vr_dtdpagto <= pr_dtfimper)  THEN
   
               --Incrementar contador lancamentos na tabela
@@ -6220,9 +6233,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF; 
             
             /* Se os periodos foram informados, filtrar por eles */
-            IF pr_dtiniper IS NOT NULL   AND
+            IF vr_dtiniper IS NOT NULL   AND
                pr_dtfimper IS NOT NULL   AND
-              (vr_tab_dados_epr(vr_index_epr).dtdpagto < pr_dtiniper   OR
+              (vr_tab_dados_epr(vr_index_epr).dtdpagto < vr_dtiniper   OR
                vr_tab_dados_epr(vr_index_epr).dtdpagto > pr_dtfimper)  THEN
               --Proximo registro
               RAISE vr_next_reg;
@@ -6618,9 +6631,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;    
       END LOOP;
             
+      IF pr_dtiniper IS NOT NULL THEN  
+         --buscar dia ultil anterior
+	       vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');
+      END IF;
+            
       /*FATURAS DE CARTAO DE CREDITO SICOOB*/
       FOR rw_fatura IN cr_fatura  (pr_cdcooper => pr_cdcooper
-                                  ,pr_nrdconta => pr_nrdconta) LOOP
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_dtiniper => vr_dtiniper
+								                  ,pr_dtfimper => pr_dtfimper) LOOP
         
         --Selecionar Historicos
         OPEN cr_craphis (pr_cdcooper => pr_cdcooper
@@ -13365,6 +13385,7 @@ END pc_consulta_ir_pj_trim;
         vr_vlsaldo2 NUMBER;
         vr_flginfor BOOLEAN:= FALSE;
 				vr_flginfor2 BOOLEAN:= FALSE;
+        vr_flginfor3 BOOLEAN:= FALSE;
         vr_diapagto INTEGER;
         vr_mespagto INTEGER;
         vr_anopagto INTEGER;
@@ -13373,6 +13394,7 @@ END pc_consulta_ir_pj_trim;
         vr_nrdrowid ROWID; 
         vr_dstexinf VARCHAR2(200);
         vr_dstexinf2 VARCHAR2(200);
+        vr_dstexinf3 VARCHAR2(200);
         vr_dslinpar VARCHAR2(200); 
         vr_dstexto  VARCHAR2(32600);
 				vr_flgloop  BOOLEAN := FALSE;
@@ -13903,6 +13925,12 @@ END pc_consulta_ir_pj_trim;
               --Descricao do Extrato
               pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat||'**';
             END IF;
+            IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor = 2735 THEN
+              --Flag Informacao
+              vr_flginfor3:= TRUE;
+              --Descricao do Extrato
+              pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat||'***';
+            END IF;
 
             --Primeira Ocorrencia
             IF vr_flgloop = FALSE THEN
@@ -13963,12 +13991,15 @@ END pc_consulta_ir_pj_trim;
 					IF vr_flginfor2 THEN
             vr_dstexinf2:= '** Atencao! Esse lancamento e apenas informativo, nao  altera o saldo devedor. O credito do estorno e efetuado em conta corrente.';
           END IF; 
+					IF vr_flginfor3 THEN
+            vr_dstexinf3:= '*** Demonstracao do IOF complementar referente as parcelas em atraso. Valor devido, mas nao altera o saldo devedor.';
+          END IF; 
 					 
           --Montar Mensagem Extrato
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||
                        to_char(vr_vlsaldo2,'fm9g999g990d00');
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
-          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="'||vr_dstexinf||'" dstexinf2="'||vr_dstexinf2||'">';
+          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="'||vr_dstexinf||'" dstexinf2="'||vr_dstexinf2||'" dstexinf3="'||vr_dstexinf3||'">';
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
@@ -14611,7 +14642,7 @@ END pc_consulta_ir_pj_trim;
 
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||to_char(vr_vlsdeved,'fm9g999g990d00');
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
-          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="">';
+          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="" dstexinf3="">';
 					--Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
@@ -14829,6 +14860,7 @@ END pc_consulta_ir_pj_trim;
         2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
         2405 - TRANSFERENCIA EMP/ FIN TR SUSPEITA DE FRAUDE
         2412 - TRANSFERENCIA PREJUIZO C/C SUSPEITA DE FRAUDE
+        2735 - IOF PREJUIZO
 
 		*/
         --Selecionar Lancamento Emprestimo
@@ -14840,7 +14872,7 @@ END pc_consulta_ir_pj_trim;
           WHERE craplem.cdcooper = pr_cdcooper 
           AND   craplem.nrdconta = pr_nrdconta 
           AND   craplem.nrctremp = pr_nrctremp 
-          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2405, 2385, 2400);
+          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2405, 2385, 2400, 2735);
         rw_craplem cr_craplem%ROWTYPE;
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);

@@ -1831,17 +1831,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
       IF rw_crapind.idperiod IN (1,2)THEN
 
-        -- Verifica se periodo da taxa e maior que data atual
-        IF TRUNC(vr_dtperiod,'MM') < TRUNC(rw_crapdat.dtmvtolt,'MM') AND NVL(rw_craptxi.vlrdtaxa,0) = 0 
-           AND pr_cddindex <> 4 THEN
-          vr_dscritic := 'Nao e possivel cadastrar taxa do mes anterior.';
-          RAISE vr_exc_saida;
-        ELSIF TRUNC(vr_dtperiod,'MM') < TRUNC(rw_crapdat.dtmvtolt,'MM') AND NVL(rw_craptxi.vlrdtaxa,0) <> 0 
-              AND pr_cddindex <> 4 THEN
-          vr_dscritic := 'Nao e possivel alterar taxa do mes anterior.';
-          RAISE vr_exc_saida;
-        END IF;
-
+          -- Verifica se periodo da taxa e maior que data atual
+          IF TRUNC(vr_dtperiod,'MM') < TRUNC(rw_crapdat.dtmvtolt,'MM') AND NVL(rw_craptxi.vlrdtaxa,0) = 0 
+             AND pr_cddindex <> 4 THEN
+            vr_dscritic := 'Nao e possivel cadastrar taxa do mes anterior.';
+            RAISE vr_exc_saida;
+          ELSIF TRUNC(vr_dtperiod,'MM') < TRUNC(rw_crapdat.dtmvtolt,'MM') AND NVL(rw_craptxi.vlrdtaxa,0) <> 0 
+                AND pr_cddindex <> 4 THEN
+            vr_dscritic := 'Nao e possivel alterar taxa do mes anterior.';
+            RAISE vr_exc_saida;
+          END IF;
+        
       ELSE
 
         -- Verifica se periodo da taxa e maior que data atual
@@ -2263,7 +2263,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
       END IF;
 
       IF rw_crapind.idperiod IN (1,2)THEN
-
         -- Verifica se periodo da taxa e maior que data atual
         IF TRUNC(vr_dtperiod,'MM') < TRUNC(rw_crapdat.dtmvtolt,'MM') AND pr_cddindex <> 4THEN
            vr_dscritic := 'Nao e possivel alterar taxa do mes anterior.';
@@ -4180,8 +4179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               vr_txofimes := ROUND(((vr_vlcdimes * vr_vltxadic) / 100),6);
               vr_txofidia := ROUND(((POWER(1 + (vr_txofimes / 100),1 / vr_qtdiaute) - 1) * 100),6);
               
-              BEGIN
-                UPDATE craptrd
+            BEGIN
+              UPDATE craptrd
                 SET    craptrd.vltrapli = vr_vlcdimes
                       ,craptrd.txofimes = vr_txofimes
                       ,craptrd.txofidia = vr_txofidia

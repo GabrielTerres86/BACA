@@ -62,8 +62,11 @@
  * 043: [14/11/2017] Jonata          (RKAM) : Ajuste para apresentar mensagem que cartão deve ser cancelado através do SIPAGNET. (P364)
  * 044: [01/12/2017] Jonata          (RKAM) : Não permitir acesso a opção de incluir quando conta demitida.
  * 045: [29/03/2018] Lombardi	   (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
+ * 046: [13/08/2018] Carlos         (Ailos) : prb0040273 Verificação do estado do objeto oPinpad nas funções lerCartaoChip e fechaConexaoPinpad 
+ *                                            para evitar travamento na entrega do cartão.
  * 046: [17/08/2018] Fabricio      (AILOS)  : Tratamento na altera_senha_pinpad() para ignorar a AID (application ID) 'A0000001510000'
  *                                            GP GlobalPlatform (por solicitacao da Cabal) em virtude da geracao dos novos chips - SCTASK0025102. (Fabricio)
+ * 048: [22/08/2018] Ranghetti     (AILOS)  : Habilitar botao de impressao para cartoes BB - INC0022408.
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -281,7 +284,12 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
                 $("#btnupdo").prop("disabled", false);
                 $("#btnupdo").css('cursor', 'default');
             }
+        }else{
+			// Habilitar botao de impressao para cartoes BB
+			$("#btnimpr").prop("disabled", false);            
+			$("#btnimpr").css('cursor', 'pointer');
         }
+			
 
         //Se estiver executando a rotina de impedimentos e o cartão for CECRED deve deixar habilitado, pois ao clicar no botão de canelcar, deverá apresentar alerta
         //informando que o cartão deve ser cancelado através do SIPAGNET.
@@ -4812,12 +4820,16 @@ function lerCartaoChip() {
     var sTagPortador = '';
     var sTagDataValidade = '';
 
+    fechaConexaoPinpad(oPinpad);
+
+    if (oPinpad == "" || oPinpad == false || typeof oPinpad == 'undefined') {
     try {
         var oPinpad = new ActiveXObject("Gertec.PPC");
     } catch (e) {
         hideMsgAguardo();
 //showError("error","A rotina de entrega n&atilde;o &eacute; compat&iacute;vel com este navegador, acesse o Internet Explorer.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
         return;
+    }
     }
 
 // Abre a porta do PINPAD
@@ -5234,26 +5246,26 @@ function altera_senha_pinpad() {
                                 /* Se application ID diferente de GP GlobalPlatform (solicitado pela Cabal para ignorarmos) - 
                                    SCTASK0025102 (Fabricio) */
                                 if (aOperacao[iAPP] != 'A0000001510000') {
-                                    oRetornoJson = altera_cb(oPinpad, aOperacao[iAPP], sNTexto4, sNumeroCartao);
-                                    // Para cada transacao precisamos fechar a conexao e abrir novamente. (By GERTEC)
-                                    if (oRetornoJson.bOK) {
-                                        oPinpad.CloseSerial();
-                                        oPinpad.OpenSerial(sPortaPinpad);
-                                    } else {
-                                        fechaConexaoPinpad(oPinpad);
-                                        return;
-                                    }
+                                oRetornoJson = altera_cb(oPinpad, aOperacao[iAPP], sNTexto4, sNumeroCartao);
+// Para cada transacao precisamos fechar a conexao e abrir novamente. (By GERTEC)
+                                if (oRetornoJson.bOK) {
+                                    oPinpad.CloseSerial();
+                                    oPinpad.OpenSerial(sPortaPinpad);
+                                } else {
+                                    fechaConexaoPinpad(oPinpad);
+                                    return;
                                 }
+                            }
                             }
 
                             fechaConexaoPinpad(oPinpad);
-    // Vamos verificar se a acao eh para entregar o cartao ou 2 via da senha
-                                if (nomeacao == 'ENTREGAR_CARTAO') {
-        // Efetua a entrega do cartao com CHIP
-                                    efetuaEntregaCartaoComChip();
+// Vamos verificar se a acao eh para entregar o cartao ou 2 via da senha
+                            if (nomeacao == 'ENTREGAR_CARTAO') {
+// Efetua a entrega do cartao com CHIP
+                                efetuaEntregaCartaoComChip();
                             } else {
 // Somente volta para a tela de consulta
-                                    showError("inform", 'Senha alterada com sucesso.', "Alerta - Ayllos", "acessaOpcaoAba(14,0,'2');");
+                                showError("inform", 'Senha alterada com sucesso.', "Alerta - Ayllos", "acessaOpcaoAba(14,0,'2');");
                             }
                         } catch (e) {
                             fechaConexaoPinpad(oPinpad);
@@ -5283,6 +5295,9 @@ function altera_senha_pinpad() {
  * @param Object Objeto Pinpad
  */
 function fechaConexaoPinpad(oPinpad) {
+
+    // Se houver conexao ativa, elimina	
+    if (oPinpad != false && typeof oPinpad != 'undefined') {
     oPinpad.ReadMagCard_Stop();
     oPinpad.ChangeEMVCardPasswordStop();
     oPinpad.StopPINBlock();
@@ -5290,6 +5305,7 @@ function fechaConexaoPinpad(oPinpad) {
     oPinpad.SetLED(0);
 // Fecha Porta
     oPinpad.CloseSerial();
+}
 }
 
 function altera_cb(oPinpad, sAID, sNTexto4, sNumeroCartao) {

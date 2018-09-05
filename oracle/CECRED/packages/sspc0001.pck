@@ -511,7 +511,8 @@ PROCEDURE pc_busca_intippes(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cód. da
 													 ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
 													 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
 													 ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
-                           ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
+                                                     ,pr_tpctrato IN crapavt.tpctrato%TYPE DEFAULT 1 --> Tipo de Contrato 1-Emprestimo, 8-Limite Desconto Titulo
+                                                     ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
 													 ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
 													 ,pr_inpessoa OUT NUMBER);                 --> 1-Física; 2- Jurídica
 
@@ -593,6 +594,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --                          Referentes a proposta. (Lindon Carlos Pecile - GFT)
   --				
   --             14/03/2018 - Inclusão nova tag no XML  <CEP_END_RES> na procedure pc_monta_cpf_cnpj_envio (Paulo Martins - Mout´s)
+  --                          
+  --             11/07/2018 - Adicionado na procedure pc_busca_intippes o parâmetro pr_tpctrato e o cursor cr_crawlim para buscar 
+  --                          informações da pessoa do contrato de limite de desconto de titulos (Paulo Penteado GFT)
   --                          
   ---------------------------------------------------------------------------------------------------------------
 
@@ -3508,9 +3512,17 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_txalinea VARCHAR2(30);          --> Receber a alinea como texto para tratamento do campo dsmotivo
     vr_nrdconta NUMBER;                --> Receber a conta da pessoa relacionada
 		vr_intippes NUMBER;                --> Receber o enquadramento do tipo de pessoa na proposta
+    vr_tpctrato crapavt.tpctrato%TYPE;
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_processa_retorno_req');  
+
+    -- Setar o tipo de contrato conforme o indicador do produto
+    IF pr_inprodut = 5 THEN
+      vr_tpctrato := 8;
+    ELSE
+      vr_tpctrato := 1;
+    END IF;
 
     -- Inicializa o contador de consultas
     vr_contador := 1;
@@ -3636,6 +3648,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                          ,pr_nrctremp => pr_nrdocmto
                          ,pr_nrcpfcgc => vr_crapcbd.nrcpfcgc
                          ,pr_dsclasse => vr_dsclasse
+                         ,pr_tpctrato => vr_tpctrato
                          ,pr_intippes => vr_intippes 
                          ,pr_nrctapes => vr_nrdconta
                          ,pr_inpessoa => vr_inpessoa); 
@@ -5806,7 +5819,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
          and a.nrdconta = pr_nrdconta
          and a.nrctremp = pr_nrdocmto
          and a.nrcpfcgc = p_nrcpfcgc
-         and nvl(a.nrcepend,0) > 0;      
+         and nvl(a.nrcepend,0) > 0;         
          
     -- Busca cep crapenc 
       cursor c_crapenc(p_nrdconta in number) is
@@ -6087,7 +6100,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       -- Se possuir conta, podes buscar da TBCADAST_PESSOA
       vr_nrcepend_av1 := null;
       open c_cep(vr_inpessoa_av1,vr_nrcpfcgc_av1);
-      fetch c_cep into vr_nrcepend_av1;
+       fetch c_cep into vr_nrcepend_av1;
       if c_cep%notfound then
         --Tipo endereco(9-Comercial,10-Residencial,11-Progrid,12-Corresp)
         open c_crapenc(vr_nrdconta_av1); 
@@ -10726,6 +10739,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 														 ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
 														 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
 														 ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
+                                                         ,pr_tpctrato IN crapavt.tpctrato%TYPE DEFAULT 1 --> Tipo de Contrato 1-Emprestimo, 8-Limite Desconto Titulo
 														 ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
 														 ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
 														 ,pr_inpessoa OUT NUMBER) IS               --> 1-Física; 2- Jurídica
@@ -10739,6 +10753,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
   --
   --  Objetivo  : Rotina responsável por retornar qual o enquadramento da pessoa na proposta passada 
 	--              por parâmetro
+  --
+  --  Alteracoes: 11/07/2018 - Adicionado o parâmetro pr_tpctrato e o cursor cr_crawlim para buscar informações da
+  --                           pessoa do contrato de limite de desconto de titulos (Paulo Penteado GFT)
   --
   --  Alteracoes: 
   ---------------------------------------------------------------------------------------------------------------														 
@@ -10776,6 +10793,18 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 					 AND crawepr.nrctremp = pr_nrctremp
 					 AND crawepr.dsprotoc IS NOT NULL;
 					 
+   -- Cursor sobre os dados de contrato de limite desconto titulo
+   CURSOR cr_crawlim IS
+   SELECT lim.nrctaav1
+         ,lim.nrctaav2
+         ,lim.inconcje
+     FROM crawlim lim
+    WHERE lim.cdcooper = pr_cdcooper
+      AND lim.nrdconta = pr_nrdconta
+      AND lim.nrctrlim = pr_nrctremp
+      AND lim.tpctrlim = 3
+      AND lim.dsprotoc IS NOT NULL;
+           
 			-- Buscar os dados do associado
 			CURSOR cr_crapass(pr_nrdconta crapass.nrdconta%TYPE) IS
 				SELECT crapass.nrcpfcgc,
@@ -10806,10 +10835,23 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 				 WHERE crapavt.cdcooper = pr_cdcooper
 					 AND crapavt.nrdconta = pr_nrdconta
 					 AND crapavt.nrctremp = pr_nrctremp
-					 AND crapavt.tpctrato = 1; -- Emprestimo					 		 
+           AND crapavt.tpctrato = pr_tpctrato;                
 					 					 
 		BEGIN
 			-- Buscar as informações da proposta
+   IF pr_tpctrato = 8 THEN
+     OPEN  cr_crawlim;
+     FETCH cr_crawlim INTO vr_nrctaav1
+                          ,vr_nrctaav2
+                          ,vr_inconcje;
+     IF    cr_crawlim%NOTFOUND THEN
+           CLOSE cr_crawlim;
+           RAISE vr_exc_erro;
+     END   IF;
+     CLOSE cr_crawlim;
+     
+   ELSE
+      -- Buscar as informaçoes da proposta
 			OPEN cr_crawepr;
       FETCH cr_crawepr 
        INTO vr_nrctaav1
@@ -10823,6 +10865,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       END IF;
       -- Fecha o cursor de emprestimo
       CLOSE cr_crawepr;
+   END IF;
 			
       -- Popula as variaveis do titular da consulta
 			OPEN cr_crapass(pr_nrdconta);
@@ -11064,7 +11107,7 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
   --  Objetivo  : Rotina responsável por buscar as informações das consultas efetuadas nos Birôs a partir da 
 	--              Esteira
   --
-  --  Alteracoes: 
+  --  Alteracoes: 01/08/2018 - Ajustado para propostas de CDC (Rafael Faria - Supero)
   ---------------------------------------------------------------------------------------------------------------			
 		DECLARE
 		  -- Tratamento de críticas
@@ -11086,7 +11129,8 @@ PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  -->
 			
 			-- Cursor sobre os dados de emprestimo
 			CURSOR cr_crawepr IS
-				SELECT crawepr.cdopeste
+				SELECT decode(empr0001.fn_tipo_finalidade(pr_cdcooper => crawepr.cdcooper
+                                                         ,pr_cdfinemp => crawepr.cdfinemp), 3, crawepr.cdoperad, crawepr.cdopeste) as cdopeste
 							,crawepr.nrconbir
 					FROM crawepr
 				 WHERE crawepr.cdcooper = pr_cdcooper
@@ -11562,7 +11606,7 @@ BEGIN
                           ,pr_nrprotoc => pr_dsprotoc
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdocmto => pr_nrctrlim
-                          ,pr_inprodut => 1
+                          ,pr_inprodut => 5
                           ,pr_tpconaut => 'M'             -- Motor de Credito
                           ,pr_inconscr => vr_inconscr     -- Houve consulta SCR?
                           ,pr_retxml   => vr_xmlret

@@ -1,4 +1,4 @@
-/***********************************************************************************
+/******************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +------------------------------------------+----------------------------------------+
@@ -6,6 +6,7 @@
   +------------------------------------------+----------------------------------------+
   | sistema/generico/procedures/b1wgen0188.p |                                        |
   |   busca_dados                            |	EMPR0002.pc_busca_dados_cpa           |
+  |   valida_dados                            |	EMPR0002.pc_valid_dados_cpa           |
   +------------------------------------------+----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -114,6 +115,8 @@
                              rotina pc_calcula_tarifa para lançar o código da 
                              faixa de valor (rotina grava_dados_conta) (Carlos)
 
+				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
+                
 ..............................................................................*/
 
 /*................................ DEFINICOES ............................... */
@@ -1117,6 +1120,7 @@ PROCEDURE grava_dados:
                                                    INPUT 0, /* idcobope */
                                                    INPUT 0, /* idfiniof */
                                                    INPUT "", /* DSCATBEM */
+                                                   INPUT 1, /* par_inresapr */
                                                    OUTPUT TABLE tt-erro,
                                                    OUTPUT TABLE tt-msg-confirma,
                                                    OUTPUT aux_recidepr,
