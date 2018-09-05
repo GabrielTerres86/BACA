@@ -329,6 +329,7 @@ BEGIN
 
         -- Efetua o pagamento da parcela em Dia
         EMPR0011.pc_efetua_pagamento_em_dia(pr_cdcooper => pr_cdcooper
+                                           ,pr_cdprogra => vr_cdprogra
                                            ,pr_dtmvtoan => rw_crapdat.dtmvtoan
                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                            ,pr_cdagenci => rw_epr_pep.cdagenci
