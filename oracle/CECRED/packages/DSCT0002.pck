@@ -7269,6 +7269,9 @@ END fn_letra_risco;
     --               06/06/2018 - Remoção das restrições da impressão do bordero
     --
     --               16/08/2018 - Zerar o prazo quando o titulo estiver vencido
+    --
+    --               05/09/2018 - Campos de restrição de volta mas somente para borderos antigos (Vitor S. Assanuma - GFT)
+    --
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -7547,6 +7550,7 @@ END fn_letra_risco;
                          '<nmextcop>'|| rw_crapcop.nmextcop ||'</nmextcop>'||
                          '<dstitulo>'|| vr_dstitulo ||'</dstitulo>'||
                          '<dsqrcode>'|| vr_qrcode ||'</dsqrcode>'||
+                         '<flgrestr>'|| pr_flgrestr || '</flgrestr>'||
                          '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) ||'</nrdconta>'||
                          '<nmprimtl>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmprimtl ||'</nmprimtl>'||
                          '<cdagenci>'|| vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'</cdagenci>'||
@@ -7629,6 +7633,37 @@ END fn_letra_risco;
                           '<qtdprazo>'||   vr_rel_qtdprazo                              ||'</qtdprazo>'|| 
                           '<nmsacado>'||   gene0007.fn_caract_controle(substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32))   ||'</nmsacado>'|| 
                           '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>');
+                         
+        -- Caso seja bordero antigo, escreve as restrições
+        IF (pr_flgrestr = 0) THEN
+          pc_escreve_xml( '<restricoes>');
+
+          -- Percorre as restricoes
+          IF vr_tab_bordero_restri.COUNT > 0 THEN
+            FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
+              -- Sea for restricao do cheque em questao
+              IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
+                --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
+                IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
+                  continue;
+                END IF;
+
+                vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
+
+                pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto>' ||'</restricao>');
+                -- Se foi aprovado pelo coordenador
+                IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+
+                  IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
+                    vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
+                  END IF;
+
+                END IF;
+              END IF;
+            END LOOP;
+          END IF;
+          pc_escreve_xml('</restricoes>');                          
+        END IF;
         pc_escreve_xml('</titulo>');
         
       
@@ -7672,13 +7707,43 @@ END fn_letra_risco;
                           <vldtotal>'|| to_char(vr_tab_totais(idxtot).vltottit,'fm999G999G999G990D00') ||'</vldtotal>
                           <vltotliq>'|| to_char(vr_tab_totais(idxtot).vltotliq,'fm999G999G999G990D00') ||'</vltotliq>
                           <vldmedia>'|| to_char(vr_tab_totais(idxtot).vlmedtit,'fm999G999G999G990D00') ||'</vldmedia>
-                          <qtrestri>'|| vr_tab_totais(idxtot).qtrestri ||'</qtrestri>
+                          <qtrestri>'|| NVL(vr_tab_totais(idxtot).qtrestri, 0) ||'</qtrestri>
                           <flgrestr>'|| pr_flgrestr ||'</flgrestr>
                         </total>');  
         END LOOP;
       END IF;
-      
       pc_escreve_xml('</totais>',TRUE);
+      
+      -- Caso seja borderô antigo
+      IF (pr_flgrestr = 0) THEN
+        -- Se possui restricoes aprovadas pelo coordenador
+        IF vr_tab_restri_apr_coo.COUNT > 0 THEN
+          pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');
+          vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
+          WHILE vr_idxrestr IS NOT NULL LOOP
+            pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto>' || 
+                               '<flgrestr>'|| pr_flgrestr ||'</flgrestr>' ||
+            '</restricao>');
+            vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
+          END LOOP;
+          pc_escreve_xml(  '</restricoes_coord>');
+        END IF;
+
+        --> Exibir sacados que com pagamentos nao efetuados/pendentes
+        IF vr_tab_sacado_nao_pagou.count > 0 THEN
+          pc_escreve_xml('<sacnaopago>',TRUE);
+          vr_idxsac := vr_tab_sacado_nao_pagou.first;
+          WHILE vr_idxsac IS NOT NULL LOOP
+            pc_escreve_xml('<sacado>
+                               <nmsacado>'|| gene0007.fn_caract_controle(vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado) ||'</nmsacado>
+                               <qtdtitul>'|| vr_tab_sacado_nao_pagou(vr_idxsac).qtdtitul ||'</qtdtitul>
+                               <vlrtitul>'|| to_char(vr_tab_sacado_nao_pagou(vr_idxsac).vlrtitul,'fm999G999G999G990D00') ||'</vlrtitul>
+                            </sacado>');
+            vr_idxsac := vr_tab_sacado_nao_pagou.next(vr_idxsac);
+          END LOOP;
+          pc_escreve_xml('</sacnaopago>');
+        END IF;
+      END IF;
       pc_escreve_xml('</Bordero></raiz>',TRUE);      
       
       --> Solicita geracao do PDF

@@ -2699,7 +2699,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Alteracoes: 26/05/2017 - Alterado para tipo de impressao 10 - Analise
                              PRJ300 - Desconto de cheque (Odirlei-AMcom) 
-                06/08/2018 - Inserção da impressão de Extrato de Borderô [pr_idimpres=11]
+                
+                05/09/2018 - Inclusão da flag de restrição na chamada da impressão de bordero de titulos (Vitor S. Assanuma - GFT)
     ..............................................................................*/
     DECLARE
       -- Cursor da data
@@ -2795,6 +2796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                              pr_dsiduser => pr_dsiduser,
                                              pr_flgemail => pr_flgemail,
                                              pr_flgerlog => pr_flgerlog,
+                                             pr_flgrestr => pr_flgrestr,
                                              pr_nmarqpdf => vr_nmarqpdf,
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
@@ -2803,7 +2805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           RAISE vr_exc_erro;
         END IF;
       --> 11 - Extrato Bordero
-      ELSIF pr_idimpres IN (11) THEN
+     ELSIF pr_idimpres IN (11) THEN
         DSCT0002.pc_gera_extrato_bordero(pr_cdcooper => vr_cdcooper,
                                              pr_cdagecxa => vr_cdagenci,
                                              pr_nrdcaixa => vr_nrdcaixa,
@@ -7758,23 +7760,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       RAISE vr_exc_erro;
     END IF;
     
-		OPEN cr_craplim (pr_cdcooper => pr_cdcooper
-		                ,pr_nrdconta => pr_nrdconta
-									  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+    OPEN cr_craplim (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta
+                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                     ,pr_nrborder => pr_nrborder);
-		FETCH cr_craplim INTO rw_craplim;
+    FETCH cr_craplim INTO rw_craplim;
 		
-		IF cr_craplim%NOTFOUND THEN
-			-- Fecha cursor
-			CLOSE cr_craplim;
-			-- Atribui crítica
-			vr_cdcritic := 0;
-			vr_dscritic := 'Cooperado não possui limite de desconto de cheque ativo.';
-			-- Levanta exceção
-			RAISE vr_exc_erro;
-		END IF;
-		-- Fecha cursor
-		CLOSE cr_craplim;
+    IF cr_craplim%NOTFOUND THEN
+        -- Fecha cursor
+        CLOSE cr_craplim;
+        -- Atribui crítica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Cooperado não possui limite de desconto de cheque ativo.';
+        -- Levanta exceção
+        RAISE vr_exc_erro;
+    END IF;
+    -- Fecha cursor
+    CLOSE cr_craplim;
     
     IF vr_tab_lim_desconto.exists(rw_crapass.inpessoa) THEN
       IF rw_craplim.vltotchq > (rw_craplim.vllimite + (rw_craplim.vllimite * (vr_tab_lim_desconto(rw_crapass.inpessoa).pctollim / 100))) THEN
@@ -7925,15 +7927,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_vltotiofadi := NVL(vr_vltotiofadi,0) + NVL(vr_vliofadi,0);
       vr_vltotiofcpl := NVL(vr_vltotiofcpl,0) + NVL(vr_vliofcpl,0);
 			-- Buscar custódia
-			OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
-			               ,pr_nrdconta => pr_nrdconta
-										 ,pr_nrborder => pr_nrborder
-										 ,pr_cdcmpchq => vr_tab_cheques(vr_idx_cheque).cdcmpchq
-										 ,pr_cdbanchq => vr_tab_cheques(vr_idx_cheque).cdbanchq
-										 ,pr_cdagechq => vr_tab_cheques(vr_idx_cheque).cdagechq
-										 ,pr_nrctachq => vr_tab_cheques(vr_idx_cheque).nrctachq
-										 ,pr_nrcheque => vr_tab_cheques(vr_idx_cheque).nrcheque);
-			FETCH cr_crapcst INTO rw_crapcst;
+      OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrborder => pr_nrborder
+                     ,pr_cdcmpchq => vr_tab_cheques(vr_idx_cheque).cdcmpchq
+                     ,pr_cdbanchq => vr_tab_cheques(vr_idx_cheque).cdbanchq
+                     ,pr_cdagechq => vr_tab_cheques(vr_idx_cheque).cdagechq
+                     ,pr_nrctachq => vr_tab_cheques(vr_idx_cheque).nrctachq
+                     ,pr_nrcheque => vr_tab_cheques(vr_idx_cheque).nrcheque);
+                FETCH cr_crapcst INTO rw_crapcst;
 			
 			-- Se não encontrou
 			IF cr_crapcst%NOTFOUND THEN
