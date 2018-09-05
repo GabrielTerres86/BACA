@@ -187,7 +187,10 @@ create or replace package body cecred.CNSO0001 is
                            
                21/02/2018 - Ajustar relatorio e gravar critica na lau caso 
                             tenha alguma (Lucas Ranghetti #852207)
-														
+							 
+               03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
+                            							
 	             24/04/2018 - Migracao do Progress (crps663.i) para Oracle
 			                     (Teobaldo Jamunda, AMcom - PRJ Debitador Unico)
 .............................................................................*/
@@ -474,7 +477,10 @@ create or replace package body cecred.CNSO0001 is
   -- Frequencia: Sempre que chamado
   -- Objetivo  : Buscar consorcio nao debitado no processo noturno
   --
-  --  Alterações: 25/04/2018 - Conversão Progress --> Oracle PLSQL (Teobaldo J., AMcom)
+  --  Alterações: 03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+  --                          PRJ366 (Lombardi).
+  --
+  --              25/04/2018 - Conversão Progress --> Oracle PLSQL (Teobaldo J., AMcom)
   --
   ---------------------------------------------------------------------------------------------
 		-- Cursor de lancamentos automaticos
@@ -731,6 +737,7 @@ create or replace package body cecred.CNSO0001 is
            ,craplau.nrseqdig
            ,craplau.nrdolote
            ,craplau.dtmvtolt
+           ,craplau.dscedent
            ,(CASE  
               WHEN craplau.cdhistor = 1230 THEN 1
               WHEN craplau.cdhistor = 1231 THEN 2
@@ -810,6 +817,9 @@ create or replace package body cecred.CNSO0001 is
   vr_dtrefere     DATE;
   vr_coopeatu     INTEGER;
   vr_tpconatu     INTEGER;
+
+  -- Objetos para armazenar as variáveis da notificação
+  vr_variaveis_notif NOTI0001.typ_variaveis_notif;
 
   -- Tratamento de erros vars
   vr_dscritic     VARCHAR2(4000);
@@ -947,7 +957,7 @@ create or replace package body cecred.CNSO0001 is
             IF rw_crapass.dtdemiss IS NOT NULL THEN
                vr_cdcritic := 454;
                vr_dscritic := 'Cooperado foi demitido.';
-            ELSIF rw_crapass.cdsitdct IN (2, 3, 9) THEN
+            ELSIF rw_crapass.cdsitdct IN (2, 3, 4) THEN
                vr_cdcritic := 64;
                vr_dscritic := 'Conta encerrada.';
             ELSIF rw_crapass.dtelimin IS NOT NULL THEN
@@ -1151,6 +1161,20 @@ create or replace package body cecred.CNSO0001 is
                 vr_dscritic := 'Erro ao atualizar craplau(CNSO0001): ' || SQLERRM;
                 RAISE vr_exc_erro;
             END;
+            
+            --> inicio NOTIF 
+            vr_variaveis_notif('#valordebito')  := to_char(rw_craplau.vllanaut,'FM999G990D00') ;
+            vr_variaveis_notif('#datadebito')   := to_char(vr_dtrefere,'DD/MM/RRRR'); 
+            vr_variaveis_notif('#tipodebito')   := rw_craplau.dscedent;            
+            
+            noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => 10
+                                        ,pr_cdmotivo_mensagem => 1
+                                        ,pr_cdcooper          => pr_cdcooper
+                                        ,pr_nrdconta          => vr_nrdconta
+                                        ,pr_idseqttl          => 0
+                                        ,pr_variaveis         => vr_variaveis_notif);
+            --> fim NOTIF
+              
           END IF; -- fim flggrava (debito consorcio)
 
         END LOOP; -- fim rw_craplau

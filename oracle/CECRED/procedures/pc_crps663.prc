@@ -18,7 +18,48 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps663 (pr_cdcooper  IN crapcop.cdcooper%
      Objetivo  : Efetuar debito de consorcios, mediante chamada de rotina principal
                  CNSO0001.pc_gera_debitos
 
-     Alteracoes: 03/05/2018 - Conversao Progress -> Oracle - Teobaldo J. (AMcom)
+     Alteracoes: 05/12/2013 - Alteracao referente a integracao Progress X 
+                            Dataserver Oracle 
+                            Inclusao do VALIDATE ( André Euzébio / SUPERO) 
+                            
+               15/01/2014 - Correcoes e melhorias conforme softdesk 121162
+                            (Carlos).
+                            
+               23/06/2014 - Ajustado cria-crapndb para buscar craplau.cdseqtel
+                            (Lucas R.) 
+                            
+               07/11/2014 - Retirado as declaracoes de variaveis da includes 
+                            crps663.i e declarado aqui na debcns.p para evitar 
+                            problemas de imcompatibilidade na hora de usar a 
+                            includes, alteracoes referentes a automatizacao da 
+                            DEBCNS (Tiago SD199974).
+
+               19/11/2015 - Ajustado para que a procedure efetua-debito-consorcio
+                            utilize a obtem-saldo-dia convertida em Oracle.
+                            (Douglas - Chamado 285228)
+                            
+               25/11/2015 - Incluida procedure gera_log_execucao_663 para gerar
+                            log quando debcns for executada manualmente
+                            (Tiago SD338533).
+
+               24/10/2016 - Ajustes para que tenha uma terceira execucao
+                            da DEBCNS - Melhoria349 (Tiago/Elton).
+                            
+               23/10/2017 - Ajustes para lançamentos duplicados e tambem para que 
+                            tenhamos uma execucao matutina (Lucas Ranghetti #739738)
+                            
+               29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834) 
+                           
+               21/02/2018 - Ajustar relatorio e gravar critica na lau caso 
+                            tenha alguma (Lucas Ranghetti #852207)
+
+               03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
+
+               06/07/2018 - PJ450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
+                            da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)  
+                            
+               03/05/2018 - Conversao Progress -> Oracle - Teobaldo J. (AMcom)
 
      ................................................................................ */
 
