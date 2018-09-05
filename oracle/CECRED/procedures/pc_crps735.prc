@@ -21,6 +21,7 @@ BEGIN
 
      Alteracoes:
                07/08/2018 - Alterado para paralelismo - Luis Fernando (GFT)
+               05/09/2010 - Alterado para nao incluir titulos em acordo na raspaca - Cassia de Oliveira (GFT)
 
   ............................................................................ */
   DECLARE
@@ -92,7 +93,14 @@ BEGIN
              craptdb.vlmratit,
              craptdb.vlpagmra,
              craptdb.vlliquid
-        FROM craptdb, crapbdt
+        FROM crapbdt, craptdb
+   LEFT JOIN tbdsct_titulo_cyber -- busca codigo de desconto de titulos
+          ON craptdb.cdcooper = tbdsct_titulo_cyber.cdcooper 
+         AND craptdb.nrdconta = tbdsct_titulo_cyber.nrdconta
+         AND craptdb.nrborder = tbdsct_titulo_cyber.nrborder
+         AND craptdb.nrtitulo = tbdsct_titulo_cyber.nrtitulo
+   LEFT JOIN tbrecup_acordo_contrato -- busca titulos em acordo
+          ON tbdsct_titulo_cyber.nrctrdsc = tbrecup_acordo_contrato.nrctremp
        WHERE craptdb.cdcooper =  crapbdt.cdcooper
          AND craptdb.nrdconta =  crapbdt.nrdconta
          AND craptdb.nrborder =  crapbdt.nrborder
@@ -101,6 +109,7 @@ BEGIN
          AND craptdb.insittit =  4 -- liberado
          AND crapbdt.cdagenci = nvl(pr_cdagenci,crapbdt.cdagenci)
          AND crapbdt.flverbor =  1 -- bordero liberado na nova versão
+         AND tbrecup_acordo_contrato.nrctremp IS NULL -- remove os titulos que estao em acordo
        ORDER BY dtvencto, vlsldtit desc; -- define a ordem de prioridade da raspada
     
     -- Cursor para verificar se existe algum boleto em aberto (emitido pela tela COBTIT)
