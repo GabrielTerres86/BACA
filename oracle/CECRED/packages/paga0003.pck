@@ -418,8 +418,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        12/04/2018 - Alterada chamada do processo de monitoracao para 
                     AFRA0004.pc_monitora_tributos
                     PRJ381 - Analise Antifraude, Teobaldo J. - AMcom)
-										
-			 23/07/2018 - Fixado nome da cooperativa CECRED (paleativamente) devido problemas no processamento dos mesmos
+
+       09/05/2018 - Incluido a chamada da rotina gen_debitador_unico.pc_qt_hora_prg_debitador
+                    para atualizar a quantidade de execuções programadas no debitador
+                    Projeto debitador único - Josiane Stiehler (AMcom)
+					  
+	   23/07/2018 - Fixado nome da cooperativa CECRED (paleativamente) devido problemas no processamento dos mesmos
 			              no Bancoob. (Reinert)
 
 	   16/08/2018 - Ajustado cursores da craptab para utilizar o Unique Key Index
@@ -7173,14 +7177,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Janeiro/2018                       Ultima atualizacao: 10/01/2018
+     Data    : Janeiro/2018                       Ultima atualizacao: 09/05/2018
   
    Dados referentes ao programa:
   
    Frequencia: Sempre que chamado
    Objetivo  : Procedimento para processar os debitos agendados de pagamento bancoob
   
-    Alterações: 
+    Alterações: 09/05/2018 - Incluido a chamada da rotina gen_debitador_unico.pc_qt_hora_prg_debitador
+                             para atualizar a quantidade de execuções programadas no debitador
+                             Projeto debitador único - Josiane Stiehler (AMcom)
   --------------------------------------------------------------------------------------------------------------- */
 
     ----------------> CURSORES <---------------  
@@ -7272,6 +7278,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END IF;
       
       vr_dtmvtopg:= rw_crapdat.dtmvtolt;
+      
+      -- atualiza a quantidade de execuções que estão agendadas no debitador unico
+      gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
+                                                  ,pr_cdprocesso => 'PAGA0003.PC_PROCESSA_AGEND_BANCOOB' --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                  ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_erro;
+      END IF;
+
       
       --> Verificar/controlar a execução da DEBNET e DEBSIC 
       SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper        --> Código da coopertiva

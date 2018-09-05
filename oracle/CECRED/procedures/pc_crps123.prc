@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 16/11/2017
+   Data    : Junho/95.                       Ultima atualizacao: 03/05/2018
 
    Dados referentes ao programa:
 
@@ -235,7 +235,7 @@ BEGIN
 
                  21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                               (Ana - Envolti - Chamado 746134)
-
+														   
                  18/10/2017 - Ajustar para não verificar mais os consorcios nesta rotina
                               e sim no crps663 (Lucas Ranghetti #739738) 
 
@@ -243,6 +243,8 @@ BEGIN
 							  (Mauricio - Mouts)
 
                  30/04/2018 - Alterados codigos de situacao "rw_crapass.cdsitdct". PRJ366 (Lombardi).
+
+                 02/05/2018 - Ajuste no nome do arquivo gerado no relatorio (Projeto Debitador Unico - Fabiano B. Dias - AMcom).	
 
   ............................................................................................*/
   
@@ -265,7 +267,7 @@ BEGIN
 
     -- DIVERSAS
     vr_dsintegr VARCHAR2(50);
-    vr_dsarquiv VARCHAR2(200) := '/rl/crrl101.lst';
+    vr_dsarquiv VARCHAR2(200) := '/rl/crrl101_'||to_char( gene0002.fn_busca_time )||'.lst'; -- debitador
     vr_nrdolot1 INTEGER;
     vr_nrdolot2 INTEGER;
     vr_nrdolote INTEGER;
@@ -313,7 +315,7 @@ BEGIN
 
     -- BUSCA DOS DADOS DE LOTES
     CURSOR cr_craplot(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                      pr_dtmvtopr IN crapdat.dtmvtopr%TYPE) IS
+                      pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
       SELECT lot.cdcooper,
              lot.cdagenci,
              lot.cdbccxlt,
@@ -330,7 +332,7 @@ BEGIN
              lot.progress_recid
         FROM craplot lot
        WHERE lot.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
-         AND lot.dtmvtolt = pr_dtmvtopr -- DATA DE MOVIMENTACAO
+         AND lot.dtmvtolt = pr_dtmvtolt -- DATA DE MOVIMENTACAO
          AND lot.nrdolote > 6500        -- NUMERO DO LOTE
          AND lot.nrdolote < 6600        -- NUMERO DO LOTE
          AND lot.tplotmov = 1           -- TIPO DO LOTE
@@ -341,7 +343,7 @@ BEGIN
 
     -- BUSCA LANCAMENTOS AUTOMATICOS
     CURSOR cr_craplau(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                      pr_dtmvtopr IN crapdat.dtmvtopr%TYPE) IS
+                      pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
       SELECT lau.cdagenci,
              lau.nrdconta,
              lau.cdbccxlt,
@@ -372,7 +374,7 @@ BEGIN
                                         lau.nrdocmto) AS seqlauto
         FROM craplau lau
        WHERE lau.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
-         AND lau.dtmvtopg <= pr_dtmvtopr -- DATA DE PAGAMENTO
+         AND lau.dtmvtopg <= pr_dtmvtolt -- DATA DE PAGAMENTO
          AND lau.insitlau = 1 -- SITUACAO DO LANCAMENTO
          AND lau.dsorigem NOT IN ('CAIXA'
                                  ,'INTERNET'
@@ -493,7 +495,7 @@ BEGIN
 
     -- BUSCA DADOS DE LANCAMENTOS
     CURSOR cr_craplcm(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                      pr_dtmvtopr IN craplcm.dtmvtolt%TYPE,
+                      pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
                       pr_cdagenci IN craplcm.cdagenci%TYPE,
                       pr_cdbccxlt IN craplcm.cdbccxlt%TYPE,
                       pr_nrdolote IN craplcm.nrdolote%TYPE,
@@ -503,7 +505,7 @@ BEGIN
       SELECT lcm.nrdolote
         FROM craplcm lcm
        WHERE lcm.cdcooper = pr_cdcooper  -- CODIGO DA COOPERATIVA
-         AND lcm.dtmvtolt = pr_dtmvtopr  -- DATA DE MOVIMENTACAO
+         AND lcm.dtmvtolt = pr_dtmvtolt  -- DATA DE MOVIMENTACAO
          AND lcm.cdagenci = pr_cdagenci  -- CODIGO DO PA
          AND lcm.cdbccxlt = pr_cdbccxlt  -- BANCO/CAIXA
          AND lcm.nrdolote = pr_nrdolote  -- LOTE
@@ -982,7 +984,7 @@ BEGIN
             vr_des_chave_ag := lpad(rw_crapass.cdagenci,3,0);  
             -- montar cabecalho          
             vr_tab_ag(vr_des_chave_ag).cdagenci := rw_crapass.cdagenci;
-            vr_tab_ag(vr_des_chave_ag).dtdebito := rw_crapdat.dtmvtopr;
+            vr_tab_ag(vr_des_chave_ag).dtdebito := rw_crapdat.dtmvtolt;
             vr_tab_ag(vr_des_chave_ag).cdbccxlt := rw_craplot_II.cdbccxlt;
             vr_tab_ag(vr_des_chave_ag).dtmvtopg := TO_CHAR(rw_craplot_II.dtmvtolt, 'dd/mm/yyyy');
           
@@ -1204,7 +1206,7 @@ BEGIN
     
     -- ABRE O CURSOR DE LOTE E FAZ A ATRIBUICAO DO CODIGO DO LOTE CONSULTADO
     OPEN cr_craplot(pr_cdcooper => pr_cdcooper,          -- CODIGO DA COOPERATIVA
-                    pr_dtmvtopr => rw_crapdat.dtmvtopr); -- DATA PROXIMO DIA UTIL
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt); -- DATA MOVIMENTO
 
     FETCH cr_craplot
       INTO rw_craplot;
@@ -1222,14 +1224,14 @@ BEGIN
       vr_nrdolot1 := rw_craplot.nrdolote;
     END IF;
 
-	-- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+	  -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
     vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                              pr_cdcooper => pr_cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
 
     -- ABRE O CURSOR REFERENTE AOS LANCAMENTOS AUTOMATICOS
     OPEN cr_craplau(pr_cdcooper => pr_cdcooper,          -- CODIGO DA COOPERATIVA
-                    pr_dtmvtopr => rw_crapdat.dtmvtopr); -- DATA PROXIMO DIA UTIL
+                    pr_dtmvtolt => rw_crapdat.dtmvtolt); -- DATA MOVIMENTO
 
     LOOP
       FETCH cr_craplau
@@ -1244,10 +1246,10 @@ BEGIN
       vr_auxcdcri := 0;
       vr_nrdolote := vr_nrdolot1;
       vr_cdcooper := pr_cdcooper;
-      vr_cdagenci := rw_craplau.cdagenci;
+     vr_cdagenci := rw_craplau.cdagenci;
       vr_nrdconta := rw_craplau.nrdconta;
 
-	  -- Condicao para verificar se permite incluir as linhas parametrizadas
+	    -- Condicao para verificar se permite incluir as linhas parametrizadas
       IF INSTR(',' || vr_dsctajud || ',',',' || vr_nrdconta || ',') > 0 THEN
         IF rw_craplau.cdhistor = 38 THEN
 		      CONTINUE;        
@@ -1320,7 +1322,7 @@ BEGIN
 
       -- BUSCA REGISTRO REFERENTES A LOTES
       OPEN cr_craplot_II(pr_cdcooper => vr_cdcooper,
-                         pr_dtmvtolt => rw_crapdat.dtmvtopr,
+                         pr_dtmvtolt => rw_crapdat.dtmvtolt,
                          pr_cdagenci => vr_cdagenci,
                          pr_cdbccxlt => vr_cdbccxlt,
                          pr_nrdolote => vr_nrdolote);
@@ -1346,7 +1348,7 @@ BEGIN
              nrseqdig,
              cdcooper)
           VALUES
-            (rw_crapdat.dtmvtopr,
+            (rw_crapdat.dtmvtolt,
              vr_cdagenci,
              vr_cdbccxlt,
              vr_nrdolote,
@@ -1379,7 +1381,7 @@ BEGIN
             -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
             vr_dscritic := 'Problema ao inserir na tabela CRAPLOT: ' || sqlerrm;
             --Chamado 709894
-            vr_dsparam := 'Dtmvtolt='||rw_crapdat.dtmvtopr
+            vr_dsparam := 'Dtmvtolt='||rw_crapdat.dtmvtolt
                         ||',Cdagenci='||vr_cdagenci
                         ||',Cdbccxlt='||vr_cdbccxlt
                         ||',Nrdolote='||vr_nrdolote;
@@ -1530,10 +1532,10 @@ BEGIN
 
       -- ATRIBUICAO DE NUMERO DE DOCUMENTO
       vr_nrdocmto := rw_craplau.nrdocmto;
-      
+
       -- TRATAMENTO DÉBITO FÁCIL
       IF vr_cdcritic = 0 AND rw_craplau.flgblqdb = 1 THEN
-        
+
         -- GERAR REGISTROS NA CRAPNDB PARA DEVOLUCAO DE DEBITOS AUTOMATICOS
         CONV0001.pc_gerandb(pr_cdcooper => vr_cdcooper         -- CÓDIGO DA COOPERATIVA
                              ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
@@ -1578,7 +1580,7 @@ BEGIN
         LOOP
           -- CONSULTA DE LANCEMENTOS
           OPEN cr_craplcm(pr_cdcooper => vr_cdcooper,            -- CODIGO DA COOPERATIVA
-                          pr_dtmvtopr => rw_crapdat.dtmvtopr,    -- DATA DE MOVIMENTACAO
+                          pr_dtmvtolt => rw_crapdat.dtmvtolt,    -- DATA DE MOVIMENTACAO
                           pr_cdagenci => rw_craplot_II.cdagenci, -- CODIGO DO PA
                           pr_cdbccxlt => rw_craplot_II.cdbccxlt, -- BANCO / CAIXA
                           pr_nrdolote => rw_craplot_II.nrdolote, -- NUMERO DO LOTE
@@ -1863,7 +1865,7 @@ BEGIN
              SET insitlau = 2,
                  nrcrcard = NVL(vr_nrcrcard, 0),
                  nrseqlan = rw_craplot_II.nrseqdig + 1,
-                 dtdebito = rw_crapdat.dtmvtopr
+                 dtdebito = rw_crapdat.dtmvtolt
            WHERE craplau.rowid = rw_craplau.rowid;
 
           -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -1892,7 +1894,7 @@ BEGIN
             -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
             UPDATE craplau
                SET insitlau = 3,
-                   dtdebito = rw_crapdat.dtmvtopr,
+                   dtdebito = rw_crapdat.dtmvtolt,
                    nrcrcard = NVL(vr_nrcrcard, 0)
              WHERE craplau.rowid = rw_craplau.rowid;
 
@@ -1931,7 +1933,7 @@ BEGIN
               -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
               UPDATE craplau
                  SET insitlau = 3,
-                     dtdebito = rw_crapdat.dtmvtopr,
+                     dtdebito = rw_crapdat.dtmvtolt,
                      nrcrcard = NVL(vr_nrcrcard, 0)
                WHERE craplau.rowid = rw_craplau.rowid;
 
@@ -1992,12 +1994,12 @@ BEGIN
 				 vr_flgentra = 1 AND  -- e se condição de criação da craplcm for atingida
 				 vr_gerandb  = 1 THEN -- então atualiza data do último débito.
         -- VERIFICA DATA DO ULTIMO DEBITO
-        IF NVL(to_char(rw_crapatr.dtultdeb,'MMYYYY'),'0') <> to_char(rw_crapdat.dtmvtopr,'MMYYYY') THEN
+        IF NVL(to_char(rw_crapatr.dtultdeb,'MMYYYY'),'0') <> to_char(rw_crapdat.dtmvtolt,'MMYYYY') THEN
 
           BEGIN
             -- ATUALIZA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
             UPDATE crapatr
-               SET dtultdeb = rw_crapdat.dtmvtopr -- ATUALIZA DATA DO ULTIMO DEBITO
+               SET dtultdeb = rw_crapdat.dtmvtolt -- ATUALIZA DATA DO ULTIMO DEBITO
              WHERE ROWID = rw_crapatr.rowid;
 
             -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -2101,7 +2103,7 @@ BEGIN
       --Geração de log de erro - Chamado 709894
       vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
                              ' --> ' || 'ERRO: ' ||vr_dscritic ||
-                             '. Cdcooper=' || pr_cdcooper ||
+                                                   '. Cdcooper=' || pr_cdcooper ||
                              ','||vr_dsparam;
 
       --Geração de log de erro - Chamado 709894

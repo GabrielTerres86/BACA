@@ -1773,7 +1773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Programa: gera_log (Antigo gera_log.i>proc_gerar_log.i)
        Autor   : David
-       Data    : Novembro/2007                      Ultima atualizacao: 02/03/2016
+       Data    : Novembro/2007                      Ultima atualizacao: 03/08/2018
 
        Dados referentes ao programa:
 
@@ -1789,6 +1789,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                                 via trigger (Andrino - RKAM)
 
                    02/03/2015 - Tratar para não estourar o campo de dscritic (Odirlei-AMcom)             
+
+                   03/08/2018 - Ajuste do tamanho do nome do programa no insert do LOG -- Projeto Debitador Unico 03/08/2018 - AMcom Fabiano B. Dias.
 
     ..............................................................................*/
     BEGIN
@@ -1813,7 +1815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                          ,pr_flgtrans
                          ,pr_hrtransa
                          ,pr_idseqttl
-                         ,pr_nmdatela
+                         ,substr(pr_nmdatela,1,12)
                          ,pr_nrdconta)
                 RETURNING ROWID INTO pr_nrdrowid;
     END;
