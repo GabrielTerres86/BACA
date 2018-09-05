@@ -1932,8 +1932,9 @@ END pc_inserir_lancamento_bordero;
     BEGIN
       vr_contingencia := 0;
 
-      open cr_crapbdt;
-      fetch cr_crapbdt into rw_crapbdt;
+      OPEN  cr_crapbdt;
+      FETCH cr_crapbdt into rw_crapbdt;
+      CLOSE cr_crapbdt;
 
       vr_vltotliq := 0;
       vr_vltotbrt := 0;
@@ -1983,6 +1984,7 @@ END pc_inserir_lancamento_bordero;
         FETCH cr_crapcob INTO rw_crapcob;
 
         IF cr_crapcob%FOUND THEN
+          CLOSE cr_crapcob;
           -- Registra log de cobrança para o títulos
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
                                        ,pr_cdoperad => pr_cdoperad
@@ -1994,7 +1996,10 @@ END pc_inserir_lancamento_bordero;
           IF vr_des_erro = 'NOK' THEN
             RAISE vr_exc_erro;
           END IF;
-          close cr_crapcob;
+        ELSE
+          CLOSE cr_crapcob;
+          vr_dscritic := 'Título não encontrado';
+          RAISE vr_exc_erro;
         END IF;
 
         vr_vltotliq := vr_vltotliq + ROUND((rw_base_calculo.vltitulo - vr_vldjuros),2);
@@ -5750,10 +5755,12 @@ END pc_inserir_lancamento_bordero;
       OPEN cr_crapbdt(vr_cdcooper);
       FETCH cr_crapbdt INTO rw_crapbdt;
       IF (cr_crapbdt%NOTFOUND) THEN
+        CLOSE cr_crapbdt;
         vr_dscritic := 'Borderô inválido';
         raise vr_exc_erro;
       END IF;
       IF (rw_crapbdt.nrctrlim<>vr_tab_dados_limite(0).nrctrlim) THEN
+        CLOSE cr_crapbdt;
         vr_dscritic := 'O contrato deste borderô não se encontra mais ativo.';
         raise vr_exc_erro;
       END IF;
