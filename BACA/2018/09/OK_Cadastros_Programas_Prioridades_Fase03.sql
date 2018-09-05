@@ -106,16 +106,13 @@ insert into tbgen_debitador_horario (IDHORA_PROCESSAMENTO, DHPROCESSAMENTO)
 values (3, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 17:30:00', 'dd-mm-yyyy hh24:mi:ss'));
 
 insert into tbgen_debitador_horario (IDHORA_PROCESSAMENTO, DHPROCESSAMENTO)
-values (4, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 18:00:00', 'dd-mm-yyyy hh24:mi:ss'));
+values (4, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 19:00:00', 'dd-mm-yyyy hh24:mi:ss'));
 
 insert into tbgen_debitador_horario (IDHORA_PROCESSAMENTO, DHPROCESSAMENTO)
-values (5, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 19:00:00', 'dd-mm-yyyy hh24:mi:ss'));
+values (5, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 21:00:00', 'dd-mm-yyyy hh24:mi:ss'));
 
 insert into tbgen_debitador_horario (IDHORA_PROCESSAMENTO, DHPROCESSAMENTO)
-values (6, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 21:00:00', 'dd-mm-yyyy hh24:mi:ss'));
-
-insert into tbgen_debitador_horario (IDHORA_PROCESSAMENTO, DHPROCESSAMENTO)
-values (7, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 21:50:00', 'dd-mm-yyyy hh24:mi:ss'));
+values (6, to_date(To_Char(sysdate+1,'dd-mm-yyyy')||' 21:50:00', 'dd-mm-yyyy hh24:mi:ss'));
 
 COMMIT;
 
@@ -130,7 +127,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB', 6);
+values ('EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PAGA0003.PC_PROCESSA_AGEND_BANCOOB', 1);
@@ -142,10 +139,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PAGA0003.PC_PROCESSA_AGEND_BANCOOB', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PAGA0003.PC_PROCESSA_AGEND_BANCOOB', 4);
-
-insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS123', 6);
+values ('PC_CRPS123', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS145', 1);
@@ -157,7 +151,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS145', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS145', 6);
+values ('PC_CRPS145', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS172', 1);
@@ -169,7 +163,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS172', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS172', 6);
+values ('PC_CRPS172', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS268', 1);
@@ -181,7 +175,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS268', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS268', 6);
+values ('PC_CRPS268', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS439', 1);
@@ -193,7 +187,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS439', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS439', 6);
+values ('PC_CRPS439', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS509', 1);
@@ -205,7 +199,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS509', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS509', 7);
+values ('PC_CRPS509', 6);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS509_PRIORI', 1);
@@ -217,7 +211,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS509_PRIORI', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS509_PRIORI', 7);
+values ('PC_CRPS509_PRIORI', 6);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS642', 1);
@@ -229,7 +223,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS642', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS642', 5);
+values ('PC_CRPS642', 4);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS642_PRIORI', 1);
@@ -241,7 +235,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS642_PRIORI', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS642_PRIORI', 5);
+values ('PC_CRPS642_PRIORI', 4);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS654', 1);
@@ -253,7 +247,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS654', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS654', 6);
+values ('PC_CRPS654', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS663', 1);
@@ -265,7 +259,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS663', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS663', 5);
+values ('PC_CRPS663', 4);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS674', 1);
@@ -277,7 +271,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS674', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS674', 6);
+values ('PC_CRPS674', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS688', 1);
@@ -289,7 +283,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS688', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS688', 6);
+values ('PC_CRPS688', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS724', 1);
@@ -301,7 +295,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS724', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS724', 6);
+values ('PC_CRPS724', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS750', 1);
@@ -313,7 +307,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('PC_CRPS750', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('PC_CRPS750', 6);
+values ('PC_CRPS750', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA', 1);
@@ -325,7 +319,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA', 6);
+values ('RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA', 5);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('TARI0001.PC_DEB_TARIFA_PEND', 1);
@@ -337,7 +331,7 @@ insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
 values ('TARI0001.PC_DEB_TARIFA_PEND', 3);
 
 insert into tbgen_debitador_horario_proc (CDPROCESSO, IDHORA_PROCESSAMENTO)
-values ('TARI0001.PC_DEB_TARIFA_PEND', 6);
+values ('TARI0001.PC_DEB_TARIFA_PEND', 5);
 
 COMMIT;
 
@@ -369,11 +363,6 @@ END;
 /
 BEGIN
   gen_debitador_unico.pc_job_debitador_unico(pr_idhora_processamento => 6
-                                            ,pr_idtipo_operacao      => 'I'); 
-END;
-/
-BEGIN
-  gen_debitador_unico.pc_job_debitador_unico(pr_idhora_processamento => 7
                                             ,pr_idtipo_operacao      => 'I'); 
 END;
 /
