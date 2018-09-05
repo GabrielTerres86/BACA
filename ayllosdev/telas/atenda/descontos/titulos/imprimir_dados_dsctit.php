@@ -142,12 +142,12 @@
 	$flgverbor = $root->dados->flgverbor->cdata;
 	$flgnewbor = $root->dados->flgnewbor->cdata;
 		
-    if (($idimpres == 1 || // COMPLETA
+    if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
-		    $idimpres == 3 || // PROPOSTA
+		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7 // BORDERO DE CHEQUES
-        ) && ($flgnewbor)) {
+        $idimpres == 7 // BORDERO DE TITULOS
+        ) {
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
@@ -159,7 +159,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
-        $xml .= "    <flgrestr>0</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
+        $xml .= "    <flgrestr>".($flgnewbor == 1 ? 0 : 1 )."</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
