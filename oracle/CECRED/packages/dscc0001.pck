@@ -2796,6 +2796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                              pr_dsiduser => pr_dsiduser,
                                              pr_flgemail => pr_flgemail,
                                              pr_flgerlog => pr_flgerlog,
+                                             pr_flgrestr => pr_flgrestr,
                                              pr_nmarqpdf => vr_nmarqpdf,
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
