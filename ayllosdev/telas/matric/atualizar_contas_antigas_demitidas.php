@@ -7,7 +7,8 @@
 	                                                                   
 	  Objetivo  : Script para gerenciar a opção "H" da tela MATRIC
 	                                                                   	 
-	  Alteracoes: 													   
+	  Alteracoes:  04/09/2018 - Incluido campo operauto (operador autorizador) na passagem de parametro.
+                              (Alcemir - Mout's : SM 364)
 	                                         						   
 	************************************************************************/
 	
@@ -28,12 +29,13 @@
     }
 		
 	// Se parametros necessarios nao foram informados
-	if (!isset($_POST["camposPc"]) || !isset($_POST["dadosPrc"])) {
+	if (!isset($_POST["camposPc"]) || !isset($_POST["dadosPrc"]) || !isset($_POST["operauto"])) {  
 		exibirErro('error',"Par&acirc;metros incorretos.",'Alerta - Ayllos','',false);
 	}	
 
 	$camposPc = $_POST["camposPc"];
 	$dadosPrc = $_POST["dadosPrc"];
+  $operauto = $_POST["operauto"];
 			
 	if((count($camposPc) == 0) || (count($dadosPrc) == 0)){
 		exibirErro('error',"Conta(s) n&atilde;o encontrada(s).",'Alerta - Ayllos','',false);
@@ -44,6 +46,7 @@
     $xml   = "";
     $xml  .= "<Root>";
     $xml  .= "  <Dados>";
+    $xml  .= "   <cdopelib>".$operauto."</cdopelib>";
     $xml  .= retornaXmlFilhos( $camposPc, $dadosPrc, 'Reverter', 'Itens');
     $xml  .= "  </Dados>";
     $xml  .= "</Root>";

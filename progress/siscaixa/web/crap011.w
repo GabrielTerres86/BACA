@@ -30,8 +30,12 @@ Alteracoes: 30/04/2009 -  Excluida as variaveis "v_complem4" e "v_complem5"
 			27/12/2017 - Alterado para controlar submit do form e ajustar foco nos campos
                         (Jonata - MOUTS SD 812703/810959 )
                         
-      14/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
-                      norturno rodando (Douglas Pagel - AMcom).
+            14/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                         norturno rodando (Douglas Pagel - AMcom).
+						 
+						 
+		    04/09/2018 - chamar procedure pc_valida_valor_devolucao, para validar valor da devolução.
+			             (Alcemir - Mout's : SM 364)
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -672,10 +676,36 @@ PROCEDURE process-web-request :
 						    
              {include/i-erro.i}
          END.
+					 
+					 
 					 ELSE 
 					    DO:
+						 
+						 RUN dbo/b1crap11.p PERSISTENT SET h-b1crap11.
+												
+							 
+							 IF (v_tpoperacao = "2" OR v_tpoperacao = "3") AND (dec(v_aux_valor) > 0) then
+					              RUN pc_valida_valor_devolucao IN h-b1crap11(INPUT v_coop,
+													                                INPUT dec(v_conta),
+																					INPUT v_aux_valor,
+																					INPUT v_tpoperacao,
+																					INPUT int(v_pac),
+																					INPUT int(v_caixa)).
+																					
+						    IF RETURN-VALUE = "NOK" THEN  
+							    DO:
+								   {include/i-erro.i}
+								    ASSIGN v_cod = ""
+									       v_senha = ""
+										   v_aux_valor = ""
+										   v_valor = "".
+									ASSIGN vh_foco = "7"
+							               ok = ''.
 
-             RUN dbo/b1crap11.p PERSISTENT SET h-b1crap11.
+							END.
+						     ELSE
+		                       DO:
+							                
 
              RUN valida-lancamento-boletim IN h-b1crap11 (INPUT v_coop,
                                                           INPUT v_operador,
@@ -727,7 +757,7 @@ PROCEDURE process-web-request :
 											         v_tpoperacao = "3"   ) AND
 												     v_sequencia_ope = "2"  THEN
 												DO: 
-
+	                                                 																							
 													 RUN valida-lancamento-capital IN h-b1crap11(INPUT  v_coop,
 																								 INPUT  v_conta	,
 																								 INPUT  v_operador,
@@ -737,6 +767,10 @@ PROCEDURE process-web-request :
 																								 OUTPUT v_valor,
 																								 OUTPUT v_origem_devol,
 																								 OUTPUT v_nome).
+																								 
+ 													 message "----------------------------".
+													 message "v_valor: " + string(v_valor).
+                                                	 message "v_nome: " + string(v_nome).												 
 
 													 IF RETURN-VALUE = "NOK" THEN  
 														DO:
@@ -956,7 +990,9 @@ PROCEDURE process-web-request :
                                      v_cod = ""
                                      v_senha = ""
                                      v_nome = ""
-                                     v_conta = "".
+                                     v_conta = ""
+									 v_doc = "".
+
                          END.
                      
                      END. 
@@ -965,11 +1001,12 @@ PROCEDURE process-web-request :
 											
                  END.
              END.
+			 	
 								
              END.
 						
              DELETE PROCEDURE h-b1crap11.
-						
+		END.				
      END.
 
      DELETE PROCEDURE h-b1crap00.
@@ -1070,7 +1107,7 @@ PROCEDURE process-web-request :
 				{&OUT}
 					   '<script language="JavaScript"> ' SKIP
 						 'document.form1.v_hist.disabled=true; ' SKIP
-						 'document.form1.v_valor.disabled=true; ' SKIP
+						 'document.form1.v_valor.disabled=false; ' SKIP
 						'</script>' SKIP.
 			END.
 							

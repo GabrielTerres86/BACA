@@ -33,6 +33,8 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 			08/01/2018 - Alteracao para permitir estorno apenas para a opcao Acertos via caixa - Jonata MOUTS.
 			
 			16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)			   							 			
+    
+            04/09/2018 - Deixar habilitado para digitação o campo valor (Alcemir - Mout's : SM 364)		   							 			
 ------------------------------------------------------------------------------->
 
 <html>
@@ -125,7 +127,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 					 
                    
 						 document.form1.v_conta.disabled=false;
-                   document.form1.v_valor.disabled=true;
+                   document.form1.v_valor.disabled=false;
 						 document.form1.v_hist.disabled=true;
 						 document.form1.v_hist.value="2083";
 						 document.form1.v_aux_hist.value="2083";
@@ -135,7 +137,7 @@ Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
 					 }else if(document.form1.v_tpoperacao[i].value == "3"){
 					 
 						document.form1.v_conta.disabled=false;
-                  document.form1.v_valor.disabled=true;
+                  document.form1.v_valor.disabled=false;
 						document.form1.v_hist.disabled=true;
 						document.form1.v_hist.value="2065";
 						document.form1.v_aux_hist.value="2065";

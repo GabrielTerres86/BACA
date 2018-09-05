@@ -694,7 +694,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);          --> Erros do processo       
                                      
-  PROCEDURE pc_atualiza_cta_ant_demitidas(pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+  PROCEDURE pc_atualiza_cta_ant_demitidas(pr_cdopelib  IN crapope.cdoperad%TYPE --> codigo do operador liberação
+                                         ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
                                          ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
@@ -2482,6 +2483,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --
     --               19/02/2018 - Ajustes na criação de pendencia de digitalização.
     --                            PRJ366 - Ajustes tpconta (Odirlei-AMcom)
+	--
+	--				 28/08/2018 - Fixar o código de emissao de cheque na proc
+	--							  pc_duplica_conta (Andrey Formigari - Mouts)
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2781,7 +2785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                cdclcnae,
                nmttlrfb,
                inconrfb,
-               cdbcochq,
+               85,
                cdsecext,
                to_char(SYSDATE,'sssss'), 
                pr_cdoperad, -- INICIO - Alteracoes referentes a M181 - Rafael Maciel (RKAM)"
@@ -4400,14 +4404,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
       -- Verifica cartoes
       CURSOR cr_craplcm_cartoes (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE) IS
+                                 ,pr_nrdconta IN tbinss_dcb.nrdconta%TYPE
+								 ,pr_cdhistprod IN crapprm.dsvlrprm%TYPE) IS
         SELECT 1
           FROM craplcm lcm 
          WHERE lcm.cdcooper = pr_cdcooper
            AND lcm.nrdconta = pr_nrdconta
                                 -- Cartões BANCOOB
-           AND lcm.cdhistor IN (1956,1957,1958,1959,1960,1961 
-                               ,444,584); -- Cartões BB
+           AND INSTR(pr_cdhistprod,';'||lcm.cdhistor||';') > 0; -- Cartões BB
       rw_craplcm_cartoes cr_craplcm_cartoes%ROWTYPE;
       
       --Verifica Contrato de proposta/apólice de seguro
@@ -4449,6 +4453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_des_reto      VARCHAR2(10);
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
+	  vr_cdhistorprod crapprm.dsvlrprm%type;
 
       -- Variaveis gerais
       vr_tab_saldo_rdca cecred.apli0001.typ_tab_saldo_rdca; --> Record com os saldos de aplicacao
@@ -4628,9 +4633,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         END IF;        
         CLOSE cr_cartaobb;
         
+		      vr_cdhistorprod := gene0001.fn_param_sistema(pr_cdcooper => 0,
+                                                   pr_nmsistem => 'CRED',
+                                    pr_cdacesso => 'HIST_PROD_DOM_BANC');
         -- Verifica cartoes
         OPEN cr_craplcm_cartoes (pr_cdcooper => pr_cdcooper
-                                ,pr_nrdconta => pr_nrdconta);
+                                ,pr_nrdconta => pr_nrdconta
+								,pr_cdhistprod => vr_cdhistorprod);
+
+
         FETCH cr_craplcm_cartoes INTO rw_craplcm_cartoes;
         -- Se encontrar
         IF cr_craplcm_cartoes%FOUND THEN
@@ -13879,7 +13890,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
   END pc_contas_antiga_demitida;
 
-  PROCEDURE pc_atualiza_cta_ant_demitidas(pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+  PROCEDURE pc_atualiza_cta_ant_demitidas(pr_cdopelib  IN crapope.cdoperad%TYPE --> codigo do operador liberação
+                                         ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                          ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
                                          ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
@@ -13901,7 +13913,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      Objetivo  : Rotina responsável por atualizar contas antigas demitidas que houve a devolução de sobras de capital ( "H" - MATRIC).
      Observacao: -----
 
-     Alteracoes:                 
+     Alteracoes:   04/09/2018 - Incluido parametro pr_cdopelib , e gravação de LOG para o operador logado e autorizador.
+	                            (Alcemir - Mout's : SM 364)
     ..............................................................................*/ 
                   
     --Variaveis locais
@@ -13912,6 +13925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);    
+    vr_dstransa VARCHAR2(200);
+    vr_nrdrowid ROWID;
     
     vr_id_acesso   PLS_INTEGER := 0;
     vr_des_reto VARCHAR2(3); 
@@ -14063,6 +14078,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             vr_dscritic := 'Erro ao atualizar tabela tbcotas_devolucao.' ||SQLERRM;
             RAISE vr_exc_saida;
         END; 
+      
+		 vr_dstransa := 'Liberação de cotas e depósitos de cooperados demitidos.';
+         
+         -- LOG DA OPERAÇÃO
+         gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                              ,pr_cdoperad => SubStr(vr_cdoperad,1,10)
+                              ,pr_dscritic => SubStr(vr_dscritic,1,159)
+                              ,pr_dsorigem => 'AYLLOS'
+                              ,pr_dstransa => SubStr(vr_dstransa,1,121)
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 1
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => 1
+                              ,pr_nmdatela => 'MATRIC'
+                              ,pr_nrdconta => vr_tab_contas_demitidas(vr_id_acesso).nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+                                                               
+        
+         -- LOG DO OPERADOR LIBERAÇÃO
+         vr_dstransa := 'Autorização de liberação de cotas e depósitos de cooperados demitidos.';
+         
+         gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                              ,pr_cdoperad => SubStr(pr_cdopelib,1,10)
+                              ,pr_dscritic => SubStr(vr_dscritic,1,159)
+                              ,pr_dsorigem => 'AYLLOS'
+                              ,pr_dstransa => SubStr(vr_dstransa,1,121)
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 1
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => 1
+                              ,pr_nmdatela => 'MATRIC'
+                              ,pr_nrdconta => vr_tab_contas_demitidas(vr_id_acesso).nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+
+
       
       END IF;
       
