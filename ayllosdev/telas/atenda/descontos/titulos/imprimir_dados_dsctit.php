@@ -50,7 +50,10 @@
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
 		?>
-          <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
+<script language="javascript">
+  alert('<?php echo $msgError; ?>');
+</script>
+<?php
 		exit();
 	}	
 	// Verifica se parâmetros necessários foram informados
@@ -60,8 +63,9 @@
 		!isset($_POST["limorbor"]) ||
 		!isset($_POST["idimpres"]) ||
 		!isset($_POST["flgemail"])) {
-		?><script language="javascript">alert('Par&acirc;metros incorretos.');</script>
-  <?php
+		?>
+<script language="javascript">alert('Par&acirc;metros incorretos.');</script>
+<?php
 		exit();
 	}	
 
@@ -76,37 +80,48 @@
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		?>
-  <script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
+<script language="javascript">alert('Conta/dv inv&aacute;lida.');</script>
+<?php
 		exit();
 	}
 	
 	// Verifica se número do contrato é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
-		?><script language="javascript">alert('Contrato inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Contrato inv&aacute;lido.');</script>
+<?php
 		exit();
 	}
 	
 	// Verifica se número do bordero é um inteiro válido
 	if ((!validaInteiro($nrborder)) && ($nrborder != "")) {
-		?><script language="javascript">alert('Bordero inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Bordero inv&aacute;lido.');</script>
+<?php
 		exit();
 	}	
 	
 	// Verifica se identificador de impressão é um inteiro válido
 	if (!validaInteiro($idimpres)) {
-		?><script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script>
+<?php
 		exit();
 	}		
 	
 	// Verifica se flag para envio de email é válida
 	if ($flgemail <> "yes" && $flgemail <> "no") {
-		?><script language="javascript">alert('Identificador de envio de e-mail inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Identificador de envio de e-mail inv&aacute;lido.');</script>
+<?php
 		exit();
 	}
 	
 	// Verifica se identificador de impressão é um inteiro válido
 	if (!validaInteiro($limorbor)) {
-		?><script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script>
+<?php
 		exit();
 	}	
 	
@@ -127,12 +142,12 @@
 	$flgverbor = $root->dados->flgverbor->cdata;
 	$flgnewbor = $root->dados->flgnewbor->cdata;
 		
-    if (($idimpres == 1 || // COMPLETA
+    if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7 || // BORDERO DE CHEQUES
-        ) && ($flgnewbor)) {
+        $idimpres == 7 // BORDERO DE TITULOS
+        ) {
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
@@ -144,7 +159,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
-        $xml .= "    <flgrestr>0</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
+        $xml .= "    <flgrestr>".($flgnewbor == 1 ? 0 : 1 )."</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
@@ -153,7 +168,11 @@
 
         if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+			?>
+<script language="javascript">
+  alert('<?php echo $msg; ?>');
+</script>
+<?php
 			exit();
 		}
 
@@ -204,7 +223,11 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+		?>
+<script language="javascript">
+  alert('<?php echo $msg; ?>');
+</script>
+<?php
 		exit();
 	} 
 	
