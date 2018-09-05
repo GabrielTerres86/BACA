@@ -195,7 +195,7 @@ function controlaOperacao(nriniseq, nrregist) {
 
 function manterRotina( operacao ) {
 
-	if(cddopcao == "I")
+	if(cddopcao == "I" && cdaditiv == 5)
 	{
 		if(!validaCamposAditiv())
 		{
@@ -215,6 +215,9 @@ function manterRotina( operacao ) {
 			break;
 		}
 	}
+  
+  if(cddopcao == "I" && cdaditiv == 5) {	
+  
 	var dscatbem = $('#dscatbem', '#frmTipo').val();	
 	var dstipbem = $('#dstipbem', '#frmTipo').val();
 	var nrmodbem = $('#nranobem option:selected', '#frmTipo').text(); 
@@ -254,6 +257,7 @@ function manterRotina( operacao ) {
 	$.trim(uflicenc.toUpperCase());
 	$.trim(dsmarbem.toUpperCase());
 	$.trim(vlfipbem.toUpperCase());
+  }
 
 	var idcobert = normalizaNumero($('#idcobert', '#'+frmCab).val());
 
@@ -306,7 +310,7 @@ function manterRotina( operacao ) {
 	}
 
 	showMsgAguardo( mensagem );
-	if(cddopcao == "I")
+	if(cddopcao == "I" && cdaditiv == 5)
 	{
 		//TrataDados();
 
