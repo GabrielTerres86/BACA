@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 27/02/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 08/08/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -911,6 +911,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                 ,crapass.nrdctitg
                 ,crapass.tpvincul
                 ,tpcta.cdmodalidade_tipo cdmodali
+				,crapass.inprejuz
          FROM crapass crapass
              ,tbcc_tipo_conta tpcta
          WHERE  crapass.cdcooper = pr_cdcooper
@@ -967,6 +968,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                  nvl(crapsld.vlsdblfp,0) +
                  nvl(crapsld.vlsddisp,0) +
                  nvl(crapsld.vlsdchsl,0)) vlsldtot
+               ,crapsld.vlblqprj
          FROM crapsld crapsld,
               crapass crapass -- projeto ligeirinho
          WHERE crapsld.cdcooper = crapass.cdcooper 
@@ -1245,6 +1247,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_rel_vlsldneg NUMBER:= 0;
        vr_rel_vlsdbltl NUMBER:= 0;
        vr_rel_vlstotal NUMBER:= 0;
+       vr_rel_vlstotal_006 NUMBER:= 0;
+       vr_rel_vlsddisp_006 NUMBER:= 0;	   
        vr_rel_vlestour NUMBER:= 0;
        vr_rel_vlblqjud NUMBER:= 0;
        vr_rel_dslimite VARCHAR2(100);
@@ -5216,7 +5220,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                       ,pr_fldosmail => 'S'                 --> Flag para converter arquivo para dos antes de enviar email
                                       ,pr_dspathcop => vr_nom_dircop||'/converte/' --> Lista sep. por ';' de diretórios a copiar o relatório
                                       ,pr_dsmailcop => vr_email_dest       --> Lista sep. por ';' de emails para envio do relatório
-                                      ,pr_dsassmail => 'FUNCIONARIOS DA CECRED COM ESTOURO DE CONTA NA '||Upper(pr_nmrescop)    --> Assunto do e-mail que enviará o relatório
+                                      ,pr_dsassmail => 'FUNCIONARIOS DA AILOS COM ESTOURO DE CONTA NA '||Upper(pr_nmrescop)    --> Assunto do e-mail que enviará o relatório
                                       ,pr_dscormail => NULL                --> HTML corpo do email que enviará o relatório
                                       ,pr_des_erro  => vr_des_erro);       --> Saída com erro
 
@@ -5946,6 +5950,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_rel_vlsdbltl NUMBER:= 0; --valor bloqueado total
          vr_rel_vlsdchsl NUMBER:= 0; --valor cheque salario
          vr_rel_vlstotal NUMBER:= 0; --valor total
+         --vr_rel_vlstotal_006 NUMBER:= 0; --valor total		 
+         --vr_rel_vlsddisp_006 NUMBER:= 0; --saldo disponivel
          vr_pac_vlsaqmax NUMBER:= 0; --valor maximo saque
          vr_pac_vlsddisp NUMBER:= 0; --valor disponivel
          vr_pac_vltotlim NUMBER:= 0; --valor limite credito
@@ -6085,6 +6091,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_rel_vlsdchsl:= 0;
          --Zerar valor total
          vr_rel_vlstotal:= 0;
+         --vr_rel_vlstotal_006:= 0;
 
          -- Processar todos os registros dos cheques
          vr_des_chave := vr_tab_crat006.FIRST;
@@ -8249,6 +8256,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              vr_rel_vlsdbltl:= Nvl(rw_crapsld.vlsdbloq,0) + Nvl(rw_crapsld.vlsdblpr,0) + Nvl(rw_crapsld.vlsdblfp,0);
              --Valor do saldo total recebe saldo disponivel + saldo bloqueado total + saldo cheque salario
              vr_rel_vlstotal:= Nvl(rw_crapsld.vlsddisp,0) + vr_rel_vlsdbltl + Nvl(rw_crapsld.vlsdchsl,0);
+             if rw_crapass.inprejuz= 1 then
+               vr_rel_vlstotal_006:= Nvl(rw_crapsld.vlblqprj,0) + vr_rel_vlsdbltl + Nvl(rw_crapsld.vlsdchsl,0);
+               vr_rel_vlsddisp_006:= Nvl(rw_crapsld.vlblqprj,0);
+             else
+               vr_rel_vlstotal_006:= Nvl(rw_crapsld.vlsddisp,0) + vr_rel_vlsdbltl + Nvl(rw_crapsld.vlsdchsl,0);
+               vr_rel_vlsddisp_006:= Nvl(rw_crapsld.vlsddisp,0);
+             end if;             
+             --vr_rel_vlstotal:= decode(rw_crapass.inprejuz,1,nvl(rw_crapsld.vlblqprj,0)
+			       --                                        ,Nvl(rw_crapsld.vlsddisp,0) ) 
+			       --                                    + vr_rel_vlsdbltl + Nvl(rw_crapsld.vlsdchsl,0);
+             --aqui mario
+             --vr_rel_vlstotal_006:= decode(rw_crapass.inprejuz,1,nvl(rw_crapsld.vlblqprj,0)
+             --                                                 ,Nvl(rw_crapsld.vlsddisp,0) 
+			       --                                      + vr_rel_vlsdbltl + Nvl(rw_crapsld.vlsdchsl,0);
+             
+             --vr_rel_vlsddisp_006:= decode(rw_crapass.inprejuz,1,nvl(rw_crapsld.vlblqprj,0)
+			       --                                            ,Nvl(rw_crapsld.vlsddisp,0) );
              --Valor Maximo saque recebe valor disponivel - valor ipmf a pagar - valor ipmf apurado
              vr_vlsaqmax:= Nvl(rw_crapsld.vlsddisp,0) - Nvl(rw_crapsld.vlipmfpg,0) - Nvl(rw_crapsld.vlipmfap,0);
              --Valor Bloqueado Judicialmente
@@ -8325,12 +8349,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                  vr_tab_crat006(vr_index_crat006).nrdconta:= rw_crapass.nrdconta;
                  vr_tab_crat006(vr_index_crat006).dsdacstp:= vr_rel_dsdacstp;
                  vr_tab_crat006(vr_index_crat006).vlsaqmax:= vr_vlsaqmax;
-                 vr_tab_crat006(vr_index_crat006).vlsddisp:= rw_crapsld.vlsddisp;
+               --vr_tab_crat006(vr_index_crat006).vlsddisp:= rw_crapsld.vlsddisp;
+                 vr_tab_crat006(vr_index_crat006).vlsddisp:= vr_rel_vlsddisp_006;
                  vr_tab_crat006(vr_index_crat006).vllimcre:= rw_crapass.vllimcre;
                  vr_tab_crat006(vr_index_crat006).vlsdbltl:= vr_rel_vlsdbltl;
                  vr_tab_crat006(vr_index_crat006).vlsdchsl:= rw_crapsld.vlsdchsl;
                  vr_tab_crat006(vr_index_crat006).vlblqjud:= rw_crapsld.vlblqjud;
-                 vr_tab_crat006(vr_index_crat006).vlstotal:= vr_rel_vlstotal;
+                 vr_tab_crat006(vr_index_crat006).vlstotal:= vr_rel_vlstotal_006;
                  --Se a data saldo liquido nao for nulo
                  IF rw_crapsld.dtdsdclq IS NOT NULL THEN
                    vr_tab_crat006(vr_index_crat006).nmprimtl:=  'CL - '|| rw_crapass.nmprimtl;
