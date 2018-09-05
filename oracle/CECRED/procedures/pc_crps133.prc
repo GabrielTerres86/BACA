@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/95                      Ultima atualizacao: 06/08/2018
+   Data    : Setembro/95                      Ultima atualizacao: 05/09/2018
 
    Dados referentes ao programa:
 
@@ -109,6 +109,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
                
                11/08/2018 - Inclusão da aplicação programada no cursor cr_craplpp (Proj. 411.2 - CIS Corporate).
+               
+               05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).
 
 ............................................................................. */
 BEGIN
@@ -553,7 +555,7 @@ BEGIN
        where lpp.dtmvtolt = pr_dtmvtolt
          and lpp.cdcooper = pr_cdcooper
          and lpp.nrdconta = pr_nrdconta
-       UNION
+       UNION ALL
       SELECT lac.nrdconta,
              lac.cdhistor,
              lac.vllanmto
@@ -1344,8 +1346,8 @@ begin
                                                     rw_crapass(idx).nrdconta) loop
             pc_gera_registro_conta (rw_crapass(idx).cdagenci,
                                     vr_cdempres,
-                            rw_gera_registro_conta.cdhistor,
-                            rw_gera_registro_conta.vllanmto);
+                                    rw_gera_registro_conta.cdhistor,
+                                    rw_gera_registro_conta.vllanmto);
   end loop;
 
   -- Transações nos caixas e auto-atendimento

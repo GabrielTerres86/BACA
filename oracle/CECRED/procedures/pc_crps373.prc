@@ -1,9 +1,9 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                      ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                                      ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                                      ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                                      ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps373 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
     /* .............................................................................
 
@@ -90,7 +90,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
                               Nao gerar pc_imposto para inpessoa 3 (Guilherme/SUPERO)
                               
                  14/08/2018 - Inclusão da Aplicaçã Programada (CRAPLPP e CRAPLAC)
-                              Proj. 411.2 - CIS Corporate                              
+                              Proj. 411.2 - CIS Corporate
+                              
+                 05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).
+                                               
     ............................................................................ */
 
     DECLARE
@@ -343,22 +346,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps373(pr_cdcooper IN crapcop.cdcooper%TY
           AND cp.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim
           AND cp.cdhistor IN (863, 151, 870)
           AND cs.cdcooper = cp.cdcooper
-                AND cs.nrdconta = cp.nrdconta
-              UNION
-              SELECT asn.inpessoa
-                    ,decode (lac.cdhistor,cpc.cdhsirap,863,cpc.cdhsrdap,151) cdhistor --De para dinamico
-                    ,lac.vllanmto
-              FROM crapass asn,craprac rac,craplac lac,crapcpc cpc
-              WHERE lac.cdcooper = pr_cdcooper
-                AND lac.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim
-                AND lac.cdhistor IN (cpc.cdhsirap,cpc.cdhsrdap)
-                AND asn.cdcooper = lac.cdcooper
-                AND asn.nrdconta = lac.nrdconta
-                AND rac.cdcooper = lac.cdcooper
-                AND rac.nrdconta = lac.nrdconta
-                AND rac.nraplica = lac.nraplica
-                AND cpc.cdprodut = rac.cdprodut
-                AND cpc.indplano = 1 -- Aplicacoes programadas
+          AND cs.nrdconta = cp.nrdconta
+         UNION ALL
+        SELECT asn.inpessoa
+              ,decode (lac.cdhistor,cpc.cdhsirap,863,cpc.cdhsrdap,151) cdhistor --De para dinamico
+              ,lac.vllanmto
+        FROM crapass asn,craprac rac,craplac lac,crapcpc cpc
+        WHERE lac.cdcooper = pr_cdcooper
+          AND lac.dtmvtolt BETWEEN pr_data_inicio AND pr_data_fim
+          AND lac.cdhistor IN (cpc.cdhsirap,cpc.cdhsrdap)
+          AND asn.cdcooper = lac.cdcooper
+          AND asn.nrdconta = lac.nrdconta
+          AND rac.cdcooper = lac.cdcooper
+          AND rac.nrdconta = lac.nrdconta
+          AND rac.nraplica = lac.nraplica
+          AND cpc.cdprodut = rac.cdprodut
+          AND cpc.indplano = 1 -- Aplicacoes programadas
         );
 
       /* Busca dados de lançamentos de cotas/capital */

@@ -14,7 +14,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/93.                       Ultima atualizacao: 11/08/2018
+   Data    : Fevereiro/93.                       Ultima atualizacao: 05/09/2018
 
    Dados referentes ao programa:
 
@@ -115,7 +115,9 @@ BEGIN
                             o append, não ocasionando mais "Erro ao efetuar Mv do relatório" e 
                             duplicação de conteúdo em um mesmo relatório (Carlos)               
 
-               11/08/2018 - Inclusão de aplicações programadas - cursor cr_craplpp - (Proj. 411.2 CIS Corporate)                                     
+               11/08/2018 - Inclusão de aplicações programadas - cursor cr_craplpp - (Proj. 411.2 CIS Corporate)       
+               
+               05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).                              
 
   ............................................................................. */
 
@@ -186,7 +188,7 @@ BEGIN
        AND lpp.cdcooper = crapass.cdcooper
        AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
     GROUP BY lpp.nrdconta,lpp.nrctrrpp
-    UNION
+    UNION ALL
     SELECT rac.nrdconta
            ,rac.nrctrrpp
            ,Count(*) qtlancmto
@@ -955,10 +957,10 @@ BEGIN
                                   ,pr_tab_cta_bloq => vr_tab_craptab);
 
         -- Busca registro de lancamentos na poupanca
-        OPEN cr_craplpp(pr_cdcooper => pr_cdcooper
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt - 180
-                         ,pr_nrdconta => rw_crapext.nrdconta
-                         ,pr_cdagenci => pr_cdagenci);
+        OPEN cr_craplpp (pr_cdcooper => pr_cdcooper
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt - 180
+                        ,pr_nrdconta => rw_crapext.nrdconta
+                        ,pr_cdagenci => pr_cdagenci);
                        
         FETCH cr_craplpp INTO rw_craplpp;
         

@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Novembro/91.                      Ultima atualizacao: 18/11/2017
+    Data    : Novembro/91.                      Ultima atualizacao: 05/09/2018
 
     Dados referentes ao programa:
 
@@ -198,6 +198,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                            NAO RECEBIDOS. (Wagner - CECRED/Sustentação - Chamado 826394).
                            
               06/08/2018 - Inclusão da aplicação programada no cursor cr_craplpp (Proj. 411.2 - CIS Corporate).
+
+              05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).
                            
     ............................................................................. */
     DECLARE
@@ -747,7 +749,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
         AND    craplpp.cdagenci = pr_cdagenci
         AND    craplpp.cdbccxlt = pr_cdbccxlt
         AND    craplpp.nrdolote = pr_nrdolote
-        UNION
+        UNION ALL
         SELECT craplac.cdhistor
               ,craplac.vllanmto
         FROM   craplac
