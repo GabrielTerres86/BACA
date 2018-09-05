@@ -22,9 +22,14 @@
 							   geracao da impressao. (Jaison/Daniel)
           
                   23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
-                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)	
+                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
+
+                  12/04/2018 - Ajustes para adicionar parâmetro para controle da exibição da 
+                  			   restrição no report de borderô de desct. de tít (GFT) 
 
                   28/05/2018 - Incluso impressoa Proposta (GFT)   
+
+                  15/08/2018 - Inserção da verificação se é bordero liberado no processo novo ou antigo. (GFT) 
 
 	************************************************************************/ 
 
@@ -45,10 +50,12 @@
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
 		?>
-          <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
+<script language="javascript">
+  alert('<?php echo $msgError; ?>');
+</script>
+<?php
 		exit();
 	}	
-
 	// Verifica se parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || 
 		!isset($_POST["nrctrlim"]) || 
@@ -56,8 +63,9 @@
 		!isset($_POST["limorbor"]) ||
 		!isset($_POST["idimpres"]) ||
 		!isset($_POST["flgemail"])) {
-		?><script language="javascript">alert('Par&acirc;metros incorretos.');</script>
-  <?php
+		?>
+<script language="javascript">alert('Par&acirc;metros incorretos.');</script>
+<?php
 		exit();
 	}	
 
@@ -72,45 +80,74 @@
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		?>
-  <script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
+<script language="javascript">alert('Conta/dv inv&aacute;lida.');</script>
+<?php
 		exit();
 	}
 	
 	// Verifica se número do contrato é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
-		?><script language="javascript">alert('Contrato inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Contrato inv&aacute;lido.');</script>
+<?php
 		exit();
 	}
 	
 	// Verifica se número do bordero é um inteiro válido
 	if ((!validaInteiro($nrborder)) && ($nrborder != "")) {
-		?><script language="javascript">alert('Bordero inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Bordero inv&aacute;lido.');</script>
+<?php
 		exit();
 	}	
 	
 	// Verifica se identificador de impressão é um inteiro válido
 	if (!validaInteiro($idimpres)) {
-		?><script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script>
+<?php
 		exit();
 	}		
 	
 	// Verifica se flag para envio de email é válida
 	if ($flgemail <> "yes" && $flgemail <> "no") {
-		?><script language="javascript">alert('Identificador de envio de e-mail inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Identificador de envio de e-mail inv&aacute;lido.');</script>
+<?php
 		exit();
 	}
 	
 	// Verifica se identificador de impressão é um inteiro válido
 	if (!validaInteiro($limorbor)) {
-		?><script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script><?php
+		?>
+<script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script>
+<?php
 		exit();
 	}	
 	
-    if ($idimpres == 1 || // COMPLETA
+	// Verifica se o borderô deve ser utilizado no sistema novo ou no antigo
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " <nrborder>".$nrborder."</nrborder>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+	$flgnewbor = $root->dados->flgnewbor->cdata;
+		
+    if (($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
-		$idimpres == 3 || // PROPOSTA
+		    $idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7) { // BORDERO DE CHEQUES
+        $idimpres == 7 // BORDERO DE CHEQUES
+        ) && ($flgnewbor)) {
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
@@ -122,6 +159,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
+        $xml .= "    <flgrestr>0</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
@@ -130,7 +168,11 @@
 
         if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+			?>
+<script language="javascript">
+  alert('<?php echo $msg; ?>');
+</script>
+<?php
 			exit();
 		}
 
@@ -181,7 +223,11 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+		?>
+<script language="javascript">
+  alert('<?php echo $msg; ?>');
+</script>
+<?php
 		exit();
 	} 
 	
