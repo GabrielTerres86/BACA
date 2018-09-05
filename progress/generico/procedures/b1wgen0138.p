@@ -37,7 +37,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0138.p
     Autor     : Guilherme
-    Data      : Maio/2012                   Ultima Atualizacao: 05/03/2014
+    Data      : Maio/2012                   Ultima Atualizacao: 12/07/2018
     
     Dados referentes ao programa:
 
@@ -130,9 +130,10 @@
                              
                 05/03/2014 - Incluso VALIDATE (Daniel). 
                 
-                12/07/2018 - Altera rotina calc_endivid_grupo para chamar a nova rotina oracle
-                             pc_calc_endivid_grupo_prog. Eliminada lógica progess.
-                             Renato Cordeiro (AMcom)
+                12/07/2018 - P450 - Altera rotina calc_endivid_grupo para chamar a 
+                             nova rotina oracle
+                             pc_calc_endivid_grupo_prog. Eliminada lógica 
+                             progess. Renato Cordeiro (AMcom)
                              
 .............................................................................*/
 
@@ -1167,11 +1168,6 @@ PROCEDURE calc_endivid_grupo:
     DELETE OBJECT xField. 
     DELETE OBJECT xText.
 
-    for each tt-grupo :
-    
-        disp tt-grupo.nrdgrupo tt-grupo.nrdconta.
-    end.
-
 
 
 /*
@@ -1938,15 +1934,7 @@ FUNCTION busca_grupo RETURNS LOGICAL(INPUT par_cdcooper  AS INT,
                                      OUTPUT par_dsdrisgp AS CHAR):
 
 /*----------------------------------------------------------------------------------------------------------------------------------------*/
-/*
-GECO0001.pc_busca_grupo_associado
-   pr_cdcooper        number(10)        in
-   pr_nrdconta        number(10)        in
-   pr_flggrupo        number        out
-   pr_nrdgrupo        number(11)        out
-   pr_gergrupo        varchar2        out
-   pr_dsdrisgp        varchar2(2)        out
-*/
+
 
    DEF VAR vr_flggrupo AS INT.
 

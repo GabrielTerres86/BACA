@@ -19,7 +19,6 @@ PREPARAR PARA SALVAR OS ERROS NO ARQUIVO EM ALGUM LUGAR DO /MICROS/CECRED/
       FROM crapcop c
      WHERE c.flgativo = 1
        AND c.cdcooper <> 3
-       --AND c.cdcooper = 9
    ORDER BY cdcooper       
        ;
 
@@ -33,7 +32,6 @@ PREPARAR PARA SALVAR OS ERROS NO ARQUIVO EM ALGUM LUGAR DO /MICROS/CECRED/
                  ,i.rowid
               FROM tbcc_grupo_economico_integ i,  tbcc_grupo_economico x
              WHERE i.cdcooper = pr_cdcooper
-               AND i.dtexclusao IS NULL
                AND i.idgrupo  = x.idgrupo
     ) tmp
     ORDER BY CPF_BASE, nrcpfcgc, nrdconta

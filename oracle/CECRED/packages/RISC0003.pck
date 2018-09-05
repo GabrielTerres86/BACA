@@ -17,6 +17,10 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
   -- Atualizações: 09/04/2018 - Incluída procedure para cálculo dos dados Brutos do Risco - Daniel(AMcom)
   --                            pc_risco_central_ocr - tabela TBRISCO_CENTRAL_OCR
   --
+  --               26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --
+  --               20/07/2018 - P450 - Reformulação Dados Brutos (Reginaldo/AMcom)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
 
   ----------------------------- TIPOS E REGISTROS -------------------------
@@ -175,7 +179,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   -- Atualizações: 09/04/2018 - Incluída procedure para cálculo dos dados Brutos do Risco - Daniel(AMcom)
   --                            pc_risco_central_ocr - tabela TBRISCO_CENTRAL_OCR
   --
-  --               04/07/2018 - Alteração na "pc_risco_central_ocr" para chamada da
+  --               26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --
+  --               04/07/2018 - P450 - Alteração na "pc_risco_central_ocr" para chamada da
   --                            RISC0004.pc_carrega_tabela_riscos - Reginaldo(AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -244,15 +250,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   rw_crapris_last cr_crapris_last%ROWTYPE;
 
   -- Buscar risco de grupo econônomico
-  CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
-                   ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
-    SELECT crapgrp.innivrge,
-           crapgrp.nrdgrupo
-      FROM crapgrp
-     WHERE crapgrp.cdcooper = pr_cdcooper
-       AND crapgrp.nrctasoc = pr_nrctasoc;
+  CURSOR cr_crapgrp (pr_cdcooper IN tbcc_grupo_economico_integ.cdcooper%TYPE
+                    ,pr_nrdconta IN tbcc_grupo_economico_integ.nrdconta%TYPE) IS
+    SELECT *
+      FROM (SELECT p.inrisco_grupo
+                  ,int.idgrupo
+                  ,int.nrdconta
+              FROM tbcc_grupo_economico_integ INT
+                  ,tbcc_grupo_economico p
+             WHERE int.dtexclusao IS NULL
+               AND int.cdcooper = pr_cdcooper
+               AND int.idgrupo  = p.idgrupo
+             UNION
+            SELECT pai.inrisco_grupo
+                  ,pai.idgrupo
+                  ,pai.nrdconta
+              FROM tbcc_grupo_economico       pai
+                 , crapass                    ass
+                 , tbcc_grupo_economico_integ int
+             WHERE ass.cdcooper = pai.cdcooper
+               AND ass.nrdconta = pai.nrdconta
+               AND int.idgrupo  = pai.idgrupo
+               AND int.dtexclusao is NULL
+               AND ass.cdcooper = pr_cdcooper
+               AND int.cdcooper = pr_cdcooper
+          ) dados
+     WHERE dados.nrdconta = pr_nrdconta;
   rw_crapgrp cr_crapgrp%ROWTYPE;
-
 
   -- Função que irá retornar se o operador poderá fazer alterações no período informado
   FUNCTION fn_periodo_habilitado(pr_cdcooper IN NUMBER
@@ -825,7 +849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       vr_dstextab     craptab.dstextab%TYPE;
       vr_innivris     crapris.innivris%TYPE;
       vr_innivris_csv crapris.innivris%TYPE;
-      vr_nrdgrupo     crapgrp.nrdgrupo%TYPE;
+      vr_nrdgrupo     crapris.nrdgrupo%TYPE;
       vr_vlarrasto    NUMBER;
       vr_fcrapris     BOOLEAN;
 
@@ -924,14 +948,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
 
           -- Vamos verificar se possui grupo economico
           OPEN cr_crapgrp(pr_cdcooper => rw_movto.cdcooper
-                         ,pr_nrctasoc => rw_movto.nrdconta);
+                         ,pr_nrdconta => rw_movto.nrdconta);
           FETCH cr_crapgrp INTO rw_crapgrp;
           IF cr_crapgrp%FOUND THEN
             CLOSE cr_crapgrp;
-            vr_nrdgrupo := rw_crapgrp.nrdgrupo;
+            vr_nrdgrupo := rw_crapgrp.inrisco_grupo;
             -- Caso nao possuir nenhuma operacao na mensal, vamos assumir o risco do grupo economico
             IF NOT vr_fcrapris THEN
-              vr_innivris := rw_crapgrp.innivrge;
+              vr_innivris := rw_crapgrp.inrisco_grupo;
             END IF;
           ELSE
             CLOSE cr_crapgrp;

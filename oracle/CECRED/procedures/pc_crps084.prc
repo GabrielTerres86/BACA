@@ -11,7 +11,7 @@ BEGIN
   Programa: pc_crps084                      Antigo: Fontes/crps084.p
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
-  Autor   : Deborah/Edson                   Ultima atualizacao: 21/06/2016
+  Autor   : Deborah/Edson                   Ultima atualizacao: 18/07/2018
   Data    : Janeiro/94.
 
   Dados referentes ao programa:
@@ -110,9 +110,9 @@ BEGIN
              17/08/2015 - Ajuste no calculo do Risco, Projeto de Provisao. (James)
              
              21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
-                          (Carlos Rafael Tanholi).
+                          (Carlos Rafael Tanholi).             
                           
-             26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+             18/07/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
         
   ............................................................................. */
 
@@ -214,22 +214,22 @@ DECLARE
   TYPE typ_tab_crapljd   IS TABLE OF NUMBER INDEX BY VARCHAR2(85);
   
   --Definicao das tabelas de memoria
-  vr_tab_devedores       typ_tab_devedores;
-  vr_tab_dev_conta       typ_tab_devedores;
-  vr_tab_dsdrisco        typ_tab_dsdrisco;
-  vr_tab_crapass         typ_tab_crapass;
+  vr_tab_devedores    typ_tab_devedores;
+  vr_tab_dev_conta    typ_tab_devedores;
+  vr_tab_dsdrisco     typ_tab_dsdrisco;
+  vr_tab_crapass      typ_tab_crapass;
   vr_tab_grupo_economico typ_tab_grupo_economico;
-  vr_tab_relato          typ_tab_relato;
-  vr_tab_crapepr         typ_tab_tot;
-  vr_tab_crapebn         typ_tab_tot;
-  vr_tab_craptdb         typ_tab_tot;
-  vr_tab_crapris         typ_tab_tot;
-  vr_tab_crapcdb         typ_tab_crapcdb;
-  vr_tab_crapljt         typ_tab_crapljt;
-  vr_tab_crapljd         typ_tab_crapljd;
-  vr_tab_crapcob         typ_tab_crapljd;
-  vr_tab_cpf             typ_tab_cpf;
-
+  vr_tab_relato       typ_tab_relato;
+  vr_tab_crapepr      typ_tab_tot;
+  vr_tab_crapebn      typ_tab_tot;
+  vr_tab_craptdb      typ_tab_tot;
+  vr_tab_crapris      typ_tab_tot;
+  vr_tab_crapcdb      typ_tab_crapcdb;
+  vr_tab_crapljt      typ_tab_crapljt;
+  vr_tab_crapljd      typ_tab_crapljd;
+  vr_tab_crapcob      typ_tab_crapljd;
+  vr_tab_cpf          typ_tab_cpf;
+  
   
   --Cursores da rotina crps323
   
@@ -501,28 +501,30 @@ DECLARE
   
    --Selecionar informacoes dos grupos
    CURSOR cr_grupo_economico (pr_cdcooper IN tbcc_grupo_economico.cdcooper%type) IS
-     SELECT  gi.nrdconta
-            ,gi.nrcpfcgc
-            ,gi.idgrupo
-            , decode(ge.inrisco_grupo ,1 ,'AA' ,2 ,'A' ,3 ,'B' ,4 ,'C' , 5 ,'D'
-                                      ,6 ,'E'  ,7 ,'F' ,8 ,'G' ,9 ,'H' , 10,'HH') dsdrisco
-            ,ge.inrisco_grupo innivris
-            ,ge.inrisco_grupo innivrge
-      FROM tbcc_grupo_economico        ge
-          ,tbcc_grupo_economico_integ  gi
-     WHERE ge.cdcooper = pr_cdcooper
-       AND gi.cdcooper = ge.cdcooper
-       AND gi.idgrupo = ge.idgrupo;
+     SELECT *
+      FROM (SELECT int.idgrupo
+                  ,int.nrdconta
+                  ,int.Nrcpfcgc
+              FROM tbcc_grupo_economico_integ INT
+                  ,tbcc_grupo_economico p
+             WHERE int.dtexclusao IS NULL
+               AND int.cdcooper = pr_cdcooper
+               AND int.idgrupo  = p.idgrupo
+             UNION
+            SELECT pai.idgrupo
+                  ,pai.nrdconta
+                  ,ass.nrcpfcgc
+              FROM tbcc_grupo_economico       pai
+                 , crapass                    ass
+                 , tbcc_grupo_economico_integ int
+             WHERE ass.cdcooper = pai.cdcooper
+               AND ass.nrdconta = pai.nrdconta
+               AND int.idgrupo  = pai.idgrupo
+               AND int.dtexclusao is null
+               AND ass.cdcooper = pr_cdcooper
+               AND int.cdcooper = pr_cdcooper
+          ) dados;
    rw_grupo_economico cr_grupo_economico%ROWTYPE;
-	   
-     --SELECT  crapgrp.nrctasoc
-     --       ,crapgrp.nrcpfcgc
-     --       ,crapgrp.nrdgrupo
-     --       ,crapgrp.dsdrisco
-     --       ,crapgrp.innivris
-     --       ,crapgrp.innivrge
-     --FROM crapgrp
-     --WHERE crapgrp.cdcooper = pr_cdcooper;
   
   --Tipo do Cursor de risco para Bulk Collect
   TYPE typ_crapris IS TABLE of cr_crapris_teste%ROWTYPE;
@@ -1645,7 +1647,7 @@ DECLARE
           vr_nrdgrupo:= 0;
           --Montar indice para grupo
           vr_index_grupo_economico:= lpad(rw_crapsld.nrdconta,10,'0')||
-                                     lpad(vr_tab_crapass(rw_crapsld.nrdconta).nrcpfcgc,25,'0');
+                             lpad(vr_tab_crapass(rw_crapsld.nrdconta).nrcpfcgc,25,'0');
           --Se existir o grupo
           IF vr_tab_grupo_economico.EXISTS(vr_index_grupo_economico) THEN
             --utilizar o grupo encontrado
