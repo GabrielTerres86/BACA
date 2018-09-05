@@ -22,14 +22,14 @@
 							   geracao da impressao. (Jaison/Daniel)
           
                   23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
-                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)	
+                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
 
                   12/04/2018 - Ajustes para adicionar parâmetro para controle da exibição da 
-                  			   restrição no report de borderô de desct. de tít
+                  			   restrição no report de borderô de desct. de tít (GFT) 
 
                   28/05/2018 - Incluso impressoa Proposta (GFT)   
 
-                  15/08/2018 - Inserção da verificação se é bordero liberado no processo novo ou antigo.
+                  15/08/2018 - Inserção da verificação se é bordero liberado no processo novo ou antigo. (GFT) 
 
 	************************************************************************/ 
 
@@ -109,8 +109,8 @@
 		?><script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
 	}	
-
-	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	
+	// Verifica se o borderô deve ser utilizado no sistema novo ou no antigo
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= " <nrborder>".$nrborder."</nrborder>";
@@ -127,12 +127,12 @@
 	$flgverbor = $root->dados->flgverbor->cdata;
 	$flgnewbor = $root->dados->flgnewbor->cdata;
 		
-    if (($idimpres == 1 || // COMPLETA
+    if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
 		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7 || // BORDERO DE CHEQUES
-        $idimpres == 11) && ($flgnewbor) ) {// BORDERO EXTRATO
+        $idimpres == 7 // BORDERO DE TITULOS
+        ) {
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
@@ -144,7 +144,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
-        $xml .= "    <flgrestr>0</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
+        $xml .= "    <flgrestr>".($flgnewbor == 1 ? 0 : 1 )."</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
