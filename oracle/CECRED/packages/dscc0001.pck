@@ -450,6 +450,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       03/04/2018 - Adicionado noti0001.pc_cria_notificacao       
 				  
 	  27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
+
+	  05/09/2018 - Alterado posição do ROLLBACK no exception - INC0023398
 				              
   --------------------------------------------------------------------------------------------------------------*/
 
@@ -4435,12 +4437,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          TRIM(vr_dscritic) IS NULL THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+		-- Efetuar rollback -- Alterado - Paulo Martins 05/09/2018 - INC0023398
+        ROLLBACK;      
 			ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := REPLACE(REPLACE(vr_dscritic,chr(13)),chr(10));
       END IF;
-      -- Efetuar rollback
-      ROLLBACK;      
     WHEN OTHERS THEN      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := REPLACE(REPLACE('Nao foi possivel remover cheques do borderô: ' || SQLERRM, chr(13)),chr(10));																			
