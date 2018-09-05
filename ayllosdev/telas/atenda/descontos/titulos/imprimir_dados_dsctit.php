@@ -125,11 +125,9 @@
 			exibeErro(htmlentities($root->erro->registro->dscritic));
 			exit;
 		}
-		$flgverbor = $root->dados->flgverbor->cdata;
 		$flgnewbor = $root->dados->flgnewbor->cdata;
 	}
 	else{
-		$flgverbor = 0;
 		$flgnewbor = 0;
 	}
 	
