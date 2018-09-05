@@ -1771,7 +1771,7 @@ BEGIN
                                     ,pr_dsiduser => to_char(pr_nrdconta)
                                     ,pr_flgemail => 0
                                     ,pr_flgerlog => 0
-                                    ,pr_flgrestr => 1
+                                    ,pr_flgrestr => 0
                                     ,pr_nmarqpdf => vr_nmarqpdf
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);

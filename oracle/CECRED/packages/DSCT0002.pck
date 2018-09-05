@@ -7550,7 +7550,6 @@ END fn_letra_risco;
                          '<nmextcop>'|| rw_crapcop.nmextcop ||'</nmextcop>'||
                          '<dstitulo>'|| vr_dstitulo ||'</dstitulo>'||
                          '<dsqrcode>'|| vr_qrcode ||'</dsqrcode>'||
-                         '<flgrestr>'|| pr_flgrestr || '</flgrestr>'||
                          '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) ||'</nrdconta>'||
                          '<nmprimtl>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmprimtl ||'</nmprimtl>'||
                          '<cdagenci>'|| vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'</cdagenci>'||
@@ -7635,7 +7634,7 @@ END fn_letra_risco;
                           '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>');
                          
         -- Caso seja bordero antigo, escreve as restrições
-        IF (pr_flgrestr = 0) THEN
+        IF (pr_flgrestr = 1) THEN
           pc_escreve_xml( '<restricoes>');
 
           -- Percorre as restricoes
@@ -7715,7 +7714,7 @@ END fn_letra_risco;
       pc_escreve_xml('</totais>',TRUE);
       
       -- Caso seja borderô antigo
-      IF (pr_flgrestr = 0) THEN
+      IF (pr_flgrestr = 1) THEN
         -- Se possui restricoes aprovadas pelo coordenador
         IF vr_tab_restri_apr_coo.COUNT > 0 THEN
           pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');

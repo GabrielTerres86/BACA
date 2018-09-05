@@ -1891,7 +1891,7 @@ END pc_incluir_bordero_esteira;
                                               pr_dsiduser => vr_dsiduser,
                                               pr_flgemail => 0,
                                               pr_flgerlog => 0,
-                                              pr_flgrestr => 1, --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
+                                              pr_flgrestr => 0, --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
                                               pr_nmarqpdf => vr_nmarquiv,
                                               pr_cdcritic => vr_cdcritic,
                                               pr_dscritic => vr_dscritic);
