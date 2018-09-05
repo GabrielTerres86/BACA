@@ -39,8 +39,8 @@ begin
                                 repeat_interval     => 'Freq=Minutely;Interval=10;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour=08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18',
                                 end_date            => to_date(null),
                                 job_class           => 'DEFAULT_JOB_CLASS',
-                                enabled             => false,
-                                auto_drop           => true,
+                                enabled             => true,
+                                auto_drop           => false,
                                 comments            => 'Gerar os problemas de envio/recepção de mensagens para o JD');
 end;
 /
