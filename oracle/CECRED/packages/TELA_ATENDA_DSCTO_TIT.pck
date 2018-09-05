@@ -5287,7 +5287,8 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
                             ,vlinfoci                                                    
                             ,vlinfocc
                             ,qtinfocs
-                            ,vlinfocs)
+                            ,vlinfocs
+							,vlcompdb)
                       VALUES(pr_dtmvtolt
                             ,pr_cdagenci
                             ,700
@@ -5308,7 +5309,8 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
                             ,0
                             ,0
                             ,0
-                            ,0);
+                            ,0
+							,vr_vldtit);
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
           CONTINUE;
@@ -7459,6 +7461,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             craplot.vlinfodb = vr_vldtit,
             craplot.vlinfocr = vr_vldtit,
             craplot.vlcompcr = vr_vldtit,
+            craplot.vlcompdb = vr_vldtit,
             craplot.qtcompln = vr_qtregist
         WHERE
             craplot.cdbccxlt = 700
