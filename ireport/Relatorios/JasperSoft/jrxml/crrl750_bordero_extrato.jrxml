@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-08-27T14:44:24 -->
+<!-- 2018-09-05T18:43:30 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl750_bordero" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="440" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -81,6 +81,9 @@
 	</field>
 	<field name="vlprjbor" class="java.lang.String">
 		<fieldDescription><![CDATA[vlprjbor]]></fieldDescription>
+	</field>
+	<field name="vltxmora" class="java.lang.String">
+		<fieldDescription><![CDATA[vltxmora]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -330,7 +333,7 @@
 				<textElement textAlignment="Left" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{txjurmor}+" %"]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{txmensal}+" %"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="208" y="42" width="120" height="8" uuid="cb3d09a5-7a51-4206-931e-2b92a809a3eb">
@@ -342,7 +345,7 @@
 				<textElement textAlignment="Left" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{txjurmor}+" %"]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{vltxmora}+" %"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="208" y="50" width="120" height="8" uuid="64f28bc3-1f11-4523-a63a-dae1c9a85ceb">
@@ -354,7 +357,7 @@
 				<textElement textAlignment="Left" markup="html">
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{txjurmor}+" %"]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{vltxmult}+" %"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="208" y="58" width="120" height="8" uuid="0ec20ffc-1200-493b-ae5b-59a5995536e4">
