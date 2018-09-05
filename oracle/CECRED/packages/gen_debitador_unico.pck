@@ -133,7 +133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
   --  Programa  : GEN_DEBITADOR_UNICO
   --  Sistema   : Pacote de Rotinas genéricas focando nas funcionalidades do Debitador Único
   --  Autor     : Marcelo Elias Gonçalves - AMcom Sistemas de Informação
-  --  Data      : Maio/2018                               Última atualização: 07/08/2018
+  --  Data      : Maio/2018                               Última atualização:
   --  Frequência: Conforme chamada
   --  Objetivo  : Empacotar as rotinas referente ao Debitador Único
   --
@@ -326,7 +326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
       pr_ininterromper := TRUE;
       RAISE vr_erro;
     END IF;
-
+    
     
 
     -- VErificar se já foi a última execução
@@ -505,8 +505,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
           or (to_number(To_Char(SYSDATE,'hh24')) between 0 and 1) THEN  -- entre meia noite e 1h, não permite excluir horário        
           vr_ds_erro := 'Exclusão de horário '||To_Char(pr_dhprocessamento,'hh24:mi')||' não permitida pois o controle de execução já está na última execução ou o horário já executou, exclusão permitida apenas para horários não executados.';
           RAISE vr_erro;          
+        END IF;
       END IF;
-    END IF;
     END IF;
     --
     pr_ininterromper := FALSE;
@@ -828,6 +828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
     vr_cdacesso           VARCHAR2(100);
     vr_dt_controle        VARCHAR2(10);
     vr_qtde_ja_executada  NUMBER := 0;
+       
   BEGIN
     --Para cada processo
     FOR r_processo_horario IN cr_processo_horario(pr_ds_cdprocesso         => pr_ds_cdprocesso
@@ -1052,8 +1053,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                 vr_ds_erro := 'Erro ao verificar quantidade de execuções faltantes no dia do programa '||pr_cdprocesso||' durante o dia no Debitador Único. Erro: '||SubStr(SQLERRM,255);
                 RAISE vr_erro;
             END;     
-    END IF;
-
+        END IF;
+                
         -- Se a rotina executa na cadeia noturna, atribui mais uma execução no contador.
         IF NVL(rw_tbgen_param_debit_unico.inexec_cadeia_noturna,'N') = 'S' THEN
           vr_qt_hora_prg_debitador_dia := nvl(vr_qt_hora_prg_debitador_dia,0) + 1;
@@ -1070,7 +1071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
           RAISE vr_erro;
         END IF;
         CLOSE cr_crapprm;
-
+        
         -- tratar dados do parametro
         vr_tbdados := gene0002.fn_quebra_string(pr_string  => rw_crapprm_ctrl.dsvlrprm,
                                                 pr_delimit => '#');        
@@ -1583,6 +1584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
         vr_tpexec_emergencial := 'P'; --P=Programa(s) Específicos
       END IF;
 
+
       -- Log de ocorrência
       pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
                           ,pr_indexecu => 'Validando informacoes para Execucao Emergencial...'
@@ -1810,15 +1812,265 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
             RAISE vr_exc_email;
           END IF;
 
+
           -- Não realizar execução do programa pois o próximo horario é apenas para o dia seguinte.
           -- Se a execução está no mesmo dia do parametro de agendamento, permitirá executar
           IF (vr_temhorproxdia AND vr_dataagenproxdia <> rw_crapdat.dtmvtolt) AND
               vr_flultexe = 1 THEN --e já executou a última do dia
             NULL;
           ELSE
-            
+            --PC_CRPS509_PRIORI - DEBNET - EFETUAR DEBITO DE AGENDAMENTOS DE CONVENIOS PRIORITARIOS DA CECRED FEITOS NA INTERNET
+            IF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS509_PRIORI' THEN
+              vr_cdprogra := 'PC_CRPS509_PRIORI';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps509_priori(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                               ,pr_flgresta => 0             --IN PLS_INTEGER             --> Flag padrão para utilização de restart
+                               ,pr_stprogra => vr_stprogra   --OUT PLS_INTEGER            --> Saída de termino da execução
+                               ,pr_infimsol => vr_infimsol   --OUT PLS_INTEGER            --> Saída de termino da solicitação
+                               ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                               ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Descricao da Critica
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+            --PC_CRPS509 - DEBNET - EFETUAR DEBITO DE AGENDAMENTOS DE CONVENIOS DA CECRED FEITOS NA INTERNET
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS509' THEN
+              vr_cdprogra := 'PC_CRPS509';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps509(pr_cdcooper => pr_cdcooper --IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+                        ,pr_flgresta => 0           --IN PLS_INTEGER             --> Flag padrão para utilização de restart
+                        ,pr_stprogra => vr_stprogra --OUT PLS_INTEGER            --> Saída de termino da execução
+                        ,pr_infimsol => vr_infimsol --OUT PLS_INTEGER            --> Saída de termino da solicitação
+                        ,pr_cdcritic => vr_cdcritic --OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                        ,pr_dscritic => vr_dscritic --OUT VARCHAR2               --> Descricao da Critica
+                        ,pr_inpriori => 'N');       --IN VARCHAR2 DEFAULT 'T'    --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos)
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+            --PC_CRPS642_PRIORI - DEBSIC - EFETUAR DEBITO DE AGENDAMENTOS DE CONVENIOS PRIORITARIOS DA SICREDI FEITOS NA INTERNET
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS642_PRIORI' THEN
+              vr_cdprogra := 'PC_CRPS642_PRIORI';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps642_priori(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Código da cooperativa
+                               ,pr_flgresta => 0             --IN PLS_INTEGER             --> Flag 0/1 para utilizar restart na chamada
+                               ,pr_stprogra => vr_stprogra   --OUT PLS_INTEGER            --> Saída de termino da execução
+                               ,pr_infimsol => vr_infimsol   --OUT PLS_INTEGER            --> Saída de termino da solicitação
+                               ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                               ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Descricao da Critica
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+            --PC_CRPS642 - DEBSIC - EFETUAR DEBITO DE AGENDAMENTOS DE CONVENIOS DA SICREDI FEITOS NA INTERNET
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS642' THEN
+              vr_cdprogra := 'PC_CRPS642';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps642(pr_cdcooper => pr_cdcooper --IN crapcop.cdcooper%TYPE   --> Código da cooperativa
+                        ,pr_flgresta => 0           --IN PLS_INTEGER             --> Flag 0/1 para utilizar restart na chamada
+                        ,pr_stprogra => vr_stprogra --OUT PLS_INTEGER            --> Saída de termino da execução
+                        ,pr_infimsol => vr_infimsol --OUT PLS_INTEGER            --> Saída de termino da solicitação
+                        ,pr_cdcritic => vr_cdcritic --OUT crapcri.cdcritic%TYPE  --> Código da Critica
+                        ,pr_dscritic => vr_dscritic --OUT VARCHAR2               --> Descricao da Critica
+                        ,pr_inpriori => 'N');       --IN VARCHAR2 DEFAULT 'T'    --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos)
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+               -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
             --PC_CRPS750 - PAGAMENTOS DAS PARCELAS DE EMPRÉSTIMOS (TR E PP)
-            IF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS750' THEN
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS750' THEN
               vr_cdprogra := 'PC_CRPS750';
 
               -- Log de ocorrência
@@ -1941,7 +2193,131 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_tpexecuc => NULL
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
-              --                        
+              --
+            --PC_CRPS172 - DEBITO EM CONTA DAS PRESTACOES DE PLANO DE CAPITAL
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS172' THEN
+              vr_cdprogra := 'PC_CRPS172';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps172(pr_cdcooper => pr_cdcooper   -- in craptab.cdcooper%type
+                        ,pr_flgresta => 0             -- in pls_integer           --> Flag padrão para utilização de restart
+                        ,pr_stprogra => vr_stprogra   --out pls_integer           --> Saída de termino da execução
+                        ,pr_infimsol => vr_infimsol   --out pls_integer           --> Saída de termino da solicitação,
+                        ,pr_cdcritic => vr_cdcritic   --out crapcri.cdcritic%type --> Codigo da Critica
+                        ,pr_dscritic => vr_dscritic); --out varchar2              --> Descricao da Critica
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+            --PC_CRPS145 - DEBITO EM CONTA REF POUPANCA PROGRAMADA
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS145' THEN
+              vr_cdprogra := 'PC_CRPS145';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps145(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                        ,pr_flgresta => 0             --IN PLS_INTEGER             --> Flag padrão para utilização de restart
+                        ,pr_stprogra => vr_stprogra   --OUT PLS_INTEGER            --> Saída de termino da execução
+                        ,pr_infimsol => vr_infimsol   --OUT PLS_INTEGER            --> Saída de termino da solicitação
+                        ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
+                        ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Descricao da Critica
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
             --PC_CRPS439 - DEBITO DIARIO DO SEGURO
             ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS439' THEN
               vr_cdprogra := 'PC_CRPS439';
@@ -1969,6 +2345,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                         ,pr_infimsol => vr_infimsol   --out pls_integer            --> Saída de termino da solicitação,
                         ,pr_cdcritic => vr_cdcritic   --out crapcri.cdcritic%type  --> Codigo da Critica
                         ,pr_dscritic => vr_dscritic); --out varchar2               --> Codigo da Critica
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+            --PC_CRPS654 - TENTATIVA DIARIA DEBITO DE COTAS
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS654' THEN
+              vr_cdprogra := 'PC_CRPS654';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps654 (pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                         ,pr_cdoperad => '1'           --IN crapope.cdoperad%TYPE   --> Codigo do operador
+                         ,pr_flgresta => 0             --IN PLS_INTEGER             --> Flag padrão para utilização de restart
+                         ,pr_stprogra => vr_stprogra   --OUT PLS_INTEGER            --> Saída de termino da execução
+                         ,pr_infimsol => vr_infimsol   --OUT PLS_INTEGER            --> Saída de termino da solicitação
+                         ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                         ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Texto de erro/critica encontrada
 
               -- Tratamento de erro
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
@@ -2067,6 +2506,127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
               --
+            --PC_CRPS688 - EFETUAR RESGATE DE APLICAÇÕES AGENDADAS PELO INTERNET BANK
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS688' THEN
+              vr_cdprogra := 'PC_CRPS688';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps688(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                        ,pr_flgresta => 0             --IN PLS_INTEGER             --> Flag padrão para utilização de restart
+                        ,pr_stprogra => vr_stprogra   --OUT PLS_INTEGER            --> Saída de termino da execução
+                        ,pr_infimsol => vr_infimsol   --OUT PLS_INTEGER            --> Saída de termino da solicitação
+                        ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                        ,pr_dscritic => vr_dscritic); --OUT VARCHAR2               --> Texto de erro/critica encontrada
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+            --RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA - EFETIVAR OS AGENDAMENTOS DE RECARGA DE CELULAR EM TODAS AS COOPERATIVAS
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA' THEN
+              vr_cdprogra := 'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              rcel0001.pc_proces_agendamentos_recarga(pr_cdcooper => pr_cdcooper
+                                                     ,pr_nmdatela => 'JOBAGERCEL'
+                                                     ,pr_cdcritic => vr_cdcritic
+                                                     ,pr_dscritic => vr_dscritic);
+
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
             -- EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB - EFETIVAR LANCAMENTO PENDENTE MULTA/JUROS TR CONTRATOS EMP/FINANC POS-FIXADA
             ELSIF Upper(r_processo_horario.cdprocesso) = 'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB' THEN
               vr_cdprogra := 'EMPR0009.PC_EFETIVA_LCTO_PENDENTE_JOB';
@@ -2089,6 +2649,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
 
               -- Executa processo/programa
               empr0009.pc_efetiva_lcto_pendente_job(pr_cdcooper => pr_cdcooper);
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+            --PC_CRPS123 - EFETUAR OS LANCAMENTOS AUTOMATICOS NO SISTEMA REF. A DEBITO EM CONTA
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS123' THEN
+              vr_cdprogra := 'PC_CRPS123';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps123(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE  --> Cooperativa solicitada
+                        ,pr_flgresta => 0             --IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                        ,pr_stprogra => vr_stprogra   --OUT PLS_INTEGER           --> Saída de termino da execução
+                        ,pr_infimsol => vr_infimsol   --OUT PLS_INTEGER           --> Saída de termino da solicitação
+                        ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE --> Critica encontrada
+                        ,pr_dscritic => vr_dscritic); --OUT VARCHAR2              --> Texto de erro/critica encontrada
 
               -- Tratamento de erro
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
@@ -2184,7 +2806,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                                   ,pr_tpexecuc => NULL
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                   ,pr_idtiplog => 'O');
-              --            
+              --
+            --PC_CRPS663 - DEBCNS - EFETUAR DEBITOS DE CONSORCIOS PENDENTES
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS663' THEN
+              vr_cdprogra := 'PC_CRPS663';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              pc_crps663(pr_cdcooper => pr_cdcooper   --IN crapcop.cdcooper%TYPE  --> Codigo Cooperativa
+                        ,pr_flgresta => 0             --IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                        ,pr_stprogra => vr_stprogra   --OUT PLS_INTEGER           --> Saida de termino da execucao
+                        ,pr_infimsol => vr_infimsol   --OUT PLS_INTEGER           --> Saida de termino da solicitacao
+                        ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE --> Codigo da Critica
+                        ,pr_dscritic => vr_dscritic); --OUT crapcri.dscritic%TYPE --> Descricao da Critica
+
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
             --PC_CRPS268 - DEBITO EM CONTA REFERENTE SEGURO DE VIDA EM GRUPO
             ELSIF Upper(r_processo_horario.cdprocesso) = 'PC_CRPS268' THEN
               vr_cdprogra := 'PC_CRPS268';
@@ -2213,6 +2897,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gen_debitador_unico AS
                         ,pr_cdcritic => vr_cdcritic   --OUT crapcri.cdcritic%TYPE --> Codigo da Critica
                         ,pr_dscritic => vr_dscritic); --OUT crapcri.dscritic%TYPE --> Descricao da Critica
 
+              -- Tratamento de erro
+              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                --
+                -- Atualiza Parâmetro de qual programa/cooperativa ocasionou erro no Debitador Único.
+                pc_atualiz_erro_prg_debitador(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'CTRL_ERRO_PRG_DEBITADOR'
+                                             ,pr_dsvlrprm => To_Char(SYSDATE,'dd/mm/rrrr')||' '||To_Char(r_processo_horario.dhprocessamento,'hh24:mi')||'#'||vr_cdprogra);
+                -- Log de erro de execucao
+                pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                    ,pr_indexecu => 'Fim Execucao com Critica: '||vr_dscritic
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_tpexecuc => NULL
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_idtiplog => 'E');
+                RAISE vr_exc_email;
+              END IF;
+              --
+              -- Log de fim de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Fim Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'F');
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Programa '||vr_cdprogra||' Executado.'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+             --
+            --PAGA0003.PC_PROCESSA_AGEND_BANCOOB - DEBITO AGENDADOS DE PAGAMENTO BONCOOB
+            ELSIF Upper(r_processo_horario.cdprocesso) = 'PAGA0003.PC_PROCESSA_AGEND_BANCOOB' THEN
+              vr_cdprogra := 'PAGA0003.PC_PROCESSA_AGEND_BANCOOB';
+
+              -- Log de ocorrência
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra_raiz
+                                  ,pr_indexecu => 'Executando Programa '||vr_cdprogra||'...'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'O');
+              --
+              -- Log de inicio de execucao
+              pc_gera_log_execucao(pr_nmprgexe => vr_cdprogra
+                                  ,pr_indexecu => 'Inicio Execucao'
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_tpexecuc => NULL
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                  ,pr_idtiplog => 'I');
+
+              -- Executa processo/programa
+              paga0003.pc_processa_agend_bancoob(pr_cdcooper => pr_cdcooper   --> Código da cooperativa
+                                                ,pr_cdcritic => vr_cdcritic   --> Codigo da critica
+                                                ,pr_dscritic => vr_dscritic); --> descrição da critica
 
               -- Tratamento de erro
               IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
