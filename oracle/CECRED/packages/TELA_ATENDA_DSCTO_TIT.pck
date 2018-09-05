@@ -5423,7 +5423,7 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
                  pr_cdcooper,
                  pr_tab_dados_titulos(vr_index).cdbandoc,
                  pr_tab_dados_titulos(vr_index).nrdctabb,
-                 pr_tab_dados_titulos(vr_index).nrdctabb,
+                 pr_tab_dados_titulos(vr_index).nrcnvcob,
                  null,
                  null,
                  null,
