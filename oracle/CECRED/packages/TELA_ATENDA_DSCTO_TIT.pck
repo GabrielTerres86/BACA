@@ -256,7 +256,8 @@ TYPE typ_reg_borderos IS RECORD(
      aux_qtsitapr   INTEGER,
      aux_vlsitapr   craptdb.vltitulo%TYPE,
      dsinsitapr     VARCHAR2(50),
-     flrestricao    INTEGER
+     flrestricao    INTEGER,
+     inprejuz       INTEGER
 
 );
 TYPE typ_tab_borderos IS TABLE OF typ_reg_borderos INDEX BY BINARY_INTEGER;
@@ -3417,7 +3418,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                                                  and    lim_ativo.nrdconta = pr_nrdconta
                                                                  and    lim_ativo.cdcooper = pr_cdcooper)) then 1
                --   mostrar todas as demais
-               when lim.insitlim in (4,7) then 1
+               when lim.insitlim in (4,7,9) then 1
                else 0
           end = 1
    and    lim.tpctrlim = pr_tpctrlim
@@ -8589,7 +8590,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                          WHEN 6 THEN 'ENVIADO ESTEIRA'
                          WHEN 7 THEN 'PRAZO EXPIRADO'
                          ELSE        'PROBLEMA'
-       END DSINSITAPR
+       END DSINSITAPR,
+       BDT.INPREJUZ
        FROM CRAPBDT BDT
        WHERE
        BDT.CDCOOPER = pr_cdcooper
@@ -8675,6 +8677,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                pr_tab_borderos(vr_idxbordero).aux_vlsitapr := vr_vl_apr;
                pr_tab_borderos(vr_idxbordero).dtlibbdt := rw_crapbdt.dtlibbdt;
                pr_tab_borderos(vr_idxbordero).dsinsitapr :=  rw_crapbdt.dsinsitapr;
+               pr_tab_borderos(vr_idxbordero).inprejuz   :=  rw_crapbdt.inprejuz;
 
 
         END LOOP;
@@ -8793,6 +8796,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               '<dssitbdt>'     || vr_tab_borderos(vr_index).dssitbdt                          || '</dssitbdt>' ||
                               '<dsinsitapr>'   || vr_tab_borderos(vr_index).dsinsitapr                        || '</dsinsitapr>'  ||
                               '<dtlibbdt>'     || TO_CHAR(vr_tab_borderos(vr_index).dtlibbdt, 'DD/MM/RRRR')   || '</dtlibbdt>'  ||
+                              '<inprejuz>'     || vr_tab_borderos(vr_index).inprejuz                          || '</inprejuz>'  ||
 
                            '</inf>'
             );
@@ -9031,7 +9035,8 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     pr_tab_titulo(0).nmdsacad := rw_craptdb.nmdsacad;
     pr_tab_titulo(0).cdtpinsc := rw_craptdb.cdtpinsc;
     pr_tab_titulo(0).diasatr  := ccet0001.fn_diff_datas(rw_craptdb.dtvencto, rw_crapdat.dtmvtolt);
-    IF pr_tab_titulo(0).diasatr < 0 THEN
+    -- Caso o titulo não esteja vencido ou esteja pago, zera os dias de atraso
+    IF pr_tab_titulo(0).diasatr < 0 OR rw_craptdb.dtvencto IS NOT NULL THEN
       pr_tab_titulo(0).diasatr := 0;
     END IF;
     pr_tab_titulo(0).diasprz  := ccet0001.fn_diff_datas(rw_craptdb.dtlibbdt, rw_craptdb.dtvencto);
