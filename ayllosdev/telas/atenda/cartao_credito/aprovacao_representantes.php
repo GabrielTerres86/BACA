@@ -45,10 +45,10 @@
             $alguemNaoAssinou = false;
             $idastcjt = null;
             $insitcrd = false;
-            $inupgrad = false;
-            $temJustificativa = false;
-            $dsjustif;
-            $cdopesup;
+			$inupgrad = false;
+			$temJustificativa = false;
+			$dsjustif;
+			$cdopesup;
 			
             if($tpacao == "verificaAutorizacoes"){
 
@@ -74,7 +74,8 @@
 					
 					if(!$temJustificativa && (isset($representante->dsjustif) && strlen($representante->dsjustif) > 0)){
 						$temJustificativa = true;
-						echo "\n justificativaCartao ='".$representante->dsjustif."' ;\n";
+						
+						echo "\n justificativaCartao ='".preg_replace( "/\r|\n/", "", $representante->dsjustif )."' ;\n";
 						echo "\n  globalesteira = true; \n";
 					}
                 }
@@ -100,10 +101,10 @@
                   
 					return;
 				 }*/
+                
 
-
-
-
+                
+               
                 
                 return;
             }
