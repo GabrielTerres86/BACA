@@ -60,10 +60,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Atenda Seguros
   --
-  -- Alterado: 23/01/2018 - Reginaldo (AMcom)
-  -- Ajuste: Criada procedure pc_busca_dados_risco
-  --
-  --           26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  -- Alteracoes: 23/01/2018 - Criada procedure pc_busca_dados_risco
+  --                          PJ 450 - Reginaldo (AMcom)
+  --             06/09/2018 - Inclusão da coluna quantidade de dias de atraso
+	--                          PJ 450 - Diego Simas - AMcom
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -84,6 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_numero_grupo  IN crapris.nrdgrupo%TYPE
                                ,pr_ris_melhora   IN crawepr.dsnivris%TYPE
                                ,pr_ris_final     IN crawepr.dsnivris%TYPE
+                               ,pr_qtd_dias_atraso IN crapris.qtdiaatr%TYPE
                                ,pr_tipo_registro IN VARCHAR2) IS
   BEGIN
          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -258,7 +259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         Sistema : Ayllos
         Sigla   : CECRED
         Autor   : Daniel/AMcom & Reginaldo/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao: 15/06/2018
+        Data    : Janeiro/2018                 Ultima atualizacao: 06/09/2018
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
@@ -268,6 +269,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                      Março/2018 - Reginaldo (AMcom)
 
                      15/06/2018 - P450 - Melhora de Performance (Reginaldo/AMcom)
+                     
+                     06/09/2018 - Inclusão da coluna quantidade de dias de atraso
+                                  PJ 450 - Diego Simas - AMcom 
 
       ..............................................................................*/
 
@@ -487,6 +491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
          , RISC0004.fn_traduz_risco(ris.inrisco_cpf) risco_cpf
          , RISC0004.fn_traduz_risco(ris.inrisco_grupo) risco_grupo
          , RISC0004.fn_traduz_risco(ris.inrisco_final) risco_final
+         , ris.qtdiaatr
          , ris.cdmodali as ris_cdmodali
          , decode (ris.cdmodali
                  , 0, 'CTA' -- Apenas para compatibilidade com dados pré-existentes (foi mantido apenas o '999')
@@ -618,6 +623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                    , rw_tabrisco_central.nrdgrupo
                                    , rw_tabrisco_central.risco_melhora
                                    , rw_tabrisco_central.risco_final
+                                   , rw_tabrisco_central.qtdiaatr
                                    , rw_tabrisco_central.tipo_registro
                                    );
 
@@ -658,6 +664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , rw_tabrisco_central.nrdgrupo
                                      , rw_tabrisco_central.risco_melhora
                                      , rw_tabrisco_central.risco_final
+                                     , rw_tabrisco_central.qtdiaatr
                                      , rw_tabrisco_central.tipo_registro
                                    );
                vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
@@ -862,8 +869,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
              t.vljuprej,
              t.vlsdprej,
              t.vldivida_original,
-						 t.vljur60_ctneg,
-						 t.vljur60_lcred
+             t.vljur60_ctneg,
+             t.vljur60_lcred
         FROM tbcc_prejuizo t
        WHERE t.cdcooper = pr_cdcooper
          AND t.nrdconta = pr_nrdconta;
@@ -1023,10 +1030,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         FETCH cr_crapsld INTO rw_crapsld;
 
         vr_iof := 0;
-				
-				vr_saldodev := (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + 
-												 rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred) * (-1);											
-			        
+        
+        vr_saldodev := (rw_prejuizo.vljuprej + rw_prejuizo.vlsdprej + 
+                         rw_prejuizo.vljur60_ctneg + rw_prejuizo.vljur60_lcred) * (-1);                      
+              
 
         IF cr_crapsld%FOUND THEN
           CLOSE cr_crapsld;
@@ -1056,8 +1063,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                pr_posicao  => vr_qtregist,
                                pr_tag_nova => 'vlsdprej', -- Saldo Atual
                                pr_tag_cont => rw_prejuizo.vlsdprej + 
-															                rw_prejuizo.vljur60_ctneg +
-																							rw_prejuizo.vljur60_lcred,
+                                              rw_prejuizo.vljur60_ctneg +
+                                              rw_prejuizo.vljur60_lcred,
                                pr_des_erro => vr_dscritic);
 
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -1157,4 +1164,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   END pc_consulta_preju_cc;
 
 END TELA_ATENDA_OCORRENCIAS;
-/

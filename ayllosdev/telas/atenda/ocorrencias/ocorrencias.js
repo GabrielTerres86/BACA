@@ -1,7 +1,7 @@
 /***********************************************************************
     Fonte: ocorrencias.js
     Autor: Guilherme
-    Data : Fevereiro/2007                Última Alteração: 19/06/2018
+    Data : Fevereiro/2007                Última Alteração: 24/08/2018
 
     Objetivo  : Biblioteca de funções da rotina OCORRENCIAS da tela
                 ATENDA
@@ -25,6 +25,9 @@
 
                 19/06/2018 - Atualizado os detalhes da aba Prejuízo para considerar o prejuízo da Conta Corrente
                              Diego Simas - AMcom - PRJ450
+
+				24/08/2018 - Inclusão da coluna quantidade de dias de atraso
+							 PJ 450 - Diego Simas - AMcom
 							 
  ***********************************************************************/
 
@@ -279,7 +282,7 @@ function formataRiscos() {
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
-	divRegistro.css({ 'height': '175px', 'width': '820px' });
+	divRegistro.css({ 'height': '175px', 'width': '840px' });
 
 	var ordemInicial = new Array();
 

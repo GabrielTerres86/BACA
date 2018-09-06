@@ -158,8 +158,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos e funções auxiliares para a manipulação de dados de risco
   --
-  -- Alterado:
-  --           26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  -- Alterado  :
+  --             26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
+  --             24/08/2018 - Inclusão da coluna quantidade de dias de atraso
+  --                          PJ 450 - Diego Simas - AMcom  
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -575,8 +577,8 @@ END fn_traduz_cdmodali_tpctr;
 
 -- Busca nível de risco do grupo economico
 FUNCTION fn_busca_niv_risco_ge(pr_cdcooper     IN NUMBER
-																 ,pr_nrdconta     IN NUMBER
-																 ,pr_nrcpfcgc     IN NUMBER
+                                 ,pr_nrdconta     IN NUMBER
+                                 ,pr_nrcpfcgc     IN NUMBER
                               ,pr_nrdgrupo     IN NUMBER)
   RETURN crapris.innivris%TYPE AS vr_risco_grupo crapris.innivris%TYPE;
 
@@ -972,6 +974,7 @@ BEGIN
       , inrisco_rating
       , inrisco_operacao
       , inrisco_refin
+      , qtdiaatr -- PJ 450 -- Diego Simas (AMcom)
       --, qtdias_atraso_refin
     )
     VALUES (
@@ -994,6 +997,7 @@ BEGIN
       , vr_inrisco_rating
       , vr_inrisco_operacao
       , vr_inrisco_refin
+      , rw_crapris.qtdiaatr -- PJ 450 -- Diego Simas (AMcom)
     --  , vr_qtdias_atraso_refin
     ) RETURNING ROWID INTO vr_rowidocr;
 
@@ -1371,7 +1375,7 @@ END pc_carrega_tabela_riscos;
 
     CURSOR cr_ass_contas (pr_cdcooper IN crapcop.cdcooper%TYPE
                          ,pr_nrcpfcgc IN crapass.nrcpfcnpj_base%TYPE) IS
-      SELECT ass.nrdconta	
+      SELECT ass.nrdconta  
             ,ass.cdcooper
             ,ass.nrcpfcgc
         FROM crapass ass
