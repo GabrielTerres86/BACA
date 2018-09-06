@@ -8,7 +8,8 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0003 IS
                             ,pr_cdoperad     IN crapope.cdoperad%TYPE  --> Código do Operador
                             ,pr_nmdatela     IN craptel.nmdatela%TYPE  --> Nome da Tela
                             ,pr_idorigem     IN INTEGER                --> Identificador de Origem
-                            ,pr_saldodevedor OUT NUMBER            -- Valor do saldo devedor total
+                            ,pr_saldodevedor OUT NUMBER                --> Valor do saldo devedor total
+                            ,pr_saldodevempr OUT NUMBER                --> Valor do saldo devedor somente dos empréstimos efetivador                            
                             ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
                             ,pr_dscritic     OUT VARCHAR2                            
                              );
@@ -51,9 +52,11 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0003 IS
                                    pr_cdoperad IN crapope.cdoperad%type,  --> Código do Operador
                                    pr_nmdatela IN craptel.nmdatela%type,  --> Nome da Tela
                                    pr_idorigem IN INTEGER,                --> Identificador de Origem    
-                                   pr_sld_devedor out crawseg.vlseguro%type,   --> Valor proposta                                                                       
+                                   pr_valida_proposta in varchar2 default 'S',   --> Usado não para validar o cancelamento em pc_crps781                                
+                                   pr_sld_devedor out crawseg.vlseguro%type,   --> Valor proposta      
                                    pr_flgprestamista out char,
                                    pr_flgdps         out char,
+                                   pr_dsmotcan out varchar2,
                                    pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
                                    pr_dscritic out crapcri.dscritic%type); --> Descricao da critica   
   
@@ -77,7 +80,26 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0003 IS
                                    pr_nmdatela IN craptel.nmdatela%type,  --> Nome da Tela
                                    pr_idorigem IN INTEGER,                --> Identificador de Origem                                     
                                    pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
-                                   pr_dscritic out crapcri.dscritic%type); --> Descricao da critica                                         
+                                   pr_dscritic out crapcri.dscritic%type); --> Descricao da critica     
+                                   
+  PROCEDURE pc_valida_contrato( pr_nrctrato IN crawseg.nrctrato%TYPE --Número do contrato
+                               ,pr_nrdconta IN crawseg.nrdconta% TYPE -- Número da conta    
+                               ,pr_xmllog   IN VARCHAR2 DEFAULT NULL --XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
+                               ,pr_des_erro OUT VARCHAR2);           --Saida OK/NOK     
+                               
+  PROCEDURE pc_busca_contratos(pr_nrdconta IN CRAPASS.NRDCONTA%TYPE --> Número da conta
+                              ,pr_nrregist IN INTEGER               --> Quantidade de registros
+                              ,pr_nriniseq IN INTEGER               --> Qunatidade inicial
+                              ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do Campo
+                              ,pr_des_erro OUT VARCHAR2);           --> Saida OK/NOK   
                                        
 END SEGU0003;
 /
@@ -97,6 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0003 IS
   -- Alteracoes: 
   --
   ---------------------------------------------------------------------------
+  
   -- Função que retorna o saldo devedor para utilização no seguro de vida prestamista
   PROCEDURE pc_saldo_devedor(pr_cdcooper     IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                             ,pr_nrdconta     IN crapass.nrdconta%TYPE  --> Número da conta
@@ -106,7 +129,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0003 IS
                             ,pr_cdoperad     IN crapope.cdoperad%TYPE  --> Código do Operador
                             ,pr_nmdatela     IN craptel.nmdatela%TYPE  --> Nome da Tela
                             ,pr_idorigem     IN INTEGER                --> Identificador de Origem
-                            ,pr_saldodevedor OUT NUMBER            -- Valor do saldo devedor total
+                            ,pr_saldodevedor OUT NUMBER                --> Valor do saldo devedor total
+                            ,pr_saldodevempr OUT NUMBER                --> Valor do saldo devedor somente dos empréstimos efetivador
                             ,pr_cdcritic     OUT PLS_INTEGER           --> Código da crítica
                             ,pr_dscritic     OUT VARCHAR2                            ) IS
    /* .............................................................................
@@ -216,6 +240,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0003 IS
       END IF;
     END LOOP;
     
+    pr_saldodevempr := vr_total_saldo_devedor; --Somente o Saldo devedor - Sem proposta
+    
     -- Buscar o valor da proposta de emprestimo e somar ao saldo devedor
     FOR rw_crawepr IN cr_crawepr LOOP
       vr_total_saldo_devedor:=vr_total_saldo_devedor + rw_crawepr.vlemprst;
@@ -264,7 +290,7 @@ EXCEPTION
     /* .............................................................................
 
      Programa: pc_impres_proposta_seg_pres
-     Sistema : Rotinas referentes ao cartão de crédito
+     Sistema : Seguros - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Márcio(Mouts)
      Data    : Agosto/2018.                    Ultima atualizacao: 
@@ -299,9 +325,7 @@ EXCEPTION
              0 vl_saldo_devedor, --cs.vl_saldo_devedor
              1 id_imprime_DPS, -- Indicador se imprime DPS ou não
              cs.dtinivig,
-             cc.nmcidade||', '||to_char(cs.dtmvtolt,'DD')||' DE '||
-                                to_char(cs.dtmvtolt,'MONTH')||' DE '||
-                                to_char(cs.dtmvtolt,'YYYY')||'.' local_e_data,
+             cs.dtmvtolt,
              cs.nmdsegur Cooperado, -- Cooperado
              trim(gene0002.fn_mask_conta(ca.nrdconta)) nrdconta2, -- Número da conta
              co.nmoperad -- Nome do operador
@@ -335,7 +359,7 @@ EXCEPTION
     CURSOR cr_crapseg(prr_nrctrseg IN crawseg.nrctrseg%TYPE) IS
       select 
              cs.vlslddev, 
-             cs.idimpdps
+             decode(cs.idimpdps,1,'S','N') idimpdps
       from 
              crapseg cs
       where 
@@ -371,8 +395,10 @@ EXCEPTION
     vr_dscormail       VARCHAR2(50);
     
     vr_saldodevedor    NUMBER:=0;
+    vr_saldodevempr    NUMBER:=0;
     vr_id_imprime_dsp  VARCHAR2(1);    
     vr_flgprestamista  VARCHAR2(1);
+    vr_localedata      VARCHAR2(200);    
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
@@ -381,6 +407,7 @@ EXCEPTION
     l_offset     NUMBER:=0;
     
     vr_dsjasper  VARCHAR2(100);
+    vr_dsmotcan  VARCHAR2(60);    
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -390,7 +417,7 @@ EXCEPTION
       gene0002.pc_escreve_xml(vr_des_xml, vr_txtcompl, pr_des_dados, pr_fecha_xml);
     END;
     
-  BEGIN    
+  BEGIN   
     --> Definir transação
     IF pr_flgerlog = 1 THEN
       vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -428,15 +455,17 @@ EXCEPTION
                            pr_cdoperad       => pr_cdoperad,
                            pr_nmdatela       => pr_nmdatela,
                            pr_idorigem       => pr_idorigem,   
-                           pr_sld_devedor    => vr_saldodevedor,                                 
+                           pr_sld_devedor    => vr_saldodevedor,  
                            pr_flgprestamista => vr_flgprestamista,
                            pr_flgdps         => vr_id_imprime_dsp,
+                           pr_dsmotcan       => vr_dsmotcan,
                            pr_cdcritic       => pr_cdcritic,
-                           pr_dscritic       => pr_dscritic) ;
+                           pr_dscritic       => pr_dscritic);
                               
     IF pr_dscritic IS NOT NULL THEN
            RAISE vr_exc_erro; -- encerra programa           
     END IF;
+    --
 
     IF vr_flgprestamista = 'S' THEN
     
@@ -465,6 +494,7 @@ EXCEPTION
                          pr_nmdatela => pr_nmdatela,
                          pr_idorigem => pr_idorigem,
                          pr_saldodevedor => vr_saldodevedor,
+                         pr_saldodevempr => vr_saldodevempr,
                          pr_cdcritic => pr_cdcritic,
                          pr_dscritic => pr_dscritic);
          IF pr_dscritic IS NOT NULL THEN
@@ -483,6 +513,9 @@ EXCEPTION
       vr_des_xml := NULL;
       dbms_lob.createtemporary(vr_des_xml, TRUE);
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+
+      -- Monta o Local e Data
+      vr_localedata := upper(SUBSTR(rw_crawseg.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(rw_crawseg.dtmvtolt));
     
       vr_txtcompl := NULL;
       
@@ -509,7 +542,7 @@ EXCEPTION
         '<plano>'           ||rw_crawseg.tpplaseg                       ||'</plano>'           ||-- Plano
         '<saldoDevedor>'    ||vr_saldodevedor                           ||'</saldoDevedor>'    ||-- Saldo Devedor do Cooperado/Conta        
         '<dataIniVigencia>' ||to_char(rw_crawseg.dtnascsg,'DD/MM/RRRR') ||'</dataIniVigencia>' ||-- Data de inicio da vigencia do seguro prestamista
-        '<localData>'       ||rw_crawseg.local_e_data                   ||'</localData>'       ||-- Local e data do seguro prestamista
+        '<localData>'       ||vr_localedata                             ||'</localData>'       ||-- Local e data do seguro prestamista
         '<nomeCooperado>'   ||rw_crawseg.nmdsegur                       ||'</nomeCooperado>'   ||-- Nome do Coooperado
         '<contaCooperado>'  ||rw_crawseg.nrdconta                       ||'</contaCooperado>'  ||-- Conta do Cooperado
         '<operador>'|| rw_crawseg.nmoperad ||'</operador>'); -- Nome do operador           
@@ -685,7 +718,7 @@ EXCEPTION
     /* .............................................................................
 
     Programa:  pc_imp_proposta_seg_pres_web
-    Sistema : Ayllos Web
+    Sistema : Seguros - Cooperativa de Credito
     Autor   : Márcio(Mouts)
     Data    : Agosto/2018                 Ultima atualizacao: 
 
@@ -813,9 +846,11 @@ EXCEPTION
                                    pr_cdoperad IN crapope.cdoperad%type,  --> Código do Operador
                                    pr_nmdatela IN craptel.nmdatela%type,  --> Nome da Tela
                                    pr_idorigem IN INTEGER,                --> Identificador de Origem       
-                                   pr_sld_devedor out crawseg.vlseguro%type,   --> Valor proposta                              
+                                   pr_valida_proposta in varchar2 default 'S',    --> Usado não para validar o cancelamento em pc_crps781
+                                   pr_sld_devedor out crawseg.vlseguro%type,   --> Valor proposta   
                                    pr_flgprestamista out char,
                                    pr_flgdps         out char,
+                                   pr_dsmotcan out varchar2,
                                    pr_cdcritic out crapcri.cdcritic%type,    --> Codigo da critica
                                    pr_dscritic out crapcri.dscritic%type) IS --> Descricao da critica  
                                    
@@ -867,9 +902,11 @@ EXCEPTION
   vr_dstextab     craptab.dstextab%TYPE;  --> Busca na craptab
   
   vr_vallidps     number;
-  vr_sld_devedor  number;    
+  vr_sld_devedor  crawseg.vlseguro%type;    
+  vr_sld_devempr  crapseg.vlslddev%type; 
+  vr_valor_para_validacao crapseg.vlslddev%type;
   vr_vlminimo     number;                 
-  vr_vlmaximo     number;      
+  --vr_vlmaximo     number;      
   -- Idade do cooperado
   vr_nrdeanos     PLS_INTEGER;
   vr_nrdeanos_aux PLS_INTEGER;  
@@ -890,6 +927,7 @@ EXCEPTION
                           , pr_nmdatela => pr_nmdatela
                           , pr_idorigem => pr_idorigem
                           , pr_saldodevedor => vr_sld_devedor -- Armazena o Saldo Devedor
+                          , pr_saldodevempr => vr_sld_devempr
                           , pr_cdcritic => vr_cdcritic
                           , pr_dscritic => vr_dscritic);
 
@@ -904,14 +942,14 @@ EXCEPTION
   IF vr_dstextab IS NULL THEN
     -- Usar valores padrão
     vr_vlminimo := 0;
-    vr_vlmaximo := 999999999.99;
+    --vr_vlmaximo := 999999999.99;
   ELSE
     -- Usar informações conforme o posicionamento
     -- Valor mínimo da posição 27 a 39
     vr_vlminimo := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,27,12));
     -- Valor máximo da posição 14 a 26
-    vr_vlmaximo := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,14,12));
-
+    -- Foi definido como regra, não validar valores máximos 
+    -- vr_vlmaximo := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,14,12));
   END IF;
 
 
@@ -958,18 +996,30 @@ EXCEPTION
                          ,pr_dsdidade => vr_dsdidade                -- Descricao da idade
                          ,pr_des_erro => vr_dscritic);       -- Mensagem de Erro
                          
+    if pr_valida_proposta = 'N' then
+      vr_valor_para_validacao := vr_sld_devempr; -- Valor somente dos emprestimos    
+    else
+      vr_valor_para_validacao := vr_sld_devedor; -- Valor de emprestimos + proposta
+    end if;
   
     pr_flgprestamista := 'N';
     --Validar Valor 
-    if vr_sld_devedor > vr_vlminimo and vr_sld_devedor < vr_vlmaximo then
+    if vr_valor_para_validacao > vr_vlminimo /*and vr_valor_para_validacao < vr_vlmaximo*/ then
       pr_flgprestamista := 'S';
+    else
+      if vr_valor_para_validacao < vr_vlminimo then
+        pr_dsmotcan := 'Saldo devedor abaixo do valor mínimo';
+      /*elsif vr_valor_para_validacao > vr_vlmaximo then
+        pr_dsmotcan := 'Saldo devedor acima do valor máximo';*/
+      end if;
     end if;
 
     --Validar Idades
     if vr_nrdeanos_aux < vr_nrdeanos then
       pr_flgprestamista := 'S';
+    else
+      pr_dsmotcan := 'Idade acima do limite';      
     end if;
-
     
     -- Buscar o valor para impressão com DPS ou sem DPS
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -986,13 +1036,13 @@ EXCEPTION
       -- EFETUA OS PROCEDIMENTOS COM O DADO RETORNADO DA CRAPTAB
       vr_vallidps := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,94,12));
       IF vr_vallidps IS NULL THEN
-        vr_dscritic := 'Parâmetro de Valor Limite para Impressão com DPS nãp cadastrado!';
+        vr_dscritic := 'Parametro de Valor Limite para Impressao com DPS nao cadastrado!';
         RAISE vr_exc_saida;
       END IF;
 
     END IF;  
     
-    if vr_sld_devedor > vr_vallidps then
+    if vr_valor_para_validacao > vr_vallidps then
       pr_flgdps := 'S';
     else 
       pr_flgdps := 'N';
@@ -1060,7 +1110,8 @@ EXCEPTION
     -- 
     vr_flgprestamista varchar2(1) := 'N';        
     vr_flgdps         varchar2(1) := 'N';
-    vr_vlproposta     crawseg.vlseguro%type;    
+    vr_vlproposta     crawseg.vlseguro%type;  
+    vr_dsmotcan  VARCHAR2(60);  
     
   BEGIN
   
@@ -1076,6 +1127,7 @@ EXCEPTION
                                  , pr_sld_devedor => vr_vlproposta
                                  , pr_flgprestamista => vr_flgprestamista
                                  , pr_flgdps => vr_flgdps
+                                 , pr_dsmotcan => vr_dsmotcan                                 
                                  , pr_cdcritic => vr_cdcritic
                                  , pr_dscritic => vr_dscritic);
     --Se ocorreu erro
@@ -1176,7 +1228,8 @@ EXCEPTION
     -- 
     vr_flgprestamista varchar2(1) := 'N';        
     vr_flgdps         varchar2(1) := 'N';
-    vr_vlproposta     crawseg.vlseguro%type;    
+    vr_vlproposta     crawseg.vlseguro%type; 
+    vr_dsmotcan       VARCHAR2(60);        
     
   BEGIN
     
@@ -1195,6 +1248,7 @@ EXCEPTION
                                      , pr_sld_devedor => vr_vlproposta
                                      , pr_flgprestamista => vr_flgprestamista
                                      , pr_flgdps => vr_flgdps
+                                     , pr_dsmotcan =>  vr_dsmotcan
                                      , pr_cdcritic => vr_cdcritic
                                      , pr_dscritic => vr_dscritic);
         --Se ocorreu erro
@@ -1266,7 +1320,305 @@ EXCEPTION
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
       ROLLBACK;  
-  END pc_efetiva_proposta_sp;   
+  END pc_efetiva_proposta_sp; 
+    
+  PROCEDURE pc_valida_contrato( pr_nrctrato IN crawseg.nrctrato%TYPE --Número do contrato
+                               ,pr_nrdconta IN crawseg.nrdconta% TYPE -- Número da conta
+                               ,pr_xmllog   IN VARCHAR2 DEFAULT NULL --XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
+                               ,pr_des_erro OUT VARCHAR2)IS         --Saida OK/NOK
+  /*---------------------------------------------------------------------------------------------------------------
+    Programa: pc_valida_contrato      Antiga: 
+    Sistema : Seguros - Cooperativa de Credito
+    Sigla   : CRED
+
+    Autor   : Márcio (Mouts)
+    Data    : 04/09/2018                        Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Por demanda
+    Objetivo  : Verificar se o contrato já está associado a algum seguro prestamista
+
+    Alteracoes: 
+  ---------------------------------------------------------------------------------------------------------------*/
+  
+  ------------------------------- VARIÁVEIS --------------------------------  
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+  vr_des_reto VARCHAR2(3); 
+  
+ 
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+  
+  --Variaveis de Excecoes    
+  vr_exc_erro  EXCEPTION;                                       
+  
+  BEGIN
+               
+    --Inicializar Variaveis
+    vr_cdcritic:= 0;                         
+    vr_dscritic:= NULL;
+    
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+    
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Validar que o contrato existe para a cooperativa e conta informada
+    BEGIN
+      SELECT 
+            'OK'
+        INTO
+           pr_des_erro
+        FROM
+           crawepr c
+       WHERE
+           c.cdcooper = vr_cdcooper
+       AND c.nrdconta = pr_nrdconta 
+       AND c.nrctremp = pr_nrctrato;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+       pr_dscritic:= 'Contrato informado nao pertence ao cooperado!';
+      WHEN OTHERS THEN
+        vr_dscritic:= 'Erro ao executar a rotina SEGU0003.pc_valida_contrato.'|| SQLERRM;
+      --Levantar Excecao
+      RAISE vr_exc_erro;          
+    END;
+        
+    -- Verificar se o contrato está associado a alguma proposta de seguro prestamista
+    -- Se estiver, retornar mensagem informando
+    BEGIN
+      SELECT 
+            'Proposta de Prestamista já contratada! Proposta:'||c.nrctrseg
+        INTO
+           pr_des_erro
+        FROM
+           crawseg c
+       WHERE
+           c.cdcooper = vr_cdcooper
+       AND c.nrdconta = pr_nrdconta 
+       AND c.nrctrato = pr_nrctrato;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+       pr_des_erro:='OK';
+      WHEN OTHERS THEN
+        vr_dscritic:= 'Erro ao executar a rotina SEGU0003.pc_valida_contrato.'|| SQLERRM;
+      --Levantar Excecao
+      RAISE vr_exc_erro;          
+    END;
+                                      
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');           
+        
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro:= 'NOK';
+      
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+                                     
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+      
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro ao executar a rotina BLQJ0002.PC_VAL_OPE_JURIDICO --> '|| SQLERRM;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+  
+  END pc_valida_contrato;
+
+  PROCEDURE pc_busca_contratos(pr_nrdconta IN CRAPASS.NRDCONTA%TYPE --> Número da conta
+                              ,pr_nrregist IN INTEGER               --> Quantidade de registros
+                              ,pr_nriniseq IN INTEGER               --> Qunatidade inicial
+                              ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                              ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                              ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                              ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                              ,pr_nmdcampo OUT VARCHAR2             --> Nome do Campo
+                              ,pr_des_erro OUT VARCHAR2) IS --> Saida OK/NOK
+    /* .............................................................................
+    Programa: pc_busca_contratos
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Márcio (Mouts)
+    Data    : Setembro/2018                       Ultima atualizacao: 
+    
+    Dados referentes ao programa:
+    
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para carregar os códigos dos contratos cadastrados na CRAWEPR aprovados 
+                e que não estejam associados a uma proposta de seguro prestamista
+    
+    Alteracoes: 
+    ............................................................................. */
+    CURSOR cr_crawepr(p_cdcooper IN crapcop.cdcooper%type) IS             
+      SELECT 
+              w.nrctremp
+          FROM
+              crawepr w
+         WHERE 
+              w.cdcooper = p_cdcooper
+          AND w.nrdconta = pr_nrdconta
+          AND w.insitapr = 1 -- Decisao Aprovado 
+          AND NOT EXISTS (SELECT 
+                                1 
+                            FROM 
+                                crawseg cc 
+                           WHERE
+                                cc.cdcooper = w.cdcooper 
+                            AND cc.nrdconta = w.nrdconta 
+                            AND cc.nrctrato = w.nrctremp)          
+      ORDER BY          
+              w.nrctremp;          
+
+    -- Variaveis de log
+    vr_cdcooper NUMBER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_auxconta PLS_INTEGER := 0;
+
+    --Variaveis de erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    vr_exc_saida EXCEPTION;
+
+    --Variaveis de controle
+    vr_nrregist INTEGER := nvl(pr_nrregist,9999);
+    vr_qtregist INTEGER;
+
+  BEGIN -- Inicio pc_busca_paises
+
+    --Inicializar Variaveis
+    vr_qtregist:= 0;
+
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'SEGU0003'
+                              ,pr_action => null);
+
+    -- Extrai os dados dos dados que vieram do php
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'crawepr',pr_tag_cont => NULL,pr_des_erro => vr_dscritic);
+
+    FOR rw_crawepr IN cr_crawepr (vr_cdcooper) LOOP
+
+      --Incrementar Quantidade Registros do Parametro
+      vr_qtregist:= nvl(vr_qtregist,0) + 1;
+
+      /* controles da paginacao */
+      IF (vr_qtregist < pr_nriniseq) OR
+         (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         --Proximo contrato
+        CONTINUE;
+      END IF;
+
+      --Numero Registros
+      IF vr_nrregist > 0 THEN
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'crawepr'      ,pr_posicao => 0          , pr_tag_nova => 'dados_crawepr', pr_tag_cont => NULL                , pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'dados_crawepr',pr_posicao => vr_auxconta, pr_tag_nova => 'nrctremp'     , pr_tag_cont => rw_crawepr.nrctremp , pr_des_erro => vr_dscritic);
+        -- Incrementa contador p/ posicao no XML
+        vr_auxconta := nvl(vr_auxconta,0) + 1;
+      END IF;
+
+      --Diminuir registros
+      vr_nrregist:= nvl(vr_nrregist,0) - 1;
+
+    END LOOP;
+
+    -- Insere atributo na tag Dados com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'crawepr'           --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtregist         --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    pr_des_erro := 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+
+      IF TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := pr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+    WHEN OTHERS THEN
+
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral (TELA_FATCA_CRS.pc_busca_paises).';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      ROLLBACK;
+    
+  END pc_busca_contratos;
 
 END SEGU0003;
 /
