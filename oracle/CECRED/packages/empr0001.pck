@@ -16659,8 +16659,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
       IF pr_tpproduto = 1 THEN
         vr_dstpproduto := 'EMPRESTIMO';
+        vr_nmdatela := 'PROPOSTA';        
       ELSE
         vr_dstpproduto := 'LIMITE DESCTO TITULO';
+        vr_nmdatela := 'TITULO';        
       END IF;
       open c_motivo_atual(vr_cdcooper);
        fetch c_motivo_atual into r_motivo_atual;
