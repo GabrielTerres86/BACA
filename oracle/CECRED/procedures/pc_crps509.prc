@@ -5,7 +5,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS509 ( pr_cdcooper IN crapcop.cdcooper%
                                                ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                                ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
-                                               ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
+                                               ,pr_dscritic OUT VARCHAR2               --> Descricao da Critica
+ 											   ,pr_inpriori IN VARCHAR2 DEFAULT 'T') IS   --> Indicador de prioridade para o debitador unico ("S"= agua/luz, "N"=outros, "T"=todos) 
   BEGIN
 
   /* .............................................................................
