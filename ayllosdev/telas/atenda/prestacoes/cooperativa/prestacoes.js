@@ -62,6 +62,7 @@
  * 048: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
  * 049: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
  * 050: [07/06/2018] Tratamento para nao permitir desfazer efetivação de emprestimo CDC. PRJ439 (Odirlei-AMcom)
+ * 049: [01/08/2018] Ajuste para apresentar valores negativos na tela de prejuizo - INC0019253. (Andre Bohn - MoutS)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -694,7 +695,7 @@ function controlaLayout(operacao) {
 		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vlpiofpr,#vltiofpr,#vliofcpl','#'+nomeForm);
 
 
-		cTodosMoeda.addClass('moeda');
+		cTodosMoeda.addClass('monetario');
 		cTodos.addClass('campo').css('width','123px');
 
 		rRotulos.addClass('rotulo').css('width','95px');
