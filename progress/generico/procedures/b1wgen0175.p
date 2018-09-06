@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 16/04/2018
+   Data    : Setembro/2013                      Ultima atualizacao: 26/05/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -101,13 +101,26 @@
                 Fraudes/Impedimentos e remoçao do processo de devoluçao de Cheques.
                 PRJ367 - Compe Sessao Unica (Lombardi)
 
+   12/04/2018 - Ajustes para permitir devolver o cheque com alinea 11 em casos de já haver
+                devolução pela alinea 22 (Wagner/Sustentação #839414)
+                 
    16/04/2018 - Incluido tratamento na procedure valida-alinea para nao 
                 criticar horario limite de devolucao quando se tratar de 
 				cheques trocados no caixa (Diego).
+   
+   15/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
+                PRJ366 (Lombardi)
 
-   06/09/2018 - Ajuste para tratamento do campo insitdev igual a 2, para devolucoes
-                automatica de cheques, com historico 573.
-                Chamado SCTASK0027900 - Gabriel (Mouts).
+   13/05/2018 - Efetuado correcao para que alineas 20,21,28 possam ser usadas
+                apenas se a contra ordem for permanente (Jonata - MOUTS - SCTASK0011337).
+
+
+
+   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+   20/07/2018 - Condição para não poder marcar/desmarcar cheques normais depois das 13:00
+				(Andrey Formigari - Mouts - PRB0040153)
+
 
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
@@ -709,7 +722,7 @@ PROCEDURE busca-devolucoes-cheque:
                     CASE crapfdc.cdbanchq:
                      
                         WHEN   1  THEN tt-lancto.dsbccxlt = "B.BRASIL".
-                        WHEN  85  THEN tt-lancto.dsbccxlt = "CECRED".
+                        WHEN  85  THEN tt-lancto.dsbccxlt = "AILOS".
                         WHEN 756  THEN tt-lancto.dsbccxlt = "BANCOOB".
                         WHEN 104  THEN tt-lancto.dsbccxlt = "CEF".
                    
@@ -790,7 +803,6 @@ PROCEDURE busca-devolucoes-cheque:
             
                              WHEN 0 THEN tt-lancto.dssituac = "a devolver".
                              WHEN 1 THEN tt-lancto.dssituac = "devolvido".
-                             WHEN 2 THEN tt-lancto.dssituac = "a devolver".
                              OTHERWISE   tt-lancto.dssituac = "indefinida".
             
                         END CASE.
@@ -853,7 +865,7 @@ PROCEDURE busca-devolucoes-cheque:
                        
                 CASE crapdev.cdbanchq:                     
                     WHEN   1  THEN tt-lancto.dsbccxlt = "B.BRASIL".
-                    WHEN  85  THEN tt-lancto.dsbccxlt = "CECRED".
+                    WHEN  85  THEN tt-lancto.dsbccxlt = "AILOS".
                     WHEN 756  THEN tt-lancto.dsbccxlt = "BANCOOB".
                     WHEN 104  THEN tt-lancto.dsbccxlt = "CEF".                   
                 END CASE.       
@@ -861,7 +873,6 @@ PROCEDURE busca-devolucoes-cheque:
                 CASE crapdev.insitdev:            
                     WHEN 0 THEN tt-lancto.dssituac = "a devolver".
                     WHEN 1 THEN tt-lancto.dssituac = "devolvido".
-                    WHEN 2 THEN tt-lancto.dssituac = "a devolver".
                     OTHERWISE   tt-lancto.dssituac = "indefinida".      
                 END CASE.
                 
@@ -949,7 +960,6 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
-                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                 
@@ -1029,7 +1039,6 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
-                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                 
@@ -1145,7 +1154,6 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
-                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                  
@@ -1223,7 +1231,6 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
-                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                     
@@ -1304,7 +1311,6 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
-                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                     
@@ -1373,7 +1379,6 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
-                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                      
@@ -1804,6 +1809,25 @@ PROCEDURE verifica_alinea:
             RETURN "NOK".
         END.
 
+		/* Para devolução com alinea 20,21,28 a contra ordem deve ser permanente. */
+		IF  CAN-DO("20,21,28,",STRING(par_cdalinea)) AND
+		    crapcor.dtvalcor <> ?                    THEN      
+		   DO:
+		      ASSIGN aux_cdcritic = 412
+				     aux_dscritic = "".
+
+			  RUN gera_erro (INPUT par_cdcooper,
+				 		     INPUT 0,
+							 INPUT 0,
+							 INPUT 1, /*sequencia*/
+							 INPUT aux_cdcritic,
+							 INPUT-OUTPUT aux_dscritic).
+
+			  RETURN "NOK".
+
+
+        END.
+
         IF  par_cdalinea = 20         AND
             crapcor.cdhistor <> 818   THEN DO:
             ASSIGN aux_cdcritic = 412
@@ -1893,7 +1917,7 @@ PROCEDURE valida-alinea:
     DEF VAR aux_dsoperad AS CHAR                                       NO-UNDO.
     DEF VAR aux_qtdevolu AS INTE                                       NO-UNDO.
     DEF VAR ret_execucao AS LOGICAL                                    NO-UNDO.
-    
+
     DEF BUFFER b-crapneg FOR crapneg.
     
     FIND crapass WHERE crapass.cdcooper = par_cdcooper
@@ -1948,6 +1972,7 @@ PROCEDURE valida-alinea:
 
     IF  par_cdalinea = 11 THEN DO:
 		IF NOT CAN-DO(aux_lsalinea,"")   AND
+		   NOT CAN-DO(aux_lsalinea,"22") AND /* 22 - Cheque sem assinatura*/
 		   NOT CAN-DO(aux_lsalinea,"31") AND
 		   NOT CAN-DO(aux_lsalinea,"39") AND
 		   NOT CAN-DO(aux_lsalinea,"48") AND
@@ -2497,7 +2522,7 @@ PROCEDURE valida-alinea:
                        INPUT-OUTPUT aux_dscritic).
         RETURN "NOK".
     END.
-    
+
     /* Permitir somente alineas de Fraude e Impedimentos apos
       primeira devolucao */
     RUN verifica_hora_execucao(INPUT par_cdcooper,
@@ -2756,6 +2781,7 @@ PROCEDURE geracao-devolu:
     DEF VAR aux_cdalinea AS INTE                                       NO-UNDO.
     DEF VAR aux_nmoperad AS CHAR FORMAT "x(20)"                        NO-UNDO.
     DEF VAR aux_nrdrecid AS RECID                                      NO-UNDO.
+	DEF VAR ret_execucao AS LOGICAL                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2791,6 +2817,31 @@ PROCEDURE geracao-devolu:
             DO  TRANSACTION:  /* transacao para devolver */        
 
                 IF  par_flag THEN DO: /* a devolver */
+
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para desmarcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
                     
                     ASSIGN aux_dssituac = "normal"
                            par_flag     = FALSE
@@ -2819,6 +2870,31 @@ PROCEDURE geracao-devolu:
                     
                 END.
                 ELSE DO:
+					
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para marcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
 
                     ASSIGN par_flag     = TRUE
                            aux_dssituac = "a devolver" 
@@ -2855,6 +2931,31 @@ PROCEDURE geracao-devolu:
             FOR EACH tt-desmarcar NO-LOCK:
 
                 IF  tt-desmarcar.flag THEN DO: /* a devolver */
+
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(tt-desmarcar.cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para desmarcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
                     
                     ASSIGN aux_dssituac = "normal"
                            par_flag     = FALSE
@@ -3278,8 +3379,8 @@ PROCEDURE gera-devolu:
             crapdev.indctitg = TRUE.
 
         VALIDATE crapdev.
-        
-    END.
+    
+            END.
     ELSE
     IF  par_inchqdev = 2   OR
         par_inchqdev = 4   THEN DO:
@@ -3454,7 +3555,7 @@ PROCEDURE gera-devolu:
              crapdev.indctitg = TRUE.
 
         VALIDATE crapdev.
-        
+
     END.
     ELSE
     IF  par_inchqdev = 5   THEN DO:
@@ -4081,7 +4182,7 @@ PROCEDURE executa-processo-devolu:
                                             INPUT par_cddevolu,
                                             INPUT aux_valorvlb,
                                             OUTPUT TABLE tt-erro).
-                                            
+
                 END.
 
                 HIDE MESSAGE NO-PAUSE.
@@ -4145,7 +4246,7 @@ PROCEDURE verifica_locks:
 
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                               aux_dscritic +
-                              " Avise a Equipe de Suporte da CECRED" +
+                              " Avise a Equipe de Suporte do AILOS" +
                               " Coop: " + STRING(par_cdcooper) +
                               " Banco do Cheque: " + STRING(par_cdbanchq) +
                               " Tabela: crapdev " +
@@ -4233,7 +4334,7 @@ PROCEDURE verifica_locks:
                 WHEN 1 THEN aux_nrdolote = 10110. /* BANCOOB */
                 WHEN 2 THEN aux_nrdolote = 8451.  /* CONTA BASE */
                 WHEN 3 THEN aux_nrdolote = 10109. /* CONTA INTEGRACAO */
-                WHEN 4 THEN aux_nrdolote = 10117. /* CECRED */
+                WHEN 4 THEN aux_nrdolote = 10117. /* AILOS */
             END CASE.
         END.
         ELSE
@@ -4859,8 +4960,8 @@ PROCEDURE gera_lancamento:
                     END.
                             
                     IF  par_cddevolu = 5 THEN DO: /* 1a devolucao - 13:30* */
-                          crapdev.indevarq = 2.   /* Envia */
-                      END.
+                            crapdev.indevarq = 2.   /* Envia */
+                    END.
                     ELSE /* 2a devolucao – 19:00 – Sessao de Prevencao a Fraudes e Impedimentos*/
                          /* Somente alineas 20, 21, 24, 25, 28, 30, 35 e 70 */
                          /* Na segunda Devolucao envia todos com o 
@@ -5179,6 +5280,9 @@ PROCEDURE gera_impressao:
     DEF VAR aux_nmcidade AS CHAR                                       NO-UNDO.
     DEF VAR aux_dsdctitg AS CHAR                                       NO-UNDO.
     DEF VAR aux_nmdircop AS CHAR                                       NO-UNDO.
+    DEF VAR aux_dstipcta AS CHAR    FORMAT "x(15)"                     NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                       NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                       NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -5243,7 +5347,7 @@ PROCEDURE gera_impressao:
 
     FORM crapass.nrdconta LABEL "Conta/dv"
          crapass.nmprimtl LABEL "Titular"       FORMAT "x(40)" 
-         craptip.dstipcta LABEL "Tipo de conta" 
+         aux_dstipcta     LABEL "Tipo de conta" 
          crapdev.nrctachq LABEL "Conta Cheque"  FORMAT "zzzz,zz9,9"
          crapdev.nrcheque LABEL "Cheque"        FORMAT "zzz,zz9,9"
          crapdev.vllanmto LABEL "Valor"         FORMAT "zzzz,zz9.99"
@@ -5561,12 +5665,37 @@ PROCEDURE gera_impressao:
                         OR (par_cddevolu = 3                         
                        AND  crapass.nrdctitg = crapdev.nrdctitg))  NO-LOCK,
         EACH crapope WHERE crapope.cdcooper = par_cdcooper
-                       AND crapope.cdoperad = crapdev.cdoperad     NO-LOCK,
-        EACH craptip WHERE craptip.cdcooper = par_cdcooper
-                       AND craptip.cdtipcta = crapass.cdtipcta     
-                       NO-LOCK BREAK BY crapdev.cdbccxlt
+                       AND crapope.cdoperad = crapdev.cdoperad     NO-LOCK
+                       BREAK BY crapdev.cdbccxlt
                                      BY crapdev.nrdctabb
                                      BY crapdev.nrcheque:
+
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                   INPUT crapneg.cdtctant, /* Tipo de conta */
+                                  OUTPUT "",               /* Descriçao do Tipo de conta */
+                                  OUTPUT "",               /* Flag Erro */
+                                  OUTPUT "").              /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK"  THEN
+            NEXT.
 
         IF  LINE-COUNTER(str_1) > 80 THEN DO:
             PAGE STREAM str_1.
@@ -5578,7 +5707,7 @@ PROCEDURE gera_impressao:
                     rel_vlchqdev = 0.
 
         DISPLAY STREAM str_1 crapass.nrdconta  crapass.nmprimtl
-                             craptip.dstipcta  crapdev.nrctachq
+                             aux_dstipcta      crapdev.nrctachq
                              crapdev.nrcheque  crapdev.vllanmto
                              crapdev.cdalinea  crapass.cdagenci
                              crapope.nmoperad  WITH FRAME f_todos.
@@ -6193,6 +6322,8 @@ PROCEDURE gera_arquivo_cecred:
     DEF VAR aux_cdbandep AS INTE                                       NO-UNDO.
     DEF VAR aux_cdagedep AS INTE                                       NO-UNDO.
     DEF VAR aux_cdtipdoc AS INTE                                       NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                       NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                       NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -6455,10 +6586,10 @@ PROCEDURE gera_arquivo_cecred:
                                           crapdev.vllanmto.
            
                 WHEN 2 THEN 
-                    ASSIGN aux_dsorigem = "Arq. Diurno"
-                           aux_totqtdiu = aux_totqtdiu + 1
-                           aux_totvldiu = aux_totvldiu +
-                                          crapdev.vllanmto.
+                            ASSIGN aux_dsorigem = "Arq. Diurno"
+                                   aux_totqtdiu = aux_totqtdiu + 1
+                                   aux_totvldiu = aux_totvldiu +
+                                                  crapdev.vllanmto.
             END CASE.     
 
             ASSIGN aux_totqtrej = aux_totqtrej + 1                
@@ -6563,13 +6694,32 @@ PROCEDURE gera_arquivo_cecred:
                            NO-LOCK NO-ERROR.
         
             IF  AVAIL crapass THEN DO:
-                FIND craptip WHERE craptip.cdcooper = par_cdcooper
-                               AND craptip.cdtipcta = crapass.cdtipcta
-                               NO-LOCK NO-ERROR.
                 
-                IF  AVAIL craptip THEN
-                    aux_dstipcta = craptip.dstipcta.
-                ELSE
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                RUN STORED-PROCEDURE pc_descricao_tipo_conta
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                          (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                           INPUT crapass.cdtipcta, /* Tipo de conta */
+                                          OUTPUT "",               /* Descriçao do Tipo de conta */
+                                          OUTPUT "",               /* Flag Erro */
+                                          OUTPUT "").              /* Descriçao da crítica */
+                
+                CLOSE STORED-PROC pc_descricao_tipo_conta
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dstipcta = ""
+                       aux_des_erro = ""
+                       aux_dscritic = ""
+                       aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                       WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                       aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                       WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                       aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                       WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+                
+                IF aux_des_erro = "NOK"  THEN
                     aux_dstipcta = "NAO ENCONTRADO".
             END.
             ELSE
@@ -6698,11 +6848,11 @@ PROCEDURE gera_arquivo_cecred:
                                                   crapdev.vllanmto.
            
                 WHEN 2 THEN DO: 
-                    ASSIGN aux_dsorigem = "Arq. Diurno"
+                        ASSIGN aux_dsorigem = "Arq. Diurno"
                                aux_totqtdiu = aux_totqtdiu + 1
                                aux_totvldiu = aux_totvldiu +
                                               crapdev.vllanmto.
-                END.
+                    END.
             END CASE.     
         END.
 
@@ -6972,11 +7122,11 @@ PROCEDURE gera_arquivo_cecred:
             RUN enviar_email_completo IN h-b1wgen0011
                                      (INPUT par_cdcooper,
                                       INPUT "crps264",
-                                      INPUT "cpd@cecred.coop.br",
+                                      INPUT "cpd@ailos.coop.br",
                                       INPUT 
                                       "suporte@viacredi.coop.br",
                                       INPUT "Relatorio de Devolucoes " + 
-                                            "Cheques CECRED",
+                                            "Cheques AILOS",
                                       INPUT "",
                                       INPUT aux_nmarqdev,
                                       INPUT "",
@@ -7226,33 +7376,33 @@ PROCEDURE marcar_cheque_devolu:
 
     ASSIGN ret_pedsenha  = FALSE.
 
-    IF  par_dsbccxlt = "CECRED" THEN DO:
+    IF  par_dsbccxlt = "AILOS" THEN DO:
         
         DO WHILE TRUE:
         
-            /* Validar ultimo horario para devolucao */
-            RUN verifica_hora_execucao(INPUT par_cdcooper,
-                                       INPUT par_dtmvtolt,
-                                       INPUT 6,
-                                       OUTPUT ret_execucao,
-                                       OUTPUT TABLE tt-erro).
-        
-            IF  ret_execucao THEN DO:
-                ASSIGN ret_pedsenha  = TRUE /* Exigira a senha ao usuario */
-                       aux_cdcritic = 0
-                       aux_dscritic = "Hora limite para marcar cheques " +
-                                      "foi ultrapassada!".
-               
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT 0,
-                               INPUT 0,
-                               INPUT 1, /*sequencia*/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                RETURN "OK".
-            END.
-            ELSE
-                LEAVE.
+                /* Validar ultimo horario para devolucao */
+                RUN verifica_hora_execucao(INPUT par_cdcooper,
+                                           INPUT par_dtmvtolt,
+                                           INPUT 6,
+                                           OUTPUT ret_execucao,
+                                           OUTPUT TABLE tt-erro).
+            
+                IF  ret_execucao THEN DO:
+                    ASSIGN ret_pedsenha  = TRUE /* Exigira a senha ao usuario */
+                           aux_cdcritic = 0
+                           aux_dscritic = "Hora limite para marcar cheques " +
+                                          "foi ultrapassada!".
+                   
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT 1, /*sequencia*/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                    RETURN "OK".
+                END.
+                ELSE
+                    LEAVE.
 
         END. /* Fim DO WHILE TRUE */
     END.
