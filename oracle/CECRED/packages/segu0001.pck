@@ -577,6 +577,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                            ,pr_cdempres  IN crapemp.cdempres%type -- Codigo Empresa
                            ,pr_dtnascsg  IN crapdat.dtmvtolt%type -- Data Nascimento
                            ,pr_complend  IN crawseg.complend%type -- Complemento Endereco
+                           ,pr_nrctremp  IN crawepr.nrctremp%type default 0-- Número do Contrato de Empréstimo associado ao seguro Prestamista
                            ,pr_flgsegur  OUT BOOLEAN              -- Seguro Criado
                            ,pr_crawseg   OUT ROWID                -- Registro Crawseg
                            ,pr_des_erro  OUT VARCHAR2             -- Retorno Erro OK/NOK
@@ -4078,6 +4079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                            ,pr_cdempres  IN crapemp.cdempres%type -- Codigo Empresa
                            ,pr_dtnascsg  IN crapdat.dtmvtolt%type -- Data Nascimento
                            ,pr_complend  IN crawseg.complend%type -- Complemento Endereco
+                           ,pr_nrctremp  IN crawepr.nrctremp%type default 0-- Número do Contrato de Empréstimo associado ao seguro Prestamista                           
                            ,pr_flgsegur  OUT BOOLEAN              -- Seguro Criado
                            ,pr_crawseg   OUT ROWID                -- Registro Crawseg
                            ,pr_des_erro  OUT VARCHAR2             -- Retorno Erro OK/NOK
@@ -4099,7 +4101,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   -- Alterações:
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                          ( Belli - Envolti - #667957)
-  -- 
+  --             04/09/2018 - PJ 438 - Sprint 3 - Gravar o número do contrato de emprestimo
+  --                          na proposta de seguro quando a mesma for prestamista. Márcio(Mouts)
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -4853,7 +4856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                               ,crawseg.vlappinv = 0
                               ,crawseg.flgcurso = 0 /*FALSE*/
                               ,crawseg.flgrepgr = 0 /*FALSE*/
-                              ,crawseg.nrctrato = 0
+                              ,crawseg.nrctrato = decode(pr_tpseguro,4,pr_nrctremp,0)  --PJ438 - Sprint3
                               ,crawseg.flgvisto = 0 /*FALSE*/
                               ,crawseg.vlfrqobr = 0
                               ,crawseg.qtparcel = 0

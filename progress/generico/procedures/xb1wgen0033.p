@@ -188,6 +188,7 @@ DEF VAR aux_datdespr AS DATE                                           NO-UNDO.
 DEF VAR aux_datdebit AS DATE                                           NO-UNDO.
 DEF VAR aux_nrregist AS INT                                            NO-UNDO.
 DEF VAR aux_nriniseq AS INT                                            NO-UNDO.
+DEF VAR aux_nrctrato LIKE crawseg.nrctrato                             NO-UNDO. /* PRJ 438 */
 
 { sistema/generico/includes/b1wgen0033tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -331,6 +332,7 @@ PROCEDURE valores_entrada:
             WHEN "datdebit"    THEN aux_datdebit    = DATE(tt-param.valorCampo).
             WHEN "nrregist"    THEN aux_nrregist    = INT(tt-param.valorCampo).
             WHEN "nriniseq"    THEN aux_nriniseq    = INT(tt-param.valorCampo).
+            WHEN "nrctrato"    THEN aux_nrctrato    = INT(tt-param.valorCampo). /* PRJ 438 */
 
             
         END CASE.        
@@ -483,6 +485,7 @@ PROCEDURE cria_seguro:
                             INPUT aux_cdempres,
                             INPUT aux_dtnascsg,
                             INPUT aux_complend,
+                            INPUT aux_nrctrato, /* PRJ 438 */
                             OUTPUT aux_flgsegur,
                             OUTPUT aux_rec_crawseg,
                             OUTPUT TABLE tt-erro).
