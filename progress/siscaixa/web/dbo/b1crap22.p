@@ -109,19 +109,19 @@
                             crapass, crapttl, crapjur (Adriano - P339).
 
                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
-                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576) 
                             
                07/06/2018 - Alterado a inclusao na CRAPLCM para a Centralizadora de 
                             Lançamentos de Conta Corrente - PRJ450 - Diego Simas - AMcom                      
                            
 -----------------------------------------------------------------------------*/
 
-{ dbo/bo-erro1.i }
+{dbo/bo-erro1.i}
 { sistema/generico/includes/b1wgen0200tt.i }
 
-DEF VAR glb_nrcalcul         AS DECIMAL                             NO-UNDO.
-DEF VAR glb_dsdctitg         AS CHAR                                NO-UNDO.
-DEF VAR glb_stsnrcal         AS LOGICAL                             NO-UNDO.
+DEF  VAR glb_nrcalcul        AS DECIMAL                             NO-UNDO.
+DEF  VAR glb_dsdctitg        AS CHAR                                NO-UNDO.
+DEF  VAR glb_stsnrcal        AS LOGICAL                             NO-UNDO.
 DEF VAR h-b1wgen0200         AS HANDLE                              NO-UNDO.
 DEF VAR aux_incrineg         AS INT                                 NO-UNDO.
 DEF VAR aux_cdcritic         AS INT                                 NO-UNDO.
@@ -564,13 +564,17 @@ PROCEDURE realiza-deposito:
          ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
          ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
          ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-          
+
+		MESSAGE "1 - BO0022 - VOLTOU 0200:" 
+        "aux_cdcritic: " aux_cdcritic
+        "aux_dscritic: " aux_dscritic
+        "aux_incrineg: " aux_incrineg.
        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-          IF aux_incrineg = 0 THEN DO:
+          /*IF aux_incrineg = 0 THEN DO:*/
              ASSIGN i-cod-erro  = aux_cdcritic
                     c-desc-erro = aux_dscritic.
              UNDO Deposito, LEAVE Deposito.
-          END.                                
+          /*END.                                */
        END.
           
        IF  VALID-HANDLE(h-b1wgen0200) THEN
@@ -612,23 +616,23 @@ PROCEDURE realiza-deposito:
                           NO-LOCK NO-ERROR.
        
        IF AVAIL crapass THEN
-	      DO:
+              DO:
           ASSIGN c-nome-titular1 = crapass.nmprimtl
                  c-pa-titular    = "   PAC: " + STRING(crapass.cdagenci,"99").
        
-			 IF crapass.inpessoa = 1 THEN
-			    DO:
-				   FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-				                      WHERE crapttl.cdcooper = crapass.cdcooper AND
-								            crapttl.nrdconta = crapass.nrdconta AND
-									        crapttl.idseqttl = 2
-									        NO-LOCK:
+                         IF crapass.inpessoa = 1 THEN
+                            DO:
+                                   FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+                                                      WHERE crapttl.cdcooper = crapass.cdcooper AND
+                                                                            crapttl.nrdconta = crapass.nrdconta AND
+                                                                                crapttl.idseqttl = 2
+                                                                                NO-LOCK:
 
-				      ASSIGN c-nome-titular2 = crapttl.nmextttl.				   
+                                      ASSIGN c-nome-titular2 = crapttl.nmextttl.                                   
 
-				   END.
+                                   END.
 
-				END.
+                                END.
 
           END.
 
@@ -727,8 +731,8 @@ PROCEDURE realiza-deposito:
                                     STRING(c-literal[34],"x(48)")   +
                                     STRING(c-literal[35],"x(48)")   +
                                     STRING(c-literal[36],"x(48)")   + 
-									FILL(' ',384)                   +
-									'.'
+                                                                        FILL(' ',384)                   +
+                                                                        '.'
                                     p-ult-seq-autentica = p-ult-sequencia
                                     in99 = 0.
        
@@ -865,27 +869,27 @@ PROCEDURE realiza-deposito-cheque:
                    + STRING(centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
                    + STRING(centraliza("OUVIDORIA - " + STRING(crapcop.nrtelouv),48),"x(48)")
                    + STRING(centraliza("Atendimento nos dias uteis das " + REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
-				   + FILL(' ',384)
-				   + '.'.
+                                   + FILL(' ',384)
+                                   + '.'.
 
 
             FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper NO-LOCK NO-ERROR.
 
-		    IF AVAIL(crapdat) THEN
-			DO:
-				FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
-							   AND crapaut.dtmvtolt = crapdat.dtmvtolt
-							   AND crapaut.cdagenci = p-cod-agencia
-							   AND crapaut.nrdcaixa = p-nro-caixa
-							   AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
+                    IF AVAIL(crapdat) THEN
+                        DO:
+                                FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
+                                                           AND crapaut.dtmvtolt = crapdat.dtmvtolt
+                                                           AND crapaut.cdagenci = p-cod-agencia
+                                                           AND crapaut.nrdcaixa = p-nro-caixa
+                                                           AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
 
-				IF AVAIL(crapaut) THEN
-				DO:
-				  ASSIGN crapaut.dslitera = p-literal-autentica.
-				  VALIDATE crapaut.
-				  RELEASE crapaut.			  
+                                IF AVAIL(crapaut) THEN
+                                DO:
+                                  ASSIGN crapaut.dslitera = p-literal-autentica.
+                                  VALIDATE crapaut.
+                                  RELEASE crapaut.                          
         END.
-			END.
+                        END.
 
         END.
         
@@ -991,26 +995,26 @@ PROCEDURE realiza-deposito-cheque-migrado:
                    + STRING(centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
                    + STRING(centraliza("OUVIDORIA - " + STRING(crapcop.nrtelouv),48),"x(48)")
                    + STRING(centraliza("Atendimento nos dias uteis das " + REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
-				   + FILL(' ',384)
-				   + '.'.
+                                   + FILL(' ',384)
+                                   + '.'.
 
             FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper NO-LOCK NO-ERROR.
 
-		    IF AVAIL(crapdat) THEN
-			DO:
-				FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
-							   AND crapaut.dtmvtolt = crapdat.dtmvtolt
-							   AND crapaut.cdagenci = p-cod-agencia
-							   AND crapaut.nrdcaixa = p-nro-caixa
-							   AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
+                    IF AVAIL(crapdat) THEN
+                        DO:
+                                FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
+                                                           AND crapaut.dtmvtolt = crapdat.dtmvtolt
+                                                           AND crapaut.cdagenci = p-cod-agencia
+                                                           AND crapaut.nrdcaixa = p-nro-caixa
+                                                           AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
 
-				IF AVAIL(crapaut) THEN
-				DO:
-				  ASSIGN crapaut.dslitera = p-literal-autentica.
-				  VALIDATE crapaut.
-				  RELEASE crapaut.			  
-				END.
-			END.
+                                IF AVAIL(crapaut) THEN
+                                DO:
+                                  ASSIGN crapaut.dslitera = p-literal-autentica.
+                                  VALIDATE crapaut.
+                                  RELEASE crapaut.                          
+                                END.
+                        END.
 
         END.
 
@@ -1116,26 +1120,26 @@ PROCEDURE realiza-deposito-cheque-migrado-host:
                    + STRING(centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
                    + STRING(centraliza("OUVIDORIA - " + STRING(crapcop.nrtelouv),48),"x(48)")
                    + STRING(centraliza("Atendimento nos dias uteis das " + REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
-				   + FILL(' ',384)
-				   + '.'.
+                                   + FILL(' ',384)
+                                   + '.'.
 
             FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper NO-LOCK NO-ERROR.
 
-		    IF AVAIL(crapdat) THEN
-			DO:
-				FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
-							   AND crapaut.dtmvtolt = crapdat.dtmvtolt
-							   AND crapaut.cdagenci = p-cod-agencia
-							   AND crapaut.nrdcaixa = p-nro-caixa
-							   AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
+                    IF AVAIL(crapdat) THEN
+                        DO:
+                                FIND crapaut WHERE crapaut.cdcooper = crapcop.cdcooper 
+                                                           AND crapaut.dtmvtolt = crapdat.dtmvtolt
+                                                           AND crapaut.cdagenci = p-cod-agencia
+                                                           AND crapaut.nrdcaixa = p-nro-caixa
+                                                           AND crapaut.nrsequen = p-ult-seq-autentica EXCLUSIVE-LOCK NO-ERROR.
 
-				IF AVAIL(crapaut) THEN
-				DO:
-				  ASSIGN crapaut.dslitera = p-literal-autentica.
-				  VALIDATE crapaut.
-				  RELEASE crapaut.			  
-				END.
-			END.
+                                IF AVAIL(crapaut) THEN
+                                DO:
+                                  ASSIGN crapaut.dslitera = p-literal-autentica.
+                                  VALIDATE crapaut.
+                                  RELEASE crapaut.                          
+                                END.
+                        END.
 
         END.
         
@@ -1210,9 +1214,9 @@ PROCEDURE realiza-transferencia:
     DEF VAR aux_cdagetfn                 LIKE craptfn.cdagenci  NO-UNDO.
     DEF VAR aux_cdcritic                 AS INTE                NO-UNDO.
     DEF VAR aux_dscritic                 AS CHAR                NO-UNDO.
-    DEF VAR aux_nmsegntl1				         LIKE crapttl.nmextttl  NO-UNDO.
-    DEF VAR aux_nmsegntl2				         LIKE crapttl.nmextttl  NO-UNDO.
-    DEF VAR aux_nrcpfcgc2				         LIKE crapttl.nrcpfcgc  NO-UNDO.
+        DEF VAR aux_nmsegntl1                                 LIKE crapttl.nmextttl  NO-UNDO.
+        DEF VAR aux_nmsegntl2                                 LIKE crapttl.nmextttl  NO-UNDO.
+    DEF VAR aux_nrcpfcgc2                                 LIKE crapttl.nrcpfcgc  NO-UNDO.
     
     DEF VAR aux_vltarifa                 AS DECI                NO-UNDO.
     DEF VAR aux_flgtrans                 AS LOGI                NO-UNDO.
@@ -1222,7 +1226,7 @@ PROCEDURE realiza-transferencia:
     DEF VAR aux_cdhisest                 AS INTE                NO-UNDO.
     DEF VAR aux_cdfvlcop                 AS INTE                NO-UNDO.
     DEF VAR h-b1wgen0153                 AS HANDLE              NO-UNDO.
-    
+
     DEF BUFFER crabhis FOR craphis.
     DEF BUFFER crabcop FOR crapcop.
     
@@ -1281,19 +1285,19 @@ PROCEDURE realiza-transferencia:
                 UNDO REAL_TRANS, LEAVE REAL_TRANS.
             END.
            
-	   IF crapass.inpessoa = 1 THEN
-	      DO:
-		     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-			                    WHERE crapttl.cdcooper = crapass.cdcooper AND
-							       	  crapttl.nrdconta = crapass.nrdconta AND
-								      crapttl.idseqttl = 2
-								      NO-LOCK:
+           IF crapass.inpessoa = 1 THEN
+              DO:
+                     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+                                            WHERE crapttl.cdcooper = crapass.cdcooper AND
+                                                                         crapttl.nrdconta = crapass.nrdconta AND
+                                                                      crapttl.idseqttl = 2
+                                                                      NO-LOCK:
 
-			    ASSIGN aux_nmsegntl1 = crapttl.nmextttl.
+                            ASSIGN aux_nmsegntl1 = crapttl.nmextttl.
 
-			 END.
+                         END.
 
-		  END.
+                  END.
            
        /** Informacoes da conta de destino **/
        FIND crabass WHERE  crabass.cdcooper = crabcop.cdcooper  AND
@@ -1307,21 +1311,21 @@ PROCEDURE realiza-transferencia:
                 UNDO REAL_TRANS, LEAVE REAL_TRANS.
             END.
 
-	   IF crabass.inpessoa = 1 THEN
-	      DO:
-		     FOR FIRST crapttl FIELDS(crapttl.nmextttl crapttl.nrcpfcgc)
-			                    WHERE crapttl.cdcooper = crabass.cdcooper AND
-							      	  crapttl.nrdconta = crabass.nrdconta AND
-								      crapttl.idseqttl = 2
-								      NO-LOCK:
+           IF crabass.inpessoa = 1 THEN
+              DO:
+                     FOR FIRST crapttl FIELDS(crapttl.nmextttl crapttl.nrcpfcgc)
+                                            WHERE crapttl.cdcooper = crabass.cdcooper AND
+                                                                        crapttl.nrdconta = crabass.nrdconta AND
+                                                                      crapttl.idseqttl = 2
+                                                                      NO-LOCK:
 
-			 
-			    ASSIGN aux_nmsegntl2 = crapttl.nmextttl
-					   aux_nrcpfcgc2 = crapttl.nrcpfcgc.
+                         
+                            ASSIGN aux_nmsegntl2 = crapttl.nmextttl
+                                           aux_nrcpfcgc2 = crapttl.nrcpfcgc.
 
-		     END.
+                     END.
 
-		  END.
+                  END.
 
        /* Validar para criar o lancamento ao fim da procedure */
        FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
@@ -1463,10 +1467,10 @@ PROCEDURE realiza-transferencia:
                           vr-nrterfin = aux_nrterfin.
                     
                    IF   aux_nrterfin <> 0  THEN DO:
-                        ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
+                            ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
                                vr-nrsequni = p-nrsequni
                                vr-nrautdoc = craptfn.nrultaut
-                               p-nrultaut  = craptfn.nrultaut. 
+                                   p-nrultaut       = craptfn.nrultaut. 
                    END.
                END.
                
@@ -1519,17 +1523,21 @@ PROCEDURE realiza-transferencia:
                   ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                   ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
                 
+				MESSAGE "2 - BO0022 - VOLTOU 0200:" 
+					"aux_cdcritic: " aux_cdcritic
+					"aux_dscritic: " aux_dscritic
+					"aux_incrineg: " aux_incrineg.
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  IF aux_incrineg = 0 THEN DO:
+                  /*IF aux_incrineg = 0 THEN DO:*/
                      ASSIGN i-cod-erro  = aux_cdcritic
                             c-desc-erro = aux_dscritic.                        
                      UNDO REAL_TRANS, LEAVE REAL_TRANS.
-                  END.                                
+                  /*END.                                */
                END.
                 
                IF  VALID-HANDLE(h-b1wgen0200) THEN
                    DELETE PROCEDURE h-b1wgen0200.
-               
+
                ASSIGN   craplot.nrseqdig = craplot.nrseqdig + 1
                         craplot.qtcompln = craplot.qtcompln + 1
                         craplot.qtinfoln = craplot.qtinfoln + 1
@@ -1584,7 +1592,7 @@ PROCEDURE realiza-transferencia:
                
                IF  RETURN-VALUE = "NOK" THEN
                    UNDO REAL_TRANS, LEAVE REAL_TRANS.
-                   
+        
                ASSIGN vr-cdpesqbb = "CRAP22"
                       vr-cdcoptfn = crapcop.cdcooper 
                       vr-cdagetfn = p-cod-agencia
@@ -1603,10 +1611,10 @@ PROCEDURE realiza-transferencia:
                           vr-nrterfin = aux_nrterfin.
                     
                    IF   aux_nrterfin <> 0  THEN DO:
-                        ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
+                            ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
                                vr-nrsequni = p-nrsequni
                                vr-nrautdoc = craptfn.nrultaut
-                               p-nrultaut  = craptfn.nrultaut. 
+                                   p-nrultaut       = craptfn.nrultaut.
                    END.
                END.
                
@@ -1658,19 +1666,23 @@ PROCEDURE realiza-transferencia:
                   ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
                   ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                   ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
-                  
+				  
+			   MESSAGE "3 - BO0022 - VOLTOU 0200:" 
+					"aux_cdcritic: " aux_cdcritic
+					"aux_dscritic: " aux_dscritic
+					"aux_incrineg: " aux_incrineg.
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  IF aux_incrineg = 0 THEN DO:
+                  /*IF aux_incrineg = 0 THEN DO:*/
                      /* Nao houve critica de negocio */  
                      ASSIGN i-cod-erro  = aux_cdcritic
                             c-desc-erro = aux_dscritic.               
                      UNDO REAL_TRANS, LEAVE REAL_TRANS.
-                  END.                                
+                  /*END.                                */
                END.
                   
                IF VALID-HANDLE(h-b1wgen0200) THEN
                   DELETE PROCEDURE h-b1wgen0200.
-                              
+
                ASSIGN   craplot.nrseqdig  = craplot.nrseqdig + 1
                         craplot.qtcompln  = craplot.qtcompln + 1
                         craplot.qtinfoln  = craplot.qtinfoln + 1
@@ -1822,7 +1834,7 @@ PROCEDURE realiza-transferencia:
                                UNDO REAL_TRANS, LEAVE REAL_TRANS.
                            END.
                    END.
-               
+            
                ASSIGN vr-cdpesqbb = "CRAP22 - " + STRING(crabcop.cdagectl,"9999")
                       vr-cdcoptfn = crabcop.cdcooper 
                       vr-cdagetfn = crabass.cdagenci /** PAC do destinatario **/
@@ -1841,10 +1853,10 @@ PROCEDURE realiza-transferencia:
                           vr-nrterfin = aux_nrterfin.
                     
                    IF   aux_nrterfin <> 0  THEN DO:
-                        ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
+                            ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
                                vr-nrsequni = p-nrsequni
                                vr-nrautdoc = craptfn.nrultaut
-                               p-nrultaut  = craptfn.nrultaut. 
+                                   p-nrultaut       = craptfn.nrultaut.
                    END.
                END.
                
@@ -1897,13 +1909,18 @@ PROCEDURE realiza-transferencia:
                   ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
                   ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                   ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+				  
+			   MESSAGE "4 - BO0022 - VOLTOU 0200:" 
+					"aux_cdcritic: " aux_cdcritic
+					"aux_dscritic: " aux_dscritic
+					"aux_incrineg: " aux_incrineg.
                   
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  IF aux_incrineg = 0 THEN DO:
+                  /*IF aux_incrineg = 0 THEN DO:*/
                      ASSIGN i-cod-erro  = aux_cdcritic
                             c-desc-erro = aux_dscritic.
                      UNDO REAL_TRANS, LEAVE REAL_TRANS.
-                  END.                              
+                  /*END.                              */
                END.
                   
                IF VALID-HANDLE(h-b1wgen0200) THEN
@@ -1922,7 +1939,7 @@ PROCEDURE realiza-transferencia:
                          c-desc-erro = "Lancamento nao encontrado".
                   UNDO REAL_TRANS, LEAVE REAL_TRANS.                    
                END.
-               
+
                ASSIGN   craplot.nrseqdig  = craplot.nrseqdig + 1
                         craplot.qtcompln  = craplot.qtcompln + 1
                         craplot.qtinfoln  = craplot.qtinfoln + 1
@@ -2070,7 +2087,7 @@ PROCEDURE realiza-transferencia:
                                 c-desc-erro = "Lancamento ja existente".
                          UNDO REAL_TRANS, LEAVE REAL_TRANS.
                     END.
-               
+            
                ASSIGN vr-cdpesqbb = "CRAP22 - " + STRING(crapcop.cdagectl,"9999")
                       vr-cdcoptfn = crapcop.cdcooper
                       vr-cdagetfn = p-cod-agencia /** PAC do destinatario **/
@@ -2089,10 +2106,10 @@ PROCEDURE realiza-transferencia:
                           vr-nrterfin = aux_nrterfin.
                     
                    IF   aux_nrterfin <> 0  THEN DO:
-                        ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
+                            ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1
                                vr-nrsequni = p-nrsequni
                                vr-nrautdoc = craptfn.nrultaut
-                               p-nrultaut  = craptfn.nrultaut. 
+                                   p-nrultaut       = craptfn.nrultaut. 
                    END.
                END.
                
@@ -2145,18 +2162,23 @@ PROCEDURE realiza-transferencia:
                  ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
                  ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
                  ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+				 
+			   MESSAGE "5 - BO0022 - VOLTOU 0200:" 
+					"aux_cdcritic: " aux_cdcritic
+					"aux_dscritic: " aux_dscritic
+					"aux_incrineg: " aux_incrineg.
                 
                IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-                  IF aux_incrineg = 0 THEN DO:
+                  /*IF aux_incrineg = 0 THEN DO:*/
                      ASSIGN i-cod-erro = aux_cdcritic
                            c-desc-erro = aux_dscritic.
                      UNDO REAL_TRANS, LEAVE REAL_TRANS. 
-                  END.                                
+                  /*END.                                */
                END.
                 
                IF VALID-HANDLE(h-b1wgen0200) THEN
                   DELETE PROCEDURE h-b1wgen0200.
-               
+
                ASSIGN   craplot.nrseqdig  = craplot.nrseqdig + 1
                         craplot.qtcompln  = craplot.qtcompln + 1
                         craplot.qtinfoln  = craplot.qtinfoln + 1
@@ -2326,12 +2348,12 @@ PROCEDURE realiza-transferencia:
        END.
       
        ASSIGN p-literal-autentica = RIGHT-TRIM(p-literal-autentica)
-			 + FILL(' ',112)
-			 + STRING(centraliza("SAC - " + STRING(crapcop.nrtelsac),48),"x(48)")
-			 + STRING(centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
-			 + STRING(centraliza("OUVIDORIA - " + STRING(crapcop.nrtelouv),48),"x(48)")
-			 + STRING(centraliza("Atendimento nos dias uteis das " + REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
-			 + FILL(' ',480).
+                         + FILL(' ',112)
+                         + STRING(centraliza("SAC - " + STRING(crapcop.nrtelsac),48),"x(48)")
+                         + STRING(centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
+                         + STRING(centraliza("OUVIDORIA - " + STRING(crapcop.nrtelouv),48),"x(48)")
+                         + STRING(centraliza("Atendimento nos dias uteis das " + REPLACE(REPLACE(STRING(crapcop.hriniouv,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimouv,"HH:MM"),':','h'),'h00','h'),48),"x(48)")
+                         + FILL(' ',480).
       
        ASSIGN c-texto-2-via = p-literal-autentica.
                         
@@ -2714,17 +2736,22 @@ PROCEDURE estorna-transferencia-intercooperativa:
            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+		   
+		MESSAGE "6 - BO0022 - VOLTOU 0200:" 
+					"aux_cdcritic: " aux_cdcritic
+					"aux_dscritic: " aux_dscritic
+					"aux_incrineg: " aux_incrineg.
                 
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
-           IF aux_incrineg = 0 THEN DO:
+           /*IF aux_incrineg = 0 THEN DO:*/
               ASSIGN par_dscritic = aux_dscritic.
               UNDO, RETURN "NOK".
-           END.                                
+           /*END.                                */
         END.
                  
         IF VALID-HANDLE(h-b1wgen0200) THEN
            DELETE PROCEDURE h-b1wgen0200.
-  
+
         /*** Informacao da cooperativa de origem ***/
         CREATE craplcx.
         ASSIGN craplcx.cdcooper = par_cdcooper
@@ -2866,7 +2893,7 @@ PROCEDURE estorna-transferencia-intercooperativa:
                /** DEBITO ESTORNO **/
                craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
                craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
-               
+        
         IF NOT VALID-HANDLE(h-b1wgen0200) THEN
            RUN sistema/generico/procedures/b1wgen0200.p 
              PERSISTENT SET h-b1wgen0200.
@@ -2915,17 +2942,22 @@ PROCEDURE estorna-transferencia-intercooperativa:
            ,OUTPUT aux_incrineg                  /* Indicador de crítica de negócio               */
            ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
            ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
+		   
+		MESSAGE "7 - BO0022 - VOLTOU 0200:" 
+			"aux_cdcritic: " aux_cdcritic
+			"aux_dscritic: " aux_dscritic
+			"aux_incrineg: " aux_incrineg.
   
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-           IF aux_incrineg = 0 THEN DO:
+           /*IF aux_incrineg = 0 THEN DO:*/
               ASSIGN par_dscritic = aux_dscritic.
               UNDO, RETURN "NOK".
-           END.                                
+           /*END.                                */
         END.
   
         IF VALID-HANDLE(h-b1wgen0200) THEN
            DELETE PROCEDURE h-b1wgen0200.
-        
+
         DO aux_contador = 1 TO 10:
 
             FIND crapldt WHERE crapldt.cdcooper = par_cdcooper     AND
@@ -3549,7 +3581,7 @@ PROCEDURE valida_senha_cartao:
      
     IF   p-opcao = "C"   THEN
          DO:
-			IF  TRIM(p-senha-cartao) = '' THEN
+                        IF  TRIM(p-senha-cartao) = '' THEN
                 DO:
                     RUN cria-erro (INPUT p-cooper,
                                    INPUT p-cod-agencia,
@@ -3559,7 +3591,7 @@ PROCEDURE valida_senha_cartao:
                                    INPUT YES).
                      RETURN "NOK".
                 END.
-				
+                                
             RUN sistema/generico/procedures/b1wgen0025.p 
                  PERSISTENT SET h-b1wgen0025.
                  
