@@ -28,6 +28,10 @@
 	$cdaditiv = (isset($_POST['cdaditiv'])) ? $_POST['cdaditiv'] : 0 ;
 	$tpaplica = (isset($_POST['tpaplica'])) ? $_POST['tpaplica'] : '';
 	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
+		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	}  
+  
 	// Monta o xml de requisição
 	$xml  = "";
 	$xml .= "<Root>";
