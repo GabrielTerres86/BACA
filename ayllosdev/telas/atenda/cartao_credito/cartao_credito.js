@@ -188,7 +188,7 @@ function controlaFoco() {
 }
 
 function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, FlgcChip , decisaoMotorEsteira) {
-
+    
 	callbacckReturn = "idAnt=0; setTimeout(function(){ selecionaCartao("+nrCtrCartao+",'"+ nrCartao+"', "+cdAdmCartao+", '"+id+"', '"+cor+"', '"+situacao+"', '"+FlgcChip+"'); }, 600);";
     if (id != idAnt) {
         // Armazena o número do contrato/proposta, número cartão, cód adm do cartão selecionado eme variaveis GLOBAIS
@@ -241,7 +241,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 
             $("#btnence").prop("disabled", true);
             $("#btnence").css('cursor', 'default');
-			
+
 
             if (!(situacao == "ESTUDO" && decisaoMotorEsteira == 'SEM APROVACAO')) {
                 $("#btnexcl").prop("disabled", true);
@@ -276,7 +276,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 
             $("#btnextr").prop("disabled", true);
             $("#btnextr").css('cursor', 'default');
-
+            
             $("#btnimpr").prop("disabled", true);
             $("#btnimpr").css('cursor', 'default');
 
@@ -289,7 +289,7 @@ function selecionaCartao(nrCtrCartao, nrCartao, cdAdmCartao, id, cor, situacao, 
 			$("#btnimpr").prop("disabled", false);            
 			$("#btnimpr").css('cursor', 'pointer');
         }
-			
+
 
         //Se estiver executando a rotina de impedimentos e o cartão for CECRED deve deixar habilitado, pois ao clicar no botão de canelcar, deverá apresentar alerta
         //informando que o cartão deve ser cancelado através do SIPAGNET.
@@ -1688,7 +1688,8 @@ function validarNovoCartao() {
             var dsrepinc = "";
         } else {
             var dsgraupr = "";
-            var nrdoccrd = "";
+            //var nrdoccrd = ""; //AjusteDoc
+			var nrdoccrd = $("#nrdoccrd", "#frmNovoCartao").val(); //AjusteDoc
             var flgimpnp = "yes";
             var dsrepinc = $("#dsrepinc option:selected", "#frmNovoCartao").text();
             var nmempres = $("#nmempres", "#frmNovoCartao").val();
@@ -1937,7 +1938,8 @@ function cadastrarNovoCartao() {
 	log4console("montando nova requisição");
 // Recebendo valores
     var dsgraupr = (inpessoa == 1) ? $('#dsgraupr option:selected', '#' + nomeForm).text() : '';
-    var nrdoccrd = (inpessoa == 1) ? $('#nrdoccrd', '#' + nomeForm).val() : '';
+    //var nrdoccrd = (inpessoa == 1) ? $('#nrdoccrd', '#' + nomeForm).val() : ''; //AjusteDoc
+	var nrdoccrd = $('#nrdoccrd', '#' + nomeForm).val();
     var flgimpnp = (inpessoa == 1) ? $('#flgimpnp', '#' + nomeForm).val() : 'yes';
     var vlsalari = (inpessoa == 1) ? normalizaNumero($('#vlsalari', '#' + nomeForm).val()) : '0,00';
     var vlsalcon = (inpessoa == 1) ? normalizaNumero($('#vlsalcon', '#' + nomeForm).val()) : '0,00';
@@ -3966,12 +3968,12 @@ function opcaoExcluir() {
         return false;
     }
 
-    showConfirmacao("Deseja excluir o cart&atilde;o de cr&eacute;dito?", "Confirma&ccedil;&atilde;o - Ayllos", "excluiCartao();", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja excluir o cart&atilde;o de cr&eacute;dito?", "Confirma&ccedil;&atilde;o - Ayllos", "excluiCartao("+nrctrcrd+");", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 
 }
 
 // Função para excluir cartão de crédito
-function excluiCartao() {
+function excluiCartao(contrato) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, excluindo cart&atilde;o de cr&eacute;dito ...");
 
@@ -4042,12 +4044,12 @@ function opcaoHabilitar() {
 
 // Função para carregar dados do representante
 function carregarRepresentante(cddopcao, idrepres, nrcpfrep) {
-// Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, verificando representante ...");
 
-    // Carrega conteúdo da opção através de ajax
+	// Carrega conteúdo da opção através de ajax
 	if(inpessoa == 2)
 		return;
+	// Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, verificando representante ...");
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/cartao_credito/representantes_carregar.php",
@@ -4547,7 +4549,7 @@ function opcaoAlteraAdm() {
 }
 
 
-function atualizaUpgradeDowngrade()
+function atualizaUpgradeDowngrade(contrato)
 {
 	//showMsgAguardo("Aguarde, atualizando justificativa...");
 	var codaadmi = $("#hdncodadm").val();
@@ -4576,7 +4578,7 @@ function atualizaUpgradeDowngrade()
         data: {
 			cdcooper  : cdcooper,
             nrdconta  : nrdconta,
-            nrctrcrd  : nrctrcrd,
+            nrctrcrd  : contrato,
 			ds_justif : dsjustificativa,
 			cdadmnov  : codnadmi,
 			inupgrad  : 1
@@ -4593,7 +4595,7 @@ function atualizaUpgradeDowngrade()
     });
 }
 
-function validarUpDown() {
+function validarUpDown(contrato) {
 
     var codaadmi = $("#hdncodadm").val();
     var codnadmi = $("#dsadmant").val();
@@ -4624,7 +4626,7 @@ function validarUpDown() {
             codnadmi: codnadmi,
             nrdconta: nrdconta,
             nrcrcard: nrcrcard,
-            nrctrcrd: nrctrcrd,
+            nrctrcrd: contrato,
 			dsjustificativa:dsjustificativa,
             redirect: "html_ajax"
         },
@@ -4636,7 +4638,7 @@ function validarUpDown() {
 			if(!error)
 				//CODIGO TEMPORARIO - so mandaremos para a esteira se for piloto.
 			    if (iPiloto == 1) {
-					atualizaUpgradeDowngrade();
+					atualizaUpgradeDowngrade(contrato);
 				} else {					
 					showError("inform","Operacao realizada com sucesso.","Alerta - Ayllos","voltaDiv(0,1,4);acessaOpcaoAba(0,1,4);");
 				}
@@ -5874,7 +5876,7 @@ function mostraHisLimite() {
     });
 }
 
-function carregaHistorico(type) {
+function carregaHistorico(type,contrato) {
     showMsgAguardo("Aguarde, carregando hist&oacute;rico ...");
 	var sitcrd = $("#dssituac").val();
     $.ajax({
@@ -5884,7 +5886,7 @@ function carregaHistorico(type) {
         data: {
             nrcrcard: nrcrcard,
             nrdconta: nrdconta,
-            nrctrcrd: nrctrcrd,
+            nrctrcrd: contrato,
             type: type,
 			dssituac : sitcrd
         },
@@ -5913,8 +5915,11 @@ function validarSenha(nrctrcrd) {
 	
 	
     idacionamento = $("#idacionamento","#frmNovoCartao").val();
-    log4console("5608 - protocolo : "+protocolo);
-    atualizaContrato(nrctrcrd,protocolo,"S", function(){
+    log4console("prj cartoes protocolo : "+protocolo);
+	log4console("prj cartoes idacionamento : "+idacionamento);
+	if(idacionamento == undefined && protocolo)
+		idacionamento = protocolo;
+    atualizaContrato(nrctrcrd,idacionamento,"S", function(){
         log4console(' add trigger back');
         $(".btnVoltar").attr('onclick','voltarParaTelaPrincipal();');
 		//|| idastcjt !=1
@@ -5940,24 +5945,24 @@ function validarSenha(nrctrcrd) {
 
 }
 
-function solicitaSenha(nrctrcrd,cdAdmCartao) {
+function solicitaSenha(contrato,cdAdmCartao) {
 	if(cdAdmCartao != undefined){
 		cdadmcrd = cdAdmCartao;
 	}
     try{
-    if($("#btnsaveRequest").attr('onclick') != 'solicitaSenha('+nrctrcrd+')'){
-        $("#btnsaveRequest").attr('onclick','solicitaSenha('+nrctrcrd+')');
+    if($("#btnsaveRequest").attr('onclick') != 'solicitaSenha('+contrato+')'){
+        $("#btnsaveRequest").attr('onclick','solicitaSenha('+contrato+')');
     }}catch(e){
         console.log('estamos fora da tela novo');
     }
 	//|| idastcjt !=1  inpessoa == 1
     //if (false) {
 	if( inpessoa == 1 ){
-        validarSenha(nrctrcrd);
+        validarSenha(contrato);
         return;
     }
     showMsgAguardo("Aguarde ...");
-    atualizaContrato(nrctrcrd,protocolo,"S", function(){
+    atualizaContrato(contrato,protocolo,"S", function(){
 	var chklen =  $('input[name="dsadmcrdcc"]').length;
 	var outros = false;
     for(j = 0; j< chklen; j++){	
@@ -5975,7 +5980,7 @@ function solicitaSenha(nrctrcrd,cdAdmCartao) {
         data: {
             tpacao: 'montagrid',
             nrdconta : nrdconta,
-            nrctrcrd : nrctrcrd,
+            nrctrcrd : contrato,
 			cdadmcrd : cdadmcrd,
 			esteira  : esteira
         },
@@ -6368,7 +6373,7 @@ function verificaRetornoBancoob(nrctrcrd){
         });
 }
 
-function alterarBancoob(autorizado,inpessoa,tipo){
+function alterarBancoob(autorizado,inpessoa,tipo, contrato){
     
 
     var vlsugmot = $("#vlsugmot").val();
@@ -6397,7 +6402,7 @@ function alterarBancoob(autorizado,inpessoa,tipo){
             data: {
                 tpacao: 'alterar',
                 nrdconta      :   nrdconta,
-                nrctrcrd      :   nrctrcrd,
+                nrctrcrd      :   contrato,
                 vlsugmot      :   vlsugmot,
                 inpessoa      :   inpessoa,
                 tipo          :   tipo,

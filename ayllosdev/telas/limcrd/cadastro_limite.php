@@ -33,6 +33,11 @@
     $dddebito = isset($_POST['dddebito'])? $_POST['dddebito'] : "";
     $tpproces = isset($_POST['tpproces'])? $_POST['tpproces'] : "A";
     $cecred = $cdadmcrd > 9 && $cdadmcrd < 81;
+	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$tpproces, false)) <> '') {
+	   exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	}
+	
     if($tpproces == "A"){
         if($cecred  ){
             if(is_null($vllimite_min)){
