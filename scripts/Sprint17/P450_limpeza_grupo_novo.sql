@@ -253,7 +253,7 @@ DECLARE
                           rw_grupo_old.cdcooper,            --> cdcooper,
                           rw_grupo_old.nrdconta,            --> nrdconta,
                           rw_grupo_old.tppessoa,            --> tppessoa,
-                          2, --manutençao                   --> tpcarga,
+                          rw_grupo_old.tpcarga,             --> tpcarga,
                           rw_grupo_old.tpvinculo,           --> tpvinculo,
                           rw_grupo_old.peparticipacao,      --> peparticipacao,
                           rw_grupo_old.dtinclusao,          --> dtinclusao,
