@@ -104,7 +104,11 @@
    16/04/2018 - Incluido tratamento na procedure valida-alinea para nao 
                 criticar horario limite de devolucao quando se tratar de 
 				cheques trocados no caixa (Diego).
-   
+
+   06/09/2018 - Ajuste para tratamento do campo insitdev igual a 2, para devolucoes
+                automatica de cheques, com historico 573.
+                Chamado SCTASK0027900 - Gabriel (Mouts).
+
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -786,6 +790,7 @@ PROCEDURE busca-devolucoes-cheque:
             
                              WHEN 0 THEN tt-lancto.dssituac = "a devolver".
                              WHEN 1 THEN tt-lancto.dssituac = "devolvido".
+                             WHEN 2 THEN tt-lancto.dssituac = "a devolver".
                              OTHERWISE   tt-lancto.dssituac = "indefinida".
             
                         END CASE.
@@ -856,6 +861,7 @@ PROCEDURE busca-devolucoes-cheque:
                 CASE crapdev.insitdev:            
                     WHEN 0 THEN tt-lancto.dssituac = "a devolver".
                     WHEN 1 THEN tt-lancto.dssituac = "devolvido".
+                    WHEN 2 THEN tt-lancto.dssituac = "a devolver".
                     OTHERWISE   tt-lancto.dssituac = "indefinida".      
                 END CASE.
                 
@@ -943,6 +949,7 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                 
@@ -1022,6 +1029,7 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                 
@@ -1137,6 +1145,7 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                  
@@ -1214,6 +1223,7 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                     
@@ -1294,6 +1304,7 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                     
@@ -1362,6 +1373,7 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                      

@@ -253,8 +253,13 @@
                            CRITICASDEVOLU.txt (Reinert).
 
               14/08/2018 - Tratamento de devolucoes automaticas, insitdev = 2, setando seus 
-			               valores para insitdev = 1, desta forma registros irao constar no 
-						   Relatorio 219. Chamado PRB0040059 - Gabriel (Mouts).
+                           valores para insitdev = 1, desta forma registros irao constar no 
+                           Relatorio 219. Chamado PRB0040059 - Gabriel (Mouts).
+
+              06/09/2018 - Cheques com devolucao de historico 573 nao estavam sendo
+                           processados com sucesso. Feito tratamento para receber
+                           devolucoes automaticas, feitas pelo pc_crps533, corretamente.
+                           Chamado SCTASK0027900 - Gabriel (Mouts).
 
 ..............................................................................*/
 
@@ -3578,7 +3583,8 @@ PROCEDURE trata_dev_automatica:
   FOR EACH crapdev WHERE crapdev.cdcooper = par_cdcooper AND
                          crapdev.insitdev = 2            EXCLUSIVE-LOCK:
 
-    ASSIGN crapdev.insitdev = 1.
+    ASSIGN crapdev.insitdev = 1
+           crapdev.indevarq = 2.
 
   END.
 
