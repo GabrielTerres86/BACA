@@ -53,7 +53,7 @@
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
-	$xml .= "   <tpproduto>5</tpproduto>";
+	$xml .= "   <tpproduto>3</tpproduto>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <nrctrato>".$nrctrlim."</nrctrato>";
 	$xml .= "   <tpctrlim>3</tpctrlim>";
