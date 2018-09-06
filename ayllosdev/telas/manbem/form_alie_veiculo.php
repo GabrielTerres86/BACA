@@ -55,7 +55,7 @@
                     <label for="nrmodbem" >Ano Mod./Fab.:</label>
 					<select name="nrmodbem" id="nrmodbem"></select>	
 					<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>				
-					<label for="nranobem" style='display:none'>Ano Mod.:</label>
+					<label for="nranobem" style='display:none'>Ano Fab.:</label>
 					<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" />				
 				</div>
 				<div>
