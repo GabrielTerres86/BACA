@@ -53,7 +53,7 @@
 	$xml  = '';
 	$xml .= '<Root>';
 	$xml .= '	<Dados>';
-	$xml .= "   	 <tpproduto>5</tpproduto>";
+	$xml .= "   	 <tpproduto>3</tpproduto>";
 	$xml .= '        <nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '        <nrctrato>'.$nrctrlim.'</nrctrato>';
 	$xml .= '	    <tpctrlim>3</tpctrlim>';
@@ -65,7 +65,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+		exibirErro('error',utf8_decode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','',false);
 	}
 	
 	$motivos = $xmlObjeto->roottag->tags;

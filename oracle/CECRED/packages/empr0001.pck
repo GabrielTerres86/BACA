@@ -16372,7 +16372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             raise vr_exc_saida;              
           end if;
         close c_crawepr;
-      elsif pr_tpproduto = 5 then -- Limite de Crédito
+      elsif pr_tpproduto = 3 then -- Limite de Crédito
         open c_crawlim(vr_cdcooper);
          fetch c_crawlim into r_crawlim;
           if c_crawlim%notfound then
@@ -16823,7 +16823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                 vr_dscritic := 'Erro ao atualizar emprestimo EMPR0001.pc_grava_motivo_anulacao: '||sqlerrm;
                 raise vr_exc_saida;             
             end;
-          elsif pr_tpproduto = 5 then -- Limite de Crédito
+          elsif pr_tpproduto = 3 then -- Limite de Crédito
             begin
               update crawlim l
                  set l.dtanulac = rw_crapdat.dtmvtolt,
