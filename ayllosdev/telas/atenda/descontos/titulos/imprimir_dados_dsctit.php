@@ -125,29 +125,33 @@
 		exit();
 	}	
 	
-	// Verifica se o borderô deve ser utilizado no sistema novo ou no antigo
-	$xml = "<Root>";
-	$xml .= " <Dados>";
-	$xml .= " <nrborder>".$nrborder."</nrborder>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";
-	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getClassXML($xmlResult);
-	$root = $xmlObj->roottag;
-	// Se ocorrer um erro, mostra crítica
-	if ($root->erro){
-		exibeErro(htmlentities($root->erro->registro->dscritic));
-		exit;
+	if ($nrborder > 0) {
+		// Verifica se o borderô deve ser utilizado no sistema novo ou no antigo
+		$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= " <nrborder>".$nrborder."</nrborder>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+		$root = $xmlObj->roottag;
+		// Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+		$flgnewbor = $root->dados->flgnewbor->cdata;
 	}
-	$flgverbor = $root->dados->flgverbor->cdata;
-	$flgnewbor = $root->dados->flgnewbor->cdata;
-		
-    if (($idimpres == 1 || // COMPLETA
+	else{
+		$flgnewbor = 0;
+	}
+	
+    if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
-		    $idimpres == 3 || // PROPOSTA
+		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
-        $idimpres == 7 // BORDERO DE CHEQUES
-        ) && ($flgnewbor)) {
+        $idimpres == 7 // BORDERO DE TITULOS
+        ) {
         $xml  = "<Root>";
         $xml .= "  <Dados>";
         $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
@@ -159,7 +163,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
-        $xml .= "    <flgrestr>0</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
+        $xml .= "    <flgrestr>".($flgnewbor == 1 ? 0 : 1 )."</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
