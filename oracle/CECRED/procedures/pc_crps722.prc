@@ -270,6 +270,37 @@ BEGIN
          AND ass.nrdconta = pr_nrdconta;                           
     rw_crapass_2 cr_crapass_2%ROWTYPE;     
     
+    --> Verificar se existe o registro devido alguma conta incluida manualmente
+    CURSOR cr_tbintegrante_exc (pr_idintegrante IN tbcc_grupo_economico_integ.idintegrante%TYPE) IS
+      SELECT 1
+        FROM tbcc_grupo_economico_integ it,
+             crapass ass       
+       WHERE it.idintegrante = pr_idintegrante 
+         AND it.cdcooper = ass.cdcooper
+         AND it.nrdconta = ass.nrdconta
+         AND EXISTS (SELECT 1 
+                       FROM tbcc_grupo_economico_integ it2,
+                            crapass ass2
+                      WHERE it2.cdcooper = ass2.cdcooper
+                         AND it2.nrdconta = ass2.nrdconta
+                         AND it2.dtexclusao IS NULL
+                         AND it2.tpcarga = 3
+                         AND ass.nrcpfcnpj_base = ass2.nrcpfcnpj_base);                
+    rw_tbintegrante_exc cr_tbintegrante_exc%ROWTYPE;
+    
+    --> Verificar se o integrante foi excluido hoje pelo processo automatico
+    CURSOR cr_tbintegrante_exc2 (pr_idgrupo    tbcc_grupo_economico_integ.idgrupo%TYPE,  
+                                 pr_cdcooper   tbcc_grupo_economico_integ.cdcooper%TYPE, 
+                                 pr_nrdconta   tbcc_grupo_economico_integ.nrdconta%TYPE)IS
+      SELECT it.rowid
+        FROM tbcc_grupo_economico_integ it
+       WHERE it.idgrupo  = pr_idgrupo
+         AND it.cdcooper = pr_cdcooper
+         AND it.nrdconta = pr_nrdconta
+         AND trunc(it.dtexclusao) = trunc(SYSDATE) 
+         AND it.cdoperad_exclusao = 1;
+    rw_tbintegrante_exc2 cr_tbintegrante_exc2%ROWTYPE;
+    
     --> INCORPORAR GRUPO
     PROCEDURE pc_incorpora_grupo(pr_cdcooper      IN tbcc_grupo_economico.cdcooper%TYPE,
                                  pr_idgrupo_ori   IN tbcc_grupo_economico.idgrupo%TYPE,
@@ -834,6 +865,22 @@ BEGIN
       
       END LOOP;  
       
+      --> Listar todas as contas desse base CPF/CNPJ para verificar se ja estao no grupo para nao exclui-lo
+      FOR rw_crapass IN cr_crapass(pr_cdcooper => rw_grupo_economico.cdcooper,
+                                   pr_nrdconta => rw_grupo_economico.nrdconta) LOOP
+                                   
+        IF vr_idgrupo = '45795' THEN
+          NULL;
+        END IF;
+        -- Chave do Integrante do Grupo Economico
+        vr_ind_integrante_grupo := lpad(vr_idgrupo,10,'0')||lpad(rw_grupo_economico.cdcooper,10,'0')||lpad(rw_crapass.nrdconta,10,'0');
+        -- Condicao para verificar se o integrante jah esta criado
+        IF vr_tab_grupo_economico_inte.EXISTS(vr_ind_integrante_grupo) THEN          
+          vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).flgexcluir   := FALSE;
+        END IF;
+      
+      END LOOP;
+      
 
     END LOOP; -- cr_grupo_economico
 
@@ -843,16 +890,27 @@ BEGIN
       WHILE vr_ind_integrante_grupo IS NOT NULL LOOP
         -- Condicao para verificar se deve excluir o integrante
         IF vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).flgexcluir THEN
-          BEGIN
-            UPDATE tbcc_grupo_economico_integ SET
-                   dtexclusao        = TRUNC(SYSDATE)
-                  ,cdoperad_exclusao = '1'
-             WHERE idintegrante = vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).idintegrante;          
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar o integrante do grupo economico: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
+          --> Verificar se existe o registro devido alguma conta incluida manualmente
+          OPEN cr_tbintegrante_exc (pr_idintegrante => vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).idintegrante);
+          FETCH cr_tbintegrante_exc INTO rw_tbintegrante_exc;
+          --> caso nao tenha, deve excluir
+          IF cr_tbintegrante_exc%NOTFOUND THEN
+            CLOSE cr_tbintegrante_exc;
+          
+          
+            BEGIN
+              UPDATE tbcc_grupo_economico_integ SET
+                     dtexclusao        = TRUNC(SYSDATE)
+                    ,cdoperad_exclusao = '1'
+               WHERE idintegrante = vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).idintegrante;          
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar o integrante do grupo economico: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          ELSE
+            CLOSE cr_tbintegrante_exc;
+          END IF;
           
         END IF;
                   
@@ -865,10 +923,6 @@ BEGIN
     FOR rw_crapcop IN cr_crapcop LOOP
       -- Atualizar o Grupo Economico - incluir Integrante a partir da tabela de associados (CRAPASS)
       FOR rw_grupo_associado IN cr_grupo_associado(pr_cdcooper => rw_crapcop.cdcooper) LOOP
-        IF rw_grupo_associado.nrdconta = 8808554 THEN
-          NULL;
-        END IF;
-        
         
         vr_achou := 0;
         begin
@@ -916,6 +970,37 @@ BEGIN
               RAISE vr_exc_saida;
           end;
         end if;
+
+        IF vr_achou = 0 THEN
+          --> Verificar se o integrante foi excluido hoje pelo processo automatico
+          --> pois quando como o processo inclui contas que não sao da formação do grupo antifo
+          --> é necessario deixar excluir para apos validar se deve manter
+          OPEN cr_tbintegrante_exc2 (pr_idgrupo  => rw_grupo_associado.idgrupo ,
+                                     pr_cdcooper => rw_grupo_associado.cdcooper, 
+                                     pr_nrdconta => rw_grupo_associado.nrdconta);
+          FETCH cr_tbintegrante_exc2 INTO rw_tbintegrante_exc2;
+          IF cr_tbintegrante_exc2%NOTFOUND THEN
+            CLOSE cr_tbintegrante_exc2;
+          ELSE
+            BEGIN
+              UPDATE tbcc_grupo_economico_integ itg
+                 SET itg.dtexclusao = NULL,
+                     itg.cdoperad_exclusao = NULL
+               WHERE itg.rowid = rw_tbintegrante_exc2.rowid;      
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro atualizar integrante do grupo economico. '||
+                             'Coop.='||rw_crapcop.cdcooper||', Grupo='||rw_grupo_associado.idgrupo||': '|| SQLERRM;
+                RAISE vr_exc_saida;  
+            END;
+          
+            --> Marcar para nao incluir
+            vr_achou := 1;
+          
+          END IF;                           
+        
+        END IF;
+        
 
         if vr_achou = 0 then
           begin
