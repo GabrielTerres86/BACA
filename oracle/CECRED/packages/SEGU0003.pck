@@ -1006,6 +1006,11 @@ EXCEPTION
     --Validar Valor 
     if vr_valor_para_validacao > vr_vlminimo /*and vr_valor_para_validacao < vr_vlmaximo*/ then
       pr_flgprestamista := 'S';
+      --Validar Idades
+      if vr_nrdeanos_aux > vr_nrdeanos then
+        pr_flgprestamista := 'N';
+        pr_dsmotcan := 'Idade acima do limite';      
+      end if;      
     else
       if vr_valor_para_validacao < vr_vlminimo then
         pr_dsmotcan := 'Saldo devedor abaixo do valor mínimo';
@@ -1014,13 +1019,8 @@ EXCEPTION
       end if;
     end if;
 
-    --Validar Idades
-    if vr_nrdeanos_aux < vr_nrdeanos then
-      pr_flgprestamista := 'S';
-    else
-      pr_dsmotcan := 'Idade acima do limite';      
-    end if;
-    
+    pr_flgdps := 'N';
+    if pr_flgprestamista = 'S' then
     -- Buscar o valor para impressão com DPS ou sem DPS
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                              ,pr_nmsistem => 'CRED'
@@ -1044,11 +1044,8 @@ EXCEPTION
     
     if vr_valor_para_validacao > vr_vallidps then
       pr_flgdps := 'S';
-    else 
-      pr_flgdps := 'N';
-
     end if;
-
+    end if;
   
     pr_sld_devedor := vr_sld_devedor;
   

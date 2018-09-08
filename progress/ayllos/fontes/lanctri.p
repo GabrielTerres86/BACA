@@ -1722,8 +1722,13 @@ DO WHILE TRUE:
                                WHEN pc_efetiva_proposta_sp.pr_cdcritic <> ?
              glb_dscritic = pc_efetiva_proposta_sp.pr_dscritic
                                WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
-          IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-             RETURN "NOK".                                
+          IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+             DO:
+                 ASSIGN glb_dscritic = "Erro ao efetivar prestamista: " + glb_dscritic.
+                 MESSAGE glb_dscritic.
+                 PAUSE 3 NO-MESSAGE.
+                 UNDO, RETURN.
+             END.
       END.  	  
 
       IF glb_cdcritic > 0    THEN
