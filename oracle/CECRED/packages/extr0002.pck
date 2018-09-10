@@ -800,7 +800,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
         03/08/2018 - Inclusao de aplicacoes programadas - PRJ 411.2 - CIS Corporate
 
-
+        17/08/2018 - sctask0012764 Inclusão de module e action nas subrotinas da rotina
+                     pc_gera_impressao_car para fracionar as execuções no log do BD (Carlos)
         
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -3766,7 +3767,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 15/08/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 31/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3785,6 +3786,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298) 
   --
   --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
+  --
+  --              31/07/2018 - P410 - Inclusao de Histórico para não compor Saldo no IOF do Prejuizo (Marcos-Envolti)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Tabela de Memoria primeira parcela
@@ -3976,7 +3979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476) THEN 
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476,2735) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
@@ -3993,7 +3996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            
            /* Multa e Juros de Mora de Prejuizo */
            /* M324 - inclusao dos novos historicos de multas e juros */
-           IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476) THEN
+           IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476,2735) THEN
              pr_extrato_epr(vr_index).flgsaldo := FALSE;
            END IF;  
              
@@ -4615,6 +4618,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              07/05/2018 - Verificacao de impedimento de talionario atraves da proc 
   --                           pc_ind_impede_talonario. PRJ366 (Lombardi)
   -- 
+  --              09/08/2018 - Alterado forma para da busca de lançamentos futuros para emprestimos e 
+  --                           Fatura de cartão de crédito : (Alcemir - Mout's / PRB0040071).  
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4865,7 +4871,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       
       --> Buscar faturas de cartoes 
       CURSOR cr_fatura  (pr_cdcooper IN crapsdc.cdcooper%type
-                        ,pr_nrdconta IN crapsdc.nrdconta%TYPE) IS
+                        ,pr_nrdconta IN crapsdc.nrdconta%TYPE
+                        ,pr_dtiniper IN tbcrd_fatura.dtvencimento%TYPE
+						            ,pr_dtfimper IN tbcrd_fatura.dtvencimento%TYPE) IS
         SELECT fatura.dtvencimento
               ,fatura.dsdocumento
               ,fatura.vlpendente
@@ -4875,7 +4883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND fatura.nrdconta = pr_nrdconta
          AND fatura.insituacao = 1
          AND fatura.vlpendente > 0
-         AND ((fatura.dtvencimento >= pr_dtiniper
+         AND ((fatura.dtvencimento > pr_dtiniper
          AND fatura.dtvencimento <= pr_dtfimper) 
           OR pr_dtiniper IS NULL 
          AND pr_dtfimper IS NULL); 
@@ -5268,6 +5276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_vldpagto NUMBER;
       vr_qtdpagto INTEGER;
       vr_dtfatura DATE;
+      vr_dtiniper DATE;
       vr_dtiniper01 DATE;
       vr_dtfimper01 DATE;
       vr_dscedent VARCHAR(300);
@@ -6117,6 +6126,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         RAISE vr_exc_erro;
       END IF;  
            
+      
+      IF pr_dtiniper IS NOT NULL THEN 
+         vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');    
+      END IF;
+           
       --Buscar primeiro registro da tabela de emprestimos
       vr_index_epr:= vr_tab_dados_epr.FIRST;
       --Se Retornou Dados
@@ -6138,9 +6152,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             /* Valor da parcela vencida */
             IF vr_tab_dados_epr(vr_index_epr).vlprvenc > 0 THEN
               -- Se os periodos foram informados, filtrar por eles
-              IF (pr_dtiniper IS NULL   AND
+              IF (vr_dtiniper IS NULL   AND
                   pr_dtfimper IS NULL)  OR
-                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
+                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >  vr_dtiniper   AND
                   vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN  
                             
               --Incrementar contador lancamentos na tabela
@@ -6165,9 +6179,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                     TO_CHAR(rw_crapdat.dtmvtolt,'MMYYYY'),'DDMMYYYY');
               
               -- Se os periodos foram informados, filtrar por eles
-              IF (pr_dtiniper IS NULL   AND
+              IF (vr_dtiniper IS NULL   AND
                   pr_dtfimper IS NULL)  OR
-                  (vr_dtdpagto >= pr_dtiniper   AND
+                  (vr_dtdpagto >  vr_dtiniper   AND
                    vr_dtdpagto <= pr_dtfimper)  THEN
   
               --Incrementar contador lancamentos na tabela
@@ -6220,9 +6234,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF; 
             
             /* Se os periodos foram informados, filtrar por eles */
-            IF pr_dtiniper IS NOT NULL   AND
+            IF vr_dtiniper IS NOT NULL   AND
                pr_dtfimper IS NOT NULL   AND
-              (vr_tab_dados_epr(vr_index_epr).dtdpagto < pr_dtiniper   OR
+              (vr_tab_dados_epr(vr_index_epr).dtdpagto < vr_dtiniper   OR
                vr_tab_dados_epr(vr_index_epr).dtdpagto > pr_dtfimper)  THEN
               --Proximo registro
               RAISE vr_next_reg;
@@ -6618,9 +6632,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;    
       END LOOP;
             
+      IF pr_dtiniper IS NOT NULL THEN  
+         --buscar dia ultil anterior
+	       vr_dtiniper := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => (pr_dtiniper - 1),pr_tipo => 'A');
+      END IF;
+            
       /*FATURAS DE CARTAO DE CREDITO SICOOB*/
       FOR rw_fatura IN cr_fatura  (pr_cdcooper => pr_cdcooper
-                                  ,pr_nrdconta => pr_nrdconta) LOOP
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_dtiniper => vr_dtiniper
+								                  ,pr_dtfimper => pr_dtfimper) LOOP
         
         --Selecionar Historicos
         OPEN cr_craphis (pr_cdcooper => pr_cdcooper
@@ -8021,7 +8042,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Variaveis de Excecoes
         vr_exc_sair EXCEPTION;
         vr_exc_erro EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextdpv';
+
       BEGIN
+        
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         --Limpar Tabela Erro
         pr_tab_erro.DELETE;
         
@@ -8101,6 +8128,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             pr_nmarqimp:= vr_nmendter || '.ex';
             pr_nmarqpdf:= vr_nmendter || '.pdf';
           END IF;  
+
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           -- Chamar rotina para busca do saldo
           extr0001.pc_obtem_saldo(pr_cdcooper   => pr_cdcooper
                                  ,pr_rw_crapdat => rw_crapdat
@@ -8195,6 +8225,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             RAISE vr_exc_sair;   
           END IF;   
            
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Encontrar saldo
           IF vr_tab_saldos.COUNT > 0 THEN
             --Acumular Saldos no total (disponivel+cheq.salario+bloqueado+chq.praca+cheq.fora_praca)
@@ -8358,6 +8390,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             --Popular Clob do relatorio interno
             gene0002.pc_escreve_xml(vr_clobxml40, vr_dstexto40,'</lancamentos><cheques>'); 
             
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
             /** Cheques recebidos em deposito **/
             IF pr_inrelext IN (2,4) THEN
               --Percorrer todos os Cheques
@@ -8478,6 +8512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF;
 
           END IF; --Dados Cooperado                    
+
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
         EXCEPTION
           WHEN vr_exc_sair THEN
             pr_des_reto:= 'OK';
@@ -8512,8 +8548,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;  
+
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception;
         
           --Retorno com Erro
           pr_des_reto:= 'NOK';
@@ -8641,7 +8680,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Variaveis de Excecoes
         vr_exc_erro EXCEPTION;
         vr_exc_sair EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextcti';
+
       BEGIN
+
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         --Inicializar transacao
         vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
         vr_dstransa:= 'Consultar dados para extrato da conta investimento.'; 
@@ -8901,6 +8946,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;  
+        
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+        
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -8930,7 +8978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-        
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -9260,6 +9308,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_exc_erro     EXCEPTION;
         vr_exc_saida    EXCEPTION;
       BEGIN
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_consulta_imposto_renda');
+
         --Inicializar transacao
         vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
         vr_dstransa:= 'Consultar dados para informe de rendimentos.'; 
@@ -10150,6 +10200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
         END IF;  
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);   
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -10163,7 +10214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
         WHEN OTHERS THEN
-
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -10603,7 +10654,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
     --Variaveis de Excecoes
     vr_exc_erro     EXCEPTION;
     vr_exc_saida    EXCEPTION;
+    
+    vr_nmaction VARCHAR2(32) := 'pc_consulta_ir_pj_trim';
+    
   BEGIN
+
+    gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
     --Inicializar transacao
     vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dstransa:= 'Consultar dados para informe de rendimentos trimestre.';
@@ -11220,6 +11277,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       END IF;
+
+      gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Retorno não OK
@@ -11233,7 +11292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
     WHEN OTHERS THEN
-
+      cecred.pc_internal_exception;
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Chamar rotina de gravação de erro
@@ -11741,7 +11800,11 @@ END pc_consulta_ir_pj_trim;
         --Variaveis de Excecoes
         vr_exc_erro EXCEPTION;
         vr_exc_sair EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextir';
+        
       BEGIN
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
         --Inicializar transacao
         vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
         vr_dstransa:= 'Consultar dados para informe de rendimentos.'; 
@@ -11786,6 +11849,8 @@ END pc_consulta_ir_pj_trim;
           --Escrever no arquivo XML
           gene0002.pc_escreve_xml(vr_clobxml44, vr_dstexto44,'<?xml version="1.0" encoding="UTF-8"?><crrl044><contas>');
                                                     
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Se nao deve rodar
           IF NOT pr_flgrodar THEN 
             --Nome Arquivo Impressao
@@ -11823,6 +11888,8 @@ END pc_consulta_ir_pj_trim;
           --Fechar Cursor
           CLOSE cr_crapass;
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
 		  IF rw_crapass.inpessoa = 1 THEN
 
 		    OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
@@ -11849,6 +11916,9 @@ END pc_consulta_ir_pj_trim;
                                     ,pr_tab_retencao_ir => vr_tab_retencao_ir --Retencoes do IR
                                     ,pr_tab_erro => pr_tab_erro               --Tabela de Erros
                                     ,pr_des_reto => pr_des_reto);             --Descricao Erro
+                                    
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+                                    
           --Se ocorreu erro
           IF pr_des_reto = 'NOK' OR vr_tab_extrato_ir.COUNT = 0 THEN 
             --Se nao deu erro e a tabela está vazia
@@ -12157,6 +12227,8 @@ END pc_consulta_ir_pj_trim;
 
           END IF;  
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           IF pr_flgrodar = TRUE THEN
             --Popular Clob do relatorio interno
             gene0002.pc_escreve_xml(vr_clobxml44, vr_dstexto44,'</contas></crrl044>',TRUE);
@@ -12211,6 +12283,7 @@ END pc_consulta_ir_pj_trim;
               END IF; 
             END IF;  
 
+            gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
             
             --Retornar Valor para parametro
             pr_des_reto:= 'OK';                        
@@ -12251,6 +12324,9 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;  
+
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -12280,7 +12356,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-        
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -12503,8 +12579,9 @@ END pc_consulta_ir_pj_trim;
       vr_exc_erro EXCEPTION;
       vr_exc_sair EXCEPTION;
 
-
+      vr_nmaction VARCHAR2(32) := 'pc_gera_impextir_pj_trim';
     BEGIN
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
         --Inicializar transacao
         vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
         vr_dstransa:= 'Consultar dados para informe de rendimentos Trimestrais.';
@@ -12598,6 +12675,8 @@ END pc_consulta_ir_pj_trim;
           --Fechar Cursor
           CLOSE cr_crapass;
 
+      gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
 		  IF rw_crapass.inpessoa = 1 THEN
 
 		    OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
@@ -12653,7 +12732,7 @@ END pc_consulta_ir_pj_trim;
           --Buscar a primeira ocorrencia do extrato
           vr_index:= vr_tab_extrato_ir.FIRST;
 
-
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
           --Popular Variaveis
           vr_rel_aarefere:= pr_anorefer;
@@ -12785,7 +12864,7 @@ END pc_consulta_ir_pj_trim;
           --Escrever no XML interno
           gene0002.pc_escreve_xml(vr_clobxml44,vr_dstexto44,vr_dstexto);
 
-
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
           IF pr_flgrodar = TRUE THEN
             --Popular Clob do relatorio interno
@@ -12847,6 +12926,8 @@ END pc_consulta_ir_pj_trim;
 
           END IF;
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         EXCEPTION
           WHEN vr_exc_sair THEN
             pr_des_reto:= 'OK';
@@ -12881,6 +12962,8 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;
+        
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -12911,7 +12994,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;
         WHEN OTHERS THEN
-
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -13365,6 +13448,7 @@ END pc_consulta_ir_pj_trim;
         vr_vlsaldo2 NUMBER;
         vr_flginfor BOOLEAN:= FALSE;
 				vr_flginfor2 BOOLEAN:= FALSE;
+        vr_flginfor3 BOOLEAN:= FALSE;
         vr_diapagto INTEGER;
         vr_mespagto INTEGER;
         vr_anopagto INTEGER;
@@ -13373,6 +13457,7 @@ END pc_consulta_ir_pj_trim;
         vr_nrdrowid ROWID; 
         vr_dstexinf VARCHAR2(200);
         vr_dstexinf2 VARCHAR2(200);
+        vr_dstexinf3 VARCHAR2(200);
         vr_dslinpar VARCHAR2(200); 
         vr_dstexto  VARCHAR2(32600);
 				vr_flgloop  BOOLEAN := FALSE;
@@ -13903,6 +13988,12 @@ END pc_consulta_ir_pj_trim;
               --Descricao do Extrato
               pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat||'**';
             END IF;
+            IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor = 2735 THEN
+              --Flag Informacao
+              vr_flginfor3:= TRUE;
+              --Descricao do Extrato
+              pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat||'***';
+            END IF;
 
             --Primeira Ocorrencia
             IF vr_flgloop = FALSE THEN
@@ -13963,12 +14054,15 @@ END pc_consulta_ir_pj_trim;
 					IF vr_flginfor2 THEN
             vr_dstexinf2:= '** Atencao! Esse lancamento e apenas informativo, nao  altera o saldo devedor. O credito do estorno e efetuado em conta corrente.';
           END IF; 
+					IF vr_flginfor3 THEN
+            vr_dstexinf3:= '*** Demonstracao do IOF complementar referente as parcelas em atraso. Valor devido, mas nao altera o saldo devedor.';
+          END IF; 
 					 
           --Montar Mensagem Extrato
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||
                        to_char(vr_vlsaldo2,'fm9g999g990d00');
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
-          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="'||vr_dstexinf||'" dstexinf2="'||vr_dstexinf2||'">';
+          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="'||vr_dstexinf||'" dstexinf2="'||vr_dstexinf2||'" dstexinf3="'||vr_dstexinf3||'">';
           --Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
@@ -14611,7 +14705,7 @@ END pc_consulta_ir_pj_trim;
 
           vr_dstexto:= 'Saldo para Liquidacao em '||to_char(pr_dtmvtolt,'DD/MM/YYYY')||' R$: '||to_char(vr_vlsdeved,'fm9g999g990d00');
           --Finalizar TAG parcelas e Montar Cabecalho do Extrato
-          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="">';
+          vr_dstexto:= '</parcelas><extratos dsmsgext="'||vr_dstexto||'" dstexinf="" dstexinf2="" dstexinf3="">';
 					--Escrever no XML
           gene0002.pc_escreve_xml(pr_clobxml,pr_dstexto,vr_dstexto);
 
@@ -14829,6 +14923,7 @@ END pc_consulta_ir_pj_trim;
         2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
         2405 - TRANSFERENCIA EMP/ FIN TR SUSPEITA DE FRAUDE
         2412 - TRANSFERENCIA PREJUIZO C/C SUSPEITA DE FRAUDE
+        2735 - IOF PREJUIZO
 
 		*/
         --Selecionar Lancamento Emprestimo
@@ -14840,7 +14935,7 @@ END pc_consulta_ir_pj_trim;
           WHERE craplem.cdcooper = pr_cdcooper 
           AND   craplem.nrdconta = pr_nrdconta 
           AND   craplem.nrctremp = pr_nrctremp 
-          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2405, 2385, 2400);
+          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2405, 2385, 2400, 2735);
         rw_craplem cr_craplem%ROWTYPE;
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);
@@ -14911,7 +15006,11 @@ END pc_consulta_ir_pj_trim;
         --Variaveis de Excecoes
         vr_exc_erro     EXCEPTION;
         vr_exc_sair     EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextepr';
       BEGIN
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+        
         IF pr_inselext = 2 THEN
           vr_nrctremp:= 0;
         ELSE
@@ -15061,6 +15160,8 @@ END pc_consulta_ir_pj_trim;
                                                    ,pr_cdacesso => 'PAREMPCTL'
                                                    ,pr_tpregist => 1); 
       
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Obter Dados do Emprestimo
           EMPR0001.pc_obtem_dados_empresti(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                                           ,pr_cdagenci => pr_cdagenci         --> Código da agência
@@ -15087,6 +15188,8 @@ END pc_consulta_ir_pj_trim;
                                           ,pr_des_reto => vr_des_reto            --> Retorno OK / NOK
                                           ,pr_tab_erro => pr_tab_erro);          --> Tabela com possíves erros
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Se ocorreu erro
           IF vr_des_reto = 'NOK' THEN 
             --se tem erro na tabela 
@@ -15106,6 +15209,8 @@ END pc_consulta_ir_pj_trim;
             --Levantar Excecao
             RAISE vr_exc_sair;
            END IF; 
+
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
           --Buscar a primeira ocorrencia do extrato
           vr_index:= vr_tab_dados_epr.FIRST;
@@ -15472,6 +15577,9 @@ END pc_consulta_ir_pj_trim;
                 --Proximo registro
                 vr_index_novo:= vr_tab_extrato_epr_novo.NEXT(vr_index_novo);
               END LOOP;      
+
+              gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
               --Se tem erro no Historico
               IF vr_errohist THEN
                 --Montar mensagem Historico
@@ -15543,6 +15651,8 @@ END pc_consulta_ir_pj_trim;
             vr_index:= vr_tab_dados_epr.NEXT(vr_index);
           END LOOP;
           
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+          
           --Ayllos Web
           IF pr_flgrodar = TRUE THEN
             --Popular Clob do relatorio interno
@@ -15609,6 +15719,9 @@ END pc_consulta_ir_pj_trim;
             END IF;
 
           END IF; 
+
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Retornar Valor para parametro
           pr_des_reto:= 'OK';                                                        
         EXCEPTION
@@ -15646,6 +15759,8 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;  
 
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -15675,7 +15790,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-        
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -15879,7 +15994,10 @@ END pc_consulta_ir_pj_trim;
         -- controlar tag
         vr_ftagapli BOOLEAN;
         
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextrda';
       BEGIN
+
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
         --Limpar Tabela Erro
         pr_tab_erro.DELETE;
         
@@ -15912,6 +16030,8 @@ END pc_consulta_ir_pj_trim;
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
         --Atribuir Descricao da Origem
         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
@@ -15969,6 +16089,8 @@ END pc_consulta_ir_pj_trim;
             pr_nmarqpdf:= vr_nmendter || '.pdf';
           END IF;  
           
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Selecionar associado
           OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
@@ -15999,6 +16121,8 @@ END pc_consulta_ir_pj_trim;
           --Fechar Cursor
           CLOSE cr_crapass;
           
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Selecionar Dados Agencia
           OPEN cr_crapage(pr_cdcooper => pr_cdcooper
                          ,pr_cdagenci => rw_crapass.cdagenci);
@@ -16090,6 +16214,8 @@ END pc_consulta_ir_pj_trim;
               END IF;
             END IF;
 					
+            gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
             IF vr_tpaplica IN (0,1) THEN -- Todas ou atuais
 
                 --Obtem Dados Aplicacoes
@@ -16136,6 +16262,8 @@ END pc_consulta_ir_pj_trim;
                 END IF;
             END IF;
 					
+            gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
             -- Montagem do XML com todas as aplicacoes que deverao ser exibidas na tela atenda/impres
             IF vr_tab_aplica.COUNT > 0 THEN
                 -- Percorre todas as aplicações de captação da conta											 
@@ -16624,6 +16752,7 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;    
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);    
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -16653,6 +16782,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
+          cecred.pc_internal_exception;
 
           -- Retorno não OK
           pr_des_reto := 'NOK';
@@ -16833,7 +16963,12 @@ END pc_consulta_ir_pj_trim;
         --Variaveis de Excecoes
         vr_exc_erro EXCEPTION;
         vr_exc_sair EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextaap';
       BEGIN
+
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         --Limpar Tabela Erro
         pr_tab_erro.DELETE;
         
@@ -17195,6 +17330,8 @@ END pc_consulta_ir_pj_trim;
             vr_index_dados_rpp:= vr_tab_dados_rpp.NEXT(vr_index_dados_rpp);
           END LOOP; --dados_rpp
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           IF pr_flgrodar = TRUE THEN              
             --Finaliza Clob Interno
             gene0002.pc_escreve_xml(vr_clobxml209, vr_dstexto209,'</contas></crrl744>',TRUE);
@@ -17251,6 +17388,8 @@ END pc_consulta_ir_pj_trim;
             dbms_lob.freetemporary(vr_clobxml209); 
           END IF;
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Retorno com Sucesso
           pr_des_reto:= 'OK';
 
@@ -17290,6 +17429,7 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;          
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -17319,7 +17459,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-         
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -17486,7 +17626,12 @@ END pc_consulta_ir_pj_trim;
         --Variaveis de Excecoes
         vr_exc_erro EXCEPTION;
         vr_exc_sair EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextppr';
       BEGIN
+
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         --Limpar Tabela Erro
         pr_tab_erro.DELETE;
         
@@ -17632,6 +17777,9 @@ END pc_consulta_ir_pj_trim;
           END IF;  
           -- Fechar o cursor
           CLOSE cr_crapage;
+
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
           vr_percenir:= GENE0002.fn_char_para_number
                               (TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -17687,6 +17835,8 @@ END pc_consulta_ir_pj_trim;
             RAISE vr_exc_sair;          
           END IF;
           
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Percorrer dados extrato da poupanca
           vr_index_dados_rpp:= vr_tab_dados_rpp.FIRST;
           WHILE vr_index_dados_rpp IS NOT NULL LOOP
@@ -17831,6 +17981,8 @@ END pc_consulta_ir_pj_trim;
             vr_index_dados_rpp:= vr_tab_dados_rpp.NEXT(vr_index_dados_rpp);
           END LOOP; --dados_rpp
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           IF pr_flgrodar = TRUE THEN              
             --Finaliza Clob Interno
             gene0002.pc_escreve_xml(vr_clobxml209, vr_dstexto209,'</contas></crrl209>',TRUE);
@@ -17890,6 +18042,8 @@ END pc_consulta_ir_pj_trim;
           --Retorno com Sucesso
           pr_des_reto:= 'OK';
 
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         EXCEPTION
           WHEN vr_exc_sair THEN
             pr_des_reto:= 'OK';
@@ -17926,6 +18080,9 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;          
+
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -17955,7 +18112,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-                    
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -18094,7 +18251,12 @@ END pc_consulta_ir_pj_trim;
         --Variaveis de Excecoes
         vr_exc_erro EXCEPTION;
         vr_exc_sair EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextcap';
       BEGIN
+
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         --Limpar Tabela Erro
         pr_tab_erro.DELETE;
         
@@ -18206,6 +18368,9 @@ END pc_consulta_ir_pj_trim;
           END IF;  
           -- Fechar o cursor
           CLOSE cr_crapage;
+
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Limpar tabelas memoria
           vr_tab_extrato_cotas.DELETE;
           --Executar rotina consulta cotas associado
@@ -18384,6 +18549,8 @@ END pc_consulta_ir_pj_trim;
             pr_des_reto:= 'NOK';
         END;
           
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
         --Se nao tem erro na temp-table 
         IF pr_tab_erro.COUNT = 0 AND (vr_dscritic IS NOT NULL OR nvl(vr_cdcritic,0) <> 0) THEN
           -- Chamar rotina de gravacao de erro
@@ -18411,6 +18578,7 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;          
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);         
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -18440,7 +18608,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-        
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -18573,7 +18741,12 @@ END pc_consulta_ir_pj_trim;
         --Variaveis de Excecoes
         vr_exc_erro EXCEPTION;
         vr_exc_sair EXCEPTION;
+        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impexttar';
       BEGIN
+        
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+      
         --Limpar Tabela Erro
         pr_tab_erro.DELETE;
         
@@ -18763,6 +18936,8 @@ END pc_consulta_ir_pj_trim;
               --Finaliza TAG Extratos e Conta
               gene0002.pc_escreve_xml(vr_clobxml499,vr_dstexto499,'</contas></crrl499>', TRUE);
               
+              gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+              
               -- Gera relatório 499
               gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                   --> Cooperativa conectada
                                          ,pr_cdprogra  => pr_cdprogra                   --> Programa chamador
@@ -18857,6 +19032,7 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;          
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -18886,7 +19062,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -19048,8 +19224,9 @@ END pc_consulta_ir_pj_trim;
         
         vr_contador PLS_INTEGER := 0;        
             
-        
+        vr_nmaction VARCHAR2(32) := 'pc_gera_impextapl';
       BEGIN
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
         --Limpar Tabela Erro
         pr_tab_erro.DELETE;
         
@@ -19170,6 +19347,8 @@ END pc_consulta_ir_pj_trim;
           --Fechar Cursor
           CLOSE cr_crapass;
           
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Limpar tabelas memoria
           vr_tab_saldo_rdca.DELETE;
           
@@ -19214,6 +19393,8 @@ END pc_consulta_ir_pj_trim;
             RAISE vr_exc_sair;          
           END IF;
           
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
           vr_percenir:= GENE0002.fn_char_para_number
                               (TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -19270,6 +19451,8 @@ END pc_consulta_ir_pj_trim;
             RAISE vr_exc_sair;          
           END IF;          
           
+          gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+
           --Verificar se possui bloqueio judicial
           vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$        '||
                           to_char(nvl(vr_vlblqjud,0),'fm999g999g999g990d00')||'"'; 
@@ -19541,6 +19724,7 @@ END pc_consulta_ir_pj_trim;
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;          
+        gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- Retorno não OK
@@ -19570,7 +19754,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_nrdrowid => vr_nrdrowid);
           END IF;  
         WHEN OTHERS THEN
-  
+          cecred.pc_internal_exception;
           -- Retorno não OK
           pr_des_reto := 'NOK';
           -- Chamar rotina de gravação de erro
@@ -19853,8 +20037,12 @@ END pc_consulta_ir_pj_trim;
     TYPE vr_typ_arr_histor_iof IS TABLE OF NUMBER;
     vr_arr_histor_iof vr_typ_arr_histor_iof;
         
+    vr_nmaction VARCHAR2(32) := 'pc_gera_extrato_op_credito';
+        
   BEGIN
       
+    gene0001.pc_set_modulo(pr_action => NULL, pr_module => vr_nmaction);
+    
     --Limpar Tabelas
     vr_tab_erro.DELETE;
     vr_tab_extrato_ope_credito.DELETE;
@@ -19994,6 +20182,8 @@ END pc_consulta_ir_pj_trim;
       --Popular Clob do relatorio interno
       gene0002.pc_escreve_xml(pr_clobxml, vr_dstexto143,vr_dstexto);      
       
+      gene0001.pc_set_modulo(pr_action => NULL, pr_module => vr_nmaction);
+
       --Percorre os 12 meses do ano
       WHILE vr_contador <= 12 LOOP
         
@@ -20327,6 +20517,8 @@ END pc_consulta_ir_pj_trim;
       --Finaliza TAG Extratos e Conta            
       gene0002.pc_escreve_xml(pr_clobxml,vr_dstexto143,'</informacoes><totalAno>' || to_char(nvl( vr_vltotano,0),'fm999G999G990D00') || '</totalAno></crrl712>',TRUE);      
                                                     
+      gene0001.pc_set_modulo(pr_action => NULL, pr_module => vr_nmaction);
+                                           
       --Ayllos Web
       IF pr_flgrodar = 1 THEN
 
@@ -20408,7 +20600,7 @@ END pc_consulta_ir_pj_trim;
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
     END IF; 
-               
+    gene0001.pc_set_modulo(pr_action => NULL, pr_module => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Retorno não OK
@@ -20436,7 +20628,7 @@ END pc_consulta_ir_pj_trim;
       END IF;  
       
     WHEN OTHERS THEN
-  
+      cecred.pc_internal_exception;
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Chamar rotina de gravação de erro
@@ -20944,8 +21136,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_tab_erro => pr_tab_erro);
           pr_des_reto:= 'NOK';  
         WHEN OTHERS THEN
-
-btch0001.pc_log_internal_exception(pr_cdcooper);
+          cecred.pc_internal_exception(pr_cdcooper);
           --Montar critica
           vr_dscritic:=  'Erro ao executar a rotina pc_gera_impressao. '||sqlerrm; 
           -- Chamar rotina de gravacao de erro
@@ -21152,10 +21343,42 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
               ,lrg.tpaplica
               ,lrg.tpresgat;                     
     
+    vr_nmrotpro VARCHAR2(100) := 'EXTR0002.pc_gera_impressao_car';
+
     --------------------------FIM ESTRUTURAS DE TABELA----------------------------------------
     
     BEGIN 
       
+      GENE0001.pc_set_modulo(pr_module => vr_nmrotpro, pr_action => vr_nmrotpro);
+
+      vr_dsparame := 'pr_cdcooper:' || pr_cdcooper ||
+                     ', pr_cdagenci:' || pr_cdagenci ||
+                     ', pr_nrdcaixa:' || pr_nrdcaixa ||
+                     ', pr_idorigem:' || pr_idorigem ||
+                     ', pr_nmdatela:' || pr_nmdatela ||
+                     ', pr_dtmvtolt:' || pr_dtmvtolt ||
+                     ', pr_dtmvtopr:' || pr_dtmvtopr ||
+                     ', pr_cdprogra:' || pr_cdprogra ||
+                     ', pr_inproces:' || pr_inproces ||
+                     ', pr_cdoperad:' || pr_cdoperad ||
+                     ', pr_dsiduser:' || pr_dsiduser ||
+                     ', pr_flgrodar:' || pr_flgrodar ||
+                     ', pr_nrdconta:' || pr_nrdconta ||
+                     ', pr_idseqttl:' || pr_idseqttl ||
+                     ', pr_tpextrat:' || pr_tpextrat ||
+                     ', pr_dtrefere:' || pr_dtrefere ||
+                     ', pr_dtreffim:' || pr_dtreffim ||
+                     ', pr_flgtarif:' || pr_flgtarif ||
+                     ', pr_inrelext:' || pr_inrelext ||
+                     ', pr_inselext:' || pr_inselext ||
+                     ', pr_nrctremp:' || pr_nrctremp ||
+                     ', pr_nraplica:' || pr_nraplica ||
+                     ', pr_nranoref:' || pr_nranoref ||
+                     ', pr_flgerlog:' || pr_flgerlog ||
+                     ', pr_intpextr:' || pr_intpextr ||
+                     ', pr_tpinform:' || pr_tpinform ||
+                     ', pr_nrperiod:' || pr_nrperiod;
+
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop INTO rw_crapcop;
@@ -21330,11 +21553,27 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
 
       END IF;
 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+
       EXCEPTION
         WHEN vr_exc_saida THEN
+          GENE0004.pc_log(pr_cdcritic => 9999, 
+                          pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 9999) ||
+                                         vr_nmrotpro ||
+                                         '. ' || vr_dsparame, 
+                          pr_nmrotina => 'EXTR0002',
+                          pr_cdcooper => pr_cdcooper);
           pr_des_reto := 'NOK';
-
         WHEN OTHERS THEN
+          cecred.pc_internal_exception;
+          GENE0004.pc_log(pr_cdcritic => 9999, 
+                          pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 9999) ||
+                                         vr_nmrotpro ||
+                                         '. ' || SQLERRM ||
+                                         '. ' || vr_dsparame, 
+                          pr_nmrotina => 'EXTR0002',
+                          pr_cdcooper => pr_cdcooper);
+
           pr_des_reto := 'NOK';
       END;    
     END pc_gera_impressao_car;  
