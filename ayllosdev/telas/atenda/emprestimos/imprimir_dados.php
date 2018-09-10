@@ -19,6 +19,8 @@
 	  26/06/2015 - Impressao do 'Termo Portabilidade'. (Jaison/Diego - SD: 290027)
     
     16/11/2015 - Foi comentada a tag 'nrctremp'. (Lombardi - Projeto Portabilidade)
+
+      09/09/2018 - Alterada a chamada da impressao de Contrato - PRJ 438 (Mateus Z - Mouts)
 	 ************************************************************************* */
 
 	session_cache_limiter("private");
@@ -66,9 +68,9 @@
 	$dsiduser = session_id();
 
 	// Verifica se opcao eh contrato ou contrato nao negociavel ou termo de portabilidade
-	if ($idimpres == '2' || $idimpres == '8' || $idimpres == '9') {
+	if ($idimpres == '8' || $idimpres == '9') {
 
-		$inimpctr = ($idimpres == '2') ? 0 : 1;
+		$inimpctr = 1;
 
 		$xml = '';
 		$xml .= '<Root>';
@@ -77,6 +79,21 @@
 		$xml .= '		<nrdconta>' . $nrdconta . '</nrdconta>';
 		$xml .= '		<nrctremp>' . $nrctremp . '</nrctremp>';
 		$xml .= '		<inimpctr>' . $inimpctr . '</inimpctr>';
+		$xml .= '	</Dados>';
+		$xml .= '</Root>';
+	} else if($idimpres == '2') {
+
+		$inimpctr = 0;
+		$nrctrseg = 0;
+
+		$xml = '';
+		$xml .= '<Root>';
+		$xml .= '	<Dados>';
+		$xml .= '		<cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+		$xml .= '		<nrdconta>' . $nrdconta . '</nrdconta>';
+		$xml .= '		<nrctremp>' . $nrctremp . '</nrctremp>';
+		$xml .= '		<inimpctr>' . $inimpctr . '</inimpctr>';
+		$xml .= '       <nrctrseg>' . $nrctrseg . '</nrctrseg>';
 		$xml .= '	</Dados>';
 		$xml .= '</Root>';
 	} else {
@@ -141,7 +158,7 @@
 		$nmarqpdf = $xmlObj;
 	}
 	else // verifica se opcao eh contrato
-	if ($idimpres == '2' || $idimpres == '8') {
+	if ($idimpres == '8') {
 		// Executa script para envio do XML
 		$xmlResult = mensageria($xml, "EMPR0003", "IMPCONTR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 
@@ -173,7 +190,27 @@
 
 		// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 		$nmarqpdf = $xmlObjDados->roottag->tags[0]->cdata;
-	} else {
+	}
+	else // verifica se opcao eh contrato
+	if ($idimpres == '2') {
+		// Executa script para envio do XML
+		$xmlResult = mensageria($xml, "EMPR0003", "IMPRIME_CONTRATO_PRESTAMISTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+		// Cria objeto para classe de tratamento de XML
+		$xmlObj = simplexml_load_string($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if ($xmlObj->Erro->Registro->dscritic != '') {
+			$msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
+			?><script language="javascript">alert('<?php echo $msgErro; ?>');</script><?php
+			exit();
+		}
+
+		// Obtém nome do arquivo PDF 
+		$nmarqpdf = $xmlObj;
+
+	} 
+	else {
 		// Executa script para envio do XML
 		$xmlResult = getDataXML($xml);
 

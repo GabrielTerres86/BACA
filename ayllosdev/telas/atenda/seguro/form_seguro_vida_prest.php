@@ -8,7 +8,7 @@
  * ALTERAÇÕES   :
  * 001: [30/11/2012] David (CECRED) : Validar session
  * 002: [05/03/2015] Odirlei(AMcom) : Permitir definir dia do mês para os proximos debitos
- * 
+ * 003: [06/09/2018] Mateus Z(Mouts) : PRJ 438 - Adicionado campo contrato para tipo Prestamista
  */
 
 	session_start();
@@ -85,6 +85,14 @@
 				<label for='tpplaseg' class='not'>Plano:</label>
 				<input type="text" id='tpplaseg' value='000' name='tpplaseg'  >
 			<br>
+			<?php 
+                // Exibir campo Contrato apenas para Prestamista
+                if ($tipo == 4) { ?>
+                	<label for='nrctrato'>Contrato:</label>
+					<input type="text" name='nrctrato' id='nrctrato'>
+					<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+					<br>
+            <? } ?>
 			<fieldset>
 				<legend>Beneficiarios</legend>					
 						<?php for($i = 1; $i <= 5; $i++){?>
@@ -110,3 +118,9 @@
 	<input type="image" id="btContinuar"   src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
 	
 </div>
+<!-- Caso for prestamista, chamar função para a lupa tratar a lupa do contrato -->
+<? if($tipo == 4){ ?>
+	<script type="text/javascript">
+		controlaPesquisas('TI');
+	</script>
+<? } ?> 

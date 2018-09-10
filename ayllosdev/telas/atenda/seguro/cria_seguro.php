@@ -12,6 +12,7 @@
 				  25/07/2013 - Incluído o campo Complemento no endereço. (James).	
                   05/03/2015 - Incluir tratamento de dia dos proximos debitos para seguro de vida(Odirlei-AMcom)
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+				  06/09/2018 - PRJ 438 - Adicionado campo contrato. (Mateus Z - Mouts)
 
  */
  
@@ -80,6 +81,7 @@ $cdsegura  = (intval($_POST['cdsegura']) > 0)?$_POST['cdsegura']:'0';
 $dtnascsg  = $_POST['dtnascsg'];
 $nrcpfcgc  = $_POST['nrcpfcgc'];
 $nrctrseg  = $_POST['nrctrseg'];
+$nrctrato  = $_POST['nrctrato'];
 
 $nmresseg = '';
 $nrctrseg = '0';
@@ -253,7 +255,9 @@ if($tpseguro != 4){
 	}
 	$xml .= "		<cdsexosg>".$cdsexosg."</cdsexosg>";
 	$xml .= "		<cdempres>".$cdempres."</cdempres>";
-	
+	if($tpseguro == 4){
+		$xml .= "		<nrctrato>".$nrctrato."</nrctrato>";
+	}	
 $xml .= "	</Dados>";
 $xml .= "</Root>";
 $agora=date("i:s");
