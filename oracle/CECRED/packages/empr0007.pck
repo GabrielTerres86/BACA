@@ -1286,11 +1286,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
 
           -- Rotina para pagamento de prejuizo
-          RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
+          EMPR9999.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
                                                ,pr_nrdconta => pr_nrdconta
                                                ,pr_cdagenci => rw_cde.cdagenci
                                                ,pr_crapdat  => rw_crapdat
-                                               ,pr_nracordo => 0
                                                ,pr_nrparcel => 0
                                                ,pr_nrctremp => pr_nrctremp
                                                ,pr_tpemprst => rw_crapepr.tpemprst
@@ -1334,11 +1333,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             IF rw_crapepr.vlsdprej > 0 THEN
 
               -- Rotina para gerar abono se necessario
-              RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
+              EMPR9999.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_cdagenci => rw_cde.cdagenci
                                  ,pr_crapdat  => rw_crapdat
-                                 ,pr_nracordo => 0
                                  ,pr_nrparcel => 0
                                  ,pr_nrctremp => pr_nrctremp
                                  ,pr_tpemprst => rw_crapepr.tpemprst
@@ -1418,11 +1416,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           -- Pagamento Parcial
 
           -- Rotina para pagamento de prejuizo
-          RECP0001.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
+          EMPR9999.pc_pagar_emprestimo_prejuizo(pr_cdcooper => pr_cdcooper
                                                ,pr_nrdconta => pr_nrdconta
                                                ,pr_cdagenci => rw_cde.cdagenci
                                                ,pr_crapdat => rw_crapdat
-                                               ,pr_nracordo => 0
                                                ,pr_nrparcel => 0
                                                ,pr_nrctremp => pr_nrctremp
                                                ,pr_tpemprst => rw_crapepr.tpemprst
@@ -2398,18 +2395,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           CLOSE cr_crawepr;
         END IF;
 
-        /*
-        -- PJ450 - Verificar se pode debitar (Regra de Negocio)
-        IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => rw_crapepr.nrdconta
-                                       ,pr_cdhistor => 108) THEN
-            vr_dscritic := 'Lançamento de debito não efetuado. Cooperativa: '||pr_cdcooper
-                            || ' - Nr. Conta: ' || rw_crapepr.nrdconta
-                            || ' - Cod. historico: 108' ;
-            RAISE vr_exc_undo;
-        END IF;
-				*/
-
 				-- Busca do cadastro de linhas de crédito de empréstimo
 				FOR rw_craplcr IN cr_craplcr(rw_crapepr.cdlcremp) LOOP
 					-- Guardamos a taxa e o indicador de emissão de boletos
@@ -2600,7 +2585,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 					-- Não permitir antecipação de parcela quando não estiver em acordo ativo
           -- Utilizar o quantidade de meses e parcelas calculadas para saber se esta em atraso
           -- Os campos da tabela podem esta desatualizados
-          IF vr_qtprecal > vr_msdecatr AND NVL(vr_flgativo,0) = 0 THEN
+          IF vr_qtprecal > vr_msdecatr AND NVL(vr_flgativo,0) = 0 
+					AND UPPER(pr_nmtelant) <> 'BLQPREJU' THEN
              vr_cdcritic := 0;
 						 vr_dscritic := 'Pagamento apenas para parcelas em atraso';
 						 RAISE vr_exc_undo;

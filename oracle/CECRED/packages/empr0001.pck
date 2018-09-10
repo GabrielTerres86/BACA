@@ -15583,17 +15583,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
     vr_flgerlog := sys.diutil.int_to_bool(pr_flgerlog);
 
-    EMPR0013.pc_verifica_consignado( pr_cdcooper    => pr_cdcooper /*IN  tbepr_consignado_contrato.cdcooper%TYPE*/
-                                     ,pr_nrdconta    => pr_nrdconta /*IN  tbepr_consignado_contrato.nrdconta%TYPE*/
-                                     ,pr_nrctremp    => pr_nrctremp /*IN  tbepr_consignado_contrato.nrctremp%TYPE DEFAULT 0*/
-                                     ,pr_flconsig    => vr_flconsig /*OUT INTEGER*/
-                                     ,pr_dsconsig    => vr_dsconsig /*OUT VARCHAR2*/
-                                     ,pr_cdcritic    => pr_cdcritic /*OUT PLS_INTEGER --> Código da crítica*/
-                                     ,pr_dscritic    => pr_dscritic); /*OUT VARCHAR2 --> Descrição da crítica*/
-
-    IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
-       RAISE vr_exc_erro;
-    END IF;
     IF vr_flconsig > 0 THEN
        pr_cdcritic := 1279;
        pr_dscritic := vr_dsconsig;

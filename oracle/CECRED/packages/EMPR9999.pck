@@ -172,27 +172,30 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
 
 
 
-   PROCEDURE pc_pagar_emprestimo_pos(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
-                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
-                                    ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
-                                    ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
-                                    ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo
-                                    ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
-                                    ,pr_vlemprst  IN crapepr.vlemprst%TYPE
-                                    ,pr_txmensal  IN crapepr.txmensal%TYPE
-                                    ,pr_dtprivencto IN crawepr.dtdpagto%TYPE
-                                    ,pr_vlsprojt    IN crapepr.vlsprojt%TYPE
-                                    ,pr_qttolar    IN crapepr.qttolatr%TYPE
-                                    ,pr_nrparcel    IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
-                                    ,pr_vlsdeved    IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
-                                    ,pr_vlsdevat    IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
-                                    ,pr_idorigem    IN NUMBER                       -- Indicador da origem
-                                    ,pr_nmtelant    IN VARCHAR2                     -- Nome da tela
-                                    ,pr_cdoperad    IN VARCHAR2                     -- Código do operador
-                                    ,pr_idvlrmin OUT NUMBER                       -- Indica que houve critica do valor minimo
-                                    ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
-                                    ,pr_cdcritic OUT NUMBER                       -- Código de críticia
-                                    ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
+   -- Realizar o calculo e pagamento de Emprestimo POS
+ PROCEDURE pc_pagar_emprestimo_pos(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
+                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
+                                   ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
+                                   ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
+                                   ,pr_nrctremp  IN crapepr.nrctremp%TYPE        -- Número do contrato de empréstimo
+                                   ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE
+                                   ,pr_vlemprst  IN crapepr.vlemprst%TYPE
+                                   ,pr_txmensal  IN crapepr.txmensal%TYPE
+                                   ,pr_dtprivencto IN crawepr.dtdpagto%TYPE
+																	 ,pr_dtmvtolt  IN crapepr.dtmvtolt%TYPE
+                                   ,pr_vlsprojt    IN crapepr.vlsprojt%TYPE
+                                   ,pr_qttolar    IN crapepr.qttolatr%TYPE
+                                   ,pr_nrparcel    IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
+                                   ,pr_vlsdeved    IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
+                                   ,pr_vlsdevat    IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
+																	 ,pr_vlrpagar    IN NUMBER
+                                   ,pr_idorigem    IN NUMBER                       -- Indicador da origem
+                                   ,pr_nmtelant    IN VARCHAR2                     -- Nome da tela
+                                   ,pr_cdoperad    IN VARCHAR2                     -- Código do operador
+                                   ,pr_idvlrmin OUT NUMBER                       -- Indica que houve critica do valor minimo
+                                   ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
+                                   ,pr_cdcritic OUT NUMBER                       -- Código de críticia
+                                   ,pr_dscritic OUT VARCHAR2);                   -- Descrição da crítica
 
 
 END EMPR9999;
@@ -467,6 +470,7 @@ create or replace package body cecred.EMPR9999 as
     /* descriçao e código da critica */
     vr_cdcritic := null;
     vr_dscritic := '';
+    pr_idquapro := 1;
 		
 		vr_vet_qualif(1) := 'Operacao Normal';
 		vr_vet_qualif(2) := 'Renovacao de credito';
@@ -564,20 +568,12 @@ create or replace package body cecred.EMPR9999 as
       END IF;
       CLOSE cr_crapepr;
 
-      /* REGRA ANULADA PELA HISTÓRIA 9927 (P450) - Reginaldo/AMcom - 17/08/2018
-      /* Se contrato a liquidar já é um refinanciamento, força
-       qualificaçao mínima como "Renegociaçao" Reginaldo (AMcom) - Mar/2018 
-      IF rw_crapepr.idquaprc > 1 THEN
-        vr_qtdias_atraso := GREATEST(vr_qtdias_atraso, 5);
-      END IF;
-			*/
-
       vr_indice_epr := vr_vet_liquida.next(vr_indice_epr);
 			
 			IF vr_auxdias_atraso < vr_qtdias_atraso THEN
 				vr_auxdias_atraso := vr_qtdias_atraso;
 			END IF;
-			
+      
 			-- De 0 a 4 dias de atraso - Renovaçao de Crédito
 			IF vr_auxdias_atraso < 5 THEN
 				pr_idquapro := 2;      
@@ -2284,18 +2280,10 @@ create or replace package body cecred.EMPR9999 as
   EXCEPTION
     WHEN  vr_exc_erro THEN
       pr_vltotpag := 0; -- retornar zero
-
-      /** DESFAZER A TRANSAÇÃO **/
-      ROLLBACK;
-      /**************************/
     WHEN OTHERS THEN
       pr_vltotpag := 0; -- retornar zero
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na PC_PAGAR_EMPRESTIMO_PP: '||SQLERRM;
-
-      /** DESFAZER A TRANSAÇÃO **/
-      ROLLBACK;
-      /**************************/
   END pc_pagar_emprestimo_pp;
 
 
@@ -2309,11 +2297,13 @@ create or replace package body cecred.EMPR9999 as
                                    ,pr_vlemprst  IN crapepr.vlemprst%TYPE
                                    ,pr_txmensal  IN crapepr.txmensal%TYPE
                                    ,pr_dtprivencto IN crawepr.dtdpagto%TYPE
+																	 ,pr_dtmvtolt  IN crapepr.dtmvtolt%TYPE
                                    ,pr_vlsprojt    IN crapepr.vlsprojt%TYPE
                                    ,pr_qttolar    IN crapepr.qttolatr%TYPE
                                    ,pr_nrparcel    IN tbrecup_acordo_parcela.nrparcela%TYPE -- Número da parcela
                                    ,pr_vlsdeved    IN crapepr.vlsdeved%TYPE        -- Valor do saldo devedor
                                    ,pr_vlsdevat    IN crapepr.vlsdevat%TYPE        -- Valor anterior do saldo devedor
+																	 ,pr_vlrpagar    IN NUMBER
                                    ,pr_idorigem    IN NUMBER                       -- Indicador da origem
                                    ,pr_nmtelant    IN VARCHAR2                     -- Nome da tela
                                    ,pr_cdoperad    IN VARCHAR2                     -- Código do operador
@@ -2347,14 +2337,14 @@ create or replace package body cecred.EMPR9999 as
 
 
    --Tabelas de Memoria para Pagamentos das Parcelas Emprestimo
-   vr_tab_pgto_parcel  EMPR0001.typ_tab_pgto_parcel;
-   vr_tab_calculado    EMPR0001.typ_tab_calculado;
    vr_tab_parcelas_pos EMPR0011.typ_tab_parcelas;
 
    vr_tab_price EMPR0011.typ_tab_price;
 
    vr_index_pos PLS_INTEGER;
-
+	 
+	 vr_vlrpagar NUMBER := pr_vlrpagar;
+	 vr_vlparcel NUMBER;
 
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
@@ -2375,23 +2365,16 @@ create or replace package body cecred.EMPR9999 as
     END fn_dia_util_anterior;
 
   BEGIN
-
-    -----------------------------------------------------------------------------------------------
-    -- Buscar as parcelas do contrato
-    -----------------------------------------------------------------------------------------------
-
-
-
+    pr_vltotpag := 0;
 
       -- Busca as parcelas para pagamento
       EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
   							                             ,pr_cdprogra => vr_cdprogra
-                                             ,pr_flgbatch => TRUE
                                              ,pr_dtmvtolt => pr_crapdat.dtmvtolt
                                              ,pr_dtmvtoan => pr_crapdat.dtmvtoan
                                              ,pr_nrdconta => pr_nrdconta        -- rw_crapepr.nrdconta
                                              ,pr_nrctremp => pr_nrctremp        --rw_crapepr.nrctremp
-                                             ,pr_dtefetiv => pr_crapdat.dtmvtolt--rw_crapepr.dtmvtolt
+                                             ,pr_dtefetiv => pr_dtmvtolt        --rw_crapepr.dtmvtolt
                                              ,pr_cdlcremp => pr_cdlcremp        --rw_crapepr.cdlcremp
                                              ,pr_vlemprst => pr_vlemprst        --rw_crapepr.vlemprst
                                              ,pr_txmensal => pr_txmensal        --rw_crapepr.txmensal
@@ -2400,7 +2383,8 @@ create or replace package body cecred.EMPR9999 as
                                              ,pr_qttolatr => pr_qttolar         --rw_crapepr.qttolatr
                                              ,pr_tab_parcelas => vr_tab_parcelas_pos
                                              ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic);
+                                             ,pr_dscritic => vr_dscritic);																				 
+																						 
           -- Se houve erro
           IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
             -- Gera Log
@@ -2412,58 +2396,58 @@ create or replace package body cecred.EMPR9999 as
             RAISE vr_exc_saida;
           END IF;
 
-
-
           -- Limpa PLTable
           vr_tab_price.DELETE;
 
           -- Carregar as variveis de retorno
           vr_index_pos := vr_tab_parcelas_pos.FIRST;
-          WHILE vr_index_pos IS NOT NULL LOOP
+          WHILE vr_index_pos IS NOT NULL AND vr_vlrpagar > 0 LOOP
             -- Chama pagamento da parcela
+						
+						IF vr_vlrpagar >= vr_tab_parcelas_pos(vr_index_pos).vlatrpag THEN
+							vr_vlparcel := vr_tab_parcelas_pos(vr_index_pos).vlatrpag;
+						ELSE
+							vr_vlparcel := vr_vlrpagar;
+						END IF;
+						
             EMPR0011.pc_gera_pagto_pos(pr_cdcooper  =>  pr_cdcooper--rw_crapepr.cdcooper
-									                            ,pr_cdprogra =>  vr_cdprogra
-                                              ,pr_dtcalcul  => pr_crapdat.dtmvtolt
-                                              ,pr_nrdconta  => pr_nrdconta--rw_crapepr.nrdconta
-                                              ,pr_nrctremp  => pr_nrctremp--rw_crapepr.nrctremp
-                                              ,pr_nrparepr  => vr_tab_parcelas_pos(vr_index_pos).nrparepr
-                                              ,pr_vlpagpar  => vr_tab_parcelas_pos(vr_index_pos).vlatrpag
-                                              ,pr_idseqttl  => 1
-                                              ,pr_cdagenci  => pr_cdagenci---rw_crapepr.cdagenci
-                                              ,pr_cdpactra  => pr_cdagenci--rw_crapepr.cdagenci
-                                              ,pr_nrdcaixa  => 0
-                                              ,pr_cdoperad  => '1'
-                                              ,pr_nrseqava  => 0
-                                              ,pr_idorigem  => 7 -- BATCH
-                                              ,pr_nmdatela  => pr_nmtelant
-                                              ,pr_tab_price => vr_tab_price
-                                              ,pr_cdcritic  => vr_cdcritic
-                                              ,pr_dscritic  => vr_dscritic);
+									                   ,pr_cdprogra =>  vr_cdprogra
+                                     ,pr_dtcalcul  => pr_crapdat.dtmvtolt
+                                     ,pr_nrdconta  => pr_nrdconta--rw_crapepr.nrdconta
+                                     ,pr_nrctremp  => pr_nrctremp--rw_crapepr.nrctremp
+                                     ,pr_nrparepr  => vr_tab_parcelas_pos(vr_index_pos).nrparepr
+                                     ,pr_vlpagpar  => vr_vlparcel
+                                     ,pr_idseqttl  => 1
+                                     ,pr_cdagenci  => pr_cdagenci---rw_crapepr.cdagenci
+                                     ,pr_cdpactra  => pr_cdagenci--rw_crapepr.cdagenci
+                                     ,pr_nrdcaixa  => 0
+                                     ,pr_cdoperad  => '1'
+                                     ,pr_nrseqava  => 0
+                                     ,pr_idorigem  => 7 -- BATCH
+                                     ,pr_nmdatela  => pr_nmtelant
+                                     ,pr_tab_price => vr_tab_price
+                                     ,pr_cdcritic  => vr_cdcritic
+                                     ,pr_dscritic  => vr_dscritic);
+																		 
             -- Se houve erro
             IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
             END IF;
+						
             -- Proximo index
             vr_index_pos := vr_tab_parcelas_pos.NEXT(vr_index_pos);
+						
+						vr_vlrpagar := vr_vlrpagar - vr_vlparcel;
+						pr_vltotpag := pr_vltotpag + vr_vlparcel;
           END LOOP;
-
-
-
   EXCEPTION
     WHEN  vr_exc_erro THEN
       pr_vltotpag := 0; -- retornar zero
       pr_dscritic := vr_dscritic;
-      /** DESFAZER A TRANSAÇÃO **/
-      ROLLBACK;
-      /**************************/
     WHEN OTHERS THEN
       pr_vltotpag := 0; -- retornar zero
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na PC_PAGAR_EMPRESTIMO_POS: '||SQLERRM;
-
-      /** DESFAZER A TRANSAÇÃO **/
-      ROLLBACK;
-      /**************************/
   END pc_pagar_emprestimo_pos;
 
 END EMPR9999;
