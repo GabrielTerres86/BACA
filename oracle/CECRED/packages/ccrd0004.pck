@@ -1378,7 +1378,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
           if vr_cdcritic <> 0 or vr_dscritic <> null then
              RAISE vr_exc_saida;
           end if;
-        EXCEPTION
+        EXCEPTION	 
+		  WHEN vr_exc_saida THEN  
+            null; --> Apenas passar a critica
+            RAISE vr_exc_saida; 
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
             RAISE vr_exc_saida;
