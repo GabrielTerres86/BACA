@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 21/02/2018
+     Data    : Marco/2005.                     Ultima atualizacao: 11/07/2018
 
      Dados referentes ao programa:
 
@@ -368,9 +368,14 @@ BEGIN
 							  registrados com histórico 50 serão inseridos no Relatório 414, 
 							  página de "Lançamentos Integrados".
 							  Chamado 792327 (Gabriel / Mouts)
+                              
+								11/07/2018 - Incluídos históricos para o relatório CRITICAITG.txt
+                           - Removido histórico 0729TRANSF.CTA. no relatório CRITICAITG.txt
+													 (Reinert)	 
 
-           29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
-                PRJ450 - Renato Cordeiro (AMcom)         
+                 29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                              PRJ450 - Renato Cordeiro (AMcom)         
+
 
      ............................................................................. */
 
@@ -1154,10 +1159,6 @@ BEGIN
         vr_tab_historico('0633SEGURO').nrctades := 4894;
         vr_tab_historico('0633SEGURO').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. SEGURO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
 
-        vr_tab_historico('0729TRANSF.CTA.').nrctaori := 1179;
-        vr_tab_historico('0729TRANSF.CTA.').nrctades := 4894;
-        vr_tab_historico('0729TRANSF.CTA.').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TEC SALÁRIO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
-
         vr_tab_historico('0729TRANSFERENC').nrctaori := 1179;
         vr_tab_historico('0729TRANSFERENC').nrctades := 4894;
         vr_tab_historico('0729TRANSFERENC').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
@@ -1197,6 +1198,50 @@ BEGIN
         vr_tab_historico('0729TRANSF RECE').nrctaori := 1179;
         vr_tab_historico('0729TRANSF RECE').nrctades := 4894;
         vr_tab_historico('0729TRANSF RECE').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                                
+
+        vr_tab_historico('0976TED-CRED CO').nrctaori := 1179;
+        vr_tab_historico('0976TED-CRED CO').nrctades := 4894;
+        vr_tab_historico('0976TED-CRED CO').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TED CREDITO NAO INTEGRADA AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+        
+        vr_tab_historico('0189PGTO CDC RE').nrctaori := 1773;
+        vr_tab_historico('0189PGTO CDC RE').nrctades := 1179;
+        vr_tab_historico('0189PGTO CDC RE').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. PGTO CDC NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0500REVERSAO DU').nrctaori := 1773;
+        vr_tab_historico('0500REVERSAO DU').nrctades := 1179;
+        vr_tab_historico('0500REVERSAO DU').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. REVERSAO DUPLICADA NAO INTEGRADA AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0632ORDEM BANCA').nrctaori := 1179;
+        vr_tab_historico('0632ORDEM BANCA').nrctades := 4894;
+        vr_tab_historico('0632ORDEM BANCA').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. ORDEM BANCARIA NAO INTEGRADA AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900BRADESCO CR').nrctaori := 1179;
+        vr_tab_historico('0900BRADESCO CR').nrctades := 4894;
+        vr_tab_historico('0900BRADESCO CR').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. BRADESCO CREDITO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0732CIELO CREDI').nrctaori := 1179;
+        vr_tab_historico('0732CIELO CREDI').nrctades := 4894;
+        vr_tab_historico('0732CIELO CREDI').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CIELO CREDITO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900REDECARD DE').nrctaori := 1179;
+        vr_tab_historico('0900REDECARD DE').nrctades := 4894;
+        vr_tab_historico('0900REDECARD DE').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REDECARD NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0886REMUNER. AC').nrctaori := 1179;
+        vr_tab_historico('0886REMUNER. AC').nrctades := 4894;
+        vr_tab_historico('0886REMUNER. AC').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REMUNERACAO AC NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900REDE VISA D').nrctaori := 1179;
+        vr_tab_historico('0900REDE VISA D').nrctades := 4894;
+        vr_tab_historico('0900REDE VISA D').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REDE VISA NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0900REDE CREDIT').nrctaori := 1179;
+        vr_tab_historico('0900REDE CREDIT').nrctades := 4894;
+        vr_tab_historico('0900REDE CREDIT').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. REDE CREDITO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
+
+        vr_tab_historico('0612CRED PAGSEG').nrctaori := 1179;
+        vr_tab_historico('0612CRED PAGSEG').nrctades := 4894;
+        vr_tab_historico('0612CRED PAGSEG').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO PAGSEGURO NAO INTEGRADO AUTOMATICAMENTE NA C/C ITG pr_nrctaitg - A REGULARIZAR"';
         
      END;
 
@@ -3402,7 +3447,6 @@ BEGIN
                CLOSE cr_craplot;
                --Criar lote
                BEGIN
-
                  INSERT INTO craplot
                       (craplot.cdcooper
                       ,craplot.dtmvtolt
@@ -3977,29 +4021,28 @@ BEGIN
                END IF;
                --Inserir lancamento
                lanc0001.pc_gerar_lancamento_conta(
-               pr_dtmvtolt => rw_craplot.dtmvtolt,
-               pr_dtrefere => vr_dtleiarq,
-               pr_cdagenci => rw_craplot.cdagenci,
-               pr_cdbccxlt => rw_craplot.cdbccxlt,
-               pr_nrdolote => rw_craplot.nrdolote,
-               pr_nrdconta => nvl(vr_nrdconta,0),
-               pr_nrdctabb => nvl(vr_nrdctabb,0),
-               pr_nrdctitg => nvl(vr_nrdctitg,' '),
-               pr_nrdocmto => nvl(vr_nrdocmto,0),
-               pr_cdhistor => nvl(vr_cdhislcm,0),
-               pr_vllanmto => nvl(vr_vllanmto,0),
-               pr_nrseqdig => nvl(vr_nrseqint,0),
-               pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
-               pr_cdcooper => pr_cdcooper,
-               pr_cdbanchq => rw_crapfdc.cdbanchq,
-               pr_cdagechq => rw_crapfdc.cdagechq,
-               pr_nrctachq => rw_crapfdc.nrctachq,
-               pr_tab_retorno => vr_tab_retorno,
-               pr_incrineg => vr_incrineg,
-               pr_cdcritic => pr_cdcritic,
-               pr_dscritic => pr_dscritic
-               );
-               if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+                                 pr_dtmvtolt => rw_craplot.dtmvtolt,
+                                 pr_dtrefere => vr_dtleiarq,
+                                 pr_cdagenci => rw_craplot.cdagenci,
+                                 pr_cdbccxlt => rw_craplot.cdbccxlt,
+                                 pr_nrdolote => rw_craplot.nrdolote,
+                                 pr_nrdconta => nvl(vr_nrdconta,0),
+                                 pr_nrdctabb => nvl(vr_nrdctabb,0),
+                                 pr_nrdctitg => nvl(vr_nrdctitg,' '),
+                                 pr_nrdocmto => nvl(vr_nrdocmto,0),
+                                 pr_cdhistor => nvl(vr_cdhislcm,0),
+                                 pr_vllanmto => nvl(vr_vllanmto,0),
+                                 pr_nrseqdig => nvl(vr_nrseqint,0),
+                                 pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
+                                 pr_cdcooper => pr_cdcooper,
+                                 pr_cdbanchq => rw_crapfdc.cdbanchq,
+                                 pr_cdagechq => rw_crapfdc.cdagechq,
+                                 pr_nrctachq => rw_crapfdc.nrctachq,
+                                 pr_tab_retorno => vr_tab_retorno,
+                                 pr_incrineg => vr_incrineg,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic);
+               if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
                  RAISE vr_exc_saida;
                end if;
                rw_craplcm.nrseqdig:=nvl(vr_nrseqint,0);
@@ -4045,6 +4088,8 @@ BEGIN
                INTO rw_craplcm.nrseqdig,rw_craplcm.cdhistor;
 */
              EXCEPTION
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
                  vr_dscritic:= 'Erro ao inserir lancamento. '||sqlerrm;
@@ -4298,26 +4343,25 @@ BEGIN
              BEGIN
 
                lanc0001.pc_gerar_lancamento_conta(
-               pr_dtmvtolt => rw_craplot.dtmvtolt,
-               pr_dtrefere => vr_dtleiarq,
-               pr_cdagenci => rw_craplot.cdagenci,
-               pr_cdbccxlt => rw_craplot.cdbccxlt,
-               pr_nrdolote => rw_craplot.nrdolote,
-               pr_nrdconta => nvl(vr_nrdconta,0),
-               pr_nrdctabb => nvl(vr_nrdctabb,0),
-               pr_nrdctitg => nvl(vr_nrdctitg,' '),
-               pr_nrdocmto => nvl(vr_nrdocmto,0),
-               pr_cdhistor => nvl(vr_cdhistor,0),
-               pr_vllanmto => nvl(vr_vllanmto,0),
-               pr_nrseqdig => nvl(vr_nrseqint,0),
-               pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
-               pr_cdcooper => pr_cdcooper,
-               pr_tab_retorno => vr_tab_retorno,
-               pr_incrineg => vr_incrineg,
-               pr_cdcritic => pr_cdcritic,
-               pr_dscritic => pr_dscritic
-               );
-               if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+                                 pr_dtmvtolt => rw_craplot.dtmvtolt,
+                                 pr_dtrefere => vr_dtleiarq,
+                                 pr_cdagenci => rw_craplot.cdagenci,
+                                 pr_cdbccxlt => rw_craplot.cdbccxlt,
+                                 pr_nrdolote => rw_craplot.nrdolote,
+                                 pr_nrdconta => nvl(vr_nrdconta,0),
+                                 pr_nrdctabb => nvl(vr_nrdctabb,0),
+                                 pr_nrdctitg => nvl(vr_nrdctitg,' '),
+                                 pr_nrdocmto => nvl(vr_nrdocmto,0),
+                                 pr_cdhistor => nvl(vr_cdhistor,0),
+                                 pr_vllanmto => nvl(vr_vllanmto,0),
+                                 pr_nrseqdig => nvl(vr_nrseqint,0),
+                                 pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
+                                 pr_cdcooper => pr_cdcooper,
+                                 pr_tab_retorno => vr_tab_retorno,
+                                 pr_incrineg => vr_incrineg,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic);
+               if (nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null) then
                  RAISE vr_exc_saida;
                end if;
                rw_craplcm.nrseqdig:=nvl(vr_nrseqint,0);
@@ -4356,7 +4400,9 @@ BEGIN
                RETURNING craplcm.nrseqdig,craplcm.cdhistor
                INTO rw_craplcm.nrseqdig,rw_craplcm.cdhistor;
 */
-             EXCEPTION
+             EXCEPTION               
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
                  vr_dscritic:= 'Erro ao inserir lancamento debito. '||sqlerrm;
@@ -4464,27 +4510,26 @@ BEGIN
              --Inserir Lancamento
              BEGIN
                lanc0001.pc_gerar_lancamento_conta(
-               pr_dtmvtolt => rw_craplot.dtmvtolt,
-               pr_dtrefere => vr_dtleiarq,
-               pr_cdagenci => rw_craplot.cdagenci,
-               pr_cdbccxlt => rw_craplot.cdbccxlt,
-               pr_nrdolote => rw_craplot.nrdolote,
-               pr_nrdconta => nvl(vr_nrdconta,0),
-               pr_nrdctabb => nvl(vr_nrdctabb,0),
-               pr_nrdocmto => nvl(vr_nrdocmto,0),
-               pr_nrdctitg => nvl(vr_nrdctitg,' '),
-               pr_cdhistor => nvl(vr_cdhistor,0),
-               pr_vllanmto => nvl(vr_vllanmto,0),
-               pr_nrseqdig => nvl(vr_nrseqint,0),
-               pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
-               pr_cdcooper => nvl(pr_cdcooper,0),
-               pr_dsidenti => nvl(vr_dsidenti,' '),
-               pr_tab_retorno => vr_tab_retorno,
-               pr_incrineg => vr_incrineg,
-               pr_cdcritic => pr_cdcritic,
-               pr_dscritic => pr_dscritic
-               );
-               if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+                                 pr_dtmvtolt => rw_craplot.dtmvtolt,
+                                 pr_dtrefere => vr_dtleiarq,
+                                 pr_cdagenci => rw_craplot.cdagenci,
+                                 pr_cdbccxlt => rw_craplot.cdbccxlt,
+                                 pr_nrdolote => rw_craplot.nrdolote,
+                                 pr_nrdconta => nvl(vr_nrdconta,0),
+                                 pr_nrdctabb => nvl(vr_nrdctabb,0),
+                                 pr_nrdocmto => nvl(vr_nrdocmto,0),
+                                 pr_nrdctitg => nvl(vr_nrdctitg,' '),
+                                 pr_cdhistor => nvl(vr_cdhistor,0),
+                                 pr_vllanmto => nvl(vr_vllanmto,0),
+                                 pr_nrseqdig => nvl(vr_nrseqint,0),
+                                 pr_cdpesqbb => nvl(vr_cdpesqbb,' '),
+                                 pr_cdcooper => nvl(pr_cdcooper,0),
+                                 pr_dsidenti => nvl(vr_dsidenti,' '),
+                                 pr_tab_retorno => vr_tab_retorno,
+                                 pr_incrineg => vr_incrineg,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic );
+               if (nvl(vr_cdcritic,0) <>0 or vr_dscritic is not null) then
                  RAISE vr_exc_saida;
                end if;
                rw_craplcm.nrseqdig:=nvl(vr_nrseqint,0);
@@ -4526,6 +4571,9 @@ BEGIN
                INTO rw_craplcm.nrseqdig,rw_craplcm.cdhistor;
 */
              EXCEPTION
+               
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                WHEN OTHERS THEN
                  vr_cdcritic:= 0;
                  vr_dscritic:= 'Erro ao inserir lancamento debito. '||sqlerrm;
