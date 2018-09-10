@@ -371,10 +371,6 @@ PROCEDURE valida-saldo-conta:
 
     IF p-inprejuz THEN DO:
 
-        MESSAGE "BO54 - valida-saldo-conta - vai chamar oracle - "
-                "p-valor: " p-valor
-                "de-valor-liberado: " de-valor-liberado.
-
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         
         RUN STORED-PROCEDURE pc_cred_disp_prj
@@ -399,9 +395,6 @@ PROCEDURE valida-saldo-conta:
         IF aux_dscritic <> "" THEN 
             ASSIGN de-valor-liberado = 0.
 
-        MESSAGE "BO54 - valida-saldo-conta - voltou chamar oracle - "
-                "p-valor: " p-valor
-                "de-valor-liberado: " de-valor-liberado.
         /* Disponivel MENOR Valor Saque */
         IF  de-valor-liberado < p-valor THEN DO:
                 
@@ -439,11 +432,6 @@ PROCEDURE valida-saldo-conta:
                         "CTA EM PREJUIZO - Saldo Prj:" +
                         TRIM(STRING(de-valor-liberado,
                              "zzz,zzz,zzz,zz9.99-")).
-
-        MESSAGE "BO54 - valida-saldo-conta - Saldo - "
-                "p-valor-disponivel: " p-valor-disponivel
-                "de-valor-libera: " de-valor-libera
-                "p-mensagem: " p-mensagem.
 
     END.
     ELSE DO:
