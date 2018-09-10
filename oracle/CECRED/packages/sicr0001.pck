@@ -1,4 +1,4 @@
-create or replace package cecred.SICR0001 is
+create or replace package cecred.SICR0001 is 
   /*..............................................................................
 
      Programa: SICR0001      (Antiga: includes/crps642.i)
