@@ -375,7 +375,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps215 (pr_cdcooper  IN crapcop.cdcooper%
               RAISE vr_exc_saida;
            end if;
           
-        EXCEPTION
+        EXCEPTION	   
+          WHEN vr_exc_saida THEN  
+            raise vr_exc_saida;
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir lancamento nrdconta = '||rw_craplcb.nrdconta||
                                                      ' vllanmto = '||rw_craplcb.vllanmto||' : '||SQLERRM;
