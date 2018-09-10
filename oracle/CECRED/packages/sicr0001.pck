@@ -233,7 +233,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 04/07/2018
+     Data    : Abril/2013                       Ultima atualizacao: 05/09/2018
 
      Dados referentes ao programa:
 
@@ -339,12 +339,15 @@ create or replace package body cecred.SICR0001 is
                               Não posicionar pr_dscritic nem pr_cdcritic no retorno de criticas                            
 				                      ( Belli - Envolti - Chamado REQ0014479 )
 							  
-                              
                  29/05/2018 - Alterar sumario_debsic para somente somar os nao efetivados 
                               feitos no dia do debito, se ja foi cancelado nao vamos somar 
                               (bater com informacoes do crrl642) (Lucas Ranghetti INC0016207)
                               
                  04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
+
+                 05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
+                              - Estava concatenando "_EXEC" no final desse parâmetro
+				                      (Ana - Envolti - Chamado INC0023351)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
@@ -3698,7 +3701,7 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Odirlei Busana - AMcom
-  --   Data    : Novembro/2015                       Ultima atualizacao: 30/01/2018
+  --   Data    : Novembro/2015                       Ultima atualizacao: 05/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3713,6 +3716,10 @@ create or replace package body cecred.SICR0001 is
   --                        - Inclusão exception Others
   --                        - Tratamento erros others
   --                          (Ana - Envolti - Chamado 788828)
+  --
+  --             05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
+  --                          - Estava concatenando "_EXEC" no final desse parâmetro
+	--                          (Ana - Envolti - Chamado INC0023351)
   --------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
     CURSOR cr_crapprm (pr_cdcooper crapprm.cdcooper%TYPE,
@@ -3785,7 +3792,8 @@ create or replace package body cecred.SICR0001 is
     FETCH cr_crapprm INTO rw_crapprm_qtd;
     IF cr_crapprm%NOTFOUND THEN
       pr_cdcritic := 1132;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'QTD_EXEC_'||vr_cdprogra||'_EXEC.';
+      --INC0023351
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'QTD_EXEC_'||vr_cdprogra||'.';
       CLOSE cr_crapprm;
       RAISE vr_exc_erro;
     END IF;
