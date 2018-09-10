@@ -3234,54 +3234,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             rw_craplcm.vllanmto := pr_vltarifa;
             
           EXCEPTION
+            WHEN vr_exc_erro THEN
+              IF vr_cdcritic = 92 THEN --> DUP_VAL_ON_INDEX 
+                --Se o numero documento igual zero
+                IF pr_nrdocmto = 0 THEN
             
-          WHEN DUP_VAL_ON_INDEX THEN
-          --Se o numero documento igual zero
-          IF pr_nrdocmto = 0 THEN
+                  -- Gerar novo nrseqdig que será utilizado como numero de documento
+                 pc_insere_lote (pr_cdcooper => pr_cdcooper,
+                                 pr_dtmvtolt => pr_dtmvtolt,
+                                 pr_cdagenci => pr_cdagenci,
+                                 pr_cdbccxlt => pr_cdbccxlt,
+                                 pr_nrdolote => pr_nrdolote,
+                                 pr_tplotmov => pr_tplotmov,
+                                 pr_cdhistor => 0,
+                                 pr_cdoperad => pr_cdoperad,
+                                 pr_nrdcaixa => 0,
+                                 pr_cdopecxa => 0,
+                                 pr_dscritic => vr_dscritic,
+                                 pr_craplot  => rw_craplot);
             
-            -- Gerar novo nrseqdig que será utilizado como numero de documento
-            pc_insere_lote (pr_cdcooper => pr_cdcooper,
-                            pr_dtmvtolt => pr_dtmvtolt,
-                            pr_cdagenci => pr_cdagenci,
-                            pr_cdbccxlt => pr_cdbccxlt,
-                            pr_nrdolote => pr_nrdolote,
-                            pr_tplotmov => pr_tplotmov,
-                            pr_cdhistor => 0,
-                            pr_cdoperad => pr_cdoperad,
-                            pr_nrdcaixa => 0,
-                            pr_cdopecxa => 0,
-                            pr_dscritic => vr_dscritic,
-                            pr_craplot  => rw_craplot);
+                 IF vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_erro;
+                 END IF;
             
-            IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro;
-            END IF;
-            
-            --Proximo registro loop
-            CONTINUE;
-          END IF;
-          --Montar Numero Aplicacao
-          vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplica;
-          --Verificar se eh numerico
-          vr_errnumber:= FALSE;
-          BEGIN
-            vr_nraplica2:= To_Number(vr_nraplica);
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_errnumber:= TRUE;
-          END;
-          --Se ocorreu erro na conversao number
-          IF vr_errnumber OR NOT GENE0002.fn_numerico(vr_nraplica) THEN
-            --Diminuir conta aplicacao
-            vr_contapli:= Nvl(vr_contapli,0) - 1;
-            --Montar Numero Aplicacao Funcionario
-            vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplfun;
-            --Proximo registro loop
-            CONTINUE;
-          END IF;
-          --Proximo registro loop
-          CONTINUE;
+                 --Proximo registro loop
+                 CONTINUE;
+               END IF;
+               --Montar Numero Aplicacao
+               vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplica;
+               --Verificar se eh numerico
+               vr_errnumber:= FALSE;
+               BEGIN
+                 vr_nraplica2:= To_Number(vr_nraplica);
+               EXCEPTION
+                 WHEN OTHERS THEN
+                   vr_errnumber:= TRUE;
+               END;
+               --Se ocorreu erro na conversao number
+               IF vr_errnumber OR NOT GENE0002.fn_numerico(vr_nraplica) THEN
+                 --Diminuir conta aplicacao
+                 vr_contapli:= Nvl(vr_contapli,0) - 1;
+                 --Montar Numero Aplicacao Funcionario
+                 vr_nraplica:= vr_tab_ctrdocmt(vr_contapli)||vr_nraplfun;
+                 --Proximo registro loop
+                 CONTINUE;
+               END IF;
+               --Proximo registro loop
+               CONTINUE;
           
+              ELSE
+                RAISE vr_exc_erro;
+              END IF; --> FIM IF vr_cdcritic = 92  
+                     
           WHEN Others THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro ao inserir lancamento. '||sqlerrm;
