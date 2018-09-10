@@ -36,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 08/02/2018
+    Data    : Abril/2006                      Ultima Atualizacao: 12/06/2018
     
     Dados referentes ao programa:
 
@@ -415,8 +415,18 @@
 
 	          30/01/2018 - Adicionado tratamento na valida-inclusao-conta-transferencia
                            para trocar a mensagem quando a origem for InternetBank (Anderson).
-            12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
-                           
+
+              24/04/2018 - Normalizandos criticas para que busque apenas da tabela crapcri
+                           tambem no "WHEN OTHERS THEN" para que nao mostre mais críticas
+                           que o usuário não precise enxergar e então gravando em log. 
+                           (SD 865935 - Kelvin)		   
+
+              12/04/2018 - Inclusao de novos campo para realizaçao 
+                           de analise de fraude. 
+                           PRJ381 - AntiFraude (Odirlei-AMcom)
+
+              12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -1216,9 +1226,9 @@ PROCEDURE verifica_operacao:
     DEF VAR aux_dtiniper AS DATE                                    NO-UNDO.
     DEF VAR aux_dtfimper AS DATE                                    NO-UNDO.
     DEF VAR aux_vltarifa AS DECI                                    NO-UNDO.
-    DEF VAR aux_cdhistor AS INT                                    NO-UNDO.
-    DEF VAR aux_cdhisest AS INT                                    NO-UNDO.
-    DEF VAR aux_cdfvlcop AS INT                                    NO-UNDO.
+    DEF VAR aux_cdhistor AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdhisest AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdfvlcop AS INTE                                    NO-UNDO.
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1crap20   AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1crap22   AS HANDLE                                  NO-UNDO.
@@ -2585,6 +2595,7 @@ PROCEDURE executa-envio-ted:
     DEF  INPUT PARAM par_idagenda AS INTEGER                        NO-UNDO.
     DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dstransa AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_iddispos AS CHAR                           NO-UNDO.
     
     DEF OUTPUT PARAM par_dsprotoc LIKE crappro.dsprotoc             NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -2644,6 +2655,7 @@ PROCEDURE executa-envio-ted:
      INPUT par_idagenda,
      INPUT par_iptransa,  /* pr_iptransa */
      INPUT par_dstransa,  /* pr_dstransa */
+                                         INPUT par_iddispos,
 
      
     OUTPUT "",  /*pr_dsprotoc*/
@@ -9891,8 +9903,8 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                  OUTPUT aux_nrdrowid).
                                              
           RETURN "NOK".
-      
         END.
+      
       
     RETURN "OK".
     

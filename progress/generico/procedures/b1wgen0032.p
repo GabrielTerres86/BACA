@@ -139,15 +139,19 @@
 
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-                                07/12/2016 - P341-Automatizaçao BACENJUD - Alterar o uso da descriçao do
+                07/12/2016 - P341-Automatizaçao BACENJUD - Alterar o uso da descriçao do
                              departamento passando a considerar o código (Renato Darosci)
 
-                                19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                                         crapass, crapttl, crapjur 
-                                                        (Adriano - P339).
+                19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur (Adriano - P339).
 
                 29/03/2018 - Chamar rotina pc_valida_adesao_produto na proc 
                              obtem-permissao-solicitacao. PRJ366 (Lombardi).
+
+                14/08/2018 - P450 - Procedimentos realizados na c/c para a transferência(Rangel/AMcom)
+
+				03/08/2018 - Ajuste na grava-senha-letras, para	alterar a situação
+				             da senha letras para ativo. INC0019451 (Wagner - Sustentação)
 
 ..............................................................................*/
 
@@ -1997,6 +2001,32 @@ PROCEDURE bloquear-cartao-magnetico:
             RETURN "NOK".
         END.
                             
+    IF  par_flgerlog  THEN
+        DO:
+            RUN proc_gerar_log (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT "",
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT TRUE,
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                               OUTPUT aux_nrdrowid).
+
+            /** Numero do Cartao Magnetico **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "nrcartao",
+                                     INPUT "",
+                                     INPUT STRING(par_nrcartao,
+                                                  "9999,9999,9999,9999")).
+                                     
+            /** Situacao do cartao **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "cdsitcar",
+                                     INPUT "2",
+                                     INPUT "4").
+        END.
 
     RETURN "OK".
     
@@ -3309,6 +3339,7 @@ PROCEDURE grava-senha-letras:
                                          UPPER(SUBSTR(par_dssennov,1,1)))
                crapsnh.dtaltsnh = par_dtmvtolt
                crapsnh.cdoperad = par_cdoperad
+			   crapsnh.cdsitsnh = 1 /* Ativo */
                aux_flgtrans     = TRUE.
         
     END. /** Fim do DO TRANSACTION - TRANSACAO **/

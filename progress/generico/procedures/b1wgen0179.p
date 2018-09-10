@@ -16,11 +16,20 @@
                              
                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
                 
+				26/03/2018 - PJ 416 - BacenJud - Incluir o campo de inclusão do histórico no bloqueio judicial - Márcio - Mouts
+                
+                05/04/2018 - PJ 416 - BacenJud - Incluido na grava_dados o parametro operauto (para salvar log), que é o 
+                             operador que autorizou a alteraçao do campo histórico no bloqueio judicial - Mateus Z (Mouts)
+        
                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
                              Diego Simas - AMcom  
-                             
-                18/07/2018 - Criado novo campo "indebprj", indicador de débito após transferencia da CC para Prejuízo
-                             PJ 450 - Diego Simas - AMcom
+
+                16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+        
+                15/05/2018 - 364 - SM 5 - Ajuste para considerar o novo parâmetro inperdes (Rafael - Mouts).
+
+                18/07/2018 - P450 - Criado novo campo "indebprj", indicador de débito após transferencia da CC para Prejuízo
+                             (Diego Simas - AMcom)
         
 ............................................................................*/
 
@@ -590,10 +599,18 @@ PROCEDURE Busca_Historico:
            tt-histor.indebprj = craphis.indebprj
            tt-histor.ingerdeb = craphis.ingerdeb   
            tt-histor.dsextrat = craphis.dsextrat
+		   /*PJ 416 - Início */
+           tt-histor.indutblq = craphis.indutblq		   
+		   /*PJ 416 - Fim */
+
+           /*Inicio 364 - SM 5*/
+           tt-histor.inperdes = craphis.inperdes
+           /*Fim 364 - SM 5*/
            tt-histor.flgsenha = IF craphis.flgsenha THEN
                                     1
                                 ELSE
-                                    0. 
+                                    0
+		   tt-histor.idmonpld = craphis.idmonpld.
 
         IF craphis.cdgrphis > 0 THEN
             DO:
@@ -839,6 +856,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_cdgrphis AS INTE                           NO-UNDO.
     
     DEF  INPUT PARAM par_flgsenha AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_indutblq AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdprodut AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagrupa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsextrat AS CHAR                           NO-UNDO.
@@ -850,6 +868,13 @@ PROCEDURE Grava_Dados:
 
     DEF  INPUT PARAM par_indebfol AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_txdoipmf AS INTE                           NO-UNDO.
+    /*364 - SM 5*/
+    DEF  INPUT PARAM par_inperdes AS INTE                           NO-UNDO.
+    
+	  /* PRJ 416 */
+    DEF  INPUT PARAM par_operauto AS CHAR                           NO-UNDO.
+    
+	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -862,7 +887,6 @@ PROCEDURE Grava_Dados:
     DEF  VAR aux_flgsenha AS LOGI                                   NO-UNDO.
     DEF  VAR aux_inestocc AS LOGI                                   NO-UNDO. 
     DEF  VAR aux_flggphis AS CHAR                                   NO-UNDO.
-    
     DEF  VAR aux_des_erro AS CHAR                                   NO-UNDO.
 
     ASSIGN aux_dscritic = ""
@@ -1110,6 +1134,16 @@ PROCEDURE Grava_Dados:
                 ASSIGN aux_flgsenha = NO.
         END.
         
+		/*PJ 416 - Início */
+        IF NOT CAN-DO("S,N",par_indutblq) THEN		
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Indicador para Considerar para Bloqueio Judicial invalido."
+                       par_nmdcampo = "indutblq".
+                LEAVE Grava.
+            END.		
+		/*PJ 416 - Fim*/
+
         IF par_inestocc = 1 THEN
             ASSIGN aux_inestocc = TRUE.
         ELSE
@@ -1254,6 +1288,7 @@ PROCEDURE Grava_Dados:
                                        INPUT par_nrctatrc,
                                        INPUT par_nrctatrd,
                                        INPUT aux_flgsenha,
+									   INPUT par_indutblq,
                                        INPUT par_cdprodut,
                                        INPUT par_cdagrupa,
                                        INPUT par_indebfol,
@@ -1265,7 +1300,9 @@ PROCEDURE Grava_Dados:
                                        INPUT aux_vltarcxo,
                                        INPUT aux_vltarint,
                                        INPUT aux_vltarcsh,
-                                       INPUT 0). /* cdcoprep */
+                                       INPUT par_inperdes,
+                                       INPUT 0,
+									   INPUT par_idmonpld). /* cdcoprep */
                      /* Codigo da cooperativa que esta replicando eh 0
                         esta alterando o historico */
                 END.
@@ -1304,7 +1341,10 @@ PROCEDURE Grava_Dados:
                            craphis.cdagrupa  =  par_cdagrupa
                            craphis.dsextrat  =  CAPS(par_dsextrat)
                            craphis.flgsenha  =  aux_flgsenha
-                           craphis.cdgrphis  =  par_cdgrphis.
+                           craphis.cdgrphis  =  par_cdgrphis
+						   craphis.indutblq  =  par_indutblq						   
+                           craphis.idmonpld  =  par_idmonpld
+                           craphis.inperdes  =  par_inperdes.
     
                     /* Atualizar as informacoes das tarifas */
                     FIND FIRST crapthi WHERE crapthi.cdcooper = craphis.cdcooper
@@ -1362,6 +1402,43 @@ PROCEDURE Grava_Dados:
                                          INPUT par_vltarint,
                                          INPUT par_vltarayl,
                                          INPUT par_vltarcsh).
+					
+					/* Inicio PRJ 416 - Se o campo operauto (operador que autorizou fia vform senha) nao seja vazio, irá salvar log informando que foi o mesmo que autorizou a açao */                     
+                    IF par_indutblq = "N" AND par_operauto <> "" THEN
+                      DO:
+                      
+                        FIND crapope WHERE crapope.cdcooper = par_cdcooper   AND
+                                           crapope.cdoperad = par_operauto   NO-LOCK NO-ERROR.
+                          
+                        /* Gravar log com a autorizacao do operador */
+                        IF par_cddopcao = "A"  THEN
+                          DO:
+                          
+                            ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+                            aux_dstransa = "O operador " + STRING(par_operauto) + " - " + STRING(crapope.nmoperad) + " autorizou a alteracao do indicador de utilizacao do historico no Bloqueio Judicial do Historico " + STRING(par_cdhistor) + " de 'Sim' para 'Nao'".
+                          
+                END.
+                          
+                        IF par_cddopcao = "I"  THEN
+                          DO:
+                          
+                            ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+                            aux_dstransa = "O operador " + STRING(par_operauto) + " - " + STRING(crapope.nmoperad) + " autorizou a alteracao do indicador de utilizacao do historico no Bloqueio Judicial do Historico " + STRING(par_cdhinovo) + " de 'Sim' para 'Nao'".
+                          
+                          END.
+                        
+                        RUN proc_gerar_log (INPUT par_cdcooper,
+                                            INPUT par_cdoperad,
+                                            INPUT "",
+                                            INPUT aux_dsorigem,
+                                            INPUT aux_dstransa,
+                                            INPUT TRUE,
+                                            INPUT 0,
+                                            INPUT par_nmdatela,
+                                            INPUT 0,
+                                            OUTPUT aux_nrdrowid).
+                      END.
+                    /* Fim PRJ 416 */
                 END.
             
             /* Gerar log da inclusao */
@@ -1550,6 +1627,7 @@ PROCEDURE Replica_Dados:
                                INPUT craphis.nrctatrc,
                                INPUT craphis.nrctatrd,
                                INPUT craphis.flgsenha,
+							   INPUT craphis.indutblq,
                                INPUT craphis.cdprodut,
                                INPUT craphis.cdagrupa,
                                INPUT craphis.indebfol,
@@ -1561,7 +1639,9 @@ PROCEDURE Replica_Dados:
                                INPUT log_vltarcxo,
                                INPUT log_vltarint,
                                INPUT log_vltarcsh,
-                               INPUT par_cdcooper). /* cdcoprep */
+                               INPUT craphis.inperdes,
+                               INPUT par_cdcooper,
+							   INPUT craphis.idmonpld). /* cdcoprep */
             /* passar o codigo da cooperativa 
               que estamos replicando o historico */
         END.
@@ -2024,6 +2104,7 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM par_nrctatrc AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctatrd AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_flgsenha AS LOGI                            NO-UNDO.
+	DEF INPUT PARAM par_indutblq AS CHAR                            NO-UNDO.
     DEF INPUT PARAM par_cdprodut AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_cdagrupa AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_indebfol AS INTE                            NO-UNDO.
@@ -2036,7 +2117,9 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM log_vltarint AS DECI                            NO-UNDO.
     DEF INPUT PARAM log_vltarcsh AS DECI                            NO-UNDO.
     /* Codigo da cooperativa que replicou os dados */
+    DEF INPUT PARAM log_inperdes AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_cdcoprep AS INTE NO-UNDO.
+	DEF INPUT PARAM par_idmonpld AS INTE                            NO-UNDO.
 
     FOR FIRST b-craphis WHERE b-craphis.cdcooper = par_cdcooper
                           AND b-craphis.cdhistor = par_cdhistor NO-LOCK: END.
@@ -2327,6 +2410,41 @@ PROCEDURE gera_item_log:
                              ELSE
                                 "Nao"), 
                       INPUT (IF par_flgsenha = TRUE THEN
+                                "Sim"
+                             ELSE 
+                                "Nao")).
+       
+    IF log_inperdes <> b-craphis.inperdes THEN
+       RUN gera_log (INPUT par_cdcooper,
+                     INPUT par_cdoperad,
+                     INPUT par_cdhistor,
+                     INPUT par_cdcoprep,
+                     INPUT "Indicador de permissao desligamento",
+                     INPUT b-craphis.inperdes,
+                     INPUT log_inperdes).
+       
+	/*PJ 416 - Início*/   
+    IF par_indutblq <> b-craphis.indutblq THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Ind. Cons. Bloq. Jud.",
+                      INPUT STRING(b-craphis.indutblq),
+                      INPUT STRING(par_indutblq)).
+    /*PJ 416 - Fim */ 							
+       
+    IF par_idmonpld <> b-craphis.idmonpld THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Monitoramento PLD",
+                      INPUT (IF b-craphis.idmonpld = 1 THEN
+                                "Sim" 
+                             ELSE
+                                "Nao"), 
+                      INPUT (IF par_idmonpld = 1 THEN
                                 "Sim"
                              ELSE 
                                 "Nao")).

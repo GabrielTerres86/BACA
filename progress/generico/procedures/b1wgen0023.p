@@ -30,7 +30,7 @@
 
     Programa: b1wgen0023.p
     Autor   : Guilherme
-    Data    : Junho/2009                       Ultima Atualizacao: 03/12/2014
+    Data    : Junho/2009                       Ultima Atualizacao: 06/07/2018
     
     Dados referentes ao programa:
 
@@ -70,7 +70,7 @@
                19/12/2013 - Adicionado validate para as tabelas craplot,
                             craplcm, craplem (Tiago).
                             
-               09/09/2014 - Criaçăo de procedures para validaçăo de limites
+               09/09/2014 - Criação de procedures para validação de limites
                             de crédito (Dionathan).
                
                01/12/2014 - De acordo com a circula 3.656 do Banco Central, substituir nomenclaturas 
@@ -84,6 +84,7 @@
  .............................................................................*/
 
 { sistema/generico/includes/b1wgen0023tt.i }
+
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
@@ -687,10 +688,15 @@ PROCEDURE baixa_epr_titulo:
                        ,OUTPUT aux_cdcritic
                        ,OUTPUT aux_dscritic).
 
-                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                        DO: 
-                            RETURN 'NOK'.
-                        END.   
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO: 			 
+                           RUN gera_erro (INPUT par_cdcooper,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrdcaixa,
+                                          INPUT 1,     /** Sequencia **/
+                                          INPUT aux_cdcritic,
+                                          INPUT-OUTPUT aux_dscritic).
+                           RETURN "NOK".
+                        END.
 
              ASSIGN craplot.vlinfodb = craplot.vlinfocr + par_vllanmto
                     craplot.vlcompdb = craplot.vlcompcr + par_vllanmto
@@ -797,10 +803,15 @@ PROCEDURE baixa_epr_titulo:
                        ,OUTPUT aux_cdcritic
                        ,OUTPUT aux_dscritic).
 
-                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                        DO:  
-                           RETURN 'NOK'.
-                        END.     
+                       IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO: 			 
+                           RUN gera_erro (INPUT par_cdcooper,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrdcaixa,
+                                          INPUT 1,     /** Sequencia **/
+                                          INPUT aux_cdcritic,
+                                          INPUT-OUTPUT aux_dscritic).
+                           RETURN "NOK".
+                        END.
 
     ASSIGN   craplot.vlinfodb = craplot.vlinfodb + par_vllanmto
              craplot.vlcompdb = craplot.vlcompdb + par_vllanmto

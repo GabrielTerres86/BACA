@@ -55,7 +55,7 @@
 
    Programa: b1wgen0091.p                  
    Autora  : André - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 06/12/2016
+   Data    : 16/05/2011                        Ultima atualizacao: 12/06/2018
     
    Dados referentes ao programa:
    
@@ -361,6 +361,9 @@
              
                06/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
                12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
                             
  ............................................................................*/
@@ -7020,7 +7023,7 @@ PROCEDURE pi_carrega_temp_cooperativas:
          DO:
              FOR EACH crapcop NO-LOCK:
                  CREATE tt-crapcop.
-                 BUFFER-COPY crapcop TO tt-crapcop.
+                 BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
              END.
          END.
     ELSE 
@@ -7042,7 +7045,7 @@ PROCEDURE pi_carrega_temp_cooperativas:
                  END.
 
             CREATE tt-crapcop.
-            BUFFER-COPY crapcop TO tt-crapcop.
+            BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
             RELEASE crapcop.
         END.
 
@@ -7153,67 +7156,46 @@ PROCEDURE gera_credito_em_conta:
             ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
             ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
             
-          IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-            DO:  
-            IF aux_incrineg = 1 THEN
-             DO:
-              /* Tratativas de negocio */ 
-              ASSIGN crablbi.dtdpagto = par_dtmvtolt
-              crablbi.dtdenvio = par_dtmvtolt.
+          IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:  
+             /* Tratar o erro */
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT crablbi.cdagenci,
+                            INPUT 100,
+                            INPUT 1,            /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+             RETURN "NOK".
+          END.
+          ASSIGN crablbi.dtdpagto = par_dtmvtolt
+                 crablbi.dtdenvio = par_dtmvtolt.
 
-              IF UPPER(par_cdprogra) = "PRPREV" THEN
-                 UNIX SILENT VALUE("echo "      + STRING(par_dtdehoje,"99/99/9999")      +
-                                   " "          + STRING(TIME,"HH:MM:SS")    + "' --> '" +
-                                   "Operador: " + par_cdoperad               + " - "     +
-                                   "Realizou o credito em conta para a "                 +
-                                   "Conta: " + STRING(crablbi.nrdconta,"zzzz,zzz,9") +
-                                   ", Coop.: " + STRING(crablbi.cdcooper) +
-                                   ", PA : " + STRING(crablbi.cdagenci) +
-                                   ", Valor: " + STRING(crablbi.vlliqcre) + "." 
-                                   + " >> log/prprev.log").
-              ELSE
-                 UNIX SILENT VALUE("echo "      + STRING(par_dtdehoje,"99/99/9999")      +
-                                   " "          + STRING(TIME,"HH:MM:SS")    + "' --> '" +
-                                   "Realizado o credito em conta para a "                +
-                                   "Conta: " + STRING(crablbi.nrdconta,"zzzz,zzz,9") +
-                                   ", Coop.: " + STRING(crablbi.cdcooper) +
-                                   ", PA : " + STRING(crablbi.cdagenci) +
-                                   ", Valor: " + STRING(crablbi.vlliqcre) + "."
-                                   + " >> log/prprev.log").
+          IF UPPER(par_cdprogra) = "PRPREV" THEN
+             UNIX SILENT VALUE("echo "      + STRING(par_dtdehoje,"99/99/9999")      +
+                               " "          + STRING(TIME,"HH:MM:SS")    + "' --> '" +
+                               "Operador: " + par_cdoperad               + " - "     +
+                               "Realizou o credito em conta para a "                 +
+                               "Conta: " + STRING(crablbi.nrdconta,"zzzz,zzz,9") +
+                               ", Coop.: " + STRING(crablbi.cdcooper) +
+                               ", PA : " + STRING(crablbi.cdagenci) +
+                               ", Valor: " + STRING(crablbi.vlliqcre) + "." 
+                               + " >> log/prprev.log").
+          ELSE
+             UNIX SILENT VALUE("echo "      + STRING(par_dtdehoje,"99/99/9999")      +
+                               " "          + STRING(TIME,"HH:MM:SS")    + "' --> '" +
+                               "Realizado o credito em conta para a "                +
+                               "Conta: " + STRING(crablbi.nrdconta,"zzzz,zzz,9") +
+                               ", Coop.: " + STRING(crablbi.cdcooper) +
+                               ", PA : " + STRING(crablbi.cdagenci) +
+                               ", Valor: " + STRING(crablbi.vlliqcre) + "."
+                               + " >> log/prprev.log").
               
-                 RELEASE craplot.
+          RELEASE craplot.
 
-                 /*VALIDATE craplcm.*/
 
-              RETURN "OK".
-             END.
-            ELSE
-             DO:
-              MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-              RETURN "NOK".
-             END.   
-            END.
-            
-          IF  VALID-HANDLE(h-b1wgen0200) THEN
-            DELETE PROCEDURE h-b1wgen0200.           
-           
-    /*CREATE craplcm.
+    IF  VALID-HANDLE(h-b1wgen0200) THEN
+        DELETE PROCEDURE h-b1wgen0200.
 
-    ASSIGN craplcm.cdcooper = par_cdcooper
-           craplcm.dtmvtolt = craplot.dtmvtolt
-           craplcm.cdagenci = craplot.cdagenci
-           craplcm.cdbccxlt = craplot.cdbccxlt
-           craplcm.nrdolote = craplot.nrdolote
-           craplcm.nrdconta = crablbi.nrdconta
-           craplcm.nrdctabb = crablbi.nrdconta
-           craplcm.nrdctitg = STRING(crablbi.nrdconta,"99999999")
-           craplcm.nrdocmto = craplot.nrseqdig
-           craplcm.cdhistor = 581
-           craplcm.vllanmto = crablbi.vlliqcre
-           craplcm.nrseqdig = craplot.nrseqdig.*/
-       
-    
-
+    RETURN "OK".
 
 END PROCEDURE.   /* FIM gera_credito_em_conta  */
 
@@ -7323,13 +7305,13 @@ PROCEDURE transfere_beneficio:
         (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
         ,INPUT craplot.cdagenci               /* par_cdagenci */
         ,INPUT craplot.cdbccxlt               /* par_cdbccxlt */
-        ,INPUT craplot.nrdolote             /* par_nrdolote */
+        ,INPUT craplot.nrdolote               /* par_nrdolote */
         ,INPUT par_nrdconta                   /* par_nrdconta */
         ,INPUT craplot.nrseqdig + 1           /* par_nrdocmto */
         ,INPUT par_cdhistor                   /* par_cdhistor */
         ,INPUT craplot.nrseqdig + 1           /* par_nrseqdig */
         ,INPUT crablbi.vlliqcre               /* par_vllanmto */
-        ,INPUT par_nrdconta                  /* par_nrdctabb */
+        ,INPUT par_nrdconta                   /* par_nrdctabb */
         ,INPUT ""                             /* par_cdpesqbb */
         ,INPUT 0                              /* par_vldoipmf */
         ,INPUT 0                              /* par_nrautdoc */
@@ -7364,28 +7346,21 @@ PROCEDURE transfere_beneficio:
         ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
         ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
         
-        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-        DO:  
-          MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-          RETURN "NOK".
-        END.   
-        
-        IF  VALID-HANDLE(h-b1wgen0200) THEN
-        DELETE PROCEDURE h-b1wgen0200.    
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:  
+           /* Tratar o erro */
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT craplot.cdagenci,
+                          INPUT 100,
+                          INPUT 1,            /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+        END.
 
-    /*CREATE craplcm.
-    ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-           craplcm.cdagenci = craplot.cdagenci
-           craplcm.cdbccxlt = craplot.cdbccxlt
-           craplcm.nrdolote = craplot.nrdolote
-           craplcm.nrdconta = par_nrdconta
-           craplcm.nrdctabb = par_nrdconta
-           craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
-           craplcm.vllanmto = crablbi.vlliqcre
-           craplcm.cdhistor = par_cdhistor
-           craplcm.nrseqdig = craplot.nrseqdig + 1
-           craplcm.nrdocmto = craplot.nrseqdig + 1
-           craplcm.cdcooper = craplot.cdcooper.*/
+        IF  VALID-HANDLE(h-b1wgen0200) THEN
+            DELETE PROCEDURE h-b1wgen0200.    
+
+
 
     FIND craphis WHERE craphis.cdcooper = par_cdcooper AND
                        craphis.cdhistor = par_cdhistor
@@ -7487,7 +7462,7 @@ PROCEDURE comprova_vida:
          crapcop.nmextcop       NO-LABEL                      AT 18
          SKIP                                                 
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 13
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 28
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 28
          par_hrtransa NO-LABEL                                AT 65 
          SKIP                                                 
          "COMPROVANTE DE RENOVACAO PROVA DE VIDA INSS"        AT 21
@@ -7523,7 +7498,7 @@ PROCEDURE comprova_vida:
          crapcop.nmextcop       NO-LABEL                      AT 18
          SKIP                                                
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 13
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 28
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 28
          par_hrtransa NO-LABEL                                AT 65 
          SKIP                                                
          "COMPROVANTE DE RENOVACAO PROVA DE VIDA INSS"        AT 21
@@ -7550,7 +7525,7 @@ PROCEDURE comprova_vida:
 
   FORM   aux_nmextcop FORMAT "X(44)" NO-LABEL                 AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - " 
@@ -7581,7 +7556,7 @@ PROCEDURE comprova_vida:
   FORM   SKIP(5)
          aux_nmextcop FORMAT "X(44)" NO-LABEL                 AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - " 
@@ -7612,7 +7587,7 @@ PROCEDURE comprova_vida:
 
   FORM   aux_nmextcop FORMAT "X(44)"  NO-LABEL                AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - "
@@ -7651,7 +7626,7 @@ PROCEDURE comprova_vida:
 
   FORM   aux_nmextcop FORMAT "X(44)"  NO-LABEL                AT 2
          SKIP                                                 
-         " SISTEMA CECRED - CONVENIOS INSS "                  AT 7
+         " SISTEMA AILOS  - CONVENIOS INSS "                  AT 7
          SKIP
          par_dtmvtolt           NO-LABEL FORMAT "99/99/9999"  AT 12
          " - "

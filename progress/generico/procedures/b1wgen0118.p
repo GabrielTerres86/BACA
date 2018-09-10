@@ -2,7 +2,7 @@
    
    Programa: b1wgen0118.p                  
    Autor(a): Gabriel
-   Data    : 29/09/2011                        Ultima atualizacao: 27/10/2014
+   Data    : 29/09/2011                        Ultima atualizacao: 12/06/2018
 
    Dados referentes ao programa:
 
@@ -590,7 +590,7 @@ PROCEDURE deposito-tarifa:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
-    /* DEF OUTPUT PARAM TABLE FOR tt-erro.*/
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
     DEF  VAR         aux_flgtrans AS LOGI                           NO-UNDO.

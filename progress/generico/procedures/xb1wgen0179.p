@@ -15,9 +15,15 @@
 
                  05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
                  
+				 05/04/2018 - PRJ 416 Bacenjud - Adicionado campo indutblq e operauto - Mateus Z (Mouts)
+                 
                  12/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
                               Diego Simas - AMcom
                               
+                 16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                              
+                 15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
+
                  18/07/2018 - Criado novo campo "indebprj", indicador de débito após transferencia da CC para Prejuízo
   							  PJ 450 - Diego Simas - AMcom
                               
@@ -77,6 +83,7 @@ DEF VAR aux_inestocc AS INTE                                         NO-UNDO.
 DEF VAR aux_indebprj AS INTE                                         NO-UNDO.
 DEF VAR aux_ingerdeb AS INTE                                         NO-UNDO.
 DEF VAR aux_flgsenha AS INTE                                         NO-UNDO.
+DEF VAR aux_indutblq AS CHAR                                         NO-UNDO.
 DEF VAR aux_dsextrat AS CHAR                                         NO-UNDO.
 DEF VAR aux_vltarayl AS DECI                                         NO-UNDO.
 DEF VAR aux_vltarcxo AS DECI                                         NO-UNDO.
@@ -84,6 +91,7 @@ DEF VAR aux_vltarint AS DECI                                         NO-UNDO.
 DEF VAR aux_vltarcsh AS DECI                                         NO-UNDO.
 DEF VAR aux_indebfol AS INTE                                         NO-UNDO.
 DEF VAR aux_txdoipmf AS INTE                                         NO-UNDO.
+DEF VAR aux_operauto AS CHAR                                         NO-UNDO.
 DEF VAR log_vltarayl AS DECI                                         NO-UNDO.
 DEF VAR log_vltarcxo AS DECI                                         NO-UNDO.
 DEF VAR log_vltarint AS DECI                                         NO-UNDO.
@@ -95,6 +103,9 @@ DEF VAR aux_cdgrphis AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cdprodut AS INTE                                         NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                         NO-UNDO.
+
+DEF VAR aux_idmonpld AS INTE                                         NO-UNDO.
+DEF VAR aux_inperdes AS INTE                                         NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -151,6 +162,7 @@ PROCEDURE valores_entrada:
              WHEN "indebprj" THEN aux_indebprj = INTE(tt-param.valorCampo).
              WHEN "ingerdeb" THEN aux_ingerdeb = INTE(tt-param.valorCampo).
              WHEN "flgsenha" THEN aux_flgsenha = INTE(tt-param.valorCampo).
+			 WHEN "indutblq" THEN aux_indutblq = tt-param.valorCampo.
              WHEN "dsextrat" THEN aux_dsextrat = tt-param.valorCampo.
              WHEN "vltarayl" THEN aux_vltarayl = DECI(tt-param.valorCampo).
              WHEN "vltarcxo" THEN aux_vltarcxo = DECI(tt-param.valorCampo).
@@ -158,6 +170,7 @@ PROCEDURE valores_entrada:
              WHEN "vltarcsh" THEN aux_vltarcsh = DECI(tt-param.valorCampo).
              WHEN "indebfol" THEN aux_indebfol = INTE(tt-param.valorCampo).
              WHEN "txdoipmf" THEN aux_txdoipmf = INTE(tt-param.valorCampo).
+			 WHEN "operauto" THEN aux_operauto = tt-param.valorCampo.
              WHEN "vltarayl" THEN log_vltarayl = DECI(tt-param.valorCampo).
              WHEN "vltarcxo" THEN log_vltarcxo = DECI(tt-param.valorCampo).
              WHEN "vltarint" THEN log_vltarint = DECI(tt-param.valorCampo).
@@ -169,6 +182,8 @@ PROCEDURE valores_entrada:
              WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
              WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
              WHEN "cdgrphis" THEN aux_cdgrphis = INTE(tt-param.valorCampo).
+             WHEN "inperdes" THEN aux_inperdes = INTE(tt-param.valorCampo).
+			 WHEN "idmonpld" THEN aux_idmonpld = INTE(tt-param.valorCampo).
 
          END CASE.
 
@@ -380,6 +395,7 @@ PROCEDURE Grava_Dados:
                      INPUT aux_cdgrphis,
                      
                      INPUT aux_flgsenha,     
+					 INPUT aux_indutblq,					 
                      INPUT aux_cdprodut,     
                      INPUT aux_cdagrupa,     
                      INPUT aux_dsextrat,     
@@ -389,6 +405,9 @@ PROCEDURE Grava_Dados:
                      INPUT aux_vltarcsh,
                      INPUT aux_indebfol,
                      INPUT aux_txdoipmf,
+                     INPUT aux_inperdes,
+					 INPUT aux_operauto,
+					 INPUT aux_idmonpld,
                     OUTPUT aux_nmdcampo,
                     OUTPUT TABLE tt-erro).   
                                              

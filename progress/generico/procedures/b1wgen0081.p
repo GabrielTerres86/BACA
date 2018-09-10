@@ -44,7 +44,7 @@
 
    Programa: b1wgen0081.p                  
    Autora  : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 02/07/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 19/07/2018
 
    Dados referentes ao programa:
 
@@ -206,9 +206,14 @@
                             pois foi convertida e nao é mais utilizada.
                             PRJ404-Garantia(Odirlei-AMcom)             
 
+               10/05/2018 - Permitir resgate de aplicaçoes bloqueadas (SM404)
+
                02/07/2018 - PJ450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
                             da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)                            
                             
+               19/07/2018 - Mostrar apenas aplicações não programadas no obtem-tipos-aplicacao e buscar-dados-aplicacao
+							Proj. 411.2 - CIS Corporate
+			   
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -1498,7 +1503,7 @@ PROCEDURE valida-acesso-opcao-resgate:
                        INTE(SUBSTR(craptab.dstextab,1,7)) =
                                craprda.nraplica              NO-LOCK NO-ERROR.
 
-            IF  AVAILABLE craptab  THEN
+            IF  AVAILABLE craptab AND(par_idorigem <> 5 OR par_nmdatela <> "ATENDA") THEN
                 DO:
                     ASSIGN aux_cdcritic = 669
                            aux_dscritic = "".
@@ -1510,7 +1515,7 @@ PROCEDURE valida-acesso-opcao-resgate:
                                    INPUT aux_cdcritic,
                                    INPUT-OUTPUT aux_dscritic).
                                    
-                    IF  par_flgerlog  THEN
+                    /*IF  par_flgerlog  THEN*/
                         RUN proc_gerar_log (INPUT par_cdcooper,
                                             INPUT par_cdoperad,
                                             INPUT aux_dscritic,
@@ -3296,7 +3301,7 @@ PROCEDURE efetua-resgate-online:
                            INTE(SUBSTR(craptab.dstextab,1,7)) = craplrg.nraplica
                            NO-LOCK NO-ERROR.
              
-                IF  AVAILABLE craptab  THEN
+                IF  AVAILABLE craptab AND(par_idorigem <> 5 OR par_cdprogra <> "ATENDA" )  THEN
                     ASSIGN aux_cdcritic = 640.    
                 ELSE   
                 IF  crabrda.insaqtot = 1  THEN
@@ -3512,12 +3517,11 @@ PROCEDURE efetua-resgate-online:
                                 IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                                    DO:  
                                       RUN gera_erro (INPUT par_cdcooper,
-                                               INPUT par_cdagenci,
-                                               INPUT par_nrdcaixa,
-                                               INPUT 1,      /** Sequencia **/
-                                               INPUT aux_cdcritic,
-                                               INPUT-OUTPUT aux_dscritic).
-                                   
+                                                     INPUT par_cdagenci,
+                                                     INPUT par_nrdcaixa,
+                                                     INPUT 1,      /** Sequencia **/
+                                                     INPUT aux_cdcritic,
+                                                     INPUT-OUTPUT aux_dscritic).
                                        UNDO, RETURN "NOK".
                                     END.
                                 ELSE 
@@ -3527,43 +3531,8 @@ PROCEDURE efetua-resgate-online:
                                       FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
                                    END.
 
-
                                 IF  VALID-HANDLE(h-b1wgen0200) THEN
                                     DELETE PROCEDURE h-b1wgen0200.
-                                /*
-                                CREATE craplcm.
-                                ASSIGN craplcm.cdcooper = par_cdcooper
-                                       craplcm.dtmvtolt = craplot.dtmvtolt
-                                       craplcm.dtrefere = crabrda.dtmvtolt
-                                       craplcm.cdagenci = craplot.cdagenci
-                                       craplcm.cdbccxlt = craplot.cdbccxlt
-                                       craplcm.nrdolote = craplot.nrdolote
-                                       craplcm.nrdconta = crabrda.nrdconta
-                                       craplcm.nrdctabb = crabrda.nrdconta
-                                       craplcm.nrdctitg = 
-                                               STRING(crabrda.nrdconta,
-                                                      "99999999")
-                                       craplcm.nrdocmto = craplrg.nrdocmto
-                                       craplcm.cdhistor = IF  aux_flgresga  THEN
-                                                              115
-                                                          ELSE 
-                                                              186
-                                       craplcm.vllanmto = aux_vlresgat
-                                       craplcm.cdpesqbb = 
-                                        IF (NOT aux_flgresga)                AND
-                                           (crabrda.dtmvtolt >= aux_dtinipmf AND
-                                            crabrda.dtmvtolt <= aux_dtfimpmf)
-                                            THEN " " ELSE "."
-                                       craplcm.nrseqdig = craplot.nrseqdig + 1.
-                            
-                                IF  crabrda.flgctain  THEN  
-                                    ASSIGN craplcm.cdhistor = 
-                                                   IF  aux_flgresga  THEN
-                                                       497
-                                                   ELSE 
-                                                       498.
-                                VALIDATE craplcm.
-                                */
                                 ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
                                        craplot.qtcompln = craplot.qtcompln + 1
                                        craplot.vlinfocr = craplot.vlinfocr + 
@@ -4224,7 +4193,7 @@ PROCEDURE obtem-tipos-aplicacao:
     
     FOR EACH crapcpc FIELDS(cdprodut nmprodut idtippro cdhscacc cdhsvrcc
                                                         cdhsraap cdhsnrap cdhsprap cdhsrvap cdhsrdap
-                                cdhsirap cdhsrgap cdhsvtap) WHERE crapcpc.idsitpro = 1 NO-LOCK:
+                                cdhsirap cdhsrgap cdhsvtap) WHERE crapcpc.idsitpro = 1 AND crapcpc.indplano = 0 NO-LOCK:
 
         FOR EACH crapdpc FIELDS(cdcooper idsitmod cdmodali)
             WHERE crapdpc.cdcooper = par_cdcooper AND
@@ -4873,6 +4842,7 @@ PROCEDURE buscar-dados-aplicacao:
             DO:
                 FIND craprac WHERE craprac.cdcooper = par_cdcooper AND
                                    craprac.nrdconta = par_nrdconta AND
+								   craprac.nrctrrpp = 0 AND /* Nao para Aplicacao Programada */
                                    craprac.nraplica = par_nraplica
                                    NO-LOCK NO-ERROR.
 

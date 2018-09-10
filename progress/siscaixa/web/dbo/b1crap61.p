@@ -5,7 +5,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Evandro.
-   Data    : Marco/2010                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2010                      Ultima atualizacao: 12/06/2018
 
    Dados referentes ao programa:
 
@@ -36,7 +36,7 @@
                17/11/2014 - Efetuar RETURN "NOK" quando a procedure 
                            'realiza-deposito' retornar <> "OK" (Diego).
                            
-               03/12/2014 - Validaçăod e LOCKED na crapmdw e verificaçăo de
+               03/12/2014 - Validação e LOCKED na crapmdw e verificação de
                             sequencial zerado
                             (Lucas Lunelli SD. 227937)     
                             
@@ -46,18 +46,20 @@
                               c-desc-erro para NO-UNDO
                            (Adriano SD - 237890).   
                            
-               18/02/2015 - Alteraçăo para retornar de uma vez todos os envelopes de DINHEIRO a
+               18/02/2015 - Alteração para retornar de uma vez todos os envelopes de DINHEIRO a
                             serem processados naquela data para aquele TAA (Lunelli - SD 229246).
                             
-               13/10/2015 - Corrigida conversăo de tipos na procedure 'deposita_envelope_dinheiro'
-                            durante a criaçăo da CRAPLCM (Lucas Lunelli)
+               13/10/2015 - Corrigida conversão de tipos na procedure 'deposita_envelope_dinheiro'
+                            durante a criação da CRAPLCM (Lucas Lunelli)
 
 			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
               
+               04/05/2018 - Possibilidade de utilizar o caixa on-line mesmo com o processo 
+                            batch (noturno) executando (Fabio Adriano - AMcom)
               
-       12/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente - Rangel Decker AMcom       
+               12/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente - Rangel Decker AMcom       
 
 ............................................................................ */
 
@@ -901,7 +903,7 @@ PROCEDURE deposita_envelope_dinheiro:
           DO: 
              /** Executa processo normal de Deposito Envelope Dinheiro **/
              FIND FIRST craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                                      craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                                      craplot.dtmvtolt = crapdat.dtmvtocd  AND
                                       craplot.cdagenci = p-cod-agencia     AND
                                       craplot.cdbccxlt = 11                AND /* Fixo */
                                       craplot.nrdolote = i-nro-lote 
@@ -912,7 +914,7 @@ PROCEDURE deposita_envelope_dinheiro:
                    CREATE craplot.
        
                    ASSIGN craplot.cdcooper = crapcop.cdcooper
-                          craplot.dtmvtolt = crapdat.dtmvtolt
+                          craplot.dtmvtolt = crapdat.dtmvtocd
                           craplot.cdagenci = p-cod-agencia
                           craplot.cdbccxlt = 11
                           craplot.nrdolote = i-nro-lote
@@ -992,7 +994,7 @@ PROCEDURE deposita_envelope_dinheiro:
                    /*--- Verifica se Lancamento ja Existe ---*/
                    FIND FIRST craplcm WHERE
                               craplcm.cdcooper = crapcop.cdcooper    AND
-                              craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                              craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                               craplcm.cdagenci = p-cod-agencia       AND
                               craplcm.cdbccxlt = 11                  AND
                               craplcm.nrdolote = i-nro-lote          AND
@@ -1010,7 +1012,7 @@ PROCEDURE deposita_envelope_dinheiro:
                 
                    FIND FIRST craplcm WHERE 
                               craplcm.cdcooper = crapcop.cdcooper    AND
-                              craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                              craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                               craplcm.cdagenci = p-cod-agencia       AND
                               craplcm.cdbccxlt = 11                  AND
                               craplcm.nrdolote = i-nro-lote          AND
@@ -1074,7 +1076,7 @@ PROCEDURE deposita_envelope_dinheiro:
                    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                     DO:  
                       ASSIGN i-cod-erro  = aux_cdcritic
-                          c-desc-erro = aux_dscritic.
+                             c-desc-erro = aux_dscritic.
        
 					  UNDO DepDinheiro, LEAVE DepDinheiro.
                    END.  
@@ -1129,7 +1131,7 @@ PROCEDURE deposita_envelope_dinheiro:
                     c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                                     TRIM(crapcop.nmextcop)
                     c-literal[2]  = " "
-                    c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
+                    c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
                                     STRING(TIME,"HH:MM:SS") +  " PAC " +
                                     STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                                     STRING(p-nro-caixa,"Z99") + "/" +
@@ -1385,7 +1387,7 @@ PROCEDURE confere_envelope:
             RETURN "NOK".
         END.
 
-    /* Atualiza os valores porem a finalizacao da situaçăo para "1"
+    /* Atualiza os valores porem a finalizacao da situação para "1"
        eh feita na rotina 51 apos o deposito dos valores */
     ASSIGN crapenl.vldincmp = par_vldincmp
            crapenl.vlchqcmp = par_vlchqcmp.

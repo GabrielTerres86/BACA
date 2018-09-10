@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2007                    Ultima atualizacao: 31/05/2016
+   Data    : Abril/2007                    Ultima atualizacao: 12/06/2018
 
    Dados referentes ao programa:
 
@@ -19,7 +19,7 @@
 			               chave da CRAPLCM##3 retornar critica corretamente
 						   (Tiago/Elton SD391162);
          
-         12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
+               12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
 ..............................................................................*/
 { sistema/generico/includes/b1wgen0200tt.i }
 

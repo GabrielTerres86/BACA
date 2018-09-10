@@ -35,7 +35,7 @@
     
    Programa: b1wgen0155.p                  
    Autora  : Guilherme / SUPERO
-   Data    : 23/04/2013                        Ultima atualizacao: 14/03/2018
+   Data    : 23/04/2013                        Ultima atualizacao: 12/06/2018
 
    Dados referentes ao programa:
 
@@ -99,10 +99,10 @@
                             busca-contas-cooperado que nao sao mais utilizadas.
                             PRJ404-Garantia(Odirlei-AMcom)                            
                             
-                           14/03/2018 - Adicionado parametro que faltava na chamada da procedure
-                                                        consulta-bloqueio-jud. (Kelvin)
+               14/03/2018 - Adicionado parametro que faltava na chamada da procedure
+                            consulta-bloqueio-jud. (Kelvin)
               
-         12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)     
+               12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) na tabela CRAPLCM  - José Carvalho(AMcom)
               
 ..............................................................................*/
  

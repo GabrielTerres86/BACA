@@ -46,7 +46,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0084a.p
     Autor   : Gabriel
-    Data    : Setembro/2011               ultima Atualizacao: 27/11/2015
+    Data    : Setembro/2011               ultima Atualizacao: 08/07/2018
      
     Dados referentes ao programa:
    
@@ -170,8 +170,14 @@
                 31/10/2016 - Validação dentro do busca_registro_parcela para identificar
 				                     parcelas ja liquidadas (AJFink - SD545719)
 
+                10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)                     
+
                 12/06/2018 - Ajuste para usar procedure que centraliza lancamentos na CRAPLCM 
                              [gerar_lancamento_conta_comple]. (PRJ450 - Teobaldo J - AMcom)
+
+                23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)                   
+
+                07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)                
                             
 ............................................................................. */
 
@@ -4076,12 +4082,15 @@ PROCEDURE cria_lancamento_cc_chave:
                      ,OUTPUT aux_cdcritic                        /* Código da crítica                             */
                      ,OUTPUT aux_dscritic).                      /* Descriçao da crítica                          */
 
-                   IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-                      DO:  
-                        /* Tratamento erro banco de dados 
-                           MESSAGE  aux_cdcritic  aux_dscritic VIEW-AS ALERT-BOX. */   
-                        RETURN "NOK".
-                      END.   
+                   IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+                      RUN gera_erro (INPUT par_cdcooper,        
+                                     INPUT par_cdpactra,
+                                     INPUT 1, /* nrdcaixa  */
+                                     INPUT 1, /* sequencia */
+                                     INPUT aux_cdcritic,        
+                                     INPUT-OUTPUT aux_dscritic).
+                                     UNDO, RETURN "NOK". 
+                   END.
                    ELSE 
                       DO:
                         FIND FIRST tt-ret-lancto.

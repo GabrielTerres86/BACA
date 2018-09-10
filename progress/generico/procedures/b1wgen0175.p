@@ -114,6 +114,11 @@
    13/05/2018 - Efetuado correcao para que alineas 20,21,28 possam ser usadas
                 apenas se a contra ordem for permanente (Jonata - MOUTS - SCTASK0011337).
 
+   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+   20/07/2018 - Condição para não poder marcar/desmarcar cheques normais depois das 13:00
+				(Andrey Formigari - Mouts - PRB0040153)
+
    27/06/2018 - P450 Regulatório de Credito - Substituido o create na craplcm pela chamada 
                 da rotina gerar_lancamento_conta_comple. (Josiane Stiehler - AMcom)
 ............................................................................. */
@@ -722,7 +727,7 @@ PROCEDURE busca-devolucoes-cheque:
                     CASE crapfdc.cdbanchq:
                      
                         WHEN   1  THEN tt-lancto.dsbccxlt = "B.BRASIL".
-                        WHEN  85  THEN tt-lancto.dsbccxlt = "CECRED".
+                        WHEN  85  THEN tt-lancto.dsbccxlt = "AILOS".
                         WHEN 756  THEN tt-lancto.dsbccxlt = "BANCOOB".
                         WHEN 104  THEN tt-lancto.dsbccxlt = "CEF".
                    
@@ -865,7 +870,7 @@ PROCEDURE busca-devolucoes-cheque:
                        
                 CASE crapdev.cdbanchq:                     
                     WHEN   1  THEN tt-lancto.dsbccxlt = "B.BRASIL".
-                    WHEN  85  THEN tt-lancto.dsbccxlt = "CECRED".
+                    WHEN  85  THEN tt-lancto.dsbccxlt = "AILOS".
                     WHEN 756  THEN tt-lancto.dsbccxlt = "BANCOOB".
                     WHEN 104  THEN tt-lancto.dsbccxlt = "CEF".                   
                 END CASE.       
@@ -2781,6 +2786,7 @@ PROCEDURE geracao-devolu:
     DEF VAR aux_cdalinea AS INTE                                       NO-UNDO.
     DEF VAR aux_nmoperad AS CHAR FORMAT "x(20)"                        NO-UNDO.
     DEF VAR aux_nrdrecid AS RECID                                      NO-UNDO.
+	DEF VAR ret_execucao AS LOGICAL                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2817,6 +2823,31 @@ PROCEDURE geracao-devolu:
 
                 IF  par_flag THEN DO: /* a devolver */
                     
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para desmarcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
+                    
                     ASSIGN aux_dssituac = "normal"
                            par_flag     = FALSE
                            aux_cdalinea = 0
@@ -2844,6 +2875,31 @@ PROCEDURE geracao-devolu:
                     
                 END.
                 ELSE DO:
+					
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para marcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
 
                     ASSIGN par_flag     = TRUE
                            aux_dssituac = "a devolver" 
@@ -2880,6 +2936,31 @@ PROCEDURE geracao-devolu:
             FOR EACH tt-desmarcar NO-LOCK:
 
                 IF  tt-desmarcar.flag THEN DO: /* a devolver */
+                    
+					IF NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(tt-desmarcar.cdalinea)) THEN
+					DO:
+					
+						RUN verifica_hora_execucao(INPUT par_cdcooper,
+												   INPUT par_dtmvtolt,
+												   INPUT 4,
+												   OUTPUT ret_execucao,
+												   OUTPUT TABLE tt-erro).
+												   
+						IF  ret_execucao THEN DO:
+							ASSIGN aux_cdcritic = 0
+								   aux_dscritic = "Hora limite para desmarcar cheques " +
+												  "foi ultrapassada!".
+						   
+							RUN gera_erro (INPUT par_cdcooper,
+										   INPUT 0,
+										   INPUT 0,
+										   INPUT 1,
+										   INPUT aux_cdcritic,
+										   INPUT-OUTPUT aux_dscritic).
+							
+							RETURN "NOK".
+						END.
+					END.
                     
                     ASSIGN aux_dssituac = "normal"
                            par_flag     = FALSE
@@ -4170,7 +4251,7 @@ PROCEDURE verifica_locks:
 
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                               aux_dscritic +
-                              " Avise a Equipe de Suporte da CECRED" +
+                              " Avise a Equipe de Suporte do AILOS" +
                               " Coop: " + STRING(par_cdcooper) +
                               " Banco do Cheque: " + STRING(par_cdbanchq) +
                               " Tabela: crapdev " +
@@ -4258,7 +4339,7 @@ PROCEDURE verifica_locks:
                 WHEN 1 THEN aux_nrdolote = 10110. /* BANCOOB */
                 WHEN 2 THEN aux_nrdolote = 8451.  /* CONTA BASE */
                 WHEN 3 THEN aux_nrdolote = 10109. /* CONTA INTEGRACAO */
-                WHEN 4 THEN aux_nrdolote = 10117. /* CECRED */
+                WHEN 4 THEN aux_nrdolote = 10117. /* AILOS */
             END CASE.
         END.
         ELSE
@@ -4815,8 +4896,6 @@ PROCEDURE gera_lancamento:
 
                 UNDO TRANS_1, RETURN "NOK".
             END.
-            
-            
             
             /* VIACON - cria lancamento na coop atual */
 
@@ -7230,11 +7309,11 @@ PROCEDURE gera_arquivo_cecred:
             RUN enviar_email_completo IN h-b1wgen0011
                                      (INPUT par_cdcooper,
                                       INPUT "crps264",
-                                      INPUT "cpd@cecred.coop.br",
+                                      INPUT "cpd@ailos.coop.br",
                                       INPUT 
                                       "suporte@viacredi.coop.br",
                                       INPUT "Relatorio de Devolucoes " + 
-                                            "Cheques CECRED",
+                                            "Cheques AILOS",
                                       INPUT "",
                                       INPUT aux_nmarqdev,
                                       INPUT "",
@@ -7484,7 +7563,7 @@ PROCEDURE marcar_cheque_devolu:
 
     ASSIGN ret_pedsenha  = FALSE.
 
-    IF  par_dsbccxlt = "CECRED" THEN DO:
+    IF  par_dsbccxlt = "AILOS" THEN DO:
         
         DO WHILE TRUE:
         

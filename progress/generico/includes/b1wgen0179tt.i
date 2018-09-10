@@ -13,9 +13,15 @@
                              
                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
 
-				        18/04/2018 - Incluído novo campo inestocc - Diego Simas (AMcom)   
+				26/03/2018 - PJ 416 - BacenJud - Incluir o campo de inclusão do histórico no bloqueio judicial - Márcio - Mouts 
+
+                18/04/2018 - Incluído novo campo inestocc - Diego Simas (AMcom)   
                 
-                19/07/2018 - Incluído novo campo indebprj - Diego Simas (AMcom)
+                16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                
+                15/05/2018 - 364 - SM 5- Incluir campo inperdes - Rafael Mouts
+
+                19/07/2018 - P450 - Incluído novo campo indebprj - Diego Simas (AMcom)
                 
 .............................................................................*/
 
@@ -48,6 +54,12 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD ingercre AS INTE
     FIELD ingerdeb AS INTE
     FIELD flgsenha AS INTE
+	/*PJ 416 - Início*/
+    FIELD indutblq AS CHAR
+	/*PJ 416 - Fim*/
+    /*INICIO 364 SM 5*/
+    FIELD inperdes AS INTE
+    /*FIM 364 SM 5*/
     FIELD dsextrat AS CHAR
     FIELD vltarcsh AS DECI
     FIELD cdgrphis AS INTE
@@ -62,6 +74,7 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD vltarint AS DECI
     FIELD txcpmfcc AS DECI
     FIELD inestocc AS INTE
+    FIELD idmonpld AS INTE
     FIELD indebprj AS INTE.
     
 DEF TEMP-TABLE tt-crapthi NO-UNDO

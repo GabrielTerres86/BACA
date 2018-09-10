@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 24/04/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 12/06/2018
            
     Dados referentes ao programa:
                 
@@ -3002,6 +3002,12 @@ PROCEDURE busca_limites:
                             crawlim.tpctrlim = craplim.tpctrlim   AND
                             crawlim.nrctrmnt = craplim.nrctrlim   AND
                             crawlim.insitlim = 6 /*não aprovada*/ )
+                           OR /*438*/
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 8 /*438 - Expirada decurso de prazo*/ )                            
                            NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crawlim  THEN
@@ -3638,7 +3644,7 @@ PROCEDURE busca_dados_limite_incluir:
 					DO:
     						CREATE tt-msg-confirma.
 							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
         END.
     
 			END.
