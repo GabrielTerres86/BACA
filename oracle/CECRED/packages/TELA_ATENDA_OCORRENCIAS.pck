@@ -63,7 +63,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Alteracoes: 23/01/2018 - Criada procedure pc_busca_dados_risco
   --                          PJ 450 - Reginaldo (AMcom)
   --             06/09/2018 - Inclusão da coluna quantidade de dias de atraso
-	--                          PJ 450 - Diego Simas - AMcom
+  --                          PJ 450 - Diego Simas - AMcom
+  --             10/09/2018 - Inclusão da coluna numero do grupo economico 
+  --                          PJ 450 - Diego Simas - AMcom
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -87,112 +89,119 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_qtd_dias_atraso IN crapris.qtdiaatr%TYPE
                                ,pr_tipo_registro IN VARCHAR2) IS
   BEGIN
-         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+         gene0007.pc_insere_tag(pr_xml   => pr_retxml,
                              pr_tag_pai  => 'Contas',
                              pr_posicao  => 0,
                              pr_tag_nova => 'Conta',
                              pr_tag_cont => NULL,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'numero_conta',
                              pr_tag_cont => pr_num_conta,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'cpf_cnpj',
                              pr_tag_cont => pr_cpf_cnpj,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'contrato',
                              pr_tag_cont => pr_num_contrato,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_inclusao',
                              pr_tag_cont => pr_ris_inclusao,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_grupo',
                              pr_tag_cont => pr_ris_grupo,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'rating',
                              pr_tag_cont => pr_rating,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_atraso',
                              pr_tag_cont => pr_ris_atraso,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_refin',
                              pr_tag_cont => pr_ris_refin,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_agravado',
                              pr_tag_cont => pr_ris_agravado,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_melhora',
                              pr_tag_cont => CASE WHEN pr_ris_melhora <> pr_ris_inclusao AND pr_ris_melhora = 'A' THEN pr_ris_melhora ELSE '' END,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_operacao',
                              pr_tag_cont => pr_ris_operacao,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_cpf',
                              pr_tag_cont => pr_ris_cpf,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_final',
                              pr_tag_cont => pr_ris_final,
                              pr_des_erro => pr_dscritic);
+                             
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
+                             pr_tag_pai  => 'Conta',
+                             pr_posicao  => pr_pos_conta,
+                             pr_tag_nova => 'qtd_dias_atraso',
+                             pr_tag_cont => pr_qtd_dias_atraso,
+                             pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'numero_gr_economico',
                              pr_tag_cont => pr_numero_grupo,
                              pr_des_erro => pr_dscritic);
 
-          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'tipo_registro',
@@ -272,6 +281,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                      
                      06/09/2018 - Inclusão da coluna quantidade de dias de atraso
                                   PJ 450 - Diego Simas - AMcom 
+                                  
+                     10/09/2018 - Inclusão da coluna numero do grupo economico 
+                                  PJ 450 - Diego Simas - AMcom
 
       ..............................................................................*/
 
@@ -503,20 +515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                  , 301, 'DCH'
                  , 302, 'DTI'
                  , 999, 'CTA'  ) tipo_registro
-             , epr.idquaprc as epr_idquaprc
-             , epr.cdlcremp as epr_cdlcremp
-             , epr.cdfinemp as epr_cdfinemp
-             , lcr.flgrefin as lcr_flgrefin
-             , lcr.flgstlcr as lcr_flgstlcr
-             , epr.dtinicio_atraso_refin
-      FROM tbrisco_central_ocr ris
-      LEFT JOIN crapepr epr ON epr.cdcooper = ris.cdcooper
-                           AND epr.nrdconta = ris.nrdconta
-                           AND epr.nrctremp = ris.nrctremp
-                           AND ris.cdorigem = 3
-      LEFT JOIN craplcr lcr ON lcr.cdlcremp = epr.cdlcremp
-                           AND lcr.cdcooper = epr.cdcooper
-                           AND ris.cdorigem = 3
+      FROM tbrisco_central_ocr ris      
      WHERE ris.cdcooper = pr_cdcooper
        AND ris.nrdconta = pr_nrdconta
        AND ris.dtrefere = pr_dtmvtoan
@@ -1164,3 +1163,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   END pc_consulta_preju_cc;
 
 END TELA_ATENDA_OCORRENCIAS;
+/

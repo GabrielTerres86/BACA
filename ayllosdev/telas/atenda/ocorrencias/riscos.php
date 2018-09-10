@@ -2,30 +2,32 @@
 	/************************************************************************
 	      Fonte: riscos.php
 	      Autor: Reginaldo Silva (AMcom)
-	      Data : Janeiro/2018               Última Alteração: 24/08/2018
+	      Data : Janeiro/2018               Ãšltima AlteraÃ§Ã£o: 10/09/2018
 
-	      Objetivo  : Mostrar aba "Riscos" da rotina de OCORRÊNCIAS
+	      Objetivo  : Mostrar aba "Riscos" da rotina de OCORRÃŠNCIAS
                       da tela ATENDA
 
-	      Alterações:		
+	      AlteraÃ§Ãµes:		
 
-		  09/02/2018 - Inclusão das colunas Risco Melhora e Risco Final
+		  09/02/2018 - InclusÃ£o das colunas Risco Melhora e Risco Final
 		  25/03/2018 - Adicionada coluna de Risco Refinanciamento 
 		               e carregamento de dados brutos (Reginaldo / Marcel)
-		  24/08/2018 - Inclusão da coluna quantidade de dias de atraso
+		  24/08/2018 - InclusÃ£o da coluna quantidade de dias de atraso
+		               PJ 450 - Diego Simas - AMcom
+	      10/09/2018 - InclusÃ£o do campo NÃºmero do Grupo EconÃ´mico
 		               PJ 450 - Diego Simas - AMcom
 
 	************************************************************************/	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');		
 	require_once('../../../includes/controla_secao.php');
     // Classe para leitura do xml de retorno
 	require_once('../../../class/xmlfile.php');
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 		
     $msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], '@');
@@ -34,7 +36,7 @@
 		exibeErro($msgError);		
 	}	
 	
-	// Verifica se o número do CPF/CNPJ foi informado
+	// Verifica se o nÃºmero do CPF/CNPJ foi informado
 	if (empty($_POST['nrcpfcnpj'])) {
 		exibeErro('Par&acirc;metros incorretos.');
 	}	
@@ -44,12 +46,12 @@
 	$numDigitos = strlen($nrcpfcnpj) > 11 ? 14 : 11;
 	$nrcpfcnpj = str_pad($nrcpfcnpj, 14, '0', STR_PAD_LEFT);
 
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro('CPF/CNPJ inv&aacute;lido.');
 	}
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xml = '<Root>';
 	$xml .= ' <Dados>';
 	$xml .= '   <nrdconta>' . $nrdconta . '</nrdconta>';
@@ -66,7 +68,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRiscos = getObjectXML($xmlResultRiscos);
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjRiscos->roottag->tags[0]->name) == 'ERRO') {
 		exibeErro($xmlObjRiscos->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
@@ -75,7 +77,7 @@
 	$dadosCentral = $xmlObjRiscos->roottag->tags[0]->tags[1]->tags;
 	$riscoCentral = getByTagName($dadosCentral, 'risco_ult_central'); 
 		
-	// Função para exibir erros na tela através de javascript
+	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
 	function exibeErro($msgErro) { 
 		echo "<script type='text/javascript'>";
 		echo "hideMsgAguardo();";
@@ -120,20 +122,21 @@
 			<thead>
 				<tr>
 					<th><span title="CPF/CNPJ">CPF/CNPJ</span></th>
-					<th><span title="Número da conta">Conta</span></th>
-					<th><span title="Número do contrato">Contr.</span></th>
-					<th><span title="Tipo de contrato">Tipo</span></th>
-					<th><span title="Risco Inclusão">Incl.</span></th>
-					<th><span title="Rating">Rat.</span></th>
-					<th><span title="Risco Atraso">Atr.</span></th>
-					<th><span title="Risco Refinanciamento">Ref.</span></th>
-					<th><span title="Risco Agravado">Agr.</span></th>
-					<th><span title="Risco Melhora">Melh.</span></th>
-					<th><span title="Risco da Operação">Oper.</span></th>
+					<th><span title="NÃºmero da conta">CONTA</span></th>
+					<th><span title="NÃºmero do contrato">CON</span></th>
+					<th><span title="Tipo de contrato">TIP</span></th>
+					<th><span title="Risco InclusÃ£o">INC</span></th>
+					<th><span title="Rating">RAT</span></th>
+					<th><span title="Risco Atraso">ATR</span></th>
+					<th><span title="Risco Refinanciamento">REF</span></th>
+					<th><span title="Risco Agravado">AGR</span></th>
+					<th><span title="Risco Melhora">MEL</span></th>
+					<th><span title="Risco da OperaÃ§Ã£o">OPE</span></th>
 					<th><span title="Risco do CPF">CPF</span></th>
-					<th><span title="Risco do Grupo Econômico">GE</span></th>					
-					<th><span title="Risco Final">Final</span></th>
-					<th><span title="Quantidade de Dias de Atraso">Dias Atr.</span></th>
+					<th><span title="Risco do Grupo EconÃ´mico">GE</span></th>					
+					<th><span title="Risco Final">FIN</span></th>
+					<th><span title="Quantidade de Dias de Atraso">D/ATR</span></th>
+					<th><span title="NÃºmero do Grupo EconÃ´mico">NGE</span></th>
 				</tr>
 			</thead>
 			<tbody>				
@@ -156,6 +159,7 @@
 						<td><? echo getByTagName($risco->tags, 'risco_grupo'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'risco_final'); ?></td>
 						<td><? echo getByTagName($risco->tags, 'qtd_dias_atraso'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'numero_gr_economico'); ?></td>
 					</tr>
 				<?
 					}
@@ -169,7 +173,7 @@
 			<input type="text" name="riscoCooperado" id="riscoCooperado" value="<? echo getByTagName($dadosCentral, 'risco_cooperado'); ?>" readonly tabindex="-1" style="width: 90px; text-align: center; outline: 1px solid grey; display: block; float: left; position: relative;">
 			<br>
 			<div style="margin-top: 10px;">
-				<label for="riscoUltimaCentral" style="width: 170px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Último Fechamento:</label>
+				<label for="riscoUltimaCentral" style="width: 170px; margin-right: 15px; margin-left: 30px; font-weight: bold; display: block; float: left;">Risco Ãšltimo Fechamento:</label>
 				<input type="text" name="riscoUltimaCentral" id="riscoUltimaCentral" value="<? echo getByTagName($dadosCentral, 'risco_ult_central');/*!empty($riscoCentral) ? $riscoCentral : 'A';*/ ?>" readonly tabindex="-1" style="width: 40px; text-align: center; outline: 1px solid grey; display: block; float: left; position: relative;">
 			</div>
 		</div>

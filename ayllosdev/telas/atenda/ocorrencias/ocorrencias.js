@@ -1,7 +1,7 @@
 /***********************************************************************
     Fonte: ocorrencias.js
     Autor: Guilherme
-    Data : Fevereiro/2007                Última Alteração: 24/08/2018
+    Data : Fevereiro/2007                Última Alteração: 10/09/2018
 
     Objetivo  : Biblioteca de funções da rotina OCORRENCIAS da tela
                 ATENDA
@@ -28,6 +28,9 @@
 
 				24/08/2018 - Inclusão da coluna quantidade de dias de atraso
 							 PJ 450 - Diego Simas - AMcom
+
+			    10/09/2018 - Ajuste no layout da tela de risco
+					         PJ 450 - Diego Simas - AMcom
 							 
  ***********************************************************************/
 
@@ -282,15 +285,27 @@ function formataRiscos() {
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
-	divRegistro.css({ 'height': '175px', 'width': '840px' });
+	divRegistro.css({ 'height': '175px', 'width': '950px' });
 
 	var ordemInicial = new Array();
 
-	var arrayLargura = ['99px', '67px', '55px', '40px', '40px', '40px', '40px', '40px', '40px', '40px',
-		'40px', '40px', '40px', '40px'];
+	var arrayLargura = ['99px', '67px', 
+		                '55px', '40px', 
+						'40px', '40px', 
+						'40px', '40px', 
+						'40px', '40px',
+ 		                '40px', '40px', 
+						'40px', '40px', 
+						'40px', '40px'];
 
-	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center', 'center', 'center',
-		'center', 'center', 'center', 'center', 'center'];
+	var arrayAlinha = ['center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center'];
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 
