@@ -9,6 +9,8 @@
  *				  03/04/2013 - Correcao tratamento dos includes quando cdaditiv
  *				  igual a 5 (Daniel)					
  *
+ *                01/11/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+ *
  */
 ?>
  
@@ -27,6 +29,7 @@
 	$nraditiv = (isset($_POST['nraditiv'])) ? $_POST['nraditiv'] : 0 ;
 	$cdaditiv = (isset($_POST['cdaditiv'])) ? $_POST['cdaditiv'] : 0 ;
 	$tpaplica = (isset($_POST['tpaplica'])) ? $_POST['tpaplica'] : '';
+	$tpctrato = (isset($_POST['tpctrato'])) ? $_POST['tpctrato'] : 0;
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -57,6 +60,7 @@
 	$xml .= '		<cdaditiv>'.$cdaditiv.'</cdaditiv>';
 	$xml .= '		<tpaplica>'.$tpaplica.'</tpaplica>';
 	$xml .= '		<nrctagar>'.$nrctagar.'</nrctagar>';
+	$xml .= '		<tpctrato>'.$tpctrato.'</tpctrato>';
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";	
 
@@ -65,7 +69,7 @@
 	
 	// Cria objeto para classe de tratamento de XML
 	$xmlObj = getObjectXML($xmlResult);
-	
+
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
 		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
 	}
@@ -76,6 +80,25 @@
 	$cdaditiv 	= empty($cdaditiv) ? getByTagName($dados,'cdaditiv') : $cdaditiv;
 	$regtotal	= count($registros);
 	
+	//------------------------------- Lista Bens ------------------------------
+	$xmlBens  = "<Root>";
+    $xmlBens .= " <Dados>";
+    $xmlBens .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xmlBens .= "   <nrctremp>".$nrctremp."</nrctremp>";
+    $xmlBens .= "   <tpctrato>".$tpctrato."</tpctrato>";
+    $xmlBens .= " </Dados>";
+    $xmlBens .= "</Root>";
+
+	$xmlBensResult = mensageria($xmlBens, "TELA_ADITIV", "BUSCA_BENS_TP5", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+	$xmlBensObj = getObjectXML($xmlBensResult);
+	if ( strtoupper($xmlBensObj->roottag->tags[0]->name) == 'ERRO' ) {
+		exibirErro('error',$xmlBensObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+	}
+	$registrosBens 	= $xmlBensObj->roottag->tags[0]->tags;
+	$dadosBens 		= $xmlBensObj->roottag->tags[0]->tags[0]->tags;
+	//----------------------------- Fim Lista Bens ------------------------------
+
 	if ( $cdaditiv == 1 ) {
 		include('form_tipo1.php');
 		
@@ -118,10 +141,12 @@
 <script>
 	regtotal = '<?php echo $regtotal ?>';
 	cdaditiv = '<? echo $cdaditiv ?>';
+	cdopcao = '<?php echo $cddopcao ?>';
+	data = '<?php echo $glbvars["dtmvtolt"] ?>';
+	$("#dtmvtolt").val(data);
 	$("#cdaditiv option[value='<? echo $cdaditiv ?>']",'#frmCab').prop('selected',true);
 
 	var i = 0;
-	
 	<?php
 	// cria um array com os bens para 
 	// verificar qual vai ser substituido na opcao I
