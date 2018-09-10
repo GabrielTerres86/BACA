@@ -941,7 +941,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                 -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
                 -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
                 -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
-                CONTINUE;  
+                vr_dscritic := 'Problemas ao criar lancamento:'||vr_dscritic;
+                RAISE vr_exc_saida;  
               END IF;  
             END IF;	
 				
