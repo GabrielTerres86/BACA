@@ -2182,13 +2182,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
             CLOSE cr_craplcm;
           END LOOP;
           
-           /* identifica se pode debitar na conta do cooperado */
-           vr_fldebita := LANC0001.fn_pode_debitar(pr_cdcooper => nvl(pr_cdcooper,0),
-                                                   pr_nrdconta => nvl(pr_nrdconta,0),
-                                                   pr_cdhistor => vr_cdhistor);
-
-         /* se nao puder debitar historico */
-          IF vr_fldebita = TRUE THEN
             -- insere dados na craplcm
             BEGIN
             -- Inserir lancamento
@@ -2210,12 +2203,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                                               -- OUTPUT --
                                               ,pr_tab_retorno => vr_tab_retorno
                                               ,pr_incrineg => vr_incrineg
-                                              ,pr_cdcritic => vr_cdcritic
-                                              ,pr_dscritic => vr_dscritic); 
+                                              ,pr_cdcritic => pr_cdcritic
+                                              ,pr_dscritic => pr_dscritic); 
                                            
           	IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-		       		RAISE vr_exc_fimprg;
+              -- Se foi retornado apenas codigo
+              IF nvl(pr_cdcritic,0) > 0 AND trim(pr_dscritic) IS NULL THEN
+                -- Buscar a descricao
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
       			END IF;                                                                                         
+              
+		       		RETURN;
+      			END IF;     
+                                                                                                
           EXCEPTION
             WHEN OTHERS THEN
                pr_dscritic := 'Erro ao inserir dados na craplcm na rotina pc_efetua_lancamento. '||SQLERRM;
@@ -2253,7 +2253,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps375( pr_cdcooper IN crapcop.cdcooper%T
                   RETURN;
               END;
             END IF;--IF pr_cdhistor = 266 OR pr_cdhistor = 1132 THEN
-           END IF; 
         END;
       END pc_efetua_lancamento;
 
