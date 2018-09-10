@@ -2830,8 +2830,37 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                            , pr_cdcritic  => vr_cdcritic      -- OUT
                                            , pr_dscritic  => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lançamento (CRAPLCM, conta transitória, etc)
 										   
-          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_saida;	
+          IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN	 
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                             ' craplcm [2]: cdcooper: '||pr_cdcooper ||
+                             ', dtmvtolt: '|| rw_craplot.dtmvtolt ||
+                             ', cdagenci: '|| rw_craplot.cdagenci ||
+                             ', cdbccxlt: '|| rw_craplot.cdbccxlt ||
+                             ', nrdolote: '|| rw_craplot.nrdolote ||
+                             ', nrdconta: '|| nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                             ', nrdctabb: '|| nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                             ', nrdctitg: '|| nvl(vr_nrdconta_incorp,vr_nrdconta) ||
+                             ', nrdocmto: '|| vr_nrdocmto ||
+                             ', cdhistor: '|| vr_cdhistor ||
+                             ', vllanmto: '|| vr_vllanmto ||
+                             ', nrseqdig: '|| vr_nrseqarq ||
+                             ', cdpesqbb: '|| vr_cdpeslcm ||
+                             ', cdbanchq: '|| vr_cdbandoc ||
+                             ', cdcmpchq: '|| vr_cdcmpdoc ||
+                             ', cdagechq: '|| vr_cdagedoc ||
+                             ', nrctachq: '|| vr_nrctadoc ||
+                             ', sqlotchq: '|| vr_nrseqarq ||'. '|| sqlerrm;
+              -- Envio centralizado de log de erro
+              pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
+                        pr_dstiplog      => 'E',
+                        pr_dscritic      => vr_dscritic,
+                        pr_cdcriticidade => 1,
+                        pr_cdmensagem    => vr_cdcritic,
+                        pr_ind_tipo_log  => 1);
+
+              --Inclusão na tabela de erros Oracle - Chamado 789851
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+	
           END IF;	
 		  
           -- Totalizadores
