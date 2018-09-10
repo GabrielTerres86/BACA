@@ -80,6 +80,21 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
   --                          (Lucas Ranghetti #847282)
+  --
+  --             13/04/2018 - Incluido o controle de execução de programa
+  --                          Projeto Debitador Unico - Josiane Stiehler (AMcom)
+  --
+  --             30/05/2018 - Tratamento para Grupo de afinidade zerado
+  --                          (Lucas Ranghetti SCTASK0014662)
+  --
+  --             09/07/2018 - Validar critica 080 apos a criacao da critica no
+  --                          relatorio (Lucas Ranghetti INC0018668)
+  --
+  --             10/07/2018 - Validar valores nulos na geracao das linhas do arquivo ccb3 e
+  --                          enviar e-mail caso nao gere arquivo (Lucas Ranghetti PRB0040160)
+  --
+  --             30/07/2018 - Adicionado tratamento para não enviar conta PJ caso a mesma ainda não tenha sido criada
+  --                          no arquivo gerado na procedure pc_crps671 (Reinert).
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -125,7 +140,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
                           ,pr_cdtrnbcb IN craphcb.cdtrnbcb%TYPE  --> Codigo da transacao
                           ,pr_dstrnbcb IN craphcb.dstrnbcb%TYPE  --> Descricao da transacao
                           ,pr_cdhisest IN tbcrd_his_vinculo_bancoob.cdhistor%TYPE --> Codigo do historico
-                          ,pr_flgdebcc IN VARCHAR2               --> Debitar C/C
+													,pr_flgdebcc IN VARCHAR2               --> Debitar C/C
                           ,pr_tphistor IN tbcrd_his_vinculo_bancoob.tphistorico%TYPE
                           ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                           ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -164,23 +179,23 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                               ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-  /* Procedimento para o CRPS671 */
+	/* Procedimento para o CRPS671 */
   PROCEDURE pc_crps671(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                      ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+											,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+											,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+											,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+											,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+											,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
   /* Procedimento para o CRPS672 */
   PROCEDURE pc_crps672(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                      ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+											,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+											,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+											,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+											,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+											,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-  /* Procedimento para o CRPS669 */
+	/* Procedimento para o CRPS669 */
   PROCEDURE pc_crps669(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -188,7 +203,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-  /* Procedimento para o CRPS670 */
+	/* Procedimento para o CRPS670 */
   PROCEDURE pc_crps670(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -2141,8 +2156,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 02/02/2018 - Ajuste para quando recebemos uma transacao de credito aprovada onde nao
                              houve estorno na conta do cooperado de forma online precisamos lancar
                              o credito em conta. (Chamado 836129) - (Fabricio)
-                             
-                04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência 
+
+                04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência
                              na craplcm e craplot (Marcel / AMCom)
     ....................................................................................................*/
     DECLARE
@@ -2250,12 +2265,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_flgerro     BOOLEAN := FALSE;
       -- controle de permissao de debito em craplcm
       vr_podedbta    BOOLEAN;
-      vr_rw_craplot   craplot%ROWTYPE;
-      
+      vr_rw_craplot   LANC0001.cr_craplot%ROWTYPE;
+
       -- saidas da pc_gerar_lancamento_conta
       vr_retornos LANC0001.typ_reg_retorno; -- Record com os dados retornados pela "pc_gerar_lancamento_conta"
       vr_incrineg INTEGER;
-      
+
       ---------------------------- ESTRUTURAS DE REGISTRO ----------------------
       -- Definicao do tipo de arquivo para processamento
       TYPE typ_tab_nmarquiv IS
@@ -3118,7 +3133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
 
         vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
-                                             ,pr_delimit => ',');
+									                           ,pr_delimit => ',');
 
         IF vr_split.count = 0 THEN
           vr_cdcritic := 182;
@@ -3463,9 +3478,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 	                 /* se nao puder debitar historico */
                    IF vr_podedbta = false THEN
                      continue;
-                   END IF;                                  
+                   END IF;
                 END IF;
-                              
+
                 /*******************************/
                 -- verifica se deve debitar C/C
                 IF vr_flgdebcc = 1 THEN
@@ -4139,7 +4154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     vr_dtmovtoo := rw_crapdat.dtmvtolt;
                     vr_cdhistor_ori := vr_cdhistor_off;
                     vr_dshistor_ori := vr_dshistor_off;
-                ELSE
+	              ELSE
                   vr_cdorigem := 8;
                   vr_cdhistor_ori := vr_cdhistor_on;
                   vr_dshistor_ori := vr_dshistor_on;
@@ -4288,7 +4303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 IF cr_craplot%NOTFOUND THEN
                     BEGIN
                        CLOSE cr_craplot;
-                       
+
                        LANC0001.pc_incluir_lote( pr_dtmvtolt => vr_tab_craplcm(vr_idxlcm).dtmvtolt
                                                , pr_cdagenci => vr_tab_craplcm(vr_idxlcm).cdagenci
                                                , pr_cdbccxlt => vr_tab_craplcm(vr_idxlcm).cdbccxlt
@@ -4299,14 +4314,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                , pr_rw_craplot => vr_rw_craplot
                                                , pr_cdcritic => vr_cdcritic
                                                , pr_dscritic => vr_dscritic
-                                               ); 
-                                               
+                                               );
+
                         -- Posiciona a capa de lote
                         OPEN cr_craplot(pr_cdcooper => vr_tab_craplcm(vr_idxlcm).cdcooper,
                                         pr_dtmvtolt => vr_tab_craplcm(vr_idxlcm).dtmvtolt,
                                         pr_cdagenci => vr_tab_craplcm(vr_idxlcm).cdagenci);
                         FETCH cr_craplot INTO rw_craplot;
-                          
+
                         IF cr_craplot%NOTFOUND THEN
                           -- Fechar o cursor pois haverá raise
                           CLOSE cr_craplot;
@@ -4314,12 +4329,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           vr_cdcritic := 1172;
                           RAISE vr_exc_saida;
                         END IF;
-                                       
+
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
                         RAISE vr_exc_saida;
                     END;
+
                 END IF;
 
                 -- fecha cursor de lote
@@ -4339,7 +4355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                     , pr_nrseqdig => vr_tab_craplcm(vr_idxlcm).nrseqdig
                                                     , pr_cdcooper => vr_tab_craplcm(vr_idxlcm).cdcooper
                                                     , pr_vllanmto => vr_tab_craplcm(vr_idxlcm).vllanmto
-                                                    , pr_retorno  => vr_retornos
+                                                    , pr_tab_retorno  => vr_retornos
                                                     , pr_incrineg => vr_incrineg
                                                     , pr_cdcritic => vr_cdcritic
                                                     , pr_dscritic => vr_dscritic);
@@ -4373,13 +4389,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
               -- Atualiza a capa do lote
                 BEGIN
-                  UPDATE craplot -- se o numero for maior que o ja existente atualiza
+                  UPDATE craplot
+                                    -- se o numero for maior que o ja existente atualiza
                      SET nrseqdig = greatest(nrseqdig,rw_craplot.nrseqdig),
                          qtcompln = qtcompln + 1,
                          qtinfoln = qtinfoln + 1,
                          vlcompdb = vlcompdb + vr_tab_craplcm(vr_idxlcm).vllanmto,
                          vlinfodb = vlcompdb + vr_tab_craplcm(vr_idxlcm).vllanmto
-                   WHERE craplot.rowid = rw_craplot.rowid;
+                   WHERE ROWID = rw_craplot.rowid;
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
@@ -4766,7 +4783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 20/06/2017
+     Data    : Maio/14.                    Ultima atualizacao: 10/07/2017
 
      Dados referentes ao programa:
 
@@ -4873,6 +4890,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                 23/08/2017 - Alterar o envio de alterações para que sejam enviadas as informações de
                              alteração de limites. (Renato Darosci - Projeto 360)
+
+                10/07/2018 - Validar valores nulos na geracao das linhas do arquivo ccb3 e
+                             enviar e-mail caso nao gere arquivo (Lucas Ranghetti PRB0040160)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -4937,6 +4957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_dsderro    VARCHAR2(4000);
 
       -- Comando completo
       vr_dscomando VARCHAR2(4000);
@@ -5029,7 +5050,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              ass.nrdconta = pcr.nrdconta AND
              ass.dtdemiss IS NULL        AND
              age.cdcooper = ass.cdcooper AND
-             age.cdagenci = ass.cdagenci
+             age.cdagenci = ass.cdagenci AND
+			 pcr.insitdec IN (2,3) /* Decisao esteira = 2 - Aprovado Auto, 3 - Aprovado Manuel */
              -- Numero da conta utilizado para nao gerar linha de solicitacao de cartao adiciona quando eh
              -- UPGRADE/DOWNGRADE, DEVE ficar como primeiro campo no ORDER BY (Douglas - Chamado 441407)
              ORDER BY pcr.nrdconta
@@ -5349,7 +5371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_aux_nrcepend  VARCHAR2( 8);
           vr_aux_dddebito  VARCHAR2( 2);
           vr_aux_vllimcrd  VARCHAR2( 9);
-      vr_aux_dsendcom  VARCHAR2(50);
+          vr_aux_dsendcom  VARCHAR2(50);
 
         BEGIN
           BEGIN
@@ -5378,10 +5400,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        -- VERIFICAR QUANTOS CARACTERES SERÃO DESTINADOS AO ENDEREÇO SD204641
             IF rw_crapenc.dsender_apbl IS NULL THEN
               --USA OS 50 CARACTERES PARA O ENDEREÇO
-              vr_aux_dsendcom := rpad(substr(rw_crapenc.dsender_compl,1,50),50,' ');
+              vr_aux_dsendcom := rpad(substr(nvl(rw_crapenc.dsender_compl,' '),1,50),50,' ');
             ELSE
               -- SEPARA 29 CARACTERES PARA ENDEREÇO E 21 PARA COMPLEMENTO
-              vr_aux_dsendcom := rpad((TRIM(substr(rw_crapenc.dsendere,1,29)) || TRIM(substr(rw_crapenc.nrendere,1,6)||substr(rw_crapenc.dsender_apbl,1,15))),50,' ');
+              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(rw_crapenc.dsendere,' '),1,29)) ||
+                                           TRIM(substr(nvl(rw_crapenc.nrendere,' '),1,6)||
+                                           substr(nvl(rw_crapenc.dsender_apbl,' '),1,15))),' '),50,' ');
             END IF;
 
       -- Gerar código sequencial de controle para o contrato (Renato-Supero)
@@ -5475,20 +5499,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '  '                                    /* Uso Futuro                   */                             ||
                               '1'                                     /* Tp. Endere. - Residencial    */                             ||
                               vr_aux_dsendcom                /* Endereço Completo            */                             ||
-                              rpad(rw_crapenc.cdufende,2,' ' )        /* UF                           */                             ||
-                              rpad(rw_crapenc.nmcidade,40,' ')        /* Cidade                       */                             ||
-                              rpad(rw_crapenc.nmbairro,25,' ')        /* Bairro                       */                             ||
-                              lpad(rw_crapenc.nrcepend,8,'0' )        /* CEP                          */                             ||
+                              rpad(nvl(rw_crapenc.cdufende,' '),2,' ' )        /* UF                           */                             ||
+                              rpad(nvl(rw_crapenc.nmcidade,' '),40,' ')        /* Cidade                       */                             ||
+                              rpad(nvl(rw_crapenc.nmbairro,' '),25,' ')        /* Bairro                       */                             ||
+                              lpad(nvl(rw_crapenc.nrcepend,'0'),8,'0' )        /* CEP                          */                             ||
                               lpad(NVL(vr_dstelres,'0'),9,'0' )       /* Telefone Residencial         */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
                               '  '                                    /* Uso Futuro                   */                             ||
                               vr_tpcntdeb                             /* Tp. Conta Deb.               */                             ||
                               '756'                                   /* Banco da Conta Debitar       */                             ||
-                              lpad(rw_crapcol.cdagebcb,4,'0' )        /* Agencia da Conta Debitar     */                             ||
-                              lpad(rw_crawcrd.nrdconta,12,'0')        /* Nr. Conta a Debitar          */                             ||
+                              lpad(nvl(rw_crapcol.cdagebcb,'0'),4,'0' )        /* Agencia da Conta Debitar     */                             ||
+                              lpad(nvl(rw_crawcrd.nrdconta,'0'),12,'0')        /* Nr. Conta a Debitar          */                             ||
                               lpad(vr_tpdpagto,3,'0' )                /* Porc. Deb. Autom             */                             ||
-                              lpad(rw_crawcrd.nrdconta,8,'0' )        /* Nr. Conta Socio              */                             ||
+                              lpad(nvl(rw_crawcrd.nrdconta,'0'),8,'0' )        /* Nr. Conta Socio              */                             ||
                               lpad('0',12,'0')                        /* Renda Titular                */                             ||
                               '  '                                    /* Uso Futuro                   */                             ||
                               lpad(nvl(rw_crawcrd.dddebito,0),2,'0')  /* Venc. Validos do Emiss.     */                             ||
@@ -5503,7 +5527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '00'                                    /* Situação da Conta            */                             ||
                               '000'                                   /* Cod. Rejeição                */                             ||
                               lpad('0',8,'0')                         /* Promoção                     */                             ||
-                              lpad(pr_canvenda, 8,' ')                /* Canal de Vendas              */                             ||
+                              lpad(nvl(pr_canvenda,' '), 8,' ')                /* Canal de Vendas              */                             ||
                               lpad(' ',8,' ')                         /* Vendedor                     */                             ||
                               '0'                                     /* Cliente Normal               */                             ||
                               '0'                                     /* Entrega Normal               */                             ||
@@ -5535,7 +5559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF pr_vllimalt IS NOT NULL THEN
                 vr_aux_vllimcrd := lpad(pr_vllimalt,9,'0');
               ELSE
-              vr_aux_vllimcrd := '_________';
+                vr_aux_vllimcrd := '_________';
               END IF;
 
               -- Verifica se deve enviar a informação de grupo de afinidade e canal de vendas
@@ -5752,7 +5776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  TRIM(vr_dscritic) IS NOT NULL THEN
                 vr_cdorgexp := NULL;
                 vr_nmorgexp := NULL;
-              END IF;
+            END IF;
             END IF;
 
 
@@ -6054,52 +6078,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%TELEF.%'
               THEN*/
 
-                  -- Verificar se houve alteração no grupo de afinidade - por PA
-                  -- a alteracao de PA deve ser a primeira, ou separado por virgula
-                  IF upper(rw_crapalt.dsaltera) LIKE 'PAC %'             OR
-                     upper(rw_crapalt.dsaltera) LIKE 'PA %'              OR
-                     upper(rw_crapalt.dsaltera) LIKE '%,PAC %'           OR
-                     upper(rw_crapalt.dsaltera) LIKE '%,PA %'            OR
-                     upper(rw_crapalt.dsaltera) LIKE '%, PAC %'          OR
-                     upper(rw_crapalt.dsaltera) LIKE '%, PA %'           THEN
-                    vr_flaltafn := TRUE;
-                  END IF;
+              -- Verificar se houve alteração no grupo de afinidade - por PA
+              -- a alteracao de PA deve ser a primeira, ou separado por virgula
+              IF upper(rw_crapalt.dsaltera) LIKE 'PAC %'             OR
+                 upper(rw_crapalt.dsaltera) LIKE 'PA %'              OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PAC %'           OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PA %'            OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PAC %'          OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PA %'           THEN
+                vr_flaltafn := TRUE;
+              END IF;
 
-                  -- verificar se houve alteração no Bairro ou Rua
-                  IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
-                     upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
-                     upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
-                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
-                     upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
-                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR
-                     upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
-                     upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     THEN
-                    vr_flalttpe := TRUE;
-                  END IF;
+              -- verificar se houve alteração no Bairro ou Rua
+              IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
+                 upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR
+                 upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     THEN
+                vr_flalttpe := TRUE;
+              END IF;
 
-                  -- Verificar se foi alterado Estado, cidade ou CEP
-                  IF upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
-                     upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
-                     upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
-                     upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
-                    vr_flaltcep := TRUE;
-                  END IF;
+              -- Verificar se foi alterado Estado, cidade ou CEP
+              IF upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
+                vr_flaltcep := TRUE;
+              END IF;
 
-                  -- Verificar se houve alteração do telefone do cooperado
-                  IF upper(rw_crapalt.dsaltera) LIKE '%TELEF.%' THEN
-                    vr_flalttfc := TRUE;
-                  END IF;
+              -- Verificar se houve alteração do telefone do cooperado
+              IF upper(rw_crapalt.dsaltera) LIKE '%TELEF.%' THEN
+                vr_flalttfc := TRUE;
+              END IF;
 
               /*  END IF;  -- Condição IF comentada conforme comentário anterior */
 
@@ -6120,22 +6144,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  vr_vllimalt IS NOT NULL THEN   -- Alterado Limite
 
                 -- Tp. Operac.: Modificação de Conta Cartão (ENDEREÇO/PA/TELEFONE/LIMITE)
-                  vr_tipooper := '02';
+                vr_tipooper := '02';
 
-                  -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
-                  gera_linha_registro_tipo1 (rw_crapcrd_loop_alt,
-                                             rw_crapcol,
-                                             rw_crapdat,
-                                             rw_crapadc,
-                                             rw_crapcrd_loop_alt.nrcctitg,
-                                             vr_tipooper,
-                                             rw_crapcrd_loop_alt.inpessoa,
-                                            (rw_crapcrd_loop_alt.nrctrcrd + 1000000),
-                                             rw_crapcrd_loop_alt.cdagenci, -- Canal de Venda
-                                             rw_crapacb.cdgrafin,
-                                             vr_flaltafn,    -- pr_flaltafn
-                                             vr_flaltcep,    -- pr_flaltcep
-                                             vr_flalttpe,    -- pr_flalttpe
+                -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
+                gera_linha_registro_tipo1 (rw_crapcrd_loop_alt,
+                                           rw_crapcol,
+                                           rw_crapdat,
+                                           rw_crapadc,
+                                           rw_crapcrd_loop_alt.nrcctitg,
+                                           vr_tipooper,
+                                           rw_crapcrd_loop_alt.inpessoa,
+                                          (rw_crapcrd_loop_alt.nrctrcrd + 1000000),
+                                           rw_crapcrd_loop_alt.cdagenci, -- Canal de Venda
+                                           rw_crapacb.cdgrafin,
+                                           vr_flaltafn,    -- pr_flaltafn
+                                           vr_flaltcep,    -- pr_flaltcep
+                                           vr_flalttpe,    -- pr_flalttpe
                                            vr_flalttfc,    -- pr_flalttfc
                                            vr_vllimalt);   -- pr_vllimalt
 
@@ -6154,7 +6178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     vr_dscritic := 'Erro ao atualizar solicitação de alteração de limite: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
-            END IF;
+              END IF;
 
             END IF;
 
@@ -6163,6 +6187,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             CLOSE cr_altlimit;
 
           END LOOP;
+
+          -- Zerar variável de conta
+		  vr_nrctarg1 := 0;
 
           -- Executa LOOP em registro de Cartões para gravar DETALHE
           FOR rw_crawcrd IN cr_crawcrd(rw_crapcol.cdcooper) LOOP
@@ -6557,6 +6584,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Tp. Operac.: Inclusão de Cartão
                   vr_tipooper := '01';
 
+                  -- Guarda o número da conta informado no registro tipo 1
+                  vr_nrctarg1 := rw_crawcrd.nrdconta;
+
                   -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
                   gera_linha_registro_tipo1 (rw_crawcrd,
                                              rw_crapcol,
@@ -6601,6 +6631,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- Tp. Operac.: Inclusão de Cartão Adicional
                 vr_tipooper := '04';
                 ELSE
+                  -- Se não for a mesma conta do registro 01 enviado, deve pular o registro
+				  IF NVL(vr_nrctarg1,0) <> NVL(rw_crawcrd.nrdconta,-1) THEN
+					CONTINUE;
+				  END IF;
+
                   vr_tipooper := '01';
                 END IF;
 
@@ -6646,8 +6681,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                               || vr_dscritic );
                 END IF;
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception;
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
                 vr_dscritic := 'Problema ao montar arquivo de cartoes solicitados - ' || sqlerrm;
+
+                gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
+                                          ,pr_cdprogra        => vr_cdprogra
+                                          ,pr_des_destino     => gene0001.fn_param_sistema('CRED',vr_cdcooper,'CRD_RESPONSAVEL')
+                                          ,pr_des_assunto     => 'ERRO - Arquivo CCB3'
+                                          ,pr_des_anexo       => NULL
+                                          ,pr_des_corpo       => 'Erro ao gerar arquivo '|| vr_nmrquivo||
+                                                                 '<br><br>'||'Critica: ' || vr_dscritic
+                                          ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                          ,pr_des_erro        => vr_dsderro);
+                --Se ocorreu erro
+                IF trim(vr_dsderro) IS NOT NULL THEN
+                  vr_dscritic:= vr_dsderro;
+                  --Levantar Excecao
+                RAISE vr_exc_saida;
+                END IF;
+
                 RAISE vr_exc_saida;
             END;
 
@@ -6764,7 +6817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 04/05/2018
+       Data    : Abril/2014.                     Ultima atualizacao: 09/07/2018
 
        Dados referentes ao programa:
 
@@ -6904,6 +6957,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                    23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
                                 (Lucas Ranghetti #847282)
+
+                   07/05/2018 - Ajuste realizado para que a criação do lote seja separado
+                                por cooperativa para solucionar o problema do incidente
+                                INC0013534. (Kelvin)
+
+                   30/05/2018 - Tratamento para Grupo de afinidade zerado
+                                (Lucas Ranghetti SCTASK0014662)
+
+                   09/07/2018 - Validar critica 080 apos a criacao da critica no
+                                relatorio (Lucas Ranghetti INC0018668)
     ............................................................................ */
 
     DECLARE
@@ -6966,6 +7029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_conarqui   NUMBER:= 0;
       vr_listarq    VARCHAR2(2000);
       vr_split      gene0002.typ_split := gene0002.typ_split();
+      vr_indice     NUMBER;
 
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -7005,6 +7069,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           INDEX BY BINARY_INTEGER;
 
         vr_vet_nmtipsol  typ_vet_nmtipsol;
+
+      -- Definicao do vetor com os códigos de lote de SMS criado por cooperativa
+      TYPE typ_tab_nrdlote IS
+       TABLE OF NUMBER(10)
+       INDEX BY BINARY_INTEGER;
+
+      -- Vetor para armazenar os códigos de lote de SMS criado por cooperativa
+      vr_vet_nrdlote typ_tab_nrdlote;
 
       -- Armazena o indicador de envio de SMS para o produto, por cooperativa
       TYPE typ_tab_enviasms IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
@@ -7458,15 +7530,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            AND ROWNUM = 1;
       rw_craptlc cr_craptlc%ROWTYPE;
 
+      -- Tabela de Limite de Credito CECRED
+      CURSOR cr_craptlc_cecred(pr_cdcooper craptlc.cdcooper%TYPE,
+                              pr_cdadmcrd craptlc.cdadmcrd%TYPE,
+                              pr_vllimcrd craptlc.vllimcrd%TYPE) IS
+        SELECT     1 AS cdlimcrd
+        FROM       TBCRD_CONFIG_CATEGORIA tbcc
+        WHERE      tbcc.cdcooper = pr_cdcooper
+        AND        tbcc.cdadmcrd = pr_cdadmcrd
+        AND        pr_vllimcrd between tbcc.vllimite_minimo AND tbcc.vllimite_maximo;
+      rw_craptlc_cecred cr_craptlc_cecred%ROWTYPE;
+
       -- Buscar o telefone celular do cooperado
       CURSOR cr_craptfc(pr_cdcooper craptfc.cdcooper%TYPE
                        ,pr_nrdconta craptfc.nrdconta%TYPE ) IS
         SELECT tfc.nrdddtfc
              , tfc.nrtelefo
-          FROM craptfc tfc
-         WHERE tfc.cdcooper = pr_cdcooper
-           AND tfc.nrdconta = pr_nrdconta
-           AND tfc.tptelefo = 2  -- Celular
+      	  FROM craptfc tfc
+      	 WHERE tfc.cdcooper = pr_cdcooper
+      	   AND tfc.nrdconta = pr_nrdconta
+	         AND tfc.tptelefo = 2  -- Celular
            AND tfc.idseqttl = 1
            AND tfc.idsittfc = 1 /* Ativo */
          ORDER BY tfc.cdseqtfc DESC;  -- Para o caso de mais de um telefone cadastrado, utilizar o último
@@ -7484,7 +7567,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            AND atu.nrdconta          = pr_nrdconta
            AND atu.nrconta_cartao    = pr_nrctacrd
            AND atu.vllimite_alterado = pr_vllimalt
-           AND atu.tpsituacao        = 2;    /* Enviado ao Bancoob */
+           AND atu.tpsituacao        = 2    /* Enviado ao Bancoob */
+           AND atu.cdcanal           = 14;  /* SAS */
       rw_atulimi   cr_atulimi%ROWTYPE;
 
       -- Buscar o parametro de envio de SMS de cada cooperativa para o produto CARTAO DE CREDITO
@@ -7660,8 +7744,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                               ,pr_sms               => 1  -- Indicador de SMS
                                                               ,pr_valores_dinamicos => vr_dsvlrmsg);
 
-                    -- Se não há lote de SMS criado
-                    IF vr_idlotsms IS NULL THEN
+                    -- Se não há lote de SMS criado na cooperativa
+                    IF NOT vr_vet_nrdlote.EXISTS(pr_cdcooper) THEN
                       -- Cria o lote de sms
                       esms0001.pc_cria_lote_sms(pr_cdproduto     => 21 -- CARTAO CREDITO CECRED
                                                ,pr_idtpreme      => 'SMSCRDBCB'
@@ -7674,10 +7758,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         RAISE vr_exc_erro;
                       END IF;
 
+                      vr_vet_nrdlote(pr_cdcooper) := vr_idlotsms;
+
                     END IF; -- vr_idlotsms IS NULL
 
                     -- Gerar registro do SMS a ser enviado
-                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_idlotsms
+                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_vet_nrdlote(pr_cdcooper)
                                            ,pr_cdcooper   => pr_cdcooper
                                            ,pr_nrdconta   => pr_nrdconta
                                            ,pr_idseqttl   => 1
@@ -7699,7 +7785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Fechar o cursor
                   CLOSE cr_craptfc;
 
-                vr_idlotaux := vr_idlotsms; -- Carrega o id do lote na var auxiliar
+                vr_idlotaux := vr_vet_nrdlote(pr_cdcooper); -- Carrega o id do lote na var auxiliar
               ELSE
                 vr_idlotaux := null;        -- Esvazia o id do lote na var auxiliar
                 END IF;  -- NVL(vr_enviasms,0) = 1 -- Se envia SMS
@@ -7800,6 +7886,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
             -- Somente a administadora diferente de MAESTRO que ira ter Limite cadastrado
             IF UPPER(rw_crapadc.nmbandei) <> 'MAESTRO' THEN
+			        vr_cdlimcrd := 0;
+
               -- Para cada cartao, vamos buscar o valor de limite de credito cadastrado
               OPEN cr_craptlc(pr_cdcooper => pr_cdcooper,
                               pr_cdadmcrd => rw_crawcrd_limite.cdadmcrd,
@@ -7808,7 +7896,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               vr_craptlc := cr_craptlc%FOUND;
               CLOSE cr_craptlc;
 
-              vr_cdlimcrd := rw_craptlc.cdlimcrd;
+              -- Se nao encontrou, vamos tentar buscar os limites na nova tabela
+              IF NOT vr_craptlc THEN
+                -- CECRED
+                OPEN cr_craptlc_cecred(pr_cdcooper => pr_cdcooper,
+                            pr_cdadmcrd => rw_crawcrd_limite.cdadmcrd,
+                            pr_vllimcrd => pr_vllimcrd);
+                FETCH cr_craptlc_cecred INTO rw_craptlc_cecred;
+                vr_craptlc := cr_craptlc_cecred%FOUND;
+                CLOSE cr_craptlc_cecred;
+              ELSE
+                  vr_cdlimcrd := rw_craptlc.cdlimcrd;
+              END IF;
             ELSE
               vr_craptlc := TRUE;
             END IF;
@@ -7863,7 +7962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                       pr_dscritic  => pr_dscritic);
             IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
-          END IF;
+            END IF;
 
           END IF;
 
@@ -8188,7 +8287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_cdmajora  NUMBER;
         vr_dscritic  VARCHAR2(500);
 
-    BEGIN
+      BEGIN
 
         -- Se tem código de erro
         IF pr_cdcritic IS NOT NULL OR pr_cdcodigo IS NOT NULL THEN
@@ -8213,15 +8312,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_dscritic := NULL;
         END IF;
 
+
+        IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',pr_cdcooper,'DB_NAME_PRODUC') THEN --> Produção
+
         -- Atualizar os registros de majoração
         UPDATE integradados.sasf_majoracaocartao@sasp maj
-           SET maj.cdmajorado        = vr_cdmajora
+	         SET maj.cdmajorado        = vr_cdmajora
              , maj.dtmajoracaocartao = SYSTIMESTAMP
-             , maj.dsexclusao        = vr_dscritic
-         WHERE maj.cdcooper          = pr_cdcooper
-           AND maj.nrdconta          = pr_nrdconta
-           AND maj.nrcontacartao     = pr_nrctacrd
-           AND maj.cdmajorado        = 4; -- Pendente
+	           , maj.dsexclusao        = vr_dscritic
+	       WHERE maj.cdcooper          = pr_cdcooper
+	         AND maj.nrdconta          = pr_nrdconta
+	         AND maj.nrcontacartao     = pr_nrctacrd
+	         AND maj.cdmajorado        = 4; -- Pendente
+        END IF;
 
       EXCEPTION
         WHEN OTHERS THEN
@@ -8337,7 +8440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           END IF;
 
       vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
-                                           ,pr_delimit => ',');
+									                         ,pr_delimit => ',');
 
       IF vr_split.count = 0 THEN
         vr_cdcritic := 182;
@@ -9131,11 +9234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
                 IF vr_tpdocmto = '03' THEN
-                  /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
-                    continue;
-                  END IF;
+
 
                   vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,250,23)||substr(vr_des_text,7,2);
 
@@ -9169,6 +9268,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         vr_dscritic := 'Erro ao inserir craprej: '||SQLERRM;
                         RAISE vr_exc_saida;
                       END;
+
+                    /* nao deve solicitar cartao novamente caso retorne critica 080
+                       (pessoa ja tem cartao nesta conta) */
+                    IF substr(vr_des_text, 211, 3) = '080' THEN
+                      continue;
+                    END IF;
 
                     -- Atualiza o campo cdpesqbb do tipo 1 com as inforamções de tipo 2
                     atualiza_nmtitcrd(vr_cdcooper,
@@ -9427,6 +9532,163 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   END IF;
 
                 ELSE
+
+                  if vr_cdgrafin = 0 then
+                    -- Limpar as variáveis para evitar valores da iteração anterior
+                    rw_crapacb.cdadmcrd := 0;
+                    vr_cdgrafin := 0;
+                    vr_dddebito := 0;
+                    vr_vllimcrd := 0;
+                    vr_tpdpagto := 0;
+                    vr_flgdebcc := 0;
+
+                    -- Busca dados da agencia cooperado
+                    OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
+                                    pr_nrdconta => vr_nrdconta);
+                    FETCH cr_crapass INTO rw_crapass;
+                    CLOSE cr_crapass;
+
+                    -- Verificar se o cursor está aberto
+                    IF cr_crawcrd_em_uso%ISOPEN THEN
+                      CLOSE cr_crawcrd_em_uso;
+                    END IF;
+
+                    -- Buscar o contrato que esteja em uso
+                    OPEN cr_crawcrd_em_uso(pr_cdcooper => vr_cdcooper -- pr_cdcooper
+                                          ,pr_nrdconta => vr_nrdconta -- pr_nrdconta
+                                          ,pr_nrcctitg => vr_nrdctitg -- pr_nrcctitg
+                                          ,pr_nrcpftit => vr_nrcpfcgc -- pr_nrcpftit
+                                          ,pr_flgprcrd => 1 );        -- pr_flgprcrd
+
+                    FETCH cr_crawcrd_em_uso INTO rw_crapacb.cdadmcrd
+                                                ,vr_dddebito
+                                                ,vr_vllimcrd
+                                                ,vr_tpdpagto
+                                                ,vr_flgdebcc;
+                    -- Se não encontrar registros
+                    IF cr_crawcrd_em_uso%NOTFOUND THEN
+                      -- Fechar o cursor
+                      CLOSE cr_crawcrd_em_uso;
+
+                      -- Buscar registro de solicitacao
+                      OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                               ,vr_nrdconta                 -- pr_nrdconta
+                                               ,NULL                        -- pr_nrcctitg
+                                               ,vr_nrcpfcgc                 -- pr_nrcpftit
+                                               ,2                             -- pr_insitcrd -- SOLICITADO
+                                               ,NULL);                        -- pr_flgprcrd
+                      FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                   , vr_dddebito
+                                                   , vr_vllimcrd
+                                                   , vr_tpdpagto
+                                                   , vr_flgdebcc;
+                      -- Se não encontrar registros
+                      IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                        -- Fechar o cursor
+                        CLOSE cr_crawcrd_cdgrafin;
+
+                        -- Buscar pelo CPF do titular
+                        OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
+                                                 ,vr_nrdconta                          -- pr_nrdconta
+                                                 ,NULL                                 -- pr_nrcctitg
+                                                 ,vr_nrcpfcgc                          -- pr_nrcpftit
+                                                 ,3                                    -- pr_insitcrd -- LIBERADO
+                                                 ,NULL );                              -- pr_flgprcrd
+                        FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                     , vr_dddebito
+                                                     , vr_vllimcrd
+                                                     , vr_tpdpagto
+                                                     , vr_flgdebcc;
+
+                        -- Se não encontrar registros
+                        IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                          -- Fechar o cursor
+                          CLOSE cr_crawcrd_cdgrafin;
+
+                          -- Buscar cartão liberado do próprio
+                          OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
+                                                   ,vr_nrdconta                          -- pr_nrdconta
+                                                   ,NULL                                 -- pr_nrcctitg
+                                                   ,NULL                                 -- pr_nrcpftit
+                                                   ,3                                    -- pr_insitcrd -- LIBERADO
+                                                   ,NULL );                              -- pr_flgprcrd
+                          FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                       , vr_dddebito
+                                                       , vr_vllimcrd
+                                                       , vr_tpdpagto
+                                                       , vr_flgdebcc;
+
+                          -- Se não encontrar registros
+                          IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                            -- Buscar cartão liberado que tenha um outro cancelado na mesma data ( Ou seja: Up/Downgrade)
+                            OPEN  cr_crawcrd_cancel(vr_cdcooper                 -- pr_cdcooper
+                                                   ,vr_nrdconta                 -- pr_nrdconta
+                                                   ,vr_nrdctitg   -- pr_nrcctitg
+                                                   ,3                           -- pr_insitcrd
+                                                   ,rw_crapdat.dtmvtolt);       -- pr_dtmvtolt
+                            FETCH cr_crawcrd_cancel INTO rw_crapacb.cdadmcrd
+                                                       , vr_dddebito
+                                                       , vr_vllimcrd
+                                                       , vr_tpdpagto
+                                                       , vr_flgdebcc;
+                            -- Se não encontrar registros
+                            IF cr_crawcrd_cancel%NOTFOUND THEN
+                              CLOSE cr_crawcrd_cancel;
+                              -- Buscar os dados do cartao
+                              OPEN cr_crawcrd_cdgrafin_conta(vr_cdcooper               -- pr_cdcooper
+                                                            ,vr_nrdconta               -- pr_nrdconta
+                                                            ,vr_nrdctitg               -- pr_nrcctitg
+                                                            ,rw_crapdat.dtmvtolt);     -- pr_dtmvtolt
+                              -- Buscar os dados
+                              FETCH cr_crawcrd_cdgrafin_conta INTO rw_crawcrd_cdgrafin_conta;
+                              IF cr_crawcrd_cdgrafin_conta%FOUND THEN
+                                CLOSE cr_crawcrd_cdgrafin_conta;
+                                -- Carrega os dados do cartao
+                                rw_crapacb.cdadmcrd := rw_crawcrd_cdgrafin_conta.cdadmcrd;
+                                vr_dddebito         := rw_crawcrd_cdgrafin_conta.dddebito;
+                                vr_vllimcrd         := rw_crawcrd_cdgrafin_conta.vllimcrd;
+                                vr_tpdpagto         := rw_crawcrd_cdgrafin_conta.tpdpagto;
+                                vr_flgdebcc         := rw_crawcrd_cdgrafin_conta.flgdebcc;
+                              ELSE
+                                CLOSE cr_crawcrd_cdgrafin_conta;
+
+                                IF cr_crawcrd_cdgrafin%ISOPEN THEN
+                                  CLOSE cr_crawcrd_cdgrafin;
+                                END IF;
+
+                                OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                                         ,vr_nrdconta                 -- pr_nrdconta
+                                                         ,vr_nrdctitg                 -- pr_nrcctitg
+                                                         ,NULL                        -- pr_nrcpftit
+                                                         ,NULL                        -- pr_insitcrd -- EM USO
+                                                         ,1);                         -- pr_flgprcrd
+                                FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                             , vr_dddebito
+                                                             , vr_vllimcrd
+                                                             , vr_tpdpagto
+                                                             , vr_flgdebcc;
+                              END IF;
+
+                            ELSE
+                              CLOSE cr_crawcrd_cancel;
+                            END IF;
+
+                          END IF;
+                        END IF;
+                      END IF;
+                    END IF;
+
+                    -- Verificar se o cursor está aberto
+                    IF cr_crawcrd_em_uso%ISOPEN THEN
+                      CLOSE cr_crawcrd_em_uso;
+                    END IF;
+
+                    -- Fecha o cursor
+                    IF cr_crawcrd_cdgrafin%ISOPEN THEN
+                    CLOSE cr_crawcrd_cdgrafin;
+                    END IF;
+
+                  else
                   -- busca Codigo da Adminstradora com base no Cod. do Grupo de Afinidade
                   OPEN cr_crapacb(pr_cdgrafin => vr_cdgrafin);
                   FETCH cr_crapacb INTO rw_crapacb;
@@ -9445,16 +9707,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   END IF;
                   -- Fecha cursor de Grupo de Afinidade
                   CLOSE cr_crapacb;
-
+                  end if;
                 END IF;
 
                 -- Verifica se houve rejeição do Tipo de Registro 2
                 IF vr_codrejei <> '000'  THEN
-                  /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
-                    continue;
-                  END IF;
 
                   BEGIN
                     vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,57,23)||substr(vr_des_text,7,2);
@@ -9485,6 +9742,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       vr_dscritic := 'Erro ao inserir craprej: '||SQLERRM;
                       RAISE vr_exc_saida;
                     END;
+
+                   /* nao deve solicitar cartao novamente caso retorne critica 080
+                     (pessoa ja tem cartao nesta conta) */
+                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                    continue;
+                  END IF;
 
                   -- Atualiza o campo cdpesqbb do tipo 1 com as inforamções de tipo 2
                   atualiza_nmtitcrd(vr_cdcooper,
@@ -9703,7 +9966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         -- Buscar o nome embossado no plastico do cartao
                         vr_nmextttl := TRIM(substr(vr_des_text,57,23));
                         vr_vlsalari := 0;
-                    END IF;
+                      END IF;
                     END IF;
                   ELSE
                     -- fechar os cursores
@@ -10328,11 +10591,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
       END LOOP;
 
+      IF  vr_vet_nrdlote.COUNT > 0 THEN
+
+        vr_indice := vr_vet_nrdlote.FIRST;
+
+        LOOP
       -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
-      IF vr_idlotsms IS NOT NULL THEN
         --> Enviar lote de SMS para o Aymaru
         pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
-                          ,pr_idlotsms => vr_idlotsms
+                            ,pr_idlotsms => vr_vet_nrdlote(vr_indice)
                           ,pr_dscritic => vr_dscritic
                           ,pr_cdcritic => vr_cdcritic);
 
@@ -10352,6 +10619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           pc_log_message;
         END IF;
 
+
         -- Fechar a situação do lote
        /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
                                      ,pr_dscritic   => vr_dscritic);
@@ -10360,10 +10628,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;*/
+          EXIT WHEN vr_vet_nrdlote.LAST = vr_indice;
 
+          vr_indice := vr_vet_nrdlote.NEXT(vr_indice);
+
+        END LOOP;
       END IF;
-
-
       -- Adiciona a linha ao XML
       pc_escreve_xml(vr_xml_lim_cartao,'</crrl707>');
 
@@ -10604,8 +10874,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    26/05/2017 - Tratado para pegar uma data de referencia que sirva para todas as situações de
                 vencimento de fatura contando que os dias de repique agora são dias uteis
                 (Tiago/Fabricio #677702)
-                
-    04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência 
+
+    04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência
                  na craplcm e craplot (Marcel / AMCom)
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
@@ -10674,13 +10944,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
       vr_idxrel     INTEGER := 0;
 
+      -- Objetos para armazenar as variáveis da notificação
+      vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+      vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+      vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
+
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
       vr_exc_erro   EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
-      vr_des_erro   VARCHAR2(4000);
+	    vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro;
 
       ct_hispgfat CONSTANT INTEGER := 1545;
@@ -10691,7 +10966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- controle execuções programa
       vr_flultexe     INTEGER;
       vr_qtdexec      INTEGER;
-      
+
       -- saidas da craplcm
       vr_retornos LANC0001.typ_reg_retorno;  -- Record com os dados retornados pela "pc_gerar_Lancamento_conta"
       vr_incrineg INTEGER;
@@ -10763,6 +11038,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END fn_encerra_exec;
 
     BEGIN
+      -- Verifica se o programa que chamou é o CRPS674
+      -- para verificar a quantidade de execução programada no debitador
+      -- Faz o controle de execução para saber quando é a última execução
+      -- Projeto debitador único
+      if pr_cdprogra = 'CRPS674' then
+         -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
+         gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper    => pr_cdcooper   --Cooperativa
+                                                     ,pr_cdprocesso => 'PC_'||pr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                     ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+         IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;
+
+         -- registrar a quantidade de execução
+         -- Projeto debitador unico
+         SICR0001.pc_controle_exec_deb (pr_cdcooper   => pr_cdcooper         --> Código da coopertiva
+                                        ,pr_cdtipope  => 'I'                 --> Tipo de operacao I-incrementar e C-Consultar
+                                        ,pr_dtmvtolt  => pr_dtmvtolt         --> Data do movimento
+                                        ,pr_cdprogra  => pr_cdprogra         --> Codigo do programa
+                                        ,pr_flultexe  => vr_flultexe         --> Retorna se é a ultima execução do procedimento
+                                        ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade
+                                        ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro
+                                        ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer
+
+           IF nvl(vr_cdcritic,0) > 0 OR
+              TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
+
+           --Commit para garantir o
+           --controle de execucao do programa
+           COMMIT;
+      end if;
+
 
       --funcao que starta execucao dos debitos somente se os debito anteriores
       --estiverem ok de acordo com parametro da prm
@@ -10774,18 +11083,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END IF;
 
       vr_dscritic := '';
-      --RODANDO VIA JOB validacoes
-      IF upper(pr_cdprogra) = 'REPIQUE' THEN
-         gene0004.pc_executa_job(pr_cdcooper => pr_cdcooper
-                                ,pr_fldiautl => 1
-                                ,pr_flproces => 1
-                                ,pr_dscritic => vr_dscritic);
-
-         IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_saida;
-         END IF;
-      END IF;
-
       --Buscar Transacao
       vr_dstransa:= 'Debito fatura';
 
@@ -10972,8 +11269,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         --Fecha cursor
         CLOSE cr_crawcrd;
 
-        -- Obter valores de saldos diários
-        extr0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_tbcrd_fatura.cdcooper,
+				-- Obter valores de saldos diários
+				extr0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_tbcrd_fatura.cdcooper,
                                     pr_rw_crapdat => rw_crapdat,
                                     pr_cdagenci   => rw_crapass.cdagenci,
                                     pr_nrdcaixa   => 0,
@@ -10986,21 +11283,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                     pr_tab_sald   => vr_tab_sald,
                                     pr_tab_erro   => vr_tab_erro);
 
-        -- se encontrar erro
-        IF vr_des_erro = 'NOK' THEN
-          -- presente na tabela de erros
-          IF vr_tab_erro.count > 0 THEN
-            -- adquire descrição
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            -- grava log
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                       pr_ind_tipo_log => 2, -- Erro tratato
-                                       pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -'    ||
-                                                                           pr_cdprogra  || ' --> ' || vr_dscritic);
-          END IF;
-          -- Volta para o inicio do loop
-          CONTINUE;
-        END IF;
+				-- se encontrar erro
+				IF vr_des_erro = 'NOK' THEN
+					-- presente na tabela de erros
+					IF vr_tab_erro.count > 0 THEN
+						-- adquire descrição
+						vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+						-- grava log
+						btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+																			 pr_ind_tipo_log => 2, -- Erro tratato
+																			 pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' -'    ||
+																																					 pr_cdprogra  || ' --> ' || vr_dscritic);
+					END IF;
+					-- Volta para o inicio do loop
+					CONTINUE;
+				END IF;
 
         -- verifica se pode debitar
         vr_podedbta := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
@@ -11009,18 +11306,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         /* se nao puder debitar historico */
         IF vr_podedbta = false THEN
           continue;
-        END IF;                                  
+        END IF;
 
-									
-        -- alimenta indice da temp-table
-        vr_ind_sald := vr_tab_sald.last;
+
+				-- alimenta indice da temp-table
+				vr_ind_sald := vr_tab_sald.last;
 
         -- inicializa o valor de pagamento
         vr_vlpagmto := 0;
 
-        -- adquire saldo disponível total da conta (saldo + cheque especial + limite de crédito)
-        vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl +
-                       vr_tab_sald(vr_ind_sald).vllimcre;
+				-- adquire saldo disponível total da conta (saldo + cheque especial + limite de crédito)
+				vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl +
+											 vr_tab_sald(vr_ind_sald).vllimcre;
 
 
         IF upper(pr_cdprogra) = 'DEBCCR' THEN
@@ -11065,7 +11362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            -- Situacao de repique, repique so pode ser feito
            -- apos o dia do vencimento da fatura e a flag de
            -- parametro estiver marcada para processar repique
-           IF rw_tbcrd_fatura.dtvencimento >= pr_dtmvtolt OR
+           IF rw_tbcrd_fatura.dtvencimento > pr_dtmvtolt OR
               vr_flrepccr = 'N' THEN
 
               --Se for uma situacao de repique e a coop nao realiza
@@ -11170,6 +11467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         --Mudar situacao da fatura para nao efetuado qdo
         --for o ultimo dia do repique e nao conseguiu realizar o pagamento total
         IF pr_cdprogra = 'CRPS674' AND
+           vr_flultexe = 1 AND -- somente quando for a última execução do debitador  - Projeto Debitador Unico
           (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0 AND
            gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                       ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
@@ -11201,49 +11499,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                               , pr_nrdctabb => rw_crapass.nrdconta
                                               , pr_nrdocmto => rw_tbcrd_fatura.dsdocumento || TO_CHAR(SYSDATE, 'hh24mmss')
                                               , pr_nrdolote => 0 -- Lote nao sera usado
-                                              , pr_nrseqdig => vr_idpagamento_fatura -- Alterado por Renato devido a erro no processo noturno 
+                                              , pr_nrseqdig => vr_idpagamento_fatura -- Alterado por Renato devido a erro no processo noturno
                                               , pr_cdcooper => pr_cdcooper
                                               , pr_vllanmto => vr_vlpagmto -- Valor Total ou definido pelo logica de repique
-                                              , pr_retorno  => vr_retornos
+                                              , pr_tab_retorno  => vr_retornos
                                               , pr_incrineg => vr_incrineg
                                               , pr_cdcritic => vr_cdcritic
                                               , pr_dscritic => vr_dscritic);
 
-/*            INSERT INTO craplcm
-                (cdcooper,
-                 dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdctabb,
-                 nrdocmto,
-                 vllanmto,
-                 nrdconta,
-                 cdhistor,
-                 nrseqdig,
-                 cdpesqbb,
-                 dtrefere,
-                 hrtransa)
-            VALUES
-                (pr_cdcooper,
-                 pr_dtmvtolt,
-                 rw_crapass.cdagenci,
-                 100,
-                 0, -- Lote nao sera usado
-                 rw_crapass.nrdconta, -- nrdctabb
-                 rw_tbcrd_fatura.dsdocumento || TO_CHAR(SYSDATE, 'hh24mmss'),
-                 vr_vlpagmto, -- Valor Total ou definido pelo logica de repique
-                 rw_tbcrd_fatura.nrdconta,
-                 ct_hispgfat, -- Historico
-                 vr_idpagamento_fatura, -- Alterado por Renato devido a erro no processo noturno
-                 rw_crawcrd.nrcrcard, -- Num cartao
-                 trunc(SYSDATE), -- Data referencia
-                 gene0002.fn_busca_time); -- Hora transacao */
+
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir craplcm: '||SQLERRM;
               RAISE vr_exc_saida;
           END;
+          --
+          vr_notif_origem   := 10;
+          vr_notif_motivo   := 1;
+          vr_variaveis_notif('#valordebito') := TRIM(TO_CHAR(vr_vlpagmto,'fm999G999G999G990D00'));
+          vr_variaveis_notif('#datadebito')  := TO_CHAR(pr_dtmvtolt,'dd/mm/yyyy');
+          vr_variaveis_notif('#tipodebito')  := vr_dstransa;
+          -- Cria uma notificação
+          noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                      ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                      ,pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => rw_tbcrd_fatura.nrdconta
+                                      ,pr_variaveis => vr_variaveis_notif);
 
           --Pega os valores para atualizar no sld do dia das faturas
           vr_vlsomsld := vr_vlpagmto;
@@ -11409,7 +11690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
 
         -- Call the procedure
-        ccrd0003.pc_debita_fatura(pr_cdcooper => vr_crapcop(i),
+        CCRD0003.pc_debita_fatura(pr_cdcooper => vr_crapcop(i),
                                          pr_cdprogra => 'REPIQUE',
                                          pr_cdoperad => 1,
                                          pr_dtmvtolt => rw_crapdat.dtmvtolt,
@@ -11680,7 +11961,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_exc_erro   EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
-      vr_des_erro   VARCHAR2(4000);
+	    vr_des_erro   VARCHAR2(4000);
       vr_tab_erro   GENE0001.typ_tab_erro;
 
       PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
@@ -11779,7 +12060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                ,pr_cdcooper => pr_cdcooper
                                                ,pr_nmsubdir => 'rlnsv');
 
-      vr_dsdirarq := vr_dsdireto||'/rl/crrl693.lst';
+      vr_dsdirarq := vr_dsdireto||'/rl/crrl693_'|| to_char( gene0002.fn_busca_time )||'.lst';
 
       -- Submeter o relatório 693
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                                    --> Cooperativa conectada
