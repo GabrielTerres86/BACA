@@ -227,8 +227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  
                  29/05/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente  
                               PRJ450 - Diego Simas - AMcom 
-
-                 29/05/2018 - Alteração INSERT na craplcm pela chamada da rotina LANC0001
+                            - Alteração INSERT na craplcm pela chamada da rotina LANC0001
                               PRJ450 - Renato Cordeiro (AMcom)         
                  
   ---------------------------------------------------------------------------------------------------------------*/
@@ -1122,7 +1121,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
           
           dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
-        EXCEPTION
+        EXCEPTION			 
+          WHEN vr_exc_erro THEN		  
+            raise vr_exc_erro; --> Passar critica
           WHEN Others THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
@@ -1331,7 +1332,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                
           dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
-        EXCEPTION
+        EXCEPTION	 
+          WHEN vr_exc_erro THEN		  
+            raise vr_exc_erro; --> Passar critica 
           WHEN Others THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
@@ -1667,7 +1670,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                
           dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
-        EXCEPTION
+        EXCEPTION	
+          WHEN vr_exc_erro THEN		  
+            raise vr_exc_erro; --> Passar critica
           WHEN Others THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
@@ -1953,7 +1958,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
           dbms_output.put_line('rowid='||rw_craplcm.ROWID);
 
-        EXCEPTION
+        EXCEPTION		  
+          WHEN vr_exc_erro THEN		  
+            raise vr_exc_erro; --> Passar critica
           WHEN Others THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro ao inserir na tabela craplcm. '||sqlerrm;
