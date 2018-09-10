@@ -2313,25 +2313,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       CURSOR cr_tbcc_grp (pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
                          ,pr_idgrupo  IN tbcc_grupo_economico.idgrupo%TYPE) IS  --> Código do Grupo TBCC
         /* APENAS GRUPOS QUE TEM INTEGRANTE ATIVO */
-        SELECT IDGRUPO
-          FROM (SELECT ge.idgrupo,ge.nrdconta
-          FROM tbcc_grupo_economico ge
-         WHERE ge.cdcooper = pr_cdcooper
-                   AND ge.idgrupo  = decode(pr_idgrupo,0,ge.idgrupo,pr_idgrupo)
+        SELECT idgrupo
+          FROM (SELECT int.idgrupo
+                      ,int.nrdconta
+                  FROM tbcc_grupo_economico_integ INT
+                      ,tbcc_grupo_economico p
+                 WHERE int.dtexclusao IS NULL
+                   AND int.cdcooper = pr_cdcooper
+                   AND int.idgrupo  = p.idgrupo
+                   AND int.idgrupo  = decode(pr_idgrupo,0,int.idgrupo,pr_idgrupo)
                 UNION
-                SELECT gi.idgrupo, gi.nrdconta
-                  FROM tbcc_grupo_economico       ge,
-                       tbcc_grupo_economico_integ gi
-                 WHERE ge.cdcooper = pr_cdcooper
-                   AND gi.cdcooper = ge.cdcooper
-                   AND gi.idgrupo  = ge.idgrupo
-                   AND gi.dtexclusao IS NULL
-                   AND ge.idgrupo = decode(pr_idgrupo,0,ge.idgrupo,pr_idgrupo)
+                SELECT pai.idgrupo
+                      ,pai.nrdconta
+                  FROM tbcc_grupo_economico       pai
+                     , crapass                    ass
+                     , tbcc_grupo_economico_integ int
+                 WHERE ass.cdcooper = pai.cdcooper
+                   AND ass.nrdconta = pai.nrdconta
+                   AND int.idgrupo  = pai.idgrupo
+                   AND int.dtexclusao is NULL
+                   AND ass.cdcooper = pr_cdcooper
+                   AND int.cdcooper = pr_cdcooper
+                   AND pai.idgrupo  = decode(pr_idgrupo,0,pai.idgrupo,pr_idgrupo)
                 ) TMP
          GROUP BY TMP.IDGRUPO
         HAVING COUNT(*) > 1
-         ORDER BY idgrupo         
-         ;
+         ORDER BY idgrupo;
       rw_tbcc_grp cr_tbcc_grp%ROWTYPE;
 
       CURSOR cr_contas_grupo (pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
@@ -2401,10 +2408,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         vr_opt_innivris := 0;
         vr_innivris := 0;
 
-
-        IF rw_tbcc_grp.idgrupo IN(36842,36843,36845,36852,36860,36870,36875,36878) THEN
-          NULL;
-        END IF;
 
         --Busca grupos por nrconta
         FOR rw_contas_grupo in cr_contas_grupo(pr_cdcooper => pr_cdcooper          --> Código da cooperativa
