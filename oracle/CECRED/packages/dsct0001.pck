@@ -29,6 +29,13 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --
   ---------------------------------------------------------------------------------------------------------------
  
+  -- Constantes
+  vr_cdhistor_resgate     CONSTANT craphis.cdhistor%TYPE := 687;
+  vr_cdhistordsct_resgcta CONSTANT craphis.cdhistor%TYPE := 2676; --RESGATE C/C
+  vr_cdhistordsct_resopcr CONSTANT craphis.cdhistor%TYPE := 2677; --RESGATE Operacao Credito
+  vr_cdhistordsct_resbaix CONSTANT craphis.cdhistor%TYPE := 2678; --RESGATE Baixa da carteira
+  vr_cdhistordsct_resreap CONSTANT craphis.cdhistor%TYPE := 2679; --RESGATE Baixa rendas a apropriar
+ 
   --Tipo de Desconto de Títulos
   TYPE typ_tot_descontos IS RECORD --(b1wgen0030tt.i/tt-tot_descontos)
     (vldscchq NUMBER
@@ -170,6 +177,38 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
                                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'DSCT0001'
                                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
                                  );
+                                 
+  /* Procedure para efetuar a liquidacao do bordero */
+  PROCEDURE pc_efetua_liquidacao_bordero (pr_cdcooper IN INTEGER --Codigo Cooperativa
+                                         ,pr_cdagenci IN INTEGER --Codigo Agencia
+                                         ,pr_nrdcaixa IN INTEGER --Numero do Caixa
+                                         ,pr_cdoperad IN VARCHAR2 --Codigo Operador
+                                         ,pr_dtmvtolt IN DATE     --Data Movimento
+                                         ,pr_idorigem IN INTEGER  --Identificador Origem
+                                         ,pr_nrdconta IN INTEGER  --Numero da Conta
+                                         ,pr_nrborder IN INTEGER  --Numero do Bordero
+                                         ,pr_tab_erro OUT GENE0001.typ_tab_erro --Tabela de erros
+                                         ,pr_des_erro OUT VARCHAR2 --identificador de erro
+                                         ,pr_cdcritic OUT VARCHAR2 --Codigo do erro
+                                         ,pr_dscritic OUT VARCHAR2 --Descricao do erro                              
+                                         );
+                                         
+  PROCEDURE pc_abatimento_juros_titulo(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                      ,pr_nrborder  IN crapbdt.nrborder%TYPE --> Numero do bordero
+                                      ,pr_cdbandoc  IN craptdb.cdbandoc%TYPE
+                                      ,pr_nrdctabb  IN craptdb.nrdctabb%TYPE
+                                      ,pr_nrcnvcob  IN craptdb.nrcnvcob%TYPE
+                                      ,pr_nrdocmto  IN craptdb.nrdocmto%TYPE
+                                      ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                                      ,pr_cdagenci  IN crapass.cdagenci%TYPE
+                                      ,pr_cdoperad  IN VARCHAR2              --> Codigo operador
+                                      ,pr_cdorigpg  IN NUMBER DEFAULT 0      --> Código da origem do pagamento  
+                                      ,pr_dtdpagto  IN craptdb.dtdpagto%TYPE DEFAULT NULL --> Data de pagamento                                    
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                      );
+                                          
 END  DSCT0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
@@ -210,15 +249,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
-
+              
                22/11/2017 - Adicionado regra para não debitar títulos vencidos no primeiro dia util do ano e
                             que venceram no dia útil anterior. (Rafael)
-              
+                            
                25/11/2017 - Ajuste para cobrar IOF. (James - P410)
                
                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)                            
-  
+
                15/02/2018 - Incluido nome do módulo logado
                             No caso de erro de programa gravar tabela especifica de log 
                             Ajuste mensagem de erro:
@@ -232,9 +271,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                27/04/2018 - Projeto Ligeirinho. Alterado para gravar o PA do associado na tabela de lotes (craplot)
 			                quando chamado pelo CRPS538. (Mário- AMcom)
     
-               27/06/2018 - P450 Regulatório de Credito - Substituido o insert na craplcm pela chamada 
-                            da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)				              
+			   04/07/2018 - Projeto Ligeirinho. Ajuste chamado pelo CRPS509 #40089. (Mário- AMcom)
+    
+               24/05/2018 - Alterado procedure pc_efetua_resgate_tit_bord. Realizar os lançamentos:
+                            1) Na conta corrente do cooperado (tabela CRAPLCM)
+                               Valor do título descontando juros proporcional (histórico 2676 - RESGATE DE TITULO DESCONTADO)
+                            2) Nas movimentações da operação de desconto (tabela tbdsct_lancamento_bordero)
+                               Valor líquido do título (histórico 2677 - RESGATE DE TITULO DESCONTADO)
+                               Valor bruto do título (histórico 2678 - RESGATE DE TITULO DESCONTADO) --> Baixa da carteira
+                               Valor dos juros do título (histórico 2679	- RENDA SOBRE RESGATE DE TÍTULO DESCONTADO)
+                            (Paulo Penteado (GFT))
+                            
+               07/06/2018 - Alterado a procedure pc_efetua_baixa_titulo, onde:
+                            1) A rotina atual é chamada somente para os pagamentos de títulos de borderôs inclusos na versão 
+                               antiga (crapbdt.flverbor = 0)
+                            2) Os pagamentos de títulos de borderôs novos (crapbdt.flverbor = 1) irá chamar a nova rotina de 
+                               baixa de título DSCT0003.pc_pagar_titulo
+                            Criado a procedure pc_abatiamento_juros_titulo com a mesma funcionalidade do trecho de abatimento 
+                            de juros do titulo antigamente escrita da rotina pc_efetua_baixa_titulo. Com isso, essa rtoina 
+                            pode ser utilizada na dsct0003 para abatimento de juros das operações de crédito.
+                            (Paulo Penteado (GFT)) 	 
 
+               27/06/2018 - P450 Regulatório de Credito - Substituido o insert na craplcm pela chamada 
+                            da rotina lanc0001.pc_gerar_lancamento_conta. (Josiane Stiehler - AMcom)				               
+                            
+               19/07/2018 - Alterado as procedures pc_efetua_baixa_tit_car e pc_efetua_baixa_titulopara: Para os borderôs inclusos 
+                            no sistema antes da nova versão de funcionalidade do bordero, quando houver o pagamento da operação de 
+                            desconto, ou seja, do título vencido, através do débito em conta corrente deverá ser atualizada a coluna 
+                            “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
+    
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
@@ -279,10 +344,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       FROM crapjur
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta;
-  rw_crapjur cr_crapjur%ROWTYPE;  
-
+  rw_crapjur cr_crapjur%ROWTYPE;
+  
   -- Excluida rw_craperr, cr_craperr rw_crapban e cr_crapban não utilizadas - 15/02/2018 - Chamado 851591
-      
+
   --Buscar informacoes de lote
   CURSOR cr_craplot (pr_cdcooper IN craplot.cdcooper%TYPE
                     ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
@@ -437,7 +502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_flgliqui:= FALSE;
       END IF;
       --Fechar Cursor
-      CLOSE cr_craptdb;                      
+      CLOSE cr_craptdb;
 
       --Se liquidou
       IF vr_flgliqui THEN
@@ -497,7 +562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
      Sigla   : CRED
 
      Autor   : Desconhecido
-     Data    : --/--/----                        Ultima atualizacao: 15/02/2018
+     Data    : --/--/----                        Ultima atualizacao: 19/07/2018
 
      Dados referentes ao programa:
 
@@ -514,6 +579,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              - Incluído tratamento para não duplicar a mensagens na tbgen: vr_ininsoco
                             (Belli - Envolti - Chamado 851591)      
      
+                19/07/2018 - Para os borderôs inclusos no sistema antes da nova versão de funcionalidade do bordero, quando houver 
+                             o pagamento da operação de desconto, ou seja, do título vencido, através do débito em conta corrente 
+                             deverá ser atualizada a coluna “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
   ..................................................................................*/ 
   BEGIN
     DECLARE
@@ -523,25 +591,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                        ,pr_dtrefere IN DATE
                        ,pr_insittit IN craptdb.insittit%TYPE) IS
-        SELECT ROWID,
-               cdcooper,
-               nrdconta,
-               nrborder,
-               cdbandoc,
-               dtvencto,
-               dtlibbdt,
-               nrcnvcob,
-               nrdctabb,
-               nrdocmto,
-               nrinssac,
-               vltitulo,
-               vlliquid
-          FROM craptdb 
+        SELECT craptdb.ROWID,
+               craptdb.cdcooper,
+               craptdb.nrdconta,
+               craptdb.nrborder,
+               craptdb.cdbandoc,
+               craptdb.dtvencto,
+               craptdb.dtlibbdt,
+               craptdb.nrcnvcob,
+               craptdb.nrdctabb,
+               craptdb.nrdocmto,
+               craptdb.nrinssac,
+               craptdb.vltitulo,
+               craptdb.vlliquid
+          FROM craptdb, crapbdt 
          WHERE craptdb.cdcooper  = pr_cdcooper
+           AND craptdb.cdcooper  = crapbdt.cdcooper
+           AND craptdb.nrdconta  = crapbdt.nrdconta
+           AND craptdb.nrborder  = crapbdt.nrborder
            AND craptdb.dtvencto >= pr_dtrefere
            AND craptdb.dtvencto  < pr_dtmvtolt 
            AND craptdb.insittit  = pr_insittit --4 liberado
            AND craptdb.dtdpagto IS NULL
+           AND crapbdt.flverbor = 0 -- somente os titulos de borderôs antigos devem ser considerados
          ORDER BY cdcooper, nrdconta, dtvencto, nrborder, vltitulo, nrdocmto; 
       
       --Selecionar Bordero de titulos
@@ -549,6 +621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                         ,pr_nrborder IN crapbdt.nrborder%type) IS
         SELECT crapbdt.txmensal
               ,crapbdt.vltaxiof
+              ,crapbdt.flverbor
         FROM crapbdt
         WHERE crapbdt.cdcooper = pr_cdcooper
         AND   crapbdt.nrborder = pr_nrborder;        
@@ -574,7 +647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_cardbtitcrpj INTEGER; --> Parametro de dias carencia cobranca c/ registro pessoa juridica
 
       -- Excluida vr_diascare e vr_diascare não utilizadas - 15/02/2018 - Chamado 851591       
-      vr_dtrefere     DATE;                --> Data de referencia para buscar os titulos que vao ser debitados  
+      vr_dtrefere     DATE;                --> Data de referencia para buscar os titulos que vao ser debitados
       -- Excluida vr_dtvcttdb não utilizadas - 15/02/2018 - Chamado 851591 
            
       vr_nrseqdig     NUMBER;              --> Nr Sequencia
@@ -584,9 +657,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_tab_saldo    EXTR0001.typ_tab_saldos;     --> Temp-Table com o saldo do dia
 
       vr_tab_dados_tar typ_tab_dados_tarifa;
-            
+      
       -- Excluida vr_vlttsrpf, vr_vlttsrpj, vr_vlttcrpf e vr_vlttcrpj não utilizadas - 15/02/2018 - Chamado 851591 
-            
+      
       vr_dstextab     craptab.dstextab%TYPE;    
       vr_dsctajud     crapprm.dsvlrprm%TYPE;
       vr_natjurid     crapjur.natjurid%TYPE;
@@ -594,7 +667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vliofpri     NUMBER(25,2);
       vr_vliofadi     NUMBER(25,2);
       vr_vliofcpl     NUMBER(25,2);
-      vr_qtdiaiof     PLS_INTEGER;                           
+      vr_qtdiaiof     PLS_INTEGER;                          
       vr_flgimune     PLS_INTEGER; -- Merge 1 - 15/02/2018 - Chamado 851591                       
       vr_dtmvtolt_lcm craplcm.dtmvtolt%TYPE;
       vr_cdagenci_lcm craplcm.cdagenci%TYPE;
@@ -620,7 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_des_erro     VARCHAR2(4000);
       vr_cdcritic     crapcri.cdcritic%TYPE;
       vr_dscritic     crapcri.dscritic%TYPE;
-      
+
       --Agrupa os parametros - 15/02/2018 - Chamado 851591 
       vr_dsparame VARCHAR2(4000);
       --Indicador para gerar critica nas ocorrencias. 1 Insere, 2 Não insere. - 15/02/2018 - Chamado 851591
@@ -655,7 +728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
         --Sem Registro PF
         vr_cdbattar:= 'DSTTITSRPF';
-
+        
         /*  Busca valor da tarifa sem registro*/
         TARI0001.pc_carrega_dados_tar_vigente (pr_cdcooper  => pr_cdcooper  --Codigo Cooperativa
                                               ,pr_cdbattar  => vr_cdbattar  --Codigo Tarifa
@@ -680,7 +753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
-        
+
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_busca_vltarifa_tit');
 
@@ -801,20 +874,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
           --Indicador para gerar critica nas ocorrencias. 1 Insere, 2 Não insere. - 15/02/2018 - Chamado 851591                      
           IF vr_ininsoco = 1 THEN
-            GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdagenci => pr_cdagenci
-                                 ,pr_nrdcaixa => pr_nrdcaixa
-                                 ,pr_nrsequen => 1 /** Sequencia **/
-                                 ,pr_cdcritic => pr_cdcritic
-                                 ,pr_dscritic => pr_dscritic
-                                 ,pr_tab_erro => vr_tab_erro);
-
+          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_nrsequen => 1 /** Sequencia **/
+                               ,pr_cdcritic => pr_cdcritic
+                               ,pr_dscritic => pr_dscritic
+                               ,pr_tab_erro => vr_tab_erro);
+                               
           END IF;                     
           pr_tab_erro := vr_tab_erro;
           IF NVL(vr_tab_erro.Count,0) > 0 THEN
             pr_tab_erro := vr_tab_erro;
           END IF;
-
+          
         WHEN OTHERS THEN     
           -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
@@ -830,7 +903,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                ,pr_nrsequen => 1 /** Sequencia **/
                                ,pr_cdcritic => pr_cdcritic
                                ,pr_dscritic => pr_dscritic
-                               ,pr_tab_erro => vr_tab_erro); 
+                               ,pr_tab_erro => vr_tab_erro);        
                                
           pr_tab_erro := vr_tab_erro;       
           IF NVL(vr_tab_erro.Count,0) > 0 THEN
@@ -838,7 +911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           END IF;
                                
       END pc_busca_vltarifa_tit;  
-
+      
       --Pega maior nrseqdig lcm
       FUNCTION fn_busca_nrseqdig(pr_cdcooper crapcop.cdcooper%TYPE
                                 ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) RETURN NUMBER IS                                
@@ -859,7 +932,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.fn_busca_nrseqdig');
 
         OPEN cr_craplcm_seq(pr_cdcooper => pr_cdcooper
-                           ,pr_dtmvtolt => pr_dtmvtolt);
+                             ,pr_dtmvtolt => pr_dtmvtolt);
         FETCH cr_craplcm_seq INTO rw_craplcm_seq;
         
         IF cr_craplcm_seq%NOTFOUND THEN
@@ -867,7 +940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            RETURN 0;
         END IF;
         
-        CLOSE cr_craplcm_seq;
+          CLOSE cr_craplcm_seq;
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         RETURN rw_craplcm_seq.nrseqdig;
@@ -902,7 +975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         RETURN TRUE;        
       END fn_verifica_cobranca_reg;                                                                        
-
+      
       --Busca data de referencia para processamento dos titulos
       FUNCTION fn_dtrefere_carencia(pr_cdcooper crapcop.cdcooper%TYPE
                                    ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
@@ -960,14 +1033,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_dtvalida := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                                    pr_dtmvtolt => vr_dtvalida - 6, --DtReferencia - (max carencia + 1)
                                                    pr_tipo => 'A', -- Anterior
-                                                   pr_feriado => TRUE); 
-                                                   
+                                                   pr_feriado => TRUE);                
+      
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);	               
       
         RETURN vr_dtvalida;
       END fn_dtrefere_carencia;
-                       
+
     BEGIN
       
       -- Incluido nome do módulo logado - 15/02/2018 - Chamado 851591
@@ -983,11 +1056,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                       ' ,pr_dtmvtoan:' || pr_dtmvtoan;
                       
 /*#########################Carrega variaveis e parametros iniciais################################################*/
-
+      
       --tabela que guarda a qtd de tit
       --que devem ser tarifados por conta
       vr_tab_tar.delete; 
-
+      
       --Cobranca com registro
       vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                               ,pr_nmsistem => 'CRED'
@@ -1007,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');
         vr_cardbtitcrpf := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
       END IF;
-      
+
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');
 
@@ -1025,7 +1098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           --Levantar Excecao
           RAISE vr_exc_erro;
-      ELSE
+      ELSE          
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');          
         vr_cardbtitcrpj := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
@@ -1039,14 +1112,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                          ,pr_dtmvtolt => pr_dtmvtolt
                                          ,pr_dtmvtoan => pr_dtmvtoan);
                                          
-      -- Projeto Ligeirinho -  paralelismo
-      -- busca a sequencia para as execuções de paralelismo
-      if paga0001.fn_exec_paralelo then
-        vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
-      else                                         
-        vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper
-                                        ,pr_dtmvtolt => pr_dtmvtolt) + 1;
-      end if;
+       -- Projeto Ligeirinho -  paralelismo
+       -- busca a sequencia para as execuções de paralelismo
+       if paga0001.fn_exec_paralelo then
+          vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
+       else
+      vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => pr_dtmvtolt) + 1;
+       end if;
                                       
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');
@@ -1071,8 +1144,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
       vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                pr_cdcooper => pr_cdcooper,
-                                               pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');  
-                                               
+                                               pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');      
+      
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');    
       
@@ -1082,8 +1155,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         WHEN '1' THEN vr_dtultdia := vr_dtultdia - 2;
         WHEN '7' THEN vr_dtultdia := vr_dtultdia - 1;
         ELSE vr_dtultdia := add_months(TRUNC(rw_crapdat.dtmvtoan,'RRRR'),12)-1;
-      END CASE;        
-      
+      END CASE;       
+
 /*######################Loop Principal Pegando os titulos para Processamento######################################*/
       FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => pr_dtmvtolt
@@ -1222,14 +1295,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            
            --Verificar o saldo retornado
            IF vr_tab_saldo.Count = 0 THEN
-             --Montar mensagem erro             
+             --Montar mensagem erro
              --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
              vr_cdcritic := 1072; --Nao foi possivel consultar o saldo para a operacao.
              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
              --Levantar Excecao
              RAISE vr_exc_erro;
            END IF;
-
+        
            --Se o saldo nao for suficiente
            IF rw_craptdb.vltitulo > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
                                      nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
@@ -1262,27 +1335,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
         IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
            IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-              -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
-              -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-              vr_cdcritic := 1034;
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                                    'craplcm(1):'  ||
-                                     ' dtmvtolt:'    || pr_dtmvtolt         ||
-                                     ', cdagenci:'   || '1'                 || 
-                                     ', cdbccxlt:'   || '100'               || 
-                                     ', nrdolote:'   || '10301'             ||
-                                     ', nrdconta:'   || rw_craptdb.nrdconta ||
-                                     ', nrdocmto:'   || NVL(vr_nrseqdig,0)  || 
-                                     ', vllanmto:'   || rw_craptdb.vltitulo ||
-                                     ', cdhistor:'   || '591'               ||
-                                     ', nrseqdig:'   || NVL(vr_nrseqdig,0)  ||
-                                     ', nrdctabb:'   || rw_craptdb.nrdconta ||
-                                     ', nrautdoc:'   || '0'                 ||
-                                     ', cdcooper:'   || pr_cdcooper         ||
-                                     ', cdpesqbb:'   || rw_craptdb.nrdocmto || 
-                                     '. ' ||sqlerrm; 
-               RAISE vr_exc_erro;
+            -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
+            -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+            vr_cdcritic := 1034;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                               'craplcm(1):'  ||
+                               ' dtmvtolt:'    || pr_dtmvtolt         ||
+                               ', cdagenci:'   || '1'                 || 
+                               ', cdbccxlt:'   || '100'               || 
+                               ', nrdolote:'   || '10301'             ||
+                               ', nrdconta:'   || rw_craptdb.nrdconta ||
+                               ', nrdocmto:'   || NVL(vr_nrseqdig,0)  || 
+                               ', vllanmto:'   || rw_craptdb.vltitulo ||
+                               ', cdhistor:'   || '591'               ||
+                               ', nrseqdig:'   || NVL(vr_nrseqdig,0)  ||
+                               ', nrdctabb:'   || rw_craptdb.nrdconta ||
+                               ', nrautdoc:'   || '0'                 ||
+                               ', cdcooper:'   || pr_cdcooper         ||
+                               ', cdpesqbb:'   || rw_craptdb.nrdocmto || 
+                               '. ' ||sqlerrm; 
+            RAISE vr_exc_erro;
            ELSE
              CONTINUE;
            END IF;
@@ -1290,15 +1363,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             
         rw_craplcm.nrseqdig:= NVL(vr_nrseqdig,0);
         rw_craplcm.vllanmto:= rw_craptdb.vltitulo;
-             
-        -- Projeto Ligeirinho -  paralelismo
-        -- busca a sequencia para as execuções de paralelismo
-        if paga0001.fn_exec_paralelo then
+        
+       -- Projeto Ligeirinho -  paralelismo
+       -- busca a sequencia para as execuções de paralelismo
+       if paga0001.fn_exec_paralelo then
           vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
-        else
-          vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
-        end if;
-		
+       else
+        vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
+       end if;
+        
         /*#########BUSCAR BDT BORDERO##################################*/
         --Selecionar Bordero de titulos
         OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
@@ -1333,7 +1406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         
         -- Quantidade de Dias em atraso
         vr_qtdiaiof := pr_dtmvtolt - rw_craptdb.dtvencto;
-
+        
         TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 2 --> Desconto de Titulo
                                      ,pr_tpoperacao => 2 --> Pagamento Em Atraso
                                      ,pr_cdcooper   => pr_cdcooper
@@ -1358,7 +1431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-
+        
          -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');	
         
@@ -1386,27 +1459,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                 IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                    -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-                    CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
-                    -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-                    vr_cdcritic := 1034;
-                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                                     'craplcm(2):' ||
-                                     ' dtmvtolt:'   || pr_dtmvtolt  ||
-                                     ', cdagenci:'  || '1'      || 
-                                     ', cdbccxlt:'  || '100'    || 
-                                     ', nrdolote:'  || '10301'  ||
-                                     ', nrdconta:'  || rw_craptdb.nrdconta  ||
-                                     ', nrdocmto:'  || NVL(vr_nrseqdig,0)   || 
-                                     ', vllanmto:'  || vr_vliofcpl  ||
-                                     ', cdhistor:'  || '2321'       ||
-                                     ', nrseqdig:'  || NVL(vr_nrseqdig,0)   ||
-                                     ', nrdctabb:'  || rw_craptdb.nrdconta  ||
-                                     ', nrautdoc:'  || '0'          ||
-                                     ', cdcooper:'  || pr_cdcooper  ||
-                                     ', cdpesqbb:'  || rw_craptdb.nrdocmto  || 
-                                     '. ' ||sqlerrm; 
-                    RAISE vr_exc_erro;
+              -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+              -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+              vr_cdcritic := 1034;
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                               'craplcm(2):' ||
+                               ' dtmvtolt:'   || pr_dtmvtolt  ||
+                               ', cdagenci:'  || '1'      || 
+                               ', cdbccxlt:'  || '100'    || 
+                               ', nrdolote:'  || '10301'  ||
+                               ', nrdconta:'  || rw_craptdb.nrdconta  ||
+                               ', nrdocmto:'  || NVL(vr_nrseqdig,0)   || 
+                               ', vllanmto:'  || vr_vliofcpl  ||
+                               ', cdhistor:'  || '2321'       ||
+                               ', nrseqdig:'  || NVL(vr_nrseqdig,0)   ||
+                               ', nrdctabb:'  || rw_craptdb.nrdconta  ||
+                               ', nrautdoc:'  || '0'          ||
+                               ', cdcooper:'  || pr_cdcooper  ||
+                               ', cdpesqbb:'  || rw_craptdb.nrdocmto  || 
+                               '. ' ||sqlerrm; 
+              RAISE vr_exc_erro;
                   ELSE --  vr_incrineg = 1 = Erro de negócio
                     vr_cdcritic := 0;
                     vr_dscritic := 'Lançameno não foi efetuado' ||
@@ -1433,13 +1506,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             vr_cdbccxlt_lcm:= 100;
             vr_nrdolote_lcm:= 10301;
             vr_nrseqdig_lcm:= NVL(vr_nrseqdig,0);
-        
+
           -- Projeto Ligeirinho -  paralelismo
           -- busca a sequencia para as execuções de paralelismo
           if paga0001.fn_exec_paralelo then
              vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
-          else          
-            vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
+          else
+          vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
           end if;
         END IF;
         
@@ -1461,7 +1534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         -- Condicao para verificar se houve critica                             
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF; 
+        END IF;        
         
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');	
@@ -1475,7 +1548,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         BEGIN
           UPDATE craptdb 
              SET craptdb.insittit = 3, /* Baixado s/ pagto */
-                 craptdb.dtdebito = pr_dtmvtolt
+                 craptdb.dtdebito = pr_dtmvtolt,
+                 craptdb.vlsldtit = 0
            WHERE craptdb.ROWID = rw_craptdb.ROWID;
         EXCEPTION
           WHEN OTHERS THEN
@@ -1493,7 +1567,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             RAISE vr_exc_erro;
         END;
         /*#########FIM ATUALIZA TDB##################################*/  
-
+        
         /*#########LIQUIDA BORDERO##################################*/
         /* Verifica se deve liquidar o bordero caso sim Liquida */
         DSCT0001.pc_efetua_liquidacao_bordero (pr_cdcooper => rw_craptdb.cdcooper  --Codigo Cooperativa
@@ -1508,7 +1582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                               ,pr_des_erro => vr_des_erro   --identificador de erro
                                               ,pr_cdcritic => vr_cdcritic   --Código do erro
                                               ,pr_dscritic => vr_dscritic); --Descricao do erro;
-											  
+
         IF NVL(LENGTH(TRIM(vr_dscritic)),0) > 0 THEN -- Merge 02/05/2018 - Chamado 851591 
           GENE0001.pc_gera_erro(pr_cdcooper => rw_craptdb.cdcooper
                                ,pr_cdagenci => pr_cdagenci
@@ -1518,7 +1592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => vr_tab_erro);
         END IF;
-		
+
         --Se ocorreu erro
         IF vr_des_erro = 'NOK' THEN
           --Mensagem erro
@@ -1567,7 +1641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_erro;
       END IF;                     
-
+      
       vr_indice := vr_tab_tar.FIRST;
       
       WHILE vr_indice IS NOT NULL LOOP         
@@ -1584,7 +1658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         
         IF cr_crapass%NOTFOUND THEN
            CLOSE cr_crapass;
-
+           
            -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591            
            vr_cdcritic := 9; --Associado n cadastrado
            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -1634,8 +1708,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                IF NVL(vr_tab_erro.Count,0) > 0 THEN
                  vr_ininsoco := 2;
                END IF;                      
-               --Levantar Excecao
-               RAISE vr_exc_erro;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
              END IF;
              
              -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
@@ -1677,9 +1751,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                IF NVL(vr_tab_erro.Count,0) > 0 THEN
                  vr_ininsoco := 2;
                END IF;                      
-               --Levantar Excecao
-               RAISE vr_exc_erro;
-             END IF;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
               
              -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');	
@@ -1724,9 +1798,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                IF NVL(vr_tab_erro.Count,0) > 0 THEN
                  vr_ininsoco := 2;
                END IF;                      
-               --Levantar Excecao
-               RAISE vr_exc_erro;
-             END IF;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
               
              -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');	
@@ -1767,9 +1841,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                IF NVL(vr_tab_erro.Count,0) > 0 THEN
                  vr_ininsoco := 2;
                END IF;                      
-               --Levantar Excecao
-               RAISE vr_exc_erro;
-             END IF;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
               
              -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');	
@@ -1784,7 +1858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       /*#########FIM LANCAR TARIFA TITULO#########################*/     
 
       COMMIT;
-	  
+
 	    -- Merge 1 - 15/02/2018 - Chamado 851591
       IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
         GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -1799,7 +1873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       IF NVL(vr_tab_erro.Count,0) > 0 THEN
         pr_tab_erro := vr_tab_erro;
       END IF;
-      
+
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);	
 
@@ -1813,21 +1887,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
         --Indicador para gerar critica nas ocorrencias. 1 Insere, 2 Não insere. - 15/02/2018 - Chamado 851591                      
         IF vr_ininsoco = 1 THEN
-          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagenci
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_nrsequen => 1 /** Sequencia **/
-                               ,pr_cdcritic => pr_cdcritic
-                               ,pr_dscritic => pr_dscritic
-                               ,pr_tab_erro => vr_tab_erro);
+        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 /** Sequencia **/
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => pr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
         END IF;
                              
         IF NVL(vr_tab_erro.Count,0) > 0 THEN
-          pr_tab_erro := vr_tab_erro;
+        pr_tab_erro := vr_tab_erro;
         END IF;
-	
+                             
         ROLLBACK;
-                
+        
       WHEN OTHERS THEN     
         -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
@@ -1845,18 +1919,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
-							 
+                             
         -- Merge 1 - 15/02/2018 - Chamado 851591                     
         IF NVL(vr_tab_erro.Count,0) > 0 THEN
-          pr_tab_erro := vr_tab_erro;
+        pr_tab_erro := vr_tab_erro;
         END IF;
-                             
+
         ROLLBACK;                             
         
     END;    
   END pc_efetua_baixa_tit_car;
 
-  PROCEDURE pc_efetua_baixa_tit_car_job IS 
+  PROCEDURE pc_efetua_baixa_tit_car_job IS           
   /* ................................................................................
 
      Programa: pc_efetua_baixa_tit_car_job       Antiga: 
@@ -1921,7 +1995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                       ) IS
         vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;                                      
       BEGIN
-        --> Controlar geração de log de execução dos jobs  
+        --> Controlar geração de log de execução dos jobs 
         --> Geração de log                                
         CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog
                               ,pr_cdprograma    => vr_nomdojob
@@ -1945,14 +2019,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     
       -- Log de inicio de execucao
       pc_controla_log_batch(pr_dstiplog => 'I');
-
+    
       -- SD#497991
       -- validação copiada de TARI0001
       -- Verificar se a data atual é uma data util, se retornar uma data diferente
       -- indica que não é um dia util, então deve sair do programa sem executar ou reprogramar
       IF gene0005.fn_valida_dia_util(pr_cdcooper => 3
                                     ,pr_dtmvtolt => vr_dthoje) = vr_dthoje THEN -- SD#497991
-                                    
+
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_job');
 
@@ -1970,7 +2044,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         IF trim(vr_dserro) IS NULL THEN
         
           FOR rw_crapcop IN cr_crapcop LOOP
-            
+           
             -- Cooperativa em execução - 15/02/2018 - Chamado 851591       
             vr_cdcooper := rw_crapcop.cdcooper;
             
@@ -1987,8 +2061,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_job');
               CONTINUE;
-            END IF;  
-              
+            END IF;                                          
+          
             -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_job');                                        
 
@@ -2002,7 +2076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                              pr_cdcritic => vr_cdcritic, 
                                              pr_dscritic => vr_dscritic, 
                                              pr_tab_erro => vr_tab_erro);
-                       
+                                         
             IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL OR vr_tab_erro.COUNT > 0 THEN
               IF vr_tab_erro.COUNT > 0 THEN
                  vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
@@ -2029,13 +2103,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         END IF;
 
       END IF; -- SD#497991
-      
+
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_job');
 
       -- Log de fim de execucao
       pc_controla_log_batch(pr_dstiplog => 'F');
-      
+
       -- Limpa nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
 
@@ -2043,22 +2117,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       WHEN vr_exc_erro THEN  
         --Indicador para gerar critica nas ocorrencias. 1 Insere, 2 Não insere. - 15/02/2018 - Chamado 851591                      
         IF vr_ininsoco = 1 THEN
-          GENE0001.pc_gera_erro(pr_cdcooper => 3
-                               ,pr_cdagenci => 1
-                               ,pr_nrdcaixa => 100
-                               ,pr_nrsequen => 1 /** Sequencia **/
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => vr_tab_erro);
+        GENE0001.pc_gera_erro(pr_cdcooper => 3
+                             ,pr_cdagenci => 1
+                             ,pr_nrdcaixa => 100
+                             ,pr_nrsequen => 1 /** Sequencia **/
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
 				END IF;
-
+                             
         -- Merge 1 - 15/02/2018 - Chamado 851591                     
         FOR idx in vr_tab_erro.FIRST .. vr_tab_erro.LAST LOOP
 		                             
           vr_cdcritic := vr_tab_erro(idx).cdcritic;
           vr_dscritic := vr_tab_erro(idx).dscritic;
 
-          -- Log de erro de execucao
+        -- Log de erro de execucao
           pc_controla_log_batch(pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic
                                ,pr_cdcritic => vr_cdcritic
@@ -2071,7 +2145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         -- Limpa nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         
-      WHEN OTHERS THEN 
+      WHEN OTHERS THEN     
         -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
         CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper); 
 
@@ -2093,15 +2167,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 		                             
           vr_cdcritic := vr_tab_erro(idx).cdcritic;
           vr_dscritic := vr_tab_erro(idx).dscritic;
-          -- Log de erro de execucao
+        -- Log de erro de execucao
           pc_controla_log_batch(pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_tpocorrencia => 2
                                );							  
         END LOOP;
-		
-        ROLLBACK;       
+
+        ROLLBACK;                             
         
         -- Limpa nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);                      
@@ -2129,7 +2203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 15/02/2018
+    --  Data     : Julho/2013.                   Ultima atualizacao: 19/07/2018
     --
     --  Dados referentes ao programa:
     --
@@ -2147,7 +2221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --              07/10/2016 - Quando pagamento do título é no mesmo dia da liberação do borderô
     --                           de desconto o valor do juro deve ser devolvido.
     --                           Incluído ELSIF para quando vr_qtdprazo=0  (SD#489111-AJFink)
-    --    
+    --
     --              15/02/2018 - Incluido nome do módulo logado
     --                           No caso de erro de programa gravar tabela especifica de log 
     --                           Ajuste mensagem de erro:
@@ -2157,6 +2231,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --                          (Belli - Envolti - Chamado 851591) 
     --                           - Inclusão gravação log
     --                          (Ana - Envolti - Chamado 851591)      
+    --              07/06/2018 - Alterado a procedure pc_efetua_baixa_titulo, onde:
+    --                           1) A rotina atual é chamada somente para os pagamentos de títulos de borderôs inclusos na versão 
+    --                              antiga (crapbdt.flverbor = 0)
+    --                           2) Os pagamentos de títulos de borderôs novos (crapbdt.flverbor = 1) irá chamar a nova rotina de 
+    --                              baixa de título DSCT0003.pc_pagar_titulo
+    --                           Adicionado a rotina de abatimento de juros na procedure pc_abatimento_juros_titulo
+    --                           (Paulo Penteado (GFT))      
+    --
+    --              19/07/2018 - Para os borderôs inclusos no sistema antes da nova versão de funcionalidade do bordero, quando houver 
+    --                           o pagamento da operação de desconto, ou seja, do título vencido, através do débito em conta corrente 
+    --                           deverá ser atualizada a coluna “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
     --
     -- .........................................................................
 
@@ -2212,6 +2297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               ,crapcob.nrdocmto
               ,crapcob.incobran
               ,crapcob.dtretcob
+              ,crapcob.indpagto
               ,crapcob.ROWID
         FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
@@ -2220,8 +2306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
         AND   crapcob.nrdocmto = pr_nrdocmto
-              AND   crapcob.flgregis = pr_flgregis
-         ORDER BY crapcob.progress_recid ASC;
+        AND   crapcob.flgregis = pr_flgregis
+        ORDER BY crapcob.progress_recid ASC;
       rw_crapcob cr_crapcob%ROWTYPE;
       
       --Selecionar Bordero de titulos
@@ -2229,6 +2315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                         ,pr_nrborder IN crapbdt.nrborder%type) IS
         SELECT crapbdt.txmensal
               ,crapbdt.vltaxiof
+              ,crapbdt.flverbor
         FROM crapbdt
         WHERE crapbdt.cdcooper = pr_cdcooper
         AND   crapbdt.nrborder = pr_nrborder;
@@ -2305,6 +2392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_flgachou     BOOLEAN;
       vr_flgdsair     BOOLEAN;
       vr_flg_feriafds BOOLEAN;
+      vr_flgcob       BOOLEAN;
       vr_dtprvenc     DATE;
       vr_dtferiado    DATE;
       vr_tottitul_cr  INTEGER := 0; /* Qtd. De Tit. Registrados */
@@ -2328,7 +2416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vliofpri     NUMBER(25,2);
       vr_vliofadi     NUMBER(25,2);
       vr_vliofcpl     NUMBER(25,2);
-      vr_qtdiaiof     PLS_INTEGER;                           
+      vr_qtdiaiof     PLS_INTEGER;                          
       vr_flgimune     PLS_INTEGER; -- Merge 1 - 15/02/2018 - Chamado 851591                         
       vr_dtmvtolt_lcm craplcm.dtmvtolt%TYPE;
       vr_cdagenci_lcm craplcm.cdagenci%TYPE;
@@ -2337,6 +2425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
       vr_vltaxa_iof_principal NUMBER := 0;
       vr_cdagenci     crapass.cdagenci%TYPE;
+      vr_vlpagmto     NUMBER;
 
       --Variaveis de erro
       vr_des_erro     VARCHAR2(4000);
@@ -2367,7 +2456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --Inicializar variaveis erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
-      
+
       --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
       vr_dsparame :=  ' pr_cdcooper:' || pr_cdcooper || 
                       ', pr_cdagenci:' || pr_cdagenci || 
@@ -2416,8 +2505,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         BEGIN
           --Sair
           vr_flgdsair:= FALSE;
-          --Zerar valor total juros
-          vr_vltotjur:= 0;
           --Selecionar titulos do bordero
           OPEN cr_craptdb (pr_cdcooper => pr_cdcooper
                           ,pr_cdbandoc => pr_tab_titulos(vr_index_titulo).cdbandoc
@@ -2443,6 +2530,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             RAISE vr_exc_proximo;
           END IF;
 
+          --Selecionar Bordero de titulos
+          OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
+                          ,pr_nrborder => rw_craptdb.nrborder);
+          --Posicionar no proximo registro
+          FETCH cr_crapbdt INTO rw_crapbdt;
+          --Se nao encontrar
+          IF cr_crapbdt%NOTFOUND THEN
+            --Fechar Cursor
+            CLOSE cr_crapbdt;
+            --Mensagem de erro
+            --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+            vr_cdcritic := 1166; --Bordero nao encontrado.
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            -- Excluido GENE0001.pc_gera_erro esta no final da rotina - 15/02/2018 - Chamado 851591 
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+          --Fechar Cursor
+          CLOSE cr_crapbdt;
+
+          --   Selecionar informacoes Cobranca
+          OPEN cr_crapcob (pr_cdcooper => pr_cdcooper
+                          ,pr_cdbandoc => pr_tab_titulos(vr_index_titulo).cdbandoc
+                          ,pr_nrdctabb => pr_tab_titulos(vr_index_titulo).nrdctabb
+                          ,pr_nrdconta => pr_tab_titulos(vr_index_titulo).nrdconta
+                          ,pr_nrcnvcob => pr_tab_titulos(vr_index_titulo).nrcnvcob
+                          ,pr_nrdocmto => pr_tab_titulos(vr_index_titulo).nrdocmto
+                          ,pr_flgregis => 1);
+          FETCH cr_crapcob INTO rw_crapcob;
+          vr_flgcob := cr_crapcob%FOUND;
+          CLOSE cr_crapcob;
+          
+          -- Efetuar baixa para os titulos da nova versão de funcionalidade do bordero. Se for a nova versão, entra na rotina abaixo e
+          -- ao final da execução pula para o próximo título da lista. Se não for a nova versão, não entra na rotina abaixo e continua
+          -- a efetivar a baixa conforme a versão antiga da funcionalizada do borderô.
+          IF rw_crapbdt.flverbor = 1 THEN
+            vr_vlpagmto := pr_tab_titulos(vr_index_titulo).vltitulo;
+            dsct0003.pc_pagar_titulo(pr_cdcooper => pr_cdcooper
+                                    ,pr_cdagenci => vr_cdagenci
+                                    ,pr_nrdcaixa => pr_nrdcaixa
+                                    ,pr_idorigem => pr_idorigem
+                                    ,pr_cdoperad => pr_cdoperad
+                                    ,pr_nrdconta => rw_craptdb.nrdconta
+                                    ,pr_nrborder => rw_craptdb.nrborder
+                                    ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                    ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                    ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                    ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_inproces => rw_crapdat.inproces
+                                    ,pr_cdorigpg => 1
+                                    ,pr_indpagto => rw_crapcob.indpagto
+                                    ,pr_vlpagmto => vr_vlpagmto
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic );
+            -- Condicao para verificar se houve critica                             
+            IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+            --Se não der erro no pagamento acima, então ir para o proximo titulo, assim não roda o rotina abaixo
+            --que é referente a baixa de titulo de bordero da versão antiga.
+            RAISE vr_exc_proximo;
+          END IF;
+
           /*
           Se caso o titulo vier pela COMPE o crps517 soh ira rodar a noite
           para baixar os titulos em descto, e nesse periodo(dia) o
@@ -2454,7 +2605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                     ,pr_dtmvtolt => rw_craptdb.dtvencto
                                                     ,pr_tipo     => 'P');
-                                                    
+
           -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
 
@@ -2478,7 +2629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             vr_dtprvenc:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                      ,pr_dtmvtolt => vr_dtprvenc
                                                      ,pr_tipo     => 'P');
-                                                    
+
             -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
 
@@ -2502,26 +2653,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             vr_tottitul_sr:= Nvl(vr_tottitul_sr,0) + 1;
           END IF;
           
-          --Selecionar Bordero de titulos
-          OPEN cr_crapbdt (pr_cdcooper => rw_craptdb.cdcooper
-                          ,pr_nrborder => rw_craptdb.nrborder);
-          --Posicionar no proximo registro
-          FETCH cr_crapbdt INTO rw_crapbdt;
-          --Se nao encontrar
-          IF cr_crapbdt%NOTFOUND THEN
-            --Fechar Cursor
-            CLOSE cr_crapbdt;
-            --Mensagem de erro
-            --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-            vr_cdcritic := 1166; --Bordero nao encontrado.
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-            -- Excluido GENE0001.pc_gera_erro esta no final da rotina - 15/02/2018 - Chamado 851591 
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-          --Fechar Cursor
-          CLOSE cr_crapbdt;
-
           /*
           Valor pago eh menor que o titulo (Ex: Desconto de 10%)
           a diferenca eh cobrado o ajuste do titulo
@@ -2550,7 +2681,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                  se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
                  da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
                  a agencia do cooperado*/
-              IF not paga0001.fn_exec_paralelo then  
+                 
+              if not paga0001.fn_exec_paralelo then  
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => pr_dtmvtolt
@@ -2566,35 +2698,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   --Criar lote
                   BEGIN
                     INSERT INTO craplot
-                    (craplot.cdcooper
-                    ,craplot.dtmvtolt
-                    ,craplot.cdagenci
-                    ,craplot.cdbccxlt
-                    ,craplot.nrdolote
-                    ,craplot.cdoperad
-                    ,craplot.tplotmov
-                    ,craplot.cdhistor)
-                    VALUES
-                    (pr_cdcooper
-                    ,pr_dtmvtolt
-                      ,vr_cdagenci  --1 --Substituido (1) para Agencia do Parâmetro  --Paralelismo --AMcom
-                    ,100
-                    ,10300
-                    ,pr_cdoperad
-                    ,1
-                    ,vr_cdhistor)
-                    RETURNING ROWID
+                      (craplot.cdcooper
                       ,craplot.dtmvtolt
                       ,craplot.cdagenci
                       ,craplot.cdbccxlt
                       ,craplot.nrdolote
-                      ,craplot.nrseqdig
+                      ,craplot.cdoperad
+                      ,craplot.tplotmov
+                      ,craplot.cdhistor)
+                    VALUES
+                      (pr_cdcooper
+                      ,pr_dtmvtolt
+                      ,vr_cdagenci  --1 --Substituido (1) para Agencia do Parâmetro  --Paralelismo --AMcom
+                      ,100
+                      ,10300
+                      ,pr_cdoperad
+                      ,1
+                      ,vr_cdhistor)
+                    RETURNING ROWID
+                        ,craplot.dtmvtolt
+                        ,craplot.cdagenci
+                        ,craplot.cdbccxlt
+                        ,craplot.nrdolote
+                        ,craplot.nrseqdig
                     INTO rw_craplot.ROWID
-                      ,rw_craplot.dtmvtolt
-                      ,rw_craplot.cdagenci
-                      ,rw_craplot.cdbccxlt
-                      ,rw_craplot.nrdolote
-                      ,rw_craplot.nrseqdig;
+                        ,rw_craplot.dtmvtolt
+                        ,rw_craplot.cdagenci
+                        ,rw_craplot.cdbccxlt
+                        ,rw_craplot.nrdolote
+                        ,rw_craplot.nrseqdig;
                   EXCEPTION
                     WHEN Dup_Val_On_Index THEN
                       --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -2638,14 +2770,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                              pr_cdbccxpg => null,
                                              pr_nmrotina => 'DSCT0001.PC_EFETUA_BAIXA_TITULO');
                 
-                rw_craplot.dtmvtolt := pr_dtmvtolt;
-                rw_craplot.cdagenci := 1;
-                rw_craplot.cdbccxlt := 100;
-                rw_craplot.nrdolote := 10300;
-                rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm; 
+                  rw_craplot.dtmvtolt := pr_dtmvtolt;
+                  rw_craplot.cdagenci := 1;
+                  rw_craplot.cdbccxlt := 100;
+                  rw_craplot.nrdolote := 10300;
+                  rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm; 
               end if;  
-              
-          --Gravar lancamento
+              --Gravar lancamento
           -- P450 - Regulatório de crédito
           lanc0001.pc_gerar_lancamento_conta(
                       pr_dtmvtolt => rw_craplot.dtmvtolt
@@ -2669,27 +2800,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                  IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                    -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-                    CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
-                    -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-                    vr_cdcritic := 1034;
-                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                                 'craplcm(3):'  ||
-                                 ' dtmvtolt:'    || rw_craplot.dtmvtolt ||
-                                 ', cdagenci:'   || rw_craplot.cdagenci ||
-                                 ', cdbccxlt:'   || rw_craplot.cdbccxlt ||
-                                 ', nrdolote:'   || rw_craplot.nrdolote ||
-                                 ', nrdconta:'   || rw_craptdb.nrdconta ||
-                                 ', nrdocmto:'   || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                 ', vllanmto:'   || rw_craptdb.vltitulo ||' - '|| pr_tab_titulos(vr_index_titulo).vltitulo ||
-                                 ', cdhistor:'   || vr_cdhistor         ||
-                                 ', nrseqdig:'   || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                 ', nrdctabb:'   || rw_craptdb.nrdconta ||
-                                 ', nrautdoc:'   || '0'                 ||
-                                 ', cdcooper:'   || pr_cdcooper         ||
-                                 ', cdpesqbb:'   || rw_craptdb.nrdocmto ||
-                                 '. ' ||sqlerrm; 
-                    RAISE vr_exc_erro;
+                  -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
+                  -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                  vr_cdcritic := 1034;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                               'craplcm(3):'  ||
+                               ' dtmvtolt:'    || rw_craplot.dtmvtolt ||
+                               ', cdagenci:'   || rw_craplot.cdagenci ||
+                               ', cdbccxlt:'   || rw_craplot.cdbccxlt ||
+                               ', nrdolote:'   || rw_craplot.nrdolote ||
+                               ', nrdconta:'   || rw_craptdb.nrdconta ||
+                               ', nrdocmto:'   || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
+                               ', vllanmto:'   || rw_craptdb.vltitulo ||' - '|| pr_tab_titulos(vr_index_titulo).vltitulo ||
+                               ', cdhistor:'   || vr_cdhistor         ||
+                               ', nrseqdig:'   || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
+                               ', nrdctabb:'   || rw_craptdb.nrdconta ||
+                               ', nrautdoc:'   || '0'                 ||
+                               ', cdcooper:'   || pr_cdcooper         ||
+                               ', cdpesqbb:'   || rw_craptdb.nrdocmto ||
+                               '. ' ||sqlerrm; 
+                  RAISE vr_exc_erro;
                  END IF;
               END IF;              
               rw_craplcm.nrseqdig := Nvl(rw_craplot.nrseqdig,0);
@@ -2705,10 +2836,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 /* Atualiza o lote na craplot */
                 BEGIN
                   UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                  ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                  ,craplot.nrseqdig = Nvl(rw_craplcm.nrseqdig,0)
-                                  ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
-                                  ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
+                                    ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                                    ,craplot.nrseqdig = Nvl(rw_craplcm.nrseqdig,0)
+                                    ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
+                                    ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
                   WHERE craplot.ROWID = rw_craplot.ROWID
                   RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
                 EXCEPTION
@@ -2726,8 +2857,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                  ', vlcompcr:' || 'Nvl(craplot.vlcompcr,0) + ' ||rw_craplcm.vllanmto||
                                  ', ROWID:' || rw_craplot.ROWID  || 
                                  '. ' ||sqlerrm; 
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
                 END;
                 --Acumular Valor Lancamento
                 vr_vllanmto:= nvl(vr_vllanmto,0) + rw_craplcm.vllanmto;
@@ -2762,10 +2893,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               if not paga0001.fn_exec_paralelo then  
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                              ,pr_dtmvtolt => pr_dtmvtolt
+                                ,pr_dtmvtolt => pr_dtmvtolt
                                 ,pr_cdagenci => vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro --AMcom
-                              ,pr_cdbccxlt => 100
-                              ,pr_nrdolote => 10300);
+                                ,pr_cdbccxlt => 100
+                                ,pr_nrdolote => 10300);
                 --Posicionar no proximo registro
                 FETCH cr_craplot INTO rw_craplot;
                 --Se encontrou registro
@@ -2775,35 +2906,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   --Criar lote
                   BEGIN
                     INSERT INTO craplot
-                    (craplot.cdcooper
-                    ,craplot.dtmvtolt
-                    ,craplot.cdagenci
-                    ,craplot.cdbccxlt
-                    ,craplot.nrdolote
-                    ,craplot.cdoperad
-                    ,craplot.tplotmov
-                    ,craplot.cdhistor)
-                    VALUES
-                    (pr_cdcooper
-                    ,pr_dtmvtolt
-                      ,vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
-                    ,100
-                    ,10300
-                    ,pr_cdoperad
-                    ,1
-                    ,vr_cdhistor)
-                    RETURNING ROWID
+                      (craplot.cdcooper
                       ,craplot.dtmvtolt
                       ,craplot.cdagenci
                       ,craplot.cdbccxlt
                       ,craplot.nrdolote
-                      ,craplot.nrseqdig
+                      ,craplot.cdoperad
+                      ,craplot.tplotmov
+                      ,craplot.cdhistor)
+                    VALUES
+                      (pr_cdcooper
+                      ,pr_dtmvtolt
+                      ,vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
+                      ,100
+                      ,10300
+                      ,pr_cdoperad
+                      ,1
+                      ,vr_cdhistor)
+                    RETURNING ROWID
+                        ,craplot.dtmvtolt
+                        ,craplot.cdagenci
+                        ,craplot.cdbccxlt
+                        ,craplot.nrdolote
+                        ,craplot.nrseqdig
                     INTO rw_craplot.ROWID
-                      ,rw_craplot.dtmvtolt
-                      ,rw_craplot.cdagenci
-                      ,rw_craplot.cdbccxlt
-                      ,rw_craplot.nrdolote
-                      ,rw_craplot.nrseqdig;
+                        ,rw_craplot.dtmvtolt
+                        ,rw_craplot.cdagenci
+                        ,rw_craplot.cdbccxlt
+                        ,rw_craplot.nrdolote
+                        ,rw_craplot.nrseqdig;
                   EXCEPTION
                     WHEN Dup_Val_On_Index THEN
                       --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -2853,7 +2984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 rw_craplot.nrdolote := 10300;                   
                 rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm; 
               END IF;
-			  
+              
               --Gravar lancamento
               -- P450 - Regulatório de crédito
               lanc0001.pc_gerar_lancamento_conta(
@@ -2878,27 +3009,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
               IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                  IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                    -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-                    CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-                    -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-                    vr_cdcritic := 1034;
-                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
-                                      'craplot(3):'||
-                                      ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
-                                      ', cdagenci:' || rw_craplot.cdagenci ||
-                                      ', cdbccxlt:' || rw_craplot.cdbccxlt ||
-                                      ', nrdolote:' || rw_craplot.nrdolote ||
-                                      ', nrdconta:' || rw_craptdb.nrdconta ||
-                                      ', nrdocmto:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                      ', vllanmto:' || pr_tab_titulos(vr_index_titulo).vltitulo ||' - '|| rw_craptdb.vltitulo ||
-                                      ', cdhistor:' || vr_cdhistor ||
-                                      ', nrseqdig:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                      ', nrdctabb:' || rw_craptdb.nrdconta ||
-                                      ', nrautdoc:' || '0' ||
-                                      ', cdcooper:' || pr_cdcooper ||
-                                      ', cdpesqbb:' || rw_craptdb.nrdocmto ||
-                                      '. ' ||sqlerrm; 
-                    RAISE vr_exc_erro;
+                  -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                  -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                  vr_cdcritic := 1034;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
+                                   'craplot(3):'||
+                                   ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
+                                   ', cdagenci:' || rw_craplot.cdagenci ||
+                                   ', cdbccxlt:' || rw_craplot.cdbccxlt ||
+                                   ', nrdolote:' || rw_craplot.nrdolote ||
+                                   ', nrdconta:' || rw_craptdb.nrdconta ||
+                                   ', nrdocmto:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
+                                   ', vllanmto:' || pr_tab_titulos(vr_index_titulo).vltitulo ||' - '|| rw_craptdb.vltitulo ||
+                                   ', cdhistor:' || vr_cdhistor ||
+                                   ', nrseqdig:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
+                                   ', nrdctabb:' || rw_craptdb.nrdconta ||
+                                   ', nrautdoc:' || '0' ||
+                                   ', cdcooper:' || pr_cdcooper ||
+                                   ', cdpesqbb:' || rw_craptdb.nrdocmto ||
+                                   '. ' ||sqlerrm; 
+                  RAISE vr_exc_erro;
                  END IF;
               END IF;
 
@@ -2912,10 +3043,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 /* Atualiza o lote na craplot */
                 BEGIN
                   UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                  ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                  ,craplot.nrseqdig = Nvl(rw_craplcm.nrseqdig,0)
-                                  ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
-                                  ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
+                                    ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                                    ,craplot.nrseqdig = Nvl(rw_craplcm.nrseqdig,0)
+                                    ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
+                                    ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
                   WHERE craplot.ROWID = rw_craplot.ROWID
                   RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
                 EXCEPTION
@@ -3059,13 +3190,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                  a agencia do cooperado*/
               if not paga0001.fn_exec_paralelo then              
                 -- Vamos verificar se o valo do IOF complementar é maior que 0
-                IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN -- Merge 1 - 15/02/2018 - Chamado 851591
+              IF NVL(vr_vliofcpl,0) > 0 AND vr_flgimune <= 0 THEN -- Merge 1 - 15/02/2018 - Chamado 851591
                   /* Leitura do lote */
                   OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                                ,pr_dtmvtolt => vr_dtmvtolt
+                                  ,pr_dtmvtolt => vr_dtmvtolt
                                   ,pr_cdagenci => vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
-                                ,pr_cdbccxlt => 100
-                                ,pr_nrdolote => 10300);
+                                  ,pr_cdbccxlt => 100
+                                  ,pr_nrdolote => 10300);
                   --Posicionar no proximo registro
                   FETCH cr_craplot INTO rw_craplot;
                   --Se encontrou registro
@@ -3076,35 +3207,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     --Criar lote
                     BEGIN
                       INSERT INTO craplot
-                      (craplot.cdcooper
-                      ,craplot.dtmvtolt
-                      ,craplot.cdagenci
-                      ,craplot.cdbccxlt
-                      ,craplot.nrdolote
-                      ,craplot.cdoperad
-                      ,craplot.tplotmov
-                      ,craplot.cdhistor)
-                      VALUES
-                      (pr_cdcooper
-                      ,pr_dtmvtolt
-                        ,vr_cdagenci --1  --Substituido (1) para Agencia do Parâmetro --AMcom
-                      ,100
-                      ,10300
-                      ,pr_cdoperad
-                        ,01
-                      ,2321)
-                      RETURNING ROWID
+                        (craplot.cdcooper
                         ,craplot.dtmvtolt
                         ,craplot.cdagenci
                         ,craplot.cdbccxlt
                         ,craplot.nrdolote
-                        ,craplot.nrseqdig
+                        ,craplot.cdoperad
+                        ,craplot.tplotmov
+                        ,craplot.cdhistor)
+                      VALUES
+                        (pr_cdcooper
+                        ,pr_dtmvtolt
+                        ,vr_cdagenci --1  --Substituido (1) para Agencia do Parâmetro --AMcom
+                        ,100
+                        ,10300
+                        ,pr_cdoperad
+                        ,01
+                        ,2321)
+                      RETURNING ROWID
+                          ,craplot.dtmvtolt
+                          ,craplot.cdagenci
+                          ,craplot.cdbccxlt
+                          ,craplot.nrdolote
+                          ,craplot.nrseqdig
                       INTO rw_craplot.ROWID
-                        ,rw_craplot.dtmvtolt
-                        ,rw_craplot.cdagenci
-                        ,rw_craplot.cdbccxlt
-                        ,rw_craplot.nrdolote
-                        ,rw_craplot.nrseqdig;
+                          ,rw_craplot.dtmvtolt
+                          ,rw_craplot.cdagenci
+                          ,rw_craplot.cdbccxlt
+                          ,rw_craplot.nrdolote
+                          ,rw_craplot.nrseqdig;
                     EXCEPTION
                       WHEN Dup_Val_On_Index THEN
                         --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -3179,27 +3310,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
                 IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                    IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                      -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-                      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-                      -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-                      vr_cdcritic := 1034;
-                      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
-                                        'craplot(3):'||
-                                        ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
-                                        ', cdagenci:' || rw_craplot.cdagenci ||
-                                        ', cdbccxlt:' || rw_craplot.cdbccxlt ||
-                                        ', nrdolote:' || rw_craplot.nrdolote ||
-                                        ', nrdconta:' || rw_craptdb.nrdconta ||
-                                        ', nrdocmto:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                        ', vllanmto:' || pr_tab_titulos(vr_index_titulo).vltitulo ||' - '|| rw_craptdb.vltitulo ||
-                                        ', cdhistor:' || vr_cdhistor ||
-                                        ', nrseqdig:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                        ', nrdctabb:' || rw_craptdb.nrdconta ||
-                                        ', nrautdoc:' || '0' ||
-                                        ', cdcooper:' || pr_cdcooper ||
-                                        ', cdpesqbb:' || rw_craptdb.nrdocmto ||
-                                        '. ' ||sqlerrm; 
-                      RAISE vr_exc_erro;
+                    -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+                    CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
+                    -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                    vr_cdcritic := 1034;
+                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                                   'craplcm(4):'||
+                                   ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
+                                   ', cdagenci:' || rw_craplot.cdagenci ||
+                                   ', cdbccxlt:' || rw_craplot.cdbccxlt ||
+                                   ', nrdolote:' || rw_craplot.nrdolote ||
+                                   ', nrdconta:' || rw_craptdb.nrdconta ||
+                                   ', nrdocmto:' || NVL(rw_craplot.nrseqdig,0) || ' + 1' ||
+                                   ', vllanmto:' || vr_vliofcpl ||
+                                   ', cdhistor:' || '2321' ||
+                                   ', nrseqdig:' || NVL(rw_craplot.nrseqdig,0) || ' + 1' ||
+                                   ', nrdctabb:' || rw_craptdb.nrdconta ||
+                                   ', nrautdoc:' || '0' ||
+                                   ', cdcooper:' || pr_cdcooper ||
+                                   ', cdpesqbb:' || rw_craptdb.nrdocmto ||
+                                   '. ' ||sqlerrm; 
+                    RAISE vr_exc_erro;
                    END IF;
                 END IF;    
                 vr_dtmvtolt_lcm := rw_craplot.dtmvtolt;
@@ -3208,7 +3339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_nrdolote_lcm := rw_craplot.nrdolote;
                 vr_nrseqdig_lcm := NVL(rw_craplot.nrseqdig,0);
                 rw_craplcm.vllanmto:=  vr_vliofcpl;          
-               
+
                 /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
                 PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
        	        deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
@@ -3217,10 +3348,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   /* Atualiza o lote na craplot */
                   BEGIN
                     UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                    ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                    ,craplot.nrseqdig = Nvl(vr_nrseqdig_lcm,0)
-                                    ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
-                                    ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
+                                      ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                                      ,craplot.nrseqdig = Nvl(vr_nrseqdig_lcm,0)
+                                      ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
+                                      ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
                     WHERE craplot.ROWID = rw_craplot.ROWID;
                   EXCEPTION
                     WHEN OTHERS THEN
@@ -3241,7 +3372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                       RAISE vr_exc_erro;
                   END;
                 END IF;
-
+                
               END IF;
               
               -- Procedure para inserir o valor do IOF
@@ -3274,9 +3405,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             END IF;
 
             --Atualizar situacao titulo
-            BEGIN 
-              UPDATE craptdb SET craptdb.insittit = 2
+            BEGIN
+              UPDATE craptdb 
+                 SET craptdb.insittit = 2
                                 ,craptdb.dtdpagto = vr_dtmvtolt
+                    ,craptdb.vlsldtit = 0
               WHERE craptdb.ROWID = rw_craptdb.ROWID
               RETURNING craptdb.dtdpagto INTO rw_craptdb.dtdpagto;
             EXCEPTION
@@ -3315,10 +3448,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             if not paga0001.fn_exec_paralelo then
               /* Leitura do lote */
               OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                            ,pr_dtmvtolt => pr_dtmvtolt
+                              ,pr_dtmvtolt => pr_dtmvtolt
                               ,pr_cdagenci => vr_cdagenci --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
-                            ,pr_cdbccxlt => 100
-                            ,pr_nrdolote => 10300);
+                              ,pr_cdbccxlt => 100
+                              ,pr_nrdolote => 10300);
               --Posicionar no proximo registro
               FETCH cr_craplot INTO rw_craplot;
               --Se encontrou registro
@@ -3328,35 +3461,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 --Criar lote
                 BEGIN
                   INSERT INTO craplot
-                    (craplot.cdcooper
-                    ,craplot.dtmvtolt
-                    ,craplot.cdagenci
-                    ,craplot.cdbccxlt
-                    ,craplot.nrdolote
-                    ,craplot.cdoperad
-                    ,craplot.tplotmov
-                    ,craplot.cdhistor)
+                      (craplot.cdcooper
+                      ,craplot.dtmvtolt
+                      ,craplot.cdagenci
+                      ,craplot.cdbccxlt
+                      ,craplot.nrdolote
+                      ,craplot.cdoperad
+                      ,craplot.tplotmov
+                      ,craplot.cdhistor)
                   VALUES
-                    (pr_cdcooper
-                    ,pr_dtmvtolt
+                      (pr_cdcooper
+                      ,pr_dtmvtolt
                       ,vr_cdagenci --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
-                    ,100
-                    ,10300
-                    ,pr_cdoperad
-                    ,1
-                    ,591)
+                      ,100
+                      ,10300
+                      ,pr_cdoperad
+                      ,1
+                      ,591)
                   RETURNING ROWID
-                    ,craplot.dtmvtolt
-                    ,craplot.cdagenci
-                    ,craplot.cdbccxlt
-                    ,craplot.nrdolote
-                    ,craplot.nrseqdig
+                      ,craplot.dtmvtolt
+                      ,craplot.cdagenci
+                      ,craplot.cdbccxlt
+                      ,craplot.nrdolote
+                      ,craplot.nrseqdig
                   INTO rw_craplot.ROWID
-                    ,rw_craplot.dtmvtolt
-                    ,rw_craplot.cdagenci
-                    ,rw_craplot.cdbccxlt
-                    ,rw_craplot.nrdolote
-                    ,rw_craplot.nrseqdig;
+                      ,rw_craplot.dtmvtolt
+                      ,rw_craplot.cdagenci
+                      ,rw_craplot.cdbccxlt
+                      ,rw_craplot.nrdolote
+                      ,rw_craplot.nrseqdig;
                 EXCEPTION
                   WHEN Dup_Val_On_Index THEN
                     --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -3398,7 +3531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                            pr_tplotmov => 1,
                                            pr_cdhistor => 591,
                                            pr_cdbccxpg => null,
-                                           pr_nmrotina => 'CXON0014.PC_EFETUA_BAIXA_TITULO');
+                                           pr_nmrotina => 'DSCT0001.PC_EFETUA_BAIXA_TITULO');
                             
               rw_craplot.dtmvtolt := pr_dtmvtolt;                  
               rw_craplot.cdagenci := 1;                   
@@ -3407,7 +3540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm;                                   
               
             END IF;
-			    
+            
             --Gravar lancamento
             -- P450 - Regulatório de crédito
             lanc0001.pc_gerar_lancamento_conta(
@@ -3432,33 +3565,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
                IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-                  -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-                  -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-                  vr_cdcritic := 1034;
-                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
-                                     'craplcm(5):'||
-                                     ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
-                                     ', cdagenci:' || rw_craplot.cdagenci ||
-                                     ', cdbccxlt:' || rw_craplot.cdbccxlt ||
-                                     ', nrdolote:' || rw_craplot.nrdolote ||
-                                     ', nrdconta:' || rw_craptdb.nrdconta ||
-                                     ', nrdocmto:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                     ', vllanmto:' || pr_tab_titulos(vr_index_titulo).vltitulo ||' - '|| rw_craptdb.vltitulo ||
-                                     ', cdhistor:' || '591' ||
-                                     ', nrseqdig:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
-                                     ', nrdctabb:' || rw_craptdb.nrdconta ||
-                                     ', nrautdoc:' || '0' ||
-                                     ', cdcooper:' || pr_cdcooper ||
-                                     ', cdpesqbb:' || rw_craptdb.nrdocmto ||
-                                     '. ' ||sqlerrm; 
-                  RAISE vr_exc_erro;
+                -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                vr_cdcritic := 1034;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
+                                   'craplcm(5):'||
+                                   ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
+                                   ', cdagenci:' || rw_craplot.cdagenci ||
+                                   ', cdbccxlt:' || rw_craplot.cdbccxlt ||
+                                   ', nrdolote:' || rw_craplot.nrdolote ||
+                                   ', nrdconta:' || rw_craptdb.nrdconta ||
+                                   ', nrdocmto:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
+                                   ', vllanmto:' || pr_tab_titulos(vr_index_titulo).vltitulo ||' - '|| rw_craptdb.vltitulo ||
+                                   ', cdhistor:' || '591' ||
+                                   ', nrseqdig:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
+                                   ', nrdctabb:' || rw_craptdb.nrdconta ||
+                                   ', nrautdoc:' || '0' ||
+                                   ', cdcooper:' || pr_cdcooper ||
+                                   ', cdpesqbb:' || rw_craptdb.nrdocmto ||
+                                   '. ' ||sqlerrm; 
+                RAISE vr_exc_erro;
                END IF;
             END IF; 
             rw_craplcm.nrseqdig:= Nvl(rw_craplot.nrseqdig,0);
             rw_craplcm.vllanmto:= pr_tab_titulos(vr_index_titulo).vltitulo;
             
-           
+            
             /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
               PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
               deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
@@ -3466,10 +3599,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               /* Atualiza o lote na craplot */
               BEGIN
                 UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                ,craplot.nrseqdig = Nvl(rw_craplcm.nrseqdig,0)
-                                ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
-                                ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
+                                  ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                                  ,craplot.nrseqdig = Nvl(rw_craplcm.nrseqdig,0)
+                                  ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
+                                  ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
                 WHERE craplot.ROWID = rw_craplot.ROWID
                 RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
               EXCEPTION
@@ -3487,14 +3620,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                ', vlcompcr:' || 'Nvl(craplot.vlcompcr,0) + ' || rw_craplcm.vllanmto ||
                                ', ROWID:'    || rw_craplot.ROWID  || 
                                '. ' ||sqlerrm; 
-                  --Levantar Excecao
-                  RAISE vr_exc_erro;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
               END;
-            END IF;  
+            END IF;            
             
             --Atualizar situacao titulo
             BEGIN
-              UPDATE craptdb SET craptdb.insittit = 3 /* Baixado s/ pagto */
+              UPDATE craptdb 
+                 SET craptdb.insittit = 3 /* Baixado s/ pagto */
+                    ,craptdb.vlsldtit = 0
               WHERE craptdb.ROWID = rw_craptdb.ROWID;
             EXCEPTION
               WHEN OTHERS THEN
@@ -3510,21 +3645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 --Levantar Excecao
                 RAISE vr_exc_erro;
             END;
-            --Selecionar informacoes Cobranca
-            OPEN cr_crapcob (pr_cdcooper => pr_cdcooper
-                            ,pr_cdbandoc => pr_tab_titulos(vr_index_titulo).cdbandoc
-                            ,pr_nrdctabb => pr_tab_titulos(vr_index_titulo).nrdctabb
-                            ,pr_nrdconta => pr_tab_titulos(vr_index_titulo).nrdconta
-                            ,pr_nrcnvcob => pr_tab_titulos(vr_index_titulo).nrcnvcob
-                            ,pr_nrdocmto => pr_tab_titulos(vr_index_titulo).nrdocmto
-                            ,pr_flgregis => 1);
-            --Posicionar no proximo registro
-            FETCH cr_crapcob INTO rw_crapcob;
-            --Se nao encontrar
-            IF cr_crapcob%FOUND THEN
-              --Fechar Cursor
-              CLOSE cr_crapcob;
-              --Montar Mensagem
+            IF vr_flgcob THEN
               vr_dsmensag:= 'Tit baixado de desconto s/ pagto';
               --Criar log Cobranca
               PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.ROWID --ROWID da Cobranca
@@ -3541,10 +3662,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                     
               -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
-            END IF;
-            --Fechar Cursor
-            IF cr_crapcob%ISOPEN THEN
-              CLOSE cr_crapcob;
             END IF;
           END IF; /* Final da baixa por vencimento */
 
@@ -3694,13 +3811,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               vr_dtrefjur:= Last_Day(rw_craptdb.dtdpagto);
               /* Restitui o juro que seria apropriado no mês do pagamento do título */
               FOR rw_crapljt IN cr_crapljt (pr_cdcooper => pr_cdcooper
-                                           ,pr_nrdconta => rw_craptdb.nrdconta
-                                           ,pr_nrborder => rw_craptdb.nrborder
+                                         ,pr_nrdconta => rw_craptdb.nrdconta
+                                         ,pr_nrborder => rw_craptdb.nrborder
                                            ,pr_dtrefere => vr_dtrefjur
-                                           ,pr_cdbandoc => rw_craptdb.cdbandoc
-                                           ,pr_nrdctabb => rw_craptdb.nrdctabb
-                                           ,pr_nrcnvcob => rw_craptdb.nrcnvcob
-                                           ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                         ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                         ,pr_nrdocmto => rw_craptdb.nrdocmto
                                            ,pr_tipo     => 1) LOOP
                 --Acumular total juros
                 vr_vltotjur:= Nvl(vr_vltotjur,0) + Nvl(rw_crapljt.vldjuros,0);
@@ -3823,7 +3940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                       --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
                       vr_cdcritic := 59; --Lote ja cadastrado.
                       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                      RAISE vr_exc_erro;
+                    RAISE vr_exc_erro;
                     WHEN OTHERS THEN
                       -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
                       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
@@ -3842,7 +3959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                      '. ' ||sqlerrm; 
                       RAISE vr_exc_erro;
                   END;
-                END IF;
+          END IF;
                 --Fechar Cursor
                 IF cr_craplot%ISOPEN THEN
                   CLOSE cr_craplot;
@@ -3954,7 +4071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   			
             END IF;
           END IF;  --vr_fldebita = TRUE
-          
+
           /* Verifica se deve liquidar o bordero caso sim Liquida */
           DSCT0001.pc_efetua_liquidacao_bordero (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
                                                 ,pr_cdagenci => vr_cdagenci  --Codigo Agencia
@@ -3979,7 +4096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                  ,pr_dscritic => vr_dscritic
                                  ,pr_tab_erro => vr_tab_erro);
           END IF;
-		  
+
           --Se ocorreu erro
           IF vr_des_erro = 'NOK' THEN
             -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -3999,7 +4116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-                                                    
+
           -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
 
@@ -4045,7 +4162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
-                                                    
+
             -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
 
@@ -4075,7 +4192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
-                                                    
+
             -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_titulo');
 
@@ -4168,7 +4285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       IF NVL(vr_tab_erro.Count,0) > 0 THEN
         pr_tab_erro := vr_tab_erro;
       END IF;
-      
+
       -- Limpa nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
 
@@ -4176,7 +4293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       WHEN vr_exc_erro THEN
         -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
         pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic; 
+        pr_dscritic:= vr_dscritic;
 
         -- Se nao tiver gerado a tabela de erro, gera a mesma
         IF vr_tab_erro.count = 0 THEN
@@ -4203,7 +4320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
         -- Merge 1 - 15/02/2018 - Chamado 851591
         IF NVL(vr_tab_erro.Count,0) > 0 THEN
-          pr_tab_erro := vr_tab_erro;
+        pr_tab_erro := vr_tab_erro;
         END IF;
 
       WHEN OTHERS THEN
@@ -4225,7 +4342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                               ,pr_dscritic      => pr_dscritic
                               ,pr_cdcritic      => pr_cdcritic
                               ,pr_cdcooper      => pr_cdcooper);
-                              
+
         GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
@@ -4233,10 +4350,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
-							 
+
         -- Merge 1 - 15/02/2018 - Chamado 851591
         IF NVL(vr_tab_erro.Count,0) > 0 THEN
-          pr_tab_erro := vr_tab_erro;
+        pr_tab_erro := vr_tab_erro;
         END IF;
 
     END;
@@ -4266,7 +4383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2016.                   Ultima atualizacao: 15/02/2018
+    --  Data     : Maio/2016.                   Ultima atualizacao: 24/05/2018
     --
     --  Dados referentes ao programa:
     --
@@ -4276,7 +4393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --   Disparador pelo PC_CRPS702 que esta sendo incluido Log via RE0011078.
     --
     --  Alteracoes: 
-    --    
+    --
     --              15/02/2018 - Incluido nome do módulo logado
     --                           No caso de erro de programa gravar tabela especifica de log 
     --                           Ajuste mensagem de erro:
@@ -4284,6 +4401,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --                           - Gravando as informações de entrada de INSERTS, UPDATE e DELETES quando derem erro
     --                           - Incluído tratamento para não duplicar a mensagens na tbgen: vr_ininsoco
     --                          (Belli - Envolti - Chamado 851591) 
+    --
+    --           24/05/2018 - Alterado procedure pc_efetua_resgate_tit_bord. Realizar os lançamentos:
+    --                        1) Na conta corrente do cooperado (tabela CRAPLCM)
+    --                           Valor do título descontando juros proporcional (histórico 2676 - RESGATE DE TITULO DESCONTADO)
+    --                        2) Nas movimentações da operação de desconto (tabela tbdsct_lancamento_bordero)
+    --                           Valor líquido do título (histórico 2677 - RESGATE DE TITULO DESCONTADO)
+    --                           Valor bruto do título (histórico 2678 - RESGATE DE TITULO DESCONTADO) --> Baixa da carteira
+    --                           Valor dos juros do título (histórico 2679	- RENDA SOBRE RESGATE DE TÍTULO DESCONTADO)
+    --                        (Paulo Penteado (GFT))
+    --
+    --           08/08/2018 - Zerar o saldo devedor quando resgatado.
+    --                        (Vitor Shimada Assanuma [GFT])          
     --
     -- .........................................................................
     ------------------------------- CURSORES ---------------------------------
@@ -4319,6 +4448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             ,crapbdt.insitbdt
             ,crapbdt.txmensal
             ,crapbdt.dtlibbdt
+            ,crapbdt.flverbor -- Indicativo da versao das funcionalidades de bordero (0-Versao antiga/1-Versao nova)
             ,crapbdt.rowid
         FROM crapbdt
        WHERE crapbdt.cdcooper = pr_cdcooper
@@ -4347,7 +4477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             ,craptdb.nrdctabb
             ,craptdb.nrcnvcob
             ,craptdb.vlliquid
-            ,craptdb.rowid            
+            ,craptdb.rowid
             -- Exclue coluna - COUNT(*) OVER(PARTITION BY craptdb.cdcooper) qtdreg - 15/02/2018 - Chamado 851591           
         FROM craptdb
        WHERE craptdb.cdcooper = pr_cdcooper
@@ -4461,7 +4591,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_cdhisest     INTEGER;
       vr_dtdivulg     DATE;
       vr_dtvigenc     DATE;
-      vr_cdhistor     INTEGER;
+      vr_cdhistortari INTEGER;
+      vr_cdhistorresg craphis.cdhistor%TYPE;
       vr_cdfvlcop     INTEGER;
       vr_vltarres     NUMBER(32,8);
       vr_rowid_craplat ROWID;
@@ -4477,17 +4608,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vlliqori    craptdb.vlliquid%TYPE;
       vr_dtultdat    DATE;
       vr_vllanmto    craplcm.vllanmto%TYPE;
-      
+
       --Agrupa os parametros - 15/02/2018 - Chamado 851591 
       vr_dsparame VARCHAR2(4000);
       
     --------------------------- SUBROTINAS INTERNAS --------------------------  
-    
+      
   BEGIN
-                                                    
+      
     -- Incluido nome do módulo logado - 15/02/2018 - Chamado 851591
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_resgate_tit_bord');
-    
+  
     --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
     vr_dsparame := ' pr_cdcooper:'  || pr_cdcooper || 
                    ', pr_cdagenci:' || pr_cdagenci || 
@@ -4501,14 +4632,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                    ', pr_nrdconta:' || pr_nrdconta ||
                    ', pr_cdbccxlt:' || pr_cdbccxlt || 
                    ', pr_nrdolote:' || pr_nrdolote;
-
+    
     --> Leitura dos titulos para serem incluidos no Log
     vr_idxtit:= pr_tab_titulos.FIRST;
     WHILE vr_idxtit IS NOT NULL LOOP
       vr_dsparame := vr_dsparame || ', pr_nrdocmto:' || pr_tab_titulos(vr_idxtit).nrdocmto; 
       vr_idxtit:= pr_tab_titulos.NEXT(vr_idxtit);
     END LOOP;
-
+  
     SAVEPOINT vr_resgate;
     vr_dscritic := NULL;
     
@@ -4549,7 +4680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     END IF;
     
     --> Verificar se encontrou o lote
-    IF vr_fcraplot = FALSE THEN  
+    IF vr_fcraplot = FALSE THEN
       -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
       vr_cdcritic := 1172; --Registro de lote nao encontrado.
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -4678,7 +4809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                             ,pr_cdbattar  => vr_cdbattar  --Codigo Tarifa
                                             ,pr_vllanmto  => 1            --Valor Lancamento
                                             ,pr_cdprogra  => NULL         --Codigo Programa
-                                            ,pr_cdhistor  => vr_cdhistor  --Codigo Historico
+                                            ,pr_cdhistor  => vr_cdhistortari  --Codigo Historico
                                             ,pr_cdhisest  => vr_cdhisest  --Historico Estorno
                                             ,pr_vltarifa  => vr_vltarres  --Valor tarifa
                                             ,pr_dtdivulg  => vr_dtdivulg  --Data Divulgacao
@@ -4692,7 +4823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF; 
-                                                    
+      
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_resgate_tit_bord');
       
@@ -4701,7 +4832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
                                          ,pr_nrdconta => rw_craptdb.nrdconta  --Numero da Conta
                                          ,pr_dtmvtolt => pr_dtresgat          --Data Lancamento
-                                         ,pr_cdhistor => vr_cdhistor          --Codigo Historico
+                                         ,pr_cdhistor => vr_cdhistortari      --Codigo Historico
                                          ,pr_vllanaut => vr_vltarres          --Valor lancamento automatico
                                          ,pr_cdoperad => pr_cdoperad          --Codigo Operador
                                          ,pr_cdagenci => 1                    --Codigo Agencia
@@ -4728,13 +4859,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-                                                    
+      
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_resgate_tit_bord');
       
       END IF;
       
       --**** RECALCULO DO TITULO(COBRANCA DE JUROS DE RESGATE) ****
+      IF  rw_crapbdt.flverbor = 1 THEN
+          vr_vlliqori := rw_craptdb.vlliquid;
+
+          dsct0003.pc_calcula_juros_simples_tit(pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => rw_craptdb.nrdconta
+                                               ,pr_nrborder => rw_craptdb.nrborder
+                                               ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                               ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                               ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                               ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                               ,pr_vltitulo => rw_craptdb.vltitulo
+                                               ,pr_dtvencto => rw_craptdb.dtvencto
+                                               ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
+                                               ,pr_txmensal => rw_crapbdt.txmensal
+                                               ,pr_vldjuros => vr_vldjuros
+                                               ,pr_flresgat => TRUE
+                                               ,pr_dtrefere => vr_dtultdat
+                                               ,pr_dscritic => vr_dscritic );
+
+          vr_vlliqnov := rw_craptdb.vltitulo - vr_vldjuros; 
+          
+          -- Lançar operação de desconto, Valor dos juros do título
+          dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrborder => rw_craptdb.nrborder
+                                                ,pr_dtmvtolt => pr_dtresgat--pr_dtmvtolt
+                                                ,pr_cdorigem => 5
+                                                ,pr_cdhistor => vr_cdhistordsct_resreap
+                                                ,pr_vllanmto => vr_vldjuros
+                                                ,pr_dscritic => vr_dscritic );
+          
+          IF  vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+          END IF;
+      ELSE
       IF rw_craptdb.dtvencto > pr_dtmvtoan AND
          rw_craptdb.dtvencto < pr_dtresgat THEN 
         vr_qtdprazo := rw_craptdb.dtvencto - rw_crapbdt.dtlibbdt;
@@ -4872,6 +5038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_vlliqori := rw_craptdb.vlliquid;
         vr_vlliqnov := rw_craptdb.vltitulo;  
       END IF;-- Fim IF vr_qtdprazo > 0 THEN     
+      END IF;
       
       --Selecionar lancamento juros desconto titulo
       FOR rw_craplj IN cr_crapljt2 ( pr_cdcooper => pr_cdcooper
@@ -4963,7 +5130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                         ,10300         -- nrdolote
                         ,1             -- tplotmov
                         ,pr_cdoperad   -- cdoperad
-                        ,687           -- cdhistor
+                        ,vr_cdhistor_resgate -- cdhistor
                         ,pr_cdcooper)  -- cdcooper 
                RETURNING craplot.rowid, 
                          craplot.dtmvtolt,
@@ -4989,7 +5156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                            ', nrdolote:' || '10300'     ||
                            ', tplotmov:' || '1'         ||
                            ', cdoperad:' || pr_cdoperad ||
-                           ', cdhistor:' || '687'       ||
+                           ', cdhistor:' || vr_cdhistor_resgate ||
                            ', cdcooper:' || pr_cdcooper ||
                            '. ' ||sqlerrm; 
             RAISE vr_exc_erro;
@@ -5024,8 +5191,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                            ', ROWID:'    || rw_craplot.ROWID || 
                            '. ' ||sqlerrm; 
           RAISE vr_exc_erro;
-      END; 
-        
+      END;   
+      
       --Gravar lancamento
       -- P450 - Regulatório de crédito
       lanc0001.pc_gerar_lancamento_conta(
@@ -5033,7 +5200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                  ,pr_cdagenci => rw_craplot.cdagenci
                  ,pr_cdbccxlt => rw_craplot.cdbccxlt
                  ,pr_nrdolote => rw_craplot.nrdolote
-                 ,pr_nrdconta => rw_craptdb.nrdconta
+                                                ,pr_nrdconta => rw_craptdb.nrdconta
                  ,pr_nrdctabb => rw_craptdb.nrdconta
                  ,pr_cdpesqbb => rw_craptdb.nrdocmto 
                  ,pr_cdcooper => pr_cdcooper
@@ -5050,27 +5217,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
          IF vr_incrineg = 0 THEN -- Erro de sistema/BD
-            -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
-            -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-            vr_cdcritic := 1034;
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                           'craplcm(7):'||
-                           ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
-                           ', cdagenci:' || rw_craplot.cdagenci ||
-                           ', cdbccxlt:' || rw_craplot.cdbccxlt ||
-                           ', nrdolote:' || rw_craplot.nrdolote ||
-                           ', nrdconta:' || rw_craptdb.nrdconta ||
-                           ', nrdocmto:' || rw_craplot.nrseqdig ||
-                           ', vllanmto:' || vr_vllanmto         ||
-                           ', cdhistor:' || '687'               ||
-                           ', nrseqdig:' || rw_craplot.nrseqdig ||
-                           ', nrdctabb:' || rw_craptdb.nrdconta ||
-                           ', nrautdoc:' || '0'                 ||
-                           ', cdpesqbb:' || rw_craptdb.nrdocmto ||
-                           ', cdcooper:' || pr_cdcooper         ||
-                           '. ' ||sqlerrm; 
-           RAISE vr_exc_erro;
+          -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
+          -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         'craplcm(7):'||
+                         ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
+                         ', cdagenci:' || rw_craplot.cdagenci ||
+                         ', cdbccxlt:' || rw_craplot.cdbccxlt ||
+                         ', nrdolote:' || rw_craplot.nrdolote ||
+                         ', nrdconta:' || rw_craptdb.nrdconta ||
+                         ', nrdocmto:' || rw_craplot.nrseqdig ||
+                         ', vllanmto:' || vr_vllanmto         ||
+                         ', cdhistor:' || vr_cdhistorresg     ||
+                         ', nrseqdig:' || rw_craplot.nrseqdig ||
+                         ', nrdctabb:' || rw_craptdb.nrdconta ||
+                         ', nrautdoc:' || '0'                 ||
+                         ', cdpesqbb:' || rw_craptdb.nrdocmto ||
+                         ', cdcooper:' || pr_cdcooper         ||
+                         '. ' ||sqlerrm; 
+          RAISE vr_exc_erro;
           ELSE --  vr_incrineg = 1 -- Erro de negócio
             vr_cdcritic := 0;
             vr_dscritic := 'Lançamento não foi efetuado - '||
@@ -5102,6 +5269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               ,craptdb.dtresgat = pr_dtresgat
               ,craptdb.cdoperes = pr_cdoperad
               ,craptdb.vlliqres = vr_vlliqnov
+              ,craptdb.vlsldtit = 0
          WHERE craptdb.rowid = rw_craptdb.rowid;
       EXCEPTION
         WHEN OTHERS THEN
@@ -5182,14 +5350,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
-                                                    
+      
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_resgate_tit_bord');
       
       --Proximo registro
       vr_idxtit:= pr_tab_titulos.NEXT(vr_idxtit);
     END LOOP;
-    
+  
     -- Limpa nome do módulo logado - 15/02/2018 - Chamado 851591
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   
@@ -5213,7 +5381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                      ' DSCT0001.pc_efetua_resgate_tit_bord. '||sqlerrm||'.'||vr_dsparame;
 
   END pc_efetua_resgate_tit_bord;
-
+  
   /* Rotina referente a consulta de avalistas, procuradores e representantes */
   PROCEDURE pc_busca_total_descto_lim(pr_cdcooper IN INTEGER  --Codigo Cooperativa
                                      ,pr_cdagenci IN INTEGER  --Codigo da agencia
@@ -5244,7 +5412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
      Frequencia: Sempre que for chamado
      Objetivo  : Buscar valor total da divida em desconto a partir do numero do craplim
-     
+
      Pck disparada por: 
      - AVAL0001.pc_busca_dados_contratos que é dispara pelas AVAL0001.pc_busca_dados_contratos_car 
        e AVAL0001.pc_busca_dados_contratos_web
@@ -5330,7 +5498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_dsparame VARCHAR2(4000);
 
       BEGIN
-                                                    
+
         -- Incluido nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_busca_total_descto_lim');
 
@@ -5338,7 +5506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         -- Excluida vr_cdcritic - 15/02/2018 - Chamado 851591 
         -- Excluida vr_dscritic - 15/02/2018 - Chamado 851591 
         vr_index := 0;
-    
+
         --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591
         vr_dsparame := ' pr_cdcooper:' || pr_cdcooper || 
                        ', pr_cdagenci:' || pr_cdagenci || 
@@ -5353,7 +5521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
         --Limpar tabela dados
         pr_tab_tot_descontos.DELETE;
-        
+
         --Limpar tabela erros - 15/02/2018 - Chamado 851591
         pr_tab_erro.DELETE;
         
@@ -5395,7 +5563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           pr_tab_tot_descontos(vr_index).qttotdsc := pr_tab_tot_descontos(vr_index).qttotdsc + 1;
 
         END LOOP; -- for rw_crapbdt
-        
+
       -- Limpa nome do módulo logado - 15/02/2018 - Chamado 851591
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
 
@@ -5422,7 +5590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                           0  -- 0 Outro
                                                       END --0-Outro, 1-Batch, 2-Job, 3-Online
                                       );       
-                                      
+
         GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
@@ -5430,14 +5598,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic
                              ,pr_tab_erro => vr_tab_erro);
-							       
+
         IF NVL(vr_tab_erro.Count,0) > 0 THEN
           pr_tab_erro := vr_tab_erro; -- Retorno de tabela de erros - 15/02/2018 - Chamado 851591
         END IF;
 
     END;
   END pc_busca_total_descto_lim;
-
+  
   /* Buscar a soma total de descontos (titulos + cheques)  */
   PROCEDURE pc_busca_total_descontos( pr_cdcooper IN INTEGER        --> Codigo Cooperativa
                                      ,pr_cdagenci IN INTEGER       --> Codigo da agencia
@@ -5465,8 +5633,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
      Dados referentes ao programa:
 
      Frequencia: Sempre que for chamado
-     Objetivo  : Buscar a soma total de descontos (titulos + cheques)
-     
+     Objetivo  : Buscar a soma total de descontos (titulos + cheques) 
+
      Pck dispara por: 
      - cada0004.pc_carrega_dados_atenda que disparado por cada0004.pc_carrega_dados_atenda_web
      - DSCT0002.pc_busca_dados_imp_descont
@@ -5525,7 +5693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     vr_dsorigem VARCHAR2(50);
     vr_dstransa VARCHAR2(200);
     vr_nrdrowid ROWID;
-
+      
     --Variaveis de Excecao
     vr_exc_erro    EXCEPTION;      
     --Agrupa os parametros - 15/02/2018 - Chamado 851591 
@@ -5534,7 +5702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
      
-  BEGIN                                                    
+  BEGIN
     -- Incluido nome do módulo logado - 15/02/2018 - Chamado 851591
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_busca_total_descontos');
     
@@ -5549,7 +5717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                    ', pr_idorigem:' || pr_idorigem || 
                    ', pr_nmdatela:' || pr_nmdatela || 
                    ', pr_flgerlog:' || pr_flgerlog ;
-        
+  
     IF pr_flgerlog = 'S' THEN
       IF pr_idorigem IS NULL THEN
         vr_cdcritic := 1132;
@@ -5557,11 +5725,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       ELSE 
-        vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
-        vr_dstransa := 'Listar ocorrencias.';
-      END IF;  
+      vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
+      vr_dstransa := 'Listar ocorrencias.';
     END IF;  
-
+    END IF;  
+    
     -- Ajuste nulo em ocorrencia não tratado - 15/02/2018 - Chamado 851591 
     vr_idx := 1;
     pr_tab_tot_descontos(vr_idx).qttotdsc := 0;
@@ -5632,7 +5800,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     -- Limpa nome do módulo logado - 15/02/2018 - Chamado 851591
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     
-  EXCEPTION  
+  EXCEPTION    
     WHEN vr_exc_erro THEN
       -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
       pr_cdcritic := vr_cdcritic;
@@ -5673,7 +5841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       pr_cdcritic := 9999;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)||
                      'DSCT0001.pc_busca_total_descontos. ' ||sqlerrm||'.'||vr_dsparame;
-                     
+      
       -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
       DSCT0001.pc_controla_log_batch(pr_dscritic => pr_dscritic
                                     ,pr_cdcritic => pr_cdcritic
@@ -5860,20 +6028,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
       --Tabela de memoria de erros
       vr_tab_erro GENE0001.typ_tab_erro;
-      --Rowid para a craplat              
+      --Rowid para a craplat
       -- Excluida vr_rowid_craplat - 15/02/2018 - Chamado 851591      
-      --Tabela de memoria para contas            
+      --Tabela de memoria para contas
       -- Excluida TYPE typ_tab_conta IS TABLE OF NUMBER INDEX BY PLS_INTEGER; - 15/02/2018 - Chamado 851591
       
       --Variaveis de Excecao
       vr_exc_erro    EXCEPTION;
       vr_exc_proximo EXCEPTION;
-      
+
       --Agrupa os parametros - 15/02/2018 - Chamado 851591 
       vr_dsparame VARCHAR2(4000);
       
   BEGIN
-                                                    
+
      -- Incluido nome do módulo logado - 15/02/2018 - Chamado 851591
      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_estorno_baixa_titulo'); 
     
@@ -5893,7 +6061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_cdcritic:= 0;
 
       pr_tab_erro.DELETE;
-      
+
       --Selecionar a data do movimento
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -6338,7 +6506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                  ,craptdb.dtdpagto = null
             WHERE craptdb.rowid = rw_craptdb.rowid;
          EXCEPTION
-           WHEN OTHERS THEN
+            WHEN OTHERS THEN
              -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
              -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -6349,7 +6517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             ', dtdpagto:' || 'NULL' ||
                             ', ROWID:'    || rw_craptdb.ROWID || 
                             '. ' ||sqlerrm; 
-             RAISE vr_exc_erro;
+               RAISE vr_exc_erro;
          END;
 
          /* Se o bordero estava liquidado volta o status para liberado */
@@ -6369,7 +6537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 SET insitbdt = 3 /*Liberado*/
               WHERE rowid    = rw_crapbdt.rowid;
            EXCEPTION
-             WHEN OTHERS THEN
+              WHEN OTHERS THEN
              -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
              -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
@@ -6379,7 +6547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             ' insitbdt:'  || '3' ||
                             ' ,ROWID:'    || rw_crapbdt.ROWID || 
                             '. ' ||sqlerrm; 
-             RAISE vr_exc_erro;
+               RAISE vr_exc_erro;
            END;
          END IF;
          IF cr_crapbdt%ISOPEN THEN
@@ -6476,7 +6644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);     
-      -- Erro      
+      -- Erro
       -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
       pr_cdcritic := 9999;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
@@ -6552,6 +6720,614 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       -- No caso de erro de programa gravar tabela especifica de log  
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);    
   END pc_controla_log_batch;
+
+  PROCEDURE pc_abatimento_juros_titulo(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
+                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
+                                      ,pr_nrborder  IN crapbdt.nrborder%TYPE --> Numero do bordero
+                                      ,pr_cdbandoc  IN craptdb.cdbandoc%TYPE
+                                      ,pr_nrdctabb  IN craptdb.nrdctabb%TYPE
+                                      ,pr_nrcnvcob  IN craptdb.nrcnvcob%TYPE
+                                      ,pr_nrdocmto  IN craptdb.nrdocmto%TYPE
+                                      ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                                      ,pr_cdagenci  IN crapass.cdagenci%TYPE
+                                      ,pr_cdoperad  IN VARCHAR2              --> Codigo operador
+                                      ,pr_cdorigpg  IN NUMBER DEFAULT 0      --> Código da origem do pagamento
+                                      ,pr_dtdpagto  IN craptdb.dtdpagto%TYPE DEFAULT NULL --> Data de pagamento
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                                      ) IS
+    /*---------------------------------------------------------------------------------------------------------
+      Programa : pc_abatimento_juros_titulo
+      Sistema  : Ayllos
+      Sigla    : DSCT
+      Autor    : Paulo Penteado (GFT)
+      Data     : Junho/2018
+  
+      Objetivo  : Efetuar o abatimento de juros do título do borderô
+     
+               pr_cdorigpg: Código da origem do pagamento 
+                            0 - Conta-Corrente
+                            1 - Operação de Crédito
+  
+      Alteração : 09/06/2018 - Criação (Paulo Penteado (GFT))
+  
+    ----------------------------------------------------------------------------------------------------------*/
+    vr_cdhistor   craphis.cdhistor%TYPE;
+    vr_dtperiod   DATE;
+    vr_dtrefjur   DATE;
+    vr_dtultdat   DATE;
+    vr_flgachou   BOOLEAN;
+    vr_incrawljt  PLS_INTEGER;
+    vr_nrdocmtolt craptdb.nrdocmto%TYPE;
+    vr_nrdolote   craplot.nrdolote%TYPE;
+    vr_qtdprazo   INTEGER;
+    vr_txdiaria   NUMBER;
+    vr_vldjuros   NUMBER;
+    vr_vltitulo   NUMBER;
+    vr_vltotjur   NUMBER;
+    
+    rw_craplcm craplcm%ROWTYPE;
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+  
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+      
+    --Selecionar Bordero de titulos
+    CURSOR cr_crapbdt IS
+      SELECT crapbdt.txmensal
+            ,crapbdt.vltaxiof
+            ,crapbdt.flverbor
+      FROM crapbdt
+      WHERE crapbdt.cdcooper = pr_cdcooper
+      AND   crapbdt.nrborder = pr_nrborder;
+    rw_crapbdt cr_crapbdt%ROWTYPE;
+    
+    CURSOR cr_craptdb IS
+      SELECT craptdb.dtvencto
+            ,craptdb.vltitulo
+            ,craptdb.nrdconta
+            ,craptdb.nrdocmto
+            ,craptdb.cdcooper
+            ,craptdb.insittit
+            ,nvl(craptdb.dtdpagto, pr_dtdpagto) dtdpagto
+            ,craptdb.nrborder
+            ,craptdb.dtlibbdt
+            ,craptdb.cdbandoc
+            ,craptdb.nrdctabb
+            ,craptdb.nrcnvcob
+            ,craptdb.rowid
+            ,craptdb.vlliquid
+            ,craptdb.nrtitulo
+            ,COUNT(*) OVER (PARTITION BY craptdb.cdcooper) qtdreg
+      FROM craptdb
+      WHERE craptdb.cdcooper = pr_cdcooper
+      AND   craptdb.cdbandoc = pr_cdbandoc
+      AND   craptdb.nrdctabb = pr_nrdctabb
+      AND   craptdb.nrcnvcob = pr_nrcnvcob
+      AND   craptdb.nrdconta = pr_nrdconta
+      AND   craptdb.nrdocmto = pr_nrdocmto
+      AND   craptdb.dtresgat IS NULL;
+    rw_craptdb cr_craptdb%ROWTYPE;
+
+    --Selecionar lancamento juros desconto titulo
+    CURSOR cr_crapljt (pr_cdcooper IN crapljt.cdcooper%type
+                      ,pr_nrdconta IN crapljt.nrdconta%type
+                      ,pr_nrborder IN crapljt.nrborder%type
+                      ,pr_dtrefere IN crapljt.dtrefere%type
+                      ,pr_cdbandoc IN crapljt.cdbandoc%type
+                      ,pr_nrdctabb IN crapljt.nrdctabb%type
+                      ,pr_nrcnvcob IN crapljt.nrcnvcob%type
+                      ,pr_nrdocmto IN crapljt.nrdocmto%TYPE
+                      ,pr_tipo     IN INTEGER) IS
+      SELECT crapljt.ROWID
+            ,crapljt.vldjuros
+            ,crapljt.vlrestit
+      FROM crapljt
+      WHERE crapljt.cdcooper = pr_cdcooper
+      AND   crapljt.nrdconta = pr_nrdconta
+      AND   crapljt.nrborder = pr_nrborder
+      AND   ((pr_tipo = 1 AND crapljt.dtrefere = pr_dtrefere) OR
+             (pr_tipo = 2 AND crapljt.dtrefere > pr_dtrefere))
+      AND   crapljt.cdbandoc = pr_cdbandoc
+      AND   crapljt.nrdctabb = pr_nrdctabb
+      AND   crapljt.nrcnvcob = pr_nrcnvcob
+      AND   crapljt.nrdocmto = pr_nrdocmto;
+    rw_crapljt cr_crapljt%ROWTYPE;
+     
+  BEGIN
+    OPEN  cr_crapbdt;
+    FETCH cr_crapbdt INTO rw_crapbdt;
+    IF    cr_crapbdt%NOTFOUND THEN
+          CLOSE cr_crapbdt;
+          vr_cdcritic := 1166; --Bordero nao encontrado.
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_erro;
+    END   IF;
+    CLOSE cr_crapbdt;
+    
+    OPEN  cr_craptdb;
+    FETCH cr_craptdb INTO rw_craptdb;
+    IF    cr_craptdb%NOTFOUND THEN
+          CLOSE cr_craptdb;
+          vr_cdcritic := 1108; 
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_erro;
+    END   IF;
+    CLOSE cr_craptdb;
+
+    /**** ABATIMENTO DE JUROS ****/
+    --Zerar valor total juros
+    vr_vltotjur:= 0;
+    IF (rw_crapbdt.flverbor=0) THEN
+       vr_txdiaria := APLI0001.fn_round((POWER(1 + (rw_crapbdt.txmensal / 100),1 / 30) - 1),7);
+    ELSE
+       vr_txdiaria := (rw_crapbdt.txmensal / 100)/30;
+    END IF;
+    --Quantidade dias prazo
+    vr_qtdprazo:= TO_NUMBER(rw_craptdb.dtvencto - rw_craptdb.dtlibbdt) -
+                  TO_NUMBER(rw_craptdb.dtvencto - rw_craptdb.dtdpagto);
+    IF vr_qtdprazo < 0 THEN
+      vr_qtdprazo:= TO_NUMBER(rw_craptdb.dtvencto - rw_craptdb.dtlibbdt) -
+                    TO_NUMBER(rw_craptdb.dtdpagto - rw_craptdb.dtvencto);
+    END IF;
+    --Valor Titulo
+    vr_vltitulo:= rw_craptdb.vltitulo;
+    --Data Periodo
+    vr_dtperiod:= rw_craptdb.dtlibbdt;
+    --Zerar valor juros
+    vr_vldjuros:= 0;
+
+    /* Houve pagamento antecipado e data de pagamento maior que data de liberação do bordero (vr_qtdprazo>0) */
+    IF vr_qtdprazo > 0 AND rw_craptdb.dtdpagto < rw_craptdb.dtvencto  THEN
+      --Percorrer todo o prazo
+      FOR vr_contador IN 1..vr_qtdprazo LOOP
+        --Valor juros
+        vr_vldjuros:= APLI0001.fn_round(vr_vltitulo * vr_txdiaria,2);
+        
+        IF (rw_crapbdt.flverbor=0) THEN
+          --Valor Titulo recebe valor juros
+          vr_vltitulo:= vr_vltitulo + vr_vldjuros;
+        END IF;
+        --Data Periodo
+        vr_dtperiod:= vr_dtperiod + 1;
+        --data referencia juros
+        vr_dtrefjur:= Last_Day(vr_dtperiod);
+        --Marcar que nao encontrou
+        vr_flgachou:= FALSE;
+        --Selecionar Lancamento Juros Desconto Titulo
+        FOR idx IN 1..vr_tab_crawljt.Count LOOP
+          IF vr_tab_crawljt(idx).cdcooper = rw_craptdb.cdcooper AND
+             vr_tab_crawljt(idx).nrdconta = rw_craptdb.nrdconta AND
+             vr_tab_crawljt(idx).nrborder = rw_craptdb.nrborder AND
+             vr_tab_crawljt(idx).dtrefere = vr_dtrefjur         AND
+             vr_tab_crawljt(idx).cdbandoc = rw_craptdb.cdbandoc AND
+             vr_tab_crawljt(idx).nrdctabb = rw_craptdb.nrdctabb AND
+             vr_tab_crawljt(idx).nrcnvcob = rw_craptdb.nrcnvcob AND
+             vr_tab_crawljt(idx).nrdocmto = rw_craptdb.nrdocmto THEN
+            --Marcar que encontrou
+            vr_flgachou:= TRUE;
+            --Acumular valor juros
+            vr_tab_crawljt(idx).vldjuros:= vr_tab_crawljt(idx).vldjuros + vr_vldjuros;
+          END IF;
+        END LOOP;
+        /*Se nao encontrou cria */
+        IF NOT vr_flgachou THEN
+          --Selecionar indice
+          vr_incrawljt:= vr_tab_crawljt.Count+1;
+          --Gravar dados tabela memoria
+          vr_tab_crawljt(vr_incrawljt).cdcooper:= rw_craptdb.cdcooper;
+          vr_tab_crawljt(vr_incrawljt).nrdconta:= rw_craptdb.nrdconta;
+          vr_tab_crawljt(vr_incrawljt).nrborder:= rw_craptdb.nrborder;
+          vr_tab_crawljt(vr_incrawljt).dtrefere:= vr_dtrefjur;
+          vr_tab_crawljt(vr_incrawljt).cdbandoc:= rw_craptdb.cdbandoc;
+          vr_tab_crawljt(vr_incrawljt).nrdctabb:= rw_craptdb.nrdctabb;
+          vr_tab_crawljt(vr_incrawljt).nrcnvcob:= rw_craptdb.nrcnvcob;
+          vr_tab_crawljt(vr_incrawljt).nrdocmto:= rw_craptdb.nrdocmto;
+          vr_tab_crawljt(vr_incrawljt).vldjuros:= vr_vldjuros;
+        END IF;
+      END LOOP;  --vr_contador IN 1..vr_qtdprazo
+      /*  Atualiza registro de provisao de juros ..........  */
+      FOR idx IN 1..vr_tab_crawljt.Count LOOP
+        --Se for a mesma cooperativa
+        IF vr_tab_crawljt(idx).cdcooper = pr_cdcooper THEN
+          --Selecionar lancamento juros desconto titulo
+                OPEN cr_crapljt (pr_cdcooper => vr_tab_crawljt(idx).cdcooper
+                                ,pr_nrdconta => vr_tab_crawljt(idx).nrdconta
+                                ,pr_nrborder => vr_tab_crawljt(idx).nrborder
+                                ,pr_dtrefere => vr_tab_crawljt(idx).dtrefere
+                                ,pr_cdbandoc => vr_tab_crawljt(idx).cdbandoc
+                                ,pr_nrdctabb => vr_tab_crawljt(idx).nrdctabb
+                                ,pr_nrcnvcob => vr_tab_crawljt(idx).nrcnvcob
+                                ,pr_nrdocmto => vr_tab_crawljt(idx).nrdocmto
+                          ,pr_tipo     => 1);
+          --Posicionar no proximo registro
+          FETCH cr_crapljt INTO rw_crapljt;
+          --Se nao encontrar
+          IF cr_crapljt%NOTFOUND THEN
+            --Fechar Cursor
+            CLOSE cr_crapljt;
+            --Mensagem erro              
+            -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+            vr_cdcritic := 1170; --Registro crapljt nao encontrado.
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            -- Excluido GENE0001.pc_gera_erro esta no final da rotina - 15/02/2018 - Chamado 851591 
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+          --Fechar Cursor
+          CLOSE cr_crapljt;
+          --Se o valor dos juros mudou
+          IF rw_crapljt.vldjuros <> vr_tab_crawljt(idx).vldjuros THEN
+            --Se valor juros tabela eh maior encontrado
+            IF  rw_crapljt.vldjuros > vr_tab_crawljt(idx).vldjuros THEN
+              --Atualizar tabela juros
+              BEGIN 
+                UPDATE crapljt SET crapljt.vlrestit = NVL(crapljt.vldjuros,0) - NVL(vr_tab_crawljt(idx).vldjuros,0)
+                                  ,crapljt.vldjuros = nvl(vr_tab_crawljt(idx).vldjuros,0)
+                WHERE crapljt.ROWID = rw_crapljt.ROWID
+                RETURNING crapljt.vlrestit INTO rw_crapljt.vlrestit;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+                  -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                  vr_cdcritic := 1035;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)|| 
+                                 'crapljt(1):'||
+                                 ' vlrestit:'  || 'NVL(crapljt.vldjuros,0) - ' || NVL(vr_tab_crawljt(idx).vldjuros,0) ||
+                                 ' ,vldjuros:' || nvl(vr_tab_crawljt(idx).vldjuros,0) ||
+                                 ' ,ROWID   :' || rw_crapljt.ROWID  || 
+                                 '. ' ||sqlerrm; 
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+              END;
+              /* Juros a ser restituido */
+              vr_vltotjur:= rw_crapljt.vlrestit;
+            ELSE
+              --Mensagem erro
+              -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+              vr_cdcritic := 367; --Erro - Juros negativo:
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||
+                             rw_crapljt.vldjuros;
+              -- Excluido GENE0001.pc_gera_erro esta no final da rotina - 15/02/2018 - Chamado 851591                      
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+          --Data de Referencia
+          vr_dtultdat:= vr_tab_crawljt(idx).dtrefere;
+          --Excluir registro da tabela memoria
+          vr_tab_crawljt.DELETE(idx);
+        END IF;
+      END LOOP;
+    --#489111 início
+    /* Houve pagamento antecipado e data de pagamento igual a data de liberação do bordero (vr_qtdprazo=0) */
+    ELSIF vr_qtdprazo = 0 AND rw_craptdb.dtdpagto < rw_craptdb.dtvencto  THEN
+      --data referencia juros
+      vr_dtrefjur:= Last_Day(rw_craptdb.dtdpagto);
+      /* Restitui o juro que seria apropriado no mês do pagamento do título */
+            FOR rw_crapljt IN cr_crapljt (pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => rw_craptdb.nrdconta
+                                         ,pr_nrborder => rw_craptdb.nrborder
+                                         ,pr_dtrefere => vr_dtrefjur
+                                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                         ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                         ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                   ,pr_tipo     => 1) LOOP
+        --Acumular total juros
+        vr_vltotjur:= Nvl(vr_vltotjur,0) + Nvl(rw_crapljt.vldjuros,0);
+        --Atualizar tabela lancamento juros desconto titulos
+        BEGIN
+          UPDATE crapljt SET crapljt.vlrestit = crapljt.vldjuros
+                            ,crapljt.vldjuros = 0
+          WHERE crapljt.ROWID = rw_crapljt.ROWID;
+        EXCEPTION
+          WHEN Others THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)  || 
+                           'crapljt(2):'||
+                           ' vlrestit:'  || 'crapljt.vldjuros' ||
+                           ', vldjuros:' || '0' ||
+                           ', ROWID:'    || rw_crapljt.ROWID  || 
+                           '. ' ||sqlerrm; 
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+        END;
+      END LOOP;
+      --Data de Referencia
+      vr_dtultdat:= vr_dtrefjur;
+    --#489111 fim
+    ELSE
+      /* o juros sempre eh referente ao ultimo dia do mes */
+      vr_dtultdat:= Last_Day(rw_craptdb.dtdpagto);
+    END IF;
+    /* Restitui o juro que seria apropriado no(s) periodo(s) seguinte(s) */
+          FOR rw_crapljt IN cr_crapljt (pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => rw_craptdb.nrdconta
+                                       ,pr_nrborder => rw_craptdb.nrborder
+                                       ,pr_dtrefere => vr_dtultdat
+                                       ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                       ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                       ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                       ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                 ,pr_tipo     => 2) LOOP
+      --Acumular total juros
+      vr_vltotjur:= Nvl(vr_vltotjur,0) + Nvl(rw_crapljt.vldjuros,0);
+      --Atualizar tabela lancamento juros desconto titulos
+      BEGIN
+        UPDATE crapljt SET crapljt.vlrestit = crapljt.vldjuros
+                          ,crapljt.vldjuros = 0
+        WHERE crapljt.ROWID = rw_crapljt.ROWID;
+      EXCEPTION
+        WHEN Others THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+          -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+          vr_cdcritic := 1035;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)|| 
+                         'crapljt(3):'||
+                         ' vlrestit:'  || 'crapljt.vldjuros' ||
+                         ', vldjuros:' || '0' ||
+                         ' ,ROWID:'    || rw_crapljt.ROWID  || 
+                         '. ' ||sqlerrm; 
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+      END;
+    END LOOP;
+    --Se valor total juros positivo
+    IF vr_vltotjur > 0 THEN
+      -- conta corrente
+      IF nvl(pr_cdorigpg,0) = 0 THEN
+        vr_cdhistor   := 597;
+        vr_nrdolote   := 10300;
+        vr_nrdocmtolt := NULL;
+      ELSE -- operação de crédito
+        vr_cdhistor := dsct0003.vr_cdhistordsct_rendapgtoant;
+        vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
+                                  ,pr_nmdcampo => 'NRDOLOTE'
+                                  ,pr_dsdchave => TO_CHAR(pr_cdcooper)|| ';' 
+                                                  || pr_dtmvtolt || ';'
+                                                  || TO_CHAR(pr_cdagenci)|| ';'
+                                                  || '100');
+        vr_nrdocmtolt := rw_craptdb.nrdocmto;
+      END IF;
+            
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+      PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
+      se grava na tabela CRAPLOT no momento em que esta rodando a esta rotina OU somente no final da execucação
+      da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
+      a agencia do cooperado*/
+            
+      if not paga0001.fn_exec_paralelo then
+        /* Leitura do lote */
+        OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+                      ,pr_dtmvtolt => pr_dtmvtolt
+                        ,pr_cdagenci => pr_cdagenci
+                      ,pr_cdbccxlt => 100
+                      ,pr_nrdolote => vr_nrdolote);
+        --Posicionar no proximo registro
+        FETCH cr_craplot INTO rw_craplot;
+        --Se encontrou registro
+        IF cr_craplot%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_craplot;
+          --Criar lote
+          BEGIN 
+            INSERT INTO craplot
+              (craplot.cdcooper
+              ,craplot.dtmvtolt
+              ,craplot.cdagenci
+              ,craplot.cdbccxlt
+              ,craplot.nrdolote
+              ,craplot.cdoperad
+              ,craplot.tplotmov
+              ,craplot.cdhistor)
+            VALUES
+              (pr_cdcooper
+              ,pr_dtmvtolt
+                ,pr_cdagenci
+              ,100
+              ,vr_nrdolote
+              ,pr_cdoperad
+              ,1
+              ,vr_cdhistor)
+            RETURNING ROWID
+              ,craplot.dtmvtolt
+              ,craplot.cdagenci
+              ,craplot.cdbccxlt
+              ,craplot.nrdolote
+              ,craplot.nrseqdig
+            INTO rw_craplot.ROWID
+              ,rw_craplot.dtmvtolt
+              ,rw_craplot.cdagenci
+              ,rw_craplot.cdbccxlt
+              ,rw_craplot.nrdolote
+              ,rw_craplot.nrseqdig;
+          EXCEPTION
+            WHEN Dup_Val_On_Index THEN
+              --Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+              vr_cdcritic := 59; --Lote ja cadastrado.
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+              RAISE vr_exc_erro;
+            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
+              -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+              vr_cdcritic := 1034;
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                             'craplot(6):'||
+                             ' cdcooper:'  || pr_cdcooper ||
+                             ', dtmvtolt:' || pr_dtmvtolt ||
+                             ', cdagenci:' || '1'         ||
+                             ', cdbccxlt:' || '100'       ||
+                             ', nrdolote:' || vr_nrdolote ||
+                             ', cdoperad:' || pr_cdoperad ||
+                             ', tplotmov:' || '1'         ||
+                             ', cdhistor:' || vr_cdhistor ||
+                             '. ' ||sqlerrm; 
+              RAISE vr_exc_erro;
+          END;
+        END IF;
+        --Fechar Cursor
+        IF cr_craplot%ISOPEN THEN
+          CLOSE cr_craplot;
+        END IF;
+        rw_craplot.nrseqdig:= rw_craplot.nrseqdig + 1; -- projeto ligeirinho
+      ELSE
+        paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
+                                     pr_dtmvtolt => pr_dtmvtolt,
+                                     pr_cdagenci => 1,
+                                     pr_cdbccxlt => 100,
+                                     pr_nrdolote => vr_nrdolote,
+                                     pr_cdoperad => pr_cdoperad,
+                                     pr_nrdcaixa => NULL,
+                                     pr_tplotmov => 1,
+                                     pr_cdhistor => vr_cdhistor,
+                                     pr_cdbccxpg => null,
+                                     pr_nmrotina => 'DSCT0001.PC_ABATIMENTO_JUROS_TITULO');
+                            
+        rw_craplot.dtmvtolt := pr_dtmvtolt;                  
+        rw_craplot.cdagenci := 1;                   
+        rw_craplot.cdbccxlt := 100;                  
+        rw_craplot.nrdolote := vr_nrdolote;  
+        rw_craplot.nrseqdig := PAGA0001.fn_seq_parale_craplcm; 
+      END IF;
+			
+      --Gravar lancamento
+      BEGIN 
+        INSERT INTO craplcm
+            (craplcm.dtmvtolt
+            ,craplcm.cdagenci
+            ,craplcm.cdbccxlt
+            ,craplcm.nrdolote
+            ,craplcm.nrdconta
+            ,craplcm.nrdocmto
+            ,craplcm.vllanmto
+            ,craplcm.cdhistor
+            ,craplcm.nrseqdig
+            ,craplcm.nrdctabb
+            ,craplcm.nrautdoc
+            ,craplcm.cdcooper
+            ,craplcm.cdpesqbb)
+        VALUES
+            (rw_craplot.dtmvtolt
+            ,rw_craplot.cdagenci
+            ,rw_craplot.cdbccxlt
+            ,rw_craplot.nrdolote
+            ,rw_craptdb.nrdconta
+            ,nvl(vr_nrdocmtolt, Nvl(rw_craplot.nrseqdig,0))
+            ,vr_vltotjur
+            ,vr_cdhistor
+            ,Nvl(rw_craplot.nrseqdig,0) -- Merge 02/05/2018 - Chamado 851591 
+            ,rw_craptdb.nrdconta
+            ,0
+            ,pr_cdcooper
+            ,rw_craptdb.nrdocmto)
+        RETURNING craplcm.nrseqdig
+                 ,craplcm.vllanmto
+        INTO rw_craplcm.nrseqdig
+
+            ,rw_craplcm.vllanmto;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+          -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                             'craplcm(6):'||
+                             ' dtmvtolt:'  || rw_craplot.dtmvtolt ||
+                             ', cdagenci:' || rw_craplot.cdagenci ||
+                             ', cdbccxlt:' || rw_craplot.cdbccxlt ||
+                             ', nrdolote:' || rw_craplot.nrdolote ||
+                             ', nrdconta:' || rw_craptdb.nrdconta ||
+                             ', nrdocmto:' || nvl(vr_nrdocmtolt, Nvl(rw_craplot.nrseqdig,0) || ' + 1') ||
+                             ', vllanmto:' || vr_vltotjur ||
+                             ', cdhistor:' || vr_cdhistor ||
+                             ', nrseqdig:' || Nvl(rw_craplot.nrseqdig,0) || ' + 1' ||
+                             ', nrdctabb:' || rw_craptdb.nrdconta ||
+                             ', nrautdoc:' || '0' ||
+                             ', cdcooper:' || pr_cdcooper ||
+                             ', cdpesqbb:' || rw_craptdb.nrdocmto ||
+                             '. ' ||sqlerrm; 
+          RAISE vr_exc_erro;
+      END;
+            
+      /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
+      PAGA0001.pc_efetua_debitos_ligeir, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
+      deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/
+            
+      if not paga0001.fn_exec_paralelo then
+        /* Atualiza o lote na craplot */
+        BEGIN 
+          UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                          ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                          ,craplot.nrseqdig = Nvl(rw_craplcm.nrseqdig,0)
+                          ,craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + vr_vltotjur
+                          ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + vr_vltotjur
+          WHERE craplot.ROWID = rw_craplot.ROWID
+          RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
+            -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                         'craplot(5):'||
+                         ' qtinfoln:'  || 'Nvl(craplot.qtinfoln,0) + 1' ||
+                         ', qtcompln:' || 'Nvl(craplot.qtcompln,0) + 1' ||
+                         ', nrseqdig:' || Nvl(rw_craplcm.nrseqdig,0) ||
+                         ', vlinfodb:' || 'Nvl(craplot.vlinfodb,0) +' || vr_vltotjur ||
+                         ', vlcompdb:' || 'Nvl(craplot.vlcompdb,0) +' || vr_vltotjur ||
+                         ', ROWID:'    || rw_craplot.ROWID || 
+                         '. ' ||sqlerrm; 
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END;
+      END IF;
+      
+      -- Lançar valor da renda antecipada de juros nos lançamentos do borderô
+      IF pr_cdorigpg = 1 THEN
+        dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
+                                              ,pr_nrdconta => rw_craptdb.nrdconta
+                                              ,pr_nrborder => rw_craptdb.nrborder
+                                              ,pr_dtmvtolt => pr_dtmvtolt
+                                              ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                              ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                              ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                              ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                              ,pr_nrtitulo => rw_craptdb.nrtitulo
+                                              ,pr_cdorigem => 5
+                                              ,pr_cdhistor => dsct0003.vr_cdhistordsct_pgtomultacc
+                                              ,pr_vllanmto => vr_vltotjur
+                                              ,pr_dscritic => vr_dscritic );
+
+        IF trim(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+    END IF;
+  EXCEPTION
+    WHEN vr_exc_erro then
+         IF  vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         pr_cdcritic := vr_cdcritic;
+         pr_dscritic := vr_dscritic;
+  
+    WHEN OTHERS THEN
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := 'Erro nao tratado na rotina DSCT0001.pc_abatimento_juros_titulo: '||SQLERRM;
+  END pc_abatimento_juros_titulo;
+
     
 END  DSCT0001;
 /
