@@ -460,7 +460,9 @@ PROCEDURE gera_lancamento:
                           STRING(TIME,"HH:MM:SS") +
                           " - " + glb_cdprogra + "' --> '"
                            + aux_dscritic +  
-                        " >> log/proc_batch.log").                       
+                        " >> log/proc_batch.log").  
+
+                       UNDO TRANS_1, RETURN "NOK".                     
                    END.   
                 ELSE 
                    DO:

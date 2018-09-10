@@ -428,7 +428,15 @@ DO WHILE TRUE:
             ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
   
             IF  VALID-HANDLE(h-b1wgen0200) THEN
-                DELETE PROCEDURE h-b1wgen0200.
+                DELETE PROCEDURE h-b1wgen0200. 
+			
+            IF aux_cdcritic > 0 OR 	aux_dscritic <> "" THEN 
+            DO:
+              ASSIGN glb_cdcritic = aux_cdcritic.
+                     glb_dscritic = aux_dscritic.    
+              NEXT.
+            END.
+
 
                 ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
                     craplot.qtcompln = craplot.qtcompln + 1
