@@ -10,8 +10,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --
   --  Alteracoes: 14/06/2017 - Criação da rotina.
   --              13/12/2017 - Criação da procedure pc_insere_horario_grade (Alexandre Borgmann - Mouts)
-
-
+  --              29/06/2018 - Recebimento da SLC0005 (Andrino - Mouts)
+  --              17/07/2018 - AILOS SCTASK0016979-Recebimento das Liquidacoes da Cabal - Everton Souza - Mouts
+   
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
   vr_dtprocessoexec          crapdat.dtmvtolt%TYPE;
@@ -293,6 +294,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_arquivos(pr_dtinicio IN VARCHAR2               --> Data inicial da consulta
                              ,pr_dtfinal  IN VARCHAR2               --> Data final da consulta
+                             ,pr_dtinicioliq IN VARCHAR2            --> Data inicial Liquidação da consulta
+                             ,pr_dtfinalliq  IN VARCHAR2            --> Data final Liquidação da consulta
                              ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                              ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
                              ,pr_tparquivo IN VARCHAR2              --> Tipo de arquivo (CR/DB/AT)
@@ -343,6 +346,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                            
   -- Rotina para retornar as conciliacoes liquidacao STR
   PROCEDURE pc_lista_conciliacao(pr_dtlcto IN VARCHAR2                 --> Data lcto consulta
+                                ,pr_ispb     IN VARCHAR2               --> Identificador da Credenciadora
                                 ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -419,6 +423,11 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
                               ,pr_NomCliCredtd       IN VARCHAR2
                               ,pr_DtHrSLC            IN VARCHAR2
                               ,pr_DtMovto            IN VARCHAR2
+                              ,pr_Tptransacao_SLC    IN VARCHAR2
+                              ,pr_nmarquivo_slc      IN VARCHAR2
+                              ,pr_cdcontrole_slc_original IN VARCHAR2
+                              ,pr_tpdevolucao_liquidacao  IN VARCHAR2
+                              ,pr_nrcontrole_emissor_arq  IN VARCHAR2
                               ,pr_dscritic           OUT VARCHAR2);
 
   FUNCTION fn_valida_liquid_antecipacao (pr_vlrlancto     IN NUMBER
@@ -1762,8 +1771,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                 vr_iderro := 1;
-             ELSE
-                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr<>1027058000191 /*cielo*/ THEN
+             /*ELSE
+                IF vr_IndrFormaTransf <> '3' and vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    vr_codocorc:='32';
@@ -1773,7 +1782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_cdocorr => 32
                               );
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
              END  IF;
              vr_linhaErro:=895;
 
@@ -2275,7 +2284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
    CURSOR c2 IS
      SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                        ,pr_nmdcampo => 'TPARQUIVO'
-                                       ,pr_dsdchave => 1),4,'0'))  seq
+                                       ,pr_dsdchave => '1;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
        FROM dual;
      r2 c2%ROWTYPE;
 
@@ -3794,8 +3803,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_idcampo => vr_idcampo
                                 ,pr_dscritic => vr_dscritic);
                  vr_iderro := 1;
-             ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 /*cielo*/ THEN
+             /*ELSE
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo*\ THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
@@ -3803,7 +3812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_dscritic => vr_dscritic
                               ,pr_cdocorr => '32');
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
               END IF;
 
               vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
@@ -4011,7 +4020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
    CURSOR c2 IS
      SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                        ,pr_nmdcampo => 'TPARQUIVO'
-                                       ,pr_dsdchave => 2),4,'0'))  seq
+                                       ,pr_dsdchave => '2;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
        FROM dual;
      r2 c2%ROWTYPE;
 
@@ -5566,15 +5575,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                vr_iderro := 1;
-          ELSE
-                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 /*cielo */  THEN
+          /*ELSE
+                IF vr_IndrFormaTransf <> '3' and  vr_CNPJCreddr<>1027058000191 \*cielo *\  THEN
                    vr_dscritic:= vr_nomarq||' - Campo IndrFormaTransf com valor '||vr_IndrFormaTransf||' não é aceito no processo de importação';
                    vr_idcampo := 'IndrFormaTransf';
                    pc_gera_critica(pr_nomearq => vr_nomarq
                               ,pr_idcampo => vr_idcampo
                               ,pr_dscritic => vr_dscritic);
                    vr_iderro := 1;
-                END IF;
+                END IF;*/
             END IF;
 
             vr_CodMoeda := CCRD0006.fn_busca_valor(pr_table_of(w_indice).dslinha,'CodMoeda','S');
@@ -5783,7 +5792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     CURSOR c2 IS
       SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                         ,pr_nmdcampo => 'TPARQUIVO'
-                                        ,pr_dsdchave => 3),4,'0'))  seq
+                                        ,pr_dsdchave => '3;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
         FROM dual;
       r2 c2%ROWTYPE;
 
@@ -7754,7 +7763,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
             END IF;
 
             IF rw_tabela.tpforma_transf = 4 OR
-               (rw_tabela.tpforma_transf = 5 AND rw_lancamento.nrcnpj_credenciador<>01027058000191) THEN
+               (rw_tabela.tpforma_transf = 5 AND rw_lancamento.nrcnpj_credenciador not in (01027058000191, /* Cielo */
+                                                                                           01425787000104 /* RedeCard */
+                                                                                          )) THEN
                vr_dserro := 'Indicador de Forma de Transferência 4 (Débito em conta) ou 5 (STR) não tratado nesse processo';
                vr_cdocorr := '32';
                RAISE vr_erro;
@@ -7930,7 +7941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   PROCEDURE pc_efetiva_reg_pendentes(pr_dtprocesso IN DATE
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic OUT VARCHAR2)  IS
-                                    
+
 /*                                    
                    25/06/2018 - Tratamento de Históricos de Credito/Debito   
                                 José Carvalho  AMcom 
@@ -8380,33 +8391,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               RAISE vr_exc_saida;
             END IF;
 
+            -- insere o registro na tabela de lancamentos
             BEGIN
-              -- insere o registro na tabela de lancamentos
-              LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt =>trunc(vr_dtprocesso)    -- dtmvtolt
-                                                ,pr_cdagenci=>1                        -- cdagenci
-                                                ,pr_cdbccxlt =>100                     -- cdbccxlt
-                                                ,pr_nrdolote =>vr_nrdolote             -- nrdolote 
-                                                ,pr_nrdconta =>vr_nrdconta             -- nrdconta 
-                                                ,pr_nrdocmto =>vr_nrseqdiglcm          -- nrdocmto 
-                                                ,pr_cdhistor =>vr_cdhistor             -- cdhistor
-                                                ,pr_nrseqdig =>vr_nrseqdiglcm          -- nrseqdig
-                                                ,pr_vllanmto =>rw_tabela.vlpagamento   -- vllanmto 
-                                                ,pr_nrdctabb =>vr_nrdconta             -- nrdctabb
-                                                ,pr_nrdctitg =>GENE0002.fn_mask(vr_nrdconta,'99999999') -- nrdctitg 
-                                                ,pr_cdcooper =>vr_cdcooper             -- cdcooper
-                                                ,pr_dtrefere =>rw_tabela.dtpagamento   -- dtrefere
-                                                ,pr_cdoperad =>1                       -- cdoperad
-                                                ,pr_cdpesqbb =>rw_tabela.nrliquidacao  -- cdpesqbb                                                                                                
-                                                -- OUTPUT --
-                                                ,pr_tab_retorno => vr_tab_retorno
-                                                ,pr_incrineg => vr_incrineg
-                                                ,pr_cdcritic => vr_cdcritic
-                                                ,pr_dscritic => vr_dscritic);
-
-              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                 RAISE vr_exc_saida;
-              END IF;   
-            EXCEPTION 
+              INSERT INTO craplcm
+                (dtmvtolt,
+                 cdagenci,
+                 cdbccxlt,
+                 nrdolote,
+                 nrdconta,
+                 nrdocmto,
+                 cdhistor,
+                 nrseqdig,
+                 vllanmto,
+                 nrdctabb,
+                 nrdctitg,
+                 cdcooper,
+                 dtrefere,
+                 cdoperad,
+                 CDPESQBB)
+              VALUES
+                (trunc(vr_dtprocesso),                                     --dtmvtolt
+                 1,                                                 --cdagenci
+                 100,                                               --cdbccxlt
+                 vr_nrdolote,                                       --nrdolote
+                 vr_nrdconta,                                       --nrdconta
+                 vr_nrseqdiglcm,                                    --nrdocmto
+                 vr_cdhistor,                                       --cdhistor
+                 vr_nrseqdiglcm,                                    --nrseqdig
+                 rw_tabela.vlpagamento,                             --vllanmto
+                 vr_nrdconta,                                       --nrdctabb
+                 GENE0002.fn_mask(vr_nrdconta,'99999999'),          --nrdctitg
+                 vr_cdcooper,                                       --cdcooper
+                 rw_tabela.dtpagamento,                             --dtrefere
+                 '1',                                               --cdoperad
+                 rw_tabela.nrliquidacao);                           --CDPESQBB
+            EXCEPTION
               WHEN vr_exc_saida THEN
                 raise vr_exc_saida; -- Apenas passar a critica 
               WHEN OTHERS THEN
@@ -8902,6 +8921,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                   , SUBSTR(LPAD(lct.nrcnpj_credenciador, 14, '0'), 1, 8) AS ispb
                FROM CECRED.TBDOMIC_LIQTRANS_LANCTO lct;
          
+      -- Consulta credenciadoras Str
+      CURSOR cr_busca_credenciadoras_str IS
+             SELECT DISTINCT upper(lct.nmcredenciador) AS credenciadora
+                  , SUBSTR(LPAD(lct.nrcnpj_credenciador, 14, '0'), 1, 8) AS ispb
+               FROM CECRED.TBDOMIC_LIQTRANS_LANCTO lct
+              WHERE SUBSTR(LPAD(lct.nrcnpj_credenciador, 14, '0'), 1, 8) in ('01027058','01425787') ;
+
              
       -- Consulta bancos liquidantes    
       CURSOR cr_busca_liquidante IS
@@ -8944,7 +8970,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           GENE0002.pc_escreve_xml(
                   pr_xml => vr_clob, 
                   pr_texto_completo => vr_xml_temp,
-                  pr_texto_novo => '</credenciadoras><liquidantes>');
+                  pr_texto_novo => '</credenciadoras><credenciadorasstr>');
+          --
+          -- Iteracao credenciadoras
+          FOR rw_creden_str IN cr_busca_credenciadoras_str() LOOP
+              GENE0002.pc_escreve_xml(
+                  pr_xml => vr_clob,
+                  pr_texto_completo => vr_xml_temp,
+                  pr_texto_novo => '<item>' ||
+                                   '<nome>' || TRIM(rw_creden_str.credenciadora) ||'</nome>' ||
+                                   '<ispb>' || TRIM(rw_creden_str.ispb) ||'</ispb>' ||
+                                   '</item>');
+          END LOOP;
+
+          -- Escreve delimitador
+          GENE0002.pc_escreve_xml(
+                  pr_xml => vr_clob,
+                  pr_texto_completo => vr_xml_temp,
+                  pr_texto_novo => '</credenciadorasstr><liquidantes>');
+
              
           -- Iteracao banco liquidante
           FOR rw_liquid IN cr_busca_liquidante() LOOP                                              
@@ -8996,6 +9040,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   -- Rotina para retornar os arquivos processados
   PROCEDURE pc_lista_arquivos(pr_dtinicio IN VARCHAR2               --> Data inicial da consulta
                              ,pr_dtfinal  IN VARCHAR2               --> Data final da consulta
+                             ,pr_dtinicioliq IN VARCHAR2            --> Data inicial Liquidação da consulta
+                             ,pr_dtfinalliq  IN VARCHAR2            --> Data final Liquidação da consulta                             
                              ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                              ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
                              ,pr_tparquivo IN VARCHAR2              --> Tipo de arquivo (CR/DB/AT)
@@ -9010,7 +9056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                              ,pr_des_erro OUT VARCHAR2 ) IS         --> Erros do processo          
 
     -- Cursor sobre os arquivos processados
-    CURSOR cr_tabela(pr_dtinicio DATE, pr_dtfinal DATE) IS
+    CURSOR cr_tabela(pr_dtinicio DATE, pr_dtfinal DATE, pr_dtinicioliq DATE, pr_dtfinalliq DATE) IS
 select y.*
 from (
 select x.*,
@@ -9073,6 +9119,7 @@ from  (
          AND (pdv.tpforma_transf = pr_formtran OR (pr_formtran = '0' AND pdv.tpforma_transf IS NOT NULL)) --filtro forma transf
          AND (to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD') BETWEEN pr_dtinicio AND pr_dtfinal
          OR   trunc(arq.dharquivo_gerado) BETWEEN pr_dtinicio AND pr_dtfinal)
+         AND (to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD') BETWEEN pr_dtinicioliq AND pr_dtfinalliq)
          AND arq2.nmarquivo_origem(+) = arq.nmarquivo_gerado||'_ERR'
          AND (arq.tparquivo = pr_tparquivo OR (pr_tparquivo = 0 AND arq.tparquivo IN(1, 2, 3))) --filtro de tipo de arquivo
        GROUP BY  arq.nmarquivo_origem, 
@@ -9100,6 +9147,8 @@ from  (
       -- Variaveis gerais
       vr_dtinicio DATE;
       vr_dtfinal  DATE;
+      vr_dtinicioliq DATE;
+      vr_dtfinalliq  DATE; 
 
       vr_qt_tot_processados PLS_INTEGER := 0;
       vr_qt_tot_integrados  PLS_INTEGER := 0;
@@ -9144,9 +9193,23 @@ from  (
         vr_dtfinal := to_date(pr_dtfinal,'dd/mm/yyyy');
       END IF;
 
+      -- Popula a data de inicio Liquidação
+      IF TRIM(pr_dtinicioliq) IS NULL THEN
+        vr_dtinicioliq := to_date('01/01/2000','dd/mm/yyyy');
+      ELSE
+        vr_dtinicioliq := to_date(pr_dtinicioliq,'dd/mm/yyyy');
+      END IF;
+
+      -- Popula a data de termino Liquidação
+      IF TRIM(pr_dtfinalliq) IS NULL THEN
+        vr_dtfinalliq := to_date('31/12/2999','dd/mm/yyyy');
+      ELSE
+        vr_dtfinalliq := to_date(pr_dtfinalliq,'dd/mm/yyyy');
+      END IF;  
+
 
       -- Loop sobre as versoes do questionario de microcredito
-      FOR rw_tabela IN cr_tabela(vr_dtinicio, vr_dtfinal) LOOP
+      FOR rw_tabela IN cr_tabela(vr_dtinicio, vr_dtfinal, vr_dtinicioliq, vr_dtfinalliq) LOOP
 
         -- Incrementa o contador de registros
         vr_posreg := vr_posreg + 1;
@@ -10018,6 +10081,7 @@ from  (
   
   -- Rotina para retornar as conciliacoes liquidacao STR
   PROCEDURE pc_lista_conciliacao(pr_dtlcto   IN VARCHAR2               --> Data lcto consulta
+                                ,pr_ispb     IN VARCHAR2               --> Identificador da Credenciadora
                                 ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -10027,6 +10091,7 @@ from  (
        
        vr_xml_temp VARCHAR2(32726) := '';
        vr_clob     CLOB;
+	   vr_tipo_msg VARCHAR2(20);
 
        -- Tratamento de erros
        vr_exc_saida     EXCEPTION;
@@ -10047,15 +10112,30 @@ from  (
                    , rece.vlpagamentos  
                 FROM (SELECT count(1) AS qdecreditado
                            , sum(pdv.vlpagamento) AS vlcreditado
-                        FROM cecred.tbdomic_liqtrans_pdv pdv
+                        FROM cecred.tbdomic_liqtrans_lancto tll,
+                             cecred.tbdomic_liqtrans_centraliza tlc,
+                             cecred.tbdomic_liqtrans_pdv pdv
                        WHERE pdv.tpforma_transf = 5 --somente tipo 5
                          AND pdv.dtpagamento = to_char(to_date(pr_dtlcto, 'DD/MM/YYYY'), 'YYYY-MM-DD')
                          AND pdv.cdocorrencia = 0
+						 AND tll.idlancto = tlc.idlancto
+                         AND tlc.idcentraliza = pdv.idcentraliza
+                         and SUBSTR(LPAD(tll.nrcnpj_credenciador, 14, '0'), 1, 8) = pr_ispb 
                       ) cred
                    , (SELECT count(1) AS qdepagamentos
                            , sum(str.vllancamento) vlpagamentos
                         FROM cecred.tbdomic_liqtrans_msg_ltrstr str
-                       WHERE str.cdmsg = 'STR0006R2'
+                       WHERE str.cdmsg = vr_tipo_msg
+                         AND nvl(SUBSTR(LPAD(STR.nrcnpj_cpf_cliente_debitado, 14, '0'), 1, 8),0)  = 
+                                                      DECODE(vr_tipo_msg,'STR0006R2',
+                                                             pr_ispb,                -- CIELO
+                                                             0)                      -- REDECARD
+                         AND str.Cdispb_If_Debitada = DECODE(vr_tipo_msg,'STR0006R2',
+                                                             str.Cdispb_If_Debitada, -- CIELO
+                                                             '60701190')             -- REDECARD
+                         AND nvl(str.cdfinalidade_if,0) = DECODE(vr_tipo_msg,'STR0006R2',
+                                                             0,                      -- CIELO
+                                                             23)                     -- REDECARD               
                          AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
 
                            
@@ -10065,7 +10145,13 @@ from  (
        -- Monta documento XML
        dbms_lob.createtemporary(vr_clob, TRUE);
        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-          
+       --
+       IF pr_ispb = '01027058' THEN 
+         vr_tipo_msg := 'STR0006R2';-- CIELO
+       ELSE
+         vr_tipo_msg := 'STR0004R2';-- REDECARD
+       END IF;
+       --
        -- Criar cabeçalho do XML
        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                               ,pr_texto_completo => vr_xml_temp
@@ -10499,6 +10585,11 @@ from  (
                               ,pr_NomCliCredtd       IN VARCHAR2
                               ,pr_DtHrSLC            IN VARCHAR2
                               ,pr_DtMovto            IN VARCHAR2
+                              ,pr_Tptransacao_SLC    IN VARCHAR2
+                              ,pr_nmarquivo_slc      IN VARCHAR2
+                              ,pr_cdcontrole_slc_original IN VARCHAR2
+                              ,pr_tpdevolucao_liquidacao  IN VARCHAR2
+                              ,pr_nrcontrole_emissor_arq  IN VARCHAR2
                               ,pr_dscritic           OUT VARCHAR2) IS
   BEGIN
     INSERT INTO TBDOMIC_LIQTRANS_MENSAGEM_SLC
@@ -10520,7 +10611,12 @@ from  (
           ,NMCLIENTE_CREDITADO
           ,DHSLC
           ,DTMOVIMENTO
-          ,INSITUACAO)
+          ,INSITUACAO
+          ,TPTRANSACAO_SLC 
+          ,NMARQUIVO_SLC
+          ,CDCONTROLE_SLC_ORIGINAL
+          ,TPDEVOLUCAO_LIQUIDACAO
+          ,NRCONTROLE_EMISSOR_ARQUIVO)
     VALUES
           (trunc(SYSDATE)
           ,pr_CodMsg
@@ -10540,7 +10636,13 @@ from  (
           ,decode(pr_NomCliCredtd,'-1',NULL,pr_NomCliCredtd)
           ,to_date(pr_DtHrSLC, 'YYYY-MM-DD"T"HH24:MI:SS')
           ,to_date(pr_DtMovto, 'YYYY-MM-DD')
-          ,0);
+          ,0
+          ,decode(pr_tptransacao_slc,'-1',NULL,pr_tptransacao_slc)
+          ,decode(pr_nmarquivo_slc,'-1',NULL,pr_nmarquivo_slc)
+          ,decode(pr_cdcontrole_slc_original,'-1',NULL,pr_cdcontrole_slc_original)
+          ,decode(pr_tpdevolucao_liquidacao,'-1',NULL,pr_tpdevolucao_liquidacao)
+          ,decode(pr_nrcontrole_emissor_arq,'-1',NULL,pr_nrcontrole_emissor_arq)
+          );
 
   EXCEPTION
      when DUP_VAL_ON_INDEX THEN 
@@ -11424,7 +11526,8 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
     CURSOR c2 IS
       SELECT TO_NUMBER(LPAD(fn_sequence (pr_nmtabela => 'tbdomic_liqtrans_arquivo'
                                         ,pr_nmdcampo => 'TPARQUIVO'
-                                        ,pr_dsdchave => 3),4,'0'))  seq
+										,pr_dsdchave => '3;' || TO_CHAR(SYSDATE,'DD/MM/RRRR') ),5,'0'))  seq
+
         FROM dual;
       r2 c2%ROWTYPE;
 
