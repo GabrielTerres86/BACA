@@ -24,9 +24,19 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
 
 ..............................................................................*/
 
- FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
-                                 , pr_nrdconta craplcm.nrdconta%TYPE)
-  RETURN BOOLEAN;
+  -- Verifica se a conta corrente se encontra em prejuízo
+  FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
+                                 , pr_nrdconta craplcm.nrdconta%TYPE) RETURN BOOLEAN;
+
+	-- Verifica se o prejuízo de conta corrente foi liquidado em uma data específica
+  FUNCTION fn_verifica_liquidacao_preju(pr_cdcooper craplcm.cdcooper%TYPE
+                                      , pr_nrdconta craplcm.nrdconta%TYPE
+																			, pr_dtmvtolt tbcc_prejuizo.dtliquidacao%TYPE) RETURN BOOLEAN;
+
+  -- Calcula a quantidade de dias em atraso para contas corrente transferidas para prejuízo
+	FUNCTION fn_calc_dias_atraso_cc_prej(pr_cdcooper IN tbcc_prejuizo.cdcooper%TYPE
+		                                 , pr_nrdconta IN tbcc_prejuizo.nrdconta%TYPE
+																		 , pr_dtmvtolt IN tbcc_prejuizo.dtinclusao%TYPE) RETURN NUMBER;
 
  /* Rotina para inclusao de C.C. pra prejuizo */
  PROCEDURE pc_transfere_prejuizo_cc(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Coop conectada
@@ -49,9 +59,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
   -- Retorna a soma dos valores pagos (abonados) do prejuízo de c/c no dia
   FUNCTION fn_valor_pago_conta_prej(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE
                                   , pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE
-                                  , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE
-                                  , pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                  , pr_dscritic OUT crapcri.dscritic%TYPE) RETURN NUMBER;
+                                  , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE) RETURN NUMBER;
 
    PROCEDURE pc_consulta_sld_cta_prj(pr_cdcooper IN NUMBER             --> Código da Cooperativa
                                    ,pr_nrdconta IN NUMBER             --> Número da conta
@@ -228,7 +236,7 @@ PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                                    , pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE
                                    , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE
                                    , pr_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE
-                                   , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE
+                                   , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE DEFAULT NULL
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
@@ -312,6 +320,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     RETURN vr_conta_em_prejuizo;
   END fn_verifica_preju_conta;
+
+	-- Verifica se o prejuízo foi liquidado em uma data específica
+  FUNCTION fn_verifica_liquidacao_preju(pr_cdcooper craplcm.cdcooper%TYPE
+                                      , pr_nrdconta craplcm.nrdconta%TYPE
+																			, pr_dtmvtolt tbcc_prejuizo.dtliquidacao%TYPE)
+    RETURN BOOLEAN AS vr_liquidacao BOOLEAN;
+
+    CURSOR cr_prejuizo IS
+    SELECT 1
+		  FROM tbcc_prejuizo
+		 WHERE cdcooper = pr_cdcooper
+		   AND nrdconta = pr_nrdconta
+			 AND dtliquidacao = pr_dtmvtolt;
+
+		vr_aux INTEGER;
+  BEGIN
+    OPEN cr_prejuizo;
+    FETCH cr_prejuizo INTO vr_aux;
+
+		vr_liquidacao := cr_prejuizo%FOUND;
+
+    CLOSE cr_prejuizo;
+
+    RETURN vr_liquidacao;
+  END fn_verifica_liquidacao_preju;
 
   FUNCTION fn_sld_cta_prj(pr_cdcooper   IN NUMBER --> Código da Cooperativa
                          ,pr_nrdconta   IN NUMBER --> Número da conta
@@ -398,6 +431,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     END;
   END fn_sld_cta_prj;
 
+	-- Calcula a quantidade de dias em atraso para contas corrente transferidas para prejuízo
+	FUNCTION fn_calc_dias_atraso_cc_prej(pr_cdcooper IN tbcc_prejuizo.cdcooper%TYPE
+		                                 , pr_nrdconta IN tbcc_prejuizo.nrdconta%TYPE
+																		 , pr_dtmvtolt IN tbcc_prejuizo.dtinclusao%TYPE) RETURN NUMBER IS
+	  CURSOR cr_prejuizo IS
+		SELECT qtdiaatr
+		     , dtinclusao
+		  FROM tbcc_prejuizo
+		 WHERE cdcooper = pr_cdcooper
+		   AND nrdconta = pr_nrdconta
+			 AND dtliquidacao IS NULL;
+		rw_prejuizo cr_prejuizo%ROWTYPE;
+
+		vr_qtdiaatr NUMBER;
+	BEGIN
+		OPEN cr_prejuizo;
+		FETCH cr_prejuizo INTO rw_prejuizo;
+		CLOSE cr_prejuizo;
+
+		vr_qtdiaatr := nvl(rw_prejuizo.qtdiaatr, 0) + (pr_dtmvtolt - rw_prejuizo.dtinclusao);
+
+		RETURN vr_qtdiaatr;
+	END fn_calc_dias_atraso_cc_prej;
+
   --Retorna o valor dos créditos disponíveis na CC em prejuízo
   FUNCTION fn_cred_disp_prj(pr_cdcooper IN crapris.cdcooper%TYPE
                           , pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER IS
@@ -425,33 +482,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
   -- Retorna a soma dos valores pagos (abonados) do prejuízo de c/c no dia
   FUNCTION fn_valor_pago_conta_prej(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE
                                   , pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE
-                                  , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE
-                                  , pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                  , pr_dscritic OUT crapcri.dscritic%TYPE) RETURN NUMBER IS
+                                  , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE) RETURN NUMBER IS
 
     -- Recupera somatório dos lançamentos de pagamento e abono do prejuízo de conta corrente
     CURSOR cr_pagamentos IS
-    SELECT nvl(SUM(prj.vllanmto), 0) valor_pagamentos
-      FROM tbcc_prejuizo_detalhe prj
-     WHERE prj.cdcooper = pr_cdcooper
-       AND prj.nrdconta = pr_nrdconta
-       AND prj.dtmvtolt = pr_dtmvtolt
-       AND prj.cdhistor IN (2723,2733);
+    SELECT nvl(SUM(det.vllanmto), 0) valor_pagamentos
+      FROM tbcc_prejuizo_detalhe det
+     WHERE det.cdcooper = pr_cdcooper
+       AND det.nrdconta = pr_nrdconta
+       AND det.dtmvtolt = pr_dtmvtolt
+       AND det.cdhistor IN (2723,2733);
 
     vr_valor_pagamentos NUMBER;
   BEGIN
-    pr_cdcritic := 0;
-    pr_dscritic := NULL;
-
     OPEN cr_pagamentos;
     FETCH cr_pagamentos INTO vr_valor_pagamentos;
     CLOSE cr_pagamentos;
 
     RETURN vr_valor_pagamentos;
-  EXCEPTION
-    WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Erro não tratado na rotina PREJ0003.fn_valor_pago_conta_prej: ' || SQLERRM;
   END fn_valor_pago_conta_prej;
 
   -- Subrotina para escrever texto na variável CLOB do XML
@@ -726,8 +774,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     vr_vlhist38 NUMBER;
     vr_vlhist57 NUMBER;
 
-    vr_vljuro60_cneg NUMBER; -- Juros +60 (Hist. 37 + Hist. 57)
-    vr_vljuro60_cesp NUMBER; -- Juros +60 (Hist. 38)
+		vr_vljuro60_37 NUMBER; -- Juros +60 (Hist. 37 + Hist. 2718)
+		vr_vljuro60_38 NUMBER; -- Juros +60 (Hist. 38)
+		vr_vljuro60_57 NUMBER; -- Juros +60 (Hist. 57)
 
     vr_idprejuizo tbcc_prejuizo.idprejuizo%TYPE;
 		vr_existecyc INTEGER;
@@ -825,11 +874,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      END IF;
 
      -- Busca saldo devedor (saldo até 59 dias de atraso) e juros +60 não pagos da conta
-     TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => pr_cdcooper
+		 TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => pr_cdcooper
                                                    , pr_nrdconta => pr_nrdconta
                                                    , pr_vlsld59d => vr_vlslddev
-                                                   , pr_vljucneg => vr_vljuro60_cneg
-                                                   , pr_vljucesp => vr_vljuro60_cesp
+																									 , pr_vlju6037 => vr_vljuro60_37
+																									 , pr_vlju6038 => vr_vljuro60_38
+																									 , pr_vlju6057 => vr_vljuro60_57
                                                    , pr_cdcritic => vr_cdcritic
                                                    , pr_dscritic => vr_dscritic);
 
@@ -888,11 +938,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                pr_nrdconta,
                rw_crapdat.dtmvtolt,
                rw_crapass.cdsitdct,
-               vr_vlslddev + vr_vljuro60_cneg + vr_vljuro60_cesp,
+							 vr_vlslddev + vr_vljuro60_37 + vr_vljuro60_57 + vr_vljuro60_38,
                vr_qtdiaatr,
                vr_vlslddev,
-               vr_vljuro60_cneg,
-               vr_vljuro60_cesp,
+							 vr_vljuro60_37 + vr_vljuro60_57,
+							 vr_vljuro60_38,
                CASE WHEN pr_tpope = 'N' THEN 0 ELSE 1 END)
        RETURNING idprejuizo INTO vr_idprejuizo;
       EXCEPTION
@@ -920,8 +970,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                , pr_cdcooper   => pr_cdcooper
                                , pr_nrdconta   => pr_nrdconta
                                , pr_vlsldprj   => vr_vlslddev
-                               , pr_vljur60_ctneg => vr_vljuro60_cneg
-                               , pr_vljur60_lcred => vr_vljuro60_cesp
+															 , pr_vljur60_ctneg => vr_vljuro60_37 + vr_vljuro60_57
+															 , pr_vljur60_lcred => vr_vljuro60_38
                                , pr_dtmvtolt   => rw_crapdat.dtmvtolt
                                , pr_tpope      => pr_tpope
                                , pr_cdcritic   => vr_cdcritic
@@ -1271,6 +1321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
         -- Zero o saldo disponível para operações na conta corrente
         UPDATE tbcc_prejuizo tbprj
            SET tbprj.vlsldlib     = 0
+					   , tbprj.dtliquidacao = rw_crapdat.dtmvtolt
          WHERE tbprj.cdcooper     = pr_cdcooper
            AND tbprj.rowid        = rw_conta_liquida.rowid;
       EXCEPTION
@@ -1282,6 +1333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
           RAISE vr_exc_saida;
       END;
     END LOOP;
+
+		COMMIT;
 
     EXCEPTION
       WHEN OTHERS THEN
@@ -1296,6 +1349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
+				ROLLBACK;
  END  pc_liquida_prejuizo_cc;
 
   PROCEDURE pc_consulta_sld_cta_prj(pr_cdcooper IN NUMBER             --> Código da Cooperativa
@@ -3039,6 +3093,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
        AND blq.nrdconta =  pr_nrdconta
        AND blq.dtmvtolt <= pr_dtrefere
        AND his.cdcooper = blq.cdcooper
+			 AND his.cdhistor = blq.cdhistor
        AND his.indebcre = 'C'
      ORDER BY blq.dtmvtolt;
     rw_crdant cr_crdant%ROWTYPE;
@@ -3047,16 +3102,18 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     -- para descontar do saldo atual da conta transitória (bloqueios por prejuízo)
     CURSOR cr_somacred(pr_nrdconta tbcc_prejuizo_lancamento.nrdconta%TYPE
                      , pr_dtrefere tbcc_prejuizo_lancamento.dtmvtolt%TYPE) IS
-    SELECT SUM(blq.vllanmto) vlsoma
+    SELECT nvl(SUM(blq.vllanmto),0) vlsoma
       FROM tbcc_prejuizo_lancamento blq
          , craphis his
-     WHERE blq.cdcooper =  pr_cdcooper
-       AND blq.nrdconta =  pr_nrdconta
+     WHERE blq.cdcooper = pr_cdcooper
+       AND blq.nrdconta = pr_nrdconta
        AND blq.dtmvtolt > pr_dtrefere
        AND his.cdcooper = blq.cdcooper
+			 AND his.cdhistor = blq.cdhistor
        AND his.indebcre = 'C';
 
-    CURSOR cr_cyber(pr_nrdconta tbrecup_acordo.nrdconta%TYPE) IS
+    -- Verifica se há acordo de cobrança ativo para a conta
+    CURSOR cr_acordo(pr_nrdconta tbrecup_acordo.nrdconta%TYPE) IS
     SELECT a.nracordo
       FROM tbrecup_acordo a
          , tbrecup_acordo_contrato c
@@ -3066,6 +3123,15 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
        AND c.nracordo = a.nracordo
        AND c.cdorigem = 1;
 
+    -- Verifica se há marcações para a conta no CYBER
+		CURSOR cr_cyber(pr_nrdconta crapcyc.nrdconta%TYPE) IS
+		SELECT 1
+		  FROM  crapcyc cyc
+		 WHERE  cyc.cdcooper = pr_cdcooper
+		   AND  cyc.nrdconta = pr_nrdconta
+			 AND  cyc.cdorigem = 1
+			 AND  cyc.flgehvip = 1;
+
     -- Calendário de datas da cooperativa
     rw_crapdat   btch0001.cr_crapdat%ROWTYPE;
 
@@ -3073,10 +3139,10 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     vr_saldo_resgatar   NUMBER;   -- Valor do saldo disponível na conta transitória que pode ser resgatado
     vr_valor_transferir NUMBER;   -- Valor a transferir relativo a cada lançamento de crédito
     vr_dstextab craptab.dstextab%TYPE;
-    vr_qtdictcc NUMBER  :=0;
-    vr_dtrefere DATE;
-    vr_nracordo NUMBER;
-    vr_total_resgatado NUMBER := 0;
+    vr_qtdictcc         NUMBER  :=0;
+    vr_dtrefere         DATE;
+    vr_nracordo         NUMBER;
+    vr_total_resgatado  NUMBER := 0;
   BEGIN
       -- Buscar Parâmetros da TAB089
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -3099,14 +3165,31 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
       -- Percorre as contas em prejuízo da cooperativa
       FOR rw_crapass IN cr_crapass LOOP
-          -- Verifica se há acordo de cobrança ativo para a conta
-          OPEN cr_cyber(rw_crapass.nrdconta);
-          FETCH cr_cyber INTO vr_nracordo;
-          CLOSE cr_cyber;
 
-          IF vr_nracordo IS NOT NULL THEN
+
+          -- Verifica se há acordo de cobrança ativo para a conta
+          OPEN cr_acordo(rw_crapass.nrdconta);
+          FETCH cr_acordo INTO vr_nracordo;
+
+					IF cr_acordo%FOUND THEN
+						CLOSE cr_acordo;
+
             continue; -- Não efetua os resgates de créditos para contas com acordo ativo
           END IF;
+
+          CLOSE cr_acordo;
+
+					-- Verifica se a conta está marcada na CRAPCYC com as flags de cobrança extrajudicial ou judicial
+					OPEN cr_cyber(rw_crapass.nrdconta);
+					FETCH cr_cyber INTO vr_nracordo;
+
+					IF cr_cyber%FOUND THEN
+						CLOSE cr_cyber;
+
+						continue;
+					END IF;
+
+					CLOSE cr_cyber;
 
           -- Valor total dos créditos resgatados para a conta corrente
           vr_total_resgatado := 0;
@@ -3120,10 +3203,11 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
           vr_saldo_resgatar := fn_sld_cta_prj(pr_cdcooper => pr_cdcooper
                                             , pr_nrdconta => rw_crapass.nrdconta
                                             , pr_exclbloq => 1);
+
           vr_saldo_resgatar := vr_saldo_resgatar - vr_vlsoma;
 
           -- Se não há créditos a resgatar, desconsidera a conta
-          IF vr_saldo_resgatar = 0 THEN
+          IF vr_saldo_resgatar <= 0 THEN
             continue;
           END IF;
 
@@ -3164,6 +3248,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = rw_crapass.nrdconta
              AND dtliquidacao IS NULL;
+
           COMMIT;
       END LOOP;
  END pc_resgata_cred_bloq_preju;
@@ -3830,11 +3915,13 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                            ,pr_vlemprst       => rw_crapepr.vlemprst
                                            ,pr_txmensal       => rw_crapepr.txmensal
                                            ,pr_dtprivencto    => rw_crapepr.dtprivencto
+																					 ,pr_dtmvtolt       => rw_crapepr.dtmvtolt
                                            ,pr_vlsprojt       => rw_crapepr.vlsprojt
                                            ,pr_qttolar        => rw_crapepr.qttolatr
                                            ,pr_nrparcel       => pr_nrparcel               -- Número da parcela
                                            ,pr_vlsdeved       => rw_crapepr.vlsdeved       -- Valor do saldo devedor
                                            ,pr_vlsdevat       => rw_crapepr.vlsdevat       -- Valor anterior do saldo devedor
+																					 ,pr_vlrpagar       => vr_vlpagmto
                                            ,pr_idorigem       => pr_idorigem               -- Indicador da origem
                                            ,pr_nmtelant       => 'BLQPREJU'                -- Nome da tela
                                            ,pr_cdoperad       => pr_cdoperad               -- Código do operador
@@ -3927,14 +4014,30 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                    , pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE
                                    , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE
                                    , pr_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE
-                                   , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE
+                                   , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE DEFAULT NULL
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                    , pr_dscritic OUT crapcri.dscritic%TYPE) IS
+
+	CURSOR cr_prejuizo IS
+	SELECT idprejuizo
+	  FROM tbcc_prejuizo
+	 WHERE cdcooper = pr_cdcooper
+	   AND nrdconta = pr_nrdconta
+		 AND dtliquidacao IS NULL;
+
+	vr_idprejuizo tbcc_prejuizo_detalhe.idprejuizo%TYPE := pr_idprejuizo;
+
   BEGIN
     pr_cdcritic := 0;
     pr_dscritic := NULL;
+
+		IF vr_idprejuizo IS NULL THEN
+			OPEN cr_prejuizo;
+			FETCH cr_prejuizo INTO vr_idprejuizo;
+			CLOSE cr_prejuizo;
+		END IF;
 
     BEGIN
       INSERT INTO tbcc_prejuizo_detalhe (
@@ -3955,7 +4058,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
        ,SYSDATE
        ,pr_cdoperad
        ,pr_cdcooper
-       ,pr_idprejuizo
+       ,vr_idprejuizo
       );
     EXCEPTION
          WHEN OTHERS THEN
