@@ -1,4 +1,3 @@
-
   CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730 (pr_dscritic OUT VARCHAR2
                                       ) IS
 /* .............................................................................
@@ -7,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao:
+   Data    : Fevereiro/2018                    Ultima atualizacao: 06/09/2018
 
    Dados referentes ao programa:
 
@@ -16,9 +15,12 @@
 
    Alteracoes: 
    
+   06/09/2018 - INC0023422 Inclus„o de logs de exception para capturar possÌveis problemas de processamento;
+                inclus„o de pc_set_modulo (Carlos)
+   
   ............................................................................. */
   
-  -- Declara√ß√µes
+  -- DeclaraÁıes
   -- Tipo de registro linha
   TYPE typ_reg_linha IS RECORD
     (campot01 VARCHAR2(01)
@@ -81,7 +83,7 @@
     );
   -- Tabela para tipo de registro linha
   TYPE typ_tab_arquivo IS TABLE OF typ_reg_linha INDEX BY PLS_INTEGER;
-  -- Tabela que cont√©m o arquivo
+  -- Tabela que contÈm o arquivo
   vr_tab_arquivo  typ_tab_arquivo;
 	
 	-- Tipo de registro cooperativa
@@ -105,7 +107,7 @@
 		,vr_cdagenci tbfin_recursos_movimento.cdagenci_debitada%TYPE   -- Agencia Remetente
 		,vr_nrdconta tbfin_recursos_movimento.dsconta_debitada%TYPE    -- Conta Remetente
 		,vr_tppessoa tbfin_recursos_movimento.inpessoa_debitada%TYPE   -- Tipo de pessoa Remetente
-		,vr_origem   INTEGER                                           -- Fixo 7 -- Processo autom√°tico
+		,vr_origem   INTEGER                                           -- Fixo 7 -- Processo autom·tico
 		,vr_nrispbif tbfin_recursos_movimento.nrispbif%TYPE            -- Banco destino
 		,vr_cdageban tbfin_recursos_movimento.cdagenci_creditada%TYPE  -- Agencia destino
 		,vr_nrctatrf tbfin_recursos_movimento.dsconta_creditada%TYPE   -- Conta destino                          
@@ -113,10 +115,10 @@
 		,vr_nrcpfcgc tbfin_recursos_movimento.nrcnpj_creditada%TYPE    -- CPF do titular destino
 		,vr_intipcta tbfin_recursos_movimento.tpconta_creditada%TYPE   -- Tipo de conta destino
 		,vr_inpessoa tbfin_recursos_movimento.inpessoa_debitada%TYPE   -- Tipo de pessoa destino
-		,vr_vllanmto tbfin_recursos_movimento.vllanmto%TYPE            -- Valor do lan√ßamento
+		,vr_vllanmto tbfin_recursos_movimento.vllanmto%TYPE            -- Valor do lanÁamento
 		,vr_cdfinali INTEGER                                           -- Finalidade TED
-		,vr_operador VARCHAR2(2)                                       -- Fixo 1 -- Processo autom√°tico
-		,vr_cdhistor tbfin_recursos_movimento.cdhistor%TYPE            -- C√≥digo do hist√≥rico
+		,vr_operador VARCHAR2(2)                                       -- Fixo 1 -- Processo autom·tico
+		,vr_cdhistor tbfin_recursos_movimento.cdhistor%TYPE            -- CÛdigo do histÛrico
 		,vr_tpregist VARCHAR2(100)                                     -- Tipo registro
 		,vr_tporigem VARCHAR2(100)                                     -- Tabela de origem
 		);
@@ -127,7 +129,7 @@
 	-- Registro de TED
 	vr_reg_ted typ_reg_ted;
 	 
-	-- Tipo de registro lan√ßamento
+	-- Tipo de registro lanÁamento
 	TYPE typ_reg_lancto IS RECORD
     (vr_tpregist  VARCHAR2(100)                            -- Tipo registro
 		,vr_origem    VARCHAR2(100)                            -- Tabela de origem
@@ -136,24 +138,26 @@
 		,vr_cdcomarc  tbcobran_confirmacao_ieptb.cdcomarc%TYPE -- Comarca
 		,vr_nrseqrem  tbcobran_confirmacao_ieptb.nrseqrem%TYPE -- Sequencial de remessa
 		,vr_nrseqarq  tbcobran_confirmacao_ieptb.nrseqarq%TYPE -- Sequencia do arquivo
-    ,vr_idretorno tbcobran_retorno_ieptb.idretorno%TYPE    -- Lan√ßamento retorno
+    ,vr_idretorno tbcobran_retorno_ieptb.idretorno%TYPE    -- LanÁamento retorno
 		);
-	-- Tabela de registro lan√ßamento
+	-- Tabela de registro lanÁamento
 	TYPE typ_tab_lancto IS TABLE OF typ_reg_lancto INDEX BY PLS_INTEGER;
-	-- Tabela que contem os lan√ßamentos
+	-- Tabela que contem os lanÁamentos
 	vr_tab_lancto typ_tab_lancto;
-	-- Registro do lan√ßamento
+	-- Registro do lanÁamento
 	vr_reg_lancto typ_reg_lancto;
 	 
   vr_exc_erro     EXCEPTION;
   
   vr_nrretcoo     NUMBER := 0;
-  -- Cursor gen¬ørico de calend√°rio
+  -- Cursor genørico de calend·rio
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 	--
 	vr_dtmvtolt crapdat.dtmvtolt%TYPE;
 	--
 	texto CLOB;
+  
+  vr_cdprogra VARCHAR2(32) := 'CRPS730';
   
   -- Subrotinas
 	-- Remove caracteres especiais
@@ -161,19 +165,19 @@
 		                          ) RETURN VARCHAR2 IS
 	BEGIN
 		--
-		RETURN translate(pr_texto,'√ë√Å√â√ç√ì√ö√Ä√à√å√í√ô√Ç√ä√é√î√õ√É√ï√Ñ√ã√è√ñ√ú√á√±√°√©√≠√≥√∫√†√®√¨√≤√π√¢√™√Æ√¥√ª√£√µ√§√´√Ø√∂√º√ß.-!"''`#$%().:[/]{}¬®+?;¬∫¬™¬∞¬ß&¬¥*<>','NAEIOUAEIOUAEIOUAOAEIOUCnaeiouaeiouaeiouaoaeiouc');
+		RETURN translate(pr_texto,'—¡…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’ƒÀœ÷‹«Ò·ÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ı‰ÎÔˆ¸Á.-!"''`#$%().:[/]{}®+?;∫™∞ß&¥*<>','NAEIOUAEIOUAEIOUAOAEIOUCnaeiouaeiouaeiouaoaeiouc');
 		--
 	END fun_remove_char_esp;
 	
   -- Controla Controla log
   PROCEDURE pc_controla_log_batch(pr_idtiplog IN NUMBER   -- Tipo de Log
-                                 ,pr_dscritic IN VARCHAR2 -- Descri√ß√£o do Log
+                                 ,pr_dscritic IN VARCHAR2 -- DescriÁ„o do Log
                                  ) IS
     --
     vr_dstiplog VARCHAR2(10);
     --
   BEGIN
-    -- Descri√ß√£o do tipo de log
+    -- DescriÁ„o do tipo de log
     IF pr_idtiplog = 2 THEN
       --
       vr_dstiplog := 'ERRO: ';
@@ -197,7 +201,7 @@
       pc_internal_exception (pr_cdcooper => 3);                                                             
   END pc_controla_log_batch;
    
-  -- Rotina que insere um valor numa linha da tabela em mem√≥ria
+  -- Rotina que insere um valor numa linha da tabela em memÛria
   PROCEDURE pc_insere_valor(/*pr_nrrow    IN      NUMBER
                            ,*/pr_nrattrib IN      NUMBER
                            ,pr_dsvalue  IN      CLOB
@@ -324,6 +328,7 @@
     END CASE;
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao tentar atribuir o valor: ' || pr_nrattrib || '/' || pr_dsvalue || ': ' || SQLERRM;
   END pc_insere_valor;
   
@@ -545,11 +550,12 @@
     WHEN vr_exc_erro THEN
       NULL;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao processar o registro: ' || SQLERRM;
     --
   END pc_insere_registro;
    
-  -- Rotina que carrega os arquivos de confirma√ß√£o
+  -- Rotina que carrega os arquivos de confirmaÁ„o
   PROCEDURE pc_carrega_arquivo_confirmacao(pr_cdcooper IN  crapcop.cdcooper%TYPE
 		                                      ,pr_dscritic OUT VARCHAR2
                                           ) IS
@@ -567,7 +573,7 @@
 																						,pr_cdcooper => pr_cdcooper
 																						,pr_cdacesso => 'DIR_IEPTB_RETORNO'
 																						);
-    -- Buscar arquivos de confirma√ß√£o
+    -- Buscar arquivos de confirmaÁ„o
     vr_pesq := 'C%%%%%%%.%%%';
     -- Buscar a lista de arquivos do diretorio
     gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_confirmacao
@@ -609,11 +615,12 @@
       pr_dscritic := vr_dscritic;
       --
     WHEN OTHERS THEN
-      pr_dscritic := 'N√£o foi possivel importar o arquivo de confirma√ß√£o: '||SQLERRM;
+      cecred.pc_internal_exception;
+      pr_dscritic := 'N„o foi possivel importar o arquivo de confirmaÁ„o: '||SQLERRM;
     --
   END pc_carrega_arquivo_confirmacao;
 	
-	-- Atualiza a confirma√ß√£o
+	-- Atualiza a confirmaÁ„o
 	PROCEDURE pc_atualiza_confirmacao(pr_cdcooper      IN  tbcobran_confirmacao_ieptb.cdcooper%TYPE
 		                               ,pr_dtmvtolt      IN  tbcobran_confirmacao_ieptb.dtmvtolt%TYPE
 																	 ,pr_cdcomarc      IN  tbcobran_confirmacao_ieptb.cdcomarc%TYPE
@@ -643,6 +650,7 @@
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
+      cecred.pc_internal_exception;
 			pr_dscritic := 'Erro ao atualizar a tabela tbcobran_confirmacao_ieptb: ' || SQLERRM;
 	END pc_atualiza_confirmacao;
 	
@@ -679,6 +687,7 @@
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
+          cecred.pc_internal_exception;
 					pr_dscritic := '1.Erro ao atualizar a tabela tbcobran_retorno_ieptb: ' || SQLERRM;
 		  END;
 			--
@@ -699,6 +708,7 @@
 				--
 			EXCEPTION
 				WHEN OTHERS THEN
+          cecred.pc_internal_exception;
 					pr_dscritic := '2.Erro ao atualizar a tabela tbcobran_retorno_ieptb: ' || SQLERRM;
 		  END;
 			--
@@ -765,11 +775,12 @@
       END IF;  
       --
     WHEN OTHERS THEN
-      pr_dscritic := 'N√£o foi possivel importar o arquivo de retorno: '||SQLERRM;
+      cecred.pc_internal_exception;
+      pr_dscritic := 'N„o foi possivel importar o arquivo de retorno: '||SQLERRM;
     --
   END pc_carrega_arquivo_retorno;
   
-  -- Insere o registro na tabela de confirma√ß√£o do IEPTB
+  -- Insere o registro na tabela de confirmaÁ„o do IEPTB
   PROCEDURE pc_gera_confirmacao_ieptb(pr_cdcooper            IN  tbcobran_confirmacao_ieptb.cdcooper%TYPE
                                      ,pr_dtmvtolt            IN  tbcobran_confirmacao_ieptb.dtmvtolt%TYPE
                                      ,pr_cdcomarc            IN  tbcobran_confirmacao_ieptb.cdcomarc%TYPE
@@ -854,10 +865,11 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao inserir na tbcobran_confirmacao_ieptb: ' || SQLERRM;
   END pc_gera_confirmacao_ieptb;
   
-  -- Insere o registro na tabela de confirma√ß√£o do IEPTB
+  -- Insere o registro na tabela de confirmaÁ„o do IEPTB
   PROCEDURE pc_gera_retorno_ieptb(pr_cdcooper            IN  tbcobran_retorno_ieptb.cdcooper%TYPE
                                  ,pr_dtmvtolt            IN  tbcobran_retorno_ieptb.dtmvtolt%TYPE
                                  ,pr_cdcomarc            IN  tbcobran_retorno_ieptb.cdcomarc%TYPE
@@ -953,6 +965,7 @@
 		--
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao inserir na tbcobran_retorno_ieptb: ' || SQLERRM;
   END pc_gera_retorno_ieptb;
 	
@@ -995,7 +1008,7 @@
 					END IF;
 					--
 				END IF;
-				-- Pr√≥ximo registro
+				-- PrÛximo registro
 				vr_index_coop := vr_tab_coop.next(vr_index_coop);
 				--
 			END LOOP;
@@ -1026,10 +1039,11 @@
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
+      cecred.pc_internal_exception;
 			pr_dscritic := 'Erro na pc_totaliza_cooperativa: ' || SQLERRM;
 	END pc_totaliza_cooperativa;
 	
-	-- Atualiza os t√≠tulos
+	-- Atualiza os tÌtulos
 	PROCEDURE pc_atualiza_titulos(pr_idretorno IN  tbcobran_retorno_ieptb.idretorno%TYPE
 		                           ,pr_tpregist  IN  VARCHAR2
 															 ,pr_origem    IN  VARCHAR2
@@ -1095,7 +1109,7 @@
 					END IF;
 					--
 				END IF;
-				-- Pr√≥ximo registro
+				-- PrÛximo registro
 				vr_index_lancto := vr_tab_lancto.next(vr_index_lancto);
 				--
 			END LOOP;
@@ -1106,7 +1120,7 @@
 		--
 	END pc_atualiza_titulos;
 	
-	-- Processa as TED geradas em mem√≥ria e realiza o envio das mesmas
+	-- Processa as TED geradas em memÛria e realiza o envio das mesmas
 	PROCEDURE pc_envia_teds(pr_dscritic OUT VARCHAR2
 		                     ) IS
 		--
@@ -1144,13 +1158,13 @@
 																		,pr_cdcritic => vr_cdcritic
 																		,pr_dscritic => vr_dscritic
 																		);
-				-- Atualiza os t√≠tulos
+				-- Atualiza os tÌtulos
 				pc_atualiza_titulos(pr_idretorno => vr_idlancto                          -- IN
 													 ,pr_tpregist  => vr_tab_ted(vr_index_ted).vr_tpregist -- IN
 													 ,pr_origem    => vr_tab_ted(vr_index_ted).vr_tporigem -- IN
 													 ,pr_dscritic  => vr_dscritic                          -- OUT
 													 );
-				-- Pr√≥ximo registro
+				-- PrÛximo registro
 				vr_index_ted := vr_tab_ted.next(vr_index_ted);
 				--
 			END LOOP;
@@ -1161,7 +1175,7 @@
 		--
 	END pc_envia_teds;
 	
-  -- Processa os arquivos de confirma√ß√£o e retorno
+  -- Processa os arquivos de confirmaÁ„o e retorno
   PROCEDURE pc_processa_arquivos(pr_idtipprc IN  VARCHAR2
 		                            ,pr_dscritic OUT VARCHAR2
                                 ) IS
@@ -1203,7 +1217,7 @@
          AND crapcob.nrdocmto = pr_nrdocmto;
     --
     rw_crapcob cr_crapcob%ROWTYPE;
-    -- Cursor ocorr√™ncias/motivos
+    -- Cursor ocorrÍncias/motivos
     /*CURSOR cr_crapmot(pr_cdocorre crapmot.cdocorre%TYPE
                      ,pr_cdmotivo crapmot.cdmotivo%TYPE
                      ,pr_cdcooper crapmot.cdcooper%TYPE
@@ -1347,11 +1361,11 @@
 				rw_crapret  := NULL;
 				--
 				vr_nmarquiv := vr_tab_arquivo(vr_index_reg).nmarquiv;
-				-- Verifica se o tipo do registro √© header
+				-- Verifica se o tipo do registro È header
 				IF vr_tab_arquivo(vr_index_reg).campot01 = '0' THEN
 					--
 					NULL;
-				-- Verifica se o tipo do registro √© transa√ß√£o
+				-- Verifica se o tipo do registro È transaÁ„o
 				ELSIF vr_tab_arquivo(vr_index_reg).campot01 = '1' THEN
 					-- Busca o boleto referente ao registro no arquivo
 					OPEN cr_crapcob(pr_cdagectl => to_number(regexp_replace(substr(vr_tab_arquivo(vr_index_reg).campot03, 0, 5),'[[:punct:]]','')) -- IN
@@ -1365,7 +1379,7 @@
 					IF cr_crapcob%NOTFOUND THEN
 						--
 						CLOSE cr_crapcob;
-						pr_dscritic := 'Boleto n√£o encontrado!';
+						pr_dscritic := 'Boleto n„o encontrado!';
 						RAISE vr_exc_erro;
 						--
 					END IF;
@@ -1390,11 +1404,11 @@
 					vr_vlgraele := to_number(substr(vr_tab_arquivo(vr_index_reg).campot42, 0, 8) || ',' ||  substr(vr_tab_arquivo(vr_index_reg).campot42, 9, 2));
 					vr_vlsaldot := to_number(substr(vr_tab_arquivo(vr_index_reg).campot18, 0, 12) || ',' ||  substr(vr_tab_arquivo(vr_index_reg).campot18, 13, 2));
 					vr_vltitulo := to_number(substr(vr_tab_arquivo(vr_index_reg).campot17, 0, 12) || ',' ||  substr(vr_tab_arquivo(vr_index_reg).campot17, 13, 2));
-					-- Verifica a ocorr√™ncia
+					-- Verifica a ocorrÍncia
 					CASE
 						-- 1: Pago (6)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '1' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -1440,7 +1454,7 @@
 								vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic
 																												,vr_dscritic
 																												);
-								-- Padroniza√ß√£o de logs
+								-- PadronizaÁ„o de logs
 								pc_gera_log(pr_cdcooper     => rw_crapcob.cdcooper
 													 ,pr_dstiplog     => 'E'
 													 ,pr_dscritic     =>  vr_dscritic
@@ -1462,7 +1476,7 @@
 							--
 							IF cr_crapret%NOTFOUND THEN
 								--
-								vr_dscritic := 'N√£o encontrado o registro na CRAPRET.';
+								vr_dscritic := 'N„o encontrado o registro na CRAPRET.';
 								RAISE vr_exc_erro;
 								--
 							END IF;
@@ -1507,7 +1521,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'T√≠tulo liquidado em cart√≥rio pendente de concilia√ß√£o.'
+																					 ,pr_dsmensag => 'TÌtulo liquidado em cartÛrio pendente de conciliaÁ„o.'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -1519,7 +1533,7 @@
 							END IF;
 						-- 2: Protestado (9)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '2' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -1597,7 +1611,7 @@
 							--
 							IF cr_crapret%NOTFOUND THEN
 								--
-								vr_dscritic := 'N√£o encontrado o registro na CRAPRET.';
+								vr_dscritic := 'N„o encontrado o registro na CRAPRET.';
 								RAISE vr_exc_erro;
 								--
 							END IF;
@@ -1641,7 +1655,7 @@
 							/*
 							PAGA0002.pc_proc_baixa( pr_cdcooper => pr_cdcooper                          -- Codigo da cooperativa
 																		 ,pr_idtabcob => rw_crapcob.rowid                     -- Rowid da Cobranca                                           
-																		 ,pr_cdbanpag => pr_tab_regimp(vr_index_reg).cdbanpag -- Codigo banco cobran¬øa
+																		 ,pr_cdbanpag => pr_tab_regimp(vr_index_reg).cdbanpag -- Codigo banco cobranøa
 																		 ,pr_cdagepag => pr_tab_regimp(vr_index_reg).cdagepag -- Codigo Agencia cobranca
 																		 ,pr_dtocorre => pr_tab_regimp(vr_index_reg).dtocorre -- Data Ocorrencia
 																		 ,pr_cdocorre => pr_tab_regimp(vr_index_reg).cdocorre -- Codigo Ocorrencia
@@ -1658,7 +1672,7 @@
 								vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic
 																												,vr_dscritic
 																												);
-								-- Padroniza√ß√£o de logs - Chamado 743443 - 02/10/2017
+								-- PadronizaÁ„o de logs - Chamado 743443 - 02/10/2017
 								pc_gera_log(pr_cdcooper   => pr_cdcooper,
 														pr_dstiplog   => 'E',
 														pr_dscritic   =>  vr_dscritic,
@@ -1667,7 +1681,7 @@
 							--*/
 						-- 3: Retirado (24)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '3' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '09';
 							vr_idtiparq := 'RET';
@@ -1746,7 +1760,7 @@
 							--
 							IF cr_crapret%NOTFOUND THEN
 								--
-								vr_dscritic := 'N√£o encontrado o registro na CRAPRET.';
+								vr_dscritic := 'N„o encontrado o registro na CRAPRET.';
 								RAISE vr_exc_erro;
 								--
 							END IF;
@@ -1789,7 +1803,7 @@
 							--
 						-- 4: Sustado (63)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '4' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -1831,7 +1845,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Susta√ß√£o Judicial (IEPTB).'
+																					 ,pr_dsmensag => 'SustaÁ„o Judicial (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -1843,9 +1857,9 @@
 								--
 							END IF;
 							--
-						-- 5: Devolvido pelo cart√≥rio por irregularidade - Sem custas (26)
+						-- 5: Devolvido pelo cartÛrio por irregularidade - Sem custas (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '5' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'CON';
@@ -1898,7 +1912,7 @@
 							--
 							IF cr_crapret%NOTFOUND THEN
 								--
-								vr_dscritic := 'N√£o encontrado o registro na CRAPRET.';
+								vr_dscritic := 'N„o encontrado o registro na CRAPRET.';
 								RAISE vr_exc_erro;
 								--
 							END IF;
@@ -1941,7 +1955,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Devolvido pelo cart√≥rio por irregularidade - Sem custas (IEPTB).'
+																					 ,pr_dsmensag => 'Devolvido pelo cartÛrio por irregularidade - Sem custas (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -1953,9 +1967,9 @@
 								--
 							END IF;
 							--
-						-- 6: Devolvido pelo cart√≥rio por irregularidade - Com custas (28)
+						-- 6: Devolvido pelo cartÛrio por irregularidade - Com custas (28)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '6' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'CON';
@@ -2009,7 +2023,7 @@
 							--
 							IF cr_crapret%NOTFOUND THEN
 								--
-								vr_dscritic := 'N√£o encontrado o registro na CRAPRET.';
+								vr_dscritic := 'N„o encontrado o registro na CRAPRET.';
 								RAISE vr_exc_erro;
 								--
 							END IF;
@@ -2052,7 +2066,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Devolvido pelo cart√≥rio por irregularidade - Com custas (IEPTB).'
+																					 ,pr_dsmensag => 'Devolvido pelo cartÛrio por irregularidade - Com custas (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2064,9 +2078,9 @@
 								--
 							END IF;
 							--
-						-- 7: Liquida√ß√£o em condicional (26)
+						-- 7: LiquidaÁ„o em condicional (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '7' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2108,7 +2122,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Liquida√ß√£o em condicional (IEPTB).'
+																					 ,pr_dsmensag => 'LiquidaÁ„o em condicional (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2121,9 +2135,9 @@
 							END IF;
 							--
 							
-						-- 8: T√≠tulo aceito (26)
+						-- 8: TÌtulo aceito (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '8' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2165,7 +2179,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'T√≠tulo aceito (IEPTB).'
+																					 ,pr_dsmensag => 'TÌtulo aceito (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2179,7 +2193,7 @@
 							
 						-- 9: Edital, apenas estados da Bahia e Rio de Janeiro (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '9' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2235,7 +2249,7 @@
 							
 						-- A: Protesto do banco cancelado (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'A' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2289,9 +2303,9 @@
 								--
 							END IF;
 							
-						-- B: Protesto j√° efetuado (26)
+						-- B: Protesto j· efetuado (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'B' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2333,7 +2347,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Protesto j√° efetuado (IEPTB).'
+																					 ,pr_dsmensag => 'Protesto j· efetuado (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2347,7 +2361,7 @@
 							
 						-- C: Protesto por edital (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'C' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2403,7 +2417,7 @@
 							
 						-- D: Retirado por edital (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'D' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '09';
 							vr_idtiparq := 'RET';
@@ -2459,7 +2473,7 @@
 							
 						-- E: Protesto de terceiro cancelado (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'E' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2513,9 +2527,9 @@
 								--
 							END IF;
 							
-						-- F: Desist√™ncia do protesto por liquida√ß√£o banc√°ria (26)
+						-- F: DesistÍncia do protesto por liquidaÁ„o banc·ria (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'F' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2557,7 +2571,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Desist√™ncia do protesto por liquida√ß√£o banc√°ria (IEPTB).'
+																					 ,pr_dsmensag => 'DesistÍncia do protesto por liquidaÁ„o banc·ria (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2571,7 +2585,7 @@
 							
 						-- G: Sustado definitivo (63)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'G' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '09';
 							vr_idtiparq := 'RET';
@@ -2625,9 +2639,9 @@
 								--
 							END IF;
 							
-						-- I: Emiss√£o da 2¬™ via do instrumento de protesto (Apenas log)
+						-- I: Emiss„o da 2™ via do instrumento de protesto (Apenas log)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'I' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2669,7 +2683,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Emiss√£o da 2¬™ via do instrumento de protesto (IEPTB).'
+																					 ,pr_dsmensag => 'Emiss„o da 2™ via do instrumento de protesto (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2681,9 +2695,9 @@
 								--
 							END IF;
 							
-						-- J: Cancelamento j√° efetuado anteriormente (26)
+						-- J: Cancelamento j· efetuado anteriormente (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'J' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2725,7 +2739,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Cancelamento j√° efetuado anteriormente (IEPTB).'
+																					 ,pr_dsmensag => 'Cancelamento j· efetuado anteriormente (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2737,9 +2751,9 @@
 								--
 							END IF;
 							
-						-- X: Cancelamento n√£o efetuado (26)
+						-- X: Cancelamento n„o efetuado (26)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = 'X' THEN
-							-- Seta o motivo e ocorr√™ncia a serem utilizados no d√©bito de custas e tarifas da conta do cooperado
+							-- Seta o motivo e ocorrÍncia a serem utilizados no dÈbito de custas e tarifas da conta do cooperado
 							vr_cdocorre := 28;
 							vr_dsmotivo := '08';
 							vr_idtiparq := 'RET';
@@ -2781,7 +2795,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'Cancelamento n√£o efetuado (IEPTB).'
+																					 ,pr_dsmensag => 'Cancelamento n„o efetuado (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2837,7 +2851,7 @@
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
 																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-																					 ,pr_dsmensag => 'T√≠tulo registrado em cart√≥rio nr: ' || vr_tab_arquivo(vr_index_reg).campot31
+																					 ,pr_dsmensag => 'TÌtulo registrado em cartÛrio nr: ' || vr_tab_arquivo(vr_index_reg).campot31
 																					 ,pr_des_erro => vr_des_erro
 																					 ,pr_dscritic => pr_dscritic
 																					 );
@@ -2882,7 +2896,7 @@
 								vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic
 																												,vr_dscritic
 																												);
-								-- Padroniza√ß√£o de logs
+								-- PadronizaÁ„o de logs
 								cobr0011.pc_gera_log(pr_cdcooper     => rw_crapcob.cdcooper
 																		,pr_dstiplog     => 'E'
 																		,pr_dscritic     =>  vr_dscritic
@@ -2916,7 +2930,7 @@
 					END CASE;
 					--
 					IF (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele) > 0 THEN
-						-- Somat√≥rio de Custas por CRA
+						-- SomatÛrio de Custas por CRA
 						IF (vr_vlcuscar + vr_vlcusdis + vr_vldemdes) > 0 THEN
 							--
 							IF vr_tab_arquivo(vr_index_reg).campot30 = 'SP' THEN
@@ -2974,7 +2988,7 @@
 							END IF;
 							--
 						END IF;
-						-- Somat√≥rio de Tarifas por CRA
+						-- SomatÛrio de Tarifas por CRA
 						IF (vr_vlgraele) > 0 THEN
 							--
 							IF vr_tab_arquivo(vr_index_reg).campot30 = 'SP' THEN
@@ -3099,7 +3113,7 @@
 						END IF;
 						--
 					END IF;
-					-- Atualiza a confirma√ß√£o/retorno
+					-- Atualiza a confirmaÁ„o/retorno
 					IF vr_idtiparq = 'CON' THEN
 						--
 						pc_atualiza_confirmacao(pr_cdcooper      => rw_crapcob.cdcooper                   -- IN
@@ -3150,21 +3164,21 @@
 					NULL;
 					--
 				END IF;
-				-- Pr√≥ximo registro
+				-- PrÛximo registro
 				vr_index_reg := vr_tab_arquivo.next(vr_index_reg);
 				--
 			END LOOP;
 			
-			-- Gerar os lan√ßamentos por cooperativa e na central
+			-- Gerar os lanÁamentos por cooperativa e na central
 			vr_index_coop := 0;
 			vr_total_ieptb := 0;
 			--
 			IF vr_tab_coop.COUNT() > 0 THEN
 				--
 				WHILE vr_index_coop IS NOT NULL LOOP
-					-- Lan√ßamentos SP
+					-- LanÁamentos SP
 					IF nvl(vr_tab_coop(vr_index_coop).vlcustas_sp, 0) > 0 THEN
-						-- Gera lan√ßamento hist√≥rico 2635
+						-- Gera lanÁamento histÛrico 2635
 						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper    -- IN
 						                               ,pr_nrdconta => 20000006                               -- IN
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                    -- IN
@@ -3188,7 +3202,7 @@
 					END IF;
 					--
 					IF nvl(vr_tab_coop(vr_index_coop).vltarifa_sp, 0) > 0 THEN
-						-- Gera lan√ßamento hist√≥ico 2643
+						-- Gera lanÁamento histÛico 2643
 						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper    -- IN
 						                               ,pr_nrdconta => 20000006                               -- IN
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                    -- IN
@@ -3210,9 +3224,9 @@
 						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vltarifa_sp, 0);
 						--
 					END IF;
-					-- Lan√ßamentos outros estados
+					-- LanÁamentos outros estados
 					IF nvl(vr_tab_coop(vr_index_coop).vlcustas_outros, 0) > 0 THEN
-						-- Gera lan√ßamento hist√≥rico 2635
+						-- Gera lanÁamento histÛrico 2635
 						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper        -- IN
 						                               ,pr_nrdconta => 10000003                                   -- IN
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                        -- IN
@@ -3236,7 +3250,7 @@
 					END IF;
 					--
 					IF nvl(vr_tab_coop(vr_index_coop).vltarifa_outros, 0) > 0 THEN
-						-- Gera lan√ßamento hist√≥ico 2643
+						-- Gera lanÁamento histÛico 2643
 						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper        -- IN
 						                               ,pr_nrdconta => 10000003                                   -- IN
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                        -- IN
@@ -3258,7 +3272,7 @@
 						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vltarifa_outros, 0);
 						--
 					END IF;
-					-- Pr√≥ximo registro
+					-- PrÛximo registro
 					vr_index_coop := vr_tab_coop.next(vr_index_coop);
 					--
 				END LOOP;
@@ -3443,7 +3457,8 @@
     WHEN vr_exc_erro THEN
       pr_dscritic := nvl(pr_dscritic, vr_dscritic);
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao processar os arquivos de confirma√ß√£o/retorno: ' || SQLERRM;
+      cecred.pc_internal_exception;
+      pr_dscritic := 'Erro ao processar os arquivos de confirmaÁ„o/retorno: ' || SQLERRM;
   END pc_processa_arquivos;
 	
 	-- Rotina para mover os arquivos processados
@@ -3469,7 +3484,7 @@
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nmsubdir => '/salvar'
 																				);
-		-- Buscar arquivos de confirma√ß√£o
+		-- Buscar arquivos de confirmaÁ„o
     vr_pesq := 'C%%%%%%%.%%%';
     -- Buscar a lista de arquivos do diretorio
     gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_arquivo
@@ -3526,12 +3541,16 @@
 		WHEN vr_exc_erro THEN
 			NULL;
 		WHEN OTHERS THEN
+      cecred.pc_internal_exception;
 			pr_dscritic := 'Erro ao mover os arquivos: ' || SQLERRM;
 	END pc_move_arquivos;
 	--
-begin
+BEGIN
+
+  GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => vr_cdprogra);
+
   -- Incluido controle de Log inicio programa
-  pc_controla_log_batch(1, 'In√≠cio crps730');
+  pc_controla_log_batch(1, 'InÌcio crps730');
   --
 	BEGIN
 		--
@@ -3558,6 +3577,9 @@ begin
     RAISE vr_exc_erro;
     --
   END IF;
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_carrega_arquivo_confirmacao');
+  
 	--
   pc_carrega_arquivo_confirmacao(pr_cdcooper => 3           -- IN
 	                              ,pr_dscritic => pr_dscritic -- OUT
@@ -3569,7 +3591,9 @@ begin
     --
   END IF;
 	--
-	pc_processa_arquivos(pr_idtipprc => 'C'         -- IN -- Processamento do arquivo de Confirma√ß√£o
+
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_processa_arquivos');  
+	pc_processa_arquivos(pr_idtipprc => 'C'         -- IN -- Processamento do arquivo de ConfirmaÁ„o
 	                    ,pr_dscritic => pr_dscritic -- OUT
                       );
   --
@@ -3578,6 +3602,8 @@ begin
     RAISE vr_exc_erro;
     --
   END IF;
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_carrega_arquivo_retorno');
   --
   pc_carrega_arquivo_retorno(pr_cdcooper => 3           -- IN
 	                          ,pr_dscritic => pr_dscritic -- OUT
@@ -3588,6 +3614,8 @@ begin
     RAISE vr_exc_erro;
     --
   END IF;
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_processa_arquivos');
   --
   pc_processa_arquivos(pr_idtipprc => 'R'         -- IN -- Processamento do arquivo de Retorno
 	                    ,pr_dscritic => pr_dscritic -- OUT
@@ -3599,7 +3627,7 @@ begin
     --
   END IF;
 	
-	-- Executa a concilia√ß√£o autom√°tica
+	-- Executa a conciliaÁ„o autom·tica
 	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
@@ -3608,7 +3636,8 @@ begin
     --
   END IF;
 	
-	-- Gera as movimenta√ß√µes
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_gera_movimento_pagamento');
+	-- Gera as movimentaÁıes
 	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
@@ -3621,20 +3650,26 @@ begin
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> Finalizado o processamento dos retornos.'); -- Texto para escrita
   --
 --	COMMIT;
+
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_envia_teds');
   -- Faz o envio das TEDs
 	pc_envia_teds(pr_dscritic => pr_dscritic);
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_move_arquivos');
 	-- Move os arquivos processados
 	pc_move_arquivos(pr_cdcooper => 3           -- IN
 									,pr_dscritic => pr_dscritic -- OUT
 									);
-	--
+                  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
 EXCEPTION
   WHEN vr_exc_erro THEN
-    -- Inclu√≠do controle de Log
+    -- IncluÌdo controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> ' || pr_dscritic);
 		ROLLBACK;
   WHEN OTHERS THEN
-    -- Inclu√≠do controle de Log
+    cecred.pc_internal_exception;
+    -- IncluÌdo controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> ' || SQLERRM);
 		ROLLBACK;
   --
