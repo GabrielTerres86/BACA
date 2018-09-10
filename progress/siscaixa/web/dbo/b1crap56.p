@@ -1513,7 +1513,7 @@ PROCEDURE atualiza-outros:
               PERSISTENT SET h-b1wgen0200.
 
            RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-            (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+            (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
             ,INPUT p-cod-agencia                  /* par_cdagenci */
             ,INPUT 11                             /* par_cdbccxlt */
             ,INPUT i-nro-lote                     /* par_nrdolote */

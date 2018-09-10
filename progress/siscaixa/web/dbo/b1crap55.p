@@ -1526,7 +1526,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                                   OUTPUT glb_stsnrcal).
              /* P450 - Credito unificado */
              RUN gerar_lancamento_conta_comple IN h-b1wgen0200
-                        ( INPUT crapdat.dtmvtolt      /* par_dtmvtolt */
+                        ( INPUT crapdat.dtmvtocd      /* par_dtmvtolt */
                          ,INPUT p-cod-agencia         /* par_cdagenci */
                          ,INPUT 11                    /* par_cdbccxlt */
                          ,INPUT i-nro-lote            /* par_nrdolote */
@@ -1570,8 +1570,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 
                          IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                             DO:  
-                              IF aux_incrineg = 0 THEN
-                               DO:
+                              
 									ASSIGN i-cod-erro  = aux_cdcritic
 										   c-desc-erro = aux_dscritic.           
 									RUN cria-erro (INPUT p-cooper,
@@ -1581,7 +1580,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 												INPUT c-desc-erro,
 												INPUT YES).
 									RETURN "NOK".
-                               END. 
+                                
                             END. 
          
                ASSIGN
@@ -1603,7 +1602,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                                   OUTPUT glb_stsnrcal).
              /* P450 - Credito unificado */                    
              RUN gerar_lancamento_conta_comple IN h-b1wgen0200
-                        ( INPUT crapdat.dtmvtolt      /* par_dtmvtolt */
+                        ( INPUT crapdat.dtmvtocd      /* par_dtmvtolt */
                          ,INPUT p-cod-agencia         /* par_cdagenci */
                          ,INPUT 11                    /* par_cdbccxlt */
                          ,INPUT i-nro-lote            /* par_nrdolote */
@@ -1647,9 +1646,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 
                          IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                             DO:  
-                              IF aux_incrineg = 0 THEN
-                               DO:
-									ASSIGN i-cod-erro  = aux_cdcritic
+                              		ASSIGN i-cod-erro  = aux_cdcritic
 										   c-desc-erro = aux_dscritic.           
 									RUN cria-erro (INPUT p-cooper,
 												INPUT p-cod-agencia,
@@ -1658,7 +1655,7 @@ PROCEDURE atualiza-pagto-cheque-liberado:
 												INPUT c-desc-erro,
 												INPUT YES).
 									RETURN "NOK".
-                               END. 
+                                
                             END. 
                            
              ASSIGN

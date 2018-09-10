@@ -555,7 +555,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 PERSISTENT SET h-b1wgen0200.
             
             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-              (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+              (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
               ,INPUT p-cod-agencia                  /* par_cdagenci */
               ,INPUT 11                             /* par_cdbccxlt */
               ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -601,8 +601,7 @@ PROCEDURE atualiza-cheque-sem-captura:
               
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
               DO:   
-                IF aux_incrineg = 0 THEN
-                  DO:
+                
                     /* Nao houve critica de negocio */  
                     ASSIGN i-cod-erro  = aux_cdcritic
                            c-desc-erro = aux_dscritic.           
@@ -613,7 +612,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                                    INPUT c-desc-erro,
                                    INPUT YES).
                     RETURN "NOK".
-                  END.                                
+                                                
               END.
               
             IF  VALID-HANDLE(h-b1wgen0200) THEN
@@ -693,7 +692,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 PERSISTENT SET h-b1wgen0200.
 
             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-              (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+              (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
               ,INPUT p-cod-agencia                  /* par_cdagenci */
               ,INPUT 11                             /* par_cdbccxlt */
               ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -739,8 +738,7 @@ PROCEDURE atualiza-cheque-sem-captura:
               
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
               DO:   
-                IF aux_incrineg = 0 THEN
-                  DO:
+                
                     /* Nao houve critica de negocio */  
                     ASSIGN i-cod-erro  = aux_cdcritic
                            c-desc-erro = aux_dscritic.           
@@ -751,7 +749,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                                    INPUT c-desc-erro,
                                    INPUT YES).
                     RETURN "NOK".
-                  END.                                
+                                                
               END.
               
             IF  VALID-HANDLE(h-b1wgen0200) THEN
@@ -831,7 +829,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 PERSISTENT SET h-b1wgen0200.
 
             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-              (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+              (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
               ,INPUT p-cod-agencia                  /* par_cdagenci */
               ,INPUT 11                             /* par_cdbccxlt */
               ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -877,8 +875,7 @@ PROCEDURE atualiza-cheque-sem-captura:
               
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
               DO:   
-                IF aux_incrineg = 0 THEN
-                  DO:
+                
                     /* Nao houve critica de negocio */  
                     ASSIGN i-cod-erro  = aux_cdcritic
                            c-desc-erro = aux_dscritic.           
@@ -889,7 +886,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                                    INPUT c-desc-erro,
                                    INPUT YES).
                     RETURN "NOK".
-                  END.                                
+                                               
               END.
               
             IF  VALID-HANDLE(h-b1wgen0200) THEN
@@ -969,7 +966,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                 PERSISTENT SET h-b1wgen0200.
 
             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-              (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+              (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
               ,INPUT p-cod-agencia                  /* par_cdagenci */
               ,INPUT 11                             /* par_cdbccxlt */
               ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -1015,8 +1012,6 @@ PROCEDURE atualiza-cheque-sem-captura:
               
             IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
               DO:   
-                IF aux_incrineg = 0 THEN
-                  DO:
                     /* Nao houve critica de negocio */  
                     ASSIGN i-cod-erro  = aux_cdcritic
                            c-desc-erro = aux_dscritic.           
@@ -1027,7 +1022,7 @@ PROCEDURE atualiza-cheque-sem-captura:
                                    INPUT c-desc-erro,
                                    INPUT YES).
                     RETURN "NOK".
-                  END.                                
+                                                  
               END.
   
             IF  VALID-HANDLE(h-b1wgen0200) THEN

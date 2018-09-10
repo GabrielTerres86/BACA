@@ -1044,7 +1044,7 @@ PROCEDURE gera_lancamento:
                                        " - " + glb_cdprogra + "' --> '"
                                        + aux_dscritic +  
                                        " >> log/proc_message.log").
-						  NEXT. 
+						  UNDO, RETURN "NOK".
                         END. 
                      ELSE
                         DO:
@@ -1178,7 +1178,7 @@ PROCEDURE gera_lancamento:
                                        " - " + glb_cdprogra + "' --> '"
                                        + aux_dscritic +  
                                        " >> log/proc_message.log").
-						 NEXT.
+						 UNDO, RETURN "NOK".
                       END.  
                 
                 END. /*end pode debitar*/         
@@ -1457,7 +1457,7 @@ PROCEDURE gera_lancamento:
                                        " - " + glb_cdprogra + "' --> '"
                                        + aux_dscritic +  
                                        " >> log/proc_message.log").
-									  NEXT. 
+									  UNDO, RETURN "NOK".
                                     END.
                                  ELSE
                                     DO:
@@ -1530,7 +1530,7 @@ PROCEDURE gera_lancamento:
                                        " - " + glb_cdprogra + "' --> '"
                                        + aux_dscritic +  
                                        " >> log/proc_message.log").
-								    NEXT. 
+								    UNDO, RETURN "NOK". 
                                   END.
                                
                                ASSIGN crapcdb.insitchq = 3.  /* Devolvido */
@@ -1715,7 +1715,7 @@ PROCEDURE gera_lancamento:
 											   " - " + glb_cdprogra + "' --> '"
 											   + aux_dscritic +  
 											   " >> log/proc_message.log").
-										   NEXT. 
+										   UNDO, RETURN "NOK". 
                                          END.
                                       ELSE 
                                         DO:
