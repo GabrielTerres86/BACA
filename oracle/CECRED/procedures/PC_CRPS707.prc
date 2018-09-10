@@ -986,7 +986,7 @@ BEGIN
                  
                END IF;
 
-
+               -- Cria o lancamento em C/C
                lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                 , pr_cdagenci => 1
                                                 , pr_cdbccxlt => 100
