@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 12/06/2018
 
    Dados referentes ao programa:
 
@@ -1796,7 +1796,7 @@ PROCEDURE atualiza-deposito-com-captura:
                           PERSISTENT SET h-b1wgen0200.
 
                       RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                        (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                        (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                         ,INPUT p-cod-agencia                  /* par_cdagenci */
                         ,INPUT 11                             /* par_cdbccxlt */
                         ,INPUT i-nro-lote                     /* par_nrdolote */
@@ -1877,7 +1877,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                   PERSISTENT SET h-b1wgen0200.
 
                               RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
-                                (INPUT crapdat.dtmvtolt               /* par_dtmvtolt */
+                                (INPUT crapdat.dtmvtocd               /* par_dtmvtolt */
                                 ,INPUT p-cod-agencia                  /* par_cdagenci */
                                 ,INPUT 11                             /* par_cdbccxlt */
                                 ,INPUT i-nro-lote                     /* par_nrdolote */

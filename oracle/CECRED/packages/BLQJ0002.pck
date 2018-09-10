@@ -3620,6 +3620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        and lcm.progress_recid+0 > pr_progress_recid -- Lancamentos do dia que são maiores que o último lançamento utilizado
   ORDER BY
            lcm.progress_recid;
+    rw_lancamento cr_lancamento%rowtype; 
             
     -- Registro sobre a data do sistema
     rw_crapdat                btch0001.cr_crapdat%ROWTYPE;
