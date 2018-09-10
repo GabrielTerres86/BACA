@@ -9992,38 +9992,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                                             ,pr_delimitador => ';'));
                                                                     
         END IF;
-        
-        -- Buscar o valor que a conta possui de limite 
-        OPEN cr_crapsnh(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_idseqttl => pr_idseqttl);
+        -- Buscar limite de conta somente se origem for diferente de URA
+        IF pr_idorigem <> 6 THEN
+          -- Buscar o valor que a conta possui de limite 
+          OPEN cr_crapsnh(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_idseqttl => pr_idseqttl);
                                    
-        FETCH cr_crapsnh INTO rw_crapsnh;
+          FETCH cr_crapsnh INTO rw_crapsnh;
         
-        IF cr_crapsnh%FOUND THEN
-          -- Validar o tipo de pessoa 
-          IF rw_crapass.inpessoa = 1 THEN
-            -- Pessoa física utiliza o valor de limite para WEB
-            vllimweb := rw_crapsnh.vllimweb;
-          ELSE 
-            -- Pessoa jurídica possui dois campos para valor de limite WEB
-            -- Validar para utilizar o menor valor entre o limite de pagamento
-            -- e o limite de transferencia
-            IF rw_crapsnh.vllimtrf > rw_crapsnh.vllimpgo THEN
-              vllimweb := rw_crapsnh.vllimpgo;
-            ELSE
-              vllimweb := rw_crapsnh.vllimtrf;
+          IF cr_crapsnh%FOUND THEN
+            -- Validar o tipo de pessoa 
+            IF rw_crapass.inpessoa = 1 THEN
+              -- Pessoa física utiliza o valor de limite para WEB
+              vllimweb := rw_crapsnh.vllimweb;
+            ELSE 
+              -- Pessoa jurídica possui dois campos para valor de limite WEB
+              -- Validar para utilizar o menor valor entre o limite de pagamento
+              -- e o limite de transferencia
+              IF rw_crapsnh.vllimtrf > rw_crapsnh.vllimpgo THEN
+                vllimweb := rw_crapsnh.vllimpgo;
+              ELSE
+                vllimweb := rw_crapsnh.vllimtrf;
+              END IF;
             END IF;
-          END IF;
         
-          -- Utilizar o menor valor, entre o configurado na TAB045, ou o valor habilitado na internet  
-          IF vr_vllimmax > vllimweb THEN
-            vr_vllimmax := vllimweb;
-          END IF;
+            -- Utilizar o menor valor, entre o configurado na TAB045, ou o valor habilitado na internet  
+            IF vr_vllimmax > vllimweb THEN
+              vr_vllimmax := vllimweb;
+            END IF;
           
-        END IF;
+          END IF;
         
-        CLOSE cr_crapsnh;
+          CLOSE cr_crapsnh;
+
+		END IF;
         
         -- Validar bloqueios para resgate de aplicacao
         pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
