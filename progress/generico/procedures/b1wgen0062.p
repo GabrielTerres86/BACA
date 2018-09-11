@@ -91,6 +91,8 @@
 							 
 				15/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 				             
+				05/09/2018 - Ajuste no campo Nome Social (INC0023368 - Andrey Formigari)
+				             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -231,12 +233,17 @@ PROCEDURE Busca_Impressao:
 
         /* f_cadast */
         IF  AVAILABLE crapttl THEN
-            ASSIGN tt-fcad.nmprimtl = crapttl.nmextttl.
+			DO:
+				ASSIGN tt-fcad.nmprimtl = crapttl.nmextttl
+					   tt-fcad.nmsocial = crapttl.nmsocial.
+			END.
         ELSE
-            ASSIGN tt-fcad.nmprimtl = crapass.nmprimtl.
+			DO:
+				ASSIGN tt-fcad.nmprimtl = crapass.nmprimtl
+					   tt-fcad.nmsocial = "".
+			END.
 
-        ASSIGN tt-fcad.dsmvtolt = "DATA: " + STRING(par_dtmvtolt,"99/99/9999")
-			   tt-fcad.nmsocial = crapttl.nmsocial.
+        ASSIGN tt-fcad.dsmvtolt = "DATA: " + STRING(par_dtmvtolt,"99/99/9999").
 
         /* f_responsa */
         FOR FIRST crapope FIELDS(nmoperad)
