@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 26/05/2018
+   Data    : Setembro/2013                      Ultima atualizacao: 06/09/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -121,6 +121,9 @@
    20/07/2018 - Condição para não poder marcar/desmarcar cheques normais depois das 13:00
 				(Andrey Formigari - Mouts - PRB0040153)
 
+   06/09/2018 - Ajuste para tratamento do campo insitdev igual a 2, para devolucoes
+                automatica de cheques, com historico 573.
+                Chamado SCTASK0027900 - Gabriel (Mouts).
 
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
@@ -803,6 +806,7 @@ PROCEDURE busca-devolucoes-cheque:
             
                              WHEN 0 THEN tt-lancto.dssituac = "a devolver".
                              WHEN 1 THEN tt-lancto.dssituac = "devolvido".
+                             WHEN 2 THEN tt-lancto.dssituac = "a devolver".
                              OTHERWISE   tt-lancto.dssituac = "indefinida".
             
                         END CASE.
@@ -873,6 +877,7 @@ PROCEDURE busca-devolucoes-cheque:
                 CASE crapdev.insitdev:            
                     WHEN 0 THEN tt-lancto.dssituac = "a devolver".
                     WHEN 1 THEN tt-lancto.dssituac = "devolvido".
+                    WHEN 2 THEN tt-lancto.dssituac = "a devolver".
                     OTHERWISE   tt-lancto.dssituac = "indefinida".      
                 END CASE.
                 
@@ -960,6 +965,7 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                 
@@ -1039,6 +1045,7 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                 
@@ -1154,6 +1161,7 @@ PROCEDURE busca-devolucoes-cheque:
                         CASE crapdev.insitdev:
                             WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                             WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                            WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                             OTHERWISE   tt-devolu.dssituac = "indefinida".
                         END CASE.
                  
@@ -1231,6 +1239,7 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                     
@@ -1311,6 +1320,7 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                     
@@ -1379,6 +1389,7 @@ PROCEDURE busca-devolucoes-cheque:
                             CASE crapdev.insitdev:
                                 WHEN 0 THEN tt-devolu.dssituac = "a devolver".
                                 WHEN 1 THEN tt-devolu.dssituac = "devolvido".
+                                WHEN 2 THEN tt-devolu.dssituac = "a devolver".
                                 OTHERWISE   tt-devolu.dssituac = "indefinida".
                             END CASE.
                      
