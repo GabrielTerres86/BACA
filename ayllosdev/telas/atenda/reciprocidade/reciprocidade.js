@@ -1244,7 +1244,7 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
     var cpftest2 = $("#cpftest2", "#divTestemunhas").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
 
-    var nrconven = normalizaNumero($("#nrconven", "#divConteudoOpcao").val());
+    var nrconven = normalizaNumero($("#convenios", "#divConteudoOpcao").val());
 	nrconven_imprimir = (nrconven_imprimir > 0) ? nrconven_imprimir : nrconven;
 
     flgregis = (flgregis == "SIM") ? "yes" : "no";
@@ -1430,7 +1430,7 @@ function controlaLayout(nomeForm) {
 
 		tabela.zebraTabela(0);
 
-        $('#' + nomeForm).css('width', '820px');
+        $('#' + nomeForm).css('width', '850px');
         divRegistro.css('height', '365px');
 
 		var ordemInicial = new Array();
@@ -2778,7 +2778,7 @@ function validaDados(pedeSenha) {
 		return false;
     }
 
-    if ( (vDataFimAdicionalCee || vDataFimAdicionalCoo) && !vJustificativaDesc ) {
+    if ( (vDataFimAdicionalCee || vDataFimAdicionalCoo || atualizacaoDesconto) && !vJustificativaDesc ) {
         showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
     }
@@ -3302,7 +3302,7 @@ function atualizarDescontos() {
             if ($item.val() != $item.attr('oldvalue')) {
                 atualizacaoDesconto = true;
             }
-            perdescontos.push($item.attr('cdcatego') + "#" + converteNumero($item.val()));
+            perdescontos.push($item.attr('cdcatego') + "#" + $item.val().replace(".", ","));
         }
     }
     voltarParaDesconto();

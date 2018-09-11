@@ -251,6 +251,7 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 <script>
 descontoConvenios = [];
 perdescontos = [];
+atualizacaoDesconto = false;
 <?php if (count($aux)) { ?>
 	descontoConvenios = <?php echo json_encode($aux); ?>;
 <?php }?>

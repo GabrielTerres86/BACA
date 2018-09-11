@@ -90,7 +90,7 @@ foreach($emails as $email) {
 ?>
 <input type="hidden" id= "emails_titular" name="emails_titular" value="<?php echo $emails_titular; ?>">	
 
-<form action="<?php echo $UrlSite; ?>telas/atenda/cobranca/imprimir_relatorio.php" name="frmRelatorio" class="formulario" id="frmRelatorio" method="post">
+<form action="<?php echo $UrlSite; ?>telas/atenda/reciprocidade/imprimir_relatorio.php" name="frmRelatorio" class="formulario" id="frmRelatorio" method="post">
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>" />
     <input type="hidden" name="nmarquiv" id="nmarquiv" />
     <input type="hidden" name="nrdconta" id="nrdconta" />
@@ -98,7 +98,7 @@ foreach($emails as $email) {
     <input type="hidden" name="cdagenci" id="cdagenci" />
 </form>	
 
-<form action="<?php echo $UrlSite; ?>telas/atenda/cobranca/impressao_termo.php" name="frmTermo" class="formulario" id="frmTermo" method="post">
+<form action="<?php echo $UrlSite; ?>telas/atenda/reciprocidade/impressao_termo.php" name="frmTermo" class="formulario" id="frmTermo" method="post">
 	<input type="hidden" id="nrdconta" name="nrdconta" value="">	
 	<input type="hidden" id="dsdtitul" name="dsdtitul" value="">
 	<input type="hidden" id="flgregis" name="flgregis" value="">

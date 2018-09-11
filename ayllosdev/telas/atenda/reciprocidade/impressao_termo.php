@@ -3,30 +3,30 @@
 /***********************************************************************
   Fonte: impressao_termo.php                                               
   Autor: Gabriel                                                  
-  Data : Marco/2011                       Última Alteração: 04/07/2012 		   
+  Data : Marco/2011                       ï¿½ltima Alteraï¿½ï¿½o: 04/07/2012 		   
 	                                                                   
   Objetivo  : Gerar o PDF do termo da rotina de COBRANCA da ATENDA.              
 	                                                                 
-  Alterações: 26/07/2011 - Incluir a impressao de Cobranca registrada
+  Alteraï¿½ï¿½es: 26/07/2011 - Incluir a impressao de Cobranca registrada
 						   (Gabriel).
 						   
 			  04/07/2012 - Retirado funcao exibeErro(). (Jorge)
 
-			  28/12/2015 - Novo contrato cobrança registrada (Daniel)
+			  28/12/2015 - Novo contrato cobranï¿½a registrada (Daniel)
   
 ***********************************************************************/
 
 session_cache_limiter("private");
 session_start();
 	
-// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+// Includes para controle da session, variï¿½veis globais de controle, e biblioteca de funï¿½ï¿½es	
 require_once("../../../includes/config.php");
 require_once("../../../includes/funcoes.php");	
 require_once("../../../includes/controla_secao.php");
 require_once("../../../class/xmlfile.php");	
 
 
-// Verifica se tela foi chamada pelo método POST
+// Verifica se tela foi chamada pelo mï¿½todo POST
 isPostMethod();
 
 // Recebe o nome do PDF
@@ -39,6 +39,7 @@ $nmdtest2 = $_POST["nmdtest2"];
 $cpftest2 = $_POST["cpftest2"];
 $nrconven = $_POST["nrconven"];
 $tpimpres = $_POST["tpimpres"];
+$idcalculo_reciproci = 8132;
 
 $dsiduser =  session_id();
 
@@ -57,27 +58,27 @@ if ($flgregis == 'yes' ) {
 	$xml .= "   <dsiduser>".$dsiduser."</dsiduser>";
 	$xml .= "   <dsdtitul>".$dsdtitul."</dsdtitul>";
 	$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xml .= "   <nrconven>".$nrconven."</nrconven>";
-	$xml .= "   <tpimpres>".$tpimpres."</tpimpres>"; // 1 - Adesão  2 - Cancelamento
+	$xml .= "   <idcalculo_reciproci>".$idcalculo_reciproci."</idcalculo_reciproci>";
+	$xml .= "   <tpimpres>".$tpimpres."</tpimpres>"; // 1 - Adesï¿½o  2 - Cancelamento
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
 	// craprdr / crapaca 
-	$xmlResult = mensageria($xml, "ATENDA", "IMPTERMO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA", "IMPTERMO2", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crï¿½tica
 	if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
 		exibeErro($xmlObjeto->roottag->tags[0]->cdata);		 
 	}
 
-	//Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+	//Obtï¿½m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 	$nmarqpdf = $xmlObjeto->roottag->cdata;
 
-	//Chama função para mostrar PDF do impresso gerado no browser	 
+	//Chama funï¿½ï¿½o para mostrar PDF do impresso gerado no browser	 
 	visualizaPDF($nmarqpdf);	
 
-	// Função para exibir erros na tela através de javascript
+	// Funï¿½ï¿½o para exibir erros na tela atravï¿½s de javascript
 	function exibeErro($msgErro) { 
 	  echo '<script>alert("'.$msgErro.'");</script>';	
 	  exit();
@@ -119,7 +120,7 @@ if ($flgregis == 'yes' ) {
 	$xmlObjTermo = getObjectXML($xmlResult);
 
 
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crï¿½tica
 	if (strtoupper($xmlObjTermo->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjTermo->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
@@ -128,7 +129,7 @@ if ($flgregis == 'yes' ) {
 
 	$nmarqpdf = $xmlObjTermo->roottag->tags[0]->attributes["NMARQPDF"];
 
-	/// Chama função para mostrar PDF do impresso gerado no browser	 
+	/// Chama funï¿½ï¿½o para mostrar PDF do impresso gerado no browser	 
 	visualizaPDF($nmarqpdf);	
 }
 ?>
