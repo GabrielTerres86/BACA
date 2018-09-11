@@ -1,5 +1,8 @@
 DECLARE
 
+  vr_dsdireto varchar2(500);
+  vr_teste number;
+
   PROCEDURE pc_transf_integrantes_grupo(pr_cdcooper IN INTEGER,
                                         pr_idgrupo INTEGER DEFAULT 0) IS
 
@@ -487,6 +490,8 @@ DECLARE
 
 BEGIN
 
+  vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'M', pr_cdcooper => 3, pr_nmsubdir => 'odirlei/arq' );
+
   --> Buscar cooperativas ativas
   FOR rw_crapcop IN (SELECT * 
                        FROM crapcop cop
@@ -495,8 +500,30 @@ BEGIN
                       ORDER BY cop.cdcooper ) LOOP
                         
                         
+    vr_teste := exporta_tabela_para_csv (p_query => 'SELECT * FROM tbcc_grupo_economico x
+                                                   WHERE x.cdcooper = '||rw_crapcop.cdcooper||'  order by idgrupo',
+                                  p_dir => vr_dsdireto,
+                                  p_arquivo => 'GrupoEco_antes_'||rw_crapcop.cdcooper);--to_char(SYSDATE,'hh24mi'));
+
+    vr_teste := exporta_tabela_para_csv (p_query => 'SELECT * FROM tbcc_grupo_economico_integ x
+                                                   WHERE x.cdcooper = '||rw_crapcop.cdcooper||' order by idgrupo,idintegrante',
+                                  p_dir => vr_dsdireto,
+                                  p_arquivo => 'GrupoEco_int_antes_'||rw_crapcop.cdcooper);--to_char(SYSDATE,'hh24mi'));
+                                                       
     -- Call the procedure
     pc_transf_integrantes_grupo(pr_cdcooper => rw_crapcop.cdcooper);   
+    
+    COMMIT;
+    
+    vr_teste := exporta_tabela_para_csv (p_query => 'SELECT * FROM tbcc_grupo_economico x
+                                                   WHERE x.cdcooper = '||rw_crapcop.cdcooper||'  order by idgrupo',
+                                  p_dir => vr_dsdireto,
+                                  p_arquivo => 'GrupoEco_depois_'||rw_crapcop.cdcooper);--to_char(SYSDATE,'hh24mi'));
+
+    vr_teste := exporta_tabela_para_csv (p_query => 'SELECT * FROM tbcc_grupo_economico_integ x
+                                                   WHERE x.cdcooper = '||rw_crapcop.cdcooper||' order by idgrupo,idintegrante',
+                                  p_dir => vr_dsdireto,
+                                  p_arquivo => 'GrupoEco_int_depois_'||rw_crapcop.cdcooper);--to_char(SYSDATE,'hh24mi'));        
     
     COMMIT;
                        
