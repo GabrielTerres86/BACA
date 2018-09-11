@@ -1,11 +1,12 @@
 <? 
 /*!
  * FONTE        : carrega_tela_estorno_pagamento.php
- * CRIAÇÃO      : James Prust Junior
- * DATA CRIAÇÃO : 14/09/2015
+ * CRIAÃ‡ÃƒO      : James Prust Junior
+ * DATA CRIAÃ‡ÃƒO : 14/09/2015
  * OBJETIVO     : Rotina para carregar a tela de Estornar Pagamento
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÃ‡Ã•ES   : 03/08/2018 - Criado a opÃ§Ã£o para estornar o pagamento de PrejuÃ­zo de Conta Corrente
+ *				               PJ 450 - Diego Simas - AMcom
  * -------------- 
  */
     session_start();
@@ -26,14 +27,20 @@
 		case 'C':
 		case 'E':
 			require_once("form_estorno_pagamento.php");
-		break;
-		
+			break;		
 		case 'R':
 			require_once("form_impressao_estorno.php");
-		break;
+			break;
+		case 'CCT':
+		case 'ECT':
+			require_once("form_estorno_pagamento_ct.php");
+			break;
+		case 'RCT':
+			require_once("form_impressao_estorno_ct.php");
+			break;
 	}	
 ?>
 <script>
-hideMsgAguardo();
-formataCampos();
+	hideMsgAguardo();
+	formataCampos();
 </script>
