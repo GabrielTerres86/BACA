@@ -4601,7 +4601,7 @@ BEGIN
   PROCEDURE pc_impr_dec_rec_ise_iof_xml(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da Cooperativa
 									   ,pr_nrdconta IN crapepr.nrdconta%TYPE  --> Numero da conta
 									   ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Numero do CPF
-                                       ,pr_nrctrato IN crapepr.nrctremp%TYPE  --> Numero do contrato
+                     ,pr_nrctrato IN crapepr.nrctremp%TYPE  --> Numero do contrato
 									   ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
 									   ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica
 									   ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
@@ -5800,7 +5800,8 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
     -- Se retornou erro
     IF NVL(vr_cdcritic,0) > 0 OR 
       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
+      --RAISE vr_exc_erro;
+      vr_nmarqimp_pre := 'FALSE';
     END IF;
     -- Se tiver prestamista
     IF vr_nmarqimp_pre <> 'FALSE' THEN
