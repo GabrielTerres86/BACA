@@ -23,13 +23,7 @@ $cdalcada    = (!empty($_POST['cdalcada']))    ? $_POST['cdalcada'] : '';
 $dsemail     = (!empty($_POST['dsemail']))     ? $_POST['dsemail'] : '';
 $cdaprovador = (!empty($_POST['cdaprovador'])) ? $_POST['cdaprovador'] : '';
 $flregra     = (isset($_POST['flregra']))      ? (int)$_POST['flregra'] : 0;
-
-$flofesms    = (isset($_POST['flofesms']))    ? $_POST['flofesms'] : 0;
-$dtiniofe    = (isset($_POST['dtiniofe']))    ? $_POST['dtiniofe'] : '';
-$dtfimofe    = (isset($_POST['dtfimofe']))    ? $_POST['dtfimofe'] : '';
-$dsmensag    = (isset($_POST['dsmensag']))    ? $_POST['dsmensag'] : '';
-$fllindig    = (isset($_POST['fllindig']))    ? $_POST['fllindig'] : 0;
-$nrdialau    = (isset($_POST['nrdialau']))    ? $_POST['nrdialau'] : 0;
+$fncAfter    = (isset($_POST['fncAfter']))     ? $_POST['fncAfter'] : '';
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	exibeErroNew($msgError);
@@ -89,9 +83,18 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
         $dsalcada     = getByTagName($r->tags,"dsalcada_aprovacao");
         $flgregra     = getByTagName($r->tags,"flregra_aprovacao") == "1" ? "checked" : "";
         $disabled     = ( ( ( $countReg === 0 && $cdalcada == 1 ) || $cddopcao == 'C' ) ? 'disabled' : '' );
+
+        $xml = new XmlMensageria();
+        $xml->add('cdcooper',$cdcooper);
+        $xml->add('cdalcada_aprovacao',$cdalcada);
+
+        $xmlResult = mensageria($xml, "TELA_CADRES", "BUSCA_APROVADORES", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getObjectXML($xmlResult);
+
+        $registros = $xmlObj->roottag->tags[0]->tags;
         
         $html .= "<tr>";
-        $html .= "  <td width=\"35\" align=\"center\"> <input type=\"checkbox\" $flgregra id=\"alcada_$i\" name=\"chkalcada\" value=\"$cdalcada\" $disabled ></td>";
+        $html .= "  <td width=\"35\" align=\"center\"> <input data-count=\"".count($registros)."\" type=\"checkbox\" $flgregra id=\"alcada_$cdalcada\" name=\"chkalcada\" value=\"$cdalcada\" $disabled ></td>";
         $html .= "  <td width=\"361\"> $dsalcada </td>";
         $html .= "  <td width=\"200\" align=\"center\"> <a href=\"#\" class=\"botao ".($disabled && $cddopcao == 'A' ? 'botaoDesativado' : '')."\" style=\"margin:3px 0\" onclick=\"Grid.onClick_Aprovadores($cdalcada)\" $disabled>Aprovadores</a></td>";
         $html .= '</tr>';
@@ -163,7 +166,7 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
         exibeErroNew($msgErro);exit;
     }
 
-    echo 'showError("inform","Aprovador removido com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","PopupAprovadores.carregarGridAprovadores(\"'.$cdalcada.'\");blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
+    echo 'showError("inform","Aprovador removido com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","PopupAprovadores.carregarGridAprovadores(\"'.$cdalcada.'\", \"'.$fncAfter.'\");blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
 }
 
 function exibeErroNew($msgErro) {

@@ -18,6 +18,7 @@ isPostMethod();
 $cdalcada = (isset($_POST['cdalcada'])) ? $_POST['cdalcada'] : '';
 $cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
 $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'C';
+$flgregra = (isset($_POST['flgregra'])) ? (int) $_POST['flgregra'] : false;
 ?>
 
 <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
@@ -32,7 +33,14 @@ $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'C';
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
 								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Aprovadores</td>
+								
+								<?php if ($flgregra) { ?>
+								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divRotina')); $('[name=chkalcada]#alcada_<?php echo $cdalcada; ?>').prop('checked', false); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+								<?php } else { ?>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divRotina')); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+								<?php } ?>
+								
+								
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>
 						</table>
@@ -63,7 +71,11 @@ $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'C';
 										</div>
 
 										<div id="divBotoes" style="margin-bottom: 10px;">
+											<?php if ($flgregra) { ?>
+											<a href="#" class="botao" id="btPopupVoltar" onClick="fechaRotina($('#divRotina'));$('[name=chkalcada]#alcada_<?php echo $cdalcada; ?>').prop('checked', false)">Voltar</a>
+											<?php } else { ?>
 											<a href="#" class="botao" id="btPopupVoltar" onClick="fechaRotina($('#divRotina'));">Voltar</a>
+											<?php } ?>
 										</div>
 									</div>
 								</td>
