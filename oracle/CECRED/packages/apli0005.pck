@@ -3184,7 +3184,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       WHEN vr_exc_saida THEN
 
+        IF upper(pr_nmdatela) <> 'CRPS145' THEN
         ROLLBACK;
+        END IF;
 
          -- Se veio apenas o código
         IF vr_cdcritic > 0 AND pr_dscritic IS NULL THEN
