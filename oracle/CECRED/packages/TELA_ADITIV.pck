@@ -4540,7 +4540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_dsmodbem := upper(pr_nrmodbem);
     IF vr_dsmodbem LIKE 'ZERO KM%' THEN
       -- Trocar Zero KM pelo ano corrente
-      vr_dsmodbem := to_char(SYSDATE,'RRRR')||REPLACE(vr_dsmodbem,'ZERO KM','');
+      vr_dsmodbem := (to_number(to_char(SYSDATE,'RRRR'))+1)||REPLACE(vr_dsmodbem,'ZERO KM','');
     END IF;
     
     -- Separa os dados do modelo. Ano e tipo de combustível chegam no mesmo campo. (Ex: "2018 GASOLINA")
