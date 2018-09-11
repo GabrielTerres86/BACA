@@ -170,7 +170,7 @@ function exibeErro($msgErro) {
               ($flsitsms == 1 || $dsalerta != "")) { ?>
         		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
 	<?php  } ?>
-	<a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Termo</a>    
+	<a href="#" class="botao" onclick="confirmaImpressao('SIM','1'); return false;">Termo</a>    
     <a href="#" class="botao" onclick="carregaLogCeb();return false;">Hist. Acesso</a>
 	<a href="#" class="botao" onclick="carregaLogNegociacao(); return false;">Hist. Negocia&ccedil;&atilde;o</a>
 	<a href="#" class="botao" onclick="carregaCobranca(); return false;">Recip. Antigo</a>
