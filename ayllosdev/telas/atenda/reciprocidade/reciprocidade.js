@@ -3080,6 +3080,7 @@ function abrirAprovacao(hideBtnDetalhes) {
         data: {
             cdcooper: cdcooper,
             idrecipr: idrecipr,
+            fnconfirm: "hideMsgAguardo();$('#telaAprovacao').hide();$('#divConteudoOpcao').show();blockBackground(parseInt($('#divRotina').css('z-index')));",
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -3127,6 +3128,7 @@ function abrirRejeicao() {
         data: {
             cdcooper: cdcooper,
             idrecipr: idrecipr,
+            fnreject: "hideMsgAguardo();$('#telaRejeicao').hide();$('#divConteudoOpcao').show();blockBackground(parseInt($('#divRotina').css('z-index')));",
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {

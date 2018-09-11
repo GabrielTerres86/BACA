@@ -17,8 +17,9 @@ isPostMethod();
 
 
 // Recebe a operação que está sendo realizada
-$cdcooper = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
-$idrecipr = (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : '';
+$cdcooper  = (!empty($_POST['cdcooper']))  ? $_POST['cdcooper']  : $glbvars['cdcooper'];
+$idrecipr  = (!empty($_POST['idrecipr']))  ? $_POST['idrecipr']  : '';
+$fnconfirm = (!empty($_POST['fnconfirm'])) ? $_POST['fnconfirm'] : "hideMsgAguardo();fechaRotina($('#telaAprovacao'));estadoInicial();";
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 	exibeErroNew($msgError);
@@ -110,6 +111,7 @@ function exibeErroNew($msgErro) {
 				cdcooper: cdcooper,
 				cdalcada: cdalcada,
 				idrecipr: idrecipr,
+				fnconfirm: "<?php echo $fnconfirm; ?>",
 				redirect: "script_ajax" // Tipo de retorno do ajax
 			},
 			error: function (objAjax, responseError, objExcept) {

@@ -19,6 +19,7 @@ isPostMethod();
 $cdcooper = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
 $idrecipr = (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : '';
 $cdalcada = (!empty($_POST['cdalcada'])) ? $_POST['cdalcada'] : '';
+$fnreject = (!empty($_POST['fnreject'])) ? $_POST['fnreject'] : "hideMsgAguardo();fechaRotina($('#telaRejeicao'));estadoInicial();";
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 	exibeErroNew($msgError);
@@ -65,7 +66,7 @@ function exibeErroNew($msgErro) {
 
 						<div id="divBotoes" style="margin-bottom: 10px;">
 							<a href="#" class="botao" id="btVoltar">Voltar</a>
-							<a href="#" class="botaoDesativado" id="btPopupRejeitar" onclick="rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $cdalcada; ?>,<?php echo $idrecipr; ?>)">Enviar</a>
+							<a href="#" class="botaoDesativado" id="btPopupRejeitar" onclick="rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $idrecipr; ?>)">Enviar</a>
 						</div>
 
 					</td>
@@ -89,7 +90,7 @@ function exibeErroNew($msgErro) {
         var justific = $(this).val();
 
         if (justific && justific.trim()) {
-            $('#btPopupRejeitar').trocaClass('botaoDesativado','botao').css('cursor','default').attr("onclick","rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $cdalcada; ?>,<?php echo $idrecipr; ?>);");
+            $('#btPopupRejeitar').trocaClass('botaoDesativado','botao').css('cursor','default').attr("onclick","rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $idrecipr; ?>);");
         } else {
             $('#btPopupRejeitar').trocaClass('botao','botaoDesativado').css('cursor','default').attr("onclick","return false;");
         }
@@ -97,7 +98,7 @@ function exibeErroNew($msgErro) {
 	
 	// zebradoLinhaTabela($('#divResultadoAprovacao > table > tbody > tr'));
 
-	function rejeitarContrato(cdcooper, cdalcada, idrecipr) {
+	function rejeitarContrato(cdcooper, idrecipr) {
 
         var justific = cJustificativa.val();
 
@@ -113,9 +114,9 @@ function exibeErroNew($msgErro) {
 			data: {
 				cddopcao: 'R',
 				cdcooper: cdcooper,
-				cdalcada: cdalcada,
 				idrecipr: idrecipr,
 				justific: justific,
+				fnreject: "<?php echo $fnreject; ?>",
 				redirect: "script_ajax" // Tipo de retorno do ajax
 			},
 			error: function (objAjax, responseError, objExcept) {

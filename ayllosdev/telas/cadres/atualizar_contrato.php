@@ -17,11 +17,13 @@ require_once('../../class/xmlfile.php');
 isPostMethod();
 
 // Recebe a operação que está sendo realizada
-$cddopcao    = (!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
-$cdcooper    = (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'];
-$cdalcada    = (!empty($_POST['cdalcada'])) ? $_POST['cdalcada'] : '';
-$idrecipr    = (!empty($_POST['idrecipr'])) ? $_POST['idrecipr'] : '';
-$justific    = (!empty($_POST['justific'])) ? $_POST['justific'] : '';
+$cddopcao    = (!empty($_POST['cddopcao']))  ? $_POST['cddopcao']  : '';
+$cdcooper    = (!empty($_POST['cdcooper']))  ? $_POST['cdcooper']  : $glbvars['cdcooper'];
+$cdalcada    = (!empty($_POST['cdalcada']))  ? $_POST['cdalcada']  : '';
+$idrecipr    = (!empty($_POST['idrecipr']))  ? $_POST['idrecipr']  : '';
+$justific    = (!empty($_POST['justific']))  ? $_POST['justific']  : '';
+$fnconfirm   = (!empty($_POST['fnconfirm'])) ? $_POST['fnconfirm'] : 'hideMsgAguardo();fechaRotina($(\\"#telaAprovacao\\"));estadoInicial();';
+$fnreject    = (!empty($_POST['fnreject']))  ? $_POST['fnreject']  : 'hideMsgAguardo();fechaRotina($(\\"#telaRejeicao\\"));estadoInicial();';
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 	exibeErroNew($msgError);
@@ -29,7 +31,7 @@ if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddo
 
 if ( $cddopcao == 'A' ) {
 
-    $xml = new XmlMensageria();
+    /*$xml = new XmlMensageria();
     $xml->add('cdcooper',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('idcalculo_reciproci',$idrecipr);
@@ -42,13 +44,13 @@ if ( $cddopcao == 'A' ) {
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
         exibeErroNew($msgErro);exit;
-    }
+    }*/
 
-    echo 'showError("inform","O contrato foi aprovado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","hideMsgAguardo();fechaRotina($(\"#telaAprovacao\"));estadoInicial();");';
+    echo 'showError("inform","O contrato foi aprovado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","'.$fnconfirm.'");';
 
 } else if ( $cddopcao == 'R' ) {
 
-    $xml = new XmlMensageria();
+    /*$xml = new XmlMensageria();
     $xml->add('cdcooper',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('idcalculo_reciproci',$idrecipr);
@@ -62,9 +64,9 @@ if ( $cddopcao == 'A' ) {
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
         exibeErroNew($msgErro);exit;
-    }
+    }*/
 
-    echo 'showError("inform","O contrato foi rejeitado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","hideMsgAguardo();fechaRotina($(\"#telaRejeicao\"));estadoInicial();");';
+    echo 'showError("inform","O contrato foi rejeitado.","Notifica&ccedil;&atilde;o - Ayllos","'.$fnreject.'");';
 
 }
 
