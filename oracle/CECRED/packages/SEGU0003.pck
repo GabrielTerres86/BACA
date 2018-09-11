@@ -340,7 +340,7 @@ EXCEPTION
       where 
              cs.cdcooper = pr_cdcooper 
          and cs.nrdconta = pr_nrdconta 
-         and (cs.nrctrseg = pr_nrctrseg or cs.nrctrato = pr_nrctremp)
+         and cs.nrctrseg = pr_nrctrseg
          and cs.cdcooper = cc.cdcooper
          and cs.cdcooper = ca.cdcooper
          and cs.nrdconta = ca.nrdconta
