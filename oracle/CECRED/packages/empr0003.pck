@@ -5511,22 +5511,22 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
     
     --Aqui deve chamar a rotina para verificar se imprime o relatório e se é DPS ou não
     SEGU0003.pc_validar_prestamista(pr_cdcooper       => pr_cdcooper,
-                           pr_nrdconta       => pr_nrdconta,
-                           pr_nrctremp       => rw_crawseg.nrctrato,
-                           pr_cdagenci       => pr_cdagecxa,
-                           pr_nrdcaixa       => pr_nrdcaixa,
-                           pr_cdoperad       => pr_cdoperad,
-                           pr_nmdatela       => pr_nmdatela,
-                           pr_idorigem       => pr_idorigem,   
-                           pr_sld_devedor    => vr_saldodevedor,  
-                           pr_flgprestamista => vr_flgprestamista,
-                           pr_flgdps         => vr_id_imprime_dsp,
-                           pr_dsmotcan       => vr_dsmotcan,
-                           pr_cdcritic       => pr_cdcritic,
-                           pr_dscritic       => pr_dscritic);
+                                    pr_nrdconta       => pr_nrdconta,
+                                    pr_nrctremp       => pr_nrctremp,
+                                    pr_cdagenci       => pr_cdagecxa,
+                                    pr_nrdcaixa       => pr_nrdcaixa,
+                                    pr_cdoperad       => pr_cdoperad,
+                                    pr_nmdatela       => pr_nmdatela,
+                                    pr_idorigem       => pr_idorigem,   
+                                    pr_sld_devedor    => vr_saldodevedor,  
+                                    pr_flgprestamista => vr_flgprestamista,
+                                    pr_flgdps         => vr_id_imprime_dsp,
+                                    pr_dsmotcan       => vr_dsmotcan,
+                                    pr_cdcritic       => pr_cdcritic,
+                                    pr_dscritic       => pr_dscritic);
                               
     IF pr_dscritic IS NOT NULL THEN
-           RAISE vr_exc_erro; -- encerra programa           
+      RAISE vr_exc_erro; -- encerra programa           
     END IF;
     --
 
