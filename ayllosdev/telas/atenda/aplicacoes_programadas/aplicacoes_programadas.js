@@ -880,7 +880,6 @@ function validarInclusaoPoupanca() {
 	var tpemiext = $("#tpemiext","#frmDadosPoupanca").val();
 	var cdprodut = $("#cdprodut","#frmDadosPoupanca").val();
 	
-
 	//Limpa o campo de Erro anterior
 	$('input, select','#frmDadosPoupanca' ).removeClass('campoErro');
 		
@@ -959,10 +958,9 @@ function validarInclusaoPoupanca() {
 }
 
 // Função para incluir a aplicação programada
-function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
+function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext,cdprodut) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, incluindo poupan&ccedil;a programada ...");	
-	
 	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",		
