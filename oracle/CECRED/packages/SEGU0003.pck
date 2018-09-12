@@ -466,186 +466,179 @@ EXCEPTION
            RAISE vr_exc_erro; -- encerra programa           
     END IF;
     --
-
-    IF vr_flgprestamista = 'S' THEN
-    
-      --> Buscar dados para impressao da Proposta de Seguro de Vida Prestamista
-      OPEN cr_crawseg;
-      FETCH cr_crawseg INTO rw_crawseg;
-      IF cr_crawseg%NOTFOUND THEN
-        CLOSE cr_crawseg;
-        vr_dscritic := 'Proposta nao encontrada.';
-        RAISE vr_exc_erro;
-      ELSE
-       CLOSE cr_crawseg;
-      END IF;
-    
-      OPEN cr_crapseg(rw_crawseg.nrctrseg);
-      FETCH cr_crapseg INTO rw_crapseg;
-      IF cr_crapseg%NOTFOUND THEN
-        CLOSE cr_crapseg;      
-        -- Se a proposta nao estiver efetivada, rodar a rotina para calculo do saldo devedor
-        pc_saldo_devedor(pr_cdcooper => pr_cdcooper,
-                         pr_nrdconta => pr_nrdconta,
-                         pr_nrctremp => rw_crawseg.nrctrato,
-                         pr_cdagenci => pr_cdagecxa,
-                         pr_nrdcaixa => pr_nrdcaixa,
-                         pr_cdoperad => pr_cdoperad,
-                         pr_nmdatela => pr_nmdatela,
-                         pr_idorigem => pr_idorigem,
-                         pr_saldodevedor => vr_saldodevedor,
-                         pr_saldodevempr => vr_saldodevempr,
-                         pr_cdcritic => pr_cdcritic,
-                         pr_dscritic => pr_dscritic);
-         IF pr_dscritic IS NOT NULL THEN
-           RAISE vr_exc_erro; -- encerra programa           
-         END IF;
-           
-      ELSE
-        -- Se proposta de seguro estiver efetivada, buscar da tabela o valor do saldo e o indicador de DPS   
-        --> Buscar dados para impressao da Proposta de Seguro de Vida Prestamista
-        CLOSE cr_crapseg;
-        vr_saldodevedor   := rw_crapseg.vlslddev;
-        vr_id_imprime_dsp := rw_crapseg.idimpdps;
-      END IF;
-
-      -- Inicializar o CLOB
-      vr_des_xml := NULL;
-      dbms_lob.createtemporary(vr_des_xml, TRUE);
-      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-
-      -- Monta o Local e Data
-      vr_localedata := upper(SUBSTR(rw_crawseg.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(rw_crawseg.dtmvtolt));
-    
-      vr_txtcompl := NULL;
-      
-      --> INICIO
-      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><dadosRelatorio>
-                      <dps>'|| vr_id_imprime_dsp ||'</dps>');  -- Nome da cooperativa
-      pc_escreve_xml(
-        '<nmextcop>'        ||rw_crawseg.nmextcop                       ||'</nmextcop>'        ||-- Nome da cooperativa
-        '<conta>'           ||rw_crawseg.nrdconta                       ||'</conta>'           ||-- Número da conta - Formatado
-        '<proposta>'        ||rw_crawseg.nrctrseg                       ||'</proposta>'        ||-- Número da Proposta de Seguro de Vida Prestamista    
-        '<contaProponete>'  ||rw_crawseg.nrdconta                       ||'</contaProponete>'  ||-- Número da conta - Formatado
-        '<postoAtendimento>'||rw_crawseg.cdagenci                       ||'</postoAtendimento>'||-- Número do PA
-        '<segurado>'        ||rw_crawseg.nmdsegur                       ||'</segurado>'        ||-- Nome do segurado     
-        '<cpf>'             ||rw_crawseg.nrcpfcgc                       ||'</cpf>'             ||-- Cpf do segurado                                     
-        '<estadoCivil>'     ||rw_crawseg.rsestcvl                       ||'</estadoCivil>'     ||-- Estado Civil
-        '<dataNascimento>'  ||to_char(rw_crawseg.dtnascsg,'DD/MM/RRRR') ||'</dataNascimento>'  ||-- Data de nascimento
-        '<sexo>'            ||rw_crawseg.cdsexosg                       ||'</sexo>'            ||-- Sexo 
-        '<endereco>'        ||rw_crawseg.Endereco                       ||'</endereco>'        ||-- Endereco
-        '<bairro>'          ||rw_crawseg.nmbairro                       ||'</bairro>'          ||-- Nome do Bairro
-        '<cidade>'          ||rw_crawseg.nmcidade                       ||'</cidade>'          ||-- Nome da Cidade
-        '<uf>'              ||rw_crawseg.cdufresd                       ||'</uf>'              ||-- Unidade da Federacao
-        '<cep>'             ||rw_crawseg.nrcepend                       ||'</cep>'             ||-- Cep
-        '<contrato>'        ||rw_crawseg.nrctrato                       ||'</contrato>'        ||-- Número do Contrato de empr'estimo vinculado ao seguro 
-        '<plano>'           ||rw_crawseg.tpplaseg                       ||'</plano>'           ||-- Plano
-        '<saldoDevedor>'    ||vr_saldodevedor                           ||'</saldoDevedor>'    ||-- Saldo Devedor do Cooperado/Conta        
-        '<dataIniVigencia>' ||to_char(rw_crawseg.dtnascsg,'DD/MM/RRRR') ||'</dataIniVigencia>' ||-- Data de inicio da vigencia do seguro prestamista
-        '<localData>'       ||vr_localedata                             ||'</localData>'       ||-- Local e data do seguro prestamista
-        '<nomeCooperado>'   ||rw_crawseg.nmdsegur                       ||'</nomeCooperado>'   ||-- Nome do Coooperado
-        '<contaCooperado>'  ||rw_crawseg.nrdconta                       ||'</contaCooperado>'  ||-- Conta do Cooperado
-        '<operador>'|| rw_crawseg.nmoperad ||'</operador>'); -- Nome do operador           
-
-      --> Descarregar buffer    
-      pc_escreve_xml(' ',TRUE); 
-    
-      --> Descarregar buffer    
-      pc_escreve_xml('</dadosRelatorio>',TRUE); 
-    
-      loop exit when l_offset > dbms_lob.getlength(vr_des_xml);
-      DBMS_OUTPUT.PUT_LINE (dbms_lob.substr( vr_des_xml, 254, l_offset) || '~');
-      l_offset := l_offset + 255;
-      end loop;
-    
-      IF vr_id_imprime_dsp = 'S'THEN
-        vr_dsjasper :='proposta_prestamista_dps.jasper';
-      ELSE
-        vr_dsjasper := 'proposta_prestamista.jasper';
-      END IF;
-      --> Solicita geracao do PDF
-      gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
-                                 , pr_cdprogra  => pr_cdprogra
-                                 , pr_dtmvtolt  => pr_dtmvtolt
-                                 , pr_dsxml     => vr_des_xml
-                                 , pr_dsxmlnode => '/dadosRelatorio'
-                                 , pr_dsjasper  => vr_dsjasper
-                                 , pr_dsparams  => null
-                                 , pr_dsarqsaid => vr_dsdireto ||'/rl/'||pr_nmarqpdf
-                                 , pr_flg_gerar => 'S'
-                                 , pr_qtcoluna  => 234
-                                 , pr_cdrelato  => 280
-                                 , pr_sqcabrel  => 1
-                                 , pr_flg_impri => 'N'
-                                 , pr_nmformul  => ' '
-                                 , pr_nrcopias  => 1
-                                 , pr_nrvergrl  => 1
-                                 , pr_dsextmail => NULL
-                                 , pr_dsmailcop => vr_dsmailcop
-                                 , pr_dsassmail => vr_dsassmail
-                                 , pr_dscormail => vr_dscormail
-                                 , pr_des_erro  => vr_dscritic);
-    
-      IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
-        RAISE vr_exc_erro; -- encerra programa
-      END IF;        
-    
-      IF pr_idorigem = 5 THEN
-        -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
-        GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
-                                    ,pr_cdagenci => NULL
-                                    ,pr_nrdcaixa => NULL
-                                    ,pr_nmarqpdf => vr_dsdireto ||'/rl/'||pr_nmarqpdf
-                                    ,pr_des_reto => vr_des_reto
-                                    ,pr_tab_erro => vr_tab_erro);
-        -- Se retornou erro
-        IF NVL(vr_des_reto,'OK') <> 'OK' THEN
-          IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
-            RAISE vr_exc_erro; -- encerra programa
-          END IF;
-        END IF;
-
-        -- Remover relatorio do diretorio padrao da cooperativa
-        gene0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => 'rm '||vr_dsdireto ||'/rl/'||pr_nmarqpdf
-                             ,pr_typ_saida   => vr_typsaida
-                             ,pr_des_saida   => vr_dscritic);
-        -- Se retornou erro
-        IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
-          -- Concatena o erro que veio
-          vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
-          RAISE vr_exc_erro; -- encerra programa
-        END IF;
-      END IF;        
-    
-      --> Gerar log de sucesso
-      IF pr_flgerlog = 1 THEN
-        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-                             pr_cdoperad => pr_cdopecxa, 
-                             pr_dscritic => NULL, 
-                             pr_dsorigem => vr_dsorigem, 
-                             pr_dstransa => vr_dstransa, 
-                             pr_dttransa => trunc(SYSDATE),
-                             pr_flgtrans =>  1, -- True
-                             pr_hrtransa => gene0002.fn_busca_time, 
-                             pr_idseqttl => vr_idseqttl, 
-                             pr_nmdatela => pr_nmdatela, 
-                             pr_nrdconta => pr_nrdconta, 
-                             pr_nrdrowid => vr_nrdrowid);
-                             
-        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
-                                  pr_nmdcampo => 'nrctrseg', 
-                                  pr_dsdadant => NULL, 
-                                  pr_dsdadatu => pr_nrctrseg);
-      END IF;
-    
-      COMMIT;
+    --> Buscar dados para impressao da Proposta de Seguro de Vida Prestamista
+    OPEN cr_crawseg;
+    FETCH cr_crawseg INTO rw_crawseg;
+    IF cr_crawseg%NOTFOUND THEN
+      CLOSE cr_crawseg;
+      vr_dscritic := 'Proposta nao encontrada.';
+      RAISE vr_exc_erro;
     ELSE
-      -- Caso retorne que não deve ser gerado o relatório, será retornado 'FALSE' no nome do arquivo
-      pr_nmarqpdf:='FALSE';
+     CLOSE cr_crawseg;
     END IF;
+    
+    OPEN cr_crapseg(rw_crawseg.nrctrseg);
+    FETCH cr_crapseg INTO rw_crapseg;
+    IF cr_crapseg%NOTFOUND THEN
+      CLOSE cr_crapseg;      
+      -- Se a proposta nao estiver efetivada, rodar a rotina para calculo do saldo devedor
+      pc_saldo_devedor(pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta,
+                       pr_nrctremp => rw_crawseg.nrctrato,
+                       pr_cdagenci => pr_cdagecxa,
+                       pr_nrdcaixa => pr_nrdcaixa,
+                       pr_cdoperad => pr_cdoperad,
+                       pr_nmdatela => pr_nmdatela,
+                       pr_idorigem => pr_idorigem,
+                       pr_saldodevedor => vr_saldodevedor,
+                       pr_saldodevempr => vr_saldodevempr,
+                       pr_cdcritic => pr_cdcritic,
+                       pr_dscritic => pr_dscritic);
+       IF pr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_erro; -- encerra programa           
+       END IF;
+           
+    ELSE
+      -- Se proposta de seguro estiver efetivada, buscar da tabela o valor do saldo e o indicador de DPS   
+      --> Buscar dados para impressao da Proposta de Seguro de Vida Prestamista
+      CLOSE cr_crapseg;
+      vr_saldodevedor   := rw_crapseg.vlslddev;
+      vr_id_imprime_dsp := rw_crapseg.idimpdps;
+    END IF;
+
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+
+    -- Monta o Local e Data
+    vr_localedata := upper(SUBSTR(rw_crawseg.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(rw_crawseg.dtmvtolt));
+    
+    vr_txtcompl := NULL;
+      
+    --> INICIO
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><dadosRelatorio>
+                    <dps>'|| vr_id_imprime_dsp ||'</dps>');  -- Nome da cooperativa
+    pc_escreve_xml(
+      '<nmextcop>'        ||rw_crawseg.nmextcop                       ||'</nmextcop>'        ||-- Nome da cooperativa
+      '<conta>'           ||rw_crawseg.nrdconta                       ||'</conta>'           ||-- Número da conta - Formatado
+      '<proposta>'        ||rw_crawseg.nrctrseg                       ||'</proposta>'        ||-- Número da Proposta de Seguro de Vida Prestamista    
+      '<contaProponete>'  ||rw_crawseg.nrdconta                       ||'</contaProponete>'  ||-- Número da conta - Formatado
+      '<postoAtendimento>'||rw_crawseg.cdagenci                       ||'</postoAtendimento>'||-- Número do PA
+      '<segurado>'        ||rw_crawseg.nmdsegur                       ||'</segurado>'        ||-- Nome do segurado     
+      '<cpf>'             ||rw_crawseg.nrcpfcgc                       ||'</cpf>'             ||-- Cpf do segurado                                     
+      '<estadoCivil>'     ||rw_crawseg.rsestcvl                       ||'</estadoCivil>'     ||-- Estado Civil
+      '<dataNascimento>'  ||to_char(rw_crawseg.dtnascsg,'DD/MM/RRRR') ||'</dataNascimento>'  ||-- Data de nascimento
+      '<sexo>'            ||rw_crawseg.cdsexosg                       ||'</sexo>'            ||-- Sexo 
+      '<endereco>'        ||rw_crawseg.Endereco                       ||'</endereco>'        ||-- Endereco
+      '<bairro>'          ||rw_crawseg.nmbairro                       ||'</bairro>'          ||-- Nome do Bairro
+      '<cidade>'          ||rw_crawseg.nmcidade                       ||'</cidade>'          ||-- Nome da Cidade
+      '<uf>'              ||rw_crawseg.cdufresd                       ||'</uf>'              ||-- Unidade da Federacao
+      '<cep>'             ||rw_crawseg.nrcepend                       ||'</cep>'             ||-- Cep
+      '<contrato>'        ||rw_crawseg.nrctrato                       ||'</contrato>'        ||-- Número do Contrato de empr'estimo vinculado ao seguro 
+      '<plano>'           ||rw_crawseg.tpplaseg                       ||'</plano>'           ||-- Plano
+      '<saldoDevedor>'    ||vr_saldodevedor                           ||'</saldoDevedor>'    ||-- Saldo Devedor do Cooperado/Conta        
+      '<dataIniVigencia>' ||to_char(rw_crawseg.dtnascsg,'DD/MM/RRRR') ||'</dataIniVigencia>' ||-- Data de inicio da vigencia do seguro prestamista
+      '<localData>'       ||vr_localedata                             ||'</localData>'       ||-- Local e data do seguro prestamista
+      '<nomeCooperado>'   ||rw_crawseg.nmdsegur                       ||'</nomeCooperado>'   ||-- Nome do Coooperado
+      '<contaCooperado>'  ||rw_crawseg.nrdconta                       ||'</contaCooperado>'  ||-- Conta do Cooperado
+      '<operador>'|| rw_crawseg.nmoperad ||'</operador>'); -- Nome do operador           
+
+    --> Descarregar buffer    
+    pc_escreve_xml(' ',TRUE); 
+    
+    --> Descarregar buffer    
+    pc_escreve_xml('</dadosRelatorio>',TRUE); 
+    
+    loop exit when l_offset > dbms_lob.getlength(vr_des_xml);
+    DBMS_OUTPUT.PUT_LINE (dbms_lob.substr( vr_des_xml, 254, l_offset) || '~');
+    l_offset := l_offset + 255;
+    end loop;
+    
+    IF vr_id_imprime_dsp = 'S'THEN
+      vr_dsjasper :='proposta_prestamista_dps.jasper';
+    ELSE
+      vr_dsjasper := 'proposta_prestamista.jasper';
+    END IF;
+    --> Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                               , pr_cdprogra  => pr_cdprogra
+                               , pr_dtmvtolt  => pr_dtmvtolt
+                               , pr_dsxml     => vr_des_xml
+                               , pr_dsxmlnode => '/dadosRelatorio'
+                               , pr_dsjasper  => vr_dsjasper
+                               , pr_dsparams  => null
+                               , pr_dsarqsaid => vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                               , pr_flg_gerar => 'S'
+                               , pr_qtcoluna  => 234
+                               , pr_cdrelato  => 280
+                               , pr_sqcabrel  => 1
+                               , pr_flg_impri => 'N'
+                               , pr_nmformul  => ' '
+                               , pr_nrcopias  => 1
+                               , pr_nrvergrl  => 1
+                               , pr_dsextmail => NULL
+                               , pr_dsmailcop => vr_dsmailcop
+                               , pr_dsassmail => vr_dsassmail
+                               , pr_dscormail => vr_dscormail
+                               , pr_des_erro  => vr_dscritic);
+    
+    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;        
+    
+    --IF pr_idorigem = 5 THEN
+      -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+    GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                ,pr_cdagenci => NULL
+                                ,pr_nrdcaixa => NULL
+                                ,pr_nmarqpdf => vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                                ,pr_des_reto => vr_des_reto
+                                ,pr_tab_erro => vr_tab_erro);
+    -- Se retornou erro
+    IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+      IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF;
+
+    -- Remover relatorio do diretorio padrao da cooperativa
+    gene0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'rm '||vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    -- Se retornou erro
+    IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+      -- Concatena o erro que veio
+      vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;
+    --END IF;        
+    
+    --> Gerar log de sucesso
+    IF pr_flgerlog = 1 THEN
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                           pr_cdoperad => pr_cdopecxa, 
+                           pr_dscritic => NULL, 
+                           pr_dsorigem => vr_dsorigem, 
+                           pr_dstransa => vr_dstransa, 
+                           pr_dttransa => trunc(SYSDATE),
+                           pr_flgtrans =>  1, -- True
+                           pr_hrtransa => gene0002.fn_busca_time, 
+                           pr_idseqttl => vr_idseqttl, 
+                           pr_nmdatela => pr_nmdatela, 
+                           pr_nrdconta => pr_nrdconta, 
+                           pr_nrdrowid => vr_nrdrowid);
+                             
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                pr_nmdcampo => 'nrctrseg', 
+                                pr_dsdadant => NULL, 
+                                pr_dsdadatu => pr_nrctrseg);
+    END IF;
+    
+    COMMIT;
   EXCEPTION    
     WHEN vr_exc_erro THEN
       
