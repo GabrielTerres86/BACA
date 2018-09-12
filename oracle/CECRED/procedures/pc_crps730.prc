@@ -1,4 +1,3 @@
-
   CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730 (pr_dscritic OUT VARCHAR2
                                       ) IS
 /* .............................................................................
@@ -7,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao:
+   Data    : Fevereiro/2018                    Ultima atualizacao: 06/09/2018
 
    Dados referentes ao programa:
 
@@ -15,6 +14,9 @@
    Objetivo: Integrar as remessas com o IEPTB
 
    Alteracoes: 
+   
+   06/09/2018 - INC0023422 Inclusão de logs de exception para capturar possíveis problemas de processamento;
+                inclusão de pc_set_modulo (Carlos)
    
   ............................................................................. */
   
@@ -154,6 +156,8 @@
 	vr_dtmvtolt crapdat.dtmvtolt%TYPE;
 	--
 	texto CLOB;
+  
+  vr_cdprogra VARCHAR2(32) := 'CRPS730';
   
   -- Subrotinas
 	-- Remove caracteres especiais
@@ -324,6 +328,7 @@
     END CASE;
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao tentar atribuir o valor: ' || pr_nrattrib || '/' || pr_dsvalue || ': ' || SQLERRM;
   END pc_insere_valor;
   
@@ -545,6 +550,7 @@
     WHEN vr_exc_erro THEN
       NULL;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao processar o registro: ' || SQLERRM;
     --
   END pc_insere_registro;
@@ -609,6 +615,7 @@
       pr_dscritic := vr_dscritic;
       --
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Não foi possivel importar o arquivo de confirmação: '||SQLERRM;
     --
   END pc_carrega_arquivo_confirmacao;
@@ -643,6 +650,7 @@
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
+      cecred.pc_internal_exception;
 			pr_dscritic := 'Erro ao atualizar a tabela tbcobran_confirmacao_ieptb: ' || SQLERRM;
 	END pc_atualiza_confirmacao;
 	
@@ -679,6 +687,7 @@
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
+          cecred.pc_internal_exception;
 					pr_dscritic := '1.Erro ao atualizar a tabela tbcobran_retorno_ieptb: ' || SQLERRM;
 		  END;
 			--
@@ -699,6 +708,7 @@
 				--
 			EXCEPTION
 				WHEN OTHERS THEN
+          cecred.pc_internal_exception;
 					pr_dscritic := '2.Erro ao atualizar a tabela tbcobran_retorno_ieptb: ' || SQLERRM;
 		  END;
 			--
@@ -765,6 +775,7 @@
       END IF;  
       --
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Não foi possivel importar o arquivo de retorno: '||SQLERRM;
     --
   END pc_carrega_arquivo_retorno;
@@ -854,6 +865,7 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao inserir na tbcobran_confirmacao_ieptb: ' || SQLERRM;
   END pc_gera_confirmacao_ieptb;
   
@@ -953,6 +965,7 @@
 		--
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao inserir na tbcobran_retorno_ieptb: ' || SQLERRM;
   END pc_gera_retorno_ieptb;
 	
@@ -1026,6 +1039,7 @@
 		--
 	EXCEPTION
 		WHEN OTHERS THEN
+      cecred.pc_internal_exception;
 			pr_dscritic := 'Erro na pc_totaliza_cooperativa: ' || SQLERRM;
 	END pc_totaliza_cooperativa;
 	
@@ -2868,7 +2882,7 @@
 																							 ,pr_vltarifa            => 0                                                          -- Valor da tarifa -- REVISAR
 																							 ,pr_cdhistor            => 972                                                        -- Codigo do historico -- REVISAR
 																							 ,pr_cdocorre            => 23                                                         -- Codigo Ocorrencia -- REVISAR
-																							 ,pr_dsmotivo            => NULL                                                       -- Descricao Motivo -- REVISAR
+																							 ,pr_dsmotivo            => '00'                                                       -- Descricao Motivo -- REVISAR
 																							 ,pr_crapdat             => rw_crapdat                                                 -- Data movimento
 																							 ,pr_cdoperad            => '1'                                                          -- Codigo Operador -- Revisar
 																							 ,pr_ret_nrremret        => vr_nrretcoo                                                -- Numero Remessa Retorno Cooperado
@@ -3443,6 +3457,7 @@
     WHEN vr_exc_erro THEN
       pr_dscritic := nvl(pr_dscritic, vr_dscritic);
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao processar os arquivos de confirmação/retorno: ' || SQLERRM;
   END pc_processa_arquivos;
 	
@@ -3526,10 +3541,14 @@
 		WHEN vr_exc_erro THEN
 			NULL;
 		WHEN OTHERS THEN
+      cecred.pc_internal_exception;
 			pr_dscritic := 'Erro ao mover os arquivos: ' || SQLERRM;
 	END pc_move_arquivos;
 	--
-begin
+BEGIN
+
+  GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => vr_cdprogra);
+
   -- Incluido controle de Log inicio programa
   pc_controla_log_batch(1, 'Início crps730');
   --
@@ -3558,6 +3577,9 @@ begin
     RAISE vr_exc_erro;
     --
   END IF;
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_carrega_arquivo_confirmacao');
+  
 	--
   pc_carrega_arquivo_confirmacao(pr_cdcooper => 3           -- IN
 	                              ,pr_dscritic => pr_dscritic -- OUT
@@ -3569,6 +3591,8 @@ begin
     --
   END IF;
 	--
+
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_processa_arquivos');  
 	pc_processa_arquivos(pr_idtipprc => 'C'         -- IN -- Processamento do arquivo de Confirmação
 	                    ,pr_dscritic => pr_dscritic -- OUT
                       );
@@ -3578,6 +3602,8 @@ begin
     RAISE vr_exc_erro;
     --
   END IF;
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_carrega_arquivo_retorno');
   --
   pc_carrega_arquivo_retorno(pr_cdcooper => 3           -- IN
 	                          ,pr_dscritic => pr_dscritic -- OUT
@@ -3588,6 +3614,8 @@ begin
     RAISE vr_exc_erro;
     --
   END IF;
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_processa_arquivos');
   --
   pc_processa_arquivos(pr_idtipprc => 'R'         -- IN -- Processamento do arquivo de Retorno
 	                    ,pr_dscritic => pr_dscritic -- OUT
@@ -3608,6 +3636,7 @@ begin
     --
   END IF;
 	
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_gera_movimento_pagamento');
 	-- Gera as movimentações
 	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
 	--
@@ -3621,19 +3650,25 @@ begin
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> Finalizado o processamento dos retornos.'); -- Texto para escrita
   --
 --	COMMIT;
+
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_envia_teds');
   -- Faz o envio das TEDs
 	pc_envia_teds(pr_dscritic => pr_dscritic);
+  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_move_arquivos');
 	-- Move os arquivos processados
 	pc_move_arquivos(pr_cdcooper => 3           -- IN
 									,pr_dscritic => pr_dscritic -- OUT
 									);
-	--
+                  
+  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
 EXCEPTION
   WHEN vr_exc_erro THEN
     -- Incluído controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> ' || pr_dscritic);
 		ROLLBACK;
   WHEN OTHERS THEN
+    cecred.pc_internal_exception;
     -- Incluído controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> ' || SQLERRM);
 		ROLLBACK;
