@@ -1,5 +1,4 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps660 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                              ,pr_flgresta IN PLS_INTEGER             --> Flag padrão para utilização de restart
                                               ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                               ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
@@ -11,7 +10,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 16/05/2017
+     Data    : Outubro/9999                     Ultima atualizacao: 04/07/2017
 
      Dados referentes ao programa:
 
@@ -72,10 +71,15 @@ BEGIN
                               
                  16/05/2017 - P408 - Considerar riscos com inddocto = 5 - Garantias Prestadas
                               (Andrei-Mouts)                                                                
+                 
+                 04/07/2018 - P450 - Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos 
+                              (cdorigem = 3) estejam em Prejuízo (innivris = 10) - Daniel(AMcom)
+
+                 23/07/2018 - P442 - Individualização de operações BNDEs (Marcos-Envolti)    
 
                  17/08/2018 - PJ450 - Inclusão de Limite NÃO Utilizado nas Informações Agregadas
                               (Renato Cordeiro - AMcom)
-                              
+
   ............................................................................ */
 
   DECLARE
@@ -169,6 +173,8 @@ BEGIN
     vr_tab_crapepr    typ_tab_crapepr;                              --> Declaração de PL Table
     vr_dsparame       crapsol.dsparame%type;                        --> Parâmetro de execução
     vr_vlindivi       NUMBER(25,2);                                 --> Valor para individualizar as operacoes
+    vr_cdcooper       crapcop.cdcooper%TYPE;                       --> Codigo da Cooperativa
+    vr_vljuro60       crapris.vljura60%TYPE;
 
     -- Tratamento de erros
     vr_exc_saida  EXCEPTION;                                       --> Controle de saída para erros
@@ -178,11 +184,13 @@ BEGIN
 
     ------------------------------- CURSORES ---------------------------------
     -- Busca dados da cooperativa
-    CURSOR cr_crapcop IS
-      SELECT cop.nmrescop
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.cdcooper
+            ,cop.nmrescop
             ,cop.nmextcop
         FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+       WHERE cop.cdcooper = decode(pr_cdcooper,0,cop.cdcooper,pr_cdcooper)
+         AND cop.flgativo = 1;
     rw_crapcop cr_crapcop%ROWTYPE;
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -215,7 +223,7 @@ BEGIN
       SELECT ci.rowid
             ,ci.vldivida
             ,ci.vljura60
-						,ci.vlsld59d
+            ,ci.vlsld59d
             ,decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc) nrcpfcgc
             ,ci.nrdconta
             ,ci.nrctremp
@@ -232,6 +240,58 @@ BEGIN
         AND ci.inddocto IN(1,3,4,5)
       ORDER BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc);
     vr_vldivida crapris.vldivida%TYPE;
+
+    
+    -- Busca cnpjs/cpfs a individualizar origem BNDES
+    -- Este cursor pode trazer as saídas, pois elas também serão individualizadas para o BNDEs
+    CURSOR cr_crapris_BNDES(pr_dtrefere IN crapris.dtrefere%TYPE) IS  --> Data de referencia
+      SELECT ris.rowid
+            ,ris.vldivida
+            ,ris.vljura60
+            ,decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc) nrcpfcgc
+            ,ris.cdcooper
+            ,ris.nrdconta
+            ,ris.nrctremp
+            ,ris.cdorigem
+            ,ris.innivris 
+            ,ris.inddocto
+            ,ris.cdinfadi
+            ,ROW_NUMBER () OVER (PARTITION BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc)
+                                     ORDER BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc)) nrseqctr
+            ,COUNT(1)      OVER (PARTITION BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc)) qtdcontr
+      FROM crapris ris
+      WHERE ris.dtrefere = pr_dtrefere
+        AND ris.inddocto IN(1,2,5) -- Operações Ativas, Saidas, Cartão de Crédito e Garantias Prestadas
+        AND ris.cdorigem in(1,3,7) -- Somente Limite, Empréstimos/Financiamentos e Garantias prestadas Coop
+        AND ris.inpessoa IN (1,2)-- Deve ser CPF ou CNPJ
+        AND ris.vldivida <> 0    -- Com divida
+        AND (  ris.dsinfaux = 'BNDES'  
+             OR (ris.cdorigem = 1 AND EXISTS(SELECT 1
+                                               FROM craplim li
+                                                   ,craplrt lr
+                                              WHERE li.cdcooper = ris.cdcooper
+                                                AND li.nrdconta = ris.nrdconta
+                                                AND li.nrctrlim = ris.nrctremp
+                                                AND li.cdcooper = lr.cdcooper
+                                                AND li.cddlinha = lr.cddlinha
+                                                AND lr.dsdlinha LIKE '%BNDES%'))
+             OR (ris.cdorigem = 3 AND exists(select 1
+                                              from crapepr ep
+                                              join craplcr lc
+                                                on lc.cdcooper = ep.cdcooper
+                                               AND lc.cdlcremp = ep.cdlcremp                     
+                                             WHERE ep.cdcooper = ris.cdcooper
+                                               AND ep.nrdconta = ris.nrdconta
+                                               AND ep.nrctremp = ris.nrctremp
+                                               AND lc.dsorgrec IN ('MICROCREDITO PNMPO BNDES AILOS','MICROCREDITO PNMPO BNDES')))
+             OR (ris.inddocto = 5 AND EXISTS(SELECT 1
+                                              FROM tbrisco_provisgarant_prodt prd
+                                                  ,tbrisco_provisgarant_movto mvt
+                                             WHERE mvt.idproduto     = prd.idproduto
+                                               AND mvt.idmovto_risco = ris.dsinfaux
+                                               and prd.tparquivo     = 'Cartao_BNDES_BRDE'))
+           )
+      ORDER BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc);
 
     /* Buscar dados do cadastro de empréstimos */
     CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE) IS
@@ -282,7 +342,8 @@ BEGIN
         AND tpctatrf <> 3;
         
     /* Buscar dados das contas incorporadas - Concredi >> Via e Credimil >> SCR */
-    CURSOR cr_craptco_inc(pr_cdcopant crapcop.cdcooper%TYPE) IS
+    CURSOR cr_craptco_inc(pr_cdcooper crapcop.cdcooper%TYPE
+                         ,pr_cdcopant crapcop.cdcooper%TYPE) IS
       SELECT ct.nrctaant
             ,ct.nrdconta
       FROM craptco ct
@@ -292,15 +353,16 @@ BEGIN
 
     ------------------------------- PROCEDURES INTERNAS ---------------------------------
     /* Processar conta de migração entre cooperativas */
-    FUNCTION fn_verifica_conta_migracao(pr_nrdconta  IN crapass.nrdconta%TYPE) --> Número da conta
+    FUNCTION fn_verifica_conta_migracao(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE) --> Número da conta
                                                                                RETURN BOOLEAN IS
     BEGIN
       -- Validamos Apenas Via, AV, SCR e Tranpocred
-      IF NOT pr_cdcooper IN(1,13,16,9) THEN
+      IF pr_cdcooper NOT IN(1,13,16,9) THEN
         -- OK
         RETURN TRUE;
       ELSE
-        IF vr_tab_craptco.exists(LPAD(pr_nrdconta, 15, '0')) THEN
+        IF vr_tab_craptco.exists(LPAD(pr_cdcooper,03,'0')||LPAD(pr_nrdconta,15,'0')) THEN
           RETURN FALSE;
         ELSE
           -- Tudo OK até aqui, retornamos true
@@ -626,7 +688,8 @@ BEGIN
         -- Executar consulta de riscos
         FOR rw_crapris IN cr_crapris_mes_anterior(pr_cdcooper => pr_cdcooper, pr_dtultdma => vr_dtultdma) LOOP
           -- Verifica migração/incorporação
-          IF NOT fn_verifica_conta_migracao(pr_nrdconta  => rw_crapris.nrdconta) THEN
+          IF NOT fn_verifica_conta_migracao(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => rw_crapris.nrdconta) THEN
             CONTINUE;
           END IF;
 
@@ -767,7 +830,8 @@ BEGIN
         -- Executar consulta de riscos
         FOR rw_crapris IN cr_crapris_mes_anterior(pr_cdcooper => pr_cdcooper, pr_dtultdma => vr_dtultdma) LOOP
           -- Verifica migração/incorporação
-          IF NOT fn_verifica_conta_migracao(pr_nrdconta  => rw_crapris.nrdconta) THEN
+          IF NOT fn_verifica_conta_migracao(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta  => rw_crapris.nrdconta) THEN
             CONTINUE;
           END IF;
 
@@ -1001,7 +1065,7 @@ BEGIN
     GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL);
 
     -- Verifica se a cooperativa esta cadastrada
-    OPEN cr_crapcop;
+    OPEN cr_crapcop(pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
 
     -- Se não encontrar
@@ -1095,39 +1159,52 @@ BEGIN
       vr_tab_crapepr(vr_ixcrapepr).inliquid := regs.inliquid;
     END LOOP;
 
+
+    
+    -- Quando execução Trimestral Cecred, carregaremos a CRAPTCO de todas as cooperativas migradas
+    -- senão é carregado apenas a CRAPTCO da cooperativa em execução
+    IF pr_cdcooper = 3 AND to_char(vr_dtrefere,'mm') IN ('03','06','09','12') THEN
+      vr_cdcooper := 0;
+    ELSE
+      vr_cdcooper := pr_cdcooper;
+    END IF; 
+    
     -- Carrega as tabelas de contas transferidas da Viacredi e do AltoVale e SCRCred
-    IF pr_cdcooper = 1 THEN
+    FOR rw_crapcop IN cr_crapcop(vr_cdcooper) LOOP
+      IF rw_crapcop.cdcooper = 1 THEN
       -- Vindas da Acredicoop
       IF vr_dtrefere <= TO_DATE('31/12/2013', 'DD/MM/RRRR') THEN
         FOR regs IN cr_craptco LOOP
-          vr_tab_craptco(LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
+            vr_tab_craptco(lpad(rw_crapcop.cdcooper,3,'0')||LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
         END LOOP;
       END IF;  
       -- Incorporação da Concredi 
       IF vr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
-        FOR regs IN cr_craptco_inc(pr_cdcopant => 4) LOOP
-          vr_tab_craptco(LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
+          FOR regs IN cr_craptco_inc(rw_crapcop.cdcooper,4) LOOP
+            vr_tab_craptco(lpad(rw_crapcop.cdcooper,3,'0')||LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
         END LOOP;
       END IF;  
     -- Migração Via >> Altovale
-    ELSIF pr_cdcooper = 16 AND vr_dtrefere <= TO_DATE('31/12/2012', 'DD/MM/RRRR') THEN
+      ELSIF rw_crapcop.cdcooper = 16 AND vr_dtrefere <= TO_DATE('31/12/2012', 'DD/MM/RRRR') THEN
       -- Vindas da Via
       FOR regs IN cr_craptco_16 LOOP
-        vr_tab_craptco(LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
+          vr_tab_craptco(lpad(rw_crapcop.cdcooper,3,'0')||LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
       END LOOP;
     -- Incorporação da Credimil >> SCR
-    ELSIF pr_cdcooper = 13 AND vr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
+      ELSIF rw_crapcop.cdcooper = 13 AND vr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
       -- Vindas da Credimil
-      FOR regs IN cr_craptco_inc(15) LOOP
-        vr_tab_craptco(LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
+        FOR regs IN cr_craptco_inc(rw_crapcop.cdcooper,15) LOOP
+          vr_tab_craptco(lpad(rw_crapcop.cdcooper,3,'0')||LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
       END LOOP;
     -- Incorporação da Transulcred >> Transpocred
-    ELSIF pr_cdcooper = 9 AND vr_dtrefere <= TO_DATE('31/12/2016', 'DD/MM/RRRR') THEN
+      ELSIF rw_crapcop.cdcooper = 9 AND vr_dtrefere <= TO_DATE('31/12/2016', 'DD/MM/RRRR') THEN
       -- Vindas da Transulcred
-      FOR regs IN cr_craptco_inc(17) LOOP
-        vr_tab_craptco(LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
+        FOR regs IN cr_craptco_inc(rw_crapcop.cdcooper,17) LOOP
+          vr_tab_craptco(lpad(rw_crapcop.cdcooper,3,'0')||LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
       END LOOP;
     END IF;
+    END LOOP;
+
 
     -- Carregar pl table de liquidações
     FOR regs IN cr_crawepr(pr_cdcooper) LOOP
@@ -1151,7 +1228,8 @@ BEGIN
     -- Acumular dívida por CPF
     FOR rw_crapris IN cr_crapris(pr_cdcooper, vr_dtrefere) LOOP
       -- Verifica migração/incorporação
-      IF NOT fn_verifica_conta_migracao(pr_nrdconta  => rw_crapris.nrdconta) THEN
+      IF NOT fn_verifica_conta_migracao(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta  => rw_crapris.nrdconta) THEN
         CONTINUE;
       END IF;
       -- Reinicializar valor e pltable no primeiro registro do CPF/CNPJ
@@ -1162,20 +1240,25 @@ BEGIN
       -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
       -- Incluido inddocto=3 abaixo, Limite não utilizado (Renato Cordeiro AMcom)
       IF rw_crapris.inddocto IN (1,3,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
-				IF rw_crapris.cdorigem <> 1 THEN
-           vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
-				ELSE
-					 vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
-				END IF;
+        IF rw_crapris.cdorigem <> 1 THEN
+          vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+        ELSE
+          vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
+        END IF;
       END IF;
       
       -- ***
       -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
       -- estejam em Prejuízo (innivris = 10)
       IF rw_crapris.cdorigem = 3 AND rw_crapris.innivris = 10 THEN
-        vr_vldivida := vr_vldivida - (PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
-                                                                ,pr_nrdconta => rw_crapris.nrdconta
-                                                                ,pr_nrctremp => rw_crapris.nrctremp));
+
+        vr_vljuro60 := PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nrdconta => rw_crapris.nrdconta
+                                                 ,pr_nrctremp => rw_crapris.nrctremp);
+        -- Se o valor da divida for maior que juros60
+        IF vr_vldivida > vr_vljuro60 THEN
+           vr_vldivida := vr_vldivida - vr_vljuro60;
+        END IF;
       END IF;              
       
       -- Adicionar este rowid a pltable
@@ -1209,6 +1292,61 @@ BEGIN
     -- Verifica se ocorreram erros
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
+    END IF;
+    
+    -- Para execução Trimestral na Central 
+    IF pr_cdcooper = 3 AND to_char(vr_dtrefere,'mm') IN ('03','06','09','12') THEN
+      -- Vamos buscar toda a central de risco de todas as Cooperativas com origem BNDES para individualizar as mesmas
+      -- NEste cursor já estamos trazendo as saídas de operações, criadas na pc_cria_saida_operacao acima executada
+      FOR rw_crapris IN cr_crapris_BNDES(vr_dtrefere) LOOP
+        -- Reinicializar valor e pltable no primeiro registro do CPF/CNPJ
+        IF rw_crapris.nrseqctr = 1 THEN
+          vr_vldivida := 0;
+          vr_tab_rowid.delete;
+        END IF;  
+        -- Verifica migração/incorporação
+        IF NOT fn_verifica_conta_migracao(pr_cdcooper => rw_crapris.cdcooper
+                                         ,pr_nrdconta => rw_crapris.nrdconta) THEN
+          CONTINUE;
+        END IF;
+        -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
+        IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
+          vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+        END IF;
+        -- ***
+        -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
+        -- estejam em Prejuízo (innivris = 10)
+        IF rw_crapris.cdorigem = 3 AND rw_crapris.innivris = 10 THEN
+          vr_vljuro60 := PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
+                                                   ,pr_nrdconta => rw_crapris.nrdconta
+                                                   ,pr_nrctremp => rw_crapris.nrctremp);
+          -- Se o valor da divida for maior que juros60
+          IF vr_vldivida > vr_vljuro60 THEN
+             vr_vldivida := vr_vldivida - vr_vljuro60;
+          END IF;
+        END IF; 
+
+        -- Adicionar este rowid a pltable
+        vr_tab_rowid(vr_tab_rowid.count()+1) := rw_crapris.rowid;        
+        -- Para o ultimo registro (Já acumulou todos os contratos do CPF)
+        IF rw_crapris.nrseqctr = rw_crapris.qtdcontr THEN
+          -- Individualizar caso valor acumulado >= a R$ 200,00
+          IF vr_vldivida >= vr_vlindivi THEN
+            -- Varrer pltable
+            FOR vr_idx IN 1..vr_tab_rowid.count LOOP  
+              BEGIN
+                UPDATE crapris cr
+                   SET cr.flindbndes = 1
+                WHERE ROWID = vr_tab_rowid(vr_idx);
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao atualizar CRAPRIS quanto a individualização BNDES: ' ||SQLERRM;
+                  RAISE vr_exc_saida;
+              END;
+            END LOOP;
+          END IF;
+        END IF;
+      END LOOP;      
     END IF;
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
@@ -1264,4 +1402,3 @@ BEGIN
       ROLLBACK;
   END;
 END pc_crps660;
-/

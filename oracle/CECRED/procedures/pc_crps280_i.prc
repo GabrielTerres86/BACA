@@ -433,6 +433,7 @@ BEGIN
     vr_indice_dados_tdb varchar2(200);
     vr_indice_tdb       varchar2(200);
     vr_nrctrdsc_tdb     crapcyb.nrctremp%TYPE;
+    vr_idx_grp          VARCHAR2(20);
 
     ds_character_separador constant varchar2(1) := '#';
     --Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
@@ -717,6 +718,13 @@ BEGIN
 
     -- Vetor para armazenar a totalização por nível de risco de FINAME
     vr_tab_finame_nivris typ_tab_finame_nivris;
+
+
+
+    -- Temp Table para armazenar a data do maior atraso
+    TYPE typ_tab_crapgrp IS TABLE OF NUMBER
+      INDEX BY VARCHAR2(20); -- cdcooper + nrcpfcgc
+    vr_tab_crapgrp typ_tab_crapgrp;
 
 
     ---------- Cursores específicos do processo ----------
@@ -1095,24 +1103,26 @@ BEGIN
 
     -- Verifica se a conta em questao pertence a algum grupo economico
     -- Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
-    CURSOR cr_crapgrp(pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE) IS
-      SELECT '*'
-        FROM (SELECT 2 tipo, i.idgrupo, i.nrdconta, x.inrisco_grupo
-                    ,i.nrcpfcgc
-                FROM tbcc_grupo_economico_integ i,  tbcc_grupo_economico x
-               WHERE i.cdcooper   = pr_cdcooper
-                 AND i.dtexclusao IS NULL
-                 AND i.idgrupo    = x.idgrupo
-              UNION ALL
-              SELECT 1 tipo, t.idgrupo, t.nrdconta, t.inrisco_grupo
-                    ,a.nrcpfcgc
-                FROM tbcc_grupo_economico t, crapass a
-               WHERE t.cdcooper = pr_cdcooper
-                 AND a.cdcooper = t.cdcooper
-                 AND a.nrdconta = t.nrdconta
-                 AND a.dtelimin IS NULL
-               ) tmp
-        WHERE nrcpfcgc = pr_nrcpfcgc;
+    CURSOR cr_crapgrp IS
+      SELECT *
+        FROM (SELECT int.nrdconta, int.nrcpfcgc
+                FROM tbcc_grupo_economico_integ INT
+                    ,tbcc_grupo_economico p
+               WHERE int.dtexclusao IS NULL
+                 AND int.cdcooper = pr_cdcooper
+                 AND int.idgrupo  = p.idgrupo
+               UNION
+              SELECT pai.nrdconta, ass.Nrcpfcgc
+                FROM tbcc_grupo_economico       pai
+                   , crapass                    ass
+                   , tbcc_grupo_economico_integ int
+               WHERE ass.cdcooper = pai.cdcooper
+                 AND ass.nrdconta = pai.nrdconta
+                 AND int.idgrupo  = pai.idgrupo
+                 AND int.dtexclusao is null
+                 AND int.cdcooper = pr_cdcooper
+                 AND ass.cdcooper = pr_cdcooper
+            ) dados;
 
     /* Cursor de Linha de Credito */
       CURSOR cr_craplcr (pr_cdcooper IN craplcr.cdcooper%TYPE
@@ -3904,6 +3914,14 @@ BEGIN
                                          ' - Horário: ' ||to_char(sysdate, 'dd/mm/yyyy hh24:mi:ss'),
                       PR_IDPRGLOG     => vr_idlog_ini_ger);
 
+
+      -- Popular a VR_TAB com todos os grupos economicos
+      FOR rw_crapgrp IN cr_crapgrp LOOP
+        -- Popular o Indice
+        vr_idx_grp := lpad(pr_cdcooper,5,'0')||lpad(rw_crapgrp.nrcpfcgc,15,'0');
+        vr_tab_crapgrp(vr_idx_grp) := rw_crapgrp.nrcpfcgc;        
+      END LOOP;
+
       -- Buscar o primeiro registro da tabela temporária
       vr_des_chave_crapris := vr_tab_crapris.FIRST;
       LOOP
@@ -4539,12 +4557,12 @@ BEGIN
 
         -- Reiniciar variavel de controle de grupo empresarial
         vr_pertenge := '';
+        vr_idx_grp  := lpad(pr_cdcooper,5,'0')||lpad(vr_tab_crapris(vr_des_chave_crapris).nrcpfcgc,15,'0');
+        IF vr_tab_crapgrp.exists(vr_idx_grp) THEN
+           -- Verifica se o CPF/CNPJ em questao pertence a algum grupo economico
+           vr_pertenge := '*';
+        END IF;
 
-        -- Verifica se a conta em questao pertence a algum grupo economico
-        OPEN cr_crapgrp(pr_nrcpfcgc => vr_tab_crapris(vr_des_chave_crapris).nrcpfcgc);
-        FETCH cr_crapgrp
-          INTO vr_pertenge; --> Se encontrar registros na consulta, a variavel receberá '*'
-        CLOSE cr_crapgrp;
         -- Se houve atraso
         IF vr_qtpreatr > 0 THEN
           -- Acumular no totalizador de saldo devedor
