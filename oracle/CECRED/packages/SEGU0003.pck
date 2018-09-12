@@ -543,7 +543,7 @@ EXCEPTION
       '<contrato>'        ||rw_crawseg.nrctrato                       ||'</contrato>'        ||-- Número do Contrato de empr'estimo vinculado ao seguro 
       '<plano>'           ||rw_crawseg.tpplaseg                       ||'</plano>'           ||-- Plano
       '<saldoDevedor>'    ||vr_saldodevedor                           ||'</saldoDevedor>'    ||-- Saldo Devedor do Cooperado/Conta        
-      '<dataIniVigencia>' ||to_char(rw_crawseg.dtnascsg,'DD/MM/RRRR') ||'</dataIniVigencia>' ||-- Data de inicio da vigencia do seguro prestamista
+      '<dataIniVigencia>' ||to_char(rw_crawseg.dtinivig,'DD/MM/RRRR') ||'</dataIniVigencia>' ||-- Data de inicio da vigencia do seguro prestamista
       '<localData>'       ||vr_localedata                             ||'</localData>'       ||-- Local e data do seguro prestamista
       '<nomeCooperado>'   ||rw_crawseg.nmdsegur                       ||'</nomeCooperado>'   ||-- Nome do Coooperado
       '<contaCooperado>'  ||rw_crawseg.nrdconta                       ||'</contaCooperado>'  ||-- Conta do Cooperado
