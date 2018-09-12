@@ -38,12 +38,17 @@
                
                 08/12/2017 - Melhoria 458, auste fechamento-boletim-caixa. Antonio R. Jr (mouts)
                 
-                14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).                    
-                     
+                14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto(AMCOM).
+                
                 05/07/2018 - Tratar os novos históricos
                              1590 - DEPOSITO TRANSPORTE DE VALORES (ESTABELECIMENTOS)
                              2692 - DB TRANSPORTE DE VALORES (ESTABELECIMENTOS)
                              Marcelo Telles Coelho - Projeto 420 - PLD
+                     
+			    05/09/2018 - Tratamento na rotina retorna-dados-fechamento
+				             para utilizar dtmvtolt quando nrdcaixa = 900
+							 (utilizado pelo crps364 para TA e IBank).
+							 (SCTASK0026821) - (Fabricio)
                      
 ------------------------------------------------------------------------------ */
 {dbo/bo-erro1.i}
@@ -81,6 +86,18 @@ PROCEDURE retorna-dados-fechamento:
     FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
                              NO-LOCK NO-ERROR.
 
+	IF p-nro-caixa = 900 THEN
+	DO:
+		FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
+								crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+								crapbcx.cdagenci = p-cod-agencia        AND
+								crapbcx.nrdcaixa = p-nro-caixa          AND
+								crapbcx.cdopecxa = p-cod-operador       AND
+								crapbcx.cdsitbcx = 1 
+								USE-INDEX crapbcx1 NO-LOCK NO-ERROR. 
+	END.
+	ELSE
+	DO:
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
                             crapbcx.dtmvtolt = crapdat.dtmvtocd     AND /* 14/06/2018 - Alterado para considerar dtmvtocd - Everton Deserto*/
                             crapbcx.cdagenci = p-cod-agencia        AND
@@ -88,6 +105,7 @@ PROCEDURE retorna-dados-fechamento:
                             crapbcx.cdopecxa = p-cod-operador       AND
                             crapbcx.cdsitbcx = 1 
                             USE-INDEX crapbcx1 NO-LOCK NO-ERROR. 
+	END.
                             
     IF  NOT AVAIL crapbcx  THEN 
         DO:
