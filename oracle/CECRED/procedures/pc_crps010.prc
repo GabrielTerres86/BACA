@@ -167,7 +167,8 @@ BEGIN
           
           06/02/2018 - #842836 Inclusão do hint FULL no cursor cr_craplem para melhoria de performance (Carlos)
           
-          02/07/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+          02/07/2018 - Projeto Revitalização Sistemas - Transformação do programa
+			           em paralelo por Agência - Andreatta (MOUTs)
           
 		  01/08/2018 - Remoção de Hint com problema de lentidão - Andreatta (MOUTs)
       

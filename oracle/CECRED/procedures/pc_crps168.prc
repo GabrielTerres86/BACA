@@ -63,7 +63,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS168(pr_cdcooper  IN crapcop.cdcooper%t
                             era chamado, duplicando dados na crapger
                             (Tiago Castro - RKAM).
 
-               17/05/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+               17/05/2018 - Projeto Revitalização Sistemas - Transformação do programa
+			                em paralelo por Agência - Andreatta (MOUTs)
 
                15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate) 
 

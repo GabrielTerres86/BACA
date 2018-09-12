@@ -154,7 +154,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                19/03/2018 - Consistencia para considerar dias úteis ou corridos na 
                             atualização do saldo - Daniel(AMcom)		
 
-               28/06/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+               28/06/2018 - Projeto Revitalização Sistemas - Transformação do programa
+			                em paralelo por Agência - Andreatta (MOUTs)
                             
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
                             

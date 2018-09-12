@@ -125,7 +125,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
                07/12/2015 - Adicionado validacao para limpar o buffer da string de xml
                             quando montar as tags com os totais. (Douglas - Chamado 368794)
               
-               15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)  
+               15/05/2018 - Projeto Revitalização Sistemas - Transformação do programa
+			                em paralelo por Agência - Andreatta (MOUTs)
               
                15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)  
 

@@ -104,7 +104,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS133(pr_cdcooper  IN craptab.cdcooper%T
                05/03/2018 - Substituída verificacao do tipo de conta "NOT IN (5,6,7,17,18)" para a 
                             modalidade do tipo de conta diferente de "2" e "3". PRJ366. (Lombardi)
 
-               17/05/2018 - Projeto Revitalização Sistemas - Andreatta (MOUTs)
+               17/05/2018 - Projeto Revitalização Sistemas - Transformação do programa
+			                em paralelo por Agência - Andreatta (MOUTs)
 
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
                
