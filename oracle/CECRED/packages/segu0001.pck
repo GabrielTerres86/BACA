@@ -7745,6 +7745,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_sair EXCEPTION;
       vr_exc_erro EXCEPTION;
 
+      vr_plano crapseg.tpplaseg%type;
+
+       --Cursor para retornor próximo plano
+       cursor c_plano is
+       select max(s.tpplaseg)+1 tpplaseg  
+         from crapseg s
+        where s.nrdconta = pr_nrdconta
+          and s.cdcooper = pr_cdcooper
+          and s.tpseguro = 4
+          and s.cdsitseg = 1; -- Somente ativos
+
+
     BEGIN
 
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_cria_seguro');
@@ -8019,6 +8031,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
           vr_dtnascsg := pr_dtnascsg;
         END IF;
 
+        -- Próximo Plano
+        OPEN c_plano;
+         FETCH c_plano INTO vr_plano;
+        CLOSE c_plano; 
+
         BEGIN
           INSERT INTO crawseg
             (crawseg.dtmvtolt
@@ -8100,7 +8117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             ,vr_vlpremio --vlpremio
             ,pr_vlpreseg --vlpreseg
             ,pr_cdcalcul --cdcalcul
-            ,pr_tpplaseg --tpplaseg
+            ,vr_plano    --tpplaseg Será calculado (Paulo Martins) 12/09
             ,pr_vlseguro --vlseguro
             ,vr_dtprideb --dtprideb
             ,pr_flgunica --flgunica
