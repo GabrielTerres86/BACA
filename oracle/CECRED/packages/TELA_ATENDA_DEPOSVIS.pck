@@ -1135,11 +1135,11 @@ END pc_busca_saldos_devedores;
 
         /* Procedure para obter dados de emprestimos do associado */
         EMPR0001.pc_obtem_dados_empresti(pr_cdcooper   => vr_cdcooper               --> Cooperativa conectada
-                                        ,pr_cdagenci   => to_number(vr_cdagenci, 0) --> Código da agência
-                                        ,pr_nrdcaixa   => to_number(vr_nrdcaixa, 0) --> Número do caixa
+                                        ,pr_cdagenci   => nvl(vr_cdagenci, 0) --> Código da agência
+                                        ,pr_nrdcaixa   => nvl(vr_nrdcaixa, 0) --> Número do caixa
                                         ,pr_cdoperad   => vr_cdoperad               --> Código do operador
                                         ,pr_nmdatela   => 'ATENDA'                  --> Nome datela conectada
-                                        ,pr_idorigem   => to_number(vr_idorigem, 0) --> Indicador da origem da chamada
+                                        ,pr_idorigem   => nvl(vr_idorigem, 0) --> Indicador da origem da chamada
                                         ,pr_nrdconta   => pr_nrdconta               --> Conta do associado
                                         ,pr_idseqttl   => 1                         --> Sequencia de titularidade da conta
                                         ,pr_rw_crapdat => rw_crapdat                --> Vetor com dados de parâmetro (CRAPDAT)
@@ -1750,6 +1750,11 @@ BEGIN
       ELSE
 				 OPEN cr_prejuizo;
 				 FETCH cr_prejuizo INTO vr_dtprejuz;
+				 
+				 IF cr_prejuizo%NOTFOUND THEN
+					 vr_dtprejuz := NULL;
+				 END IF;
+				 
 				 CLOSE cr_prejuizo;
 
          IF rw_saldos.dtrisclq < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
@@ -1782,6 +1787,9 @@ BEGIN
                 pr_vlju6038 := pr_vlju6038 + rw_craplcm.vllanmto;
               ELSIF rw_craplcm.cdhistor = 57 THEN
                 pr_vlju6057 := pr_vlju6057 + rw_craplcm.vllanmto;
+							ELSIF rw_craplcm.cdhistor = 2323 AND vr_dtprejuz IS NOT NULL
+							AND rw_craplcm.dtmvtolt >= vr_dtprejuz THEN
+							  vr_vliofprj := nvl(vr_vliofprj,0) + rw_craplcm.vllanmto;
               ELSIF rw_craplcm.indebcre = 'D' THEN
                 pr_vlsld59d := pr_vlsld59d + rw_craplcm.vllanmto;
               ELSE
