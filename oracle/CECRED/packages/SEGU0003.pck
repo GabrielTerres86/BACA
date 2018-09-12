@@ -173,7 +173,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0003 IS
        WHERE
              c.cdcooper = pr_cdcooper
          AND c.nrdconta = pr_nrdconta
-         AND c.nrctremp = pr_nrctremp;
+         AND c.nrctremp = pr_nrctremp
+         and not exists (select 1 -- Garantir que somente proposta não efetivada esteja no saldo -- Paulo 12/09
+                           from crapepr e -- Emprestimos efetivados
+                          where e.cdcooper = c.cdcooper
+                            and e.nrdconta = c.nrdconta
+                            and e.nrctremp = c.nrctremp);
 
     -- Tratamento de erros
     vr_exc_erro        EXCEPTION;
