@@ -1327,7 +1327,8 @@ BEGIN
         LOOP
           BEGIN
             EXIT WHEN vr_idxindc IS NULL;
-
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
             -- Sempre irá testar o índice futuro para executar atribuição de dados pelo índice anterior
             IF vr_tab_craprpp(vr_idxindc).nrdconta = rw_crapass.nrdconta THEN
               -- Passa para o próximo registro
