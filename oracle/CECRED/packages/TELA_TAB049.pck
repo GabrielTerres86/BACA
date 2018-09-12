@@ -185,16 +185,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB049 IS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'valormin',
                              pr_tag_cont => to_char(vr_valormin,
-                                                    '999999999D00',
+                                                    'fm9g999g999g999g999g990d00',
                                                     'NLS_NUMERIC_CHARACTERS='',.'''),
                              pr_des_erro => vr_dscritic);
-
+                             
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'valormax',
                              pr_tag_cont => to_char(vr_valormax,
-                                                    '999999999D00',
+                                                    'fm9g999g999g999g999g990d00',
                                                     'NLS_NUMERIC_CHARACTERS='',.'''),
                              pr_des_erro => vr_dscritic);
 
@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB049 IS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'vallidps',
                              pr_tag_cont => to_char(vr_vallidps,
-                                                    '999999999D00',
+                                                    'fm9g999g999g999g999g990d00',
                                                     'NLS_NUMERIC_CHARACTERS='',.'''),
                              pr_des_erro => vr_dscritic);
                              
