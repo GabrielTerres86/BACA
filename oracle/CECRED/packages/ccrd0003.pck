@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/07/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 12/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -87,8 +87,17 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
   --                          (Lucas Ranghetti SCTASK0014662)
   --
+  --             09/07/2018 - Validar critica 080 apos a criacao da critica no
+  --                          relatorio (Lucas Ranghetti INC0018668)
+  --
+  --             10/07/2018 - Validar valores nulos na geracao das linhas do arquivo ccb3 e 
+  --                          enviar e-mail caso nao gere arquivo (Lucas Ranghetti PRB0040160)
+  --
   --             30/07/2018 - Adicionado tratamento para não enviar conta PJ caso a mesma ainda não tenha sido criada 
   --                          no arquivo gerado na procedure pc_crps671 (Reinert).
+  --
+  --             12/09/2018 - Ajuste na mudanca de data no debito da fatura (alterar somente na ultima execucao do dia)
+  --                          Projeto Debitador Unico - Fabiano B. Dias (AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -4764,7 +4773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 20/06/2017
+     Data    : Maio/14.                    Ultima atualizacao: 10/07/2017
 
      Dados referentes ao programa:
 
@@ -4871,6 +4880,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                 23/08/2017 - Alterar o envio de alterações para que sejam enviadas as informações de 
                              alteração de limites. (Renato Darosci - Projeto 360)
+                             
+                10/07/2018 - Validar valores nulos na geracao das linhas do arquivo ccb3 e 
+                             enviar e-mail caso nao gere arquivo (Lucas Ranghetti PRB0040160)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -4935,6 +4947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_dsderro    VARCHAR2(4000);
 
       -- Comando completo
       vr_dscomando VARCHAR2(4000);
@@ -5377,10 +5390,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        -- VERIFICAR QUANTOS CARACTERES SERÃO DESTINADOS AO ENDEREÇO SD204641
             IF rw_crapenc.dsender_apbl IS NULL THEN
               --USA OS 50 CARACTERES PARA O ENDEREÇO
-              vr_aux_dsendcom := rpad(substr(rw_crapenc.dsender_compl,1,50),50,' ');
+              vr_aux_dsendcom := rpad(substr(nvl(rw_crapenc.dsender_compl,' '),1,50),50,' ');
             ELSE
               -- SEPARA 29 CARACTERES PARA ENDEREÇO E 21 PARA COMPLEMENTO
-              vr_aux_dsendcom := rpad((TRIM(substr(rw_crapenc.dsendere,1,29)) || TRIM(substr(rw_crapenc.nrendere,1,6)||substr(rw_crapenc.dsender_apbl,1,15))),50,' ');
+              vr_aux_dsendcom := rpad(nvl((TRIM(substr(nvl(rw_crapenc.dsendere,' '),1,29)) || 
+                                           TRIM(substr(nvl(rw_crapenc.nrendere,' '),1,6)||
+                                           substr(nvl(rw_crapenc.dsender_apbl,' '),1,15))),' '),50,' ');
             END IF;
 
       -- Gerar código sequencial de controle para o contrato (Renato-Supero)
@@ -5474,20 +5489,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '  '                                    /* Uso Futuro                   */                             ||
                               '1'                                     /* Tp. Endere. - Residencial    */                             ||
                               vr_aux_dsendcom                /* Endereço Completo            */                             ||
-                              rpad(rw_crapenc.cdufende,2,' ' )        /* UF                           */                             ||
-                              rpad(rw_crapenc.nmcidade,40,' ')        /* Cidade                       */                             ||
-                              rpad(rw_crapenc.nmbairro,25,' ')        /* Bairro                       */                             ||
-                              lpad(rw_crapenc.nrcepend,8,'0' )        /* CEP                          */                             ||
+                              rpad(nvl(rw_crapenc.cdufende,' '),2,' ' )        /* UF                           */                             ||
+                              rpad(nvl(rw_crapenc.nmcidade,' '),40,' ')        /* Cidade                       */                             ||
+                              rpad(nvl(rw_crapenc.nmbairro,' '),25,' ')        /* Bairro                       */                             ||
+                              lpad(nvl(rw_crapenc.nrcepend,'0'),8,'0' )        /* CEP                          */                             ||
                               lpad(NVL(vr_dstelres,'0'),9,'0' )       /* Telefone Residencial         */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
                               ' '                                     /* Uso Futuro                   */                             ||
                               '  '                                    /* Uso Futuro                   */                             ||
                               vr_tpcntdeb                             /* Tp. Conta Deb.               */                             ||
                               '756'                                   /* Banco da Conta Debitar       */                             ||
-                              lpad(rw_crapcol.cdagebcb,4,'0' )        /* Agencia da Conta Debitar     */                             ||
-                              lpad(rw_crawcrd.nrdconta,12,'0')        /* Nr. Conta a Debitar          */                             ||
+                              lpad(nvl(rw_crapcol.cdagebcb,'0'),4,'0' )        /* Agencia da Conta Debitar     */                             ||
+                              lpad(nvl(rw_crawcrd.nrdconta,'0'),12,'0')        /* Nr. Conta a Debitar          */                             ||
                               lpad(vr_tpdpagto,3,'0' )                /* Porc. Deb. Autom             */                             ||
-                              lpad(rw_crawcrd.nrdconta,8,'0' )        /* Nr. Conta Socio              */                             ||
+                              lpad(nvl(rw_crawcrd.nrdconta,'0'),8,'0' )        /* Nr. Conta Socio              */                             ||
                               lpad('0',12,'0')                        /* Renda Titular                */                             ||
                               '  '                                    /* Uso Futuro                   */                             ||
                               lpad(nvl(rw_crawcrd.dddebito,0),2,'0')  /* Venc. Validos do Emiss.     */                             ||
@@ -5502,7 +5517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                               '00'                                    /* Situação da Conta            */                             ||
                               '000'                                   /* Cod. Rejeição                */                             ||
                               lpad('0',8,'0')                         /* Promoção                     */                             ||
-                              lpad(pr_canvenda, 8,' ')                /* Canal de Vendas              */                             ||
+                              lpad(nvl(pr_canvenda,' '), 8,' ')                /* Canal de Vendas              */                             ||
                               lpad(' ',8,' ')                         /* Vendedor                     */                             ||
                               '0'                                     /* Cliente Normal               */                             ||
                               '0'                                     /* Entrega Normal               */                             ||
@@ -6656,8 +6671,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                               || vr_dscritic );
                 END IF;
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception;
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
                 vr_dscritic := 'Problema ao montar arquivo de cartoes solicitados - ' || sqlerrm;
+                
+                gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
+                                          ,pr_cdprogra        => vr_cdprogra
+                                          ,pr_des_destino     => gene0001.fn_param_sistema('CRED',vr_cdcooper,'CRD_RESPONSAVEL')
+                                          ,pr_des_assunto     => 'ERRO - Arquivo CCB3'
+                                          ,pr_des_anexo       => NULL
+                                          ,pr_des_corpo       => 'Erro ao gerar arquivo '|| vr_nmrquivo||
+                                                                 '<br><br>'||'Critica: ' || vr_dscritic
+                                          ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                          ,pr_des_erro        => vr_dsderro);
+                --Se ocorreu erro
+                IF trim(vr_dsderro) IS NOT NULL THEN
+                  vr_dscritic:= vr_dsderro;
+                  --Levantar Excecao
+                RAISE vr_exc_saida;
+                END IF;
+                
                 RAISE vr_exc_saida;
             END;
 
@@ -6774,7 +6807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 30/05/2018
+       Data    : Abril/2014.                     Ultima atualizacao: 09/07/2018
 
        Dados referentes ao programa:
 
@@ -6921,6 +6954,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    
                    30/05/2018 - Tratamento para Grupo de afinidade zerado 
                                 (Lucas Ranghetti SCTASK0014662)
+                                
+                   09/07/2018 - Validar critica 080 apos a criacao da critica no
+                                relatorio (Lucas Ranghetti INC0018668)
     ............................................................................ */
 
     DECLARE
@@ -9188,11 +9224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
                 IF vr_tpdocmto = '03' THEN                  
-                  /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
-                    continue;
-                  END IF;
+
                   
                   vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,250,23)||substr(vr_des_text,7,2);
                   
@@ -9226,6 +9258,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         vr_dscritic := 'Erro ao inserir craprej: '||SQLERRM;
                         RAISE vr_exc_saida;
                       END;
+
+                    /* nao deve solicitar cartao novamente caso retorne critica 080
+                       (pessoa ja tem cartao nesta conta) */
+                    IF substr(vr_des_text, 211, 3) = '080' THEN
+                      continue;
+                    END IF;
 
                     -- Atualiza o campo cdpesqbb do tipo 1 com as inforamções de tipo 2 
                     atualiza_nmtitcrd(vr_cdcooper,
@@ -9664,12 +9702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 
                 -- Verifica se houve rejeição do Tipo de Registro 2
                 IF vr_codrejei <> '000'  THEN
-                  /* nao deve solicitar cartao novamente caso retorne critica 080
-                     (pessoa ja tem cartao nesta conta) */
-                  IF substr(vr_des_text, 211, 3) = '080' THEN
-                    continue;
-                  END IF;
-                  
+                                   
                   BEGIN                  
                     vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,57,23)||substr(vr_des_text,7,2);
                     INSERT INTO craprej
@@ -9699,6 +9732,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       vr_dscritic := 'Erro ao inserir craprej: '||SQLERRM;
                       RAISE vr_exc_saida;
                     END;
+
+                   /* nao deve solicitar cartao novamente caso retorne critica 080
+                     (pessoa ja tem cartao nesta conta) */
+                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                    continue;
+                  END IF;
 
                   -- Atualiza o campo cdpesqbb do tipo 1 com as inforamções de tipo 2 
                   atualiza_nmtitcrd(vr_cdcooper,
@@ -10795,7 +10834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    Programa: CCDR0003
    Sigla   : APLI
    Autor   : Tiago
-   Data    : Junho/2015                          Ultima atualizacao: 26/05/2017
+   Data    : Junho/2015                          Ultima atualizacao: 12/09/2018
 
    Dados referentes ao programa:
 
@@ -10825,6 +10864,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    26/05/2017 - Tratado para pegar uma data de referencia que sirva para todas as situações de
                 vencimento de fatura contando que os dias de repique agora são dias uteis
                 (Tiago/Fabricio #677702)
+				
+   12/09/2018 - Ajuste na mudanca de data no debito da fatura (alterar somente na ultima execucao do dia)
+                Projeto Debitador Unico - Fabiano B. Dias (AMcom)				
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -11473,11 +11515,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_vlsomsld := vr_vlpagmto;
           vr_dtultsld := pr_dtmvtolt;
           vr_flmuddia := 0;
-          
-          IF nvl(TRUNC(rw_tbcrd_fatura.dtref_pagodia),TO_DATE('01/01/0001','DD/MM/RRRR')) <>
-             TRUNC(pr_dtmvtolt) THEN
+                  
+          IF ( nvl(TRUNC(rw_tbcrd_fatura.dtref_pagodia),TO_DATE('01/01/0001','DD/MM/RRRR')) <>  TRUNC(pr_dtmvtolt)  ) 
+          AND (pr_cdprogra <> 'CRPS674' OR (pr_cdprogra = 'CRPS674' AND vr_flultexe = 1))  THEN -- Debitador Unico 12/09/2018.
              vr_flmuddia := 1;
-          END IF;             
+          END IF; 
           
           -- Fatura totalmente paga   
           IF (vr_vlpagmto - rw_tbcrd_fatura.vlpendente) = 0 THEN
