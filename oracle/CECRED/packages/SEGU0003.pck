@@ -1388,10 +1388,11 @@ EXCEPTION
        WHERE
            c.cdcooper = vr_cdcooper
        AND c.nrdconta = pr_nrdconta 
-       AND c.nrctremp = pr_nrctrato;
+       AND c.nrctremp = pr_nrctrato
+       AND c.nrctremp > 0;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
-       pr_dscritic:= 'Contrato informado nao pertence ao cooperado!';
+       vr_dscritic:= 'Contrato informado nao pertence ao cooperado!';
       WHEN OTHERS THEN
         vr_dscritic:= 'Erro ao executar a rotina SEGU0003.pc_valida_contrato.'|| SQLERRM;
       --Levantar Excecao
@@ -1402,15 +1403,16 @@ EXCEPTION
     -- Se estiver, retornar mensagem informando
     BEGIN
       SELECT 
-            'Proposta de Prestamista já contratada! Proposta:'||c.nrctrseg
+            'Proposta de Prestamista já contratada! Proposta: '||c.nrctrseg||'.'
         INTO
-           pr_des_erro
+           vr_dscritic
         FROM
            crawseg c
        WHERE
            c.cdcooper = vr_cdcooper
        AND c.nrdconta = pr_nrdconta 
-       AND c.nrctrato = pr_nrctrato;
+       AND c.nrctrato = pr_nrctrato
+       AND c.nrctrato > 0;       
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
        pr_des_erro:='OK';
@@ -1420,6 +1422,10 @@ EXCEPTION
       RAISE vr_exc_erro;          
     END;
                                       
+    if vr_dscritic is not null then
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    end if;                                             
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');           
         
