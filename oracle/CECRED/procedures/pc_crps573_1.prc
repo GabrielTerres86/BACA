@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos-Envolti
-       Data    : Julho/2018                       Ultima atualizacao: 28/08/2018
+       Data    : Julho/2018                       Ultima atualizacao: 04/09/2018
 
        Dados referentes ao programa:
 
@@ -42,6 +42,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                             
                      28/08/2018 - Quando o Juros60 for maior que o valor da divida, enviar o valor da divida, 
                                   senao subtrair do valor da divida o Juros60 para emprestimos em prejuizo. (P450 - Jaison)
+
+                     04/09/2018 - P450 - Correção Juros60 (Reginaldo/AMcom)
 
     .............................................................................................................................*/
 
@@ -642,6 +644,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               innivris crapris.innivris%TYPE,
               qtdiaatr crapris.qtdiaatr%TYPE,
               vldivida crapris.vldivida%TYPE,
+              vlsld59d crapris.vlsld59d%TYPE,
               vlvec180 crapris.vlvec180%TYPE,
               vlvec360 crapris.vlvec360%TYPE,
               vlvec999 crapris.vlvec999%TYPE,
@@ -704,6 +707,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               nrctremp crapris.nrctremp%TYPE,
               nrseqctr crapris.nrseqctr%TYPE,
               vldivida crapris.vldivida%TYPE,
+              vlsld59d crapris.vlsld59d%TYPE,
               dtinictr crapris.dtinictr%TYPE,
               cdorigem crapris.cdorigem%TYPE,
               nrdocnpj VARCHAR2(15),
@@ -994,6 +998,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       vr_cdvencto crapvri.cdvencto%TYPE;
       vr_indice_crapvri VARCHAR2(45);
       vr_vlrdivid NUMBER(17,2);
+      vr_vldivida_aux NUMBER(17,2); -- Variável auxiliar para o valor da dívida
       vr_cloperis VARCHAR2(03);
       vr_innivris PLS_INTEGER;
       vr_coddindx PLS_INTEGER;
@@ -1407,6 +1412,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                  ris.innivris,
                  ris.qtdiaatr,
                  ris.vldivida,
+                 ris.vlsld59d,
                  ris.vlvec180,
                  ris.vlvec360,
                  ris.vlvec999,
@@ -1485,6 +1491,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                  ris.innivris,
                  ris.qtdiaatr,
                  ris.vldivida,
+                 ris.vlsld59d,
                  ris.vlvec180,
                  ris.vlvec360,
                  ris.vlvec999,
@@ -1564,6 +1571,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
              innivris   crapris.innivris%TYPE, 
              qtdiaatr   crapris.qtdiaatr%TYPE, 
              vldivida   crapris.vldivida%TYPE, 
+             vlsld59d   crapris.vlsld59d%TYPE,
              vlvec180   crapris.vlvec180%TYPE, 
              vlvec360   crapris.vlvec360%TYPE, 
              vlvec999   crapris.vlvec999%TYPE, 
@@ -1842,6 +1850,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           vr_tab_individ_copy(vr_indice_copy).nrctremp := vr_tab_ris(vr_indice_ris).nrctremp;
           vr_tab_individ_copy(vr_indice_copy).nrseqctr := vr_tab_ris(vr_indice_ris).nrseqctr;
           vr_tab_individ_copy(vr_indice_copy).vldivida := vr_tab_ris(vr_indice_ris).vldivida;
+          vr_tab_individ_copy(vr_indice_copy).vlsld59d := vr_tab_ris(vr_indice_ris).vlsld59d;
           vr_tab_individ_copy(vr_indice_copy).dtinictr := vr_tab_ris(vr_indice_ris).dtinictr;
           vr_tab_individ_copy(vr_indice_copy).nrcpfcgc := vr_cpf;
           vr_tab_individ_copy(vr_indice_copy).nrdocnpj := vr_nrdocnpj;
@@ -1936,13 +1945,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                 --         3   R$ 500,00 a R$ 999,99
                 --         4   R$ 1.000,00 a R$ 4.999,99
                 --         5   acima de R$4999,99
-                IF (vr_tab_crapris_temp(vr_indice_temp).vldivida - vr_tab_crapris_temp(vr_indice_temp).vljura60 ) < 100 THEN
+                IF vr_tab_crapris_temp(vr_indice_temp).cdmodali = 0101 THEN
+                  vr_vldivida_aux := vr_tab_crapris_temp(vr_indice_temp).vlsld59d;
+                ELSE
+                  vr_vldivida_aux := vr_tab_crapris_temp(vr_indice_temp).vldivida - vr_tab_crapris_temp(vr_indice_temp).vljura60;
+                END IF;
+							
+                IF (vr_vldivida_aux) < 100 THEN
                   vr_cddfaixa := 1;
-                ELSIF (vr_tab_crapris_temp(vr_indice_temp).vldivida - vr_tab_crapris_temp(vr_indice_temp).vljura60 ) < 500 THEN
+                ELSIF (vr_vldivida_aux) < 500 THEN
                   vr_cddfaixa := 2;
-                ELSIF (vr_tab_crapris_temp(vr_indice_temp).vldivida - vr_tab_crapris_temp(vr_indice_temp).vljura60 ) < 1000 THEN
+                ELSIF (vr_vldivida_aux) < 1000 THEN
                   vr_cddfaixa := 3;
-                ELSIF (vr_tab_crapris_temp(vr_indice_temp).vldivida - vr_tab_crapris_temp(vr_indice_temp).vljura60 ) < 5000 THEN
+                ELSIF (vr_vldivida_aux) < 5000 THEN
                   vr_cddfaixa := 4;  
                 ELSE
                   vr_cddfaixa := 5;  
@@ -2171,6 +2186,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                  ris.innivris,
                  ris.qtdiaatr,
                  ris.vldivida,
+                 ris.vlsld59d,
                  ris.vlvec180,
                  ris.vlvec360,
                  ris.vlvec999,
@@ -2450,6 +2466,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
             vr_tab_saida(vr_indice_crapris).innivris := rw_crapris.innivris;
             vr_tab_saida(vr_indice_crapris).qtdiaatr := rw_crapris.qtdiaatr;
             vr_tab_saida(vr_indice_crapris).vldivida := rw_crapris.vldivida;
+            vr_tab_saida(vr_indice_crapris).vlsld59d := rw_crapris.vlsld59d;
             vr_tab_saida(vr_indice_crapris).vlvec180 := rw_crapris.vlvec180;
             vr_tab_saida(vr_indice_crapris).vlvec360 := rw_crapris.vlvec360;
             vr_tab_saida(vr_indice_crapris).vlvec999 := rw_crapris.vlvec999;
@@ -5764,7 +5781,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
            -- Prejuizo com calc diferenciado 
            IF vr_vldivida <> 0  THEN 
              vr_vlpercen := vr_tab_percentual(vr_tab_individ(vr_idx_individ).innivris).percentual / 100;
-             vr_vlpreatr := ROUND(( (vr_vldivida - vr_tab_individ(vr_idx_individ).vljura60) * vr_vlpercen),2);
+             IF vr_tab_individ(vr_idx_individ).cdmodali = 101 THEN
+               vr_vlpreatr := ROUND(( (vr_tab_individ(vr_idx_individ).vlsld59d) * vr_vlpercen),2);
+             ELSE 
+               vr_vlpreatr := ROUND(( (vr_vldivida - vr_tab_individ(vr_idx_individ).vljura60) * vr_vlpercen),2);
+             END IF;
            END IF;
 
           -- Inicio da TAG de operacoes de credito <Op> 
@@ -6253,8 +6274,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           WHILE vr_indice_venc IS NOT NULL LOOP
             IF vr_tab_venc(vr_indice_venc).cdvencto >= 230 AND vr_tab_venc(vr_indice_venc).cdvencto <= 290 THEN
               IF vr_flgfirst = 1 THEN
-                 vr_vldivnor := vr_ttldivid - vr_tab_individ(vr_idx_individ).vljura60 - vr_vljurfai;
-                 vr_flgfirst := 0;
+                -- Para conta corrente, não desconta o valor dos juros +60 (os juros já foram subtraídos do valor da dívida - vlsld59d)
+                IF vr_tab_individ(vr_idx_individ).cdmodali = 101 THEN
+                  vr_vldivnor := vr_ttldivid - vr_vljurfai;
+                ELSE
+                  vr_vldivnor := vr_ttldivid - vr_tab_individ(vr_idx_individ).vljura60 - vr_vljurfai;
+                END IF;
+                vr_flgfirst := 0;
               ELSE
                 -- Com base nos juros e no valor da divida, eh calculado o valor total da divida
                 vr_vldivnor := fn_normaliza_juros(vr_ttldivid

@@ -17,11 +17,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 BEGIN
   /* ..........................................................................
 
-     Programa: pc_crps280_i (Antiga includes/crps280.i)
+     Programa: PC_CRPS280_I (Antiga includes/crps280.i)
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 29/06/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 29/08/2018
 
      Dados referentes ao programa:
 
@@ -370,6 +370,10 @@ BEGIN
                               dos titulos de bordero, e para gerar as entradas nas tabelas do CYBER
                               (Andrew Albuquerque - GFT)
                  17/06/2018 - Revisão de campos para envio de Títulos para a Cyber (Andrew Albuquerque - GFT)
+
+                 29/08/2018 - Acréscimo do valor dos juros +60 aos saldos devedores para a modalidade 0101 (ADP)
+                              nos relatórios 227 e 354. (Reginaldo/AMcom - P450)
+
   ............................................................................. */
 
   DECLARE
@@ -586,7 +590,9 @@ BEGIN
               ,cdusolcr craplcr.cdusolcr%TYPE
               ,dsorgrec craplcr.dsorgrec%TYPE
               ,dtinictr crapris.dtinictr%TYPE
-              ,fleprces INTEGER);
+              ,fleprces INTEGER
+              ,inprejuz crapass.inprejuz%TYPE
+              ,vliofmes crapsld.vliofmes%TYPE);
 
     -- Definição de um tipo de tabela com o registro acima
       TYPE typ_tab_crapris IS
@@ -761,6 +767,7 @@ BEGIN
             ,ass.nmprimtl
             ,ris.dsinfaux
             ,ris.dtinictr
+            ,ass.inprejuz
         FROM crapass ass
             ,crapris ris
          WHERE ris.cdcooper  = ass.cdcooper
@@ -949,6 +956,7 @@ BEGIN
     -- Buscar detalhes do saldo da conta
     CURSOR cr_crapsld(pr_nrdconta IN crapsld.nrdconta%TYPE) IS
       SELECT sld.qtdriclq
+           , sld.vliofmes
         FROM crapsld sld
        WHERE sld.cdcooper = pr_cdcooper
          AND sld.nrdconta = pr_nrdconta;
@@ -2310,7 +2318,7 @@ BEGIN
                       ' wpr_vltotdiv  crapbnd.vltotdiv%TYPE; ' || chr(13) ||
                       ' rw_crapdat    btch0001.cr_crapdat%ROWTYPE;' || chr(13) ||
                       'begin ' || chr(13) ||
-                      '   cecred.pc_crps280_i(' || pr_cdcooper || ',' || chr(13) ||
+                      '   cecred.PC_CRPS280_I(' || pr_cdcooper || ',' || chr(13) ||
                       'rw_crapdat,' || chr(13) ||
                       '''' || pr_dtrefere || '''' || ',' || chr(13) ||
                       '''' || pr_cdprogra || '''' || ',' || chr(13) ||
@@ -2770,6 +2778,8 @@ BEGIN
           vr_tab_crapris(vr_des_chave_crapris).cdusolcr := vr_cdusolcr;
           vr_tab_crapris(vr_des_chave_crapris).dsorgrec := vr_dsorgrec;
           vr_tab_crapris(vr_des_chave_crapris).dtinictr := rw_crapris.dtinictr;
+          vr_tab_crapris(vr_des_chave_crapris).inprejuz := rw_crapris.inprejuz;
+          vr_tab_crapris(vr_des_chave_crapris).vliofmes := rw_crapsld.vliofmes;
 
           IF rw_crapris.cdorigem = 1 THEN
             -- conta corrente
@@ -3324,7 +3334,7 @@ BEGIN
     END pc_grava_tab_men_dados_tdb;
 
     ---------------------------------------
-    -- Inicio Bloco Principal pc_crps280_I
+    -- Inicio Bloco Principal PC_CRPS280_I
     ---------------------------------------
 
   BEGIN
@@ -4006,15 +4016,40 @@ BEGIN
                           vr_tab_crapris(vr_des_chave_crapris).cdmodali || vr_tab_crapris(vr_des_chave_crapris).nrctremp ||
                           vr_tab_crapris(vr_des_chave_crapris).nrseqctr;
 
-
+        /*
+         Se a modalidade é 0101, soma o valor dos juros +60 aos saldos devedores,
+         pois a CRAPVRI é alimentada para esta modalidade somente com o valor do
+         saldo devedor até 59 dias de atraso (sem os juros +60)
+         Reginaldo/AMcom - P450
+        */
         IF vr_tab_crapvri_index.exists(vr_chave_index) THEN
-
-          vr_vldivida := vr_vldivida + vr_tab_crapvri_index(vr_chave_index).vldivida;
+          vr_vldivida := vr_vldivida + 
+					               (vr_tab_crapvri_index(vr_chave_index).vldivida +
+												  CASE WHEN vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101 
+														   THEN vr_tab_crapris(vr_des_chave_crapris).vljura60
+															 ELSE 0
+													END);
           vr_qtpreatr := vr_tab_crapvri_index(vr_chave_index).qtpreatr;
-          vr_vltotatr := vr_vltotatr + vr_tab_crapvri_index(vr_chave_index).vltotatr;
-          vr_vlprejuz := vr_vlprejuz + vr_tab_crapvri_index(vr_chave_index).vlprejuz;
-          vr_vlprejuz_conta := vr_vlprejuz_conta + vr_tab_crapvri_index(vr_chave_index).vlprejuz;
-
+          vr_vltotatr := vr_vltotatr + 
+					               (vr_tab_crapvri_index(vr_chave_index).vltotatr +
+												  CASE WHEN vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101 
+														   THEN vr_tab_crapris(vr_des_chave_crapris).vljura60
+															 ELSE 0
+													END);
+          vr_vlprejuz := vr_vlprejuz + 
+					               (vr_tab_crapvri_index(vr_chave_index).vlprejuz +
+												  CASE WHEN vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101 
+														        AND vr_tab_crapvri_index(vr_chave_index).vlprejuz > 0
+														   THEN vr_tab_crapris(vr_des_chave_crapris).vljura60
+															 ELSE 0
+													END);
+          vr_vlprejuz_conta := vr_vlprejuz_conta + 
+					                     (vr_tab_crapvri_index(vr_chave_index).vlprejuz +
+												       CASE WHEN vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101 
+																         AND vr_tab_crapvri_index(vr_chave_index).vlprejuz > 0
+														        THEN vr_tab_crapris(vr_des_chave_crapris).vljura60
+															      ELSE 0
+													     END);
         END IF;
 
         -- Somente considerar se houver diferença na dívida, do contrario considerar prejuízo
@@ -4023,8 +4058,10 @@ BEGIN
           vr_percentu := vr_tab_risco(vr_tab_crapris(vr_des_chave_crapris).innivris).percentu;
           -- Calcular o percentual para o atraso com base nos percentuais da tabela
           vr_vlpercen := vr_percentu / 100;
+
           -- Calcular o valor de prestação em atraso
             vr_vlpreatr := ROUND( (vr_vldivida - vr_tab_crapris(vr_des_chave_crapris).vljura60 ) * vr_vlpercen ,2);
+            
           -- Acumular totalizadores por risco de PAC
           vr_tab_totrispac(vr_tab_crapris(vr_des_chave_crapris).innivris).qtdabase := vr_tab_totrispac(vr_tab_crapris(vr_des_chave_crapris).innivris).qtdabase + 1;
           vr_tab_totrispac(vr_tab_crapris(vr_des_chave_crapris).innivris).vljura60 := vr_tab_totrispac(vr_tab_crapris(vr_des_chave_crapris).innivris).vljura60 + vr_tab_crapris(vr_des_chave_crapris).vljura60;
@@ -4756,7 +4793,7 @@ BEGIN
                                                       ,pr_dtefetiv => pr_rw_crapdat.dtmvtolt                        -- Data da efetivacao do emprestimo.
                                                       ,pr_qtpreemp => 1                                             -- Quantidade de prestacoes.
                                                       ,pr_vlemprst => vr_vldivida                                   -- Valor emprestado.
-                                                      ,pr_vlsdeved => vr_vldivida                                   -- Saldo devedor
+                                                      ,pr_vlsdeved => vr_vldivida + vr_tab_crapris(vr_des_chave_crapris).vliofmes                                 -- Saldo devedor
                                                       ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
                                                       ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
                                                       ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
