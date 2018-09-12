@@ -138,6 +138,7 @@
 * 110: [13/07/2018] Criada função processaPerdaAprovacao para verificar se haverá perda de aprovacao ao fazer alteração 
 *                   na opção "Valor da proposta de data e vencimento" (Mateus Z / Mouts - PRJ 438)
 * 111: [28/05/2018] P439 - Criado validacoes de contingencia da integracao cdc
+* 112: [12/09/2018] P442 - Ajustes nos tamanhos da tela devido novos campos nas Consultas Automatizadas (Maykon-Envolti)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -2406,7 +2407,7 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['C_DADOS_PROP', 'A_DADOS_PROP', 'I_DADOS_PROP'])) {
 
         nomeForm = 'frmDadosProp';
-        altura = '430px';
+        altura = '480px';
         largura = '462px';
 
         var cTodos = $('input', '#' + nomeForm + ' fieldset:eq(0)');
@@ -2862,7 +2863,7 @@ function controlaLayout(operacao) {
         'C_PROTECAO_AVAL', 'C_PROTECAO_CONJ', 'C_PROTECAO_SOC', 'A_PROTECAO_SOC',
         'I_PROTECAO_TIT'])) {
 
-        altura = '430px';
+        altura = '550px';
         largura = '510px';
 
         // Caso for Cessao de Credito sera fixado o valor

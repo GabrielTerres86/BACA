@@ -63,6 +63,7 @@
  * 049: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
  * 050: [07/06/2018] Tratamento para nao permitir desfazer efetivação de emprestimo CDC. PRJ439 (Odirlei-AMcom)
  * 049: [01/08/2018] Ajuste para apresentar valores negativos na tela de prejuizo - INC0019253. (Andre Bohn - MoutS)
+ * 050: [12/09/2018] P442 - Ajustes nos tamanhos de tela e mascaras para apresentacao de Consultas Automatizadas novas (Diogo-Envolti)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -1121,7 +1122,7 @@ function controlaLayout(operacao) {
 
 	} else if (in_array(operacao,['C_PROTECAO_TIT','C_PROTECAO_AVAL','C_PROTECAO_CONJ','C_PROTECAO_SOC'])){
 
-		altura   = '430px';
+		altura   = '550px';
 		largura  = '510px';
 	
 		formata_protecao (operacao, arrayProtCred['nrinfcad'] , arrayProtCred['dsinfcad'] );
