@@ -235,7 +235,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 05/07/2018
+     Data    : Abril/2013                       Ultima atualizacao: 05/09/2018
 
      Dados referentes ao programa:
 
@@ -349,6 +349,10 @@ create or replace package body cecred.SICR0001 is
                  04/07/2018 - Tratamento Claro movel, enviar sempre como RL (Lucas Ranghetti INC0018399)
 
                  05/07/2018 - Incluido pr_inpriori na pc_obtem_agendamentos_debito para o "debitador unico" (Fabiano B. Dias - AMcom)
+
+                 05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
+                              - Estava concatenando "_EXEC" no final desse parâmetro
+				                (Ana - Envolti - Chamado INC0023351)
   ..............................................................................*/
 
   -- Objetos para armazenar as variáveis da notificação
@@ -3791,7 +3795,7 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Odirlei Busana - AMcom
-  --   Data    : Novembro/2015                       Ultima atualizacao: 30/01/2018
+  --   Data    : Novembro/2015                       Ultima atualizacao: 05/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -3809,6 +3813,10 @@ create or replace package body cecred.SICR0001 is
   --
   --             26/03/2018 - Incluido Chamada 509_PRIORI e 642_PRIORI para 
   --                           o "debitador unico" (Fabiano B. Dias - AMcom) 
+  --             05/09/2018 - Ajuste mensagem do parâmetro QTD_EXEC_vr_cdprogra:
+  --                          - Estava concatenando "_EXEC" no final desse parâmetro
+  --                            (Ana - Envolti - Chamado INC0023351)
+
 --------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
     CURSOR cr_crapprm (pr_cdcooper crapprm.cdcooper%TYPE,
@@ -3885,7 +3893,8 @@ create or replace package body cecred.SICR0001 is
     FETCH cr_crapprm INTO rw_crapprm_qtd;
     IF cr_crapprm%NOTFOUND THEN
       pr_cdcritic := 1132;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'QTD_EXEC_'||vr_cdprogra||'_EXEC.';
+      --INC0023351
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'QTD_EXEC_'||vr_cdprogra||'.';
       CLOSE cr_crapprm;
       RAISE vr_exc_erro;
     END IF;
@@ -3897,7 +3906,7 @@ create or replace package body cecred.SICR0001 is
       SELECT to_number(TRIM(substr(rw_crapprm_qtd.dsvlrprm,1,decode(instr(rw_crapprm_qtd.dsvlrprm,'#'),0,length(rw_crapprm_qtd.dsvlrprm),instr(rw_crapprm_qtd.dsvlrprm,'#')-1))))
         INTO rw_crapprm_qtd.dsvlrprm
         FROM dual;
-    END;    
+    END;      
 
     --  Se tipo de operação for Incrementar
     IF pr_cdtipope = 'I' THEN
