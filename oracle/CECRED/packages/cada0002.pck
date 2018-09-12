@@ -202,14 +202,14 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 
 END CADA0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
+ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
-
+  
     Programa : CADA0002
     Sistema  : Rotinas acessadas pelas telas de cadastros Web
     Sigla    : CADA
     Autor    : Renato Darosci - Supero
-    Data     : Julho/2014.                   Ultima atualizacao: 09/08/2018
+    Data     : Julho/2014.                   Ultima atualizacao: 21/08/2018
   
    Dados referentes ao programa:
   
@@ -260,9 +260,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                            (Adriano - SD 620221).
                            
                08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
-               
-               09/08/2018 - sctask0012741 Gerar log de operadores apenas quando inativados, pelo job 
-                            JBOPE_BLOQUEIA_OPERADORES, podendo ser consultado na tela LOGTEL (Carlos)
+
+               21/08/2018 - Criar rotina para impressão de comprovante de GPS 
+                            pc_impressao_gps (André Bohn Mout's) - INC0021250
   ---------------------------------------------------------------------------------------------------------------------------*/
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -350,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,nrdocpes     VARCHAR2(100)
                             ,cdidenti     VARCHAR2(100)
                             ,nrdocmto_dae VARCHAR2(100)
-                            );
+                            ,dslinha3     VARCHAR2(4000));
     
   
   -- REGISTROS
@@ -1933,6 +1933,112 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_impressao_fgts_dae;
   
+  /* Emissao de comprovante de GPS */
+  PROCEDURE pc_impressao_gps(pr_xmldata  IN typ_xmldata
+                            ,pr_nmrescop IN VARCHAR2
+                            ,pr_cdbcoctl IN NUMBER
+                            ,pr_cdagectl IN NUMBER) IS
+    -- ..........................................................................
+    --
+    --  Programa : 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : 
+    --  Data     : Agosto/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de pagamentos de GPS
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha       NUMBER := 0;  
+    rw_dadosgps       GENE0002.typ_split;
+    vr_nrddadogps     NUMBER := 0;  
+    vr_nrdcollabel    NUMBER := 31; -- Para manter os títulos alinhados no centro    
+    rw_campogps       GENE0002.typ_split;
+    
+  BEGIN
+    -- Imprime o cabeçalho
+    pc_escreve_xml(LPAD('',80, '-'), 1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante de Pagamento GPS '||' - '||
+                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml(LPAD('Banco: ',vr_nrdcollabel)||to_char(pr_cdbcoctl) ,4);
+    pc_escreve_xml(LPAD('Agencia: ',vr_nrdcollabel)||to_char(pr_cdagectl) ,5);
+    pc_escreve_xml(LPAD('Conta/DV: ',vr_nrdcollabel)||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl,6);
+    vr_nrdlinha := 7;
+    
+    -- Imprime o preposto se estiver informado
+    IF TRIM(pr_xmldata.nmprepos) IS NOT NULL THEN
+      pc_escreve_xml(LPAD('Preposto: ',vr_nrdcollabel)||pr_xmldata.nmprepos,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+    
+    -- Imprime a data do movimento
+    pc_escreve_xml(LPAD('Data Movimento: ',vr_nrdcollabel)||to_char(pr_xmldata.dtmvtolx,'dd/mm/yy'), vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime o valor do pagamento
+    pc_escreve_xml(LPAD('Valor: ',vr_nrdcollabel)||to_char(pr_xmldata.valor,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    pc_escreve_xml(LPAD('',80, '-'), vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+ 
+    -- Imprime os dados da GPS
+    rw_dadosgps := GENE0002.fn_quebra_string(pr_string => pr_xmldata.dslinha3, pr_delimit => '#');
+    
+    IF rw_dadosgps.COUNT > 0 THEN
+      FOR vr_nrddadogps IN 1..rw_dadosgps.COUNT LOOP
+        -- Verifica se linha de campos está formatada com "campo : valor"
+        IF INSTR(rw_dadosgps(vr_nrddadogps),':') > 0 THEN 
+          -- Separa campo do valor
+          rw_campogps := GENE0002.fn_quebra_string(pr_string => rw_dadosgps(vr_nrddadogps),pr_delimit => ':');
+          IF rw_campogps.COUNT > 1 THEN
+            -- Apresenta o campo somente se valor não for vazio
+            IF LENGTH(TRIM(rw_campogps(2))) > 0 THEN
+              pc_escreve_xml(LPAD(rw_campogps(1),vr_nrdcollabel-2)||': '||rw_campogps(2),vr_nrdlinha);
+              vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+            END IF;
+          END IF;
+        ELSE  
+          -- Se não for "campo : valor" apresenta linha toda
+          pc_escreve_xml(rw_dadosgps(vr_nrddadogps), vr_nrdlinha);
+          vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        END IF;
+      END LOOP; 
+    END IF;
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Imprime a data de transação
+    pc_escreve_xml(LPAD('Data Transacao: ',vr_nrdcollabel)||to_char(pr_xmldata.dttransa,'dd/mm/yy'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a hora da transação
+    pc_escreve_xml(LPAD('Hora: ',vr_nrdcollabel)||to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'hh24:mi:ss'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprimir o número do Documento
+    pc_escreve_xml(LPAD('Nr. Documento: ',vr_nrdcollabel)||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a sequencia de autenticação
+    pc_escreve_xml(LPAD('Seq. Autenticacao: ',vr_nrdcollabel)||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime o protocolo
+    pc_escreve_xml(LPAD('Protocolo: ',vr_nrdcollabel)||pr_xmldata.dsprotoc,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+		-- Imprime linha de rodapé
+    pc_escreve_xml(LPAD('',80, '-'), vr_nrdlinha);
+    
+  END pc_impressao_gps;
+  
   -- Rotina para impressão de comprovante de pagamento do deb automatico
   PROCEDURE pc_impressao_debaut(pr_xmldata  IN typ_xmldata
                                ,pr_nmrescop IN VARCHAR2) IS
@@ -2861,6 +2967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.nrdocpes := fn_extract('/Root/Dados/nrdocpes/text()');
     rw_xmldata.cdidenti := fn_extract('/Root/Dados/cdidenti/text()');
     rw_xmldata.nrdocmto_dae := fn_extract('/Root/Dados/nrdocmto_dae/text()');
+    rw_xmldata.dslinha3 := gene0007.fn_caract_acento(gene0007.fn_convert_web_db(fn_extract('/Root/Dados/Inform/Linhas/dslinha3/text()')));
     
     -- Inicializar o CLOB do XML
     vr_dsxmlrel := null;
@@ -2965,6 +3072,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                               ,pr_cdcooper => pr_cdcooper
                               ,pr_nmrescop => rw_crapcop.nmrescop);  
       
+    ELSIF rw_xmldata.cdtippro = 13 THEN --GPS
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_GPS';
+    
+      -- Imprimir comprovante de pagamento de GPS
+      pc_impressao_gps(pr_xmldata  => rw_xmldata
+                      ,pr_nmrescop => rw_crapcop.nmrescop
+                      ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                      ,pr_cdagectl => rw_crapcop.cdagectl);      
+													 
     ELSIF rw_xmldata.cdtippro = 14 THEN
       
       -- Guardar o nome da rotina chamada para exibir em caso de erro
@@ -4097,9 +4214,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
            LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 20 THEN
           vr_cdcritic := 1217;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        pr_nmdcampo := 'nrctatrf';
-        RAISE vr_exc_saida;
-      END IF;
+          pr_nmdcampo := 'nrctatrf';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       -- Verifica o tipo de pessoa
@@ -4149,9 +4266,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         IF pr_intipcta = 3 THEN -- Conta de Pagamento
           vr_cdcritic := 1219;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' '|| vr_dstextab;
-        pr_nmdcampo := 'intipcta';
-        RAISE vr_exc_saida;
-      END IF;
+          pr_nmdcampo := 'intipcta';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       IF pr_inpessoa = 1 THEN 
@@ -4174,8 +4291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_cdcritic := 1221;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           pr_nmdcampo := 'nrcpfcgc';
-        RAISE vr_exc_saida;
-      END IF;
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
       END IF;
 
@@ -4185,7 +4302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       pr_nmdcampo := 'nrctatrf';
       RAISE vr_exc_saida;
-      END IF;
+    END IF;
         
     EXCEPTION
 			WHEN vr_exc_saida THEN
@@ -4277,56 +4394,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         FETCH cr_tbcadast_colaborador
           INTO rw_tbcadast_colaborador;
 
-        --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
-        IF cr_tbcadast_colaborador%NOTFOUND THEN 
-          CLOSE cr_tbcadast_colaborador;         
+      --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
+      IF cr_tbcadast_colaborador%NOTFOUND THEN 
+        CLOSE cr_tbcadast_colaborador;         
 
-          /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
-          em outras cooperativas*/          
-          OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
-            FETCH cr_valida_cecred
-              INTO rw_valida_cecred;
+        /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
+        em outras cooperativas*/          
+        OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
+          FETCH cr_valida_cecred
+            INTO rw_valida_cecred;
 
-          --Nao e CECRED ou está inativo
-          IF cr_valida_cecred%NOTFOUND THEN
-            CLOSE cr_valida_cecred;                       
-            --Inativa operador
-            BEGIN 
-              UPDATE crapope ope
-                 SET ope.cdsitope = 2
-               WHERE ope.cdcooper = rw_crapope.cdcooper
-                 AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
-
-            -- Log de sucesso. Poderá ser consultado na tela LOGTEL
-            btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapope.cdcooper,
-                                       pr_ind_tipo_log => 1, --> mensagem
-                                       pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr hh24:mi:ss') ||
-                                                          ' --> Vetor inativou o operador ' || rw_crapope.cdoperad,
-                                       pr_nmarqlog     => 'operad.log',
-                                       pr_dstiplog     => 'O',
-                                       pr_flfinmsg     => 'N',
-                                       pr_cdprograma   => 'JBOPE_BLOQUEIA_OPERADORES');
-            EXCEPTION
-              WHEN OTHERS THEN
-                RAISE vr_exc_error;
-            END;
-          --E CECRED
-          ELSE
-            CLOSE cr_valida_cecred;  
-          --Ativa operador
-            BEGIN 
-              UPDATE crapope ope
-                 SET ope.cdsitope = 1
-               WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
-            EXCEPTION
-              WHEN OTHERS THEN
-                RAISE vr_exc_error;
-            END;
-    END IF;
-
+        --Nao e CECRED ou está inativo
+        IF cr_valida_cecred%NOTFOUND THEN
+          CLOSE cr_valida_cecred;                       
+          --Inativa operador
+          BEGIN 
+            UPDATE crapope ope
+               SET ope.cdsitope = 2
+             WHERE ope.cdcooper = rw_crapope.cdcooper
+               AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE vr_exc_error;
+          END;
+        --E CECRED
         ELSE
-          CLOSE cr_tbcadast_colaborador;
-    END IF;
+          CLOSE cr_valida_cecred;  
+            --Inativa operador
+          BEGIN 
+            UPDATE crapope ope
+               SET ope.cdsitope = 1
+             WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE vr_exc_error;
+          END;
+        END IF;
+
+          -- Log de sucesso.
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                               , pr_cdcooper => rw_crapope.cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 4 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                               , pr_idprglog => vr_idprglog);                      
+
+
+      ELSE
+        CLOSE cr_tbcadast_colaborador;
+      END IF;
         
                 
 				
@@ -4336,13 +4455,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                          , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
                          , pr_idprglog => vr_idprglog);
         
-        COMMIT;
+    COMMIT;
 
   EXCEPTION
     WHEN vr_exc_error THEN
 
       pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - CADA0002 --> Erro ao atualzar a tabela crapope na rotina pc_bloqueia_operadores. Detalhes: ' || SQLERRM;
-
+        
       CECRED.pc_log_programa(pr_dstiplog => 'O'
                            , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
                            , pr_cdcooper => 0

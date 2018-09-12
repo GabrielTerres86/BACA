@@ -2808,7 +2808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_obj_generic2.put('opCred', vr_lst_generic3);
 
       -- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
-      vr_qtmesest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_ESTOUROS');
+      vr_qtmesest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EST_CRD');
 
       -- Montar objeto para Estrutura Estouros
       vr_lst_generic3 := json_list();
@@ -2856,7 +2856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_lst_generic3 := json_list();
 
       -- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
-      vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');
+      vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEVCHQ_CRD');
 
       -- Efetuar laço para trazer todos os registros
       FOR rw_negchq IN cr_crapneg_cheq(vr_qtmeschq) LOOP

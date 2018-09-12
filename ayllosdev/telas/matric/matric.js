@@ -62,6 +62,7 @@
  * 036: [27/12/2017] Renato Darosci  (SUPERO): Alterações apra inclusão dos novos botões Desligar e Saque Parcial - Melhoria 329
  * 037: [16/01/2018] Lucas Reinert			 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * 038: [13/07/2018] Andrey Formigari (Mouts): Novo campo Nome Social (#SCTASK0017525)
+ * 039: [04/09/2018] Alcemir          (Mouts): alterado atualizarContasAntigasDemitidas(), incluido parametro operauto (operador autorizador). (SM 364) 
  */
 
 // Definição de algumas variáveis globais 
@@ -3076,7 +3077,7 @@ function validarSenha(operacao) {
                         buscaContas();
                     } else if (operacao == 'LCH') {
 
-                        atualizarContasAntigasDemitidas();
+                        atualizarContasAntigasDemitidas(operauto);
 
                     }
 
@@ -3707,7 +3708,7 @@ function reverterSituacaoContasDemitidas() {
 
 
 
-function atualizarContasAntigasDemitidas() {
+function atualizarContasAntigasDemitidas(operauto) {
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, efetuando operação ...");
@@ -3725,6 +3726,7 @@ function atualizarContasAntigasDemitidas() {
         data: {
             camposPc: camposPc,
             dadosPrc: dadosPrc,
+            operauto: operauto,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

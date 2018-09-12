@@ -204,6 +204,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          AND ttl.nrcpfcgc = pr_nrcpfcgc;
     rw_crapttl cr_crapttl%ROWTYPE;
     
+		-- cursor para encontrar dados do avalista de PJ
+		CURSOR cr_crapavt (pr_cdcooper IN crapavt.cdcooper%TYPE,
+											 pr_nrdconta IN crapavt.nrdconta%TYPE,
+											 pr_nrcpfcgc IN crapavt.nrcpfcgc%TYPE) IS
+		SELECT avt.nrdconta
+					,NVL(ttl.tpdocttl,avt.tpdocava) tpdocava
+					,NVL(ttl.nmextttl,avt.nmdavali) nmdavali
+					,NVL(ttl.cdestcvl,avt.cdestcvl) cdestcvl
+					,avt.nrcpfcgc
+					,NVL(ttl.nrdocttl,avt.nrdocava) nrdocava
+					,NVL(ttl.idorgexp,avt.idorgexp) idorgexp
+					,NVL(ttl.cdufdttl,avt.cdufddoc) cdufddoc
+					,NVL(ttl.dtnasttl,avt.dtnascto) dtnascto
+					,DECODE(NVL(ttl.cdsexotl,avt.cdsexcto),1,'2',2,'1','0') sexbancoob
+					,NVL(ttl.inpessoa,DECODE(avt.inpessoa,0,1,avt.inpessoa)) inpessoa
+			FROM crapttl ttl
+				 , crapavt avt
+		 WHERE ttl.cdcooper(+) = avt.cdcooper
+			 AND ttl.nrdconta(+) = avt.nrdctato
+			 AND avt.tpctrato = 6 -- Contrato pessoa juridica
+			 AND avt.cdcooper = pr_cdcooper
+			 AND avt.nrdconta = pr_nrdconta
+			 AND avt.nrcpfcgc = pr_nrcpfcgc ;
+		rw_crapavt cr_crapavt%ROWTYPE;
+    
     --> Buscar dados cooperado
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
                        pr_nrdconta crapass.nrdconta%TYPE )IS
@@ -761,6 +786,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          TRIM(vr_dscritic) IS NOT NULL THEN
         vr_cdoedrep := 'NAO CADAST';
       END IF;
+		ELSE
+			--
+			-- Representante do tipo OUTROS
+			IF rw_crawcrd.cdgraupr = 9 THEN
+				--
+				--vr_dtnascto   := rw_crawcrd.dtnasccr;
+				--vr_nrdocttl   := ' ';
+				vr_nrdocttl   := rw_crawcrd.nrdoccrd;
+				--vr_idorgexp   := NULL;
+				--vr_cdufdttl   := ' ';
+				--vr_nmdavali   := rw_crawcrd.nmtitcrd;                
+				--vr_sexbancoob := 0;
+				--vr_cdestcvl   := 0;
+				--vr_nrcpfcgc   := rw_crawcrd.nrcpftit;
+				--vr_inpessoa   := 1;
+        --        
+			ELSE
+				-- Busca registro de representante para pessoa jurídica
+				OPEN cr_crapavt(pr_cdcooper => pr_cdcooper,
+												pr_nrdconta => pr_nrdconta,
+												pr_nrcpfcgc => rw_crawcrd.nrcpftit);
+				FETCH cr_crapavt INTO rw_crapavt;
+
+				-- Se nao encontrar
+				IF cr_crapavt%NOTFOUND THEN
+					-- Fechar o cursor pois efetuaremos raise
+					CLOSE cr_crapavt;
+					-- Montar mensagem de critica
+					vr_dscritic := 'Representante nao encontrado. Conta/DV: ' || pr_nrdconta ||
+												 ' CPF: '                                   || rw_crawcrd.nrcpftit ||
+												 ' Coop: '                                  || pr_cdcooper ;
+					RAISE vr_exc_erro;
+					--
+				ELSE
+					-- Data nascimento representante
+					--vr_dtnascto := rw_crapavt.dtnascto;
+
+					-- Apenas fechar o cursor
+					CLOSE cr_crapavt;
+					--
+				END IF;
+
+				-- Somente alimenta varíaveis com informações de Documento for Carteira de Identidade
+				IF rw_crapavt.tpdocava = 'CI' THEN
+					vr_nrdocttl := rw_crapavt.nrdocava;
+					--vr_idorgexp := rw_crapavt.idorgexp;
+					--vr_cdufdttl := rw_crapavt.cdufddoc;
+					--vr_nmdavali := rw_crapavt.nmdavali;
+				ELSE
+					vr_nrdocttl := ' ';
+					--vr_idorgexp := NULL;
+					--vr_cdufdttl := ' ';
+					--vr_nmdavali := rw_crapavt.nmdavali;
+				END IF;
+
+				-- Assume a data de nascimento
+				--vr_dtnascto   := rw_crapavt.dtnascto;
+				--vr_sexbancoob := rw_crapavt.sexbancoob;
+				--vr_cdestcvl   := rw_crapavt.cdestcvl;
+				--vr_nrcpfcgc   := rw_crapavt.nrcpfcgc;
+				--vr_inpessoa   := rw_crapavt.inpessoa;
+        --
+			END IF;
+			--
     END IF;  
     
     IF rw_crapjur.dtiniatv IS NOT NULL THEN

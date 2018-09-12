@@ -106,8 +106,12 @@
                 
                 30/05/2018 - Ajustes na execucao do CCF, mudanca de horarios para o retorno.
                              Chamado SCTASK0012791 - Heitor (Mouts)
-
+							
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+				05/07/2018 - Removidas chamadas relativas ao Debito de Consorcio (crps663.i), devido 
+				             ter sido convertida para Oracle e ser chamada pelo Debitador Unico 
+							 (Teobaldo J., AMcom)							 
 
 .............................................................................*/
 
@@ -1121,75 +1125,11 @@ PROCEDURE gera_arq:
                                    INPUT "").
         END.                  
         
-        WHEN "DEBCNS MATUTINA" THEN DO:
 
-            /* Grava Data e Hora da execucao */ 
-            RUN grava_dthr_proc(INPUT par_cdcooper,
-                                INPUT par_dtmvtolt,
-                                INPUT TIME,
-                                INPUT TRIM(par_nmprgexe)). 
+        /* 11/05/2018 - Removidas chamadas DEBCNS, que passam a ser 
+		                chamadas pelo Debitador Unico  (Teobaldo, AMcom) -- */
 
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Inicio execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
                                    
-            RUN gera_arq_debcns(INPUT par_cdcooper,
-                                INPUT 1). /*Primeira execucao*/
-                                
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Fim execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
-
-        END.                  
-        
-        WHEN "DEBCNS VESPERTINA" THEN DO:
-
-            /* Grava Data e Hora da execucao */ 
-            RUN grava_dthr_proc(INPUT par_cdcooper,
-                                INPUT par_dtmvtolt,
-                                INPUT TIME,
-                                INPUT TRIM(par_nmprgexe)). 
-
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Inicio execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
-                                   
-            RUN gera_arq_debcns(INPUT par_cdcooper,
-                                INPUT 2). /*Segunda execucao*/
-                                
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Fim execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
-
-        END.
-        
-        WHEN "DEBCNS NOTURNA" THEN DO:
-
-            /* Grava Data e Hora da execucao */ 
-            RUN grava_dthr_proc(INPUT par_cdcooper,
-                                INPUT par_dtmvtolt,
-                                INPUT TIME,
-                                INPUT TRIM(par_nmprgexe)). 
-
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Inicio execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
-                                   
-            RUN gera_arq_debcns(INPUT par_cdcooper,
-                                INPUT 3). /*Ultima execucao*/
-            
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Fim execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
-
-        END.
-
         WHEN "AGENDAMENTO APLICACAO/RESGATE" THEN 
           DO:
              /* Grava Data e Hora da execucao */ 
@@ -2480,128 +2420,17 @@ PROCEDURE gera_relatorio_remcob.
     RETURN "OK".
 END PROCEDURE.
 
+
+/* 11/05/2018 - Rotina alterada para nao fazer nada, pois o debito de consorcio
+                serah realizado pelo Debitador Unico, no Oracle (pc_crps663) 
+				Teobaldo J., AMcom, Projeto Debitador Unico                    */
+				
 PROCEDURE gera_arq_debcns:
 
     DEF INPUT PARAM par_cdcooper    AS  INTE                        NO-UNDO.
     DEF INPUT PARAM par_nrseqexe    AS  INTEGER                     NO-UNDO.
     
-   
-    ASSIGN glb_cddopcao    = "P"
-           glb_cdempres    = 11
-           glb_nmrescop    = crapcop.nmrescop
-           glb_progerad    = "663"
-           glb_cdrelato[1] = 663
-           glb_nmdestin[1] = "DESTINO: ADMINISTRATIVO"
-           aux_dtdebito    = glb_dtmvtolt
-           aux_cdcooper    = par_cdcooper
-           aux_nmarqcen = "crrl663_" + STRING(TIME) + ".lst"
-           aux_nmaqcesv = "rlnsv/" + aux_nmarqcen
-           aux_nmarqcen = "rl/" + aux_nmarqcen.
-
-    FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL(crapdat) THEN
-        DO:
-            ASSIGN glb_dscritic = crapcop.nmrescop +
-                                " - Registro crapdat nao encontrado.".
-            RUN gera_critica_procmessage.
             RETURN "OK".
-        END.
-    ELSE
-        DO:
-            ASSIGN glb_dtmvtolt = crapdat.dtmvtolt
-                   glb_dtmvtopr = crapdat.dtmvtopr
-                   glb_inproces = crapdat.inproces.
-        END.
-
-    EMPTY TEMP-TABLE tt-obtem-consorcio.
-   
-    ASSIGN glb_dscritic = "".
-
-    /*   Verifica somente das cooperativas que tiverem  agendamentos */
-    FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper AND
-                       craptab.nmsistem = "CRED"           AND
-                       craptab.tptabela = "GENERI"         AND
-                       craptab.cdempres = 00               AND
-                       craptab.cdacesso = "HRPGSICRED"     AND
-                       craptab.tpregist = 90  NO-LOCK NO-ERROR.
-
-    IF  NOT AVAILABLE craptab  THEN
-        DO:
-            ASSIGN glb_dscritic = crapcop.nmrescop +
-                                " - Tabela HRPGSICRED nao cadastrada.".
-            RUN gera_critica_procbatch.
-            RETURN "OK".
-        END.
-    ELSE
-        DO:
-            IF  SUBSTR(craptab.dstextab,19,3) = "SIM"  THEN
-                ASSIGN aux_flsgproc = TRUE.
-            ELSE
-                ASSIGN aux_flsgproc = FALSE.
-                                                       
-            /*Verifica se cooperativa optou pelo segundo processo*/
-            IF  NOT aux_flsgproc  THEN
-                DO:
-                    ASSIGN glb_dscritic = crapcop.nmrescop +
-                                         " - Opcao para processo manual " +
-                                         "desabilitada.".
-                    RUN gera_critica_procbatch.
-                    RETURN "OK".
-                END.
-            
-            /** Verifica se horario para pagamentos nao esgotou */
-            /* M349 - Deixa de validar o horario pois ocorrera uma execucao
-			   do programa durante o dia dentro do horario que ainda nao esgotou 
-			   para pagamento					
-            IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
-                TIME < INT(ENTRY(2,craptab.dstextab," ")) THEN
-                DO:
-                    ASSIGN glb_dscritic = crapcop.nmrescop   +
-                                          " - Horario para " + 
-                                          "pagamentos CONSORCIO nao esgotou".
-                    RUN gera_critica_procbatch.
-                    RETURN "OK".
-                END. */
-        END.
-        
-    /*** PROCESSA COOPERATIVA ***/
-    RUN obtem-consorcio.
-
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO: 
-            RUN gera_critica_procmessage.
-            RETURN "OK".
-        END.
- 
-
-    FIND FIRST tt-obtem-consorcio NO-LOCK NO-ERROR.
-
-    IF  NOT AVAIL(tt-obtem-consorcio) THEN
-        DO:
-            ASSIGN glb_dscritic = "Nao ha consorcios para processar neste momento para cooperativa " + crapcop.nmrescop.
-            RUN gera_critica_procbatch.
-            RETURN "OK".
-        END. 
-
-    /*Debito dos consorcios*/
-    RUN efetua-debito-consorcio(INPUT FALSE, 
-                                INPUT par_nrseqexe).
-    
-    HIDE MESSAGE NO-PAUSE.
-
-    ASSIGN aux_nmarquiv = "crrl663_" + STRING(TIME) + ".lst"
-           aux_nmarqimp = "/usr/coop/" + crapcop.dsdircop + 
-                          "/rl/" + aux_nmarquiv
-           aux_nmarquiv = "/usr/coop/" + crapcop.dsdircop + 
-                          "/rlnsv/" + aux_nmarquiv.
-
-    RUN imprime-consorcios (INPUT crapcop.cdcooper).
-
-    IF  RETURN-VALUE = "OK"  THEN
-        UNIX SILENT VALUE ("cat " + aux_nmarqimp + " >> " + aux_nmarqcen). 
-
-    RETURN "OK".
 END PROCEDURE.
 
 PROCEDURE proc_agenda_resg_aplica:
@@ -2615,6 +2444,10 @@ PROCEDURE proc_agenda_resg_aplica:
            glb_nmtelant = "AUTCOMPE".
 
     ETIME(TRUE).
+
+	/* ******************************************************************************
+	   11/05/2018 - Comentado esse bloco pois o pc_crps688 serah chamado
+	                pelo Debitador Unico (Teobaldo J., AMcom - Proj. Debitador Unico)
 
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
@@ -2642,6 +2475,8 @@ PROCEDURE proc_agenda_resg_aplica:
     CLOSE STORED-PROCEDURE pc_crps688 WHERE PROC-HANDLE = aux_handproc.
 
     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+	***************************************************************************** */
 
     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 
                       " - "   + glb_cdprogra + "' --> '"   +
@@ -3158,7 +2993,7 @@ PROCEDURE imp_arq:
                                
              RUN fontes/crps556.p.
          END.  */
-         
+
          WHEN "IMP CCF" THEN
          DO:
              RUN atualiza_status_execucao (INPUT par_nmprgexe,
@@ -3166,15 +3001,15 @@ PROCEDURE imp_arq:
                                            INPUT par_cdcooper).
 
              RUN gera_log_execucao (INPUT par_nmprgexe + "(CRPS550)",
-                                    INPUT "Inicio execucao", 
-                                    INPUT par_cdcooper,
-                                    INPUT "(TODAS)").
+                                        INPUT "Inicio execucao", 
+                                        INPUT par_cdcooper,
+                                        INPUT "(TODAS)").
              RUN fontes/crps550.p.
              RUN gera_log_execucao (INPUT par_nmprgexe + "(CRPS550)",
-                                    INPUT "Fim execucao", 
-                                    INPUT par_cdcooper,
-                                    INPUT "(TODAS)").
-             
+                                        INPUT "Fim execucao", 
+                                        INPUT par_cdcooper,
+                                        INPUT "(TODAS)").
+                 
              RUN grava_dthr_proc(INPUT par_cdcooper,
                                  INPUT glb_dtmvtolt,
                                  INPUT TIME,
@@ -3212,7 +3047,7 @@ PROCEDURE imp_arq:
                                         INPUT "Fim execucao", 
                                         INPUT par_cdcooper,
                                         INPUT "(TODAS)").
-                 
+    
                  /* Valida se importou os arquivos, caso contrario nao devera
                    gravar data e hora da ultima execucao, pois o programa devera 
                    tentar importar novamente */ 

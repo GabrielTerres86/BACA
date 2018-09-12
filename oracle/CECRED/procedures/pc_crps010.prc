@@ -171,7 +171,7 @@ BEGIN
           
 		  01/08/2018 - Remoção de Hint com problema de lentidão - Andreatta (MOUTs)
       
-          06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
+      06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
           
    ............................................................................. */
    DECLARE
@@ -3931,7 +3931,7 @@ BEGIN
                     -- Se ocorreu erro
                     IF vr_dscritic IS NOT NULL THEN
                        -- Levantar Excecao
-                       vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
+                     vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
                        RAISE vr_exc_saida;
                     END IF;
 
@@ -4650,7 +4650,7 @@ BEGIN
 
                        -- Se retornou erro
                        IF vr_dscritic IS NOT NULL THEN
-                          vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
+                        vr_dscritic := 'Conta '||vr_tab_crapass(vr_idx_crapass).nrdconta||' --> '||vr_dscritic;
                           -- Levantar Excecao
                           RAISE vr_exc_saida;
                        END IF;
@@ -4775,8 +4775,8 @@ BEGIN
               EXCEPTION
                  WHEN vr_exc_pula THEN
                     NULL;
-                 WHEN vr_exc_saida THEN
-                   RAISE vr_exc_saida;
+               WHEN vr_exc_saida THEN
+                 RAISE vr_exc_saida;
                  WHEN OTHERS THEN
                     cecred.pc_internal_exception;
                     vr_dscritic:= 'Erro ao selecionar associado. '||SQLERRM;
@@ -5590,25 +5590,11 @@ BEGIN
                           pr_flgsucesso    => 0,
                           pr_idprglog      => vr_idlog_ini_par);  
                           
-          -- Gera Log no Batch cfme solicitação Rodrigo Siewert
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
-          
           -- Encerrar o job do processamento paralelo dessa agência
           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
                                       ,pr_des_erro => vr_dscritic);                        
                                       
-        ELSE
-          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || vr_dscritic );
-          END IF;
         END IF;
         
         -- Efetuar rollback
@@ -5640,10 +5626,7 @@ BEGIN
                           pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                           pr_idprglog   => vr_idlog_ini_par,
                           pr_flgsucesso => 0);  
-          -- Gera Log no Batch cfme solicitação Rodrigo Siewert
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||vr_cdprogra||'_'||pr_cdagenci||' --> '||pr_cdcritic||' - '||pr_dscritic);
+
           -- Encerrar o job do processamento paralelo dessa agência
           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')

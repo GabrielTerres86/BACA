@@ -1,5 +1,3 @@
-
-
 <?php
 	/*!
     * FONTE        : form_cadastro_limite.php
@@ -15,8 +13,18 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
+
+isPostMethod();
+
+$cddopcao = ((!empty($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'I');
+
+if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao, false)) <> '') {
+   exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+   exit;
+}
+
 	require_once('supfn.php');
-	isPostMethod();
+
 	$admcrd = intval($_POST['admcrd']);
 	$CECRED = (($admcrd > 10) && ($admcrd < 81));
 

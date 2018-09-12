@@ -5,6 +5,8 @@
  * OBJETIVO     : Biblioteca de funções da tela LDESCO
  * --------------
  * ALTERAÇÕES   : 11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
+ *                 
+ *                27/08/2018 - remove acentos e caracteres empeciais no campo descrição.(Marco Amorim - Mout'S)
  * --------------
  */
 
@@ -277,6 +279,16 @@ function formataFiltro() {
     window.setTimeout(function(){
         $('#frmFiltro *:input[type!=hidden]:first').focus();
     }, 50);
+
+    // Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
+    $("#descricao").bind("keyup", function () {
+        this.value = removeTodosCaracteresInvalidos(this.value, 1);
+    });
+
+    // Bloqueia a digitação de caracteres com a tecla Alt + ..
+    $("#descricao").bind("keydown", function (e) {
+        if (e.altKey) { return false; }
+    });
 
     //Evento para o campo cdagenci
     $("#cdcodigo","#frmFiltro").unbind('keypress').bind('keypress', function(e) {

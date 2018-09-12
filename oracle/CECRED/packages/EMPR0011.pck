@@ -396,6 +396,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
   PROCEDURE pc_efetua_pagamento_em_dia(pr_cdcooper IN  crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                      ,pr_cdprogra IN  crapprg.cdprogra%TYPE     --> Nome da Tela
                                       ,pr_dtmvtoan IN  crapdat.dtmvtoan%TYPE     --> Data de Movimento do Dia Anterior
                                       ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE     --> Data de Movimento Atual
                                       ,pr_cdagenci IN  crapage.cdagenci%TYPE     --> Codigo da Agencia
@@ -5349,6 +5350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_efetua_lcto_juros_correc;
 
   PROCEDURE pc_efetua_pagamento_em_dia(pr_cdcooper IN  crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                      ,pr_cdprogra IN  crapprg.cdprogra%TYPE     --> Nome da Tela
                                       ,pr_dtmvtoan IN  crapdat.dtmvtoan%TYPE     --> Data de Movimento do Dia Anterior
                                       ,pr_dtmvtolt IN  crapdat.dtmvtolt%TYPE     --> Data de Movimento Atual
                                       ,pr_cdagenci IN  crapage.cdagenci%TYPE     --> Codigo da Agencia
@@ -5646,51 +5648,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
             vr_dscritic := 'Erro ao atualizar o registro na crappep. ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
+        
+        -- No programa CRPS149: 
+        -- Será feito o débito em conta corrente        
+        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN
+          -- Se for Financiamento
+          IF pr_floperac THEN
+            -- Condicao para verificar se o pagamento foi feito por um avalista
+            IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
+              vr_cdhistor := 2333;
+            ELSE
+              vr_cdhistor := 2337;
+            END IF;
+          ELSE
+            -- Condicao para verificar se o pagamento foi feito por um avalista
+            IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
+              vr_cdhistor := 2332;
+            ELSE
+              vr_cdhistor := 2336;
+            END IF;
+          END IF;
 
-        -- Se for Financiamento
-        IF pr_floperac THEN
-          -- Condicao para verificar se o pagamento foi feito por um avalista
-          IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
-            vr_cdhistor := 2333;
-          ELSE
-            vr_cdhistor := 2337;
+          -- Lanca em C/C e atualiza o lote
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+                                        ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
+                                        ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
+                                        ,pr_cdbccxlt => 100           --> Numero do caixa
+                                        ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
+                                        ,pr_cdpactra => pr_cdpactra   --> PA da transacao
+                                        ,pr_nrdolote => 650003        --> Numero do Lote
+                                        ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                        ,pr_cdhistor => vr_cdhistor   --> Codigo historico
+                                        ,pr_vllanmto => vr_vlpagpar   --> Valor da parcela emprestimo
+                                        ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
+                                        ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
+                                        ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
+                                        ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
+          -- Se ocorreu erro
+          IF vr_des_reto <> 'OK' THEN
+            -- Se possui algum erro na tabela de erros
+            IF vr_tab_erro.COUNT() > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao criar o pagamento de emprestimo na conta.';
+            END IF;
+            RAISE vr_exc_erro;
           END IF;
-        ELSE
-          -- Condicao para verificar se o pagamento foi feito por um avalista
-          IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
-            vr_cdhistor := 2332;
-          ELSE
-            vr_cdhistor := 2336;
-          END IF;
-        END IF;
-
-        -- Lanca em C/C e atualiza o lote
-        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                      ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
-                                      ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
-                                      ,pr_cdbccxlt => 100           --> Numero do caixa
-                                      ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
-                                      ,pr_cdpactra => pr_cdpactra   --> PA da transacao
-                                      ,pr_nrdolote => 650003        --> Numero do Lote
-                                      ,pr_nrdconta => pr_nrdconta   --> Número da conta
-                                      ,pr_cdhistor => vr_cdhistor   --> Codigo historico
-                                      ,pr_vllanmto => vr_vlpagpar   --> Valor da parcela emprestimo
-                                      ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
-                                      ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
-                                      ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
-                                      ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
-                                      ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
-        -- Se ocorreu erro
-        IF vr_des_reto <> 'OK' THEN
-          -- Se possui algum erro na tabela de erros
-          IF vr_tab_erro.COUNT() > 0 THEN
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao criar o pagamento de emprestimo na conta.';
-          END IF;
-          RAISE vr_exc_erro;
+        
         END IF;
         
         -- Atualizar Emprestimo
@@ -5988,52 +5995,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           RAISE vr_exc_erro;
         END IF;        
         
-        -- Verificar se o pagamento foi feito por um avalista
-        IF NVL(pr_nrseqava,0) = 0 THEN
-          -- Se for Financiamento
-          IF pr_floperac THEN
-            vr_cdhistor := 2364;
+        -- No programa CRPS149: 
+        -- Será feito o débito em conta corrente        
+        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN
+          -- Verificar se o pagamento foi feito por um avalista
+          IF NVL(pr_nrseqava,0) = 0 THEN
+            -- Se for Financiamento
+            IF pr_floperac THEN
+              vr_cdhistor := 2364;
+            ELSE
+              vr_cdhistor := 2362;
+            END IF;
           ELSE
-            vr_cdhistor := 2362;
+            -- Se for Financiamento
+            IF pr_floperac THEN
+              vr_cdhistor := 2368;
+            ELSE
+              vr_cdhistor := 2366;
+            END IF;
           END IF;
-        ELSE
-          -- Se for Financiamento
-          IF pr_floperac THEN
-            vr_cdhistor := 2368;
-          ELSE
-            vr_cdhistor := 2366;
-          END IF;
-        END IF;
 
-        -- Lanca em C/C e atualiza o lote
-        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                      ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
-                                      ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
-                                      ,pr_cdbccxlt => 100           --> Numero do caixa
-                                      ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
-                                      ,pr_cdpactra => pr_cdpactra   --> PA da transacao
-                                      ,pr_nrdolote => 650003        --> Numero do Lote
-                                      ,pr_nrdconta => pr_nrdconta   --> Número da conta
-                                      ,pr_cdhistor => vr_cdhistor   --> Codigo historico
-                                      ,pr_vllanmto => vr_vlmtapar   --> Valor da multa
-                                      ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
-                                      ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
-                                      ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
-                                      ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
-                                      ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
-        -- Se ocorreu erro
-        IF vr_des_reto <> 'OK' THEN
-          -- Se possui algum erro na tabela de erros
-          IF vr_tab_erro.COUNT() > 0 THEN
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao criar o lancamento da multa.';
+          -- Lanca em C/C e atualiza o lote
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+                                        ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
+                                        ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
+                                        ,pr_cdbccxlt => 100           --> Numero do caixa
+                                        ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
+                                        ,pr_cdpactra => pr_cdpactra   --> PA da transacao
+                                        ,pr_nrdolote => 650003        --> Numero do Lote
+                                        ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                        ,pr_cdhistor => vr_cdhistor   --> Codigo historico
+                                        ,pr_vllanmto => vr_vlmtapar   --> Valor da multa
+                                        ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
+                                        ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
+                                        ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
+                                        ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
+          -- Se ocorreu erro
+          IF vr_des_reto <> 'OK' THEN
+            -- Se possui algum erro na tabela de erros
+            IF vr_tab_erro.COUNT() > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao criar o lancamento da multa.';
+            END IF;
+            RAISE vr_exc_erro;
           END IF;
-          RAISE vr_exc_erro;
+          
         END IF;
-
+        
       END IF; -- NVL(vr_vlmrapar, 0) > 0
 
       -- Efetua o Lancamento de Juros de Mora do Contrato de Emprestimo
@@ -6132,52 +6144,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           
         END IF;   
 
-        -- Verificar se o pagamento foi feito por um avalista
-        IF NVL(pr_nrseqava,0) = 0 THEN
-          -- Se for Financiamento
-          IF pr_floperac THEN
-            vr_cdhistor := 2372;
+        -- No programa CRPS149: 
+        -- Será feito o débito em conta corrente        
+        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN          
+          -- Verificar se o pagamento foi feito por um avalista
+          IF NVL(pr_nrseqava,0) = 0 THEN
+            -- Se for Financiamento
+            IF pr_floperac THEN
+              vr_cdhistor := 2372;
+            ELSE
+              vr_cdhistor := 2370;
+            END IF;
           ELSE
-            vr_cdhistor := 2370;
+            -- Se for Financiamento
+            IF pr_floperac THEN
+              vr_cdhistor := 2376;
+            ELSE
+              vr_cdhistor := 2374;
+            END IF;
           END IF;
-        ELSE
-          -- Se for Financiamento
-          IF pr_floperac THEN
-            vr_cdhistor := 2376;
-          ELSE
-            vr_cdhistor := 2374;
-          END IF;
-        END IF;
 
-        -- Lanca em C/C e atualiza o lote
-        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                      ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
-                                      ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
-                                      ,pr_cdbccxlt => 100           --> Numero do caixa
-                                      ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
-                                      ,pr_cdpactra => pr_cdpactra   --> PA da transacao
-                                      ,pr_nrdolote => 650003        --> Numero do Lote
-                                      ,pr_nrdconta => pr_nrdconta   --> Número da conta
-                                      ,pr_cdhistor => vr_cdhistor   --> Codigo historico
-                                      ,pr_vllanmto => vr_vlmrapar   --> Valor do juros de mora
-                                      ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
-                                      ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
-                                      ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
-                                      ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
-                                      ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
-        -- Se ocorreu erro
-        IF vr_des_reto <> 'OK' THEN
-          -- Se possui algum erro na tabela de erros
-          IF vr_tab_erro.COUNT() > 0 THEN
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao criar o lancamento da multa.';
-          END IF;
-          RAISE vr_exc_erro;
-        END IF;
-
+          -- Lanca em C/C e atualiza o lote
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+                                        ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
+                                        ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
+                                        ,pr_cdbccxlt => 100           --> Numero do caixa
+                                        ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
+                                        ,pr_cdpactra => pr_cdpactra   --> PA da transacao
+                                        ,pr_nrdolote => 650003        --> Numero do Lote
+                                        ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                        ,pr_cdhistor => vr_cdhistor   --> Codigo historico
+                                        ,pr_vllanmto => vr_vlmrapar   --> Valor do juros de mora
+                                        ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
+                                        ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
+                                        ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
+                                        ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
+                                        ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
+          -- Se ocorreu erro
+          IF vr_des_reto <> 'OK' THEN
+            -- Se possui algum erro na tabela de erros
+            IF vr_tab_erro.COUNT() > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao criar o lancamento da multa.';
+            END IF;
+            RAISE vr_exc_erro;
+          END IF;          
+        END IF;        
       END IF; -- NVL(vr_vlmrapar, 0) > 0
 
 	    -- Efetuar o lançamento do valor complementar de IOF
@@ -6189,29 +6204,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           vr_cdhistor := 2539;
         END IF;
         
-   			EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
-                                       ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo
-                                       ,pr_cdagenci => pr_cdagenci   -- Codigo Agencia
-                                       ,pr_cdbccxlt => 100           -- Codigo Caixa
-                                       ,pr_cdoperad => pr_cdoperad   -- Operador
-                                       ,pr_cdpactra => pr_cdpactra   -- Posto Atendimento
-                                       ,pr_tplotmov => 5             -- Tipo movimento
-                                       ,pr_nrdolote => 650004        -- Numero Lote
-                                       ,pr_nrdconta => pr_nrdconta   -- Numero da Conta
-                                       ,pr_cdhistor => vr_cdhistor   -- Codigo Historico
-                                       ,pr_nrctremp => pr_nrctremp   -- Numero Contrato
-                                       ,pr_vllanmto => vr_vliofcpl   -- Valor Lancamento
-                                       ,pr_dtpagemp => pr_dtcalcul   -- Data Pagamento Emprestimo
-                                       ,pr_txjurepr => pr_txjuremp   -- Taxa Juros Emprestimo
-                                       ,pr_vlpreemp => pr_vlpreemp   -- Valor Emprestimo
-                                       ,pr_nrsequni => pr_nrparepr   -- Numero Sequencia
-                                       ,pr_nrparepr => pr_nrparepr   -- Numero Parcelas Emprestimo
-                                       ,pr_flgincre => TRUE          -- Indicador Credito
-                                       ,pr_flgcredi => TRUE          -- Credito
-                                       ,pr_nrseqava => pr_nrseqava   -- Pagamento: Sequencia do avalista
-                                       ,pr_cdorigem => pr_cdorigem   -- Origem do Lancamento
-                                       ,pr_cdcritic => vr_cdcritic   -- Codigo Erro
-                                       ,pr_dscritic => vr_dscritic); -- Descricao Erro
+   			EMPR0001.pc_cria_lancamento_lem_chave(pr_cdcooper => pr_cdcooper   -- Codigo Cooperativa
+                                             ,pr_dtmvtolt => pr_dtcalcul   -- Data Emprestimo
+                                             ,pr_cdagenci => pr_cdagenci   -- Codigo Agencia
+                                             ,pr_cdbccxlt => 100           -- Codigo Caixa
+                                             ,pr_cdoperad => pr_cdoperad   -- Operador
+                                             ,pr_cdpactra => pr_cdpactra   -- Posto Atendimento
+                                             ,pr_tplotmov => 5             -- Tipo movimento
+                                             ,pr_nrdolote => 650004        -- Numero Lote
+                                             ,pr_nrdconta => pr_nrdconta   -- Numero da Conta
+                                             ,pr_cdhistor => vr_cdhistor   -- Codigo Historico
+                                             ,pr_nrctremp => pr_nrctremp   -- Numero Contrato
+                                             ,pr_vllanmto => vr_vliofcpl   -- Valor Lancamento
+                                             ,pr_dtpagemp => pr_dtcalcul   -- Data Pagamento Emprestimo
+                                             ,pr_txjurepr => pr_txjuremp   -- Taxa Juros Emprestimo
+                                             ,pr_vlpreemp => pr_vlpreemp   -- Valor Emprestimo
+                                             ,pr_nrsequni => pr_nrparepr   -- Numero Sequencia
+                                             ,pr_nrparepr => pr_nrparepr   -- Numero Parcelas Emprestimo
+                                             ,pr_flgincre => TRUE          -- Indicador Credito
+                                             ,pr_flgcredi => TRUE          -- Credito
+                                             ,pr_nrseqava => pr_nrseqava   -- Pagamento: Sequencia do avalista
+                                             ,pr_cdorigem => pr_cdorigem   -- Origem do Lancamento
+                                             ,pr_nrseqdig => vr_nrseqdig   -- Sequencia do Lancamento
+                                             ,pr_cdcritic => vr_cdcritic   -- Codigo Erro
+                                             ,pr_dscritic => vr_dscritic); -- Descricao Erro
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
+        tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
+                              ,pr_nrdconta     => pr_nrdconta
+                              ,pr_dtmvtolt     => pr_dtcalcul
+                              ,pr_tpproduto    => 1 -- Emprestimo
+                              ,pr_nrcontrato   => pr_nrctremp
+                              ,pr_idlautom     => null
+                              ,pr_dtmvtolt_lcm => pr_dtcalcul
+                              ,pr_cdagenci_lcm => pr_cdpactra
+                              ,pr_cdbccxlt_lcm => 100
+                              ,pr_nrdolote_lcm => 650004
+                              ,pr_nrseqdig_lcm => vr_nrseqdig
+                              ,pr_vliofpri     => 0
+                              ,pr_vliofadi     => 0
+                              ,pr_vliofcpl     => vr_vliofcpl
+                              ,pr_flgimune     => 0
+                              ,pr_cdcritic     => vr_cdcritic 
+                              ,pr_dscritic     => vr_dscritic);
+
         -- Se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
@@ -6250,68 +6290,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         -- Se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF;        
-        
-        -- Se for Financiamento
-        IF pr_floperac THEN
-          vr_cdhistor := 2542;
-        ELSE
-          vr_cdhistor := 2541;
         END IF;
         
-        -- Lanca em C/C e atualiza o lote
-        EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                            ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
-                                            ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
-                                            ,pr_cdbccxlt => 100           --> Numero do caixa
-                                            ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
-                                            ,pr_cdpactra => pr_cdpactra   --> PA da transacao
-                                            ,pr_nrdolote => 650003        --> Numero do Lote
-                                            ,pr_nrdconta => pr_nrdconta   --> Número da conta
-                                            ,pr_cdhistor => vr_cdhistor   --> Codigo historico
-                                            ,pr_vllanmto => vr_vliofcpl   --> Valor da multa
-                                            ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
-                                            ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
-                                            ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
-                                            ,pr_nrseqdig => vr_nrseqdig   --> Sequencia do Lancamento
-                                            ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
-                                            ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
-        -- Se ocorreu erro
-        IF vr_des_reto <> 'OK' THEN
-          -- Se possui algum erro na tabela de erros
-          IF vr_tab_erro.COUNT() > 0 THEN
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        -- No programa CRPS149: 
+        -- Será feito o débito em conta corrente        
+        IF UPPER(pr_cdprogra) <> 'CRPS149' THEN        
+          -- Se for Financiamento
+          IF pr_floperac THEN
+            vr_cdhistor := 2542;
           ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao criar o lancamento do IOF.';
+            vr_cdhistor := 2541;
           END IF;
-          RAISE vr_exc_erro;
-        END IF;
-        
-    	  -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
-        tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
-                              ,pr_nrdconta     => pr_nrdconta
-                              ,pr_dtmvtolt     => pr_dtcalcul
-                              ,pr_tpproduto    => 1 -- Emprestimo
-                              ,pr_nrcontrato   => pr_nrctremp
-                              ,pr_idlautom     => null
-                              ,pr_dtmvtolt_lcm => pr_dtcalcul
-                              ,pr_cdagenci_lcm => pr_cdpactra
-                              ,pr_cdbccxlt_lcm => 100
-                              ,pr_nrdolote_lcm => 650003
-                              ,pr_nrseqdig_lcm => vr_nrseqdig
-                              ,pr_vliofpri     => 0
-                              ,pr_vliofadi     => 0
-                              ,pr_vliofcpl     => vr_vliofcpl
-                              ,pr_flgimune     => 0
-                              ,pr_cdcritic     => vr_cdcritic 
-                              ,pr_dscritic     => vr_dscritic);
-
-        -- Se houve erro
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
+          
+          -- Lanca em C/C e atualiza o lote
+          EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+                                              ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
+                                              ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
+                                              ,pr_cdbccxlt => 100           --> Numero do caixa
+                                              ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
+                                              ,pr_cdpactra => pr_cdpactra   --> PA da transacao
+                                              ,pr_nrdolote => 650003        --> Numero do Lote
+                                              ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                              ,pr_cdhistor => vr_cdhistor   --> Codigo historico
+                                              ,pr_vllanmto => vr_vliofcpl   --> Valor da multa
+                                              ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
+                                              ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
+                                              ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
+                                              ,pr_nrseqdig => vr_nrseqdig   --> Sequencia do Lancamento
+                                              ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
+                                              ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
+          -- Se ocorreu erro
+          IF vr_des_reto <> 'OK' THEN
+            -- Se possui algum erro na tabela de erros
+            IF vr_tab_erro.COUNT() > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao criar o lancamento do IOF.';
+            END IF;
+            RAISE vr_exc_erro;
+          END IF;        
+        END IF;   	  
       
 		  END IF;
   
@@ -6414,53 +6434,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
         RAISE vr_exc_erro;
       END IF;
+      
+      -- No programa CRPS149: 
+      -- Será feito o débito em conta corrente        
+      IF UPPER(pr_cdprogra) <> 'CRPS149' THEN        
+        -- Se for Financiamento
+        IF pr_floperac THEN
+          -- Condicao para verificar se o pagamento foi feito por um avalista
+          IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
+            vr_cdhistor := 2333;
+          ELSE
+            vr_cdhistor := 2337;
+          END IF;
+        ELSE
+          -- Condicao para verificar se o pagamento foi feito por um avalista
+          IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
+            vr_cdhistor := 2332;
+          ELSE
+            vr_cdhistor := 2336;
+          END IF;
+        END IF;
 
-      -- Se for Financiamento
-      IF pr_floperac THEN
-        -- Condicao para verificar se o pagamento foi feito por um avalista
-        IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
-          vr_cdhistor := 2333;
-        ELSE
-          vr_cdhistor := 2337;
+        -- Lanca em C/C e atualiza o lote
+        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+                                      ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
+                                      ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
+                                      ,pr_cdbccxlt => 100           --> Numero do caixa
+                                      ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
+                                      ,pr_cdpactra => pr_cdpactra   --> PA da transacao
+                                      ,pr_nrdolote => 650003        --> Numero do Lote
+                                      ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                      ,pr_cdhistor => vr_cdhistor   --> Codigo historico
+                                      ,pr_vllanmto => vr_vlpagpar   --> Valor da parcela emprestimo
+                                      ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
+                                      ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
+                                      ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
+                                      ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
+        -- Se ocorreu erro
+        IF vr_des_reto <> 'OK' THEN
+          -- Se possui algum erro na tabela de erros
+          IF vr_tab_erro.COUNT() > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao criar o pagamento de emprestimo na conta.';
+          END IF;
+          RAISE vr_exc_erro;
         END IF;
-      ELSE
-        -- Condicao para verificar se o pagamento foi feito por um avalista
-        IF pr_nrseqava = 0 OR pr_nrseqava IS NULL THEN
-          vr_cdhistor := 2332;
-        ELSE
-          vr_cdhistor := 2336;
-        END IF;
+        
       END IF;
-
-      -- Lanca em C/C e atualiza o lote
-      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                    ,pr_dtmvtolt => pr_dtcalcul   --> Movimento atual
-                                    ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
-                                    ,pr_cdbccxlt => 100           --> Numero do caixa
-                                    ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
-                                    ,pr_cdpactra => pr_cdpactra   --> PA da transacao
-                                    ,pr_nrdolote => 650003        --> Numero do Lote
-                                    ,pr_nrdconta => pr_nrdconta   --> Número da conta
-                                    ,pr_cdhistor => vr_cdhistor   --> Codigo historico
-                                    ,pr_vllanmto => vr_vlpagpar   --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
-                                    ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
-                                    ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
-                                    ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
-                                    ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
-      -- Se ocorreu erro
-      IF vr_des_reto <> 'OK' THEN
-        -- Se possui algum erro na tabela de erros
-        IF vr_tab_erro.COUNT() > 0 THEN
-          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao criar o pagamento de emprestimo na conta.';
-        END IF;
-        RAISE vr_exc_erro;
-      END IF;
-
+      
       -- Atualizar Emprestimo
       BEGIN
         UPDATE crapepr
@@ -6495,6 +6520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_efetua_pagamento_em_atraso;
 
   PROCEDURE pc_efetua_pagamento_vencer(pr_cdcooper  IN  crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                      ,pr_cdprogra  IN  crapprg.cdprogra%TYPE     --> Nome da Tela
                                       ,pr_dtmvtoan  IN  crapdat.dtmvtoan%TYPE     --> Data de Movimento Anterior
                                       ,pr_dtmvtolt  IN  crapdat.dtmvtolt%TYPE     --> Data de Movimento Atual
                                       ,pr_cdagenci  IN  crapage.cdagenci%TYPE     --> Codigo da Agencia
@@ -6789,51 +6815,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       ---------------------------------------------------------------------------------------------------
       -- Efetua o lancamento de Pagamento em Conta Corrente
       ---------------------------------------------------------------------------------------------------
-      IF NVL(pr_nrseqava,0) = 0 THEN
-        -- Se for Financiamento
-        IF pr_floperac THEN
-          vr_cdhistor := 2333;
+      -- No programa CRPS149: 
+      -- Será feito o débito em conta corrente        
+      IF UPPER(pr_cdprogra) <> 'CRPS149' THEN
+        IF NVL(pr_nrseqava,0) = 0 THEN
+          -- Se for Financiamento
+          IF pr_floperac THEN
+            vr_cdhistor := 2333;
+          ELSE
+            vr_cdhistor := 2332;
+          END IF;
         ELSE
-          vr_cdhistor := 2332;
+          -- Se for Financiamento
+          IF pr_floperac THEN
+            vr_cdhistor := 2337;
+          ELSE
+            vr_cdhistor := 2336;
+          END IF;
         END IF;
-      ELSE
-        -- Se for Financiamento
-        IF pr_floperac THEN
-          vr_cdhistor := 2337;
-        ELSE
-          vr_cdhistor := 2336;
+        
+        -- Lanca em C/C e atualiza o lote
+        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
+                                      ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
+                                      ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
+                                      ,pr_cdbccxlt => 100           --> Numero do caixa
+                                      ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
+                                      ,pr_cdpactra => pr_cdpactra   --> PA da transacao
+                                      ,pr_nrdolote => 650003        --> Numero do Lote
+                                      ,pr_nrdconta => pr_nrdconta   --> Número da conta
+                                      ,pr_cdhistor => vr_cdhistor   --> Codigo historico
+                                      ,pr_vllanmto => pr_vlpagpar   --> Valor da parcela emprestimo
+                                      ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
+                                      ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
+                                      ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
+                                      ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
+        -- Se ocorreu erro
+        IF vr_des_reto <> 'OK' THEN
+          -- Se possui algum erro na tabela de erros
+          IF vr_tab_erro.COUNT() > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao criar o pagamento de emprestimo na conta.';
+          END IF;
+          RAISE vr_exc_erro;
         END IF;
+
       END IF;
       
-      -- Lanca em C/C e atualiza o lote
-      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                    ,pr_dtmvtolt => pr_dtmvtolt   --> Movimento atual
-                                    ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
-                                    ,pr_cdbccxlt => 100           --> Numero do caixa
-                                    ,pr_cdoperad => pr_cdoperad   --> Codigo do operador
-                                    ,pr_cdpactra => pr_cdpactra   --> PA da transacao
-                                    ,pr_nrdolote => 650003        --> Numero do Lote
-                                    ,pr_nrdconta => pr_nrdconta   --> Número da conta
-                                    ,pr_cdhistor => vr_cdhistor   --> Codigo historico
-                                    ,pr_vllanmto => pr_vlpagpar   --> Valor da parcela emprestimo
-                                    ,pr_nrparepr => pr_nrparepr   --> Numero parcelas emprestimo
-                                    ,pr_nrctremp => pr_nrctremp   --> Numero do contrato de emprestimo
-                                    ,pr_nrseqava => pr_nrseqava   --> Pagamento: Sequencia do avalista
-                                    ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
-                                    ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
-      -- Se ocorreu erro
-      IF vr_des_reto <> 'OK' THEN
-        -- Se possui algum erro na tabela de erros
-        IF vr_tab_erro.COUNT() > 0 THEN
-          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao criar o pagamento de emprestimo na conta.';
-        END IF;
-        RAISE vr_exc_erro;
-      END IF;
-
     	-- Verificar valor saldo devedor parcela
       vr_vlsdvpar := nvl(pr_vlsdvpar,0) - (nvl(pr_vlpagpar,0) + nvl(vr_vldescto,0));
       IF vr_vlsdvpar <= 0 THEN
@@ -7654,6 +7685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       IF rw_crappep.dtvencto > vr_dtmvtoan AND rw_crappep.dtvencto <= vr_dtmvtolt THEN
         -- Efetua o pagamento da parcela em Dia
         pc_efetua_pagamento_em_dia(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdprogra => pr_cdprogra
                                   ,pr_dtmvtoan => vr_dtmvtoan
                                   ,pr_dtmvtolt => vr_dtmvtolt
                                   ,pr_cdagenci => pr_cdagenci
@@ -7746,6 +7778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       ELSIF rw_crappep.dtvencto > vr_dtmvtolt THEN
         -- Efetua o pagamento da parcela vencer
         pc_efetua_pagamento_vencer(pr_cdcooper  => pr_cdcooper
+                                  ,pr_cdprogra  => pr_cdprogra
                                   ,pr_dtmvtoan  => vr_dtmvtoan
                                   ,pr_dtmvtolt  => vr_dtmvtolt
                                   ,pr_cdagenci  => pr_cdagenci

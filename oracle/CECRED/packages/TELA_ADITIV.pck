@@ -4463,6 +4463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
 
     -- Variaveis
     rw_crapdat    btch0001.cr_crapdat%ROWTYPE;
+    vr_dsmodbem   VARCHAR2(100);
     vr_nrmodbem   crapadi.nrmodbem%type;
     vr_dstpcomb   crapadi.dstpcomb%type;
     vr_rowidepr   varchar2(20);
@@ -4535,9 +4536,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       raise vr_exc_saida;
     end if; --> Fim IF pr_cddopcao
       
+    -- Tratar situação do Zero KM no serviço da Fipe
+    vr_dsmodbem := upper(pr_nrmodbem);
+    IF vr_dsmodbem LIKE 'ZERO KM%' THEN
+      -- Trocar Zero KM pelo ano corrente
+      vr_dsmodbem := (to_number(to_char(SYSDATE,'RRRR'))+1)||REPLACE(vr_dsmodbem,'ZERO KM','');
+    END IF;
+    
     -- Separa os dados do modelo. Ano e tipo de combustível chegam no mesmo campo. (Ex: "2018 GASOLINA")
-    vr_nrmodbem := substr(pr_nrmodbem, 1, 4);
-    vr_dstpcomb := ltrim(substr(pr_nrmodbem, 5));
+    vr_nrmodbem := substr(vr_dsmodbem, 1, 4);
+    vr_dstpcomb := ltrim(substr(vr_dsmodbem, 5));
 
     -- Chamar substituição de Bem
     tela_manbem.pc_substitui_bem(par_cdcooper => vr_cdcooper,

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Novembro/2004                   Ultima atualizacao: 26/05/2018
+   Data    : Novembro/2004                   Ultima atualizacao: 06/09/2018
 
    Dados referentes ao programa:
 
@@ -100,6 +100,8 @@
                             e no titulo do email adicionado qual cooperativa gerou o email.
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
+			   06/09/2018 - Remover o endereco de e-mail do james. (James)
 
 /*----------------------------------------------------------------------------*/
 
@@ -604,8 +606,7 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                            + "compe@ailos.coop.br,"
                                            + "eduardo@ailos.coop.br,"
                                            + "anderson.fossa@ailos.coop.br,"  
-                                           + "jean.deschamps@ailos.coop.br,"  
-                                           + "james.junior@ailos.coop.br", 
+                                           + "jean.deschamps@ailos.coop.br",                                             
                                      INPUT "'CONTROLE PROCESSO  (" + crapcop.nmrescop + ") ' ",
                                      INPUT SUBSTRING(aux_nmarqimp, 5),
                                      INPUT FALSE).
@@ -622,7 +623,6 @@ DEF  VAR     aux_dssolici            AS CHAR                         NO-UNDO.
                                            "eduardo@ailos.coop.br," +
                                            "anderson.fossa@ailos.coop.br," + 
                                            "jean.deschamps@ailos.coop.br," + 
-                                           "james.junior@ailos.coop.br," +
 										   "custodia@ailos.coop.br," +
                                            "tesouraria@ailos.coop.br", 
                                      INPUT "'CONTROLE PROCESSO  (" + crapcop.nmrescop + ") ' ",

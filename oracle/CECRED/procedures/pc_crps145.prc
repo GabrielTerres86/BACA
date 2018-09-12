@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Marco/96.                       Ultima atualizacao: 09/03/2018
+       Data    : Marco/96.                       Ultima atualizacao: 02/05/2018
 
        Dados referentes ao programa:
 
@@ -107,6 +107,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    
                    09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
                                 Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                                 
+
+                   02/05/2018 - Ajuste no nome do arquivo gerado no relatorio (Projeto Debitador Unico - Fabiano B. Dias - AMcom).																
 
     ............................................................................. */
 
@@ -561,7 +563,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         vr_tab_craphis(rw_craphis.cdhistor).indoipmf := rw_craphis.indoipmf;
       END LOOP; 
 
-      
+
       --inicializando a variavel de controle de commit para o restart
       vr_commit := 0;
       --percorre os lancamentos de poupanca programada
@@ -615,7 +617,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
             RAISE vr_exc_saida;
           END IF;
           
-          
           --acumulando o valor total do saldo
           vr_vlsldtot := vr_tab_crapsld(rw_craprpp.nrdconta).vlsddisp +
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfap - 
@@ -663,7 +664,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
                   vr_indoipmf := 1;
                   vr_txdoipmf := 0;
                 END IF;           
-                
               END IF;  
             END IF;
             --se abono zero e historico dentro da lista abaixo
@@ -698,7 +698,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
                 vr_vlsldtot := nvl(vr_vlsldtot,0) - rw_craplcm.vllanmto;
               END IF;
             END IF;  
-            
           END LOOP;  /* For each craplcm */
 
           --se o valor da prestacao da poupanca programada for menor ou igual ao saldo acumulado
@@ -710,7 +709,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                          ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
                                          ,pr_dscritic => vr_dscritic   -- Descricao da Critica
                                          ,pr_tab_care => vr_tab_care); -- Tabela com registros de Carencia do produto    
-            
+
                IF vr_dscritic IS NULL THEN
                 apli0005.pc_cadastra_aplic(pr_cdcooper => pr_cdcooper,
                                               pr_cdoperad => '1',
@@ -989,7 +988,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_dsxmlnode => '/crrl120/registro'
                                  ,pr_dsjasper  => 'crrl120.jasper'
                                  ,pr_dsparams  => ''
-                                 ,pr_dsarqsaid => vr_path_arquivo || '/crrl120.lst'
+                                 ,pr_dsarqsaid => vr_path_arquivo || '/crrl120_'||to_char( gene0002.fn_busca_time )||'.lst'
                                  ,pr_flg_gerar => 'N'
                                  ,pr_qtcoluna  => 132
                                  ,pr_sqcabrel  => 1

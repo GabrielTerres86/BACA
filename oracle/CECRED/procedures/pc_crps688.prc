@@ -58,6 +58,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
                    13/04/2017 - Correcao para nao considerar as aplicacoes diferentes de RDCPOS
                                 no agendamento do resgate de valores feitos pelo IBANK.
                                 (Carlos Rafael Tanholi SD 637453)
+                   18/04/2018 - Incluido a chamada da rotina gen_debitador_unico.pc_qt_hora_prg_debitador
+                                para atualizar a quantidade de execuções programadas no debitador
+                                Projeto debitador único - Josiane Stiehler (AMcom)
     ............................................................................ */
 
     DECLARE
@@ -540,6 +543,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
       ELSE
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
+      END IF;      
+
+      -- atualiza a quantidade de execuções que estão agendadas no debitador unico
+      gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper    => pr_cdcooper   --Cooperativa
+                                                  ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                  ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
       END IF;      
          
 	  --> Verificar a execução da DEBNET e DEBSIC

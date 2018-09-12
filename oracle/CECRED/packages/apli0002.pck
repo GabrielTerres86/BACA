@@ -10907,7 +10907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Agosto/2014                          Ultima atualizacao: 09/05/2017
+   Data    : Agosto/2014                          Ultima atualizacao: 29/08/2018
 
    Dados referentes ao programa:
 
@@ -10955,6 +10955,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              
                 09/05/2017 - Implementei o tratamento de erro para o retorno da rotina
                              apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)
+                             
+                29/08/2018 - Ajuste realizado para prevenir problemas no resgate de aplicação.
+                             (PRB0040124 - Kelvin)
   .......................................................................................*/
   PROCEDURE pc_efetua_resgate_online(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -11186,8 +11189,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
-      rw_crapass cr_crapass%ROWTYPE;   
+      rw_crapass cr_crapass%ROWTYPE; 
       
+      CURSOR cr_busca_pa(pr_cdcooper IN crapope.cdcooper%TYPE
+                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
+        SELECT nvl(cdpactra,0) cdpactra
+          FROM crapope
+         WHERE cdoperad = pr_cdoperad
+           AND cdcooper = pr_cdcooper;
+        rw_busca_pa cr_busca_pa%ROWTYPE;
+        
+             
       -- Definição de tipo e inicialização com valores
       TYPE vr_typ_ctrdocmt IS VARRAY(9) OF VARCHAR2(1);
       vr_ctrdocmt vr_typ_ctrdocmt := vr_typ_ctrdocmt('1','2','3','4','5','6','7','8','9');
@@ -15126,8 +15138,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             END IF;
 
             var_cdpactra := NVL(pr_cdagenci, 0);
-            IF var_cdpactra = 0 tHEN
-              SELECT cdpactra INTO var_cdpactra FROM crapope WHERE cdoperad = pr_cdoperad AND cdcooper = pr_cdcooper;
+            IF var_cdpactra = 0 THEN
+              
+              OPEN cr_busca_pa(pr_cdcooper
+                              ,pr_cdoperad);
+                FETCH cr_busca_pa
+                  INTO rw_busca_pa;
+              CLOSE cr_busca_pa;
+              
+              var_cdpactra := rw_busca_pa.cdpactra;              
             END IF;
 
             BEGIN

@@ -50,6 +50,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  
                  23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)	 	   
                  
+				 04/09/2018 - Atualizar DTINICIO_CREDITO ao atualizar TBCOTAS_DEVOLUCAO.
+				              (Alcemir - Mout's : SM 364)
+                 
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -12778,7 +12781,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   	pr_dscritic       := null;
 
     update TBCOTAS_DEVOLUCAO
-       set VLPAGO      = VLPAGO + nvl(pr_vlpago,0)
+       set VLPAGO      = VLPAGO + nvl(pr_vlpago,0),
+	       DTINICIO_CREDITO = trunc(SYSDATE) 
      where CDCOOPER    = pr_cdcooper
        and NRDCONTA    = pr_nrdconta
        and TPDEVOLUCAO = pr_tpdevolucao;

@@ -304,6 +304,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
 	--                09/02/2018 - Alterado para verificar operação de recarga duplicada;
 	--                           - Alterada crítica para solicitações de recargas repetidas no TAA. (Reinert)
+  --                16/04/2018 - Incluido a chamada do programa gen_debitador_unico.pc_qt_hora_prg_debitador
+  --                             para  atualizar a quantidade de execução que esta agendada no Debitador
+  --                             Projeto Debitador Unico - Josiane Stiehler (AMcom)
+
   ---------------------------------------------------------------------------------------------------------------
   
   -- Objetos para armazenar as variáveis da notificação
@@ -4584,7 +4588,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                 02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
                              crapass, crapttl, crapjur 
              		  				   (Adriano - P339).
-  
+                16/04/2018 - Incluido a chamada do programa gen_debitador_unico.pc_qt_hora_prg_debitador
+                             para  atualizar a quantidade de execução que esta agendada no Debitador
+                             Projeto Debitador Unico - Josiane Stiehler (AMcom)
+
     ..............................................................................*/
     DECLARE
       
@@ -4676,6 +4683,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       ELSE
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      
+      -- Verifica se o programa que chamou é o Debitador
+      IF pr_nmdatela = 'JOBAGERCEL' AND
+         pr_cdcooper <> 3 THEN
+         -- Atualiza a quantidade de execução que estão agendadas no Debitador
+         -- Projeto Debitador Único
+         gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper    => pr_cdcooper   --Cooperativa
+                                                     ,pr_cdprocesso => 'RCEL0001.PC_PROCES_AGENDAMENTOS_RECARGA' --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                     ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+         IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+         END IF;
+
+         -- registrar a quantidade de execução
+         -- Projeto debitador unico
+         SICR0001.pc_controle_exec_deb (pr_cdcooper   => pr_cdcooper         --> Código da coopertiva
+                                       ,pr_cdtipope  => 'I'                 --> Tipo de operacao I-incrementar e C-Consultar
+                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
+                                       ,pr_cdprogra  => pr_nmdatela         --> Codigo do programa
+                                       ,pr_flultexe  => vr_flultexe         --> Retorna se é a ultima execução do procedimento
+                                       ,pr_qtdexec   => vr_qtdexec          --> Retorna a quantidade
+                                       ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica de erro
+                                       ,pr_dscritic  => vr_dscritic);       --> descrição do erro se ocorrer
+
+           IF nvl(vr_cdcritic,0) > 0 OR
+              TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
+           --Commit para garantir o
+           --controle de execucao do programa
+           COMMIT;
       END IF;
       
       --> Verificar a execução da DEBNET/DEBSIC 

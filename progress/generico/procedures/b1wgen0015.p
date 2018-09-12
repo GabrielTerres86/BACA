@@ -425,6 +425,11 @@
                            de analise de fraude. 
                            PRJ381 - AntiFraude (Odirlei-AMcom)
                            
+              19/07/2018 - Ajustar a verifica_operacao para enviar o parametro de agencia corretamente
+                           ao inves do valor fixo 90 (PRJ 363 - Douglas Quisinski)
+
+			  29/08/2018 - Foi adicionado um campo na tabela tt-dados-titular para retornar o
+						   Valor limite folha de pagamento (Felipe Fronza Mout`s)
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -8445,7 +8450,8 @@ PROCEDURE cria-registro-titular-conta-conjunta:
 		   tt-dados-titular.dtlimted = ?
 		   tt-dados-titular.dtlimweb = ?
 		   tt-dados-titular.dtlimvrb = ?
-		   tt-dados-titular.dtblutsh = ?.
+		   tt-dados-titular.dtblutsh = ?
+		   tt-dados-titular.vllimflp = cratopi.vllimflp.
 
 END PROCEDURE.
 
@@ -8491,7 +8497,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtlimted = ?
                    tt-dados-titular.dtlimweb = ?
                    tt-dados-titular.dtlimvrb = ?
-                   tt-dados-titular.dtblutsh = ?. 
+                   tt-dados-titular.dtblutsh = ?
+				   tt-dados-titular.vllimflp = 0. 
         END.
     ELSE
         DO: 
@@ -8563,7 +8570,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtlimted = cratsnh.dtlimted
                    tt-dados-titular.dtlimweb = cratsnh.dtlimweb
                    tt-dados-titular.dtlimvrb = cratsnh.dtlimvrb
-                   tt-dados-titular.dtblutsh = cratsnh.dtblutsh. 
+                   tt-dados-titular.dtblutsh = cratsnh.dtblutsh
+				   tt-dados-titular.vllimflp = cratsnh.vllimflp. 
         END.
 
     RETURN "OK".

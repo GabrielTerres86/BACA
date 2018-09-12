@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 16/06/2018
+   Data    : 14/07/2006                        Ultima atualizacao: 30/08/2018
 
    Dados referentes ao programa:
 
@@ -291,6 +291,9 @@
 
                16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (Rafael).
 
+               30/08/2018 - Adicionar validacao nos parametros de TIPO de JUROS, TIPO de MULTA,
+                           TIPO de EMISSAO e FORMATO do DOCUMENTO (DOuglas - PRJ285 Nova Conta Online)
+      
 .............................................................................*/
 
 
@@ -1411,6 +1414,31 @@ PROCEDURE gravar-boleto:
                  END.                              
            END.
 
+       /* Verificar se o TIPO de JUROS, ou MULTA, sejam um dos valores validos*/
+       IF  NOT CAN-DO("1,2,3",STRING(par_tpjurmor)) OR    /* 1=vlr "R$" diario, 2= "%" Mensal, 3=isento */
+           NOT CAN-DO("1,2,3",STRING(par_tpdmulta)) THEN  /* 1=vlr "R$", 2= "%" , 3=isento */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Tipo de juros de mora ou tipo de multa nao selecionado".
+            
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
+
+        IF NOT CAN-DO("1,2",STRING(par_tpemitir)) THEN  /* 1-Boleto/2-Carne */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Formato do documento (boleto avulso ou carne) nao selecionado".
+            
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
+        
+        IF NOT CAN-DO("1,2,3",STRING(par_inemiten)) THEN  /* 1-Banco/2-Cooperado/3-Cooperativa */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Forma de emissao do documento nao selecionado".
+            
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
 
         RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
 

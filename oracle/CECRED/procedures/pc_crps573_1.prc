@@ -5296,6 +5296,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                          || replace(pr_txeanual,',','.')|| ','
                                          || rw_crapris_age.cdagenci || ',' 
                                          || vr_idparale || ',' 
+                                         || '''N'','
                                          || 'wpr_cdcritic, wpr_dscritic);' 
                                          || chr(13) || --
                         'END;'; --  
@@ -7864,16 +7865,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       else
         -- Gerar log
         pc_controla_log_batch(1, '6 - Fim PA: '||pr_cdagenci );
-                    
-        -- Encerrar a tabela de modalidades
-        pc_log_programa(PR_DSTIPLOG           => 'O',
-                        PR_CDPROGRAMA         => vr_cdprogra ||'_'|| pr_cdagenci || '$',
-                        pr_cdcooper           => pr_cdcooper,
-                        pr_tpexecucao         => vr_tpexecucao,   -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                        pr_tpocorrencia       => 4,
-                        pr_dsmensagem         => 'Chamada encerra paralelo ' ,
-                        PR_IDPRGLOG           => vr_idlog_ini_par);      
 
+        --Grava data fim para o JOB na tabela de LOG 
+        pc_log_programa(pr_dstiplog   => 'F',    
+                        pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                        pr_cdcooper   => pr_cdcooper, 
+                        pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                        pr_idprglog   => vr_idlog_ini_par);     
+                    
         -- Atualiza finalização do batch na tabela de controle 
         gene0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole   --ID de Controle
                                            ,pr_cdcritic   => vr_cdcritic     --Codigo da critica

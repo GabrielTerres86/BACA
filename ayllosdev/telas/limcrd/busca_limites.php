@@ -19,6 +19,11 @@ require_once("../../includes/controla_secao.php");
 require_once("../../class/xmlfile.php");
 isPostMethod();
 
+if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$_POST["action"], false)) <> '') {
+   exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+   exit;
+}
+
 if ($_POST["action"] == "C") {
     $nr_page = isset($_POST["page"]) ? $_POST["page"] : 0;
     if (!is_numeric($nr_page))

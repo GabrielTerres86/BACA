@@ -1,4 +1,4 @@
-/*-----------------------------------------------------------------------------
+ /*-----------------------------------------------------------------------------
 
     b1crap11.p - Validacao/Atualizacao Inclusao Boletim Caixa 
     
@@ -61,6 +61,8 @@
         14/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                       norturno rodando (Douglas Pagel - AMcom).
 
+				04/09/2018 - Incluido procedure pc_valida_valor_devolucao para validar valor da devolução.
+				             (Alcemir Mout's - SM 364)
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -1825,6 +1827,99 @@ PROCEDURE valida-existencia-boletim:
     RETURN "OK".
     
 END PROCEDURE.
+
+PROCEDURE pc_valida_valor_devolucao:
+    
+	DEF INPUT  PARAM p-cooper               AS CHAR.            
+    DEF INPUT  PARAM p-conta                AS DEC.	
+    DEF INPUT  PARAM p-vldevolu             AS DEC.
+	DEF INPUT  PARAM p-tpdevolu             AS CHAR.
+	DEF INPUT  PARAM p-cod-agencia          AS INTE.
+    DEF INPUT  PARAM p-nro-caixa            AS INTE.
+	
+	
+	DEF VAR aux_flgvalid AS INT           NO-UNDO.
+    DEF VAR aux_tpdevolu AS INT INIT 0    NO-UNDO.
+	
+	DEF VAR aux_vlcapital AS DEC          NO-UNDO.
+	DEF VAR aux_dtinicio_credito AS DATE  NO-UNDO.
+	DEF VAR aux_vlpago AS DEC             NO-UNDO.
+	
+	
+	
+	
+	FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
+	
+	IF p-tpdevolu = "2" THEN
+	  ASSIGN aux_tpdevolu = 3.
+	
+	IF p-tpdevolu = "3" THEN
+	  ASSIGN aux_tpdevolu = 4.
+    
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+			  /* Efetuar a chamada da rotina Oracle */
+			  RUN STORED-PROCEDURE pc_buscar_tbcota_devol
+				  aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper,  /*codigo da cooperativa*/    
+													  INPUT p-conta, /*Conta*/                    
+													  INPUT aux_tpdevolu, /*Cotas*/                    															     
+													 OUTPUT ?, /*Valor do capital*/                       
+													 OUTPUT ?, /*Data de pagemento*/                        
+													 OUTPUT ?, /*Valor pago*/                        
+													 OUTPUT 0, /*Codigo da critica*/                    
+													 OUTPUT ""). /*Descricao da critica*/               
+
+			  /* Fechar o procedimento para buscarmos o resultado */
+			  CLOSE STORED-PROC pc_buscar_tbcota_devol
+					 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+			  /* Busca possíveis erros */
+			  ASSIGN i-cod-erro = 0
+					 c-desc-erro = ""
+					 i-cod-erro = pc_buscar_tbcota_devol.pr_cdcritic
+									WHEN pc_buscar_tbcota_devol.pr_cdcritic <> ?
+					 c-desc-erro = pc_buscar_tbcota_devol.pr_dscritic
+									WHEN pc_buscar_tbcota_devol.pr_dscritic <> ?
+					 aux_vlcapital = pc_buscar_tbcota_devol.pr_vlcapital
+									WHEN pc_buscar_tbcota_devol.pr_vlcapital <> ?
+					 aux_dtinicio_credito = pc_buscar_tbcota_devol.pr_dtinicio_credito
+									WHEN pc_buscar_tbcota_devol.pr_dtinicio_credito <> ?
+					 aux_vlpago = pc_buscar_tbcota_devol.pr_vlpago
+									WHEN pc_buscar_tbcota_devol.pr_vlpago <> ?.
+									
+
+			IF i-cod-erro <> 0  OR c-desc-erro <> "" THEN
+				DO:
+					RUN cria-erro (INPUT p-cooper,
+								   INPUT p-cod-agencia,
+								   INPUT p-nro-caixa,
+								   INPUT i-cod-erro,
+								   INPUT c-desc-erro,
+								   INPUT YES).
+					RETURN "NOK".
+				END.
+            ELSE
+			  IF p-vldevolu > (aux_vlcapital - aux_vlpago) THEN
+			   DO:
+					ASSIGN i-cod-erro  = 0
+						   c-desc-erro = "Valor da devolução é maior que o disponível.".
+					RUN cria-erro (INPUT p-cooper,
+								   INPUT p-cod-agencia,
+								   INPUT p-nro-caixa,
+								   INPUT i-cod-erro,
+								   INPUT c-desc-erro,
+								   INPUT YES).
+					RETURN "NOK".
+								   
+			   END.
+			  			  			  			  			   
+        RETURN "OK".	
+			
+			
+END PROCEDURE.
+
 
 FUNCTION reabilita-caixa-sangria RETURNS LOGICAL (INPUT p-cod-cooper  AS INTE,
                                                   INPUT p-cod-agencia AS INTE,

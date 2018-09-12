@@ -348,17 +348,18 @@
 		<? if (($cdadmcrd >= 10) && ($cdadmcrd <= 80)){ ?>
 		<a href="#" class="botao" id="bthislim" onClick="mostraHisLimite(); return false;">Hist. Limite</a>
 		<? } ?>
-				<a href="#" class="botao" id="btHistoricoProposta" onclick="carregaHistorico(0);"> <? echo utf8ToHtml("Hist. Proposta");?></a>
+				<a href="#" class="botao" id="btHistoricoProposta" onclick="carregaHistorico(0, <? echo $nrctrcrd ;?>);"> <? echo utf8ToHtml("Hist. Proposta");?></a>
 				<?php
 				//Desabilitar o botão Imprimir Termo de Adesão para os cartões BB
 				if ($cdadmcrd!=83&&$cdadmcrd!=85&&$cdadmcrd!=87):?>
-					<a id="continuaAprovacaoBTN" style="display:none "  class="botao" onclick="solicitaSenha(nrctrcrd) ;" ><? echo utf8ToHtml("Continuar Aprovação");?> </a>
+					<a id="continuaAprovacaoBTN" style="display:none "  class="botao" onclick="solicitaSenha(<?php echo $nrctrcrd; ?>) ;" ><? echo utf8ToHtml("Continuar Aprovação");?> </a>
 					<a  style="display:none " cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 					nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
 					idorigem="<?php echo $glbvars['idorigem']; ?>" 
 					cdoperad="<?php echo $glbvars['cdoperad']; ?>"
 					dsdircop="<?php echo $glbvars['dsdircop']; ?>"
+					nrctrcrd="<?php echo $nrctrcrd; ?>"
 					   href="#" class="botao imprimeTermoBTN" id="emiteTermoBTN" onclick="imprimirTermoDeAdesao(this);"> <? echo utf8ToHtml("Imprimir Termo de Adesão");?></a>
 					   
 				<?php endif; ?>	   
@@ -375,7 +376,7 @@
 	}else{
 		$(".imprimeTermoBTN").show();
 		hideMsgAguardo();
-		bloqueiaFundo(divRotina);
+		bloqueiaFundo(divRotina);				
 	}
 	controlaLayout('frmDadosCartao');
 

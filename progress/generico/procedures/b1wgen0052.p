@@ -133,6 +133,8 @@
 
 			   13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 
+			   10/09/2018 - Ajuste na busca pelo Nome Social (Andrey Formigari - Mouts)
+
 ............................................................................*/
 
 
@@ -199,9 +201,17 @@ PROCEDURE Busca_Dados:
 							crapttl.idseqttl = par_idseqttl 
 							NO-LOCK:
         END.
-		
-		CREATE tt-crapttl.
-        ASSIGN tt-crapttl.nmsocial = crapttl.nmsocial.
+
+	IF AVAILABLE crapttl THEN
+		DO:
+			CREATE tt-crapttl.
+			ASSIGN tt-crapttl.nmsocial = crapttl.nmsocial.
+		END.
+	ELSE
+		DO:
+			CREATE tt-crapttl.
+			ASSIGN tt-crapttl.nmsocial = " ".
+		END.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dscritic = ""
