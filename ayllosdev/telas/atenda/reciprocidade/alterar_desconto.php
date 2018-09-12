@@ -40,12 +40,14 @@ $vlaplicacoes        = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes
 $vldeposito          = ( (!empty($_POST['vldeposito'])) ? $_POST['vldeposito'] : null );
 $dtfimcontrato       = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
 $flgdebito_reversao  = ( (!empty($_POST['flgdebito_reversao'])) ? $_POST['flgdebito_reversao'] : 0 );
-$vldesconto_coo      = ( (!empty($_POST['vldesconto_coo'])) ? floatval($_POST['vldesconto_coo']) : 0 );
+$vldesconto_coo      = ( (!empty($_POST['vldesconto_coo'])) ? $_POST['vldesconto_coo'] : 0 );
 $dtfimadicional_coo  = ( (!empty($_POST['dtfimadicional_coo'])) ? $_POST['dtfimadicional_coo'] : null );
-$vldesconto_cee      = ( (!empty($_POST['vldesconto_cee'])) ? floatval($_POST['vldesconto_cee']) : 0 );
+$vldesconto_cee      = ( (!empty($_POST['vldesconto_cee'])) ? $_POST['vldesconto_cee'] : 0 );
 $dtfimadicional_cee  = ( (!empty($_POST['dtfimadicional_cee'])) ? $_POST['dtfimadicional_cee'] : null );
 $txtjustificativa    = ( (!empty($_POST['txtjustificativa'])) ? $_POST['txtjustificativa'] : null );
 $idvinculacao        = ( (!empty($_POST['idvinculacao'])) ? $_POST['idvinculacao'] : null );
+$vldescontoconcedido_coo  = ( (!empty($_POST['vldescontoconcedido_coo'])) ? $_POST['vldescontoconcedido_coo'] : 0 );
+$vldescontoconcedido_cee  = ( (!empty($_POST['vldescontoconcedido_cee'])) ? $_POST['vldescontoconcedido_cee'] : 0 );
 
 $arrConvenios = array();
 if (count($convenios)) {
@@ -73,13 +75,15 @@ $xml .= "   <vlaplicacoes>".converteFloat($vlaplicacoes)."</vlaplicacoes>";
 $xml .= "   <vldeposito>".converteFloat($vldeposito)."</vldeposito>";
 $xml .= "   <dtfimcontrato>".$dtfimcontrato."</dtfimcontrato>";
 $xml .= "   <flgdebito_reversao>".$flgdebito_reversao."</flgdebito_reversao>";
-$xml .= "   <vldesconto_coo>".$vldesconto_coo."</vldesconto_coo>";
+$xml .= "   <vldesconto_coo>".converteFloat($vldesconto_coo)."</vldesconto_coo>";
 $xml .= "   <dtfimadicional_coo>".$dtfimadicional_coo."</dtfimadicional_coo>";
-$xml .= "   <vldesconto_cee>".$vldesconto_cee."</vldesconto_cee>";
+$xml .= "   <vldesconto_cee>".converteFloat($vldesconto_cee)."</vldesconto_cee>";
 $xml .= "   <dtfimadicional_cee>".$dtfimadicional_cee."</dtfimadicional_cee>";
 $xml .= "   <txtjustificativa>".$txtjustificativa."</txtjustificativa>";
 $xml .= "   <idvinculacao>".$idvinculacao."</idvinculacao>";
 $xml .= "   <perdesconto>".implode("|", $perdesconto)."</perdesconto>";
+$xml .= "   <vldescontoconcedido_coo>".converteFloat($vldescontoconcedido_coo)."</vldescontoconcedido_coo>";
+$xml .= "   <vldescontoconcedido_cee>".converteFloat($vldescontoconcedido_cee)."</vldescontoconcedido_cee>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 //exit('hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'); // debug

@@ -107,6 +107,7 @@ foreach($emails as $email) {
 	<input type="hidden" id="nmdtest2" name="nmdtest2" value="">
 	<input type="hidden" id="cpftest2" name="cpftest2" value="">
 	<input type="hidden" id="nrconven" name="nrconven" value="">
+	<input type="hidden" id="idrecipr" name="idrecipr" value="">
 	<input type="hidden" id="sidlogin" name="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 	<input type="hidden" id="tpimpres" name="tpimpres" value="">
 </form>

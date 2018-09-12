@@ -1044,395 +1044,461 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
 
   -- Rotina para impressao do termo de abertura e termo de cancelamento
   PROCEDURE pc_imprimir_termo(pr_nrdconta IN crapass.nrdconta%TYPE --> Numedo da conta
-                             ,pr_nmdtest1 IN VARCHAR2 --> Nome da testemunha 1
-                             ,pr_cpftest1 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 1
-                             ,pr_nmdtest2 IN VARCHAR2 --> Nome da testemunha 2
-                             ,pr_cpftest2 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 2
-                             ,pr_nrconven IN crapceb.nrconven%TYPE --> Numero do convenio
-                             ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento, 3-Termo de Cancelamento Protesto
-                             ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
-                             ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
-                             ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
-                             ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
-                             ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                             ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
-    /* .............................................................................
-
-    Programa: pc_imprimir_termo
-    Sistema : Ayllos Web
-    Autor   : Andrino Souza
-    Data    : Janeiro/2016                 Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Frequencia: Sempre que for chamado
-
-    Objetivo  : Rotina para retornar os dados para o termo de abertura e termo de encerramento
-
-    Alteracoes: -11/03/2016 - Adptação para envio da cláusula de Reciprocidade conforme
-                              indicadores selecionados. (Marcos-Supero)
-    ..............................................................................*/
-
-      -- Cursor sobre o convenio
-      CURSOR cr_crapceb(pr_cdcooper crapcop.cdcooper%TYPE) IS
-        SELECT b.nmextcop||' - '||b.nmrescop nmcooper,
-               gene0002.fn_mask_cpf_cnpj(b.nrdocnpj,2) cnpjcoop,
-               gene0002.fn_mask_cpf_cnpj(f.nrcpfcgc,f.inpessoa) nrcpfcgc,
-               i.dsendere||
-                   DECODE(GREATEST(0,i.nrendere),0,'',', '||i.nrendere)||' - '||
-                   i.nmbairro dsendere,
-               i.nmcidade,
-               i.cdufende,
-               gene0002.fn_mask_cep(i.nrcepend) nrcepend,
-               to_char(e.nrconven,'fm999G999G990') nrcnvcob,
-               'D+'||e.qtdfloat qtdfloat,
-               DECODE(NVL(e.flcooexp,0),1,'Cooperado Emite e Expede',' ') flcooexp,
-               DECODE(NVL(e.flceeexp,0),1,'Cooperativa Emite e Expede',' ') flceeexp,
-               DECODE(e.flserasa,'1','Sim','Nao') flserasa,
-               DECODE(E.flprotes,1,'Sim','Nao')  flprotes, -- Conforme e-mail da Patricia, devera sempre ser sim para protesto
-               ' Banco '|| LPAD(b.cdbcoctl,4,'0') ||
-                 ' Ag./Coop. '|| b.cdagectl ||
-                 ' Conta '||gene0002.fn_mask_conta(e.nrdconta) contadeb,
-               f.nmprimtl,
-               b.nmextcop,
-               e.qtdecprz+1 || ' dias' dsdecurs,
-               INITCAP(g.nmcidade)||'/'||g.cdufdcop||', '||
-                to_char(h.dtmvtolt,'DD') || ' de '||
-                to_char(h.dtmvtolt,'month','nls_date_language=portuguese') ||'de '||
-                to_char(h.dtmvtolt,'yyyy')||'.' dsdata,
-								d.flrecipr,
-							 e.idrecipr,
-               DECODE(NVL(d.insrvprt,0), 0, 'Nenhum', 1, 'IEPTB', 2, 'BB') insrvprt,
-               e.cdcooper,
-               e.nrdconta,
-               e.nrconven,
-               f.cdagenci,
-               f.nrcpfcgc nrcpfcgc_sem_mask
-          FROM crapenc i,
-               crapdat h,
-               crapage g,
-               crapass f,
-               crapcco d,
-               crapcop b,
-               crapceb e
-         WHERE b.cdcooper = e.cdcooper
-           AND e.cdcooper = pr_cdcooper
-           AND e.nrdconta = pr_nrdconta
-           AND e.nrconven = pr_nrconven
-           AND d.cdcooper = e.cdcooper
-           AND d.nrconven = e.nrconven
-           AND f.cdcooper = e.cdcooper
-           AND f.nrdconta = e.nrdconta
-           AND g.cdcooper = f.cdcooper
-           AND g.cdagenci = f.cdagenci
-           AND h.cdcooper = e.cdcooper
-           AND i.cdcooper = f.cdcooper
-           AND i.nrdconta = f.nrdconta
-           AND i.idseqttl = 1
-           AND i.tpendass = decode(f.inpessoa,1,10,9);
-      rw_crapceb cr_crapceb%ROWTYPE;
-      
-      -- Busca do prazo e dos indicadores da reciprocidade
-      CURSOR cr_recipro(pr_idcalculo IN tbrecip_calculo.idcalculo_reciproci%TYPE) IS
-        SELECT rca.qtdmes_retorno_reciproci||' ('||decode(rca.qtdmes_retorno_reciproci,3,'três',6,'seis',9,'nove','doze')||')' qtdmes_retorno_reciproci
-              ,rind.nmindicador
-          FROM tbrecip_calculo        rca
-              ,tbrecip_indica_calculo rica
-              ,tbrecip_indicador      rind
-         WHERE rca.idcalculo_reciproci = pr_idcalculo
-           AND rca.idcalculo_reciproci = rica.idcalculo_reciproci
-           AND rica.idindicador        = rind.idindicador;
-      
-      -- Cursor sobre os representantes
-      CURSOR cr_crapavt(pr_cdcooper crapcop.cdcooper%TYPE) IS
-        SELECT NVL(trim(a.nmdavali), b.nmprimtl) nmrepres,
-               a.dsproftl
-          FROM crapass b, 
-               crapavt A 
-         WHERE a.cdcooper = pr_cdcooper
-           AND A.nrdconta = pr_nrdconta
-           AND a.tpctrato = 6
-           AND b.cdcooper (+) = a.cdcooper
-           AND b.nrdconta (+) = a.nrdctato;
-
-      -- Cria o registro de data
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-
-      -- Tratamento de erros
-      vr_exc_saida     EXCEPTION;
-
-      -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(10000);
-      vr_tab_erro GENE0001.typ_tab_erro;
-      vr_des_reto VARCHAR2(10);
-
-      -- Variaveis de log
-      vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
-
-      -- Variaveis
-      vr_xml_temp    VARCHAR2(32726) := '';
-      vr_clob        CLOB;
-      vr_existe      BOOLEAN := FALSE;
-      vr_cpftest1    VARCHAR2(15);
-      vr_cpftest2    VARCHAR2(15);
-      vr_nom_direto  VARCHAR2(200);   --> Diretório para gravação do arquivo
-      vr_dsjasper    VARCHAR2(100);   --> nome do jasper a ser usado
-      vr_nmarqim     VARCHAR2(50);    --> nome do arquivo PDF
-			vr_xml_recipro VARCHAR2(32767); --> informações da reciprocidade
-      vr_qrcode      VARCHAR2(32767); --> QR Code enviado para o XML
-      vr_cdtipdoc    VARCHAR2(32767); --> Tipo do documento a ser usado no QR Code
+                               ,pr_nmdtest1 IN VARCHAR2 --> Nome da testemunha 1
+                               ,pr_cpftest1 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 1
+                               ,pr_nmdtest2 IN VARCHAR2 --> Nome da testemunha 2
+                               ,pr_cpftest2 IN crapass.nrcpfcgc%TYPE --> Cpf da testemunha 2
+                               ,pr_nrconven IN crapceb.nrconven%TYPE --> Numero do convenio
+                               ,pr_tpimpres IN PLS_INTEGER --> 1-Termo de Abertura, 2-Termo de Encerramento, 3-Termo de Cancelamento Protesto
+                               ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                               ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS
+        --> Erros do processo
+        /* .............................................................................
+        
+        Programa: pc_imprimir_termo
+        Sistema : Ayllos Web
+        Autor   : Andrino Souza
+        Data    : Janeiro/2016                 Ultima atualizacao:
+        
+        Dados referentes ao programa:
+        
+        Frequencia: Sempre que for chamado
+        
+        Objetivo  : Rotina para retornar os dados para o termo de abertura e termo de encerramento
+        
+        Alteracoes: -11/03/2016 - Adptação para envio da cláusula de Reciprocidade conforme
+                                  indicadores selecionados. (Marcos-Supero)
+        ..............................................................................*/
     
-  BEGIN
-      -- Extrai os dados vindos do XML
-      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
-                              ,pr_cdcooper => vr_cdcooper
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nmeacao  => vr_nmeacao
-                              ,pr_cdagenci => vr_cdagenci
-                              ,pr_nrdcaixa => vr_nrdcaixa
-                              ,pr_idorigem => vr_idorigem
-                              ,pr_cdoperad => vr_cdoperad
-                              ,pr_dscritic => vr_dscritic);
-
-      -- Abre o cursor de data
-      OPEN btch0001.cr_crapdat(vr_cdcooper);
-      FETCH btch0001.cr_crapdat INTO rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
-
-      --busca diretorio padrao da cooperativa
-      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                            ,pr_cdcooper => vr_cdcooper
-                                            ,pr_nmsubdir => 'rl');
-      
-      -- Monta documento XML de Dados
-      dbms_lob.createtemporary(vr_clob, TRUE);
-      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-      -- Criar cabeçalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><adesao>');
-      
-      OPEN cr_crapceb(vr_cdcooper);
-      FETCH cr_crapceb INTO rw_crapceb;
-      IF cr_crapceb%NOTFOUND THEN
+        -- Cursor sobre o convenio
+        CURSOR cr_crapceb(pr_cdcooper crapcop.cdcooper%TYPE) IS
+            SELECT b.nmextcop || ' - ' || b.nmrescop nmcooper
+                  ,gene0002.fn_mask_cpf_cnpj(b.nrdocnpj, 2) cnpjcoop
+                  ,gene0002.fn_mask_cpf_cnpj(f.nrcpfcgc, f.inpessoa) nrcpfcgc
+                  ,i.dsendere || decode(greatest(0, i.nrendere), 0, '', ', ' || i.nrendere) || ' - ' ||
+                   i.nmbairro dsendere
+                  ,i.nmcidade
+                  ,i.cdufende
+                  ,gene0002.fn_mask_cep(i.nrcepend) nrcepend
+                  ,to_char(e.nrconven, 'fm999G999G990') nrcnvcob
+                  ,'D+' || e.qtdfloat qtdfloat
+                  ,decode(nvl(e.flcooexp, 0), 1, 'Cooperado Emite e Expede', ' ') flcooexp
+                  ,decode(nvl(e.flceeexp, 0), 1, 'Cooperativa Emite e Expede', ' ') flceeexp
+                  ,decode(e.flserasa, '1', 'Sim', 'Nao') flserasa
+                  ,decode(e.flprotes, 1, 'Sim', 'Nao') flprotes
+                  , -- Conforme e-mail da Patricia, devera sempre ser sim para protesto
+                   ' Banco ' || lpad(b.cdbcoctl, 4, '0') || ' Ag./Coop. ' || b.cdagectl || ' Conta ' ||
+                   gene0002.fn_mask_conta(e.nrdconta) contadeb
+                  ,f.nmprimtl
+                  ,b.nmextcop
+                  ,e.qtdecprz + 1 || ' dias' dsdecurs
+                  ,initcap(g.nmcidade) || '/' || g.cdufdcop || ', ' || to_char(h.dtmvtolt, 'DD') || ' de ' ||
+                   to_char(h.dtmvtolt, 'month', 'nls_date_language=portuguese') || 'de ' ||
+                   to_char(h.dtmvtolt, 'yyyy') || '.' dsdata
+                  ,d.flrecipr
+                  ,e.idrecipr
+                  ,decode(nvl(d.insrvprt, 0), 0, 'Nenhum', 1, 'IEPTB', 2, 'BB') insrvprt
+                  ,e.cdcooper
+                  ,e.nrdconta
+                  ,e.nrconven
+                  ,f.cdagenci
+                  ,f.nrcpfcgc nrcpfcgc_sem_mask
+              FROM crapenc i
+                  ,crapdat h
+                  ,crapage g
+                  ,crapass f
+                  ,crapcco d
+                  ,crapcop b
+                  ,crapceb e
+             WHERE b.cdcooper = e.cdcooper
+               AND e.cdcooper = pr_cdcooper
+               AND e.nrdconta = pr_nrdconta
+               AND e.nrconven = pr_nrconven
+               AND d.cdcooper = e.cdcooper
+               AND d.nrconven = e.nrconven
+               AND f.cdcooper = e.cdcooper
+               AND f.nrdconta = e.nrdconta
+               AND g.cdcooper = f.cdcooper
+               AND g.cdagenci = f.cdagenci
+               AND h.cdcooper = e.cdcooper
+               AND i.cdcooper = f.cdcooper
+               AND i.nrdconta = f.nrdconta
+               AND i.idseqttl = 1
+               AND i.tpendass = decode(f.inpessoa, 1, 10, 9);
+        rw_crapceb cr_crapceb%ROWTYPE;
+    
+        -- Busca do prazo e dos indicadores da reciprocidade
+        CURSOR cr_recipro(pr_idcalculo IN tbrecip_calculo.idcalculo_reciproci%TYPE) IS
+            SELECT rca.qtdmes_retorno_reciproci || ' (' ||
+                   decode(rca.qtdmes_retorno_reciproci, 3, 'três', 6, 'seis', 9, 'nove', 'doze') || ')' qtdmes_retorno_reciproci
+                  ,rind.nmindicador
+              FROM tbrecip_calculo        rca
+                  ,tbrecip_indica_calculo rica
+                  ,tbrecip_indicador      rind
+             WHERE rca.idcalculo_reciproci = pr_idcalculo
+               AND rca.idcalculo_reciproci = rica.idcalculo_reciproci
+               AND rica.idindicador = rind.idindicador;
+    
+        -- Cursor sobre os representantes
+        CURSOR cr_crapavt(pr_cdcooper crapcop.cdcooper%TYPE) IS
+            SELECT nvl(TRIM(a.nmdavali), b.nmprimtl) nmrepres
+                  ,a.dsproftl
+              FROM crapass b
+                  ,crapavt a
+             WHERE a.cdcooper = pr_cdcooper
+               AND a.nrdconta = pr_nrdconta
+               AND a.tpctrato = 6
+               AND b.cdcooper(+) = a.cdcooper
+               AND b.nrdconta(+) = a.nrdctato;
+    
+        -- Cria o registro de data
+        rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+        -- Tratamento de erros
+        vr_exc_saida EXCEPTION;
+    
+        -- Variável de críticas
+        vr_cdcritic crapcri.cdcritic%TYPE;
+        vr_dscritic VARCHAR2(10000);
+        vr_tab_erro gene0001.typ_tab_erro;
+        vr_des_reto VARCHAR2(10);
+    
+        -- Variaveis de log
+        vr_cdcooper INTEGER;
+        vr_cdoperad VARCHAR2(100);
+        vr_nmdatela VARCHAR2(100);
+        vr_nmeacao  VARCHAR2(100);
+        vr_cdagenci VARCHAR2(100);
+        vr_nrdcaixa VARCHAR2(100);
+        vr_idorigem VARCHAR2(100);
+    
+        -- Variaveis
+        vr_xml_temp    VARCHAR2(32726) := '';
+        vr_clob        CLOB;
+        vr_existe      BOOLEAN := FALSE;
+        vr_cpftest1    VARCHAR2(15);
+        vr_cpftest2    VARCHAR2(15);
+        vr_nom_direto  VARCHAR2(200); --> Diretório para gravação do arquivo
+        vr_dsjasper    VARCHAR2(100); --> nome do jasper a ser usado
+        vr_nmarqim     VARCHAR2(50); --> nome do arquivo PDF
+        vr_xml_recipro VARCHAR2(32767); --> informações da reciprocidade
+        vr_qrcode      VARCHAR2(32767); --> QR Code enviado para o XML
+        vr_cdtipdoc    VARCHAR2(32767); --> Tipo do documento a ser usado no QR Code
+    
+    BEGIN
+        -- Extrai os dados vindos do XML
+        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+    
+        -- Abre o cursor de data
+        OPEN btch0001.cr_crapdat(vr_cdcooper);
+        FETCH btch0001.cr_crapdat
+            INTO rw_crapdat;
+        CLOSE btch0001.cr_crapdat;
+    
+        --busca diretorio padrao da cooperativa
+        vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                              ,pr_cdcooper => vr_cdcooper
+                                              ,pr_nmsubdir => 'rl');
+    
+        -- Monta documento XML de Dados
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+        -- Criar cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="utf-8"?><adesao>');
+    
+        OPEN cr_crapceb(vr_cdcooper);
+        FETCH cr_crapceb
+            INTO rw_crapceb;
+        IF cr_crapceb%NOTFOUND THEN
+            CLOSE cr_crapceb;
+            vr_dscritic := 'Convenio informado inexistente!';
+            RAISE vr_exc_saida;
+        END IF;
         CLOSE cr_crapceb;
-        vr_dscritic := 'Convenio informado inexistente!';
-        RAISE vr_exc_saida;
-      END IF;
-      CLOSE cr_crapceb;
-
-      -- Formata a mascara do CPF da testemunha 1
-      IF nvl(pr_cpftest1,0) = 0 THEN
-        vr_cpftest1 := NULL;
-      ELSE
-        vr_cpftest1 := gene0002.fn_mask_cpf_cnpj(pr_cpftest1,1);
-      END IF;
-      
-      -- Formata a mascara do CPF da testemunha 2
-      IF nvl(pr_cpftest2,0) = 0 THEN
-        vr_cpftest2 := NULL;
-      ELSE
-        vr_cpftest2 := gene0002.fn_mask_cpf_cnpj(pr_cpftest2,1);
-      END IF;
-      
-      /* Somente para o termo de adesão com Reciprocidade */
-      IF pr_tpimpres = 1 AND rw_crapceb.flrecipr = 1 AND  rw_crapceb.idrecipr > 0 THEN 
-        /* Também iremos buscar o prazo da reciprocidade e os indicadores selecionados */
-        FOR rw_recipro IN cr_recipro(rw_crapceb.idrecipr) LOOP
-          -- No primeiro registro enviamos também o prazo
-          IF vr_xml_recipro IS NULL THEN
-            -- Inicializamos a tag
-            vr_xml_recipro := '<reciprocidade inreproc="yes" qtmesretorno="'||rw_recipro.qtdmes_retorno_reciproci||'">'||chr(10);
-          END IF;
-          -- Em todos os registros enviar o indicador atual
-          vr_xml_recipro := vr_xml_recipro || '<indicador><nmindicador>'||rw_recipro.nmindicador||'</nmindicador></indicador>'||chr(10);
-        END LOOP;
-        /* Se há informação de reciprocidade */
+    
+        -- Formata a mascara do CPF da testemunha 1
+        IF nvl(pr_cpftest1, 0) = 0 THEN
+            vr_cpftest1 := NULL;
+        ELSE
+            vr_cpftest1 := gene0002.fn_mask_cpf_cnpj(pr_cpftest1, 1);
+        END IF;
+    
+        -- Formata a mascara do CPF da testemunha 2
+        IF nvl(pr_cpftest2, 0) = 0 THEN
+            vr_cpftest2 := NULL;
+        ELSE
+            vr_cpftest2 := gene0002.fn_mask_cpf_cnpj(pr_cpftest2, 1);
+        END IF;
+    
+        /* Somente para o termo de adesão com Reciprocidade */
+        IF pr_tpimpres = 1 AND rw_crapceb.flrecipr = 1 AND rw_crapceb.idrecipr > 0 THEN
+            /* Também iremos buscar o prazo da reciprocidade e os indicadores selecionados */
+            FOR rw_recipro IN cr_recipro(rw_crapceb.idrecipr) LOOP
+                -- No primeiro registro enviamos também o prazo
+                IF vr_xml_recipro IS NULL THEN
+                    -- Inicializamos a tag
+                    vr_xml_recipro := '<reciprocidade inreproc="yes" qtmesretorno="' ||
+                                      rw_recipro.qtdmes_retorno_reciproci || '">' || chr(10);
+                END IF;
+                -- Em todos os registros enviar o indicador atual
+                vr_xml_recipro := vr_xml_recipro || '<indicador><nmindicador>' || rw_recipro.nmindicador ||
+                                  '</nmindicador></indicador>' || chr(10);
+            END LOOP;
+            /* Se há informação de reciprocidade */
+            IF vr_xml_recipro IS NOT NULL THEN
+                -- Finalizamos a tag
+                vr_xml_recipro := vr_xml_recipro || '</reciprocidade>' || chr(10);
+            END IF;
+        END IF;
+    
+        -- Definir o TIPO DE DOCUMENTO de acordo com o layout.
+        -- OBS.: Verificar os códigos de cancelamento. Por enquanto está igual adesão.
+        IF (nvl(pr_tpimpres, 1) = 1) THEN
+            -- Se for Adesao
+            IF (length(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc, '-', ''), '.', ''), '/', '')) = 11) THEN
+                vr_cdtipdoc := 106; -- PF
+            ELSIF (length(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc, '-', ''), '.', ''), '/', '')) = 14) THEN
+                vr_cdtipdoc := 115; -- PJ
+            END IF;
+        ELSE
+            -- Cancelamento
+            IF (length(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc, '-', ''), '.', ''), '/', '')) = 11) THEN
+                vr_cdtipdoc := 106; -- PF
+            ELSIF (length(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc, '-', ''), '.', ''), '/', '')) = 14) THEN
+                vr_cdtipdoc := 115; -- PJ
+            END IF;
+        END IF;
+    
+        -- Gera Pendencia de digitalizacao do documento
+        digi0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_idseqttl => 1
+                                            ,pr_nrcpfcgc => rw_crapceb.nrcpfcgc_sem_mask
+                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            ,pr_tpdocmto => CASE
+                                                                WHEN vr_cdtipdoc = 106 THEN
+                                                                 25
+                                                                ELSE
+                                                                 32
+                                                            END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
+                                            ,pr_cdoperad => vr_cdoperad
+                                            ,pr_nrseqdoc => pr_nrconven
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+    
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+        END IF;
+    
+        vr_qrcode := rw_crapceb.cdcooper || '_' || rw_crapceb.cdagenci || '_' ||
+                     TRIM(gene0002.fn_mask_conta(rw_crapceb.nrdconta)) || '_' || 0 || '_' ||
+                     rw_crapceb.nrconven || '_' || 0 || '_' || vr_cdtipdoc; -- 
+    
+        -- Escreve os dados principais
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<cooperativa>' || chr(10) || '<nmcooper>' ||
+                                                     rw_crapceb.nmcooper || '</nmcooper>' || chr(10) ||
+                                                     '<cnpjcoop>' || rw_crapceb.cnpjcoop || '</cnpjcoop>' ||
+                                                     chr(10) || '</cooperativa>' || chr(10) || '<dsqrcode>' ||
+                                                     vr_qrcode || '</dsqrcode>' || chr(10) || '<cooperado>' ||
+                                                     chr(10) || '<nmprimtl>' || rw_crapceb.nmprimtl ||
+                                                     '</nmprimtl>' || chr(10) || '<nrcpfcgc>' ||
+                                                     rw_crapceb.nrcpfcgc || '</nrcpfcgc>' || chr(10) ||
+                                                     '<dsendere>' || rw_crapceb.dsendere || '</dsendere>' ||
+                                                     chr(10) || '<nmcidade>' || rw_crapceb.nmcidade ||
+                                                     '</nmcidade>' || chr(10) || '<cdufende>' ||
+                                                     rw_crapceb.cdufende || '</cdufende>' || chr(10) ||
+                                                     '<nrcepend>' || rw_crapceb.nrcepend || '</nrcepend>' ||
+                                                     chr(10) || '<nrcnvcob>' || rw_crapceb.nrcnvcob ||
+                                                     '</nrcnvcob>' || chr(10) || '<flcooexp>' ||
+                                                     rw_crapceb.flcooexp || '</flcooexp>' || chr(10) ||
+                                                     '<flceeexp>' || rw_crapceb.flceeexp || '</flceeexp>' ||
+                                                     chr(10) || '<qtdfloat>' || rw_crapceb.qtdfloat ||
+                                                     '</qtdfloat>' || chr(10) || '<flserasa>' ||
+                                                     rw_crapceb.flserasa || '</flserasa>' || chr(10) ||
+                                                     '<flprotes>' || rw_crapceb.flprotes || '</flprotes>' ||
+                                                     chr(10) || '<insrvprt>' || rw_crapceb.insrvprt ||
+                                                     '</insrvprt>' || chr(10) || '<dsdecurs>' ||
+                                                     rw_crapceb.dsdecurs || '</dsdecurs>' || chr(10) ||
+                                                     '<nmextcop>' || rw_crapceb.nmextcop || '</nmextcop>' ||
+                                                     chr(10) || '<dsdata>' || rw_crapceb.dsdata || '</dsdata>' ||
+                                                     chr(10) || '<contadeb>' || rw_crapceb.contadeb ||
+                                                     '</contadeb>' || chr(10) || '</cooperado>' || chr(10));
+        -- Se houver reciprocidade
         IF vr_xml_recipro IS NOT NULL THEN
-          -- Finalizamos a tag
-          vr_xml_recipro := vr_xml_recipro ||'</reciprocidade>'||chr(10);
+            -- Enviamos ao xml do relatório
+            gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => vr_xml_recipro);
         END IF;
-			END IF;
-      
-      -- Definir o TIPO DE DOCUMENTO de acordo com o layout.
-      -- OBS.: Verificar os códigos de cancelamento. Por enquanto está igual adesão.
-      IF (NVL(pr_tpimpres, 1) = 1) THEN  -- Se for Adesao
-        IF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 11) THEN
-          vr_cdtipdoc := 106; -- PF
-        ELSIF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 14) THEN
-          vr_cdtipdoc := 115; -- PJ
-        END IF;
-      ELSE -- Cancelamento
-        IF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 11) THEN
-          vr_cdtipdoc := 106; -- PF
-        ELSIF (LENGTH(REPLACE(REPLACE(REPLACE(rw_crapceb.nrcpfcgc,'-',''),'.',''),'/','')) = 14) THEN
-          vr_cdtipdoc := 115; -- PJ
-        END IF;
-      END IF;
-      
-      -- Gera Pendencia de digitalizacao do documento
-      DIGI0001.pc_grava_pend_digitalizacao(pr_cdcooper => vr_cdcooper
-                                          ,pr_nrdconta => pr_nrdconta
-                                          ,pr_idseqttl => 1
-                                          ,pr_nrcpfcgc => rw_crapceb.nrcpfcgc_sem_mask
-                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                          ,pr_tpdocmto => CASE WHEN vr_cdtipdoc = 106 THEN 25 ELSE 32 END -- Termo de Adesao do protesto - 106(PF)/115(PJ)
-                                          ,pr_cdoperad => vr_cdoperad
-                                          ,pr_nrseqdoc => pr_nrconven
-                                          ,pr_cdcritic => vr_cdcritic
-                                          ,pr_dscritic => vr_dscritic);
-              
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-
-      vr_qrcode := rw_crapceb.cdcooper || '_' || 
-                   rw_crapceb.cdagenci || '_' ||
-                   TRIM(gene0002.fn_mask_conta(rw_crapceb.nrdconta)) || '_' || 
-                   0 || '_' ||
-                   rw_crapceb.nrconven || '_' || 
-                   0 || '_' || 
-                   vr_cdtipdoc; -- 
-             
-      -- Escreve os dados principais
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<cooperativa>'||chr(10)||
-                                                     '<nmcooper>'||rw_crapceb.nmcooper||'</nmcooper>'||chr(10)||
-                                                     '<cnpjcoop>'||rw_crapceb.cnpjcoop||'</cnpjcoop>'||chr(10)||
-                                                   '</cooperativa>'||chr(10)||
-                                                   '<dsqrcode>'|| vr_qrcode ||'</dsqrcode>'||chr(10)||
-                                                   '<cooperado>'||chr(10)||
-                                                     '<nmprimtl>'||rw_crapceb.nmprimtl||'</nmprimtl>'||chr(10)||
-                                                     '<nrcpfcgc>'||rw_crapceb.nrcpfcgc||'</nrcpfcgc>'||chr(10)||
-                                                     '<dsendere>'||rw_crapceb.dsendere||'</dsendere>'||chr(10)||
-                                                     '<nmcidade>'||rw_crapceb.nmcidade||'</nmcidade>'||chr(10)||
-                                                     '<cdufende>'||rw_crapceb.cdufende||'</cdufende>'||chr(10)||
-                                                     '<nrcepend>'||rw_crapceb.nrcepend||'</nrcepend>'||chr(10)||
-                                                     '<nrcnvcob>'||rw_crapceb.nrcnvcob||'</nrcnvcob>'||chr(10)||
-                                                     '<flcooexp>'||rw_crapceb.flcooexp||'</flcooexp>'||chr(10)||
-                                                     '<flceeexp>'||rw_crapceb.flceeexp||'</flceeexp>'||chr(10)||
-                                                     '<qtdfloat>'||rw_crapceb.qtdfloat||'</qtdfloat>'||chr(10)||
-                                                     '<flserasa>'||rw_crapceb.flserasa||'</flserasa>'||chr(10)||
-                                                     '<flprotes>'||rw_crapceb.flprotes||'</flprotes>'||chr(10)||
-                                                     '<insrvprt>'||rw_crapceb.insrvprt||'</insrvprt>'||chr(10)||
-                                                     '<dsdecurs>'||rw_crapceb.dsdecurs||'</dsdecurs>'||chr(10)||
-                                                     '<nmextcop>'||rw_crapceb.nmextcop||'</nmextcop>'||chr(10)||
-                                                     '<dsdata>'||rw_crapceb.dsdata||'</dsdata>'||chr(10)||
-                                                     '<contadeb>'||rw_crapceb.contadeb||'</contadeb>'||chr(10)||
-                                                   '</cooperado>'||chr(10));
-      -- Se houver reciprocidade
-      IF vr_xml_recipro IS NOT NULL THEN
-        -- Enviamos ao xml do relatório
+    
+        -- Escreve os dados de testemunhas e representantes
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
-                               ,pr_texto_novo     => vr_xml_recipro);
-      END IF;
-                                                   
-      -- Escreve os dados de testemunhas e representantes
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     =>  '<testemunhas>'||chr(10)||
-                                                     '<nmdtest1>'||pr_nmdtest1||'</nmdtest1>'||chr(10)||
-                                                     '<cpftest1>'||vr_cpftest1||'</cpftest1>'||chr(10)||
-                                                     '<nmdtest2>'||pr_nmdtest2||'</nmdtest2>'||chr(10)||
-                                                     '<cpftest2>'||vr_cpftest2||'</cpftest2>'||chr(10)||
-                                                   '</testemunhas>'||chr(10)||
-                                                   '<representantes>'||chr(10));
-      -- Efetua loop sobre os representantes
-      FOR rw_crapavt IN cr_crapavt(vr_cdcooper) LOOP
-        vr_existe := TRUE;
+                               ,pr_texto_novo     => '<testemunhas>' || chr(10) || '<nmdtest1>' || pr_nmdtest1 ||
+                                                     '</nmdtest1>' || chr(10) || '<cpftest1>' || vr_cpftest1 ||
+                                                     '</cpftest1>' || chr(10) || '<nmdtest2>' || pr_nmdtest2 ||
+                                                     '</nmdtest2>' || chr(10) || '<cpftest2>' || vr_cpftest2 ||
+                                                     '</cpftest2>' || chr(10) || '</testemunhas>' || chr(10) ||
+                                                     '<representantes>' || chr(10));
+        -- Efetua loop sobre os representantes
+        FOR rw_crapavt IN cr_crapavt(vr_cdcooper) LOOP
+            vr_existe := TRUE;
+            gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => '<representante>' || chr(10) || '<nmrepres>' ||
+                                                         rw_crapavt.nmrepres || '</nmrepres>' || chr(10) ||
+                                                         '<dsproftl>' || rw_crapavt.dsproftl || '</dsproftl>' ||
+                                                         chr(10) || '</representante>' || chr(10));
+        END LOOP;
+    
+        -- Se nao existir representante, apenas insere a TAG de inexistente
+        IF NOT vr_existe THEN
+            gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => '<representante/>' || chr(10));
+        END IF;
+    
+        -- Encerrar a tag raiz
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
-                               ,pr_texto_novo     => '<representante>'||chr(10)||
-                                                       '<nmrepres>'||rw_crapavt.nmrepres||'</nmrepres>'||chr(10)||
-                                                       '<dsproftl>'||rw_crapavt.dsproftl||'</dsproftl>'||chr(10)||
-                                                     '</representante>'||chr(10)); 
-      END LOOP;
-      
-      -- Se nao existir representante, apenas insere a TAG de inexistente
-      IF NOT vr_existe THEN
+                               ,pr_texto_novo     => '</representantes>' || chr(10)
+                               ,pr_fecha_xml      => TRUE);
+    
+        -- Escreve os dados dos convenios
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
-                               ,pr_texto_novo     => '<representante/>'||chr(10));
-      END IF;
-      
-      -- Encerrar a tag raiz
-      gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     =>   '</representantes>'||chr(10)||
-                                                   '</adesao>'
-                             ,pr_fecha_xml      => TRUE);
-
-      -- Verifica o tipo que devera ser impresso
-      IF pr_tpimpres = 1 THEN  -- Se for Adesao
-        vr_dsjasper := 'termo_adesao_cob_reg.jasper';
-        vr_nmarqim  := '/TermoAbertura_'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
-      ELSIF pr_tpimpres = 2 THEN -- Se for cancelamento
-        vr_dsjasper := 'termo_cancel_cob_reg.jasper';
-        vr_nmarqim  := '/TermoCancelamento'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
-      ELSE -- Se for cancelamento do protesto
-        vr_dsjasper := 'termo_cancel_protesto.jasper';
-        vr_nmarqim  := '/TermoCancelamento'||to_char(sysdate,'DDMMYYYYHH24MISS')||'.pdf';
-      END IF;
-      
-      -- Solicita geracao do PDF
-      gene0002.pc_solicita_relato(pr_cdcooper   => vr_cdcooper
-                                 , pr_cdprogra  => 'ATENDA' 
-                                 , pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                 , pr_dsxml     => vr_clob
-                                 , pr_dsxmlnode => '/adesao'
-                                 , pr_dsjasper  => vr_dsjasper
-                                 , pr_dsparams  => null
-                                 , pr_dsarqsaid => vr_nom_direto||vr_nmarqim
-                                 , pr_cdrelato  => 684
-                                 , pr_flg_gerar => 'S'
-                                 , pr_qtcoluna  => 80
-                                 , pr_sqcabrel  => 1
-                                 , pr_flg_impri => 'N'
-                                 , pr_nmformul  => ' '
-                                 , pr_nrcopias  => 1
-                                 , pr_des_erro  => vr_dscritic);
-
-      -- copia contrato pdf do diretorio da cooperativa para servidor web
-      gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
-                                 , pr_cdagenci => NULL
-                                 , pr_nrdcaixa => NULL
-                                 , pr_nmarqpdf => vr_nom_direto||vr_nmarqim
-                                 , pr_des_reto => vr_des_reto
-                                 , pr_tab_erro => vr_tab_erro
-                                 );
-
-      -- Libera a memoria do CLOB
-      dbms_lob.close(vr_clob); 
-
-      -- Criar XML de retorno
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
-                                       vr_nmarqim || '</nmarqpdf>');
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-      ROLLBACK;
-      -- Carregar XML padrao para variavel de retorno
-      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-
-    WHEN OTHERS THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral em pc_negativa_serasa: ' || SQLERRM;
-      ROLLBACK;
-      -- Carregar XML padrao para variavel de retorno
-      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-  END;
+                               ,pr_texto_novo     => '<convenios>' || chr(10));
+        -- Efetua loop sobre os convenios
+        /*FOR rw_crapavt IN cr_crapavt(vr_cdcooper) LOOP
+          vr_existe := TRUE;
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<representante>'||chr(10)||
+                                                         '<nmrepres>'||rw_crapavt.nmrepres||'</nmrepres>'||chr(10)||
+                                                         '<dsproftl>'||rw_crapavt.dsproftl||'</dsproftl>'||chr(10)||
+                                                       '</representante>'||chr(10)); 
+        END LOOP;*/
+    
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<convenio>' || chr(10) || '<nrconven>' || '101.001' ||
+                                                     '</nrconven>' || chr(10) || '<qtdecprz>' || '59' ||
+                                                     '</qtdecprz>' || chr(10) || '<qtdfloat>' || '2' ||
+                                                     '</qtdfloat>' || chr(10) || '<modalidade>' ||
+                                                     'Cooperado Emite e Expede (COO)' || '</modalidade>' ||
+                                                     chr(10) || '<flserasa>' || 'SIM' || '</flserasa>' ||
+                                                     chr(10) || '<flprotes>' || 'NÃO' || '</flprotes>' ||
+                                                     chr(10) || '</convenio>' || chr(10));
+    
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<convenio>' || chr(10) || '<nrconven>' || '101.002' ||
+                                                     '</nrconven>' || chr(10) || '<qtdecprz>' || '58' ||
+                                                     '</qtdecprz>' || chr(10) || '<qtdfloat>' || '2' ||
+                                                     '</qtdfloat>' || chr(10) || '<modalidade>' ||
+                                                     'Cooperativa Emite e Expede (COO)' || '</modalidade>' ||
+                                                     chr(10) || '<flserasa>' || 'NÃO' || '</flserasa>' ||
+                                                     chr(10) || '<flprotes>' || 'SIM' || '</flprotes>' ||
+                                                     chr(10) || '</convenio>' || chr(10));
+    
+        -- Se nao existir convenio, apenas insere a TAG de inexistente
+        /*IF NOT vr_existe THEN
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<convenios/>'||chr(10));
+        END IF;*/
+    
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</convenios>' || chr(10) || '</adesao>'
+                               ,pr_fecha_xml      => TRUE);
+    
+        -- Verifica o tipo que devera ser impresso
+        IF pr_tpimpres = 1 THEN
+            -- Se for Adesao
+            vr_dsjasper := 'termo_adesao_cob_reg.jasper';
+            vr_nmarqim  := '/TermoAbertura_' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';
+        ELSIF pr_tpimpres = 2 THEN
+            -- Se for cancelamento
+            vr_dsjasper := 'termo_cancel_cob_reg.jasper';
+            vr_nmarqim  := '/TermoCancelamento' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';
+        ELSE
+            -- Se for cancelamento do protesto
+            vr_dsjasper := 'termo_cancel_protesto.jasper';
+            vr_nmarqim  := '/TermoCancelamento' || to_char(SYSDATE, 'DDMMYYYYHH24MISS') || '.pdf';
+        END IF;
+    
+        /*gene0002.pc_clob_para_arquivo(pr_clob     => vr_clob
+                                     ,pr_caminho  => '/usr/coopd/sistemad/equipe/reinert/'
+                                     ,pr_arquivo  => 'xml_rel_termo.xml'
+                                     ,pr_des_erro => vr_dscritic);*/
+    
+        -- Solicita geracao do PDF
+        gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper
+                                   ,pr_cdprogra  => 'ATENDA'
+                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                   ,pr_dsxml     => vr_clob
+                                   ,pr_dsxmlnode => '/adesao'
+                                   ,pr_dsjasper  => vr_dsjasper
+                                   ,pr_dsparams  => NULL
+                                   ,pr_dsarqsaid => vr_nom_direto || vr_nmarqim
+                                   ,pr_cdrelato  => 684
+                                   ,pr_flg_gerar => 'S'
+                                   ,pr_qtcoluna  => 80
+                                   ,pr_sqcabrel  => 1
+                                   ,pr_flg_impri => 'N'
+                                   ,pr_nmformul  => ' '
+                                   ,pr_nrcopias  => 1
+                                   ,pr_des_erro  => vr_dscritic);
+    
+        -- copia contrato pdf do diretorio da cooperativa para servidor web
+        gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
+                                    ,pr_cdagenci => NULL
+                                    ,pr_nrdcaixa => NULL
+                                    ,pr_nmarqpdf => vr_nom_direto || vr_nmarqim
+                                    ,pr_des_reto => vr_des_reto
+                                    ,pr_tab_erro => vr_tab_erro);
+    
+        -- Libera a memoria do CLOB
+        dbms_lob.close(vr_clob);
+    
+        -- Criar XML de retorno
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' || vr_nmarqim ||
+                                       '</nmarqpdf>');
+    EXCEPTION
+        WHEN vr_exc_saida THEN
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := vr_dscritic;
+            ROLLBACK;
+            -- Carregar XML padrao para variavel de retorno
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
+        
+        WHEN OTHERS THEN
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := 'Erro geral em pc_negativa_serasa: ' || SQLERRM;
+            ROLLBACK;
+            -- Carregar XML padrao para variavel de retorno
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+                                           pr_dscritic || '</Erro></Root>');
+    END;
 
 
 END SSPC0002;

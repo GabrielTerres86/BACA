@@ -1243,6 +1243,7 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
     var nmdtest2 = $("#nmdtest2", "#divTestemunhas").val();
     var cpftest2 = $("#cpftest2", "#divTestemunhas").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
+    var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
 
     var nrconven = normalizaNumero($("#convenios", "#divConteudoOpcao").val());
 	nrconven_imprimir = (nrconven_imprimir > 0) ? nrconven_imprimir : nrconven;
@@ -1257,7 +1258,7 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
     $("#nmdtest2", "#frmTermo").val(nmdtest2);
     $("#cpftest2", "#frmTermo").val(cpftest2);
     $("#nrconven", "#frmTermo").val(nrconven_imprimir);
-
+    $("#idrecipr", "#frmTermo").val(idrecipr);
     $("#tpimpres", "#frmTermo").val(tpdtermo_imprimir);//Atribuir o insitest onde 1-ativo e 2-inativo
 
 	var action = $("#frmTermo").attr("action");
@@ -2866,23 +2867,25 @@ function incluiDesconto(houveAlteracao) {
 		type: "POST",
 		url: url,
 		data: {
-			idcalculo_reciproci: idcalculo_reciproci,
-			nrdconta:            parseInt($('#nrdconta', '#frmCabAtenda').val().replace(/\W/g, '')),
-			convenios:           JSON.stringify(descontoConvenios),
-			boletos_liquidados:  $('#qtdboletos_liquidados', '.tabelaDesconto').val(),
-			volume_liquidacao:   $('#valvolume_liquidacao', '.tabelaDesconto').val(),
-			qtdfloat:            $('#qtdfloat', '.tabelaDesconto').val(),
-			vlaplicacoes:        $('#vlaplicacoes', '.tabelaDesconto').val(),
-            vldeposito:          $('#vldeposito', '.tabelaDesconto').val(),
-            idvinculacao:        $('#idvinculacao', '.tabelaDesconto').val(),
-			dtfimcontrato:       vDataFimContrato,
-			flgdebito_reversao:  $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
-            vldesconto_coo:      converteNumero($('#vldesconto_coo', '.tabelaDesconto').val()),
-            dtfimadicional_coo:  parseInt(dtfimadicional_coo),
-            vldesconto_cee:      converteNumero($('#vldesconto_cee', '.tabelaDesconto').val()),
-            dtfimadicional_cee:  parseInt(dtfimadicional_cee),
-            txtjustificativa:    vJustificativaDesc,
-            perdesconto:         JSON.stringify(perdescontos),
+			idcalculo_reciproci:     idcalculo_reciproci,
+			nrdconta:                parseInt($('#nrdconta', '#frmCabAtenda').val().replace(/\W/g, '')),
+			convenios:               JSON.stringify(descontoConvenios),
+			boletos_liquidados:      $('#qtdboletos_liquidados', '.tabelaDesconto').val(),
+			volume_liquidacao:       $('#valvolume_liquidacao', '.tabelaDesconto').val(),
+			qtdfloat:                $('#qtdfloat', '.tabelaDesconto').val(),
+			vlaplicacoes:            $('#vlaplicacoes', '.tabelaDesconto').val(),
+            vldeposito:              $('#vldeposito', '.tabelaDesconto').val(),
+            idvinculacao:            $('#idvinculacao', '.tabelaDesconto').val(),
+			dtfimcontrato:           vDataFimContrato,
+			flgdebito_reversao:      $('#debito_reajuste_reciproci', '.tabelaDesconto').val(),
+            vldesconto_coo:          $('#vldesconto_coo', '.tabelaDesconto').val(),
+            dtfimadicional_coo:      parseInt(dtfimadicional_coo),
+            vldesconto_cee:          $('#vldesconto_cee', '.tabelaDesconto').val(),
+            dtfimadicional_cee:      parseInt(dtfimadicional_cee),
+            txtjustificativa:        vJustificativaDesc,
+            perdesconto:             JSON.stringify(perdescontos),
+            vldescontoconcedido_coo: $('#vldescontoconcedido_coo', '.tabelaDesconto').val(),
+            vldescontoconcedido_cee: $('#vldescontoconcedido_cee', '.tabelaDesconto').val(),
 			redirect:            "script_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {

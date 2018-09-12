@@ -39,7 +39,7 @@ $nmdtest2 = $_POST["nmdtest2"];
 $cpftest2 = $_POST["cpftest2"];
 $nrconven = $_POST["nrconven"];
 $tpimpres = $_POST["tpimpres"];
-$idcalculo_reciproci = 8132;
+$idrecipr = $_POST["idrecipr"];
 
 $dsiduser =  session_id();
 
@@ -58,13 +58,13 @@ if ($flgregis == 'yes' ) {
 	$xml .= "   <dsiduser>".$dsiduser."</dsiduser>";
 	$xml .= "   <dsdtitul>".$dsdtitul."</dsdtitul>";
 	$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xml .= "   <idcalculo_reciproci>".$idcalculo_reciproci."</idcalculo_reciproci>";
+	$xml .= "   <idcalculo_reciproci>".$idrecipr."</idcalculo_reciproci>";
 	$xml .= "   <tpimpres>".$tpimpres."</tpimpres>"; // 1 - Ades�o  2 - Cancelamento
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
 	// craprdr / crapaca 
-	$xmlResult = mensageria($xml, "ATENDA", "IMPTERMO2", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA", "IMPTERMO_RECIPROCI", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	// Se ocorrer um erro, mostra cr�tica
