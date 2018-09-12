@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 17/07/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 12/09/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -292,7 +292,9 @@ BEGIN
              
              10/08/2018 - Salvar arquivos STR0004R2 recusados e gravar historico nulo nas mensagens
                           STR0004R2 e STR0006R2. PRJ486 (Lombardi)
-                  
+             
+             12/09/2018 - Substituido insert na craplcm para utilizar rotina centralizadora LANC0001.
+                          PRJ450 - Regulatorio (Odirlei-AMcom)    
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -323,6 +325,9 @@ BEGIN
     vr_des_saida    VARCHAR2(4000);
     vr_logprogr     VARCHAR2(1000);
     vr_nmarqlog     VARCHAR2(1000);
+    vr_tab_retorno  lanc0001.typ_reg_retorno;
+    vr_incrineg     INTEGER;
+    
 
     /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -767,6 +772,7 @@ BEGIN
         pc_mover_arquivo_xml(pr_nmarq_mover => vr_aux_nmarqxml
                             ,pr_nmdir_mover => rw_crapcop_central.dsdircop);
       END IF;
+      
     END;
 
     /* SubRotina para concentrar o encerramento de rotina paralela */
@@ -1075,7 +1081,8 @@ BEGIN
       ELSE
         RETURN true;
       END IF;
-
+      
+      
     END;
 
     -- Verificar se o processo esta ainda executando em estado de crise
@@ -4144,7 +4151,17 @@ END;
           -- Usar da epr
           vr_aux_txjuremp := rw_crapepr.txjuremp;
         END IF;
-
+        
+        --> Verificar se o cooperado pode realizar debito com o historico 108 - PREST.EMPREST
+        IF lanc0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper, 
+                                    pr_nrdconta => pr_nrdconta, 
+                                    pr_cdhistor => 108) THEN
+          vr_dscritic := 'Debito hist. 108 nao permitido para o cooperado.';
+          -- Sair da rotina
+          RAISE vr_exc_saida;
+                                 
+        END IF;
+        
         -- Atualizar capa do emprestimo
         BEGIN
           UPDATE crapepr
@@ -4358,43 +4375,43 @@ END;
           -- Apenas Fecha Cursor
           CLOSE cr_craplot;
         END IF;
-
+        
+        vr_tab_retorno := NULL;
+        vr_incrineg := 0;
+        
         -- Inserir Lancamento de debito na conta
-        BEGIN
-          INSERT INTO craplcm
-             (cdcooper
-             ,dtmvtolt
-             ,cdagenci
-             ,cdbccxlt
-             ,nrdolote
-             ,nrdconta
-             ,nrdctabb
-             ,nrdctitg
-             ,nrdocmto
-             ,cdhistor
-             ,nrseqdig
-             ,cdpesqbb
-             ,vllanmto)
-          VALUES
-             (pr_cdcooper
-             ,rw_craplot.dtmvtolt
-             ,rw_craplot.cdagenci
-             ,rw_craplot.cdbccxlt
-             ,rw_craplot.nrdolote
-             ,pr_nrdconta
-             ,pr_nrdconta
-             ,GENE0002.fn_mask(pr_nrdconta,'99999999')
-             ,pr_nrctremp
-             ,108
-             ,nvl(rw_craplot.nrseqdig,0) + 1
-             ,null
-             ,vr_aux_VlrLanc);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || SQLERRM;
-           -- Sair da rotina
-           RAISE vr_exc_saida;
-        END;
+        LANC0001.pc_gerar_lancamento_conta
+                      ( pr_cdcooper => pr_cdcooper 
+                       ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                       ,pr_cdagenci => rw_craplot.cdagenci
+                       ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                       ,pr_nrdolote => rw_craplot.nrdolote
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrdctabb => pr_nrdconta
+                       ,pr_nrdctitg => GENE0002.fn_mask(pr_nrdconta,'99999999')
+                       ,pr_nrdocmto => pr_nrctremp
+                       ,pr_cdhistor => 108
+                       ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                       ,pr_cdpesqbb => null
+                       ,pr_vllanmto => vr_aux_VlrLanc
+                       --> OUT <--
+                       ,pr_tab_retorno => vr_tab_retorno
+                       ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+                       
+        IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --> Tratativas para critica de negocio
+          IF vr_incrineg = 1 THEN
+            -- Sair da rotina
+            RAISE vr_exc_saida;
+          --> Tratativas para criticas de sistema
+          ELSE
+            -- Sair da rotina
+            RAISE vr_exc_saida;
+          END IF; 
+        
+        END IF;                 
 
         -- Atualizar capa do Lote
         BEGIN
@@ -4657,43 +4674,43 @@ END;
       IF vr_aux_existlcm = 1 THEN
         vr_dscritic := 'Lancamento ja existe! Lote: ' ||rw_b_craplot.nrdolote||', Doc.: ' || vr_aux_nrdocmto;
       ELSE
+        
+        vr_tab_retorno := NULL;
+        vr_incrineg := 0;
+        
         -- Inserir Lancamento somente se não criticou acima
-        BEGIN
-          INSERT INTO craplcm
-             (cdcooper
-             ,dtmvtolt
-             ,cdagenci
-             ,cdbccxlt
-             ,nrdolote
-             ,nrdconta
-             ,nrdctabb
-             ,nrdocmto
-             ,cdhistor
-             ,nrseqdig
-             ,cdpesqbb
-             ,vllanmto
-             ,cdoperad
-             ,hrtransa)
-          VALUES
-             (rw_b_crapcop.cdcooper
-             ,rw_b_craplot.dtmvtolt
-             ,rw_b_craplot.cdagenci
-             ,rw_b_craplot.cdbccxlt
-             ,rw_b_craplot.nrdolote
-             ,rw_craptco.nrdconta
-             ,rw_craptco.nrdconta
-             ,vr_aux_nrdocmto
-                                   /* Credito TEC  TED */
-             ,DECODE(vr_aux_CodMsg,'STR0037R2',799,'PAG0137R2',799,578)
-             ,nvl(rw_b_craplot.nrseqdig,0) + 1
-             ,vr_aux_dadosdeb
-             ,pr_vlrlanct
-             ,'1'
-             ,vr_aux_hrtransa);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || SQLERRM;
-        END;
+        LANC0001.pc_gerar_lancamento_conta
+                      ( pr_cdcooper => rw_b_crapcop.cdcooper
+                       ,pr_dtmvtolt => rw_b_craplot.dtmvtolt
+                       ,pr_cdagenci => rw_b_craplot.cdagenci
+                       ,pr_cdbccxlt => rw_b_craplot.cdbccxlt
+                       ,pr_nrdolote => rw_b_craplot.nrdolote
+                       ,pr_nrdconta => rw_craptco.nrdconta
+                       ,pr_nrdctabb => rw_craptco.nrdconta
+                       ,pr_nrdocmto => vr_aux_nrdocmto
+                                       --> Credito TEC  TED 
+                       ,pr_cdhistor => (CASE vr_aux_CodMsg 
+                                           WHEN 'STR0037R2' THEN 799 --> CREDITO TEC
+                                           WHEN 'PAG0137R2' THEN 799 --> CREDITO TEC
+                                           ELSE 578 --> CREDITO TED
+                                        END)
+                       ,pr_nrseqdig => nvl(rw_b_craplot.nrseqdig,0) + 1
+                       ,pr_cdpesqbb => vr_aux_dadosdeb
+                       ,pr_vllanmto => pr_vlrlanct
+                       ,pr_cdoperad => '1'
+                       ,pr_hrtransa => vr_aux_hrtransa
+                                              
+                       --> OUT <--
+                       ,pr_tab_retorno => vr_tab_retorno
+                       ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
+                       
+        IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --> sem tratativas de critica, criticas serão tratadas no if geral logo abaixo
+          NULL;         
+        END IF;
+                 
       END IF;
 
       -- Se deu erro na gravação
@@ -6082,46 +6099,47 @@ END;
             CLOSE cr_tbfin_rec_con;
 
             IF NOT vr_aux_flgreccon THEN
-
-              -- Gerar lançamento em conta
-              BEGIN
-                INSERT INTO craplcm
-                   (cdcooper
-                   ,dtmvtolt
-                   ,cdagenci
-                   ,cdbccxlt
-                   ,nrdolote
-                   ,nrdconta
-                   ,nrdctabb
-                   ,nrdocmto
-                   ,cdhistor
-                   ,nrseqdig
-                   ,cdpesqbb
-                   ,vllanmto
-                   ,cdoperad
-                   ,hrtransa)
-                VALUES
-                   (rw_crapcop_mensag.cdcooper
-                   ,rw_craplot.dtmvtolt
-                   ,rw_craplot.cdagenci
-                   ,rw_craplot.cdbccxlt
-                   ,rw_craplot.nrdolote
-                   ,vr_aux_nrctacre
-                   ,vr_aux_nrctacre
-                   ,vr_aux_nrdocmto
-                   ,vr_aux_cdhistor
-                   ,nvl(rw_craplot.nrseqdig,0) + 1
-                   ,vr_aux_cdpesqbb
-                   ,vr_aux_VlrLanc
-                   ,'1'
-                   ,to_char(vr_glb_dataatual,'sssss'));
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || SQLERRM;
-                 -- Sair da rotina
+              
+            
+              vr_tab_retorno := NULL;
+              vr_incrineg := 0;
+              
+              -- -- Gerar lançamento em conta
+              LANC0001.pc_gerar_lancamento_conta
+                            ( pr_cdcooper => rw_crapcop_mensag.cdcooper
+                             ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                             ,pr_cdagenci => rw_craplot.cdagenci
+                             ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                             ,pr_nrdolote => rw_craplot.nrdolote
+                             ,pr_nrdconta => vr_aux_nrctacre
+                             ,pr_nrdctabb => vr_aux_nrctacre
+                             ,pr_nrdocmto => vr_aux_nrdocmto
+                             ,pr_cdhistor => vr_aux_cdhistor
+                             ,pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                             ,pr_cdpesqbb => vr_aux_cdpesqbb
+                             ,pr_vllanmto => vr_aux_VlrLanc
+                             ,pr_cdoperad => '1'
+                             ,pr_hrtransa => to_char(vr_glb_dataatual,'sssss')
+                             
+                             --> OUT <--
+                             ,pr_tab_retorno => vr_tab_retorno
+                             ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+                             
+              IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                --> Tratativas para critica de negocio
+                IF vr_incrineg = 1 THEN
+                  -- Sair da rotina
+                  RAISE vr_exc_saida;
+                --> Tratativas para criticas de sistema
+                ELSE
+                  -- Sair da rotina
                  RAISE vr_exc_saida;
-              END;
-
+                END IF; 
+              
+              END IF;  
+              
               -- Atualizar capa do Lote
               BEGIN
                 UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
@@ -6463,51 +6481,52 @@ END;
             -- Retornar a execução
             RETURN;
           END IF;
-
-          BEGIN
-            -- Criar LCM
-            INSERT INTO craplcm
-               (cdcooper
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,nrdconta
-               ,nrdctabb
-               ,nrdocmto
-               ,cdhistor
-               ,vllanmto
-               ,nrseqdig
-               ,cdpesqbb
-               ,cdoperad
-               ,hrtransa)
-            VALUES
-               (rw_crapcop_portab.cdcooper
-               ,rw_craplot.dtmvtolt
-               ,rw_craplot.cdagenci
-               ,rw_craplot.cdbccxlt
-               ,rw_craplot.nrdolote
-               ,rw_portab.nrdconta
-               ,rw_portab.nrdconta
-               ,vr_aux_nrctremp
-               ,1918
-               ,vr_aux_VlrLanc
-               ,rw_craplot.nrseqdig + 1
-               ,'CRED TED PORT'
-               ,'1'
-               ,to_char(vr_glb_dataatual,'sssss'));
-            -- Atualizar capa do Lote
-            UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
-                              ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
-                              ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
-                              ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
-                              ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
-            WHERE craplot.ROWID = rw_craplot.ROWID;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao criar lancamento de TED ou na atualizacao do Lote: '||sqlerrm;
-          END;
-
+          
+          vr_tab_retorno := NULL;
+          vr_incrineg := 0;
+              
+          -- -- Gerar lançamento em conta
+          LANC0001.pc_gerar_lancamento_conta
+                        ( pr_cdcooper => rw_crapcop_portab.cdcooper
+                         ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                         ,pr_cdagenci => rw_craplot.cdagenci
+                         ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                         ,pr_nrdolote => rw_craplot.nrdolote
+                         ,pr_nrdconta => rw_portab.nrdconta
+                         ,pr_nrdctabb => rw_portab.nrdconta
+                         ,pr_nrdocmto => vr_aux_nrctremp
+                         ,pr_cdhistor => 1918 --> CRED TED PORT
+                         ,pr_vllanmto => vr_aux_VlrLanc
+                         ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                         ,pr_cdpesqbb => 'CRED TED PORT'
+                         ,pr_cdoperad => '1'
+                         ,pr_hrtransa => to_char(vr_glb_dataatual,'sssss')                         
+                             
+                         --> OUT <--
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+                             
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --> Tratativas de erro serão controladas logo abaixo
+            NULL;
+          ELSE
+            BEGIN
+              -- Atualizar capa do Lote
+              UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
+                                ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + vr_aux_VlrLanc
+                                ,craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                                ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
+                                ,craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
+              WHERE craplot.ROWID = rw_craplot.ROWID;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao criar lancamento de TED ou na atualizacao do Lote: '||sqlerrm;
+            END;          
+              
+          END IF;
+          
           -- Se não houve erro até então
           IF vr_dscritic IS NULL THEN
 
