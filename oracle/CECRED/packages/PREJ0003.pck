@@ -61,6 +61,10 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                                   , pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE
                                   , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE) RETURN NUMBER;
 
+	-- Retorna o valor de juros remuneratórios provisionados para a conta em prejuízo
+	FUNCTION fn_juros_remun_prov(pr_cdcooper IN crapris.cdcooper%TYPE
+                             , pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER;
+
    PROCEDURE pc_consulta_sld_cta_prj(pr_cdcooper IN NUMBER             --> Código da Cooperativa
                                    ,pr_nrdconta IN NUMBER             --> Número da conta
                                    ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -546,6 +550,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     RETURN vr_valor_pagamentos;
   END fn_valor_pago_conta_prej;
 
+	-- Retorna o valor de juros remuneratórios provisionados para a conta em prejuízo
+	FUNCTION fn_juros_remun_prov(pr_cdcooper IN crapris.cdcooper%TYPE
+                             , pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER IS
+	  vr_vljuros NUMBER;			
+		vr_cdcritic crapcri.cdcritic%TYPE;
+		vr_dscritic crapcri.dscritic%TYPE;										
+	BEGIN
+		pc_calc_juros_remun_prov(pr_cdcooper => pr_cdcooper
+		                       , pr_nrdconta => pr_nrdconta
+													 , pr_vljuprov => vr_vljuros
+													 , pr_cdcritic => vr_cdcritic
+													 , pr_dscritic => vr_dscritic);
+													 
+		IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+			vr_vljuros := 0;
+		END IF;
+													 
+		RETURN vr_vljuros; 
+	END fn_juros_remun_prov;
+
   -- Subrotina para escrever texto na variável CLOB do XML
   PROCEDURE pc_escreve_clob(pr_clobdado IN OUT NOCOPY CLOB,
                                 pr_des_dados IN VARCHAR2,
@@ -604,15 +628,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
        AND  (pr_dtmvtolt - ris.dtdrisco) >= 180  -- dias_risco
        AND   ris.qtdiaatr >=180 -- dias_atraso
        AND   NOT EXISTS (SELECT 1
-                           FROM crapepr epr
-                          WHERE epr.cdcooper = ris.cdcooper
-                            AND epr.nrdconta = ris.nrdconta
-                            AND epr.inprejuz = 1
-                            AND epr.cdlcremp = 100)
-       AND NOT EXISTS (SELECT 1
                          FROM crapcyc cyc
                         WHERE cyc.cdcooper = ris.cdcooper
                           AND cyc.nrdconta = ris.nrdconta
+													AND cyc.cdorigem = 1
                           AND cyc.cdmotcin = 2)
        AND   ris.dtrefere =  pr_dtrefere;
       rw_crapris  cr_crapris%ROWTYPE;
@@ -762,16 +781,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
        AND   ris.dtrefere  = pr_dtrefere
        AND   pr_dtmvtolt - ris.dtdrisco >= 180  -- dias_risco
        AND   ris.qtdiaatr  >= 180 -- dias_atraso
-       AND   ris.nrdconta  not in (SELECT epr.nrdconta
-                                   FROM   crapepr epr
-                                   WHERE epr.cdcooper = ris.cdcooper
-                                   AND   epr.nrdconta = ris.nrdconta
-                                   AND   epr.inprejuz = 1
-                                   AND   epr.cdlcremp = 100)
-       AND  ris.nrdconta  not in   (SELECT cyc.nrdconta
+       AND  ris.nrdconta  NOT IN   (SELECT cyc.nrdconta
                                     FROM   crapcyc cyc
                                     WHERE cyc.cdcooper = ris.cdcooper
                                     AND   cyc.nrdconta = ris.nrdconta
+																		AND   cyc.cdorigem = 1
                                     AND   cyc.cdmotcin = 2);
 
     rw_crapris  cr_crapris%ROWTYPE;
@@ -1159,6 +1173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
             -- Fechar o cursor
             CLOSE cr_crapcrm;
            ELSE
+
                -- Bloqueio cartão magnetico
                cada0004.pc_bloquear_cartao_magnetico( pr_cdcooper => pr_cdcooper, --> Codigo da cooperativa
                                                       pr_cdagenci => 0,  --> Codigo de agencia
@@ -1175,6 +1190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                                                       pr_cdcritic  => vr_cdcritic,
                                                       pr_dscritic  => vr_dscritic,
                                                       pr_des_reto  => vr_des_reto);--> OK ou NOK
+
 
                 IF vr_des_reto <> 'OK' THEN
                    pr_cdcritic := vr_cdcritic;
@@ -2691,7 +2707,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                                           pr_anorefju => vr_anorefju,
                                           pr_des_reto => vr_dscritic);
 
-      IF vr_vljupre > 0 THEN
+      IF vr_vljupre_prov > 0 THEN
         -- Atualiza juros remuneratórios do prejuízo
         UPDATE tbcc_prejuizo prj
            SET prj.dtrefjur = rw_crapdat.dtmvtolt
@@ -2859,7 +2875,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     END IF;
 
     UPDATE tbcc_prejuizo
-       SET vlpgprej = nvl(vlpgprej, 0) + vr_valrpago
+       SET vlpgprej = nvl(vlpgprej, 0) + least(vr_valrpago, pr_vlrpagto)
      WHERE ROWID = rw_contaprej.rowid;
 
     -- Desconta o valor total do pagamento efetuado do saldo disponível para operações na C/C
