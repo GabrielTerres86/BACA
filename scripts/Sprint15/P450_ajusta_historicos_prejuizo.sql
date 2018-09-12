@@ -1,6 +1,6 @@
 -- Marca os históricos para lançamento aberto por PA no CRPS249
 UPDATE craphis his
-   SET his.tpctbcxa = 2
+   SET his.tpctbcxa = 0
  WHERE his.cdhistor IN (2408, 2412, 2716, 2717, 2721, 2722)
 ;	  
 
