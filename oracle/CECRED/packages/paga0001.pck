@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 28/06/2018
+  --  Data    : Abril/2006                     Ultima Atualizacao: 12/09/2018
   --
   --  Dados referentes ao programa:
   --
@@ -291,12 +291,12 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --         18/07/2018 - Inclusão de pc_internal_exception nas exceptions others da procedure pc_paga_titulo
   --                      (André Bohn Mout's) - PRB0040172
-  
-  
+  --
+  --  
   --             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
   --
-	--        26/03/2018 - Incluido pr_inpriori na pc_obtem_agend_debitos para o "debitador unico" (Fabiano B. Dias - AMcom)
-
+  --          12/09/2018 - Busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
+  --  
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -1424,7 +1424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --                   - Mover as procedures de execucao de instrucao de cobranca para a package COBR0006
   --                       - pc_prep_retorno_cooper_90
   --                     (Douglas - Importacao de Arquivo CNAB)
-  --        
+  --
   --
   --        19/01/2016 - (Ajuste migracao crps123 > crps509) Incluir tratamento de debito facil 
   --                     na procedure  pc_debita_convenio_cecred (Lucas Ranghetti #388406 )
@@ -6023,7 +6023,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                           ,pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => rw_craplau.nrdconta
                                           ,pr_variaveis => vr_variaveis_notif);
-							
+
              END IF;
 
              --Marcar que ocorreu erro TAA
@@ -8447,7 +8447,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
        END IF;  -- Nao possui Analise de Fraude 
 
-      
+
 
       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
        PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
@@ -10623,7 +10623,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
           END IF;
-          
+
+        END IF;
         END IF;
 
 
@@ -11486,7 +11487,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                vr_cdmotivo_mensagem := MOTIVO_PAGAMENTO_DARFDAS;
                vr_variaveis_notif('#darfdas') := UPPER(rw_craplau.dsdarfdas);
                vr_variaveis_notif('#cedente') := rw_craplau.dscedent;
-                
+
                     ELSIF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
                vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
                                      'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
@@ -12348,7 +12349,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                    13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
                                (Adriano - SD 495293).       
 
-	                 26/03/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
+                   26/03/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
+
+                   12/09/2018 - Busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
 	
     -----------------------------------------------------------------------------*/
   BEGIN
@@ -12413,6 +12416,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
               ,craphis.cdhistor||'-'||craphis.dshistor dshistor
               ,craplau.cdctrlcs
 							,craphis.cdhistor
+              ,craplau.dscodbar -- Debitador Unico
         FROM craplau craplau
             ,crapass crapass
             ,craphis craphis 
@@ -12530,15 +12534,27 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 
 		  -- Verifica se o lancamento eh agua/luz.					
 		  vr_agua_luz := 'N';
-		  BEGIN
-			SELECT DISTINCT 'S'
-			INTO vr_agua_luz
-			FROM gnconve a
-				,crapcon b
-           WHERE a.cdhisdeb = rw_craplau.cdhistor 
-             AND a.cdhiscxa = b.cdhistor  
-             AND b.cdsegmto in (2,3) -- 3=energia; 2=agua.
-			 AND b.cdcooper = pr_cdcooper;
+          BEGIN
+            SELECT DISTINCT 'S'
+              INTO vr_agua_luz
+              FROM gnconve a
+                  ,crapcon b
+             WHERE a.cdhisdeb = rw_craplau.cdhistor 
+               AND a.cdhiscxa = b.cdhistor  
+               AND b.cdsegmto in (2,3) -- 3=energia; 2=agua.
+               AND b.cdcooper = pr_cdcooper
+           UNION
+            SELECT 'S'
+              FROM crapscn
+                  ,crapcon
+             WHERE crapscn.cdempcon = crapcon.cdempcon
+               AND crapscn.cdsegmto = crapcon.cdsegmto
+               AND crapcon.flgcnvsi = 0 -- indica que é Proprio
+               AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+               AND crapscn.cdsegmto in (2, 3) -- agua / energia
+               AND crapscn.cdempcon = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,16,4))
+               AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,2,1))
+               AND crapcon.cdcooper = pr_cdcooper; 			 
  		  EXCEPTION
 			WHEN NO_DATA_FOUND THEN
 			  vr_agua_luz := 'N';
@@ -12565,7 +12581,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 		  END IF;
 					
         END IF; -- pr_inpriori = 'T' 
-					
+
 		------------------------------
         -- Debitador Unico - fim.
 		------------------------------
@@ -20452,7 +20468,7 @@ end;';
     --buscar registros não processados
     FOR rw_crapdda IN cr_crapdda LOOP
       IF rw_crapdda.incobran = 5 THEN
-    
+
       --Executar baixa efetiva NPC
       ddda0001.pc_baixa_efetiva_npc (pr_rowid_cob => rw_crapdda.cobrowid    -- ROWID da Cobranca
                                            ,pr_cdcritic  => vr_cdcritic            -- Codigo de Erro
