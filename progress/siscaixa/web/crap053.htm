@@ -9,6 +9,10 @@
               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
 			  
 			  10/08/2018 - Adicionado os campos radio button Conta e Especie. PRJ 420 (Mateus Z - Mouts)
+   			  
+              31/08/2018 - Adicionado cartao de assinatura a partir da conta do cheque
+						   autenticado na leitora. (Prj. Acelera - Reinert)
+
 -->
 
 <html>
@@ -22,15 +26,41 @@
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript>
+$( document ).ready(function() {
+	if ($("#v_seqope").val() == 2){
+		$("#v_tppagmto0").prop("disabled", "true");
+		$("#v_tppagmto1").prop("disabled", "true");
+		$("#v_valor").prop("disabled", "true");
+		$("#v_cmc7").prop("disabled", "true");
+		$("#manual").prop("disabled", "true");
+		$("#ok").css("display", "inline-block");
+	}
+});
+
+function confirmaOperacao(){
+
+	$("#v_tppagmto0").removeAttr("disabled");
+	$("#v_tppagmto1").removeAttr("disabled");
+	$("#v_valor").removeAttr("disabled");
+	$("#v_cmc7").removeAttr("disabled");
+	$("#manual").removeAttr("disabled");
+	$("#frmRotina53").submit();
+	$("#v_valor").prop("disabled", "true");
+	$("#v_cmc7").prop("disabled", "true");
+	$("#manual").prop("disabled", "true");	
+	
+}
+</script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>CONSULTA CONTA ASSOCIADO</title>
 </head>
 
 
 <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
-<form onKeyDown="change_page(event)" method=post>
+<form onKeyDown="change_page(event)" name="frmRotina53" id="frmRotina53" method=post>
          <input type="hidden" name="v_msg"><input type="hidden" name="vh_foco" value="7">
-
 <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
 <div align="center">
   <center>
@@ -90,16 +120,17 @@
           <td align="right" class="linhaform" width="23%">Valor:</td>
           <td align="left" class="linhaform" width="77%">
           <p align="left">
-          <input type="text" name="v_valor" size="20" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" maxlength="18" style="text-align: right" ></p>
+          <input type="text" name="v_valor" id="v_valor" size="20" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" maxlength="18" style="text-align: right" ></p>
           </td>
         </tr>
 <center>
         <tr>
           <td align="right" class="linhaform" width="23%">CMC7</td>
-          <td align="left" class="linhaform" width="77%"><input type="text" name="v_cmc7" size="40" class="input" OnKeyUp="Javascript:preenchimento(event,0,this,34,'submit')" maxlength="40" style="text-align: right" >
-            <input type="submit" value="Manual" name="Manual" class="button">
+          <td align="left" class="linhaform" width="77%"><input type="text" name="v_cmc7" id="v_cmc7" size="40" class="input" OnKeyUp="Javascript:preenchimento(event,0,this,34,'submit')" maxlength="40" style="text-align: right" >
+            <input type="submit" value="Manual" name="manual" id="manual" class="button">
           </td>
         </tr>
+		<input type="hidden" name="v_seqope" id="v_seqope" value="1">
           <tr>
           <td align="right" class="linhaform"></td>
           <td align="left" class="linhaform">
@@ -109,7 +140,11 @@
           </tr>
           <tr>
           <td align="right" class="linhaform" colspan="3">
-            <p align="center"><input type="submit" value="Cancelar" name="cancela" class="button"></td>
+				<p align="center">
+					<input type="button" value="Ok" name="ok" class="button" id="ok" style="display: none" onClick="confirmaOperacao();">
+					<input type="submit" value="Cancelar" name="cancela" class="button">
+				</p>
+			</td>
           </tr>
           <tr>
           <td align="right" class="linhaform" colspan="3">

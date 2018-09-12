@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 25/06/2018.
+   Data    : Marco/2001                      Ultima atualizacao: 31/08/2018.
 
    Dados referentes ao programa:
 
@@ -48,6 +48,10 @@
                             (Tiago Castro - RKAM)
                             
               25/06/2018 - inc0016988 Inclusao de no-lock em consulta com shared (Carlos)
+
+			  31/08/2018 - Adicionado cartao de assinatura a partir da conta do cheque
+						   autenticado na leitora. (Prj. Acelera - Reinert)
+
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -210,6 +214,7 @@ DEF VAR p-flg-coop-host   AS LOG NO-UNDO.
 DEF VAR p-nro-conta-nova  AS INT NO-UNDO.
 DEF VAR p-nro-conta-anti  AS INT NO-UNDO.
 
+DEF BUFFER b-crapcop FOR crapcop.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -754,6 +759,7 @@ PROCEDURE process-web-request :
    */ 
   RUN outputHeader.
   {include/i-global.i}
+  {include/var_digidoc.i}
 
   ASSIGN de-valor    = get-value("v_pvalor2").
  
@@ -1135,6 +1141,69 @@ PROCEDURE process-web-request :
                             ASSIGN de-saldo-cheque = de-saldo-cheque +
                                    crapmdw.vlcompel.
                         END.
+
+                        FOR FIRST crapmdw 
+                           FIELDS (cdbanchq cdagechq nrctabdb)
+                            WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
+                                  crapmdw.cdagenci = INT(v_pac)        AND
+                                  crapmdw.nrdcaixa = INT(v_caixa)      AND
+                                  crapmdw.nrctabdb = DEC(v_conta1)     AND
+                                  crapmdw.nrcheque = INT(v_cheque)
+                                  NO-LOCK:
+                          IF 	crapmdw.cdbanchq = crapcop.cdbcoctl THEN
+                              DO:
+                                /* Cheque da cooperativa */
+                                IF crapmdw.cdagechq = crapcop.cdagectl THEN
+                                  DO:
+                                    /* Abrir cartao de assinatura do cooperado do cheque */
+                                    {&OUT} "<script>var params = [" +
+                                                        "'height='+screen.height," +
+                                                        "'width='+screen.width," +
+                                                        "'screenX=0'," +
+                                                        "'screenY=0'," +
+                                                        "'top=0'," +
+                                                        "'left=0'," +
+                                                        "'resizable=yes'" +
+                                                        "].join(','); " +
+                                           "window.open('http://" + aux_svdigdoc + 
+                                           "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(crapmdw.nrctabdb, "zzzz,zzz,9")) + 
+                                           "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                  END.
+                                /* Cheque de outra cooperativa do sistema */
+                                ELSE
+                                  DO:
+                                    FOR FIRST b-crapcop 
+                                       FIELDS (cdcooper)
+                                        WHERE b-crapcop.cdagectl = crapmdw.cdagechq
+                                        NO-LOCK:                                                  
+                                      FOR FIRST craptco
+                                         FIELDS (nrdconta)
+                                          WHERE craptco.cdcopant = b-crapcop.cdcooper AND
+                                                craptco.nrctaant = crapmdw.nrctabdb   AND
+                                                craptco.cdcooper = crapcop.cdcooper   AND 
+                                                craptco.tpctatrf = 1                  AND
+                                                craptco.flgativo = TRUE
+                                                NO-LOCK:
+                                                
+                                          /* Abrir cartao de assinatura do cooperado com a conta migrada do cheque */
+                                          {&OUT} "<script>var params = [" +
+                                                        "'height='+screen.height," +
+                                                        "'width='+screen.width," +
+                                                        "'screenX=0'," +
+                                                        "'screenY=0'," +
+                                                        "'top=0'," +
+                                                        "'left=0'," +
+                                                        "'resizable=yes'" +
+                                                        "].join(','); " +
+                                                 "window.open('http://" + aux_svdigdoc + 
+                                                 "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(craptco.nrdconta, "zzzz,zzz,9")) + 
+                                                 "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                      END.
+                                    END.
+                                  END.
+                              END.
+                        END.
+                        
                         IF de-saldo-cheque = DEC(v_valor1) THEN DO:
                            IF  GET-VALUE("v_pnrsequni") = ""  THEN 
                            {&OUT} "<script>window.location='crap051c.w"          +

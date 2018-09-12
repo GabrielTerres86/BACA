@@ -75,6 +75,9 @@
 			 
 			 04/05/2018 - Possibilidade de usar caixa on-line mesmo com o processo batch (noturno) executando 
 			              (Fabio Adriano - Amcom).
+
+             31/08/2018 - Adicionado cartao de assinatura a partir da conta do cheque
+						   autenticado na leitora. (Prj. Acelera - Reinert)
 -->
 
 <html>
@@ -403,6 +406,7 @@
     DEF VAR v_cheque     AS CHARACTER                              NO-UNDO.
     
     DEF BUFFER crabcop FOR crapcop.
+    DEF BUFFER b-crapcop FOR crapcop.
     
     DEFINE TEMP-TABLE w-craperr  NO-UNDO
            FIELD cdagenci   LIKE craperr.cdagenc
@@ -438,6 +442,7 @@
     CREATE ab_unmap.
 
     {include/i-global.i}
+    {include/var_digidoc.i}
 
     ASSIGN v_conta      = GET-VALUE("v_pconta")
            v_nome       = GET-VALUE("v_pnome")
@@ -1450,6 +1455,51 @@
                                                                           v_flg-coop-host   = STRING(p-flg-coop-host)
                                                                           v_nro-conta-nova  = STRING(p-nro-conta-nova) 
                                                                           v_nro-conta-anti  = STRING(p-nro-conta-anti).
+                                                             
+                                                                   IF p-cdbanchq = crapcop.cdbcoctl THEN
+                                                                      DO:
+                                                                         /* Cheque da cooperativa */
+                                                                         IF p-cdagechq = crapcop.cdagectl THEN
+                                                                            DO:
+                                                                              RUN JavaScript("var params = [" +
+																								"'height='+screen.height," +
+																								"'width='+screen.width," +
+																								"'screenX=0'," +
+																								"'screenY=0'," +
+																								"'top=0'," +
+																								"'left=0'," +
+																								"'resizable=yes'" +
+																								"].join(','); " +
+																						     "window.open('http://" + aux_svdigdoc + 
+                                                                                             "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(p-nrctabdb, "zzzz,zzz,9")) + 
+                                                                                             "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);").
+                                                                            END.
+                                                                            /* Cheque de outra cooperativa do sistema */
+                                                                         ELSE
+                                                                           DO:
+                                                                             FOR FIRST b-crapcop FIELDS (cdcooper) WHERE b-crapcop.cdagectl = p-cdagechq NO-LOCK:                                                  
+                                                                               FOR FIRST craptco FIELDS (nrdconta) WHERE craptco.cdcopant = b-crapcop.cdcooper 
+                                                                                                                     AND craptco.nrctaant = p-nrctabdb         
+                                                                                                                     AND craptco.cdcooper = crapcop.cdcooper    
+                                                                                                                     AND craptco.tpctatrf = 1                  
+                                                                                                                     AND craptco.flgativo = TRUE NO-LOCK:
+                                                                            
+                                                                               RUN JavaScript("var params = [" +
+																								"'height='+screen.height," +
+																								"'width='+screen.width," +
+																								"'screenX=0'," +
+																								"'screenY=0'," +
+																								"'top=0'," +
+																								"'left=0'," +
+																								"'resizable=yes'" +
+																								"].join(','); " +
+																							  "window.open('http://" + aux_svdigdoc + 
+                                                                                              "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(craptco.nrdconta, "zzzz,zzz,9")) + 
+                                                                                              "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);").
+                                                                               END.
+                                                                             END.
+                                                                           END.
+                                                                      END.                                                             
                                                                    
                                                                    IF NOT VALID-HANDLE(h-b1crap51) THEN
                                                                       RUN dbo/b1crap51.p PERSISTENT SET h-b1crap51.

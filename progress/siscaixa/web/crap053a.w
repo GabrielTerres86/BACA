@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 10/08/2018.
+   Data    : Marco/2001                      Ultima atualizacao: 31/08/2018.
 
    Dados referentes ao programa:
 
@@ -40,6 +40,10 @@
                             
                10/08/2018 - Adicionado funcao para realizar provisao e 
                             tratamento para solicitar senha. PRJ 420 (Mateus Z - Mouts)             
+
+			  31/08/2018 - Adicionado cartao de assinatura a partir da conta do cheque
+						   autenticado na leitora. (Prj. Acelera - Reinert)
+
 ............................................................................ */
 
 { sistema/generico/includes/var_oracle.i }
@@ -194,6 +198,7 @@ DEF VAR p-solicita-senha AS CHAR NO-UNDO.
 DEF VAR p_flg-erro-cod-senha AS CHAR NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR.
+DEF BUFFER b-crapcop FOR crapcop.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -637,6 +642,7 @@ PROCEDURE process-web-request :
    */ 
   RUN outputHeader.
   {include/i-global.i}
+  {include/var_digidoc.i}
    
   ASSIGN de-valor    = get-value("v_valor").
   
@@ -1054,6 +1060,61 @@ PROCEDURE process-web-request :
                              END. 
                           
                          END. /* get-value("OK") */
+                       ELSE
+                         DO:
+                            IF INT(v_banco) = crapcop.cdbcoctl THEN
+                               DO:
+                                  /* Cheque da cooperativa */
+                                  IF INT(v_agenc) = crapcop.cdagectl THEN
+                                     DO:
+                                      /* Abrir cartao de assinatura do cooperado do cheque */
+                                      {&OUT} "<script>var params = [" +
+                                                        "'height='+screen.height," +
+                                                        "'width='+screen.width," +
+                                                        "'screenX=0'," +
+                                                        "'screenY=0'," +
+                                                        "'top=0'," +
+                                                        "'left=0'," +
+                                                        "'resizable=yes'" +
+                                                        "].join(','); " +
+                                             "window.open('http://" + aux_svdigdoc + 
+                                             "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(DEC(v_conta), "zzzz,zzz,9")) + 
+                                             "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                     END.
+                                     /* Cheque de outra cooperativa do sistema */
+                                  ELSE
+                                    DO:
+                                      FOR FIRST b-crapcop 
+                                         FIELDS (cdcooper)
+                                          WHERE b-crapcop.cdagectl = INT(v_agenc)
+                                          NO-LOCK:                                                  
+                                        FOR FIRST craptco
+                                           FIELDS (nrdconta)
+                                            WHERE craptco.cdcopant = b-crapcop.cdcooper AND
+                                                  craptco.nrctaant = DEC(v_conta)       AND
+                                                  craptco.cdcooper = crapcop.cdcooper   AND 
+                                                  craptco.tpctatrf = 1                  AND
+                                                  craptco.flgativo = TRUE
+                                                  NO-LOCK:
+                                                  
+                                            /* Abrir cartao de assinatura do cooperado com a conta migrada do cheque */
+                                            {&OUT} "<script>var params = [" +
+                                                        "'height='+screen.height," +
+                                                        "'width='+screen.width," +
+                                                        "'screenX=0'," +
+                                                        "'screenY=0'," +
+                                                        "'top=0'," +
+                                                        "'left=0'," +
+                                                        "'resizable=yes'" +
+                                                        "].join(','); " +
+                                                   "window.open('http://" + aux_svdigdoc + 
+                                                   "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(craptco.nrdconta, "zzzz,zzz,9")) + 
+                                                   "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                        END.
+                                      END.
+                                    END.
+                               END.
+                         END.
                     END.
                 END.
              END.  

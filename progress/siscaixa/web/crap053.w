@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 18/05/2018.
+   Data    : Marco/2001                      Ultima atualizacao: 31/08/2018.
 
    Dados referentes ao programa:
 
@@ -49,6 +49,9 @@
                10/08/2018 - Adicionado funcao para realizar provisao e 
                             tratamento para solicitar senha. PRJ 420 (Mateus Z - Mouts)       
                       
+  			   31/08/2018 - Adicionado cartao de assinatura a partir da conta do cheque
+						    autenticado na leitora. (Prj. Acelera - Reinert)
+
 ............................................................................ */
 
 { sistema/generico/includes/var_oracle.i }
@@ -68,7 +71,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
        FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
        FIELD v_valor AS CHARACTER FORMAT "X(256)":U
-       FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U.
+       FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U
+       FIELD v_seqope AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -160,6 +164,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
      FIELD dscritic   LIKE craperr.dscritic
      FIELD erro       LIKE craperr.erro.
 
+DEF BUFFER b-crapcop FOR crapcop.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -177,8 +183,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto
+&Scoped-Define ENABLED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto ab_unmap.v_seqope
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_cmc7 ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_tppagmto ab_unmap.v_seqope
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -238,6 +244,10 @@ DEFINE FRAME Web-Frame
            "v_tppagmto 0", "0":U,
            "v_tppagmto 1", "1":U 
            SIZE 20 BY 2
+     ab_unmap.v_seqope AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1          
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -268,6 +278,7 @@ DEFINE FRAME Web-Frame
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U
+          FIELD v_seqope AS CHARACTER FORMAT "X(256)":U 
       END-FIELDS.
    END-TABLES.
  */
@@ -322,6 +333,8 @@ DEFINE FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_tppagmto IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */      
+/* SETTINGS FOR FILL-IN ab_unmap.v_seqope IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
 
@@ -388,6 +401,8 @@ PROCEDURE htmOffsets :
     ("v_valor":U,"ab_unmap.v_valor":U,ab_unmap.v_valor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_tppagmto":U,"ab_unmap.v_tppagmto":U,ab_unmap.v_tppagmto:HANDLE IN FRAME {&FRAME-NAME}).  
+  RUN htmAssociate
+    ("v_seqope":U,"ab_unmap.v_seqope":U,ab_unmap.v_seqope:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 
@@ -468,6 +483,7 @@ PROCEDURE process-web-request :
     RUN outputHeader.
 
     {include/i-global.i}
+    {include/var_digidoc.i}
 
     /* Describe whether to receive FORM input for all the fields.  For example,
      * check particular input fields (using GetField in web-utilities-hdl). 
@@ -518,7 +534,8 @@ PROCEDURE process-web-request :
                     ASSIGN v_valor = ""
                            v_cmc7  = ""
                            v_msg   = ""
-                           vh_foco = "7".
+                           vh_foco  = "7"
+                           v_seqope = "1".
                 END.
                 ELSE DO:
 
@@ -638,6 +655,62 @@ PROCEDURE process-web-request :
                                     {include/i-erro.i}
                                 END.
                                 ELSE DO:
+                                  IF v_seqope = "1" THEN DO:                                      
+                                      ASSIGN v_seqope = "2".                                      
+                                      IF p-cdbanchq = crapcop.cdbcoctl THEN
+                                         DO:
+                                            /* Cheque da cooperativa */
+                                            IF p-cdagechq = crapcop.cdagectl THEN
+                                               DO:
+                                                /* Abrir cartao de assinatura do cooperado do cheque */
+                                                {&OUT} "<script>var params = [" +
+                                                        "'height='+screen.height," +
+                                                        "'width='+screen.width," +
+                                                        "'screenX=0'," +
+                                                        "'screenY=0'," +
+                                                        "'top=0'," +
+                                                        "'left=0'," +
+                                                        "'resizable=yes'" +
+                                                        "].join(','); " +
+                                                       "window.open('http://" + aux_svdigdoc + 
+                                                       "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(p-nrctabdb, "zzzz,zzz,9")) + 
+                                                       "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                               END.
+                                               /* Cheque de outra cooperativa do sistema */
+                                            ELSE
+                                              DO:
+                                                FOR FIRST b-crapcop 
+                                                   FIELDS (cdcooper)
+                                                    WHERE b-crapcop.cdagectl = p-cdagechq
+                                                    NO-LOCK:                                                  
+                                                  FOR FIRST craptco
+                                                     FIELDS (nrdconta)
+                                                      WHERE craptco.cdcopant = b-crapcop.cdcooper AND
+                                                            craptco.nrctaant = p-nrctabdb         AND
+                                                            craptco.cdcooper = crapcop.cdcooper   AND 
+                                                            craptco.tpctatrf = 1                  AND
+                                                            craptco.flgativo = TRUE
+                                                            NO-LOCK:
+                                                            
+                                                      /* Abrir cartao de assinatura do cooperado com a conta migrada do cheque */
+                                                      {&OUT} "<script>var params = [" +
+                                                              "'height='+screen.height," +
+                                                              "'width='+screen.width," +
+                                                              "'screenX=0'," +
+                                                              "'screenY=0'," +
+                                                              "'top=0'," +
+                                                              "'left=0'," +
+                                                              "'resizable=yes'" +
+                                                              "].join(','); " +
+                                                             "window.open('http://" + aux_svdigdoc + 
+                                                             "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(craptco.nrdconta, "zzzz,zzz,9")) + 
+                                                             "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                                  END.
+                                                END.
+                                              END.
+                                         END.
+                                  END.
+                                  ELSE DO:
                                     
                                     IF TRIM(p-mensagem1) = '' AND
                                        TRIM(p-mensagem2) = '' AND
@@ -930,6 +1003,7 @@ PROCEDURE process-web-request :
                                 END.
                             END.
                         END.
+                        END.
 
                     END.
                 END.
@@ -961,8 +1035,6 @@ PROCEDURE process-web-request :
          * Enable objects that should be enabled. */
         RUN enableFields.
 
-
-  
         /* STEP 4.2c -
          * OUTPUT the Progress form buffer to the WEB stream. */
         RUN outputFields.
@@ -984,7 +1056,8 @@ PROCEDURE process-web-request :
          *
          * STEP 2a -
          * Set any values that need to be set, then display them. */
-        ASSIGN vh_foco = "7".
+        ASSIGN vh_foco = "7"
+               v_seqope = "1".
         RUN displayFields.
 
         /* STEP 2b -
