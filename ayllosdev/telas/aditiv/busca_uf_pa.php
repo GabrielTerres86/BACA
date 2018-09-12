@@ -60,6 +60,7 @@
 	
 	$uflicenc = $xmlObjeto->roottag->tags[0]->attributes["UFLICENC"];	
 	
-	echo "$('#uflicenc','#frmTipo').val('$uflicenc');";
+	echo "$('#uflicenc','#frmTipo').val('$uflicenc').change()";
+	
 		
 ?>

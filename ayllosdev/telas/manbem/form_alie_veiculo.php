@@ -14,8 +14,10 @@
 	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
 	
     <link href="../../css/aditiv_alie_veiculo.css" rel="stylesheet" type="text/css">
+	<script type="text/javascript" src="../manbem/scripts/utils.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/aliena_veiculo.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/servico_fipe.js"></script>
+	<script type="text/javascript" src="../manbem/scripts/interveniente.js"></script>
 	
 	<form name="frmTipo" id="frmTipo">	
 		<fieldset>
@@ -92,11 +94,11 @@
 				</div>
 				<div>
 					<label for="uflicenc"> UF Licenciamento :</label>
-					<input name="uflicenc" id="uflicenc" type="text" value="<? echo getByTagName($dados,'uflicenc')?>" />
+					<? echo selectUfPa('uflicenc', getByTagName($dados, 'uflicenc')) ?>
 				</div>
 				<div>
 					<label for="nrcpfcgc"> CPF/CNPJ Interv. :</label>
-					<input name="nrcpfcgc" id="nrcpfcgc" class="cpfOuCnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" onKeyPress="VerificaPessoa(this.value)" onKeyUp="VerificaPessoa(this.value)" />
+					<input name="nrcpfcgc" id="nrcpfcgc" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" />
 				</div>
 			</div>
 		</fieldset>

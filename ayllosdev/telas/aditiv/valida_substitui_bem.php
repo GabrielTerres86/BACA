@@ -87,7 +87,8 @@
 		if ($msgErro == '') {
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		echo 'intervenienteValidado=false;';
+		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
 	}
 	else {
 

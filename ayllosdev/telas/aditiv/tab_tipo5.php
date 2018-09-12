@@ -81,8 +81,7 @@
 	<li id="nranobem"></li>
 	<li><? echo utf8ToHtml('Modelo:'); ?></li>
 	<li id="nrmodbem"></li>
-	<li><? echo utf8ToHtml('Uf Licenci:'); ?></li>
-	<li id="uflicenc"></li>
+	
 	</ul>
 	</div>	
 
