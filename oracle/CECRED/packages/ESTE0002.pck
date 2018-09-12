@@ -2734,7 +2734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              vr_flesprej := TRUE;
           END IF;
           
-          CLOSE cr_crapepr_preju;
+          CLOSE cr_prejuizo;
                 
       END LOOP;
       
