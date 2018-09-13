@@ -7749,7 +7749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
        --Cursor para retornor próximo plano
        cursor c_plano is
-       select max(s.tpplaseg)+1 tpplaseg  
+       select nvl(max(s.tpplaseg)+1,1) tpplaseg  
          from crapseg s
         where s.nrdconta = pr_nrdconta
           and s.cdcooper = pr_cdcooper
