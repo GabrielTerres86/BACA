@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 24/08/2018
+     Data    : Maio/2001                       Ultima atualizacao: 12/09/2018
      
      Dados referentes ao programa:
 
@@ -319,7 +319,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  19/06/2018 - P450 - Nova regra para Risco Refin (Guilherme/AMcom)
 
-  			     24/08/2018 - Gravar data de Risco para Limite de Crédito (Fabio Adriano - AMcom)
+  			     24/08/2018 - P450 - Gravar data de Risco para Limite de Crédito (Fabio Adriano - AMcom)
+
+                 12/09/2018 - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
 
   ............................................................................ */
 
@@ -441,7 +443,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.nrctremp
               ,crapepr.cdlcremp
               ,crapepr.tpemprst
-              ,crapepr.dtmvtolt
+              ,crapepr.dtmvtolt -- Data Efetivação
               ,crapepr.vlsdeved
               ,crapepr.qtprecal
               ,crapepr.qtmesdec
@@ -456,10 +458,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,crapepr.inprejuz
               ,crapepr.qtlcalat
               ,crapepr.vlsdevat
-              ,crawepr.dtdpagto dtdpripg
+              ,crawepr.dtdpagto dtdpripg -- Data Primeira Parcela
               ,crapepr.dtultpag
               ,crawepr.dsnivris
-              ,crawepr.dsnivori
+              ,crawepr.dsnivori -- Risco Original / Nascimento da Proposta
               ,crapepr.diarefju
               ,crapepr.mesrefju
               ,crapepr.anorefju
@@ -1209,7 +1211,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
   PROCEDURE pc_calcula_risco_refin(pr_cdcooper  IN NUMBER          --> Cooperativa
                                   ,pr_nrdconta  IN NUMBER          --> Conta
                                   ,pr_nrctremp  IN NUMBER          --> Contrato
+                                  ,pr_dsnivori  IN crawepr.dsnivori%TYPE -- Risco Original da Proposta
                                   ,pr_qtdiaatr  IN NUMBER          --> Dias em atraso do contrato atual
+                                  ,pr_dtefetiv  IN DATE            --> Data efetivação Contrato
                                   ,pr_dtrefere  IN DATE            --> Data Referencia Central Risco
                                   ,pr_dtprvcto  IN DATE            --> Data Primeiro Vencto Contrato Atual
                                   ,pr_dtatrefin IN crapepr.dtinicio_atraso_refin%TYPE -- Data do Risco Refin
@@ -1221,22 +1225,33 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
     vr_risco_refin    PLS_INTEGER:=2;   -- Risco baseado na quantidade de dias
 
   BEGIN
-
     -- FORMULA: X = (A - B) + C
     -- X => QUANTIDADE DIAS ATRASO PARA CALCULO DO RISCO REFIN
     -- A => DATA ATUAL OU DATA DO VENCTO DA PRIMEIRA PARCELA
     -- B => DATA DE INICIO DO PIOR ATRASO DOS CONTRATOS REFINANCIADOS
     -- C => QUANTIDADE DIAS ATRASO DO CONTRATO ATUAL
 
-
     -- Se o vencimento da primeira parcela for superior a data atual da central
     -- de risco, deverá ser a data da Central. Caso contrario, deverá ser a
     -- data do vencimento da primeira parcela
+
+    -- 11/09/18 - Alteração da Regra por solicitação do Gilmar/Credito
+    --   "Se o contrato for efetivado antes do dia 05/09 e vencimento da primeira parcela
+    --    for maior que  a data atual (sistema), para esses casos o sistema atribui o
+    --    risco original no risco refin"
+    --   Tratamento para diferenciar contratos novos após a liberação
+
+    pr_qtdias_atr := 0;
+
+    -- 1o Vencto >= Data do Dia ?
     IF pr_dtprvcto >= pr_dtrefere THEN
       vr_datarefe := pr_dtrefere;
     ELSE
       vr_datarefe := pr_dtprvcto;
     END IF;
+
+    -- Valido para contratos EFETIVADOS APOS 05/Set/2018
+    IF  pr_dtefetiv >= to_date('05/09/2018','DD/MM/YYYY') THEN
 
     -- X => QUANTIDADE DIAS ATRASO PARA CALCULO DO RISCO REFIN =>  X = (A - B) + C
     pr_qtdias_atr := (vr_datarefe - pr_dtatrefin) + pr_qtdiaatr;
@@ -1244,12 +1259,38 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
     -- Baseado na quantidade de dias, retorna o nivel de risco (Numerico para Alfa)
     vr_risco_refin := risc0004.fn_calcula_niv_risco_atraso(qtdiaatr => pr_qtdias_atr);
 
+    ELSE
+      --  Se a parcela ainda nao venceu, assume risco original
+      IF pr_dtprvcto >= pr_dtrefere THEN
+        -- Assume o Risco Original / Inclusao
+        pr_qtdias_atr := CASE WHEN pr_dsnivori = 'A'  THEN 0
+                              WHEN pr_dsnivori = 'B'  THEN 15
+                              WHEN pr_dsnivori = 'C'  THEN 31
+                              WHEN pr_dsnivori = 'D'  THEN 61
+                              WHEN pr_dsnivori = 'E'  THEN 91
+                              WHEN pr_dsnivori = 'F'  THEN 121
+                              WHEN pr_dsnivori = 'G'  THEN 151
+                              WHEN pr_dsnivori = 'H'  THEN 181
+                              WHEN pr_dsnivori = 'HH' THEN 181
+                              ELSE 0 END;
+        -- Baseado na quantidade de dias, retorna o nivel de risco (Numerico para Alfa)
+        vr_risco_refin := risc0004.fn_calcula_niv_risco_atraso(qtdiaatr => pr_qtdias_atr);
+      ELSE
+        -- X => QUANTIDADE DIAS ATRASO PARA CALCULO DO RISCO REFIN =>  X = (A - B) + C
+        pr_qtdias_atr := (vr_datarefe - pr_dtatrefin) + pr_qtdiaatr;
+
+        -- Baseado na quantidade de dias, retorna o nivel de risco (Numerico para Alfa)
+        vr_risco_refin := risc0004.fn_calcula_niv_risco_atraso(qtdiaatr => pr_qtdias_atr);
+      END IF;
+
+    END IF;
+
     vr_idx_crapepr_up := vr_tab_crapepr_up.count + 1;
     vr_tab_crapepr_up(vr_idx_crapepr_up).cdcooper            := pr_cdcooper;
     vr_tab_crapepr_up(vr_idx_crapepr_up).nrdconta            := pr_nrdconta;
     vr_tab_crapepr_up(vr_idx_crapepr_up).nrctremp            := pr_nrctremp;
     vr_tab_crapepr_up(vr_idx_crapepr_up).inrisco_refin       := vr_risco_refin;
-    vr_tab_crapepr_up(vr_idx_crapepr_up).qtdias_atraso_refin := pr_qtdias_atr;
+      vr_tab_crapepr_up(vr_idx_crapepr_up).qtdias_atraso_refin := NVL(pr_qtdias_atr,0);
 
 
   EXCEPTION
@@ -1265,69 +1306,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                                    || vr_dscritic );
 
   END; -- Fim procedure pc_calcula_risco_refin
-
-
-
-
-      -- Retorna quantidade de dias acelerados - Daniel(AMcom)
-      -- Se não houverem, o retorno deverá ser 0(zero).
-      PROCEDURE pc_busca_dias_acelerados(pr_cdcooper IN NUMBER      --> Cooperativa
-                                        ,pr_nrdconta IN NUMBER      --> Conta
-                                        ,pr_nrctremp IN NUMBER      --> Contrato
-                                        ,pr_qtdiaacl OUT NUMBER) IS --> Dias acelerados
-  ---
-      CURSOR cr_diaacl(pr_cdcooper IN NUMBER     --> Cooper
-                      ,pr_nrdconta IN NUMBER     --> Conta
-                      ,pr_nrctremp IN NUMBER) IS --> Contrato
-       --
-       SELECT DECODE(trim(nvl(wpr.dsnivori,'A'))
-                             , 'AA', 0   -- 1
-                             ,  'A', 0   -- 2
-                             ,  'B', 16  -- 3
-                             ,  'C', 31  -- 4
-                             ,  'D', 61  -- 5
-                             ,  'E', 91  -- 6
-                             ,  'F', 121 -- 7
-                             ,  'G', 151 -- 8
-                             ,  'H', 181 -- 9  
-                             , 0) qt_diasini -- Retorna a quantidade de dias da faixa do risco original
-         FROM crawepr wpr
-            , crapepr epr
-        WHERE epr.cdcooper = wpr.cdcooper
-          AND epr.nrdconta = wpr.nrdconta
-          AND epr.nrctremp = wpr.nrctremp
-          -- Somente contrato 3 - Renegociação
-          --                  4 - Composição de Dívida
-          AND epr.idquaprc IN (3, 4)
-          AND epr.dtmvtolt >= to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                                ,pr_nmsistem => 'CRED'
-                                                                ,pr_cdacesso => 'DT_CORTE_RISCO_REFIN')
-                                                                ,'DD/MM/RRRR')
-          AND epr.cdcooper = pr_cdcooper
-          AND epr.nrdconta = pr_nrdconta
-          AND epr.nrctremp = pr_nrctremp;
-      rw_diaacl cr_diaacl%ROWTYPE;
-
-      BEGIN
-         OPEN cr_diaacl(pr_cdcooper
-                       ,pr_nrdconta
-                       ,pr_nrctremp);
-        FETCH cr_diaacl
-         INTO rw_diaacl;
-        CLOSE cr_diaacl;
-
-          IF to_number(rw_diaacl.qt_diasini) > 0 THEN
-            pr_qtdiaacl := rw_diaacl.qt_diasini;
-          ELSE
-            pr_qtdiaacl := 0;
-          END IF;
-
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Ignorar qualquer problema
-          pr_qtdiaacl := 0;
-      END;
-
 
 
       -- Funcao para calcular o Juros 60 do produto PP
@@ -2250,7 +2228,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         END CASE;
 
 
-
         -- PROCEDURE pc_lista_emp_price      / TPEMPRST = 0 / TR
         ----------------------- RISCO REFIN -----------------------
         IF  pr_rw_crapepr.idquaprc IN(3,4)
@@ -2259,7 +2236,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           pc_calcula_risco_refin(pr_cdcooper   => pr_cdcooper
                                 ,pr_nrdconta   => pr_rw_crapepr.nrdconta
                                 ,pr_nrctremp   => pr_rw_crapepr.nrctremp
+                                ,pr_dsnivori   => pr_rw_crapepr.dsnivori -- Nivel Original do Contrato
                                 ,pr_qtdiaatr   => vr_qtdiaatr -- Dias em atraso do contrato atual
+                                ,pr_dtefetiv   => pr_rw_crapepr.dtmvtolt -- Data Efetivação Contrato
                                 ,pr_dtrefere   => vr_dtrefere
                                 ,pr_dtprvcto   => pr_rw_crapepr.dtdpripg
                                 ,pr_dtatrefin  => pr_rw_crapepr.dtinicio_atraso_refin
@@ -3013,7 +2992,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           pc_calcula_risco_refin(pr_cdcooper   => pr_cdcooper
                                 ,pr_nrdconta   => pr_rw_crapepr.nrdconta
                                 ,pr_nrctremp   => pr_rw_crapepr.nrctremp
+                                ,pr_dsnivori   => pr_rw_crapepr.dsnivori -- Nivel Original do Contrato
                                 ,pr_qtdiaatr   => vr_qtdiaatr -- Dias em atraso do contrato atual
+                                ,pr_dtefetiv   => pr_rw_crapepr.dtmvtolt -- Data Efetivação Contrato
                                 ,pr_dtrefere   => vr_dtrefere
                                 ,pr_dtprvcto   => pr_rw_crapepr.dtdpripg
                                 ,pr_dtatrefin  => pr_rw_crapepr.dtinicio_atraso_refin
@@ -3689,7 +3670,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           pc_calcula_risco_refin(pr_cdcooper   => pr_cdcooper
                                 ,pr_nrdconta   => pr_rw_crapepr.nrdconta
                                 ,pr_nrctremp   => pr_rw_crapepr.nrctremp
+                                ,pr_dsnivori   => pr_rw_crapepr.dsnivori -- Nivel Original do Contrato
                                 ,pr_qtdiaatr   => vr_qtdiaatr -- Dias em atraso do contrato atual
+                                ,pr_dtefetiv   => pr_rw_crapepr.dtmvtolt -- Data Efetivação Contrato
                                 ,pr_dtrefere   => vr_dtrefere
                                 ,pr_dtprvcto   => pr_rw_crapepr.dtdpripg
                                 ,pr_dtatrefin  => pr_rw_crapepr.dtinicio_atraso_refin
@@ -6623,10 +6606,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       EXCEPTION
         WHEN vr_exc_erro THEN
           pr_des_erro := 'Erro pc_atribui_risco_associado. --> Detalhes: '||vr_des_erro ||' '||sqlerrm;
-           FOR idx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
-           LOOP
-              pr_des_erro := pr_des_erro || ';'||SQL%BULK_EXCEPTIONS (idx).ERROR_INDEX;
-           END LOOP;
+--           FOR idx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
+--           LOOP
+--              pr_des_erro := pr_des_erro || ';'||SQL%BULK_EXCEPTIONS (idx).ERROR_INDEX;
+--           END LOOP;
 
 
 
