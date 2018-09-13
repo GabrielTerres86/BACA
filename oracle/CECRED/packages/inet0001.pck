@@ -3195,7 +3195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   ---------------------------------------------------------------------------------------------------------------*/
       CURSOR cr_crappfp (prc_indrowid IN VARCHAR2)IS
         SELECT pfp.dtdebito,
-               pfp.vllctpag
+               pfp.vllctpag,
+               pfp.idsitapr
           FROM crappfp pfp
          WHERE pfp.rowid like prc_indrowid;
        --
@@ -3381,6 +3382,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           vr_rowid := vr_indrowid(vr_index);
           -- buscar informacao Rowid selecionado 
           FOR rw_crappfp IN cr_crappfp(vr_rowid) LOOP
+            
+            -- Verificar se folha já foi registrada como transação pendente
+            IF rw_crappfp.idsitapr = 6 THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Folha de pagamento já foi registrada para aprovação do(s) preposto(s). Verifique as transações pendentes.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+                
             -- Verificar se deve somar o valor ou validara validar os limites
             IF va_data_ant is null or
               va_data_ant = rw_crappfp.dtdebito THEN

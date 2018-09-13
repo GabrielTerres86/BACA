@@ -836,7 +836,8 @@ PROCEDURE obtem-novo-plano:
                            crappro.nrdocmto = crappla.nrctrpla NO-LOCK. END.
                            
     IF  AVAILABLE crappro  THEN
-        ASSIGN tt-novo-plano.dsprotoc = crappro.dsprotoc.
+        ASSIGN tt-novo-plano.dsprotoc = crappro.dsprotoc
+               tt-novo-plano.idlstdom = 33.
             
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,

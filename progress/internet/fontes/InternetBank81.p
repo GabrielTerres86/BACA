@@ -29,6 +29,7 @@ CREATE WIDGET-POOL.
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0112tt.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR h-b1wgen0112 AS HANDLE                                         NO-UNDO.
 
@@ -71,10 +72,10 @@ RUN sistema/generico/procedures/b1wgen0112.p PERSISTENT SET h-b1wgen0112.
             
 IF  NOT VALID-HANDLE(h-b1wgen0112)  THEN
     DO:
-
         ASSIGN aux_dscritic = "Handle invalido para BO b1wgen0112."
                xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
                               "</dsmsgerr>".
+		RUN proc_geracao_log.
         RETURN "NOK".
     END.
 
@@ -82,27 +83,20 @@ RUN sistema/generico/procedures/b1wgen0155.p PERSISTENT SET h-b1wgen0155.
 
 IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
     DO:
-
+        DELETE PROCEDURE h-b1wgen0112.
+        
         ASSIGN aux_dscritic = "Handle invalido para BO b1wgen0155."
                xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
                               "</dsmsgerr>".
+		RUN proc_geracao_log.
         RETURN "NOK".
     END.
 
-ASSIGN aux_dtmvtolt = DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)).
-/*
-IF (MONTH(par_dtvctfim) + 1) = 13  THEN
-    par_dtvctfim = DATE(1,1,YEAR(par_dtvctfim) + 1).
-ELSE
-    par_dtvctfim = DATE(MONTH(par_dtvctfim) + 1,1,YEAR(par_dtvctfim)).
-*/
-          
-          
-ASSIGN aux_vlblqapl_gar = 0
+ASSIGN aux_dtmvtolt     = DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt))          
+       aux_vlblqapl_gar = 0
        aux_vlblqpou_gar = 0.
           
-/*** Busca Saldo Bloqueado Judicial ***/
-    
+/*** Busca Saldo Bloqueado Judicial ***/    
 RUN retorna-valor-blqjud IN h-b1wgen0155(
                          INPUT par_cdcooper,
                          INPUT par_nrdconta,
@@ -116,16 +110,21 @@ RUN retorna-valor-blqjud IN h-b1wgen0155(
 IF  RETURN-VALUE <> "OK"  THEN
     DO:
         DELETE PROCEDURE h-b1wgen0155.
+        DELETE PROCEDURE h-b1wgen0112.
         
         IF  aux_dscritic = ""  THEN
-            aux_dscritic = "Erro inesperado. Nao foi possivel " + 
-                           "efetuar a transferencia.".
+            aux_dscritic = "Erro inesperado. Não foi possível " + 
+                           "consultar o demonstrativo.".
         
         ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
                               "</dsmsgerr>".
+							  
+		RUN proc_geracao_log.
         
         RETURN "NOK".
     END.
+    
+DELETE PROCEDURE h-b1wgen0155.    
          
 /*** Busca Saldo Bloqueado Garantia ***/
 RUN calcula_bloq_garantia IN h-b1wgen0112
@@ -135,14 +134,16 @@ RUN calcula_bloq_garantia IN h-b1wgen0112
                           OUTPUT aux_vlblqpou_gar,
                           OUTPUT aux_dscritic).
 
-IF aux_dscritic <> "" THEN
-DO:
-   ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".   
-   RUN proc_geracao_log (INPUT FALSE).
-   RETURN "NOK".
-
-END.
-        
+IF  aux_dscritic <> ""  THEN
+    DO:   
+       DELETE PROCEDURE h-b1wgen0112.
+       
+       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".   
+       
+       RUN proc_geracao_log.
+       
+       RETURN "NOK".
+    END.        
          
 RUN Gera_Impressao_Aplicacao IN h-b1wgen0112
                       ( INPUT par_cdcooper,
@@ -167,54 +168,43 @@ RUN Gera_Impressao_Aplicacao IN h-b1wgen0112
                        OUTPUT TABLE tt-demonstrativo,
                        OUTPUT TABLE tt-erro).
 
-
 IF  RETURN-VALUE <> "OK"  THEN
     DO:
         DELETE PROCEDURE h-b1wgen0112.
+        
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+        
+        IF  AVAIL tt-erro  THEN
+            ASSIGN aux_dscritic = tt-erro.dscritic.
+        ELSE
+            ASSIGN aux_dscritic = "Erro inesperado. Não foi possível " + 
+                                  "consultar o demonstrativo.".        
 
-        IF  aux_dscritic = ""  THEN
-            aux_dscritic = "Erro inesperado. Nao foi possivel " + 
-                           "efetuar a transferencia.".
-
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+		RUN proc_geracao_log.
+		
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foram encontrados lançamentos para o período informado." +
                               "</dsmsgerr>".
 
         RETURN "NOK".
     END.
 
-/* VALIDAR SE HOUVERAM ERROS */
-FIND FIRST tt-erro NO-LOCK NO-ERROR.
-IF  AVAIL tt-erro THEN DO:
-
-    DELETE PROCEDURE h-b1wgen0112.
-
-    aux_dscritic = tt-erro.dscritic.
-
-    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                          "</dsmsgerr>".
-    RETURN "NOK".
-END.
-
 /* VALIDAR TABELA DE DADOS */
 FIND FIRST tt-demonstrativo NO-LOCK NO-ERROR.
-IF  NOT AVAIL tt-demonstrativo THEN DO:
 
+IF  NOT AVAIL tt-demonstrativo THEN 
+    DO:
+        DELETE PROCEDURE h-b1wgen0112.
+		
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foram encontrados lançamentos para o período informado." +
+                              "</dsmsgerr>".
+							  
+        RETURN "NOK".
+    END.
+
+IF  VALID-HANDLE(h-b1wgen0112)  THEN
     DELETE PROCEDURE h-b1wgen0112.
-
-    aux_dscritic = "Nao foram encontrados dados para a pesquisa!".
-
-    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                          "</dsmsgerr>".
-    RETURN "NOK".
-END.
-
-IF VALID-HANDLE(h-b1wgen0155) THEN
-    DELETE PROCEDURE h-b1wgen0112.
-
 
 ASSIGN aux_nrsequen = 0.
-
-/*message "IBANK81: " aux_dtmvtolt par_dtvctini par_dtvctfim.*/
 
 DO  WHILE ((par_dtvctini <= par_dtvctfim) AND /* LIMITE DATA FIM    */
            (aux_nrsequen < 12 )           AND /* LIMITE DE 12 MESES */
@@ -253,7 +243,6 @@ ASSIGN aux_dslinxml =
             "<vlcolu10>" + aux_dsmesext[10] + "</vlcolu10>" + 
             "<vlcolu11>" + aux_dsmesext[11] + "</vlcolu11>" + 
             "<vlcolu12>" + aux_dsmesext[12] + "</vlcolu12>" + 
-/*            "<vlcolu13>" + aux_dsmesext[13] + "</vlcolu13>" +*/
             "<vlcolu14> </vlcolu14>" + 
             "<vlcolu15> </vlcolu15>" +
         "</LINHA>".
@@ -276,8 +265,7 @@ FOR EACH tt-demonstrativo NO-LOCK
        
         /* CRIA LINHA DE TITULOS COM MESES **/
         CREATE xml_operacao.
-        ASSIGN xml_operacao.dslinxml = aux_dslinxml.
-      
+        ASSIGN xml_operacao.dslinxml = aux_dslinxml.      
     END.
 
     ASSIGN aux_dslixml2 = "".
@@ -305,7 +293,7 @@ RETURN "OK".
 PROCEDURE pi_cria_dados:
 
 
-    ASSIGN aux_dslixml2 = 
+ ASSIGN aux_dslixml2 = 
  "<LINHA>" +
  "<nraplica>" + STRING(tt-demonstrativo.nraplica,"zzz,zz9")    + "</nraplica>"
  +
@@ -409,24 +397,57 @@ PROCEDURE pi_cria_dados:
     ASSIGN aux_dslixml2 = aux_dslixml2 +
            "<vlcolu12></vlcolu12>".
 
-/* IF aux_nrsequen >= 13 THEN
-    ASSIGN aux_dslixml2 = aux_dslixml2 +
-           "<vlcolu13>" + STRING(tt-demonstrativo.vlcolu13,"zz,zzz,zz9.99") 
-         + "</vlcolu13>".
- ELSE
-    ASSIGN aux_dslixml2 = aux_dslixml2 +
-           "<vlcolu13></vlcolu13>".*/
-
-
  ASSIGN aux_dslixml2 = aux_dslixml2 +
- "<vlcolu14>" + tt-demonstrativo.vlcolu14 + "</vlcolu14>"
- +
- "<vlcolu15>" + tt-demonstrativo.vlcolu15 + "</vlcolu15>"
- + "</LINHA>".
+           "<vlcolu14>" + tt-demonstrativo.vlcolu14 + "</vlcolu14>"
+           +
+           "<vlcolu15>" + tt-demonstrativo.vlcolu15 + "</vlcolu15>"
+           + "</LINHA>".
 
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = aux_dslixml2.
+ CREATE xml_operacao.
+ ASSIGN xml_operacao.dslinxml = aux_dslixml2.
 
 
 END PROCEDURE.
 
+PROCEDURE proc_geracao_log:
+        
+    /* Gerar log(CRAPLGM) - Rotina Oracle */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_gera_log_prog
+        aux_handproc = PROC-HANDLE NO-ERROR
+        (INPUT par_cdcooper    /* pr_cdcooper */
+        ,INPUT "996"           /* pr_cdoperad */
+        ,INPUT aux_dscritic    /* pr_dscritic */
+        ,INPUT "INTERNET"      /* pr_dsorigem */
+        ,INPUT "Consultar Demonstrativo de Aplicacoes" /* pr_dstransa */
+        ,INPUT aux_datdodia    /* pr_dttransa */
+        ,INPUT 0 /* Operacao sem sucesso */ /* pr_flgtrans */
+        ,INPUT TIME            /* pr_hrtransa */
+        ,INPUT par_idseqttl    /* pr_idseqttl */
+        ,INPUT "INTERNETBANK"  /* pr_nmdatela */
+        ,INPUT par_nrdconta    /* pr_nrdconta */
+        ,OUTPUT 0 ). /* pr_nrrecid  */
+
+    IF  ERROR-STATUS:ERROR  THEN DO:
+        DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+            ASSIGN aux_msgerora = aux_msgerora + 
+                                  ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+        END.
+            
+        ASSIGN aux_dscritic = "InternetBank26.pc_gera_log_prog ' --> '"  +
+                              "Erro ao executar Stored Procedure: '" +
+                              aux_msgerora.
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - " + aux_dscritic +  "' >> log/proc_batch.log").
+        
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+        
+    END. 
+    
+    CLOSE STORED-PROC pc_gera_log_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+	
+END PROCEDURE.

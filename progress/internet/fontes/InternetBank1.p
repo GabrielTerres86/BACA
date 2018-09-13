@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 13/12/2017
+   Data    : Marco/2007                        Ultima atualizacao:  12/03/2018
 
    Dados referentes ao programa:
 
@@ -581,49 +581,58 @@ DO:
 END.
 
 
-RUN sistema/generico/procedures/b1wgen0002.p PERSISTENT
-    SET h-b1wgen0002.
+/* Busca saldo devedor de emprestimo */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-IF  VALID-HANDLE(h-b1wgen0002)  THEN
-    DO:
-        /* Busca saldo devedor do emprestimos */
-        RUN saldo-devedor-epr IN h-b1wgen0002 (INPUT par_cdcooper,
-                                               INPUT 90,
-                                               INPUT 900,
-                                               INPUT "996",
-                                               INPUT "InternetBank",
-                                               INPUT 3,
-                                               INPUT par_nrdconta,
-                                               INPUT par_idseqttl,
-                                               INPUT par_dtmvtolt,
-                                               INPUT par_dtmvtopr,
-                                               INPUT 0,
-                                               INPUT "InternetBank",
-                                               INPUT par_inproces,
-                                               INPUT FALSE,
-                                              OUTPUT aux_vlsdeved,
-                                              OUTPUT aux_vltotpre,
-                                              OUTPUT aux_qtprecal,
-                                              OUTPUT TABLE tt-erro).
+RUN STORED-PROCEDURE PC_SALDO_DEVEDOR_EPR_CAR
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                         INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                         INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
+                                         INPUT "996",
+                                         INPUT par_nmprogra,
+                                         INPUT par_cdorigem,
+                                         INPUT par_nrdconta,
+                                         INPUT par_idseqttl,
+                                         INPUT 0,
+                                         INPUT par_nmprogra,
+                                         INPUT "N",
+                                        OUTPUT 0,
+                                        OUTPUT 0,
+                                        OUTPUT 0,
+                                        OUTPUT "",
+                                        OUTPUT 0,
+                                        OUTPUT "").
 
-        DELETE PROCEDURE h-b1wgen0002.
+CLOSE STORED-PROC PC_SALDO_DEVEDOR_EPR_CAR
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-        IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                IF  AVAILABLE tt-erro  THEN
-                    aux_dscritic = tt-erro.dscritic.
-                ELSE
-                    aux_dscritic = "Nao foi possivel carregar os saldos.".
+ASSIGN aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_vlsdeved = 0
+       aux_vltotpre = 0   
+       aux_qtprecal = 0   
+       aux_cdcritic = PC_SALDO_DEVEDOR_EPR_CAR.PR_CDCRITIC
+                          WHEN PC_SALDO_DEVEDOR_EPR_CAR.PR_CDCRITIC <> ?       
+       aux_vlsdeved = PC_SALDO_DEVEDOR_EPR_CAR.PR_VLSDEVED
+                          WHEN PC_SALDO_DEVEDOR_EPR_CAR.PR_VLSDEVED <> ?
+       aux_vltotpre = PC_SALDO_DEVEDOR_EPR_CAR.PR_VLTOTPRE
+                          WHEN PC_SALDO_DEVEDOR_EPR_CAR.PR_VLTOTPRE <> ?   
+       aux_qtprecal = PC_SALDO_DEVEDOR_EPR_CAR.PR_QTPRECAL
+                          WHEN PC_SALDO_DEVEDOR_EPR_CAR.PR_QTPRECAL <> ?.                          
 
-                xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+IF aux_cdcritic <> 0  OR
+   aux_dscritic <> "" THEN
+   DO:
+       IF aux_dscritic = "" THEN
+          ASSIGN aux_dscritic =  "Nao foi possivel carregar os saldos.".
 
-                RUN proc_geracao_log (INPUT FALSE).
+       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+                             "</dsmsgerr>".
 
-                RETURN "NOK".
-            END.
-    END.
+       RETURN "NOK".
+   END.
 
 RUN sistema/generico/procedures/b1wgen0188.p PERSISTENT SET h-b1wgen0188.
 

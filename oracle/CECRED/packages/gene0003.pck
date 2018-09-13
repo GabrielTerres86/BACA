@@ -1984,18 +1984,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     vr_dsdmensg crapmsg.dsdmensg%TYPE := ' ';
     
   BEGIN
+    /** A nova Conta Online não utiliza o módulo de mensagens da tabela crapmsg
+        Visto que a Conta Online clássica será descontinuada vamos comentar a criação de mensagem na crapmsg 
+        
     -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_gerar_mensagem');
   
-    /* trocando caracteres especiais */
+    -- trocando caracteres especiais 
     vr_dsdmensg := REPLACE(pr_dsdmensg, '<', '%3C');
     vr_dsdmensg := REPLACE(vr_dsdmensg, '>', '%3E');
     vr_dsdmensg := REPLACE(vr_dsdmensg, CHR(38), '%26');
 
     OPEN cr_usuarios_internet;
-   FETCH cr_usuarios_internet BULK COLLECT
+    FETCH cr_usuarios_internet BULK COLLECT
     INTO vr_usuarios_internet;
-   CLOSE cr_usuarios_internet;
+    CLOSE cr_usuarios_internet;
 
     FOR idx IN 1 .. vr_usuarios_internet.count LOOP
 
@@ -2005,9 +2008,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                               ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
                               ,pr_flgdecre => 'N');
 
-    /* trocando "#cooperado#" pelo nome do cooperado,
-      trocando #cooperativa# pelo nome fantasia da cooperativa
-      trocando #titular# pelo nome do titular da conta */
+    -- trocando "#cooperado#" pelo nome do cooperado,
+    -- trocando #cooperativa# pelo nome fantasia da cooperativa
+    -- trocando #titular# pelo nome do titular da conta 
       vr_dsdmensg := REPLACE(vr_dsdmensg,'%23cooperado%23',vr_usuarios_internet(idx).nmextttl);
       vr_dsdmensg := REPLACE(vr_dsdmensg,'%23cooperativa%23',vr_usuarios_internet(idx).nmrescop);
   
@@ -2074,6 +2077,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+    **/
+  NULL;
+    
   EXCEPTION
     WHEN OTHERS THEN
       --Tratamento de mensagem
