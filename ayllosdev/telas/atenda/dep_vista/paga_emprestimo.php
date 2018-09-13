@@ -14,7 +14,7 @@
 
 	$cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0;
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
-    $nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
+    $nrctremp = (isset($_POST['nrctremp'])) ? str_replace(".","", $_POST['nrctremp']) : 0;
 	$vlrpagto = (isset($_POST['vlrpagto'])) ? str_replace(",",".",str_replace(",","", $_POST['vlrpagto'])) : 0;    
 	$vlrabono = (isset($_POST['vlrabono'])) ? str_replace(",",".",str_replace(",","", $_POST['vlrabono'])) : 0;    
   
