@@ -52,7 +52,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0003 IS
                                    pr_cdoperad IN crapope.cdoperad%type,  --> Código do Operador
                                    pr_nmdatela IN craptel.nmdatela%type,  --> Nome da Tela
                                    pr_idorigem IN INTEGER,                --> Identificador de Origem    
-                                   pr_valida_proposta in varchar2 default 'S',   --> Usado não para validar o cancelamento em pc_crps781                                
+                                   pr_valida_proposta in varchar2,   --> Usado não para validar o cancelamento em pc_crps781                                
                                    pr_sld_devedor out crawseg.vlseguro%type,   --> Valor proposta      
                                    pr_flgprestamista out char,
                                    pr_flgdps         out char,
@@ -460,6 +460,7 @@ EXCEPTION
                            pr_cdoperad       => pr_cdoperad,
                            pr_nmdatela       => pr_nmdatela,
                            pr_idorigem       => pr_idorigem,   
+                           pr_valida_proposta => 'N', -- Na impressão somente considera valor saldo devedor
                            pr_sld_devedor    => vr_saldodevedor,  
                            pr_flgprestamista => vr_flgprestamista,
                            pr_flgdps         => vr_id_imprime_dsp,
@@ -844,7 +845,7 @@ EXCEPTION
                                    pr_cdoperad IN crapope.cdoperad%type,  --> Código do Operador
                                    pr_nmdatela IN craptel.nmdatela%type,  --> Nome da Tela
                                    pr_idorigem IN INTEGER,                --> Identificador de Origem       
-                                   pr_valida_proposta in varchar2 default 'S',    --> Usado não para validar o cancelamento em pc_crps781
+                                   pr_valida_proposta in varchar2,         --> Usado não para validar o cancelamento em pc_crps781
                                    pr_sld_devedor out crawseg.vlseguro%type,   --> Valor proposta   
                                    pr_flgprestamista out char,
                                    pr_flgdps         out char,
@@ -1119,6 +1120,7 @@ EXCEPTION
                                  , pr_cdoperad => pr_cdoperad
                                  , pr_nmdatela => pr_nmdatela
                                  , pr_idorigem => pr_idorigem
+                                 , pr_valida_proposta => 'S' -- Na criação considera proposta + Saldo
                                  , pr_sld_devedor => vr_vlproposta
                                  , pr_flgprestamista => vr_flgprestamista
                                  , pr_flgdps => vr_flgdps
@@ -1240,6 +1242,7 @@ EXCEPTION
                                      , pr_cdoperad => pr_cdoperad
                                      , pr_nmdatela => pr_nmdatela
                                      , pr_idorigem => pr_idorigem
+                                     , pr_valida_proposta => 'N' --Na efetivação da proposta o emprestimo já esta efetivado
                                      , pr_sld_devedor => vr_vlproposta
                                      , pr_flgprestamista => vr_flgprestamista
                                      , pr_flgdps => vr_flgdps
