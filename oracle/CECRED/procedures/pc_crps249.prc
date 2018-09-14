@@ -13192,7 +13192,7 @@ BEGIN
                    TRIM(vr_dtmvtolt_yymmdd)||','||
                    TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                    '3962,'||
-                   '9261,'||
+                   '3866,'||
                    TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
                    '5210,'||
                    '"(crps249) REVERSAO JUROS +60 C/C P/ PREJUIZO"';
