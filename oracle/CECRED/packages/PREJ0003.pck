@@ -2523,14 +2523,14 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
       IF vr_vlsddisp  >= rw_crapsldiof.vliofmes THEN
          vr_vllanciof := rw_crapsldiof.vliofmes;     -- Paga Total
       ELSE
-        vr_vllanciof := vr_vllanciof -  vr_vlsddisp;  --Paga Parcial
+         vr_vllanciof := rw_crapsldiof.vliofmes - vr_vlsddisp;  --Paga Parcial
       END IF;
 
-      pc_pagar_IOF_conta_prej(pr_cdcooper   =>pr_cdcooper           -- Código da Cooperativa
-                             ,pr_nrdconta   =>pr_nrdconta -- Número da Conta
-                             ,pr_vllanmto   =>vr_vllanciof          -- Valor do Lançamento
-                             ,pr_dtmvtolt   =>rw_crapdat.dtmvtolt
-                             ,pr_vlbasiof   =>rw_crapsldiof.vlbasiof
+      pc_pagar_IOF_conta_prej(pr_cdcooper   => pr_cdcooper           -- Código da Cooperativa
+                             ,pr_nrdconta   => pr_nrdconta -- Número da Conta
+                             ,pr_vllanmto   => vr_vllanciof          -- Valor do Lançamento
+                             ,pr_dtmvtolt   => rw_crapdat.dtmvtolt
+                             ,pr_vlbasiof   => rw_crapsldiof.vlbasiof
                              ,pr_cdcritic   => vr_cdcritic           -- Código de críticia
                              ,pr_dscritic   => vr_dscritic );
 
@@ -2552,7 +2552,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
        -- Zera o valor do IOF provisionado na CRAPSLD
        UPDATE crapsld sld
-          SET vliofmes = 0
+          SET vliofmes = vliofmes - vr_vllanciof
             , vlbasiof = 0
         WHERE ROWID = rw_crapsldiof.rowid;
     END IF;
@@ -2575,7 +2575,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
       IF vr_vlsddisp  >= rw_craplauiof.vliofmes THEN
          vr_vllanciof := rw_craplauiof.vliofmes;     -- Paga Total
       ELSE
-        vr_vllanciof := vr_vllanciof -  vr_vlsddisp;  --Paga Parcial
+        vr_vllanciof := rw_craplauiof.vliofmes -  vr_vlsddisp;  --Paga Parcial
       END IF;
 
       pc_pagar_IOF_conta_prej(pr_cdcooper   => pr_cdcooper           -- Código da Cooperativa
