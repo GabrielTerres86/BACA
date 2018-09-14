@@ -586,15 +586,15 @@ END.
 
 RUN STORED-PROCEDURE PC_SALDO_DEVEDOR_EPR_CAR
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
-                                         INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
-                                         INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
+                                         INPUT 90,
+                                         INPUT 900,
                                          INPUT "996",
-                                         INPUT par_nmprogra,
-                                         INPUT par_cdorigem,
+                                         INPUT "INTERNETBANK",
+                                         INPUT 3,
                                          INPUT par_nrdconta,
                                          INPUT par_idseqttl,
                                          INPUT 0,
-                                         INPUT par_nmprogra,
+                                         INPUT "INTERNETBANK",
                                          INPUT "N",
                                         OUTPUT 0,
                                         OUTPUT 0,
