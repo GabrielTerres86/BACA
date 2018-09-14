@@ -2464,6 +2464,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
   vr_vlsddisp  NUMBER := 0;
   vr_valrpago  NUMBER := 0;
   vr_vllanciof NUMBER := 0;
+	vr_vliofpag  NUMBER := 0;
 
   vr_tab_retorno LANC0001.typ_reg_retorno; -- Record com dados retornados pela "pc_gerar_lancamento_conta"
   vr_incrineg   PLS_INTEGER;
@@ -2559,6 +2560,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     --Calcula o saldo disponivel  apos pagamento de IOF
     vr_vlsddisp := vr_vlsddisp - nvl(vr_vllanciof,0);
     vr_valrpago := vr_valrpago + nvl(vr_vllanciof,0);
+		vr_vliofpag := vr_vliofpag + nvl(vr_vllanciof,0);
 
     vr_vllanciof := 0; -- Reinicializa a variável para reutilizá-la
 
@@ -2610,6 +2612,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
     --Calcula o saldo disponivel  apos pagamento de IOF
     vr_vlsddisp := vr_vlsddisp - nvl(vr_vllanciof,0);
     vr_valrpago := vr_valrpago + nvl(vr_vllanciof,0);
+		vr_vliofpag := vr_vliofpag + nvl(vr_vllanciof,0);
 
     IF vr_vlsddisp > 0 AND rw_contaprej.vljur60_ctneg > 0 THEN
        --O Saldo disponivel pode liquidar Juros60 37,57
@@ -2874,7 +2877,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
                               , pr_cdhistor => 2721
                               , pr_idprejuizo => rw_contaprej.idprejuizo
-                              , pr_vllanmto => pr_vlrpagto
+                              , pr_vllanmto => pr_vlrpagto - nvl(vr_vliofpag,0)
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
 
@@ -2884,7 +2887,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_dtmvtolt => rw_crapdat.dtmvtolt
                               , pr_cdhistor => 2733
                               , pr_idprejuizo => rw_contaprej.idprejuizo
-                              , pr_vllanmto => pr_vlrpagto
+                              , pr_vllanmto => pr_vlrpagto - nvl(vr_vliofpag,0)
                               , pr_cdcritic => vr_cdcritic
                               , pr_dscritic => vr_dscritic);
     END IF;
