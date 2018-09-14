@@ -55,7 +55,7 @@ function exibeErroNew($msgErro) {
 ?>
 <script>
 var operacao = 'VALIDA_DADOS';
-trocaBotao('carregaTelaFiltrarContrato()','showConfirmacao(\'Confirma a operação?\',\'1Confirma&ccedil;&atilde;o - Ayllos\',\'manterRotina(operacao);\',\'\',\'sim.gif\',\'nao.gif\')','Estornar');
+trocaBotao('carregaTelaFiltrarContrato()','showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'manterRotina(operacao);\',\'\',\'sim.gif\',\'nao.gif\')','Estornar');
 $('#nrdconta','#frmEstornoPagamento').desabilitaCampo();
 $('#nrctremp','#frmEstornoPagamento').desabilitaCampo();
 $('#totalest','#frmEstornoPagamento').val('<?php echo formataMoeda(getByTagName($xmlObj->roottag->tags[1]->tags,'vlpagtot')) ?>');
