@@ -4,7 +4,7 @@
     Sistema : Internet - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Jorge
-    Data    : Abril/2011                   Ultima atualizacao: 04/02/2016
+    Data    : Abril/2011                   Ultima atualizacao: 18/06/2016
   
     Dados referentes ao programa:
   
@@ -50,9 +50,15 @@
                                  
                 13/10/2016 - Inclusao opcao 95 e 96, para Enviar e cancelar
                              SMS de vencimento. PRJ319 - SMS Cobranca (Odirlei-AMcom)
-                
+
+                04/05/2018 - Inclusao de parametro qtdiaprt referente a quantidade de dias 
+                             para protesto automatico - instrução 80. PRJ352 - Protesto (Supero)
+                                 
                 01/06/2018 - Incluir parametro com o numero de celular do sacado para ser
                              processado na instruçao 95. PRJ. 285 - Nova Conta Online (Douglas)
+
+			    18/06/2018 - Excluido parametro qtdiaprt pois só será utilizado no novo IB
+				             pelo SOA. (PRJ352 - Protesto - Rafael)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -111,6 +117,7 @@ RUN STORED-PROCEDURE pc_InternetBank66
                              INPUT par_vldescto,
                              INPUT par_cdtpinsc,
                              INPUT par_nrcelsac,
+                             INPUT 0, /* qtdiaprt */
                              OUTPUT xml_dsmsgerr,
                              OUTPUT 0,   /* pr_cdcritic */
                              OUTPUT ""). /* pr_dscritic */
