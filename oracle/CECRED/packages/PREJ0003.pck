@@ -60,7 +60,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
   FUNCTION fn_valor_pago_conta_prej(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE
                                   , pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE
                                   , pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE) RETURN NUMBER;
-
+																	
 	-- Retorna o valor de juros remuneratórios provisionados para a conta em prejuízo
 	FUNCTION fn_juros_remun_prov(pr_cdcooper IN crapris.cdcooper%TYPE
                              , pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER;
@@ -242,6 +242,7 @@ PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                                    , pr_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE
                                    , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE DEFAULT NULL
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
+																	 , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                    , pr_dscritic OUT crapcri.dscritic%TYPE);
@@ -266,51 +267,7 @@ PROCEDURE pc_resgata_cred_bloq_preju(pr_cdcooper IN crapcop.cdcooper%TYPE   --> 
                            , pr_vlrsaldo OUT NUMBER
                            , pr_cdcritic OUT crapcri.cdcritic%TYPE
                            , pr_dscritic OUT crapcri.dscritic%TYPE);
-                           
-  PROCEDURE pc_busca_pagto_estorno_prj(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                      ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
-                                      --> CAMPOS IN/OUT PADRÃO DA MENSAGERIA 
-                                      ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
-                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                      ,pr_retxml    IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                      ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK                     
 
-  PROCEDURE pc_grava_estorno_preju(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE --> Código da cooperativa
-                                  ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE --> Conta do cooperado
-                                  ,pr_totalest IN tbcc_prejuizo_detalhe.vllanmto%TYPE --> Total a estornar
-                                  ,pr_justific IN VARCHAR2                            --> Descrição da justificativa 
-                                  --> CAMPOS IN/OUT PADRÃO DA MENSAGERIA 
-                                  ,pr_xmllog   IN VARCHAR2                            --> XML com informações de LOG
-                                  ,pr_cdcritic OUT PLS_INTEGER                        --> Código da crítica
-                                  ,pr_dscritic OUT VARCHAR2                           --> Descrição da crítica
-                                  ,pr_retxml   IN OUT NOCOPY XMLType                  --> Arquivo de retorno do XML
-                                  ,pr_nmdcampo OUT VARCHAR2                           --> Nome do campo com erro
-                                  ,pr_des_erro OUT VARCHAR2);                         --> Saida OK/NOK                     
-                                  
-  PROCEDURE pc_consulta_estorno_preju(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE --> Código da cooperativa
-                                     ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE --> Conta do cooperado
-                                     --> CAMPOS IN/OUT PADRÃO DA MENSAGERIA 
-                                     ,pr_xmllog   IN VARCHAR2                            --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER                        --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2                           --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType                  --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2                           --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);                         --> Saida OK/NOK                                                       
-                                     
-  -- Procedure da Tela: ESTORN, Acao: Relatorio Estorno Pagamento de Prejuizo C/C
-  PROCEDURE pc_tela_imprimir_relatorio(pr_nrdconta IN crapepr.nrdconta%TYPE        --> Numero da Conta
-                                      ,pr_dtmvtolt IN VARCHAR2                     --> Data de Movimento
-                                      ,pr_dtiniest IN VARCHAR2                     --> Data Inicio do Estorno
-                                      ,pr_dtfinest IN VARCHAR2                     --> Data Fim do Estorno
-                                      --> CAMPOS IN/OUT PADRÃO DA MENSAGERIA 
-                                      ,pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
-                                      ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
-                                      ,pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
-                                      ,pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
-                                      ,pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
-                                      ,pr_des_erro OUT VARCHAR2);                  --> Erros do processo 
 
 end PREJ0003;
 /
@@ -549,7 +506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     RETURN vr_valor_pagamentos;
   END fn_valor_pago_conta_prej;
-
+	
 	-- Retorna o valor de juros remuneratórios provisionados para a conta em prejuízo
 	FUNCTION fn_juros_remun_prov(pr_cdcooper IN crapris.cdcooper%TYPE
                              , pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER IS
@@ -627,7 +584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
        AND   ris.innivris  = 9    -- Situação H
        AND  (pr_dtmvtolt - ris.dtdrisco) >= 180  -- dias_risco
        AND   ris.qtdiaatr >=180 -- dias_atraso
-       AND   NOT EXISTS (SELECT 1
+       AND NOT EXISTS (SELECT 1
                          FROM crapcyc cyc
                         WHERE cyc.cdcooper = ris.cdcooper
                           AND cyc.nrdconta = ris.nrdconta
@@ -2202,16 +2159,16 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        vr_exc_saida EXCEPTION;
 
        -- Recupera as informações do prejuízo de conta corrente
-       CURSOR cr_tbcc_prejuizo IS
-       SELECT a.dtinclusao
-            , a.dtrefjur
-            , a.vlsdprej +
-              a.vljur60_ctneg +
-              a.vljur60_lcred +
-              a.vljuprej vlsdprej
-         FROM tbcc_prejuizo a
-        WHERE a.idprejuizo = pr_idprejuizo;
-       rw_tbcc_prejuizo cr_tbcc_prejuizo%ROWTYPE;
+       CURSOR cr_prejuizo IS
+       SELECT prj.dtinclusao
+            , prj.dtrefjur
+            , (prj.vlsdprej +
+              prj.vljur60_ctneg +
+              prj.vljur60_lcred +
+              prj.vljuprej) vlsdtotal
+         FROM tbcc_prejuizo prj
+        WHERE prj.idprejuizo = pr_idprejuizo;
+       rw_prejuizo cr_prejuizo%ROWTYPE;
 
        vr_dstextab craptab.dstextab%TYPE;
        vr_pctaxpre NUMBER := 0;
@@ -2230,30 +2187,29 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
   BEGIN
      pr_des_reto := 'OK';
 
-     OPEN cr_tbcc_prejuizo;
+     OPEN cr_prejuizo;
+		 FETCH cr_prejuizo INTO rw_prejuizo;
 
-     IF cr_tbcc_prejuizo%NOTFOUND THEN
+     IF cr_prejuizo%NOTFOUND THEN
         pr_des_reto := 'Não há prejuízo ativo para a conta informada: ' || pr_idprejuizo;
 
-        CLOSE cr_tbcc_prejuizo;
+        CLOSE cr_prejuizo;
 
-        RAISE vr_exc_saida;
-     ELSE
-        FETCH cr_tbcc_prejuizo INTO rw_tbcc_prejuizo;
+        RAISE vr_exc_saida;       
      END IF;
 
-     CLOSE cr_tbcc_prejuizo;
+     CLOSE cr_prejuizo;
 
      vr_dtdpagto := to_char(pr_dtdpagto,'DD');
 
-     if rw_tbcc_prejuizo.dtrefjur is null then
-        vr_diarefju := to_char(rw_tbcc_prejuizo.dtinclusao,'DD');
-        vr_mesrefju := to_char(rw_tbcc_prejuizo.dtinclusao,'MM');
-        vr_anorefju := to_char(rw_tbcc_prejuizo.dtinclusao,'RRRR');
+     if rw_prejuizo.dtrefjur is null then
+        vr_diarefju := to_char(rw_prejuizo.dtinclusao,'DD');
+        vr_mesrefju := to_char(rw_prejuizo.dtinclusao,'MM');
+        vr_anorefju := to_char(rw_prejuizo.dtinclusao,'RRRR');
      else
-        vr_diarefju := to_char(rw_tbcc_prejuizo.dtrefjur,'DD');
-        vr_mesrefju := to_char(rw_tbcc_prejuizo.dtrefjur,'MM');
-        vr_anorefju := to_char(rw_tbcc_prejuizo.dtrefjur,'RRRR');
+        vr_diarefju := to_char(rw_prejuizo.dtrefjur,'DD');
+        vr_mesrefju := to_char(rw_prejuizo.dtrefjur,'MM');
+        vr_anorefju := to_char(rw_prejuizo.dtrefjur,'RRRR');
      end if;
 
      vr_diafinal := to_char(pr_dtdpagto,'DD');
@@ -2287,7 +2243,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
      vr_potencia := POWER(vr_valor, vr_qtdedias);
 
      --Retornar Juros calculados
-     pr_vljpreju := rw_tbcc_prejuizo.vlsdprej * (vr_potencia - 1);
+     pr_vljpreju := rw_prejuizo.vlsdtotal * (vr_potencia - 1);
 
      --Se valor for  negativo
      IF pr_vljpreju < 0 THEN
@@ -2424,6 +2380,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
            tbprj.nrdiarefju,
            tbprj.nrmesrefju,
            tbprj.nranorefju,
+					 tbprj.dtinclusao,
            tbprj.rowid,
            tbprj.idprejuizo
       FROM tbcc_prejuizo tbprj
@@ -2470,7 +2427,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
   vr_vljr60_ctneg  tbcc_prejuizo.vljur60_ctneg%TYPE  := 0; -- Valor pago de juros +60 (hist. 37 + hist. 57)
   vr_vljur60_lcred tbcc_prejuizo.vljur60_lcred%TYPE  := 0; -- Valor pago de juros +60 (hist. 38)
   vr_vljupre       tbcc_prejuizo.vljuprej%TYPE       := 0; -- Valor pago de juros remuneratórios do prejuízo
-  vr_vljupre_prov  tbcc_prejuizo.vljuprej%TYPE       := 0; -- Valor pago de juros remuneratórios (provisionados) do prejuízo
+  vr_vljupre_prov  NUMBER                            := 0; -- Valor pago de juros remuneratórios (provisionados) do prejuízo
   vr_vlprinc       tbcc_prejuizo.vlsdprej%TYPE       := 0; -- Valor pago do saldo devedor principal do prejuízo
   vr_nrseqdig      craplcm.nrseqdig%TYPE;
 
@@ -2617,17 +2574,6 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        ELSE
          vr_vljr60_ctneg := vr_vlsddisp;
        END IF;
-
-       BEGIN
-          UPDATE TBCC_PREJUIZO tbprj
-          SET tbprj.vljur60_ctneg = tbprj.vljur60_ctneg - vr_vljr60_ctneg
-          WHERE tbprj.rowid = rw_contaprej.rowid;
-        EXCEPTION
-         WHEN OTHERS THEN
-           vr_cdcritic:=0;
-           vr_dscritic := 'Erro ao atualizar Juros60 - TBCC_PREJUIZO:'||SQLERRM;
-         RAISE vr_exc_saida;
-       END;
     END IF;
 
     vr_vlsddisp:= vr_vlsddisp - vr_vljr60_ctneg;
@@ -2640,17 +2586,6 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        ELSE
          vr_vljur60_lcred := vr_vlsddisp;
        END IF;
-
-       BEGIN
-          UPDATE  TBCC_PREJUIZO tbprj
-          SET tbprj.vljur60_lcred = tbprj.vljur60_lcred - vr_vljur60_lcred
-          WHERE tbprj.rowid = rw_contaprej.rowid;
-      EXCEPTION
-           WHEN OTHERS THEN
-             vr_cdcritic:=0;
-             vr_dscritic := 'Erro ao atualizar Juros60 - TBCC_PREJUIZO:'||SQLERRM;
-           RAISE vr_exc_saida;
-       END;
     END IF;
 
     vr_vlsddisp := vr_vlsddisp - vr_vljur60_lcred;
@@ -2693,19 +2628,19 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
     IF vr_vlsddisp > 0 THEN
       -- Calcula os juros remuneratórios desde a última data de pagamento/débito até o dia atual
-      vr_diarefju  := rw_contaprej.nrdiarefju;
-      vr_mesrefju  := rw_contaprej.nrmesrefju;
-      vr_anorefju  := rw_contaprej.nranorefju;
+				vr_diarefju  := nvl(rw_contaprej.nrdiarefju, to_char(rw_contaprej.dtinclusao, 'DD'));
+				vr_mesrefju  := nvl(rw_contaprej.nrmesrefju, to_char(rw_contaprej.dtinclusao, 'MM'));
+				vr_anorefju  := nvl(rw_contaprej.nranorefju, to_char(rw_contaprej.dtinclusao, 'YYYY'));
 
-      prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
-                                          pr_ehmensal => FALSE,
-                                          pr_dtdpagto => rw_crapdat.dtmvtolt,
-                                          pr_idprejuizo => rw_contaprej.idprejuizo,
-                                          pr_vljpreju => vr_vljupre_prov,
-                                          pr_diarefju => vr_diarefju,
-                                          pr_mesrefju => vr_mesrefju,
-                                          pr_anorefju => vr_anorefju,
-                                          pr_des_reto => vr_dscritic);
+				prej0003.pc_calc_juro_remuneratorio(pr_cdcooper => pr_cdcooper,
+																						pr_ehmensal => FALSE,
+																						pr_dtdpagto => rw_crapdat.dtmvtolt,
+																						pr_idprejuizo => rw_contaprej.idprejuizo,
+																						pr_vljpreju => vr_vljupre_prov,
+																						pr_diarefju => vr_diarefju,
+																						pr_mesrefju => vr_mesrefju,
+																						pr_anorefju => vr_anorefju,
+																						pr_des_reto => vr_dscritic);
 
       IF vr_vljupre_prov > 0 THEN
         -- Atualiza juros remuneratórios do prejuízo
@@ -2770,6 +2705,32 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
 
     vr_vlsddisp := vr_vlsddisp - vr_vljupre_prov;
     vr_valrpago := vr_valrpago + vr_vljupre_prov;
+		
+		IF vr_vljr60_ctneg > 0 THEN
+		   BEGIN
+          UPDATE TBCC_PREJUIZO tbprj
+          SET tbprj.vljur60_ctneg = tbprj.vljur60_ctneg - vr_vljr60_ctneg
+          WHERE tbprj.rowid = rw_contaprej.rowid;
+        EXCEPTION
+         WHEN OTHERS THEN
+           vr_cdcritic:=0;
+           vr_dscritic := 'Erro ao atualizar Juros60 - TBCC_PREJUIZO:'||SQLERRM;
+         RAISE vr_exc_saida;
+       END;
+		END IF;
+		
+		IF vr_vljur60_lcred > 0 THEN
+			BEGIN
+          UPDATE  TBCC_PREJUIZO tbprj
+          SET tbprj.vljur60_lcred = tbprj.vljur60_lcred - vr_vljur60_lcred
+          WHERE tbprj.rowid = rw_contaprej.rowid;
+       EXCEPTION
+           WHEN OTHERS THEN
+             vr_cdcritic:=0;
+             vr_dscritic := 'Erro ao atualizar Juros60 - TBCC_PREJUIZO:'||SQLERRM;
+           RAISE vr_exc_saida;
+       END;
+		END IF;		
 
     -- Pagar saldo do prejuízo
     IF vr_vlsddisp > 0 THEN
@@ -4076,6 +4037,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                    , pr_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE
                                    , pr_idprejuizo IN tbcc_prejuizo_detalhe.idprejuizo%TYPE DEFAULT NULL
                                    , pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE
+																	 , pr_nrctremp IN tbcc_prejuizo_detalhe.nrctremp%TYPE DEFAULT 0
                                    , pr_cdoperad IN tbcc_prejuizo_detalhe.cdoperad%TYPE DEFAULT '1'
                                    , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                    , pr_dscritic OUT crapcri.dscritic%TYPE) IS
@@ -4109,6 +4071,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
        ,cdoperad
        ,cdcooper
        ,idprejuizo
+			 ,nrctremp
       )
       VALUES (
         pr_dtmvtolt
@@ -4119,6 +4082,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
        ,pr_cdoperad
        ,pr_cdcooper
        ,vr_idprejuizo
+			 ,pr_nrctremp
       );
     EXCEPTION
          WHEN OTHERS THEN
@@ -4342,980 +4306,6 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado na pc_cred_disp_prj: ' || SQLERRM;
   END;
-  
-  PROCEDURE pc_busca_pagto_estorno_prj(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                      ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
-                                      ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                      ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                      ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                      ,pr_des_erro OUT VARCHAR2)IS            --Saida OK/NOK
-
-  /*---------------------------------------------------------------------------------------------------------------
-
-    Programa : pc_busca_pagto_estorno_prj
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
-    Autor    : Diego Simas
-    Data     : Agosto/2018                          Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Frequencia: -----
-    Objetivo   : Rotina para consultar o último pagamento via conta transitória (Bloqueado Prejuízo).
-    Alterações :
-
-    -------------------------------------------------------------------------------------------------------------*/
-    
-    -- CURSORES --    
-    
-    --> Consultar ultimo lancamento de prejuizo
-    CURSOR cr_detalhe_ult_lanc(pr_cdcooper tbcc_prejuizo_detalhe.cdcooper%TYPE,
-                               pr_nrdconta tbcc_prejuizo_detalhe.nrdconta%TYPE,
-                               pr_dtmvtolt tbcc_prejuizo_detalhe.dtmvtolt%TYPE)IS 
-    SELECT d.dthrtran,d.idprejuizo
-      FROM tbcc_prejuizo_detalhe d
-     WHERE d.cdcooper = pr_cdcooper
-       AND d.nrdconta = pr_nrdconta
-       AND d.cdhistor = 2733
-       AND d.dtmvtolt BETWEEN TRUNC(pr_dtmvtolt) AND LAST_DAY(pr_dtmvtolt) 
-  ORDER BY d.dtmvtolt, d.dthrtran DESC;
-    rw_detalhe_ult_lanc cr_detalhe_ult_lanc%ROWTYPE;    
-    
-    --> Consultar todos os historicos para soma à estornar
-    --> 2723 – Abono de prejuízo
-    -->  2725 – Pagamento do valor principal do prejuízo
-    -->  2727 – Pagamento dos juros +60 da transferência para prejuízo
-    -->  2729 – Pagamento dos juros remuneratórios do prejuízo 
-    -->  2323 – Pagamento de IOF provisionado 
-    -->  2721 – Débito para pagamento do prejuízo (para fins contábeis)
-    CURSOR cr_detalhe_tot_est(pr_cdcooper tbcc_prejuizo_detalhe.cdcooper%TYPE,
-                              pr_nrdconta tbcc_prejuizo_detalhe.nrdconta%TYPE,
-                              pr_dthrtran tbcc_prejuizo_detalhe.dthrtran%TYPE)IS 
-    SELECT SUM(d.vllanmto) total_estorno
-      FROM tbcc_prejuizo_detalhe d
-          ,tbcc_prejuizo c
-     WHERE d.cdcooper = 8
-       AND d.nrdconta = 33774
-       AND d.dthrtran = pr_dthrtran
-       AND(d.cdhistor = 2723  --> 2723 – Abono de prejuízo
-        OR d.cdhistor = 2725  --> 2725 – Pagamento do valor principal do prejuízo
-        OR d.cdhistor = 2727  --> 2727 – Pagamento dos juros +60 da transferência para prejuízo
-        OR d.cdhistor = 2729  --> 2729 – Pagamento dos juros remuneratórios do prejuízo 
-        OR d.cdhistor = 2323) --> 2323 – Pagamento de IOF provisionado 
-       AND c.cdcooper = d.cdcooper
-       AND c.nrdconta = d.nrdconta
-       AND c.dtliquidacao IS NULL
-  ORDER BY d.dtmvtolt, d.dthrtran DESC;
-    rw_detalhe_tot_est cr_detalhe_tot_est%ROWTYPE;    
-    
-    -- Consultar se já houve estorno
-    CURSOR cr_ja_estornou(pr_cdcooper   tbcc_prejuizo_detalhe.cdcooper%TYPE,
-                          pr_nrdconta   tbcc_prejuizo_detalhe.nrdconta%TYPE,
-                          pr_idprejuizo tbcc_prejuizo_detalhe.idprejuizo%TYPE)IS 
-    SELECT 1
-      FROM tbcc_prejuizo_detalhe c
-     WHERE c.cdcooper   = pr_cdcooper
-       AND c.nrdconta   = pr_nrdconta
-       AND c.idprejuizo = pr_idprejuizo
-       AND c.cdhistor   = 2722;
-    rw_ja_estornou cr_ja_estornou%ROWTYPE;   
-     
-    
-    --Variaveis de Criticas
-    vr_cdcritic INTEGER;
-    vr_dscritic VARCHAR2(4000);
-    vr_des_reto VARCHAR2(3);
-    vr_exc_saida EXCEPTION;
-
-    --Tabela de Erros
-    vr_tab_erro gene0001.typ_tab_erro;
-    
-    -- Variaveis de log
-    vr_cdcooper crapcop.cdcooper%TYPE;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-
-    --Variaveis Locais
-    vr_qtregist   INTEGER := 0;
-    vr_clob       CLOB;
-    vr_xml_temp   VARCHAR2(32726) := '';
-    tot_estorno   crapepr.vljurmes%TYPE;
-    vr_inprejuz   BOOLEAN;
-    rw_crapdat   btch0001.cr_crapdat%ROWTYPE;
-
-    --Variaveis de Indice
-    vr_index PLS_INTEGER;
-
-    --Variaveis de Excecoes
-    vr_exc_ok    EXCEPTION;
-    vr_exc_erro  EXCEPTION;
-
-  BEGIN
-    pr_des_erro := 'OK';
-    -- Extrai dados do xml
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                             pr_cdcooper => vr_cdcooper,
-                             pr_nmdatela => vr_nmdatela,
-                             pr_nmeacao  => vr_nmeacao,
-                             pr_cdagenci => vr_cdagenci,
-                             pr_nrdcaixa => vr_nrdcaixa,
-                             pr_idorigem => vr_idorigem,
-                             pr_cdoperad => vr_cdoperad,
-                             pr_dscritic => vr_dscritic);
-
-    -- Se retornou alguma crítica
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      -- Levanta exceção
-      RAISE vr_exc_saida;
-    END IF;
-    
-    -- Leitura do calendário da cooperativa
-    OPEN btch0001.cr_crapdat(pr_cdcooper);
-    FETCH btch0001.cr_crapdat
-    INTO rw_crapdat;
-
-    IF btch0001.cr_crapdat%NOTFOUND THEN
-      CLOSE btch0001.cr_crapdat;
-
-      vr_cdcritic := 1;
-      RAISE vr_exc_saida;
-    ELSE
-      CLOSE btch0001.cr_crapdat;
-    END IF;
-
-    -- PASSA OS DADOS PARA O XML RETORNO
-    -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Root',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'Dados',
-                           pr_tag_cont => NULL,
-                           pr_des_erro => vr_dscritic);
-    -- Insere as tags
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Dados',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'inf',
-                           pr_tag_cont => NULL,
-                           pr_des_erro => vr_dscritic);
-    
-    -----> PROCESSAMENTO PRINCIPAL <-----
-    
-    vr_inprejuz := fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
-                                          ,pr_nrdconta => pr_nrdconta); 
-    
-    IF vr_inprejuz = TRUE THEN
-     
-       OPEN cr_detalhe_ult_lanc(pr_cdcooper => pr_cdcooper
-                               ,pr_nrdconta => pr_nrdconta
-                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
-
-       FETCH cr_detalhe_ult_lanc INTO rw_detalhe_ult_lanc;    
-    
-       IF cr_detalhe_ult_lanc%FOUND THEN 
-          CLOSE cr_detalhe_ult_lanc;
-          
-          OPEN cr_ja_estornou(pr_cdcooper   => pr_cdcooper
-                             ,pr_nrdconta   => pr_nrdconta
-                             ,pr_idprejuizo => rw_detalhe_ult_lanc.idprejuizo);
-          FETCH cr_ja_estornou INTO rw_ja_estornou;
-          
-          IF cr_ja_estornou%NOTFOUND THEN
-
-             CLOSE cr_ja_estornou;
-
-             OPEN cr_detalhe_tot_est(pr_cdcooper => pr_cdcooper
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_dthrtran => rw_detalhe_ult_lanc.dthrtran);
-
-             FETCH cr_detalhe_tot_est INTO rw_detalhe_tot_est;       
-         
-             tot_estorno := 0;
-            
-             IF cr_detalhe_tot_est%FOUND THEN 
-                tot_estorno := rw_detalhe_tot_est.total_estorno;
-                IF nvl(tot_estorno,0) = 0 THEN
-                   vr_cdcritic := 0;
-                   vr_dscritic := 'Não existem valores lançados para efetuar o estorno!';
-                   RAISE vr_exc_erro;
-                END IF;
-             END IF;
-         
-            CLOSE cr_detalhe_tot_est;
-         
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                                   pr_tag_pai  => 'inf',
-                                   pr_posicao  => vr_qtregist,
-                                   pr_tag_nova => 'totestor',
-                                   pr_tag_cont => tot_estorno,
-                                   pr_des_erro => vr_dscritic);
-                                
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                                   pr_tag_pai  => 'inf',
-                                   pr_posicao  => vr_qtregist,
-                                   pr_tag_nova => 'datalanc',
-                                   pr_tag_cont => to_char(TRUNC(rw_detalhe_ult_lanc.dthrtran), 'DD/MM/YYYY'),
-                                   pr_des_erro => vr_dscritic);
-          ELSE
-            CLOSE cr_ja_estornou;  
-            vr_cdcritic := 0;
-            vr_dscritic := 'Não existem valores lançados para efetuar o estorno!';
-            RAISE vr_exc_erro;                                                 
-          END IF;                  
-       ELSE
-          CLOSE cr_detalhe_ult_lanc;
-          vr_cdcritic := 0;
-          vr_dscritic := 'Não existem pagamentos de prejuízo de C/C para estorno!';
-          RAISE vr_exc_erro;
-       END IF;
-    ELSE
-      vr_cdcritic := 0;
-      vr_dscritic := 'Esta conta não está em prejuízo!';
-      RAISE vr_exc_erro;
-    END IF;
-    
-    pr_cdcritic := NULL;
-    pr_dscritic := NULL;   
-
-
-  EXCEPTION
-    WHEN vr_exc_erro THEN
-      -- Retorno não OK
-      pr_des_erro:= 'NOK';
-
-      -- Erro
-      pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
-
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
-    WHEN OTHERS THEN
-      -- Retorno não OK
-      pr_des_erro:= 'NOK';
-
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_busca_pagto_estorno_prj --> '|| SQLERRM;
-
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
-
-  END pc_busca_pagto_estorno_prj;
-  
-  PROCEDURE pc_grava_estorno_preju(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE --> Código da cooperativa
-                                  ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE --> Conta do cooperado
-                                  ,pr_totalest IN tbcc_prejuizo_detalhe.vllanmto%TYPE --> Total a estornar
-                                  ,pr_justific IN VARCHAR2                            --> Descrição da justificativa 
-                                  --> CAMPOS IN/OUT PADRÃO DA MENSAGERIA 
-                                  ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                  ,pr_des_erro OUT VARCHAR2)IS            --Saida OK/NOK
-
-  /*---------------------------------------------------------------------------------------------------------------
-
-    Programa : pc_grava_estorno_preju
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
-    Autor    : Diego Simas
-    Data     : Agosto/2018                          Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Frequencia : 
-    Objetivo   : Rotina responsável por gerar os históricos específicos para o estorno da CC em prejuízo.
-    Alterações : 
-
-    -------------------------------------------------------------------------------------------------------------*/
-    
-    -- CURSORES --    
-    
-    --> Consultar ultimo lancamento de prejuizo
-    CURSOR cr_detalhe_ult_lanc(pr_cdcooper tbcc_prejuizo_detalhe.cdcooper%TYPE,
-                               pr_nrdconta tbcc_prejuizo_detalhe.nrdconta%TYPE)IS 
-    SELECT d.dthrtran
-      FROM tbcc_prejuizo_detalhe d
-     WHERE d.cdcooper = pr_cdcooper
-       AND d.nrdconta = pr_nrdconta
-       AND d.cdhistor = 2733
-  ORDER BY d.dtmvtolt, d.dthrtran DESC;
-    rw_detalhe_ult_lanc cr_detalhe_ult_lanc%ROWTYPE;    
-    
-    --> Consultar todos os historicos para soma à estornar
-    --> 2723 – Abono de prejuízo
-    --> 2725 – Pagamento do valor principal do prejuízo
-    --> 2727 – Pagamento dos juros +60 da transferência para prejuízo
-    --> 2729 – Pagamento dos juros remuneratórios do prejuízo 
-    --> 2323 – Pagamento de IOF provisionado 
-    --> 2721 – Débito para pagamento do prejuízo (para fins contábeis)
-    CURSOR cr_detalhe_tot_est(pr_cdcooper tbcc_prejuizo_detalhe.cdcooper%TYPE,
-                              pr_nrdconta tbcc_prejuizo_detalhe.nrdconta%TYPE,
-                              pr_dthrtran tbcc_prejuizo_detalhe.dthrtran%TYPE)IS 
-    SELECT d.cdhistor
-          ,d.vllanmto
-          ,d.idprejuizo               
-      FROM tbcc_prejuizo_detalhe d
-     WHERE d.cdcooper = pr_cdcooper
-       AND d.nrdconta = pr_nrdconta
-       AND d.dthrtran = pr_dthrtran
-       AND(d.cdhistor = 2723  --> 2723 – Abono de prejuízo
-        OR d.cdhistor = 2725  --> 2725 – Pagamento do valor principal do prejuízo
-        OR d.cdhistor = 2727  --> 2727 – Pagamento dos juros +60 da transferência para prejuízo
-        OR d.cdhistor = 2729  --> 2729 – Pagamento dos juros remuneratórios do prejuízo 
-        OR d.cdhistor = 2721  --> 2721 – Débito para pagamento do prejuízo (para fins contábeis)
-        OR d.cdhistor = 2323  --> 2323 – IOF
-        OR d.cdhistor = 2733) --> 2733 - Débito para pagamento do prejuízo (para fins contábeis) 
-  ORDER BY d.dtmvtolt, d.dthrtran DESC, d.cdhistor ASC;
-    rw_detalhe_tot_est cr_detalhe_tot_est%ROWTYPE;   
-    
-    --Variaveis de Criticas
-    vr_cdcritic INTEGER;
-    vr_dscritic VARCHAR2(4000);
-    vr_des_reto VARCHAR2(3);
-    vr_exc_saida EXCEPTION;
-
-    --Tabela de Erros
-    vr_tab_erro gene0001.typ_tab_erro;
-    
-    -- Variaveis de log
-    vr_cdcooper crapcop.cdcooper%TYPE;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-
-    --Variaveis Locais
-    vr_qtregist INTEGER := 0;
-    vr_clob     CLOB;
-    vr_xml_temp VARCHAR2(32726) := '';
-    vr_cdhistor tbcc_prejuizo_detalhe.cdhistor%TYPE;
-    vr_valoriof tbcc_prejuizo_detalhe.vllanmto%TYPE;
-    vr_valordeb tbcc_prejuizo_detalhe.vllanmto%TYPE;
-
-    --Variaveis de Indice
-    vr_index PLS_INTEGER;
-
-    --Variaveis de Excecoes
-    vr_exc_ok    EXCEPTION;
-    vr_exc_erro  EXCEPTION;
-
-  BEGIN
-    pr_des_erro := 'OK';
-    -- Extrai dados do xml
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                             pr_cdcooper => vr_cdcooper,
-                             pr_nmdatela => vr_nmdatela,
-                             pr_nmeacao  => vr_nmeacao,
-                             pr_cdagenci => vr_cdagenci,
-                             pr_nrdcaixa => vr_nrdcaixa,
-                             pr_idorigem => vr_idorigem,
-                             pr_cdoperad => vr_cdoperad,
-                             pr_dscritic => vr_dscritic);
-
-    -- Se retornou alguma crítica
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      -- Levanta exceção
-      RAISE vr_exc_saida;
-    END IF;
-
-    -- PASSA OS DADOS PARA O XML RETORNO
-    -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Root',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'Dados',
-                           pr_tag_cont => NULL,
-                           pr_des_erro => vr_dscritic);
-    -- Insere as tags
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Dados',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'inf',
-                           pr_tag_cont => NULL,
-                           pr_des_erro => vr_dscritic);
-    
-    -----> PROCESSAMENTO PRINCIPAL <-----
-    OPEN cr_detalhe_ult_lanc(pr_cdcooper => pr_cdcooper
-                            ,pr_nrdconta => pr_nrdconta);
-
-    FETCH cr_detalhe_ult_lanc INTO rw_detalhe_ult_lanc;   
-    
-    IF cr_detalhe_ult_lanc%FOUND THEN 
-       CLOSE cr_detalhe_ult_lanc;       
-       FOR rw_detalhe_tot_est IN cr_detalhe_tot_est(pr_cdcooper => pr_cdcooper
-                                                   ,pr_nrdconta => pr_nrdconta
-                                                   ,pr_dthrtran => rw_detalhe_ult_lanc.dthrtran) LOOP
-           
-           IF rw_detalhe_tot_est.cdhistor = 2323 THEN
-              -- 2323 - Pagamento de IOF provisionado 
-              -- Caso haja valor de IOF precisamos 
-              -- subtrair esse valor do pagamento total 
-              vr_valoriof := rw_detalhe_tot_est.vllanmto;                                                     
-           ELSIF rw_detalhe_tot_est.cdhistor = 2723 THEN
-              -- 2724 <- ESTORNO - > Abono de prejuízo   
-              vr_cdhistor := 2724;           
-           ELSIF rw_detalhe_tot_est.cdhistor = 2725 THEN
-              -- 2726 <- ESTORNO - > Pagamento do valor principal do prejuízo 
-              vr_cdhistor := 2726;
-           ELSIF rw_detalhe_tot_est.cdhistor = 2727 THEN
-              -- 2728 <- ESTORNO - > Pagamento dos juros +60 da transferência para prejuízo  
-              vr_cdhistor := 2728;
-           ELSIF rw_detalhe_tot_est.cdhistor = 2729 THEN 
-              -- 2730 <- ESTORNO - > Pagamento dos juros remuneratórios do prejuízo   
-              vr_cdhistor := 2730;            
-           ELSIF rw_detalhe_tot_est.cdhistor = 2721 THEN 
-              -- 2722 <- ESTORNO - > Débito para pagamento do prejuízo (para fins contábeis) 
-              vr_cdhistor := 2722;            
-           ELSIF rw_detalhe_tot_est.cdhistor = 2733 THEN 
-              -- 2732 <- ESTORNO - > Débito para pagamento do prejuízo                
-              vr_cdhistor := 2732;     
-              vr_valordeb := rw_detalhe_tot_est.vllanmto;      
-           END IF;      
-           
-           IF rw_detalhe_tot_est.cdhistor <> 2323 THEN
-              -- insere o estorno com novo histórico           
-              BEGIN
-                INSERT INTO tbcc_prejuizo_detalhe (
-                   dtmvtolt
-                  ,nrdconta
-                  ,cdhistor
-                  ,vllanmto
-                  ,dthrtran
-                  ,cdoperad
-                  ,cdcooper
-                  ,idprejuizo
-                  ,dsjustificativa
-                 )
-                 VALUES (
-                   TRUNC(SYSDATE)
-                  ,pr_nrdconta
-                  ,vr_cdhistor
-                  ,rw_detalhe_tot_est.vllanmto
-                  ,SYSDATE
-                  ,vr_cdoperad
-                  ,pr_cdcooper
-                  ,rw_detalhe_tot_est.idprejuizo
-                  ,pr_justific
-                 );
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_cdcritic := 0;
-                  vr_dscritic := 'Erro de insert na tbcc_prejuizo_detalhe: '||SQLERRM;
-                  RAISE vr_exc_erro;
-              END;
-           END IF;
-       END LOOP;
-       
-       -- Subtrai o valor IOF do pagamento
-       vr_valordeb := vr_valordeb - vr_valoriof;
-       
-       -- Insere lançamento com histórico 2738
-       BEGIN    
-         INSERT INTO TBCC_PREJUIZO_LANCAMENTO (
-                 dtmvtolt
-               , cdagenci
-               , nrdconta
-               , nrdocmto
-               , cdhistor
-               , vllanmto
-               , dthrtran
-               , cdoperad
-               , cdcooper
-               , cdorigem
-          )
-          VALUES (
-                 TRUNC(SYSDATE)
-               , vr_cdagenci
-               , pr_nrdconta
-               , ''
-               , 2738 --- ****** SUBSTITUIR *******
-               , vr_valordeb
-               , SYSDATE
-               , vr_cdoperad
-               , pr_cdcooper
-               , 5
-          );
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro de insert na TBCC_PREJUIZO_LANCAMENTO: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
-       
-    ELSE
-       CLOSE cr_detalhe_ult_lanc;
-    END IF;   
-    
-    COMMIT;   
-    
-    pr_cdcritic := NULL;
-    pr_dscritic := NULL;
-
-  EXCEPTION
-    WHEN vr_exc_erro THEN
-      -- Retorno não OK
-      pr_des_erro:= 'NOK';
-
-      -- Erro
-      pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
-
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
-    WHEN OTHERS THEN
-      -- Retorno não OK
-      pr_des_erro:= 'NOK';
-
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_grava_estorno_preju --> '|| SQLERRM;
-
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
-
-  END pc_grava_estorno_preju;  
-  
-  PROCEDURE pc_consulta_estorno_preju(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE --> Código da cooperativa
-                                     ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE --> Conta do cooperado
-                                     --> CAMPOS IN/OUT PADRÃO DA MENSAGERIA 
-                                     ,pr_xmllog   IN VARCHAR2                            --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER                        --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2                           --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType                  --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2                           --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2)IS                        --> Saida OK/NOK
-
-  /*---------------------------------------------------------------------------------------------------------------
-
-    Programa : pc_consulta_estorno_preju
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
-    Autor    : Diego Simas
-    Data     : Setembro/2018                          Ultima atualizacao:
-
-    Dados referentes ao programa:
-
-    Frequencia : -----
-    Objetivo   : Rotina para consultar o estorno de pagamento de prejuízo de conta corrente.
-    Alterações :
-
-    -------------------------------------------------------------------------------------------------------------*/
-    
-    -- CURSORES --    
-    
-    --> Consultar estorno de pagamento de conta corrente em prejuizo
-    CURSOR cr_estornos(pr_cdcooper tbcc_prejuizo_detalhe.cdcooper%TYPE,
-                      pr_nrdconta tbcc_prejuizo_detalhe.nrdconta%TYPE)IS 
-     SELECT d.cdhistor codigo
-           ,d.vllanmto valor
-           ,to_char(d.dthrtran, 'DD/MM/YYYY') data
-           ,to_char(d.dthrtran, 'HH24:MI:SS') hora
-           ,d.cdoperad cdoperad
-      FROM tbcc_prejuizo_detalhe d
-     WHERE d.cdcooper = pr_cdcooper
-       AND d.nrdconta = pr_nrdconta
-       AND d.cdhistor = 2722       
-  ORDER BY d.dthrtran DESC;
-    rw_estornos cr_estornos%ROWTYPE;   
-    
-    --> Consultar operador 
-    CURSOR cr_operador(pr_cdcooper crapope.cdcooper%TYPE,
-                       pr_cdoperad crapope.cdoperad%TYPE)IS 
-    SELECT c.nmoperad
-      FROM crapope c
-     WHERE c.cdcooper = pr_cdcooper
-       AND c.cdoperad = pr_cdoperad;
-    rw_operador cr_operador%ROWTYPE;      
-    
-    --Variaveis de Criticas
-    vr_cdcritic   INTEGER;
-    vr_dscritic   VARCHAR2(4000);
-    vr_des_reto   VARCHAR2(3);
-    vr_exc_saida  EXCEPTION;
-
-    --Tabela de Erros
-    vr_tab_erro   gene0001.typ_tab_erro;
-    
-    -- Variaveis de log
-    vr_cdcooper   crapcop.cdcooper%TYPE;
-    vr_cdoperad   VARCHAR2(100);
-    vr_nmdatela   VARCHAR2(100);
-    vr_nmeacao    VARCHAR2(100);
-    vr_cdagenci   VARCHAR2(100);
-    vr_nrdcaixa   VARCHAR2(100);
-    vr_idorigem   VARCHAR2(100);
-
-    --Variaveis Locais
-    vr_qtregist   INTEGER := 0;
-    vr_clob       CLOB;
-    vr_xml_temp   VARCHAR2(32726) := '';
-    tot_estorno   crapepr.vljurmes%TYPE;
-    vr_inprejuz   BOOLEAN;
-    rw_crapdat    btch0001.cr_crapdat%ROWTYPE;
-    vr_contador INTEGER := 0;
-
-    --Variaveis de Indice
-    vr_index      PLS_INTEGER;
-
-    --Variaveis de Excecoes
-    vr_exc_ok     EXCEPTION;
-    vr_exc_erro   EXCEPTION;
-
-  BEGIN
-    pr_des_erro := 'OK';
-    
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao  => 0, pr_tag_nova => 'estornos', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-
-    FOR rw_estornos 
-     IN cr_estornos(pr_cdcooper => pr_cdcooper
-                   ,pr_nrdconta => pr_nrdconta) LOOP
-        
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estornos', pr_posicao  => 0, pr_tag_nova => 'estorno', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estorno', pr_posicao  => vr_contador, pr_tag_nova => 'codigo'  , pr_tag_cont => rw_estornos.codigo,   pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estorno', pr_posicao  => vr_contador, pr_tag_nova => 'valor'   , pr_tag_cont => rw_estornos.valor,    pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estorno', pr_posicao  => vr_contador, pr_tag_nova => 'data'    , pr_tag_cont => rw_estornos.data,     pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estorno', pr_posicao  => vr_contador, pr_tag_nova => 'hora'    , pr_tag_cont => rw_estornos.hora,     pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estorno', pr_posicao  => vr_contador, pr_tag_nova => 'cdoperad', pr_tag_cont => rw_estornos.cdoperad, pr_des_erro => vr_dscritic);
-        
-        OPEN cr_operador(pr_cdcooper => pr_cdcooper
-                        ,pr_cdoperad => rw_estornos.cdoperad);
-        FETCH cr_operador INTO rw_operador;
-        IF cr_operador%FOUND THEN 
-           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estorno', pr_posicao  => vr_contador, pr_tag_nova => 'nmoperad', pr_tag_cont => rw_operador.nmoperad, pr_des_erro => vr_dscritic);
-           CLOSE cr_operador; 
-        ELSE
-           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'estorno', pr_posicao  => vr_contador, pr_tag_nova => 'nmoperad', pr_tag_cont => 'OPERADOR INEXISTENTE', pr_des_erro => vr_dscritic);
-           CLOSE cr_operador;
-        END IF;
-                
-        vr_contador := vr_contador + 1;      
-        
-    END LOOP;
-   
-    pr_cdcritic := NULL;
-    pr_dscritic := NULL;   
-
-
-  EXCEPTION
-    WHEN vr_exc_erro THEN
-      -- Retorno não OK
-      pr_des_erro:= 'NOK';
-
-      -- Erro
-      pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
-
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
-    WHEN OTHERS THEN
-      -- Retorno não OK
-      pr_des_erro:= 'NOK';
-
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_consulta_estorno_preju --> '|| SQLERRM;
-
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
-
-  END pc_consulta_estorno_preju;
-  
-  PROCEDURE pc_tela_imprimir_relatorio(pr_nrdconta IN crapepr.nrdconta%TYPE        --> Numero da Conta
-                                      ,pr_dtmvtolt IN VARCHAR2                     --> Data de Movimento
-                                      ,pr_dtiniest IN VARCHAR2                     --> Data Inicio do Estorno
-                                      ,pr_dtfinest IN VARCHAR2                     --> Data Fim do Estorno
-                						 		 		  --> CAMPOS IN/OUT PADRÃO DA MENSAGERIA 
-                                      ,pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
- 	  			    	          	 		 		  ,pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
-		  				    				        	  ,pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
-            			    							  ,pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
-				  	              					  ,pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
-					  					                ,pr_des_erro OUT VARCHAR2) IS                --> Erros do processo                                       
-  BEGIN
-    /* .............................................................................
-
-     Programa: pc_tela_imprimir_relatorio
-     Sistema : Conta-Corrente - Cooperativa de Credito
-     Sigla   : CRED
-     Autor   : Diego Simas (AMcom)
-     Data    : Setembro/2018.                    Ultima atualizacao:
-
-     Dados referentes ao programa:
-
-     Frequencia : -----
-     Objetivo   : Imprimir o relatorio de estornos de pagamento de prejuizo de conta corrente.
-     Alteracoes :
-     
-     ..............................................................................*/
-   DECLARE
-
-      -- Cursor dos estornos de prejuizo de conta corrente
-      CURSOR cr_estorno(pr_cdcooper IN tbepr_estorno.cdcooper%TYPE,
-                        pr_nrdconta IN tbepr_estorno.nrdconta%TYPE,
-                        pr_dtiniest IN tbepr_estorno.dtestorno%TYPE,
-                        pr_dtfinest IN tbepr_estorno.dtestorno%TYPE) IS
-      SELECT c.dtmvtolt
-            ,c.nrdconta
-            ,c.vllanmto
-            ,c.cdoperad  
-            ,c.dsjustificativa    
-        FROM tbcc_prejuizo_detalhe c
-       WHERE c.cdcooper = pr_cdcooper                              
-         AND c.nrdconta = pr_nrdconta
-         AND c.dtmvtolt BETWEEN pr_dtiniest AND pr_dtfinest
-         AND c.cdhistor = 2722;
-      rw_estorno cr_estorno%ROWTYPE;    
-
-      -- Cursor para encontrar o nome do PA
-      CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE
-                       ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
-      SELECT nmextage
-        FROM crapage
-       WHERE cdcooper = pr_cdcooper 
-         AND cdagenci = pr_cdagenci;     
-      vr_nmextage crapage.nmextage%TYPE;
-      
-      -- Cursor do Operador
-      CURSOR cr_crapope(pr_cdcooper crapope.cdcooper%TYPE,
-                        pr_cdoperad crapope.cdoperad%TYPE) IS
-        SELECT crapope.nmoperad
-          FROM crapope
-         WHERE crapope.cdcooper = pr_cdcooper
-           AND crapope.cdoperad = pr_cdoperad;
-			vr_nmoperad crapope.nmoperad%TYPE;
-      
-      -- Variável de críticas
-      vr_cdcritic      crapcri.cdcritic%TYPE;
-      vr_dscritic      VARCHAR2(10000);
-      vr_des_reto      VARCHAR2(3);
-      vr_typ_saida     VARCHAR2(3);
-      
-      vr_tab_erro      GENE0001.typ_tab_erro;
-
-      -- Tratamento de erros
-      vr_exc_saida     EXCEPTION;
-
-      -- Variaveis padrao
-      vr_cdcooper        PLS_INTEGER;
-      vr_cdoperad        VARCHAR2(100);
-      vr_nmdatela        VARCHAR2(100);
-      vr_nmeacao         VARCHAR2(100);
-      vr_cdagenci        VARCHAR2(100);
-      vr_nrdcaixa        VARCHAR2(100);
-      vr_idorigem        VARCHAR2(100);      
-      vr_xml_temp        VARCHAR2(32726) := '';
-      vr_xml             CLOB;
-      vr_nom_direto      VARCHAR2(500);
-      vr_nmarqimp        VARCHAR2(100);
-      vr_dtmvtolt        DATE;
-      vr_dtiniest        DATE;
-      vr_dtfinest        DATE;
-      vr_bltemreg        BOOLEAN := FALSE;
-          
-    BEGIN
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                              ,pr_cdcooper => vr_cdcooper
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nmeacao  => vr_nmeacao
-                              ,pr_cdagenci => vr_cdagenci
-                              ,pr_nrdcaixa => vr_nrdcaixa
-                              ,pr_idorigem => vr_idorigem
-                              ,pr_cdoperad => vr_cdoperad
-                              ,pr_dscritic => vr_dscritic);
-                              
-      vr_dtmvtolt := TO_DATE(pr_dtmvtolt,'DD/MM/YYYY');
-      vr_dtiniest := TO_DATE(pr_dtiniest,'DD/MM/YYYY');
-      vr_dtfinest := TO_DATE(pr_dtfinest,'DD/MM/YYYY');
-
-      -- Valida se a data Inicial e Final Foram preenchidas
-      IF vr_dtiniest IS NULL THEN
-        vr_dscritic := 'O campo data inicial nao foi preenchida';
-        RAISE vr_exc_saida;
-      END IF;
-      
-      IF vr_dtfinest IS NULL THEN
-        vr_dscritic := 'O campo data final nao foi preenchida';
-        RAISE vr_exc_saida;
-      END IF;
-      
-      -- Monta documento XML
-      dbms_lob.createtemporary(vr_xml, TRUE);
-      dbms_lob.open(vr_xml, dbms_lob.lob_readwrite);
-      -- Criar cabeçalho do XML
-      gene0002.pc_escreve_xml(pr_xml            => vr_xml
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Relatorio>
-                                                      <Filtros>
-                                                        <data_inicial>'||TO_CHAR(vr_dtiniest,'DD/MM/YYYY')||'</data_inicial>
-                                                        <data_final>'||TO_CHAR(vr_dtfinest,'DD/MM/YYYY')||'</data_final>
-                                                      </Filtros>');
-
-      -- Percorre todos os lancamentos que foram estornados
-      FOR rw_estorno IN cr_estorno(pr_cdcooper => vr_cdcooper,
-                                   pr_nrdconta => pr_nrdconta,
-                                   pr_dtiniest => vr_dtiniest,
-                                   pr_dtfinest => vr_dtfinest) LOOP
-          -- Possui registros
-          vr_bltemreg := TRUE;
-        
-          -- Busca o nome da Agencia
-          OPEN cr_crapage(pr_cdcooper => vr_cdcooper
-                         ,pr_cdagenci => vr_cdagenci);
-          FETCH cr_crapage INTO vr_nmextage;
-          CLOSE cr_crapage;       
-          
-          -- Busca o nome do Operador                                       
-          OPEN cr_crapope(vr_cdcooper, rw_estorno.cdoperad);
-          FETCH cr_crapope INTO vr_nmoperad;        
-          CLOSE cr_crapope;
-        
-          gene0002.pc_escreve_xml(pr_xml            => vr_xml
-                                 ,pr_texto_completo => vr_xml_temp
-                                 ,pr_texto_novo     => '<Dados>
-                                                          <nrdconta>'||rw_estorno.nrdconta||'</nrdconta>
-                                                          <cdoperad>'||rw_estorno.cdoperad||'</cdoperad>
-                                                          <dtestorno>'||TO_CHAR(rw_estorno.dtmvtolt,'DD/MM/YYYY')||'</dtestorno>
-                                                          <vlpagmto>'||TO_CHAR(rw_estorno.vllanmto,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.')||'</vlpagmto>                                                          
-                                                          <nmoperad>'||vr_nmoperad||'</nmoperad>
-                                                          <dsjustificativa>'||rw_estorno.dsjustificativa||'</dsjustificativa>                                                                                                                 
-                                                          <cdagenci>'||vr_cdagenci||'</cdagenci>                                                          
-                                                          <nmextage>'||vr_nmextage||'</nmextage>
-                                                        </Dados>');
-                                                        
-          
-      END LOOP; -- END FOR rw_estorno
-
-      -- Caso nao possua registros
-      IF NOT vr_bltemreg THEN
-        vr_dscritic := 'Nenhum registro encontrado para os filtros informados';
-        RAISE vr_exc_saida;
-      END IF;
-
-      -- Cria a Tag com os Totais
-      gene0002.pc_escreve_xml(pr_xml            => vr_xml
-                             ,pr_texto_completo => vr_xml_temp
-                             ,pr_texto_novo     => '</Relatorio>'
-                             ,pr_fecha_xml      => TRUE);
-                         
-      -- Busca do diretório base da cooperativa para PDF
-      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                            ,pr_cdcooper => vr_cdcooper
-                                            ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-      
-      -- Busca do diretório base da cooperativa para PDF
-      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                            ,pr_cdcooper => vr_cdcooper
-                                            ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-      
-      -- Definir nome do relatorio
-      vr_nmarqimp := 'crrl751_' || TO_CHAR(SYSTIMESTAMP,'SSSSSFF5') || '.pdf';
-      
-      -- Solicitar geração do relatorio
-      gene0002.pc_solicita_relato(pr_cdcooper  => vr_cdcooper --> Cooperativa conectada
-                                 ,pr_cdprogra  => 'ESTORN' --> Programa chamador
-                                 ,pr_dtmvtolt  => vr_dtmvtolt --> Data do movimento atual
-                                 ,pr_dsxml     => vr_xml --> Arquivo XML de dados
-                                 ,pr_dsxmlnode => '/Relatorio/Dados' --> Nó base do XML para leitura dos dados
-                                 ,pr_dsjasper  => 'crrl751.jasper' --> Arquivo de layout do iReport
-                                 ,pr_dsparams  => null --> Sem parâmetros
-                                 ,pr_dsarqsaid => vr_nom_direto || '/' ||vr_nmarqimp --> Arquivo final com o path
-                                 ,pr_cdrelato  => 751
-                                 ,pr_qtcoluna  => 234 --> 80 colunas
-                                 ,pr_flg_gerar => 'S' --> Geraçao na hora
-                                 ,pr_flg_impri => 'N' --> Chamar a impressão (Imprim.p)
-                                 ,pr_nmformul  => ''  --> Nome do formulário para impressão
-                                 ,pr_nrcopias  => 1   --> Número de cópias
-                                 ,pr_sqcabrel  => 1   --> Qual a seq do cabrel
-                                 ,pr_nrvergrl  => 1   --> Numero da Versao do Gerador de Relatorio - TIBCO
-                                 ,pr_des_erro  => vr_dscritic); --> Saída com erro
-      -- Tratar erro
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-      
-      -- Enviar relatorio para intranet
-      gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper --> Cooperativa conectada
-                                  ,pr_cdagenci => vr_cdagenci --> Codigo da agencia para erros
-                                  ,pr_nrdcaixa => vr_nrdcaixa --> Codigo do caixa para erros
-                                  ,pr_nmarqpdf => vr_nom_direto || '/' ||vr_nmarqimp --> Arquivo PDF  a ser gerado
-                                  ,pr_des_reto => vr_des_reto --> Saída com erro
-                                  ,pr_tab_erro => vr_tab_erro); --> tabela de erros
-      
-      -- caso apresente erro na operação
-      IF nvl(vr_des_reto, 'OK') <> 'OK' THEN
-        IF vr_tab_erro.COUNT > 0 THEN
-          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;          
-          RAISE vr_exc_saida;
-        END IF;
-      END IF;
-
-      -- Remover relatorio da pasta rl apos gerar
-      gene0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => 'rm ' || vr_nom_direto || '/' ||vr_nmarqimp
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-      -- Se retornou erro
-      IF vr_typ_saida = 'ERR' OR vr_dscritic IS NOT NULL THEN
-        -- Concatena o erro que veio
-        vr_dscritic := 'Erro ao remover arquivo: ' || vr_dscritic;
-        RAISE vr_exc_saida;
-      END IF;
-      
-      -- Libera a memoria do CLOB
-      dbms_lob.close(vr_xml);
-      dbms_lob.freetemporary(vr_xml);
-      
-      -- Criar XML de retorno
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||vr_nmarqimp || '</nmarqpdf>');
-      
-      COMMIT;
-
-    EXCEPTION
-      WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      WHEN OTHERS THEN
-
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em EMPR0008.pc_tela_imprimir_relatorio: ' || SQLERRM;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    END;  
-  
-  END pc_tela_imprimir_relatorio;
 
 END PREJ0003;
 /
