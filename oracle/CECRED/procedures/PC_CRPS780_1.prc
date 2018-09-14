@@ -97,7 +97,7 @@ BEGIN
               ,nvl(epr.vlttjmpr,0) vlttjmpr
               ,nvl(epr.vlpgmupr,0) vlpgmupr
               ,nvl(epr.vlpgjmpr,0) vlpgjmpr
-              ,epr.txmensal vltaxa_juros         
+              ,epr.txmensal vltaxa_juros
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
@@ -112,7 +112,7 @@ BEGIN
          WHERE lem.cdcooper = prc_cdcooper
            AND lem.nrdconta = prc_nrdconta
            AND lem.nrctremp = prc_nrctremp
-           and lem.cdhistor = 381;     
+           and lem.cdhistor = 381;
 
       -- Buscar as capas de lote para a cooperativa e data atual
       CURSOR cr_craplot(pr_nrdolote IN craplot.nrdolote%TYPE
@@ -141,24 +141,24 @@ BEGIN
       rw_craplot_8453 cr_craplot%ROWTYPE; --> Lancamento de pagamento de empréstimo na CC
 
       -- Buscar os juros+60 e juros atualizados
-      CURSOR cr_craplem_juros(prc_cdcooper craplem.cdcooper%TYPE                            
+      CURSOR cr_craplem_juros(prc_cdcooper craplem.cdcooper%TYPE
                              ,prc_nrdconta crapepr.nrdconta%TYPE
                              ,prc_nrctremp craplem.nrctremp%TYPE) IS
-        SELECT sum(case when c.cdhistor in (2402,2406,2382,2397) then c.vllanmto else 0 end) - 
+        SELECT sum(case when c.cdhistor in (2402,2406,2382,2397) then c.vllanmto else 0 end) -
                (sum(case when c.cdhistor in (2473) then c.vllanmto else 0 end) -
                sum(case when c.cdhistor in (2474) then c.vllanmto else 0 end) )sum_vllanmto_jr60,
-               sum(case when c.cdhistor in (381,2409) then c.vllanmto else 0 end) - 
+               sum(case when c.cdhistor in (381,2409) then c.vllanmto else 0 end) -
                (sum(case when c.cdhistor in (2389,391) then c.vllanmto else 0 end) -
                sum(case when c.cdhistor in (2393) then c.vllanmto else 0 end) )sum_vllanmto_jratlz
           FROM craplem c
          WHERE c.cdcooper = prc_cdcooper
            AND c.nrdconta = prc_nrdconta
            AND c.nrctremp = prc_nrctremp
-           AND c.cdhistor in (2402,2406,2382,2397,2473,2474,381,391,2409,2389,2393); 
-              
+           AND c.cdhistor in (2402,2406,2382,2397,2473,2474,381,391,2409,2389,2393);
+
       vr_qtdjuros60 NUMBER;
-  
-      cursor c_verifica_lote(pr_cdcooper craplem.cdcooper%type 
+
+      cursor c_verifica_lote(pr_cdcooper craplem.cdcooper%type
                             ,pr_cdagenci craplem.cdagenci%type
                             ,pr_dtmvtolt craplem.dtmvtolt%type
                             ,pr_nrdolote craplem.nrdolote%type) is
@@ -168,31 +168,31 @@ BEGIN
          and    craplem.cdagenci = pr_cdagenci
          and    craplem.dtmvtolt = pr_dtmvtolt
          and    craplem.nrdolote = pr_nrdolote;
-         
+
        CURSOR C_CRAPCYC(PR_CDCOOPER IN NUMBER
                        , PR_NRDCONTA IN NUMBER
-                       , PR_NRCTREMP IN NUMBER) IS          
+                       , PR_NRCTREMP IN NUMBER) IS
          SELECT 1
-           FROM CRAPCYC 
+           FROM CRAPCYC
           WHERE CDCOOPER = PR_CDCOOPER
             AND NRDCONTA = PR_NRDCONTA
             AND NRCTREMP = PR_NRCTREMP
             AND FLGEHVIP = 1
             AND CDMOTCIN = 1;
-     --     
-    /*  cursor c_crapris (pr_cdcooper craplem.cdcooper%type 
+     --
+    /*  cursor c_crapris (pr_cdcooper craplem.cdcooper%type
                        ,pr_nrdconta craplem.nrdconta%type
                        ,pr_nrctremp craplem.nrctremp%type) is
-                       
+
          select vljura60
          from   crapris ris
          where  ris.cdcooper = pr_cdcooper
          and    ris.nrdconta = pr_nrdconta
          and    ris.nrctremp = pr_nrctremp
          and    ris.dtrefere = rw_crapdat.dtultdma;
-         
+
         vr_vljura60 crapris.vljura60%type;*/
-         
+
       ------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
       -- Definição dos lançamentos de deposito a vista
@@ -252,7 +252,7 @@ BEGIN
       vr_inhistor PLS_INTEGER;
       vr_indoipmf PLS_INTEGER;
       vr_txdoipmf NUMBER;
-      
+
       vr_vlpgmupr NUMBER;
       vr_vlpgjmpr NUMBER;
       vr_vlttmupr NUMBER;
@@ -264,11 +264,11 @@ BEGIN
       vr_tab_dados_epr    empr0001.typ_tab_dados_epr;
       vr_qtregist         INTEGER;
       vr_tab_sald         extr0001.typ_tab_saldos;
-      
+
       -- Subrotina para checar a existência de lote cfme tipo passado
     /* inicio da rotina Pagamento */
     BEGIN
-     
+
           -- Validar contrato em acordo
            /* Verificacao de contrato de acordo */
 /*        RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => pr_cdcooper
@@ -286,25 +286,25 @@ BEGIN
         IF vr_flgativo = 1 THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo';
-          RAISE vr_exc_erro;                 
+          RAISE vr_exc_erro;
         END IF;*/
-      
+
       /*  \* Verificar se possui acordo na CRAPCYC *\
         OPEN c_crapcyc(pr_cdcooper, pr_nrdconta, pr_nrctremp);
         FETCH c_crapcyc INTO vr_flgativo;
         CLOSE c_crapcyc;
-          
+
         IF nvl(vr_flgativo,0) = 1 THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo';
-          RAISE vr_exc_erro;             
+          RAISE vr_exc_erro;
         END IF;*/
         --
         -- Iniciar variaveis
         vr_tab_sald.delete;
         vr_tab_erro.delete;
         vr_tab_crapsld.delete;
-        
+
         EXTR0001.PC_OBTEM_SALDO_DIA(pr_cdcooper => pr_cdcooper,
                                     pr_rw_crapdat => rw_crapdat,
                                     pr_cdagenci => 0,
@@ -318,7 +318,7 @@ BEGIN
                                     pr_des_reto => vr_des_reto,
                                     pr_tab_sald => vr_tab_sald,
                                     pr_tab_erro => vr_tab_erro);
-        
+
         IF vr_des_reto <> 'OK' THEN
           IF vr_tab_erro.count() > 0 THEN -- RMM
             -- Atribui críticas às variaveis
@@ -329,9 +329,9 @@ BEGIN
             vr_cdcritic := 0;
             vr_dscritic := 'Falha ao buscar saldo atual - '||sqlerrm;
             raise vr_exc_erro;
-          END IF;          
+          END IF;
         END IF;
-               
+
         IF vr_tab_sald.EXISTS(vr_tab_sald.first) THEN
           vr_tab_crapsld(pr_nrdconta).vlsddisp := vr_tab_sald(vr_tab_sald.first).vlsddisp;
           vr_tab_crapsld(pr_nrdconta).vlsdbloq := vr_tab_sald(vr_tab_sald.first).vlsdbloq;
@@ -339,7 +339,7 @@ BEGIN
           vr_tab_crapsld(pr_nrdconta).vlsddisp := vr_tab_sald(vr_tab_sald.first).vlsddisp;
           --vr_tab_crapsld(pr_nrdconta).vlipmfap := vr_tab_sald(vr_tab_sald.first).vlipmfap;
           vr_tab_crapsld(pr_nrdconta).vlipmfpg := vr_tab_sald(vr_tab_sald.first).vlipmfpg;
-          vr_tab_crapsld(pr_nrdconta).vlsdchsl := vr_tab_sald(vr_tab_sald.first).vlsdchsl;          
+          vr_tab_crapsld(pr_nrdconta).vlsdchsl := vr_tab_sald(vr_tab_sald.first).vlsdchsl;
         END IF;
         --
       --END IF;
@@ -365,9 +365,9 @@ BEGIN
            vr_vldabono := pr_vldabono;
         END IF;
         --
-        -- Gerar lançamento do historico de Abono  
+        -- Gerar lançamento do historico de Abono
         IF nvl(vr_vldabono,0) > 0 THEN
-          
+
           empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                          ,pr_cdagenci => pr_cdagenci
@@ -391,7 +391,7 @@ BEGIN
                                          ,pr_cdorigem => 7 -- batch
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-                                                           
+
           IF vr_dscritic IS NOT NULL THEN
             vr_dscritic := 'Ocorreu falha ao retornar gravação LEM (valor abono): ' || vr_dscritic;
             RAISE vr_exc_erro;
@@ -400,23 +400,23 @@ BEGIN
         -- Para caso o saldo da conta seja maior que o saldo total devedor
         IF rw_crapepr.vlsdprej +  -- saldo devedor atualizado
           (nvl(rw_crapepr.vlttmupr,0) - nvl(rw_crapepr.vlpgmupr,0)) + -- valor residual de multa
-          (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0)) < vr_vldpagto AND 
+          (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0)) < vr_vldpagto AND
            vr_vldabono = 0 THEN
           -- Atribuir somente o valor devedor do prejuízo
           vr_vldpagto := (rw_crapepr.vlsdprej +  -- saldo devedor atualizado
                              (nvl(rw_crapepr.vlttmupr,0) - nvl(rw_crapepr.vlpgmupr,0)) + -- valor residual de multa
                              (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0)));
-        
+
         ELSIF vr_vldpagto < 0 OR vr_vldabono < 0 THEN
           vr_dscritic := 'Pagamento não permitido, Saldo de pagamento ou abono menor ou igual a zero.';
-          RAISE vr_exc_erro;    
+          RAISE vr_exc_erro;
         END IF;
         --
         -- Inserir o valor de pagamento na conta corrente do cooperado
         IF vr_vldpagto > 0 THEN
 					-- Lança débito na conta corrente somente se não está em prejuízo
 					IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) = FALSE THEN
-						empr0001.pc_cria_lancamento_cc(pr_cdcooper   => pr_cdcooper 
+						empr0001.pc_cria_lancamento_cc(pr_cdcooper   => pr_cdcooper
 																					 , pr_dtmvtolt => rw_crapdat.dtmvtolt
 																					 , pr_cdagenci => 1 --rw_craplot_8457.cdagenci
 																					 , pr_cdbccxlt => 100
@@ -429,7 +429,7 @@ BEGIN
 																					 , pr_nrparepr => 0
 																					 , pr_nrctremp => rw_crapepr.nrctremp
 																					 , pr_nrseqava => 0
-																					 , pr_idlautom => 0 
+																					 , pr_idlautom => 0
 																					 , pr_des_reto => vr_des_reto
 																					 , pr_tab_erro => vr_tab_erro );
             IF vr_des_reto <> 'OK' THEN
@@ -442,16 +442,26 @@ BEGIN
                 vr_cdcritic := 0;
                 vr_dscritic := 'Falha ao inserir LCM - '||sqlerrm;
                 raise vr_exc_erro;
-              END IF; 
-            END IF; 
-					END IF;                                                               
+              END IF;
+            END IF;
+					ELSE
+						-- Lança débito no extrato do prejuízo (para correto processamento do pagamento pelo CYBER)
+            PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
+                                            , pr_nrdconta => rw_crapepr.nrdconta
+                                            , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            , pr_cdhistor => 2386
+                                            , pr_vllanmto => vr_vldpagto
+																	          , pr_nrctremp => rw_crapepr.nrctremp
+                                            , pr_cdcritic => vr_cdcritic
+                                            , pr_dscritic => vr_dscritic);
+					END IF;
 
           IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN
             rw_crapepr.txjuremp := rw_crapepr.vltaxa_juros;
             vr_inusatab := TRUE;
           ELSE
             vr_inusatab := FALSE;
-          END IF;     
+          END IF;
           --
           empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -476,12 +486,12 @@ BEGIN
                                          ,pr_cdorigem => 7 -- batch
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-                                                               
+
           IF vr_dscritic IS NOT NULL THEN
             vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (pagamento): ' || vr_dscritic;
             RAISE vr_exc_erro;
-          END IF;                       
-            
+          END IF;
+
         END IF;
         --
         -- Variavel de valor utilizada para realizar as quebras de pagamentos
@@ -491,12 +501,12 @@ BEGIN
         IF rw_crapepr.vlsdprej +  -- saldo devedor atualizado
           (nvl(rw_crapepr.vlttmupr,0) - nvl(rw_crapepr.vlpgmupr,0)) + -- valor residual de multa
           (nvl(rw_crapepr.vlttjmpr,0) - nvl(rw_crapepr.vlpgjmpr,0)) < vr_vlPrincAbono THEN
-  
+
           vr_dscritic := 'O valor é superior ao saldo do prejuizo';
           raise vr_exc_erro;
-          
+
         END IF;
-        --      
+        --
         -- Buscar o valor atualizado do juros+60 e juros atualizado na mensal
         FOR rw_craplem_juros in cr_craplem_juros(rw_crapepr.cdcooper
                                                 ,rw_crapepr.nrdconta
@@ -509,18 +519,18 @@ BEGIN
         IF (rw_crapepr.vlttmupr - rw_crapepr.vlpgmupr) >= vr_vlPrincAbono THEN
             vr_vlpgmupr := vr_vlPrincAbono;--rw_crapepr.vlpgmupr + vr_vlPrincAbono;
             vr_vlPrincAbono := 0;
-        ELSE     
+        ELSE
          --  vr_vldescto := vr_vldescto - (rw_crapepr.vlttmupr - rw_crapepr.vlpgmupr);
            vr_vlpgmupr := rw_crapepr.vlttmupr - rw_crapepr.vlpgmupr;
            vr_vlPrincAbono := vr_vlPrincAbono - vr_vlpgmupr;
-        END IF;                       
+        END IF;
         /* 2o Valor de Juros Mora     */
         IF vr_vlPrincAbono > 0 THEN
           IF (rw_crapepr.vlttjmpr - rw_crapepr.vlpgjmpr) >= vr_vlPrincAbono THEN
             vr_vlpgjmpr := vr_vlPrincAbono; --rw_crapepr.vlpgjmpr + vr_vlPrincAbono;
             vr_vlPrincAbono := 0;
           ELSE
-            vr_vlpgjmpr := rw_crapepr.vlttjmpr - rw_crapepr.vlpgjmpr; 
+            vr_vlpgjmpr := rw_crapepr.vlttjmpr - rw_crapepr.vlpgjmpr;
             vr_vlPrincAbono := vr_vlPrincAbono - vr_vlpgjmpr;
           END IF;
         END IF;
@@ -554,7 +564,7 @@ BEGIN
             END IF;
           END IF;
         END IF;
-                     
+
         \* 5o Valor em Prejuizo *\
         IF vr_vlPrincAbono > 0 THEN
           IF rw_crapepr.vlsdprej < 0 THEN
@@ -565,7 +575,7 @@ BEGIN
         END IF;*/
         /*ELSE
           vr_dscritic := 'Valor de pagamento superior ao valor do saldo disponivel do prejuizo: '||vr_vlPrincAbono;
-          raise vr_exc_erro;        
+          raise vr_exc_erro;
         END IF;*/ --  comentado a pedido do Oscar
         --
         IF vr_vlPrincAbono > 0 THEN -- Tem saldo de pag+abono para pagar saldo prejuizo e juros atualizado
@@ -581,9 +591,9 @@ BEGIN
                 rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - vr_vlPrincAbono;
                 vr_vlPrincAbono := vr_vlPrincAbono - vr_vljratlz; -- quitar o saldo de pag+abono
               --END IF;
-            ELSE 
+            ELSE
               --vr_vljratlz     := vr_juros_atualizado; -- Atualizar a craplem com o valor total
-              rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - vr_vlPrincAbono;              
+              rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - vr_vlPrincAbono;
             END IF;
           ELSE
             IF rw_crapepr.vlsdprej < 0 THEN
@@ -595,9 +605,9 @@ BEGIN
         END IF;
         /*ELSE
           vr_dscritic := 'Valor de pagamento superior ao valor do saldo disponivel do prejuizo: '||vr_vlPrincAbono;
-          raise vr_exc_erro;        
-        END IF;   */    
-        
+          raise vr_exc_erro;
+        END IF;   */
+
         --
         -- Lancamento da multa 2390
         IF nvl(vr_vlpgmupr,0) > 0 THEN
@@ -624,7 +634,7 @@ BEGIN
                                          ,pr_cdorigem => 7 -- batch
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-                                                           
+
           IF vr_dscritic IS NOT NULL THEN
             vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor multa): ' || vr_dscritic;
             RAISE vr_exc_erro;
@@ -660,7 +670,7 @@ BEGIN
             --pr_des_reto := 'NOK';
             raise vr_exc_erro;
           END IF;
-        END IF;        
+        END IF;
         -- Lancamento de juros + 60 -- 2473
         IF  nvl(vr_vljr60lm,0) > 0 THEN
           empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
@@ -686,12 +696,12 @@ BEGIN
                                          ,pr_cdorigem => 7 -- batch
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-                                                           
+
           IF vr_dscritic IS NOT NULL THEN
             vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor juros+60): ' || vr_dscritic;
             RAISE vr_exc_erro;
           END IF;
-        END IF;          
+        END IF;
         --
         -- Valor juros atualizado
         IF NVL(vr_vljratlz,0) > 0 THEN
@@ -718,14 +728,14 @@ BEGIN
                                          ,pr_cdorigem => 7 -- batch
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-                                                           
+
           IF vr_dscritic IS NOT NULL THEN
             vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor juros atualizado): ' || vr_dscritic;
             --pr_des_reto := 'NOK';
              raise vr_exc_erro;
           END IF;
         END IF;
-        --        
+        --
         -- Gerar craplem valor principal 2388
         IF vr_vlPrincAbono > 0 THEN
           -- atualiza valor principal.
@@ -752,7 +762,7 @@ BEGIN
                                          ,pr_cdorigem => 7 -- batch
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-                                                           
+
           IF vr_dscritic IS NOT NULL THEN
             vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
             RAISE vr_exc_erro;
@@ -792,8 +802,8 @@ BEGIN
               vr_cdcritic := 0;
               vr_dscritic := 'Falha ao Desativar Rating - '||sqlerrm;
               RAISE vr_exc_erro;
-            END IF;          
-          END IF;                                     
+            END IF;
+          END IF;
           --
           /** GRAVAMES **/
           GRVM0001.pc_solicita_baixa_automatica(pr_cdcooper => pr_cdcooper          -- Código da cooperativa
@@ -815,20 +825,20 @@ BEGIN
               vr_cdcritic := 0;
               vr_dscritic := 'Falha ao Falha ao solicitar baixa GRVM0001 - '||sqlerrm;
               RAISE vr_exc_erro;
-            END IF;          
-          END IF;                                                
-          
+            END IF;
+          END IF;
+
           -- zerar o saldo devedor
-          rw_crapepr.vlsdprej := 0;        
+          rw_crapepr.vlsdprej := 0;
         END IF;
-        
+
         BEGIN
           UPDATE crapepr
             SET dtdpagto  = rw_crapepr.dtdpagto
                 --,dtultpag = rw_crapepr.dtultpag
                 ,txjuremp = rw_crapepr.txjuremp
                 ,indpagto = rw_crapepr.indpagto
-                ,vlsdprej = rw_crapepr.vlsdprej  
+                ,vlsdprej = rw_crapepr.vlsdprej
                 ,vlpgjmpr = vlpgjmpr + nvl( vr_vlpgjmpr, nvl(vlpgjmpr,0) )
                 ,vlpgmupr = vlpgmupr + nvl( vr_vlpgmupr, nvl(vlpgmupr,0) )
          WHERE rowid = rw_crapepr.rowid;
@@ -854,8 +864,8 @@ BEGIN
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
         -- Efetuar rollback
-        --ROLLBACK;      
-    
+        --ROLLBACK;
+
       WHEN OTHERS THEN
         --Variavel de erro recebe erro ocorrido
            vr_cdcritic:= 0;
@@ -883,7 +893,7 @@ BEGIN
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
-    --  Executar o Pagamento     
+    --  Executar o Pagamento
     pc_gera_pagamento(pr_cdcooper
                      ,pr_nrdconta
                      ,pr_nrctremp);
