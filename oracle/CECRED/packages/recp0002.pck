@@ -309,7 +309,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 				END IF;
 			ELSE
 				vr_vlsomato := nvl(rw_prejuizo.vlsdprej,0) + nvl(rw_prejuizo.vljuprej,0) + 
-				               nvl(rw_prejuizo.vljur60_ctneg,0) + nvl(rw_prejuizo.vljur60_lcred,0);
+				               nvl(rw_prejuizo.vljur60_ctneg,0) + nvl(rw_prejuizo.vljur60_lcred,0) +
+											 PREJ0003.fn_juros_remun_prov(pr_cdcooper, pr_nrdconta);
 											 
 				IF rw_crapsld.vliofmes > 0 THEN
 					vr_vlsomato := nvl(vr_vlsomato,0) + rw_crapsld.vliofmes;
