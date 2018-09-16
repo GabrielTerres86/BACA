@@ -465,7 +465,7 @@ DECLARE
            WHERE grp.cdcooper = rw_grupo_int.cdcooper
              AND grp.idgrupo  = rw_grupo_int.idgrupo
              AND grp.nrdconta = rw_grupo_int.nrdconta
-             AND grp.idintegrante <> rw_grupo_int.idintegrante
+             AND grp.idintegrante > rw_grupo_int.idintegrante
              AND grp.dtexclusao IS NULL;
         EXCEPTION
           WHEN OTHERS THEN

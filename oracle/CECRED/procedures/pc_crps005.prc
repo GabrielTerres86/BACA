@@ -8420,10 +8420,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                --Se o saldo total for negativo
                IF vr_rel_vlstotal < 0 THEN
                  --Valor adiantamentos em credito em liquidacao recebe saldo total + limite credito
-                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal,0) + nvl(rw_crapass.vllimcre,0));
+                 --P450 - vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal,0) + nvl(rw_crapass.vllimcre,0));
+                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal_006,0) + nvl(rw_crapass.vllimcre,0));
+                 
                ELSE
                  --Valor adiantamentos em credito em liquidacao recebe saldo total - limite credito
-                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal,0) - nvl(rw_crapass.vllimcre,0));
+                 --P450-- vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal,0) - nvl(rw_crapass.vllimcre,0));
+                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapass.vllimcre,0));
                END IF;
 
                --Se for pessoa fisica ou juridica
@@ -8485,11 +8488,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
                /* Totais separados por tipo de pessoa - crrl006 Tipo 4 - consta que a pessoa esta em CL */
                vr_tab_rel_agpsdmax(4):= vr_tab_rel_agpsdmax(4) + nvl(vr_vlsaqmax,0);
-               vr_tab_rel_agpsddis(4):= vr_tab_rel_agpsddis(4) + nvl(rw_crapsld.vlsddisp,0);
+               --P450--ODIRLEI --vr_tab_rel_agpsddis(4):= vr_tab_rel_agpsddis(4) + nvl(rw_crapsld.vlsddisp,0);
+               vr_tab_rel_agpsddis(4):= vr_tab_rel_agpsddis(4) + nvl(vr_rel_vlsddisp_006,0);
+               
                vr_tab_rel_agpvllim(4):= vr_tab_rel_agpvllim(4) + nvl(rw_crapass.vllimcre,0);
                vr_tab_rel_agpsdbtl(4):= vr_tab_rel_agpsdbtl(4) + nvl(vr_rel_vlsdbltl,0);
                vr_tab_rel_agpsdchs(4):= vr_tab_rel_agpsdchs(4) + nvl(rw_crapsld.vlsdchsl,0);
-               vr_tab_rel_agpsdstl(4):= vr_tab_rel_agpsdstl(4) + nvl(vr_rel_vlstotal,0);
+               --> PRJ450 - odirlei vr_tab_rel_agpsdstl(4):= vr_tab_rel_agpsdstl(4) + nvl(vr_rel_vlstotal,0);
+               --> Para o relatorio crrl006 nao deve considerar saldos de contas transferidas para prejuizo
+               vr_tab_rel_agpsdstl(4):= vr_tab_rel_agpsdstl(4) + nvl(vr_rel_vlstotal_006,0);
+               
                vr_tab_rel_agpvlbjd(4):= vr_tab_rel_agpvlbjd(4) + Nvl(rw_crapsld.vlblqjud,0);
 
                --Diminuir o valor do limite de credito do valor utilizado do saldo
@@ -8538,7 +8546,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
                /*   Totais separados por tipo de pessoa - crrl006  */
                vr_tab_rel_agpsdmax(rw_crapass.inpessoa):= vr_tab_rel_agpsdmax(rw_crapass.inpessoa) + nvl(vr_vlsaqmax,0);
-               vr_tab_rel_agpsddis(rw_crapass.inpessoa):= vr_tab_rel_agpsddis(rw_crapass.inpessoa) + nvl(rw_crapsld.vlsddisp,0);
+               --P450 -- vr_tab_rel_agpsddis(rw_crapass.inpessoa):= vr_tab_rel_agpsddis(rw_crapass.inpessoa) + nvl(rw_crapsld.vlsddisp,0);
+               vr_tab_rel_agpsddis(rw_crapass.inpessoa):= vr_tab_rel_agpsddis(rw_crapass.inpessoa) + nvl(vr_rel_vlsddisp_006,0);
+               
                vr_tab_rel_agpvllim(rw_crapass.inpessoa):= vr_tab_rel_agpvllim(rw_crapass.inpessoa) + nvl(rw_crapass.vllimcre,0);
                vr_tab_rel_agpsdbtl(rw_crapass.inpessoa):= vr_tab_rel_agpsdbtl(rw_crapass.inpessoa) + nvl(vr_rel_vlsdbltl,0);
                vr_tab_rel_agpsdchs(rw_crapass.inpessoa):= vr_tab_rel_agpsdchs(rw_crapass.inpessoa) + nvl(rw_crapsld.vlsdchsl,0);
@@ -8556,7 +8566,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                vr_tab_rel_vldispos(rw_crapass.inpessoa):= vr_tab_rel_vldispos(rw_crapass.inpessoa) + nvl(rw_crapsld.vlsddisp,0);
              END IF;
              --Acumular no valor saldo liquido o valor do saldo total
-             vr_tab_rel_vlsldliq(rw_crapass.inpessoa):= vr_tab_rel_vlsldliq(rw_crapass.inpessoa) + nvl(vr_rel_vlstotal,0);
+             --> P450 - vr_tab_rel_vlsldliq(rw_crapass.inpessoa):= vr_tab_rel_vlsldliq(rw_crapass.inpessoa) + nvl(vr_rel_vlstotal,0);
+             vr_tab_rel_vlsldliq(rw_crapass.inpessoa):= vr_tab_rel_vlsldliq(rw_crapass.inpessoa) + nvl(vr_rel_vlstotal_006,0);
              --Se o saldo disponivel for negativo
              IF rw_crapsld.vlsddisp < 0 THEN
                --Acumular valor disponivel no vetor de valor disponivel negativo
@@ -8590,7 +8601,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                  vr_tot_vlutiliz:= nvl(vr_tot_vlutiliz,0) + nvl(rw_crapsld.vlsddisp,0) + nvl(rw_crapsld.vlsdchsl,0);
                  --Acumular no vetor do saldo utilizado o saldo disponivel + saldo cheque salario
                  vr_tab_rel_vlsutili(rw_crapass.inpessoa):= vr_tab_rel_vlsutili(rw_crapass.inpessoa) +
-                                                            nvl(rw_crapsld.vlsddisp,0) + nvl(rw_crapsld.vlsdchsl,0);
+                                                            nvl(vr_rel_vlsddisp_006,0) + nvl(rw_crapsld.vlsdchsl,0);
                  --Verificar se é conta do bndes
                  IF vr_tab_cta_bndes.EXISTS(rw_crapass.nrdconta) THEN
                    --Acumular no Valor Cheque Especial o valor do saldo disponivel + saldo cheque salario
@@ -8793,7 +8804,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                    --Acumular no vetor do saque bloqueado o valor bloqueado
                    vr_tab_rel_vlsaqblq(rw_crapass.inpessoa):= vr_tab_rel_vlsaqblq(rw_crapass.inpessoa) + (vr_vlbloque * -1);
                    --Acumular no Total adiantamento o disponivel + cheque salario + limite credito + bloqueado
-                   vr_tot_vladiant:= nvl(vr_tot_vladiant,0) + (nvl(rw_crapsld.vlsddisp,0) + nvl(rw_crapsld.vlsdchsl,0) +
+                   vr_tot_vladiant:= nvl(vr_tot_vladiant,0) + (nvl(vr_rel_vlsddisp_006,0) + nvl(rw_crapsld.vlsdchsl,0) +
                                                                nvl(rw_crapass.vllimcre,0) + nvl(vr_vlbloque,0));
 
                    --Verificar se é conta do bndes

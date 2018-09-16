@@ -190,11 +190,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
            AND (ge.nrdconta = pr_nrdconta
             OR gei.nrdconta = pr_nrdconta)
                     --> grupos ativos
-                    AND EXISTS ( SELECT 1
+                    AND (EXISTS ( SELECT 1
                                   FROM tbcc_grupo_economico_integ i
                                  WHERE ge.cdcooper = i.cdcooper
                                    AND ge.idgrupo  = i.idgrupo
                                    AND i.dtexclusao IS NULL)
+                        --> ou grupo adicionado agora
+                        OR trunc(ge.dtinclusao) = TRUNC(SYSDATE) 
+                        )           
                 ORDER BY idgrupo
                )
           WHERE ROWNUM = 1;
@@ -572,7 +575,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                dsobservacao
           FROM tbcc_grupo_economico
          WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta;
+           AND nrdconta = pr_nrdconta
+           --> grupos ativos
+           AND (EXISTS ( SELECT 1
+                        FROM tbcc_grupo_economico_integ i
+                       WHERE tbcc_grupo_economico.cdcooper = i.cdcooper
+                         AND tbcc_grupo_economico.idgrupo  = i.idgrupo
+                         AND i.dtexclusao IS NULL)
+               --> ou grupo adicionado agora
+               OR trunc(tbcc_grupo_economico.dtinclusao) = TRUNC(SYSDATE) 
+               );
       rw_tbcc_grupo_economico cr_tbcc_grupo_economico%ROWTYPE;
 
       -- Variável de críticas

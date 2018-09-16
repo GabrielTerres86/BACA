@@ -156,6 +156,28 @@ BEGIN
          
          AND grp1.cdcooper = ass_gr2.cdcooper      
          AND grp1.nrctasoc = ass_gr2.nrdconta
+         AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base
+         
+      UNION
+      --> Ou se algum integrante do grupo foi adicionado manualmente no grupo novo
+      SELECT gre.idgrupo
+        FROM tbcc_grupo_economico_integ gre
+            ,crapass                    ass_ge
+            ,crapgrp                    grp1
+            ,crapass                    ass_gr1
+            ,crapass                    ass_gr2
+       WHERE gre.cdcooper = ass_ge.cdcooper
+         AND gre.nrdconta = ass_ge.nrdconta
+         AND gre.idgrupo = pr_idgrupo
+         AND gre.dtexclusao IS NULL      
+         AND gre.tpcarga = 3
+         AND grp1.nrdgrupo = pr_nrdgrupo
+         AND grp1.cdcooper = ass_gr1.cdcooper
+         AND grp1.nrdconta = ass_gr1.nrdconta
+         AND ass_ge.nrcpfcnpj_base = ass_gr1.nrcpfcnpj_base
+            
+         AND grp1.cdcooper = ass_gr2.cdcooper
+         AND grp1.nrctasoc = ass_gr2.nrdconta
          AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base;
     rw_grupo_2 cr_grupo_2%ROWTYPE;        
             
@@ -432,6 +454,10 @@ BEGIN
         IF vr_tab_grupo_economico_inte.exists(vr_ind_integrante_ori) THEN
           vr_tab_grupo_economico_inte(vr_ind_integrante_dst) := vr_tab_grupo_economico_inte(vr_ind_integrante_ori);
           vr_tab_grupo_economico_inte(vr_ind_integrante_dst).flgexcluir   := TRUE;
+          
+          --> Marcar o origem para excluir
+          vr_tab_grupo_economico_inte(vr_ind_integrante_ori).flgexcluir   := TRUE;
+            
         ELSE
           vr_tab_grupo_economico_inte(vr_ind_integrante_dst).idintegrante := vr_idintegrante;
           vr_tab_grupo_economico_inte(vr_ind_integrante_dst).tpcarga      := 2;
@@ -511,6 +537,9 @@ BEGIN
             vr_tab_grupo_economico_inte(vr_ind_integrante_dst).idintegrante := vr_idintegrante;
             -- Nao marcar como ok(nao excluir), pois deve validar conforme a validação do grupo crapgrp
             --vr_tab_grupo_economico_inte(vr_ind_integrante_dst).flgexcluir   := TRUE;
+            
+            --> Marcar o origem para excluir
+            vr_tab_grupo_economico_inte(vr_ind_integrante_ori).flgexcluir   := TRUE;
           ELSE
             vr_tab_grupo_economico_inte(vr_ind_integrante_dst).idintegrante := vr_idintegrante;
             vr_tab_grupo_economico_inte(vr_ind_integrante_dst).tpcarga      := 2;
@@ -559,7 +588,11 @@ BEGIN
       -- Indice do Grupo Economico Novo
       vr_ind_grupo_economico_novo := lpad(rw_grupo_economico.cdcooper,10,'0')||lpad(rw_grupo_economico.nrdconta,10,'0');      
       -- Condicao para verificar se o grupo jah foi criado
-      IF NOT vr_tab_grupo_economico_novo.EXISTS(vr_ind_grupo_economico_novo) THEN
+      IF NOT vr_tab_grupo_economico_novo.EXISTS(vr_ind_grupo_economico_novo) OR
+         --> Verificar se é o mesmo grupo do registro anterior, pois pode haver no grupo dois formadores no grupo novo,
+         -- assim configurando a junção de dois grupos
+         (vr_nrdgrupo_ant = rw_grupo_economico.nrdgrupo AND
+          vr_tab_grupo_economico_novo(vr_ind_grupo_economico_novo).idgrupo <> vr_idgrupo_ant) THEN
         
         vr_flginteg := FALSE;
         vr_flggravo := FALSE;
@@ -572,7 +605,9 @@ BEGIN
         CLOSE cr_integrante;
         
         --> caso localizou conta como alguns integrante
-        IF vr_flginteg = TRUE THEN
+        IF vr_flginteg = TRUE AND 
+           --> E se nao for carga manual, pois os manuais pode não estarem no grupo antigo
+           rw_integrante.tpcarga <> 3 THEN
           --> Verificar se a conta formadora ainda pertence ao grupo na grp     
           OPEN cr_grupo_2(pr_idgrupo   => rw_integrante.idgrupo,
                           pr_nrdgrupo  => rw_grupo_economico.nrdgrupo);
@@ -853,9 +888,7 @@ BEGIN
       FOR rw_crapass IN cr_crapass(pr_cdcooper => rw_grupo_economico.cdcooper,
                                    pr_nrdconta => rw_grupo_economico.nrctasoc) LOOP
                                    
-        IF vr_idgrupo = '45795' THEN
-          NULL;
-        END IF;
+        
         -- Chave do Integrante do Grupo Economico
         vr_ind_integrante_grupo := lpad(vr_idgrupo,10,'0')||lpad(rw_grupo_economico.cdcooper,10,'0')||lpad(rw_crapass.nrdconta,10,'0');
         -- Condicao para verificar se o integrante jah esta criado
@@ -869,9 +902,7 @@ BEGIN
       FOR rw_crapass IN cr_crapass(pr_cdcooper => rw_grupo_economico.cdcooper,
                                    pr_nrdconta => rw_grupo_economico.nrdconta) LOOP
                                    
-        IF vr_idgrupo = '45795' THEN
-          NULL;
-        END IF;
+       
         -- Chave do Integrante do Grupo Economico
         vr_ind_integrante_grupo := lpad(vr_idgrupo,10,'0')||lpad(rw_grupo_economico.cdcooper,10,'0')||lpad(rw_crapass.nrdconta,10,'0');
         -- Condicao para verificar se o integrante jah esta criado
@@ -982,6 +1013,8 @@ BEGIN
           IF cr_tbintegrante_exc2%NOTFOUND THEN
             CLOSE cr_tbintegrante_exc2;
           ELSE
+            CLOSE cr_tbintegrante_exc2;
+          
             BEGIN
               UPDATE tbcc_grupo_economico_integ itg
                  SET itg.dtexclusao = NULL,
