@@ -87,12 +87,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.soap0001 AS
   --  Sistema  : SOAP
   --  Sigla    : CRED
   --  Autor    : Petter Rafael - Supero Tecnologia
-  --  Data     : Agosto/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Agosto/2013.                   Ultima atualizacao: 14/09/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Consumir Webservice.
+  -- Alteração : 14/09/2018 - Ajuste no timeout do response (Rafael Cechet).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -100,7 +101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.soap0001 AS
       pr_response     UTL_HTTP.RESP;    --> Objeto HTTP para resposta
       pr_xml_clob     CLOB;             --> Variável para armazenar o XML de resposta
       vr_erro         EXCEPTION;        --> Tratamento de exceções
-
+      vr_timeout      INTEGER := 60;    --> Timeout do response
     BEGIN
       -- Verifica se irá existir wallet para a requisição
       IF pr_wallet_path IS NOT NULL AND pr_wallet_pass IS NOT NULL THEN
@@ -111,6 +112,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.soap0001 AS
       pr_requisicao := UTL_HTTP.begin_request(pr_endpoint, 'POST','HTTP/1.0');
       UTL_HTTP.set_header(pr_requisicao, 'Content-Type', 'text/xml');
       UTL_HTTP.set_header(pr_requisicao, 'Content-Length', length(TRIM(pr_xml_req.getclobval())));
+
+      -- exceção de consulta de boletos na CIP      
+      IF upper(pr_endpoint) LIKE upper('%RecebimentoPgtoTit%') THEN               
+        BEGIN
+          vr_timeout := to_number(gene0001.fn_param_sistema('CRED' ,0 ,'NPC_TIMEOUT_CIP'));
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_timeout := 60;
+        END;        
+      END IF;
+      
+      UTL_HTTP.set_transfer_timeout(vr_timeout); -- Timeout do response
 
       -- Verifica se existe ação específica para o webservice
       IF pr_acao IS NOT NULL THEN
@@ -140,7 +153,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.soap0001 AS
       WHEN utl_http.end_of_body THEN
         utl_http.end_response(pr_response);
       WHEN utl_http.request_failed THEN
+        IF utl_http.get_detailed_sqlcode = -29276 THEN 
+          pr_erro := 'Requisicao excedeu tempo limite de ' || to_char(vr_timeout) || ' segundos';        
+        ELSE
         pr_erro := 'Requisição falhou em SOAP0001.pc_cliente_webservice: ' || UTL_HTTP.get_detailed_sqlerrm;
+        END IF;
       WHEN utl_http.http_server_error THEN
         pr_erro := 'Erro no servidor em SOAP0001.pc_cliente_webservice: ' || UTL_HTTP.get_detailed_sqlerrm;
       WHEN utl_http.http_client_error THEN
