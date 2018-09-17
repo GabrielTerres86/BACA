@@ -144,7 +144,9 @@
 	cdaditiv = '<? echo $cdaditiv ?>';
 	cdopcao = '<?php echo $cddopcao ?>';
 	data = '<?php echo $glbvars["dtmvtolt"] ?>';
-	$("#dtmvtolt").val(data);
+	if ( cdopcao == 'I' ) {
+		$("#dtmvtolt").val(data);
+	}
 	$("#cdaditiv option[value='<? echo $cdaditiv ?>']",'#frmCab').prop('selected',true);
 
 	var i = 0;

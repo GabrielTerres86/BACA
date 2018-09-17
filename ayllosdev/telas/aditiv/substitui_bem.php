@@ -100,5 +100,8 @@
         echo "$('#table_substitui_bens').hide();";
         echo "trocaBotao( 'imprimir' );";
         echo 'showError("inform","Aditivo contratual gerado com sucesso!","Alerta - Ayllos","");';
+		echo '$("#divUsoGenerico").css("visibility", "hidden");';
+		echo '$("#divUsoGenerico").html("");	';
+		echo 'unblockBackground();';
     }
 ?>
