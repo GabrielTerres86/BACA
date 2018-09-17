@@ -2128,6 +2128,7 @@ END PROCEDURE.
 PROCEDURE valida_senha:
 
     DEF VAR aux_token AS CHAR NO-UNDO.
+    DEFINE VARIABLE aux_cdcritic    AS INT         NO-UNDO.
 
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
     IF aux_idtaanew = 1 THEN
@@ -2144,6 +2145,7 @@ PROCEDURE valida_senha:
                                       INPUT aux_dssencar,
                                       INPUT aux_dtnascto,
                                       INPUT aux_idtipcar,
+                                      INPUT aux_cdcritic,
                                      OUTPUT aux_dscritic).
 
     DELETE PROCEDURE h-b1wgen0025.
