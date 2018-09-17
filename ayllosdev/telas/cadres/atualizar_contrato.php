@@ -31,7 +31,7 @@ if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddo
 
 if ( $cddopcao == 'A' ) {
 
-    /*$xml = new XmlMensageria();
+    $xml = new XmlMensageria();
     $xml->add('cdcooper',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('idcalculo_reciproci',$idrecipr);
@@ -44,13 +44,13 @@ if ( $cddopcao == 'A' ) {
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
         exibeErroNew($msgErro);exit;
-    }*/
+    }
 
     echo 'showError("inform","O contrato foi aprovado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","'.$fnconfirm.'");';
 
 } else if ( $cddopcao == 'R' ) {
 
-    /*$xml = new XmlMensageria();
+    $xml = new XmlMensageria();
     $xml->add('cdcooper',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('idcalculo_reciproci',$idrecipr);
@@ -64,12 +64,12 @@ if ( $cddopcao == 'A' ) {
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
         exibeErroNew($msgErro);exit;
-    }*/
+    }
 
     echo 'showError("inform","O contrato foi rejeitado.","Notifica&ccedil;&atilde;o - Ayllos","'.$fnreject.'");';
 
 }
 
 function exibeErroNew($msgErro) {
-    exit('hideMsgAguardo();showError("error","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");');
+    exit('hideMsgAguardo();showError("error","' . $msgErro . '","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");');
 }

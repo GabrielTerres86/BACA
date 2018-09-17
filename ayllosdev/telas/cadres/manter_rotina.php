@@ -39,7 +39,7 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
     $xml->add('nriniseq',1);
     $xml->add('nrregist',0);
 
-    $xmlResult = mensageria($xml, "CADREG", "BUSCACRAPREG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "CADREG", "BUSCACRAPREG", $cdcooper, $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
 
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
@@ -117,12 +117,14 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
 // Opcao de Gravação
 } else if ( $cddopcao == 'AX' ){
 
+    $cdmetodo = (!empty($_POST['cdmetodo'])) ? $_POST['cdmetodo'] : 'I';
+
     $xml = new XmlMensageria();
     $xml->add('cdcooper',$cdcooper);
     $xml->add('cdalcada_aprovacao',$cdalcada);
     $xml->add('cdaprovador',$cdaprovador);
     $xml->add('dsemail_aprovador',$dsemail);
-
+        
     $xmlResult = mensageria($xml, "TELA_CADRES", "INSERE_APROVADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
 
@@ -131,7 +133,30 @@ if ( $cddopcao == 'A' || $cddopcao == 'C' ) {
         exibeErroNew($msgErro);exit;
     }
 
-    echo 'showError("inform","Aprovador adicionado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","PopupAprovadores.carregarGridAprovadores(\"'.$cdalcada.'\");blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
+    $msg = "Aprovador adicionado com sucesso.";
+    if ($cdmetodo === 'A') {
+        $msg = "Aprovador atualizado com sucesso.";
+    }
+
+    // deve atualizar alçada
+    if ($flregra && $cdmetodo === 'I') {
+        $xml = new XmlMensageria();
+        $xml->add('cdcooper',$cdcooper);
+        $xml->add('cdalcada_aprovacao',$cdalcada);
+        $xml->add('flregra_aprovacao','1');
+
+        $xmlResult = mensageria($xml, "TELA_CADRES", "ATUALIZA_ALCADA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+            $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
+            exibeErroNew('N&atilde;o foi poss&iacute;vel atualizar a al&ccedil;ada.<br>' . $msgErro);exit;
+        }
+
+        exit('showError("inform","Aprovador adicionado com sucesso.<br>A al&ccedil;ada foi atualizada.","Notifica&ccedil;&atilde;o - Ayllos","PopupAprovadores.carregarGridAprovadores(\"'.$cdalcada.'\");blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");');
+    }
+
+    echo 'showError("inform","'.$msg.'","Notifica&ccedil;&atilde;o - Ayllos","PopupAprovadores.carregarGridAprovadores(\"'.$cdalcada.'\");blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
 
 // Opcao de Gravação
 } else if ( $cddopcao == 'FX' ){

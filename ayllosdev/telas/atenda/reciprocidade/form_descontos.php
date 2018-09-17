@@ -436,7 +436,7 @@ atualizacaoDesconto = false;
 	<a href="#" id="btnAbrirRejeicao" class="botao" onclick="abrirRejeicao()">Rejeitar</a>
 	<?php } ?>
     <a href="#" id="btnAprovacao" class="botao">Solicitar aprova&ccedil;&atilde;o</a>
-    <a href="#" class="botao" onclick="consulta('A','','',true,'','', 1);return false;">Tarifas instru&ccedil;&atilde;o</a>
+    <a href="#" class="botao" onclick="consulta('<?php echo $cddopcao; ?>','','','<?php echo $cddopcao == 'C' || $cddopcao == 'A' ? 'false' : 'true'; ?>','','', 1);return false;">Tarifas instru&ccedil;&atilde;o</a>
 	<a href="#" id="btVoltar" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>
 </div>
 

@@ -102,8 +102,9 @@ function exibeErroNew($msgErro) {
 					<?
 					$cdoperad = getByTagName($registros[$i]->tags,'cdoperad') | getByTagName($registros[$i]->tags,'cdopereg');
 					$nmoperad = getByTagName($registros[$i]->tags,'nmoperad');
+					$dsemail  = getByTagName($registros[$i]->tags,'dsemail_operador');
 					?>
-					<tr onClick="PopupAprovadores.onClick_Adicionar('<?php echo $cdalcada; ?>', '<?php echo $cdoperad; ?>', '<?php echo $nmoperad; ?>', ''); return false;">
+					<tr onClick="PopupAprovadores.onClick_Adicionar('<?php echo $cdalcada; ?>', '<?php echo $cdoperad; ?>', '<?php echo $nmoperad; ?>', '<?php echo $dsemail; ?>', true); return false;">
 						<td style="width:151px;font-size:11px">
 							<?php echo $cdoperad; ?>
 						</td>

@@ -126,6 +126,15 @@ function Cabecalho() {
 function Grid() {
 
     var registroSelecionado;
+    var atualizarAlcada = 0;
+
+    this.setAtualizarAlcada = function (flregra) {
+        atualizarAlcada = flregra;
+    }
+
+    this.getAtualizarAlcada = function () {
+        return atualizarAlcada;
+    }
 
     var selecionarRegistro = function (Id) {
         registroSelecionado = Id;
@@ -362,8 +371,8 @@ function PesquisaAprovadores() {
                 showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
             },
             success: function (response) {
+                fechaRotina($('#divRotina'));
                 var $div = $('#divResultadoPesquisaAprovadores');
-                //fechaRotina($('#divRotina'));
                 $div.html(response);
                 //$div.setCenterPosition();
                 zebradoLinhaTabela($('#divPesquisaAprovadoresItens > table > tbody > tr'));
@@ -445,7 +454,7 @@ function PopupAprovadores() {
             success: function (response) {
                 hideMsgAguardo();
                 $('#divGrid').html(response);
-                fechaRotina($('#divPesquisa'));
+                fechaRotina($('#divEmailAprovador'));
                 Grid.formatar();
                 exibeRotina($('#divRotina'));
                 if (fncAfter){
@@ -519,6 +528,7 @@ function PopupAprovadores() {
     }
 
     this.adicionarAprovador = function (cdalcada, cdaprovador, dsemail) {
+        var cdmetodo = $('#cdmetodo', '#divEmailAprovador').val();
         var validator = popup.isValid();
 
         if (!validator.isValid) {
@@ -537,6 +547,8 @@ function PopupAprovadores() {
                 cdalcada: cdalcada,
                 cdaprovador: cdaprovador,
                 dsemail: dsemail,
+                flregra: grid.getAtualizarAlcada(),
+                cdmetodo: cdmetodo,
                 redirect: "script_ajax" // Tipo de retorno do ajax
             },
             error: function (objAjax, responseError, objExcept) {
@@ -548,8 +560,25 @@ function PopupAprovadores() {
             },
             success: function (response) {
                 eval(response);
-                var count = parseInt($('[name=chkalcada]#alcada_'+cdalcada).data('count'));
-                $('[name=chkalcada]#alcada_'+cdalcada).data('count', ++count);
+
+                // checkbox atual
+                var $chk = $('[name=chkalcada]#alcada_'+cdalcada);
+
+                // atualiza contador de registros para alçada
+                if (cdmetodo === 'I') {
+                    var count = parseInt($chk.data('count'));
+                    $chk.data('count', ++count);
+                }
+
+                // sobrepoe rotina de fechar para evitar retrocesso na marcação do checkbox
+                if ($chk.is(':checked')) {
+                    if ($('#tdTitTela a', '#divRotina').length) {
+                        $('#tdTitTela a', '#divRotina').attr('onclick', "fechaRotina($('#divRotina')); return false;");
+                    }
+                    if ($('#btPopupVoltar', '#divRotina').length) {
+                        $('#btPopupVoltar', '#divRotina').attr('onclick', "fechaRotina($('#divRotina')); return false;");
+                    }
+                }
             }
         });
     };
@@ -576,39 +605,72 @@ function PopupAprovadores() {
                 showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
             },
             success: function (response) {
-                debugger;
                 eval(response);
+
                 var count = parseInt($('[name=chkalcada]#alcada_'+cdalcada).data('count'));
                 $('[name=chkalcada]#alcada_'+cdalcada).data('count', --count);
             }
         });
     };
 
-    PopupAprovadores.onClick_Adicionar = function (cdalcada, cdaprovador, nome, email) {
+    PopupAprovadores.onClick_Adicionar = function (cdalcada, cdaprovador, nome, email, fromPesquisa) {
+        fechaRotina($('#divPesquisa'));
+        fechaRotina($('#divRotina'));
 
-        $('#pesquisaContainer').hide();
-        $('#pesquisaEmailContainer').show();
+        exibeRotina($('#divEmailAprovador'));
+        blockBackground(parseInt($('#divEmailAprovador').css('z-index')));
 
-        $('#cdalcada', '#pesquisaEmailContainer').val(cdalcada);
-        $('#cdaprovador', '#pesquisaEmailContainer').val(cdaprovador);
+        $('#btVoltar', '#divEmailAprovador').attr('onclick', 'PopupAprovadores.onClick_Voltar('+fromPesquisa+');');
 
-        $('#lbnome', '#pesquisaEmailContainer').text(nome);
-        $('#dsemail', '#pesquisaEmailContainer').val(email);
+        if (fromPesquisa) {
+            $('#cdmetodo', '#divEmailAprovador').val('I');
+        } else {
+            $('#cdmetodo', '#divEmailAprovador').val('A');
+        }
+
+        $('#cdalcada', '#divEmailAprovador').val(cdalcada);
+        $('#cdaprovador', '#divEmailAprovador').val(cdaprovador);
+
+        $('#lbnome', '#divEmailAprovador').text(nome);
+        $('#dsemail', '#divEmailAprovador').val(email);
         
     }
 
     PopupAprovadores.onClick_Confirmar = function () {
-        var cdalcada = $('#cdalcada', '#pesquisaEmailContainer').val();
-        var cdaprovador = $('#cdaprovador', '#pesquisaEmailContainer').val();
-        var dsemail = $('#dsemail', '#pesquisaEmailContainer').val();
+        var cdalcada = $('#cdalcada', '#divEmailAprovador').val();
+        var cdaprovador = $('#cdaprovador', '#divEmailAprovador').val();
+        var dsemail = $('#dsemail', '#divEmailAprovador').val();
+        
+        if (!dsemail.trim()) {
+            showError("error", "O preenchimento do campo e-mail &eacute; obrigat&oacute;rio.", "Alerta - Ayllos", "$('#dsemail','#divEmailAprovador').focus();blockBackground(parseInt($('#divEmailAprovador').css('z-index')));");
+            return;
+        }
 
-        showConfirmacao("Confirma a adi&ccedil;&atilde;o do aprovador?", "Confirma&ccedil;&atilde;o - Ayllos", "popup.adicionarAprovador('"+cdalcada+"', '"+cdaprovador+"', '"+dsemail+"');", "blockBackground(parseInt($('#divPesquisa').css('z-index')));", 'sim.gif','nao.gif');
+        if (!validaEmail(dsemail)) {
+            showError("error", "O e-mail informado &eacute; inv&aacute;lido.", "Alerta - Ayllos", "$('#dsemail','#divEmailAprovador').focus();blockBackground(parseInt($('#divEmailAprovador').css('z-index')));");
+            return;
+        }
+
+        var msg = "Confirma a adi&ccedil;&atilde;o do aprovador?";
+
+        if ($('#cdmetodo', '#divEmailAprovador').val() === 'A') {
+            msg = "Confirma a altera&ccedil;&atilde;o do aprovador?";
+        }
+
+        showConfirmacao(msg, "Confirma&ccedil;&atilde;o - Ayllos", "popup.adicionarAprovador('"+cdalcada+"', '"+cdaprovador+"', '"+dsemail+"');", "blockBackground(parseInt($('#divPesquisa').css('z-index')));", 'sim.gif','nao.gif');
+
     }
 
-    PopupAprovadores.onClick_Voltar = function () {
+    PopupAprovadores.onClick_Voltar = function (fromPesquisa) {
 
-        $('#pesquisaEmailContainer').hide();
-        $('#pesquisaContainer').show();
+        fechaRotina($('#divPesquisa'));
+        fechaRotina($('#divEmailAprovador'));
+
+        if (fromPesquisa) {
+            exibeRotina($('#divPesquisa'));
+        } else {
+            exibeRotina($('#divRotina'));
+        }
 
     }
 
@@ -630,17 +692,23 @@ function PopupAprovadores() {
         $('#nmdbusca', '#frmPesquisaAprovadores').val(nomePesquisa);
         $('#cdalcada', '#frmPesquisaAprovadores').val(cdalcada);
 
-        PopupAprovadores.onClick_Voltar();
+        //PopupAprovadores.onClick_Voltar();
 
         PopupAprovadores.onClick_doPesquisar(nomePesquisa, nomePesquisa);
     }
 
     PopupAprovadores.onClick_doPesquisar = function (cdoperad, nmoperad) {
-        showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
-
         var cdalcada = $('#cdalcada', '#frmPesquisaAprovadores').val();
 
         PesquisaAprovadores.onPesquisar(cdalcada, cdoperad, nmoperad);
+    }
+
+    PopupAprovadores.onClick_Registro = function (dsemail) {
+        $('#dsemail','.complemento').html(dsemail);
+    }
+
+    PopupAprovadores.onDblClick_Registro = function (cdalcada, cdaprovador, nmoperad, dsemail) {
+        PopupAprovadores.onClick_Adicionar(cdalcada, cdaprovador, nmoperad, dsemail, false);
     }
 }
 
@@ -819,8 +887,10 @@ function formataOpcaoA() {
             count = parseInt($el.data('count'));
 
         if (flgregra && !count) {
+            grid.setAtualizarAlcada(1);
             Grid.onClick_Aprovadores(cdalcada, flgregra);
         } else {
+            grid.setAtualizarAlcada(0);
             showConfirmacao("A al&ccedil;ada ser&aacute; atualizada, confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "atualizarAlcada('"+cdalcada+"', "+flgregra+");", "$('#"+id+"').prop('checked', "+(!flgregra)+");", 'sim.gif','nao.gif');
         }
 

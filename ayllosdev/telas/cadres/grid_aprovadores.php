@@ -70,9 +70,11 @@ function exibeErroNew($msgErro) {
             for($i = 0; $i < $count; ++$i) {
                 $cdaprovador = getByTagName($registros[$i]->tags,'cdaprovador');
                 $nmaprovador = getByTagName($registros[$i]->tags,'nmaprovador');
+                $dsemailaprovador = getByTagName($registros[$i]->tags,'dsemailaprovador');
                 $cdaprovadores[] = $cdaprovador;
             ?>
-                <tr>
+                <tr onclick="PopupAprovadores.onClick_Registro('<?php echo $dsemailaprovador; ?>')" 
+                    ondblclick="PopupAprovadores.onDblClick_Registro('<?php echo $cdalcada; ?>', '<?php echo $cdaprovador; ?>', '<?php echo $nmaprovador; ?>','<?php echo $dsemailaprovador; ?>')">
                     <td>
                         <input type="hidden" id="cdaprovador_<?php echo $i; ?>" name="cdaprovador[]" value="<?php echo $cdaprovador; ?>"/>
                         <?php echo $cdaprovador; ?>
@@ -92,3 +94,7 @@ function exibeErroNew($msgErro) {
     </table>
     <input type="hidden" id="cdaprovador_old" value="<?php echo implode(',', $cdaprovadores); ?>"/>
 </div>
+<ul class="complemento">
+    <li class="txtNormalBold" style="width: 9%;">E-mail:</li>
+    <li id="dsemail" class="txtNormal" style="width: 70%;"><?php echo getByTagName($registros[0]->tags,'dsemailaprovador'); ?></li>
+</ul>

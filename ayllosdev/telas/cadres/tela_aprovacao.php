@@ -42,7 +42,12 @@ $registros = $xmlObj->roottag->tags[0]->tags;
 function exibeErroNew($msgErro) {
     exit('hideMsgAguardo();showError("error","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");');
 }
+
+$g_cdalcada = 0;
+$g_nvopelib = 0;
 ?>
+<input type="hidden" id="cdalcada" value="">
+<input type="hidden" id="nvopelib" value="">
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 	<tr>
 		<td align="center">
@@ -77,6 +82,12 @@ function exibeErroNew($msgErro) {
 							<td width="33%" style="padding:2px 4px;height:25px;font-size:11px"><?php echo $dsalcada; ?></td>
 							<td width="33%" style="padding:2px 4px;height:25px;font-size:11px"><a class="txtNormal" href="#" onclick="return false;" style="font-size:11px"><?php echo $dsstatus ?></a></td>
 							<td width="33%" style="padding:2px 4px;height:25px;font-size:11px" align="center"><?php if ($idaprovador && strtoupper($dsstatus) == 'PENDENTE') { ?><button type="button" class="botao" onclick="pedeSenhaCoordenador(<?php echo $nvopelib; ?>, 'aprovarContrato(<?php echo $cdcooper; ?>,<?php echo $cdalcada; ?>,<?php echo $idrecipr; ?>)', 'divRotina');return false;">Aprovar</button><?php } ?>&nbsp;</td>
+							<?php
+							if ($idaprovador && strtoupper($dsstatus) == 'PENDENTE') {
+								$g_cdalcada = $cdalcada;
+								$g_nvopelib = $nvopelib;
+							}
+							?>
 						</tr>
 						<?php } ?>
 					</tbody>
@@ -87,6 +98,13 @@ function exibeErroNew($msgErro) {
 				<a href="#" class="botao" id="btVoltar">Voltar</a>
 				<a href="#" class="botao" id="btDetalhes">Detalhes da negocia&ccedil;&atilde;o</a>
 			</div>
+
+			<?php
+			echo '<script>
+					$("#cdalcada").val("'.$g_cdalcada.'");
+					$("#nvopelib").val("'.$g_nvopelib.'");
+				  </script>';
+			?>
 
 		</td>
 	</tr>
@@ -123,6 +141,7 @@ function exibeErroNew($msgErro) {
 			},
 			success: function (response) {
 				eval(response);
+				$('#telaAprovacao').html('');
 				/*$('#divUsoGenerico').html(response);
 				exibeRotina($('#divUsoGenerico'));*/
 			}

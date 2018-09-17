@@ -72,9 +72,9 @@ $flgregra = (isset($_POST['flgregra'])) ? (int) $_POST['flgregra'] : false;
 
 										<div id="divBotoes" style="margin-bottom: 10px;">
 											<?php if ($flgregra) { ?>
-											<a href="#" class="botao" id="btPopupVoltar" onClick="fechaRotina($('#divRotina'));$('[name=chkalcada]#alcada_<?php echo $cdalcada; ?>').prop('checked', false)">Voltar</a>
+											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina'));$('[name=chkalcada]#alcada_<?php echo $cdalcada; ?>').prop('checked', false)">Voltar</a>
 											<?php } else { ?>
-											<a href="#" class="botao" id="btPopupVoltar" onClick="fechaRotina($('#divRotina'));">Voltar</a>
+											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina'));">Voltar</a>
 											<?php } ?>
 										</div>
 									</div>

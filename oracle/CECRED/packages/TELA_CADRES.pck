@@ -236,6 +236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
                       ) IS
       SELECT crapope.cdoperad
             ,crapope.nmoperad
+            ,tpa.dsemail_aprovador
         FROM tbrecip_param_aprovador tpa
             ,crapope
        WHERE tpa.cdcooper           = crapope.cdcooper
@@ -289,7 +290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 		END IF;
 		--
     vr_dsassunt := 'APROVAÇÃO DE TARIFA';
-    vr_dsmensag := 'Foi solicitada a sua aprovação para alterar a tarifa do convênio de cobrança, conforme negociação abaixo: <br><br>' ||
+    vr_dsmensag := 'Prezado(a) operador(a),<br><br>' ||
+                   'Foi solicitada a sua aprovação para alterar a tarifa do convênio de cobrança, conforme negociação abaixo: <br><br>' ||
                    'Conta: ' || SUBSTR(rw_conta.nrdconta,1, LENGTH(rw_conta.nrdconta)-1) || '-' || SUBSTR(rw_conta.nrdconta,LENGTH(rw_conta.nrdconta), LENGTH(rw_conta.nrdconta)) || '<br>' ||
                    'Nome/Razão Social: ' || rw_conta.nmprimtl || '<br><br>' ||
                    'Justificativa: <br>' || vr_dsjustificativa_desc_adic ||
@@ -321,13 +323,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 											);
 			--
 			LOOP
-				--
+			--
 				FETCH cr_operador INTO rw_operador;
 				EXIT WHEN cr_operador%NOTFOUND;
+        --
+        IF TRIM(rw_operador.dsemail_aprovador) IS NULL THEN
+           --
+           vr_dscritic := 'Operador da alcada sem e-mail cadastrado ou incorreto!';
+           RAISE vr_exc_erro;
+           --
+        END IF;
 				-- Enviar Email comunicando o interesse
 				gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
 																	,pr_cdprogra        => 'CADRES'
-																	,pr_des_destino     => NULL -- Revisar
+																	,pr_des_destino     => rw_operador.dsemail_aprovador
 																	,pr_des_assunto     => vr_dsassunt
 																	,pr_des_corpo       => vr_dsmensag
 																	,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
@@ -1312,7 +1321,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				      ,nmoperad
 							,rnum
 							,qtregtot
-					FROM(SELECT crapope.cdoperad
+              ,(SELECT dsemail_aprovador
+                  FROM tbrecip_param_aprovador tpa
+                 WHERE tpa.cdcooper = res.cdcooper
+                   AND tpa.cdaprovador = res.cdoperad) dsemail_operador
+					FROM(SELECT crapope.cdcooper
+                     ,crapope.cdoperad
 										 ,crapope.nmoperad
 										 ,ROW_NUMBER() OVER ( ORDER BY crapope.nmoperad) rnum
 										 ,COUNT(*) over () qtregtot
@@ -1329,7 +1343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 																		AND tpa.cdaprovador = crapope.cdoperad
 																		AND tpa.flativo     = 1 -- Ativo
 																)
-						ORDER BY crapope.nmoperad)
+						ORDER BY crapope.nmoperad) res
 				 WHERE (rnum >= pr_nriniseq AND 
                 rnum <= (pr_nriniseq + pr_nrregist-1))
             OR pr_nrregist = 0;
@@ -1417,6 +1431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			pc_escreve_xml('<inf>'||
 												'<cdoperad>' || rw_crapope.cdoperad ||'</cdoperad>' ||
 												'<nmoperad>' || rw_crapope.nmoperad ||'</nmoperad>' ||
+												'<dsemail_operador>' || rw_crapope.dsemail_operador ||'</dsemail_operador>' ||
 										 '</inf>');
 			--
 		END LOOP;
@@ -2056,6 +2071,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 				--
 			END IF;
 			--
+      COMMIT;
+      -- Envia os e-mails com a solicitação de aprovação para a próxima alçada se existir
+      pc_envia_email_alcada(pr_cdcooper            => pr_cdcooper
+                           ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
+                           ,pr_cdcritic            => vr_cdcritic
+                           ,pr_dscritic            => vr_dscritic
+                           );
+      --
+      IF vr_dscritic IS NOT NULL THEN
+        --
+        RAISE vr_exc_erro;
+        --
+      END IF;
+      --
 		ELSE -- Rejeitado
 			--
 			pc_reprova_contrato(pr_cdcooper => pr_cdcooper            -- IN
@@ -2072,20 +2101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADRES IS
 			--
 		END IF;
 		--
-		COMMIT;
-		-- Envia os e-mails com a solicitação de aprovação para a próxima alçada se existir
-		pc_envia_email_alcada(pr_cdcooper            => pr_cdcooper
-		                     ,pr_idcalculo_reciproci => pr_idcalculo_reciproci
-												 ,pr_cdcritic            => vr_cdcritic
-												 ,pr_dscritic            => vr_dscritic
-												 );
-		--
-		IF vr_dscritic IS NOT NULL THEN
-			--
-			RAISE vr_exc_erro;
-			--
-		END IF;
-		--
+
 	EXCEPTION
 		WHEN vr_exc_erro THEN
 			IF vr_cdcritic <> 0 THEN

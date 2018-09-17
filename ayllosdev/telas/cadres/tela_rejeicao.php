@@ -65,8 +65,8 @@ function exibeErroNew($msgErro) {
 						</div>
 
 						<div id="divBotoes" style="margin-bottom: 10px;">
-							<a href="#" class="botao" id="btVoltar">Voltar</a>
 							<a href="#" class="botaoDesativado" id="btPopupRejeitar" onclick="rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $idrecipr; ?>)">Enviar</a>
+							<a href="#" class="botao" id="btVoltar">Voltar</a>
 						</div>
 
 					</td>
@@ -128,6 +128,7 @@ function exibeErroNew($msgErro) {
 			},
 			success: function (response) {
 				eval(response);
+				$('#telaRejeicao').html('');
 				/*$('#divUsoGenerico').html(response);
 				exibeRotina($('#divUsoGenerico'));*/
 			}

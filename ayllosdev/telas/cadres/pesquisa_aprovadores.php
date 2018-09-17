@@ -66,24 +66,6 @@
 
 													</div>
 
-													<div id="pesquisaEmailContainer" style="display:none">
-														<form name="frmEmailAprovador" id="frmEmailAprovador" class="formulario">
-															<input type="hidden" id="cdalcada" value="" />
-															<input type="hidden" id="cdaprovador" value="" />
-
-															<label style="font-weight: normal;width:167px">Nome: </label>
-															<label id="lbnome" style="margin-left: 2px;">&nbsp;</label>
-															<hr style="background-color:#ddd; height:1px; clear:both">
-															<label for="dsemail" style="width:167px">E-mail:</label>
-															<input type="email" name="dsemail" id="dsemail" class="campo email" autocomplete="off" />
-															<br clear="both" />
-															<div id="divBotoes" style="margin-bottom: 10px;">
-																<a href="#" class="botao" id="btConfirmarEmail" onclick="PopupAprovadores.onClick_Confirmar();">Confirmar</a>
-																<a href="#" class="botao" id="btVoltarEmail" onclick="PopupAprovadores.onClick_Voltar();">Voltar</a>
-															</div>
-														</form>
-													</div>
-
 												</td>
 											</tr>
 										</table>

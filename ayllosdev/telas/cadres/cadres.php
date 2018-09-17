@@ -52,6 +52,7 @@ require_once("../../includes/carrega_permissoes.php");
 		<script type="text/javascript" src="cadres.js?sidlogin=<?php echo $glbvars["sidlogin"]; ?>"></script>
 		<style>
 			/*#divAlcadas div.divRegistros { height: auto !important }*/
+			center {text-align: left;}
 		</style>
 	</head>
 <body>
@@ -98,7 +99,7 @@ require_once("../../includes/carrega_permissoes.php");
 																	<td>
 																		<!-- INCLUDE DA TELA DE PESQUISA APROVADORES -->
 																		<? require_once('pesquisa_aprovadores.php'); ?>
-																		
+																		<? require_once('form_email_aprovador.php'); ?>
 																		
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
