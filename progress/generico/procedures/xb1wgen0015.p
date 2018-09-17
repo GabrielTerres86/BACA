@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0015.p
    Autor   : David
-   Data    : 12/02/2008                        Ultima atualizacao: 12/04/2016
+   Data    : 12/02/2008                        Ultima atualizacao: 08/09/2018
 
    Dados referentes ao programa:
 
@@ -40,6 +40,8 @@
 
                12/04/2016 - Remocao Aprovacao Favorecido. (Jaison/Marcos - SUPERO)
 
+			   08/09/2018 - Paginacao na tela Contas de Outras IFs (Andrey Formigari - Mouts)
+
 ..............................................................................*/
 
 
@@ -60,6 +62,9 @@ DEF VAR aux_intipcta AS INTE                                           NO-UNDO.
 DEF VAR aux_cntrgcad AS INTE                                           NO-UNDO.
 DEF VAR aux_cntrgpen AS INTE                                           NO-UNDO.
 DEF VAR aux_idastcjt AS INTE                                           NO-UNDO.
+
+DEF VAR aux_qtregini AS INTE                                           NO-UNDO.
+DEF VAR aux_qtregfim AS INTE                                           NO-UNDO.
 
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                           NO-UNDO.
@@ -150,9 +155,8 @@ PROCEDURE valores_entrada:
             WHEN "vllimvrb" THEN aux_vllimvrb = DECI(tt-param.valorCampo).
             WHEN "cdispbif" THEN aux_cdispbif = INTE(tt-param.valorCampo).
             WHEN "nmextbcc" THEN aux_nmextbcc = tt-param.valorCampo.
-           
-                
-
+            WHEN "qtregini" THEN aux_qtregini = INTE(tt-param.valorCampo).
+            WHEN "qtregfim" THEN aux_qtregfim = INTE(tt-param.valorCampo).
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -789,10 +793,15 @@ PROCEDURE consulta-contas-cadastradas:
                                             INPUT aux_inpessoa,
                                             INPUT aux_intipdif,
                                             INPUT aux_nmtitula,
-                                           OUTPUT TABLE tt-contas-cadastradas).
+											INPUT aux_qtregini,
+											INPUT aux_qtregfim,
+                                            OUTPUT TABLE tt-contas-cadastradas,
+                                            OUTPUT aux_qtregist).
                                  
-    RUN piXmlSaida (INPUT TEMP-TABLE tt-contas-cadastradas:HANDLE,
-                    INPUT "ContasCadastr").
+    RUN piXmlNew.
+	RUN piXmlExport (INPUT TEMP-TABLE tt-contas-cadastradas:HANDLE, INPUT "ContasCadastr").
+	RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
+	RUN piXmlSave.
 
 END PROCEDURE.
 

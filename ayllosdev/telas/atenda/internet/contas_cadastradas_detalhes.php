@@ -144,7 +144,7 @@
 				<br/><br/>
 			
 				<div  style = "padding-left:125px;">
-					<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="obtemCntsCad(<? echo $intipdif; ?>); return false;"/>
+					<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="obtemCntsCad(<? echo $intipdif; ?>, 0, 50); return false;"/>
 					<input type="image" id = "btAlterar"  src="<? echo $UrlImagens; ?>botoes/alterar.gif"  onClick = "habilitaAlterarDados('frmDetalhesCoop');return false;" />
 					<input type="image" style="display: none;" id = "btConcluir" src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick = "validaDadosConta('frmDetalhesCoop');return false;" style="display: none;" />
 				</div>

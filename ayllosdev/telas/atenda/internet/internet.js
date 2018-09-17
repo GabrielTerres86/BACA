@@ -1,7 +1,7 @@
 /*************************************************************************
  Fonte: internet.js                                               
  Autor: David                                                     
- Data : Junho/2008                   Última Alteração: 13/12/2017
+ Data : Junho/2008                   Última Alteração: 08/09/2018
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Internet da tela  
              ATENDA                                               
@@ -75,7 +75,10 @@
 			              de operadores (Andrei-MOUTs)
 
 			 06/04/2018 - Inclusao das function validaValorAdesao e senhaCoordenador. PRJ366 (Lombardi).
+
 			 27/06/2018 - Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
+
+             08/09/2018 - Paginacao na tela de Contas de Outras IFs (Andrey Formigari - Mouts)
 
 *********************************************************************************/
 
@@ -705,7 +708,7 @@ function controlaListaCntsCad() {
 
 }
 
-function obtemCntsCad(intipdif) {
+function obtemCntsCad(intipdif, qtregini, qtregfim) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando contas ...");
@@ -719,6 +722,8 @@ function obtemCntsCad(intipdif) {
 			intipdif: intipdif,
 			nrdconta: nrdconta,
 			idseqttl: idseqttl,
+			qtregini: qtregini,
+			qtregfim: qtregfim,
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {

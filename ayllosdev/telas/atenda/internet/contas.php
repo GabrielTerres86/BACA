@@ -111,7 +111,7 @@
                             <table align="center" style="padding-left:15px;">
 					<tr>
 						<td align ="center">
-							<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_cadastradas.gif" onClick="obtemCntsCad(0);return false;" />
+							<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_cadastradas.gif" onClick="obtemCntsCad(0, 0, 50);return false;" />
 						</td>
 						<td align ="center">
 							<input class="campo" value="<? echo utf8ToHtml($cntrgcad) ?>" type="text" style="width:30px;"/>

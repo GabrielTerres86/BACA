@@ -108,6 +108,6 @@
 	// Esconde mensagem de aguardo e retorna para a tela
 	echo 'hideMsgAguardo();';
 	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
-	echo 'obtemCntsCad("'.$intipdif.'");';
+	echo 'obtemCntsCad("'.$intipdif.'", 0, 50);';
 	
 ?>

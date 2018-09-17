@@ -3,13 +3,14 @@
 	/***************************************************************************
 	      Fonte: contas_cadastradas.php      	                           
 	      Autor: Lucas                                                     
-	      Data : Maio/2012                   Última Alteração: 08/04/2013	       
+	      Data : Maio/2012                   Última Alteração: 08/09/2018	       
 	                                                                     
 	      Objetivo  : Mostrar contas de tranf. cadastradas			       
 	                                                                     	 
 	                                                                       	 
 	      Alterações: 08/04/2013 - Transferencia intercooperativa (Gabriel)	
-                          24/04/2015 - Inclusão do campo ISPB SD271603 FDR041 (Vanessa) 
+                    24/04/2015 - Inclusão do campo ISPB SD271603 FDR041 (Vanessa)
+                    08/09/2018 - Paginacao na tela de Contas de Outras IFs (Andrey Formigari - Mouts)
 	                                                                     
 	                                                                      
 	***************************************************************************/
@@ -22,13 +23,23 @@
 	require_once("../../../includes/controla_secao.php");
 
 	// Verifica se tela foi chamada pelo m&eacute;todo POST
-	isPostMethod();	
+	isPostMethod();
+  
+  $intipdif = $_POST["intipdif"];
+	$qtregist = 0;
+	$qtregpag = 50;
+	$qtregini = ((isset($_POST["qtregini"])) ? $_POST["qtregini"] : 0);
+	$qtregfim = ((isset($_POST["qtregfim"])) ? $_POST["qtregfim"] : $qtregpag);
 			
 	?>
+
+<script type="text/javascript">
+  var intipdif;
+</script>
 	
 <div id="divBotoes" style="margin-bottom:10px">
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_sistema_ailos.gif" onClick="obtemCntsCad(1);return false;" />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_de_outras_ifs.gif" onClick="obtemCntsCad(2);return false;"  />
+	<input type="image" src="<? echo $UrlImagens; ?>botoes/contas_sistema_ailos.gif" onClick="obtemCntsCad(1, 0, <? echo $qtregpag; ?>);intipdif = 1;return false;" />
+  <input type="image" src="<? echo $UrlImagens; ?>botoes/contas_de_outras_ifs.gif" onClick="obtemCntsCad(2, 0, <? echo $qtregpag; ?>);intipdif = 2;return false;"  />
 </div>
 	
 <?php
@@ -101,6 +112,8 @@
 	$xmlGetCadastradas .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlGetCadastradas .= "		<intipdif>".$intipdif."</intipdif>";
 	$xmlGetCadastradas .= "		<inpessoa>0</inpessoa>";
+  $xmlGetCadastradas .= "		<qtregini>".$qtregini."</qtregini>";
+	$xmlGetCadastradas .= "		<qtregfim>".$qtregfim."</qtregfim>";
 	$xmlGetCadastradas .= "	</Dados>";
 	$xmlGetCadastradas .= "</Root>";
 
@@ -116,6 +129,7 @@
 	}
 	
 	$registros = $xmlObjCadastradas->roottag->tags[0]->tags;
+  $qtregist = $xmlObjCadastradas->roottag->tags[0]->attributes['QTREGIST'];
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -204,26 +218,77 @@
 				</tbody>
 			</table>		
 		</div>
+    <div id="divPesquisaRodape" class="divPesquisaRodape ">
+      <table>
+        <tr>
+          <td>
+            <?
+							
+							//
+							if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
+							
+							// Se a paginação não está na primeira, exibe botão voltar
+							if ($qtregini > 0) { 
+								?> <a class='paginacaoAnt'>
+              <<< Anterior</a> <? 
+							} else {
+								?> &nbsp; <?
+							}
+						?>
+					
+          </td>
+          <td>
+            <?
+							if ($qtregist > 0) { 
+								?> Exibindo <? echo (($qtregini==0) ? 1 : $qtregini); ?> at&eacute; <? echo (($qtregfim > $qtregist) ? $qtregist : $qtregfim); ?> de <? echo $qtregist; ?><?
+							}
+						?>
+					
+          </td>
+          <td>
+            <?
+							// Se a paginação não está na &uacute;ltima página, exibe botão proximo
+            if ($qtregist > $qtregfim) {
+            ?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
+							} else {
+								?> &nbsp; <?
+							}
+						?>			
+					
+          </td>
+        </tr>
+      </table>
+    </div>
 	</fieldset>
 	<div id="divBotoes" style="margin-bottom:10px">
 		<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="redimensiona(); carregaContas(); return false;" />
 	</div>
 </form>
-
+<style type="text/css">
+  form.formulario a{ padding: 0; }
+</style>
 <script type="text/javascript">
 
 // Aumenta tamanho do div onde o conte&uacute;do da op&ccedil;&atilde;o ser&aacute; visualizado
-$("#divConteudoOpcao").css("width","775");
-$("#divConteudoOpcao").css("height","230");
+  $("#divConteudoOpcao").css("width","775");
+  $("#divConteudoOpcao").css("height","255");
 
-//Chama funcao para controle da lista de Contas Cadastradas
-controlaListaCntsCad();
+  //Chama funcao para controle da lista de Contas Cadastradas
+  controlaListaCntsCad();
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
-blockBackground(parseInt($("#divRotina").css("z-index")));
+  // Esconde mensagem de aguardo
+  hideMsgAguardo();
+  blockBackground(parseInt($("#divRotina").css("z-index")));
 
-$("#divRotina").css("width","845px");
-$("#divRotina").centralizaRotinaH();
+  $("#divRotina").css("width","845px");
+  $("#divRotina").centralizaRotinaH();
 
+  $('a.paginacaoAnt').unbind('click').bind('click', function() {
+    obtemCntsCad(intipdif, <? echo "'".($qtregini - $qtregpag)."','".($qtregfim-$qtregpag)."'"; ?>);
+  });
+  $('a.paginacaoProx').unbind('click').bind('click', function() {
+	  obtemCntsCad(intipdif, <? echo "'".($qtregini + $qtregpag)."','".($qtregfim + $qtregpag)."'"; ?>);
+  });	
+
+  $('#divPesquisaRodape','#tabContas').formataRodapePesquisa();
 </script> 
