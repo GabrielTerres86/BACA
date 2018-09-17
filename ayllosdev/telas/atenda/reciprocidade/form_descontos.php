@@ -82,6 +82,13 @@ $vr_vldesconto_adicional_cee = getByTagName($dados->tags,"vr_vldesconto_adiciona
 $vr_idfim_desc_adicional_cee = getByTagName($dados->tags,"vr_idfim_desc_adicional_cee");
 $vr_dsjustificativa_desc_adic = getByTagName($dados->tags,"vr_dsjustificativa_desc_adic");
 $insitceb = getByTagName($dados->tags,"insitceb");
+$idvinculacao = getByTagName($dados->tags,"idvinculacao");
+$nmvinculacao = getByTagName($dados->tags,"nmvinculacao");
+if (!isset($idvinculacao)) {
+	$idvinculacao = 0;
+}
+$vldesconto_concedido_coo = getByTagName($dados->tags,"vldesconto_concedido_coo");
+$vldesconto_concedido_cee = getByTagName($dados->tags,"vldesconto_concedido_cee");
 
 $nrconven = 0;
 $convenios = getArrayByTagName($dados->tags,"convenios");
@@ -166,25 +173,25 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	exibeErro(utf8_encode($msgErro));
 }
 
-// Monta o xml para a requisicao
-$xml  = "";
-$xml .= "<Root>";
-$xml .= " <Dados>";
-$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-$xml .= " </Dados>";     
-$xml .= "</Root>";
-
-// Executa script para envio do XML
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "BUSCA_VINCULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-$vinculacao = getObjectXML($xmlResult);
-$vinculacao = $vinculacao->roottag->tags[0];
-// Se ocorrer um erro, mostra crítica
-if (strtoupper($vinculacao->roottag->tags[0]->name) == "ERRO") {
-	$msgErro = $vinculacao->roottag->tags[0]->tags[0]->tags[4]->cdata;
-	exibeErro(utf8_encode($msgErro));
+// Só iremos consultar a vinculação atual se ainda não soubermos a atual ou se for consulta
+if ($cddopcao != 'C' || $idvinculacao == 0 || empty($nmvinculacao)) {
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";     
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "BUSCA_VINCULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$vinculacao = getObjectXML($xmlResult);
+	$vinculacao = $vinculacao->roottag->tags[0];
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($vinculacao->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $vinculacao->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
+	$nmvinculacao = getByTagName($vinculacao->tags, "nmvinculacao");
+	$idvinculacao = getByTagName($vinculacao->tags, "idvinculacao");
 }
-$nmvinculacao = getByTagName($vinculacao->tags, "nmvinculacao");
-$idvinculacao = getByTagName($vinculacao->tags, "idvinculacao");
 
 ?>
 <style>
@@ -344,14 +351,14 @@ atualizacaoDesconto = false;
 		<td>Desconto concedido COO</td>
 		<td align="right">
 			<span>%</span>
-			<input name="" id="vldescontoconcedido_coo" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
+			<input name="" id="vldescontoconcedido_coo" value="<?php echo $vldesconto_concedido_coo; ?>" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corImpar">
 		<td>Desconto concedido CEE</td>
 		<td align="right">
 			<span>%</span>
-			<input name="" id="vldescontoconcedido_cee" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
+			<input name="" id="vldescontoconcedido_cee" value="<?php echo $vldesconto_concedido_cee; ?>" class="campo campoTelaSemBorda" disabled value="" style="width:153px;" />
 		</td>
 	</tr>
 </table>
@@ -451,7 +458,7 @@ cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
 
 validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 validaEmiteExpede(false);
-<?php if ($cddopcao != 'I') { echo 'calcula_desconto();'; } ?>
+<?php if ($cddopcao != 'I' && $cddopcao != 'C') { echo 'calcula_desconto();'; } ?>
 
 cDataFimContrato.change(function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
