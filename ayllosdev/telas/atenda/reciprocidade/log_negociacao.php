@@ -49,7 +49,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
 
 <div id='divRegLogNegociacao'>
     <fieldset id='tabConteudo'>
-    <legend><?= utf8ToHtml('Log da negociação - '); echo formataNumericos("zzz.zzz.zz9",$idrecipr,"."); ?></legend>
+    <legend><?= utf8ToHtml('Logs da negociação - '); echo formataNumericos("zzz.zzz.zz9",$idrecipr,"."); ?></legend>
 
     <div class='divRegistros'>
         <table>
