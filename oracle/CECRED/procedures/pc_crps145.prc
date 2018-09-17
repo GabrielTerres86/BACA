@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps145 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -704,6 +703,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
           IF rw_craprpp.vlprerpp <= vr_vlsldtot THEN
                 -- Inserir nova aplicação 
               -- Leitura de carencias do produto informado
+              vr_cdcritic := NULL;
+              vr_dscritic := NULL;
               apli0005.pc_obtem_carencias(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                          ,pr_cdprodut => rw_craprpp.cdprodut   -- Codigo do Produto 
                                          ,pr_cdcritic => vr_cdcritic   -- Codigo da Critica
@@ -727,7 +728,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                               pr_vlaplica => rw_craprpp.vlprerpp,
                                               pr_iddebcti => 0,
                                               pr_idorirec => 0,
-                                              pr_idgerlog => 0,
+                                              pr_idgerlog => 1,
                                               pr_nrctrrpp => rw_craprpp.nrctrrpp, -- Número da RPP
                                               pr_nraplica => vr_nraplica,
                                               pr_cdcritic => vr_cdcritic,
@@ -772,7 +773,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             --fecha o cursor  
             CLOSE cr_crapavs;
 
-          ELSE
+          ELSE -- erro na inclusão da aplicação
                                
             --criando novo registro de lancamentos de aplicaoes de poupanca programada
             BEGIN
@@ -802,7 +803,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             END;  
 
           END IF;  --IF rw_ craprpp.vlprerpp <= vr_vlsldtot THEN
-        END IF; /* IF vr_cdsitrpp  = 1 THEN */
+        END IF; -- Poupanca ativa
 
         IF TO_NUMBER(TO_CHAR(rw_craprpp.dtinirpp, 'DD')) < 11 THEN 
           --verifica os avisos de debito
@@ -851,6 +852,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END IF;   
         
         --atualizado a tabela de poupanca programada
+		IF vr_dscritic IS NULL THEN
         BEGIN
           UPDATE craprpp SET indebito = vr_indebito
                             ,cdsitrpp = vr_cdsitrpp
@@ -863,6 +865,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             --abortando o sistema
             RAISE vr_exc_saida;
         END;                  
+        END IF;
         
         --se o programa controla restart, atualiza o numero da conta processada
         IF pr_flgresta = 1 THEN
