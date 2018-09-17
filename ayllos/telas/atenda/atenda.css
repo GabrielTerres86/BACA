@@ -1,0 +1,71 @@
+/*******************************************************************************
+ Fonte: atenda.css                                                   
+ Autor: David                                                        
+ Data : Dezembro/2007                Última Alteração: 10/03/2017    
+                                                                     
+ Objetivo  : Arquivos com estilos css da tela Atenda                 
+                                                                     	 
+ Alterações: 12/01/2010 - Retirar #divConsultaAssociado (David).     
+             27/04/2011 - Alterado z-index do divRotina de 100       
+             			  para 98. ( Gabriel / DB1 ).                
+             			 							                 
+             30/08/2011 - Incluida divImpressaoCartao                
+             			  (Guilherme - Supero)                       
+																	 
+			 12/11/2012 - Incluído css para o divMsgsGrupoEconomico  
+						  (Adriano)									 
+                                                                     
+             09/03/2017 - Incluído css para o divMsgsGenericasAjuste
+                          (Adriano - SD 603451 ).
+
+***************************************************************************/
+
+#divRotina {
+	position: absolute;
+	width: 545px;
+	z-index: 98;
+	visibility: hidden;
+}
+
+#divJanelaDaRotina {
+	position: absolute;
+	width: 545px;
+	z-index: 105;
+	visibility: hidden;
+}
+
+#divAnotacoes {
+	position: absolute;
+	width: 545px;
+	z-index: 100;
+	visibility: hidden;
+}
+
+#divMsgsAlerta {
+	position: absolute;
+	width: 545px;
+	z-index: 100;
+	visibility: hidden;
+}
+
+#divImpressaoCartao{
+	width: 620px;
+	z-index: 300;
+	visibility: none;
+}
+
+
+#divMsgsGrupoEconomico {
+	position: absolute;
+	width: 545px;
+	z-index: 100;
+	visibility: hidden;
+}
+
+
+#divMsgsGenericas {
+	position: absolute;
+	width: 545px;
+	z-index: 100;
+	visibility: hidden;
+}

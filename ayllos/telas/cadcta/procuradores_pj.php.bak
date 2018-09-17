@@ -1,0 +1,112 @@
+<?php
+/*!
+ * FONTE        : responsavel_legal.php
+ * CRIAÇÃO      : Andrey Formigari (Mouts)
+ * DATA CRIAÇÃO : Setembro/2017
+ * OBJETIVO     : Listar Responsaveis Legais na tela CADCTA
+ * --------------
+ * ALTERAÇÕES   :
+ * --------------
+ */
+
+session_start();	
+require_once("../../includes/config.php");
+require_once("../../includes/funcoes.php");		
+require_once("../../includes/controla_secao.php");
+require_once("../../class/xmlfile.php");	
+isPostMethod();
+
+$cddopcao_proc = $_POST['cddopcao_proc'] == '' ? 'C'  : $_POST['cddopcao_proc'];
+
+// Guardo o número da conta e titular em variáveis
+$nrdconta 	   = $_POST['nrdconta'] == ''      ? 0    : $_POST['nrdconta'];
+$idseqttl 	   = $_POST['idseqttl'] == '' 	   ? 0    : $_POST['idseqttl'];
+$nrcpfcgc_proc = $_POST['nrcpfcgc_proc'] == '' ? 0    : $_POST['nrcpfcgc_proc'];
+$nrdctato 	   = $_POST['nrdctato'] == ''      ? 0    : $_POST['nrdctato'];	
+$nrdrowid 	   = $_POST['nrdrowid'] == ''      ? 0    : $_POST['nrdrowid'];	
+$operacao_proc = $_POST['operacao_proc'] == '' ? 'CT' : $_POST['operacao_proc'];
+$nmdatela      = $_POST['nmdatela'] == ''      ? ''   : $_POST['nmdatela'];
+$nmrotina      = $_POST['nmrotina'] == ''      ? ''   : $_POST['nmrotina'];
+$aux_operacao  = $_POST['aux_operacao'] == ''  ? ''   : $_POST['aux_operacao'];
+$flgcadas      = (!isset($_POST['flgcadas'])) ? ''    : $_POST['flgcadas'];
+
+// Monta o xml de requisição
+$xml  = '';
+$xml .= '<Root>';
+$xml .= '	<Cabecalho>';
+$xml .= '		<Bo>b1wgen0058.p</Bo>';
+$xml .= '		<Proc>busca_dados</Proc>';
+$xml .= '	</Cabecalho>';
+$xml .= '	<Dados>';
+$xml .= '		<cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
+$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
+$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
+$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
+$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+$xml .= '		<idseqttl>0</idseqttl>';
+$xml .= '		<nrcpfcgc>'.$nrcpfcgc_proc.'</nrcpfcgc>';	
+$xml .= '		<cddopcao>'.$cddopcao_proc.'</cddopcao>';	
+$xml .= '		<nrdctato>'.$nrdctato.'</nrdctato>';	
+$xml .= '		<nrdrowid>'.$nrdrowid.'</nrdrowid>';	
+$xml .= '	</Dados>';
+$xml .= '</Root>';	
+
+$xmlResult = getDataXML($xml);
+$xmlObjeto = getObjectXML($xmlResult);	
+$registros = $xmlObjeto->roottag->tags[0]->tags;
+?>
+
+<form id="frmConsultaDados" class="formulario" name="frmConsultaDados">
+	<fieldset>
+		<legend>Procurador</legend>
+		<div class="divRegistros">
+			<table>
+				<thead>
+					<tr><th>Conta/dv</th>
+						<th>Nome</th>
+						<th>C.P.F.</th>
+						<th>Vig&ecirc;ncia</th>
+						<th>Cargo</th>
+					</tr>			
+				</thead>
+				<tbody>
+                
+                
+					<?foreach($registros as $procuracao) { $qtRegistros++; 
+                    
+                        if (getByTagName($procuracao->tags,'dsproftl') == 'PROCURADOR') { ?>
+
+						<tr>
+							<!-- Analisar essa linha, chave primaria de procuradores(cdcooper,tpctrato,nrdconta,nrctremp,nrcpfcgc) -->
+							<td>
+								<span><? echo str_replace($search,'',getByTagName($procuracao->tags,'cddconta')) ?></span>
+								<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="<? echo getByTagName($procuracao->tags,'nrcpfcgc') ?>" /> 
+								<input type="hidden" id="nrdctato" name="nrdctato" value="<? echo getByTagName($procuracao->tags,'nrdctato') ?>" />
+								<input type="hidden" id="nrdrowid" name="nrdrowid" value="<? echo getByTagName($procuracao->tags,'nrdrowid') ?>" />
+								<input type="hidden" id="nrctremp" name="nrctremp" value="<? echo getByTagName($procuracao->tags,'nrctremp') ?>" />
+								<? echo getByTagName($procuracao->tags,'cddconta'); ?>
+							</td>
+							<td>
+								<? echo stringTabela(getByTagName($procuracao->tags,'nmdavali'),23,'maiuscula') ?>
+							</td> 
+							<td>
+								<span><? echo str_replace($search,'',getByTagName($procuracao->tags,'cdcpfcgc')) ?></span>
+								<? echo getByTagName($procuracao->tags,'cdcpfcgc') ?>
+							</td>
+							<td>
+								<span><? echo dataParaTimestamp(getByTagName($procuracao->tags,'dsvalida')) ?></span>
+								<? echo getByTagName($procuracao->tags,'dsvalida') ?>
+							</td>
+							<td>
+								<? echo stringTabela(getByTagName($procuracao->tags,'dsproftl'),10,'maiuscula') ?>
+							</td>
+						</tr>	
+
+                        <? }    } ?>			
+				</tbody>		
+			</table>
+		</div>
+	</fieldset>
+</form>
