@@ -898,7 +898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             -- Se a quantidade de dias úteis entre a data de aprovação e a data atual
             -- for maior que a quantidade de dias de expiração, o sistema deverá realizar
             -- a alteração da situação da proposta para 5 - " expirada por decurso de prazo ".            
-            IF vr_qtdiacor > vr_qtddiexp THEN
+            IF vr_qtdiacor >= vr_qtddiexp THEN
               BEGIN
                 UPDATE
                      crawepr c
@@ -1108,7 +1108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
         vr_qtdiacor:= rw_crapdat.dtmvtolt - rw_crawlim.dtaprova;
         --
         -- Data calculada conforme regras de garantia e tab089 maior que data atual sistema, recebe expiração
-        IF vr_qtdiacor > vr_qtdiatab THEN
+        IF vr_qtdiacor >= vr_qtdiatab THEN
           BEGIN
             -- Realizar a expiração do contrato   
             UPDATE crawlim lim
