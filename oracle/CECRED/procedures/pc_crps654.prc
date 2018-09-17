@@ -482,8 +482,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                  rw_crapdat.dtmvtolt,
                  1, /* debitado */
                  rw_crappla.nrdconta,
-                 rw_crappla.nrctrpla,
-                 rw_craplot.nrseqdig || vr_horaminseg,
+                 rw_crappla.nrctrpla|| vr_horaminseg, -- debitador unico
+                 rw_craplot.nrseqdig ,
                  2,
                  0,
                  0,
