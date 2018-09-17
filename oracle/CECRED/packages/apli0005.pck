@@ -2832,7 +2832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       END IF;
 
       -- Pelo batch não deve validar o valor mínimo - tem apliacacao programada com valor de parcela menor que 5 reais.
-      IF pr_nmdatela <> 'CRPS145' THEN
+      IF upper(pr_nmdatela) <> 'CRPS145' THEN
       -- Verifica valor de aplicacao
       IF pr_vlaplica < 5 THEN
         vr_dscritic := 'Valor da aplicacao nao pode ser menor que R$ 5,00.';
