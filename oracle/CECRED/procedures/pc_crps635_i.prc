@@ -335,7 +335,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
       -- NOVA ROTINA PARA CALCULO RISCO GRUPO E GRAVAÇÃO NA CENTRAL RISCO --
       ----------------------------------------------------------------------
       risc0004.pc_central_risco_grupo(pr_cdcooper => pr_cdcooper,
-                                      pr_dtrefere => vr_dtrefere,     -- Data do dia da Coop
+                                      pr_dtrefere => pr_dtrefere,     -- Data do dia da Coop
                                       pr_dtmvtoan => vr_dtrefere_aux, -- Data da central anterior
                                       pr_dscritic => vr_dscritic);
       -- Se retornou derro

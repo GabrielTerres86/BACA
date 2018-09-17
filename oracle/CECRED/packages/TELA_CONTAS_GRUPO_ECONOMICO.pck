@@ -1180,7 +1180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
 
       -- Cursor do Integrante do Grupo Economico
       CURSOR cr_tbcc_grupo_economico_integ(pr_idintegrante IN tbcc_grupo_economico_integ.idintegrante%TYPE) IS
-        SELECT dtexclusao, peparticipacao
+        SELECT dtexclusao, peparticipacao, tpcarga
           FROM tbcc_grupo_economico_integ
          WHERE tbcc_grupo_economico_integ.idintegrante = pr_idintegrante;
       rw_tbcc_grupo_economico_integ cr_tbcc_grupo_economico_integ%ROWTYPE;
@@ -1257,6 +1257,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       -- Não pode excluir integrante com mais de 50% de participacao
       IF rw_tbcc_grupo_economico_integ.peparticipacao > 50 THEN
         vr_dscritic := 'Não é possível efetuar a exclusão do integrante, verificar participação societária.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Não pode excluir integrante que foram incluidos pelo sistema, pois no dia seguinte irá incluilo 
+      IF rw_tbcc_grupo_economico_integ.tpcarga = 2 THEN
+        vr_dscritic := 'Não é possível efetuar a exclusão, integrante incluso automaticamente pelo sistema.';
         RAISE vr_exc_saida;
       END IF;
 
