@@ -247,12 +247,12 @@ BEGIN
            AND a.cdcooper = ge.cdcooper
            AND a.inpessoa = gi.tppessoa
            AND a.nrdconta = gi.nrdconta
-           AND a.dtelimin IS NULL
+           --AND a.dtelimin IS NULL
            --
            AND a.cdcooper = a2.cdcooper
            AND a.nrcpfcnpj_base = a2.nrcpfcnpj_base
            AND a2.nrdconta <> gi.nrdconta
-           AND a2.dtdemiss IS NULL
+           --AND a2.dtdemiss IS NULL
                
             --
         UNION
@@ -274,11 +274,11 @@ BEGIN
                            AND i.dtexclusao IS NULL)
            AND a.cdcooper = ge.cdcooper
            AND a.nrdconta = ge.nrdconta
-           AND a.dtelimin IS NULL
+           --AND a.dtelimin IS NULL
            AND a.cdcooper = a2.cdcooper
            AND a.nrcpfcnpj_base = a2.nrcpfcnpj_base
            AND a2.nrdconta <> ge.nrdconta
-           AND a2.dtdemiss IS NULL
+           --AND a2.dtdemiss IS NULL
           order by  1, 4, 2, 3;   
      
     --> buscar dados da conta     
