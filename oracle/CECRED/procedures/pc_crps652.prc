@@ -234,6 +234,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                05/06/2018 - Inclusão de Descont de Titulos (Borderô de Titulos) (Andrew Albuquerque(GFT))
 
                17/06/2018 - Revisão de campos para envio de Títulos para a Cyber (Andrew Albuquerque - GFT)
+
+               26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
                  
      ............................................................................. */
 
@@ -2803,12 +2805,34 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            rw_crapsld cr_crapsld%ROWTYPE;
 
            --Informações de Estouros
-           CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
-                            ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
-             SELECT crapgrp.dsdrisgp
-               FROM crapgrp
-              WHERE crapgrp.cdcooper = pr_cdcooper
-                AND crapgrp.nrctasoc = pr_nrctasoc;
+           --Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
+           CURSOR cr_crapgrp(pr_cdcooper IN tbcc_grupo_economico_integ.cdcooper%TYPE
+                                    ,pr_nrdconta IN tbcc_grupo_economico_integ.nrdconta%TYPE) IS
+           SELECT dsdrisgp
+             FROM (SELECT int.nrdconta
+                         ,int.idgrupo
+                         ,DECODE(p.inrisco_grupo,10,'HH',9,'H',8,'G',7,'F',6,'E',5,'D',4,'C',3,'B','A')  dsdrisgp
+                     FROM tbcc_grupo_economico_integ INT
+                         ,tbcc_grupo_economico p
+                    WHERE int.dtexclusao IS NULL
+                      AND int.cdcooper = pr_cdcooper
+                      AND int.idgrupo  = p.idgrupo
+                    UNION
+                   SELECT pai.nrdconta
+                         ,pai.idgrupo
+                         ,DECODE(pai.inrisco_grupo,10,'HH',9,'H',8,'G',7,'F',6,'E',5,'D',4,'C',3,'B','A')  dsdrisgp
+                     FROM tbcc_grupo_economico       pai
+                        , crapass                    ass
+                        , tbcc_grupo_economico_integ int
+                    WHERE ass.cdcooper = pai.cdcooper
+                      AND ass.nrdconta = pai.nrdconta
+                      AND int.idgrupo  = pai.idgrupo
+                      AND int.dtexclusao is null
+                      AND ass.cdcooper = pr_cdcooper
+                      AND int.cdcooper = pr_cdcooper
+                 ) dados
+            WHERE dados.nrdconta = pr_nrdconta
+            ORDER BY idgrupo;
            rw_crapgrp cr_crapgrp%ROWTYPE;
 
            --Selecionar Cadastro Cyber
@@ -2902,7 +2926,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            -- Buscar as informações do Risco do Grupo economico
            OPEN cr_crapgrp(pr_cdcooper => pr_cdcooper
-                          ,pr_nrctasoc => pr_nrdconta);
+                          ,pr_nrdconta => pr_nrdconta);
            FETCH cr_crapgrp INTO rw_crapgrp;
            IF cr_crapgrp%FOUND THEN
              vr_dsdrisgp:= rw_crapgrp.dsdrisgp;
@@ -5735,9 +5759,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                      RAISE vr_exc_saida;
                    END IF;
-
                  END IF;
-
                      --Gerar carga de Baixa
                      pc_gera_carga_baixa (pr_rw_crapcyb => rw_crapcyb            --Registro Cyber
                                      ,pr_dtmvtolt => vr_dtatual     --Data Movimento
@@ -5748,7 +5770,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
                       RAISE vr_exc_saida;
                  end IF;
-                 
                ELSE
                  -- Quando for normal verificar o saldo a regulalizar para ver se houve pagamento
                  -- Buscar o valor do lançamento dos históricos parametrizados para cálculo de conta corrente

@@ -371,7 +371,8 @@ BEGIN
                               (Andrew Albuquerque - GFT)
                  17/06/2018 - Revisão de campos para envio de Títulos para a Cyber (Andrew Albuquerque - GFT)
 
-                 29/08/2018 - Acréscimo do valor dos juros +60 aos saldos devedores para a modalidade 0101 (ADP)
+                 29/08/2018 - P450 - Ajuste para Novo Grupo Economico (Guilherme/AMcom)
+                              P450 - Acréscimo do valor dos juros +60 aos saldos devedores para a modalidade 0101 (ADP)
                               nos relatórios 227 e 354. (Reginaldo/AMcom - P450)
 
   ............................................................................. */
@@ -433,6 +434,7 @@ BEGIN
     vr_indice_dados_tdb varchar2(200);
     vr_indice_tdb       varchar2(200);
     vr_nrctrdsc_tdb     crapcyb.nrctremp%TYPE;
+    vr_idx_grp          VARCHAR2(20);
 
     ds_character_separador constant varchar2(1) := '#';
     --Código de controle retornado pela rotina gene0001.pc_grava_batch_controle
@@ -717,6 +719,13 @@ BEGIN
 
     -- Vetor para armazenar a totalização por nível de risco de FINAME
     vr_tab_finame_nivris typ_tab_finame_nivris;
+
+
+
+    -- Temp Table para armazenar a data do maior atraso
+    TYPE typ_tab_crapgrp IS TABLE OF NUMBER
+      INDEX BY VARCHAR2(20); -- cdcooper + nrcpfcgc
+    vr_tab_crapgrp typ_tab_crapgrp;
 
 
     ---------- Cursores específicos do processo ----------
@@ -1094,11 +1103,27 @@ BEGIN
     rw_crapris_last cr_crapris_last%ROWTYPE;
 
     -- Verifica se a conta em questao pertence a algum grupo economico
-    CURSOR cr_crapgrp(pr_nrcpfcgc IN crapgrp.nrcpfcgc%TYPE) IS
-      SELECT '*'
-        FROM crapgrp
-       WHERE cdcooper = pr_cdcooper
-         AND nrcpfcgc = pr_nrcpfcgc;
+    -- Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO
+    CURSOR cr_crapgrp IS
+      SELECT *
+        FROM (SELECT int.nrdconta, int.nrcpfcgc
+                FROM tbcc_grupo_economico_integ INT
+                    ,tbcc_grupo_economico p
+               WHERE int.dtexclusao IS NULL
+                 AND int.cdcooper = pr_cdcooper
+                 AND int.idgrupo  = p.idgrupo
+               UNION
+              SELECT pai.nrdconta, ass.Nrcpfcgc
+                FROM tbcc_grupo_economico       pai
+                   , crapass                    ass
+                   , tbcc_grupo_economico_integ int
+               WHERE ass.cdcooper = pai.cdcooper
+                 AND ass.nrdconta = pai.nrdconta
+                 AND int.idgrupo  = pai.idgrupo
+                 AND int.dtexclusao is null
+                 AND int.cdcooper = pr_cdcooper
+                 AND ass.cdcooper = pr_cdcooper
+            ) dados;
 
     /* Cursor de Linha de Credito */
       CURSOR cr_craplcr (pr_cdcooper IN craplcr.cdcooper%TYPE
@@ -3890,6 +3915,14 @@ BEGIN
                                          ' - Horário: ' ||to_char(sysdate, 'dd/mm/yyyy hh24:mi:ss'),
                       PR_IDPRGLOG     => vr_idlog_ini_ger);
 
+
+      -- Popular a VR_TAB com todos os grupos economicos
+      FOR rw_crapgrp IN cr_crapgrp LOOP
+        -- Popular o Indice
+        vr_idx_grp := lpad(pr_cdcooper,5,'0')||lpad(rw_crapgrp.nrcpfcgc,15,'0');
+        vr_tab_crapgrp(vr_idx_grp) := rw_crapgrp.nrcpfcgc;        
+      END LOOP;
+
       -- Buscar o primeiro registro da tabela temporária
       vr_des_chave_crapris := vr_tab_crapris.FIRST;
       LOOP
@@ -4525,12 +4558,12 @@ BEGIN
 
         -- Reiniciar variavel de controle de grupo empresarial
         vr_pertenge := '';
+        vr_idx_grp  := lpad(pr_cdcooper,5,'0')||lpad(vr_tab_crapris(vr_des_chave_crapris).nrcpfcgc,15,'0');
+        IF vr_tab_crapgrp.exists(vr_idx_grp) THEN
+           -- Verifica se o CPF/CNPJ em questao pertence a algum grupo economico
+           vr_pertenge := '*';
+        END IF;
 
-        -- Verifica se a conta em questao pertence a algum grupo economico
-        OPEN cr_crapgrp(pr_nrcpfcgc => vr_tab_crapris(vr_des_chave_crapris).nrcpfcgc);
-        FETCH cr_crapgrp
-          INTO vr_pertenge; --> Se encontrar registros na consulta, a variavel receberá '*'
-        CLOSE cr_crapgrp;
         -- Se houve atraso
         IF vr_qtpreatr > 0 THEN
           -- Acumular no totalizador de saldo devedor

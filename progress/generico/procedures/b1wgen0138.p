@@ -37,7 +37,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0138.p
     Autor     : Guilherme
-    Data      : Maio/2012                   Ultima Atualizacao: 05/03/2014
+    Data      : Maio/2012                   Ultima Atualizacao: 12/07/2018
     
     Dados referentes ao programa:
 
@@ -130,6 +130,11 @@
                              
                 05/03/2014 - Incluso VALIDATE (Daniel). 
                              
+                12/07/2018 - P450 - Altera rotina calc_endivid_grupo para chamar a 
+                             nova rotina oracle
+                             pc_calc_endivid_grupo_prog. Eliminada lógica 
+                             progess. Renato Cordeiro (AMcom)
+                             
 .............................................................................*/
 
 
@@ -139,6 +144,7 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -1035,6 +1041,137 @@ PROCEDURE calc_endivid_grupo:
     DEF OUTPUT PARAM TABLE FOR tt-grupo.
     DEF OUTPUT PARAM TABLE FOR tt-erro.                     
                                                             
+    DEF VAR vr_xml AS LONGCHAR.
+    DEF VAR vr_tpdecons AS INT.
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Efetuar a chamada a rotina Oracle  */
+
+    IF par_tpdecons = TRUE THEN
+       ASSIGN vr_tpdecons = 1.
+    ELSE
+       ASSIGN vr_tpdecons = 0.
+       
+    RUN STORED-PROCEDURE pc_calc_endivid_grupo_prog
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                 ,INPUT par_cdagenci
+                                 ,INPUT par_nrdcaixa
+                                 ,INPUT par_cdoperad
+                                 ,INPUT par_nmdatela
+                                 ,INPUT par_idorigem
+                                 ,INPUT par_nrdgrupo
+                                 ,INPUT vr_tpdecons
+                                 ,OUTPUT ""            /*pr_dsdrisco*/
+                                 ,OUTPUT 0             /*pr_vlendivi*/
+                                 ,OUTPUT ""      /*PR_XMLGRUPO*/
+                                 ,OUTPUT 0             /*pr_cdcritic*/
+                                 ,OUTPUT "").          /*pr_dscritic*/
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_calc_endivid_grupo_prog
+           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+    ASSIGN aux_dscritic = "".
+    ASSIGN aux_cdcritic = 0.
+    ASSIGN par_dsdrisco = pc_calc_endivid_grupo_prog.pr_dsdrisco
+                     WHEN pc_calc_endivid_grupo_prog.pr_dsdrisco <> ?.
+
+    ASSIGN par_vlendivi = pc_calc_endivid_grupo_prog.pr_vlendivi
+                     WHEN pc_calc_endivid_grupo_prog.pr_vlendivi <> ?.
+    ASSIGN vr_xml = pc_calc_endivid_grupo_prog.pr_xmlgrupo
+                     WHEN pc_calc_endivid_grupo_prog.pr_xmlgrupo <> ?.
+    ASSIGN aux_cdcritic = pc_calc_endivid_grupo_prog.pr_cdcritic
+                     WHEN pc_calc_endivid_grupo_prog.pr_cdcritic <> ?.
+    ASSIGN aux_dscritic = pc_calc_endivid_grupo_prog.pr_dscritic
+                     WHEN pc_calc_endivid_grupo_prog.pr_dscritic <> ?.
+                     
+
+    /*desmontar o XML e jogar na tt-grupo de novo*/
+
+    /* Efetuar a leitura do XML*/ 
+   
+    SET-SIZE(ponteiro_xml) = LENGTH(vr_xml) + 1. 
+
+    PUT-STRING(ponteiro_xml,1) = vr_xml. 
+
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+    IF ponteiro_xml <> ? THEN
+
+        DO:
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+            DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+              xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+
+              IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                  NEXT. 
+
+              IF xRoot2:NUM-CHILDREN > 0 THEN
+              DO:
+                CREATE tt-grupo.
+              END.
+
+              DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+                  xRoot2:GET-CHILD(xField,aux_cont).
+
+                  IF xField:SUBTYPE <> "ELEMENT" THEN 
+                      NEXT. 
+
+                    xField:GET-CHILD(xText,1) NO-ERROR.
+                    ASSIGN tt-grupo.cdcooper = INT(xText:NODE-VALUE)   WHEN xField:NAME = "cdcooper" NO-ERROR.
+                    ASSIGN tt-grupo.nrdgrupo = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrdgrupo" NO-ERROR.
+                    ASSIGN tt-grupo.nrctasoc = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrctasoc" NO-ERROR.
+                    ASSIGN tt-grupo.nrdconta = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrdconta" NO-ERROR.
+                    ASSIGN tt-grupo.idseqttl = INT(xText:NODE-VALUE)   WHEN xField:NAME = "idseqttl" NO-ERROR.
+                    ASSIGN tt-grupo.nrcpfcgc = DECI(xText:NODE-VALUE)   WHEN xField:NAME = "nrcpfcgc" NO-ERROR.
+                    ASSIGN tt-grupo.dsdrisco = xText:NODE-VALUE        WHEN xField:NAME = "dsdrisco" NO-ERROR.
+                    ASSIGN tt-grupo.innivris = INT(xText:NODE-VALUE)   WHEN xField:NAME = "innivris" NO-ERROR.
+                    ASSIGN tt-grupo.dsdrisgp = xText:NODE-VALUE        WHEN xField:NAME = "dsdrisgp" NO-ERROR.
+                    ASSIGN tt-grupo.inpessoa = INT(xText:NODE-VALUE)   WHEN xField:NAME = "inpessoa" NO-ERROR.
+                    ASSIGN tt-grupo.cdagenci = INT(xText:NODE-VALUE)   WHEN xField:NAME = "cdagenci" NO-ERROR.
+                    ASSIGN tt-grupo.innivrge = INT(xText:NODE-VALUE)   WHEN xField:NAME = "innivrge" NO-ERROR.
+                    ASSIGN tt-grupo.vlendivi = INT(xText:NODE-VALUE)   WHEN xField:NAME = "vlendivi" NO-ERROR.
+                    ASSIGN tt-grupo.vlendigp = INT(xText:NODE-VALUE)   WHEN xField:NAME = "vlendigp" NO-ERROR.
+             END.
+                          
+        END.
+
+            SET-SIZE(ponteiro_xml) = 0. 
+
+        END.
+
+    /*Elimina os objetos criados*/
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
+
+
+
+/*
+                                                            
     DEF VAR opt_vlendivi AS DECI                                NO-UNDO.
     DEF VAR h-b1wgen9999 AS HANDLE                              NO-UNDO.
     DEF VAR aux_tpdordem AS CHAR                                NO-UNDO.
@@ -1180,6 +1317,7 @@ PROCEDURE calc_endivid_grupo:
 
     IF VALID-HANDLE(h-b1wgen9999) THEN
        DELETE OBJECT h-b1wgen9999.
+*/
 
     RETURN "OK".
 
@@ -1795,38 +1933,46 @@ FUNCTION busca_grupo RETURNS LOGICAL(INPUT par_cdcooper  AS INT,
                                      OUTPUT par_gergrupo AS CHAR,
                                      OUTPUT par_dsdrisgp AS CHAR):
 
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "USUARI"     AND       
-                       craptab.cdempres = 00           AND        
-                       craptab.cdacesso = "CTRGRPECON" AND
-                       craptab.tpregist = 99           
-                       NO-LOCK NO-ERROR.
-        
-    IF AVAIL craptab          AND  
-       craptab.dstextab <> "" THEN
-       ASSIGN par_gergrupo = "Grupo Economico esta sendo gerado. " +
-                             "Resultados podem variar.".
-    ELSE
-       ASSIGN par_gergrupo = "".
+/*----------------------------------------------------------------------------------------------------------------------------------------*/
 
 
+   DEF VAR vr_flggrupo AS INT.
 
-    FIND FIRST crapgrp WHERE crapgrp.cdcooper = par_cdcooper AND
-                             crapgrp.nrctasoc = par_nrdconta
-                             NO-LOCK NO-ERROR.
-     IF AVAIL crapgrp THEN
-       DO:
-          ASSIGN par_nrdgrupo = crapgrp.nrdgrupo
-                 par_dsdrisgp = crapgrp.dsdrisgp.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-          RETURN TRUE.
+    /* Efetuar a chamada a rotina Oracle  */
+    RUN STORED-PROCEDURE pc_busca_grupo_associado
+       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                           ,INPUT par_nrdconta
+                                           ,OUTPUT 0
+                                           ,OUTPUT 0
+                                           ,OUTPUT ""
+                                           ,OUTPUT "").
 
-       END.
-    ELSE
-       RETURN FALSE.
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_busca_grupo_associado
+       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-    RETURN FALSE.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+    ASSIGN par_gergrupo = ""
+           par_dsdrisgp = ""
+           par_nrdgrupo = 0
+           par_gergrupo = pc_busca_grupo_associado.pr_gergrupo
+           WHEN pc_busca_grupo_associado.pr_gergrupo <> ?
+           par_dsdrisgp = pc_busca_grupo_associado.pr_dsdrisgp
+           WHEN pc_busca_grupo_associado.pr_dsdrisgp <> ?
+           par_nrdgrupo = pc_busca_grupo_associado.pr_nrdgrupo
+           WHEN pc_busca_grupo_associado.pr_nrdgrupo <> ?
+           vr_flggrupo  = pc_busca_grupo_associado.pr_flggrupo
+           WHEN pc_busca_grupo_associado.pr_flggrupo <> ?.
+
+  if vr_flggrupo = 0 then
+    return false.
+  else
+    return true.
+
+/*----------------------------------------------------------------------------------------------------------------------------------------*/
 
 END FUNCTION.
 
