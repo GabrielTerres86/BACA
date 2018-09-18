@@ -249,7 +249,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             WHEN OTHERS THEN
               --gera critica
               vr_dscritic := 'Erro ao atualizar Data do risco da Central de Risco(crapris). '||
-                             'Erro: '||SQLERRM;
+                             ' ROWID: ' || rw_crapris.rowid || ' Data Ant: ' || rw_crapris.dtdrisco_anterior ||
+                             '. Detalhes:'||SQLERRM;
+              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratado
+                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                         || vr_cdprogra || ' --> '
+                                                         || vr_dscritic );
               RAISE vr_exc_fimprg;
           END;
         END LOOP;
