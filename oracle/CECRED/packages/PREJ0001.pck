@@ -43,7 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0001 AS
                               ,pr_nrdconta IN  crapris.nrdconta%TYPE  --> Número da conta
                               ,pr_nrctremp IN  crapris.nrctremp%TYPE) --> Número do contrato
                               RETURN NUMBER;
-    
+
     /* Realiza a gravação dos parametros da transferencia para prejuizo informados na tela PARTRP */
     PROCEDURE pc_grava_prm_trp(pr_dsvlrprm1   IN VARCHAR2   --> Data de inicio da vigência
                               ,pr_dsvlrprm2   IN VARCHAR2   --> produto
@@ -379,12 +379,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
   FUNCTION fn_juros60_emprej(pr_cdcooper IN  crapris.cdcooper%TYPE
                             ,pr_nrdconta IN  crapris.nrdconta%TYPE
                             ,pr_nrctremp IN  crapris.nrctremp%TYPE) RETURN NUMBER IS
-                                                                                     
+
      CURSOR cr_juro60_pagos (pr_cdcooper crapris.cdcooper%TYPE
                             ,pr_nrdconta crapris.nrdconta%TYPE
                             ,pr_nrctremp crapris.nrctremp%TYPE) IS
      SELECT sum(CASE WHEN h.cdhistor IN (2473) THEN h.vllanmto
-                ELSE 0 END) 
+                ELSE 0 END)
           - sum(CASE WHEN h.cdhistor IN (2474) THEN h.vllanmto
                 ELSE 0 END) vllanmto
        FROM craplem h
@@ -392,8 +392,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
         AND cdcooper = pr_cdcooper
         AND nrdconta = pr_nrdconta
         AND nrctremp = pr_nrctremp;
-     rw_juro60_pagos cr_juro60_pagos%ROWTYPE;                              
-     
+     rw_juro60_pagos cr_juro60_pagos%ROWTYPE;
+
      -- Verifica se existe lançamento para os históricos específicos
      CURSOR cr_juro60_lem (pr_cdcooper crapris.cdcooper%TYPE
                           ,pr_nrdconta crapris.nrdconta%TYPE
@@ -403,24 +403,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
         WHERE h.cdcooper = pr_cdcooper
           AND h.nrdconta = pr_nrdconta
           AND h.nrctremp = pr_nrctremp
-          AND h.cdhistor IN(2402, 2406, 2382, 2397);         
-       
-     rw_juro60_lem cr_juro60_lem%ROWTYPE;     
-    
+          AND h.cdhistor IN(2402, 2406, 2382, 2397);
+
+     rw_juro60_lem cr_juro60_lem%ROWTYPE;
+
    BEGIN
      -- Abre cursor cr_juro60_lem
-     OPEN cr_juro60_lem(pr_cdcooper, pr_nrdconta, pr_nrctremp); 
+     OPEN cr_juro60_lem(pr_cdcooper, pr_nrdconta, pr_nrctremp);
     FETCH cr_juro60_lem
      INTO rw_juro60_lem;
     CLOSE cr_juro60_lem;
-   
+
      -- Se existem lançamentos para os históricos específicos
-     IF NVL(rw_juro60_lem.vljura60,0) > 0 THEN        
-    
-         OPEN cr_juro60_pagos(pr_cdcooper, pr_nrdconta, pr_nrctremp); 
-        FETCH cr_juro60_pagos  
+     IF NVL(rw_juro60_lem.vljura60,0) > 0 THEN
+
+         OPEN cr_juro60_pagos(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+        FETCH cr_juro60_pagos
          INTO rw_juro60_pagos;
-        CLOSE cr_juro60_pagos; 
+        CLOSE cr_juro60_pagos;
          --
          RETURN(rw_juro60_lem.vljura60 - nvl(rw_juro60_pagos.vllanmto, 0));
       ELSE
@@ -428,7 +428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
      END IF;
      --
    END fn_juros60_emprej;
-  
+
    PROCEDURE pc_grava_prm_trp(pr_dsvlrprm1 IN VARCHAR2  -- Data de inicio da vigência
                              ,pr_dsvlrprm2 IN VARCHAR2  -- produto
                              ,pr_dsvlprmgl IN VARCHAR2  -- Parametro geral
@@ -2222,7 +2222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
     END LOOP; */
 
     /* Verifica se existe boleto em aberto ou pago, pendente de processamento, para o contrato */
-    FOR r_busca_boleto in c_busca_boleto LOOP
+    /*FOR r_busca_boleto in c_busca_boleto LOOP
       IF r_busca_boleto.incobran = 0 THEN -- boleto aberto
         vr_cdcritic := 0;
         vr_dscritic := 'Boleto da conta: ' || r_busca_boleto.nrdconta_cob ||
@@ -2258,7 +2258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
           END IF;
 
       END IF;
-    END LOOP;
+    END LOOP;*/
 
     /* verifica se possui acordo ativo ou liquidado */
     /* recp0001.pc_verifica_situacao_acordo (pr_cdcooper => pr_cdcooper
@@ -6906,38 +6906,11 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
 
            RAISE vr_exc_erro;
         END IF;
-				
-				-- Executa apenas na mensal
-				IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr, 'MM') THEN
-					-- Calcula e debita da corrente corrente em prejuízo os juros remuneratórios
-					CECRED.PREJ0003.pc_calc_juro_prejuizo_mensal(pr_cdcooper => vr_cdcooper
-																										,pr_cdcritic =>vr_cdcritic
-																										,pr_dscritic =>vr_dscritic);
-				END IF;
-
-        -- Resgata créditos bloqueados em contas em prejuízo não movimentados há mais de X dias
-        CECRED.PREJ0003.pc_resgata_cred_bloq_preju(pr_cdcooper => vr_cdcooper
-				                                          , pr_cdcritic => vr_cdcritic
-																									, pr_dscritic => vr_dscritic);
-																									
-				-- Efetua o pagamento automático do prejuízo com os créditos disponíveis para operações na conta corrente																					
-			  CECRED.PREJ0003.pc_pagar_prejuizo_cc_autom(pr_cdcooper => vr_cdcooper
-                                                  ,pr_cdcritic =>vr_cdcritic
-                                                  ,pr_dscritic =>vr_dscritic
-                                                  ,pr_tab_erro =>vr_tab_erro );
-
-        -- Processa liquidação do prejuízo para contas corrente que tiveram todo o saldo de prejuízo pago                                                  																									
-				CECRED.PREJ0003.pc_liquida_prejuizo_cc(pr_cdcooper => vr_cdcooper
-                                                  ,pr_cdcritic =>vr_cdcritic
-                                                  ,pr_dscritic =>vr_dscritic
-                                                  ,pr_tab_erro =>vr_tab_erro );
-
-        -- Transfere contas corrente para prejuízo
-        CECRED.PREJ0003.pc_transfere_prejuizo_cc(pr_cdcooper => vr_cdcooper
-                                                  ,pr_cdcritic =>vr_cdcritic
-                                                  ,pr_dscritic =>vr_dscritic
-                                                  ,pr_tab_erro =>vr_tab_erro );
-
+        
+        PREJ0005.pc_executa_job_prejuizo(pr_cdcooper => vr_cdcooper
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                                                     
         IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
 
           -- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
@@ -6966,8 +6939,178 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
 
            RAISE vr_exc_erro;
         END IF;
+				
+				-- Se as regras de prejuízo de conta corrente estão ativas para a cooperativa
+				IF PREJ0003.fn_verifica_flg_ativa_prju(vr_cdcooper) THEN
 
+					-- Calcula e debita da corrente corrente em prejuízo os juros remuneratórios
+					CECRED.PREJ0003.pc_calc_juro_prejuizo_mensal(pr_cdcooper => vr_cdcooper
+																										,pr_cdcritic =>vr_cdcritic
+																										,pr_dscritic =>vr_dscritic);
+																										
+					IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+						-- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+						vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+												 'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
 
+						-- Parte inicial do texto do chamado e do email
+						vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+
+						-- Buscar e-mails dos destinatarios do produto cyber
+						vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+
+						cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+																	 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+																	 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+																	 -- Parametros para Ocorrencia
+																	 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+																	 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+																	 ,pr_dsmensagem    => vr_dstexto    --> dscritic
+																	 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+																	 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+																	 ,pr_texto_chamado => vr_titulo
+																	 ,pr_destinatario_email => vr_destinatario_email
+																	 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+																	 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+						 RAISE vr_exc_erro;
+					END IF;
+
+					-- Resgata créditos bloqueados em contas em prejuízo não movimentados há mais de X dias
+					CECRED.PREJ0003.pc_resgata_cred_bloq_preju(pr_cdcooper => vr_cdcooper
+																										, pr_cdcritic => vr_cdcritic
+																										, pr_dscritic => vr_dscritic);
+																										
+					IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+						-- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+						vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+												 'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+
+						-- Parte inicial do texto do chamado e do email
+						vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+
+						-- Buscar e-mails dos destinatarios do produto cyber
+						vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+
+						cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+																	 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+																	 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+																	 -- Parametros para Ocorrencia
+																	 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+																	 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+																	 ,pr_dsmensagem    => vr_dstexto    --> dscritic
+																	 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+																	 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+																	 ,pr_texto_chamado => vr_titulo
+																	 ,pr_destinatario_email => vr_destinatario_email
+																	 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+																	 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+						 RAISE vr_exc_erro;
+					END IF;
+
+					-- Efetua o pagamento automático do prejuízo com os créditos disponíveis para operações na conta corrente
+					CECRED.PREJ0003.pc_pagar_prejuizo_cc_autom(pr_cdcooper => vr_cdcooper
+																										,pr_cdcritic =>vr_cdcritic
+																										,pr_dscritic =>vr_dscritic
+																										,pr_tab_erro =>vr_tab_erro );
+																										
+					IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+						-- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+						vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+												 'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+
+						-- Parte inicial do texto do chamado e do email
+						vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+
+						-- Buscar e-mails dos destinatarios do produto cyber
+						vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+
+						cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+																	 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+																	 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+																	 -- Parametros para Ocorrencia
+																	 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+																	 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+																	 ,pr_dsmensagem    => vr_dstexto    --> dscritic
+																	 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+																	 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+																	 ,pr_texto_chamado => vr_titulo
+																	 ,pr_destinatario_email => vr_destinatario_email
+																	 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+																	 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+						 RAISE vr_exc_erro;
+					END IF;
+
+					-- Processa liquidação do prejuízo para contas corrente que tiveram todo o saldo de prejuízo pago
+					CECRED.PREJ0003.pc_liquida_prejuizo_cc(pr_cdcooper => vr_cdcooper
+																										,pr_cdcritic =>vr_cdcritic
+																										,pr_dscritic =>vr_dscritic
+																										,pr_tab_erro =>vr_tab_erro );
+																										
+				  IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+						-- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+						vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+												 'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+
+						-- Parte inicial do texto do chamado e do email
+						vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+
+						-- Buscar e-mails dos destinatarios do produto cyber
+						vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+
+						cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+																	 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+																	 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+																	 -- Parametros para Ocorrencia
+																	 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+																	 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+																	 ,pr_dsmensagem    => vr_dstexto    --> dscritic
+																	 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+																	 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+																	 ,pr_texto_chamado => vr_titulo
+																	 ,pr_destinatario_email => vr_destinatario_email
+																	 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+																	 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+						 RAISE vr_exc_erro;
+					END IF;
+
+					-- Transfere contas corrente para prejuízo
+					CECRED.PREJ0003.pc_transfere_prejuizo_cc(pr_cdcooper => vr_cdcooper
+																										,pr_cdcritic =>vr_cdcritic
+																										,pr_dscritic =>vr_dscritic
+																										,pr_tab_erro =>vr_tab_erro );
+
+					IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+						-- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+						vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+												 'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+
+						-- Parte inicial do texto do chamado e do email
+						vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+
+						-- Buscar e-mails dos destinatarios do produto cyber
+						vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+
+						cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+																	 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+																	 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+																	 -- Parametros para Ocorrencia
+																	 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+																	 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+																	 ,pr_dsmensagem    => vr_dstexto    --> dscritic
+																	 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+																	 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+																	 ,pr_texto_chamado => vr_titulo
+																	 ,pr_destinatario_email => vr_destinatario_email
+																	 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+																	 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+						 RAISE vr_exc_erro;
+					END IF;
+				END IF;
       ELSE
         -- Não retornar o erro - Chamado 831545 - 16/01/2018
         IF vr_dserro NOT LIKE '%Processo noturno nao finalizado para cooperativa%' THEN

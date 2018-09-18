@@ -245,13 +245,6 @@ vr_tab_atraso typ_tab_atraso;
 -- Record com dados do lote, obtidos a partir do cursor "LANC0001.cr_craplot"
 rw_craplot cr_craplot%ROWTYPE;
 
--- Variável que Indica se as regras de negócio do tratamento do prejuízo já estão ativas,
--- ou seja, se as regras de bloqueio de débitos e transferência de créditos para a conta
--- transitória já devem ser processados para contas em prejuízo.
-vr_inatvprj BOOLEAN := NVL(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                         ,pr_nmsistem => 'CRED'
-                                                         ,pr_cdacesso => 'IN_ATIVA_REGRAS_PREJU'), 'N') = 'S';
-
 -- Função que Obtém dados do histórico (CRAPHIS)
 FUNCTION fn_obtem_dados_historico(pr_cdcooper craplcm.cdcooper%TYPE
                               , pr_cdhistor craplcm.cdhistor%TYPE)
@@ -353,7 +346,7 @@ BEGIN
 	vr_pode_debitar := TRUE;
 
 	-- Se as regras de negócio do prejuízo já estão ativadas
-	IF vr_inatvprj THEN
+	IF PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
 		vr_reg_historico := fn_obtem_dados_historico(pr_cdcooper, pr_cdhistor);
 
 		-- Confere se o histórico em questão é de Débito
@@ -486,7 +479,7 @@ BEGIN
 
 		-- Se o lançamento é um débito, o histórico não permite estourar e a conta está em prejuízo
 		-- (e se as regras de negócio do prejuízo já estão ativas)
-		IF vr_reg_historico.indebcre = 'D' AND vr_inatvprj THEN
+		IF vr_reg_historico.indebcre = 'D' AND PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
 			-- Se a conta está estourada e não permite debitar
 			IF NOT fn_pode_debitar(pr_cdcooper, pr_nrdconta, pr_cdhistor) THEN
 				 pr_cdcritic := 1134; -- 1134 - Nao foi possivel realizar debito.
@@ -621,7 +614,7 @@ BEGIN
   		vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
 
 			IF vr_inprejuz AND vr_reg_historico.intransf_cred_prejuizo = 1
-			AND vr_inatvprj THEN
+			AND PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
 				pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
 
 				vr_vltransf := pr_vllanmto;
@@ -714,7 +707,7 @@ BEGIN
 							 , pr_cdagenci
 							 , pr_nrdconta
 							 , pr_nrdocmto
-							 , 2738 --- ****** SUBSTITUIR *******
+							 , 2738 
 							 , vr_vltransf
 							 , SYSDATE
 							 , 1

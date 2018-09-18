@@ -27,6 +27,10 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
   -- Verifica se a conta corrente se encontra em prejuízo
   FUNCTION fn_verifica_preju_conta(pr_cdcooper craplcm.cdcooper%TYPE
                                  , pr_nrdconta craplcm.nrdconta%TYPE) RETURN BOOLEAN;
+																 
+	-- Verifica se as regras do prejuízo de conta corrente estão ativadas para a cooperativa
+	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE) 
+		RETURN BOOLEAN;
 
 	-- Verifica se o prejuízo de conta corrente foi liquidado em uma data específica
   FUNCTION fn_verifica_liquidacao_preju(pr_cdcooper craplcm.cdcooper%TYPE
@@ -167,6 +171,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_nrdconta IN crapass.nrdconta%TYPE
                               , pr_vlrpagto IN craplcm.vllanmto%TYPE
                               , pr_vlrabono IN craplcm.vllanmto%TYPE DEFAULT NULL
+															, pr_atsldlib IN INTEGER DEFAULT 1 -- se deve atualizar o saldo liberado para operações na conta corrente
                               , pr_cdcritic OUT crapcri.cdcritic%TYPE
                               , pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -369,6 +374,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
 
     RETURN vr_conta_em_prejuizo;
   END fn_verifica_preju_conta;
+	
+	-- Verifica se as regras do prejuízo de conta corrente estão ativadas para a cooperativa
+	FUNCTION fn_verifica_flg_ativa_prju(pr_cdcooper IN crapcop.cdcooper%TYPE) 
+		RETURN BOOLEAN AS vr_flg_ativa_preju BOOLEAN;
+	BEGIN
+		vr_flg_ativa_preju := NVL(GENE0001.fn_param_sistema (pr_cdcooper => pr_cdcooper
+                                                        ,pr_nmsistem => 'CRED'
+                                                        ,pr_cdacesso => 'IN_ATIVA_REGRAS_PREJU'), 'N') = 'S';
+																												
+		RETURN vr_flg_ativa_preju;
+	END fn_verifica_flg_ativa_prju;
 
 	-- Verifica se o prejuízo foi liquidado em uma data específica
   FUNCTION fn_verifica_liquidacao_preju(pr_cdcooper craplcm.cdcooper%TYPE
@@ -540,7 +556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      WHERE det.cdcooper = pr_cdcooper
        AND det.nrdconta = pr_nrdconta
        AND det.dtmvtolt = pr_dtmvtolt
-       AND det.cdhistor IN (2723,2733);
+       AND det.cdhistor IN (2723,2733,2323);
 
     vr_valor_pagamentos NUMBER;
   BEGIN
@@ -2392,6 +2408,7 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
                               , pr_nrdconta IN crapass.nrdconta%TYPE
                               , pr_vlrpagto IN craplcm.vllanmto%TYPE
                               , pr_vlrabono IN craplcm.vllanmto%TYPE DEFAULT NULL
+															, pr_atsldlib IN INTEGER DEFAULT 1 -- se deve atualizar o saldo liberado para operações na conta corrente
                               , pr_cdcritic OUT crapcri.cdcritic%TYPE
                               , pr_dscritic OUT crapcri.dscritic%TYPE) IS
    /* .............................................................................
@@ -2896,13 +2913,15 @@ PROCEDURE pc_ret_saldo_dia_prej ( pr_cdcooper  IN crapcop.cdcooper%TYPE         
        SET vlpgprej = nvl(vlpgprej, 0) + least(vr_valrpago, pr_vlrpagto)
      WHERE ROWID = rw_contaprej.rowid;
 
-    -- Desconta o valor total do pagamento efetuado do saldo disponível para operações na C/C
-    pc_atualiza_sld_lib_prj(pr_cdcooper => pr_cdcooper
-                          , pr_nrdconta => pr_nrdconta
-                          , pr_vlrdebto => least(vr_valrpago, pr_vlrpagto)
-                          , pr_cdcritic => vr_cdcritic
-                          , pr_dscritic => vr_dscritic
-                          , pr_des_erro => vr_des_erro);
+    IF pr_atsldlib = 1 THEN
+			-- Desconta o valor total do pagamento efetuado do saldo disponível para operações na C/C
+			pc_atualiza_sld_lib_prj(pr_cdcooper => pr_cdcooper
+														, pr_nrdconta => pr_nrdconta
+														, pr_vlrdebto => least(vr_valrpago, pr_vlrpagto)
+														, pr_cdcritic => vr_cdcritic
+														, pr_dscritic => vr_dscritic
+														, pr_des_erro => vr_des_erro);
+		END IF;
 
  EXCEPTION
 	 WHEN vr_exc_saida THEN
