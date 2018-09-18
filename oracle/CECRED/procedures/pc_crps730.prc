@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 06/09/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 18/09/2018
 
    Dados referentes ao programa:
 
@@ -17,6 +17,8 @@
    
    06/09/2018 - INC0023422 Inclusão de logs de exception para capturar possíveis problemas de processamento;
                 inclusão de pc_set_modulo (Carlos)
+
+   18/09/2018 - Comentado rotina de crítica da conciliação automática de TEDs recebidas (Fabio Stein/Supero).
    
   ............................................................................. */
   
@@ -3630,11 +3632,12 @@ BEGIN
 	-- Executa a conciliação automática
 	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
 	--
-  IF pr_dscritic IS NOT NULL THEN
+  --Ignorar validacoes da conciliacao automatica.
+--  IF pr_dscritic IS NOT NULL THEN
+--    --
+--    RAISE vr_exc_erro;
     --
-    RAISE vr_exc_erro;
-    --
-  END IF;
+--  END IF;
 	
   GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_gera_movimento_pagamento');
 	-- Gera as movimentações
