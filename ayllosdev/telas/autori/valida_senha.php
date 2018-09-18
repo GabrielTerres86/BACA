@@ -61,7 +61,7 @@
 		$mtdErro = 'bloqueiaFundo( $(\'#divRotina\') ); $(\'#cddsenha\',\'#frmSenha\').focus();';
 		echo "flginassele = 0;"; // Nao deve validar senha
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}else{
 		
 		echo $retorno;

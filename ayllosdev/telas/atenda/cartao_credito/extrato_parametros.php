@@ -22,12 +22,12 @@
 
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"T")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrcrcard"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	$nrdconta = $_POST["nrdconta"];
@@ -36,10 +36,10 @@
 	
 
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Verifica se número do Cartao é um inteiro válido
-	if (!validaInteiro($nrcrcard)) exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lido. Cartao: '.$nrcrcard,'Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrcrcard)) exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lido. Cartao: '.$nrcrcard,'Alerta - Aimaro',$funcaoAposErro);
 ?>
 <form action="" class="formulario" name="frmExtrato" id="frmExtrato">
 	<div id="divExtrato">

@@ -159,7 +159,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
 				},
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
         },
         success: function (response) {
             hideMsgAguardo();
@@ -169,14 +169,14 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
                 }
             }
         }
@@ -226,12 +226,12 @@ function manterRotina(operacao) {
 
 	if (cddopcao == 'R') {
 		if (inidtmvt == '') {
-			showError('error', 'Informe a data inicial.', 'Alerta - Ayllos', '$(\'#inidtmvt\',\'#frmOpcao\').focus();');
+			showError('error', 'Informe a data inicial.', 'Alerta - Aimaro', '$(\'#inidtmvt\',\'#frmOpcao\').focus();');
 			return false;
 		}
 
 		if (fimdtmvt == '') {
-			showError('error', 'Informe a data final.', 'Alerta - Ayllos', '$(\'#fimdtmvt\',\'#frmOpcao\').focus();');
+			showError('error', 'Informe a data final.', 'Alerta - Aimaro', '$(\'#fimdtmvt\',\'#frmOpcao\').focus();');
 			return false;
 		}
 
@@ -244,7 +244,7 @@ function manterRotina(operacao) {
 		if (dtfim < dtini) {
 			$('#inidtmvt', '#' + frmOpcao).val('');
 			$('#fimdtmvt', '#' + frmOpcao).val('');
-			showError('error', 'Per&iacute;odo Inv&aacute;lido! Data final maior que data inicial!', 'Alerta - Ayllos', '$(\'#inidtmvt\',\'#frmOpcao\').focus();');
+			showError('error', 'Per&iacute;odo Inv&aacute;lido! Data final maior que data inicial!', 'Alerta - Aimaro', '$(\'#inidtmvt\',\'#frmOpcao\').focus();');
 			return false;
 		}
 	}	
@@ -306,7 +306,7 @@ function manterRotina(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
         },
         success: function (response) {
             try {
@@ -314,7 +314,7 @@ function manterRotina(operacao) {
                 return false;
             } catch (error) {
                 hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
             }
         }
     });
@@ -414,7 +414,7 @@ function buscaOpcao() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "unblockBackground()");
         },
         success: function (response) {
             $('#divTela').html(response);
@@ -696,7 +696,7 @@ function controlaLayoutC() {
         layoutPadrao();
 
     } else {
-        showError('error', '329 - Tipo de consulta errado.', 'Alerta - Ayllos', "cConsulta.focus();");
+        showError('error', '329 - Tipo de consulta errado.', 'Alerta - Aimaro', "cConsulta.focus();");
         return false;
     }
 
@@ -1242,7 +1242,7 @@ function geraCartaAnuencia(){
     var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();";
     var aux_mensagem = "Deseja efetuar impress&atilde;o da carta de anuencia?"; // Mensagem de confirmacao de impressao;
     showConfirmacao(aux_mensagem,
-					'Confirma&ccedil;&atilde;o - Ayllos',
+					'Confirma&ccedil;&atilde;o - Aimaro',
 					'dataPagamentoDivida();',
 					callafter,
 					'sim.gif',
@@ -1262,7 +1262,7 @@ function dataPagamentoDivida() {
 			redirect: 'ajax_html'
 		},
         error: function (objAjax, responseError, objExcept) {
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 		},
         success: function (response) {
             $('#divRotina').html(response);
@@ -1297,7 +1297,7 @@ function imprimirCartaAnuencia(){
 	});
 	
 	if (msgErro) {
-		showError('error', msgErro, 'Alerta - Ayllos', '');
+		showError('error', msgErro, 'Alerta - Aimaro', '');
         return false;
 	}
 	
@@ -1320,7 +1320,7 @@ function imprimirCartaAnuencia(){
 function buscaConsulta(operacao) {
 
     if (operacao == 'instrucoes' && cdsituac == 'L') {
-        showError('error', 'Opcao nao disponivel para situacao ' + dssituac, 'Alerta - Ayllos', "");
+        showError('error', 'Opcao nao disponivel para situacao ' + dssituac, 'Alerta - Aimaro', "");
         return false;
     }
 
@@ -1352,7 +1352,7 @@ function buscaConsulta(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -1370,14 +1370,14 @@ function buscaConsulta(operacao) {
 
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             }
 
@@ -1639,7 +1639,7 @@ function buscaCampo() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ");
         },
         success: function (response) {
 
@@ -1651,14 +1651,14 @@ function buscaCampo() {
 
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ');
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divUsoGenerico\') ); bloqueiaFundo($(\'#divRotina\')); ');
                 }
             }
 
@@ -1725,7 +1725,7 @@ function formataExportar() {
         if (divError.css('display') == 'block') { return false; }
 
         if (cNmarqint.val() == '') {
-            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Ayllos', 'bloqueiaFundo( $(\'#divRotina\') );');
+            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Aimaro', 'bloqueiaFundo( $(\'#divRotina\') );');
         } else {
             manterRotina('EA');
         }
@@ -1767,7 +1767,7 @@ function formataExportarOpS() {
         if (divError.css('display') == 'block') { return false; }
 
         if (cNmarqint.val() == '') {
-            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Ayllos', 'bloqueiaFundo( $(\'#divRotina\') );');
+            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Aimaro', 'bloqueiaFundo( $(\'#divRotina\') );');
         } else {
 
             buscaExportarOpS('ES');
@@ -1796,7 +1796,7 @@ function buscaExportar() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -1807,14 +1807,14 @@ function buscaExportar() {
                     formataExportar();
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             }
 
@@ -1892,7 +1892,7 @@ function formataArquivo() {
         if (divError.css('display') == 'block') { return false; }
 
         if (cNmarqint.val() == '') {
-            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Ayllos', 'bloqueiaFundo( $(\'#divRotina\') );');
+            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Aimaro', 'bloqueiaFundo( $(\'#divRotina\') );');
         } else {
             salvaArquivo();
         }
@@ -1922,7 +1922,7 @@ function buscaArquivo() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -1933,14 +1933,14 @@ function buscaArquivo() {
                     formataArquivo();
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             }
 
@@ -2147,7 +2147,7 @@ function formataOpcaoR() {
                 cCdagenci.habilitaCampo().focus();
             // para tipo 7, permitir informar conta 0    
             }else if (tprelato == 7 && normalizaNumero(cNrdconta.val()) == 0) {
-                showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","Gera_Impressao();","hideMsgAguardo();","sim.gif","nao.gif");
+                showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","Gera_Impressao();","hideMsgAguardo();","sim.gif","nao.gif");
             } else if (validaCampo('nrdconta', auxconta)) {
                 manterRotina('BA');
             }
@@ -2358,7 +2358,7 @@ function Gera_Impressao(nmarqpdf) {
 
     if (cNrdconta.val() == '') {
         cNrdconta.habilitaCampo();
-        showError('error', 'Informe a conta.', 'Alerta - Ayllos', '$(\'#nrdconta\',\'#frmOpcao\').focus();');
+        showError('error', 'Informe a conta.', 'Alerta - Aimaro', '$(\'#nrdconta\',\'#frmOpcao\').focus();');
         return false;
     }
 
@@ -2397,7 +2397,7 @@ function mostraImprimir(arquivo1, arquivo2) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "unblockBackground()");
         },
         success: function (response) {
             hideMsgAguardo();
@@ -2440,13 +2440,13 @@ function validaCampo(campo, valor) {
 
     // conta
     if (campo == 'nrdconta' && !validaNroConta(valor)) {
-        showError('error', 'D&iacute;gito errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
+        showError('error', 'D&iacute;gito errado.', 'Alerta - Aimaro', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
         return false;
     } else if (campo == 'nmprimtl' && valor == '') {
-        showError('error', 'O campo deve ser preenchido.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
+        showError('error', 'O campo deve ser preenchido.', 'Alerta - Aimaro', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
         return false;
     } else if (campo == 'tpconsul' && (valor < 1 || valor > 3)) {
-        showError('error', 'Tipo de consulta errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
+        showError('error', 'Tipo de consulta errado.', 'Alerta - Aimaro', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
         return false;
     }
 
@@ -2458,11 +2458,11 @@ function validaCampo(campo, valor) {
 function msgConfirmacao() {
     if (cddopcao == 'C') {
         var cdinstru = $('#cdinstru', '#frmConsulta').val();
-        showConfirmacao('Confirma execucao Instrucao ' + cdinstru + ' ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'GI\');', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+        showConfirmacao('Confirma execucao Instrucao ' + cdinstru + ' ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'GI\');', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
     } else if (cddopcao == 'I' && isHabilitado(cCddopcao)) {
-        showConfirmacao('Importar varios arquivos ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'vrsarqvs=\'yes\'; buscaOpcao();', 'vrsarqvs=\'no\'; buscaOpcao();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Importar varios arquivos ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'vrsarqvs=\'yes\'; buscaOpcao();', 'vrsarqvs=\'no\'; buscaOpcao();', 'sim.gif', 'nao.gif');
     } else if (cddopcao == 'I' && isHabilitado($('#nmarqint', '#' + frmOpcao))) {
-        showConfirmacao('Confirma a operacao ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'IA\');', '', 'sim.gif', 'nao.gif');
+        showConfirmacao('Confirma a operacao ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'IA\');', '', 'sim.gif', 'nao.gif');
     }
 
     return false;
@@ -2552,7 +2552,7 @@ function btnContinuar() {
             }
 
         } else {
-            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Ayllos', "cNmarqint.focus();");
+            showError('error', '375 - O campo deve ser preenchido.', 'Alerta - Aimaro', "cNmarqint.focus();");
             return false;
         }
 
@@ -2638,7 +2638,7 @@ function EfetuaPesquisaOpS(nriniseq,nrregist,insitceb_atu) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
                       
@@ -2652,14 +2652,14 @@ function EfetuaPesquisaOpS(nriniseq,nrregist,insitceb_atu) {
 
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             }
         }
@@ -2722,7 +2722,7 @@ function buscaExportarOpS(cddopcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "fechaRotina( $(\'#divRotina\') );");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "fechaRotina( $(\'#divRotina\') );");
         },
         success: function (response) {
 
@@ -2738,7 +2738,7 @@ function buscaExportarOpS(cddopcao) {
                 } catch (error) {
                     
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             } else {
                 try {
@@ -2746,7 +2746,7 @@ function buscaExportarOpS(cddopcao) {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
                 }
             }
 
@@ -2773,7 +2773,7 @@ function ConfirmaAtualizacao(insitceb){
     
     nrconven = $("#nrconven", "#divConteudoOpcao").val();
     if (nrconven == ""){
-        showError('error', 'Selecione um convenio.', 'Alerta - Ayllos', 'fechaRotina( $(\'#divRotina\') );');
+        showError('error', 'Selecione um convenio.', 'Alerta - Aimaro', 'fechaRotina( $(\'#divRotina\') );');
         return false;
     }
     
@@ -2782,7 +2782,7 @@ function ConfirmaAtualizacao(insitceb){
     }else if (insitceb == 6){
         msgconfi = "Confirma reprovação do convenio " + nrconven + "?";        
     }
-    showConfirmacao(msgconfi, 'Confirma&ccedil;&atilde;o - Ayllos', 'EfetuaPesquisaOpS(1,100,'+insitceb+');', 'fechaRotina( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+    showConfirmacao(msgconfi, 'Confirma&ccedil;&atilde;o - Aimaro', 'EfetuaPesquisaOpS(1,100,'+insitceb+');', 'fechaRotina( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
     
 }
  

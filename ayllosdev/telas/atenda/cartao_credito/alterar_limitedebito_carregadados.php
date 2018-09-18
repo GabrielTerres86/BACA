@@ -91,7 +91,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -116,7 +116,7 @@
 </form>
 <div class="divBotoes">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4);return false;">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onClick="showConfirmacao('Deseja alterar o limite de d&eacute;bito do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','alteraLimDeb()',metodoBlock,'sim.gif','nao.gif');return false;">
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/prosseguir.gif" onClick="showConfirmacao('Deseja alterar o limite de d&eacute;bito do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','alteraLimDeb()',metodoBlock,'sim.gif','nao.gif');return false;">
 </div>
 
 <script type="text/javascript">

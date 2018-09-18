@@ -9,7 +9,7 @@
 		if((!isset($_POST['nrdconta']))       || 
 				( !isset($_POST['nrctrcrd'])) ||
 				(!isset($_POST['nrcpf']) )){
-			echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+			echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 			return;
 		}
         function formatnumber($nub){
@@ -70,7 +70,7 @@
 		$xmlObject = getObjectXML($admresult);
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;		
-			//echo "error = true;showError(\"error\", \"$msg.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+			//echo "error = true;showError(\"error\", \"$msg.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 			//exit();
 		}
 		

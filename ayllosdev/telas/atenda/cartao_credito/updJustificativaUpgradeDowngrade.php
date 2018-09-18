@@ -7,7 +7,7 @@ require_once('../../../includes/controla_secao.php');
 require_once('../../../class/xmlfile.php');
 isPostMethod();		
 if(( !isset($_POST['cdcooper'])) || ( !isset($_POST['nrdconta'])) ||(!isset($_POST['nrctrcrd'])) ||(!isset($_POST['ds_justif'])) ||(!isset($_POST['inupgrad']))){
-	echo "showError(\"error\", \"Erro ao atualizar justificativa.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+	echo "showError(\"error\", \"Erro ao atualizar justificativa.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 	return;
 }
 
@@ -35,14 +35,14 @@ $xmlObject = getObjectXML($admresult);
 if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 	$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;		
 	echo "/* $admresult */";
-	echo "error = true;showError(\"error\", \" ".preg_replace( "/\r|\n/", "", addslashes($msg) )." \", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+	echo "error = true;showError(\"error\", \" ".preg_replace( "/\r|\n/", "", addslashes($msg) )." \", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 	exit();
 }else{
 	echo" /* \n $admresult \n */";
 	
 		$message= "Alteração de categoria efetuada com sucesso.";
 	
-	echo 'showError("inform"," '.utf8ToHtml( $message).' ","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
+	echo 'showError("inform"," '.utf8ToHtml( $message).' ","Alerta - Aimaro","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 }
 echo '  acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,"'.$glbvars["opcoesTela"][0].'");';
 

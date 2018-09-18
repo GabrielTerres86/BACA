@@ -34,7 +34,7 @@ class WebServiceCabal{
 				$this->SoapClient = new SoapClient("https://cabalprod.cecred.coop.br/netservices/http/Credito/WSTrocaSenhaCartaoChip?wsdl");
 				$this->SoapClient->__setLocation("https://cabalprod.cecred.coop.br/netservices/http/Credito/WSTrocaSenhaCartaoChip");
 			}catch(SoapFault $e){
-				exibirErro('error',"N&atilde;o foi poss&iacute;vel estabelecer conex&atilde;o.",'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+				exibirErro('error',"N&atilde;o foi poss&iacute;vel estabelecer conex&atilde;o.",'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 				exit();
 			}
 		}
@@ -46,13 +46,13 @@ class WebServiceCabal{
 		try{
 			$retorno = $oSoapCliente->$sNomeMetodo(array($sNomeRetorno=>$aParametros));
 			if (is_string($retorno)){
-				exibirErro('error',"Erro ao retornar o valor. M&eacute;todo: '".$sNomeMetodo."'",'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);							
+				exibirErro('error',"Erro ao retornar o valor. M&eacute;todo: '".$sNomeMetodo."'",'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);							
 				exit();				
 			}else{
 				$this->setRetorno($retorno->return);
 			}
 		}catch(SoapFault $e){
-			exibirErro('error',"N&atilde;o foi poss&iacute;vel estabelecer conex&atilde;o. M&eacute;todo: '".$sNomeMetodo."'",'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+			exibirErro('error',"N&atilde;o foi poss&iacute;vel estabelecer conex&atilde;o. M&eacute;todo: '".$sNomeMetodo."'",'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 			exit();
 		}
 	}

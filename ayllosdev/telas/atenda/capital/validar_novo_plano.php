@@ -167,7 +167,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);
 	}
 	
 	$solcoord = $xmlObject->roottag->tags[0]->cdata;
@@ -178,16 +178,16 @@
 	if($tpautori == "1") {
 		if ($flcancel == "false") {
 			// Mensagem para confirmar cadastro do novo plano
-			$executar .= "showConfirmacao(\"Deseja cadastrar o novo plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"solicitaSenhaMagnetico(\\\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\\\",".$nrdconta.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"Deseja cadastrar o novo plano de capital?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"solicitaSenhaMagnetico(\\\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\\\",".$nrdconta.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		}else{
-			$executar .= "showConfirmacao(\"Deseja alterar o plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"solicitaSenhaMagnetico(\\\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\\\",".$nrdconta.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"Deseja alterar o plano de capital?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"solicitaSenhaMagnetico(\\\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\\\",".$nrdconta.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		}
 	}else{
 		if ($flcancel == "false") {
 			// Mensagem para confirmar cadastro do novo plano
-			$executar .= "showConfirmacao(\"Deseja cadastrar o novo plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"Deseja cadastrar o novo plano de capital?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		}else{
-			$executar .= "showConfirmacao(\"Deseja alterar o plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+			$executar .= "showConfirmacao(\"Deseja alterar o plano de capital?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		}
 	}
 	
@@ -197,7 +197,7 @@
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		
-		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+		exibirErro("error",$mensagem,"Alerta - Aimaro", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
 	} else {
 		echo $executar;
 	}
@@ -205,7 +205,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}	
 	

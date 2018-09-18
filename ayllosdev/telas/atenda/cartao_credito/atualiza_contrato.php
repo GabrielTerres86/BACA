@@ -7,7 +7,7 @@
 		require_once('../../../class/xmlfile.php');
 		isPostMethod();		
 		if(( !isset($_POST['nrctrcrd'])) ||(!isset($_POST['idacionamento'])) ||(!isset($_POST['nrdconta']))){
-			echo "showError(\"error\", \"Erro ao atualizar contrato.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+			echo "showError(\"error\", \"Erro ao atualizar contrato.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 			return;
 		}
 		
@@ -43,7 +43,7 @@
 			$xmlObject = getObjectXML($admresult);
 			if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 				$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;		
-				echo "error = true;showError(\"error\", \"$msg.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+				echo "error = true;showError(\"error\", \"$msg.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 				exit();
 			}
 		}

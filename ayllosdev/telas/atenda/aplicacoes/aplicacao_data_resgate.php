@@ -201,7 +201,7 @@
 		}
 		
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","$(\'#'.$nmdcampo.'\',\'#'.$frm.'\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","$(\'#'.$nmdcampo.'\',\'#'.$frm.'\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 		
 	}

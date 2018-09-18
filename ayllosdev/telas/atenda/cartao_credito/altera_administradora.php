@@ -22,12 +22,12 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro,false);
 	}	
 	
 	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["codaadmi"]) || !isset($_POST["codnadmi"]) || !isset($_POST["nrcrcard"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro,false);
 	}	
 	
 	$nrdconta        = $_POST["nrdconta"];
@@ -36,10 +36,10 @@
 	$nrcrcard        = $_POST["nrcrcard"];
 	$dsjustificativa = $_POST['dsjustificativa'];
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
-	if (!validaInteiro($codaadmi)) exibirErro('error','Antiga administradora inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
-	if (!validaInteiro($codnadmi)) exibirErro('error','Nova administradora inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
-	if (!validaInteiro($nrcrcard)) exibirErro('error','Cart&atilde; inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
+	if (!validaInteiro($codaadmi)) exibirErro('error','Antiga administradora inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
+	if (!validaInteiro($codnadmi)) exibirErro('error','Nova administradora inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
+	if (!validaInteiro($nrcrcard)) exibirErro('error','Cart&atilde; inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	
     // Monta o xml de requisição
@@ -73,7 +73,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 		echo "error = true;";
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata.".",'Alerta - Ayllos',$funcaoAposErro,false);	
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata.".",'Alerta - Aimaro',$funcaoAposErro,false);	
 	}else{
 		$dsmensag = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		//echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';

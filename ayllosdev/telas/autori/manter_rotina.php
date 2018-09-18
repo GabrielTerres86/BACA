@@ -142,7 +142,7 @@
 				$mtdErro = "$('#".$nmdcampo."','#frmAutori').focus();";  
 			}
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);		
 	} 
 	
 	echo "hideMsgAguardo();";

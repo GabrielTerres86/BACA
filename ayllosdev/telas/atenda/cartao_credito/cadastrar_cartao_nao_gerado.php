@@ -19,7 +19,7 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro,false);
 	}	
 	
 	// Verifica se os parâmetros necessários foram informados
@@ -27,7 +27,7 @@
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {
-			exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
+			exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro,false);
 		}
 	}
 	
@@ -39,9 +39,9 @@
 	$repsolic  = $_POST['repsolic'];
 	
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);	
-	if (!validaInteiro($nrcrcard)) exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);	
-	if (!validaInteiro($nrcctitg)) exibirErro('error','N&uacute;mero Conta Cart&atilde;o inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);	
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);	
+	if (!validaInteiro($nrcrcard)) exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);	
+	if (!validaInteiro($nrcctitg)) exibirErro('error','N&uacute;mero Conta Cart&atilde;o inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);	
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
 	$xmlSetCartao  = "";
@@ -76,7 +76,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {		
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro,false);	
 	}else{
 		echo "nrcrcard = " . $nrcrcard . ";bCartaoSituacaoSolicitado = false;";
 		echo 'valida_dados_cartao_bancoob();';

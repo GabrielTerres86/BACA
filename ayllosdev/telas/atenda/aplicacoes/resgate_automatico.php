@@ -49,7 +49,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 		
@@ -200,7 +200,7 @@
 	}
 	
 	if ((trim($resposta) == "" || trim($resposta == 0)) && ($questiona_count > 0)){
-		echo 'showConfirmacao("Aplica&ccedil;&atilde;o n&uacute;mero '.getByTagName($questiona_cliente[$questiona_count -1]->tags,"NRAPLICA").' vencer&aacute em '.getByTagName($questiona_cliente[$questiona_count -1]->tags,"DTVENCTO").'. Resgatar?","Confirma&ccedil;&atilde;o - Ayllos","continuaListarResgates(\'SIM\',\''.$vltotrgt.'\')","continuaListarResgates(\'NAO\',\''.$vltotrgt.'\')","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Aplica&ccedil;&atilde;o n&uacute;mero '.getByTagName($questiona_cliente[$questiona_count -1]->tags,"NRAPLICA").' vencer&aacute em '.getByTagName($questiona_cliente[$questiona_count -1]->tags,"DTVENCTO").'. Resgatar?","Confirma&ccedil;&atilde;o - Aimaro","continuaListarResgates(\'SIM\',\''.$vltotrgt.'\')","continuaListarResgates(\'NAO\',\''.$vltotrgt.'\')","sim.gif","nao.gif");';
 	} else {
 		
 	?>

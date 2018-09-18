@@ -31,11 +31,11 @@
 	$idseqttl 	= 1;
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	// Se conta informada não for um número inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','',false);
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -75,7 +75,7 @@
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$msgErro  = !empty($msgretor) ? $msgErro . '<br />' .$msgretor : $msgErro;
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	} 
 
 	$registros 	= $xmlObjeto->roottag->tags[0]->tags;

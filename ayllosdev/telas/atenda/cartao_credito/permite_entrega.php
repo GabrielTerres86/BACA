@@ -15,7 +15,7 @@ session_start();
 	$cdoperad = $glbvars['cdoperad'];
 	$nrcrcard = $_POST['nrcrcard'];
 	$nrdconta = $_POST['nrdconta'];
-	if (!validaInteiro($nrcrcard) || !validaInteiro($nrdconta)) exibirErro('error',utf8ToHtml('Cartão inválido '.$nrcrcard),'Alerta - Ayllos','bloqueiaFundo(divRotina);');
+	if (!validaInteiro($nrcrcard) || !validaInteiro($nrdconta)) exibirErro('error',utf8ToHtml('Cartão inválido '.$nrcrcard),'Alerta - Aimaro','bloqueiaFundo(divRotina);');
 	
 	//nrcrcard
 	$xml .= "<Root>";
@@ -32,7 +32,7 @@ session_start();
 	$result = "";
 	foreach($nm as $key => $value){
 		if($value != 'N')
-			echo utf8ToHtml('showError("error", "O operador que realizou a solicitação do cartão não poderá efetuar a entrega do cartão.", "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));voltaDiv(0,1,4)")');
+			echo utf8ToHtml('showError("error", "O operador que realizou a solicitação do cartão não poderá efetuar a entrega do cartão.", "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));voltaDiv(0,1,4)")');
 		break;
 	}
 		

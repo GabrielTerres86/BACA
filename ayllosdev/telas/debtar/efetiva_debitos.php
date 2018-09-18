@@ -28,7 +28,7 @@
 	$retornoAposErro = 'focaCampoErro(\'cdtarifa\', \'frmCab\');';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	// Monta o xml dinâmico de acordo com a operação 
@@ -68,10 +68,10 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro,$frm) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error",\''.$msgErro.'\',"Alerta - Ayllos","$(\'#vllanmto\',\''.$frm.'\').focus(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error",\''.$msgErro.'\',"Alerta - Aimaro","$(\'#vllanmto\',\''.$frm.'\').focus(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	
-	echo 'showError("inform","Processo concluido com sucesso. Verifique log.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));unblockBackground();");';
+	echo 'showError("inform","Processo concluido com sucesso. Verifique log.","Notifica&ccedil;&atilde;o - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));unblockBackground();");';
 	
 ?>

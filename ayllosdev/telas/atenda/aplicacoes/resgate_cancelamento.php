@@ -126,7 +126,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -185,7 +185,7 @@
   
 	<a href="#" class="botao" id="btVoltar" onClick="voltarDivResgate();return false;">Voltar</a>
 	<?php if ($qtResgates > 0) { ?>
-	<a href="#" class="botao" id="btConcluir" onClick="showConfirmacao('Deseja cancelar o resgate?','Confirma&ccedil;&atilde;o - Ayllos','cancelarResgates()',metodoBlock,'sim.gif','nao.gif');return false;">Concluir</a>
+	<a href="#" class="botao" id="btConcluir" onClick="showConfirmacao('Deseja cancelar o resgate?','Confirma&ccedil;&atilde;o - Aimaro','cancelarResgates()',metodoBlock,'sim.gif','nao.gif');return false;">Concluir</a>
 	<?php } ?>
 	
 </div>

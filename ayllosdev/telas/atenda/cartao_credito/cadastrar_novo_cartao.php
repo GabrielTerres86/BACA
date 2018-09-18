@@ -35,7 +35,7 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro,false);
 	}	
 	
 	// Verifica se os parâmetros necessários foram informados
@@ -47,7 +47,7 @@
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {
-			exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
+			exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro,false);
 		}
 	}
 	
@@ -123,73 +123,73 @@
 	$executandoProdutos = $_POST['executandoProdutos'];
 	
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se tipo de pessoa é um inteiro válido
-	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se a data de nascimento do titular do cartão é uma data válida
-	if (!validaData($dtnasccr)) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaData($dtnasccr)) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se o código da admi é um inteiro válido
-	if (!validaInteiro($cdadmcrd)) exibirErro('error','C&oacute;digo da Administradora inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($cdadmcrd)) exibirErro('error','C&oacute;digo da Administradora inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se valor do salário do titular da conta é um decimal válido
-	if (!validaDecimal($vlsalari)) exibirErro('error','Valor do Sal&aacute;rio do Titular inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vlsalari)) exibirErro('error','Valor do Sal&aacute;rio do Titular inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se valor do salário do conjuge é um decimal válido
-	if (!validaDecimal($vlsalcon)) exibirErro('error','Valor do Sal&aacute;rio do C&ocirc;njuge inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vlsalcon)) exibirErro('error','Valor do Sal&aacute;rio do C&ocirc;njuge inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 
 	// Verifica se valor de outras é um decimal válido
-	if (!validaDecimal($vloutras)) exibirErro('error','Valor de Outras Rendas inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vloutras)) exibirErro('error','Valor de Outras Rendas inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se valor do aluguel é um decimal válido
-	if (!validaDecimal($vlalugue)) exibirErro('error','Valor do Aluguel inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vlalugue)) exibirErro('error','Valor do Aluguel inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 
 	// Verifica se valor do limite proposto é um decimal válido
-	if (!validaDecimal($vllimpro)) exibirErro('error','Valor do Limite Proposto inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vllimpro)) exibirErro('error','Valor do Limite Proposto inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Valida impressão de nota promissória
-	if ($flgimpnp <> "yes" && $flgimpnp <> "no") exibirErro('error','Indicador de impress&atilde;o da nota promiss&oacute;ria inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if ($flgimpnp <> "yes" && $flgimpnp <> "no") exibirErro('error','Indicador de impress&atilde;o da nota promiss&oacute;ria inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 
 	// Verifica se valor do limite de débito é um decimal válido
-	if (!validaDecimal($vllimdeb) && $vllimdeb != 0 ) exibirErro('error','Valor do Limite de D&eacute;bito inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vllimdeb) && $vllimdeb != 0 ) exibirErro('error','Valor do Limite de D&eacute;bito inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se CPF do representante é um inteiro válido
-	if (!validaInteiro($nrrepinc)) exibirErro('error','CPF do representante inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrrepinc)) exibirErro('error','CPF do representante inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 
 	// Verifica se número da conta do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav1)) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrctaav1)) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se número da conta do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav2)) exibirErro('error','Conta/dv do 2o Avalista inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrctaav2)) exibirErro('error','Conta/dv do 2o Avalista inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se CPF do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav1)) exibirErro('error','CPF do 1o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrcpfav1)) exibirErro('error','CPF do 1o Avalista inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se CPF do Conjugê do 1° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav1)) exibirErro('error','CPF do C&ocirc;njuge do 1o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($cpfcjav1)) exibirErro('error','CPF do C&ocirc;njuge do 1o Avalista inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se CPF do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav2)) exibirErro('error','CPF do 2o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrcpfav2)) exibirErro('error','CPF do 2o Avalista inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se CPF do Conjugê do 2° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav2)) exibirErro('error','CPF do C&ocirc;njuge do 2o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($cpfcjav2)) exibirErro('error','CPF do C&ocirc;njuge do 2o Avalista inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav1)) exibirErro('error','CEP do 1o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrcepav1)) exibirErro('error','CEP do 1o Avalista inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav2)) exibirErro('error','CEP do 2o Avalista inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrcepav2)) exibirErro('error','CEP do 2o Avalista inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se o CPF/CNPJ &eacute; um inteiro v&aacute;lido
-	if (!validaInteiro($nrcpfcgc)) exibirErro('error','N&uacute;mero de CPF/CNPJ inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrcpfcgc)) exibirErro('error','N&uacute;mero de CPF/CNPJ inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica tipo de pagamento
-	if (!validaInteiro($tpdpagto)) exibirErro('error','Forma de pagamento inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($tpdpagto)) exibirErro('error','Forma de pagamento inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica tipo de envio
-	if (!validaInteiro($tpenvcrd)) exibirErro('error','Tipo de Envio inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);	
+	if (!validaInteiro($tpenvcrd)) exibirErro('error','Tipo de Envio inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);	
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
 	$xmlSetCartao  = "";
@@ -285,7 +285,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {		
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro,false);	
 	} 	
 
 	// Mostra se BO retornar mensagem de atualização de cadastro
@@ -322,7 +322,7 @@
 		if(isset($nrctrcrd) && isset($cdadmcrd))
 			echo "solicitaSenha($nrctrcrd, $cdadmcrd);";
 		else{
-			exibirErro('error',utf8ToHtml("O Contrato não pôde ser gerado."),'Alerta - Ayllos',$funcaoAposErro,false);
+			exibirErro('error',utf8ToHtml("O Contrato não pôde ser gerado."),'Alerta - Aimaro',$funcaoAposErro,false);
 		}
 			
 		echo "/* $xmlResult   */";
@@ -345,13 +345,13 @@
 	}
 	
 	$confmsg = "Deseja visualizar a impress&atilde;o?";
-	$conftit = "Confirma&ccedil;&atilde;o - Ayllos";
+	$conftit = "Confirma&ccedil;&atilde;o - Aimaro";
 	$confsim = "gerarImpressao(2,".$opcao.",".$cdadmcrd.",".$nrctrcrd.",0);";	
 	$msgdconf = 'showConfirmacao("'.$confmsg.'","'.$conftit.'","'.$confsim.'",callafterCartaoCredito,"sim.gif","nao.gif");';	
 	
 	// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB
 	if ($idconfir == 1) {
-		$evalresponse = "showError('inform','".$dsmensag."','Alerta - Ayllos','".$msgdconf."');";
+		$evalresponse = "showError('inform','".$dsmensag."','Alerta - Aimaro','".$msgdconf."');";
 	}else{
 		$evalresponse = $msgdconf;
 	}

@@ -62,7 +62,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#dshistor\',\'#frmAutori\').focus();',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#dshistor\',\'#frmAutori\').focus();',false);
 	}
 	echo "$('#dshistor','#frmAutori').val('".$dshistor."');";
 	echo "hideMsgAguardo();";

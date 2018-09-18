@@ -45,7 +45,7 @@
 		$retornoAposErro = 'focaCampoErro(\'nrdconta\', \'frmCab\');';
 	else{
 		if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-			exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+			exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 		}
 		
 		$retornoAposErro = 'focaCampoErro(\'nraplica\', \'frmCab\');';
@@ -82,7 +82,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 	
 	$flgstapl = $xmlObjeto->roottag->tags[0]->attributes["FLGSTAPL"];
@@ -95,15 +95,15 @@
 			$msgalert = "Aplica&ccedil;&atilde;o Bloqueada.";
 		}
 		
-		echo 'showError("inform","'.$msgalert.'","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
+		echo 'showError("inform","'.$msgalert.'","Notifica&ccedil;&atilde;o - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
 	}
 	
 	if ($cddopcao == "B"){
-		echo 'showError("inform","Aplica&ccedil;&atilde;o Bloqueada com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
+		echo 'showError("inform","Aplica&ccedil;&atilde;o Bloqueada com sucesso.","Notifica&ccedil;&atilde;o - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
 	}
 	
 	if ($cddopcao == "L"){
-		echo 'showError("inform","Aplica&ccedil;&atilde;o Liberada com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));btnContinuar();");';		
+		echo 'showError("inform","Aplica&ccedil;&atilde;o Liberada com sucesso.","Notifica&ccedil;&atilde;o - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));btnContinuar();");';		
 	}
 	
 	if ($cddopcao == "V"){

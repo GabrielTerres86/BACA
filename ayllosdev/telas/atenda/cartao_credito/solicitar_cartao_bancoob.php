@@ -7,7 +7,7 @@
 		require_once('../../../class/xmlfile.php');
 		isPostMethod();		
 		if((!isset($_POST['nrdconta'])) || ( !isset($_POST['nrctrcrd']))){
-			echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+			echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 			return;
 		}
 		$nrdconta   = $_POST['nrdconta'];
@@ -35,7 +35,7 @@
 				if($bancoob  == 2){
 					$admresult = mensageria($bancoobXML, "ATENDA_CRD", "INCLUIR_PROPOSTA_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 					$procXML = simplexml_load_string($admresult);
-					echo "showError(\"inform\", \"".utf8ToHtml("Solicitação enviada para esteira com sucesso.")."\", \"Alerta - Ayllos\", \"voltarParaTelaPrincipal();\");";
+					echo "showError(\"inform\", \"".utf8ToHtml("Solicitação enviada para esteira com sucesso.")."\", \"Alerta - Aimaro\", \"voltarParaTelaPrincipal();\");";
 					echo "/* Encaminhado para a esteira \n $bancoobXML \n Retorno \n $admresult */";
 				}else{
 					$admresult = mensageria($bancoobXML, "CCRD0007", "SOLICITAR_CARTAO_BANCOOB", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -56,7 +56,7 @@
 				}			
 			}
 			if($erro){
-				echo "showError(\"error\", \"".preg_replace( "/\r|\n/", " ", addslashes(utf8ToHtml(str_replace("ã","&atilde;",$erro) )))."\", \"Alerta - Ayllos\", \"voltarParaTelaPrincipal();\");";
+				echo "showError(\"error\", \"".preg_replace( "/\r|\n/", " ", addslashes(utf8ToHtml(str_replace("ã","&atilde;",$erro) )))."\", \"Alerta - Aimaro\", \"voltarParaTelaPrincipal();\");";
 				?>
 					$("#emiteTermoBTN").attr("nrctrcrd","<? echo $nrctrcrd;?>");
 					$("#emiteTermoBTN").click();
@@ -83,7 +83,7 @@
 		}else if($tpacao =="alterar"){
 
 			if(!isset($_POST['vlsugmot'])){
-				echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob. Novo limite não informado.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+				echo "showError(\"error\", \"Erro ao enviar proposta ao bancoob. Novo limite não informado.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 				return;
 			}
 			
@@ -220,7 +220,7 @@
 					}else{
 						if($procXML->Dados->inf->limiteDifer != "N"){
 							?>
-							showError("alert", "<? echo utf8ToHtml("A conta possui cartões com limites diferenciados."); ?>", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+							showError("alert", "<? echo utf8ToHtml("A conta possui cartões com limites diferenciados."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 							<?
 						}
 					}
@@ -232,16 +232,16 @@
 			if($hasError){
 				?>
 				
-				showError("error", "<? echo utf8ToHtml( preg_replace( "/\r|\n/", "", addslashes ($errorMsg))); ?>", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error", "<? echo utf8ToHtml( preg_replace( "/\r|\n/", "", addslashes ($errorMsg))); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 				<?
 			}else{
 				if($bancoob){
 					?>
-					showError("inform", "<? echo utf8ToHtml( "Alteração Efetuada com Sucesso."); ?>", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("inform", "<? echo utf8ToHtml( "Alteração Efetuada com Sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 					<?
 				}else{
 					?>
-					showError("inform", "<? echo utf8ToHtml( "Alteração enviada para esteira com sucesso."); ?>", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("inform", "<? echo utf8ToHtml( "Alteração enviada para esteira com sucesso."); ?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 					<?
 				}
 				

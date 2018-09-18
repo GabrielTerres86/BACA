@@ -25,8 +25,8 @@
 	$idastcjt	= (isset($_POST['idastcjt'])) ? $_POST['idastcjt'] : '' ;	
 
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','',false);
-	if ($dssencar === "") exibirErro('error','Favor informar a senha.','Alerta - Ayllos','',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','',false);
+	if ($dssencar === "") exibirErro('error','Favor informar a senha.','Alerta - Aimaro','',false);
 
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -45,7 +45,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 		exit();
 	}
 
@@ -70,7 +70,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 		exit();
 	}
 
@@ -89,7 +89,7 @@
 	} else {
 
 		$msgErro = 'Nenhum cartao foi encontrado';
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 
 	}
 
@@ -143,7 +143,7 @@
 					} else {
 
 						$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-						exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+						exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 
 					}
 
@@ -207,7 +207,7 @@
 				if($lastArrayKey == $key){
 
 					$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-					exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+					exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 
 				} else {
 

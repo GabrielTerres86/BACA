@@ -24,7 +24,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'L')) <> '') {
     
-        exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        exibirErro('error',$msgError,'Alerta - Aimaro','',false);
     }
     
     // Monta o xml de requisição        
@@ -45,7 +45,7 @@
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-        exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#vldesblo\',\'#frmValorDesbloq\').click();',false);
+        exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#vldesblo\',\'#frmValorDesbloq\').click();',false);
         
     }
 	

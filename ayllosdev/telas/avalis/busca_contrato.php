@@ -35,7 +35,7 @@
 	$retornoAposErro = 'estadoInicial();';
 			
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$retornoAposErro,false);
 	}	
 	
 	$xmlBuscaContrato  = "";
@@ -63,7 +63,7 @@
 		
 		$msgErro  = $xmlObjBuscaContrato->roottag->tags[0]->tags[0]->tags[4]->cdata;
 						
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 		
 	}
 		

@@ -198,7 +198,7 @@ function buscaContrato() {
 				},
 		error   : function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
-					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nmprimtl\',\'#frmAvalis\').focus();');
+					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$(\'#nmprimtl\',\'#frmAvalis\').focus();');
 				},
 		success : function(response) {					
 					hideMsgAguardo();
@@ -210,14 +210,14 @@ function buscaContrato() {
 							return false;
 						} catch(error) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nmprimtl\',\'#frmAvalis\').focus();');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$(\'#nmprimtl\',\'#frmAvalis\').focus();');
 						}
 					} else {
 						try {
 							eval( response );
 						} catch(error) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nmprimtl\',\'#frmAvalis\').focus();');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$(\'#nmprimtl\',\'#frmAvalis\').focus();');
 						}
 					}
 					
@@ -243,7 +243,7 @@ function verificaMsgconta(){
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();			
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);
@@ -355,7 +355,7 @@ function mostraAvalista() {
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();			
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divRotina').html(response);

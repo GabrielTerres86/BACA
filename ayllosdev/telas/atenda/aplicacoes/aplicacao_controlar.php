@@ -254,7 +254,7 @@
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		
-		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+		exibirErro("error",$mensagem,"Alerta - Aimaro", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
 	} else {
 		echo $executar;
 	}
@@ -271,7 +271,7 @@
 		}		
 		
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro .'","Alerta - Ayllos","'.$funcao.'");';
+		echo 'showError("error","'.$msgErro .'","Alerta - Aimaro","'.$funcao.'");';
 		
 		exit();
 	}

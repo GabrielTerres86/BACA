@@ -26,7 +26,7 @@
 	$cdagenci			= (isset($_POST['cdagenci'])) ? $_POST['cdagenci'] : 0  ;
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	// Monta o xml de requisição
@@ -58,7 +58,7 @@
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;								
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 	} 
 
 	$registro 	= $xmlObjeto->roottag->tags[0]->tags;

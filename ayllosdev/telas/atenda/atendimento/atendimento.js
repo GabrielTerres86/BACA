@@ -42,7 +42,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divConteudoOpcao").html(response);
@@ -68,7 +68,7 @@ function mostraFormServicos(cddopcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divInformacoes").html(response);
@@ -134,7 +134,7 @@ function buscaRegistro(nriniseq, nrregist) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divConteudoOpcao").html(response);
@@ -171,7 +171,7 @@ function manterRotina(cddopcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesServicos').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesServicos').focus()");
         },
         success: function (response) {
             try {
@@ -180,7 +180,7 @@ function manterRotina(cddopcao) {
                 return false;
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesServicos').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btVoltar','#divBotoesServicos').focus()");
             }
         }
     });
@@ -232,7 +232,7 @@ function controlaLayout(ope) {
 
             $('#btConcluir', '#divBotoesServicos').unbind('click').bind('click', function () {
 
-                showConfirmacao('Deseja efetuar a altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'A\')', '$("#btVoltar","#divBotoesServicos").focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
+                showConfirmacao('Deseja efetuar a altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'A\')', '$("#btVoltar","#divBotoesServicos").focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
 
                 return false;
 
@@ -255,7 +255,7 @@ function controlaLayout(ope) {
 
             $('#btConcluir', '#divBotoesServicos').unbind('click').bind('click', function () {
 
-                showConfirmacao('Deseja efetuar a inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'I\')', '$("#btVoltar","#divBotoesServicos").focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
+                showConfirmacao('Deseja efetuar a inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'I\')', '$("#btVoltar","#divBotoesServicos").focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
 
                 return false;
 
@@ -288,7 +288,7 @@ function controlaLayout(ope) {
 
             $('#btConcluir', '#divBotoesServicos').unbind('click').bind('click', function () {
 
-                showConfirmacao('Deseja efetuar a exclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'E\')', '$("#btVoltar","#divBotoesServicos").focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
+                showConfirmacao('Deseja efetuar a exclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'E\')', '$("#btVoltar","#divBotoesServicos").focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
 
                 return false;
 
@@ -366,7 +366,7 @@ function controlaLayout(ope) {
     $('#btVoltar', '#divBotoesServicos').unbind('click').bind('click', function () {
 
         if (ope != 'C') {
-            showConfirmacao('Deseja cancelar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaLayout(\"V\");blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', '$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja cancelar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaLayout(\"V\");blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', '$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));', 'sim.gif', 'nao.gif');
             return false;
         }
 

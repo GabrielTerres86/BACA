@@ -51,7 +51,7 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\')); $(\'#dtemissa\', \'#frmDetalheCheque\').focus();',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\')); $(\'#dtemissa\', \'#frmDetalheCheque\').focus();',false);
 	exit();
 }else{
 	echo 'fechaRotina($(\'#divRotina\'));';
@@ -62,7 +62,7 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	}else{
 		$msgErro = 'Dados do cheque alterados com sucesso!';
 	}
-	exibirErro('inform',$msgErro,'Alerta - Ayllos','',false);
+	exibirErro('inform',$msgErro,'Alerta - Aimaro','',false);
 }
 
 ?>

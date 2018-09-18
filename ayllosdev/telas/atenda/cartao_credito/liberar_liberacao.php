@@ -127,7 +127,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -138,5 +138,5 @@
 hideMsgAguardo();
 
 //Confirma se deseja mesmo efetuar a libera&ccedil;&atilde;o
-showConfirmacao(' <?php echo $mensagem ?> ','Confirma&ccedil;&atilde;o - Ayllos','liberacaoCartao(<?php echo $idconfir?>)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');
+showConfirmacao(' <?php echo $mensagem ?> ','Confirma&ccedil;&atilde;o - Aimaro','liberacaoCartao(<?php echo $idconfir?>)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');
 </script>

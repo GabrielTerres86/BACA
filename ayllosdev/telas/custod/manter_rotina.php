@@ -66,13 +66,13 @@ $auxnrcpf = (isset($auxnrcpf)) ? $auxnrcpf : 0;
 $auxnmchq = (isset($auxnmchq)) ? $auxnmchq : '';
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
 if ($nrdconta == '0' && $cddopcao == 'I'){
 	$retornoAposErro = "focaCampoErro('nrdconta','frmOpcao')";
 	$msgErro = 'Informe o n&uacute;mero da conta.';
-	exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+	exibirErro('error', $msgErro, 'Alerta - Aimaro', $retornoAposErro, false);
 }
 
 $BO = 'b1wgen0018.p';
@@ -145,7 +145,7 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
     if (!empty($nmdcampo)) {
         $retornoAposErro = $retornoAposErro . " focaCampoErro('" . $nmdcampo . "','frmOpcao');";
     }
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+    exibirErro('error', $msgErro, 'Alerta - Aimaro', $retornoAposErro, false);
 }
 
 // Associado
@@ -164,7 +164,7 @@ if ($operacao == 'BIA') {
     echo "estadoInicial();";
 } else if ($operacao == 'GLC') {
     $msgretur = $xmlObjeto->roottag->tags[0]->attributes['MSGRETUR'];
-    exibirErro('inform', $msgretur, 'Alerta - Ayllos', 'estadoInicial();', false);
+    exibirErro('inform', $msgretur, 'Alerta - Aimaro', 'estadoInicial();', false);
 } else if ($operacao == 'VLD') {
     echo "hideMsgAguardo();";
     $dtlibera = $xmlObjeto->roottag->tags[0]->attributes['DTLIBERA'];
@@ -215,7 +215,7 @@ if ($operacao == 'BIA') {
     }
 
     $dsdolote = $xmlObjeto->roottag->tags[0]->attributes['DSDOLOTE'];
-    exibirErro('inform', $dsdolote, 'Alerta - Ayllos', 'cDtmvtolt.select();', false);
+    exibirErro('inform', $dsdolote, 'Alerta - Aimaro', 'cDtmvtolt.select();', false);
     echo "$('#btConcluir', '#divTela #divBotoes').css({'display':''});";
 }
 ?>

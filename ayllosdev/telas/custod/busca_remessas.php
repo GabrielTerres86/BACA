@@ -26,12 +26,12 @@
 
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"L")) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','',false);
-	if ($dtinicst == "" || $dtfimcst == "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','',false);
+	if ($dtinicst == "" || $dtfimcst == "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -57,7 +57,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 		exit();
 	}
 	

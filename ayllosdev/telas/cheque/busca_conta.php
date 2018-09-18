@@ -19,13 +19,13 @@
 	isPostMethod();	
 
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','',false);	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','',false);	
 	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';	
 	
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inválido.','Alerta - Ayllos','',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inválido.','Alerta - Aimaro','',false);
 
 	$xml  = "";
 	$xml .= "<Root>";
@@ -52,7 +52,7 @@
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#nrdconta\',\'#frmCabCheque\').focus();',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#nrdconta\',\'#frmCabCheque\').focus();',false);
 	} 
 		
 	$nmprimtl	= getByTagname($xmlObjeto->roottag->tags[0]->tags,'nmprimtl');

@@ -21,7 +21,7 @@
 	isPostMethod();		
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','',false);	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','',false);	
 	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';	
@@ -32,13 +32,13 @@
 	$execimpe = (isset($_POST['execimpe'])) ? $_POST['execimpe'] : 0;	
 	$tppeschq = (isset($_POST['tppeschq'])) ? $_POST['tppeschq'] : 0;	
 	
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inválido.','Alerta - Ayllos','',false);
-	if (!validaInteiro($nrtipoop)) exibirErro('error','Titular inválido.','Alerta - Ayllos','',false);
-	if (!validaInteiro($nrcheque)) exibirErro('error','Nr. Cheque inválido.','Alerta - Ayllos','',false);
-	if (!validaInteiro($nriniseq)) exibirErro('error','Nr. Inicial para pagináção inválido.','Alerta - Ayllos','',false);
-	if (!validaInteiro($nrregist)) exibirErro('error','Qtde. Registros para paginação inválido.','Alerta - Ayllos','',false);
-	else if ($nrregist > 100) exibirErro('error','Qtde. Registros para paginacao nao pode ultrapassar 100.','Alerta - Ayllos','$(\'#nrregist\',\'#frmTipoCheque\').focus(); $(\'#nrregist\',\'#frmTipoCheque\').val(\'100\');',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inválido.','Alerta - Aimaro','',false);
+	if (!validaInteiro($nrtipoop)) exibirErro('error','Titular inválido.','Alerta - Aimaro','',false);
+	if (!validaInteiro($nrcheque)) exibirErro('error','Nr. Cheque inválido.','Alerta - Aimaro','',false);
+	if (!validaInteiro($nriniseq)) exibirErro('error','Nr. Inicial para pagináção inválido.','Alerta - Aimaro','',false);
+	if (!validaInteiro($nrregist)) exibirErro('error','Qtde. Registros para paginação inválido.','Alerta - Aimaro','',false);
+	else if ($nrregist > 100) exibirErro('error','Qtde. Registros para paginacao nao pode ultrapassar 100.','Alerta - Aimaro','$(\'#nrregist\',\'#frmTipoCheque\').focus(); $(\'#nrregist\',\'#frmTipoCheque\').val(\'100\');',false);
 
 	$xml  = "";
 	$xml .= "<Root>";
@@ -70,7 +70,7 @@
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#nrregist\',\'#frmTipoCheque\').focus();', false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#nrregist\',\'#frmTipoCheque\').focus();', false);
 	} 
 		
 	$registros = $xmlObjeto->roottag->tags[0]->tags;

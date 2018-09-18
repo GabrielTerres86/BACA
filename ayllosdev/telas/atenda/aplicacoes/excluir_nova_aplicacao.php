@@ -60,7 +60,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}	
-		exibirErro('error',$msgErro,'Alerta - Ayllos','acessaRotina(\"APLICACOES\",\"Aplica&ccedil;&otilde;es\",\"aplicacoes\");',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','acessaRotina(\"APLICACOES\",\"Aplica&ccedil;&otilde;es\",\"aplicacoes\");',false);
 		exit();
 	}else{
 		echo 'hideMsgAguardo();';

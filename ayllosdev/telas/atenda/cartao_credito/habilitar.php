@@ -25,16 +25,16 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);	
 	}			
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 
 	$nrdconta = $_POST["nrdconta"];	
 	
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Monta o xml de requisição
 	$xmlGetHabilita  = "";
@@ -58,7 +58,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjHabilita->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjHabilita->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$xmlObjHabilita->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 	} 
 	
 	$dados = $xmlObjHabilita->roottag->tags[0]->tags[0]->tags;
@@ -147,7 +147,7 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObjAvais->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('error',$xmlObjAvais->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+			exibirErro('error',$xmlObjAvais->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 		}
 
 		$avais 		= $xmlObjAvais->roottag->tags[0]->tags;
@@ -300,7 +300,7 @@
 		?>
 		<div id="divBotoes">
 			<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="mostraDivDadosHabilita();return false;">
-			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a habilita&ccedil;&atilde;o de cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','voltaDiv(0,1,4);metodoBlock()','metodoBlock()','sim.gif','nao.gif');return false;">
+			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a habilita&ccedil;&atilde;o de cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','voltaDiv(0,1,4);metodoBlock()','metodoBlock()','sim.gif','nao.gif');return false;">
 			<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarAvalistas(5);return false;">
 		</div>			
 	</div>
@@ -334,7 +334,7 @@
 			}
 			
 			if (!validaCpfCnpj(retiraCaracteres($(this).val(),"0123456789",true),1)) {
-				showError("error","CPF inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfpri','#frmHabilitaCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","CPF inv&aacute;lido.","Alerta - Aimaro","$('#nrcpfpri','#frmHabilitaCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 				return false;
 			}
 			
@@ -361,7 +361,7 @@
 			}
 			
 			if (!validaCpfCnpj(retiraCaracteres($(this).val(),"0123456789",true),1)) {
-				showError("error","CPF inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfseg','#frmHabilitaCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","CPF inv&aacute;lido.","Alerta - Aimaro","$('#nrcpfseg','#frmHabilitaCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 				return false;
 			}
 			
@@ -388,7 +388,7 @@
 			}
 			
 			if (!validaCpfCnpj(retiraCaracteres($(this).val(),"0123456789",true),1)) {
-				showError("error","CPF inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfter','#frmHabilitaCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","CPF inv&aacute;lido.","Alerta - Aimaro","$('#nrcpfter','#frmHabilitaCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 				return false;
 			}
 			
