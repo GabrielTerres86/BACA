@@ -822,7 +822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 	--          06/06/2018 - Validar se o titulo esta negativado, caso esteja não deixar alterar a data de vencimento (Chamado 844126).
     --                      (Alcemir Mout's).   
     --
-	  --          17/09/2018 - Remover os titulos que estão em borderôs rejeitados (Vitor S. Assanuma - GFT) 
+	  --          17/09/2018 - Remover os titulos que estão em borderôs rejeitados e titulos não aprovados (Vitor S. Assanuma - GFT) 
     --
     -- ...........................................................................................
 
@@ -852,7 +852,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
            AND tdb.nrdctabb = pr_nrdctabb
            AND tdb.nrcnvcob = pr_nrcnvcob
            AND tdb.nrdocmto = pr_nrdocmto
-           AND bdt.insitbdt <> 5 -- Não pode estar Rejeitado
+           AND tdb.insitapr <> 2 -- Titulo não aprovado
+           AND bdt.insitbdt <> 5 -- Bordero não pode estar Rejeitado
       ;rw_craptdb cr_craptdb%ROWTYPE;
 
       rw_crapcco COBR0007.cr_crapcco%ROWTYPE;
@@ -2988,10 +2989,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           --
         END IF;
         
-        IF pr_cdoperad = '1' THEN
+        IF  rw_crapcob_ret.insrvprt = 1 THEN
           vr_cdmotivo := 'H2'; -- confirmação do protesto automático;
         ELSE
-          vr_cdmotivo := 'H1'; -- confirmação de solicitacao de protesto pelo cooperado;
+          vr_cdmotivo := null; -- confirmação de solicitacao de protesto pelo cooperado;
         END IF;          
         
         --Prepara retorno cooperado
