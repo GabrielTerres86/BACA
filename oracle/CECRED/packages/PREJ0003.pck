@@ -4436,8 +4436,8 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
     SELECT SUM(d.vllanmto) total_estorno
       FROM tbcc_prejuizo_detalhe d
           ,tbcc_prejuizo c
-     WHERE d.cdcooper = 8
-       AND d.nrdconta = 33774
+     WHERE d.cdcooper = pr_cdcooper
+       AND d.nrdconta = pr_nrdconta
        AND d.dthrtran = pr_dthrtran
        AND(d.cdhistor = 2723  --> 2723 – Abono de prejuízo
         OR d.cdhistor = 2725  --> 2725 – Pagamento do valor principal do prejuízo
