@@ -367,6 +367,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
       WHEN vr_exc_fimprg THEN
         -- Efetuar rollback
         pr_dscritic := vr_dscritic;
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratado
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                   || vr_cdprogra || ' --> '
+                                                   || pr_dscritic );
         ROLLBACK;
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado

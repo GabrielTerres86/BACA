@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
+CREATE OR REPLACE PACKAGE CECRED.GECO0001 IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : GECO0001
@@ -84,6 +84,7 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                           ,pr_nrdgrupo    IN PLS_INTEGER                 --> Número do grupo
                                           ,pr_tpdecons    IN BOOLEAN                     --> Tipo de consulta
                                           ,pr_tab_crapdat IN btch0001.rw_crapdat%TYPE    --> Informações de data do sistema
+                                          ,pr_tab_grupo   IN OUT NOCOPY typ_tab_crapgrp     --> Tabela de grupos
                                           ,pr_dstextab    IN craptab.dstextab%TYPE       --> Valor de descrição e taxas
                                           ,pr_dsdrisco    OUT VARCHAR2                   --> Descrição do risco
                                           ,pr_vlendivi    OUT NUMBER                     --> Valor dívida
@@ -165,9 +166,9 @@ CREATE OR REPLACE PACKAGE CECRED.geco0001 IS
                                  ,pr_dscritic OUT VARCHAR2);                 --> Descricao da critica
 
   
-END geco0001;
+END GECO0001;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.GECO0001 IS
   /* PL Table para dados dos associados */
   TYPE typ_reg_crapass IS
     RECORD(inpessoa crapass.inpessoa%TYPE
@@ -572,7 +573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'geco0001.pc_monta_arvore. '|| SQLERRM;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GECO0001.pc_monta_arvore. '|| SQLERRM;
 
         --Log - Chamado 883190
         pc_gera_log(pr_cdcooper      => pr_cdcooper
@@ -750,7 +751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         pr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'geco0001.pc_mesclar_grupos. '|| SQLERRM;
+        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'GECO0001.pc_mesclar_grupos. '|| SQLERRM;
 
         --Log - Chamado 883190
         pc_gera_log(pr_cdcooper      => pr_cdcooper
@@ -1847,6 +1848,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         END IF;
       END LOOP;
 
+      -- Apagar os integrantes do grupo antigo antes da geração do Novo
+      pr_tab_grupo.delete;
+
 		  -- Calcular endividamento do grupo conforme a nova forma (TBCC_GRUPO_ECONOMICO)
       pc_calc_endivid_risco_grp_TBCC(pr_cdcooper    => pr_cdcooper
                                     ,pr_cdagenci    => pr_cdagenci
@@ -1857,6 +1861,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                     ,pr_nrdgrupo    => 0
                                     ,pr_tpdecons    => TRUE
                                     ,pr_tab_crapdat => pr_tab_crapdat
+                                    ,pr_tab_grupo   => pr_tab_grupo
                                     ,pr_dstextab    => vr_dstextab
                                     ,pr_dsdrisco    => opt_dsdrisco
                                     ,pr_vlendivi    => opt_vlendivi
@@ -1901,7 +1906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         vr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'geco0001.pc_forma_grupo_economico. '|| SQLERRM;
+        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'GECO0001.pc_forma_grupo_economico. '|| SQLERRM;
 
         --Log - Chamado 883190
         pc_gera_log(pr_cdcooper      => pr_cdcooper
@@ -2248,7 +2253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'geco0001.pc_calc_endivid_risco_grupo. ' || SQLERRM;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GECO0001.pc_calc_endivid_risco_grupo. ' || SQLERRM;
 
         --Log - Chamado 883190
         pc_gera_log(pr_cdcooper      => pr_cdcooper
@@ -2273,6 +2278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                           ,pr_nrdgrupo    IN PLS_INTEGER                    --> Número do grupo
                                           ,pr_tpdecons    IN BOOLEAN                        --> Tipo de consulta
                                           ,pr_tab_crapdat IN btch0001.rw_crapdat%TYPE       --> Informações de data do sistema
+                                          ,pr_tab_grupo   IN OUT NOCOPY typ_tab_crapgrp     --> Tabela de grupos
                                           ,pr_dstextab    IN craptab.dstextab%TYPE          --> Valor da execução de descrição
                                           ,pr_dsdrisco    OUT VARCHAR2                      --> Descrição do risco
                                           ,pr_vlendivi    OUT NUMBER                        --> Valor dívida
@@ -2305,9 +2311,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       vr_retorno      PLS_INTEGER;        --> Controle da existencia de registros
       vr_dctrl        DATE;               --> Armazenar o formato de data pelo programa chamador
 
+      vr_index        VARCHAR2(100);      --> Índice para a PL Table de grupos
+      vr_contador     PLS_INTEGER;        --> Contagem de iterações do grupo
+
       vr_datarefere   DATE;               --> Armazenar data de acordo com o programa
       vr_cdcritic     PLS_INTEGER;        --> Código da crítica
       vr_exc_erro     EXCEPTION;          --> Controle de erros
+      vr_des_msg      VARCHAR2(500);
+      vr_ass_found    BOOLEAN;
 
       -- Buscar Grupos Economicos
       CURSOR cr_tbcc_grp (pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE     --> Código da cooperativa
@@ -2333,7 +2344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                    AND int.idgrupo  = pai.idgrupo
                    AND int.dtexclusao is NULL
                    AND ass.cdcooper = pr_cdcooper
-                   AND int.cdcooper = pr_cdcooper
+                   AND pai.cdcooper = pr_cdcooper
                    AND pai.idgrupo  = decode(pr_idgrupo,0,pai.idgrupo,pr_idgrupo)
                 ) TMP
          GROUP BY TMP.IDGRUPO
@@ -2347,16 +2358,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           FROM (SELECT p.cdcooper
                       ,int.idgrupo
                       ,int.nrdconta
+                      ,int.nrcpfcgc
+                      ,int.tppessoa inpessoa
+                      ,a.cdagenci
+                      ,p.inrisco_grupo
                   FROM tbcc_grupo_economico_integ INT
                       ,tbcc_grupo_economico p
+                      ,crapass a
                  WHERE int.dtexclusao IS NULL
                    AND int.cdcooper = pr_cdcooper
                    AND int.idgrupo  = p.idgrupo
                    AND int.idgrupo  = pr_idgrupo
+                   AND a.cdcooper   = int.cdcooper
+                   AND a.nrdconta   = int.nrdconta  
                 UNION
                 SELECT pai.cdcooper
                       ,pai.idgrupo
                       ,pai.nrdconta
+                      ,ass.nrcpfcgc
+                      ,ass.inpessoa
+                      ,ass.cdagenci
+                      ,pai.inrisco_grupo
                   FROM tbcc_grupo_economico       pai
                      , crapass                    ass
                      , tbcc_grupo_economico_integ int
@@ -2373,9 +2395,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
 
 
       /* Busca dados de associados */
+      -- VALIDAÇÃO DO ASSOCIADO IGUAL DA gene0005.pc_saldo_utiliza
       CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS  --> Código do associado
         SELECT a.nrdconta
+              ,a.dtelimin
+              ,(SELECT max(inprejuz)
+                   FROM crapepr epr
+                  WHERE epr.cdcooper = a.cdcooper
+                    AND epr.nrdconta = a.nrdconta
+                    AND epr.inprejuz = 1
+                   AND epr.vlsdprej > 0 ) inprejuz
           FROM crapass a
          WHERE a.cdcooper = pr_cdcooper
            AND a.nrdconta = pr_nrdconta;
@@ -2406,21 +2436,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
       LOOP
         -- Zerar valores da iteração anterior
         vr_opt_innivris := 0;
+        vr_opt_vlendivi := 0;
         vr_innivris := 0;
-
+        pr_vlendivi     := 0;
+        pr_dsdrisco     := '';
 
         --Busca grupos por nrconta
         FOR rw_contas_grupo in cr_contas_grupo(pr_cdcooper => pr_cdcooper          --> Código da cooperativa
                                        ,pr_idgrupo  => rw_tbcc_grp.idgrupo) --> Número do grupo
         LOOP
-
-
+          vr_opt_innivris := 0;
+          vr_opt_vlendivi := 0;
           -- CONDICAO PARA TRATAR CONTAS INVALIDAS NO GRUPO NOVO          
           OPEN cr_crapass(pr_cdcooper, rw_contas_grupo.nrdconta);
           FETCH cr_crapass INTO rw_crapass;
           IF cr_crapass%NOTFOUND THEN
-            CLOSE cr_crapass;
-            CONTINUE;
+            vr_ass_found := FALSE; -- Nao achou ASS
+          ELSE
+            IF rw_crapass.dtelimin IS NOT NULL
+            OR (rw_crapass.inprejuz IS NOT NULL AND
+                rw_crapass.inprejuz = 1) THEN
+              vr_ass_found := FALSE; -- Nao achou ASS
+            ELSE
+              vr_ass_found := TRUE; -- Achou ASS
+            END IF;
           END IF;
           CLOSE cr_crapass;        
 
@@ -2440,7 +2479,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
             -- Inclui nome do modulo logado
           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_calc_risco_individual');
 
-
+          -- So verifica endividamento se ASS existe
+          IF vr_ass_found THEN
           -- Calcular endividamento individual
           pc_calc_endividamento_individu(pr_cdcooper    => rw_contas_grupo.cdcooper
                                         ,pr_cdagenci    => pr_cdagenci
@@ -2455,17 +2495,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
                                         ,pr_cdcritic    => vr_cdcritic
                                         ,pr_des_erro    => pr_des_erro
                                         ,pr_tab_crapdat => pr_tab_crapdat);
-
-          -- Verifica se ocorreram erros
-          IF pr_des_erro <> 'OK' OR nvl(vr_cdcritic, 0) > 0 THEN
-            RAISE vr_exc_erro;
+            -- Verifica se existe erro
+            IF pr_des_erro <> 'OK' THEN
+              CONTINUE;
           END IF;
           -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GECO0001.pc_calc_endividamento_individu');
 
           -- Sumarizar valores
           pr_vlendivi := nvl(pr_vlendivi, 0) + nvl(vr_opt_vlendivi, 0);
+          END IF;
 
+--------------------
+          -- Retornar as contas individuais do grupo com seu endividamento e risco
+          -- Verifica se existe registro, senão gera registro
+          vr_index := lpad(rw_contas_grupo.cdcooper, 3, '0') || lpad(rw_contas_grupo.idgrupo, 10, '0') || lpad(rw_contas_grupo.nrdconta, 20, '0');
+
+          IF NOT pr_tab_grupo.exists(vr_index) THEN
+            -- Criar registro de demarcação
+            pr_tab_grupo(lpad(rw_contas_grupo.cdcooper, 3, '0') || lpad(rw_contas_grupo.idgrupo, 10, '0') || lpad('0', 20, '0')).cdcooper := rw_contas_grupo.cdcooper;
+
+            pr_tab_grupo(vr_index).cdcooper := rw_contas_grupo.cdcooper;
+            pr_tab_grupo(vr_index).nrdgrupo := rw_contas_grupo.idgrupo;
+            pr_tab_grupo(vr_index).nrdconta := rw_contas_grupo.nrdconta;
+            pr_tab_grupo(vr_index).nrctasoc := rw_contas_grupo.nrdconta;
+            pr_tab_grupo(vr_index).nrcpfcgc := rw_contas_grupo.nrcpfcgc;
+            pr_tab_grupo(vr_index).inpessoa := rw_contas_grupo.inpessoa;
+            pr_tab_grupo(vr_index).vlendivi := vr_opt_vlendivi;
+            pr_tab_grupo(vr_index).dsdrisco := pr_dsdrisco;        	          -- Risco Individual
+            pr_tab_grupo(vr_index).innivris := rw_contas_grupo.inrisco_grupo; -- Risco do Grupo
+            pr_tab_grupo(vr_index).idseqttl := 1;
+            pr_tab_grupo(vr_index).cdagenci := rw_contas_grupo.cdagenci;
+            pr_tab_grupo(vr_index).dtmvtolt := NULL;
+            pr_tab_grupo(vr_index).dtrefere := NULL;
+          END IF;
+--------------------
 
           -- Sumarizar valores
           IF vr_opt_innivris > 0 AND vr_opt_innivris <= 10 AND vr_innivris < vr_opt_innivris THEN
@@ -2480,11 +2544,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           vr_innivris := 9;
         END IF;
 
+	      -- Retorno do risco
+        pr_dsdrisco := RISC0004.fn_traduz_risco(innivris => vr_innivris );
+
+        -- Le todos os registros do grupo e atualiza o valor do risco e do endividamento do grupo
+        vr_index    := lpad(pr_cdcooper, 3, '0') || lpad(rw_tbcc_grp.idgrupo, 10, '0') || lpad('0', 20, '0');
+        vr_contador := 0;
+
+        IF pr_tab_grupo.exists(vr_index) THEN
+          -- Buscar próximo registro
+          vr_index := pr_tab_grupo.next(vr_index);
+          LOOP
+            -- Buscar próximo índice
+            IF SUBSTR(vr_index, LENGTH(vr_index) - 15, LENGTH(vr_index)) = LPAD('0', 15, '0') THEN
+              vr_index := NULL;
+            ELSE
+              IF vr_contador > 0 THEN
+                vr_index := pr_tab_grupo.NEXT(vr_index);
+              END IF;
+            END IF;
+
+            EXIT WHEN vr_index IS NULL;
+
+            -- Incrementar contador
+            vr_contador := vr_contador + 1;
+
+            -- Gravar valores na PL Table de grupos
+            pr_tab_grupo(vr_index).vlendigp := pr_vlendivi;
+            pr_tab_grupo(vr_index).dsdrisgp := pr_dsdrisco;
+            pr_tab_grupo(vr_index).innivrge := vr_innivris;
+          END LOOP;
+        END IF;
+
 
         -- Leitura de todos do grupo para atualizar o risco do grupo
         BEGIN
           UPDATE tbcc_grupo_economico ge
-             SET ge.inrisco_grupo = vr_innivris
+             SET ge.inrisco_grupo = 0 --vr_innivris Sera definido 635-RISC0004
            WHERE ge.cdcooper = pr_cdcooper
              AND ge.idgrupo  = rw_tbcc_grp.idgrupo;
         EXCEPTION
@@ -2493,12 +2589,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
             vr_cdcritic := 1035;
             pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'TBCC_GRUPO_ECONOMICO::' 
-                           ||', inrisco_grupo:'||vr_innivris
+                           ||', inrisco_grupo:'||pr_dsdrisco
                            ||' com cdcooper:'||pr_cdcooper
                            ||', idgrupo:'|| rw_tbcc_grp.idgrupo
                            ||'. '||SQLERRM;
             RAISE vr_exc_erro;
         END;
+
       END LOOP;
 
 
@@ -2525,7 +2622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'geco0001.pc_calc_endivid_risco_grupo. ' || SQLERRM;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GECO0001.pc_calc_endivid_risco_grupo. ' || SQLERRM;
 
         pr_des_erro := 'NOK';
         --Log
@@ -2634,7 +2731,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
           AND ci.inddocto = 1
           AND ci.nrdconta = pr_nrctasoc
           --AND ci.vldivida > SUBSTR(pr_dstextab, 3, 9)
-        ORDER BY ci.progress_recid DESC;
+      --  ORDER BY ci.progress_recid DESC;
+        ORDER BY ci.innivris DESC,ci.inindris DESC;
       rw_crapris  cr_crapris%ROWTYPE;
 
 	  /* Cursor para buscar o risco pelo tipo de documento e valor da dívida */
@@ -2738,7 +2836,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'geco0001.pc_calc_risco_individu. '||'NOK --> '||SQLERRM;
+        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'GECO0001.pc_calc_risco_individu. '||'NOK --> '||SQLERRM;
 
         --Log - Chamado 883190
         pc_gera_log(pr_cdcooper      => pr_cdcooper
@@ -2866,7 +2964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         pr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'geco0001.pc_calc_endividamento_individu. '||'NOK --> '||SQLERRM;
+        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'GECO0001.pc_calc_endividamento_individu. '||'NOK --> '||SQLERRM;
 
         --Log efetuado na rotina chamadora - Chamado 883190
     END;
@@ -3245,7 +3343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
         pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'geco0001.pc_calc_endivid_grupo - tela '|| pr_nmdatela || '. ' || SQLERRM;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'GECO0001.pc_calc_endivid_grupo - tela '|| pr_nmdatela || '. ' || SQLERRM;
 
         --Log - Chamado 883190
         pc_gera_log(pr_cdcooper      => pr_cdcooper
@@ -3346,7 +3444,7 @@ end;*/
                     '<dsdrisgp>' || pr_tab_grupo(vr_index).dsdrisco || '</dsdrisgp>' ||
                     '<inpessoa>' || pr_tab_grupo(vr_index).inpessoa || '</inpessoa>' ||
                     '<cdagenci>' || pr_tab_grupo(vr_index).cdagenci || '</cdagenci>' ||
-                    '<innivrge>' || pr_tab_grupo(vr_index).innivris || '</innivrge>' ||
+                    '<innivrge>' || pr_dsdrisco || '</innivrge>' ||
                     '<vlendivi>' || pr_tab_grupo(vr_index).vlendivi || '</vlendivi>' ||
                     '<vlendigp>' || pr_tab_grupo(vr_index).vlendigp || '</vlendigp>' ||
                     '</linha>';
@@ -3387,5 +3485,5 @@ end;*/
   END pc_calc_endivid_grupo_prog;
   
 
-END geco0001;
+END GECO0001;
 /

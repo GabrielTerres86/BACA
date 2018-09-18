@@ -856,8 +856,7 @@ BEGIN
   CLOSE cr_dat;
 
   -- Percorre os dados carregados da CRAPRIS
-  FOR rw_crapris
-    IN cr_crapris(pr_cdcooper, rw_crapdat.dtmvtoan) LOOP
+  FOR rw_crapris IN cr_crapris(pr_cdcooper, rw_crapdat.dtmvtoan) LOOP
 
     vr_cdmodali := rw_crapris.cdmodali;
     vr_inrisco_final := rw_crapris.innivris;
@@ -925,7 +924,8 @@ BEGIN
 
       vr_inrisco_refin := rw_crapepr.inrisco_refin;
       vr_inrisco_inclusao := fn_traduz_nivel_risco(rw_crapepr.dsnivori);
-      vr_inrisco_melhora := CASE WHEN rw_crapepr.dsnivris < rw_crapepr.dsnivori THEN fn_traduz_nivel_risco(rw_crapepr.dsnivris) ELSE NULL END;
+      vr_inrisco_melhora     := CASE WHEN rw_crapepr.dsnivris = 'A' THEN 2 ELSE NULL END; -- Risco Melhora só melhora para 2(A), se não, não melhora
+                                --CASE WHEN rw_crapepr.dsnivris < rw_crapepr.dsnivori THEN fn_traduz_nivel_risco(rw_crapepr.dsnivris) ELSE NULL END;
       vr_qtdias_atraso_refin := rw_crapepr.qtdias_atraso_refin;
     ELSE
       vr_inrisco_refin := NULL;
@@ -1003,8 +1003,8 @@ BEGIN
 
     -- Calcula a raíz do CNPJ para uso como chave da tabela de riscos CPF
     vr_chtabcpf := CASE WHEN rw_crapris.inpessoa = 2
-                       THEN substr(to_char(rw_crapris.nrcpfcgc, '00000000000000'), 1, 8)
-                       ELSE to_char(rw_crapris.nrcpfcgc, '00000000000') END;
+                       THEN substr(to_char(rw_crapris.nrcpfcgc, 'FM00000000000000'), 1, 8)
+                       ELSE to_char(rw_crapris.nrcpfcgc, 'FM00000000000') END;
 
     IF vr_tab_risco_cpf.EXISTS(vr_chtabcpf) THEN
       -- Se já existe a chave na tabela e o risco da operação é maior
@@ -1029,8 +1029,7 @@ BEGIN
   END LOOP;
 
   -- Incluir contas que não possuem 101, 201, 1901 na CRAPRIS
-  FOR rw_crapass
-    IN cr_crapass(rw_crapdat.dtmvtoan) LOOP
+  FOR rw_crapass IN cr_crapass(rw_crapdat.dtmvtoan) LOOP
 
     -- Calcula o risco Agravado
     vr_inrisco_agravado := fn_busca_risco_agravado(pr_cdcooper
@@ -1128,9 +1127,9 @@ BEGIN
     ) RETURNING ROWID INTO vr_rowidocr;
 
     -- Calcula a raíz do CNPJ para uso como chave da tabela de riscos CPF
-    vr_chtabcpf := CASE WHEN rw_crapass.inpessoa = 2
-                       THEN substr(to_char(rw_crapass.nrcpfcgc, '00000000000000'), 1, 8)
-                       ELSE to_char(rw_crapass.nrcpfcgc, '00000000000') END;
+    vr_chtabcpf := CASE WHEN rw_crapass.inpessoa = 2 THEN 
+                             substr(to_char(rw_crapass.nrcpfcgc, 'FM00000000000000'), 1, 8)
+                        ELSE to_char(rw_crapass.nrcpfcgc, 'FM00000000000') END;
 
     IF vr_tab_risco_cpf.EXISTS(vr_chtabcpf) THEN
       vr_tab_risco_cpf(vr_chtabcpf).rowids_to_update(
@@ -1368,6 +1367,7 @@ END pc_carrega_tabela_riscos;
                          AND int.idgrupo  = pai.idgrupo
                          AND int.dtexclusao is null
                          AND pai.cdcooper = pr_cdcooper
+                         AND ass.cdcooper = pr_cdcooper
                     ) dados
               ORDER BY 1,2,3,4
         ) grp;     
@@ -1418,7 +1418,7 @@ END pc_carrega_tabela_riscos;
                  AND int.idgrupo  = pai.idgrupo
                  AND int.dtexclusao is NULL
                  AND ass.cdcooper = pr_cdcooper
-                 AND int.cdcooper = pr_cdcooper
+                 AND pai.cdcooper = pr_cdcooper
             ) dados
        WHERE dados.idgrupo = pr_idgrupo;    
     rw_contas_grupo cr_contas_grupo%ROWTYPE;
@@ -1531,6 +1531,11 @@ END pc_carrega_tabela_riscos;
                             ||'Conta: '||rw_ass_contas.nrdconta
                             ||'Grupo: '||rw_grupo_cpf.nrdgrupo                            
                             || '. Detalhes:'||SQLERRM;
+              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratado
+                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                         || 'RISC0004 || ' --> '
+                                                         || vr_dscritic );
              RAISE vr_exc_erro;
          END;
          --------
@@ -1546,10 +1551,6 @@ END pc_carrega_tabela_riscos;
      FOR rw_risco_grupo IN cr_risco_grupo (pr_cdcooper => pr_cdcooper
                                           ,pr_dtrefere => pr_dtrefere) LOOP
 
-
-       IF rw_risco_grupo.nrdgrupo = 35800 THEN
-         NULL;
-       END IF;
          -- MAIOR RISCO DO GRUPO
        vr_maxrisco := rw_risco_grupo.risco_grupo;
        -- NAO LEVA PARA O PREJUIZO
@@ -1646,6 +1647,28 @@ END pc_carrega_tabela_riscos;
             END LOOP; -- FIM FOR rw_crapvri
           END LOOP; -- FIM FOR rw_crapris
         END LOOP; -- FIM FOR rw_contas_grupo
+
+        -- Leitura de todos do grupo para atualizar o risco do grupo
+        BEGIN
+          UPDATE tbcc_grupo_economico ge
+             SET ge.inrisco_grupo = vr_maxrisco
+           WHERE ge.cdcooper = pr_cdcooper
+             AND ge.idgrupo  = rw_risco_grupo.nrdgrupo;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_dscritic := 'RISC0004.pc_central_risco_grupo - '
+                         ||  'Erro ao atualizar Risco do G.E. - '
+                           ||'Grupo:'|| rw_risco_grupo.nrdgrupo
+                         || '. Detalhes:'||SQLERRM;
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratado
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                         || 'RISC0004 || ' --> '
+                                                         || vr_dscritic );
+            RAISE vr_exc_erro;
+        END;
       END LOOP; -- FIM FOR rw_risco_grupo
 
 

@@ -1101,8 +1101,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_vlprjant     crapris.vlprjant%TYPE; --> Valor prejuizo anterior
       vr_vljura60     crapris.vljura60%TYPE; --> Valor dos Juros em Atraso a mais de 60 dias
 
-			vr_cdcritic     crapcri.cdcritic%TYPE; --> Código da critica retornado pela "pc_busca_saldos_juros60"
-			vr_dscritic     crapcri.dscritic%TYPE; --> Descrição da crítica retornada pela "pc_busca_saldos_juros60"
+      vr_cdcritic     crapcri.cdcritic%TYPE; --> Código da critica retornado pela "pc_busca_saldos_juros60"
+      vr_dscritic     crapcri.dscritic%TYPE; --> Descrição da crítica retornada pela "pc_busca_saldos_juros60"
       
       vr_dtprxpar     crapris.dtprxpar%TYPE; --> Data da próxima parcela do Fluxo Financeiro
       vr_vlprxpar     crapris.vlprxpar%TYPE; --> Valor da próxima parcela do Fluxo Financeiro
@@ -1253,11 +1253,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
     -- Valido para contratos EFETIVADOS APOS 05/Set/2018
     IF  pr_dtefetiv >= to_date('05/09/2018','DD/MM/YYYY') THEN
 
-    -- X => QUANTIDADE DIAS ATRASO PARA CALCULO DO RISCO REFIN =>  X = (A - B) + C
-    pr_qtdias_atr := (vr_datarefe - pr_dtatrefin) + pr_qtdiaatr;
+      -- X => QUANTIDADE DIAS ATRASO PARA CALCULO DO RISCO REFIN =>  X = (A - B) + C
+      pr_qtdias_atr := (vr_datarefe - pr_dtatrefin) + pr_qtdiaatr;
 
-    -- Baseado na quantidade de dias, retorna o nivel de risco (Numerico para Alfa)
-    vr_risco_refin := risc0004.fn_calcula_niv_risco_atraso(qtdiaatr => pr_qtdias_atr);
+      -- Baseado na quantidade de dias, retorna o nivel de risco (Numerico para Alfa)
+      vr_risco_refin := risc0004.fn_calcula_niv_risco_atraso(qtdiaatr => pr_qtdias_atr);
 
     ELSE
       --  Se a parcela ainda nao venceu, assume risco original
@@ -1290,7 +1290,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
     vr_tab_crapepr_up(vr_idx_crapepr_up).nrdconta            := pr_nrdconta;
     vr_tab_crapepr_up(vr_idx_crapepr_up).nrctremp            := pr_nrctremp;
     vr_tab_crapepr_up(vr_idx_crapepr_up).inrisco_refin       := vr_risco_refin;
-      vr_tab_crapepr_up(vr_idx_crapepr_up).qtdias_atraso_refin := NVL(pr_qtdias_atr,0);
+    vr_tab_crapepr_up(vr_idx_crapepr_up).qtdias_atraso_refin := NVL(pr_qtdias_atr,0);
 
 
   EXCEPTION
@@ -2274,7 +2274,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Buscar nível de risco do Empréstimo
         vr_dsnivris := null;         
         -- Copiá-lo a variavel
-        IF  pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
+        -- Risco Melhora so melhora para 'A', ou nao melhora nada
+        IF  pr_rw_crapepr.dsnivris = 'A'
+        AND pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
           vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
         ELSE
           vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
@@ -3028,7 +3030,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
 
 
-        IF  pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
+        -- Risco Melhora so melhora para 'A', ou nao melhora nada
+        IF  pr_rw_crapepr.dsnivris = 'A'
+        AND pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
           vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
         ELSE
           vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
@@ -3070,11 +3074,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 -- Assumir o nível do rating
                 vr_aux_nivel := pr_risco_rating;
               END IF;
-
             END IF;
-
           END IF;
-
         END IF; /* END IF pr_risco_rating <> 0 */
         
         /* Se emprestimo tiver nivel maior que o atraso....*/
@@ -3100,11 +3101,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 -- Assumir o nível do rating
                 vr_aux_nivel := pr_risco_rating;
               END IF;
-
             END IF;
-
           END IF;
-
         END IF;
         
         -- Calculo dos Juros em atraso a mais de 60 dias        
@@ -3705,7 +3703,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
 
         vr_dsnivris := NULL;
-        IF  pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
+        -- Risco Melhora so melhora para 'A', ou nao melhora nada
+        IF  pr_rw_crapepr.dsnivris = 'A'
+        AND pr_rw_crapepr.dsnivris < pr_rw_crapepr.dsnivori  THEN
           vr_dsnivris := pr_rw_crapepr.dsnivris; -- Risco Melhora
         ELSE
           vr_dsnivris := pr_rw_crapepr.dsnivori; -- Risco Inclusão
@@ -3715,23 +3715,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
         -- Vamos verificar qual nivel de risco esta na proposta do emprestimo
         CASE
-          WHEN pr_rw_crapepr.dsnivris = ' '  THEN
+            WHEN vr_dsnivris = ' '  THEN
             vr_aux_nivel := 2;
-          WHEN pr_rw_crapepr.dsnivris = 'AA' THEN
+            WHEN vr_dsnivris = 'AA' THEN
             vr_aux_nivel := 1;
-          WHEN pr_rw_crapepr.dsnivris = 'A'  THEN
+            WHEN vr_dsnivris = 'A'  THEN
             vr_aux_nivel := 2;
-          WHEN pr_rw_crapepr.dsnivris = 'B'  THEN
+            WHEN vr_dsnivris = 'B'  THEN
             vr_aux_nivel := 3;
-          WHEN pr_rw_crapepr.dsnivris = 'C'  THEN
+            WHEN vr_dsnivris = 'C'  THEN
             vr_aux_nivel := 4;
-          WHEN pr_rw_crapepr.dsnivris = 'D'  THEN
+            WHEN vr_dsnivris = 'D'  THEN
             vr_aux_nivel := 5;
-          WHEN pr_rw_crapepr.dsnivris = 'E'  THEN
+            WHEN vr_dsnivris = 'E'  THEN
             vr_aux_nivel := 6;
-          WHEN pr_rw_crapepr.dsnivris = 'F'  THEN
+            WHEN vr_dsnivris = 'F'  THEN
             vr_aux_nivel := 7;
-          WHEN pr_rw_crapepr.dsnivris = 'G'  THEN
+            WHEN vr_dsnivris = 'G'  THEN
             vr_aux_nivel := 8;  
           ELSE
             vr_aux_nivel := 9;
@@ -5415,7 +5415,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               vr_dtrisclq := nvl(vr_tab_crapsld(rw_crapass.nrdconta).dtrisclq,pr_rw_crapdat.dtmvtolt);
               -- Verificar qual nivel de risco o AD se encontra
               CASE
-          -- Regra alterada, considerar para o risco igual a dois somente até o 14 dias de atraso
+              -- Regra alterada, considerar para o risco igual a dois somente até o 14 dias de atraso
                 WHEN vr_qtdiaatr < 15 THEN 
                   vr_risco_aux := 2;
                 WHEN vr_qtdiaatr <= 30 THEN
@@ -5428,13 +5428,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_risco_aux := 9;
               END CASE;
               
-              --**
-              -- Verifica se a conta está em prejuízo, cria registro de conta em Prejuízo - Daniel(AMcom)
-              IF rw_crapass.inprejuz = 1 THEN
-                vr_risco_aux := 10;
-              END IF;
-              --
-
               vr_diasvenc := vr_qtdiaatr * -1;
               -- Buscar o código do vencimento a lançar
               vr_cdvencto := fn_calc_codigo_vcto(pr_diasvenc => vr_diasvenc);              
@@ -5453,6 +5446,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                    ,pr_rsprjano => vr_vlprjano
                                    ,pr_rsprjaan => vr_vlprjaan
                                    ,pr_rsprjant => vr_vlprjant);
+
+              -- P450 - Reginaldo
+              -- Se a conta está em prejuízo, ajusta o nível de risco e o código de vencimento
+              IF rw_crapass.inprejuz = 1 THEN
+                vr_risco_aux := 10;
+								
+                CASE
+                  WHEN vr_qtdiaatr <= 360 THEN -- Prejuízo até 12 meses
+                    vr_cdvencto := 310;
+                  WHEN vr_qtdiaatr BETWEEN 361 AND  1440 THEN -- Prejuízo há mais de 12 meses e até 48 meses
+                    vr_cdvencto := 320;
+                  ELSE -- Prejuízo há mais de 48 meses
+                    vr_cdvencto := 330;
+                  END CASE;
+              END IF;
+
               -- Se houver Saldo Bloqueado
               IF vr_vlbloque > 0 THEN
                 -- Se a divida for inferior ao Saldo Bloqueado
@@ -6606,13 +6615,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       EXCEPTION
         WHEN vr_exc_erro THEN
           pr_des_erro := 'Erro pc_atribui_risco_associado. --> Detalhes: '||vr_des_erro ||' '||sqlerrm;
---           FOR idx IN 1 .. SQL%BULK_EXCEPTIONS.COUNT
---           LOOP
---              pr_des_erro := pr_des_erro || ';'||SQL%BULK_EXCEPTIONS (idx).ERROR_INDEX;
---           END LOOP;
-
-
-
         WHEN OTHERS THEN
           pr_des_erro := 'Erro pc_atribui_risco_associado, Erro: ' || SQLERRM;
       END pc_atribui_risco_associado;
