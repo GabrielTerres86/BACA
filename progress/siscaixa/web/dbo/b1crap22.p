@@ -2764,7 +2764,7 @@ PROCEDURE estorna-transferencia-intercooperativa:
            IF NOT AVAIL craplcm THEN DO:
               ASSIGN i-cod-erro  = 0
                      c-desc-erro = "Lancamento nao encontrado".
-              UNDO REAL_TRANS, LEAVE REAL_TRANS.                    
+             UNDO, RETURN "NOK".
         END.
 
         /*** Informacao da cooperativa de origem ***/
