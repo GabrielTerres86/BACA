@@ -15,6 +15,7 @@
  * 008: 05/07/2016 - Odirlei (AMcom) : Exibir protocolo 15 - pagamento debaut - PRJ320 - Oferta Debaut
  * 009: 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli)
  * 010: 23/03/2017 - Alterações referente a recarga de celular. (PRJ321 - Reinert)
+ * 011: 02/01/2018 - Alterações referente a inclusão das opções 24 - FGTS e 23 - DAE.
  * 011: 26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  * --------------
  */
@@ -93,7 +94,7 @@ function estadoInicial() {
     if ($("#crm_inacesso","#frmCab").val() == 1) {
         $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
 		btnOK.click();
-    }
+}
 
 }
 
@@ -526,6 +527,16 @@ function formataVerpro() {
 	rHrautdrf = $('label[for="vltotfat"]', '#' + frmDados);
 	rNrdocmto_das  = $('label[for="nrdocmto_das"]', '#' + frmDados);
 	rNrdocmto_drf = $('label[for="nrdocmto_drf"]', '#' + frmDados);
+  
+  //DAE
+  rNrdocmto_dae = $('label[for="nrdocmto_dae"]', '#' + frmDados);
+  
+  //FGTS
+  rCdconven = $('label[for="cdconven"]', '#' + frmDados);
+  rDtvalida = $('label[for="dtvalida"]', '#' + frmDados);
+  rCdidenti = $('label[for="dtvalida"]', '#' + frmDados);
+  rCdcompet = $('label[for="dtvalida"]', '#' + frmDados);
+  rNrdocpes = $('label[for="dtvalida"]', '#' + frmDados);
 	
     //labels protocolo de resgate de aplicação
     rDtresgat = $('label[for="dtresgat"]', '#' + frmDados);
@@ -575,7 +586,7 @@ function formataVerpro() {
     rCarencia.addClass('rotulo').css({'width': '130px'});
     rDtcarenc.addClass('rotulo').css({'width': '130px'});
     rTxperiod.addClass('rotulo').css({'width': '115px'});
-
+	
 	//DARF/DAS
 	rDsagtare.addClass('rotulo').css({'width': '130px'});
 	rDsagenci.addClass('rotulo').css({'width': '130px'});
@@ -597,7 +608,17 @@ function formataVerpro() {
 	rDtmvtdrf.addClass('rotulo').css({'width': '130px'});	
 	rHrautdrf.addClass('rotulo').css({'width': '130px'});	
 	rNrdocmto_das.addClass('rotulo').css({'width': '130px'});	
-	rNrdocmto_drf.addClass('rotulo').css({'width': '130px'});	
+	rNrdocmto_drf.addClass('rotulo').css({'width': '130px'});
+
+  //DAE
+  rNrdocmto_dae.addClass('rotulo').css({'width': '130px'});
+  
+  //FGTS
+  rCdconven.addClass('rotulo').css({'width': '130px'});
+  rDtvalida.addClass('rotulo').css({'width': '130px'});
+  rCdidenti.addClass('rotulo').css({'width': '130px'});
+  rCdcompet.addClass('rotulo').css({'width': '130px'});
+  rNrdocpes.addClass('rotulo').css({'width': '130px'});
 
     rDtresgat.addClass('rotulo').css({'width': '130px'});
     rHrresgat.addClass('rotulo').css({'width': '130px'});
@@ -645,7 +666,7 @@ function formataVerpro() {
     cCarencia = $('#carencia', '#' + frmDados);
     cDtcarenc = $('#dtcarenc', '#' + frmDados);
     cTxperiod = $('#txperiod', '#' + frmDados);
-
+	
 	//DARF/DAS
 	cDsagtare = $('#dsagtare', '#' + frmDados);
 	cDsagenci = $('#dsagenci', '#' + frmDados);
@@ -668,6 +689,16 @@ function formataVerpro() {
 	cHrautdrf = $('#hrautdrf', '#' + frmDados);
 	cNrdocmto_das  = $('#nrdocmto_das', '#' + frmDados);
 	cNrdocmto_drf = $('#nrdocmto_das', '#' + frmDados);
+  
+  //DAE
+  cNrdocmto_dae = $('#nrdocmto_dae', '#' + frmDados);
+  
+  //FGTS
+  cCdconven = $('#cdconven', '#' + frmDados);
+  cDtvalida = $('#dtvalida', '#' + frmDados);
+  cCdidenti = $('#cdidenti', '#' + frmDados);
+  cCdcompet = $('#cdidenti', '#' + frmDados);
+  cNrdocpes = $('#cdidenti', '#' + frmDados);
 
     //Campos protoclo aplicação
     cDtresgat = $('#dtresgat', '#' + frmDados);
@@ -714,7 +745,7 @@ function formataVerpro() {
     cCarencia.css({'width': '400px'});
     cDtcarenc.css({'width': '400px'});
     cTxperiod.css({'width': '400px'});
-
+	
 	//DARF/DAS
 	cDsagtare.css({'width': '400px'});
 	cDsagenci.css({'width': '400px'});
@@ -737,6 +768,16 @@ function formataVerpro() {
 	cHrautdrf.css({'width': '400px'});
 	cNrdocmto_das.css({'width': '400px'});
 	cNrdocmto_drf.css({'width': '400px'});
+  
+  //DAE
+  cNrdocmto_dae.css({'width': '400px'});
+  
+  //FGTS
+  cCdconven.css({'width': '400px'});
+  cDtvalida.css({'width': '400px'});
+  cCdidenti.css({'width': '400px'});
+  cCdcompet.css({'width': '400px'});
+  cNrdocpes.css({'width': '400px'});
 
     cDtresgat.css({'width': '400px'});
     cHrresgat.css({'width': '400px'});
@@ -781,7 +822,7 @@ function formataVerpro() {
 	cHrrecarga 	 = $('#hrrecarga', 	 '#' + frmDados).css({'width': '174px'});
 	cDtdebito 	 = $('#dtdebito', 	 '#' + frmDados).css({'width': '425px'});
 	cNsuopera 	 = $('#nsuopera', 	 '#' + frmDados).css({'width': '425px'});
-	
+  
 	// Campos Recarga de Celular: Fim
 	
     if ($.browser.msie) {
@@ -859,7 +900,7 @@ function formataVerpro() {
     cCarencia.css({'display': 'none'});
     cDtcarenc.css({'display': 'none'});
     cTxperiod.css({'display': 'none'});
-
+	
 	//DARF/DAS
 	rDsagtare.css({'display': 'none'});
 	rDsagenci.css({'display': 'none'});
@@ -882,6 +923,16 @@ function formataVerpro() {
 	rHrautdrf.css({'display': 'none'});
 	rNrdocmto_das.css({'display': 'none'});
 	rNrdocmto_drf.css({'display': 'none'});
+  
+  //DAE
+  rNrdocmto_dae.css({'display': 'none'});
+  
+  //FGTS
+  rCdconven.css({'display': 'none'});
+  rDtvalida.css({'display': 'none'});
+  rCdidenti.css({'display': 'none'});
+  rCdcompet.css({'display': 'none'});
+  rNrdocpes.css({'display': 'none'});
 
 	cDsagtare.css({'display': 'none'});
 	cDsagenci.css({'display': 'none'});
@@ -904,6 +955,16 @@ function formataVerpro() {
 	cHrautdrf.css({'display': 'none'});
 	cNrdocmto_das.css({'display': 'none'});
 	cNrdocmto_drf.css({'display': 'none'});
+  
+  //DAE
+  cNrdocmto_dae.css({'display': 'none'});
+  
+  //FGTS
+  cCdconven.css({'display': 'none'});
+  cDtvalida.css({'display': 'none'});
+  cCdidenti.css({'display': 'none'});
+  cCdcompet.css({'display': 'none'});
+  cNrdocpes.css({'display': 'none'});
 
     cDtresgat.css({'display': 'none'});
     cHrresgat.css({'display': 'none'});
@@ -913,7 +974,7 @@ function formataVerpro() {
     cVlliquid.css({'display': 'none'});
 
     rDsageban.html('Agencia Favorecido:');
-
+    
     if (cdtippro == '1' || cdtippro == '2' || cdtippro == '4' || cdtippro == '6') {
 
         if (cdtippro == '1') {
@@ -1190,7 +1251,7 @@ function formataVerpro() {
 		cDttransa.css({'display': 'none'});
 		
 		rVldocmto.css({'display': 'none'});
-        cVldocmto.css({'display': 'none'});
+    cVldocmto.css({'display': 'none'});
 		
 		rDtmvtolt.css({'display': 'none'});
 		cDtmvtolt.css({'display': 'none'});
@@ -1303,16 +1364,16 @@ function formataVerpro() {
 		rDtmvtdrf.css({'display': 'block'});
 	    cDtmvtdrf.css({'display': 'block'});
        
-       rNrdocmto.css({'display': 'block'});
-       cNrdocmto.css({'display': 'block'});
-       rNrdocmto.html('Nr. Documento:');
+		rNrdocmto.css({'display': 'block'});
+		cNrdocmto.css({'display': 'block'});
+		rNrdocmto.html('Nr. Documento:');
        
-       rNrseqaut.css({'display': 'block'});
-       cNrseqaut.css({'display': 'block'});
-       rNrseqaut.html('Seq. Autentica&ccedil;&atilde;o:');
+		rNrseqaut.css({'display': 'block'});
+		cNrseqaut.css({'display': 'block'});
+		rNrseqaut.html('Seq. Autentica&ccedil;&atilde;o:');
        
-       rDsprotoc.css({'display': 'block'});
-       cDsprotoc.css({'display': 'block'});
+		rDsprotoc.css({'display': 'block'});
+		cDsprotoc.css({'display': 'block'});
 	// Recarga de celular			
     } else if (cdtippro == '20'){
 		// Esconder Labels
@@ -1358,7 +1419,105 @@ function formataVerpro() {
 		cDsprotoc.css({'display': 'block'}).css('width', '425px');
 		cNmprepos.css('width', '425px');
 		cNmoperad.css('width', '425px');
-	}else {
+    
+	} else if (cdtippro == '24' || cdtippro == '23') { //FGTS/DAE
+    
+    if (cCdconven.val() == '179' || cCdconven.val() == '180' || cCdconven.val() == '181') { // Modelo 01 e 02
+    
+      $("input[type='text']", '#' + frmDados).css({'width': '380px'});
+      $("label", '#' + frmDados).css({'width': '150px'});
+      
+    } else {
+      
+      $("input[type='text']", '#' + frmDados).css({'width': '400px'});
+      $("label", '#' + frmDados).css({'width': '130px'});
+      
+    }
+    
+    // Ocultar
+    rDscedent.css({'display': 'none'});
+    cDscedent.css({'display': 'none'});
+    
+    rDsdbanco.css({'display': 'none'});
+    cDsdbanco.css({'display': 'none'});
+    
+    rDttransa.css({'display': 'none'});
+    cDttransa.css({'display': 'none'});
+    
+    rHrautenx.css({'display': 'none'});
+    cHrautenx.css({'display': 'none'});
+    
+    rVldocmto.css({'display': 'none'});
+    cVldocmto.css({'display': 'none'});
+    
+    rDtmvtolt.css({'display': 'none'});
+    cDtmvtolt.css({'display': 'none'});
+    
+    // Exibir
+    rTpdocmto.css({'display': 'block'});
+    cTpdocmto.css({'display': 'block'});
+    
+    rCdbarras.css({'display': 'block'});
+		cCdbarras.css({'display': 'block'});
+		
+		rLndigita.css({'display': 'block'});
+		cLndigita.css({'display': 'block'});
+    
+    rVltotfat.css({'display': 'block'});
+    cVltotfat.css({'display': 'block'});
+    
+    rDsidepag.css({'display': 'block'});
+    cDsidepag.css({'display': 'block'});
+    
+    rHrautdrf.css({'display': 'block'});
+    cHrautdrf.css({'display': 'block'});
+  
+    rDtmvtdrf.css({'display': 'block'});
+    cDtmvtdrf.css({'display': 'block'});
+    
+    if (cdtippro == '24') { // FGTS
+    
+      // Exibir
+      rCdconven.css({'display': 'block'});
+      cCdconven.css({'display': 'block'});
+      
+      rDtvalida.css({'display': 'block'});
+      cDtvalida.css({'display': 'block'});
+    
+      if (cCdconven.val() == '179' || cCdconven.val() == '180' || cCdconven.val() == '181') { // Modelo 01
+      
+        // Exibir
+        rCdcompet.css({'display': 'block'});
+        cCdcompet.css({'display': 'block'});
+        
+        rNrdocpes.css({'display': 'block'});
+        cNrdocpes.css({'display': 'block'});
+        
+      } else if (cCdconven.val() == '178' || cCdconven.val() == '240') { // Modelo 02
+      
+        // Exibir
+        rNrdocpes.css({'display': 'block'});
+        cNrdocpes.css({'display': 'block'});
+        
+      } else if (cCdconven.val() == '239' || cCdconven.val() == '451') { // Modelo 03
+      
+        // Exibir
+        rCdidenti.css({'display': 'block'});
+        cCdidenti.css({'display': 'block'});
+        
+      }
+      
+    } else if ( cdtippro == '23' ) { // DAE // Modelo 04
+      
+      // Exibir
+      rDsagtare.css({'display': 'block'});
+	    cDsagtare.css({'display': 'block'});
+      
+      rNrdocmto_dae.css({'display': 'block'});
+			cNrdocmto_dae.css({'display': 'block'});
+    }
+    
+  }else {
 
         if (cdtippro == '3') {
             rDsdbanco.html('Nr. do Plano:');

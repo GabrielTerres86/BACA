@@ -1,13 +1,14 @@
 <?php 
 
 	/***************************************************************************
-	      Fonte: alterar_senha_letras.php                                  
-	      Autor: Lucas Lunelli                                             
-	      Data : Novembro/2012                Ultima Alteracao:  20/10/2015     
+	Fonte: alterar_senha_letras.php                                  
+	Autor: Lucas Lunelli                                             
+	Data : Novembro/2012                Ultima Alteracao:  26/07/2016 
 	                                                                  
-	      Objetivo  : Alterar Senha Letras   							   
+	Objetivo  : Alterar Senha Letras   							   
 	                                                                  	 
-	      Alteracoes:  20/10/2015 - Reformulacao cadastral (Gabriel-RKAM).                                                    
+	Alteracoes:  20/10/2015 - Reformulacao cadastral (Gabriel-RKAM).  
+				 26/07/2016 - Corrigi o tratamento para o retorno do XML. SD 479874 (Carlos R.)                                                  
 	****************************************************************************/
 	
 	session_start();
@@ -79,7 +80,7 @@
 	$xmlObjSenha = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjSenha->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjSenha->roottag->tags[0]->name) && strtoupper($xmlObjSenha->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjSenha->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

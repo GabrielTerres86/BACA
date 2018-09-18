@@ -1,20 +1,22 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: contas_incluir_validar.php      	                       ***//
-	//*** Autor: Lucas                                                     ***//
-	//*** Data : Maio/2012                   Última Alteração: 31/07/2013  ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Validar dados para inclusão de contas de transf.     ***//
-	//***                                                                  ***//	 
-	//***                                                                  ***//	 
-	//*** Alterações: 03/07/2013 - Transferencia intercooperativa(Gabriel) ***//	 
-	//***                                                                  ***//
-	//***             31/07/2013 - Correção transferencia intercoop.(Lucas)***//
-	//***                                                                  ***//
-        //***             24/04/2015 - Inclusão do campo ISPB SD271603 FDR041  ***//
-        //***                          (Vanessa)                               ***//
-	//************************************************************************//
+	//*************************************************************************************//
+	//*** Fonte: contas_incluir_validar.php      										***//
+	//*** Autor: Lucas																	***//
+	//*** Data : Maio/2012                   Última Alteração: 26/07/2016				***//
+	//***																				***//
+	//*** Objetivo  : Validar dados para inclusão de contas de transf.					***//
+	//***																				***//	 
+	//***																				***//	 
+	//*** Alterações: 03/07/2013 - Transferencia intercooperativa(Gabriel)				***//	 
+	//***																				***//
+	//***             31/07/2013 - Correção transferencia intercoop.(Lucas)				***//
+	//***																				***//
+	//***             24/04/2015 - Inclusão do campo ISPB SD271603 FDR041 (Vanessa)     ***//
+	//***																				***//
+	//***			  26/07/2016 - Corrigi a forma de recuperacao dos dados do XML.     ***//
+	//***						   SD 479874 (Carlos R)									***//
+	//*************************************************************************************//
 	
 	session_start();
 	
@@ -39,18 +41,18 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}
 
-	$cddbanco = $_POST["cddbanco"];
-    $cdispbif = $_POST["cdispbif"];
-	$cdageban = $_POST["cdageban"];
-	$nrdconta = $_POST["nrdconta"];
-	$idseqttl = $_POST["idseqttl"];
-	$nrctatrf = $_POST["nrctatrf"];
-	$intipdif = $_POST["intipdif"];
-	$nrcpfcgc = $_POST["nrcpfcgc"];	
-	$nmtitula = $_POST["nmtitula"];
-	$inpessoa = $_POST["inpessoa"];
-	$intipcta = $_POST["intipcta"];
-	$nomeform = $_POST["nomeForm"];
+	$cddbanco = ( isset($_POST["cddbanco"]) ) ? $_POST["cddbanco"] : null;
+    $cdispbif = ( isset($_POST["cdispbif"]) ) ? $_POST["cdispbif"] : null;
+	$cdageban = ( isset($_POST["cdageban"]) ) ? $_POST["cdageban"] : null;
+	$nrdconta = ( isset($_POST["nrdconta"]) ) ? $_POST["nrdconta"] : null;
+	$idseqttl = ( isset($_POST["idseqttl"]) ) ? $_POST["idseqttl"] : null;
+	$nrctatrf = ( isset($_POST["nrctatrf"]) ) ? $_POST["nrctatrf"] : null;
+	$intipdif = ( isset($_POST["intipdif"]) ) ? $_POST["intipdif"] : null;
+	$nrcpfcgc = ( isset($_POST["nrcpfcgc"]) ) ? $_POST["nrcpfcgc"] : null;	
+	$nmtitula = ( isset($_POST["nmtitula"]) ) ? $_POST["nmtitula"] : null;
+	$inpessoa = ( isset($_POST["inpessoa"]) ) ? $_POST["inpessoa"] : null;
+	$intipcta = ( isset($_POST["intipcta"]) ) ? $_POST["intipcta"] : null;
+	$nomeform = ( isset($_POST["nomeForm"]) ) ? $_POST["nomeForm"] : null;
 			
 	// Verifica se o n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -100,28 +102,28 @@
 	$xmlObjPendentes = getObjectXML($xmlResult);
 	
 	//Foco no campo de erro
-	$nomeCampo = $xmlObjPendentes->roottag->tags[0]->attributes["NMDCAMPO"];
+	$nomeCampo = ( isset($xmlObjPendentes->roottag->tags[0]->attributes["NMDCAMPO"]) ) ? $xmlObjPendentes->roottag->tags[0]->attributes["NMDCAMPO"] : '';
 	if ( $nomeCampo != '' ) {
 		$mtdErro = 'focaCampoErro(\''.$nomeCampo.'\',\''.$nomeform.'\');bloqueiaFundo(divRotina);';
 	} else {
 		$mtdErro = 'bloqueiaFundo(divRotina);';
 	}
 
-	if ( strtoupper($xmlObjPendentes->roottag->tags[0]->name) == 'ERRO' ) {
+	if ( isset($xmlObjPendentes->roottag->tags[0]->name) && strtoupper($xmlObjPendentes->roottag->tags[0]->name) == 'ERRO' ) {
 		exibirErro('error', $xmlObjPendentes->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
 	}
 	
 	//Adquire dados pra exibição
-	$registros = $xmlObjPendentes->roottag->tags[0]->tags;
+	$registros = ( isset($xmlObjPendentes->roottag->tags[0]->tags) ) ? $xmlObjPendentes->roottag->tags[0]->tags : array();
 	
 	echo 'hideMsgAguardo();';
 	
 	if ($intipdif == "1"){
 	
-		$nmtitula = $xmlObjPendentes->roottag->tags[0]->attributes["NMTITULA"];	
-		$dscpfcgc = $xmlObjPendentes->roottag->tags[0]->attributes["DSCPFCGC"];	
-		$nrcpfcgc = $xmlObjPendentes->roottag->tags[0]->attributes["NRCPFCGC"];	
-		$inpessoa = $xmlObjPendentes->roottag->tags[0]->attributes["INPESSOA"];	
+		$nmtitula = ( isset($xmlObjPendentes->roottag->tags[0]->attributes["NMTITULA"]) ) ? $xmlObjPendentes->roottag->tags[0]->attributes["NMTITULA"] : '';	
+		$dscpfcgc = ( isset($xmlObjPendentes->roottag->tags[0]->attributes["DSCPFCGC"]) ) ? $xmlObjPendentes->roottag->tags[0]->attributes["DSCPFCGC"] : '';	
+		$nrcpfcgc = ( isset($xmlObjPendentes->roottag->tags[0]->attributes["NRCPFCGC"]) ) ? $xmlObjPendentes->roottag->tags[0]->attributes["NRCPFCGC"] : '';	
+		$inpessoa = ( isset($xmlObjPendentes->roottag->tags[0]->attributes["INPESSOA"]) ) ? $xmlObjPendentes->roottag->tags[0]->attributes["INPESSOA"] : '';	
 			
 	} 
 	

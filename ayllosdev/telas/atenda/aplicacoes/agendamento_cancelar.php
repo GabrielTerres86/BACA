@@ -3,11 +3,12 @@
 	//************************************************************************//
 	//*** Fonte: agendamento_cancelar.php                                  ***//
 	//*** Autor: Douglas Quisinski                                         ***//
-	//*** Data : Setembro/2014                Última Alteração:   /  /     ***//
+	//*** Data : Setembro/2014                Última Alteração: 21/07/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Cancelar o agendamento de aplicação e  resgate       ***//	
 	//***                                                                  ***//	 
-	//*** Alterações:                                                      ***//
+	//*** Alterações: 21/07/2016 Corrigi a forma de validacao do retorno   ***//	
+	//***						 XML"ERRO".SD 479874 (Carlos R.)		   ***//
 	//************************************************************************//
 	
 	session_start();
@@ -67,7 +68,7 @@
 	$xmlObjAgendamento = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjAgendamento->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjAgendamento->roottag->tags[0]->name) && strtoupper($xmlObjAgendamento->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjAgendamento->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 		

@@ -1,15 +1,14 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: bloqueia_senha_acesso.php                                 ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Junho/2008                   &Uacute;ltima Altera&ccedil;&atilde;o: 00/00/0000 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Bloquear Senha de Acesso ao InternetBank - Rotina de ***//
-	//***             Internet da tela ATENDA)                             ***//
-	//***                                                                  ***//	 
-	//*** Altera&ccedil;&otilde;es:                                                      ***//
-	//************************************************************************//
+	//*************************************************************************************************//
+	//*** Fonte: bloqueia_senha_acesso.php															***//
+	//*** Autor: David																				***//
+	//*** Data : Junho/2008                   Ultima Alteracao: 26/07/2016							***//
+	//***																							***//
+	//*** Objetivo  : Bloquear Senha de Acesso ao InternetBank - Rotina de Internet da tela ATENDA) ***//
+	//***																							***//	 
+	//*** Alteracoes: 26/07/2016 - Corrigi a forma de retorno de erro do XML.SD 479874 (Carlos R.)  ***//
+	//*************************************************************************************************//
 	
 	session_start();
 	
@@ -73,7 +72,7 @@
 	$xmlObjBloqueio = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjBloqueio->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjBloqueio->roottag->tags[0]->name) && strtoupper($xmlObjBloqueio->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBloqueio->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

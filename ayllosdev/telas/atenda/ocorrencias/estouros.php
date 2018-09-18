@@ -1,15 +1,14 @@
 <?php 
 
 	/************************************************************************
-	      Fonte: estouros.php
-	      Autor: Guilherme
-	      Data : Fevereiro/2008               &Uacute;ltima Altera&ccedil;&atilde;o: 13/07/2011
+	Fonte: estouros.php
+	Autor: Guilherme
+	Data : Fevereiro/2008               Ultima Alteracao: 13/07/2011
 
-          Objetivo  : Mostrar opcao de Estouros da rotina de Ocorrencias
-                      da tela ATENDA
+    Objetivo  : Mostrar opcao de Estouros da rotina de Ocorrencias da tela ATENDA
 
-	      Altera&ccedil;&otilde;es:
-				13/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+	Alteracoes: 13/07/2011 - Alterado para layout padrão (Rogerius - DB1).
+				25/07/2016 - Correcao do uso inadequado da funcao utf8tohtml. SD 479874. Carlos R.	  
 
 	************************************************************************/
 
@@ -68,11 +67,11 @@
 	$xmlObjEstouros = getObjectXML($xmlResult);
 
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjEstouros->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjEstouros->roottag->tags[0]->name) && strtoupper($xmlObjEstouros->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjEstouros->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 
-	$estouros = $xmlObjEstouros->roottag->tags[0]->tags;
+	$estouros = ( isset($xmlObjEstouros->roottag->tags[0]->tags) ) ? $xmlObjEstouros->roottag->tags[0]->tags : array();
 
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) {
@@ -91,17 +90,17 @@
 		<table>
 			<thead>
 				<tr>
-					<th><? echo utf8ToHtml('Seq'); ?></th>
-					<th><? echo utf8ToHtml('In&iacute;cio');  ?></th>
-					<th><? echo utf8ToHtml('Dias');  ?></th>
-					<th><? echo utf8ToHtml('Hist&oacute;rico');  ?></th>
-					<th><? echo utf8ToHtml('Valor est/devol');  ?></th>
-					<th><? echo utf8ToHtml('Conta base');  ?></th>
-					<th><? echo utf8ToHtml('Documento');  ?></th>
+					<th>Seq</th>
+					<th>In&iacute;cio</th>
+					<th>Dias</th>
+					<th>Hist&oacute;rico</th>
+					<th>Valor est/devol</th>
+					<th>Conta base</th>
+					<th>Documento</th>
 				</tr>
 			</thead>
 			<tbody>
-				<? 
+				<?php
                 for ($i = 0; $i < count($estouros); $i++) {
 				?>
 					<tr>
@@ -140,18 +139,18 @@
 
 	<div id="divEstourosLinha1">
 	<ul class="complemento">
-	<li style="text-align:right"><? echo utf8ToHtml('Observacoes:'); ?></li>
+	<li style="text-align:right">Observa&ccedil;&otilde;es:</li>
 	<li id="complem1"><?php echo $estouros[0]->tags[7]->cdata." ".$estouros[0]->tags[8]->cdata;  ?></li>
-	<li style="text-align:right"><? echo utf8ToHtml('Limite Credito:'); ?></li>
+	<li style="text-align:right">Limite Cr&eacute;dito:</li>
 	<li id="complem2"><?php echo number_format(str_replace(",",".",$estouros[0]->tags[9]->cdata),2,",","."); ?></li>
 	</ul>
 	</div>
 
 	<div id="divEstourosLinha2">
 	<ul class="complemento">
-	<li style="text-align:right"><? echo utf8ToHtml('De:'); ?></li>
+	<li style="text-align:right">De:</li>
 	<li id="complem3"><?php echo $estouros[0]->tags[10]->cdata; ?></li>
-	<li style="text-align:right"><? echo utf8ToHtml('Para:'); ?></li>
+	<li style="text-align:right">Para:</li>
 	<li id="complem4"><?php echo $estouros[0]->tags[11]->cdata; ?></li>
 	</ul>
 	</div>

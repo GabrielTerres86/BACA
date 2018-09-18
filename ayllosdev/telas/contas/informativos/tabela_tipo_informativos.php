@@ -1,9 +1,10 @@
-<? 
+<?php
 /*!
  * FONTE        : tabela_informativos.php
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
  * DATA CRIAÇÃO : 19/042010 
  * OBJETIVO     : Tabela que apresenda os INFORMATIVOS do titular selecionado
+ * ALTERACOES : 14/07/2016 - Correcao do titulo da coluna que estava sendo tratado como uma constante.SD 479874 (Carlos Rafael Tanholi).
  */	
 ?>
 <div class="divRegistros">
@@ -12,7 +13,7 @@
 			<tr>
 				<th>Informativo</th>
 				<th>Forma Envio</th>
-				<th><? echo utf8ToHtml(Período);?></th>
+				<th>Per&iacute;odo</th>
 				<th>Sugerido</th>
 			</tr>			
 		</thead>

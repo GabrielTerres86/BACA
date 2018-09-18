@@ -3,14 +3,12 @@
 	/********************************************************************
 	 Fonte: principal.php                                             
 	 Autor: Gabriel - Rkam                                                     
-	 Data : Agosto - 2015                  Última Alteração: 
+	 Data : Agosto - 2015                  Última Alteração: 25/07/2016
 	                                                                  
-	 Objetivo  : Mostrar opcao Principal da rotina de Atendimento da     
-	             tela ATENDA                                          
+	 Objetivo  : Mostrar opcao Principal da rotina de Atendimento da tela ATENDA                                          
 	                                                                  	 
-	 Alteraçães: 
-	 
-	 
+	 Alteraçães: 25/07/2016 - Correcao na forma de tratamento do retorno XML. SD 479874 (Carlos R.)
+
 	*********************************************************************/
 	
 	session_start();
@@ -27,9 +25,7 @@
 	require_once("../../../class/xmlfile.php");
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
-		
 		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
-	
 	}		
 	
 	// Verifica se o número da conta foi informado
@@ -43,13 +39,11 @@
 
 	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
 	$nrregist = (isset($_POST["nrregist"])) ? $_POST["nrregist"] : 30;
-	$nrdconta = $_POST["nrdconta"];
+	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : null;
 	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
-		
 		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
-
 	}
 	
 	// Monta o xml de requisição
@@ -70,15 +64,12 @@
 	$xmlObjServicos = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjServicos->roottag->tags[0]->name) == "ERRO") {
-		
+	if (isset($xmlObjServicos->roottag->tags[0]->name) && strtoupper($xmlObjServicos->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}
 	
-	$registros = $xmlObjServicos->roottag->tags;
-	$qtregist  = $xmlObjServicos->roottag->attributes["QTREGIST"];
-	
-	
+	$registros = ( isset($xmlObjServicos->roottag->tags) ) ? $xmlObjServicos->roottag->tags : array();
+	$qtregist  = ( isset($xmlObjServicos->roottag->attributes["QTREGIST"]) ) ? $xmlObjServicos->roottag->attributes["QTREGIST"] : 0;
 ?>
 
 <div id="divServicos">
@@ -95,7 +86,7 @@
 					</tr>			
 				</thead>
 				<tbody>
-					<? foreach( $registros as $result ) {  ?>
+					<?php foreach( $registros as $result ) {  ?>
 						<tr>	
 							<td><span><? echo getByTagName($result->tags,'dtatendimento'); ?></span> <? echo getByTagName($result->tags,'dtatendimento')." - ".getByTagName($result->tags,'hratendimento'); ; ?>  </td>
 							<td><span><? echo getByTagName($result->tags,'nmservico'); ?></span><? echo getByTagName($result->tags,'nmservico'); ?> </td>

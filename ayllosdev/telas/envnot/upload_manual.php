@@ -31,12 +31,18 @@
 	$_UP['erros'][4] = 'Não foi feito o upload do arquivo';
 	
 	// Dados servidor de imagem
+	$caminhoCompleto = '';
+	
 	$user = "conteudo";
 	$pass = "c0n10.t3u1d70"; //Senha de homol: "8974e8c1acb";
 		
 	// Captura as informações enviadas via POST
 	//CABECALHO
 	$cdmensagem = (isset($_POST['hdnCdmensagem'])) ? $_POST['hdnCdmensagem'] : 0; 
+	$operacaoDaTela = (isset($_POST['hdnOpcao']) && $_POST['hdnOpcao'] != '') ? $_POST['hdnOpcao'] : 'I';
+	$totalRegistrosImportados = (isset($_POST['totalRegistrosImportados']) && $_POST['totalRegistrosImportados'] > 0) ? $_POST['totalRegistrosImportados'] : 0;
+	//echo("<script> console.log('".$operacaoDaTela."');</script> ");
+	//echo("<script> console.log('".$totalRegistrosImportados."');</script> ");
 	//TITULO
 	$dstitulo_mensagem = (isset($_POST['dstitulo_mensagem'])) ? $_POST['dstitulo_mensagem'] : "";
 	$cdicone = (isset($_POST['cdicone'])) ? $_POST['cdicone'] : 0;
@@ -80,8 +86,9 @@
 	$glbvars["cdoperad"] = (isset($_POST['cdoperad'])) ? $_POST['cdoperad'] : "0";
 		
 	if($tpfiltro == 2){
-		if(!isset($_FILES['arq_upload']['name'][1]) || trim($_FILES['arq_upload']['name'][1]) == ""){
+		if(!arquivoCSVFoiAnexado()){
 			gerarErro("Selecione um arquivo para upload.");
+			exit;
 		}
 	}
 		
@@ -149,9 +156,9 @@
 	}
 	
 	//UPLOAD ARQUIVO CSV/TXT	
-	if($tpfiltro == 2){
+	if(deveImportarArquivoCSV($tpfiltro, $operacaoDaTela, $totalRegistrosImportados)){
 		
-		if(!isset($_FILES['arq_upload']['name'][1]) || trim($_FILES['arq_upload']['name'][1]) == ""){
+		if(!arquivoCSVFoiAnexado()){
 			gerarErro(utf8_decode("Selecione um arquivo para upload!"));
 		}
 		
@@ -183,56 +190,21 @@
 			gerarErro(utf8_decode("O arquivo selecione é muito grande, selecione arquivos de até 1Mb."));
 			exit; 
 		}
-			
-		$moveArq = false;
-		
-		// Depois verifica se é possível mover o arquivo para a pasta escolhida 
-		if(move_uploaded_file($_FILES['arq_upload']['tmp_name'][1], $_UP['pasta'] . $nmarquiv)){ 
-			$moveArq = true;
-		}else{
-			$moveArq = false;
+
+		$nmarquiv = '003.0.envnot_'.date('Ymdhis').'_'.$nmarquiv;
+		if(!move_uploaded_file($_FILES['arq_upload']['tmp_name'][1], $_UP['pasta'] . $nmarquiv)){ 
 			// Não foi possível fazer o upload, provavelmente a pasta está incorreta 
 			gerarErro(utf8_decode("Erro ao carregar arquivo(2)!"));
 			exit;
 		}
 		
-		if($moveArq){
-			
-			$xmlConta = "<contas>";
-			
-			// Pega conteudo do arquivo e bota em string
-			$strFile = file_get_contents($_UP['pasta'] . $nmarquiv);
-			
-			// Explode string em um array quando encontrar quebra de linha
-			$arrStrFile = explode("\n",$strFile);
-			
-			// Verificacao por linha
-			for($x=0;$x<count($arrStrFile);$x++){
-				
-				if(strpos($arrStrFile[$x],";") === false){
-					$arrCrit[] = "ATENCAO: Separador de parâmetros não encontrado em linha ".($x+1).".";
-				}
-				$arrLinha = explode(";",$arrStrFile[$x]);
-				
-				$cdcooper = (is_numeric(trim($arrLinha[0])) == "") ? 0 : trim($arrLinha[0]);
-				$nrdconta = (is_numeric(trim($arrLinha[1])) == "") ? 0 : trim($arrLinha[1]);
-				$idseqttl = (array_key_exists($arrLinha[2])) ? trim($arrLinha[2]) : 0;
-			
-				if(!is_numeric($cdcooper) || (!is_numeric($nrdconta))){
-					$arrCrit[] = "ATENCAO: Parâmetro incorreto em linha ".($x+1) . ".Conta: " . $nrdconta;
-				}else if((strlen($cdcooper) > 2) || (strlen($nrdconta) > 8) || $nrdconta == 0 || $cdcooper == 0){
-					$arrCrit[] = "ATENCAO: Conta inválida em linha ".($x+1).".";
-				}else{
-					$xmlConta .= "<conta><cdcooper>".trim($cdcooper)."</cdcooper><nrdconta>".trim($nrdconta)."</nrdconta><idseqttl>".trim($idseqttl)."</idseqttl></conta>";					
-				}
-			}
-			// GERAR ERROS CRITICOS
-			if(count($arrCrit) > 0){
-				gerarErro(utf8_decode($arrCrit[0]));
-			}
-			
-			$xmlConta .= "</contas>";
-		}		
+		//TODO REMOver
+		
+		$xmlConta = "<contas>";
+		$xmlConta .= "</contas>";
+
+		// Caminho que deve ser enviado ao Mensageria / para ORACLE fazer exec do CURL
+		$caminhoCompleto = $_SERVER['SERVER_NAME'].'/upload_files/';
 	}
 	
 	$xml  = '';
@@ -259,8 +231,13 @@
 	$xml .= '<tpfiltro_mobile>'.$tpfiltro_mobile.'</tpfiltro_mobile>';
 	$xml .= '<nmarquivo_csv>'.$nmarquiv.'</nmarquivo_csv>';
 	$xml .= '<dsxml_destinatarios><![CDATA['.$xmlConta.']]></dsxml_destinatarios>';	
+	
+	$xml .= '<nmarquivo_upload>'.$nmarquiv.'</nmarquivo_upload>';
+	$xml .= "<caminho_arq_upload>".$caminhoCompleto."</caminho_arq_upload>";
+	
+	
 	$xml .= '</Dados></Root>';
-
+	echo("<script> console.log('".$xml."');</script> ");
 	// Enviar XML de ida e receber String XML de resposta
 	$xmlResultMantemMsgManu = mensageria($xml, 'TELA_ENVNOT','MANTEM_MSG_MANUAL', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjetoMantemMsgManu = getObjectXML($xmlResultMantemMsgManu);
@@ -274,6 +251,38 @@
 		echo "<script>parent.framePrincipal.eval(\"showError('inform','Cadastro efetuado com sucesso!','Alerta - Ayllos','hideMsgAguardo(); estadoInicial();');\");</script>";
 		exit;
 	}		
+	
+	function arquivoCSVFoiAnexado(){
+		return (isset($_FILES['arq_upload']['name'][1]) && trim($_FILES['arq_upload']['name'][1]) != "");
+	}
+	
+	function deveImportarArquivoCSV($tpfiltro, $operacaoDaTela, $totalRegistrosImportados){
+		
+		if($tpfiltro == 2){
+			//echo("<script> console.log('#1');</script> ");
+			if($operacaoDaTela == 'N'){
+				//echo("<script> console.log('#2');</script> ");
+				return true;
+				
+			}
+			
+			if($operacaoDaTela == 'CM'){
+				//echo("<script> console.log('#2.1');</script> ");
+	
+				if($totalRegistrosImportados == 0){
+					//echo("<script> console.log('#2.2');</script> ");
+					return true;
+				}
+				
+				if(arquivoCSVFoiAnexado()){
+					//echo("<script> console.log('#3');</script> ");
+					return true;
+				}
+			}
+		}
+		//echo("<script> console.log('#4');</script> ");
+		return false;
+	}
 	
 	function gerarErro($dserro){
 		if(($moveImg) && $nmarqimg <> ""){

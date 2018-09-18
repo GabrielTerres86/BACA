@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: agendamento_cadastrar.php                                 ***//
 	//*** Autor: Douglas Quisinski                                         ***//
-	//*** Data : Setembro/2014                Última Alteração: 14/10/2014 ***//
+	//*** Data : Setembro/2014                Última Alteração: 21/07/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Cadastrar o agendamento de aplicação e resgate       ***//	
 	//***                                                                  ***//	 
@@ -13,6 +13,8 @@
 	//***                          tar a confirmação. (Douglas - Projeto   ***//
 	//***                          Captação Internet 2014/2)               ***//
 	//***                                                                  ***//
+	//***             21/07/2016 - Corrigi a forma de validacao do retorno ***//
+	//***						   XML "ERRO". SD 479874 (Carlos R).	   ***//	
 	//************************************************************************//
 	
 	include('agendamento_validar_parametros.php');
@@ -51,7 +53,7 @@
 	$xmlObjAgendamento = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjAgendamento->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjAgendamento->roottag->tags[0]->name) && strtoupper($xmlObjAgendamento->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjAgendamento->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 

@@ -9,8 +9,9 @@
 	//***                                                                  ***//	 
 	//*** Alterações: 04/04/2013 - Retirar validação de número inteiro para código do operador (David).       
 	//***
-	//***					11/07/2016	 - Correcao do erro de inexistencia do indice 0	dentro da TAG de retorno do XML. SD 479874 (Carlos R.) 
-	//***									
+	//***		      11/07/2016 - Correcao do erro de inexistencia do indice 0	dentro da TAG de retorno do XML. SD 479874 (Carlos R.) 
+	//***
+	//***			  27/07/2016 - Corrigi a forma de recuperacao do erro no XML de retorno. SD 479874 (Carlos R.)									
 	//************************************************************************//
 	
 	session_start();
@@ -59,13 +60,15 @@
 	$xmlObjPac = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjPac->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjPac->roottag->tags[0]->name) && strtoupper($xmlObjPac->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjPac->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 	
 			
 	$dados = ( isset($xmlObjPac->roottag->tags[0]->tags[0]) ) ? $xmlObjPac->roottag->tags[0]->tags[0] : null;
 		
-	echo "$('#cdpactra').val('".$xmlObjPac->roottag->tags[0]->attributes['CDPACTRA']."');";
+	$cdpactra = ( isset($xmlObjPac->roottag->tags[0]->attributes['CDPACTRA']) ) ? $xmlObjPac->roottag->tags[0]->attributes['CDPACTRA'] : null;
+
+	echo "$('#cdpactra').val('".$cdpactra."');";
 	echo "$('#cddsenha').focus();";
 	echo "hideMsgAguardo();";	
 	

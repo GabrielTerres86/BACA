@@ -6,11 +6,11 @@
  * OBJETIVO     : Validacao da data
  * --------------
  * ALTERAÇÕES   : 18/05/2016 - Correcao para filtrar corretamente o feriado. (Jaison/Marcos)
- *				  28/07/2016 - Removi o comando session_start e validei os indices do XML. SD 491925. (Carlos R.)
  * --------------
  */
 
-// Includes para variáveis globais de controle, e biblioteca de funções
+// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+session_start();
 require_once("../../includes/config.php");
 require_once("../../includes/funcoes.php");
 require_once("../../includes/controla_secao.php");
@@ -55,13 +55,13 @@ function valida_feriado($glb_dtmvtolt, $dataCalc, $arrayParam) {
             // Cria objeto para classe de tratamento de XML
             $xmlObj = getObjectXML($xmlResult);
 
-            if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+            if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
                 exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
             }
 
-            $registros = ( isset($xmlObj->roottag->tags[0]) ) ? $xmlObj->roottag->tags[0] : array();
+            $registros = $xmlObj->roottag->tags[0];
 
-            if(isset($registros->attributes['FERIAD']) && strtolower($registros->attributes['FERIAD']) == 'no'){
+            if(strtolower($registros->attributes['FERIAD']) == 'no'){
                 $dataCalc--;
             }
 

@@ -1,15 +1,13 @@
 <?php 
-
 	/************************************************************************
-	      Fonte: spc.php
-	      Autor: Guilherme
-	      Data : Fevereiro/2008               &Uacute;ltima Altera&ccedil;&atilde;o: 13/07/2011
+	Fonte: spc.php
+	Autor: Guilherme
+	Data : Fevereiro/2008               Ultima Alteracoes: 25/07/2016 
 
-	      Objetivo  : Mostrar opcao SPC da rotina de OCORRENCIAS da tela
-                      ATENDA
+	Objetivo  : Mostrar opcao SPC da rotina de OCORRENCIAS da tela ATENDA
 
-	      Altera&ccedil;&otilde;es:
-				13/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+	Alteracoes: 13/07/2011 - Alterado para layout padrão (Rogerius - DB1). 
+				25/07/2016 - Correcao na forma de recuperacao dos dados do XML. SD 479874 (Carlos R.)	
 	
 	************************************************************************/
 	
@@ -68,11 +66,11 @@
 	$xmlObjSPC = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjSPC->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjSPC->roottag->tags[0]->name) && strtoupper($xmlObjSPC->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjSPC->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
-	$spc = $xmlObjSPC->roottag->tags[0]->tags;
+	$spc = ( isset($xmlObjSPC->roottag->tags[0]->tags) ) ? $xmlObjSPC->roottag->tags[0]->tags : array();
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -132,10 +130,10 @@
 
 	<div id="divSPCLinha1">
 	<ul class="complemento">
-	<li><? echo utf8ToHtml('Contrato:'); ?></li>
-	<li id="contrat2"><?php echo $spc[0]->tags[6]->cdata ?></li>
-	<li><? echo utf8ToHtml('Data da Baixa:'); ?></li>
-	<li id="dtbaixa2"><?php echo $spc[0]->tags[7]->cdata ?></li>
+	<li>Contrato</li>
+	<li id="contrat2"><?php echo ( isset($spc[0]->tags[6]->cdata) ) ? $spc[0]->tags[6]->cdata : ''; ?></li>
+	<li>Data da Baixa</li>
+	<li id="dtbaixa2"><?php echo ( isset($spc[0]->tags[7]->cdata) ) ? $spc[0]->tags[7]->cdata : ''; ?></li>
 	</ul>
 	</div>
 	

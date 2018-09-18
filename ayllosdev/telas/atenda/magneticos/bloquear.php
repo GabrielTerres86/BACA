@@ -1,14 +1,16 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: bloquear.php                                              ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Outubro/2008                 &Uacute;ltima Altera&ccedil;&atilde;o: 00/00/0000 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Bloquear Cart&atilde;o Magn&eacute;tico                            ***//
-	//***                                                                  ***//	 
-	//*** Altera&ccedil;&otilde;es:                                                      ***//
-	//************************************************************************//
+	//*************************************************************************************//
+	//*** Fonte: bloquear.php															***//
+	//*** Autor: David																	***//
+	//*** Data : Outubro/2008                 Ultima Alteracao: 26/07/2016				***//
+	//***																				***//
+	//*** Objetivo  : Bloquear Cartao Magnetico											***//
+	//***																				***//	 
+	//*** Alteracoes: 26/07/2016 - Corrigi a forma de tratamento do retorno	de erro XML ***//
+	//***						   SD 479874 (Carlos R.)								***//	 
+	//***																				***//	 
+	//*************************************************************************************//
 	
 	session_start();
 	
@@ -74,7 +76,7 @@
 	$xmlObjBloqueio = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjBloqueio->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjBloqueio->roottag->tags[0]->name) && strtoupper($xmlObjBloqueio->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBloqueio->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

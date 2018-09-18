@@ -533,6 +533,7 @@ function buscarTipoDeConta(inpessoa, cdtipo_conta) {
 						if (verificaCampos())
 							confirmaAlterar();						
 					});
+					verificaInpessoa(inpessoa);
 					break;
 				case 'E':
 					$('#inpessoa_1', '#frmTipoConta').desabilitaCampo();

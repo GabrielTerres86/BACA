@@ -9,6 +9,7 @@
 $retorno = array();
 
 // Montar o xml de Requisicao
+$xml = '';
 $xml .= "<Root>";
 $xml .= " <Dados>";
 $xml .= " </Dados>";

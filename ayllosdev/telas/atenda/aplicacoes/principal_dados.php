@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: principal_dados.php                                             
 	 Autor: David                                                     
-	 Data : Setembro/2009                Última Alteração: 29/07/2014 
+	 Data : Setembro/2009                Última Alteração: 21/07/2016
 	                                                                  
 	 Objetivo  : Mostrar opcao Principal da rotina de Aplicações da   
 	             tela ATENDA                                          
@@ -25,9 +25,12 @@
 							  
 				 29/07/2014 - Inclusao de campo hidden(qtdiaapl) para
 							  quantidade de dias de aplicacao (Jean Michel).
+
+				 21/07/2016 - Removi o comando session_start pois este fonte
+						      esta sendo incluido em outro fonte que ja possui
+							  o comando. SD 479874 (Carlos R).
+
 	************************************************************************/
-	
-	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../includes/config.php");

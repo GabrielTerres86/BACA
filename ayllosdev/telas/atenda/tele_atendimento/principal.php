@@ -3,7 +3,7 @@
 	/**************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Fevereiro/2008               Ultima Alteracao: 30/09/2015
+	 Data : Fevereiro/2008               Ultima Alteracao: 25/07/2016
 	                                                                  
 	 Objetivo  : Obter dados da senha de Tele Atendimento             
 	                                                                   
@@ -19,11 +19,13 @@
 	                                                                  
 	             30/09/2015 - Ajuste para inclusão das novas telas "Produtos"
 				              (Gabriel - Rkam -> Projeto 217).			  
+
+				 25/07/2016 - Corrigi o tratamento do retorno de erro no XML.SD 479874 (Carlos R.)
 					
 	************************************************************************/
-	
+
 	session_start();
-	
+
 	// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de fun&ccedil;&otilde;es
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
@@ -77,7 +79,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDadosURA = getObjectXML($xmlResult);
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjDadosURA->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjDadosURA->roottag->tags[0]->name) && strtoupper($xmlObjDadosURA->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjDadosURA->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

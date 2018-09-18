@@ -47,6 +47,7 @@
 	$flgcreca = 'N';
 	$flgrestr = (isset($_POST['flgrestr'])) ? $_POST['flgrestr'] : '' ;
 	$flgcrdpa = (isset($_POST['flgcrdpa'])) ? $_POST['flgcrdpa'] : '' ;
+	$cdcatego = (isset($_POST['cdcatego'])) ? $_POST['cdcatego'] : '' ;
 
 		
 	// Dependendo da operação, chamo uma procedure diferente
@@ -103,6 +104,7 @@
 	$xml .= '		<flgrestr>'.$flgrestr.'</flgrestr>';
 	$xml .= '		<flgcrdpa>'.$flgcrdpa.'</flgcrdpa>';
 	$xml .= '		<idastcjt>'.$idastcjt.'</idastcjt>';
+	$xml .= '		<cdcatego>'.$cdcatego.'</cdcatego>';
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 

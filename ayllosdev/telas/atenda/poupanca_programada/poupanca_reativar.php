@@ -3,11 +3,12 @@
 	//************************************************************************//
 	//*** Fonte: poupanca_reativar.php                                     ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Março/2010                   Última Alteração: 00/00/0000 ***//
+	//*** Data : Março/2010                   Última Alteração: 26/07/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Script para reativar poupança programada             ***//
 	//***                                                                  ***//	 
-	//*** Alterações:                                                      ***//
+	//*** Alterações: 26/07/2016 - Corrigi o tratamento para retorno de    ***//
+	//***			  erro do XML. SD 479874 (Carlos R.)				   ***//
 	//************************************************************************//
 	
 	session_start();
@@ -73,7 +74,7 @@
 	$xmlObjReativar = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjReativar->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjReativar->roottag->tags[0]->name) && strtoupper($xmlObjReativar->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjReativar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

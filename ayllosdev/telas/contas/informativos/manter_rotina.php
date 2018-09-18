@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
@@ -7,11 +7,10 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
- * 001 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar variavel $op.
+ * 001 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar variavel $op
+ * 002 [14/07/2016] Carlos R. : Correcao da forma de utilizacao dos dados vindos do XML. SD 479874.
  */
-?>
- 
-<?	
+
     session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -80,13 +79,14 @@
 	$metodo = ( $operacao != 'CE' ) ? 'bloqueiaFundo(divRotina)' : 'controlaOperacao(\'\')'; 
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') 
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
 	
 	$msg = Array();
 	
 	// Se não retornou erro, então pegar a mensagem de retorno do Progress na variável msgRetorno, para ser utilizada posteriormente
-	$msgRetorno = $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'];	
-	$msgAlerta  = $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'];
+	$msgRetorno = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'] : '';
+	$msgAlerta  = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'] : '';
 	
 	if ($msgRetorno!='') $msg[] = $msgRetorno;
 	if ($msgAlerta!='' ) $msg[] = $msgAlerta;
@@ -94,9 +94,9 @@
 	$stringArrayMsg = implode( "|", $msg);
 	
 	// Verificação da revisão Cadastral
-	$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
-	$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
-	$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];	
+	$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
+	$chaveAlt     = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
+	$tpAtlCad    = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
 	
 	// Se é Validação
 	if(in_array($operacao,array('IV','AV'))) {		

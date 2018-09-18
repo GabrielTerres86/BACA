@@ -1,23 +1,24 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: criar_alterar_senha_ura.php                               ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Fevereiro/2008 										   ***//
-	//*** Ultima Alteracao: 30/01/2014 									   ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Cadastrar e Alterar senha do Tele Atendimento        ***//
-	//***                                                                  ***//	 
-	//*** Alteracoes: 18/11/2013 Adequação para a chamada da procedure     ***//
-	//*** 	Cria_senha_ura validando se a senha ja existia ou não, pois o  ***//
-	//***	XML de requisição é o mesmo 								   ***//
-	//***																   ***//
-	//***		18/11/2013 - Alteração no nome e no objetivo do arquivo    ***// 
-	//***																   ***//	
-	//***		30/01/2014 - Movida validacao de acesso a opcao para o 	   ***//
-	//***					 fonte valida_senha_ura.php. (Reinert)		   ***//
-	//***
-	//************************************************************************//
+	//*************************************************************************//
+	//*** Fonte: criar_alterar_senha_ura.php								***//
+	//*** Autor: David														***//
+	//*** Data : Fevereiro/2008 											***//
+	//*** Ultima Alteracao: 26/07/2016 										***//
+	//***																	***//
+	//*** Objetivo  : Cadastrar e Alterar senha do Tele Atendimento			***//
+	//***																	***//	 
+	//*** Alteracoes: 18/11/2013 Adequação para a chamada da procedure		***//
+	//*** 	Cria_senha_ura validando se a senha ja existia ou não, pois o	***//
+	//***	XML de requisição é o mesmo 									***//
+	//***																	***//
+	//***		18/11/2013 - Alteração no nome e no objetivo do arquivo		***// 
+	//***																	***//	
+	//***		30/01/2014 - Movida validacao de acesso a opcao para o 		***//
+	//***					 fonte valida_senha_ura.php. (Reinert)			***//
+	//***																	***//
+	//***		26/07/2016 - Corrigi o retorno XML. SD 479874 (Carlos R.)   ***//
+	//*************************************************************************//
 	
 	session_start();
 	
@@ -37,12 +38,12 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 	
-	$nrdconta = $_POST["nrdconta"];
-	$cddsenha = $_POST["cddsenha"];
-	$exisenha = $_POST["exisenha"];
+	$nrdconta = ( isset($_POST["nrdconta"]) ) ? $_POST["nrdconta"] : null;
+	$cddsenha = ( isset($_POST["cddsenha"]) ) ? $_POST["cddsenha"] : null;
+	$exisenha = ( isset($_POST["exisenha"]) ) ? $_POST["exisenha"] : null;
 	
 	// verifica se a senha ja existe e chama a procedure para criação ou alteração da senha
-	$exisenha?$procedure="altera_senha_ura":$procedure="cria_senha_ura";
+	$procedure = ($exisenha) ? "altera_senha_ura" : "cria_senha_ura";
 	
 	// Verifica se n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -81,7 +82,7 @@
 	$xmlObjSenhaURA = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjSenhaURA->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjSenhaURA->roottag->tags[0]->name) && strtoupper($xmlObjSenhaURA->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjSenhaURA->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

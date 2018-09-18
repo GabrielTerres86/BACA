@@ -1,13 +1,13 @@
-<?php
-	/*!
-	* FONTE        : busca_contas_ass.php
-	* CRIA플O      : Andre Santos - SUPERO
-	* DATA CRIA플O : 17/07/2015
-	* OBJETIVO     : Tela de Pesquisa de Associados
-	* 
-	* ALTERACAO    : 28/07/2016 - Corrigi o uso de variaveis do array $glbvars. SD 491925 (Carlos R.)
-	*/	 
+<? 
+/*!
+ * FONTE        : busca_contas_ass.php
+ * CRIA플O      : Andre Santos - SUPERO
+ * DATA CRIA플O : 17/07/2015
+ * OBJETIVO     : Tela de Pesquisa de Associados
+ */	 
+?> 
 
+<?	
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -50,17 +50,17 @@
 	$xmlResult = getDataXML($xml);	
 	$xmlObjeto = getObjectXML($xmlResult);
 	
-	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 
-		$msgErro	= ( isset($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata) ) ? $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata : '';
-		$nmdcampo	= ( isset($xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'] : '';
+		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 
 		if (!empty($nmdcampo)) { $mtdErro = " $('#nrdconta','#frmInfEmpresa').focus();$('#nrdconta','#frmInfEmpresa').val('');$('#nmextttl','#frmInfEmpresa').val('');"; }
 
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
 	} 
 	
-	$associado = ( isset($xmlObjeto->roottag->tags[0]->tags) ) ? $xmlObjeto->roottag->tags[0]->tags : array();
+	$associado = $xmlObjeto->roottag->tags[0]->tags;
 	
 	echo "hideMsgAguardo();";
     

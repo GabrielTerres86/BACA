@@ -1,16 +1,20 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: cancela_senha_acesso.php                                  ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Junho/2008                   Última Alteração: 22/04/2010 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Cancelar Senha de Acesso ao InternetBank - Rotina de ***//
-	//***             Internet da tela ATENDA                              ***//
-	//***                                                                  ***//	 
-	//*** Alterações: 22/04/2010 - Mostrar mensagem de aviso se existirem  ***// 
-	//***                          agendamentos pendentes (David).         ***//                             
-	//************************************************************************//
+	//*********************************************************************************//
+	//*** Fonte: cancela_senha_acesso.php											***//
+	//*** Autor: David																***//
+	//*** Data : Junho/2008                   Última Alteração: 22/04/2010			***//
+	//***																			***//
+	//*** Objetivo  : Cancelar Senha de Acesso ao InternetBank - Rotina de			***//
+	//***             Internet da tela ATENDA										***//
+	//***																			***//	 
+	//*** Alterações: 22/04/2010 - Mostrar mensagem de aviso se existirem			***// 
+	//***                          agendamentos pendentes (David).					***//
+	//***																			***//	 
+	//***			  26/07/2016 - Corrigi o tratamento do retorno XML. SD 479874   ***//	 
+	//***						   (Carlos R.)										***//
+	//***																			***//
+	//*********************************************************************************//
 	
 	session_start();
 	
@@ -81,12 +85,12 @@
 	$xmlObjCancelar = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjCancelar->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjCancelar->roottag->tags[0]->name) && strtoupper($xmlObjCancelar->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjCancelar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
 	// Mostra se BO retornar mensagem de confirmação
-	if (strtoupper($xmlObjCancelar->roottag->tags[0]->name) == "CONFIRMACAO") {
+	if (isset($xmlObjCancelar->roottag->tags[0]->name) && strtoupper($xmlObjCancelar->roottag->tags[0]->name) == "CONFIRMACAO") {
 		$confirma = $xmlObjCancelar->roottag->tags[0]->tags[0]->tags;	
 
 		if ($confirma[0]->cdata == 1) {

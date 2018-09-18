@@ -1,4 +1,4 @@
-<? 
+<?php
 	//************************************************************************//
 	//*** Fonte: valida_senha_ura.php                                      ***//
 	//*** Autor: Lucas Reinert                                             ***//
@@ -7,12 +7,11 @@
 	//*** Objetivo  : Validar criacao/alteracao da senha de Tele 		   ***//
 	//***             Atendimento.                                         ***//
 	//***                                                                  ***//	
-	//*** Alteracoes: --/--/---- - 										   ***//
+	//*** Alteracoes: Corrigi o retorno XML e as variaveis vindas do post  ***//
+	//***			  SD 479874 (Carlos R.)								   ***//	
 	//***                                                                  ***//	
 	//************************************************************************//
-?>
- 
-<?
+
 	session_start();
 	
 	// Includes para controle da session, variaveis globais de controle, biblioteca de funcoes e leitura do xml de retorno
@@ -31,9 +30,10 @@
 	
 	$cddsenha = (isset($_POST['cddsenha'])) ? $_POST['cddsenha'] : '';
 	$cddsenh2 = (isset($_POST['cddsenh2'])) ? $_POST['cddsenh2'] : '';
-	$frmSenha = $_POST['frmSenha'];
+	$frmSenha = (isset($_POST['frmSenha'])) ? $_POST['frmSenha'] : '';
 		
 	// Monta o xml de requisição
+	$xml = '';
 	$xml .= "<Root>";
 	$xml .= "	<Cabecalho>";
 	$xml .= "		<Bo>b1wgen0015.p</Bo>";
@@ -54,15 +54,11 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObj = getObjectXML($xmlResult);
 	
-	
-	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+	if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
 	
 		$msgErro  = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#cddsenh1\',\'#'.$frmSenha.'\').focus();limpaCamposSenha();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
 	}
 	
 	echo 'criarAlterarSenhaURA();';
-	
-	
-	
 ?>	

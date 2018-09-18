@@ -1,15 +1,13 @@
-<? 
+<?php
 /*!
  * FONTE        : principal.php
  * CRIA플O      : James Prust Junior
  * DATA CRIA플O : Julho/2015
  * OBJETIVO     : Mostrar opcao Principal da rotina de Limite Saque TAA da tela de Atenda
  * --------------
- * ALTERA합ES   :				 
+ * ALTERA합ES   : 27/07/2016 - Corrigi o retorno de erro do XML. SD 479874 (Carlos R.)
  * --------------
  */	
-?>
-<?	
 	session_start();
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
@@ -48,17 +46,18 @@
 	$xml .= "</Root>";
 	$xmlResult = mensageria($xml, "LIMITE_SAQUE_TAA", "LIMITE_SAQUE_TAA_CONSULTAR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+
+	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
 	}
 
-	$oLimite = $xmlObjeto->roottag->tags[0];	
+	$oLimite = ( isset($xmlObjeto->roottag->tags[0]) ) ? $xmlObjeto->roottag->tags[0] : '';	
 	include('form_limite_saque_taa.php');
 ?>
 <script type='text/javascript'>
-	$('#vllimite_saque','#frmLimiteSaqueTAA').val('<?= formataMoeda(getByTagName($oLimite->tags,'vllimite_saque')); ?>');
-	$('#flgemissao_recibo_saque','#frmLimiteSaqueTAA').val('<?= ((getByTagName($oLimite->tags,'flgemissao_recibo_saque') != "") ? getByTagName($oLimite->tags,'flgemissao_recibo_saque') : 0); ?>');
-	$('#dtalteracao_limite','#frmLimiteSaqueTAA').val('<?=  getByTagName($oLimite->tags,'dtalteracao_limite'); ?>');
-	$('#nmoperador_alteracao','#frmLimiteSaqueTAA').val('<?= getByTagName($oLimite->tags,'nmoperador_alteracao'); ?>');
-	controlaLayoutLimiteSaqueTAA('<?= $operacao;  ?>');
+	$('#vllimite_saque','#frmLimiteSaqueTAA').val('<?php echo formataMoeda(getByTagName($oLimite->tags,'vllimite_saque')); ?>');
+	$('#flgemissao_recibo_saque','#frmLimiteSaqueTAA').val('<?php echo ((getByTagName($oLimite->tags,'flgemissao_recibo_saque') != "") ? getByTagName($oLimite->tags,'flgemissao_recibo_saque') : 0); ?>');
+	$('#dtalteracao_limite','#frmLimiteSaqueTAA').val('<?php echo getByTagName($oLimite->tags,'dtalteracao_limite'); ?>');
+	$('#nmoperador_alteracao','#frmLimiteSaqueTAA').val('<?php echo getByTagName($oLimite->tags,'nmoperador_alteracao'); ?>');
+	controlaLayoutLimiteSaqueTAA('<?php echo $operacao;  ?>');
 </script>

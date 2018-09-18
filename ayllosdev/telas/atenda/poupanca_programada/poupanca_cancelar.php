@@ -1,14 +1,17 @@
 <?php 
-
 	//************************************************************************//
 	//*** Fonte: poupanca_cancelar.php                                     ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Março/2010                   Última Alteração: 00/00/0000 ***//
+	//*** Data : Março/2010                   Última Alteração: 26/07/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Script para cancelar poupança programada             ***//
 	//***                                                                  ***//	 
-	//*** Alterações:                                                      ***//
-	//***			  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)**//
+	//*** Alterações: 17/06/2016 - M181 - Alterar o CDAGENCI para passar o ***//
+	//***						   CDPACTRA (Rafael Maciel - RKAM)		   ***//
+	//***                                                                  ***//
+	//***			  26/07/2016 - Corrigi o tratamento para retorno de    ***//
+	//***						   erro do XML. SD 479874 (Carlos R.)	   ***//
+	//***                                                                  ***//
 	//************************************************************************//
 	
 	session_start();
@@ -74,7 +77,7 @@
 	$xmlObjCancelar = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjCancelar->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjCancelar->roottag->tags[0]->name) && strtoupper($xmlObjCancelar->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjCancelar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

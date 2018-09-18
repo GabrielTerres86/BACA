@@ -1,14 +1,14 @@
 <?php 
 	
-	//************************************************************************//
-	//*** Fonte: logoff.php                                                ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Última Alteração: 00/00/0000 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Sair do sistema                                      ***//
-	//***                                                                  ***//	 
-	//*** Alterações:                                                      ***//
-	//************************************************************************//
+	//*****************************************************************************************************//
+	//*** Fonte: logoff.php																				***//
+	//*** Autor: David																					***//
+	//*** Data : Julho/2007                   Última Alteração: 21/07/2016								***//
+	//***																								***//
+	//*** Objetivo  : Sair do sistema																	***//
+	//***																								***//	 
+	//*** Alterações: 21/07/2016 - Validacao da existencia do indice sidlogin. SD 479874. (Carlos R.)   ***//
+	//*****************************************************************************************************//
 		
 	session_start();
 	
@@ -17,11 +17,11 @@
 	
 	// Se usuário estiver logado no sistema
 	if (count($_SESSION["glbvars"]) > 1) {
-		if (isset($_SESSION["glbvars"][$glbvars["sidlogin"]])) {
+		if (isset($glbvars["sidlogin"]) && isset($_SESSION["glbvars"][$glbvars["sidlogin"]])) {
 			unset($_SESSION["glbvars"][$glbvars["sidlogin"]]);
 		}
 	} else {	
-		if (isset($_SESSION["glbvars"][$glbvars["sidlogin"]])) {
+		if (isset($glbvars["sidlogin"]) && isset($_SESSION["glbvars"][$glbvars["sidlogin"]])) {
 			session_destroy();
 		}
 	}

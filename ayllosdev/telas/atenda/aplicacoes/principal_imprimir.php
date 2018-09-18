@@ -2,7 +2,7 @@
     /************************************************************************
       Fonte: principal_imprimir.php
       Autor: ???
-      Data : ???                      Última Alteração: 30/04/2014
+      Data : ???                      Última Alteração: 21/07/2016
       
       Alterações: 09/07/2012 - Retirado campo "redirect" do form.
 	  						 Jorge (CECRED)
@@ -17,10 +17,12 @@
 	  			  			     método POST
 				  			   - Retirado códigos que estavam comentados
 	  			  		       (Adriano).
-	  						  
-	************************************************************************/
+	  			 
+				  21/07/2016 - Removi o comando session_start pois este fonte
+							   esta sendo incluido em outro fonte que ja possui
+							   o comando. SD 479874 (Carlos R).			  
 
-	session_start();
+	************************************************************************/
 	
 	// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de fun&ccedil;&otilde;es	
 	require_once("../../../includes/config.php");

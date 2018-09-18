@@ -1,14 +1,13 @@
 <?php 
-
 	//************************************************************************//
-	//*** Fonte: estornar_integralizacoes.php                              ***//
-	//*** Autor: Fabricio                                                  ***//
-	//*** Data : Setembro/2013                Ultima Alteracao:            ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Estornar as integralizacoes de capital selecionadas. ***//
-	//***                                                                  ***//
-	//***                                                                  ***//	 
-	//*** Alteracoes:                                                      ***//
+	//*** Fonte: estornar_integralizacoes.php                              
+	//*** Autor: Fabricio                                                  
+	//*** Data : Setembro/2013												Ultima Alteracao:            
+	//***                                                                  
+	//*** Objetivo  :		Estornar as integralizacoes de capital selecionadas. 
+	//***                                                                  
+	//*** Alteracoes:		Correcao na forma de recuperacao do retorno XML. SD 479874. Carlos R.
+	//***
 	//************************************************************************//
 	
 	session_start();
@@ -69,7 +68,7 @@
 	$xmlObjEstorno = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjEstorno->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjEstorno->roottag->tags[0]->name) && strtoupper($xmlObjEstorno->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjEstorno->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 	

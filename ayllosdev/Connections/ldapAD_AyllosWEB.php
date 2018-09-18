@@ -5,7 +5,8 @@
  **/
 
 // PRODUÇÃO
-$srv_ldapAD = array('ldaps://0302dc01.cecred.coop.br','ldaps://0302dc02.cecred.coop.br','ldaps://0303dc01.cecred.coop.br','ldaps://0303dc02.cecred.coop.br');
+$srv_ldapAD = array('ldap://0302dc01.cecred.coop.br','ldap://0302dc02.cecred.coop.br','ldap://0303dc01.cecred.coop.br','ldap://0303dc02.cecred.coop.br');
+#$srv_ldapAD = array('ldap://0302dc01.cecred.coop.br','ldap://0302dc02.cecred.coop.br','ldap://0303dc01.cecred.coop.br','ldap://0303dc02.cecred.coop.br');
 $dnAD       = 'DC=cecred,DC=coop,DC=br';
 
 // HOMOLOGAÇÃO
@@ -22,13 +23,13 @@ $ldapAD = false;
 $count = 0;
 while ($ldapAD==false && $count < count($srv_ldapAD)) {
 	$ip   = $srv_ldapAD[array_rand($srv_ldapAD)];
-	$port = ereg('ldaps:', $ip) ? '636':'389'; //ldap:389 ou ldaps:636
-	$dsAD = ldap_connect($ip, $port);
+	#$port = ereg('ldaps:', $ip) ? '636':'389'; //ldap:389 ou ldaps:636
+	$dsAD = ldap_connect($ip, 389);
 	//configuracoes
 	ldap_set_option( $dsAD, 17, 3 ); // LDAP_OPT_PROTOCOL_VERSION = 3
 	ldap_set_option( $dsAD, 8, 0);   // LDAP_OPT_REFERRALS = 0
 	//autentica
-	$ldapAD = @ldap_bind($dsAD,"supero","Sup&r0!11");	
+	$ldapAD = @ldap_bind($dsAD,"supero@cecred.coop.br","Sup&r0!11");	
 	$count++;	
 }
 

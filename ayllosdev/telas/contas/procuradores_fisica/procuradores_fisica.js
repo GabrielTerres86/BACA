@@ -15,8 +15,8 @@
  *				  18/10/2017 - Removendo caixa postal. (PRJ339 - Kelvin)
  *				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  *                08/01/2018 - Ajuste para carregar nome do cadastro unificado e não permitir alterar caso possua cadastro completo.
-                               P339 - Evandro Guaranha - Mout's 
- 
+                               P339 - Evandro Guaranha - Mout's   	                         
+ *                01/02/2018 - Adicionado idseqttl que estava fixo 0 no procedure salvarPoderes. (Lombardi)
  */
 
 var nrcpfcgc = '';
@@ -206,7 +206,8 @@ function controlaOperacaoProcuradores( operacao ){
 					controlaOperacaoProcuradores('TP');
 				}
 				
-                if (operacao == "A"){
+                if (operacao == "A" || 
+                    operacao == "IB" ){
                     
                     // Validar se o nome pode ser alterada
                     buscaNomePessoa_gen($('#nrcpfcgc','#'+nomeFormProcuradores ).val(),'nmdavali', nomeFormProcuradores);                        
@@ -1366,16 +1367,16 @@ function controlaLayoutPoder() {
 	$('.divRegistros > table > thead').remove();
 }
 
-function controlaOperacaoPoderes(operacao) {
-	switch (operacao) {
+function controlaOperacaoPoderes(operacao){
+    switch (operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
-			showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+		    showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 	}
-}
+        }
 
 function salvarPoderes(){
 	
@@ -1431,12 +1432,21 @@ function salvarPoderes(){
 		strPoderes += dsoutpod;
 	});
 	
+	var idseqttl;
+	
+	if (nmrotina == "MATRIC") {
+		idseqttl = $('input[name="inpessoa"]:checked','#frmCabMatric').val();
+	} else {
+		idseqttl = $('#idseqttl','#frmCabContas').val();
+	}
+	
 	$.ajax({		
 		type: 'POST',
 		url: UrlSite + 'includes/procuradores/salva_poderes.php', 		
 		data: {			
 			strPoderes: strPoderes,nrdconta: nrdconta,
-			nrcpfcgc: nrcpfcgc,nrdctato: nrdctato
+			nrcpfcgc: nrcpfcgc,nrdctato: nrdctato,
+			idseqttl: idseqttl,
 		}, 
 		error:function(objAjax, responseError,objExcept){
 			hideMsgAguardo();

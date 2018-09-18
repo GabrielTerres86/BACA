@@ -1,20 +1,20 @@
 <?php 
 
 	/************************************************************************
-	      Fonte: grupo_economico.php
-	      Autor: Adriano
-	      Data : Outubro/2012              		Última Alteração: 10/02/2014
+	Fonte: grupo_economico.php
+	Autor: Adriano
+	Data : Outubro/2012              		Última Alteração: 10/02/2014
 
-          Objetivo  : Mostrar opcao de Grupo Economico da rotina de Ocorrencias
-                      da tela ATENDA
+    Objetivo  : Mostrar opcao de Grupo Economico da rotina de Ocorrencias
+                da tela ATENDA
 
-	      Alterações: 21/03/2013 - Ajustes realizados:
-									- Corrigido a grafia do título da coluna "Endividamento"
-								    - Atribuido o valor correto a coluna "Endividamento" 
-									(Adriano).
-					  12/08/2013 - Alteração da sigla PAC para PA. (Carlos)
-					  10/02/2014 - Correção relativa ao Valor do Endividamento (Lucas).
-											
+	Alterações: 21/03/2013 - Ajustes realizados:
+							- Corrigido a grafia do título da coluna "Endividamento"
+							- Atribuido o valor correto a coluna "Endividamento" 
+							(Adriano).
+				12/08/2013 - Alteração da sigla PAC para PA. (Carlos)
+				10/02/2014 - Correção relativa ao Valor do Endividamento (Lucas).
+				25/07/2016 - Corrigi a forma de recuperacao dos dados do XML. SD 479874 (Carlos R.)							
 
 	************************************************************************/
 
@@ -67,13 +67,13 @@
 	$xmlObjBuscaGrupo = getObjectXML($xmlResult);
 
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjBuscaGrupo->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjBuscaGrupo->roottag->tags[0]->name) && strtoupper($xmlObjBuscaGrupo->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBuscaGrupo->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
     
-	$pertgrup = $xmlObjBuscaGrupo->roottag->tags[0]->attributes['PERTGRUP'];
-	$gergrupo = $xmlObjBuscaGrupo->roottag->tags[0]->attributes['GERGRUPO'];
-	$nrdgrupo = $xmlObjBuscaGrupo->roottag->tags[0]->attributes['NRDGRUPO'];
+	$pertgrup = ( isset($xmlObjBuscaGrupo->roottag->tags[0]->attributes['PERTGRUP']) ) ? $xmlObjBuscaGrupo->roottag->tags[0]->attributes['PERTGRUP'] : null;
+	$gergrupo = ( isset($xmlObjBuscaGrupo->roottag->tags[0]->attributes['GERGRUPO']) ) ? $xmlObjBuscaGrupo->roottag->tags[0]->attributes['GERGRUPO'] : null;
+	$nrdgrupo = ( isset($xmlObjBuscaGrupo->roottag->tags[0]->attributes['NRDGRUPO']) ) ? $xmlObjBuscaGrupo->roottag->tags[0]->attributes['NRDGRUPO'] : null;
 			
 	if($gergrupo != ""){
 						
@@ -112,15 +112,13 @@
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjCalcEndivRiscoGrupo = getObjectXML($xmlResultCalcEndivRiscoGrupo);
 		
-		if (strtoupper($xmlCalEndivRiscoGrupo->roottag->tags[0]->name) == "ERRO") {
-		
+		if (isset($xmlCalEndivRiscoGrupo->roottag->tags[0]->name) && strtoupper($xmlCalEndivRiscoGrupo->roottag->tags[0]->name) == "ERRO") {
 			exibeErro($xmlCalEndivRiscoGrupo->roottag->tags[0]->tags[0]->tags[4]->cdata);
-			
 		}
 		
-		$dsdrisco = $xmlObjCalcEndivRiscoGrupo->roottag->tags[0]->attributes['DSDRISCO'];
-		$vlendivi = $xmlObjCalcEndivRiscoGrupo->roottag->tags[0]->attributes['VLENDIVI'];
-		$grupo = $xmlObjCalcEndivRiscoGrupo->roottag->tags[1]->tags;
+		$dsdrisco = ( isset($xmlObjCalcEndivRiscoGrupo->roottag->tags[0]->attributes['DSDRISCO']) ) ? $xmlObjCalcEndivRiscoGrupo->roottag->tags[0]->attributes['DSDRISCO'] : '';
+		$vlendivi = ( isset($xmlObjCalcEndivRiscoGrupo->roottag->tags[0]->attributes['VLENDIVI']) ) ? $xmlObjCalcEndivRiscoGrupo->roottag->tags[0]->attributes['VLENDIVI'] : 0;
+		$grupo    = ( isset($xmlObjCalcEndivRiscoGrupo->roottag->tags[1]->tags) ) ? $xmlObjCalcEndivRiscoGrupo->roottag->tags[1]->tags : array();
 	}
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript

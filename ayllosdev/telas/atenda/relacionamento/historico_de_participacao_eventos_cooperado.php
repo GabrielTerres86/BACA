@@ -3,15 +3,15 @@
 	/************************************************************************
 	 Fonte: historico_de_participacao_eventos_cooperado.php                                             
 	 Autor: Guilherme                                                 
-	 Data : Setembro/2009                &Uacute;ltima Altera&ccedil;&atilde;o:  14/07/2011    
+	 Data : Setembro/2009                Ultima Alteracao:  27/07/2016    
 	                                                                  
 	 Objetivo  : Mostrar eventos que o cooperado participou no per&iacute;odo
 	                                                                  	 
-	 Altera&ccedil;&otilde;es:   
-					09/02/2011 - Incluir parametro na chamada da Procedure (Gabriel).                                                  
+	 Alteracoes: 09/02/2011 - Incluir parametro na chamada da Procedure (Gabriel).                                                  
 
-					14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+				 14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
 
+				 27/07/2016 - Corrigi o retorno XML e o uso de variaveis do array XML. SD 479874 (Carlos R.)
 	************************************************************************/
 
 	session_start();
@@ -101,10 +101,10 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDadosEventosHistoricoCooperado = getObjectXML($xmlResult);
 	
-	$histEventos = $xmlObjDadosEventosHistoricoCooperado->roottag->tags[0]->tags;
+	$histEventos = ( isset($xmlObjDadosEventosHistoricoCooperado->roottag->tags[0]->tags) ) ? $xmlObjDadosEventosHistoricoCooperado->roottag->tags[0]->tags : array();
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjDadosEventosHistoricoCooperado->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjDadosEventosHistoricoCooperado->roottag->tags[0]->name) && strtoupper($xmlObjDadosEventosHistoricoCooperado->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjDadosEventosHistoricoCooperado->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
@@ -122,12 +122,12 @@
 		<table>
 			<thead>
 				<tr>
-					<th><? echo utf8ToHtml('Nome inscrito'); ?></th>
-					<th><? echo utf8ToHtml('Nome evento');  ?></th>
+					<th>Nome inscrito</th>
+					<th>Nome evento</th>
 				</tr>
 			</thead>
 			<tbody>
-				<? 
+				<?php
 				for ($i = 0; $i < count($histEventos); $i++) { 								
 				?>
 					<tr>
@@ -149,12 +149,12 @@
 
 
 <ul class="complemento">
-<li><? echo utf8ToHtml('Situacao:') ?></li>
-<li id="situacao"><?php echo $histEventos[0]->tags[4]->cdata; ?></li>
-<li><? echo utf8ToHtml('Inicio:') ?></li>
-<li id="dtinicio"><?php echo $histEventos[0]->tags[2]->cdata; ?></li>
-<li><? echo utf8ToHtml('Fim:') ?></li>
-<li id="dtfim"><?php echo $histEventos[0]->tags[3]->cdata; ?></li>
+<li>Situa&ccedil;&atilde;o:</li>
+<li id="situacao"><?php echo ( isset($histEventos[0]->tags[4]->cdata) ) ? $histEventos[0]->tags[4]->cdata : ''; ?></li>
+<li>In&iacute;cio:</li>
+<li id="dtinicio"><?php echo ( isset($histEventos[0]->tags[2]->cdata) ) ? $histEventos[0]->tags[2]->cdata : ''; ?></li>
+<li>Fim:</li>
+<li id="dtfim"><?php echo ( isset($histEventos[0]->tags[3]->cdata) ) ? $histEventos[0]->tags[3]->cdata : ''; ?></li>
 </ul>
 
 <div id="divBotoes" style="margin-bottom:3px">

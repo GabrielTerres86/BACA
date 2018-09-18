@@ -3,11 +3,12 @@
 	/************************************************************************
 	 Fonte: questionario_alterar.php                                             
 	 Autor: Guilherme                                                 
-	 Data : Setembro/2009                     Última Alteração: 25/10/2010     
+	 Data : Setembro/2009                     Última Alteração: 27/07/2016   
 	                                                                  
 	 Objetivo  : Alterar datas de entrega/devolução do questionário
 	                                                                  	 
-	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).                                                      
+	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).   
+				 27/07/2016 - Corrigi o retorno XML erro. SD 479874 (Carlos R.)                                                   
 	************************************************************************/
 
 	session_start();
@@ -81,7 +82,7 @@
 	$xmlObjDadosQuestionario = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjDadosQuestionario->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjDadosQuestionario->roottag->tags[0]->name) && strtoupper($xmlObjDadosQuestionario->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjDadosQuestionario->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

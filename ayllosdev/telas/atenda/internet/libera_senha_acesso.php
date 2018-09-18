@@ -22,9 +22,12 @@
 				 24/11/2015 - Adicionado param de retorno flgimpte,
 						      indicador de impressao do termo de responsabilidade.
 							  (Jorge/David) Projeto Multipla Assinatura PJ.
+
                  17/06/2016 - M181 - Alterar o CDAGENCI para          
                            passar o CDPACTRA (Rafael Maciel - RKAM) 
-							  
+				
+				 26/07/2016 - Corrigi a recuperacao de dados do XML. SD 479874 (Carlos R.)			  
+
 	************************************************************************/
 	
 	session_start();
@@ -54,8 +57,8 @@
 	$cdsnhnew = $_POST["cdsnhnew"];
 	$cdsnhrep = $_POST["cdsnhrep"];
 	$executandoProdutos = $_POST['executandoProdutos'];
-	$idastcjt = $_POST['idastcjt'];
-	$qtdTitular = $_POST['qtdTitular'];
+	$idastcjt = ( isset($_POST['idastcjt']) ) ? $_POST['idastcjt'] : null;
+	$qtdTitular = ( isset($_POST['qtdTitular']) ) ? $_POST['qtdTitular'] : 0;
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -106,13 +109,13 @@
 	$xmlObjLiberar = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjLiberar->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjLiberar->roottag->tags[0]->name) && strtoupper($xmlObjLiberar->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjLiberar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
-	$qtdiaace = $xmlObjLiberar->roottag->tags[0]->attributes["QTDIAACE"];
-	$flgletca = $xmlObjLiberar->roottag->tags[0]->attributes["FLGLETCA"];
-	$flgimpte = $xmlObjLiberar->roottag->tags[0]->attributes["FLGIMPTE"];
+	$qtdiaace = ( isset($xmlObjLiberar->roottag->tags[0]->attributes["QTDIAACE"]) ) ? $xmlObjLiberar->roottag->tags[0]->attributes["QTDIAACE"] : 0;
+	$flgletca = ( isset($xmlObjLiberar->roottag->tags[0]->attributes["FLGLETCA"]) ) ? $xmlObjLiberar->roottag->tags[0]->attributes["FLGLETCA"] : '';
+	$flgimpte = ( isset($xmlObjLiberar->roottag->tags[0]->attributes["FLGIMPTE"]) ) ? $xmlObjLiberar->roottag->tags[0]->attributes["FLGIMPTE"] : '';
 	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';	
@@ -124,8 +127,6 @@
 		// Se o indice da opção "@" foi encontrado 
 		if (!($idPrincipal === false)) {
 			echo 'callafterInternet = \'acessaOpcaoAba('.count($glbvars["opcoesTela"]).','.$idPrincipal.',"'.$glbvars["opcoesTela"][$idPrincipal].'");\';$("#btnAceIntResp").bind("click");';
-			//echo 'callafterInternet = \'exibeLayout("'.$idastcjt.'","'.$qtdTitular.'");\';';
-			//echo 'callafterInternet =\'acessaOpcaoAba(\'0\', \'0\', \'@\'); $("#btnAceIntResp").bind("click");\';';
 		} else {
 			echo 'callafterInternet = \'blockBackground(parseInt($("#divRotina").css("z-index")));\';';
 		}
@@ -133,13 +134,13 @@
 	
 	$strMsg = " ATENCAO! O cooperado tem ".$qtdiaace.($qtdiaace > 1 ? " dias " : " dia ")."para acessar a internet<br>e cadastrar uma frase para o acesso da conta.";
 	
+	$metodo = '';
+
 	if ($executandoProdutos == 'true') {
-		//$metodo = 'encerraRotina();';
 		$metodo = 'mostraDivAlteraSenhaLetras();';
 	}
 	
 	// Carregar contrato de responsabilidade de acesso a Internet
-	//echo 'showError("inform","'.$strMsg.'","Notifica&ccedil;&atilde;o - Ayllos","'.($flgimpte == "yes" ? 'carregarContrato(\"'.$flgletca.'\");'.$metodo : '').'");';
 	echo 'showError("inform","'.$strMsg.'","Notifica&ccedil;&atilde;o - Ayllos","'.'carregarContrato(\"'.$flgletca.'\",\"'.$flgimpte.'\",\"'.$metodo.'\");'.$metodo.'");';
 	
 	// Função para exibir erros na tela através de javascript

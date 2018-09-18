@@ -42,8 +42,6 @@
 	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0  ;
     $cdoperad       = (isset($_POST['cdoperad']))   ? $_POST['cdoperad']   : 0  ;
 
-    $cdoperad = "1";
-
     $xmlCarregaDados  = "";
     $xmlCarregaDados .= "<Root>";
     $xmlCarregaDados .= " <Dados>";

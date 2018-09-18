@@ -33,9 +33,9 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 	
-	$nrdconta = $_POST["nrdconta"];
-	$flgtipar = $_POST["flgtipar"];
-	$nrdocmto = $_POST["nrdocmto"];
+	$nrdconta = ( isset($_POST["nrdconta"]) ) ? $_POST["nrdconta"] : null;
+	$flgtipar = ( isset($_POST["flgtipar"]) ) ? $_POST["flgtipar"] : null;
+	$nrdocmto = ( isset($_POST["nrdocmto"]) ) ? $_POST["nrdocmto"] : null;
 	
 	// Verifica se número do agendamento é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -74,7 +74,7 @@
 	$xmlObjResult = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjResult->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjResult->roottag->tags[0]->name) && strtoupper($xmlObjResult->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjResult->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 		

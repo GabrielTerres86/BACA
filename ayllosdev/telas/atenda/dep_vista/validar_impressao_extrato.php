@@ -82,16 +82,16 @@
 	$xmlValidaExtrato = getObjectXML($xmlResult);
 
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlValidaExtrato->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlValidaExtrato->roottag->tags[0]->name) && strtoupper($xmlValidaExtrato->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlValidaExtrato->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 	
 	$hideblock = 'hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));';
 	$gerarimpr = 'imprimirExtrato();';	
 	
-	$msgConfirma = $xmlValidaExtrato->roottag->tags[0]->tags[0]->tags[1]->cdata;
+	$msgConfirma = ( isset($xmlValidaExtrato->roottag->tags[0]->tags[0]->tags[1]->cdata) ) ? $xmlValidaExtrato->roottag->tags[0]->tags[0]->tags[1]->cdata : '';
 	
-	if ($msgConfirma <> "") {
+	if ($msgConfirma <> '') {
 		// Efetua a impressão do termo de entrega
 		echo 'showConfirmacao("'.$msgConfirma.'","Confirma&ccedil;&atilde;o - Ayllos","'.$hideblock.$gerarimpr.'","'.$hideblock.'","sim.gif","nao.gif");';// Efetua a impressão do termo de solicitação de 2 via de senha
 	} else {

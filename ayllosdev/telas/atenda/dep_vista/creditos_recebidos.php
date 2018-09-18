@@ -3,12 +3,12 @@
 	 /************************************************************************
 	  Fonte: creditos_recebidos.php
 	  Autor: Gabriel - Rkam
-	  Data : Agost/2015                 Última Alteração: 
+	  Data : Agost/2015                 Última Alteração: 21/07/2016 
 
 	  Objetivo  : Mostrar opcao Créditos Recebidos da rotina de Dep. Vista
                   da tela ATENDA
 
-	  Alterações: 
+	  Alterações: 21/07/2016 - Correcao no carregamento de valores dos campos da tela. SD 479874. Carlos R.
 	  
 	 ************************************************************************/
 	
@@ -32,9 +32,7 @@
 	
 	// Verifica se o némero da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
-		
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
-		
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');		
 	}	
 		
 	// Monta o xml de requisição
@@ -51,8 +49,8 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjCreditos = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjCreditos->roottag->tags[0]->name) == "ERRO") {
+	//Validar se o indice utilizado existe e se ocorrer um erro, mostra crítica
+	if (isset($xmlObjCreditos->roottag->tags[0]->name) &&  strtoupper($xmlObjCreditos->roottag->tags[0]->name) == "ERRO") {
 		
 		exibirErro('error',$xmlObjCreditos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}
@@ -63,14 +61,14 @@
 
 <form action="" name="frmCreditosRecebidos" id="frmCreditosRecebidos" class="formulario" method="post">			
 
-	<? foreach( $registros as $result ){ ?>
+	<?php foreach( $registros as $result ){ ?>
 	
-		<label for="<?echo $result->tags[0]->name;?>"><?echo $result->tags[0]->cdata; ?></label>
-		<input type="text" id="<?echo $result->tags[0]->name;?>" name="<?echo $result->tags[0]->name;?>" value="<? echo number_format(str_replace(",","",$result->tags[1]->cdata),2,",",".");?>" />
+		<label for="<?php echo $result->tags[0]->name;?>"><?php echo $result->tags[0]->cdata; ?></label>
+		<input type="text" id="<?php echo $result->tags[0]->name;?>" name="<?php echo $result->tags[0]->name;?>" value="<?php echo number_format(floatval(str_replace(",","",$result->tags[1]->cdata)),2,",",".");?>" />
 						
 		<br />
 		
-	<?} ?>
+	<?php } ?>
 	
 </form>
 

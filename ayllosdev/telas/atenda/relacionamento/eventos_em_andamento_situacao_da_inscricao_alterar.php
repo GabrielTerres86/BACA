@@ -3,11 +3,12 @@
 	/************************************************************************
 	 Fonte: eventos_em_andamento_situacao_da_inscricao_alterar.php                                            
 	 Autor: Guilherme                                                 
-	 Data : Setembro/2009                Última Alteração: 25/10/2010     
+	 Data : Setembro/2009                Última Alteração: 27/07/2016     
 	                                                                  
 	 Objetivo  : Alterar o status de participação no evento
 	                                                                  	 
-	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).                                                      
+	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).  
+				 27/07/2016 - Corrigi o tratamento do retorno XML. SD 479874 (Carlos R.)                                                    
 	************************************************************************/
 
 	session_start();
@@ -74,7 +75,7 @@
 	$xmlObjSituacaoInscricao = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjSituacaoInscricao->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjSituacaoInscricao->roottag->tags[0]->name) && strtoupper($xmlObjSituacaoInscricao->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjSituacaoInscricao->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	

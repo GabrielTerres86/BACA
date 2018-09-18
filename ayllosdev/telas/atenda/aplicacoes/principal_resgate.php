@@ -3,7 +3,7 @@
 	/*******************************************************************************
 	 Fonte: principal_resgate.php                                      
 	 Autor:                                                             
-	 Data : 					                 Ultima Alteracao: 30/04/2014         
+	 Data : 					                 Ultima Alteracao: 21/07/2016         
 	                                                                         
 	 Objetivo  : Mostra os botões da rotina de resgate                      
 	                                                                          
@@ -12,10 +12,12 @@
 							  - Verficar se fonte está sendo chamado via
 							    método POST
 						      (Adriano).
+
+				  21/07/2016 - Removi o comando session_start pois este fonte
+							   esta sendo incluido em outro fonte que ja possui
+							   o comando. SD 479874 (Carlos R).
 							  
 	*******************************************************************************/
-	
-	session_start();
 	
 	// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de fun&ccedil;&otilde;es	
 	require_once("../../../includes/config.php");

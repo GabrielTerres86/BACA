@@ -1,15 +1,14 @@
-<? 
-/*!
- * FONTE        : mannter_rotina.php
- * CRIAÇÃO      : James Prust Junior
- * DATA CRIAÇÃO : Julho/2015
- * OBJETIVO     : Gravacao dos dados da tela Limite Saque TAA
- * --------------
- * ALTERAÇÕES   :
- * --------------
- */	
-?>
-<?	
+<?php
+   /*
+	* FONTE        : mannter_rotina.php
+	* CRIAÇÃO      : James Prust Junior
+	* DATA CRIAÇÃO : Julho/2015
+	* OBJETIVO     : Gravacao dos dados da tela Limite Saque TAA
+	* --------------
+	* ALTERAÇÕES   : Corrigi o retorno XML de erro. SD 479874 (Carlos R.)
+	* --------------
+	*/	
+
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -48,9 +47,11 @@
 	$xml .= "   <flgemissao_recibo_saque>".$iEmissaoReciboSaque."</flgemissao_recibo_saque>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
+
 	$xmlResult = mensageria($xml, "LIMITE_SAQUE_TAA", "LIMITE_SAQUE_TAA_ALTERAR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){
+
+	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
 	}
 	
