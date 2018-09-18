@@ -1881,7 +1881,7 @@ create or replace package body CECRED.AFRA0004 is
             
              -- Se estiver monitorando DDAs, pegar no email apenas titulos DDA
              IF    pr_flgpgdda = 1  
-              AND  cr_craptit.flgpgdda = 0 THEN
+              AND  rw_craptit.flgpgdda = 0 THEN
                 CONTINUE;
              END IF;
           
