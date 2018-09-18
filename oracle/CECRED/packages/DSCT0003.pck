@@ -8123,7 +8123,7 @@ EXCEPTION
     
     -- chama a rotina de baixa do titulo
     IF vr_flbaixar THEN
-      IF rw_craptdb.dtvencto >= pr_dtmvtolt THEN
+      IF gene0005.fn_valida_dia_util(pr_cdcooper,rw_craptdb.dtvencto) >= pr_dtmvtolt THEN
         vr_insittit := 2;
       ELSE
         vr_insittit := 3;
