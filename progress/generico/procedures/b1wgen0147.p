@@ -31,7 +31,9 @@
                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                             PRJ339 - CRM (Odirlei-AMcom)          
 
-               01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
+               01/09/2017 - Correcao no comando de copia do XML na procedure
+                            cria_dados_totvs. (Carlos Rafael Tanholi - 
+                            SD 747633)
 
                28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
                             CH, RE, PP E CT. (PRJ339 - Reinert)
@@ -40,7 +42,6 @@
 
                19/02/2018 - Ajuste no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 840693)
 
-               07/06/2018 - PRJ450 - Centralizaçao do lançamento em conta corrente Rangel Decker  AMcom.
 
                23/07/2018 - PRJ450 - Gravar indexador do contrato (Guilherme/AMcom)
 
@@ -841,6 +842,15 @@ PROCEDURE atualiza-operacoes:
 
                    aux_descprod = SUBSTR(aux_setlinha, 1229, 40).
 
+            IF TRIM(aux_descprod) = "FINAME PSI PJ" THEN
+               aux_cdindxdr = 11.
+            ELSE IF TRIM(aux_descprod) = "FINAME PJ" THEN
+               aux_cdindxdr = 22.
+            ELSE
+               aux_cdindxdr = 24.
+            /* SO TEM ESSES 3 PRODUTOS PARA BNDES */
+            
+
             /* Atualiza somente ATIVO na conta dos cooperados, 
               despreza PASSIVO */
             IF  aux_natopera <> "A" THEN
@@ -954,7 +964,8 @@ PROCEDURE atualiza-operacoes:
                        crapebn.cdnatope = aux_natopera
                        crapebn.cdperpca = aux_periocar
                        crapebn.dtpricar = aux_dtcarenc
-                       crapebn.dsprodut = aux_descprod. 
+                       crapebn.dsprodut = aux_descprod
+                       crapebn.cdindxdr = aux_cdindxdr. 
 
                 VALIDATE crapebn.
 
