@@ -43,7 +43,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                      28/08/2018 - Quando o Juros60 for maior que o valor da divida, enviar o valor da divida, 
                                   senao subtrair do valor da divida o Juros60 para emprestimos em prejuizo. (P450 - Jaison)
 
-                     04/09/2018 - P450 - Correção Juros60 (Reginaldo/AMcom)
+                     04/09/2018 - P450 - Correção Juros60
+                                  P450 - Correção no valor do contrato para a modalidade 0101(Reginaldo/AMcom)
 
     .............................................................................................................................*/
 
@@ -5656,7 +5657,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                vr_diasvenc := fn_busca_dias_vencimento(rw_crapvri_venct.cdvencto);
                -- 0101 - Para adiantamento depositante ou INDDOCTO=5
                IF vr_tab_individ(vr_idx_individ).cdmodali = 0101 OR vr_tab_individ(vr_idx_individ).inddocto = 5 THEN
-                 vr_vlrctado := vr_tab_individ(vr_idx_individ).vldivida;
+                 vr_vlrctado := vr_tab_individ(vr_idx_individ).vlsld59d; -- P450 - Reginaldo/AMcom
                  vr_dtfimctr := vr_tab_individ(vr_idx_individ).dtvencop;
                -- Para Limite não Utilizado, Cheque Especial, Desconto de Titulos e Desconto de Cheques
                ELSIF vr_tab_individ(vr_idx_individ).cdmodali IN(1901,0201,0301,0302) THEN
