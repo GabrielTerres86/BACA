@@ -299,7 +299,6 @@
 	<div id="divBotoes">
 		<a href="#" class="botao"  name="btnvoltar"   id="btnvoltar"   onClick="voltaDiv(4,3,4,'CONSULTA DE BORDER&Ocirc;');return false;" > Voltar</a>
 		<a href="#" class="botao"  name="btnvoltar"   id="btnvoltar"   onClick="visualizarTituloDeBordero();return false;" > Ver Detalhes da An&aacute;lise</a>
-		<a href="#" class="botao"  name="btnDetalhes" id="btnDetalhes" onClick="visualizarDetalhesTitulo();return false;" > Ver detalhes do T&iacute;tulo</a>
 	</div>
 
 	<script type="text/javascript">

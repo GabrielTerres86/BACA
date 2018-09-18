@@ -821,7 +821,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 	--
 	--          06/06/2018 - Validar se o titulo esta negativado, caso esteja não deixar alterar a data de vencimento (Chamado 844126).
     --                      (Alcemir Mout's).   
-
+    --
+	  --          17/09/2018 - Remover os titulos que estão em borderôs rejeitados e titulos não aprovados (Vitor S. Assanuma - GFT) 
+    --
     -- ...........................................................................................
 
   BEGIN
@@ -843,12 +845,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         SELECT tdb.dtvencto
               ,tdb.insittit
           FROM craptdb tdb
+          INNER JOIN crapbdt bdt ON tdb.cdcooper = bdt.cdcooper AND tdb.nrborder = bdt.nrborder
          WHERE tdb.cdcooper = pr_cdcooper
            AND tdb.nrdconta = pr_nrdconta
            AND tdb.cdbandoc = pr_cdbandoc
            AND tdb.nrdctabb = pr_nrdctabb
            AND tdb.nrcnvcob = pr_nrcnvcob
-           AND tdb.nrdocmto = pr_nrdocmto;
+           AND tdb.nrdocmto = pr_nrdocmto
+           AND tdb.insitapr <> 2 -- Titulo não aprovado
+           AND bdt.insitbdt <> 5; -- Bordero não pode estar Rejeitado
       rw_craptdb cr_craptdb%ROWTYPE;
 
       rw_crapcco COBR0007.cr_crapcco%ROWTYPE;
@@ -10852,7 +10857,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Posicionar no proximo registro
     FETCH cr_crapcob INTO rw_crapcob;
     CLOSE cr_crapcob;
-
+		--
+    IF rw_crapcob.inserasa <> 0 THEN
+			--
+			SSPC0002.pc_cancelar_neg_serasa(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
+																		 ,pr_nrcnvcob => pr_nrcnvcob --> Numero do convenio de cobranca. 
+																		 ,pr_nrdconta => pr_nrdconta --> Numero da conta/dv do associado.
+																		 ,pr_nrdocmto => pr_nrdocmto --> Numero do documento(boleto) 
+																		 ,pr_nrremass => pr_nrremass --> Numero da Remessa
+																		 ,pr_cdoperad => pr_cdoperad --> Codigo do operador
+																		 ,pr_cdcritic => vr_cdcritic --> Código da crítica
+																		 ,pr_dscritic => vr_dscritic --> Descrição da crítica
+																		 );
+			--
+		ELSE
+			--
     IF rw_crapcob.cdbandoc = 085 THEN
       --
       pc_inst_cancel_protesto_85(pr_cdcooper            => pr_cdcooper
@@ -10909,6 +10928,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;
       --
     END IF;
+    --
+		END IF;
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -11242,6 +11263,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       vr_dscritic := 'Servico de protesto nao habilitado. Favor entrar em contato com seu PA.';
       RAISE vr_exc_erro;       
         
+    END IF;
+    
+		-- Verificar se já possui serviço do SERASA
+    IF rw_crapcob.flserasa = 1 OR rw_crapcob.qtdianeg > 0 OR rw_crapcob.inserasa > 0 THEN
+			-- Gerar o retorno para o cooperado 
+			COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+																				,pr_cdocorre => 26   -- Instrucao Rejeitada
+																				,pr_cdmotivo => '39' -- Motivo
+																				,pr_vltarifa => 0    -- Valor da Tarifa  
+																				,pr_cdbcoctl => rw_crapcop.cdbcoctl
+																				,pr_cdagectl => rw_crapcop.cdagectl
+																				,pr_dtmvtolt => pr_dtmvtolt
+																				,pr_cdoperad => pr_cdoperad
+																				,pr_nrremass => pr_nrremass
+																				,pr_cdcritic => vr_cdcritic
+																				,pr_dscritic => vr_dscritic
+																				);
+        -- Verifica se ocorreu erro durante a execucao
+        IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Recusar a instrucao
+        vr_dscritic := 'Boleto com instrução de negativação!';
+        RAISE vr_exc_erro;
+			--
     END IF;
     
     ------ FIM - VALIDACOES PARA RECUSAR ------
