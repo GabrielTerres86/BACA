@@ -1647,7 +1647,7 @@ create or replace package body CECRED.AFRA0004 is
         Sistema  : Rotinas referentes a monitoracao de Analise de Fraude
         Sigla    : CRED
         Autor    : Teobaldo Jamunda - AMcom
-        Data     : Abril/2018.                    Ultima atualizacao: 28/08/2018
+        Data     : Abril/2018.                    Ultima atualizacao: 17/09/2018
 
         Dados referentes ao programa:
 
@@ -1657,6 +1657,7 @@ create or replace package body CECRED.AFRA0004 is
 
         Alteracoes: 28/08/2018 - Inserido parametro com descricao do tipo de titulo (Tiago - RITM0025395) 
         
+                    17/09/2018 - Correções referentes a monitoração de DDA (Tiago - RITM0025395)        
     ----------------------------------------------------------------------------*/
 
     --Selecionar informacoes dos titulares da conta
@@ -1842,6 +1843,10 @@ create or replace package body CECRED.AFRA0004 is
              InStr(Upper(rw_crappro.dsprotoc),'ESTORNADO') > 0) THEN
             --Ignorar registro
             CONTINUE;
+          ELSE
+            IF InStr(Upper(rw_crappro.dsprotoc),'ESTORNADO') > 0 THEN
+              CONTINUE;
+          END IF;
           END IF;
 
           --Verificar as autenticacoes
@@ -1873,6 +1878,13 @@ create or replace package body CECRED.AFRA0004 is
           FETCH cr_craptit INTO rw_craptit;
           --Se nao encontrar
           IF cr_craptit%FOUND THEN
+            
+             -- Se estiver monitorando DDAs, pegar no email apenas titulos DDA
+             IF    pr_flgpgdda = 1  
+              AND  cr_craptit.flgpgdda = 0 THEN
+                CONTINUE;
+             END IF;
+          
             --Codigo banco Caixa
             vr_cdbccxlt:= to_number(SUBSTR(rw_craptit.dscodbar,1,3));
             IF  vr_cdbccxlt IN (1,85)  THEN
