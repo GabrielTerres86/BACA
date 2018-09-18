@@ -952,7 +952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           FETCH cr_crapgrp INTO rw_crapgrp;
           IF cr_crapgrp%FOUND THEN
             CLOSE cr_crapgrp;
-            vr_nrdgrupo := rw_crapgrp.inrisco_grupo;
+            vr_nrdgrupo := rw_crapgrp.idgrupo;
             -- Caso nao possuir nenhuma operacao na mensal, vamos assumir o risco do grupo economico
             IF NOT vr_fcrapris THEN
               vr_innivris := rw_crapgrp.inrisco_grupo;
