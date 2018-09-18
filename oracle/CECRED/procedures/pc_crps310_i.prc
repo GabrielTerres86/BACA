@@ -5452,21 +5452,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                    ,pr_rsprjaan => vr_vlprjaan
                                    ,pr_rsprjant => vr_vlprjant);
 
-              -- P450 - Reginaldo
-              -- Se a conta está em prejuízo, ajusta o nível de risco e o código de vencimento
-              IF rw_crapass.inprejuz = 1 THEN
-                vr_risco_aux := 10;
-								
-                CASE
-                  WHEN vr_qtdiaatr <= 360 THEN -- Prejuízo até 12 meses
-                    vr_cdvencto := 310;
-                  WHEN vr_qtdiaatr BETWEEN 361 AND  1440 THEN -- Prejuízo há mais de 12 meses e até 48 meses
-                    vr_cdvencto := 320;
-                  ELSE -- Prejuízo há mais de 48 meses
-                    vr_cdvencto := 330;
-                  END CASE;
-              END IF;
-
               -- Se houver Saldo Bloqueado
               IF vr_vlbloque > 0 THEN
                 -- Se a divida for inferior ao Saldo Bloqueado
