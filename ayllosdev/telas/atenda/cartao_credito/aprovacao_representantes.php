@@ -45,10 +45,10 @@
             $alguemNaoAssinou = false;
             $idastcjt = null;
             $insitcrd = false;
-			$inupgrad = false;
-			$temJustificativa = false;
-			$dsjustif;
-			$cdopesup;
+            $inupgrad = false;
+            $temJustificativa = false;
+            $dsjustif;
+            $cdopesup;
 			
             if($tpacao == "verificaAutorizacoes"){
 
@@ -101,10 +101,10 @@
                   
 					return;
 				 }*/
-                
 
-                
-               
+
+
+
                 
                 return;
             }
@@ -185,20 +185,8 @@
                 {
                     ?>
                         <a href="#" class="botao" id="" onclick="<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;"> Sair</a>
-						<? if((strlen($dsjustif) > 0 ) && (!isset($cdopesup) || strlen($cdopesup) ==0 )){
-
-							?>
-							<a href="#" class="botao" 
-							onclick="chamarCoordenador(<? echo $nrctrcrd?>, '<? echo $idacionamento; ?>','C',<?echo $cdadmcrd;?> );">
-							<?echo utf8ToHtml("Aprovação coordenador") ?>
-							</a>	
-							
-							
-							<?
-						}else{
-							?>
                         <a href="#" class="botao" id="" onclick="enviarBancoob(' <? echo utf8ToHtml($nrctrcrd) ;?> ');"> <? echo utf8ToHtml("Enviar Solicitação") ;?></a>
-						<? } ?>
+							
                     <?
                 }else{
                     ?>
