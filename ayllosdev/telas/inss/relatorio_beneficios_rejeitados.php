@@ -35,7 +35,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 		
 	$xmlSolicitaRejeitados  = "";
@@ -60,7 +60,7 @@
 			$nmdcampo = "tprelato";
 		}
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#divRelatorio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divRelatorio\').habilitaCampo(); focaCampoErro(\'#'.$nmdcampo.'\',\'divRelatorio\');',false);			
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input\',\'#divRelatorio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divRelatorio\').habilitaCampo(); focaCampoErro(\'#'.$nmdcampo.'\',\'divRelatorio\');',false);			
 					
 	}   
 	

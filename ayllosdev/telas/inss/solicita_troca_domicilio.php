@@ -38,7 +38,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$c = array('.', '-');
@@ -113,7 +113,7 @@
 		$nmdcampo = $xmlObjSolicitaAlteracao->roottag->tags[0]->attributes['NMDCAMPO'];
 				
 		if ( !empty($nmdcampo) ) { $mtdErro = "$('input,select','#frmTrocaDomicilio').removeClass('campoErro');focaCampoErro('".$nmdcampo."','frmTrocaDomicilio');";  }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 				
 	}   
 	
@@ -121,49 +121,49 @@
 	
 	$strGeraImpressao = $temsenha != 'true' ? 'Gera_Impressao(\"'.$nmarqpdf.'\",\"fechaRotina($(\'#divRotina\'));solicitaConsultaBeneficiario(\'C\');\");' : 'fechaRotina($(\"#divRotina\"));solicitaConsultaBeneficiario(\"C\");';
 	
-  exibirErro('inform','Alteracao efetuada com sucesso.','Alerta - Ayllos',$strGeraImpressao,false);
+  exibirErro('inform','Alteracao efetuada com sucesso.','Alerta - Aimaro',$strGeraImpressao,false);
   
 		
 	function validaDados(){
 					
 		//NB
 		if ( $GLOBALS["nrrecben"] == 0 ){ 
-			exibirErro('error','NB n&atilde;o foi informado!','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','NB n&atilde;o foi informado!','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}	
 		
 		//Filiação
 		if ( $GLOBALS["nmmaettl"] == ''){ 
-			exibirErro('error','Filia&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','Filia&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}
 		
 		//OP
 		if ( $GLOBALS["cdorgins"] == 0){ 
-			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}
 
 		//Unidade de atendimento
 		if ( $GLOBALS["cdagepac"] == 0){ 
-			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}
 				
 		//Agencia Sicredi
 		if ( $GLOBALS["cdagesic"] == 0){ 
-			exibirErro('error','Ag&ecirc;ncia SICREDI inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','Ag&ecirc;ncia SICREDI inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}
 		
 		//Conta
 		if ( $GLOBALS["nrdconta"] == 0){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}
 		
 		//CPF	
 		if ( $GLOBALS["nrcpfcgc"] == 0){ 
-			exibirErro('error','CPF inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','CPF inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}
 		
 		//Data de nascimento	
 		if ( $GLOBALS["dtnasttl"] == ''){ 
-			exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
+			exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaDomicilio\');',false);
 		}
 		
 	}

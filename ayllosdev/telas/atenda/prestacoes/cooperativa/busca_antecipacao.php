@@ -22,19 +22,19 @@
 	$retornoAposErro = 'focaCampoErro(\'cddopcao\', \'frmCab\');';
 	/*
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	*/
 	
 	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrctremp"]) || !isset($_POST["nrdconta"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$retornoAposErro,false);
 	}else{
 		$nrctremp = $_POST["nrctremp"];		
 		$nrdconta = $_POST["nrdconta"];
 		
 		// Verifica se número da conta é um inteiro válido
-		if (!validaInteiro($nrdconta)) exibirErro('error','Par&acirc;metros inv&aacute;lida.','Alerta - Ayllos',$retornoAposErro,false);
+		if (!validaInteiro($nrdconta)) exibirErro('error','Par&acirc;metros inv&aacute;lida.','Alerta - Aimaro',$retornoAposErro,false);
 	}
 	
 	// Montar o xml de Requisicao
@@ -55,7 +55,7 @@
 	
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 	//	$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-	//	exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+	//	exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 	
 	else{

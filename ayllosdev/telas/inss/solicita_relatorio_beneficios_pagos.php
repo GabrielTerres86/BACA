@@ -33,7 +33,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);	
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);	
 	}
 			
 	$cdagesel = (isset($_POST["cdagesel"])) ? $_POST["cdagesel"] : '';
@@ -71,22 +71,22 @@
 		$nmdcampo = $xmlObjSolicitaRelatorioBeneficiosPagos->roottag->tags[0]->attributes['NMDCAMPO'];
 			
 		if ( !empty($nmdcampo) ) { $mtdErro = "$('input','#frmRelatorioBeneficiosPagos').removeClass('campoErro');focaCampoErro('".$nmdcampo."','frmRelatorioBeneficiosPagos');";  }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			
 	}   
 	
-	exibirErro('inform','Solicita&ccedil;&atilde;o efetuada com sucesso. Em alguns instantes o relat&oacute;rio estar&aacute; dispon&iacute;vel na op&ccedil;&atilde;o Visualizar.','Alerta - Ayllos','controlaVoltar(\'V7\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);		
+	exibirErro('inform','Solicita&ccedil;&atilde;o efetuada com sucesso. Em alguns instantes o relat&oacute;rio estar&aacute; dispon&iacute;vel na op&ccedil;&atilde;o Visualizar.','Alerta - Aimaro','controlaVoltar(\'V7\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);		
 	
 	function validaDados(){
 		
 		//Data inicio do recebimento
 		if ( $GLOBALS["dtinirec"] == ''){ 
-			exibirErro('error','Data inicial de pagamento n&atilde;o informada.','Alerta - Ayllos','$(\'#dtinirec\',\'#frmRelatorioBeneficiosPagos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Data inicial de pagamento n&atilde;o informada.','Alerta - Aimaro','$(\'#dtinirec\',\'#frmRelatorioBeneficiosPagos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//Data final do recebimento
 		if ( $GLOBALS["dtfinrec"] == ''){ 
-			exibirErro('error','Data final de pagamento n&atilde;o informada.','Alerta - Ayllos','$(\'#dtfinrec\',\'#frmRelatorioBeneficiosPagos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Data final de pagamento n&atilde;o informada.','Alerta - Aimaro','$(\'#dtfinrec\',\'#frmRelatorioBeneficiosPagos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 							
 	}

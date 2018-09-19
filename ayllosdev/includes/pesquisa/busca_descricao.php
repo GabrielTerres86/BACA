@@ -34,7 +34,7 @@
 		 !isset($_POST["campoCodigo"   ]) || 
 		 !isset($_POST["campoDescricao"]) ||
 		 !isset($_POST["campoRetorno"  ]) ) { 
-		 exibirErro('error','Par&acirc;metros incorretos para a pesquisa.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		 exibirErro('error','Par&acirc;metros incorretos para a pesquisa.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
     
 	// Pega os valores nas devidas vari&aacute;veis
@@ -49,7 +49,7 @@
 	$executaMetodo   = $_POST["executaMetodo"];
 	 
 	// Verifica o par&acirc;metro c&oacute;digo
-	if ( !isset($_POST["codigoAtual"]) ) exibirErro('error','Par&acirc;metro c&oacute;digo para pesquisa '.$tituloPesquisa.' n&atilde;o foi informado.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if ( !isset($_POST["codigoAtual"]) ) exibirErro('error','Par&acirc;metro c&oacute;digo para pesquisa '.$tituloPesquisa.' n&atilde;o foi informado.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Inicializando vari&aacute;veis
 	$codigo    = $_POST["codigoAtual"];
@@ -58,8 +58,8 @@
 	$nrregist  = 10;		
 
 	// Valida c&oacute;digo
-	if ($codigo == "0") exibirErro('error','O c&oacute;digo '.$tituloPesquisa.' deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (($nomeProcedure != 'BUSCA_ORGAO_EXPEDIDOR' && $nomeProcedure != 'BUSCA_DESC_CONVEN' && $nomeProcedure != 'VALIDA_PAIS' && $nomeProcedure != 'VALIDA_TIPO_DECLARADO' && $nomeProcedure != 'VALIDA_TIPO_PROPRIETARIO') && !validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
+	if ($codigo == "0") exibirErro('error','O c&oacute;digo '.$tituloPesquisa.' deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (($nomeProcedure != 'BUSCA_ORGAO_EXPEDIDOR' && $nomeProcedure != 'BUSCA_DESC_CONVEN' && $nomeProcedure != 'VALIDA_PAIS' && $nomeProcedure != 'VALIDA_TIPO_DECLARADO' && $nomeProcedure != 'VALIDA_TIPO_PROPRIETARIO') && !validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Aimaro','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
 	
 	
 	// Verifica se e' uma rotina Progress ou Oracle
@@ -125,7 +125,7 @@
 		
 	// Se ocorrer um erro, mostra cr&iacute;tica
 	if (isset($xmlObjdescricao->roottag->tags[0]->name) && strtoupper($xmlObjdescricao->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjdescricao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjdescricao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$descricao = ( isset($xmlObjdescricao->roottag->tags[0]->tags[0]->tags) ) ? $xmlObjdescricao->roottag->tags[0]->tags[0]->tags : array();
@@ -143,10 +143,10 @@
 			
 		if ( $nomeFormulario != '' ) {				
 			echo '$("#'.$campoCodigo.'","#'.$nomeFormulario.'").addClass("campoErro");';
-			exibirErro('error','N&atilde;o h&aacute; '.$tituloPesquisa.' com o c&oacute;digo informado.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { desbloqueia(\''.$campoCodigo.'\',\''.$nomeFormulario.'\'); } else { bloqueiaFundo(divRotina,\''.$campoCodigo.'\',\''.$nomeFormulario.'\'); }',false);
+			exibirErro('error','N&atilde;o h&aacute; '.$tituloPesquisa.' com o c&oacute;digo informado.','Alerta - Aimaro','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { desbloqueia(\''.$campoCodigo.'\',\''.$nomeFormulario.'\'); } else { bloqueiaFundo(divRotina,\''.$campoCodigo.'\',\''.$nomeFormulario.'\'); }',false);
 		} else {
 			echo '$("input[name=\''.$campoCodigo.'\']").addClass("campoErro");';
-			exibirErro('error','N&atilde;o h&aacute; '.$tituloPesquisa.' com o c&oacute;digo informado.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+			exibirErro('error','N&atilde;o h&aacute; '.$tituloPesquisa.' com o c&oacute;digo informado.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		} 
 	}
 	

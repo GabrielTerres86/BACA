@@ -44,7 +44,7 @@
 			<table width="100%" border="0" cellpadding="0" cellspacing="0">
 				<tr>
 					<td width="5" height="30">&nbsp;</td>
-					<td><a href="#" onClick="carregarTelaPrincipal();return false;" class="txtSistema">SISTEMA AYLLOS</a></td>
+					<td><a href="#" onClick="carregarTelaPrincipal();return false;" class="txtSistema">SISTEMA AIMARO</a></td>
 					<td width="90" align="right"><img src="<?php echo $UrlImagens; ?>logos/logo_<?php echo str_replace(" ","",$glbvars["nmcooper"]); ?>.gif"></td>
 					<td width="5">&nbsp;</td>
 				</tr>

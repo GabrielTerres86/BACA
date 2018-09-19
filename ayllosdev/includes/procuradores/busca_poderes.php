@@ -52,7 +52,7 @@
 			$metodo = 'bloqueiaFundo(divRotina);controlaOperacaoProcuradores();';
 		}		
 		
-		exibirErro('error',$xmlObjetoBuscaDadosPoderes->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjetoBuscaDadosPoderes->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 		
 	}
 	

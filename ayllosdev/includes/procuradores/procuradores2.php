@@ -22,7 +22,7 @@
 	$flgPoderes	  = (in_array('P', $glbvars['opcoesTela']));
 	$nmdatela     = $_POST['nmdatela'];
 	
-	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Representantes/Procuradores.','Alerta - Ayllos','');
+	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Representantes/Procuradores.','Alerta - Aimaro','');
 ?>
 
 <div id="divOpcoesDaOpcao2">&nbsp;</div>

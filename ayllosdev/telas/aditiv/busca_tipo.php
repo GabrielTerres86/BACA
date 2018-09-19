@@ -33,7 +33,7 @@
 	$tpctrato = (isset($_POST['tpctrato'])) ? $_POST['tpctrato'] : 0;
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}  
   
 	// Monta o xml de requisição
@@ -72,7 +72,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','',false);
 	}
 	
 	$registros 	= $xmlObj->roottag->tags[0]->tags;
@@ -94,7 +94,7 @@
 
 	$xmlBensObj = getObjectXML($xmlBensResult);
 	if ( strtoupper($xmlBensObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlBensObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+		exibirErro('error',$xmlBensObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','',false);
 	}
 	$registrosBens 	= $xmlBensObj->roottag->tags[0]->tags;
 	$dadosBens 		= $xmlBensObj->roottag->tags[0]->tags[0]->tags;

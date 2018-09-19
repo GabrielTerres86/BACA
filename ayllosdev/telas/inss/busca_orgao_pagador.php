@@ -37,7 +37,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	validaDados();
@@ -59,7 +59,7 @@
 	
 		$msgErro = $xmlObjectBuscaOP->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$mtdErro = "$('input','#frmTrocaOpContaCorrente').removeClass('campoErro');$('#cdorgins','#frmTrocaOpContaCorrente').val('');focaCampoErro('#nrdconta','frmTrocaOpContaCorrente');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));"; 
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);		
 					
 	}   
 	
@@ -74,7 +74,7 @@
 			
 		//Numero da conta
 		if ( $GLOBALS["nrdconta"] == 0  ){ 
-			exibirErro('error','Conta inv&aacute;lida!','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmTrocaOpContaCorrente\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Conta inv&aacute;lida!','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmTrocaOpContaCorrente\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 	}

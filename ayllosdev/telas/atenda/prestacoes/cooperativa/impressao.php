@@ -43,8 +43,8 @@
 	
 	if ($glbvars["cdcooper"] == 3) {
 		$divBloqueia = "blockBackground(parseInt($('#divRotina').css('z-index')))";
-		$imp_rating = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Ayllos',".$divBloqueia.");";
-		$imp_rating_proposta = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Ayllos',".$divBloqueia.");";
+		$imp_rating = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Aimaro',".$divBloqueia.");";
+		$imp_rating_proposta = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Aimaro',".$divBloqueia.");";
 	} else {
 		$imp_rating = "verificaImpressao(5);";
 		$imp_rating_proposta = "verificaImpressao(10);";
@@ -68,7 +68,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', true);
+		exibirErro('error', $msg, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)', true);
 	}
     
 	//Busca se deve mostrar o botão para impressão da declaração de isenção de IOF
@@ -90,7 +90,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+		exibirErro('error', $msg, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)', false);
 	}
 
 	$isencaoIOF = $xmlObjDados->roottag->tags[0]->cdata;

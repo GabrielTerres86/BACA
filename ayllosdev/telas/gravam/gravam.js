@@ -382,7 +382,7 @@ function formataFiltroImpressao() {
     //Define ação para CLICK no botão de Concluir
     $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
 
-        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorio670();', 'formataFiltroImpressao();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'gerarRelatorio670();', 'formataFiltroImpressao();', 'sim.gif', 'nao.gif');
 
         return false;
 
@@ -471,7 +471,7 @@ function formataFiltroArquivo() {
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'geraArquivo();', 'formataFiltroArquivo();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'geraArquivo();', 'formataFiltroArquivo();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -482,7 +482,7 @@ function formataFiltroArquivo() {
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'solicitaProcessamentoArquivoRetorno();', 'formataFiltroArquivo();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'solicitaProcessamentoArquivoRetorno();', 'formataFiltroArquivo();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -608,7 +608,7 @@ function formataFiltroHistorico() {
     //Define ação para CLICK no botão de Concluir
     $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
 
-        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorioHistorico();', 'formataFiltroHistorico();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'gerarRelatorioHistorico();', 'formataFiltroHistorico();', 'sim.gif', 'nao.gif');
 
         return false;
 
@@ -1024,7 +1024,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 				else
 					funcao = 'verificaSituacaoGravames(' + idseqbem + ',' + tpctrpro + ');';
 				
-                showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', funcao, '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+                showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', funcao, '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
                 return false;
 
@@ -1039,7 +1039,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'baixaManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'pedeSenhaCoordenador(2,\'baixaManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1055,7 +1055,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja cancelar o registro da aliena&ccedil;&atilde;o no Gravames?', 'Confirma&ccedil;&atilde;o - Ayllos', 'cancelarGravame(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja cancelar o registro da aliena&ccedil;&atilde;o no Gravames?', 'Confirma&ccedil;&atilde;o - Aimaro', 'cancelarGravame(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1068,7 +1068,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Aimaro', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1081,7 +1081,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Aimaro', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1094,7 +1094,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1126,7 +1126,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
             //Define ação para CLICK no botão de Concluir
             $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-                showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarBensSubAditivo(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+                showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'alterarBensSubAditivo(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
                 return false;
 
@@ -1168,7 +1168,7 @@ function verificaSituacaoGravames(idseqbem,tpctrpro) {
 				  },
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+				showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
 			},
 			success: function(response) {
 				hideMsgAguardo();
@@ -1446,7 +1446,7 @@ function montaFormFiltro() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "estadoInicial();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "estadoInicial();");
         },
         success: function (response) {
 
@@ -1458,7 +1458,7 @@ function montaFormFiltro() {
                     return false;
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "estadoInicial();");
                 }
             } else {
                 try {
@@ -1466,7 +1466,7 @@ function montaFormFiltro() {
                     eval(response);
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "estadoInicial();");
                 }
             }
         }
@@ -1521,14 +1521,14 @@ function gerarRelatorioHistorico() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cdcooper','#frmFiltro').focus();");
         },
         success: function (response) {
             hideMsgAguardo();
             try {
                 eval(response);
             } catch (error) {
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
             }
 
         }
@@ -1567,14 +1567,14 @@ function gerarRelatorio670() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cdcooper','#frmFiltro').focus();");
         },
         success: function (response) {
             hideMsgAguardo();
             try {
                 eval(response);
             } catch (error) {
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
             }
 
         }
@@ -1603,7 +1603,7 @@ function buscaContratosGravames(nriniseq, nrregist) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "estadoInicial();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "estadoInicial();");
         },
         success: function (response) {
 
@@ -1615,7 +1615,7 @@ function buscaContratosGravames(nriniseq, nrregist) {
                     return false;
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "estadoInicial();");
                 }
             } else {
                 try {
@@ -1623,7 +1623,7 @@ function buscaContratosGravames(nriniseq, nrregist) {
                     eval(response);
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "estadoInicial();");
                 }
             }
         }
@@ -1656,7 +1656,7 @@ function buscaGravames(nriniseq, nrregist) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "estadoInicial();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "estadoInicial();");
         },
         success: function (response) {
 
@@ -1668,7 +1668,7 @@ function buscaGravames(nriniseq, nrregist) {
                     return false;
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "estadoInicial();");
                 }
             } else {
                 try {
@@ -1676,7 +1676,7 @@ function buscaGravames(nriniseq, nrregist) {
                     eval(response);
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "estadoInicial();");
                 }
             }
         }
@@ -1712,7 +1712,7 @@ function geraArquivo() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#cdcooper','#frmFiltro').focus();");
         },
         success: function (response) {
 
@@ -1721,7 +1721,7 @@ function geraArquivo() {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#cdcooper','#frmFiltro').focus();");
             }
 
         }
@@ -1757,7 +1757,7 @@ function solicitaProcessamentoArquivoRetorno() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#cdcooper','#frmFiltro').focus();");
         },
         success: function (response) {
 
@@ -1766,7 +1766,7 @@ function solicitaProcessamentoArquivoRetorno() {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#cdcooper','#frmFiltro').focus();");
             }
 
         }
@@ -1800,7 +1800,7 @@ function buscaPaAssociado() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#nrdconta','#frmFiltro').focus();");
         },
         success: function (response) {
 
@@ -1809,7 +1809,7 @@ function buscaPaAssociado() {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#nrdconta','#frmFiltro').focus();");
             }
 
         }
@@ -1861,7 +1861,7 @@ function alterarBensSubAditivo(idseqbem,tpctrpro) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
 
@@ -1870,7 +1870,7 @@ function alterarBensSubAditivo(idseqbem,tpctrpro) {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
             }
 
         }
@@ -1924,7 +1924,7 @@ function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
 			hideMsgAguardo();
@@ -1932,7 +1932,7 @@ function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
             }
 
         }
@@ -1976,7 +1976,7 @@ function inclusaoManual(idseqbem, tpctrpro) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
 
@@ -1985,7 +1985,7 @@ function inclusaoManual(idseqbem, tpctrpro) {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
             }
 
         }
@@ -2025,7 +2025,7 @@ function cancelarGravame(idseqbem, tpctrpro) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
 
@@ -2034,7 +2034,7 @@ function cancelarGravame(idseqbem, tpctrpro) {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
             }
 
         }
@@ -2082,7 +2082,7 @@ function blqLibJudicial(idseqbem, tpctrpro) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
 
@@ -2091,7 +2091,7 @@ function blqLibJudicial(idseqbem, tpctrpro) {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
             }
 
         }
@@ -2133,7 +2133,7 @@ function baixaManual(idseqbem,tpctrpro) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
         },
         success: function (response) {
 
@@ -2142,7 +2142,7 @@ function baixaManual(idseqbem,tpctrpro) {
                 eval(response);
             } catch (error) {
 
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#btVoltar','#divBotoesBens').focus();");
             }
 
         }
@@ -2182,7 +2182,7 @@ function buscaBens(nriniseq, nrregist) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus();");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#nrdconta','#frmFiltro').focus();");
         },
         success: function (response) {
 
@@ -2194,7 +2194,7 @@ function buscaBens(nriniseq, nrregist) {
                     return false;
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#nrdconta','#frmFiltro').focus();");
                 }
             } else {
                 try {
@@ -2202,7 +2202,7 @@ function buscaBens(nriniseq, nrregist) {
                     eval(response);
                 } catch (error) {
 
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#nrdconta','#frmFiltro').focus();");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#nrdconta','#frmFiltro').focus();");
                 }
             }
 

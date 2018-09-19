@@ -242,7 +242,7 @@
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" onclick="controlaVoltar('2'); return false;">Voltar</a>
   <a href="#" class="botao" id="btConcluir">Concluir</a>
-	<!-- <a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>-->
+	<!-- <a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>-->
 </div>
 
 <script type="text/javascript">

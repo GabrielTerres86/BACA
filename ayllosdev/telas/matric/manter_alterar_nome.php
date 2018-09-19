@@ -146,7 +146,7 @@
 		//Nome do titular
 		if ( $GLOBALS['nmprimtl'] == ''  ) {
 			$msgErro = ( $GLOBALS['inpessoa'] == 1 ) ? 'Nome deve ser preenchido.' : 'Rasão social deve se preenchida.' ;
-			exibirErro('error',$msgErro,'Alerta - Ayllos','focaCampoErro(\'nmprimtl\',\''.$nomeForm.'\');',false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro','focaCampoErro(\'nmprimtl\',\''.$nomeForm.'\');',false);
 		}	
 		
 		

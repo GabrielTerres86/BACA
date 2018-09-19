@@ -19,7 +19,7 @@
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'P')) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos');
+		exibirErro('error',$msgError,'Alerta - Aimaro');
 	}
 	
 	// Guardo os parâmetos do POST em variáveis	
@@ -40,9 +40,9 @@
     $xmlObject = getObjectXML($xmlResult);
 
     if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO' ) {
-        exibirErro('error',$xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+        exibirErro('error',$xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	} else if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'CONFIRMACAO' ) {
-		echo 'showConfirmacao("'.$xmlObject->roottag->tags[0]->cdata.'","Confirma&ccedil;&atilde;o - Ayllos","verificaAbreTelaPagamentoAvalista();","hideMsgAguardo();bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
+		echo 'showConfirmacao("'.$xmlObject->roottag->tags[0]->cdata.'","Confirma&ccedil;&atilde;o - Aimaro","verificaAbreTelaPagamentoAvalista();","hideMsgAguardo();bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
 	} else {	
 		echo 'confirmaPagamento();'; 
 	}

@@ -203,7 +203,7 @@ function pesquisaContaAvalista(i) {
         cCpfAva.habilitaCampo();
 		cCpfAva.focus();
 	} else if (!validaNroConta(nrConta)) {			
-		showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrctaav"+i+"','#"+nomeForm+"').focus();bloqueiaFundo(divRotina);");		
+		showError("error","Conta/dv inv&aacute;lida.","Alerta - Aimaro","$('#nrctaav"+i+"','#"+nomeForm+"').focus();bloqueiaFundo(divRotina);");		
 	} else {
 		carregaAvalista(i);
 	}
@@ -223,7 +223,7 @@ function pesquisaCpfAvalista(i) {
 	if ( nrCpfCnpj == 0 ) {
 		cCPF.removeClass('cpf cnpj').focus();		
 	} else if (verificaTipoPessoa(nrCpfCnpj) == 0) {			
-		showError("error","CPF/CNPJ inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfav"+i+"','#"+nomeForm+"').focus();bloqueiaFundo(divRotina);");				
+		showError("error","CPF/CNPJ inv&aacute;lido.","Alerta - Aimaro","$('#nrcpfav"+i+"','#"+nomeForm+"').focus();bloqueiaFundo(divRotina);");				
 	} else {
 		carregaAvalista(i);
         // Se nao for acessado via CRM, pode habilitar os campos
@@ -272,14 +272,14 @@ function carregaAvalista(i) {
 		},	
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			try {
 				eval(response);			
 			} catch(error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 	

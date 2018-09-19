@@ -68,14 +68,14 @@
 <div id="divBotoesDados" style='text-align:center; margin-bottom: 10px; margin-top: 10px;' >
 																			
 	<a href="#" class="botao" id="btVoltar" onClick="fechaRotina(divRotina);">Voltar</a>	
-	<a href="#" class="botao" id="btExcluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterContaDestinoTedCapital(\'E\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Excluir</a>	
+	<a href="#" class="botao" id="btExcluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterContaDestinoTedCapital(\'E\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Excluir</a>	
 	<a href="#" class="botao" id="btAlterar" onClick="controlaBotoesFormDadosTedCapital('A');return false;">Alterar</a>	
 	
 	<?if(getByTagName($registro,'insit_autoriza') == 'CANCELADO'){?>
-		<a href="#" class="botao" id="btReativar" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterContaDestinoTedCapital(\'X\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Reativar Conta</a>	
+		<a href="#" class="botao" id="btReativar" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterContaDestinoTedCapital(\'X\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Reativar Conta</a>	
 	<?}?>
 	
-	<a href="#" class="botao" id="btIncluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterContaDestinoTedCapital(\'I\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Incluir</a>	
+	<a href="#" class="botao" id="btIncluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterContaDestinoTedCapital(\'I\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Incluir</a>	
 			
 </div>
 
@@ -83,7 +83,7 @@
 <div id="divBotoesAlterar" style='text-align:center; margin-bottom: 10px; margin-top: 10px;display:none;' >
 																			
 	<a href="#" class="botao" id="btVoltar" onClick="fechaRotina(divRotina);">Voltar</a>	
-	<a href="#" class="botao" id="btConcluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterContaDestinoTedCapital(\'A\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Concluir</a>	
+	<a href="#" class="botao" id="btConcluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterContaDestinoTedCapital(\'A\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));$(\'#btVoltar\',\'#divBotoesDados\').focus();','sim.gif','nao.gif');return false;">Concluir</a>	
 			
 </div>
 

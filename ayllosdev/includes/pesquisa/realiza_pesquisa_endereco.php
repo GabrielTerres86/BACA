@@ -30,7 +30,7 @@
 		 !isset($_POST["dsendere"]) ||
 		 !isset($_POST["nmcidade"]) ||
 		 !isset($_POST["cdufende"])) { 
-		 exibirErro('error','Parâmetros incorretos para a pesquisa.','Alerta - Ayllos','bloqueiaFundo($(\'#'.$idRotina.'\'))');
+		 exibirErro('error','Parâmetros incorretos para a pesquisa.','Alerta - Aimaro','bloqueiaFundo($(\'#'.$idRotina.'\'))');
 	}		
 	
 	// Pega os valores nas devidas variáveis
@@ -73,7 +73,7 @@
 	$xmlObjPesquisa = getObjectXML($xmlResult);	
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjPesquisa->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#'.$idRotina.'\'))');
+	if (strtoupper($xmlObjPesquisa->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#'.$idRotina.'\'))');
 	
 	$pesquisa = $xmlObjPesquisa->roottag->tags[0]->tags;	
 
@@ -260,7 +260,7 @@
 	// RESULTADO DA PESQUISA
 	if (auto == 'S' && qtregist == 0) {
 		limparEndereco( camposOrigem, idForm );
-		showError("error","CEP n&atilde;o cadastrado.","Alerta - Ayllos","bloqueiaFundo($('#"+idRotina+"'));");
+		showError("error","CEP n&atilde;o cadastrado.","Alerta - Aimaro","bloqueiaFundo($('#"+idRotina+"'));");
 		
 	} else if ( auto == 'S' && qtregist == 1 ) {
 		$('tr','#ResultadoPesquisaEndereco').click();

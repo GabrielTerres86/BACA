@@ -135,7 +135,7 @@
 		
 		// Mostra mensagem sobre rating efetivado		
 		if (isset($efetivacao[1]) && $efetivacao[1] <> "") {						
-			echo 'showError("inform","'.$efetivacao[1].'","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';					
+			echo 'showError("inform","'.$efetivacao[1].'","Notifica&ccedil;&atilde;o - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';					
 		} 				
 	} else { 
 		// Encerra mensagem de aguardo e bloqueia fundo da rotina

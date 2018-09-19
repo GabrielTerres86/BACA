@@ -31,12 +31,12 @@
 	require_once('../../class/xmlfile.php');
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}		
 	
 	// Verifica se os parâmetros foram passados
 	if (!isset($_POST["nrdconta"])  || !isset($_POST["nmrotina"]) || !isset($_POST["opeProdutos"])) {	
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}	
 
 	$nmrotina				 = ( isset($_POST["nmrotina"]) ) ? $_POST["nmrotina"] : '';
@@ -48,7 +48,7 @@
 	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
-		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}
 	
 	if( ($opeProdutos == 2 && $flgcadas == 'M') || $opeProdutos == 3 ) {
@@ -88,7 +88,7 @@
 				
 				$msgErro = utf8ToHtml($xmlObjAtualizaServicos->Erro->Registro->dscritic);
 				
-				exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+				exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 			
 			}
 			
@@ -117,7 +117,7 @@
 				
 				$msgErro = utf8ToHtml($xmlObjAtualizaServicos->Erro->Registro->dscritic);
 				
-				exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+				exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 			
 			}
 		
@@ -143,7 +143,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjServicos->roottag->tags[0]->name) == "ERRO") {
 		
-		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}
 		
 	//Pega todos os servicos essenciais

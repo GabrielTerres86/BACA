@@ -22,7 +22,7 @@
 		
 	// Verifica se os parâmetros necessários foram informados	
 	if(!isset($_POST["nrdconta"]) || !isset($_POST["cdsegura"]) || !isset($_POST["tpseguro"]) || !isset($_POST["tpplaseg"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro,false);
 	}else{
 	
 		$nrdconta = $_POST["nrdconta"];
@@ -31,7 +31,7 @@
 		$tpplaseg = $_POST["tpplaseg"];		
 		
 		// Verifica se número da conta ou tpctrato é um inteiro válido
-		if (!validaInteiro($nrdconta)) exibirErro('error','Op&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+		if (!validaInteiro($nrdconta)) exibirErro('error','Op&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	}
 			
 

@@ -76,7 +76,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if ($xmlObjeto[0]->tags[4]->cdata != "") {		
-		exibirErro('error',$xmlObjeto[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjeto[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 	}else if(strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO'){
 		
 		if ( $operacao_proc == 'IB' ) { 
@@ -85,7 +85,7 @@
 			$metodo = 'bloqueiaFundo(divRotina);controlaOperacaoProc();';
 		}
 		
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 	}
 	
 ?>

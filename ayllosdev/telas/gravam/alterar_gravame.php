@@ -26,7 +26,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
   
   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -80,29 +80,29 @@
 			$nmdcampo = "dschassi";
 		}
     
-		exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','fechaRotina($(\'#divRotina\'));focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
+		exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro','fechaRotina($(\'#divRotina\'));focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
 					
 	} 
 		
-  echo "showError('inform','Bem atualizado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','fechaRotina($(\'#divRotina\'));buscaBens(1, 30);');";	
+  echo "showError('inform','Bem atualizado com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','fechaRotina($(\'#divRotina\'));buscaBens(1, 30);');";	
 	  
   
   function validaDados(){
 			
 		IF($GLOBALS["dschassi"] == '' ){ 
-			exibirErro('error','O n&uacute;mero do chassi deve ser informado.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dschassi\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero do chassi deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'dschassi\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["ufdplaca"] == '' ){ 
-			exibirErro('error','O UF da placa deve ser informado.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'ufdplaca\',\'frmBens\');',false);
+			exibirErro('error','O UF da placa deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'ufdplaca\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrdplaca"] == '' ){ 
-			exibirErro('error','O n&uacute;mero da placa deve ser informado.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'nrdplaca\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero da placa deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'nrdplaca\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrrenava"] == 0 ){ 
-			exibirErro('error','O n&uacute;mero do RENAVAM deve ser informado.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'nrrenava\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero do RENAVAM deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'nrrenava\',\'frmBens\');',false);
 		}
 				
 	}	

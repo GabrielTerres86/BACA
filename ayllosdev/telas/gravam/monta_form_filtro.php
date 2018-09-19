@@ -18,7 +18,7 @@
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	if($cddopcao == "G" ||
@@ -43,7 +43,7 @@
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);		
+			exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial();',false);		
 						
 		} 
 			

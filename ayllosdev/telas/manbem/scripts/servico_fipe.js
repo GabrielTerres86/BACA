@@ -109,7 +109,7 @@ function buscaFipeServico(urlPagina,dataParameters)
 		url   : UrlSite + urlPagina,
         data: dataParameters,
         error: function(objAjax, responseError, objExcept) {			
-            //showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            //showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
         },
         success: function(response) {
             eval(response);

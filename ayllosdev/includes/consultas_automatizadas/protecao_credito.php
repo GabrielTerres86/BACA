@@ -53,7 +53,7 @@
    
 	if ($xmlObj->Erro->Registro->dscritic != '') {
 		$msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
-		exibirErro('inform',$msgErro,'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+		exibirErro('inform',$msgErro,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
 	}
 	
 	$nrconbir = $xmlObj->nrconbir;
@@ -75,7 +75,7 @@
    
 	if ($xmlObj->Erro->Registro->dscritic != '') {
 		$msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
-		exibirErro('inform',$msgErro,'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+		exibirErro('inform',$msgErro,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
 	}
 	
 	$cdbircon     = $xmlObj->cdbircon; 
@@ -88,7 +88,7 @@
 	
 	if ($xmlObj->Erro->Registro->dscritic != '') {
 		$msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
-		exibirErro('inform',$msgErro,'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+		exibirErro('inform',$msgErro,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
 	}
 	
 	$xml_geral = simplexml_load_string($xmlResult);
@@ -151,7 +151,7 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xml_central->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('inform',$xml_central->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+			exibirErro('inform',$xml_central->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
 		}
 		
 		$central = $xml_central->roottag->tags[0]->tags[0]->tags;

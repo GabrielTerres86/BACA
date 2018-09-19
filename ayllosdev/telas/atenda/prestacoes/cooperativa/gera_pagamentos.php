@@ -39,7 +39,7 @@
 	$nrseqavl = $_POST['nrseqavl'];	
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	$xml  = "";
@@ -77,7 +77,7 @@
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjCarregaDados->roottag->tags[0]->name) == 'ERRO') {	
 		$msgErro  = $xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-		exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina);removeOpacidade(\'divConteudoOpcao\');fechaRotina($(\'#divUsoGenerico\'),$(\'#divRotina\'));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);removeOpacidade(\'divConteudoOpcao\');fechaRotina($(\'#divUsoGenerico\'),$(\'#divRotina\'));',false);
 	}
 	echo "fechaRotina($('#divUsoGenerico'),$('#divRotina')); verificarImpAntecip();";
 ?>

@@ -48,7 +48,7 @@
 			$mtdErro = 'unblockBackground()';
 		}		
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}	
 	
 	//----------------------------------------------------------------------------------------------------------------------------------	
@@ -57,7 +57,7 @@
 	if (isset($xmlObjeto->Erro->Registro->dscritic) && $xmlObjeto->Erro->Registro->dscritic != '') {	
 		$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 		$mtdErro = 'unblockBackground()';
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 	
@@ -335,7 +335,7 @@
 																			 '$comercialCdEstado', '$comercialDsCidade', '$comercialTporigem', '$nrInscricao', '$nrLicenca', '$cdNatureza', '$cdSetor', '$cdRamo',
 																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao', '$cdNacionalidade', '$cdCadastroEmpresa');");
 			
-			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Ayllos');";
+			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Aimaro');";
 			
 			exibirConfirmacao('Cadastro já existe na base, deseja iniciar relacionamento?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
 			
@@ -348,7 +348,7 @@
 		$nrctanov = ( isset($xmlObjeto->roottag->tags[0]->attributes['NRCTANOV']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'] : '';	
 
 		if ($nrctanov == 0 || $nrctanov == '') {
-			exibirErro('error','Não foi possivel gerar a nova C/C.','Alerta - Ayllos','',false);
+			exibirErro('error','Não foi possivel gerar a nova C/C.','Alerta - Aimaro','',false);
 		}
 		
 		$nomeForm = ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
@@ -361,7 +361,7 @@
 	}
 	else 
 	if ($operacao == 'DCC') { // Duplicar a C/C
-		exibirErro('inform','A conta utilizada foi ' . formataContaDVsimples($nrdconta) . '.','Alerta - Ayllos','impressao_inclusao();',false);
+		exibirErro('inform','A conta utilizada foi ' . formataContaDVsimples($nrdconta) . '.','Alerta - Aimaro','impressao_inclusao();',false);
 	}
 		
 		

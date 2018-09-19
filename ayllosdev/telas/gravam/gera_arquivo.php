@@ -32,7 +32,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$cdcooper = (isset($_POST["cdcooper"])) ? $_POST["cdcooper"] : 0;
@@ -59,20 +59,20 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltroArquivo();',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','formataFiltroArquivo();',false);		
 		
 			}	
 		
-	echo "showError('inform','Gera&ccedil;&atilde;o do arquivo de ".$tparquiv." efetuado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','formataFiltroArquivo();');";	
+	echo "showError('inform','Gera&ccedil;&atilde;o do arquivo de ".$tparquiv." efetuado com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','formataFiltroArquivo();');";	
 	
 	function validaDados(){		
 		
 		IF($GLOBALS["cdcooper"] == ''){ 
-			exibirErro('error','Cooperativa deve ser informada.','Alerta - Ayllos','$(\'input,select\',\'#frmFiltro\').habilitaCampo();focaCampoErro(\'cdcooper\',\'frmFiltro\');',false);
+			exibirErro('error','Cooperativa deve ser informada.','Alerta - Aimaro','$(\'input,select\',\'#frmFiltro\').habilitaCampo();focaCampoErro(\'cdcooper\',\'frmFiltro\');',false);
 		}
 			
 		IF($GLOBALS["tparquiv"] != 'TODAS' && $GLOBALS["tparquiv"] != 'INCLUSAO' && $GLOBALS["tparquiv"] != 'BAIXA' && $GLOBALS["tparquiv"] != 'CANCELAMENTO'){ 
-			exibirErro('error','Tipo do arquivo deve ser informado.','Alerta - Ayllos','$(\'input,select\',\'#frmFiltro\').habilitaCampo();focaCampoErro(\'tparquiv\',\'frmFiltro\');',false);
+			exibirErro('error','Tipo do arquivo deve ser informado.','Alerta - Aimaro','$(\'input,select\',\'#frmFiltro\').habilitaCampo();focaCampoErro(\'tparquiv\',\'frmFiltro\');',false);
 		}
 		
 	}	

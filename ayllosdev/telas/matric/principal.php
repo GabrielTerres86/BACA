@@ -318,7 +318,7 @@
 
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
         
-			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
 
 		}
 
@@ -357,7 +357,7 @@
 	
 	<? if (getByTagName($registro,'flgtermo') == '1'){?>
 		
-		<a href="#" class="botao" id="btTermoDesligamento" onclick="showError('inform','Termo de desligamento j&aacute; est&aacute; digitalizado no SmartShare? <? if (getByTagName($registro,'flgdigit') == '1') { echo 'Sim.'; }else{ echo 'N&atilde;o.'; } ?> ','Alerta - Ayllos','');">Termo Cancelamento</a>
+		<a href="#" class="botao" id="btTermoDesligamento" onclick="showError('inform','Termo de desligamento j&aacute; est&aacute; digitalizado no SmartShare? <? if (getByTagName($registro,'flgdigit') == '1') { echo 'Sim.'; }else{ echo 'N&atilde;o.'; } ?> ','Alerta - Aimaro','');">Termo Cancelamento</a>
 
 	<?}?>
   

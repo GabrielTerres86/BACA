@@ -16,7 +16,7 @@
 	isPostMethod();
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'P')) <> ''){
-		exibirErro('error',$msgError,'Alerta - Ayllos','',true);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',true);
 	}
 		
     $nrdconta = ( (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0);
@@ -52,11 +52,11 @@
 	function exibeErroNew($msgErro,$tipo) {	
 		if($tipo == "E"){
 		  echo 'hideMsgAguardo();';
-		  echo 'showError("error","'.$msgErro.'","Alerta - Ayllos", "bloqueiaFundo(divRotina);");';
+		  echo 'showError("error","'.$msgErro.'","Alerta - Aimaro", "bloqueiaFundo(divRotina);");';
 		  exit();
 		}else{
 		  echo 'hideMsgAguardo();';
-		  echo 'showError("inform","'.$msgErro.'","Alerta - Ayllos", "controlaOperacao(\'C_PAG_PREST_PREJU\');");';
+		  echo 'showError("inform","'.$msgErro.'","Alerta - Aimaro", "controlaOperacao(\'C_PAG_PREST_PREJU\');");';
 		  exit();
 		}
 	}

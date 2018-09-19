@@ -39,7 +39,7 @@
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
 									<div id="divConteudoCancelamento" style="padding:20px;">
 										<input style="margin-right:10px;"type="image" class="rotulo" id="btImprimir"  alt="Imprimir Termo de Cancelamento" src="<?php echo $UrlImagens; ?>botoes/imprimir_termo.gif" onClick="imprimirTermoCancelamento();return false;" />
-										<input style="margin-left:10px;" type="image" class="rotulo" id="btContinuar" alt="Desfazer cancelamento de Seguro" src="<?php echo $UrlImagens; ?>botoes/desfazer_cancelamento.gif" onClick="showConfirmacao('Deseja desfazer o cancelamento?','Confirma&ccedil;&atilde;o - Ayllos','desfazerCancelamentoSeguro();','fechaMotivoCancelamento()','sim.gif','nao.gif'); return false;" />
+										<input style="margin-left:10px;" type="image" class="rotulo" id="btContinuar" alt="Desfazer cancelamento de Seguro" src="<?php echo $UrlImagens; ?>botoes/desfazer_cancelamento.gif" onClick="showConfirmacao('Deseja desfazer o cancelamento?','Confirma&ccedil;&atilde;o - Aimaro','desfazerCancelamentoSeguro();','fechaMotivoCancelamento()','sim.gif','nao.gif'); return false;" />
 										<br />
 									</div>
 								</td>

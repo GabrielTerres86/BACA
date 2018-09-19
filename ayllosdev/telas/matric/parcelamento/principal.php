@@ -50,7 +50,7 @@
 		$xmlResult = getDataXML($xml);	
 		$xmlObjeto = getObjectXML($xmlResult);
 		
-		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo( $(\'#divUsoGenerico\') );',false);
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo( $(\'#divUsoGenerico\') );',false);
 		
 		// Define a variágel que guarda todos os itens
 		$registros = $xmlObjeto->roottag->tags[0]->tags;		

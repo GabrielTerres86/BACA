@@ -85,7 +85,7 @@
 		
 	}
 
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	
 	// Monta o xml dinâmico de acordo com a operação cdcooper nrdconta nrdctato idseqttl nrcpfcto
@@ -203,7 +203,7 @@
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 		$metodoErro = ( $operacao == 'EV' || $operacao == 'VE' ) ? 'bloqueiaFundo(divRotina);controlaOperacaoResp()' : 'rollBack();bloqueiaFundo(divRotina);';
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);		
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodoErro,false);		
 	}
 
 	$msg = Array();
@@ -227,9 +227,9 @@
 		// Se é Validação
 		if( in_array($operacao,array('AV','IV','EV')) ) {
 
-			if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacaoResp(\'VA\')','bloqueiaFundo(divRotina)',false);		
-			if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Ayllos','controlaOperacaoResp(\'VI\')','bloqueiaFundo(divRotina)',false);		
-			if( $operacao == 'EV' ) exibirConfirmacao('Deseja confirmar exclusão?' ,'Confirmação - Ayllos','controlaOperacaoResp(\'VE\')','bloqueiaFundo(divRotina);controlaOperacaoResp();',false);
+			if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacaoResp(\'VA\')','bloqueiaFundo(divRotina)',false);		
+			if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Aimaro','controlaOperacaoResp(\'VI\')','bloqueiaFundo(divRotina)',false);		
+			if( $operacao == 'EV' ) exibirConfirmacao('Deseja confirmar exclusão?' ,'Confirmação - Aimaro','controlaOperacaoResp(\'VE\')','bloqueiaFundo(divRotina);controlaOperacaoResp();',false);
 
 
 		// Se é Inclusão/Alteração/Exclusão
@@ -237,9 +237,9 @@
 			
 			// Verificar se existe "Verificação de Revisão Cadastral"
 			if($msgAtCad!='') {					
-				if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0071.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoResp(\"\")\')',false);
-				if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0071.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoResp(\"\")\')',false);
-				if( $operacao == 'VE' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0071.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoResp(\"\")\')',false);
+				if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0071.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoResp(\"\")\')',false);
+				if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0071.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoResp(\"\")\')',false);
+				if( $operacao == 'VE' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0071.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoResp(\"\")\')',false);
 			
 			// Se não existe necessidade de Revisão Cadastral
 			} else {				
@@ -265,66 +265,66 @@
 		echo '$("input,select","#frmRespLegal").removeClass("campoErro");';		
 		
 		// Número da conta e o titular são inteiros válidos
-		//if ( (!validaInteiro($GLOBALS['nrdctato'])) || ($GLOBALS['nrdctato'] == '' )) exibirErro('error','Conta/dv inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdctato\',\'frmRespLegal\')',false);
+		//if ( (!validaInteiro($GLOBALS['nrdctato'])) || ($GLOBALS['nrdctato'] == '' )) exibirErro('error','Conta/dv inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdctato\',\'frmRespLegal\')',false);
 				
 				
 		// Número da conta e o titular são inteiros válidos
-		if ( (!validaInteiro($GLOBALS['nrcpfcto'])) || ($GLOBALS['nrcpfcto'] == '' ) || ($GLOBALS['nrcpfcto'] == 0 )) exibirErro('error','C.P.F. inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpfcto\',\'frmRespLegal\')',false);
+		if ( (!validaInteiro($GLOBALS['nrcpfcto'])) || ($GLOBALS['nrcpfcto'] == '' ) || ($GLOBALS['nrcpfcto'] == 0 )) exibirErro('error','C.P.F. inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpfcto\',\'frmRespLegal\')',false);
 		
 		//Campo nome do respon.
-		if ($GLOBALS['nmdavali']=='') exibirErro('error','Nome inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmdavali\',\'frmRespLegal\')',false);
+		if ($GLOBALS['nmdavali']=='') exibirErro('error','Nome inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmdavali\',\'frmRespLegal\')',false);
 		
 		// Data Nascimento
-		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtnascto\',\'frmRespLegal\')',false);
+		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtnascto\',\'frmRespLegal\')',false);
 				
 		// Tipo de Documento
-		if (!in_array($GLOBALS['tpdocava'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmRespLegal\')',false);
+		if (!in_array($GLOBALS['tpdocava'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpdocava\',\'frmRespLegal\')',false);
 		
 		// Numero de Documento
-		if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);
 		
 		// Orgão Emissor
-		if ( $GLOBALS['cdoeddoc'] == '' ) exibirErro('error','Org&atilde;o Emissor inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdoeddoc\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['cdoeddoc'] == '' ) exibirErro('error','Org&atilde;o Emissor inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdoeddoc\',\'frmRespLegal\')',false);
 		
 		// UF Emissor
-		if ( $GLOBALS['cdufddoc'] == '') exibirErro('error','U.F. Emissor inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdufddoc\',\'frmRespLegal\')',false);		
+		if ( $GLOBALS['cdufddoc'] == '') exibirErro('error','U.F. Emissor inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdufddoc\',\'frmRespLegal\')',false);		
 		
 		// Data Emissão
-		if (!validaData($GLOBALS['dtemddoc'])) exibirErro('error','Data de Emiss&atilde;o inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtemddoc\',\'frmRespLegal\')',false);
+		if (!validaData($GLOBALS['dtemddoc'])) exibirErro('error','Data de Emiss&atilde;o inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtemddoc\',\'frmRespLegal\')',false);
 		
 		// Estado Civil
-		if (!validaInteiro($GLOBALS['cdestcvl'])) exibirErro('error','Estado Civil inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmRespLegal\')',false);
-		if ( $GLOBALS['cdestcvl'] == 0 ) exibirErro('error','Estado Civil deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmRespLegal\')',false);
+		if (!validaInteiro($GLOBALS['cdestcvl'])) exibirErro('error','Estado Civil inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['cdestcvl'] == 0 ) exibirErro('error','Estado Civil deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmRespLegal\')',false);
 		
 		// Sexo 
-		if ( $GLOBALS['cdsexcto'] == 0 ) exibirErro('error','Selecione o sexo do responsável.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'sexoMas\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['cdsexcto'] == 0 ) exibirErro('error','Selecione o sexo do responsável.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'sexoMas\',\'frmRespLegal\')',false);
 						
 		// Nacionalidade
-		if ( $GLOBALS['cdnacion'] == '' ) exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['cdnacion'] == '' ) exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnacion\',\'frmRespLegal\')',false);
 					
 		// Naturalidade
-		if ( $GLOBALS['dsnatura' ] == '') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnatura\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['dsnatura' ] == '') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsnatura\',\'frmRespLegal\')',false);
 		
 		//CEP
-		if ( !validaInteiro($GLOBALS['nrcepend']) || $GLOBALS['nrcepend'] == "" || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcepend\',\'frmRespLegal\')',false);
+		if ( !validaInteiro($GLOBALS['nrcepend']) || $GLOBALS['nrcepend'] == "" || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcepend\',\'frmRespLegal\')',false);
 		
 		//End. residencial
-		if ( $GLOBALS['dsendere'] == '' ) exibirErro('error','End. residencial inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsendere\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['dsendere'] == '' ) exibirErro('error','End. residencial inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsendere\',\'frmRespLegal\')',false);
 		
 		//Bairro
-		if ( $GLOBALS['nmbairro'] == '') exibirErro('error','Bairro inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmbairro\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['nmbairro'] == '') exibirErro('error','Bairro inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmbairro\',\'frmRespLegal\')',false);
 		
 		// UF End.
-		if ( $GLOBALS['cdufende'] == '' ) exibirErro('error','U.F. inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdufende\',\'frmRespLegal\')',false);		
+		if ( $GLOBALS['cdufende'] == '' ) exibirErro('error','U.F. inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdufende\',\'frmRespLegal\')',false);		
 		
 		//Cidade
-		if ( $GLOBALS['nmcidade'] == '' ) exibirErro('error','Cidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmcidade\',\'frmRespLegal\')',false);
+		if ( $GLOBALS['nmcidade'] == '' ) exibirErro('error','Cidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmcidade\',\'frmRespLegal\')',false);
 		
 		// Filiação Mãe
-		if ( $GLOBALS['nmmaecto'] == '') exibirErro('error','Nome da m&atilde;e inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmmaecto\',\'frmRespLegal\')',false);		
+		if ( $GLOBALS['nmmaecto'] == '') exibirErro('error','Nome da m&atilde;e inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmmaecto\',\'frmRespLegal\')',false);		
 	
 		// Relacionamento 1. ttl
-		if ( $GLOBALS['cdrlcrsp'] == '') exibirErro('error','Relacionamento com Titular inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrlcrsp\',\'frmRespLegal\')',false);		
+		if ( $GLOBALS['cdrlcrsp'] == '') exibirErro('error','Relacionamento com Titular inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdrlcrsp\',\'frmRespLegal\')',false);		
 
 	
 	}

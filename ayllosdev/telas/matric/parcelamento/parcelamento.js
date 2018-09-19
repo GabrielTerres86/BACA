@@ -59,7 +59,7 @@ function carregaDadosParcelamento(dtdebito,qtparcel,vlparcel,msgRetor,operParc) 
 				},		
 		error	: function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 				},
 		success	: function(response) {
 					if ( response.indexOf('showError("error"') == -1 ) {
@@ -138,14 +138,14 @@ function validaParcelamento(){
 	var vlparcel = $('#vlparcel','#frmParcelamento').val();
 	
 	//Data de inicio
-	if ( !validaData( dtdebito ) ) { hideMsgAguardo();showError('error','Data inválida','Alerta - Ayllos','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'dtdebito\',\'frmParcelamento\');'); return false; } 
-	if ( dtdebito == '' ) { hideMsgAguardo();showError('error','Data inválida','Alerta - Ayllos','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'dtdebito\',\'frmParcelamento\');'); return false; } 
+	if ( !validaData( dtdebito ) ) { hideMsgAguardo();showError('error','Data inválida','Alerta - Aimaro','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'dtdebito\',\'frmParcelamento\');'); return false; } 
+	if ( dtdebito == '' ) { hideMsgAguardo();showError('error','Data inválida','Alerta - Aimaro','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'dtdebito\',\'frmParcelamento\');'); return false; } 
 	
 	//Valor das parcelas
-	if( vlparcel == '' || 	vlparcel <= 0 ){ hideMsgAguardo();showError('error','Valor a parcelar inválido','Alerta - Ayllos','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'vlparcel\',\'frmParcelamento\');'); return false; } 
+	if( vlparcel == '' || 	vlparcel <= 0 ){ hideMsgAguardo();showError('error','Valor a parcelar inválido','Alerta - Aimaro','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'vlparcel\',\'frmParcelamento\');'); return false; } 
 		
 	//Quantidade de parcelas
-	if( qtparcel == '' || qtparcel <= 0 ){ hideMsgAguardo();showError('error','Quantidade de parcelas inválida','Alerta - Ayllos','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'qtparcel\',\'frmParcelamento\');'); return false; } 
+	if( qtparcel == '' || qtparcel <= 0 ){ hideMsgAguardo();showError('error','Quantidade de parcelas inválida','Alerta - Aimaro','bloqueiaFundo( $(\'#divUsoGenerico\') ,\'qtparcel\',\'frmParcelamento\');'); return false; } 
 		
 	return true;
 }

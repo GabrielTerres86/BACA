@@ -27,7 +27,7 @@
 		 !isset($_POST['nrcpfava' ]) ||
 		 !isset($_POST['bo'       ]) || 
 		 !isset($_POST['procedure']) || 
-		 !isset($_POST['nomeForm' ]) ) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		 !isset($_POST['nomeForm' ]) ) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	$bo 		= $_POST['bo'];
 	$procedure 	= $_POST['procedure'];
@@ -39,10 +39,10 @@
 	$nrcpfcgc 	= $_POST['nrcpfava'];	
 	
 	// Validações
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($idavalis)) exibirErro('error','Indicador do avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($nrctaava)) exibirErro('error','Conta/dv do avalista inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($nrcpfcgc)) exibirErro('error','CPF/CNPJ do avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($idavalis)) exibirErro('error','Indicador do avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrctaava)) exibirErro('error','Conta/dv do avalista inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrcpfcgc)) exibirErro('error','CPF/CNPJ do avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xmlGetAvalista  = '';
@@ -74,7 +74,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjAvalista->roottag->tags[0]->name) == 'ERRO') {
-		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	} 
 	
 	$avalista = $xmlObjAvalista->roottag->tags[0]->tags[0]->tags;

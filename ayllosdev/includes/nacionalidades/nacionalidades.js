@@ -55,7 +55,7 @@ function buscarNacionalidades(dsnacion)
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
 			bloqueiaFundo($('#divUsoGenerico'));
-            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","$('#cddopcao','#frmCab').focus();");
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","$('#cddopcao','#frmCab').focus();");
         },
         success: function(response) {
             hideMsgAguardo();
@@ -64,7 +64,7 @@ function buscarNacionalidades(dsnacion)
 				eval(response);
 			} 
 			catch (error) {
-				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus();");
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#cddopcao','#frmCab').focus();");
 			}
 		}
     });
@@ -84,16 +84,16 @@ function incluirNacionalidade(dsnacion){
             redirect: "script_ajax"
         },
         error: function(objAjax,responseError,objExcept) {
-            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","$('#dsnacion','#frmConsultar').focus();");
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","$('#dsnacion','#frmConsultar').focus();");
         },
         success: function(response) {
 			try {
 				eval(response);
 				buscarNacionalidades();
-				showError("inform", "Nacionalidade incluida com sucesso.", "Alerta - Ayllos", "estadoInicial();");
+				showError("inform", "Nacionalidade incluida com sucesso.", "Alerta - Aimaro", "estadoInicial();");
 			} 
 			catch (error) {
-				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#dsnacion','#frmConsultar').focus();");
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#dsnacion','#frmConsultar').focus();");
 			}
 		}
     });
@@ -286,5 +286,5 @@ function selecionaNacionalidade(){
 }
 
 function concluirInclusao(){
-	showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','incluirNacionalidade($("#dsnacion","#frmConsultar").val());','$("#dsnacion","#frmConsultar").focus();','sim.gif','nao.gif');
+	showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','incluirNacionalidade($("#dsnacion","#frmConsultar").val());','$("#dsnacion","#frmConsultar").focus();','sim.gif','nao.gif');
 }

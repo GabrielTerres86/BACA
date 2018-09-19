@@ -31,7 +31,7 @@
 	$retornoAposErro = 'estadoInicial();';
 		
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'I')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}	
 
 	$xml  = '';
@@ -60,7 +60,7 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];	
 		if (!empty($nmdcampo)) { $mtdErro = " bloqueiaFundo( $(\'#divRotina\') );"; }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);		
 	} 
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;

@@ -25,8 +25,8 @@
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : 0;
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($nrctremp)) exibirErro('error','Contrato inválido.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
+	if (!validaInteiro($nrctremp)) exibirErro('error','Contrato inválido.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -52,7 +52,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('C_PAG_PREST');",false); 
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('C_PAG_PREST');",false); 
 		return;
 	}
 

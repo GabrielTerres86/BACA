@@ -45,7 +45,7 @@ function validaCPFInterveniente()
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
 		},
 		success: function(response) {
 			try 
@@ -54,7 +54,7 @@ function validaCPFInterveniente()
 				var responseJson = $.parseJSON(response);	
 				if(responseJson.hasOwnProperty('error'))
 				{
-					showError('error',responseJson.error.msg,'Alerta - Ayllos','');
+					showError('error',responseJson.error.msg,'Alerta - Aimaro','');
 				}
 				else if(responseJson.hasOwnProperty('success'))
 				{
@@ -72,7 +72,7 @@ function validaCPFInterveniente()
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
 			}
 		}
 	});
@@ -98,7 +98,7 @@ function chamaCadastroIntervenienteGarantidor(nrcpfcgc) {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
 		},
         success: function (response) {
 			$("#divUsoGenerico").html(response);
@@ -124,7 +124,7 @@ function chamaPesquisaCep()
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
 		},
         success: function (response) {
 			$("#divUsoGAROPC").html(response);
@@ -230,7 +230,7 @@ function validaInterveniente()
 				},		
 				error: function (objAjax, responseError, objExcept) {
 					hideMsgAguardo();
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
 				},
 				success: function (response) {
 					try 
@@ -239,7 +239,7 @@ function validaInterveniente()
 						var responseJson = $.parseJSON(response);	
 						if(responseJson.hasOwnProperty('error'))
 						{
-							showError('error',responseJson.error.msg,'Alerta - Ayllos','');
+							showError('error',responseJson.error.msg,'Alerta - Aimaro','');
 						}
 						else if(responseJson.hasOwnProperty('success'))
 						{
@@ -249,7 +249,7 @@ function validaInterveniente()
 						return false;
 					} catch(error) {
 						hideMsgAguardo();
-						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 					}
 				}				
 			}); 
@@ -274,7 +274,7 @@ function validaCamposInterveniente(){
 	if(invalidos>0)
 	{
 		$("#msgErro").show();
-		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Ayllos','');
+		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Aimaro','');
 		return false;
 	}
 	else{
@@ -334,7 +334,7 @@ function gravaInterveniente(){
 				},		
 				error: function (objAjax, responseError, objExcept) {
 					hideMsgAguardo();
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
 				},
 				success: function (response) {
 					try {
@@ -342,7 +342,7 @@ function gravaInterveniente(){
 						return false;
 					} catch(error) {
 						hideMsgAguardo();
-						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 					}
 				}				
 			}); 

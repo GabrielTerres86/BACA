@@ -82,14 +82,14 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 
 	/* Se confirmou e tem termo */
 	if ($opcaosit == 2 && $imptermo == "yes") {
 		echo 'callafterRelacionamento = \'mostraEventosEmAndamento("");\';';
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","gerarImpressao(1,\'\');",callafterRelacionamento,"sim.gif","nao.gif");';			
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","gerarImpressao(1,\'\');",callafterRelacionamento,"sim.gif","nao.gif");';			
 	} else {
 		echo 'mostraEventosEmAndamento("");';
 	}

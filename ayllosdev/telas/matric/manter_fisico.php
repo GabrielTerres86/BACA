@@ -170,16 +170,16 @@
 	if($operacao == "PI" || $operacao == "PA"){	
 		
 		//Data de nascimento
-		if ( !validaData( $GLOBALS['dtnasctl'] ) || ( $GLOBALS['dtnasctl'] == '' ) ) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtnasctl\',\'frmFisico\');',false);
+		if ( !validaData( $GLOBALS['dtnasctl'] ) || ( $GLOBALS['dtnasctl'] == '' ) ) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtnasctl\',\'frmFisico\');',false);
 	
 		// Responsabilidade Legal
-		if (($inhabmen != 0)&&($inhabmen != 1)&&($inhabmen != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'inhabmen\',\'frmFisico\')',false);
+		if (($inhabmen != 0)&&($inhabmen != 1)&&($inhabmen != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'inhabmen\',\'frmFisico\')',false);
 		
 		// Somente valida a Data de Emancipação quando a Responsabilidade Legal for 1 (Habilitado)
-		if (!validaData($dthabmen) && ($inhabmen == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dthabmen\',\'frmFisico\')',false);
+		if (!validaData($dthabmen) && ($inhabmen == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dthabmen\',\'frmFisico\')',false);
 
 		// Data de emancipação não pode ser preenchida para quando a Responsabilidade legal for 0,2.
-		if ($dthabmen != '' && ($inhabmen == 0 || $inhabmen == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Ayllos','focaCampoErro(\'dthabmen\',\'frmFisico\')',false);
+		if ($dthabmen != '' && ($inhabmen == 0 || $inhabmen == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Aimaro','focaCampoErro(\'dthabmen\',\'frmFisico\')',false);
 			
 		?>  
 			nrdeanos = <? echo $xmlObjeto->roottag->tags[0]->attributes["NRDEANOS"]; ?>;
@@ -216,7 +216,7 @@
 				$nmdcampo = "nrcpfcgc";
 			}
 			
-			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','focaCampoErro(\''.$nmdcampo.'\',\'frmFisico\');',false);		
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','focaCampoErro(\''.$nmdcampo.'\',\'frmFisico\');',false);		
 						
 		} else {
 			
@@ -245,93 +245,93 @@
 		//-----------------------------
 		
 		//Nome do titular
-		if ( $GLOBALS['nmprimtl'] == ''  ) exibirErro('error','Nome deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nmprimtl\',\'frmFisico\');',false);
+		if ( $GLOBALS['nmprimtl'] == ''  ) exibirErro('error','Nome deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nmprimtl\',\'frmFisico\');',false);
 		
 		//CPF
-		if ( $GLOBALS['nrcpfcgc'] == '' || $GLOBALS['nrcpfcgc'] == 0 ) exibirErro('error','CPF deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
+		if ( $GLOBALS['nrcpfcgc'] == '' || $GLOBALS['nrcpfcgc'] == 0 ) exibirErro('error','CPF deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
 								
         //CPF Responsabilidade social		
 		if( verificaCpfCnpjBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, 1, $GLOBALS['nrcpfcgc']) == true ){			
-			exibirErro('error','CPF n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
+			exibirErro('error','CPF n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Aimaro','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
 		} 
 			
 		//Situação
-		if ( $operacao == 'AV' && $GLOBALS['cdsitcpf'] == ''  ) exibirErro('error','Situação deve ser selecionada.','Alerta - Ayllos','focaCampoErro(\'cdsitcpf\',\'frmFisico\');',false);
+		if ( $operacao == 'AV' && $GLOBALS['cdsitcpf'] == ''  ) exibirErro('error','Situação deve ser selecionada.','Alerta - Aimaro','focaCampoErro(\'cdsitcpf\',\'frmFisico\');',false);
 		
 		//Tipo do documento
-		if ( $GLOBALS['tpdocptl'] == ''  ) exibirErro('error','Tipo do documento deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'tpdocptl\',\'frmFisico\');',false);
+		if ( $GLOBALS['tpdocptl'] == ''  ) exibirErro('error','Tipo do documento deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'tpdocptl\',\'frmFisico\');',false);
 		
 		//Nº do documento
-		if ( $GLOBALS['nrdocptl'] == ''  ) exibirErro('error','Número do documento deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrdocptl\',\'frmFisico\');',false);
+		if ( $GLOBALS['nrdocptl'] == ''  ) exibirErro('error','Número do documento deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nrdocptl\',\'frmFisico\');',false);
 		
 		//Orgão emissor
-		if ( $GLOBALS['cdoedptl'] == ''  ) exibirErro('error','Orgão emissor deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'cdoedptl\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdoedptl'] == ''  ) exibirErro('error','Orgão emissor deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'cdoedptl\',\'frmFisico\');',false);
 		
 		//UF emissor
-		if ( $GLOBALS['cdufdptl'] == ''  ) exibirErro('error','UF emissor deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'cdufdptl\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdufdptl'] == ''  ) exibirErro('error','UF emissor deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'cdufdptl\',\'frmFisico\');',false);
 		
 		//Data de emissão do documento
-		if ( !validaData( $GLOBALS['dtemdptl'] ) || ( $GLOBALS['dtemdptl'] == '' ) ) exibirErro('error','Data de emissão inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtemdptl\',\'frmFisico\');',false);
+		if ( !validaData( $GLOBALS['dtemdptl'] ) || ( $GLOBALS['dtemdptl'] == '' ) ) exibirErro('error','Data de emissão inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtemdptl\',\'frmFisico\');',false);
 		
 		//-----------------------------
 		//	 Inf. Complementares	  
 		//-----------------------------
 		
 		//Tipo do nacionalidade
-		if ( $GLOBALS['tpnacion'] == ''  ) exibirErro('error','Tipo de nacionalidade deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'tpnacion\',\'frmFisico\');',false);
+		if ( $GLOBALS['tpnacion'] == ''  ) exibirErro('error','Tipo de nacionalidade deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'tpnacion\',\'frmFisico\');',false);
 		
 		//Nacionalidade
-		if ( $GLOBALS['cdnacion'] == ''  ) exibirErro('error','Nacionalidade deve ser preeenchida.','Alerta - Ayllos','focaCampoErro(\'cdnacion\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdnacion'] == ''  ) exibirErro('error','Nacionalidade deve ser preeenchida.','Alerta - Aimaro','focaCampoErro(\'cdnacion\',\'frmFisico\');',false);
 		
 		//Data de nascimento
-		if ( !validaData( $GLOBALS['dtnasctl'] ) || ( $GLOBALS['dtnasctl'] == '' ) ) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtnasctl\',\'frmFisico\');',false);
+		if ( !validaData( $GLOBALS['dtnasctl'] ) || ( $GLOBALS['dtnasctl'] == '' ) ) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtnasctl\',\'frmFisico\');',false);
 		
 		//Naturalidade
-		if ( $GLOBALS['dsnatura'] == ''  ) exibirErro('error','Naturalidade deve ser preeenchida.','Alerta - Ayllos','focaCampoErro(\'dsnatura\',\'frmFisico\');',false);
+		if ( $GLOBALS['dsnatura'] == ''  ) exibirErro('error','Naturalidade deve ser preeenchida.','Alerta - Aimaro','focaCampoErro(\'dsnatura\',\'frmFisico\');',false);
 		
 		//UF
-		if ( $GLOBALS['cdufnatu'] == ''  ) exibirErro('error','UF de naturalidade deve ser selecionada.','Alerta - Ayllos','focaCampoErro(\'cdufnatu\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdufnatu'] == ''  ) exibirErro('error','UF de naturalidade deve ser selecionada.','Alerta - Aimaro','focaCampoErro(\'cdufnatu\',\'frmFisico\');',false);
 		
 		//Sexo
-		if ( $GLOBALS['cdsexotl'] == '' ||  settype( $GLOBALS['cdsexotl'] , "integer") != 1 || settype( $GLOBALS['cdsexotl'] , "integer") != 2 ) exibirErro('error','Sexo inválido.','Alerta - Ayllos','focaCampoErro(\'sexoMas\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdsexotl'] == '' ||  settype( $GLOBALS['cdsexotl'] , "integer") != 1 || settype( $GLOBALS['cdsexotl'] , "integer") != 2 ) exibirErro('error','Sexo inválido.','Alerta - Aimaro','focaCampoErro(\'sexoMas\',\'frmFisico\');',false);
 		
 		//Estado Civil
-		if ( $GLOBALS['cdestcvl'] == ''  ) exibirErro('error','Estado civil deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'cdestcvl\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdestcvl'] == ''  ) exibirErro('error','Estado civil deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'cdestcvl\',\'frmFisico\');',false);
 		
 		//Empresa
-		if ( $GLOBALS['cdempres'] == ''  ) exibirErro('error','Empresa deve ser selecionada.','Alerta - Ayllos','focaCampoErro(\'cdempres\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdempres'] == ''  ) exibirErro('error','Empresa deve ser selecionada.','Alerta - Aimaro','focaCampoErro(\'cdempres\',\'frmFisico\');',false);
 		
 		//Cad. emp.
-		if ( $GLOBALS['nrcadast'] == ''  ) exibirErro('error','Cad. emp. deve ser preenchida.','Alerta - Ayllos','focaCampoErro(\'nrcadast\',\'frmFisico\');',false);
+		if ( $GLOBALS['nrcadast'] == ''  ) exibirErro('error','Cad. emp. deve ser preenchida.','Alerta - Aimaro','focaCampoErro(\'nrcadast\',\'frmFisico\');',false);
 		
 		//Ocupação
-		if ( $GLOBALS['cdocpttl'] == ''  ) exibirErro('error','Ocupação deve ser selecionada.','Alerta - Ayllos','focaCampoErro(\'cdocpttl\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdocpttl'] == ''  ) exibirErro('error','Ocupação deve ser selecionada.','Alerta - Aimaro','focaCampoErro(\'cdocpttl\',\'frmFisico\');',false);
 		
 		//-----------------------------
 		//		     Filiação	  
 		//-----------------------------
 				
 		//Nome da mãe
-		if ( $GLOBALS['nmmaettl'] == ''  ) exibirErro('error','Nome da mãe deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nmmaettl\',\'frmFisico\');',false);
+		if ( $GLOBALS['nmmaettl'] == ''  ) exibirErro('error','Nome da mãe deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nmmaettl\',\'frmFisico\');',false);
 		
 		//-----------------------------
 		//		    Endereço	  
 		//-----------------------------
 
 		//CEP
-		if ( $GLOBALS['nrcepend'] == '' || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrcepend\',\'frmFisico\');',false);
+		if ( $GLOBALS['nrcepend'] == '' || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nrcepend\',\'frmFisico\');',false);
 		
 		//Endereço
-		if ( $GLOBALS['dsendere'] == ''  ) exibirErro('error','Endereço deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'dsendere\',\'frmFisico\');',false);
+		if ( $GLOBALS['dsendere'] == ''  ) exibirErro('error','Endereço deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'dsendere\',\'frmFisico\');',false);
 		
 		//Bairro
-		if ( $GLOBALS['nmbairro'] == ''  ) exibirErro('error','Bairro deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nmbairro\',\'frmFisico\');',false);
+		if ( $GLOBALS['nmbairro'] == ''  ) exibirErro('error','Bairro deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nmbairro\',\'frmFisico\');',false);
 		
 		//U.F.
-		if ( $GLOBALS['cdufende'] == ''  ) exibirErro('error','U.F. deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'cdufende\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdufende'] == ''  ) exibirErro('error','U.F. deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'cdufende\',\'frmFisico\');',false);
 
 		//Cidade
-		if ( $GLOBALS['nmcidade'] == ''  ) exibirErro('error','Cidade deve ser preenchida.','Alerta - Ayllos','focaCampoErro(\'nmcidade\',\'frmFisico\');',false);
+		if ( $GLOBALS['nmcidade'] == ''  ) exibirErro('error','Cidade deve ser preenchida.','Alerta - Aimaro','focaCampoErro(\'nmcidade\',\'frmFisico\');',false);
 		
 		
 		//-----------------------------
@@ -340,7 +340,7 @@
 		
 		
 		//Data de saída
-		if ( ( $GLOBALS['dtdemiss'] != '' ) && !validaData( $GLOBALS['dtdemiss'] ) ) exibirErro('error','Data de sa&iacute;da inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtdemiss\',\'frmFisico\');',false);
+		if ( ( $GLOBALS['dtdemiss'] != '' ) && !validaData( $GLOBALS['dtdemiss'] ) ) exibirErro('error','Data de sa&iacute;da inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtdemiss\',\'frmFisico\');',false);
 			
 		
 	}	

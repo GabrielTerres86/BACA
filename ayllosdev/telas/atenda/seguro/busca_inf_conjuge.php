@@ -64,7 +64,7 @@
 
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
 		$mtdErro = 'bloqueiaFundo(divRotina);';
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 	}
 
 
@@ -103,7 +103,7 @@
 
 		if ( strtoupper($xmlObjetoAsso->roottag->tags[0]->name) == 'ERRO' ) {
 				$mtdErro = 'bloqueiaFundo(divRotina);';
-				exibirErro('error',$xmlObjetoAsso->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+				exibirErro('error',$xmlObjetoAsso->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 		}
 
 		$associado  = $xmlObjetoAsso->roottag->tags[0]->tags[0];

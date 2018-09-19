@@ -145,7 +145,7 @@ ix_1 [DAT_TRANSACAO]
         if ($mtccshadowflag == 1) { // Usuário Bloqueado
             $msgErro = "Usuário não habilitado.";
         } elseif ($IND_SISTEMA == "1" && $mtccsistema <> "1" && $mtccsistema <> "3" && $mtccsistema <> "5" && $mtccsistema <> "7") { // Sem permissão para acesso ao Ayllos
-            $msgErro = "Sem permissão para acesso ao Ayllos.";
+            $msgErro = "Sem permissão para acesso ao Aimaro.";
         } elseif ($accountexpires>1 && ldap_date_diferenca(date("Y-m-d"), date('Y-m-d',time_AD2Unix($accountexpires)-1)) < 0) { //Verifica se a conta do usuário não expirou
           $msgErro = "O usuário expirou.";
         } elseif (!ldapAD_login($dsAD, $DES_LOGIN, $DES_SENHA)) {
@@ -317,7 +317,7 @@ function validaCampos() {
                                                         <td class="txtNormal"><strong>Sistema:</strong></td>
                                                         <td colspan="2">
                                                             <select name="IND_SISTEMA" class="Campo" id="IND_SISTEMA" style="width: 130px;">
-                                                                <option value="1" selected>Ayllos</option>
+                                                                <option value="1" selected>Aimaro</option>
                                                                 <option value="2">Gestão de Eventos</option>
                                                             </select>
                                                         </td>

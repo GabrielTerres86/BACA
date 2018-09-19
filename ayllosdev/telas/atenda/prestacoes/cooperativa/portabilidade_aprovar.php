@@ -45,11 +45,11 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){
 		$msg = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		?><script language="javascript">
-        showError('error','<?php echo utf8_decode($msg); ?>','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError('error','<?php echo utf8_decode($msg); ?>','Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))");
         </script><?php
 		exit();
 	}
 ?>
 <script language="javascript">
-showError("inform",'<?php echo $xmlObj->roottag->tags[0]->cdata; ?>',"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+showError("inform",'<?php echo $xmlObj->roottag->tags[0]->cdata; ?>',"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 </script>

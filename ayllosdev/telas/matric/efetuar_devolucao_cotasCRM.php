@@ -31,7 +31,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"C")) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$rowiddes = (isset($_POST["rowiddes"])) ? $_POST["rowiddes"] : 0;
@@ -67,7 +67,7 @@
 		
 		$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#frmSaqueParcial\').removeClass(\'campoErro\');$(\'#'.$nmdcampo.'\',\'#frmSaqueParcial\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input\',\'#frmSaqueParcial\').removeClass(\'campoErro\');$(\'#'.$nmdcampo.'\',\'#frmSaqueParcial\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
 							
 	}
 
@@ -89,22 +89,22 @@
 	
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 				 
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);		
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);		
 							
 	}   	
 	
-	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso','Alerta - Ayllos','controlaVoltar();',false);
+	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso','Alerta - Aimaro','controlaVoltar();',false);
 	
 	function validaDados(){
 		
 		//Data de demissao
         if (  $GLOBALS["dtdemiss"] == '' ){
-            exibirErro('error','Data de demiss&atilde;o inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Data de demiss&atilde;o inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 		//Motivo da demissao
         if (  $GLOBALS["mtdemiss"] == 0 ){
-            exibirErro('error','Motivo da demiss&atilde;o inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Motivo da demiss&atilde;o inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 	}

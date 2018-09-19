@@ -23,7 +23,7 @@
 	}
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	if (!isset($_POST['nrdconta'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);	
 
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
 	
@@ -64,7 +64,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}

@@ -25,7 +25,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
   
   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -58,17 +58,17 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);		
 					
 	} 
 		
   if($tpcancel == "1"){ 
   
-    echo "showError('inform','Solicita&ccedil;&atilde;o de cancelamento efetuada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
+    echo "showError('inform','Solicita&ccedil;&atilde;o de cancelamento efetuada com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";
           
   }else{
   
-    echo "showError('inform','Registro de aliena&ccedil;&atilde;o do gravame cancelado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+    echo "showError('inform','Registro de aliena&ccedil;&atilde;o do gravame cancelado com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";	
     
   }
 	  
@@ -76,23 +76,23 @@
   function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == '' ){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["nrctrpro"] == '' ){ 
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["tpcancel"] != '1' && $GLOBALS["tpcancel"] != '2'){ 
-			exibirErro('error','Tipo de cancelamento inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo de cancelamento inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["tpctrpro"] == 0 ){ 
-			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["idseqbem"] == 0 ){ 
-			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
 				
 	}	

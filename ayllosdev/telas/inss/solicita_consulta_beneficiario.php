@@ -37,7 +37,7 @@
 		
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$nrcpfcgc = (isset($_POST["nrcpfcgc"])) ? $_POST["nrcpfcgc"] : 0;
@@ -71,7 +71,7 @@
 			$nmdcampo = "nrrecben";
 		}
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
 							
 	}   
 		
@@ -184,7 +184,7 @@
 				
 		//Beneficio
 		if ( $GLOBALS["nrrecben"] == 0  ){ 
-			exibirErro('error','O campo NB n&atilde;o foi preenchido!','Alerta - Ayllos','$(\'#nrrecben\',\'#divBeneficio\').habilitaCampo();focaCampoErro(\'nrrecben\',\'divBeneficio\');',false);
+			exibirErro('error','O campo NB n&atilde;o foi preenchido!','Alerta - Aimaro','$(\'#nrrecben\',\'#divBeneficio\').habilitaCampo();focaCampoErro(\'nrrecben\',\'divBeneficio\');',false);
 		}				
 			
 	}

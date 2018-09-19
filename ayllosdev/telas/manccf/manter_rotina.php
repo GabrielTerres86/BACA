@@ -58,7 +58,7 @@ switch ($operacao) {
 }
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	// Monta o xml dinâmico de acordo com a operação 
@@ -96,7 +96,7 @@ switch ($operacao) {
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);		
 	}
 	
 	// Busca os dados do contrato e os avalista
@@ -124,7 +124,7 @@ switch ($operacao) {
 		
 		if( $msgconfi != "" ){
 		
-			exibirErro('inform',$msgconfi,'Alerta - Ayllos','',false);
+			exibirErro('inform',$msgconfi,'Alerta - Aimaro','',false);
 			
 		}
 	

@@ -96,7 +96,7 @@ var dtmvtolt;
 				metodo += '$("#inconrfb","#" + nomeForm).val(0); ';
 				metodo += '$("#dtcnscpf","#" + nomeForm).val("");';
 				
-				showError("error","Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente,","Alerta - Ayllos", metodo);
+				showError("error","Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente,","Alerta - Aimaro", metodo);
 				
 			}
 		}				 
@@ -148,7 +148,7 @@ var dtmvtolt;
 			//console.log(objExcept)
 			//console.log('deu ruim - fim');
 			hideMsgAguardo();
-			showError("error","Não foi possível concluir a requisição.","Alerta - Ayllos","");
+			showError("error","Não foi possível concluir a requisição.","Alerta - Aimaro","");
 		},
 		success: function(response) {
 			//console.log('deu retorno');
@@ -170,7 +170,7 @@ var dtmvtolt;
 		$("#inconrfb","#" + nomeForm).val(0);
 		
 		if (flgDispara == false) {
-			showError("error","Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente,","Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index'))); carrregarCaptcha(false);");
+			showError("error","Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente,","Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index'))); carrregarCaptcha(false);");
 		}
 		
 		return false;	
@@ -192,7 +192,7 @@ var dtmvtolt;
 		limparDadosRFB();
 		
 		if (flgDispara == false) { 
-			showError("error",status,"Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));carrregarCaptcha(false);");
+			showError("error",status,"Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));carrregarCaptcha(false);");
 		}
 		
 		return false;
@@ -233,9 +233,9 @@ var dtmvtolt;
 	if (inconrfb == -1) {
 		fechaRotina(divRotina);
 		if (inpessoa == 1) {
-			showError('error','CPF com situa&ccedil&atilde;o diferente de regular. Cadastro n&atilde;o permitido.','Alerta - Ayllos','$("#nrcpfcgc","#frmFisico").focus();');
+			showError('error','CPF com situa&ccedil&atilde;o diferente de regular. Cadastro n&atilde;o permitido.','Alerta - Aimaro','$("#nrcpfcgc","#frmFisico").focus();');
 		} else {
-			showError('error','CNPJ com situa&ccedil&atilde;o diferente de regular. Cadastro n&atilde;o permitido.','Alerta - Ayllos','$("#nrcpfcgc","#frmJuridico").focus();');
+			showError('error','CNPJ com situa&ccedil&atilde;o diferente de regular. Cadastro n&atilde;o permitido.','Alerta - Aimaro','$("#nrcpfcgc","#frmJuridico").focus();');
 		}
 	}
 	else {

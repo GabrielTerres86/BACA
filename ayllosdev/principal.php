@@ -87,7 +87,7 @@ var glb_nmdatela = '<?php echo $nmtelini; ?>';
 <?php if (isset($dsmsgerr)) { ?>
 <script type="text/javascript">
 $(document).ready(function() {
-	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Ayllos","");
+	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Aimaro","");
 });
 </script>
 <?php } ?>

@@ -747,9 +747,9 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$telaPermitadaAcessoBacen == 0 ){
 				
 			    echo '$("#labelRot'.$contRotina.'").unbind("click");';
-				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';
+				echo '$("#labelRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Aimaro", ""); });';
 				echo '$("#valueRot'.$contRotina.'").unbind("click");';
-				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Ayllos", ""); });';	
+				echo '$("#valueRot'.$contRotina.'").bind("click",function() { showError("inform", "Cooperado est&aacute; em processo de demiss&atilde;o.", "Alerta - Aimaro", ""); });';	
 				
 			}else{
 			*/

@@ -29,7 +29,7 @@
 	// Se parâmetros necessários não foram passados
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"]) || !isset($_POST["opeProdutos"]) ) {
 
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos');
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro');
 	
 	}	
 

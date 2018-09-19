@@ -19,17 +19,17 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"C")) <> '') {
 
-        exibirErro('error',$msgError,'Alerta - Ayllos','');
+        exibirErro('error',$msgError,'Alerta - Aimaro','');
     }
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST['nrdconta']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Guardo o número da conta e titular em variáveis
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Monta o xml de requisição
 	$xml  = "";
@@ -49,7 +49,7 @@
 	
 		$msgErro  = $xmlObjContaDestino->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			 
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);		
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);		
 							
 	}
 	

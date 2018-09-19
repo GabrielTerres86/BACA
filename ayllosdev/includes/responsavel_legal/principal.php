@@ -25,10 +25,10 @@
 	$op       = $_POST['cddopcao_rsp'] == '' ? '@'  : $_POST['cddopcao_rsp'];
 
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','fechaRotina(divRotina)',false);
 		
 	// Verifica se o número da conta e o titular foram informados
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"]))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"]))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	
 	// Guardo o número da conta e titular em variáveis
 	$nrdconta = $_POST["nrdconta"]     == "" ? 0        : $_POST["nrdconta"];
@@ -67,8 +67,8 @@
 		
 		
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
 			
 	if( ($nmrotina != "Identificacao" && $tppessoa != 1 )  || $operacao != "TE"){
@@ -109,9 +109,9 @@
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){ 
 			if( $cddopcao == 'I' ){
-				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaOperacaoResp(\'TI\')',false);
+				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaOperacaoResp(\'TI\')',false);
 			}else{
-				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 			}
 		}
 		
@@ -288,14 +288,14 @@
 	controlaLayoutResp( operacao_rsp );
 	
 	if ( msgConta != '' && operacao_rsp == 'SC' ){
-		showError('inform',msgConta,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFocoResp(\''+operacao_rsp+'\');'); 
+		showError('inform',msgConta,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFocoResp(\''+operacao_rsp+'\');'); 
 	}
 		
 	if ( operacao_rsp == 'TE' ){ 
 		if( '<? echo $nmrotina; ?>' == 'Responsavel Legal'){
 			controlaOperacaoResp('EV'); 
 		}else{
-			showConfirmacao('Deseja confirmar exclus&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaArrayResp(\'EV\');controlaOperacaoResp(); criaTabela = \'E\';','bloqueiaFundo(divRotina); controlaOperacaoResp();','sim.gif','nao.gif');		
+			showConfirmacao('Deseja confirmar exclus&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaArrayResp(\'EV\');controlaOperacaoResp(); criaTabela = \'E\';','bloqueiaFundo(divRotina); controlaOperacaoResp();','sim.gif','nao.gif');		
 		}
 	}
 </script>

@@ -39,7 +39,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}					
 	
 	validaDados();
@@ -74,47 +74,47 @@
             $nmdcampo = "nmtitular";
         }
 		
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','focaCampoErro(\''.$nmdcampo.'\',\'frmDados\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','focaCampoErro(\''.$nmdcampo.'\',\'frmDados\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
 							
 	}	
 	
-	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
+	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
 	
 	function validaDados(){
 		
 		//Titular
         if (  $GLOBALS["nmtitular"] == '' ){
-            exibirErro('error','Nome do titular inv&aacute;lido.','Alerta - Ayllos','$(\'#nmtitular\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Nome do titular inv&aacute;lido.','Alerta - Aimaro','$(\'#nmtitular\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 		//CPF/CNPJ
         if (  $GLOBALS["nrcpfcgc"] == 0 ){
-            exibirErro('error','CPF/CNPJ inv&aacute;lido.','Alerta - Ayllos','$(\'#nrcpfcgc\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','CPF/CNPJ inv&aacute;lido.','Alerta - Aimaro','$(\'#nrcpfcgc\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 				
 		//Código do banco
         if ( $GLOBALS["cdbantrf"] == 0){
-            exibirErro('error','Banco inv&aacute;lido.','Alerta - Ayllos','$(\'#cdbantrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Banco inv&aacute;lido.','Alerta - Aimaro','$(\'#cdbantrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 		//Código da agência
         if (  $GLOBALS["cdagetrf"] == 0){
-            exibirErro('error','Ag&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','$(\'#cdagetrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Ag&ecirc;ncia inv&aacute;lida.','Alerta - Aimaro','$(\'#cdagetrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 		//Número da conta destino
         if ( $GLOBALS["nrctatrf"] == 0){
-            exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','$(\'#nrctatrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','$(\'#nrctatrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 		//Dígito da conta
         if (  $GLOBALS["cdbantrf"] != '85' && $GLOBALS["nrdigtrf"] == 0 ){
-            exibirErro('error','D&iacute;gito inv&aacute;lido.','Alerta - Ayllos','$(\'#nrdigtrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','D&iacute;gito inv&aacute;lido.','Alerta - Aimaro','$(\'#nrdigtrf\',\'#frmDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 		//Número da conta origem
         if ( $GLOBALS["nrdconta"] == 0){
-            exibirErro('error','Conta origem inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Conta origem inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesDados\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }		
 	}
 	

@@ -37,7 +37,7 @@
 
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		
-        exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
+        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
 
     }
 	
@@ -108,7 +108,7 @@
 										<div id="divBotoesSaqueParcial" style="margin-bottom:10px">
 											
 											<a href="#" class="botao" id="btVoltar" onclick="fechaRotina($('#divRotina')); return false;">Voltar</a>
-											<a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','efetuarSaqueParcial();','$(\'#btVoltar\',\'#divBotoesSaqueParcial\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;">Concluir</a>
+											<a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','efetuarSaqueParcial();','$(\'#btVoltar\',\'#divBotoesSaqueParcial\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;">Concluir</a>
 											
 										</div>
 										

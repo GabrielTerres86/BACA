@@ -112,7 +112,7 @@
 	}
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	if ( $cddopcao == 'E' ) {
@@ -201,13 +201,13 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " $('#".$nmdcampo."').focus();"; }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 
 	echo "hideMsgAguardo();";
 
 	if ( $cddopcao == 'E' and $operacao == 'VD' ) {
-		echo "showConfirmacao('078 - Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\'GD\')','fechaRotina($(\'#divRotina\'))','sim.gif','nao.gif');";
+		echo "showConfirmacao('078 - Confirma a operacao?','Confirma&ccedil;&atilde;o - Aimaro','manterRotina(\'GD\')','fechaRotina($(\'#divRotina\'))','sim.gif','nao.gif');";
 
 	} else if ( $cddopcao == 'E' and $operacao == 'GD' ) {
 		echo "estadoInicial();";
@@ -222,7 +222,7 @@
 		$nmdgaran = $xmlObjeto->roottag->tags[0]->attributes['NMDGARAN'];
 		echo "nmdgaran ='".$nmdgaran."';";
 
-		echo "showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','substituirBem( 0 );','estadoInicial();','sim.gif','nao.gif');";
+		echo "showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','substituirBem( 0 );','estadoInicial();','sim.gif','nao.gif');";
 
 	} else if ( $cddopcao == 'I' and $operacao == 'GD' ) {
 		echo "bloqueiaFundo( $('#divRotina') );";
@@ -231,7 +231,7 @@
 
         // Se for Cobertura de Aplicacao Vinculada a Operacao
         if ($cdaditiv == 9) {
-            exibirErro('inform','Aditivo contratual de Cobertura de Aplicação criado com sucesso!','Alerta - Ayllos','carregaAditivoCadastrado(\''.$nrdconta.'\',\''.$tpctrato.'\',\''.$nrctremp.'\',\''.$nraditiv.'\')',false);
+            exibirErro('inform','Aditivo contratual de Cobertura de Aplicação criado com sucesso!','Alerta - Aimaro','carregaAditivoCadastrado(\''.$nrdconta.'\',\''.$tpctrato.'\',\''.$nrctremp.'\',\''.$nraditiv.'\')',false);
         } else {
 		echo "$('#dtmvtolt', '#frmTipo').val('".$glbvars['dtmvtolt']."');";
 		echo "nraditiv ='".$nraditiv."';";

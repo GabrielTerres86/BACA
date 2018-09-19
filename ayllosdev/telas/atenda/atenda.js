@@ -149,7 +149,7 @@ $(document).ready(function () {
 
         // Valida número da conta
         if (!validaNroConta(retiraCaracteres($(this).val(), "0123456789", true))) {
-            showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus()");
+            showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus()");
             limparDadosCampos();
             return false;
         }
@@ -285,7 +285,7 @@ function buscaAnotacoes() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divAnotacoes').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divAnotacoes').css('z-index')))");
         },
         success: function (response) {
             $("#divListaAnotacoes").html(response);
@@ -402,7 +402,7 @@ function acessaRotina(labelRot, nomeValidar, nomeTitulo, nomeURL, opeProdutos) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
             },
             success: function (response) {
                 $("#divRotina").html(response);
@@ -510,7 +510,7 @@ function obtemCabecalho() {
     // Se nenhum dos tipos de conta foi informado
     if (nrdconta == "" && nrdctitg == "") {
         hideMsgAguardo();
-        showError("error", "Informe o n&uacute;mero da Conta/dv ou da Conta/Itg.", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus()");
+        showError("error", "Informe o n&uacute;mero da Conta/dv ou da Conta/Itg.", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus()");
         return false;
     }
 
@@ -518,7 +518,7 @@ function obtemCabecalho() {
     if (nrdconta != "") {
         if (!validaNroConta(nrdconta)) {
             hideMsgAguardo();
-            showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus()");
+            showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus()");
             limparDadosCampos();
             return false;
         }
@@ -537,7 +537,7 @@ function obtemCabecalho() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus()");
         },
         success: function (response) {
             try {
@@ -569,7 +569,7 @@ function obtemCabecalho() {
 
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus()");
             }
         }
     });
@@ -788,7 +788,7 @@ function dossieDigdoc(cdproduto){
 				},
 		error   : function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 				},
 		success : function(response) {
 					hideMsgAguardo();
@@ -804,14 +804,14 @@ function dossieDigdoc(cdproduto){
 							return false;
 						} catch(error) {
 							hideMsgAguardo();							
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 						}
 					} else {
 						try {
 							eval( response );							
 						} catch(error) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 						}
 					}
 				}
@@ -823,13 +823,13 @@ function dossieDigdoc(cdproduto){
 function impedSeguros(seguroVida, seguroAuto) {
 
     if (seguroVida == '1' && seguroAuto == '1') {
-        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Ayllos', 'showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Ayllos", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');")');
+        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Aimaro', 'showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Aimaro", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');")');
     } else if (seguroVida == '1') {
 
-       showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Ayllos", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\')");
+       showError("error","Cancelamento do SEGURO DE VIDA PREVISUL deve ser realizado no sistema de gest&atilde;o de seguros.","Alerta - Aimaro", "acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\')");
 
     } else if (seguroAuto == '1') {
-        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Ayllos', 'acessaRotina("","SEGURO","Seguro","seguro");');
+        showError('error', 'Cancelamento do SEGURO AUTO deve ser realizado via 0800.', 'Alerta - Aimaro', 'acessaRotina("","SEGURO","Seguro","seguro");');
     } else {
         acessaRotina("", "SEGURO", "Seguro", "seguro");
     }
@@ -838,7 +838,7 @@ function impedSeguros(seguroVida, seguroAuto) {
 }
 
 function impedConsorcios(){
-	showError('error','Cancelamento dos CONSORCIOS devem ser realizados pelo portal do Sicredi.','Alerta - Ayllos','acessaRotina(\'\',\'CONSORCIO\',\'Cons&oacute;rcios\',\'consorcio\');');
+	showError('error','Cancelamento dos CONSORCIOS devem ser realizados pelo portal do Sicredi.','Alerta - Aimaro','acessaRotina(\'\',\'CONSORCIO\',\'Cons&oacute;rcios\',\'consorcio\');');
 	return false;
 }
 

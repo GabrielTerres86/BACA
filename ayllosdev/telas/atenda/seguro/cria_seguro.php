@@ -269,12 +269,12 @@ $reccraws  = $xmlObjeto->roottag->tags[0]->attributes['RECCRAWS'];
 $alerta = "Aten&ccedil;&atilde;o! Para a contrata&ccedil;&atilde;o deste plano de seguro, nao h&aacute necessidade do envio da DPS - Declara&ccedil;&atilde;o Pessoal de Sa&uacute;de."; 
 
 if($flgsegur == "yes"){
-	exibirErro('alert',$alerta,'Alerta - Ayllos',"",false);
+	exibirErro('alert',$alerta,'Alerta - Aimaro',"",false);
 }
 
 if(strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) { 
 	$mtdErro = 'bloqueiaFundo(divRotina);';
-	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 	}  
 
 echo "var reccraws = '{$reccraws}';";

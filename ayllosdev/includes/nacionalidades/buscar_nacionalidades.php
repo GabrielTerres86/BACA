@@ -45,7 +45,7 @@
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input,select\',\'#divConteudo\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divConteudo\');',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input,select\',\'#divConteudo\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divConteudo\');',false);
 	} 
 		
 	echo "strHTML  = '<div class=\"divRegistros\">';";

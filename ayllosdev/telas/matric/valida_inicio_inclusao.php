@@ -65,7 +65,7 @@
 			$mtdErro = 'unblockBackground()';
 		}		
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	} else {
 		echo 'hideMsgAguardo();';
 		echo 'formataInclusao();';

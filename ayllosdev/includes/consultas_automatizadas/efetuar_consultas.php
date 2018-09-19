@@ -64,10 +64,10 @@
 		// Se retornou erro		   
 		if ($xmlObj->Erro->Registro->dscritic != '') {
 		  $msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
-		  exibirErro('inform',$msgErro,'Alerta - Ayllos',$metodo, false);
+		  exibirErro('inform',$msgErro,'Alerta - Aimaro',$metodo, false);
 		}
 		else {
-			exibirErro('inform','Consultas efetuadas com sucesso!','Alerta - Ayllos',$metodo, false);
+			exibirErro('inform','Consultas efetuadas com sucesso!','Alerta - Aimaro',$metodo, false);
 		}
 					
 	}
@@ -95,7 +95,7 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xml_analise->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('inform',$xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+			exibirErro('inform',$xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
 			exit();
 		}
 		
@@ -127,7 +127,7 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xml_analise->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('inform',$xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
+			exibirErro('inform',$xml_analise->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", true);
 			exit();
 		}
 	}

@@ -35,7 +35,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 		
 	
@@ -74,11 +74,11 @@
 		
 		if ( !empty($nmdcampo) ) { $mtdErro = "$('input','#frmRelatorioBeneficiosPagar').removeClass('campoErro');focaCampoErro('".$nmdcampo."','frmRelatorioBeneficiosPagar');";  }
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			
 	}   
 		
-	exibirErro('inform','Solicita&ccedil;&atilde;o efetuada com sucesso. Em alguns instantes o relat&oacute;rio estar&aacute; dispon&iacute;vel na op&ccedil;&atilde;o Visualizar.','Alerta - Ayllos','controlaVoltar(\'V8\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);		
+	exibirErro('inform','Solicita&ccedil;&atilde;o efetuada com sucesso. Em alguns instantes o relat&oacute;rio estar&aacute; dispon&iacute;vel na op&ccedil;&atilde;o Visualizar.','Alerta - Aimaro','controlaVoltar(\'V8\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);		
 	
 			
 ?>

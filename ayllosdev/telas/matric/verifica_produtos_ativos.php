@@ -26,7 +26,7 @@
 
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 
-        exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        exibirErro('error',$msgError,'Alerta - Aimaro','',false);
     }
 
 	$dtdemiss = (isset($_POST["dtdemiss"])) ? $_POST["dtdemiss"] : '';
@@ -109,7 +109,7 @@
 		$aux_table.= "	</tr>";
 		$aux_table.= "</table>";
 		
-		exibirMensagens('none',$aux_table,'Notifica&ccedil;&atilde;o - MATRIC','showError(\'inform\',\'Atrav&eacute;s da tela CONTAS, na op&ccedil;&atilde;o Impedimentos de Desligamento, todos os produtos e servi&ccedil;os devem ser cancelados.\',\'Notifica&ccedil;&atilde;o - Ayllos\',\'unblockBackground();\');',false);
+		exibirMensagens('none',$aux_table,'Notifica&ccedil;&atilde;o - MATRIC','showError(\'inform\',\'Atrav&eacute;s da tela CONTAS, na op&ccedil;&atilde;o Impedimentos de Desligamento, todos os produtos e servi&ccedil;os devem ser cancelados.\',\'Notifica&ccedil;&atilde;o - Aimaro\',\'unblockBackground();\');',false);
 		
     }else{	
 	
@@ -121,7 +121,7 @@
 		
 		//Número da conta
         if (  $GLOBALS["nrdconta"] == 0 ){
-            exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+            exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }
 		
 	}

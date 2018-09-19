@@ -63,11 +63,11 @@
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos',"controlaOperacao('');",false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',"controlaOperacao('');",false);
 	}		
 	
 	// Verifica se o número da conta e o titular foram informados
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);	
 	
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
@@ -94,8 +94,8 @@
     $dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '';
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	
 	$dtiniper = isset($_POST["dtpesqui"]) && validaData($_POST["dtpesqui"]) ? $_POST["dtpesqui"] : "01/01/0001";
 	$dtfimper = $glbvars["dtmvtolt"];
@@ -198,7 +198,7 @@
 		$xmlObjeto = getObjectXML($xmlResult);
 		
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false); 
 		}
 		
 		if (in_array($operacao,array('C_EXTRATO',''))){
@@ -714,7 +714,7 @@
 		$xmlObjeto = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('')",false);
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('')",false);
 		}
 		
 		if (in_array($operacao,array('C_PAG_PREST'))){ 
@@ -764,7 +764,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	}
-			exibirErro('error',$msgErro,'Alerta - Ayllos',"controlaOperacao('')",false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro',"controlaOperacao('')",false);
 		}
 
         $registros = $xmlObject->roottag->tags[0]->tags;
@@ -796,7 +796,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			}
-			exibirErro('error',$msgErro,'Alerta - Ayllos',"controlaOperacao('')",false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro',"controlaOperacao('')",false);
 		}
 
         $registro = $xmlObject->roottag->tags[0];
@@ -835,7 +835,7 @@
 			$xmlObj = getObjectXML($xmlResult);
 			
 			if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-				exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('')",false);
+				exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('')",false);
 			}
 		
 	}
@@ -875,7 +875,7 @@
 		$xmlObj = getObjectXML($xmlResult);
 		
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('')",false);
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('')",false);
 		}
 	} else if(in_array($operacao,array('C_LIQ_MESMO_DIA'))) {
 	
@@ -903,7 +903,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			}
-			exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina);prejuizoRetorno();',false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);prejuizoRetorno();',false);
 			
 			exit();
 		}
@@ -986,14 +986,14 @@
 		
 		var msgAlert = 'Operacao Efetuada com Sucesso!';
 		
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);prejuizoRetorno();');
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);prejuizoRetorno();');
 			
 	</script>
 <? }
 
 	if ((in_array($operacao,array('C_LIQ_MESMO_DIA')))) {
 
-		echo 'showError("inform","Operacao Efetuada com Sucesso!.","Notifica&ccedil;&atilde;o - Ayllos","bloqueiaFundo(divRotina);prejuizoRetorno();");';	
+		echo 'showError("inform","Operacao Efetuada com Sucesso!.","Notifica&ccedil;&atilde;o - Aimaro","bloqueiaFundo(divRotina);prejuizoRetorno();");';	
 		
 	}
 	
@@ -1010,7 +1010,7 @@
 		if (operacao == 'TC' && arrayRegistros['vlprovis'] > 0 ){
 			var msgAlert = ' Valor provisionado no cheque sal&aacute;rio: ' +arrayRegistros['vlprovis'];
 		
-			showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);');
+			showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);');
 		}
 		
 		if ( operacao == 'TC_V' ){ controlaOperacao('TC'); }

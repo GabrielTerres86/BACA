@@ -119,7 +119,7 @@
 		echo "callafterRelacionamento = \"".$acessaaba."\";";
 		
 		// Efetua a impressão do termo de entrega
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","gerarImpressao(1,\''.$nrdrowid.'\');","'.$acessaaba.'","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","gerarImpressao(1,\''.$nrdrowid.'\');","'.$acessaaba.'","sim.gif","nao.gif");';
 	} else {
 		echo $acessaaba;
 	}	
@@ -127,7 +127,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();		
 	}
 			

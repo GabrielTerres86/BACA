@@ -48,7 +48,7 @@
 			$nmdcampo = "nrcpfcgc";
 		}
 
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','focaCampoErro(\''.$nmdcampo.'\',\'frmCadastro\');',false);		
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','focaCampoErro(\''.$nmdcampo.'\',\'frmCadastro\');',false);		
 					
 	} else {
 		
@@ -61,7 +61,7 @@
 			
 		}
 		
-		/*exibirErro('error',utf8_encode($cdcnae),'Alerta - Ayllos','focaCampoErro(\''.$nmdcampo.'\',\'frmCadastro\');',false);*/
+		/*exibirErro('error',utf8_encode($cdcnae),'Alerta - Aimaro','focaCampoErro(\''.$nmdcampo.'\',\'frmCadastro\');',false);*/
 	}
 	
 					

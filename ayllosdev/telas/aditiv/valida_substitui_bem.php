@@ -88,7 +88,7 @@
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
 		echo 'intervenienteValidado=false;';
-		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
+		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Aimaro').'","","$NaN");';
 	}
 	else {
 
@@ -100,7 +100,7 @@
 
 				echo "showConfirmacao(
 										' ".$msgAvisoDefault."<br/>".$msgAviso." Continuar alteração ?'
-										,'Confirma?- Ayllos'
+										,'Confirma?- Aimaro'
 										,'".$funcaoSim."'
 										,'".$funcaoNao."'
 										,'sim.gif'
@@ -111,7 +111,7 @@
         {
 			echo "showConfirmacao(
 										'".$msgAvisoDefault." Continuar alteração?'
-										,'Confirma?- Ayllos'
+										,'Confirma?- Aimaro'
 										,'".$funcaoSim."'
 										,'".$funcaoNao."'
 										,'sim.gif'

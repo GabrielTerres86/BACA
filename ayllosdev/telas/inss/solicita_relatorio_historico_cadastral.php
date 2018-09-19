@@ -33,7 +33,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 		
 	validaDados();
@@ -63,7 +63,7 @@
 		$nmdcampo = $xmlObjSolicitaRelatorioHistCadastral->roottag->tags[0]->attributes['NMDCAMPO'];
 		
 		if ( !empty($nmdcampo) ) { $mtdErro = "$('input','#frmRelatorioHistoricoCadastral').removeClass('campoErro');focaCampoErro('".$nmdcampo."','frmRelatorioHistoricoCadastral');$('#".$nmdcampo."','#frmRelatorioHistoricoCadastral').val('');";  }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			
 	}   
 	

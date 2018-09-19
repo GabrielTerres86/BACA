@@ -37,10 +37,10 @@
 	$op = $cddopcao_proc;
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Verifica se o número da conta e o titular foram informados
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Guardo o número da conta e titular em variáveis
 	$nrdconta 	   = $_POST['nrdconta'] == ''      ? 0    : $_POST['nrdconta'];
@@ -55,8 +55,8 @@
 	$flgcadas      = (!isset($_POST['flgcadas'])) ? ''    : $_POST['flgcadas'];		
 
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Monta o xml de requisição
 	$xml  = '';
@@ -94,7 +94,7 @@
 			$metodo = 'bloqueiaFundo(divRotina);controlaOperacaoProc();';
 		}		
 		
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 		
 	}
 	
@@ -128,7 +128,7 @@
 		$regBens 		= $xmlObjetoBens->roottag->tags[0]->tags;		
 		
 		// Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObjetoBens->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaOperacaoProc()',false);	
+		if (strtoupper($xmlObjetoBens->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaOperacaoProc()',false);	
 		
 		?>
 		<script type="text/javascript">
@@ -316,7 +316,7 @@
 	if ( ope == 'TX'){	
 		if( '<? echo $nmrotina; ?>' == 'MATRIC' &&
 			'<? echo $idseqttl; ?>' == 2){
-				showConfirmacao('Deseja confirmar exclus&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaArrayProc(\'EV\');','bloqueiaFundo(divRotina); controlaOperacaoProc();','sim.gif','nao.gif');		
+				showConfirmacao('Deseja confirmar exclus&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaArrayProc(\'EV\');','bloqueiaFundo(divRotina); controlaOperacaoProc();','sim.gif','nao.gif');		
 			}else{
 				controlaOperacaoProc('EV'); 
 			}

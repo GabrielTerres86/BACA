@@ -137,7 +137,7 @@
 		
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" && $xmlObj->roottag->tags[0]->cdata != '') {
 		  $msgErro = $xmlObj->roottag->tags[0]->cdata;
-		  exibirErro('error',$msgErro,'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))", false);
+		  exibirErro('error',$msgErro,'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))", false);
 		}
 	
 		$xml_geral = simplexml_load_string($xmlResult);
@@ -196,7 +196,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

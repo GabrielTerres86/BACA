@@ -241,7 +241,7 @@
 				$nmdcampo = "nrcpfcgc";
 			}
 			
-			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','focaCampoErro(\''.$nmdcampo.'\',\'frmFisico\');',false);		
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','focaCampoErro(\''.$nmdcampo.'\',\'frmFisico\');',false);		
 						
 		} else {
 			
@@ -286,7 +286,7 @@
 				$nmdcampo = "nrcpfcgc";
 			}
 			
-			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','focaCampoErro(\''.$nmdcampo.'\',\'frmJuridico\');',false);		
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','focaCampoErro(\''.$nmdcampo.'\',\'frmJuridico\');',false);		
 						
 		} else {			
 			
@@ -314,68 +314,68 @@
 		//-----------------------------
 		
 		//Razão social
-		if ( $GLOBALS['nmprimtl'] == ''  ) exibirErro('error','Razão social deve ser preenchida.','Alerta - Ayllos','focaCampoErro(\'nmprimtl\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nmprimtl'] == ''  ) exibirErro('error','Razão social deve ser preenchida.','Alerta - Aimaro','focaCampoErro(\'nmprimtl\',\'frmJuridico\');',false);
 		
 		//Razão social
-		if ( $GLOBALS['nmfansia'] == ''  ) exibirErro('error','Nome fantasia deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nmfansia\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nmfansia'] == ''  ) exibirErro('error','Nome fantasia deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nmfansia\',\'frmJuridico\');',false);
 		
 		//CNPJ
-		if ( $GLOBALS['nrcpfcgc'] == '' || $GLOBALS['nrcpfcgc'] == 0 ) exibirErro('error','CNPJ deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nrcpfcgc'] == '' || $GLOBALS['nrcpfcgc'] == 0 ) exibirErro('error','CNPJ deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nrcpfcgc\',\'frmJuridico\');',false);
 						
 		
         //CNPJ Responsabilidade social				
 		if( verificaCpfCnpjBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, 2, $GLOBALS['nrcpfcgc']) == true ){			
-			exibirErro('error','CNPJ n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
+			exibirErro('error','CNPJ n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Aimaro','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);
 		} 
 	   
         //CNAE Responsabilidade social				
 		if( verificaCnaeBloqueado($cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $GLOBALS['cdcnae'], $GLOBALS['nrcpfcgc']) == '1'){				
-			exibirErro('error','CNAE n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);					
+			exibirErro('error','CNAE n&atilde;o autorizado, conforme previsto na Pol&iacute;tica de Responsabilidade Socioambiental do Sistema AILOS.','Alerta - Aimaro','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');',false);					
 		} 
 		
 		//Natureza jurídica
-		if ( $GLOBALS['natjurid'] == '' || $GLOBALS['natjurid'] == 0 ) exibirErro('error','Naturaza jurídica deve ser selecionada.','Alerta - Ayllos','focaCampoErro(\'natjurid\',\'frmJuridico\');',false);
+		if ( $GLOBALS['natjurid'] == '' || $GLOBALS['natjurid'] == 0 ) exibirErro('error','Naturaza jurídica deve ser selecionada.','Alerta - Aimaro','focaCampoErro(\'natjurid\',\'frmJuridico\');',false);
 				
 		//Data de inicio de atividade
-		if ( $GLOBALS['dtiniatv'] == '' || !validaData( $GLOBALS['dtiniatv'] ) ) exibirErro('error','Data de início ativ. inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtiniatv\',\'frmJuridico\');',false);
+		if ( $GLOBALS['dtiniatv'] == '' || !validaData( $GLOBALS['dtiniatv'] ) ) exibirErro('error','Data de início ativ. inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtiniatv\',\'frmJuridico\');',false);
 				
 		//Setor econômico
-		if ( $GLOBALS['cdseteco'] == '' || $GLOBALS['cdseteco'] == 0 ) exibirErro('error','Setor econômico deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'cdseteco\',\'frmJuridico\');',false);
+		if ( $GLOBALS['cdseteco'] == '' || $GLOBALS['cdseteco'] == 0 ) exibirErro('error','Setor econômico deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'cdseteco\',\'frmJuridico\');',false);
 			
 		//Cód. DDD
-		if ( $GLOBALS['nrdddtfc'] == '' || $GLOBALS['nrdddtfc'] == 0 ) exibirErro('error','Código DDD inválido.','Alerta - Ayllos','focaCampoErro(\'nrdddtfc\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nrdddtfc'] == '' || $GLOBALS['nrdddtfc'] == 0 ) exibirErro('error','Código DDD inválido.','Alerta - Aimaro','focaCampoErro(\'nrdddtfc\',\'frmJuridico\');',false);
 		
 		//Nº Telefone
-		if ( $GLOBALS['nrtelefo'] == '' || $GLOBALS['nrtelefo'] == 0 ) exibirErro('error','Número de telefone deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrtelefo\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nrtelefo'] == '' || $GLOBALS['nrtelefo'] == 0 ) exibirErro('error','Número de telefone deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nrtelefo\',\'frmJuridico\');',false);
 		
 		//Ramo atividade
-		if ( $GLOBALS['cdrmativ'] == '' || $GLOBALS['cdrmativ'] == 0 ) exibirErro('error','Ramo de atividade deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'cdrmativ\',\'frmJuridico\');',false);
+		if ( $GLOBALS['cdrmativ'] == '' || $GLOBALS['cdrmativ'] == 0 ) exibirErro('error','Ramo de atividade deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'cdrmativ\',\'frmJuridico\');',false);
 		
 		//-----------------------------
 		//		    Endereço
 		//-----------------------------	
 
 		//CEP
-		if ( $GLOBALS['nrcepend'] == '' || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrcepend\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nrcepend'] == '' || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nrcepend\',\'frmJuridico\');',false);
 		
 		//Endereço
-		if ( $GLOBALS['dsendere'] == ''  ) exibirErro('error','Endereço deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'dsendere\',\'frmJuridico\');',false);
+		if ( $GLOBALS['dsendere'] == ''  ) exibirErro('error','Endereço deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'dsendere\',\'frmJuridico\');',false);
 				
 		//Bairro
-		if ( $GLOBALS['nmbairro'] == ''  ) exibirErro('error','Bairro deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nmbairro\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nmbairro'] == ''  ) exibirErro('error','Bairro deve ser preenchido.','Alerta - Aimaro','focaCampoErro(\'nmbairro\',\'frmJuridico\');',false);
 		
 		//U.F.
-		if ( $GLOBALS['cdufende'] == ''  ) exibirErro('error','U.F. deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'cdufende\',\'frmJuridico\');',false);
+		if ( $GLOBALS['cdufende'] == ''  ) exibirErro('error','U.F. deve ser selecionado.','Alerta - Aimaro','focaCampoErro(\'cdufende\',\'frmJuridico\');',false);
 
 		//Cidade
-		if ( $GLOBALS['nmcidade'] == ''  ) exibirErro('error','Cidade deve ser preenchida.','Alerta - Ayllos','focaCampoErro(\'nmcidade\',\'frmJuridico\');',false);
+		if ( $GLOBALS['nmcidade'] == ''  ) exibirErro('error','Cidade deve ser preenchida.','Alerta - Aimaro','focaCampoErro(\'nmcidade\',\'frmJuridico\');',false);
 		
 		//-----------------------------
 		//   Entrada/Saída Cooperado	  
 		//-----------------------------
 				
 		//Data de saída
-		if ( ( $GLOBALS['dtdemiss'] != '' ) && !validaData( $GLOBALS['dtdemiss'] ) ) exibirErro('error','Data de sa&iacute;da inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtdemiss\',\'frmJuridico\');',false);
+		if ( ( $GLOBALS['dtdemiss'] != '' ) && !validaData( $GLOBALS['dtdemiss'] ) ) exibirErro('error','Data de sa&iacute;da inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtdemiss\',\'frmJuridico\');',false);
 				
 	}	
 ?>
