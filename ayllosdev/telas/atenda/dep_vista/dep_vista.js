@@ -1409,10 +1409,11 @@ function consultaSituacaoEmpr(nrctremp){
 
 function validaPagamentoPreju() {
 	var vlpagto = retiraMascara($('#vlpagto', '#frmPagPrejCC').val()) || 0;
+	var vlabono = retiraMascara($('#vlabono', '#frmPagPrejCC').val()) || 0;
 	var vlsaldo = retiraMascara($('#vlsaldo', '#frmPagPrejCC').val()) || 0;
 
-	if (vlpagto <= 0) {
-		showError("inform", 'Informe o valor do pagamento.', "Alerta - Ayllos");
+	if (vlpagto <= 0 && vlabono <= 0) {
+		showError("inform", 'Informe o valor do pagamento ou valor de abono.', "Alerta - Ayllos");
 		return false;
 	} else if (vlsaldo < 0) {
 		showError("inform", 'O valor do pagamento não pode ultrapassar o valor principal.', "Alerta - Ayllos");
