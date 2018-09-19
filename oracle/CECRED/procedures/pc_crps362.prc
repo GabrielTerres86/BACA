@@ -69,6 +69,8 @@ BEGIN
 
                14/08/2018 - Inclusão das aplicações programadas na cr_craplpp							
 
+               05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).			
+
 ............................................................................. */
   DECLARE
     -- PL Table para manter dados sobre os PACs/empresa
@@ -260,7 +262,7 @@ BEGIN
             FROM craplpp lpp
             WHERE lpp.dtmvtolt = pr_dtmvtoan
               AND lpp.cdcooper = pr_cdcooper
-            UNION
+            UNION ALL
             SELECT lac.nrdconta
                   ,lac.cdhistor
                   ,lac.vllanmto

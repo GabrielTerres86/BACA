@@ -13,7 +13,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_INTEAS is
       Objetivo  : Rotinas referentes tela de integração com sistema Easy-Way
 
       Alteracoes: 10/04/2018 - Projeto 414 - Regulatório FATCA/CRS
-                               (Marcelo Telles Coelho - Mouts).
+                               (Marcelo Telles Coelho - Mouts). 
 
   ---------------------------------------------------------------------------------------------------------------*/
   

@@ -41,7 +41,7 @@
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["dtinirpp"]) || !isset($_POST["diadtvct"]) ||
 	    !isset($_POST["mesdtvct"]) || !isset($_POST["anodtvct"]) || !isset($_POST["vlprerpp"]) ||
-		!isset($_POST["tpemiext"])) {
+		!isset($_POST["tpemiext"]) || !isset($_POST["cdprodut"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 	
@@ -52,7 +52,8 @@
 	$anodtvct = $_POST["anodtvct"];	
 	$vlprerpp = $_POST["vlprerpp"];	
 	$tpemiext = $_POST["tpemiext"];
-	
+	$cdprodut = $_POST["cdprodut"];
+
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -92,6 +93,11 @@
 	// Verifica se o tipo de impressao é um inteiro válido
 	if (!validaInteiro($tpemiext))  {
 		exibeErro("Tipo de impressao do extrato inv&aacute;lido.");	
+	}
+	
+	// Verifica se o produto é válido
+	if (!validaInteiro($cdprodut) || $cdprodut < 1 ) {
+		exibeErro("Aplica&ccedil;&atilde;o programada inv&aacute;lida.");			
 	}	
 	
 	// Monta o xml de requisição

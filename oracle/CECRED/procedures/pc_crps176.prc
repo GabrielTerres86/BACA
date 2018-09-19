@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS176 ( pr_cdcooper  IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Novembro/96.                    Ultima atualizacao: 14/08/2016
+       Data    : Novembro/96.                    Ultima atualizacao: 05/09/2018
 
        Dados referentes ao programa:
 
@@ -59,6 +59,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS176 ( pr_cdcooper  IN crapcop.cdcooper
                   14/08/2018 - Inclusão da Aplicação Programada
                                Proj. 411.2 (CIS Corporate)
              
+                  05/09/2018 - Correção do cursor cr_craplpp (Proj. 411.2 - CIS Corporate).
+                  
     ............................................................................ */
 
     DECLARE
@@ -134,7 +136,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS176 ( pr_cdcooper  IN crapcop.cdcooper
            AND craplpp.dtmvtolt > pr_dtmvtolt
          GROUP BY craplpp.nrdconta,craplpp.nrctrrpp
         HAVING Count(*) > 3
-        UNION
+        UNION ALL 
         SELECT rac.nrdconta
               ,rac.nrctrrpp
               ,Count(*) qtlancmto

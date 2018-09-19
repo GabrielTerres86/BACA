@@ -66,8 +66,10 @@ create or replace procedure cecred.pc_crps425(pr_cdcooper  in craptab.cdcooper%t
 							 28/08/2014 - Adicionado tratamento para lançamentos de produtos
 							              de captação (Reinert)
                
-							 14/08/2018 - Inclusa da Aplicação Programada
+							 14/08/2018 - Inclusão da Aplicação Programada
                             Proj. 411.2 - CIS Corporate
+
+               05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).
 
   ............................................................................. */
 
@@ -252,7 +254,7 @@ create or replace procedure cecred.pc_crps425(pr_cdcooper  in craptab.cdcooper%t
        and tab.nrdconta = ass.nrdconta
        and tab.dtmvtolt between pr_dtliminf and pr_dtlimsup
      group by ass.cdagenci,tab.cdhistor
-    union 
+    union all
     select ass.cdagenci,
            tab.cdhistor,
            count(*) qtlancto

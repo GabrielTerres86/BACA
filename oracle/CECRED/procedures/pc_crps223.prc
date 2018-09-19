@@ -158,7 +158,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS223 (pr_cdcooper in craptab.cdcooper%t
               and lpp.dtmvtolt < pr_dtfimmes
               and lpp.cdhistor in (863, 869, 870)
          group by lpp.nrdconta,lpp.cdhistor
-            union
+            union all
            select lac.nrdconta,
                   lac.cdhistor,
                   sum(lac.vllanmto) vllanmto

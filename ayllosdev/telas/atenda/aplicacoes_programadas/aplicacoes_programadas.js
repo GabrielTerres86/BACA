@@ -878,6 +878,7 @@ function validarInclusaoPoupanca() {
 	var anodtvct = $("#anodtvct","#frmDadosPoupanca").val();
 	var vlprerpp = $("#vlprerpp","#frmDadosPoupanca").val().replace(/\./g,"");
 	var tpemiext = $("#tpemiext","#frmDadosPoupanca").val();
+	var cdprodut = $("#cdprodut","#frmDadosPoupanca").val();
 
 	//Limpa o campo de Erro anterior
 	$('input, select','#frmDadosPoupanca' ).removeClass('campoErro');
@@ -937,6 +938,7 @@ function validarInclusaoPoupanca() {
 			anodtvct: anodtvct,
 			vlprerpp: vlprerpp,	
 			tpemiext: tpemiext, 				
+		    cdprodut: cdprodut,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -956,10 +958,9 @@ function validarInclusaoPoupanca() {
 }
 
 // Função para incluir a aplicação programada
-function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
+function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext,cdprodut) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, incluindo poupan&ccedil;a programada ...");	
-	
 	// Executa script de consulta através de ajax
 	$.ajax({		
 		type: "POST",		
@@ -972,6 +973,7 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
 			anodtvct: anodtvct,
 			vlprerpp: vlprerpp,
 			tpemiext: tpemiext,
+			cdprodut: cdprodut,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -993,14 +995,14 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext) {
 function imprimirAutorizacao(registro,tparquiv) {
 	registro = registro == "" ? nrdrowid : registro;
 	tparquiv = tparquiv == "" ? cdtiparq : tparquiv;
-	
+
 	if (registro == 0 || registro == "") {
 		return false;
 	}
 	
 	$("#nrdconta","#frmAutorizacao").val(nrdconta);
 	$("#nrdrowid","#frmAutorizacao").val(registro);
-	$("#cdtiparq","#frmAutorizacao").val(tparquiv);				
+	$("#cdtiparq","#frmAutorizacao").val(tparquiv);
 	var action = $("#frmAutorizacao").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
 	
