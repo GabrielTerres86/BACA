@@ -92,7 +92,8 @@ DEF TEMP-TABLE tt-novo-plano NO-UNDO
     FIELD dtultcor AS DATE
     FIELD dtprocor AS DATE
     FIELD vlcorfix AS DECI
-    FIELD dsprotoc LIKE crappro.dsprotoc.
+    FIELD dsprotoc LIKE crappro.dsprotoc
+    FIELD idlstdom AS INTE.
     
 DEF TEMP-TABLE tt-subscricao NO-UNDO
     FIELD dtdebito AS CHAR

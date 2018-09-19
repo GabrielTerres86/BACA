@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 14/04/2015
  * OBJETIVO     : Biblioteca de funções da rotina de consultas automatizadas
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 12/09/2018 - P442 - Novos campos das Consultas (Marcos-Envolit)
  *
  */
  
@@ -76,7 +76,7 @@ function formata_protecao (operacao, nrinfcad , dsinfcad ) {
 	cVltotsfn.css('width','75px').css('text-align','right');
 	cVlopescr.css('width','80px').css('text-align','right');
 	cVlrpreju.css('width','80px').css('text-align','right');
-	cQtnegati_coluna.css('width','80px').css('text-align','right');
+	cQtnegati_coluna.css('width','92px').css('text-align','right');
 	cVlnegati_coluna.css('width','80px').css('text-align','right');
 	cDtultneg_coluna.css('width','75px');
 	cNrcpfcgc.css('width','90px');
@@ -90,8 +90,8 @@ function formata_protecao (operacao, nrinfcad , dsinfcad ) {
 	rDsnegati.css('width','170px').css('text-align','left');
 	rVlnegati.css('width','40px');
 	rNmtitsoc.css('width','50px');
-	rqtnegati_coluna.css('width','75px');
-	rvlnegati_coluna.css('width','70px');
+	rqtnegati_coluna.css('width','92px').css('text-align','center');
+	rvlnegati_coluna.css('width','80px').css('text-align','center');
 	rdtultneg_coluna.css('width','85px');
 	rDtdrisco.css('width','90px');
 	rQtopescr.css('width','90px');

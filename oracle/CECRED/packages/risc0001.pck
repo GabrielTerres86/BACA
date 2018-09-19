@@ -63,7 +63,7 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0001 is
                                           ,pr_nrdcaixa           IN INTEGER                        --> Numero Caixa
                                           ,pr_nrdconta           IN crapass.nrdconta%TYPE          --> Numero da Conta
                                           ,pr_nrcpfcgc           IN crapass.nrcpfcgc%TYPE          --> CPF/CGC do associado
-                                          ,pr_tab_central_risco OUT risc0001.typ_reg_central_risco --> Informações da Central de Risco
+                                          ,pr_tab_central_risco OUT RISC0001.typ_reg_central_risco --> Informações da Central de Risco
                                           ,pr_tab_erro          OUT gene0001.typ_tab_erro          --> Tabela Erro
                                           ,pr_des_reto          OUT VARCHAR2);                     --> Retorno OK/NOK
 
@@ -75,7 +75,7 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0001 is
                              ,pr_idseqttl      IN INTEGER                   --> Sequencial do Titular
                              ,pr_nmdatela      IN VARCHAR2                  --> Nome da tela
                              ,pr_dtmvtolt      IN crapdat.dtmvtolt%TYPE     --> Data do movimento
-                             ,pr_tab_estouros OUT risc0001.typ_tab_estouros --> Informações de estouro na conta
+                             ,pr_tab_estouros OUT RISC0001.typ_tab_estouros --> Informações de estouro na conta
                              ,pr_dscritic     OUT VARCHAR2);                --> Retorno de erro
 
 END RISC0001;
@@ -511,7 +511,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         END IF;
       END IF;
     END LOOP;
-    
   END pc_calcula_juros_60_tdb;
   
   PROCEDURE pc_calcula_juros_60k(par_cdcooper IN crapris.cdcooper%TYPE
@@ -651,80 +650,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_diascalc          INTEGER := 0;
     contador             INTEGER := 0;
     vr_fleprces          INTEGER := 0;
-    vr_dtmvtolt          DATE;
-    vr_dtcorte_prm       DATE;
-    vr_data_60dias_atraso      DATE;
-    vr_data_corte_dias_uteis   DATE; --Data de corte para calculoar dias uteis
 
+    vr_vlsld59d NUMBER;
+    vr_vlju6037 NUMBER;
+    vr_vlju6038 NUMBER;
+    vr_vlju6057 NUMBER;
+
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
 
     --Busca conta corrente em ADP saldo negativo e se houver limite estourado (Rangel Decker AMcom)
     CURSOR cr_conta_negativa (pr_cdcooper IN crapris.cdcooper%TYPE) IS
       SELECT  ris.nrdconta
            ,DECODE(ass.inpessoa,3,2,ass.inpessoa) inpessoa /* Tratamento para Pessoa Administrativa considerar com PJ*/
+           ,ass.cdagenci
            ,ris.qtdiaatr
            ,ris.vldivida
            ,ris.dtinictr
+           ,sld.vljuresp -- Valor provisionado do histórico 38 (DF)
       FROM crapass ass
           ,crapris ris
+          ,crapsld sld
       WHERE ris.cdcooper = ass.cdcooper
        AND ris.nrdconta  = ass.nrdconta
        AND ris.cdcooper  = pr_cdcooper
        AND ris.dtrefere  = par_dtrefere
-      -- AND ris.inddocto  = 1 -- Docto 3020
-       AND ris.vldivida  > 0
        AND ris.cdmodali =101
        AND ris.qtdiaatr >=60
-	   AND ris.vljura60 > 0;
-
-    --Retorna os laçamentos de taxas cobradas na situação de conta negativa (Rangel Decker AMcom)
-    CURSOR cr_conta_juros60 (pr_cdcooper IN craplcm.cdcooper%TYPE,
-                             pr_nrdconta IN craplcm.nrdconta%TYPE,
-                             pr_datacorte  IN craplcm.dtmvtolt%TYPE,
-                             pr_dt60datr IN crapris.dtinictr%TYPE ) IS
-
-      SELECT /*+ index (lcm CRAPLCM##CRAPLCM2) */
-            'DF' periodo
-            ,s.nrdconta
-            ,s.dtrefere dtmvtolt
-            ,a.cdagenci
-            ,s.vljuresp vllanmto
-            ,h.cdhistor
-            ,h.dshistor
-       FROM crapsld s,
-            craphis h,
-            crapass a
-       WHERE s.cdcooper = pr_cdcooper
-       AND s.nrdconta   = pr_nrdconta
-       AND h.cdcooper   = s.cdcooper
-       AND h.cdhistor   = 38
-       AND a.cdcooper   = s.cdcooper
-       AND a.nrdconta   = s.nrdconta
-       AND s.vljuresp > 0
-      UNION
-       SELECT /*+ index (lcm CRAPLCM##CRAPLCM2) */
-            'DA' periodo
-            ,lcm.nrdconta
-            ,lcm.dtmvtolt
-            ,ass.cdagenci
-            ,lcm.vllanmto
-            ,his.cdhistor
-            ,his.dshistor
-       FROM craplcm lcm
-           ,crapass ass
-           ,craphis his
-      WHERE lcm.cdcooper = ass.cdcooper
-      AND lcm.nrdconta  = ass.nrdconta
-      AND lcm.cdcooper = his.cdcooper
-      AND lcm.cdhistor  = his.cdhistor
-      AND lcm.cdcooper  = pr_cdcooper
-      AND lcm.nrdconta  = pr_nrdconta
-      AND lcm.dtmvtolt   > pr_datacorte
-      AND lcm.dtmvtolt   >=pr_dt60datr -- Data em que completou 60 dias em ADP
-      AND his.indebcre ='D'
-      AND his.cdhistor in(38,37,57);
-
-
-
+       AND ris.vljura60 >  0
+       AND sld.cdcooper = ass.cdcooper
+       AND sld.nrdconta = ass.nrdconta;
   BEGIN
     pr_vlrjuros.valorpf  := 0;
     pr_vlrjuros.valorpj  := 0;
@@ -997,144 +952,99 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
      --Soma de valor juros e taxas de contas correntes inadimplentes (Rangel Decker AMcom)
     IF par_cdmodali = 999 THEN
-
-       --Buscar a data de corte
-       vr_dtcorte_prm := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                           ,pr_nmsistem => 'CRED'
-                                                           ,pr_cdacesso => 'DT_CORTE_RENDAPROP')
-                                                           ,'DD/MM/RRRR');
-
-
-        vr_data_corte_dias_uteis := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                                      ,pr_nmsistem => 'CRED'
-                                                                      ,pr_cdacesso => 'DT_CORTE_REGCRE')
-                                                                      ,'DD/MM/RRRR');
-
-
-
-
         FOR  rw_conta_negativa in cr_conta_negativa(pr_cdcooper =>par_cdcooper) LOOP
+          -- Chama procedure de cálculo dos juros +60
+					TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => par_cdcooper
+					                                                   , pr_nrdconta => rw_conta_negativa.nrdconta
+																														 , pr_dtlimite => par_dtrefere
+																														 , pr_vlsld59d => vr_vlsld59d
+																														 , pr_vlju6037 => vr_vlju6037
+																														 , pr_vlju6038 => vr_vlju6038
+																														 , pr_vlju6057 => vr_vlju6057
+																														 , pr_cdcritic => vr_cdcritic
+																														 , pr_dscritic => vr_dscritic);
 
-          IF rw_conta_negativa.dtinictr < vr_data_corte_dias_uteis THEN -- Se data de início do atraso menor que a data de corte
-              vr_data_60dias_atraso := TELA_ATENDA_DEPOSVIS.fn_soma_dias_uteis_data(par_cdcooper,rw_conta_negativa.dtinictr, 60); -- Conta dias úteis
+           IF rw_conta_negativa.vljuresp > 0 THEN  -- 38 DF
+             IF rw_conta_negativa.inpessoa = 1 THEN
+							  pr_juros38_df.valorpf := pr_juros38_df.valorpf + rw_conta_negativa.vljuresp;
+
+								IF pr_tabvljuros38_df.exists(rw_conta_negativa.cdagenci) THEN
+									 pr_tabvljuros38_df(rw_conta_negativa.cdagenci).valorpf := NVL(pr_tabvljuros38_df(rw_conta_negativa.cdagenci).valorpf,0) + rw_conta_negativa.vljuresp;
            ELSE
-              vr_data_60dias_atraso :=  rw_conta_negativa.dtinictr+ 60; -- Conta dias corridos
+									 pr_tabvljuros38_df(rw_conta_negativa.cdagenci).valorpf := rw_conta_negativa.vljuresp;
            END IF;
-
-
-
-          FOR  rw_conta_juros60 in cr_conta_juros60(pr_cdcooper   => par_cdcooper,
-                                                    pr_nrdconta   => rw_conta_negativa.nrdconta,
-                                                    pr_datacorte  => vr_dtcorte_prm,
-                                                    pr_dt60datr => vr_data_60dias_atraso) LOOP
-
-
-                IF rw_conta_negativa.inpessoa = 1 THEN  --Pessoa Fisica
-                   -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
-                   --(CRPS249) PROVISAO JUROS CH. ESPECIAL
-                    IF rw_conta_juros60.cdhistor = 38 AND rw_conta_juros60.periodo ='DF' THEN
-                       pr_juros38_df.valorpf := pr_juros38_df.valorpf +rw_conta_juros60.vllanmto;
-
-                        IF pr_tabvljuros38_df.exists(rw_conta_juros60.cdagenci) THEN
-                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
                         ELSE
-                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
+								pr_juros38_df.valorpj := pr_juros38_df.valorpj + rw_conta_negativa.vljuresp;
+
+								IF pr_tabvljuros38_df.exists(rw_conta_negativa.cdagenci) THEN
+									 pr_tabvljuros38_df(rw_conta_negativa.cdagenci).valorpj := NVL(pr_tabvljuros38_df(rw_conta_negativa.cdagenci).valorpj,0) + rw_conta_negativa.vljuresp;
+								ELSE
+									 pr_tabvljuros38_df(rw_conta_negativa.cdagenci).valorpj := rw_conta_negativa.vljuresp;
                         END IF;
                     END IF;
+					 END IF;
 
-                    -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
-                    --(CRPS249) PROVISAO JUROS CH. ESPECIAL
-                    IF rw_conta_juros60.cdhistor = 38 AND rw_conta_juros60.periodo ='DA' THEN
-                       pr_juros38_da.valorpf := pr_juros38_da.valorpf +rw_conta_juros60.vllanmto;
+					 IF vr_vlju6037 > 0 THEN  -- 37 DA
+						 IF rw_conta_negativa.inpessoa = 1 THEN
+						    pr_taxas37.valorpf := pr_taxas37.valorpf + vr_vlju6037;
 
-                        IF pr_tabvljuros38_da.exists(rw_conta_juros60.cdagenci) THEN
-                           pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
+								 IF pr_tabvltaxas37.exists(   rw_conta_negativa.cdagenci) THEN
+										pr_tabvltaxas37(rw_conta_negativa.cdagenci).valorpf := NVL(pr_tabvltaxas37(rw_conta_negativa.cdagenci).valorpf,0) +  vr_vlju6037;
                         ELSE
-                           pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
+										pr_tabvltaxas37(rw_conta_negativa.cdagenci).valorpf := vr_vlju6037;
                         END IF;
+							ELSE
+								 pr_taxas37.valorpj := pr_taxas37.valorpj + vr_vlju6037;
 
+								 IF pr_tabvltaxas37.exists(rw_conta_negativa.cdagenci) THEN
+										pr_tabvltaxas37(rw_conta_negativa.cdagenci).valorpj := NVL(pr_tabvltaxas37(rw_conta_negativa.cdagenci).valorpj,0) +  vr_vlju6037;
+								 ELSE
+										pr_tabvltaxas37(rw_conta_negativa.cdagenci).valorpj := vr_vlju6037;
                     END IF;
-
-                    IF rw_conta_juros60.cdhistor = 37 THEN
-                       pr_taxas37.valorpf := pr_taxas37.valorpf +rw_conta_juros60.vllanmto;
-
-                       IF pr_tabvltaxas37.exists(rw_conta_juros60.cdagenci) THEN
-                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
-                       ELSE
-                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
                        END IF;
                     END IF;
 
-                    IF rw_conta_juros60.cdhistor = 57 THEN
-                       pr_juros57.valorpf := pr_juros57.valorpf +rw_conta_juros60.vllanmto;
+					 IF vr_vlju6038 > 0 THEN  -- 38 DA
+						  IF rw_conta_negativa.inpessoa = 1 THEN
+						    pr_juros38_da.valorpf := pr_juros38_da.valorpf + vr_vlju6038;
 
-                       IF pr_tabvljuros57.exists(rw_conta_juros60.cdagenci) THEN
-                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
+								 IF pr_tabvljuros38_da.exists(rw_conta_negativa.cdagenci) THEN
+										pr_tabvljuros38_da(rw_conta_negativa.cdagenci).valorpf := NVL(pr_tabvljuros38_da(rw_conta_negativa.cdagenci).valorpf,0) +  vr_vlju6038;
                        ELSE
-                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
+										pr_tabvljuros38_da(rw_conta_negativa.cdagenci).valorpf := vr_vlju6038;
                        END IF;
+							ELSE
+								 pr_juros38_da.valorpj := pr_juros38_da.valorpj + vr_vlju6038;
 
+								 IF pr_tabvljuros38_da.exists(rw_conta_negativa.cdagenci) THEN
+										pr_tabvljuros38_da(rw_conta_negativa.cdagenci).valorpj := NVL(pr_tabvljuros38_da(rw_conta_negativa.cdagenci).valorpj,0) +  vr_vlju6038;
+								 ELSE
+										pr_tabvljuros38_da(rw_conta_negativa.cdagenci).valorpj := vr_vlju6038;
                     END IF;
-
                 END IF;
+					 END IF;
 
-                IF rw_conta_negativa.inpessoa = 2  THEN --Pessoa Juridica
-                   -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
-                   --(CRPS249) PROVISAO JUROS CH. ESPECIAL
-                   IF rw_conta_juros60.cdhistor = 38  AND rw_conta_juros60.periodo ='DF' THEN
-                       pr_juros38_df.valorpj := pr_juros38_df.valorpj +rw_conta_juros60.vllanmto;
+					 IF vr_vlju6057 > 0 THEN  -- 57 DA
+						  IF rw_conta_negativa.inpessoa = 1 THEN
+						    pr_juros57.valorpf := pr_juros57.valorpf + vr_vlju6057;
 
-                        IF pr_tabvljuros38_df.exists(rw_conta_juros60.cdagenci) THEN
-                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
+								 IF pr_tabvljuros57.exists(rw_conta_negativa.cdagenci) THEN
+										pr_tabvljuros57(rw_conta_negativa.cdagenci).valorpf := NVL(pr_tabvljuros57(rw_conta_negativa.cdagenci).valorpf,0) +  vr_vlju6057;
                         ELSE
-                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
+										pr_tabvljuros57(rw_conta_negativa.cdagenci).valorpf := vr_vlju6057;
                         END IF;
+							ELSE
+								 pr_juros57.valorpj := pr_juros57.valorpj + vr_vlju6057;
 
+								 IF pr_tabvljuros57.exists(rw_conta_negativa.cdagenci) THEN
+										pr_tabvljuros57(rw_conta_negativa.cdagenci).valorpj := NVL(pr_tabvljuros57(rw_conta_negativa.cdagenci).valorpj,0) +  vr_vlju6057;
+								 ELSE
+										pr_tabvljuros57(rw_conta_negativa.cdagenci).valorpj := vr_vlju6057;
                     END IF;
-
-                    IF rw_conta_juros60.cdhistor = 38  AND rw_conta_juros60.periodo ='DA' THEN
-                       pr_juros38_da.valorpj := pr_juros38_da.valorpj +rw_conta_juros60.vllanmto;
-
-                        IF pr_tabvljuros38_da.exists(rw_conta_juros60.cdagenci) THEN
-                           pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
-                        ELSE
-                           pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
                         END IF;
-
                     END IF;
-
-
-
-                    IF rw_conta_juros60.cdhistor = 37 THEN
-                       pr_taxas37.valorpj := pr_taxas37.valorpj +rw_conta_juros60.vllanmto;
-
-                       IF pr_tabvltaxas37.exists(rw_conta_juros60.cdagenci) THEN
-                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
-                       ELSE
-                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
-                       END IF;
-
-                    END IF;
-
-                    IF rw_conta_juros60.cdhistor = 57 THEN
-                       pr_juros57.valorpj := pr_juros57.valorpj +rw_conta_juros60.vllanmto;
-
-                       IF pr_tabvljuros57.exists(rw_conta_juros60.cdagenci) THEN
-                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
-                       ELSE
-                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
-                       END IF;
-
-                    END IF;
-
-                END IF;
-
-           END LOOP;
-
         END LOOP;
-
-     END IF;
-
+                       END IF;
   END pc_calcula_juros_60k;
 
   /*** Gerar arquivo txt para radar ***/
@@ -3090,7 +3000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            END IF;
          END LOOP;
 
-         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+     /*    FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
            IF  vr_tabvljuros38df.exists(vr_contador)
            AND vr_tabvljuros38df(vr_contador).valorpf <> 0 THEN
              vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
@@ -3098,7 +3008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
-         END LOOP;
+         END LOOP;*/
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
@@ -3119,7 +3029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
              pc_gravar_linha(vr_linhadet);
            END IF;
          END LOOP;
-
+/*
          FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
            IF  vr_tabvljuros38df.exists(vr_contador)
            AND vr_tabvljuros38df(vr_contador).valorpf <> 0 THEN
@@ -3129,7 +3039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
              pc_gravar_linha(vr_linhadet);
            END IF;
          END LOOP;
-
+*/
    END IF;
 
     --0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU (CRPS249) PROVISAO JUROS CH. ESPECIAL
@@ -3155,7 +3065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            END IF;
          END LOOP;
 
-         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+      /*   FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
            IF  vr_tabvljuros38df.exists(vr_contador)
            AND vr_tabvljuros38df(vr_contador).valorpj <> 0 THEN
              vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
@@ -3163,7 +3073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
-         END LOOP;
+         END LOOP;*/
 
 
         -- REVERSÃO
@@ -3185,7 +3095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            END IF;
          END LOOP;
 
-         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+/*         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
            IF  vr_tabvljuros38df.exists(vr_contador)
            AND vr_tabvljuros38df(vr_contador).valorpj <> 0 THEN
              vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
@@ -3193,7 +3103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
-         END LOOP;
+         END LOOP;*/
 
    END IF;
 
@@ -8266,7 +8176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                           ,pr_nrdcaixa IN INTEGER                                  --> Numero Caixa
                                           ,pr_nrdconta IN crapass.nrdconta%TYPE                    --> Numero da Conta
                                           ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE                    --> CPF/CGC do associado
-                                          ,pr_tab_central_risco OUT risc0001.typ_reg_central_risco --> Informações da Central de Risco
+                                          ,pr_tab_central_risco OUT RISC0001.typ_reg_central_risco --> Informações da Central de Risco
                                           ,pr_tab_erro          OUT gene0001.typ_tab_erro          --> Tabela Erro
                                           ,pr_des_reto          OUT VARCHAR2) IS                   --> Retorno OK/NOK
   BEGIN
@@ -8434,7 +8344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                              ,pr_idseqttl      IN INTEGER                   --> Sequencial do Titular
                              ,pr_nmdatela      IN VARCHAR2                  --> Nome da tela
                              ,pr_dtmvtolt      IN crapdat.dtmvtolt%TYPE     --> Data do movimento
-                             ,pr_tab_estouros OUT risc0001.typ_tab_estouros --> Informações de estouro na conta
+                             ,pr_tab_estouros OUT RISC0001.typ_tab_estouros --> Informações de estouro na conta
                              ,pr_dscritic     OUT VARCHAR2) IS              --> Retorno de erro
   BEGIN
     /* .............................................................................

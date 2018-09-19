@@ -3,7 +3,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_internal_exception(pr_cdcooper IN crapcop.
 --
 -- Programa: pc_log_internal_exception
 -- Autor   : Carlos Henrique Weinhold
--- Data    : Janeiro/2017.                 Ultima atualizacao: 26/10/2017
+-- Data    : Janeiro/2017.                 Ultima atualizacao: 06/09/2018
 -- Objetivo: Verificar e criar log de exceções internas do oracle, tais como: 
 --           tamanho do valor maior que o limite do tipo da variável, divisão por zero e outras.
 --           Deve ser usado apenas na exception OTHERS. 
@@ -12,7 +12,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_internal_exception(pr_cdcooper IN crapcop.
 -- Obs: Chamado #551569 -> Criação da tabela tbgen_erro_sistema
 --
 --      Chamado 736463 - 26/10/2017 - (Belli - Envolti) Tratamento de cooperativa chegando com NULL  
---                 
+--
+--      06/09/2018 - INC0023422 Logar sqlcode 100 (no data found) (Carlos)
+
   PRAGMA AUTONOMOUS_TRANSACTION;
   BEGIN
     DECLARE
@@ -21,7 +23,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_internal_exception(pr_cdcooper IN crapcop.
       vr_dsmensagem VARCHAR2(4000)  := SQLERRM;
 
     BEGIN     
-      IF vr_sqlcode < 0 THEN
+      IF vr_sqlcode < 0 OR vr_sqlcode = 100 THEN
         BEGIN
           INSERT INTO cecred.tbgen_erro_sistema e
             (e.cdcooper            

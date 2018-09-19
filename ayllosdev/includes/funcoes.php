@@ -596,6 +596,14 @@ function retornaTiposChassi() {
 	return $tiposVeiculos;
 }
 
+function retornaUfsLicenciamento(){
+	$ufs[0]["IDENTIFICADOR"] = "PR";
+	$ufs[1]["IDENTIFICADOR"] = "SC";
+	$ufs[2]["IDENTIFICADOR"] = "RS";
+	
+	return $ufs;
+}
+
 function validaPermissao($nmdatela,$nmrotina,$cddopcao='',$flgsecao=true) {
 	global $glbvars;
 	
@@ -727,24 +735,45 @@ function getCpfCnpj( $xml, $tagName ) {
 		}
 	}	
 	$resultado = trim($resultado);
-	if(strlen($resultado)<11)
+	//***** Aplica mascara de acordo com o tipo
+	$tipo = verificaTipoPessoa($resultado);
+	
+	if($tipo==1)
 	{
-		$resultado = str_pad($resultado,11, '0', STR_PAD_LEFT);
-		$resultado  = mask($resultado,'###.###.###-##');
-	}
-	else if(strlen($resultado)==11)
+		$resultado = mascaraCpf($resultado);
+	}else if(tipo==2)
 	{
-		$resultado  = mask($resultado,'###.###.###-##');
-	}
-	else if(strlen($resultado) > 11)
-	{
-		if(strlen($resultado) < 14)
-		{
-			$resultado = str_pad($resultado,14, '0', STR_PAD_LEFT);
-		}
-		$resultado = mask($resultado,'##.###.###/####-##');
+		$resultado = mascaraCnpj($resultado);
 	}	
 	return $resultado;
+}
+
+function verificaTipoPessoa($doc)
+{		
+	$tipoPessoa=0;
+	if(strlen($doc) <= 11)
+	{
+		$tipoPessoa = 1;
+	}
+	else if(strlen($doc) <= 14)
+	{
+		$tipoPessoa = 2;
+	}
+	return $tipoPessoa;
+}
+
+function mascaraCpf($doc)
+{
+	$doc = str_pad($doc,11, '0', STR_PAD_LEFT);
+	$doc  = mask($doc,'###.###.###-##');
+	return $doc;
+}
+
+function mascaraCnpj($doc)
+{
+	$doc = str_pad($doc,14, '0', STR_PAD_LEFT);
+	$doc = mask($doc,'##.###.###/####-##');
+	return $doc;
 }
 
 
@@ -870,6 +899,19 @@ function selectTipoChassi($nomeCampo,$valorCampo) {
 	for ($i = 0; $i < count($tiposChassi); $i++) {
 		$selected = ($valorCampo == $tiposChassi[$i]["IDENTIFICADOR"]) ? "selected" : "";
 		$retorno .= '<option value="'.$tiposChassi[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$tiposChassi[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+
+function selectUfPa($nomeCampo, $valorCampo){
+	$retorno		= '';
+	$ufs = retornaUfsLicenciamento();
+	$retorno = '<select name"'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	
+	for($i = 0; $i < count($ufs); $i++){
+		$selected = ($valorCampo == $ufs[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$ufs[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$ufs[$i]["IDENTIFICADOR"].'</option>';
 	}
 	$retorno .= '</select>';
 	return $retorno;

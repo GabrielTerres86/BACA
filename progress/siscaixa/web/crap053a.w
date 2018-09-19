@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 10/08/2018.
+   Data    : Marco/2001                      Ultima atualizacao: 31/08/2018.
 
    Dados referentes ao programa:
 
@@ -36,10 +36,14 @@
                
                13/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
-                            Inclusao do VALIDATE ( Andre Euzebio / SUPERO)
+                            Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
                             
                10/08/2018 - Adicionado funcao para realizar provisao e 
                             tratamento para solicitar senha. PRJ 420 (Mateus Z - Mouts)             
+
+			  31/08/2018 - Adicionado cartao de assinatura a partir da conta do cheque
+						   autenticado na leitora. (Prj. Acelera - Reinert)
+
 ............................................................................ */
 
 { sistema/generico/includes/var_oracle.i }
@@ -194,6 +198,7 @@ DEF VAR p-solicita-senha AS CHAR NO-UNDO.
 DEF VAR p_flg-erro-cod-senha AS CHAR NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR.
+DEF BUFFER b-crapcop FOR crapcop.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -376,7 +381,7 @@ DEFINE FRAME Web-Frame
           FIELD v_operador AS CHARACTER FORMAT "X(256)":U 
           FIELD v_pac AS CHARACTER FORMAT "X(256)":U 
           FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
-          FIELD v_valor AS CHARACTER FORMAT "X(256)":U
+          FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_tppagmto AS CHARACTER FORMAT "X(256)":U
       END-FIELDS.
    END-TABLES.
@@ -637,6 +642,7 @@ PROCEDURE process-web-request :
    */ 
   RUN outputHeader.
   {include/i-global.i}
+  {include/var_digidoc.i}
    
   ASSIGN de-valor    = get-value("v_valor").
   
@@ -833,75 +839,75 @@ PROCEDURE process-web-request :
                                     END.
                                     ELSE DO:
 
-                                     DO TRANSACTION ON ERROR UNDO:
-                                               
-                                        RUN dbo/b1crap53.p 
-                                            PERSISTENT SET h-b1crap53.
-                                        IF  NOT p-flg-cta-migrada  THEN
-                                        RUN atualiza-pagto-cheque 
-                                         IN h-b1crap53(INPUT v_coop,
-                                                       INPUT INT(v_pac),
-                                                       INPUT INT(v_caixa),
-                                                       INPUT v_operador,
-                                                       INPUT v_cod,
-                                                       INPUT DEC(v_conta),
-                                                       INPUT INT(v_conta1),
-                                                       INPUT INT(v_c3),
-                                                       INPUT DEC(v_valor),
-                                                       INPUT p-aux-indevchq,
-                                                       INPUT p-nrdocmto,
-                                                       INPUT p-conta-atualiza,
-                                                       INPUT INT(v_banco),
-                                                       INPUT INT(v_agenc),
-                                                       OUTPUT p-histor,  
-                                                       OUTPUT p-literal,
-                                                       OUTPUT p-ult-sequencia).
+                                 DO TRANSACTION ON ERROR UNDO:
+                                           
+                                    RUN dbo/b1crap53.p 
+                                        PERSISTENT SET h-b1crap53.
+                                    IF  NOT p-flg-cta-migrada  THEN
+                                    RUN atualiza-pagto-cheque 
+                                     IN h-b1crap53(INPUT v_coop,
+                                                   INPUT INT(v_pac),
+                                                   INPUT INT(v_caixa),
+                                                   INPUT v_operador,
+                                                   INPUT v_cod,
+                                                   INPUT DEC(v_conta),
+                                                   INPUT INT(v_conta1),
+                                                   INPUT INT(v_c3),
+                                                   INPUT DEC(v_valor),
+                                                   INPUT p-aux-indevchq,
+                                                   INPUT p-nrdocmto,
+                                                   INPUT p-conta-atualiza,
+                                                   INPUT INT(v_banco),
+                                                   INPUT INT(v_agenc),
+                                                   OUTPUT p-histor,  
+                                                   OUTPUT p-literal,
+                                                   OUTPUT p-ult-sequencia).
+                                    ELSE
+                                    DO:
+                                        IF  NOT p-flg-coop-host  THEN
+                                            RUN atualiza-pagto-cheque-migrado
+                                             IN h-b1crap53(INPUT v_coop,
+                                                           INPUT p-coop-migrada,
+                                                           INPUT INT(v_pac),
+                                                           INPUT INT(v_caixa),
+                                                           INPUT v_operador,
+                                                           INPUT v_cod,
+                                                           INPUT DEC(v_conta),
+                                                           INPUT INT(v_conta1),
+                                                           INPUT INT(v_c3),
+                                                           INPUT DEC(v_valor),
+                                                           INPUT p-aux-indevchq,
+                                                           INPUT p-nrdocmto,
+                                                           INPUT p-conta-atualiza,
+                                                           INPUT INT(v_banco),
+                                                           INPUT INT(v_agenc),
+                                                           INPUT p-nro-conta-nova,
+                                                           OUTPUT p-histor,  
+                                                           OUTPUT p-literal,
+                                                           OUTPUT p-ult-sequencia).
                                         ELSE
-                                        DO:
-                                            IF  NOT p-flg-coop-host  THEN
-                                                RUN atualiza-pagto-cheque-migrado
-                                                 IN h-b1crap53(INPUT v_coop,
-                                                               INPUT p-coop-migrada,
-                                                               INPUT INT(v_pac),
-                                                               INPUT INT(v_caixa),
-                                                               INPUT v_operador,
-                                                               INPUT v_cod,
-                                                               INPUT DEC(v_conta),
-                                                               INPUT INT(v_conta1),
-                                                               INPUT INT(v_c3),
-                                                               INPUT DEC(v_valor),
-                                                               INPUT p-aux-indevchq,
-                                                               INPUT p-nrdocmto,
-                                                               INPUT p-conta-atualiza,
-                                                               INPUT INT(v_banco),
-                                                               INPUT INT(v_agenc),
-                                                               INPUT p-nro-conta-nova,
-                                                               OUTPUT p-histor,  
-                                                               OUTPUT p-literal,
-                                                               OUTPUT p-ult-sequencia).
-                                            ELSE
-                                                RUN atualiza-pagto-cheque-migrado-host
-                                                 IN h-b1crap53(INPUT v_coop,
-                                                               INPUT p-coop-migrada,
-                                                               INPUT INT(v_pac),
-                                                               INPUT INT(v_caixa),
-                                                               INPUT v_operador,
-                                                               INPUT v_cod,
-                                                               INPUT DEC(v_conta),
-                                                               INPUT INT(v_conta1),
-                                                               INPUT INT(v_c3),
-                                                               INPUT DEC(v_valor),
-                                                               INPUT p-aux-indevchq,
-                                                               INPUT p-nrdocmto,
-                                                               INPUT p-conta-atualiza,
-                                                               INPUT INT(v_banco),
-                                                               INPUT INT(v_agenc),
-                                                               INPUT p-nro-conta-nova,
-                                                               OUTPUT p-histor,  
-                                                               OUTPUT p-literal,
-                                                               OUTPUT p-ult-sequencia).
+                                            RUN atualiza-pagto-cheque-migrado-host
+                                             IN h-b1crap53(INPUT v_coop,
+                                                           INPUT p-coop-migrada,
+                                                           INPUT INT(v_pac),
+                                                           INPUT INT(v_caixa),
+                                                           INPUT v_operador,
+                                                           INPUT v_cod,
+                                                           INPUT DEC(v_conta),
+                                                           INPUT INT(v_conta1),
+                                                           INPUT INT(v_c3),
+                                                           INPUT DEC(v_valor),
+                                                           INPUT p-aux-indevchq,
+                                                           INPUT p-nrdocmto,
+                                                           INPUT p-conta-atualiza,
+                                                           INPUT INT(v_banco),
+                                                           INPUT INT(v_agenc),
+                                                           INPUT p-nro-conta-nova,
+                                                           OUTPUT p-histor,  
+                                                           OUTPUT p-literal,
+                                                           OUTPUT p-ult-sequencia).
 
-                                        END.
+                                    END.
                                         
                                         IF v_tppagmto = "1" 
                                             THEN DO:
@@ -943,117 +949,172 @@ PROCEDURE process-web-request :
                                       
                                             END.
                                 
-                                        DELETE PROCEDURE h-b1crap53.
-                
-                                        ASSIGN v_valor = 
-                                        STRING(DEC(v_valor),"zzz,zzz,zzz,zz9.99").
-                                        IF  RETURN-VALUE = "NOK" THEN DO:
-                                            ASSIGN l-houve-erro = YES.
-                                            FOR EACH w-craperr:
-                                                DELETE w-craperr.
-                                            END.
-                                            FOR EACH craperr NO-LOCK WHERE
-                                               craperr.cdcooper =  
-                                                 crapcop.cdcooper  AND
-                                               craperr.cdagenci =  
-                                                 INT(v_pac)        AND
-                                               craperr.nrdcaixa =  
-                                                 INT(v_caixa):
+                                    DELETE PROCEDURE h-b1crap53.
+            
+                                    ASSIGN v_valor = 
+                                    STRING(DEC(v_valor),"zzz,zzz,zzz,zz9.99").
+                                    IF  RETURN-VALUE = "NOK" THEN DO:
+                                        ASSIGN l-houve-erro = YES.
+                                        FOR EACH w-craperr:
+                                            DELETE w-craperr.
+                                        END.
+                                        FOR EACH craperr NO-LOCK WHERE
+                                           craperr.cdcooper =  
+                                             crapcop.cdcooper  AND
+                                           craperr.cdagenci =  
+                                             INT(v_pac)        AND
+                                           craperr.nrdcaixa =  
+                                             INT(v_caixa):
 
-                                                CREATE w-craperr.
-                                                ASSIGN w-craperr.cdcooper =
-                                                                 craperr.cdcooper
-                                                       w-craperr.cdagenci = 
-                                                                 craperr.cdagenc
-                                                       w-craperr.nrdcaixa = 
-                                                                 craperr.nrdcaixa
-                                                       w-craperr.nrsequen = 
-                                                                 craperr.nrsequen
-                                                       w-craperr.cdcritic = 
-                                                                 craperr.cdcritic
-                                                       w-craperr.dscritic = 
-                                                                 craperr.dscritic
-                                                       w-craperr.erro     = 
-                                                                 craperr.erro.
-                                            END.
-                                            UNDO.
-                                        END.     
+                                            CREATE w-craperr.
+                                            ASSIGN w-craperr.cdcooper =
+                                                             craperr.cdcooper
+                                                   w-craperr.cdagenci = 
+                                                             craperr.cdagenc
+                                                   w-craperr.nrdcaixa = 
+                                                             craperr.nrdcaixa
+                                                   w-craperr.nrsequen = 
+                                                             craperr.nrsequen
+                                                   w-craperr.cdcritic = 
+                                                             craperr.cdcritic
+                                                   w-craperr.dscritic = 
+                                                             craperr.dscritic
+                                                   w-craperr.erro     = 
+                                                             craperr.erro.
+                                        END.
+                                        UNDO.
+                                    END.     
+                                 END.
+                         
+                                 IF  l-houve-erro = YES  THEN DO:
+                                     FOR EACH w-craperr NO-LOCK:
+                                         CREATE craperr.
+                                         ASSIGN craperr.cdcooper = 
+                                                        w-craperr.cdcooper
+                                                craperr.cdagenci = 
+                                                        w-craperr.cdagenc
+                                                craperr.nrdcaixa = 
+                                                        w-craperr.nrdcaixa
+                                                craperr.nrsequen = 
+                                                        w-craperr.nrsequen
+                                                craperr.cdcritic = 
+                                                        w-craperr.cdcritic
+                                                craperr.dscritic = 
+                                                        w-craperr.dscritic
+                                                craperr.erro     = 
+                                                        w-craperr.erro.
+                                         VALIDATE craperr.
                                      END.
-                             
-                                     IF  l-houve-erro = YES  THEN DO:
-                                         FOR EACH w-craperr NO-LOCK:
-                                             CREATE craperr.
-                                             ASSIGN craperr.cdcooper = 
-                                                            w-craperr.cdcooper
-                                                    craperr.cdagenci = 
-                                                            w-craperr.cdagenc
-                                                    craperr.nrdcaixa = 
-                                                            w-craperr.nrdcaixa
-                                                    craperr.nrsequen = 
-                                                            w-craperr.nrsequen
-                                                    craperr.cdcritic = 
-                                                            w-craperr.cdcritic
-                                                    craperr.dscritic = 
-                                                            w-craperr.dscritic
-                                                    craperr.erro     = 
-                                                            w-craperr.erro.
-                                             VALIDATE craperr.
-                                         END.
-                                         {include/i-erro.i}
+                                     {include/i-erro.i}
+                                 END.
+                                 IF  l-houve-erro = NO THEN do:  
+                                    {&OUT}
+                                         '<script>window.open("autentica.html?v_plit=" + "' p-literal '" + 
+                                         "&v_pseq=" + "' p-ult-sequencia '" + "&v_prec=" + "NO"  + "&v_psetcook=" + "yes","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true")
+                                     </script>'.
+                                 
+                                     /* Se o cheque for de uma conta migrada e estiver pagando na 
+                                        cooperativa geradora do cheque, nao gerar crapcme 
+                                        Guilherme/Magui/Mirtes - Migracao PAC Jan/2010 */
+                                     IF  p-flg-cta-migrada  AND
+                                         p-flg-coop-host    THEN
+                                     DO:
                                      END.
-                                     IF  l-houve-erro = NO THEN do:  
-                                        {&OUT}
-                                             '<script>window.open("autentica.html?v_plit=" + "' p-literal '" + 
-                                             "&v_pseq=" + "' p-ult-sequencia '" + "&v_prec=" + "NO"  + "&v_psetcook=" + "yes","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true")
-                                         </script>'.
-                                     
-                                         /* Se o cheque for de uma conta migrada e estiver pagando na 
-                                            cooperativa geradora do cheque, nao gerar crapcme 
-                                            Guilherme/Magui/Mirtes - Migracao PAC Jan/2010 */
-                                         IF  p-flg-cta-migrada  AND
-                                             p-flg-coop-host    THEN
-                                         DO:
-                                         END.
-                                         ELSE
-                                         DO:
-                                         /*** Incluido por Magui 19/08/2003 ***/
-                                         IF   DEC(v_valor) <> 0   THEN
-                                              DO:
-                                  
-                                                  FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper  AND
-                                                                     craptab.nmsistem = "CRED"            AND
-                                                                     craptab.tptabela = "GENERI"          AND
-                                                                     craptab.cdempres = 0                 AND
-                                                                     craptab.cdacesso = "VLCTRMVESP"      AND
-                                                                     craptab.tpregist = 0   NO-LOCK NO-ERROR.
-                                                  IF   AVAILABLE craptab   THEN             
-                                                       DO:
-                                                           IF  DEC(v_valor) >= DEC(craptab.dstextab)   THEN
-                                                               DO:
-                                                                   ASSIGN p-nrdolote = 11000 + INT(v_caixa).
-                                                                   {&OUT}
-                                                                   '<script> window.location=
-                                                                   "crap051f.w?v_pconta=' + v_conta '" + 
-                                                                   "&v_pvalor=" + "' get-value("v_valor") '" +
-                                                                   "&v_pnrdocmto=" + "' p-nrdocmto '" +
-                                                                   "&v_pult_sequencia=" + "' p-ult-sequencia '" +
-                                                                   "&v_pconta_base=" + "' STRING(p-conta-atualiza) '" +
-                                                                   "&v_nrdolote=" + "' STRING(p-nrdolote) '" +
-                                                                   "&v_pprograma=" + "' p-programa '" +
-                                                                   "&v_flgdebcc=" + "' p-flgdebcc '" </script>'.
-                                                               END.
-                                                       END.
-                                              END.         
-                                         /********************************/
-                                         END.
-                                     {&OUT}
-                                       '<script>window.location = "crap053.html"
-                                       </script>'.
+                                     ELSE
+                                     DO:
+                                     /*** Incluido por Magui 19/08/2003 ***/
+                                     IF   DEC(v_valor) <> 0   THEN
+                                          DO:
+                              
+                                              FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper  AND
+                                                                 craptab.nmsistem = "CRED"            AND
+                                                                 craptab.tptabela = "GENERI"          AND
+                                                                 craptab.cdempres = 0                 AND
+                                                                 craptab.cdacesso = "VLCTRMVESP"      AND
+                                                                 craptab.tpregist = 0   NO-LOCK NO-ERROR.
+                                              IF   AVAILABLE craptab   THEN             
+                                                   DO:
+                                                       IF  DEC(v_valor) >= DEC(craptab.dstextab)   THEN
+                                                           DO:
+                                                               ASSIGN p-nrdolote = 11000 + INT(v_caixa).
+                                                               {&OUT}
+                                                               '<script> window.location=
+                                                               "crap051f.w?v_pconta=' + v_conta '" + 
+                                                               "&v_pvalor=" + "' get-value("v_valor") '" +
+                                                               "&v_pnrdocmto=" + "' p-nrdocmto '" +
+                                                               "&v_pult_sequencia=" + "' p-ult-sequencia '" +
+                                                               "&v_pconta_base=" + "' STRING(p-conta-atualiza) '" +
+                                                               "&v_nrdolote=" + "' STRING(p-nrdolote) '" +
+                                                               "&v_pprograma=" + "' p-programa '" +
+                                                               "&v_flgdebcc=" + "' p-flgdebcc '" </script>'.
+                                                           END.
+                                                   END.
+                                          END.         
+                                     /********************************/
                                      END.
+                                 {&OUT}
+                                   '<script>window.location = "crap053.html"
+                                   </script>'.
+                                 END.
                                 END.
                              END. 
                           
                          END. /* get-value("OK") */
+                       ELSE
+                         DO:
+                            IF INT(v_banco) = crapcop.cdbcoctl THEN
+                               DO:
+                                  /* Cheque da cooperativa */
+                                  IF INT(v_agenc) = crapcop.cdagectl THEN
+                                     DO:
+                                      /* Abrir cartao de assinatura do cooperado do cheque */
+                                      {&OUT} "<script>var params = [" +
+                                                        "'height='+screen.height," +
+                                                        "'width='+screen.width," +
+                                                        "'screenX=0'," +
+                                                        "'screenY=0'," +
+                                                        "'top=0'," +
+                                                        "'left=0'," +
+                                                        "'resizable=yes'" +
+                                                        "].join(','); " +
+                                             "window.open('http://" + aux_svdigdoc + 
+                                             "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(DEC(v_conta), "zzzz,zzz,9")) + 
+                                             "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                     END.
+                                     /* Cheque de outra cooperativa do sistema */
+                                  ELSE
+                                    DO:
+                                      FOR FIRST b-crapcop 
+                                         FIELDS (cdcooper)
+                                          WHERE b-crapcop.cdagectl = INT(v_agenc)
+                                          NO-LOCK:                                                  
+                                        FOR FIRST craptco
+                                           FIELDS (nrdconta)
+                                            WHERE craptco.cdcopant = b-crapcop.cdcooper AND
+                                                  craptco.nrctaant = DEC(v_conta)       AND
+                                                  craptco.cdcooper = crapcop.cdcooper   AND 
+                                                  craptco.tpctatrf = 1                  AND
+                                                  craptco.flgativo = TRUE
+                                                  NO-LOCK:
+                                                  
+                                            /* Abrir cartao de assinatura do cooperado com a conta migrada do cheque */
+                                            {&OUT} "<script>var params = [" +
+                                                        "'height='+screen.height," +
+                                                        "'width='+screen.width," +
+                                                        "'screenX=0'," +
+                                                        "'screenY=0'," +
+                                                        "'top=0'," +
+                                                        "'left=0'," +
+                                                        "'resizable=yes'" +
+                                                        "].join(','); " +
+                                                   "window.open('http://" + aux_svdigdoc + 
+                                                   "/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=" + trim(STRING(craptco.nrdconta, "zzzz,zzz,9")) + 
+                                                   "&cooperativa=" + string(crapcop.cdcooper) + "', 'popup_window', params);</script>".
+                                        END.
+                                      END.
+                                    END.
+                               END.
+                         END.
                     END.
                 END.
              END.  

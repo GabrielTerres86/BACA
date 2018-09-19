@@ -552,6 +552,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                              ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Codigo de critica encontrada
                              ,pr_des_erro   OUT VARCHAR2); --> Retorno de Erro
 
+
   /* Procedure para calcular saldo devedor de emprestimos */
   PROCEDURE pc_saldo_devedor_epr(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                 ,pr_cdagenci   IN crapass.cdagenci%TYPE --> Codigo da ag¿ncia
@@ -572,6 +573,24 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                 ,pr_des_reto   OUT VARCHAR --> Retorno OK / NOK
                                 ,pr_tab_erro   OUT gene0001.typ_tab_erro); --> Tabela com poss¿ves erros
 
+  PROCEDURE pc_saldo_devedor_epr_car(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                    ,pr_cdagenci   IN crapass.cdagenci%TYPE --> Código da agência
+                                    ,pr_nrdcaixa   IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                    ,pr_cdoperad   IN crapdev.cdoperad%TYPE --> Código do operador
+                                    ,pr_nmdatela   IN VARCHAR2 --> Nome datela conectada
+                                    ,pr_idorigem   IN INTEGER --> Indicador da origem da chamada
+                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
+                                    ,pr_idseqttl   IN crapttl.idseqttl%TYPE --> Sequencia de titularidade da conta
+                                    ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Número contrato empréstimo
+                                    ,pr_cdprogra   IN crapprg.cdprogra%TYPE --> Programa conectado
+                                    ,pr_flgerlog   IN VARCHAR2 --> Gerar log S/N
+                                    ,pr_vlsdeved   IN OUT NUMBER --> Saldo devedor calculado
+                                    ,pr_vltotpre   IN OUT NUMBER --> Valor total das prestações
+                                    ,pr_qtprecal   IN OUT crapepr.qtprecal%TYPE --> Parcelas calculadas
+                                    ,pr_des_reto   OUT VARCHAR2 --> Retorno OK / NOK
+                                    ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Código da crítica
+                                    ,pr_dscritic   OUT crapcri.dscritic%TYPE); --> Descrição da crítica
+                                    
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
   FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
                                    ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
@@ -5112,7 +5131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            WHERE upper(gnsbmod.cdmodali) = upper(pr_cdmodali)
              AND upper(gnsbmod.cdsubmod) = upper(pr_cdsubmod);
         rw_gnsbmod cr_gnsbmod%ROWTYPE;
-
+      
       -- Buscar dados da cooperativa
       CURSOR cr_crapcop(pr_cdcooper NUMBER) IS
         SELECT t.flintcdc 
@@ -7242,6 +7261,182 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
   END pc_saldo_devedor_epr;
 
+  PROCEDURE pc_saldo_devedor_epr_car(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                    ,pr_cdagenci   IN crapass.cdagenci%TYPE --> Código da agência
+                                    ,pr_nrdcaixa   IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                    ,pr_cdoperad   IN crapdev.cdoperad%TYPE --> Código do operador
+                                    ,pr_nmdatela   IN VARCHAR2 --> Nome datela conectada
+                                    ,pr_idorigem   IN INTEGER --> Indicador da origem da chamada
+                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
+                                    ,pr_idseqttl   IN crapttl.idseqttl%TYPE --> Sequencia de titularidade da conta
+                                    ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Número contrato empréstimo
+                                    ,pr_cdprogra   IN crapprg.cdprogra%TYPE --> Programa conectado
+                                    ,pr_flgerlog   IN VARCHAR2 --> Gerar log S/N
+                                    ,pr_vlsdeved   IN OUT NUMBER --> Saldo devedor calculado
+                                    ,pr_vltotpre   IN OUT NUMBER --> Valor total das prestações
+                                    ,pr_qtprecal   IN OUT crapepr.qtprecal%TYPE --> Parcelas calculadas
+                                    ,pr_des_reto   OUT VARCHAR2 --> Retorno OK / NOK
+                                    ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Código da crítica
+                                    ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS --> Descrição da crítica
+  BEGIN
+    /* .............................................................................
+    
+       Programa: pc_saldo_devedor_epr_car
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : David
+       Data    : Agosto/2018.                         Ultima atualizacao: 
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado.
+       Objetivo  : Procedure para calcular saldo devedor de emprestimos
+    
+       Alteracoes:  
+    
+    ............................................................................. */
+    DECLARE
+      rw_crapdat  btch0001.cr_crapdat%ROWTYPE;    
+      
+      vr_cdcritic     INTEGER;
+      vr_dscritic     VARCHAR2(1000);
+      vr_exc_erro     EXCEPTION;
+      vr_tab_erro     gene0001.typ_tab_erro;
+      vr_des_reto     VARCHAR2(100);
+      
+      vr_dsorigem     VARCHAR2(50);
+      vr_dstransa     VARCHAR2(200);
+      vr_nrdrowid     ROWID;   
+      
+      vr_dstextab     craptab.dstextab%TYPE;
+      vr_inusatab     BOOLEAN;
+      vr_vlsldepr     NUMBER   := 0;
+      vr_vltotpre     NUMBER   := 0;
+      vr_qtprecal     INTEGER  := 0;         
+    BEGIN      
+      -- Leitura do calendário da cooperativa, para alguns procedimentos que precisam
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+       INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      --Verificar se usa tabela juros
+      vr_dstextab := TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
+                                                ,pr_nmsistem => 'CRED'
+                                                ,pr_tptabela => 'USUARI'
+                                                ,pr_cdempres => 11
+                                                ,pr_cdacesso => 'TAXATABELA'
+                                                ,pr_tpregist => 0);
+      -- Se a primeira posição do campo dstextab for diferente de zero
+      vr_inusatab := SUBSTR(vr_dstextab,1,1) != '0';
+      
+      -- Buscar saldo devedor
+      EMPR0001.pc_saldo_devedor_epr (pr_cdcooper   => pr_cdcooper     --> Cooperativa conectada
+                                    ,pr_cdagenci   => pr_cdagenci     --> Codigo da agencia
+                                    ,pr_nrdcaixa   => pr_nrdcaixa     --> Numero do caixa
+                                    ,pr_cdoperad   => pr_cdoperad     --> Codigo do operador
+                                    ,pr_nmdatela   => pr_nmdatela     --> Nome datela conectada
+                                    ,pr_idorigem   => pr_idorigem     --> Indicador da origem da chamada
+                                    ,pr_nrdconta   => pr_nrdconta     --> Conta do associado
+                                    ,pr_idseqttl   => pr_idseqttl     --> Sequencia de titularidade da conta
+                                    ,pr_rw_crapdat => rw_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+                                    ,pr_nrctremp   => pr_nrctremp     --> Numero contrato emprestimo
+                                    ,pr_cdprogra   => pr_nmdatela     --> Programa conectado
+                                    ,pr_inusatab   => vr_inusatab     --> Indicador de utilizacão da tabela
+                                    ,pr_flgerlog   => 'N'             --> Gerar log S/N
+                                    ,pr_vlsdeved   => vr_vlsldepr     --> Saldo devedor calculado
+                                    ,pr_vltotpre   => vr_vltotpre     --> Valor total das prestacães
+                                    ,pr_qtprecal   => vr_qtprecal     --> Parcelas calculadas
+                                    ,pr_des_reto   => vr_des_reto     --> Retorno OK / NOK
+                                    ,pr_tab_erro   => vr_tab_erro);   --> Tabela com possives erros
+
+      -- Se houve retorno de erro
+      IF vr_des_reto = 'NOK' THEN
+        pr_des_reto := 'NOK';
+        
+        -- Extrair o codigo e critica de erro da tabela de erro
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+        
+        -- Limpar tabela de erros
+        vr_tab_erro.DELETE;
+        
+        RAISE vr_exc_erro;
+      END IF;
+      
+      pr_vlsdeved := vr_vlsldepr;
+      pr_vltotpre := vr_vltotpre;
+      pr_qtprecal := vr_qtprecal;
+
+      -- Retorno OK
+      pr_des_reto := 'OK';
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+        
+        IF NVL(vr_cdcritic,0) <> 0 AND TRIM(NVL(vr_dscritic,' ')) <> '' THEN
+          -- Gerar rotina de gravação de erro
+          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_nrsequen => 1 --> Fixo
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic
+                               ,pr_tab_erro => vr_tab_erro);
+        END IF;
+
+        -- Se foi solicitado log
+        IF pr_flgerlog = 'S' THEN
+          -- Gerar LOG
+          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
+                              ,pr_dstransa => 'Obter saldo devedor do associado em emprestimos'
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0 --> FALSE
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);        
+        END IF;
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+        -- Montar descrição de erro não tratado
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_saldo_devedor_epr_car --> ' || SQLERRM;
+        
+        -- Se foi solicitado log
+        IF pr_flgerlog = 'S' THEN
+          -- Gerar LOG
+          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
+                              ,pr_dstransa => 'Obter saldo devedor do associado em emprestimos'
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0 --> FALSE
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);        
+        END IF;
+    END;
+  END pc_saldo_devedor_epr_car;
+  
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
   FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
                                    ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo

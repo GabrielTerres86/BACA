@@ -237,6 +237,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                              par_cdcritic out number,
                              par_dscritic out varchar2);
 
+  procedure pc_cadastro_interveniente(pr_cdcooper in crapavt.cdcooper%type,
+                                      pr_nrdconta in crapavt.nrdconta%type,
+                                      pr_nrctremp in crapavt.nrctremp%type,
+                                      pr_nrcpfcgc in crapavt.nrcpfcgc%type,
+                                      pr_cdcritic out number,
+                                      pr_dscritic out varchar2);
+
   /* Rotina para gravação do Tipo05 oriunda de chamada do AyllosWeb */
   PROCEDURE pc_grava_aditivo_tipo5(pr_nrdconta in crawepr.nrdconta%type --> Conta
                                   ,pr_nrctremp in varchar2 --> Contrato
@@ -4402,6 +4409,144 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       par_dscritic := 'Erro nao tratado na rotina TELA_ADITIV.PC_CRIA_ADITIVO: ' || sqlerrm;
   end;
   
+  procedure pc_cadastro_interveniente(pr_cdcooper in crapavt.cdcooper%type,
+                                      pr_nrdconta in crapavt.nrdconta%type,
+                                      pr_nrctremp in crapavt.nrctremp%type,
+                                      pr_nrcpfcgc in crapavt.nrcpfcgc%type,
+                                      pr_cdcritic out number,
+                                      pr_dscritic out varchar2) is
+    -- Buscar se existe Interveniente
+    cursor cr_crapavt is
+      select 1
+        from crapavt
+       where cdcooper = pr_cdcooper
+         and tpctrato = 9
+         and nrdconta = pr_nrdconta
+         and nrctremp = pr_nrctremp
+         and nrcpfcgc = pr_nrcpfcgc;
+    vr_indexis number;
+    -- Buscar associado
+    cursor cr_crapass is
+      select c.nmprimtl,
+             n.dsnacion,
+             c.dsproftl,
+             case t.cdestcvl
+               when  1 then 'SOLTEIRO(A)'
+               when  2 then 'CASADO(A)-COMUNHAO UNIVERSAL'
+               when  3 then 'CASADO(A)-COMUNHAO PARCIAL'
+               when  4 then 'CASADO(A)-SEPARACAO DE BENS'
+               when  5 then 'VIUVO(A)'
+               when  6 then 'SEPARADO(A) JUDICIALMENTE'
+               when  7 then 'DIVORCIADO(A)'
+               when  8 then 'CASADO(A)-REGIME TOTAL'
+               when  9 then 'CAS REGIME MISTO OU ESPECIAL'
+               when 11 then 'CASADO(A)-PART.FINAL AQUESTOS'
+               else null
+             end dsestcvl,
+             c.nrcpfcgc,
+             c.inpessoa,
+             e.dsendere,
+             e.nrendere,
+             e.nmbairro,
+             e.nmcidade,
+             e.cdufende,
+             e.nrcepend,
+             c.nrdconta,
+             j.nrcpfcjg,
+             j.nmconjug,
+             j.tpdoccje,
+             j.nrdoccje,
+             c.tpdocptl,
+             c.nrdocptl,
+             f.nrtelefo,
+             m.dsdemail,
+             c.cdnacion,
+             e.complend,
+             e.nrcxapst
+        from crapnac n,
+             crapenc e,
+             crapttl t,
+             craptfc f,
+             crapcem m,
+             crapcje j,
+             crapass c
+       where (   (    nvl(pr_nrcpfcgc, 0) <> 0
+                  and c.nrcpfcgc = pr_nrcpfcgc)
+              or (    nvl(pr_nrcpfcgc, 0) = 0
+                  and c.cdcooper = pr_cdcooper
+                  and c.nrdconta = pr_nrdconta))
+         and n.cdnacion = c.cdnacion
+         and j.cdcooper(+) = c.cdcooper
+         and j.nrdconta(+) = c.nrdconta
+         and j.idseqttl(+) = 1
+         and f.nrdconta(+) = c.nrdconta
+         and f.cdcooper(+) = c.cdcooper
+         and f.idseqttl(+) = 1
+         and m.nrdconta(+) = c.nrdconta
+         and m.cdcooper(+) = c.cdcooper
+         and m.idseqttl(+) = 1
+         and t.nrdconta(+) = c.nrdconta
+         and t.cdcooper(+) = c.cdcooper
+         and t.idseqttl(+) = 1
+         and e.cdcooper = c.cdcooper
+         and e.nrdconta = c.nrdconta
+         and e.idseqttl = 1
+         and e.tpendass = decode(c.inpessoa,1,10,9);
+    vr_crapass   cr_crapass%rowtype;
+  begin
+    -- Testar se o CPF está na lista de avalistas ou intervenientes
+    open cr_crapavt;
+      fetch cr_crapavt into vr_indexis;
+      -- Se não encontrar
+      if cr_crapavt%notfound then
+        close cr_crapavt;
+        -- Verificar se o CPF é de algum Cooperado
+        open cr_crapass;
+          fetch cr_crapass into vr_crapass;
+          -- Se não encontrar
+          if cr_crapass%notfound then
+            -- Esta situação não deve ocorrer, pois quando não existe o cpf, a tela obriga a cadastrar. Portanto, não tratamos neste ponto.
+            close cr_crapass;
+            return;
+          end if;
+        close cr_crapass;
+        -- Cria o interveniente
+        tela_manbem.pc_cria_interveniente(par_cdcooper  => pr_cdcooper,
+                                          par_nrdconta  => pr_nrdconta,
+                                          par_nrctremp  => pr_nrctremp,
+                                          par_nrcpfcgc  => pr_nrcpfcgc,
+                                          par_nmdavali  => vr_crapass.nmprimtl,
+                                          par_nrcpfcjg  => vr_crapass.nrcpfcjg,
+                                          par_inpessoa  => vr_crapass.inpessoa,
+                                          par_nmconjug  => vr_crapass.nmconjug,
+                                          par_tpdoccjg  => vr_crapass.tpdoccje,
+                                          par_nrdoccjg  => vr_crapass.nrdoccje,
+                                          par_tpdocava  => vr_crapass.tpdocptl,
+                                          par_nrdocava  => vr_crapass.nrdocptl,
+                                          par_dsendres1 => vr_crapass.dsendere,
+                                          par_dsendres2 => vr_crapass.nmbairro,
+                                          par_nrfonres  => vr_crapass.nrtelefo,
+                                          par_dsdemail  => vr_crapass.dsdemail,
+                                          par_nmcidade  => vr_crapass.nmcidade,
+                                          par_cdufresd  => vr_crapass.cdufende,
+                                          par_nrcepend  => vr_crapass.nrcepend,
+                                          par_cdnacion  => vr_crapass.cdnacion,
+                                          par_nrendere  => vr_crapass.nrendere,
+                                          par_complend  => vr_crapass.complend,
+                                          par_nrcxapst  => vr_crapass.nrcxapst,
+                                          par_cdcritic  => pr_cdcritic,
+                                          par_dscritic  => pr_dscritic);
+      ELSE
+        CLOSE cr_crapavt;
+      end IF;
+      
+  exception
+    when others then
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na rotina TELA_ADITIV.pc_cadastro_interveniente: ' || sqlerrm;
+  end;
+
+
   /* Rotina para gravação do Tipo05 oriunda de chamada do AyllosWeb */
   PROCEDURE pc_grava_aditivo_tipo5(pr_nrdconta in crawepr.nrdconta%type --> Conta
                                   ,pr_nrctremp in varchar2 --> Contrato
@@ -4469,6 +4614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_rowidepr   varchar2(20);
     vr_uladitiv   crapadt.nraditiv%type;
     vr_nmopeapr   crapope.nmoperad%type;
+    vr_idseqant   crapadi.idseqbem%type;
     vr_idseqnov   crapadi.idseqbem%type;
       
     --> Buscar dados da proposta de emprestimo
@@ -4547,11 +4693,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_nrmodbem := substr(vr_dsmodbem, 1, 4);
     vr_dstpcomb := ltrim(substr(vr_dsmodbem, 5));
 
+    -- Guardar ID bem anterior, pois ele poderá ser alterado caso dê erro 
+    -- na cópia do mesmo para tpctrato = 99 caso já exista outro bem substituido
+    vr_idseqant := pr_idseqbem;
+    
+    
     -- Chamar substituição de Bem
     tela_manbem.pc_substitui_bem(par_cdcooper => vr_cdcooper,
                                  par_nrdconta => pr_nrdconta,
                                  par_nrctremp => pr_nrctremp,
-                                 par_idseqbem => pr_idseqbem,
+                                 par_idseqbem => vr_idseqant,
                                  par_cdoperad => vr_cdoperad,
                                  par_dscatbem => upper(pr_dscatbem),
                                  par_dtmvtolt => rw_crapdat.dtmvtolt,
@@ -4613,13 +4764,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                     par_dstipbem => upper(pr_dstipbem),
                     par_dstpcomb => upper(vr_dstpcomb),
                     par_idseqbem => vr_idseqnov,
-                    par_idseqsub => pr_idseqbem,
+                    par_idseqsub => vr_idseqant,
                     par_rowidepr => vr_rowidepr,
                     par_uladitiv => vr_uladitiv,
                     par_cdcritic => vr_cdcritic,
                     par_dscritic => vr_dscritic);
     IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
+    END IF;
+
+    -- Verificar se o interveniente está cadastrado. Cadastrar caso não esteja.
+    IF pr_nrcpfcgc > 0 THEN
+      pc_cadastro_interveniente(pr_cdcooper => vr_cdcooper,
+                                pr_nrdconta => pr_nrdconta,
+                                pr_nrctremp => pr_nrctremp,
+                                pr_nrcpfcgc => pr_nrcpfcgc,
+                                pr_cdcritic => vr_cdcritic,
+                                pr_dscritic => vr_dscritic);
+      if vr_cdcritic > 0 or
+         vr_dscritic is not null then
+        raise vr_exc_saida;
+      end if;
     END IF;
         
     -- Geracao de LOG 

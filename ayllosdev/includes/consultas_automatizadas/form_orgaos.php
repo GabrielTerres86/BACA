@@ -10,6 +10,8 @@
  *                26/06/2015 - Validar Inf. Cadastrais quando possui consulta ao Conjuge (Gabriel-RKAM). 
  *
  *                01/03/2016 - PRJ Esteira de Credito. (Jaison/Oscar)
+ *                 
+ *                24/08/2018 - P442 - Novos campos de Escore (Marcos-Envolti)
  */	
   
  include ('protecao_credito.php'); 
@@ -19,7 +21,7 @@
 
 <form name="frmOrgaos" id="frmOrgaos" class="formulario condensado">	
 
-	<fieldset style="height:380px;">
+	<fieldset style="height:500px;">
 		<legend> <?php echo utf8ToHtml ('Órgãos de Proteção ao Crédito'); ?> </legend>
 	
 		<br />
@@ -93,7 +95,27 @@
 		<? if (count($xml_geral->Dados->crapcbd) > 0 ) { ?>
 			<label for="dsconsul">Consulta <? echo $dsconsul . '-' . $dsmodbir; ?> </label>
 		<? } ?>
+		<? 
+			if(count($xml_geral->Dados->crapesc) > 0)
+			{ 
+		?>
+				<br/><br/>
+				<label for="dsnegati"> </label>
+				<label for="qtnegati_coluna"> <? echo utf8ToHtml ('Descrição'); ?>  </label>
+				<label for="vlnegati_coluna"> <? echo utf8ToHtml ('Pontuação'); ?> </label>
+			<?	
+				$crapescinfo =$xml_geral->Dados->crapesc->crapesc_inf;
+				$dsescore = $crapescinfo->dsescore;
+				$vlpontua = $crapescinfo->vlpontua;
+			?>
+				<label for="dsnegati"> </label>
+				<input name="qtnegati_coluna" id="qtnegati_coluna" type="text" value="<? echo $dsescore; ?>" /> 			
+				<input name="vlnegati_coluna" id="vlnegati_coluna" type="text" value="<? echo $vlpontua; ?>" /> 
+				<br/><br/>
+		<?
+			}
 			
+		?>
 		<br/> <br/> 
 			 	
 		<? if ($cdbircon == 1 ) { // SPC 
@@ -204,7 +226,7 @@
 			<? } 
 			
 			if ($cdbircon == 2) { // Serasa PF e PJ
-				if (in_array($craprpf->innegati ,array('2','3','6','1','4','5','7')) == false) {
+				if (in_array($craprpf->innegati ,array('2','3','6','1','4','5','7','10','11')) == false) {					
 					continue;
 				}
 
@@ -216,7 +238,7 @@
 				
 				?>
 			
-				<label for="dsnegati"> <? echo $craprpf->dsnegati ?> </label>
+				<label for="dsnegati"> <? echo utf8ToHtml($craprpf->dsnegati) ?> </label>
 				<input name="qtnegati_coluna" id="qtnegati_coluna" type="text" value="<? echo $craprpf->qtnegati; ?>" />
 				<input name="vlnegati_coluna" id="vlnegati_coluna" type="text" value="<? echo $vlnegati; ?>" /> 
 				<input name="dtultneg_coluna" id="dtultneg_coluna" type="text" value="<? echo $craprpf->dtultneg; ?>" /> 
@@ -303,5 +325,4 @@
 	$(document).ready(function() {
 		 highlightObjFocus($('#frmOrgaos'));		 
 	});
-	
 </script>	

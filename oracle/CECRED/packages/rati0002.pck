@@ -14,6 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.RATI0002 is
   --
   -- Alteracoes:   08/06/2015 - Ajuste na busca do sequencial da PC_EFETUA_ANALISE_CTR (Andrino-RKAM)
   --
+  --               08/08/2018 - P450 - Ajuste para o novo Grupo Economico (Guilherme/AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina geral de insert, update, select e delete da tela PARRAC na tabela CRAPVAC
@@ -2529,19 +2530,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       
       -- Cursor para busca das contas do grupo economico
       CURSOR cr_crapgrp IS
-        SELECT DISTINCT crapass.nrdconta,
-               crapass.inpessoa,
-               crapass.nrcpfcgc
-          FROM crapass,
-               crapgrp
-         WHERE crapgrp.cdcooper = pr_cdcooper
-           AND crapgrp.nrdconta = pr_nrdconta
-           AND crapgrp.nrctasoc <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada
-           AND crapass.cdcooper = crapgrp.cdcooper
-           AND crapass.nrdconta = crapgrp.nrctasoc
-           AND crapass.dtelimin IS NULL -- Somente ativos
-           AND crapass.inpessoa = 1; -- Somente PF
-
+        SELECT *
+          FROM (SELECT int.tppessoa inpessoa
+                      ,int.nrdconta
+                      ,int.Nrcpfcgc
+                  FROM tbcc_grupo_economico_integ INT
+                      ,tbcc_grupo_economico p
+                 WHERE int.dtexclusao IS NULL
+                   AND int.cdcooper = pr_cdcooper
+                   AND int.idgrupo  = p.idgrupo
+                   AND int.tppessoa = 1  -- Somente PF
+                 UNION
+                SELECT ass.inpessoa
+                      ,pai.nrdconta
+                      ,ass.nrcpfcgc
+                  FROM tbcc_grupo_economico       pai
+                     , crapass                    ass
+                     , tbcc_grupo_economico_integ int
+                 WHERE ass.cdcooper = pai.cdcooper
+                   AND ass.nrdconta = pai.nrdconta
+                   AND int.idgrupo  = pai.idgrupo
+                   AND int.dtexclusao is NULL
+                   AND ass.dtelimin IS NULL -- Somente ativos
+                   AND ass.inpessoa = 1  -- Somente PF
+                   AND ass.cdcooper = pr_cdcooper
+                   AND int.cdcooper = pr_cdcooper
+              ) dados
+         WHERE dados.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada   
+;
       -- Cursor para busca das contas do grupo economico
       CURSOR cr_crapavt(pr_ingrpeco VARCHAR2)IS
         SELECT crapass.nrdconta,

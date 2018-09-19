@@ -27,12 +27,14 @@
 	$idgrupo     = $_POST["idgrupo"] == "" ? 0  : $_POST["idgrupo"];
 	$listarTodos = (($_POST["listarTodos"] == "true") ? 1 : 0);
 	$nrdconta    = $_POST["nrdconta"] == "" ? 0 : $_POST["nrdconta"];
+  $contaAtual  = $_POST["contaAtual"] == "" ? 0 : $_POST["contaAtual"];
 	
 	$xml  = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <idgrupo>".$idgrupo."</idgrupo>";
 	$xml .= "   <listar_todos>".$listarTodos."</listar_todos>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+  $xml .= "   <contaref>".$contaAtual."</contaref>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

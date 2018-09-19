@@ -145,6 +145,15 @@ PROCEDURE pc_consulta_campo_conaut( pr_nmcamp   IN VARCHAR2                  -- 
                                    ,pr_nmdcampo OUT VARCHAR2                 -- Nome do campo com erro                      
                                    ,pr_des_erro OUT VARCHAR2);               -- Erros do processo                                            
 
+-- Procedure para consulta da tabela crapesc (dados do escore)
+PROCEDURE pc_busca_escore(pr_nrconbir in  crapesc.nrconbir%type, --> Sequencial com o numero da consulta no biro 
+                          pr_nrseqdet in  crapesc.nrseqdet%type, --> Sequencial da consulta
+                          pr_nrseqesc in  crapesc.nrseqesc%type, --> Sequencial do escore
+                          pr_dsescore out crapesc.dsescore%type, --> Descrição do escore
+                          pr_vlpontua out crapesc.vlpontua%type, --> Pontuação
+                          pr_dsclassi out crapesc.dsclassi%type, --> Descrição da classificação
+                          pr_dscritic out varchar2);
+
 -- Quando o nome da cidade vem junto com a UF, deve-se separar para a gravacao
 FUNCTION fn_separa_cidade_uf(pr_nmcidade IN VARCHAR2,     --> Nome da cidade com a UF
                              pr_idretorn IN PLS_INTEGER)  --> Indicador de retorno - 1=Municipio, 2=UF
@@ -303,6 +312,16 @@ PROCEDURE pc_consulta_pefin_refin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numer
                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
+-- Busca os registros de acoes com base em uma sequencia de consulta do biro
+PROCEDURE pc_consulta_escore(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da consulta que foi realizada
+                            ,pr_nrseqdet IN crapcbd.nrseqdet%TYPE --> Sequencial dentro da consulta que foi realizada
+                            ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                            ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
 -- Busca os registros de protestos com base em uma sequencia de consulta do biro
 PROCEDURE pc_consulta_protesto(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da consulta que foi realizada
@@ -677,7 +696,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
                 FROM craprpf
                WHERE craprpf.nrconbir = pr_nrconbir
                  AND craprpf.nrseqdet = pr_nrseqdet
-                 AND craprpf.innegati = 7)
+                 AND craprpf.innegati = 7
+              UNION ALL
+              SELECT 10,
+                     'D&iacute;vida vencida' dsnegati,
+                     MAX(craprpf.qtnegati),
+                     MAX(craprpf.vlnegati),
+                     MAX(craprpf.dtultneg)
+                FROM craprpf
+               WHERE craprpf.nrconbir = pr_nrconbir
+                 AND craprpf.nrseqdet = pr_nrseqdet
+                 AND craprpf.innegati = 10
+              UNION ALL
+              SELECT 11,
+                     'Inadimpl&ecirc;ncia' dsnegati,
+                     MAX(craprpf.qtnegati),
+                     MAX(craprpf.vlnegati),
+                     MAX(craprpf.dtultneg)
+                FROM craprpf
+               WHERE craprpf.nrconbir = pr_nrconbir
+                 AND craprpf.nrseqdet = pr_nrseqdet
+                 AND craprpf.innegati = 11)
        WHERE innegati = decode(pr_innegati,0,innegati
                                             ,pr_innegati);
 
@@ -2898,7 +2937,7 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
 -- Insere registro na tabela CRAPRPF (resumo das pendencias financeiras)
 PROCEDURE pc_insere_craprpf(pr_nrconbir IN  craprpf.nrconbir%TYPE, --> Sequencial com o numero da consulta no biro 
                             pr_nrseqdet IN  craprpf.nrseqdet%TYPE, --> Sequencial da consulta
-                            pr_innegati IN  craprpf.innegati%TYPE, --> Indicador de negativa (1-refin, 2-pefin, 3-protesto, 4-acao judicial, 5-participacao em falencia, 6-cheque sem fundo, 7-cheques sustados e extraviados) 
+                            pr_innegati IN  craprpf.innegati%TYPE, --> Indicador de negativa (1-refin, 2-pefin, 3-protesto, 4-acao judicial, 5-participacao em falencia, 6-cheque sem fundo, 7-cheques sustados e extraviados, 10-dívida vencida, 11-inadimplência) 
                             pr_qtnegati IN  craprpf.qtnegati%TYPE, --> Quantidade de negativas 
                             pr_vlnegati IN  craprpf.vlnegati%TYPE, --> Valor total das negativas 
                             pr_dtultneg IN  craprpf.dtultneg%TYPE, --> Data da ultima negativa 
@@ -2929,6 +2968,70 @@ PROCEDURE pc_insere_craprpf(pr_nrconbir IN  craprpf.nrconbir%TYPE, --> Sequencia
        CECRED.pc_internal_exception (pr_cdcooper => NULL);  
        pr_dscritic := 'Erro ao inserir na CRAPRPF: ' ||SQLERRM;
    END;
+
+-- Insere registro na tabela CRAPESC (escore)
+PROCEDURE pc_insere_crapesc(pr_nrconbir IN  crapesc.nrconbir%TYPE, --> Sequencial com o numero da consulta no biro 
+                            pr_nrseqdet IN  crapesc.nrseqdet%TYPE, --> Sequencial da consulta
+                            pr_dsescore IN  crapesc.dsescore%TYPE, --> Descrição do escore
+                            pr_vlpontua IN  crapesc.vlpontua%TYPE, --> Pontuação
+                            pr_dsclassi IN  crapesc.dsclassi%TYPE, --> Descrição da classificação
+                            pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+  BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_insere_crapesc');  
+
+    INSERT INTO crapesc
+      (nrconbir,
+       nrseqdet,
+       nrseqesc,
+       dsescore,
+       vlpontua,
+       dsclassi)
+     values
+      (pr_nrconbir,
+       pr_nrseqdet,
+       (select nvl(max(nrseqesc),0)+1 from crapesc where nrconbir = pr_nrconbir and nrseqdet = pr_nrseqdet),
+       pr_dsescore,
+       pr_vlpontua,
+       pr_dsclassi);
+   EXCEPTION
+    WHEN dup_val_on_index THEN
+      NULL; -- Nao faz nada, pois o resumo ja veio do arquivo
+     WHEN OTHERS THEN
+       -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+       CECRED.pc_internal_exception (pr_cdcooper => NULL);  
+       pr_dscritic := 'Erro ao inserir na CRAPESC: ' ||SQLERRM;
+   END;
+
+
+PROCEDURE pc_busca_escore(pr_nrconbir in  crapesc.nrconbir%type, --> Sequencial com o numero da consulta no biro 
+                          pr_nrseqdet in  crapesc.nrseqdet%type, --> Sequencial da consulta
+                          pr_nrseqesc in  crapesc.nrseqesc%type, --> Sequencial do escore
+                          pr_dsescore out crapesc.dsescore%type, --> Descrição do escore
+                          pr_vlpontua out crapesc.vlpontua%type, --> Pontuação
+                          pr_dsclassi out crapesc.dsclassi%type, --> Descrição da classificação
+                          pr_dscritic out varchar2) is
+  cursor cr_crapesc is
+    select dsescore,
+           vlpontua,
+           dsclassi
+      from crapesc
+     where nrconbir = pr_nrconbir
+       and nrseqdet = pr_nrseqdet
+       and nrseqesc = pr_nrseqesc;
+  begin
+    open cr_crapesc;
+      fetch cr_crapesc into pr_dsescore, pr_vlpontua, pr_dsclassi;
+      if cr_crapesc%notfound then
+        pr_dsescore := null;
+        pr_vlpontua := null;
+        pr_dsclassi := null;
+      end if;
+    close cr_crapesc;
+  exception
+    when others then
+      pr_dscritic := 'Erro não tratado ao buscar dados de escore: '||sqlerrm;
+  end;
 
 
 PROCEDURE pc_trata_erro_retorno(pr_cdcooper IN crapepr.cdcooper%TYPE, --> Codigo da cooperativa de emprestimo
@@ -3473,6 +3576,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_crapabr crapabr%ROWTYPE;  --> Consulta de acoes no biro de consultas
     vr_craprfc craprfc%ROWTYPE;  --> Consulta de recuperacoes, falencias e concordatas
     vr_craprpf craprpf%ROWTYPE;  --> Consulta de pendencia financeira dos socios
+    vr_crapesc crapesc%ROWTYPE;  --> Consulta de escore
     
     -- Variaveis gerais
     vr_contador PLS_INTEGER;     --> Variavel contador de solicitacoes
@@ -3486,6 +3590,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_contador_adm PLS_INTEGER; --> Contador de registros de administradores
     vr_contador_psa PLS_INTEGER; --> Contador de registros de empresa participante
     vr_contador_rpf PLS_INTEGER; --> Contador de registros de pendencias financeiras
+    vr_contador_esc PLS_INTEGER; --> Contador de registros de escore
     
     vr_nmtagger VARCHAR2(100);   --> Nome da tag do biro completa
     vr_nmtagbir crapbir.nmtagbir%TYPE; --> Nome da tag do biro de consultas
@@ -4074,6 +4179,155 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
 
         END LOOP;
       END IF;      
+
+------------- BUSCA OS DADOS DO CRAPPRF (Dívida Vencida) para o Serasa -------------
+      -- Busca os totais
+      -- Monta a tag de resumo de dívida vencida
+      vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/RESUMO_DIVIDA_VENCIDA/';
+
+      -- Verifica se existe o resumo de dívida vencida
+      IF pr_retxml.existsnode(vr_nmtagaux||'QTDE_TOTAL') <> 0 THEN  
+        BEGIN
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'QTDE_TOTAL','N',vr_craprpf.qtnegati, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'VAL_TOTAL','N',vr_craprpf.vlnegati, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULTIMO','D',vr_craprpf.dtultneg, vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+            vr_dscritic := 'Erro resumo dívida vencida Serasa-'||vr_contador||': '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        -- Insere o resumo financeiro de dívida vencida
+        pc_insere_craprpf(pr_nrconbir, vr_nrseqdet, 10, vr_craprpf.qtnegati, 
+                          vr_craprpf.vlnegati, vr_craprpf.dtultneg, vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Limpa a tabela de memoria
+        vr_craprpf := NULL;
+      END IF;
+
+      -- Atualiza o contador de registro para o inicio
+      vr_contador_prf := 1; 
+      LOOP
+         
+        -- monta a tag com o caminho para a busca das informacoes 
+        vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_DIVIDA_VENCIDA/DIVIDA_VENCIDA['||vr_contador_prf||']/';
+          
+        -- Verifica se existe dados na consulta de dívida vencida
+        IF pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 THEN  
+          EXIT;
+        END IF;
+
+        BEGIN
+          -- Busca as informacoes
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_OCORRENCIA','D',vr_crapprf.dtvencto, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'VL_OCORRENCIA','N',vr_crapprf.vlregist, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'IDENTIFICACAO','S',vr_crapprf.dsinstit, vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+            vr_dscritic := 'Erro divida vencida do Serasa-'||vr_contador||'-'||vr_inpefref||'-'||vr_contador_prf||': '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        -- Verifica se ocorreu algum erro
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
+        -- Insere o registro de dívida vencida
+        BEGIN
+          INSERT INTO crapprf
+            (nrconbir,
+             nrseqdet,
+             nrseqreg,
+             inpefref,
+             dsinstit,
+             dtvencto,
+             vlregist,
+             dsnature,
+             dsmtvreg)
+           VALUES
+            (pr_nrconbir,
+             vr_nrseqdet,
+             (SELECT nvl(MAX(nrseqreg),0)+1 FROM crapprf WHERE nrconbir=pr_nrconbir AND nrseqdet=vr_nrseqdet),
+             3,
+             vr_crapprf.dsinstit,
+             vr_crapprf.dtvencto,
+             vr_crapprf.vlregist,
+             vr_crapprf.dsnature,
+             vr_crapprf.dsmtvreg);
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+            vr_dscritic := 'Erro ao inserir na CRAPPRF: '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+
+        -- Vai para a proxima consulta
+        vr_contador_prf := vr_contador_prf + 1;
+
+        -- Limpa a tabela
+        vr_crapprf := NULL;
+
+      END LOOP;
+
+------------- BUSCA OS DADOS DO CRAPPRF (Inadimplência) para o Serasa -------------
+      -- Busca os totais
+      -- Monta a tag de resumo de Inadimplência
+      vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/INADIMPLENCIA/';
+
+      -- Verifica se existe o resumo de Inadimplência
+      IF pr_retxml.existsnode(vr_nmtagaux||'QTDE_TOTAL') <> 0 THEN  
+        BEGIN
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'QTDE_TOTAL','N',vr_craprpf.qtnegati, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'VAL_TOTAL','N',vr_craprpf.vlnegati, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULTIMO','D',vr_craprpf.dtultneg, vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+            vr_dscritic := 'Erro resumo inadimplência Serasa-'||vr_contador||': '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        -- Insere o resumo financeiro de inadimplência
+        pc_insere_craprpf(pr_nrconbir, vr_nrseqdet, 11, vr_craprpf.qtnegati, 
+                          vr_craprpf.vlnegati, vr_craprpf.dtultneg, vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Limpa a tabela de memoria
+        vr_craprpf := NULL;
+      END IF;
+
+------------- BUSCA OS DADOS DO CRAPESC (Escore) para o Serasa -------------
+      -- Monta a tag de escore
+      vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/RISCOS/ESCORE/';
+
+      -- Verifica se existe o resumo de Inadimplência
+      IF pr_retxml.existsnode(vr_nmtagaux||'PONTUACAO') <> 0 THEN  
+        BEGIN
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'PONTUACAO','N',vr_crapesc.vlpontua, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DESCRICAO','S',vr_crapesc.dsescore, vr_dscritic);
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CLASSIFICACAO','S',vr_crapesc.dsclassi, vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+            vr_dscritic := 'Erro resumo escore Serasa-'||vr_contador||': '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        -- Insere o escore
+        pc_insere_crapesc(pr_nrconbir, vr_nrseqdet, vr_crapesc.dsescore, vr_crapesc.vlpontua, nvl(vr_crapesc.dsclassi,' '), vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Limpa a tabela de memoria
+        vr_crapesc := NULL;
+      END IF;
 
 ------------- BUSCA OS DADOS DO CRAPCSF (Cheque sem fundos) para o SPC -------------
       -- Primeiro faz a busca de cheques estaduais
@@ -8697,8 +8951,8 @@ PROCEDURE pc_consulta_geral_xml(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
         RAISE vr_exc_saida;
       END IF;
       
-      -- Se for consulta SPC 65 deve-se buscar o PEFIN, REFIN e Protestos
-      IF rw_crapcbd.cdmodbir = 2 THEN
+      -- Se for consulta SPC 65 ou SPC 513 deve-se buscar o PEFIN, REFIN e Protestos
+      IF rw_crapcbd.cdmodbir in (2, 3) THEN
         -- Busca o PEFIN/REFIN
         pc_consulta_pefin_refin(pr_nrconbir => pr_nrconbir,
                                 pr_nrseqdet => pr_nrseqdet,
@@ -8745,6 +8999,20 @@ PROCEDURE pc_consulta_geral_xml(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
       pc_consulta_pefin_refin(pr_nrconbir => pr_nrconbir,
                               pr_nrseqdet => pr_nrseqdet,
                               pr_inpefref => 2,
+                              pr_xmllog => pr_xmllog,
+                              pr_cdcritic => vr_cdcritic,
+                              pr_dscritic => vr_dscritic,
+                              pr_retxml => pr_retxml,
+                              pr_nmdcampo => pr_nmdcampo,
+                              pr_des_erro => pr_des_erro);
+      IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Busca Dívida Vencida
+      pc_consulta_pefin_refin(pr_nrconbir => pr_nrconbir,
+                              pr_nrseqdet => pr_nrseqdet,
+                              pr_inpefref => 3,
                               pr_xmllog => pr_xmllog,
                               pr_cdcritic => vr_cdcritic,
                               pr_dscritic => vr_dscritic,
@@ -8833,6 +9101,19 @@ PROCEDURE pc_consulta_geral_xml(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
       IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+
+      -- Busca os administradores
+      pc_consulta_escore(pr_nrconbir => pr_nrconbir,
+                         pr_nrseqdet => pr_nrseqdet,
+                         pr_xmllog => pr_xmllog,
+                         pr_cdcritic => vr_cdcritic,
+                         pr_dscritic => vr_dscritic,
+                         pr_retxml => pr_retxml,
+                         pr_nmdcampo => pr_nmdcampo,
+                         pr_des_erro => pr_des_erro);
+      IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+    END IF;
 
     END IF;
 
@@ -9124,7 +9405,7 @@ PROCEDURE pc_consulta_cabecalho(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
 -- Busca os registros do PEFIN e/ou REFIN com base em uma sequencia de consulta do biro
 PROCEDURE pc_consulta_pefin_refin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da consulta que foi realizada
                                  ,pr_nrseqdet IN crapcbd.nrseqdet%TYPE --> Sequencial dentro da consulta que foi realizada
-                                 ,pr_inpefref IN crapprf.inpefref%TYPE --> Indicador de Pefin/Refin (1-Pefin, 2-Refin, 0-Todos)
+                                 ,pr_inpefref IN crapprf.inpefref%TYPE --> Indicador de Pefin/Refin (1-Pefin, 2-Refin, 0-Todos, 3-Dívida Vencida)
                                  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -9139,9 +9420,10 @@ PROCEDURE pc_consulta_pefin_refin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numer
         FROM craprpf
        WHERE craprpf.nrconbir = pr_nrconbir
          AND craprpf.nrseqdet = pr_nrseqdet
-         AND craprpf.innegati IN (1,2)
+         AND craprpf.innegati IN (1,2,10)
          AND craprpf.innegati = decode(pr_inpefref,1,2,
                                                    2,1,
+                                                   3,10,
                                           craprpf.innegati);
     rw_craprpf cr_craprpf%ROWTYPE;
 
@@ -9175,6 +9457,8 @@ PROCEDURE pc_consulta_pefin_refin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numer
       vr_nmtagpnc := 'crapprf_pefin';
     ELSIF pr_inpefref = 2 THEN
       vr_nmtagpnc := 'crapprf_refin';
+    ELSIF pr_inpefref = 3 THEN
+      vr_nmtagpnc := 'crapprf_divida';
     ELSE
       vr_nmtagpnc := 'crapprf';
     END IF;
@@ -9380,6 +9664,69 @@ PROCEDURE pc_consulta_pendencia_fin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
       pr_dscritic := sqlerrm;
   END;
 
+-- Busca o escore com base em uma sequencia de consulta do biro
+PROCEDURE pc_consulta_escore(pr_nrconbir IN crapcbd.nrconbir%TYPE, --> Numero da consulta que foi realizada
+                             pr_nrseqdet IN crapcbd.nrseqdet%TYPE, --> Sequencial dentro da consulta que foi realizada
+                             pr_xmllog   IN VARCHAR2,              --> XML com informações de LOG
+                             pr_cdcritic OUT PLS_INTEGER,          --> Código da crítica
+                             pr_dscritic OUT VARCHAR2,             --> Descrição da crítica
+                             pr_retxml   IN OUT NOCOPY XMLType,    --> Arquivo de retorno do XML
+                             pr_nmdcampo OUT VARCHAR2,             --> Nome do campo com erro
+                             pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+    -- Cursor sobre os registros de acoes
+    cursor cr_crapesc is
+      select crapesc.dsescore,
+             crapesc.vlpontua,
+             crapesc.dsclassi
+        from crapesc
+       where crapesc.nrconbir = pr_nrconbir
+         and crapesc.nrseqdet = pr_nrseqdet;
+    
+    vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
+    vr_dscritic   VARCHAR2(4000); --> descricao do erro
+    vr_exc_saida  EXCEPTION; --> Excecao prevista
+
+    vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
+    vr_nmtagpnc   VARCHAR2(20); --> Nome da tag principal
+  BEGIN
+    -- Inclusão nome do módulo logado
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_escore');
+
+    -- Criar cabeçalho do XML
+    IF pr_retxml IS NULL THEN
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    END IF;
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0          , pr_tag_nova => 'crapesc', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    
+    -- Define a tag principal    
+    vr_nmtagpnc := 'crapesc';
+
+    -- Loop sobre os registros de escore
+    FOR rw_crapesc IN cr_crapesc LOOP
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapesc', pr_posicao => 0          , pr_tag_nova => vr_nmtagpnc||'_inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => vr_nmtagpnc||'_inf',   pr_posicao => vr_contador, pr_tag_nova => 'dsescore', pr_tag_cont => rw_crapesc.dsescore, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => vr_nmtagpnc||'_inf',   pr_posicao => vr_contador, pr_tag_nova => 'vlpontua', pr_tag_cont => to_char(rw_crapesc.vlpontua,'fm99990D00'), pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => vr_nmtagpnc||'_inf',   pr_posicao => vr_contador, pr_tag_nova => 'dsclassi', pr_tag_cont => rw_crapesc.dsclassi, pr_des_erro => vr_dscritic);
+      vr_contador := vr_contador + 1;
+    END LOOP;        
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+  END;
 
 -- Busca os registros de acoes com base em uma sequencia de consulta do biro
 PROCEDURE pc_consulta_acao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da consulta que foi realizada

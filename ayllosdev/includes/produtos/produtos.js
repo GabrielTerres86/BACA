@@ -577,7 +577,7 @@ function alimtentaTelas(operacao) {
                         //POUPANCA PROGRAMADA
                     case "16":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'POUP. PROG\',\'oupan&ccedil;a Programada\',\'poupanca_programada\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'POUP. PROG\',\'oupan&ccedil;a Programada\',\'aplicacoes_programadas\');';
                         index++;
 
                         break;

@@ -12,7 +12,7 @@ BEGIN
   Programa: pc_lista_tbgen
   Sistema : Rotina de Log
   Autor   : Belli/Envolti
-  Data    : Maio/2018                   Ultima atualizacao: ../../....  
+  Data    : Maio/2018                   Ultima atualizacao: 06/09/2018  
     
   Dados referentes ao programa:
   
@@ -24,8 +24,8 @@ BEGIN
                - Listar os erros das cadeias
                - Listar os logs pendentes a acertos 
   
-  Alterações: 
-  
+  Alterações: 06/09/2018 - Ajuste do padrão Decimal/Data
+                           (Envolti - Belli - Chamado - REQ0026091)
   ....................................................................................... */
     
 DECLARE
@@ -2100,7 +2100,9 @@ DECLARE
       vr_dtmesant := ADD_MONTHS(vr_dtmovime,-1);
       LOOP
         -- Monta Calendario
-        vr_dtmovent := TO_CHAR(vr_dtdia,'00') || '/' || TO_CHAR(vr_dtmesant,'MM/YYYY'); -- '/04/2018';         
+        --vr_dtmovent := TO_CHAR(vr_dtdia,'00') || '/' || TO_CHAR(vr_dtmesant,'MM/YYYY');
+        -- Ajuste do padrão Decimal/Data - 06/09/2018 - Chd REQ0026091
+        vr_dtmovent := TO_CHAR(vr_dtdia,'00') || '/' || TO_CHAR(vr_dtmesant,'MON/RR');         
         -- Verifica se o dia de execução da cadeia foi um dia de movimento atipico
         vr_dtmovtab := GENE0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper -- Cooperativa conectada
                                                   ,pr_dtmvtolt => vr_dtmovent -- Data do movimento
@@ -2906,13 +2908,14 @@ DECLARE
     -- Inclusão do módulo e ação logado
     GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
     -- Job permanente: JBPRG_LISTA_BATCH
-    -- Job reagendado: JBPRG_R_LISTA_BAT_$123456789
+    -- Job reagendado: JBPRG_R_LISTA_BAT_$123456789    
     vr_jobname  := 'JBPRG_R_LISTA_BAT'||'_'||'$';
     vr_dsplsql  := 
       'DECLARE
          vr_cdcritic     INTEGER:= 0;
          vr_dscritic     VARCHAR2(4000);
-       BEGIN
+       BEGIN         
+            
          CECRED.PC_LISTA_TBGEN
          ( pr_cdcopprm  => ''0'' 
          , pr_nrcadeia  => ''0'' 
@@ -3298,6 +3301,24 @@ BEGIN                                     --- --- --- INICIO DO PROCESSO
                  ', pr_dtmovime:' || pr_dtmovime ||
                  ', pr_idatzmed:' || pr_idatzmed;  
 
+  -- Ajuste do padrão Decimal/Data - 06/09/2018 - Chd REQ0026091
+  EXECUTE IMMEDIATE 'ALTER SESSION SET 
+  nls_calendar = ''GREGORIAN''
+  nls_comp = ''BINARY''
+  nls_date_format = ''DD-MON-RR''
+  nls_date_language = ''AMERICAN''
+  nls_iso_currency = ''AMERICA''
+  nls_language = ''AMERICAN''
+  nls_length_semantics = ''BYTE''
+  nls_nchar_conv_excp = ''FALSE''
+  nls_numeric_characters = ''.,''
+  nls_sort = ''BINARY''
+  nls_territory = ''AMERICA''
+  nls_time_format = ''HH.MI.SSXFF AM''
+  nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+  nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+  nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
+    
   pc_controle_execucao;
    
   -- Retorno nome do módulo logado

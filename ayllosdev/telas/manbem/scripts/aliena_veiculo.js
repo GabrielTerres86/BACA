@@ -4,6 +4,7 @@ $(function(){
 	$('#vlrdobem').val($('#vlrdobem').val()).trigger('mask.maskMoney');
 	$('#vlfipbem').maskMoney();
 	$('#vlfipbem').val($('#vlfipbem').val()).trigger('mask.maskMoney');		
+	intervenienteValidado=false;	
 });
 
 function convert_accented_characters(str){
@@ -73,23 +74,23 @@ function TrataDados(){
 function validaCamposAditiv(){
 	var invalidos=0;
 	errorMessage = "";
-	if(!validaCampo($('#dscatbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#dstipbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#dsmarbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#dsbemfin', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#nrmodbem', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#nranobem', '#frmTipo'))){invalidos=invalidos+1;}	
-	if(!validaCampo($('#vlrdobem', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo('dscatbem', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('dstipbem', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('dsmarbem', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('dsbemfin', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('nrmodbem', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('nranobem', '#frmTipo')){invalidos=invalidos+1;}	
+	if(!validaCampo('vlrdobem', '#frmTipo')){invalidos=invalidos+1;}
 
-	if(!validaCampo($('#tpchassi', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#dschassi', '#frmTipo'))){invalidos=invalidos+1;}
-	if(!validaCampo($('#dscorbem', '#frmTipo'))){invalidos=invalidos+1;}
+	if(!validaCampo('tpchassi', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('dschassi', '#frmTipo')){invalidos=invalidos+1;}
+	if(!validaCampo('dscorbem', '#frmTipo')){invalidos=invalidos+1;}
 
 	if(!$('#ufdplaca').prop( "disabled"))
 	{
-		if(!validaCampo($('#ufdplaca', '#frmTipo'))){invalidos=invalidos+1;}
-		if(!validaCampo($('#nrdplaca', '#frmTipo'))){invalidos=invalidos+1;}
-		if(!validaCampo($('#nrrenava', '#frmTipo'))){invalidos=invalidos+1;}
+		if(!validaCampo('ufdplaca', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('nrdplaca', '#frmTipo')){invalidos=invalidos+1;}
+		if(!validaCampo('nrrenava', '#frmTipo')){invalidos=invalidos+1;}
 	}
 	if(!validaRadio($('input[name=nrbem]'))){invalidos=invalidos+1;}
 
@@ -126,73 +127,8 @@ function bloqueiaCamposVeiculoZero(valor)
 		nrPlaca.prop( "disabled", false );
 	}
 }
-function validaCampo(obj){
-	var value = obj.val();	
-	var valido =true;
-	if(value===null||value===""||value=="R$ 0,00"||value=="-1")
-	{
-		addErroCampo(obj);	
-		addMensageError(obj);
-		valido =false;
-	}
-	else{
-		removeErroCampo(obj);		
-	}
-	return valido;
-}
-function removeErroCampo(obj)
-{
-	var name =obj.attr('name');		
-	var label =$("label[for='"+name+"']");
-	if(obj.hasClass('errorInput'))
-	{
-		obj.removeClass('errorInput');		
-		label.text( label.text().replace("* ",""));
-		label.removeClass('errorLabel');
-	}
-}
-function addErroCampo(obj){
-	var name =obj.attr('name');		
-	var label =$("label[for='"+name+"']");
-	if(!obj.hasClass('errorInput'))
-	{
-		obj.addClass('errorInput');
-		label.text( "* "+label.text());
-		label.addClass('errorLabel');
-	}	
-}
-function addMensageError(obj)
-{
-	var name =obj.attr('name');		
-	var label =$("label[for='"+name+"']");
-	if(label.text()!="")
-	{
-		errorMessage = errorMessage + "	 "+label.text().replace(":","")+ "<br/>";
-	}
-}
-function validaRadio(obj)
-{
-	var radios = obj;
-	var check=false;
-	for (var i = 0, length = radios.length; i < length; i++)
-	{
-		if (radios[i].checked)
-		{
-			check=true;
-		}
-	}
 
-	if(!check)
-	{
-		$('.table_alie_veiculo').addClass('errorInput');
-		errorMessage = errorMessage + "	 * Bem a ser substituido<br/>";
-		return false;
-	}
-	else {		
-		$('.table_alie_veiculo').removeClass('errorInput');
-		return true;
-	}
-}
+
 function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
 								 ufdplaca, nrdplaca, nrrenava, uflicenc, nrcpfcgc, idseqbem, dsmarbem, vlfipbem)
 {
@@ -236,6 +172,7 @@ function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem,
 			success: function(response) {
 				try {
 					eval(response);
+					//console.log("success valida substitui");
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
@@ -248,11 +185,19 @@ function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem,
 
 }
 function SenhaCoordenador(){
+	//console.log('senha');
+	
 	pedeSenhaCoordenador(2,'SubstituiBem();','divRotina');
 }
-function CancelaSubstituicao(){
+function CancelaSubstituicao()
+{
+	intervenienteValidado=false;
 }
 function SubstituiBem(){
+	if(intervenienteValidado)
+	{
+		gravaInterveniente();
+	}
 	
 	var dscatbem = $('#dscatbem', '#frmTipo') .val();	
 	var dstipbem = $('#dstipbem', '#frmTipo') .val();
@@ -265,11 +210,11 @@ function SubstituiBem(){
 	var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val()); // inteiro
 	var dschassi =  $('#dschassi', '#frmTipo') .val(); // string
 
-	var dscorbem =  $('#dscorbem', '#frmTipo') .val();; // string
+	var dscorbem =  $('#dscorbem', '#frmTipo') .val(); // string
 	var ufdplaca =  $('#ufdplaca', '#frmTipo') .val(); // string
 	var nrdplaca =  $('#nrdplaca', '#frmTipo') .val(); // string
 	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
-	var uflicenc =  $('#uflicenc', '#frmTipo').val(); // string
+	var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val(); // string
     var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
 
 	var radios = $('input[name=nrbem]');
@@ -355,14 +300,14 @@ function SubstituiBem(){
 	
 }
 $("#nrdplaca").keydown(function(){ 
-	 $("#nrdplaca").mask("AAA-9999");
+	 $("#nrdplaca").mask("AAA9999");
 });
 
 function VerificaPessoa( campo ){
 	if ( verificaTipoPessoa( campo ) == 1 ) {
 	$('#nrcpfcgc', '#frmTipo').setMask('INTEGER','999.999.999-99','.-','');
 } else if( verificaTipoPessoa( campo ) == 2 ) {
-		$('#nrcpfcgc', '#frmTipo').setMask('INTEGER','z.zzz.zzz/zzzz-zz','/.-','');
+		$('#nrcpfcgc', '#frmTipo').setMask('INTEGER','zz.zzz.zzz/zzzz-zz','/.-','');
 	} else {
 		$('#nrcpfcgc', '#frmTipo').setMask('INTEGER', 'zzzzzzzzzzzzzz','','');
 	}

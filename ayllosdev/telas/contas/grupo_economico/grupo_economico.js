@@ -45,7 +45,7 @@ function carregaTelaConsultarIntegrantes(){
 	
 	var idgrupo     = $('#idgrupo', '#frmGrupoEconomico').val();
 	var listarTodos = $('#listarTodos', '#frmGrupoEconomico').prop('checked');
-	var nrdconta    = normalizaNumero($('#nrdconta', '#frmGrupoEconomico').val());
+	var flnrdconta    = normalizaNumero($('#nrdconta', '#frmGrupoEconomico').val());
 	
 	// Carrega dados parametro através de ajax
     $.ajax({
@@ -56,7 +56,8 @@ function carregaTelaConsultarIntegrantes(){
         data:{
 			idgrupo:  idgrupo,
 			listarTodos: listarTodos,
-			nrdconta: nrdconta,
+			nrdconta: flnrdconta,
+			contaAtual: nrdconta,
 			redirect: "html_ajax"
 		},
         error: function(objAjax, responseError, objExcept) {

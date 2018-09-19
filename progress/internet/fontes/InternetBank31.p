@@ -131,7 +131,9 @@ IF  VALID-HANDLE(h-b1wgen0021)  THEN
                                                 "zz,zz9.99")) +
                                        "</vlcorfix><dsprotoc>" +
                                        tt-novo-plano.dsprotoc +
-                                       "</dsprotoc></PLANO_CAPITAL>".
+                                       "</dsprotoc><idlstdom_protocolo>" +
+                                       STRING(tt-novo-plano.idlstdom) +
+                                       "</idlstdom_protocolo></PLANO_CAPITAL>".
         
         RETURN "OK".
     END.

@@ -63,6 +63,7 @@
  * 049: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
  * 050: [07/06/2018] Tratamento para nao permitir desfazer efetivação de emprestimo CDC. PRJ439 (Odirlei-AMcom)
  * 049: [01/08/2018] Ajuste para apresentar valores negativos na tela de prejuizo - INC0019253. (Andre Bohn - MoutS)
+ * 050: [12/09/2018] P442 - Ajustes nos tamanhos de tela e mascaras para apresentacao de Consultas Automatizadas novas (Diogo-Envolti)
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -126,6 +127,11 @@ var arrayDadosPortabilidade = new Array();
 var valorTotAPagar, valorAtual , valorTotAtual;
 
 var nrctremp1, qtdregis1, nrdconta1, lstdtvcto1, lstdtpgto1, lstparepr1, lstvlrpag1;
+
+function cpfMascara(val) { 
+	return val.replace(/\D/g, '').length > 11 ? '99.999.999/9999-99' : '999.999.999-99';
+}
+	
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
@@ -1031,7 +1037,7 @@ function controlaLayout(operacao) {
 
 		cQntd.css('width','60px').setMask('INTEGER','zz9','','');
 		cConta.addClass('conta pesquisa').css('width','115px');
-		cCPF.addClass('cpf').css('width','134px');
+		cCPF.css('width','134px');
 		cNome.addClass('alphanum').css('width','255px').attr('maxlength','40');
 		cDoc.css('width','50px');
 		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','40');
@@ -1055,7 +1061,7 @@ function controlaLayout(operacao) {
 		rCpf_1.addClass('').css('width','40px');
 
 		cConj.addClass('alphanum').css('width','250px').attr('maxlength','40');
-		cCPF_1.addClass('cpf').css('width','134px');
+		cCPF_1.css('width','134px');
 		cDoc_1.css('width','50px');
 		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','40');
 
@@ -1121,7 +1127,7 @@ function controlaLayout(operacao) {
 
 	} else if (in_array(operacao,['C_PROTECAO_TIT','C_PROTECAO_AVAL','C_PROTECAO_CONJ','C_PROTECAO_SOC'])){
 
-		altura   = '430px';
+		altura   = '550px';
 		largura  = '510px';
 	
 		formata_protecao (operacao, arrayProtCred['nrinfcad'] , arrayProtCred['dsinfcad'] );
@@ -1349,7 +1355,7 @@ function controlaLayout(operacao) {
 		cRenavan.addClass('renavan').css('width','108px');
 		cAnoFab.addClass('').css('width','60px');
 		cAnoMod.addClass('').css('width','108px');
-		cCPF.addClass('cpf').css('width','162px');
+		cCPF.css('width','162px');
 
 		if ( operacao == 'C_ALIENACAO'){
 			cTodos.desabilitaCampo();
@@ -1380,7 +1386,7 @@ function controlaLayout(operacao) {
 		rNacio.css('width','45px');
 
 		cConta.addClass('conta pesquisa').css('width','115px');
-		cCPF.addClass('cpf').css('width','134px');
+		cCPF.css('width','134px');
 		cNome.addClass('alphanum').css('width','255px').attr('maxlength','40');
 		cDoc.css('width','50px');
 		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','40');
@@ -1400,7 +1406,7 @@ function controlaLayout(operacao) {
 		rCpf_1.addClass('').css('width','40px');
 
 		cConj.addClass('alphanum').css('width','250px').attr('maxlength','40');
-		cCPF_1.addClass('cpf').css('width','134px');
+		cCPF_1.css('width','134px');
 		cDoc_1.css('width','50px');
 		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','40');
 
@@ -2151,6 +2157,9 @@ function atualizaTela(){
 		$('#vlrenmes','#frmDadosAval').val( arrayAvalistas[contAvalistas]['vlrenmes'] );
 		$('#nmdavali','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nmdavali'] );
 		$('#nrcpfcgc','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrcpfcgc'] );
+		
+		$('#nrcpfcgc','#frmDadosAval').setMask('INTEGER',cpfMascara($('#nrcpfcgc','#frmDadosAval').val()),'.','');
+		
 		$('#nrdocava','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrdocava'] );
 		$('#nrcpfcjg','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrcpfcjg'] );
 		$('#nrdoccjg','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrdoccjg'] );
@@ -2197,8 +2206,19 @@ function atualizaTela(){
 		$('#vlmerbem','#frmAlienacao').val( arrayAlienacoes[contAlienacao]['vlmerbem'] );
 		$('#idalibem','#frmAlienacao').val( arrayAlienacoes[contAlienacao]['idalibem'] );
 
+    $("#frmAlienacao #uflicenc option").each(function() {
+        if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
+            $(this).attr('selected', 'selected');
+        }
+    });
+    
+
 		$('#lsbemfin','#frmAlienacao').html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
 
+		
+		$('#nrcpfbem','#frmAlienacao').setMask('INTEGER',cpfMascara($('#nrcpfbem','#frmAlienacao').val()),'.','');
+		
+		
 		contAlienacao++;
 
 	// * 002: alterado a função contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
@@ -2226,6 +2246,9 @@ function atualizaTela(){
 		$('#nrendere','#frmIntevAnuente').val( arrayIntervs[contIntervis]['nrendere'] );
 		$('#complend','#frmIntevAnuente').val( arrayIntervs[contIntervis]['complend'] );
 		$('#nrcxapst','#frmIntevAnuente').val( arrayIntervs[contIntervis]['nrcxapst'] );
+		
+		
+		$('#nrcpfcgc','#frmIntevAnuente').setMask('INTEGER',cpfMascara($('#nrcpfcgc','#frmIntevAnuente').val()),'.','');
 		
 		contIntervis++;
 
@@ -3175,6 +3198,8 @@ function carregarImpresso(){
 	$('#nrctremp','#formEmpres').val( nrctremp );
 	$('#sidlogin','#formEmpres').val( $('#sidlogin','#frmMenu').val() );
 	$('#nrcpfcgc','#formEmpres').val( nrcpfcgc );
+	
+	$('#nrcpfcgc','#formEmpres').setMask('INTEGER',cpfMascara($('#nrcpfcgc','#formEmpres').val()),'.','');
     
 	var action = UrlSite + 'telas/atenda/prestacoes/cooperativa/imprimir_dados.php';
 

@@ -36,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 24/04/2018
+    Data    : Abril/2006                      Ultima Atualizacao: 08/09/2018
     
     Dados referentes ao programa:
 
@@ -430,6 +430,8 @@
 
 			  29/08/2018 - Foi adicionado um campo na tabela tt-dados-titular para retornar o
 						   Valor limite folha de pagamento (Felipe Fronza Mout`s)
+
+			  08/09/2018 - Pagina na tela Contas de Outras IFs (Andrey Formigari - Mouts)
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -9292,8 +9294,11 @@ PROCEDURE consulta-contas-cadastradas:
     DEF  INPUT PARAM par_tppeslst AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_intipdif AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmtitula AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_qtregini AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_qtregfim AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-contas-cadastradas.
+	DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
     
     DEF VAR aux_nmprimtl AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcgc AS CHAR                                    NO-UNDO.
@@ -9315,7 +9320,19 @@ PROCEDURE consulta-contas-cadastradas:
                            crapcti.insitcta = 3)           AND
                            crapcti.intipdif = par_intipdif NO-LOCK:
 
-        /** Nao exibe contas bloqueadas para sistema cecred */
+        ASSIGN par_qtregist = par_qtregist + 1.
+		
+		IF par_qtregfim < par_qtregist THEN
+			DO:
+				NEXT.
+			END.
+			
+		IF par_qtregini >= par_qtregist THEN
+			DO:
+				NEXT.
+			END.
+
+		/** Nao exibe contas bloqueadas para sistema cecred */
         IF  crapcti.insitcta = 3 AND par_intipdif = 1 AND par_idorigem = 3 THEN
             NEXT.
 
