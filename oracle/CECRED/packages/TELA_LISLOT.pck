@@ -264,7 +264,7 @@ BEGIN
                              ,par_dtinicio IN VARCHAR2 --IN TBCC_PREJUIZO_DETALHE.dtmvtolt%TYPE -->Data movimento
                              ,par_dttermin IN VARCHAR2 --IN TBCC_PREJUIZO_DETALHE.dtmvtolt%TYPE -->Data movimento
                               ) IS
-    SELECT v.dtmvtolt   ,
+    SELECT v.dtmvtolt  ,
            --v.idlancto   ,
            v.nrdconta   ,
            v.cdhistor   ,
@@ -295,7 +295,7 @@ BEGIN
     rw_doc_nom_ass cr_doc_nom_ass%ROWTYPE;
         
   BEGIN
-    
+     
     vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
     
     --gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados', pr_posicao  => 0, pr_tag_nova => 'historicos', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -306,7 +306,7 @@ BEGIN
       FOR rw_doc_nom_ass IN cr_doc_nom_ass(pr_cdcooper, rw_det_prej_lislot.nrdconta /*pr_nrdconta*/) LOOP                                       
         
           gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados', pr_posicao  => 0, pr_tag_nova => 'historico', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'historico', pr_posicao  => vr_contador, pr_tag_nova => 'dtmvtolt', pr_tag_cont => rw_det_prej_lislot.dtmvtolt, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'historico', pr_posicao  => vr_contador, pr_tag_nova => 'dtmvtolt', pr_tag_cont => to_char(rw_det_prej_lislot.dtmvtolt,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'historico', pr_posicao  => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_det_prej_lislot.nrdconta, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'historico', pr_posicao  => vr_contador, pr_tag_nova => 'nrdocmto', pr_tag_cont => rw_doc_nom_ass.NRCPFCNPJ_BASE, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'historico', pr_posicao  => vr_contador, pr_tag_nova => 'vllanmto', pr_tag_cont => rw_det_prej_lislot.vllanmto, pr_des_erro => vr_dscritic);
@@ -316,7 +316,7 @@ BEGIN
         vr_contador := vr_contador + 1;
       
     END LOOP;
-    
+
     dbms_output.put_line(vr_retxml.getclobval);
     
     pr_retxml := vr_retxml.getclobval();
@@ -330,7 +330,7 @@ BEGIN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
 
-      
+
     WHEN OTHERS THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'Erro geral na rotina da tela TELA_LISLOT(pc_lista_det_prej_lislot): ' || SQLERRM;

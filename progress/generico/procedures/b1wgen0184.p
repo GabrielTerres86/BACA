@@ -35,9 +35,13 @@
                             seus format para 31 posicoes conforme solicitado no chamado
                             348989. (Kelvin)   
 
-			   06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
-                            departamento passando a considerar o código (Renato Darosci)
-               10/09/2018 - LISLOT históricos de prejuizo - p450 Regulatorio de credito (Fabio AMcom).
+                           06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                            departamento passando a considerar o código (Renato Darosci)  
+
+               18/08/2018 - Incluso busca de istoricos tbdsct_lancamento_bordero (GFT) 
+
+               19/09/2018 - LISLOT históricos de prejuizo - p450 Regulatorio de credito (Fabio AMcom).
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -985,12 +989,12 @@ PROCEDURE Busca_Dinamica_hibrido:
                                
                                IF xFieldHistorico:SUBTYPE <> "ELEMENT" THEN 
                                   NEXT. 
-                                  
+                                    
                                xFieldHistorico:GET-CHILD(xText,1) NO-ERROR.
                                /*CHAR*/ ASSIGN tt-handle.dtmvtolt = DATE(xText:NODE-VALUE)  WHEN xFieldHistorico:NAME = "dtmvtolt" NO-ERROR.
                                /*INTE*/ ASSIGN tt-handle.nrdconta = INT(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "nrdconta" NO-ERROR.
-                               /*CHAR*/ ASSIGN tt-handle.nrdocmto = INT(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "nrdocmto" NO-ERROR.
-                               /*DECI*/ ASSIGN tt-handle.vllanmto = INT(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "vllanmto" NO-ERROR.
+                               /*DECI*/ ASSIGN tt-handle.nrdocmto = DEC(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "nrdocmto" NO-ERROR.
+                               /*DECI*/ ASSIGN tt-handle.vllanmto = DEC(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "vllanmto" NO-ERROR.
                                
                             END.
                                         
