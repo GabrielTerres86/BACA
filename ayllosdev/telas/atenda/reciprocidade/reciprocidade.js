@@ -2795,7 +2795,7 @@ function validaDados(pedeSenha) {
     ativo = false;
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
         // 'undefined' = novo / 0 = novo, 1 = ativo
-        if (typeof descontoConvenios[i].insitceb === 'undefined' || descontoConvenios[i].insitceb == '1' || descontoConvenios[i].insitceb == '3') {
+        if (typeof descontoConvenios[i].insitceb === 'undefined' || descontoConvenios[i].insitceb == '1' || descontoConvenios[i].insitceb == '3' || descontoConvenios[i].insitceb == '0') {
             ativo = true;
         }
 		if (descontoConvenios[i].flcooexp == 1 || descontoConvenios[i].flceeexp == 1) {
