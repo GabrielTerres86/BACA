@@ -119,7 +119,7 @@
     function formataCategoriaBem(dscatbem) {
 
         $('#nrdplaca', '#frmAlienacao').removeClass('placa');
-		$('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzz-zzzz','-','');
+		$('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzzzzzz','','');
 		/*
         //$('#nrrenava', '#frmAlienacao').removeClass('renavan');
         if (dscatbem == 'AUTOMOVEL' ||

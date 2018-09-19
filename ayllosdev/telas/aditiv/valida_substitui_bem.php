@@ -9,7 +9,7 @@
  * --------------
  *   001 [28/02/2014] Guilherme(SUPERO)         : Novos campos NrCpfCgc e validações.
  *	 002 [11/12/2014] Lucas Reinert(CECRED)		: Adicionado campos tpproapl e novo parametro na function arrayTipo
- *   003 [01/11/2017] Passagem do tpctrato e idgaropc. (Jaison/Marcos Martini - PRJ404)
+ *   003 [01/11/2017] Passagem do tpctrato e idgaropc. (Jaison/Marcos Martini - PRJ404) 
  */
 ?>
 
@@ -51,6 +51,7 @@
 	$xmlCarregaDados .= "  <nrdconta>" . $nrdconta . "</nrdconta>";
 	$xmlCarregaDados .= "  <nrctremp>" . $nrctremp . "</nrctremp>";
 	$xmlCarregaDados .= "  <tpctrato>" . $tpctrato . "</tpctrato>";
+    $xmlCarregaDados .= "  <nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
 	$xmlCarregaDados .= "  <cddopcao>" . $cddopcao . "</cddopcao>";
 	$xmlCarregaDados .= "  <dscatbem>" . $dscatbem . "</dscatbem>";
 	$xmlCarregaDados .= "  <dstipbem>" . $dstipbem . "</dstipbem>";
@@ -91,32 +92,42 @@
 		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Aimaro').'","","$NaN");';
 	}
 	else {
-
-		$funcaoSim = 'SenhaCoordenador();';
+    
+    // Verificar se é obrigatorio aprovação do coordenador
+    $aprovacao == 0;
+    if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA') {
+      $aprovacao = $xmlObject->roottag->tags[1]->cdata;
+    }
+    
+    // Se é necessário pedir aprovação do coordenador
+    if($aprovacao==1){
+      $funcaoSim = 'SenhaCoordenador();';
+    }else{
+      $funcaoSim = 'SubstituiBem();';
+    }  
+    
+    //echo ("console.log('aprovacao: $aprovacao');");
+    //echo ("console.log('funcaoSim: $funcaoSim');");
+    
 		$funcaoNao = 'CancelaSubstituicao();';
 		$msgAvisoDefault = "Este processo irá retirar a alienação do veículo selecionado e alienar o novo veículo.";
-		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
-				$msgAviso  = $xmlObject->roottag->tags[0]->cdata;
-
-				echo "showConfirmacao(
-										' ".$msgAvisoDefault."<br/>".$msgAviso." Continuar alteração ?'
-										,'Confirma?- Aimaro'
-										,'".$funcaoSim."'
-										,'".$funcaoNao."'
-										,'sim.gif'
-										,'nao.gif'
-									);";
-        }
-        else
-        {
-			echo "showConfirmacao(
-										'".$msgAvisoDefault." Continuar alteração?'
-										,'Confirma?- Aimaro'
-										,'".$funcaoSim."'
-										,'".$funcaoNao."'
-										,'sim.gif'
-										,'nao.gif'
-									);";
-        }
+    
+    // Se ha mensagem
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
+				$msgAviso = $xmlObject->roottag->tags[0]->cdata;
+        if ($msgAviso != '') {
+            $msgAviso = "<br/>".$msgAviso;
+        }  
+    }   
+    
+    // Mostrar confirmação    
+    echo "showConfirmacao(
+                ' ".$msgAvisoDefault.$msgAviso." Continuar alteração ?'
+                ,'Confirma?- Ayllos'
+                ,'".$funcaoSim."'
+                ,'".$funcaoNao."'
+                ,'sim.gif'
+                ,'nao.gif'
+              );";
     }
 ?>

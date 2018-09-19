@@ -36,6 +36,7 @@
     <option value="R"><? echo utf8ToHtml('R - Retorno de arquivos') ?></option>
     <option value="S"><? echo utf8ToHtml('S - Alterar dados de bens substituidos via aditivo') ?></option>
     <option value="X"><? echo utf8ToHtml('X - Cancelamento manual ou automatico') ?></option>
+    <option value="P"><? echo utf8ToHtml('P - Parâmetros GRAVAME') ?></option>
   </select>
   
   <a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>

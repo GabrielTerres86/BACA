@@ -6038,7 +6038,7 @@ function montaString() {
                 arrayAlienacoes[i]['dschassi'] + ';' +
                 arrayAlienacoes[i]['nranobem'] + ';' +
                 arrayAlienacoes[i]['nrmodbem'] + ';' +
-                arrayAlienacoes[i]['nrdplaca'].replace('000-0000', '').replace('-', '') + ';' +
+                arrayAlienacoes[i]['nrdplaca'].replace('0000000', '') + ';' +
                 normalizaNumero(arrayAlienacoes[i]['nrrenava']) + ';' +
                 arrayAlienacoes[i]['tpchassi'] + ';' +
                 arrayAlienacoes[i]['ufdplaca'] + ';' +

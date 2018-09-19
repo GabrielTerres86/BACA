@@ -48,7 +48,7 @@
 	<br />
 
 	<label for="nrdplaca"><? echo utf8ToHtml('Placa:') ?></label>
-	<input type="text" id="nrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($dados,'nrdplaca'),'###-####') ?>" />
+	<input type="text" id="nrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($dados,'nrdplaca'),'#######') ?>" />
 	<br />
 
 	<label for="ufdplaca"><? echo utf8ToHtml('UF Placa:') ?></label>

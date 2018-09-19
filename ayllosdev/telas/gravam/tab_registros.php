@@ -171,7 +171,7 @@
             <input type="hidden" id="dsbemfin" name="dsbemfin" value="<? echo getByTagName($bens[$i]->tags,'dsbemfin'); ?>" />
             <input type="hidden" id="vlmerbem" name="vlmerbem" value="<? echo getByTagName($bens[$i]->tags,'vlmerbem'); ?>" />
             <input type="hidden" id="tpchassi" name="tpchassi" value="<? echo getByTagName($bens[$i]->tags,'tpchassi'); ?>" />
-            <input type="hidden" id="nrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($bens[$i]->tags,'nrdplaca'),'###-####'); ?>" />
+            <input type="hidden" id="nrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($bens[$i]->tags,'nrdplaca'),'#######'); ?>" />
             <input type="hidden" id="nranobem" name="nranobem" value="<? echo getByTagName($bens[$i]->tags,'nranobem'); ?>" />
             <input type="hidden" id="dscpfbem" name="dscpfbem" value="<? echo getByTagName($bens[$i]->tags,'dscpfbem'); ?>" />
             <input type="hidden" id="uflicenc" name="uflicenc" value="<? echo getByTagName($bens[$i]->tags,'uflicenc'); ?>" />
