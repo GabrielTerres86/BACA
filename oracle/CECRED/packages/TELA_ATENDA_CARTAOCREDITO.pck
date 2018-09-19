@@ -3979,6 +3979,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       Alteração : Adicao de controle para apagar o campo de flgprcrd caso cancele
                   a proposta, pois como nao foi para o Bancoob, o proximo cartao
                   que devera ser setado como primeiro cartao (Anderson 25/07/18)
+                  
+            14/09/2018 - Gravar data de cancelamento da solicitação do cartão (Renato - Supero)
 
     ..........................................................................*/
 
@@ -4024,6 +4026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
       UPDATE crawcrd
          SET insitcrd = 6 --Cancelado
             ,flgprcrd = 0 --Nao eh mais o primeiro cartao
+            ,dtcancel = TRUNC(SYSDATE) -- Setar a data de cancelamento
        WHERE cdcooper = vr_cdcooper
          AND nrdconta = pr_nrdconta
          AND nrctrcrd = pr_nrctrcrd;
