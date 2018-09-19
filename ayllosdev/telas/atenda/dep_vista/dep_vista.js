@@ -1337,11 +1337,11 @@ function efetuaLiberacaoCC(vlPagto) {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1) {
-				showError("inform", 'Liberação efetuada com sucesso.', "Alerta - Ayllos", mostraDetalhesCT());
+				showError("inform", 'Libera&ccedil;&atilde;o efetuada com sucesso.', "Alerta - Ayllos", mostraDetalhesCT());
 			} else {
 				eval(response);
 			}
