@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 11/12/2017
+   Data    : Marco/2009                     Última atualizacao: 10/06/2018
    
    Dados referentes ao programa:
 
@@ -294,7 +294,9 @@
            11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
                                                         
            26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-                                         
+
+           19/09/2018 - Utilizar a funçao fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
+
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -10681,6 +10683,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_dsoperac AS CHAR    NO-UNDO.
     DEFINE VARIABLE aux_flgimune AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_flpedsen AS LOGICAL INIT "N"                 NO-UNDO.
+	DEFINE VARIABLE aux_nrsequen AS INTE                             NO-UNDO.
     
     DEF VAR aux_cdpactra LIKE crapope.cdpactra                       NO-UNDO.
 
@@ -12444,6 +12447,24 @@ PROCEDURE efetua_liber_anali_bordero:
 
              IF  NOT AVAILABLE craplcm   THEN
                  DO:
+				    /* Busca a proxima sequencia do campo crapmat.nrseqcar */
+				    RUN STORED-PROCEDURE pc_sequence_progress
+				    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+					 								    ,INPUT "NRSEQDIG"
+					 								    ,INPUT STRING(par_cdcooper) + ";" + 
+														 	   STRING(craplot.dtmvtolt,"99/99/9999") + ";" + 
+															   STRING(craplot.cdagenci) + ";" +
+															   STRING(craplot.cdbccxlt) + ";" + 
+															   STRING(craplot.nrdolote)
+													    ,INPUT "N"
+													    ,"").
+																							
+				    CLOSE STORED-PROC pc_sequence_progress
+				    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+								  
+				    ASSIGN aux_nrsequen = INTE(pc_sequence_progress.pr_sequence)
+										   WHEN pc_sequence_progress.pr_sequence <> ?.
+										   
                     /* Cria lancamento da conta do associado */
                     CREATE craplcm.
                     ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
@@ -12454,13 +12475,13 @@ PROCEDURE efetua_liber_anali_bordero:
                            craplcm.nrdocmto = crapbdc.nrborder
                            craplcm.vllanmto = aux_vlborder
                            craplcm.cdhistor = 270
-                           craplcm.nrseqdig = craplot.nrseqdig + 1 
+                           craplcm.nrseqdig = aux_nrsequen
                            craplcm.nrdctabb = crapbdc.nrdconta
                            craplcm.nrdctitg = STRING(crapbdc.nrdconta,"99999999")
                            craplcm.nrautdoc = 0
                            craplcm.cdcooper = par_cdcooper
                            craplcm.cdpesqbb = "Desconto do bordero " + STRING(crapbdc.nrborder,"zzz,zzz,zz9")
-                           craplot.nrseqdig = craplcm.nrseqdig
+                           craplot.nrseqdig = aux_nrsequen
                            craplot.qtinfoln = craplot.qtinfoln + 1
                            craplot.qtcompln = craplot.qtcompln + 1
                            craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
