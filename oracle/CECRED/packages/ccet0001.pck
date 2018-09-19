@@ -1242,7 +1242,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 23/12/2016
+  Data    : Julho/2014                        Ultima atualizacao: 19/09/2018
 
   Dados referentes ao programa:
 
@@ -1262,6 +1262,11 @@ create or replace package body cecred.CCET0001 is
               23/12/2016 - Ajuste para aumentar o tamanho do campo que recebe o nome da cooperativa
                            pois estava estourando o format
                            (Adriano - SD 582204).                                       
+                           
+              19/09/2018 - Quando tipo do contrato for limite de credito (tpctrlim = 1) deve
+                           ser calculado o valor do IOF com base em 30 dias, independentemente
+                           da qtd de dias de vigencia do contrato - SCTASK0021789.
+                           (Fabricio)
   ............................................................................. */
     DECLARE
     
@@ -1312,6 +1317,9 @@ create or replace package body cecred.CCET0001 is
       vr_tpproduto NUMBER;
       vr_natjurid NUMBER := 0;
       vr_tpregtrb NUMBER := 0;
+      
+      vr_qtdiavig NUMBER := pr_qtdiavig;
+      
       -- CURSORES PARA UTILIZAR NA PACKAGE
       CURSOR cr_crapcop IS 
       SELECT cop.nmextcop,
@@ -1432,6 +1440,14 @@ create or replace package body cecred.CCET0001 is
          vr_tpregtrb := rw_crapjur.tpregtrb;
         END IF;           
       CLOSE cr_crapjur;
+      
+      -- limite de credito deve ter o periodo fixado em 30 dias para impressao da planilha do CET
+      IF pr_tpctrlim = 1 THEN        
+        vr_qtdiavig := 30;
+      ELSE
+        vr_qtdiavig := pr_qtdiavig;
+      END IF; 
+      
       --Novo cálculo do IOF
       TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => vr_tpproduto --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                    ,pr_tpoperacao => 1 --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
@@ -1441,7 +1457,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_natjurid   => vr_natjurid --> Natureza Juridica
                                    ,pr_tpregtrb   => vr_tpregtrb --> Tipo de Regime Tributario
                                    ,pr_dtmvtolt   => pr_dtmvtolt --> Data do movimento para busca na tabela de IOF
-                                   ,pr_qtdiaiof   => pr_qtdiavig --> Qde dias em atraso (cálculo IOF atraso)
+                                   ,pr_qtdiaiof   => vr_qtdiavig --> Qde dias em atraso (cálculo IOF atraso)
                                    ,pr_vloperacao => pr_vlemprst --> Valor total da operação (pode ser negativo também)
                                    ,pr_vltotalope => pr_vlemprst --> Valor total da operação (pode ser negativo também)
                                    ,pr_vliofpri   => vr_vliofpri   --> Retorno do valor do IOF principal
@@ -2863,19 +2879,7 @@ create or replace package body cecred.CCET0001 is
                    ,pr_nrctremp => pr_nrctremp);
       FETCH cr_dados INTO rw_dados;
       CLOSE cr_dados;
- 
-       --Concatena as liquidacoes
-      pc_concatena_liquid(rw_dados.nrctrliq##1);
-      pc_concatena_liquid(rw_dados.nrctrliq##2);
-      pc_concatena_liquid(rw_dados.nrctrliq##3);
-      pc_concatena_liquid(rw_dados.nrctrliq##4);
-      pc_concatena_liquid(rw_dados.nrctrliq##5);
-      pc_concatena_liquid(rw_dados.nrctrliq##6);
-      pc_concatena_liquid(rw_dados.nrctrliq##7);
-      pc_concatena_liquid(rw_dados.nrctrliq##8);
-      pc_concatena_liquid(rw_dados.nrctrliq##9);
-      pc_concatena_liquid(rw_dados.nrctrliq##10);    
-	   
+      
       -- Busca quantidade de dias da carencia
       EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
                                          ,pr_qtddias    => vr_qtdias_carencia
