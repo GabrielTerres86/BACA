@@ -797,7 +797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
       26/03/2018 - Adicionado as procedures pc_obtem_dados_proposta, pc_obtem_dados_proposta_web, pc_inserir_contrato_limite.
                    Alterado as procedures pc_confirmar_novo_limite e pc_negar_proposta. Alterações necessárias para adaptação 
                    do processo de criação de proposta de limite de desconto de títulos (Paulo Penteado (GFT) KE00726701-304)
-      13/04/2018 - Criadas funcionalidades de inclusão, alteração e resgate de borderôes (Luis Fernando (GFT)
+      13/04/2018 - Criadas funcionalidades de inclusão, alteração e resgate de borderôs (Luis Fernando (GFT)
       23/04/2018 - Alteração para que quando seja adicionado um titulo ao bordero, alterar o status do bordero para 'Em estudo' (Vitor (GFT))
       25/04/2018 - Alterado o calculo das porcentagens da Liquidez (Vitor (GFT))
       21/05/2018 - Adicionada procedure para trazer se a esteira e o motor estão em contingencia (Luis Fernando (GFT))
@@ -6769,7 +6769,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
         raise vr_exc_erro;
       END IF;
       IF (rw_crapbdt.insitbdt>2 OR rw_crapbdt.insitapr=7) THEN -- 1 = Em estudo, 2 = Analisado -- insitapr 7 = Prazo Expirado
-        vr_dscritic := 'Apenas borderôes em estudo e aprovados podem ser alterados';
+        vr_dscritic := 'Apenas borderôs em estudo e aprovados podem ser alterados';
         raise vr_exc_erro;
       END IF;
       
