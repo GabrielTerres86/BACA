@@ -5051,6 +5051,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
       
+      -- Variaveis Projeto 475
+      vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem20    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+      vr_des_erro            VARCHAR2(10000);
+
       -- Busca dos dados da cooperativa
       CURSOR cr_lista_cop IS
         SELECT cop.cdcooper
@@ -5127,7 +5133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
       END;
       
-		BEGIN
+    BEGIN -- inicio pc_job_efetua_repasse
       
       -- Gera log no início da execução
       pc_log_programa(PR_DSTIPLOG   => 'I'           --> Tipo do log: I - início; F - fim; O - ocorrência
@@ -5400,6 +5406,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao criar registro na tabela craptvl: ' || SQLERRM;
           END;
+
+          -- Marcelo Telles Coelho - Projeto 475
+          -- Fase 10 - controle mensagem SPB
+          sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                     ,pr_idorigem               => 'E'
+                                     ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                     ,pr_nrcontrole             => rw_idopetrf
+                                     ,pr_nrcontrole_str_pag     => NULL
+                                     ,pr_nrcontrole_dev_or      => NULL
+                                     ,pr_dhmensagem             => sysdate
+                                     ,pr_insituacao             => 'OK'
+                                     ,pr_dsxml_mensagem         => null
+                                     ,pr_dsxml_completo         => null
+                                     ,pr_nrseq_mensagem_xml     => null
+                                     ,pr_nrdconta               => 05463212
+                                     ,pr_cdcooper               => rw_crapcop.cdcooper
+                                     ,pr_cdproduto              => 30 -- TED
+                                     ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                     ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                     ,pr_dscritic               => vr_dscritic
+                                     ,pr_des_erro               => vr_des_erro);
+          -- Se ocorreu erro
+          IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levantar Excecao
+            vr_cdcritic := 0;
+            RAISE vr_exc_saida;
+          END IF;
+          -- Fase 20 - controle mensagem SPB
+          sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                     ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                                     ,pr_nrcontrole             => rw_idopetrf
+                                     ,pr_nrcontrole_str_pag     => NULL
+                                     ,pr_nrcontrole_dev_or      => NULL
+                                     ,pr_dhmensagem             => sysdate
+                                     ,pr_insituacao             => 'OK'
+                                     ,pr_dsxml_mensagem         => null
+                                     ,pr_dsxml_completo         => null
+                                     ,pr_nrseq_mensagem_xml     => null
+                                     ,pr_nrdconta               => 05463212
+                                     ,pr_cdcooper               => rw_crapcop.cdcooper
+                                     ,pr_cdproduto              => 30 -- TED
+                                     ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                     ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                     ,pr_dscritic               => vr_dscritic
+                                     ,pr_des_erro               => vr_des_erro);
+          -- Se ocorreu erro
+          IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levantar Excecao
+            vr_cdcritic := 0;
+            RAISE vr_exc_saida;
+          END IF;
              
           SSPB0001.pc_proc_envia_tec_ted (pr_cdcooper => rw_crapcop.cdcooper --> Cooperativa                            
                                          ,pr_cdagenci => '1'                 --> Cod. Agencia 
