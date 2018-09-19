@@ -22,7 +22,7 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                                ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                                ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE pc_busca_preju_cc_L100(pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+  PROCEDURE pc_busca_preju_cc(pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                    ,pr_valorprj OUT NUMBER             --> valor do prejuizo
                                    ,pr_dtiniprj OUT DATE);          --> data de registro do prejuizo
@@ -438,7 +438,7 @@ END pc_busca_saldos_devedores;
                            pr_cdcooper=>pr_cdcooper,
                            pr_dtiniatr=>vr_dtiniatr);
 
-    pc_busca_preju_cc_L100(pr_nrdconta=>pr_nrdconta,
+    pc_busca_preju_cc(pr_nrdconta=>pr_nrdconta,
                            pr_cdcooper=>pr_cdcooper,
                            pr_valorprj=>vr_vlratra,
                            pr_dtiniprj=>vr_dttrapre);
@@ -508,7 +508,7 @@ END pc_busca_saldos_devedores;
        AND nrdconta = pr_nrdconta
        AND cdmodali = 101 -- ADP
        AND cdorigem = 1 -- c/c
-       and dtrefere = (select dtmvtoan from crapdat where cdcooper = pr_cdcooper);
+       and dtrefere = (select CASE WHEN to_char(dtmvtoan, 'MM') = to_char(dtmvtolt, 'MM') THEN dtmvtoan ELSE dtultdma END from crapdat where cdcooper = pr_cdcooper);
 
     rw_crapris cr_crapris%ROWTYPE;
   BEGIN
@@ -523,21 +523,21 @@ END pc_busca_saldos_devedores;
   END pc_busca_inicio_atraso;
 
     /* .............................................................................
-     Programa: fn_busca_preju_cc_L100
+     Programa: fn_busca_preju_cc
      Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
      Sigla   : EMPR
      Autor   : Marcel Kohls
-     Data    : Marco/2018.                    Ultima atualizacao:
+     Data    : Marco/2018.                    Ultima atualizacao: 19/09/2018
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que for chamado
 
-     Objetivo  : retorna informacoes de prejuizo de conta corrente com base no contrato linha 100 e base nos dados gerados pela central de risco
+     Objetivo  : retorna informacoes de prejuizo de conta corrente
 
-     Alteracoes:
+     Alteracoes: 19/09/2018 - Inclusa busca de prejuízo de conta corrente, priorizado sobre a LC100
      ..............................................................................*/
-  PROCEDURE pc_busca_preju_cc_L100(pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+  PROCEDURE pc_busca_preju_cc(pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                    ,pr_valorprj OUT NUMBER            --> valor do prejuizo
                                    ,pr_dtiniprj OUT DATE)  IS          --> data de registro do prejuizo
@@ -545,14 +545,34 @@ END pc_busca_saldos_devedores;
                       pr_cdcooper IN crapepr.cdcooper%TYPE,
                       pr_nrdconta IN crapris.nrdconta%TYPE
                      ) IS
-    SELECT vlsdprej, dtmvtolt FROM crapepr
+    SELECT vlsdprej
+		     , dtmvtolt 
+			FROM crapepr
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta
        AND cdlcremp = 100 -- Linha 100 (indicador de que conta tem um contrato de prejuizo)
        AND vlsdprej > 0; -- com valor pendente
-
     rw_crapepr cr_crapepr%ROWTYPE;
+		
+		CURSOR cr_prejuizo IS
+		SELECT prj.dtinclusao 
+		     , prj.vlsdprej +
+				   prj.vljur60_ctneg +
+					 prj.vljur60_lcred +
+					 prj.vljuprej vlsldprej
+		  FROM tbcc_prejuizo prj
+	   WHERE prj.cdcooper = pr_cdcooper
+		   AND prj.nrdconta = pr_nrdconta
+			 AND prj.dtliquidacao IS NULL;
+		rw_prejuizo cr_prejuizo%ROWTYPE;
   BEGIN
+		OPEN cr_prejuizo;
+		FETCH cr_prejuizo INTO rw_prejuizo;
+		
+		IF cr_prejuizo%FOUND THEN
+			pr_valorprj := nvl(rw_prejuizo.vlsldprej, 0);
+			pr_dtiniprj := rw_prejuizo.dtinclusao;
+		ELSE 
     -- Busca registro de linha 100, indicando contrato de prejuizo
     OPEN cr_crapepr(pr_cdcooper, pr_nrdconta);
     FETCH cr_crapepr
@@ -562,7 +582,10 @@ END pc_busca_saldos_devedores;
 
     pr_valorprj := nvl(rw_crapepr.vlsdprej, 0);
     pr_dtiniprj := rw_crapepr.dtmvtolt;
-  END pc_busca_preju_cc_L100;
+		END IF;
+		
+		CLOSE cr_prejuizo;
+  END pc_busca_preju_cc;
 
   PROCEDURE pc_consulta_preju_cc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                 ,pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
@@ -1575,14 +1598,15 @@ PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> C
 BEGIN
 
 DECLARE
-  -- Recupera os lançamentos que não são juros +60 ocorridos após 60 dias de atraso da conta
-  CURSOR cr_craplcm(pr_dt59datr IN crapris.dtinictr%TYPE) IS
-  SELECT lcm.vllanmto
-       , lcm.dtmvtolt
-       , his.indebcre
-       , his.dshistor
+  -- Recupera dados da CRAPLCM para compor saldo devedor até 59 dias e valores de juros +60
+  CURSOR cr_craplcm(pr_dt59datr IN crapris.dtinictr%TYPE
+	                , pr_dtprejuz IN tbcc_prejuizo.dtinclusao%TYPE) IS
+	SELECT * FROM (
+		WITH lancamentos AS (
+			SELECT lcm.dtmvtolt
        , his.cdhistor
-			 , his.progress_recid
+					 , his.indebcre
+					 , lcm.vllanmto
     FROM craplcm lcm
        , craphis his
    WHERE lcm.cdcooper   = pr_cdcooper
@@ -1604,7 +1628,65 @@ DECLARE
      AND his.cdhistor   NOT IN (2719)
      AND his.cdcooper   = lcm.cdcooper
      AND his.cdhistor   = lcm.cdhistor
-   ORDER BY lcm.progress_recid;
+				 AND lcm.cdcooper = pr_cdcooper
+				 AND lcm.nrdconta = pr_nrdconta
+				 AND lcm.dtmvtolt > pr_dt59datr
+				 AND (pr_dtlimite IS NULL OR lcm.dtmvtolt <= pr_dtlimite)
+			 ORDER BY lcm.progress_recid DESC
+		)
+		SELECT 'jur60_37' tipo
+				 , lct.dtmvtolt
+				 , sum(lct.vllanmto) valor
+			FROM lancamentos lct
+		 WHERE lct.cdhistor = 37
+		 GROUP BY lct.dtmvtolt
+		UNION
+		SELECT 'jur60_38' tipo
+				 , lct.dtmvtolt
+				 , SUM(lct.vllanmto) valor
+		 FROM lancamentos lct
+		WHERE lct.cdhistor = 38
+		GROUP BY lct.dtmvtolt
+		UNION
+		SELECT 'jur60_57' tipo
+				 , lct.dtmvtolt
+				 , SUM(lct.vllanmto) valor
+		 FROM lancamentos lct
+		WHERE lct.cdhistor = 57
+		GROUP BY lct.dtmvtolt
+		UNION
+		SELECT 'jur60_2718' tipo
+				 , lct.dtmvtolt
+				 , SUM(lct.vllanmto) valor
+		 FROM lancamentos lct
+		WHERE lct.cdhistor = 2718
+		GROUP BY lct.dtmvtolt
+		UNION
+		SELECT 'iof_prej' tipo
+				 , lct.dtmvtolt
+				 , SUM(lct.vllanmto) valor
+		 FROM lancamentos lct
+		WHERE lct.cdhistor = 2323
+			AND pr_dtprejuz IS NOT NULL
+			AND lct.dtmvtolt >= pr_dtprejuz
+		GROUP BY lct.dtmvtolt
+		UNION 
+		SELECT 'saldo_dia' tipo
+				 , lct.dtmvtolt
+				 , SUM(decode(lct.indebcre, 'C', lct.vllanmto, lct.vllanmto * -1)) valor
+		 FROM lancamentos lct
+		WHERE ((lct.cdhistor NOT IN (37,38,57,2718))
+			 OR (lct.cdhistor = 2323
+			AND (pr_dtprejuz IS NULL
+			 OR lct.dtmvtolt < pr_dtprejuz)))
+		GROUP BY lct.dtmvtolt
+	)
+	PIVOT
+	(
+	   SUM(valor)
+		 FOR tipo IN ('jur60_37' AS jur60_37, 'jur60_38' AS jur60_38, 'jur60_57' AS jur60_57, 'jur60_2718' AS jur60_2718, 'iof_prej' AS iof_prej, 'saldo_dia' AS saldo_dia)
+	)
+	ORDER BY dtmvtolt;
   rw_craplcm cr_craplcm%ROWTYPE;
 
   -- Busca o limite de crédito atual do cooperado e a flag de prejuízo da conta corrente
@@ -1780,75 +1862,68 @@ BEGIN
             pr_vlsld59d := rw_crapsda.vlsddisp - rw_crapass.vllimcre;
 
             -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
-            FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso) LOOP
-              IF rw_craplcm.cdhistor IN (37,2718) THEN
-                pr_vlju6037 := pr_vlju6037 + rw_craplcm.vllanmto;
-              ELSIF rw_craplcm.cdhistor = 38 THEN
-                pr_vlju6038 := pr_vlju6038 + rw_craplcm.vllanmto;
-              ELSIF rw_craplcm.cdhistor = 57 THEN
-                pr_vlju6057 := pr_vlju6057 + rw_craplcm.vllanmto;
-							ELSIF rw_craplcm.cdhistor = 2323 AND vr_dtprejuz IS NOT NULL
-							AND rw_craplcm.dtmvtolt >= vr_dtprejuz THEN
-							  vr_vliofprj := nvl(vr_vliofprj,0) + rw_craplcm.vllanmto;
-              ELSIF rw_craplcm.indebcre = 'D' THEN
-                pr_vlsld59d := pr_vlsld59d + rw_craplcm.vllanmto;
-              ELSE
+            FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz) LOOP
+              pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_37,0);
+							pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_2718,0); -- AJUSTAR *********
+							pr_vlju6038 := pr_vlju6038 + nvl(rw_craplcm.jur60_38,0);
+							pr_vlju6057 := pr_vlju6057 + nvl(rw_craplcm.jur60_57,0);
+							vr_vliofprj := vr_vliofprj + nvl(rw_craplcm.iof_prej,0);
+							
+							IF rw_craplcm.saldo_dia > 0 THEN -- Se fechou o dia com saldo positivo (crédito)
 								-- Paga IOF debitado após transferência para prejuízo (se houver)
 								IF vr_vliofprj > 0 THEN
-								  IF rw_craplcm.vllanmto >= vr_vliofprj THEN
-										rw_craplcm.vllanmto := rw_craplcm.vllanmto - vr_vliofprj;
+								  IF rw_craplcm.saldo_dia >= vr_vliofprj THEN
+										rw_craplcm.saldo_dia := rw_craplcm.saldo_dia - vr_vliofprj;
 										vr_vliofprj := 0;
 									ELSE
-										vr_vliofprj := vr_vliofprj - rw_craplcm.vllanmto;
-										rw_craplcm.vllanmto := 0;
+										vr_vliofprj := vr_vliofprj - rw_craplcm.saldo_dia;
+										rw_craplcm.saldo_dia := 0;
 									END IF;
 								END IF;
 
-                IF pr_vlju6037 > 0 THEN
+                IF rw_craplcm.saldo_dia > 0 AND pr_vlju6037 > 0 THEN
                   -- Amortiza os juros + 60 (Hist. 37 + Hist. 2718)
-                  IF rw_craplcm.vllanmto >= pr_vlju6037 THEN
-                    rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vlju6037;
+                  IF rw_craplcm.saldo_dia >= pr_vlju6037 THEN
+                    rw_craplcm.saldo_dia := rw_craplcm.saldo_dia - pr_vlju6037;
                     pr_vlju6037 := 0;
                   ELSE
-                    pr_vlju6037 := pr_vlju6037 - rw_craplcm.vllanmto;
-                    rw_craplcm.vllanmto := 0;
+                    pr_vlju6037 := pr_vlju6037 - rw_craplcm.saldo_dia;
+                    rw_craplcm.saldo_dia := 0;
                   END IF;
                 END IF;
 
-                IF rw_craplcm.vllanmto > 0 THEN
-                  IF pr_vlju6038 > 0 THEN
+                IF rw_craplcm.saldo_dia > 0 AND pr_vlju6038 > 0 THEN
                     -- Amortiza os juros + 60 (Hist. 38)
-                    IF rw_craplcm.vllanmto >= pr_vlju6038 THEN
-                      rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vlju6038;
+									IF rw_craplcm.saldo_dia >= pr_vlju6038 THEN
+										rw_craplcm.saldo_dia := rw_craplcm.saldo_dia - pr_vlju6038;
                       pr_vlju6038 := 0;
                     ELSE
-                      pr_vlju6038 := pr_vlju6038 - rw_craplcm.vllanmto;
-                      rw_craplcm.vllanmto := 0;
-                    END IF;
+										pr_vlju6038 := pr_vlju6038 - rw_craplcm.saldo_dia;
+										rw_craplcm.saldo_dia := 0;
                   END IF;
                 END IF;
 
-								IF rw_craplcm.vllanmto > 0 THEN
-                  IF pr_vlju6057 > 0 THEN
+								IF rw_craplcm.saldo_dia > 0 AND pr_vlju6057 > 0 THEN
                     -- Amortiza os juros + 60 (Hist. 57)
-                    IF rw_craplcm.vllanmto >= pr_vlju6057 THEN
-                      rw_craplcm.vllanmto := rw_craplcm.vllanmto - pr_vlju6057;
+									IF rw_craplcm.saldo_dia >= pr_vlju6057 THEN
+										rw_craplcm.saldo_dia := rw_craplcm.saldo_dia - pr_vlju6057;
                       pr_vlju6057 := 0;
                     ELSE
-                      pr_vlju6057 := pr_vlju6057 - rw_craplcm.vllanmto;
-                      rw_craplcm.vllanmto := 0;
-                    END IF;
+										pr_vlju6057 := pr_vlju6057 - rw_craplcm.saldo_dia;
+										rw_craplcm.saldo_dia := 0;
                   END IF;
                 END IF;
 
-                IF rw_craplcm.vllanmto > 0 THEN
+                IF rw_craplcm.saldo_dia > 0 THEN
                   -- Amortiza o saldo devedor até 59 dias
-                  IF rw_craplcm.vllanmto >= pr_vlsld59d THEN
+                  IF rw_craplcm.saldo_dia >= pr_vlsld59d THEN
                     pr_vlsld59d := 0;
                   ELSE
-                    pr_vlsld59d := pr_vlsld59d - rw_craplcm.vllanmto;
+                    pr_vlsld59d := pr_vlsld59d - rw_craplcm.saldo_dia;
                   END IF;
                 END IF;
+							ELSIF rw_craplcm.saldo_dia < 0 THEN -- Se fechou o dia com saldo negativo (débito)
+								pr_vlsld59d := pr_vlsld59d + abs(rw_craplcm.saldo_dia);
               END IF;
             END LOOP;
 
