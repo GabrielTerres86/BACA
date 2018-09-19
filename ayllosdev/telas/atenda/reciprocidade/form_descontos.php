@@ -89,6 +89,8 @@ if (!isset($idvinculacao)) {
 }
 $vldesconto_concedido_coo = getByTagName($dados->tags,"vldesconto_concedido_coo");
 $vldesconto_concedido_cee = getByTagName($dados->tags,"vldesconto_concedido_cee");
+$qtdaprov = getByTagName($dados->tags,"qtdaprov");
+$insitapr = getByTagName($dados->tags,"insitapr");
 
 $nrconven = 0;
 $convenios = getArrayByTagName($dados->tags,"convenios");
@@ -199,6 +201,8 @@ img,input[type="image"]{outline: none}.inteiro{text-align: left !important}
 </style>
 <input type="hidden" id="idcalculo_reciproci" value="<?php echo $idcalculo_reciproci ?>" />
 <input type="hidden" id="cddopcao" value="<?php echo $cddopcao; ?>" />
+<input type="hidden" id="qtdaprov" value="<?php echo $qtdaprov; ?>" />
+<input type="hidden" id="insitapr" value="<?php echo $insitapr; ?>" />
 <input type="hidden" id="imgEditar" value="<?php echo $UrlImagens; ?>icones/ico_editar.png" />
 <input type="hidden" id="imgExcluir" value="<?php echo $UrlImagens; ?>geral/excluir.gif" />
 <div align="center">
@@ -438,10 +442,15 @@ atualizacaoDesconto = false;
 
 <div id="divBotoes" style="margin:5px">
     <a href="#" id="btnContinuar" class="botao">Continuar</a>
-	<?php if ($insitceb == 3) { ?>
+	<?php
+	// Em aprovação e não existe aprovação do "meu" usuario (insitapr)
+	if ($insitceb == 3 && !$insitapr) {
+	?>
     <a href="#" id="btnAbrirAprovacao" class="botao" onclick="abrirAprovacao(true)">Aprovar</a>
 	<a href="#" id="btnAbrirRejeicao" class="botao" onclick="abrirRejeicao()">Rejeitar</a>
-	<?php } ?>
+	<?php
+	}
+	?>
     <a href="#" id="btnAprovacao" class="botao">Solicitar aprova&ccedil;&atilde;o</a>
     <a href="#" class="botao" onclick="consulta('<?php echo $cddopcao; ?>','','','<?php echo $cddopcao == 'C' || $cddopcao == 'A' ? 'false' : 'true'; ?>','','', 1);return false;">Tarifas instru&ccedil;&atilde;o</a>
 	<a href="#" id="btVoltar" class="botao" onclick="acessaOpcaoContratos(); return false;">Voltar</a>

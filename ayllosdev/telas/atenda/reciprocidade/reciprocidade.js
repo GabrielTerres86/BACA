@@ -252,7 +252,9 @@ function habilitaSetor(setorLogado) {
  }
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idrecipr, insitceb, convenios) {
+function selecionaConvenio(linha, idrecipr, insitceb, convenios) {
+    var insitapr = $(linha).find('#insitapr').val();
+
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
     $("#convenios", "#divConteudoOpcao").val(convenios);
     $("#insitceb", "#divConteudoOpcao").val(insitceb);
@@ -263,9 +265,10 @@ function selecionaConvenio(idrecipr, insitceb, convenios) {
     if (insitceb == '2') {
         $("#btnAlterarConvenio").hide();
     } else if (insitceb == '3') {
-        $("#btnAlterarConvenio").hide();
-        $('#btnAbrirAprovacao').show();
-        $('#btnAbrirRejeicao').show();
+        if (!parseInt(insitapr)) {
+            $('#btnAbrirAprovacao').show();
+            $('#btnAbrirRejeicao').show();
+        }
     } else {
         $("#btnAlterarConvenio").show();
     }
@@ -491,8 +494,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
 
     // Situacao nao permite alteracao da cobranca
     if (cddopcao == "A" &&
-       (insitceb == 3 ||  // Pendente
-        insitceb == 4 ||  // Bloqueada
+       (insitceb == 4 ||  // Bloqueada
         insitceb == 6)){  // Nao aprovada
         showError("error", "Situa&ccedil;&atilde;o da cobran&ccedil;a n&atilde;o permite altera&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return;
@@ -2793,7 +2795,7 @@ function validaDados(pedeSenha) {
     ativo = false;
 	for (var i=0, len=descontoConvenios.length; i < len; ++i) {
         // 'undefined' = novo / 0 = novo, 1 = ativo
-        if (typeof descontoConvenios[i].insitceb === 'undefined' || parseInt(descontoConvenios[i].insitceb) < 2) {
+        if (typeof descontoConvenios[i].insitceb === 'undefined' || descontoConvenios[i].insitceb == '1' || descontoConvenios[i].insitceb == '3') {
             ativo = true;
         }
 		if (descontoConvenios[i].flcooexp == 1 || descontoConvenios[i].flceeexp == 1) {
@@ -2822,6 +2824,7 @@ function validaDados(pedeSenha) {
 
     // define se houve alteracao nos campos do contrato
     var houveAlteracao = false;
+    var qtdaprov = parseInt($('#qtdaprov', '#divConteudoOpcao').val());
 
     if (idcalculo_reciproci) {
         $('#qtdboletos_liquidados,#valvolume_liquidacao,#qtdfloat,#vlaplicacoes,#vldeposito,#dtfimcontrato,#debito_reajuste_reciproci').each(function (key, elem){
@@ -2838,7 +2841,7 @@ function validaDados(pedeSenha) {
         pedeSenhaCoordenador(2,'incluiDesconto(true);','divRotina');
     }else{
         var msg = 'Confirma a atualiza&ccedil;&atilde;o do contrato?';
-        if (houveAlteracao || !idcalculo_reciproci || novosConvenios.length){
+        if (houveAlteracao || !idcalculo_reciproci || novosConvenios.length || (qtdaprov && insitceb == '3')){
             msg = 'Confirma a inclus&atilde;o do novo contrato?';
         }
         showConfirmacao(msg, 'Confirma&ccedil;&atilde;o - Ayllos', 'incluiDesconto('+houveAlteracao+')', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');

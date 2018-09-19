@@ -127,16 +127,20 @@ function exibeErro($msgErro) {
 					$dtfimvig = getByTagName($contratos[$i]->tags, 'dtfimvig');
 					$status = getByTagName($contratos[$i]->tags, 'status');
 					$dtfimdesc = getByTagName($contratos[$i]->tags, 'dtfimdesc');
+					$insitapr = getByTagName($contratos[$i]->tags, 'insitapr');
 
 					// Verificar se existe algum convenio ativo(insitceb == 1)
 					if ($insitceb == 1 && $convenio_ativo == 0 ){
 						$convenio_ativo = $insitceb;
 					}
-					$mtdClick = "selecionaConvenio( '".$idrecipr."', '".$insitceb."', '".$convenios."');";
+					$mtdClick = "selecionaConvenio(this, '".$idrecipr."', '".$insitceb."', '".$convenios."');";
 				?>
-					<tr class="dbclick" id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>" ondblclick="acessaOpcaoDescontos('<?php echo ($insitceb == 1) ? 'A' : 'C';?>');">
+					<tr class="dbclick" id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>" ondblclick="acessaOpcaoDescontos('<?php echo ($insitceb == 1 || $insitceb == 3) ? 'A' : 'C';?>');">
 						
-						<td><? echo $conveniosHtml; ?></td>
+						<td>
+							<input type="hidden" id="insitapr" value="<?php echo $insitapr; ?>">
+							<? echo $conveniosHtml; ?>
+						</td>
 						<td><? echo "$status ($idrecipr)"; ?></td>
 						<td><? echo $dtcadast; ?></td>
 						<td><? echo !empty($dtultaprov) ? $dtultaprov : '-'; ?></td>
