@@ -39,11 +39,11 @@
                                                         <input type="hidden" id="cdaprovador" value="" />
                                                         <input type="hidden" id="cdmetodo" value="I" />
 
-                                                        <label style="font-weight: normal;width:167px">Nome: </label>
+                                                        <label style="font-weight: normal;width:120px">Nome: </label>
                                                         <label id="lbnome" style="margin-left: 2px;">&nbsp;</label>
                                                         <hr style="background-color:#ddd; height:1px; clear:both">
-                                                        <label for="dsemail" style="width:167px">E-mail:</label>
-                                                        <input type="email" name="dsemail" id="dsemail" class="campo email" autocomplete="off" />
+                                                        <label for="dsemail" style="width:120px">E-mail:</label>
+                                                        <input type="email" name="dsemail" id="dsemail" class="campo email" autocomplete="off" style="width:240px" />
                                                         <br clear="both" />
                                                         <div id="divBotoes" style="margin-bottom: 10px;">
                                                             <a href="#" class="botao" id="btConfirmarEmail" onclick="PopupAprovadores.onClick_Confirmar();">Confirmar</a>

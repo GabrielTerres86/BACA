@@ -65,7 +65,7 @@ function exibeErroNew($msgErro) {
 						</div>
 
 						<div id="divBotoes" style="margin-bottom: 10px;">
-							<a href="#" class="botaoDesativado" id="btPopupRejeitar" onclick="rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $idrecipr; ?>)">Enviar</a>
+							<a href="#" class="botaoDesativado" id="btPopupRejeitar" onclick="return false;">Enviar</a>
 							<a href="#" class="botao" id="btVoltar">Voltar</a>
 						</div>
 
@@ -89,7 +89,7 @@ function exibeErroNew($msgErro) {
 
         var justific = $(this).val();
 
-        if (justific && justific.trim()) {
+        if (justific.trim()) {
             $('#btPopupRejeitar').trocaClass('botaoDesativado','botao').css('cursor','default').attr("onclick","rejeitarContrato(<?php echo $cdcooper; ?>,<?php echo $idrecipr; ?>);");
         } else {
             $('#btPopupRejeitar').trocaClass('botao','botaoDesativado').css('cursor','default').attr("onclick","return false;");
@@ -102,8 +102,8 @@ function exibeErroNew($msgErro) {
 
         var justific = cJustificativa.val();
 
-        if (justific && justific.trim() == '') {
-            showError("error", "Campo justificativa n&atilde;o pode estar vazio.", "Alerta - Ayllos", "");
+        if (justific.trim() == '') {
+            showError("error", "Campo justificativa n&atilde;o pode estar vazio.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             return;
         }
 
