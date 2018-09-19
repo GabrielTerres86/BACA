@@ -995,3 +995,15 @@ function manterRotina(cddopcao) {
 function confirmaOpcaoA() {
     showConfirmacao('Confirma altera&ccedil;&otilde;es?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'AX\');', '', 'sim.gif', 'nao.gif');
 }
+
+function fechaRotinaValidaAlcada($div, cdalcada) {
+    fechaRotina($div);
+
+    // checkbox atual
+    var $chk = $('[name=chkalcada]#alcada_'+cdalcada);
+    var count = parseInt($chk.data('count'));
+
+    // atualiza contador de registros para alçada
+    $chk.prop('checked', !!count);
+
+}

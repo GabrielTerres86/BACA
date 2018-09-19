@@ -35,7 +35,7 @@ $flgregra = (isset($_POST['flgregra'])) ? (int) $_POST['flgregra'] : false;
 								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Aprovadores</td>
 								
 								<?php if ($flgregra) { ?>
-								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divRotina')); $('[name=chkalcada]#alcada_<?php echo $cdalcada; ?>').prop('checked', false); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotinaValidaAlcada($('#divRotina'), '<?php echo $cdalcada; ?>'); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<?php } else { ?>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divRotina')); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<?php } ?>
@@ -72,9 +72,9 @@ $flgregra = (isset($_POST['flgregra'])) ? (int) $_POST['flgregra'] : false;
 
 										<div id="divBotoes" style="margin-bottom: 10px;">
 											<?php if ($flgregra) { ?>
-											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina'));$('[name=chkalcada]#alcada_<?php echo $cdalcada; ?>').prop('checked', false)">Voltar</a>
+											<a href="#" class="botao" id="btVoltar" onClick="fechaRotinaValidaAlcada($('#divRotina'), '<?php echo $cdalcada; ?>'); return false;">Voltar</a>
 											<?php } else { ?>
-											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina'));">Voltar</a>
+											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina')); return false;">Voltar</a>
 											<?php } ?>
 										</div>
 									</div>
