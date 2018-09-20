@@ -89,7 +89,7 @@
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="620" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table id="tblTela" width="650" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
 																		<!-- INCLUDE DA TELA DE PESQUISA -->
@@ -105,15 +105,28 @@
 
 																			<div id="divFiltro"></div>
 
+																			<form id="frmCons" name="frmCons" class="formulario" onSubmit="return false;" style="display:block">
+																					<div id="divDados" style="margin-top: 20px;"></div>    
+																			</form>
+																			
 																			<div id="divTabela"></div>
 																			<div id="divRotina"></div>
 																			<div id="divUsoGenerico"></div>
-																					
 																			<div id="divBotoes" style="display:none;padding-bottom: 15px;">
 																			
 																				<a href="#" class="botao" id="btVoltar">Voltar</a>																																							
 																				<a href="#" class="botao" id="btProsseguir" >Prosseguir</a>
+																				<!--
+																				<a href="#" class="botao" id="btConsultar" >Consultar</a>																																						
+																				<a href="#" class="botao" id="btAlterar" >Alterar</a>																																								
+																				<a href="#" class="botao" id="btBaixar" >Baixar</a>
+																				-->
+																				<a href="#" class="botao" id="btRetArq" >Retornar arquivo</a>
+																				<a href="#" class="botao" id="btGerArq" >Gerar arquivo</a>																																						
+																				<a href="#" class="botao" id="btInclManuGravame" >Inclusão manual do gravame</a>
 																				<a href="#" class="botao" id="btConcluir" >Concluir</a>
+																				<a href="#" class="botao" id="btConsultar" >Consultar</a>																				
+																				<a href="#" class="botao" id="btImprimir" >Imprimir</a>
 																				
 																			</div>
 

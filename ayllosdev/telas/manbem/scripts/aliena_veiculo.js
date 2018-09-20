@@ -97,7 +97,7 @@ function validaCamposAditiv(){
 	if(invalidos>0)
 	{
 		$("#msgErro").show();
-		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Ayllos','');
+		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Aimaro','');
 		return false;
 	}
 	else{
@@ -111,8 +111,17 @@ function bloqueiaCamposVeiculoZero(valor)
 	var renavam =$('#nrrenava');
 	var ufPlaca =$('#ufdplaca');
 	var nrPlaca =$('#nrdplaca');
+	
 	if(valor==="ZERO KM") 
 	{
+		renavam.addClass("campoTelaSemBorda");
+		ufPlaca.addClass("campoTelaSemBorda");
+		nrPlaca.addClass("campoTelaSemBorda");
+		
+		renavam.removeClass("campo");
+		ufPlaca.removeClass("campo");
+		nrPlaca.removeClass("campo");
+		
 		renavam.val("").prop( "disabled", true );
 		ufPlaca.val(null);
 		ufPlaca.prop( "disabled", true );
@@ -122,9 +131,18 @@ function bloqueiaCamposVeiculoZero(valor)
 		removeErroCampo(nrPlaca);
 	}
 	else{
+		
 		renavam.prop( "disabled", false );
 		ufPlaca.prop( "disabled", false );
 		nrPlaca.prop( "disabled", false );
+		
+		renavam.addClass("campo");
+		ufPlaca.addClass("campo");
+		nrPlaca.addClass("campo");
+		
+		renavam.removeClass("campoTelaSemBorda");
+		ufPlaca.removeClass("campoTelaSemBorda");
+		nrPlaca.removeClass("campoTelaSemBorda");		
 	}
 }
 
@@ -168,7 +186,7 @@ function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem,
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 			},
 			success: function(response) {
 				try {
@@ -177,7 +195,7 @@ function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem,
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 				}
 			}
 		});
@@ -284,7 +302,7 @@ function SubstituiBem(){
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 			},
 			success: function(response) {
 				try {
@@ -292,7 +310,7 @@ function SubstituiBem(){
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 				}
 			}
 		});
@@ -331,7 +349,7 @@ function busca_uf_pa(nrdconta) {
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {			
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
         },
         success: function(response) {
             eval(response);

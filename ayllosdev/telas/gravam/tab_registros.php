@@ -240,9 +240,19 @@
 </form>
 
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
-	<a href="#" class="botao" id="btVoltar" onclick="controlaVoltar('2'); return false;">Voltar</a>
+	<a href="#" class="botao" id="btVoltar" 		onclick="controlaVoltar('5'); 		return false;">Voltar</a>
+	<a href="#" class="botao" id="btIncluir" 		onclick="controlaAtleraBaixa('M'); 	return false;">Incluir</a>	
+	<a href="#" class="botao" id="btAlterar"	 	onclick="controlaAtleraBaixa('A'); 	return false;">Alterar</a>	
+	<a href="#" class="botao" id="btBaixar" 		onclick="controlaAtleraBaixa('B'); 	return false;">Baixar</a>
+	<a href="#" class="botao" id="btCancelar" 		onclick="controlaAtleraBaixa('X'); 	return false;">Cancelamento</a>	
+	
+	<a href="#" class="botao" id="btLibJudicial" 	onclick="controlaAtleraBaixa('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
+	<a href="#" class="botao" id="btBlocJudicial" 	onclick="controlaAtleraBaixa('Q'); 	return false;">Bloqueio Judicial</a>																																			
+												
   <a href="#" class="botao" id="btConcluir">Concluir</a>
-	<!-- <a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>-->
+	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>
+	<!--<a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>
+	-->
 </div>
 
 <script type="text/javascript">
@@ -273,5 +283,6 @@
 
   formataFormularioBens();
   formataTabelaBens();
+
 
 </script>

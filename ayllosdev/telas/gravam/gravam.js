@@ -16,9 +16,16 @@
 						  as opções 'M', 'A' e 'B'. Projeto 369 (Lombardi).
 						  
              11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+			 
+			 12/09/2018 - Unificação das opções 'C', 'A', 'B' e 'M'.
+						  Unificação das opções 'L' e 'J'.
+						  Unificação das opções 'G' e 'R'.(Diogo - Envolti)
+						  
+			 12/09/2018 - Unificação das opções 'H' e 'I'. (Thaise - Envolti)
 ************************************************************************/
 
 var rating = new Object();
+var opcao, opcaoButton = "C";
 
 $(document).ready(function() {	
 	
@@ -33,10 +40,14 @@ function estadoInicial() {
 
     formataCabecalho();
 
+    //opcao, opcaoButton = "C";
+	$('#tblTela').css({ 'width': '650' });
     $('#cddopcao', '#frmCab').habilitaCampo().focus().val('C');
     $('#divBotoes').css({ 'display': 'none' });
+	$('#divBotoesBens').css({ 'display': 'none' });
     $('#frmFiltro').css('display', 'none');
     $('#divTabela').html('').css('display','none');
+	$('#frmCons').css({'display':'none'}); 
        	
 }
 
@@ -44,7 +55,7 @@ function formataCabecalho() {
 
     // rotulo
     $('label[for="cddopcao"]', "#frmCab").addClass("rotulo").css({ "width": "45px" });
-
+	displayNoneButton();
     // campo
     $("#cddopcao", "#frmCab").css("width", "530px").habilitaCampo();
 
@@ -92,6 +103,7 @@ function formataFiltro() {
 
     // Desabilitar a opção
     $("#cddopcao", "#frmCab").desabilitaCampo();
+	$('#btImprimir', '#divBotoes').css({ 'display': 'none' });
 
     // Seta os valores caso tenha vindo do CRM
     if ($("#crm_inacesso","#frmCab").val() == 1) {
@@ -128,11 +140,12 @@ function formataFiltro() {
     // campo
     $('#tpcancel', '#divCancelamento').css({ 'width': '100px', 'text-align': 'left' }).habilitaCampo();
 
+    
     $('#frmFiltro').css({ 'display': 'block' });
     $('#divBotoes').css({ 'display': 'block' });
     $('#btConcluir', '#divBotoes').css({ 'display': 'none' });
     $('#btProsseguir', '#divBotoes').css({ 'display': 'inline' });
-    $('#btVoltar', '#divBotoes').css({ 'display': 'inline' });
+	
     
     highlightObjFocus($('#frmFiltro'));
     
@@ -198,7 +211,8 @@ function formataFiltro() {
         });
     }
 
-    if ($('#cddopcao', '#frmCab').val() == "X") {
+    //if ($('#cddopcao', '#frmCab').val() == "X") {
+	if (opcaoButton == "X") {
 
         $('#divCancelamento').css({ 'display': 'block' });
         $('#fsetFiltroCancelamento').css({ 'display': 'block' });
@@ -260,10 +274,17 @@ function formataFiltro() {
     //Define ação para CLICK no botão de Concluir
     $("#btProsseguir", "#divBotoes").unbind('click').bind('click', function () {
 
+		mostrabutton();
+		buscaBens(1, 30);
+		});
+    /*
+    $("#btAlterar", "#divBotoes").unbind('click').bind('click', function () {
         buscaBens(1, 30);
 
     });
 
+    $("#btBaixar", "#divBotoes").unbind('click').bind('click', function () {buscaBens(1, 30);});
+    */
     //Define ação para CLICK no botão de Voltar
     $("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
 
@@ -279,6 +300,57 @@ function formataFiltro() {
 
 }
 
+function buscaContratosGravames(nriniseq, nrregist) {
+
+    var cddopcao = $("#cddopcao", "#frmCab").val();
+    var nrdconta = normalizaNumero($("#nrdconta", "#frmFiltro").val());
+
+    showMsgAguardo("Aguarde ...");
+
+    //Requisição para montar o form correspondente a opção escolhida
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/gravam/busca_contratos_gravames.php",
+        data: {
+            cddopcao: cddopcao,
+            nrdconta: nrdconta,
+            nrregist: nrregist,
+            nriniseq: nriniseq,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "estadoInicial();");
+        },
+        success: function (response) {
+
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try {
+
+                    $('#divRotina').html(response);
+                    return false;
+                } catch (error) {
+
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                }
+            } else {
+                try {
+
+                    eval(response);
+                } catch (error) {
+
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
+                }
+            }
+        }
+
+    });
+
+    return false;
+
+}
+
 function formataFiltroImpressao() {
 
     // Desabilitar a opção
@@ -290,24 +362,40 @@ function formataFiltroImpressao() {
 
       #########################################*/
 
+    
     //rotulo
-    $('label[for="cdcooper"]', "#divFiltroImpressao").addClass("rotulo").css({ "width": "100px" });
-    $('label[for="tparquiv"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ "width": "110px" });
-    $('label[for="nrseqlot"]', "#divFiltroImpressao").addClass("rotulo").css({ "width": "100px" });
-    $('label[for="dtrefere"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ "width": "160px" });
+    $('label[for="cdcooper"]', "#divFiltroImpressao").addClass("rotulo");
+	$('label[for="cdagenci"]', "#divFiltroImpressao").addClass("rotulo-linha");
+	$('label[for="nrseqlot"]', "#divFiltroImpressao").addClass("rotulo-linha");
+    $('label[for="tparquiv"]', "#divFiltroImpressao").addClass("rotulo").css({ 'width': '73px' });
+	$('label[for="flcritic"]', "#divFiltroImpressao").css({ 'padding-left': '50px' });
+	$('label[for="nrdconta"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '82px' });
+	$('label[for="nrctrpro"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '64px' });
+	$('label[for="dschassi"]', '#divFiltroImpressao').addClass("rotulo").css({ 'width': '73px' });
+    $('label[for="dtrefere"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '83px' });
+	$('label[for="dtrefate"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '83px' });
 
     // campo
     $('#cdcooper', '#divFiltroImpressao').css({ 'width': '150px', 'text-align': 'left' }).habilitaCampo();
+	$('#cdagenci', '#divFiltroImpressao').css({ 'width': '50px', 'text-align': 'center' }).addClass('inteiro').attr('maxlength', '3').habilitaCampo();
+	$('#nrseqlot', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).attr('maxlength', '7').habilitaCampo().addClass('inteiro');
     $('#tparquiv', '#divFiltroImpressao').css({ 'width': '150px', 'text-align': 'left' }).habilitaCampo();
-    $('#nrseqlot', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).attr('maxlength', '7').habilitaCampo().addClass('inteiro');
+	$('#flcritic', '#divFiltroImpressao').habilitaCampo();
+	
+	$("#nrdconta", "#divFiltroImpressao").css({ 'width': '100px', 'text-align': 'right' }).addClass('conta').attr('maxlength', '10').habilitaCampo();
+	$('#nrctrpro', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).attr('maxlength', '7').addClass('inteiro').habilitaCampo();
+	$('#dschassi', '#divFiltroImpressao').attr('maxlength', '17').css({ 'width': '150px', 'text-transform': 'uppercase' }).habilitaCampo();
     $('#dtrefere', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).habilitaCampo().addClass('data');
+	$('#dtrefate', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).habilitaCampo().addClass('data');
 
     
     $('#frmFiltro').css({ 'display': 'block' });
     $('#divBotoes').css({ 'display': 'block' });
-    $('#btConcluir', '#divBotoes').css({ 'display': 'inline' });
+    $('#btConcluir', '#divBotoes').css({ 'display': 'none' });
+	$('#btConsultar', '#divBotoes').css({ 'display': 'inline' });
     $('#btProsseguir', '#divBotoes').css({ 'display': 'none' });
     $('#btVoltar', '#divBotoes').css({ 'display': 'inline' });
+	$('#btImprimir', '#divBotoes').css({ 'display': 'inline' });
     
     highlightObjFocus($('#frmFiltro'));
     
@@ -374,10 +462,48 @@ function formataFiltroImpressao() {
 
     });
 
+	//Remover caracteres especiais
+	$('#dschassi', '#divFiltroImpressao').unbind('keyup').bind('keyup', function(e){
+			var re = /[^\w\s]/gi;
+			
+			if(re.test($('#dschassi', '#divFiltroImpressao').val())){
+				$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
+			}			
+			
+			re = /[\Q\q\I\i\O\o\_]/g;
+			
+			if(re.test($('#dschassi', '#divFiltroImpressao').val())){
+				$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
+			}			
+			
+			re = / /g;
+			
+			if(re.test($('#dschassi', '#divFiltroImpressao').val())){
+				$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(re, ''));
+			}						
+		});
+		
+	$('#dschassi', '#divFiltroImpressao').unbind('blur').bind('blur', function(){
+		$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(/[^\w\s]/gi, ''));
+		$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
+		$('#dschassi', '#divFiltroImpressao').val($('#dschassi', '#divFiltroImpressao').val().replace(/ /g,''));			
+	});
+		
+	
     //Define ação para CLICK no botão de Concluir
-    $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
+    $("#btImprimir", "#divBotoes").unbind('click').bind('click', function () {
 
-        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorio670();', 'formataFiltroImpressao();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorio670("PDF");', 'formataFiltroImpressao();', 'sim.gif', 'nao.gif');
+
+        return false;
+
+    });
+	
+	//Define ação para CLICK no botão de Concluir
+    $("#btConsultar", "#divBotoes").unbind('click').bind('click', function () {
+
+        //showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorioHistorico();', 'formataFiltroHistorico();', 'sim.gif', 'nao.gif');
+		showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorio670("TELA");', 'formataFiltroImpressao();', 'sim.gif', 'nao.gif');
 
         return false;
 
@@ -422,9 +548,19 @@ function formataFiltroArquivo() {
 
     $('#frmFiltro').css({ 'display': 'block' });
     $('#divBotoes').css({ 'display': 'block' });
-    $('#btConcluir', '#divBotoes').css({ 'display': 'inline' });
+    //$('#btConcluir', '#divBotoes').css({ 'display': 'inline' });
+	$('#btConcluir', '#divBotoes').css({ 'display': 'none' });
     $('#btProsseguir', '#divBotoes').css({ 'display': 'none' });
     $('#btVoltar', '#divBotoes').css({ 'display': 'inline' });
+    $('#btImprimir', '#divBotoes').css({ 'display': 'none' });
+   
+	if ($('#cddopcao', '#frmCab').val() == "G") {
+		$('#btRetArq', '#divBotoes').css({ 'display': 'inline' });
+		$('#btGerArq', '#divBotoes').css({ 'display': 'inline' });
+	} else	{
+		$('#btRetArq', '#divBotoes').css({ 'display': 'none' });
+		$('#btGerArq', '#divBotoes').css({ 'display': 'none' });		
+	}
    
     highlightObjFocus($('#frmFiltro'));
         
@@ -464,10 +600,15 @@ function formataFiltroArquivo() {
     if ($('#cddopcao', '#frmCab').val() == 'G') {
     
         //Define ação para CLICK no botão de Concluir
-        $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
+        //$("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
 
+        $("#btGerArq", "#divBotoes").unbind('click').bind('click', function () {
             showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'geraArquivo();', 'formataFiltroArquivo();', 'sim.gif', 'nao.gif');
+            return false;
+        });
 
+		$("#btRetArq", "#divBotoes").unbind('click').bind('click', function () {
+            showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'solicitaProcessamentoArquivoRetorno();', 'formataFiltroArquivo();', 'sim.gif', 'nao.gif');
             return false;
 
         });
@@ -475,8 +616,8 @@ function formataFiltroArquivo() {
     } else {
 
         //Define ação para CLICK no botão de Concluir
-        $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
-
+		//$("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
+        $("#btRetArq", "#divBotoes").unbind('click').bind('click', function () {
             showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'solicitaProcessamentoArquivoRetorno();', 'formataFiltroArquivo();', 'sim.gif', 'nao.gif');
 
             return false;
@@ -494,7 +635,6 @@ function formataFiltroArquivo() {
 
     });
 
-    
     $("#cdcooper", "#divFiltroArq").focus();
 
 
@@ -585,6 +725,8 @@ function formataFiltroHistorico() {
 
     });
 
+
+	
     /*---------------------*/
     /*  CONTROLE Contratos */
     /*---------------------*/
@@ -984,7 +1126,12 @@ function formataFormularioBens() {
 
 function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctrpro, tpinclus, permisit) {
 
-    if ($('#cddopcao', '#frmCab').val() == 'A'){
+    //if ($('#cddopcao', '#frmCab').val() == 'C'){
+		
+	
+	//if ($('#cddopcao', '#frmCab').val() == 'C'){
+	mostrabutton();
+	if (opcaoButton == 'A'){	
         
         /* alteracoes apenas quando for situacao 
            For contrato efetivado ou
@@ -1019,14 +1166,14 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 				else
 					funcao = 'verificaSituacaoGravames(' + idseqbem + ',' + tpctrpro + ');';
 				
-                showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', funcao, '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+				showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', funcao, 'controlaAtleraBaixa("A");', 'sim.gif', 'nao.gif');
 
                 return false;
 
             });
 
-
-    } else if ($('#cddopcao', '#frmCab').val() == 'B') {
+	} else if (opcaoButton == 'B'){
+	//} else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
         $('#dsjustif', '#divJustificativa').habilitaCampo().focus();
         $('#dsjustif', '#frmBens').val(dsjustif);
@@ -1034,18 +1181,20 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'baixaManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'baixaManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 
+		});
             return false;
 
-        });
-
-    } else if ($('#cddopcao', '#frmCab').val() == 'C') {
-
+	} else if (opcaoButton == 'C'){
+	//} else if ($('#cddopcao', '#frmCab').val() == 'C') {
+		mostrabutton();
         $('#dsjustif', '#frmBens').val(dsjustif);
         $('#btVoltar', '#divBotoesBens').focus();
 
-    } else if ($('#cddopcao', '#frmCab').val() == 'X') {
+		return false;
+	} else if (opcaoButton == 'X'){
+	//} else if ($('#cddopcao', '#frmCab').val() == 'X') {
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1056,45 +1205,51 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
         });
 
-    } else if ($('#cddopcao', '#frmCab').val() == 'J') {
+    }else if (opcaoButton == 'M') {
+
+        $('#dtmvttel', '#frmBens').habilitaCampo().focus();
+		$('#nrgravam', '#frmBens').habilitaCampo();
+		$('#dsjustif', '#frmBens').habilitaCampo();
 
         $('#dsjustif', '#frmBens').val(dsjustif);
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
-
-            showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
-
+			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'controlaAtleraBaixa("M");', 'sim.gif', 'nao.gif');
             return false;
-
         });
 
-    } else if ($('#cddopcao', '#frmCab').val() == 'L') {
+	} else if (opcaoButton == 'Q') {
+    //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
+
 
         $('#dsjustif', '#frmBens').val(dsjustif);
+//		$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
 
         //Define ação para CLICK no botão de Concluir
-        $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
+        //$("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
-
+            //showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', 'controlaAtleraBaixa("J");', 'sim.gif', 'nao.gif');
             return false;
 
-        });
+        //});
 
-    }else if ($('#cddopcao', '#frmCab').val() == 'M') {
+    } else if (opcaoButton == 'L') {
+    //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
 
         $('#dsjustif', '#frmBens').val(dsjustif);
+	//	$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
        
         //Define ação para CLICK no botão de Concluir
-        $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
+        //$("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'divRotina\');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            //showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', 'controlaAtleraBaixa("J");', 'sim.gif', 'nao.gif');
 
             return false;
 
-        });
-
+        //});
 
     } else if ($('#cddopcao', '#frmCab').val() == 'S') {
 
@@ -1313,7 +1468,6 @@ function selecionaBens(tr) {
 	$('#situacao_anterior', '#divBens').val($('#cdsitgrv', tr).val());
 	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
 
-    
     controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
     
 }
@@ -1378,9 +1532,23 @@ function controlaPesquisaAgencia() {
     return false;
 
 }
+function controlaAtleraBaixa(opcao) {
+	
+	opcaoButton = opcao;
+	
+	$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });
+	$('#btAlterar', '#divBotoesBens').css({ 'display': 'none' });
+	$('#btBaixar', '#divBotoesBens').css({ 'display': 'none' });
 
+
+	controlaCampos($('#possuictr').val(), $('#cdsitgrv').val(), $('#idseqbem').val(), $('#dsjustif').val(), $('#tpjustif').val(), $('#tpctrpro').val(), $('#tpinclus').val(), $('#permisit', '#divBens').val());			
+	return false;
+
+}
 function controlaVoltar(ope,tpconsul) {
     
+    var opbt = opcaoButton
+	opcaoButton = $("#cddopcao", "#frmCab").val();
     switch (ope) {
 
         case '1':
@@ -1419,6 +1587,28 @@ function controlaVoltar(ope,tpconsul) {
 
         break;
 
+        case '5':
+			if (opbt == 'C' || opbt == 'J' || opbt == 'Q' || opbt == 'L') {				
+				$('input[type="text"]', '#frmFiltro').limpaFormulario();
+				$('#divTabela').html('').css('display', 'none');
+				formataFiltro();
+			}else {
+				$('#dschassi', '#frmBens').desabilitaCampo();
+				$('#ufdplaca', '#frmBens').desabilitaCampo();
+				$('#nrdplaca', '#frmBens').desabilitaCampo();
+				$('#nrrenava', '#frmBens').desabilitaCampo();
+				$('#dtmvttel', '#frmBens').desabilitaCampo();
+				$('#nrgravam', '#frmBens').desabilitaCampo();
+				
+				
+				$('#dsjustif', '#divJustificativa').desabilitaCampo();
+				dtmvttel
+				opcaoButton = 'C';
+				controlaAtleraBaixa(opcaoButton);
+				return false;
+			}
+        break;
+
     }
 
     return false;
@@ -1428,6 +1618,7 @@ function controlaVoltar(ope,tpconsul) {
 function montaFormFiltro() {
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
+	opcaoButton = $("#cddopcao", "#frmCab").val();
 
     showMsgAguardo("Aguarde ...");
 
@@ -1493,10 +1684,17 @@ function gerarRelatorioHistorico() {
     //Desabilita todos os campos do form
     $('input,select', '#frmFiltro').desabilitaCampo();
 
-    var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
-    var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
     var cdcooper = $('#cdcooper', '#frmFiltro').val();
+    var tparquiv = $('#tparquiv', '#frmFiltro').val();
+    var nrseqlot = $('#nrseqlot', '#frmFiltro').val();
+    var dtrefere = $('#dtrefere', '#frmFiltro').val();
     var cddopcao = $('#cddopcao', '#frmCab').val();
+	var dtrefate = $('#dtrefate', '#frmFiltro').val();
+	var cdagenci = $('#cdagenci', '#frmFiltro').val();
+	var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+	var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
+	var flcritic = $('#flcritic').is(':checked') ? 'S' : 'N';
+	var dschassi = $('#dschassi', '#frmFiltro').val();
 
     $('input,select', '#frmFiltro').removeClass('campoErro');
 
@@ -1508,68 +1706,32 @@ function gerarRelatorioHistorico() {
         type: 'POST',
         url: UrlSite + 'telas/gravam/gerar_relatorio_historico.php',
         data: {
-            nrdconta: nrdconta,
-            nrctrpro: nrctrpro,
-            cdcooper: cdcooper,
-            cddopcao: cddopcao,
-            redirect: 'html_ajax' // Tipo de retorno do ajax
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
-        },
-        success: function (response) {
-            hideMsgAguardo();
-            try {
-                eval(response);
-            } catch (error) {
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
-            }
-
-        }
-    });
-
-    return false;
-}
-
-function gerarRelatorio670() {
-
-    //Desabilita todos os campos do form
-    $('input,select', '#frmFiltro').desabilitaCampo();
-
-    var cdcooper = $('#cdcooper', '#frmFiltro').val();
-    var tparquiv = $('#tparquiv', '#frmFiltro').val();
-    var nrseqlot = $('#nrseqlot', '#frmFiltro').val();
-    var dtrefere = $('#dtrefere', '#frmFiltro').val();
-    var cddopcao = $('#cddopcao', '#frmCab').val();
-
-    $('input,select', '#frmFiltro').removeClass('campoErro');
-
-    //Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, solicitando relatório...');
-
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: 'POST',
-        url: UrlSite + 'telas/gravam/gerar_relatorio_670.php',
-        data: {
             tparquiv: tparquiv,
             cdcooper: cdcooper,
-            cddopcao: cddopcao,
+            cddopcao: 'I',
             dtrefere: dtrefere,
             nrseqlot: nrseqlot,
+			dtrefate: dtrefate,
+			cdagenci: cdagenci,
+			nrdconta: nrdconta,
+			nrctrpro: nrctrpro,
+			flcritic: flcritic,
+			dschassi: dschassi,
+			tipsaida: tipsaida,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
+            //showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
         },
         success: function (response) {
             hideMsgAguardo();
             try {
                 eval(response);
             } catch (error) {
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+                //showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
             }
 
         }
@@ -2209,4 +2371,259 @@ function buscaBens(nriniseq, nrregist) {
 
 }
 
+function displayNoneButton() {
+	$('#btConcluir', '#divBotoes').css({ 'display': 'none' });
+    $('#btProsseguir', '#divBotoes').css({ 'display': 'none' });
+	$('#btImprimir', '#divBotoesBens').css({ 'display': 'none' });
+		
+	
+	$('#btRetArq', '#divBotoes').css({ 'display': 'none' });
+	$('#btGerArq', '#divBotoes').css({ 'display': 'none' });		
+	
+	$('#btLibJudicial', '#divBotoes').css({ 'display': 'none' });
+	$('#btBlocJudicial', '#divBotoes').css({ 'display': 'none' });
+	$('#btInclManuGravame', '#divBotoes').css({ 'display': 'none' });
+	
+	
+		
+}
+function mostrabutton() {
+	
+	
+	$('#btConcluir','#divBotoesBens').css({ 'display': 'none' });
+	$('#btAlterar','#divBotoesBens').css({ 'display': 'none' });
+	$('#btBaixar', '#divBotoesBens').css({ 'display': 'none' });
+	$('#btCancelar', '#divBotoesBens').css({ 'display': 'none' });
+	$('#btIncluir', '#divBotoesBens').css({ 'display': 'none' });
+		
+	$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'none' });
+	$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'none' });
+	
+	if (opcaoButton == "C") {
+		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });
+		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline' });
+		$('#btCancelar', '#divBotoesBens').css({ 'display': 'inline' });
+		$('#btIncluir', '#divBotoesBens').css({ 'display': 'inline' });
+	}else if (opcaoButton == "J") {	
+		$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'inline' });
+		$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'inline' });
+	}else if (opcaoButton == "M" || opcaoButton == "A" || opcaoButton == "B") {	
+		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });    
+	}
+}
 
+
+function gerarRelatorio670(tipsaida) {
+
+    //Desabilita todos os campos do form
+    $('input,select', '#frmFiltro').desabilitaCampo();
+
+	var cdcooper = $('#cdcooper', '#frmFiltro').val();
+    var tparquiv = $('#tparquiv', '#frmFiltro').val();
+    var nrseqlot = normalizaNumero($('#nrseqlot', '#frmFiltro').val());
+    var dtrefere = $('#dtrefere', '#frmFiltro').val();
+    var cddopcao = $('#cddopcao', '#frmCab').val();
+	var dtrefate = $('#dtrefate', '#frmFiltro').val();
+	var cdagenci = normalizaNumero($('#cdagenci', '#frmFiltro').val());
+	var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+	var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
+	var flcritic = $('#flcritic').is(':checked') ? 'S' : 'N';
+	var dschassi = $('#dschassi', '#frmFiltro').val();
+	
+	
+    $('input,select', '#frmFiltro').removeClass('campoErro');
+	
+	Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi);
+
+    return false;
+}
+
+function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi) {
+    //Mostra mensagem de aguardo
+    showMsgAguardo('Aguarde, solicitando relatório...');
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'telas/gravam/gerar_relatorio_670.php',
+        data: {			
+            tparquiv: tparquiv,
+            cdcooper: cdcooper,
+            cddopcao: cddopcao,
+            dtrefere: dtrefere,
+            nrseqlot: nrseqlot,
+			dtrefate: dtrefate,
+			cdagenci: cdagenci,
+			nrdconta: nrdconta,
+			nrctrpro: nrctrpro,
+			flcritic: flcritic,
+			dschassi: dschassi,
+			tipsaida: tipsaida,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
+            //showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
+        },
+        success: function (response) {	
+            hideMsgAguardo();
+			if (response.indexOf('showError("error"') != -1) {
+				eval(response);
+			} else {
+				try {
+					if(tipsaida == 'PDF'){
+						eval(response);
+					} else {
+						$('input,select','#frmCab').removeClass('campoErro');
+						$('#frmCons').css({'display':'block'}); 
+						$("#divDados").html(response);
+						$('#btProsseguir' ,'#divBotoes').hide();
+						formatarTabelaRel670('M');
+						
+						hideMsgAguardo();
+					}
+				} catch (error) {
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");            
+					//showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
+				}
+			}
+        }
+    });
+
+    return false;
+}
+
+function formatarTabelaRel670(tip){
+	$('#tblTela').css({ 'width': '1000' });
+	$('#fsetFiltro').css({ 'padding': '0 10px 10px 195px' })
+	var divRegistro = $('div.divRegistros', '#frmCons');
+	divRegistro.css({'height':'85px','padding-bottom':'1px'}); // 370px
+	
+	var tabela      = $('table', divRegistro );
+	var linha       = $('table > tbody > tr', divRegistro );
+
+	var ordemInicial = new Array();
+
+	var arrayLargura = new Array();
+	var arrayAlinha = new Array();
+	
+	arrayLargura[0] = '31px';  	//Coop
+	arrayLargura[1] = '30px';	//PA
+	arrayLargura[2] = '101px';	//Operação
+	arrayLargura[3] = '50px';	//Lote
+	arrayLargura[4] = '65px';	//Conta/DV
+	arrayLargura[5] = '65px';	//Contrato
+	arrayLargura[6] = '130px';	//Chassi
+	arrayLargura[7] = '143px';	//Bem
+	arrayLargura[8] = '65px';	//Data Envio
+	arrayLargura[9] = '65px';	//Data Ret
+	arrayLargura[10] = '';		//Situação
+	arrayLargura[11] = '14px'; // Fixo para definir o tamanho da coluna do campo da ordenação inicial que fica sobre a barra de rolagem
+	
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'center';
+    arrayAlinha[2] = 'center';
+    arrayAlinha[3] = 'center';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'center';
+    arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'center';
+	arrayAlinha[8] = 'center';
+	arrayAlinha[9] = 'center';
+	arrayAlinha[10] = 'left';
+	tabela.formataTabelaRel670( ordemInicial, arrayLargura, arrayAlinha, '' );
+	
+	var num;
+	$('table > tbody > tr', divRegistro).click( function() {
+        num = $(this).attr('id').replace('linObsClick_','');
+        mostraObservacao(num);
+	});
+}
+
+
+$.fn.extend({ 
+	
+	/*!
+	 * Formatar a tabela desta tela, sem setar Ordernação
+	 */
+	formataTabelaRel670: function(ordemInicial, larguras, alinhamento, metodoDuploClick ) {
+
+		var tabela = $(this);		
+		
+		// Forma personalizada de extra??o dos dados para ordena??o, pois para n?meros e datas os dados devem ser extra?dos para serem ordenados
+		// n?o da forma que s?o apresentados na tela. Portanto adotou-se o padr?o de no in?cio da tag TD, inserir uma tag SPAN com o formato do 
+		// dado aceito para ordena??o
+		var textExtraction = function(node) {  
+			if ( $('span', node).length == 1 ) {
+				return $('span', node).html();
+			} else {
+				return node.innerHTML;
+			}		
+		}
+
+		// O thead no IE n?o funciona corretamento, portanto ele ? ocultado no arquivo "estilo.css", mas seu conte?do
+		// ? copiado para uma tabela fora da tabela original
+		var divRegistro = tabela.parent();
+		divRegistro.before('<table class="tituloRegistros"><thead>'+$('thead', tabela ).html()+'</thead></table>');		
+		
+		var tabelaTitulo = $( 'table.tituloRegistros',divRegistro.parent() );	
+		
+		// $('thead', tabelaTitulo ).append( $('thead', tabela ).html() );
+		$('thead > tr', tabelaTitulo ).append('<th class="ordemInicial"></th>');
+		
+		
+		// Formatando - Largura 
+		if (typeof larguras != 'undefined') {
+			for( var i in larguras ) {
+				$('td:eq('+i+')', tabela ).css('width', larguras[i] );
+				$('th:eq('+i+')', tabelaTitulo ).css('width', larguras[i] );
+			}		
+		}	
+		
+		// Calcula o n?mero de colunas Total da tabela
+		var nrColTotal = $('thead > tr > th', tabela ).length;
+		
+		//$('td:last-child', tabela ).prop('colspan','2');
+		
+		// Formatando - Alinhamento
+		if (typeof alinhamento != 'undefined') {
+			for( var i in alinhamento ) {
+				var nrColAtual = i;
+				nrColAtual++;
+				$('td:nth-child('+nrColTotal+'n+'+nrColAtual+')', tabela ).css('text-align', alinhamento[i] );		
+			}		
+		}			
+
+		$('table > tbody > tr', divRegistro).each( function(i) {
+			$(this).bind('click', function() {
+				$('table', divRegistro).zebraTabela( i );
+			});
+		});		
+
+		if ( typeof metodoDuploClick != 'undefined' ) {	
+			$('table > tbody > tr', divRegistro).dblclick( function() {
+				eval( metodoDuploClick );
+			});	
+
+			$('table > tbody > tr', divRegistro).keypress( function(e) {
+				if ( e.keyCode == 13 ) {
+					eval( metodoDuploClick );
+				}
+			});	
+
+		}	
+		
+		$('td:nth-child('+nrColTotal+'n)', tabela ).css('border','0px');
+		
+		// Iniciar com a primeira linha selecionado e retornar o valor da chave deste primerio registro, que se encontra no input do tipo hidden
+		tabela.zebraTabela(0);	
+		return true;
+	}
+});
+
+function mostraObservacao(ind) {
+    $('.linObs').hide();
+    $('#divObservacao').show();
+    $('#linObs_' + ind).show();
+}

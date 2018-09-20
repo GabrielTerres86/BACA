@@ -51,7 +51,7 @@
   $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
   $xml 	   .= "     <dschassi>".$dschassi."</dschassi>";
   $xml 	   .= "     <ufdplaca>".$ufdplaca."</ufdplaca>";
-  $xml 	   .= "     <nrdplaca>".str_replace('-','',$nrdplaca)."</nrdplaca>";
+  $xml 	   .= "     <nrdplaca>".$nrdplaca."</nrdplaca>";
   $xml 	   .= "     <nrrenava>".$nrrenava."</nrrenava>";
   
   if($cddopcao == 'J'){

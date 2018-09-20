@@ -26,6 +26,14 @@
   $tparquiv = isset($_POST["tparquiv"]) ? $_POST["tparquiv"] : '';
   $cdcooper = isset($_POST["cdcooper"]) ? $_POST["cdcooper"] : 0;
   $dtrefere = isset($_POST["dtrefere"]) ? $_POST["dtrefere"] : 0;
+	$dtrefate = isset($_POST["dtrefate"]) ? $_POST["dtrefate"] : 0;
+	$cdagenci = isset($_POST["cdagenci"]) ? $_POST["cdagenci"] : 0;
+	$nrctrpro = isset($_POST["nrctrpro"]) ? $_POST["nrctrpro"] : 0;
+	$flcritic = isset($_POST["flcritic"]) ? $_POST["flcritic"] : '';
+	$dschassi = isset($_POST["dschassi"]) ? $_POST["dschassi"] : '';
+	$nrdconta = isset($_POST["nrdconta"]) ? $_POST["nrdconta"] : 0;
+	$tipsaida = isset($_POST["tipsaida"]) ? $_POST["tipsaida"] : 'PDF';
+			
   
 	validaDados();
 	
@@ -37,17 +45,26 @@
 	$xml .= "   <cdcoptel>".$cdcooper."</cdcoptel>";			
   $xml .= "   <nrseqlot>".$nrseqlot."</nrseqlot>";
   $xml .= "   <dtrefere>".$dtrefere."</dtrefere>"; 	
+  $xml .= "   <dtrefate>".$dtrefate."</dtrefate>"; 	
+  $xml .= "   <cdagenci>".$cdagenci."</cdagenci>"; 	
+  $xml .= "   <nrdconta>".$nrdconta."</nrdconta>"; 	
+  $xml .= "   <nrctrpro>".$nrctrpro."</nrctrpro>";
+  $xml .= "   <flcritic>".$flcritic."</flcritic>";
+  $xml .= "   <tipsaida>".$tipsaida."</tipsaida>";
+  $xml .= "   <dschassi>".$dschassi."</dschassi>";
+  $xml .= "   <nrregist>30</nrregist>";
+  $xml .= "   <nriniseq>1</nriniseq>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
 	$xmlResult = mensageria($xml, "GRVM0001", "REL670", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	echo "<script>console.log('".$xmlResult."');</script>";
 	$xmlObj = getObjectXML($xmlResult);		
 		
 	//-----------------------------------------------------------------------------------------------
 	// Controle de Erros
 	//-----------------------------------------------------------------------------------------------
 	if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
-	
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
 		$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
 		
@@ -63,10 +80,17 @@
 		
 	} 
 	
+	if($tipsaida == 'PDF'){
 	$nmarquiv  =  $xmlObj->roottag->attributes["NMARQUIV"];
 
 	echo 'Gera_Impressao("'.$nmarquiv.'","estadoInicial();");';			
 		
+	} else {
+		
+		$registrosSemRet = $xmlObj->roottag->tags[0]->tags;
+		
+		include('tab_relatorio_670.php');
+	}
 	
 	
 	function validaDados(){
@@ -75,10 +99,9 @@
 			exibirErro('error','Tipo de arquivo in&acute;lido.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'tparquiv\',\'frmFiltro\');',false);
 		}
     
-    IF($GLOBALS["dtrefere"] == 0 ){ 
-			exibirErro('error','Informe uma data de refer&ecirc;ncia.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'dtrefere\',\'frmFiltro\');',false);
+		IF($GLOBALS["nrseqlot"] == 0 && $GLOBALS["nrdconta"] == 0 && $GLOBALS["dschassi"] == '' ){ 
+			exibirErro('error','Informe um lote, uma conta ou um chassi.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'nrseqlot\',\'frmFiltro\');',false);
 		}
-				
 	}	
 		
 ?>

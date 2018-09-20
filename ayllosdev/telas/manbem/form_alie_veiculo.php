@@ -14,17 +14,21 @@
 	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
 	
     <link href="../../css/aditiv_alie_veiculo.css" rel="stylesheet" type="text/css">
+	<? if (!in_array($operacao,array('C_ALIENACAO'))) { ?>
 	<script type="text/javascript" src="../manbem/scripts/utils.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/aliena_veiculo.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/servico_fipe.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/interveniente.js"></script>
-	
+	<? } ?>
 	<form name="frmTipo" id="frmTipo">	
 		<fieldset>
+			<? if (!in_array($operacao,array('C_ALIENACAO'))) { ?>
 			<legend>5 - Substituição de Veículo - Alienação</legend>
+			<? } ?>
 			<div class="cabecalho">
 				<input id="nrctremp" name="nrctremp" type="hidden" value="" /> 
 				<label id="lsbemfin"></label>
+				<? if (!in_array($operacao,array('C_ALIENACAO'))) { ?>
 				<div id="msgErro">
 					<h3 class="erro">* Campos de preenchimento obrigatório!</h3>
 				</div>
@@ -32,8 +36,10 @@
 
 				<label for="dtmvtolt"> Dt Inclusão Aditivo :</label>
 				<input type="text" id="dtmvtolt" name="dtmvtolt" value="<? echo getByTagName($dados,'dtmvtolt')?>" />
+				
+				<hr >
+				<? } ?>
 			</div>			
-			<hr >
 			<div class="bloco">
 				<div>
 					<label for="dscatbem" > Categoria :</label>
@@ -67,6 +73,10 @@
 				<div>
 					<label for="vlrdobem"> Valor de Mercado :</label>
 					<input name="vlrdobem" id="vlrdobem" type="text"  value="<? echo getByTagName($dados,'vlrdobem') ?>" readonly data-prefix="R$ " data-thousands="." data-decimal=","/>
+				</div>
+				<div>
+					<label for="dssitgrv"> Situação :</label>
+					<input  name="dssitgrv" id="dssitgrv" type="text" value="<?echo getByTagName($dados,'dssitgrv') ?>" />					
 				</div>
 			</div>			
  			<div class="bloco">

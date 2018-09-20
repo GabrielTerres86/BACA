@@ -53,7 +53,7 @@
   $xml 	   .= "     <dscatbem>".$dscatbem."</dscatbem>";
   $xml 	   .= "     <dschassi>".$dschassi."</dschassi>";
   $xml 	   .= "     <ufdplaca>".$ufdplaca."</ufdplaca>";
-  $xml 	   .= "     <nrdplaca>".str_replace('-','',$nrdplaca)."</nrdplaca>";
+  $xml 	   .= "     <nrdplaca>".$nrdplaca."</nrdplaca>";
   $xml 	   .= "     <nrrenava>".$nrrenava."</nrrenava>";
   $xml 	   .= "     <nranobem>".$nranobem."</nranobem>";
   $xml 	   .= "     <nrmodbem>".$nrmodbem."</nrmodbem>";
