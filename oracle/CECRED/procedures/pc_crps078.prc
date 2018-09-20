@@ -133,6 +133,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
 
                    05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
   --                            Josiane Stiehler- AMcom
+   
+                   20/09/2018 = P450 - Elimina tratamento de incrineg no retorno da lanc0001.
+                                Não verificar se é crítica de negócio para gerar o raise.
+                                Renato Cordeiro - AMcom
     ............................................................................ */
 
     DECLARE
@@ -871,9 +875,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS078" (pr_cdcooper IN crapcop.cdcooper
                                                ,pr_dscritic => vr_dscritic); 
                               
              IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-                IF vr_incrineg = 0 THEN -- Erro de sistema/BD
                    RAISE vr_exc_undo;
-                END IF;	
              END IF; 
              
              -- Atualizar as informac?es no lote utilizado
