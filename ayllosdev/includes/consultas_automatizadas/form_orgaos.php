@@ -105,7 +105,6 @@
 				<label for="vlnegati_coluna"> <? echo utf8ToHtml ('Pontuação'); ?> </label>
 			<?	
 				$crapescinfo =$xml_geral->Dados->crapesc->crapesc_inf;
-				echo "<script>console.log('crapesc: ".$crapescinfo->cdata."');</script>";
 				$dsescore = $crapescinfo->dsescore;
 				$vlpontua = $crapescinfo->vlpontua;
 			?>

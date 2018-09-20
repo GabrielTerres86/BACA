@@ -301,7 +301,7 @@ function SubstituiBem(){
 	
 }
 $("#nrdplaca").keydown(function(){ 
-	 $("#nrdplaca").mask("AAA9999");
+	 $("#nrdplaca").mask("AAAAAAA");
 });
 
 function VerificaPessoa( campo ){

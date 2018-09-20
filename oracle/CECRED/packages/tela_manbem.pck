@@ -95,6 +95,7 @@ create or replace package cecred.tela_manbem is
   **************************************************************************/
   procedure pc_valida_dados_alienacao(par_cdcooper in number,
                                       par_cddopcao in varchar2,
+                                      par_nmdatela IN VARCHAR2,
                                       par_nrdconta in number,
                                       par_nrctremp in number,
                                       par_dscorbem in varchar2,
@@ -124,6 +125,7 @@ create or replace package cecred.tela_manbem is
                           (pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta
                           ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do contrato
                           ,pr_tpctrato IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
+                          ,pr_nmdatela IN VARCHAR2              --> Nome da tela
                           ,pr_cddopcao IN VARCHAR2              --> Tipo da Ação
                           ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
                           ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
@@ -180,7 +182,86 @@ create or replace package cecred.tela_manbem is
                                         par_dscritic out varchar2);
 
 
-end;
+  /* Acionamento da criação do Interveniente Garantidor a patir de tela */
+  procedure pc_cria_interveniente_web(pr_nrdconta  in varchar2,
+                                      pr_nrctremp  in varchar2,
+                                      pr_tpctrato  in varchar2,
+                                      pr_nrcpfcgc  in varchar2,
+                                      pr_nmdavali  in varchar2,
+                                      pr_nrcpfcjg  in varchar2,
+                                      pr_nmconjug  in varchar2,
+                                      pr_tpdoccjg  in varchar2,
+                                      pr_nrdoccjg  in varchar2,
+                                      pr_tpdocava  in varchar2,
+                                      pr_nrdocava  in VARCHAR2,
+                                      pr_dsendres1 in VARCHAR2,
+                                      pr_dsendres2 in varchar2,
+                                      pr_nrfonres  in varchar2,
+                                      pr_dsdemail  in varchar2,
+                                      pr_nmcidade  in varchar2,
+                                      pr_cdufresd  in varchar2,
+                                      pr_nrcepend  in varchar2,
+                                      pr_cdnacion  in varchar2,
+                                      pr_nrendere  in varchar2,
+                                      pr_complend  in varchar2,
+                                      pr_nrcxapst  in varchar2,
+                                      pr_xmllog   in varchar2, --> XML com informacoes de LOG
+                                      pr_cdcritic out pls_integer, --> Codigo da critica
+                                      pr_dscritic out varchar2, --> Descricao da critica
+                                      pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
+                                      pr_nmdcampo out varchar2, --> Nome do campo com erro
+                                      pr_des_erro out varchar2); --> Erros do processo
+  
+  /* Validação de Interveniente Garantidor */
+  procedure pc_valida_interv(par_nrctaava in number,
+                             par_nrcepend in crapdne.nrceplog%type,
+                             par_dsendrel in crapdne.nmextlog%type,
+                             par_nmdavali in crapavt.nmdavali%type,
+                             par_nrcpfcgc in crapavt.nrcpfcgc%type,
+                             par_tpdocava in crapavt.tpdocava%type,
+                             par_nrdocava in crapavt.nrdocava%type,
+                             par_nmconjug in crapavt.nmconjug%type,
+                             par_nrcpfcjg in crapavt.nrcpfcjg%type,
+                             par_tpdoccjg in crapavt.tpdoccjg%type,
+                             par_nrdoccjg in crapavt.nrdoccjg%type,
+                             par_cdnacion in crapavt.cdnacion%type,
+                             par_nmdcampo out varchar2,
+                             par_cdcritic out varchar2,
+                             par_dscritic out varchar2);
+  
+  /* Acionamento da validação de Interveniente Garantidor via tela */
+  procedure pc_valida_interv_web(pr_nrctaava in varchar2,
+                                 pr_nrcepend in varchar2,
+                                 pr_dsendrel in varchar2,
+                                 pr_nmdavali in varchar2,
+                                 pr_nrcpfcgc in varchar2,
+                                 pr_tpdocava in varchar2,
+                                 pr_nrdocava in varchar2,
+                                 pr_nmconjug in varchar2,
+                                 pr_nrcpfcjg in varchar2,
+                                 pr_tpdoccjg in varchar2,
+                                 pr_nrdoccjg in VARCHAR2,
+                                 pr_cdnacion in VARCHAR2,
+                                 pr_xmllog   in varchar2, --> XML com informacoes de LOG
+                                 pr_cdcritic out pls_integer, --> Codigo da critica
+                                 pr_dscritic out varchar2, --> Descricao da critica
+                                 pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
+                                 pr_nmdcampo out varchar2, --> Nome do campo com erro
+                                 pr_des_erro out varchar2); --> Erros do processo
+  
+  /* Checar se o CPF está em alguma conta ativa do sistema */
+  procedure pc_cpf_cadastrado_web(pr_nrdconta in crapavt.nrdconta%type,
+                                  pr_nrctremp in crapavt.nrctremp%type,
+                                  pr_tpctrato IN crapavt.tpctrato%TYPE,
+                                  pr_nrcpfcgc in crapavt.nrcpfcgc%type,
+                                  pr_xmllog   in varchar2, --> XML com informacoes de LOG
+                                  pr_cdcritic out pls_integer, --> Codigo da critica
+                                  pr_dscritic out varchar2, --> Descricao da critica
+                                  pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
+                                  pr_nmdcampo out varchar2, --> Nome do campo com erro
+                                  pr_des_erro out varchar2); --> Erros do processo
+
+END tela_manbem;
 /
 create or replace package body cecred.tela_manbem is
 
@@ -549,6 +630,89 @@ create or replace package body cecred.tela_manbem is
     end if;
   end;
   
+  -- Procedimento para verificar necessidade e alerta na aprovação de aditivos do tipo 5
+  PROCEDURE pc_verifica_msg_aprovacao(pr_cdcooper IN crapbpr.cdcooper%TYPE --> Código da cooperativa
+                                     ,pr_vlmerbem IN crapbpr.vlmerbem%TYPE --> Valor de mercado do bem
+                                     ,pr_vlemprst IN crapepr.vlemprst%TYPE --> Valor do emprestimo
+                                     ,pr_flgsenha OUT INTEGER              --> Verifica se solicita a senha
+                                     ,pr_dsmensag OUT VARCHAR2             --> Descricao da mensagem de aviso
+                                     ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
+    /* .............................................................................
+    
+       Programa: pc_verifica_msg_aprovacao                
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Marcos Martini - Envolti
+       Data    : Setembro/2018                        Ultima atualizacao: 
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Diaria - Sempre que for chamada
+       Objetivo  : Rotina para verificar se apresenta mensagem de garantia
+    
+       Alteracoes:     
+    ............................................................................. */
+    
+    -- Busca dos parâmetros
+    vr_solsenha VARCHAR2(1);
+    vr_valminim NUMBER;
+    -- Busca dos parametros de mensagem da atenda emprestimo
+    vr_tipsplit  gene0002.typ_split;
+  BEGIN
+    -- Default é não pedir senha
+    pr_flgsenha := 0;
+    
+    -- Caso o valor do bem for igual a 0, nao vamos exibir a mensagem
+    IF NVL(pr_vlmerbem,0) = 0 THEN
+      RETURN;
+    END IF;
+    
+    -- Buscar vetor com proporções de comparação proposta X valor mercado
+    vr_tipsplit := gene0002.fn_quebra_string(pr_string => gene0001.fn_param_sistema('CRED',pr_cdcooper,'GESGAR')
+                                            ,pr_delimit => ';');
+    
+    -- Se encontrou informação
+    IF vr_tipsplit.count() = 2 THEN
+      -- Caso o valor do bem for maior ou igual á 5 vezes, apresenta mensagem em tela
+      IF (pr_vlemprst * vr_tipsplit(1)) <= pr_vlmerbem THEN
+        pr_dsmensag := 'Atencao! Valor do bem superior ou igual a ' || vr_tipsplit(1) || ' vezes o valor do emprestimo!';
+      END IF;
+      -- Caso o valor do bem for maior ou igual á 10 vezes, solicita a senha de coordenador
+      IF (pr_vlemprst * vr_tipsplit(2)) <= pr_vlmerbem THEN
+        pr_dsmensag := 'Atencao! Valor do bem superior ou igual a ' || vr_tipsplit(2) || ' vezes o valor do emprestimo!';
+        pr_flgsenha := 1;
+      END IF;
+    END IF;  
+    
+    -- Buscar parametros de solicitação de aprovação especificos da ADITIV
+    vr_solsenha := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ADITIV_5_APROVA_COORD');
+    -- Se pede senha sempre
+    IF vr_solsenha = 'S' THEN
+      -- Pedir senha e retornar
+      pr_flgsenha := 1;
+      RETURN;
+    -- Se não pede senha nunca  
+    ELSIF vr_solsenha = 'N' THEN
+      -- Apenas retornar e preserver mensagem e pede senha vistas acima
+      RETURN;      
+    END IF;
+    
+    -- Se não existir nenhuma mensagem ainda
+    IF pr_dsmensag IS NULL THEN
+      -- Pedirá senha apenas quando o valor for abaixo da cobertura minina para, buscar 
+      vr_valminim := gene0002.fn_char_para_number(gene0001.fn_param_sistema('CRED',pr_cdcooper,'ADITIV_5_PERC_MIN_COBERT'));
+      -- Caso a proporção valor bem / valor saldo devedor for inferior ao parametrizado
+      IF vr_valminim > 0 AND (pr_vlmerbem / pr_vlemprst) < (vr_valminim / 100) THEN
+        pr_dsmensag := 'Atencao! Valor do bem inferior a ' || to_char(vr_valminim,'fm990d00') || '% do Saldo Devedor!';
+        pr_flgsenha := 1;
+      END IF;
+    END IF;  
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral em tela_manbem.pc_verifica_msg_aprovacao: ' || SQLERRM;
+  END pc_verifica_msg_aprovacao;
+  
   -- Substituição de Bem
   procedure pc_substitui_bem(par_cdcooper in crapbpr.cdcooper%type,
                              par_nrdconta in crapbpr.nrdconta%type,
@@ -602,10 +766,11 @@ create or replace package body cecred.tela_manbem is
         from crapbpr
        where cdcooper = par_cdcooper
          and nrdconta = par_nrdconta
-         and tpctrpro = 90
+         and tpctrpro = par_tpctrato
          and nrctrpro = par_nrctremp
          and idseqbem = par_idseqbem;
     v_crapbpr     cr_crapbpr%rowtype;
+    v_crapbpr99   cr_crapbpr%rowtype;
 
     -- Buscar proximo ID Seq Bem para Sustituicao
     cursor cr_crapbpr2 is
@@ -622,7 +787,7 @@ create or replace package body cecred.tela_manbem is
     vr_exc_erro   exception;
   begin
     if par_idseqbem > 0 then
-      open cr_crapbpr;
+      open cr_crapbpr(par_tpctrato);
         fetch cr_crapbpr into v_crapbpr;
         if cr_crapbpr%notfound then
           par_cdcritic := 55;
@@ -679,15 +844,33 @@ create or replace package body cecred.tela_manbem is
          (par_cdcooper = 4 and par_dtmvtolt >= to_date('23072014', 'ddmmyyyy')) or
          (par_cdcooper = 7 and par_dtmvtolt >= to_date('06102014', 'ddmmyyyy')) or
          (par_cdcooper not in (1, 4, 7) and par_dtmvtolt >= to_date('26022015', 'ddmmyyyy')) then
+        -- Checar se já não existe outro bem substituido com o mesmo ID do bem em substituição
+        open cr_crapbpr(99);
+          fetch cr_crapbpr into v_crapbpr99;
+          if cr_crapbpr%found THEN
+            -- Vamos gerar novo id para o bem sustituido para evitar duplicação da PK
+            open cr_crapbpr2;
+            fetch cr_crapbpr2 into par_idseqbem;
+            par_idseqbem := nvl(par_idseqbem,0) + 1;
+            close cr_crapbpr2;            
+          end if;
+        close cr_crapbpr;
         -- atualizar o Bem substituido
-        update crapbpr
-           set tpctrpro = 99,
-               flginclu = 0,
-               flcancel = 0,
-               flgbaixa = 1,
-               dtdbaixa = par_dtmvtolt,
-               tpdbaixa = 'A'
-         where rowid = v_crapbpr.rowid;
+        BEGIN
+          update crapbpr
+             set idseqbem = par_idseqbem,
+                 tpctrpro = 99,
+                 flginclu = 0,
+                 flcancel = 0,
+                 flgbaixa = 1,
+                 dtdbaixa = par_dtmvtolt,
+                 tpdbaixa = 'A'
+           where rowid = v_crapbpr.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            par_dscritic := 'Erro ao atualizar bem sustituido: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END; 
         /** GRAVAMES - Copia BEM para tipo 99 **/
       end if;
     ELSE
@@ -791,6 +974,7 @@ create or replace package body cecred.tela_manbem is
   **************************************************************************/
   procedure pc_valida_dados_alienacao(par_cdcooper in number,
                                       par_cddopcao in varchar2,
+                                      par_nmdatela IN VARCHAR2,
                                       par_nrdconta in number,
                                       par_nrctremp in number,
                                       par_dscorbem in varchar2,
@@ -814,7 +998,7 @@ create or replace package body cecred.tela_manbem is
                                       par_dsmensag out varchar2,
                                       par_cdcritic out number,
                                       par_dscritic out varchar2) is
-    --
+    -- Buscar o bem em outro contrato
     cursor cr_crapbpr is
       select crapbpr.nrctrpro
         from crapbpr
@@ -824,7 +1008,8 @@ create or replace package body cecred.tela_manbem is
          and crapbpr.dschassi = par_dschassi
          and crapbpr.cdsitgrv in (0, 1, 3);
     v_crapbpr      cr_crapbpr%rowtype;
-    --
+    
+    -- Buscar os dados do bem a substituir
     cursor cr_crapbpr2 is
       select crapbpr.dscatbem,
              crapbpr.vlmerbem,
@@ -848,21 +1033,6 @@ create or replace package body cecred.tela_manbem is
          and crapbpr.nrctrpro = par_nrctremp
          and crapbpr.idseqbem = par_idseqbem;
     v_crapbpr2     cr_crapbpr2%rowtype;
-    -- Buscar se existe Interveniente
-    CURSOR cr_crapavt IS
-      SELECT 1
-        FROM crapavt
-       WHERE crapavt.cdcooper = par_cdcooper
-         AND crapavt.tpctrato = 9
-         AND crapavt.nrdconta = par_nrdconta
-         AND crapavt.nrctremp = par_nrctremp
-         AND crapavt.nrcpfcgc = par_nrcpfbem;
-    vr_indexis NUMBER;
-    -- Buscar associado
-    CURSOR cr_crapass IS
-      SELECT 1
-        FROM crapass
-       WHERE nrcpfcgc = par_nrcpfbem;
     
     -- variaveis basicas
     v_ufdplaca      crapbpr.ufdplaca%type := par_ufdplaca;
@@ -999,8 +1169,7 @@ create or replace package body cecred.tela_manbem is
       open cr_crapbpr;
         fetch cr_crapbpr into v_crapbpr;
         if cr_crapbpr%found then
-          if v_crapbpr.nrctrpro <> par_nrctremp and
-             upper(par_cddopcao) <> 'A' then
+          if v_crapbpr.nrctrpro <> par_nrctremp AND upper(nvl(par_cddopcao,' ')) <> 'A' then
             v_cdcritic := 0;
             v_dscritic := 'Chassi ja existe para outra proposta deste cooperado.';
             par_nmdcampo := 'dschassi';
@@ -1011,14 +1180,12 @@ create or replace package body cecred.tela_manbem is
       close cr_crapbpr;
     end if;
     /** GRAVAMES - Nao permitir excluir Bem com sitgrv 1,2 ou 4 **/
-    if trim(par_dscatbem) is null and
-       trim(par_dsbemfin) is null and
-       par_idseqbem <> 0 then
+    if trim(par_dscatbem) is null AND trim(par_dsbemfin) is null AND par_idseqbem <> 0 then
       open cr_crapbpr2;
         fetch cr_crapbpr2 into v_crapbpr2;
         if cr_crapbpr2%notfound then
-          v_cdcritic := 77;
-          v_dscritic := '';
+          v_cdcritic := 0;
+          v_dscritic := 'Bem selecionado para substituicao nao cadastrado!';
           par_nmdcampo := 'dsbemfin';
           close cr_crapbpr2;
           raise vr_exc_erro;
@@ -1036,14 +1203,30 @@ create or replace package body cecred.tela_manbem is
       elsif v_crapbpr2.cdsitgrv = 4 then
         v_dscritic := ' Bem nao pode ser excluido! [GRAVAMES - Quitado]';
         par_nmdcampo := 'dsbemfin';
-        close cr_crapbpr2;
+        raise vr_exc_erro;
+      end if;
+    ELSIF par_idseqbem > 0 then
+      open cr_crapbpr2;
+        fetch cr_crapbpr2 into v_crapbpr2;
+        if cr_crapbpr2%notfound then
+          v_cdcritic := 0;
+          v_dscritic := 'Bem selecionado para substituicao nao cadastrado!';
+          par_nmdcampo := 'dsbemfin';
+          close cr_crapbpr2;
+          raise vr_exc_erro;
+    end if;
+      close cr_crapbpr2;
+      /** Nao pode substituir nesses Status */
+      if v_crapbpr2.cdsitgrv = 1 then
+        v_cdcritic := 0;
+        v_dscritic := 'Bem a Substituir em Processamento Gravames! Favor selecionar outro bem!';
+        par_nmdcampo := 'dsbemfin';
         raise vr_exc_erro;
       end if;
     end if;
+    
     --
-    if trim(par_dscatbem) is not null and
-       trim(par_dscatbem) <> 'MAQUINA DE COSTURA' and
-       trim(par_dscatbem) <> 'EQUIPAMENTO' then
+    if trim(par_dscatbem) is not null AND trim(par_dscatbem) NOT IN ('MAQUINA DE COSTURA','EQUIPAMENTO') then
       /** GRAVAMES - NAO PERMITIR ALTERAR DETERMINADAS SITUACOES */
       if par_cddopcao = 'A' and
          par_idseqbem <> 0 and
@@ -1054,8 +1237,8 @@ create or replace package body cecred.tela_manbem is
         open cr_crapbpr2;
           fetch cr_crapbpr2 into v_crapbpr2;
           if cr_crapbpr2%notfound then
-            v_cdcritic := 77;
-            v_dscritic := '';
+            v_cdcritic := 0;
+            v_dscritic := 'Bem selecionado para substituicao nao cadastrado!';
             par_nmdcampo := 'dsbemfin';
             close cr_crapbpr2;
             raise vr_exc_erro;
@@ -1157,31 +1340,6 @@ create or replace package body cecred.tela_manbem is
           par_nmdcampo := 'nrcpfbem';
           raise vr_exc_erro;
         end if;
-        -- Testar se o CPF está na lista de avalistas ou intervenientes
-        OPEN cr_crapavt;
-        FETCH cr_crapavt
-         INTO vr_indexis;
-        -- Se não encontrar
-        IF cr_crapavt%NOTFOUND THEN 
-          CLOSE cr_crapavt;
-          -- Verificar se o CPF é de algum Cooperado
-          OPEN cr_crapass;
-          FETCH cr_crapass 
-           INTO vr_indexis;
-          -- Se não encontrar
-          IF cr_crapass%NOTFOUND THEN 
-            CLOSE cr_crapass;
-            -- Gerar critica
-            v_cdcritic := 0;
-            v_dscritic := 'CPF Invalido! Verifique Avalistas da Proposta ou informe um CPF/CNPJ de Associado do Sistema Ailos!';
-            par_nmdcampo := 'nrcpfbem';
-            raise vr_exc_erro;
-          ELSE
-            CLOSE cr_crapass;       
-          END IF;
-        ELSE
-          CLOSE cr_crapavt;
-        END IF;
       end if;
     end if; /* END do tratamento de dscatbem */
     --
@@ -1190,19 +1348,32 @@ create or replace package body cecred.tela_manbem is
       par_nmdcampo := 'dscatbem';
       raise vr_exc_erro;
     end if;
+    -- Validar mensagens de aprovação conforme tela
+    IF par_nmdatela IN('ADITIV') THEN
     /* Verifica se apresenta a mensagem de garantia na tela */
-    empr0001.pc_verifica_msg_garantia(par_cdcooper,
-                                      par_dscatbem,
-                                      par_vlmerbem,
-                                      par_vlemprst,
-                                      par_flgsenha,
-                                      par_dsmensag,
-                                      v_cdcritic,
-                                      v_dscritic);
-    if v_cdcritic is not null or
-       v_dscritic is not null then
+      pc_verifica_msg_aprovacao(par_cdcooper
+                               ,par_vlmerbem
+                               ,par_vlemprst
+                               ,par_flgsenha
+                               ,par_dsmensag
+                               ,v_dscritic);
+      if v_dscritic is not null then
+        raise vr_exc_erro;
+      end if;
+    ELSE
+      /* Validar da regra da ATENDA */
+      empr0001.pc_verifica_msg_garantia(par_cdcooper
+                                       ,par_dscatbem
+                                       ,par_vlmerbem
+                                       ,par_vlemprst
+                                       ,par_flgsenha
+                                       ,par_dsmensag
+                                       ,v_cdcritic
+                                       ,v_dscritic);
+      if v_cdcritic is not null OR v_dscritic is not null then
       raise vr_exc_erro;
     end if;
+    END IF;   
   exception
     when vr_exc_erro then
       if v_cdcritic <> 0 and
@@ -1222,6 +1393,7 @@ create or replace package body cecred.tela_manbem is
                           (pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta
                           ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do contrato
                           ,pr_tpctrato IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
+                          ,pr_nmdatela IN VARCHAR2              --> Nome da tela
                           ,pr_cddopcao IN VARCHAR2              --> Tipo da Ação
                           ,pr_dscatbem in varchar2 --> Categoria (Auto, Moto ou Caminhão)
                           ,pr_dstipbem in varchar2 --> Tipo do Bem (Usado/Zero KM)
@@ -1317,7 +1489,6 @@ create or replace package body cecred.tela_manbem is
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
   BEGIN
-    
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                             ,pr_cdcooper => vr_cdcooper
@@ -1337,7 +1508,7 @@ create or replace package body cecred.tela_manbem is
     IF pr_nrctremp <> 0 THEN
       IF pr_tpctrato = 90 THEN
         --> Caso chamada oriunda da Aditiv
-        IF vr_nmdatela = 'ADITIV' THEN
+        IF pr_nmdatela = 'ADITIV' THEN
           --> Validar contrato emprestimo
           OPEN cr_crapepr;
           FETCH cr_crapepr INTO vr_vlsdeved;
@@ -1439,6 +1610,7 @@ create or replace package body cecred.tela_manbem is
     -- Acionar validação de Bens
     pc_valida_dados_alienacao(par_cdcooper => vr_cdcooper
                              ,par_cddopcao => pr_cddopcao
+                             ,par_nmdatela => pr_nmdatela
                              ,par_nrdconta => pr_nrdconta
                              ,par_nrctremp => pr_nrctremp
                              ,par_dscorbem => upper(pr_dscorbem)
@@ -1466,10 +1638,13 @@ create or replace package body cecred.tela_manbem is
     IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     -- Em caso de retorno da mensagem
-    ELSIF vr_dsmensag IS NOT NULL THEN
+    ELSE
       -- Montar a mesma no XML de retorno  
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><mensagem>' ||vr_dsmensag|| '</mensagem></Root>');        
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' 
+                                   ||'<Root>'
+                                   ||'  <mensagem>' ||vr_dsmensag|| '</mensagem>'
+                                   ||'  <aprovaca>' ||vr_flgsenha|| '</aprovaca>'
+                                   ||'</Root>');        
     END IF;
            
   EXCEPTION
@@ -1560,9 +1735,9 @@ create or replace package body cecred.tela_manbem is
       v_nrrenava := par_nrrenava;
       v_ufdplaca := par_ufdplaca;
     else
-      v_nrdplaca := null;
+      v_nrdplaca := ' ';
       v_nrrenava := 0;
-      v_ufdplaca := null;
+      v_ufdplaca := ' ';
     end if;
     
     
@@ -1693,6 +1868,713 @@ create or replace package body cecred.tela_manbem is
       par_cdcritic := 0;
       par_dscritic := 'Erro nao tratado na rotina TELA_MANBEM.PC_GRAVA_ALIENACAO_HIPOTECA: ' || sqlerrm;
   end;
+  
+  /* Criação do Interveniente Garantidor quando preenchido em tela */
+  procedure pc_cria_interveniente(par_cdcooper in crapavt.cdcooper%type,
+                                  par_nrdconta in crapavt.nrdconta%type,
+                                  par_nrctremp in crapavt.nrctremp%type,
+                                  par_nrcpfcgc in crapavt.nrcpfcgc%type,
+                                  par_inpessoa IN crapavt.inpessoa%TYPE,
+                                  par_nmdavali in crapavt.nmdavali%type,
+                                  par_nrcpfcjg in crapavt.nrcpfcjg%type,
+                                  par_nmconjug in crapavt.nmconjug%type,
+                                  par_tpdoccjg in crapavt.tpdoccjg%type,
+                                  par_nrdoccjg in crapavt.nrdoccjg%type,
+                                  par_tpdocava in crapavt.tpdocava%type,
+                                  par_nrdocava in crapavt.nrdocava%type,
+                                  par_dsendres1 in crapavt.dsendres##1%type,
+                                  par_dsendres2 in crapavt.dsendres##2%type,
+                                  par_nrfonres in crapavt.nrfonres%type,
+                                  par_dsdemail in crapavt.dsdemail%type,
+                                  par_nmcidade in crapavt.nmcidade%type,
+                                  par_cdufresd in crapavt.cdufresd%type,
+                                  par_nrcepend in crapavt.nrcepend%type,
+                                  par_cdnacion in crapavt.cdnacion%type,
+                                  par_nrendere in crapavt.nrendere%type,
+                                  par_complend in crapavt.complend%type,
+                                  par_nrcxapst in crapavt.nrcxapst%type,
+                                  par_cdcritic out number,
+                                  par_dscritic out varchar2) is
+  begin
+    insert into crapavt(cdcooper,
+                        nrdconta,
+                        tpctrato,
+                        nrctremp,
+                        nrcpfcgc,
+                        nmdavali,
+                        inpessoa,
+                        nrcpfcjg,
+                        nmconjug,
+                        tpdoccjg,
+                        nrdoccjg,
+                        tpdocava,
+                        nrdocava,
+                        dsendres##1,
+                        dsendres##2,
+                        nrfonres,
+                        dsdemail,
+                        nmcidade,
+                        cdufresd,
+                        nrcepend,
+                        cdnacion,
+                        nrendere,
+                        complend,
+                        nrcxapst)
+    values(par_cdcooper,
+           par_nrdconta,
+           9,
+           par_nrctremp,
+           par_nrcpfcgc,
+           par_nmdavali,
+           par_inpessoa,
+           par_nrcpfcjg,
+           par_nmconjug,
+           par_tpdoccjg,
+           par_nrdoccjg,
+           par_tpdocava,
+           par_nrdocava,
+           par_dsendres1,
+           par_dsendres2,
+           par_nrfonres,
+           par_dsdemail,
+           par_nmcidade,
+           par_cdufresd,
+           par_nrcepend,
+           par_cdnacion,
+           par_nrendere,
+           par_complend,
+           par_nrcxapst);
+    --
+    commit;
+  exception
+    when dup_val_on_index then
+      /* Interveniente ja cadastrado - Nao pode ter dois intervenientes*/
+                     /* Com o mesmo CPF/CNPJ - Gabriel */
+      null;
+    when others then
+      par_cdcritic := 0;
+      par_dscritic := 'Erro nao tratado na rotina TELA_MANBEM.PC_CRIA_INTERVENIENTE: ' || sqlerrm;
+  end;
 
-end;
+  /* Acionamento da criação do Interveniente Garantidor a patir de tela */
+  procedure pc_cria_interveniente_web(pr_nrdconta  in varchar2,
+                                      pr_nrctremp  in varchar2,
+                                      pr_tpctrato  in varchar2,
+                                      pr_nrcpfcgc  in varchar2,
+                                      pr_nmdavali  in varchar2,
+                                      pr_nrcpfcjg  in varchar2,
+                                      pr_nmconjug  in varchar2,
+                                      pr_tpdoccjg  in varchar2,
+                                      pr_nrdoccjg  in varchar2,
+                                      pr_tpdocava  in varchar2,
+                                      pr_nrdocava  in VARCHAR2,
+                                      pr_dsendres1 in VARCHAR2,
+                                      pr_dsendres2 in varchar2,
+                                      pr_nrfonres  in varchar2,
+                                      pr_dsdemail  in varchar2,
+                                      pr_nmcidade  in varchar2,
+                                      pr_cdufresd  in varchar2,
+                                      pr_nrcepend  in varchar2,
+                                      pr_cdnacion  in varchar2,
+                                      pr_nrendere  in varchar2,
+                                      pr_complend  in varchar2,
+                                      pr_nrcxapst  in varchar2,
+                                      pr_xmllog   in varchar2, --> XML com informacoes de LOG
+                                      pr_cdcritic out pls_integer, --> Codigo da critica
+                                      pr_dscritic out varchar2, --> Descricao da critica
+                                      pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
+                                      pr_nmdcampo out varchar2, --> Nome do campo com erro
+                                      pr_des_erro out varchar2) is --> Erros do processo
+    vr_numteste   number;
+    -- Variável de críticas
+    vr_cdcritic   crapcri.cdcritic%type; --> Cód. Erro
+    vr_dscritic   varchar2(1000);        --> Desc. Erro
+    -- Tratamento de erros
+    vr_exc_erro   exception;
+    -- Variaveis de log
+    vr_cdcooper   integer;
+    vr_cdoperad   varchar2(100);
+    vr_nmdatela   varchar2(100);
+    vr_nmeacao    varchar2(100);
+    vr_cdagenci   varchar2(100);
+    vr_nrdcaixa   varchar2(100);
+    vr_idorigem   varchar2(100);
+    -- Buscar tipo de pessoa
+    vr_stsnrcal   boolean;
+    vr_inpessoa   crapass.inpessoa%type;
+  begin
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+    -- Em caso de erro
+    if vr_dscritic is not null then
+      raise vr_exc_erro;
+    end if;
+    --
+    begin
+      vr_numteste := to_number(pr_nrdconta);
+    exception
+      when others then 
+        vr_dscritic := 'Numero da conta do associado '||pr_nrdconta||' invalido!';
+        pr_nmdcampo := 'nrdconta';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrctremp);
+    exception
+      when others then 
+        vr_dscritic := 'Numero do contrato de emprestimo '||pr_nrctremp||' invalido!';
+        pr_nmdcampo := 'nrctremp';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrcpfcgc);
+    exception
+      when others then 
+        vr_dscritic := 'Numero do CPF/CNPJ do Interveniente Garantidor '||pr_nrcpfcgc||' invalido!';
+        pr_nmdcampo := 'nrcpfcgc';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrcpfcjg);
+    exception
+      when others then 
+        vr_dscritic := 'CPF do conjuge '||pr_nrcpfcjg||' invalido!';
+        pr_nmdcampo := 'nrcpfcjg';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrdocava);
+    exception
+      when others then 
+        vr_dscritic := 'Documento '||pr_nrdocava||' invalido!';
+        pr_nmdcampo := 'nrdocava';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrdocava);
+    exception
+      when others then 
+        vr_dscritic := 'Documento Conjuge '||pr_nrdoccjg||' invalido!';
+        pr_nmdcampo := 'nrdocava';
+        raise vr_exc_erro; 
+    end;
+    
+    --
+    begin
+      vr_numteste := to_number(pr_nrcepend);
+    exception
+      when others then 
+        vr_dscritic := 'CEP '||pr_nrcepend||' invalido!';
+        pr_nmdcampo := 'nrcepend';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrendere);
+    exception
+      when others then 
+        vr_dscritic := 'Numero do endereco '||pr_nrendere||' invalido!';
+        pr_nmdcampo := 'nrendere';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrcxapst);
+    exception
+      when others then 
+        vr_dscritic := 'Caixa postal '||pr_nrcxapst||' invalida!';
+        pr_nmdcampo := 'nrcxapst';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrfonres);
+    exception
+      when others then 
+        vr_dscritic := 'Telefone '||pr_nrfonres||' invalido!';
+        pr_nmdcampo := 'nrfonres';
+        raise vr_exc_erro; 
+    end;
+    
+    -- Validar e buscar o tipo de pessoa
+    gene0005.pc_valida_cpf_cnpj(pr_nrcpfcgc,
+                                vr_stsnrcal,
+                                vr_inpessoa);
+    if not vr_stsnrcal then
+      vr_cdcritic := 27;
+      pr_nmdcampo := 'nrcpfcgc';
+      raise vr_exc_erro; 
+    end if;
+    
+    -- Direcionar para a gravacao
+    pc_cria_interveniente(par_cdcooper  => vr_cdcooper,
+                          par_nrdconta  => pr_nrdconta,
+                          par_nrctremp  => pr_nrctremp,
+                          par_nrcpfcgc  => pr_nrcpfcgc,
+                          par_nmdavali  => upper(pr_nmdavali),
+                          par_nrcpfcjg  => pr_nrcpfcjg,
+                          par_inpessoa  => vr_inpessoa,
+                          par_nmconjug  => upper(pr_nmconjug),
+                          par_tpdoccjg  => pr_tpdoccjg,
+                          par_nrdoccjg  => pr_nrdoccjg,
+                          par_tpdocava  => pr_tpdocava,
+                          par_nrdocava  => pr_nrdocava,
+                          par_dsendres1 => upper(pr_dsendres1),
+                          par_dsendres2 => upper(pr_dsendres2),
+                          par_nrfonres  => pr_nrfonres,
+                          par_dsdemail  => upper(pr_dsdemail),
+                          par_nmcidade  => upper(pr_nmcidade),
+                          par_cdufresd  => upper(pr_cdufresd),
+                          par_nrcepend  => pr_nrcepend,
+                          par_cdnacion  => pr_cdnacion,
+                          par_nrendere  => pr_nrendere,
+                          par_complend  => upper(pr_complend),
+                          par_nrcxapst  => pr_nrcxapst,
+                          par_cdcritic  => pr_cdcritic,
+                          par_dscritic  => pr_dscritic);
+    -- Em caso de erro 
+    if vr_cdcritic > 0 or
+       vr_dscritic is not null then
+      raise vr_exc_erro;
+    end if;
+  exception
+    when vr_exc_erro then
+      if vr_cdcritic <> 0 then
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      end if;
+      --
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    when others then
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro na rotina TELA_ADITIV.PC_VALIDA_INTERV_WEB: ' || sqlerrm;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  end;
+
+  /* Validação de Interveniente Garantidor */
+  procedure pc_valida_interv(par_nrctaava in number,
+                             par_nrcepend in crapdne.nrceplog%type,
+                             par_dsendrel in crapdne.nmextlog%type,
+                             par_nmdavali in crapavt.nmdavali%type,
+                             par_nrcpfcgc in crapavt.nrcpfcgc%type,
+                             par_tpdocava in crapavt.tpdocava%type,
+                             par_nrdocava in crapavt.nrdocava%type,
+                             par_nmconjug in crapavt.nmconjug%type,
+                             par_nrcpfcjg in crapavt.nrcpfcjg%type,
+                             par_tpdoccjg in crapavt.tpdoccjg%type,
+                             par_nrdoccjg in crapavt.nrdoccjg%type,
+                             par_cdnacion in crapavt.cdnacion%type,
+                             par_nmdcampo out varchar2,
+                             par_cdcritic out varchar2,
+                             par_dscritic out varchar2) is
+    
+    -- validar CEP 
+    cursor cr_crapdne is
+      select 1
+        from crapdne c
+       where c.nrceplog = par_nrcepend
+         and rownum = 1;
+    v_existe   number(1);
+    
+    -- Validar Logradouro
+    cursor cr_crapdne2 is
+      select 1
+        from crapdne c
+       where c.nrceplog = par_nrcepend
+         and (   trim(par_dsendrel) like '%'||trim(c.nmextlog)||'%'
+              or trim(par_dsendrel) like '%'||trim(c.nmreslog)||'%')
+         and rownum = 1;
+    
+    -- Validar tipo de pessoa
+    vr_stsnrcal   boolean;
+    vr_inpessoa   crapass.inpessoa%type;
+  begin
+    -- Caso CEP informado
+    if par_nrcepend <> 0 then
+      -- Endereço deve ser informado
+      if par_dsendrel is null then
+        par_dscritic := 'Endereco deve ser informado.';
+        par_nmdcampo := 'nrcepend';
+        return;
+      end if;
+      -- Checar se o CEP existe na tabela
+      open cr_crapdne;
+        fetch cr_crapdne into v_existe;
+        if cr_crapdne%notfound then
+          par_dscritic := 'CEP nao cadastrado.';
+          par_nmdcampo := 'nrcepend';
+          close cr_crapdne;
+          return;
+        end if;
+      close cr_crapdne;
+      -- Checar se o endereço é o mesmo do CEP
+      open cr_crapdne2;
+        fetch cr_crapdne2 into v_existe;
+        if cr_crapdne2%notfound then
+          par_dscritic := 'Endereco nao pertence ao CEP.';
+          par_nmdcampo := 'nrcepend';
+          close cr_crapdne2;
+          return;
+        end if;
+      close cr_crapdne2;
+    end if;
+    
+    -- Nome obrigatorio
+    if par_nmdavali is null then
+      par_dscritic := 'Nome do interveniente deve ser informado.';
+      par_nmdcampo := 'nmdavali';
+      return;
+    end if;
+    
+    -- Nacionalidade obrigatoria
+    if par_cdnacion is null then
+      par_dscritic := 'Nacionalidade do interveniente deve ser informada.';
+      par_nmdcampo := 'cdnacion';
+      return;
+    end if;
+    
+    -- CPF obrigatorio
+    if par_nrcpfcgc is null then
+      par_dscritic := 'CPF/CNPJ do interveniente deve ser informado.';
+      par_nmdcampo := 'nrcpfcgc';
+      return;
+    end if;
+    
+    -- validar o CPF informado
+    gene0005.pc_valida_cpf_cnpj(par_nrcpfcgc,
+                                vr_stsnrcal,
+                                vr_inpessoa);
+    if not vr_stsnrcal then
+      par_cdcritic := 27;
+      par_nmdcampo := 'nrcpfcgc';
+      return;
+    end if;
+    
+    -- Para PH
+    if vr_inpessoa = 2 then
+      -- PJ
+      if par_tpdocava is not null then
+        par_dscritic := 'Para pessoa juridica, nao e permitido informar o tipo de documento do interveniente.';
+        par_nmdcampo := 'tpdocava';
+        return;
+      end if;
+      --
+      if par_nrdocava is not null then
+        par_dscritic := 'Para pessoa juridica, nao e permitido informar o numero do documento do interveniente.';
+        par_nmdcampo := 'nrdocava';
+        return;
+      end if;
+      --
+      if par_nmconjug is not null then
+        par_dscritic := 'Para pessoa jurídica, nao e permitido informar o nome do conjuge.';
+        par_nmdcampo := 'nmconjug';
+        return;
+      end if;
+      --
+      if par_nrcpfcjg is not null then
+        par_dscritic := 'Para pessoa jurídica, nao e permitido informar o CPF do conjuge.';
+        par_nmdcampo := 'nrcpfcjg';
+        return;
+      end if;
+      --
+      if par_tpdoccjg is not null then
+        par_dscritic := 'Para pessoa jurídica, nao e permitido informar o tipo de documento do conjuge.';
+        par_nmdcampo := 'tpdoccjg';
+        return;
+      end if;
+      --
+      if par_nrdoccjg is not null then
+        par_dscritic := 'Para pessoa jurídica, nao e permitido informar o nimero do documento do conjuge.';
+        par_nmdcampo := 'nrdoccjg';
+        return;
+      end if;
+    else
+      -- PF
+      if par_tpdocava is null then
+        par_dscritic := 'Tipo de documento do interveniente é obrigatorio.';
+        par_nmdcampo := 'tpdocava';
+        return;
+      end if;
+      --
+      if par_nrdocava is null then
+        par_dscritic := 'Número do documento do interveniente é obrigatorio.';
+        par_nmdcampo := 'nrdocava';
+        return;
+      end if;
+      --
+      if par_nmconjug is not null or
+         nvl(par_nrcpfcjg,0) <> 0 or
+         par_tpdoccjg is not null or
+         nvl(par_nrdoccjg,0) <> 0  then
+        -- Se algum dos campos estiver preenchido, todos são obrigatórios
+        if par_nmconjug is null or
+           nvl(par_nrcpfcjg,0) = 0 or
+           par_tpdoccjg is null or
+           nvl(par_nrdoccjg,0) = 0  then
+          par_dscritic := 'Todos os dados do conjuge devem ser informados.';
+          par_nmdcampo := 'nrcpfcjg';
+          return;
+        end if;
+        -- validar CPF do conjuge
+        gene0005.pc_valida_cpf_cnpj(par_nrcpfcjg,
+                                    vr_stsnrcal,
+                                    vr_inpessoa);
+        if not vr_stsnrcal then
+          par_cdcritic := 27;
+          par_nmdcampo := 'nrcpfcjg';
+          return;
+        end if;
+      end if;
+    end if;
+  exception
+    when others then
+      par_cdcritic := 0;
+      par_dscritic := 'Erro nao tratado na rotina TELA_MANBEM.PC_VALIDA_INTERV: ' || sqlerrm;
+  end;
+
+  /* Acionamento da validação de Interveniente Garantidor via tela */
+  procedure pc_valida_interv_web(pr_nrctaava in varchar2,
+                                 pr_nrcepend in varchar2,
+                                 pr_dsendrel in varchar2,
+                                 pr_nmdavali in varchar2,
+                                 pr_nrcpfcgc in varchar2,
+                                 pr_tpdocava in varchar2,
+                                 pr_nrdocava in varchar2,
+                                 pr_nmconjug in varchar2,
+                                 pr_nrcpfcjg in varchar2,
+                                 pr_tpdoccjg in varchar2,
+                                 pr_nrdoccjg in VARCHAR2,
+                                 pr_cdnacion in VARCHAR2,
+                                 pr_xmllog   in varchar2, --> XML com informacoes de LOG
+                                 pr_cdcritic out pls_integer, --> Codigo da critica
+                                 pr_dscritic out varchar2, --> Descricao da critica
+                                 pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
+                                 pr_nmdcampo out varchar2, --> Nome do campo com erro
+                                 pr_des_erro out varchar2) is --> Erros do processo
+    vr_numteste   number;
+    -- Variável de críticas
+    vr_cdcritic   crapcri.cdcritic%type; --> Cód. Erro
+    vr_dscritic   varchar2(1000);        --> Desc. Erro
+    -- Tratamento de erros
+    vr_exc_erro   exception;
+    -- Variaveis de log
+    vr_cdcooper   integer;
+    vr_cdoperad   varchar2(100);
+    vr_nmdatela   varchar2(100);
+    vr_nmeacao    varchar2(100);
+    vr_cdagenci   varchar2(100);
+    vr_nrdcaixa   varchar2(100);
+    vr_idorigem   varchar2(100);
+  begin
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+    -- Em caso de erro
+    if vr_dscritic is not null then
+      raise vr_exc_erro;
+    end if;
+    -- 
+    begin
+      vr_numteste := to_number(pr_nrctaava);
+    exception
+      when others then 
+        vr_dscritic := 'Numero da conta do avalista '||pr_nrctaava||' inválido!';
+        pr_nmdcampo := 'nrctaava';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrcepend);
+    exception
+      when others then 
+        vr_dscritic := 'CEP '||pr_nrctaava||' invalido!';
+        pr_nmdcampo := 'nrcepend';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrcpfcgc);
+    exception
+      when others then 
+        vr_dscritic := 'CPF '||pr_nrcpfcgc||' invalido!';
+        pr_nmdcampo := 'nrcfcgc';
+        raise vr_exc_erro; 
+    end;
+    --
+    begin
+      vr_numteste := to_number(pr_nrcpfcgc);
+    exception
+      when others then 
+        vr_dscritic := 'Documento '||pr_nrdocava||' invalido!';
+        pr_nmdcampo := 'nrdocava';
+        raise vr_exc_erro; 
+    end;
+    
+    -- Acionar validação 
+    pc_valida_interv(par_nrctaava => pr_nrctaava,
+                     par_nrcepend => pr_nrcepend,
+                     par_dsendrel => pr_dsendrel,
+                     par_nmdavali => pr_nmdavali,
+                     par_nrcpfcgc => pr_nrcpfcgc,
+                     par_tpdocava => pr_tpdocava,
+                     par_nrdocava => pr_nrdocava,
+                     par_nmconjug => pr_nmconjug,
+                     par_nrcpfcjg => pr_nrcpfcjg,
+                     par_tpdoccjg => pr_tpdoccjg,
+                     par_nrdoccjg => pr_nrdoccjg,
+                     par_cdnacion => pr_cdnacion,
+                     par_nmdcampo => pr_nmdcampo,
+                     par_cdcritic => pr_cdcritic,
+                     par_dscritic => pr_dscritic);
+    -- Em caso de erro 
+    if vr_cdcritic > 0 or
+       vr_dscritic is not null then
+      raise vr_exc_erro;
+    end if;
+  exception
+    when vr_exc_erro then
+      if vr_cdcritic <> 0 then
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      end if;
+      --
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    when others then
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro na rotina TELA_ADITIV.PC_VALIDA_INTERV_WEB: ' || sqlerrm;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  end;
+
+  /* Checar se o CPF está em alguma conta ativa do sistema */
+  procedure pc_cpf_cadastrado_web(pr_nrdconta in crapavt.nrdconta%type,
+                                  pr_nrctremp in crapavt.nrctremp%type,
+                                  pr_tpctrato IN crapavt.tpctrato%TYPE,
+                                  pr_nrcpfcgc in crapavt.nrcpfcgc%type,
+                                  pr_xmllog   in varchar2, --> XML com informacoes de LOG
+                                  pr_cdcritic out pls_integer, --> Codigo da critica
+                                  pr_dscritic out varchar2, --> Descricao da critica
+                                  pr_retxml   in out nocopy xmltype, --> Arquivo de retorno do XML
+                                  pr_nmdcampo out varchar2, --> Nome do campo com erro
+                                  pr_des_erro out varchar2) is --> Erros do processo
+    -- Variaveis de log
+    vr_cdcooper   integer;
+    vr_cdoperad   varchar2(100);
+    vr_nmdatela   varchar2(100);
+    vr_nmeacao    varchar2(100);
+    vr_cdagenci   varchar2(100);
+    vr_nrdcaixa   varchar2(100);
+    vr_idorigem   varchar2(100);
+    -- Variável de críticas
+    vr_cdcritic   crapcri.cdcritic%type; --> Cód. Erro
+    vr_dscritic   varchar2(1000);        --> Desc. Erro
+    -- Tratamento de erros
+    vr_exc_erro   exception;
+    -- Buscar se existe Interveniente
+    cursor cr_crapavt is
+      select 1
+        from crapavt
+       where cdcooper = vr_cdcooper
+         and tpctrato = 9
+         and nrdconta = pr_nrdconta
+         and nrctremp = pr_nrctremp
+         and nrcpfcgc = pr_nrcpfcgc;
+    vr_indexis number;
+    -- Buscar associado com conta ativa
+    cursor cr_crapass is
+      select 1
+        from crapass
+       where nrcpfcgc = pr_nrcpfcgc
+         AND dtdemiss IS NULL;
+  begin
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+    -- Em caso de erro
+    if vr_dscritic is not null then
+      raise vr_exc_erro;
+    end if;
+    pr_nmdcampo := 'nrcpfbem';
+    -- QUando CPF zerado, sai direto da rotina
+    IF pr_nrcpfcgc <> 0 THEN
+      -- Testar se o CPF está na lista de avalistas ou intervenientes
+      open cr_crapavt;
+      fetch cr_crapavt into vr_indexis;
+      -- Se não encontrar
+      if cr_crapavt%notfound then
+        close cr_crapavt;
+        -- Verificar se o CPF é de algum Cooperado
+        open cr_crapass;
+          fetch cr_crapass into vr_indexis;
+          -- Se não encontrar
+          if cr_crapass%notfound then
+            close cr_crapass;
+            -- Retornar indicação de que não está cadastrado
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Dados EHASSOCIADO="NOK"/></Root>');
+            return;
+          end if;
+        close cr_crapass;
+      ELSE
+        close cr_crapavt;
+      end IF;
+    END IF;
+    -- Retornar indicação de que está cadastrado
+    pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                   '<Root><Dados EHASSOCIADO="OK"/></Root>');
+  exception
+    when vr_exc_erro then
+      if vr_cdcritic <> 0 then
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      end if;
+      --
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    when others then
+      pr_dscritic := 'Erro na rotina TELA_ADITIV.PC_CPF_CADASTRADO_WEB: ' || sqlerrm;
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  end;
+
+END tela_manbem;
 /

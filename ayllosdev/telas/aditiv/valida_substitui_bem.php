@@ -51,6 +51,7 @@
 	$xmlCarregaDados .= "  <nrdconta>" . $nrdconta . "</nrdconta>";
 	$xmlCarregaDados .= "  <nrctremp>" . $nrctremp . "</nrctremp>";
 	$xmlCarregaDados .= "  <tpctrato>" . $tpctrato . "</tpctrato>";
+    $xmlCarregaDados .= "  <nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
 	$xmlCarregaDados .= "  <cddopcao>" . $cddopcao . "</cddopcao>";
 	$xmlCarregaDados .= "  <dscatbem>" . $dscatbem . "</dscatbem>";
 	$xmlCarregaDados .= "  <dstipbem>" . $dstipbem . "</dstipbem>";
@@ -92,26 +93,37 @@
 	}
 	else {
 
+    // Verificar se é obrigatorio aprovação do coordenador
+    $aprovacao == 0;
+    if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA') {
+      $aprovacao = $xmlObject->roottag->tags[1]->cdata;
+    }
+    
+    // Se é necessário pedir aprovação do coordenador
+    if($aprovacao==1){
 		$funcaoSim = 'SenhaCoordenador();';
+    }else{
+      $funcaoSim = 'SubstituiBem();';
+    }  
+    
+    //echo ("console.log('aprovacao: $aprovacao');");
+    //echo ("console.log('funcaoSim: $funcaoSim');");
+    
 		$funcaoNao = 'CancelaSubstituicao();';
 		$msgAvisoDefault = "Este processo irá retirar a alienação do veículo selecionado e alienar o novo veículo.";
+    
+    // Se ha mensagem
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
-				$msgAviso  = $xmlObject->roottag->tags[0]->cdata;
+				$msgAviso = $xmlObject->roottag->tags[0]->cdata;
+        if ($msgAviso != '') {
+            $msgAviso = "<br/>".$msgAviso;
+        }  
+    }   
 
-				echo "showConfirmacao(
-										' ".$msgAvisoDefault."<br/>".$msgAviso." Continuar alteração ?'
-										,'Confirma?- Ayllos'
-										,'".$funcaoSim."'
-										,'".$funcaoNao."'
-										,'sim.gif'
-										,'nao.gif'
-									);";
-        }
-        else
-        {
+    // Mostrar confirmação    
 			echo "showConfirmacao(
-										'".$msgAvisoDefault." Continuar alteração?'
-										,'Confirma?- Ayllos'
+                ' ".$msgAvisoDefault.$msgAviso." Continuar alteração ?'
+                ,'Confirma?- Ayllos'
 										,'".$funcaoSim."'
 										,'".$funcaoNao."'
 										,'sim.gif'

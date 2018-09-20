@@ -356,7 +356,7 @@ BEGIN
                                    ||chr(10)||'<nmresseg>'||TRIM(rw_crawseg.nmresseg)||'</nmresseg>'
                                    ||chr(10)||'<dsveicul>'||TRIM(rw_crawseg.dsmarvei) || ' ' || TRIM(rw_crawseg.dstipvei)||'</dsveicul>'
                                    ||chr(10)||'<dsmodelo>'||TRIM(LPAD(rw_crawseg.nrmodvei,4,0)) || '/' || TRIM(LPAD(rw_crawseg.nranovei,4,0))||'</dsmodelo>'
-                                   ||chr(10)||'<nrdplaca>'||TRIM(SUBSTR(rw_crawseg.nrdplaca,0,3) || '-' || SUBSTR(rw_crawseg.nrdplaca,4,4))||'</nrdplaca>'
+                                   ||chr(10)||'<nrdplaca>'||TRIM(SUBSTR(rw_crawseg.nrdplaca,0,3) || SUBSTR(rw_crawseg.nrdplaca,4,4))|| ' ' ||'</nrdplaca>'
                                    ||chr(10)||'</seguros>');  
           
         IF vr_pa_anterior <> rw_crapseg.cdagenci THEN

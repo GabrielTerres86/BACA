@@ -28,6 +28,32 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_GRAVAM AS
                                   ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                   ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
                                   ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
+   /* Procedimento para retornar os parâmetros gravados em Sistema */
+   PROCEDURE pc_busca_parametros(pr_xmllog   IN VARCHAR2           -- XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER       -- Código da crítica
+                                ,pr_dscritic OUT VARCHAR2          -- Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2          -- Nome do Campo
+                                ,pr_des_erro OUT VARCHAR2);        -- Saida OK/NOK
+
+  /* Procedimento para retornar os parâmetros gravados em Sistema */
+  PROCEDURE pc_gravacao_parametros(pr_nrdiaenv in varchar2 -- Numero Dias Envio apos Liquidação / Cancelamento
+                                  ,pr_hrenvi01 in varchar2 -- Horário 1º Envio do dia
+                                  ,pr_hrenvi02 in varchar2 -- Horário 2º Envio do dia
+                                  ,pr_hrenvi03 in varchar2 -- Horário 3º Envio do dia
+                                  ,pr_aprvcord in varchar2 -- Solicitação de Aprovação de Coordenador
+                                  ,pr_perccber in varchar2 -- Percentual de valor do Bem X Valor Proposta
+                                  ,pr_tipcomun in varchar2 -- Tipo de Comunicação com B3 para Gravames
+                                  ,pr_nrdnaoef in varchar2 -- Numero dias após Gravame sem efetivação
+                                  ,pr_emlnaoef in varchar2 -- List de emails para aviso Gravame sem efetivacao
+                                  
+                                  ,pr_xmllog   IN VARCHAR2           -- XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER       -- Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2          -- Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2          -- Nome do Campo
+                                  ,pr_des_erro OUT VARCHAR2);        -- Saida OK/NOK     
+  
      
   /*Rotina para criar os arquivos de GRAVAMES*/                             
   PROCEDURE pc_gera_arquivo(pr_cdcoptel   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS      
@@ -253,6 +279,527 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
         
         
   END pc_buscar_cooperativas;
+  
+   /* Procedimento para retornar os parâmetros gravados em Sistema para tela GRAVAM */
+   PROCEDURE pc_busca_parametros(pr_xmllog   IN VARCHAR2           -- XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER       -- Código da crítica
+                                ,pr_dscritic OUT VARCHAR2          -- Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2          -- Nome do Campo
+                                ,pr_des_erro OUT VARCHAR2)IS       -- Saida OK/NOK
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_busca_parametros
+    Autor    : Marcos - Envolti
+    Data     : Agosto/2018                            Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Busca parâmetros do sistema para retornar a tela PHP
+
+    Alterações :
+
+    -------------------------------------------------------------------------------------------------------------*/
+
+    -- Variaveis de locais
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION;
+
+    --Separacao de valores por hora para vetor
+    vr_txhorarios   gene0002.typ_split;
+
+
+  BEGIN
+
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
+                              ,pr_action => 'pc_busca_parametros');
+
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Se não veio a Cooperativa temos de gerar erro
+    IF vr_cdcooper IS NULL THEN
+     -- Montar mensagem de critica
+     vr_cdcritic:= 651;
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Raiz/>');
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Raiz'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'Dados'
+      ,pr_tag_cont => NULL
+      ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'nrdiaenv'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'GRAVAM_DIAS_PARA_ENV')
+      ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'hrenvi01'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'GRAVAM_HRENVIO_01')
+      ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'hrenvi02'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'GRAVAM_HRENVIO_02')
+      ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'hrenvi03'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'GRAVAM_HRENVIO_03')
+      ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'aprvcord'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'ADITIV_5_APROVA_COORD')
+      ,pr_des_erro => vr_dscritic);      
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'perccber'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'ADITIV_5_PERC_MIN_COBERT')
+      ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'tipcomun'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'GRAVAM_TIPO_COMUNICACAO')
+      ,pr_des_erro => vr_dscritic);      
+      
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'nrdnaoef'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'GRAVAM_DIA_AVISO_NAO_EFT')
+      ,pr_des_erro => vr_dscritic);   
+
+    GENE0007.pc_insere_tag
+      (pr_xml      => pr_retxml
+      ,pr_tag_pai  => 'Dados'
+      ,pr_posicao  => 0
+      ,pr_tag_nova => 'emlnaoef'
+      ,pr_tag_cont => gene0001.fn_param_sistema('CRED',vr_cdcooper,'GRAVAM_MAIL_AVIS_NAO_EFT')
+      ,pr_des_erro => vr_dscritic);                 
+
+    -- Retorno OK
+    pr_des_erro := 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+
+      -- Propagar Erro
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'NOK';
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+    WHEN OTHERS THEN
+
+      -- Propagar erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_parametros --> '|| SQLERRM;
+      pr_des_erro:= 'NOK';
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+  END pc_busca_parametros;
+
+  /* Procedimento para retornar os parâmetros gravados em Sistema */
+  PROCEDURE pc_gravacao_parametros(pr_nrdiaenv in varchar2 -- Numero Dias Envio apos Liquidação / Cancelamento
+                                  ,pr_hrenvi01 in varchar2 -- Horário 1º Envio do dia
+                                  ,pr_hrenvi02 in varchar2 -- Horário 2º Envio do dia
+                                  ,pr_hrenvi03 in varchar2 -- Horário 3º Envio do dia
+                                  ,pr_aprvcord in varchar2 -- Solicitação de Aprovação de Coordenador
+                                  ,pr_perccber in varchar2 -- Percentual de valor do Bem X Valor Proposta
+                                  ,pr_tipcomun in varchar2 -- Tipo de Comunicação com B3 para Gravames
+                                  ,pr_nrdnaoef in varchar2 -- Numero dias após Gravame sem efetivação
+                                  ,pr_emlnaoef in varchar2 -- List de emails para aviso Gravame sem efetivacao
+                                  
+                                  ,pr_xmllog   IN VARCHAR2           -- XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER       -- Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2          -- Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType -- Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2          -- Nome do Campo
+                                  ,pr_des_erro OUT VARCHAR2)IS       -- Saida OK/NOK
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_gravacao_parametros
+    Autor    : Marcos-Envolti
+    Data     : Junho/2018                           Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Gravar parâmetros do sistema conforme preenchimento em tela PHP
+
+    Alterações :
+
+    -------------------------------------------------------------------------------------------------------------*/
+    -- Variaveis de locais
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION;
+    
+    vr_txemails gene0002.typ_split; --> Separação da linha em vetor
+    vr_vlemails VARCHAR2(4000); --> Emails válidos
+    
+    -- Variaveis para LOG
+    vr_dsvlrprm VARCHAR2(4000);
+    vr_dsnomprm VARCHAR2(4000);
+    
+
+  BEGIN
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => ct_nmdatela
+                              ,pr_action => 'pc_gravacao_parametros');
+
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+    -- Verifica se houve erro recuperando informacoes de log
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Valida tipo de dado e range dos dias para envio
+    DECLARE
+      vr_numteste NUMBER;
+    BEGIN
+      vr_numteste := pr_nrdiaenv;
+      IF trim(vr_numteste) IS NULL OR vr_numteste < 0 OR vr_numteste > 30 THEN
+        RAISE vr_exc_erro;
+      END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := gene0007.fn_convert_db_web('Número de dias após liquidação do contrato para envio das baixas é obrigatório! Favor informar um número de 0 a 30 dias!');
+        RAISE vr_exc_erro;
+    END;  
+    
+    -- Validar horários para envio
+    IF trim(pr_hrenvi01) IS NULL AND trim(pr_hrenvi02) IS NULL AND trim(pr_hrenvi03) IS NULL THEN
+      vr_dscritic := gene0007.fn_convert_db_web('Informe pelo menos um Horário(s) dos envios das baixas/cancelamentos:');
+      RAISE vr_exc_erro;
+    ELSE
+      DECLARE
+        vr_datteste DATE;
+        vr_valteste VARCHAR2(100);
+      BEGIN
+        -- Validar se é horário válido
+        FOR idx IN 1..3 LOOP
+          IF idx = 1 THEN
+            vr_valteste := pr_hrenvi01;
+          ELSIF idx = 2 THEN
+            vr_valteste := pr_hrenvi02;
+          ELSE
+            vr_valteste := pr_hrenvi03;
+          END IF;
+          -- Somente se existir valor
+          IF trim(vr_valteste) IS NOT NULL THEN
+            -- Converter para data
+            vr_datteste := to_date(to_char(SYSDATE,'ddmmrrrr')||vr_valteste,'ddmmrrrrhh24:mi');
+            -- Se chegou aqui é uma data válida
+            IF vr_datteste < to_date(to_char(SYSDATE,'ddmmrrrr')||'05:00','ddmmrrrrhh24:mi')
+            OR vr_datteste > to_date(to_char(SYSDATE,'ddmmrrrr')||'23:00','ddmmrrrrhh24:mi') THEN
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+        END LOOP;
+      EXCEPTION
+        WHEN OTHERS THEN 
+          vr_dscritic := gene0007.fn_convert_db_web('Horário [] para envio inválido! Favor informar um horário entre as 05:00 e as 23:00!');
+          RAISE vr_exc_erro;
+      END;
+    END IF;
+    
+    -- Valida tipo de dado e range dos dias para aviso gravam sem efetivação
+    DECLARE
+      vr_numteste NUMBER;
+    BEGIN
+      vr_numteste := pr_nrdnaoef;
+      IF trim(vr_numteste) IS NULL OR vr_numteste < 0 OR vr_numteste > 30 THEN
+        RAISE vr_exc_erro;
+      END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := gene0007.fn_convert_db_web('Número de dias para aviso via e-mail de propostas com gravames e não efetivadas é obrigatório! Favor informar um número de 0 a 30 dias!');
+        RAISE vr_exc_erro;
+    END;  
+    
+    -- Validar solicitação de aprovação
+    IF trim(pr_aprvcord) NOT IN('N','S','A') THEN
+      vr_dscritic := gene0007.fn_convert_db_web('Opção inválida de Solicita senha de coordenação para aditivos!');
+      RAISE vr_exc_erro;
+    END IF;
+    -- Para aprovação "Apenas", temos de validar o percentual
+    IF trim(pr_aprvcord) = 'A' THEN
+      DECLARE
+        vr_numteste NUMBER;
+      BEGIN
+        vr_numteste := pr_perccber;
+        IF trim(vr_numteste) IS NULL OR vr_numteste < 0.01 OR vr_numteste > 100 THEN
+          RAISE vr_exc_erro;
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := gene0007.fn_convert_db_web('Valor mínimo de porcentagem sobre o saldo devedor inválido! Favor informar um valor percentual entre 0,01 e 100!');
+          RAISE vr_exc_erro;
+      END;       
+    END IF;    
+    
+    -- Validar Tipo de Comunicação
+    IF trim(pr_tipcomun) NOT IN('N','S') THEN
+      vr_dscritic := gene0007.fn_convert_db_web('Tipo de Comunicação Inválida!');
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Se temos dias para aviso, é obrigatório informar email
+    IF pr_nrdnaoef > 0 THEN     
+      -- Separar os emails enviados e tentar validá-los
+      vr_txemails := gene0002.fn_quebra_string(replace(pr_emlnaoef,',',';'),';');
+      IF vr_txemails.COUNT() > 0 THEN
+        FOR vr_idx IN vr_txemails.FIRST..vr_txemails.LAST LOOP
+          -- Se o email atual possuir alguma informação
+          IF trim(vr_txemails(vr_idx)) IS NOT NULL THEN 
+            -- Validar o mesmo
+            IF gene0003.fn_valida_email(vr_txemails(vr_idx)) = 1 THEN 
+              vr_vlemails := vr_vlemails || lower(vr_txemails(vr_idx))||';';
+            ELSE
+              -- Gerar erro 
+              vr_dscritic := gene0007.fn_convert_db_web('Endereço de email ['||vr_txemails(vr_idx)||'] não é um endereço válido!');
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+        END LOOP;
+      END IF;        
+      -- Se não validou pelo menos um email
+      IF vr_vlemails IS NULL THEN 
+        vr_dscritic := gene0007.fn_convert_db_web('E-mail(s) para enviar relatório de propostas com gravames e não efetivadas deve ser informado! Informe endereços válidos e separados por ponto e vírgula(;), caso seja necessário!');
+        RAISE vr_exc_erro;
+      END IF;        
+    END IF;
+
+    -- Passadas as validações, faremos a gravação
+    DECLARE
+      vr_nomcampo VARCHAR2(100);
+      vr_vlranter VARCHAR2(4000);
+      vr_vlrcampo VARCHAR2(4000);
+      vr_cdacesso VARCHAR2(24);
+      
+      -- Pltable para gravar os horários ordenados
+      TYPE typ_tab_horarios IS TABLE OF VARCHAR2(5) INDEX BY VARCHAR2(5);
+      vr_tab_horarios typ_tab_horarios;
+      vr_idx_horarios VARCHAR2(5);
+      -- Variaveis para guardar os horários encontratos
+      vr_hrenvi01 VARCHAR2(5); 
+      vr_hrenvi02 VARCHAR2(5);
+      vr_hrenvi03 VARCHAR2(5);
+    BEGIN
+      -- Posicionar os horários em pltable
+      IF trim(pr_hrenvi01) IS NOT NULL THEN
+        vr_tab_horarios(pr_hrenvi01) := pr_hrenvi01;
+      END IF;
+      IF trim(pr_hrenvi02) IS NOT NULL THEN
+        vr_tab_horarios(pr_hrenvi02) := pr_hrenvi02;
+      END IF;      
+      IF trim(pr_hrenvi03) IS NOT NULL THEN
+        vr_tab_horarios(pr_hrenvi03) := pr_hrenvi03;
+      END IF; 
+      -- Varrer a pltable e gravar nas variaveis corretas
+      vr_idx_horarios := vr_tab_horarios.first;
+      LOOP
+        EXIT WHEN vr_idx_horarios IS NULL;
+        -- Posicionar
+        IF vr_hrenvi01 IS NULL THEN
+          vr_hrenvi01 := vr_tab_horarios(vr_idx_horarios);
+        ELSIF vr_hrenvi02 IS NULL THEN
+          vr_hrenvi02 := vr_tab_horarios(vr_idx_horarios);
+        ELSE
+          vr_hrenvi03 := vr_tab_horarios(vr_idx_horarios);
+        END IF;
+        vr_idx_horarios := vr_tab_horarios.next(vr_idx_horarios);
+      END LOOP;
+      -- Loop para salvar os 9 campos
+      FOR vr_idx IN 1..9 LOOP        
+        -- Conforme cada posição busca o parametro
+        IF vr_idx = 1 THEN
+          vr_nomcampo := gene0007.fn_convert_db_web('Número de dias após liquidação do contrato para envio das baixas');
+          vr_vlrcampo := pr_nrdiaenv;
+          vr_cdacesso := 'GRAVAM_DIAS_PARA_ENV';
+        ELSIF vr_idx in(2,3,4) THEN          
+          -- Reposicionaremos os horários para que fiquem em ordem
+          IF vr_idx = 2 THEN
+            -- Usamos o menor
+            vr_vlrcampo := vr_hrenvi01;  
+          ELSIF vr_idx = 3 THEN
+            -- Usaremos o do meio  
+            vr_vlrcampo := vr_hrenvi02;  
+          ELSE
+            -- Usamos o maior
+            vr_vlrcampo := vr_hrenvi03;  
+          END IF;
+          -- Nome é fixo e cdacesso conforme o loop
+          vr_nomcampo := gene0007.fn_convert_db_web('Horário(s) dos envios das baixas/cancelamentos');
+          vr_cdacesso := 'GRAVAM_HRENVIO_'||to_char(vr_idx-1,'fm00');
+        ELSIF vr_idx = 5 THEN
+          vr_nomcampo := gene0007.fn_convert_db_web('Solicitar aprovação nos Aditivos de Substituição de Bem');
+          vr_vlrcampo := pr_aprvcord;
+          vr_cdacesso := 'ADITIV_5_APROVA_COORD';
+        ELSIF vr_idx = 6 THEN
+          vr_nomcampo := gene0007.fn_convert_db_web('Valor mínimo de porcentagem sobre o saldo devedor');
+          vr_vlrcampo := pr_perccber;
+          vr_cdacesso := 'ADITIV_5_PERC_MIN_COBERT';
+        ELSIF vr_idx = 7 THEN
+          vr_nomcampo := gene0007.fn_convert_db_web('Forma de Comunicação');
+          vr_vlrcampo := pr_tipcomun;
+          vr_cdacesso := 'GRAVAM_TIPO_COMUNICACAO';  
+        ELSIF vr_idx = 8 THEN
+          vr_nomcampo := gene0007.fn_convert_db_web('Número de dias para aviso via e-mail de propostas com gravames e não efetivadas:');
+          vr_vlrcampo := pr_nrdnaoef;
+          vr_cdacesso := 'GRAVAM_DIA_AVISO_NAO_EFT'; 
+        ELSE
+          vr_nomcampo := gene0007.fn_convert_db_web('E-mail(s) para enviar relatório de propostas com gravames e não efetivadas');
+          vr_vlrcampo := vr_vlemails;
+          vr_cdacesso := 'GRAVAM_MAIL_AVIS_NAO_EFT'; 
+        END IF;        
+        -- Testar a alteração para gravação e log
+        vr_vlranter := gene0001.fn_param_sistema('CRED',vr_cdcooper,vr_cdacesso);
+        IF nvl(vr_vlrcampo,' ') <> nvl(vr_vlranter,' ') THEN 
+          UPDATE crapprm
+             SET dsvlrprm = vr_vlrcampo
+           WHERE nmsistem = 'CRED'
+             AND cdcooper = vr_cdcooper
+             AND cdacesso = vr_cdacesso; 
+          IF SQL%ROWCOUNT = 0 THEN   
+            INSERT INTO crapprm(nmsistem 
+                               ,cdcooper 
+                               ,cdacesso 
+                               ,dsvlrprm)
+                         VALUES('CRED'
+                               ,vr_cdcooper
+                               ,vr_cdacesso
+                               ,vr_vlrcampo);
+          END IF;
+          -- Gerar LOG
+          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => ct_nmdatela
+                                    ,pr_flfinmsg     => 'N'
+                                    ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
+                                                     || ' -->  Operador '|| vr_cdoperad || ' - ' 
+                                                     || 'Alterou o parâmetro "'||vr_nomcampo||'" de ' || vr_vlranter
+                                                     || ' para ' || vr_vlrcampo || '.');
+        END IF;   
+      END LOOP;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        RAISE vr_exc_erro;
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro na gravação dos Parâmetros GRAVAM Campo "'||vr_nomcampo||'" para '||vr_vlrcampo||'. Erro encontrado: '||sqlerrm;
+        RAISE vr_exc_erro;
+    END;
+    
+    -- Gravar no banco
+    COMMIT;
+    -- Retorno OK
+    pr_des_erro := 'OK';
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Propagar Erro
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'NOK';
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      -- Propagar erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_gravacao_parametros --> '|| SQLERRM;
+      pr_des_erro:= 'NOK';
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+  END pc_gravacao_parametros;
+  
   
   PROCEDURE pc_gera_arquivo(pr_cdcoptel   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS      
                            ,pr_tparquiv   IN VARCHAR2           --> Tipo do arquivo                      

@@ -102,6 +102,9 @@
 
 		<?
 		
+	}else if($cddopcao == "P"){
+		include('form_filtro_parametros.php');
+		
 	}else{
 		
 		include('form_filtro.php'); 

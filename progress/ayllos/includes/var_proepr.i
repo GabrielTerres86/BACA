@@ -480,7 +480,7 @@ FORM SKIP(1)
      SKIP
      tt-bens-alienacao.ufdplaca AT  2 FORMAT "xx"    LABEL "UF/Placa         " 
                                                      AUTO-RETURN
-     tt-bens-alienacao.nrdplaca       FORMAT "xxx-xxxx" NO-LABEL 
+     tt-bens-alienacao.nrdplaca       FORMAT "xxxxxxx" NO-LABEL 
      tt-bens-alienacao.uflicenc       LABEL  "UF Licenciamento"     AT  47
      SKIP
      tt-bens-alienacao.nrrenava AT  2 FORMAT "zzz,zzz,zzz,zz9" 
