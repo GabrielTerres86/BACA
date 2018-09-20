@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 22/09/2017
+    Data    : Junho/2010                      Ultima atualizacao: 06/09/2018
   
     Dados referentes ao programa:
   
@@ -189,7 +189,9 @@
                              PRJ366 (Lombardi).		
 
 				13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)	
-
+				
+				06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+                             corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
 .............................................................................*/
                                                      
 
@@ -418,6 +420,7 @@ PROCEDURE Grava_Dados :
                              INPUT par_idorigee,
                              INPUT par_nrlicamb,
 							 INPUT par_nmsocial,
+                             INPUT par_cdempres,
                             OUTPUT par_rowidass,
                             OUTPUT aux_rowidttl,               
                             OUTPUT aux_rowidjur,
@@ -4257,7 +4260,8 @@ PROCEDURE Inclui PRIVATE :
     DEF  INPUT PARAM par_hrinicad AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO. 
+    DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_rowidass AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM par_rowidttl AS ROWID                          NO-UNDO.
@@ -4636,6 +4640,7 @@ PROCEDURE Inclui PRIVATE :
                       INPUT par_inhabmen,
                       INPUT par_dthabmen,
 					  INPUT par_nmsocial,
+					  INPUT par_cdempres,
                      OUTPUT par_rowidttl,
                      OUTPUT crabass.dsproftl,
                      OUTPUT par_cdcritic,
@@ -5188,7 +5193,7 @@ PROCEDURE Inclui_Fis PRIVATE :
     DEF  INPUT PARAM par_inhabmen AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
 	DEF  INPUT PARAM par_nmsocial AS CHAR                           NO-UNDO.
-
+    DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_rowidttl AS ROWID                          NO-UNDO.
     DEF OUTPUT PARAM par_dsproftl AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -5251,7 +5256,9 @@ PROCEDURE Inclui_Fis PRIVATE :
 
                           RUN STORED-PROCEDURE pc_busca_crapttl_compl 
                                 aux_handproc = PROC-HANDLE NO-ERROR
-                                                 (  INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */
+                                                   (INPUT par_cdcooper  /* pa_cdcooper*/
+												   ,INPUT par_cdempres  /* pr_cdempres */
+												   ,INPUT par_nrcpfcgc  /* pr_nrcpfcgc  */ 
                                                    ,OUTPUT 0   /* pr_cdnatopc   */
                                                    ,OUTPUT 0   /* pr_cdocpttl   */   
                                                    ,OUTPUT 0   /* pr_tpcttrab   */   

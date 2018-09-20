@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 13/03/2018
+    Data    : Janeiro/2010                   Ultima atualizacao: 06/09/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -176,6 +176,9 @@
                              da modalidade do tipo de conta. PRJ366 (Lombardi).						 
 
                 24/04/2018 - Gravar historico de inclusao e alteracao de titular. PRJ366 (Lombardi).
+				
+				CC - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+				             corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
 .............................................................................*/
 
 
@@ -1650,7 +1653,9 @@ PROCEDURE Grava_Dados:
 
                           RUN STORED-PROCEDURE pc_busca_crapttl_compl 
                                 aux_handproc = PROC-HANDLE NO-ERROR
-                                                 (  INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */
+                                                 (  INPUT 0	/*pr_cdcooper*/			
+												   ,INPUT 0 /*pr_cdempres*/
+												   ,INPUT par_nrcpfcgc  /* pr_nrcpfcgc   */												   												   
                                                    ,OUTPUT 0   /* pr_cdnatopc   */
                                                    ,OUTPUT 0   /* pr_cdocpttl   */   
                                                    ,OUTPUT 0   /* pr_tpcttrab   */   

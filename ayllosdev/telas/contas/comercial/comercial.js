@@ -24,6 +24,9 @@
  *			      05/07/2018 - Ajustado rotina para que nao haja inconsistencia nas informacoes da empresa
  *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
  *				  31/07/2018 - Ajuste realizado para que ao carregar a alteração, traga as informações correta da empresa. (Kelvin)	
+ *				  06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para	
+ *                             corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
+ *
  * --------------
  */
 
@@ -93,6 +96,9 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
 function controlaOperacao(operacao, flgConcluir) {   
 
+    if(operacao == 'AV')
+		buscaInfEmpresa();
+	
     var inpolexp = $('#inpolexp', '#' + nomeForm).val();
     var inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
 	
@@ -193,6 +199,10 @@ function controlaOperacao(operacao, flgConcluir) {
             }
 			if(operacao == 'CA' || operacao == 'CAE'){
               $("#nmextemp").desabilitaCampo();
+			  if(operacao == 'CAE'){
+				  $('#nrcpfemp').val("");
+				  $('#nmextemp').val("");
+			  }
 			  buscaInfEmpresa();
             }
             return false;
@@ -594,13 +604,16 @@ function controlaLayout(operacao) {
         cCodEmpresa.unbind('blur').bind('blur', function () {
             // Adaptar campo empresa, nao chamar evento BLUR se tiver com a TELA PESQUISA aberta. ( Rogerius (DB1) )
             if ($('#divPesquisa').css('visibility') == 'visible') { return false; }
-            controlaPesquisas();
-            controlaOperacao('CAE');
-			buscaInfEmpresa();
+            
+			controlaPesquisas();
+            controlaOperacao('CAE');			
+						
         });
 		
 		cCodCnpj.unbind('blur').bind('blur', function () {
-			buscaNomePessoa();
+			
+			buscaInfEmpresa();
+			
         });
 
         // Acionar o botao Salvar no enter do ultinmo campo
@@ -1199,6 +1212,8 @@ function buscaReferenciaFolha(nrdconta) {
 
 function controlaContinuar(flgPrimertela) {
 
+    buscaInfEmpresa();
+	
     var inpolexp = $('#inpolexp', '#' + nomeForm).val();
     var inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
 
@@ -1281,6 +1296,8 @@ function buscaNomePessoa(){
 function buscaInfEmpresa(){
 
     var cdempres = $('#cdempres').val();
+	var nrcpfemp = $('#nrcpfemp').val();
+	var nmextemp = $('#nmextemp').val();
 
     hideMsgAguardo();
 
@@ -1304,6 +1321,8 @@ function buscaInfEmpresa(){
             cdempres: cdempres,
 			nrdconta: nrdconta,
 			idseqttl: idseqttl,
+			nrcpfemp: normalizaNumero(nrcpfemp),
+			nmextemp: nmextemp,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {

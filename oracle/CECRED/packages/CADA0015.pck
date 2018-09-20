@@ -1654,14 +1654,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao:
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 06/09/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para cadastrar/atualizar pessoa conjuge
     --
-    --  Alteração :
+    --  Alteração : 06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+    --                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     --
     -- ..........................................................................*/
@@ -1827,7 +1828,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
             ELSE -- Se encontrou a pessoa juridica
               --> se o nome estiver diferente, é necessario atualizar pessoa
-              IF substr(pr_crapcje.nmextemp,1,40) <> substr(rw_pessoa.nmpessoa,1,40) THEN
+              IF substr(pr_crapcje.nmextemp,1,40) <> substr(rw_pessoa.nmpessoa,1,40) AND 
+                 NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
                 vr_flcria_empresa := TRUE;
               END IF;
               -- Atualiza o ID da pessoa juridica
@@ -1842,7 +1844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             FETCH cr_pessoa_id INTO rw_pessoa;
             CLOSE cr_pessoa_id;
 
-            IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
+            IF substr(nvl(pr_crapcje.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) AND
+               NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
               -- Atualiza o indicador para criar o CNPJ
               vr_flcria_empresa := TRUE;
             END IF;
@@ -4038,14 +4041,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Agosto/2017.                   Ultima atualizacao:
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 06/09/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para atualizacao da tabela renda do titular (CRAPTTL)
     --
-    --  Alteração :
+    --  Alteração : 	06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+		--						                 corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     --
     -- ..........................................................................*/
@@ -4119,7 +4123,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
       ELSE -- Se encontrou a pessoa juridica
         --> se o nome estiver diferente, é necessario atualizar pessoa
-        IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
+        IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) AND
+           NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
           vr_flcria_empresa := TRUE;
         END IF;
         -- Atualiza o ID da pessoa juridica
@@ -4135,7 +4140,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       CLOSE cr_pessoa_id;
 
       -- Feito a validacao abaixo para nao cortar o final do nome da pessoa
-      IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) THEN
+      IF substr(nvl(pr_crapttl.nmextemp,' '),1,40) <> substr(nvl(rw_pessoa.nmpessoa,' '),1,40) AND
+         NVL(rw_pessoa.tpcadastro,4) NOT IN (3,4) THEN
         -- Atualiza o indicador para criar o CNPJ
         vr_flcria_empresa := TRUE;
       END IF;
