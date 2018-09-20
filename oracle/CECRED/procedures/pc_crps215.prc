@@ -357,7 +357,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps215 (pr_cdcooper  IN crapcop.cdcooper%
                                              ,pr_cdagenci => rw_craplot.cdagenci
                                              ,pr_cdbccxlt => rw_craplot.cdbccxlt
                                              ,pr_nrdolote => rw_craplot.nrdolote
-                                             ,pr_nrdconta => rw_craplot.nrdolote
+                                             ,pr_nrdconta => rw_craplcb.nrdconta 
                                              ,pr_nrdctabb => rw_craplcb.nrdctabb
                                              ,pr_nrdctitg => gene0002.fn_mask(rw_craplcb.nrdctabb,'99999999')
                                              ,pr_nrdocmto => vr_nrdocmt2
