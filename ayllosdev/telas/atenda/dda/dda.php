@@ -20,7 +20,7 @@
 	isPostMethod();	
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 	
     $labelRot = $_POST['labelRot'];	
 	
@@ -32,7 +32,7 @@
 	// Carregas as opções da Rotina de DDA
 	$flgAcesso  = (in_array('@',$glbvars["opcoesTela"]));	
 				
-	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de DDA.','Alerta - Ayllos','');
+	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de DDA.','Alerta - Aimaro','');
 
 ?>
 

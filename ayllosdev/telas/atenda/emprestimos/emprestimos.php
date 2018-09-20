@@ -20,7 +20,7 @@ require_once('../../../class/xmlfile.php');
 isPostMethod();	
 
 // Se parâmetros necessários não foram informados
-if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','');
+if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','');
 
 $labelRot = $_POST['labelRot'];
 
@@ -36,7 +36,7 @@ $flgAlterar   = (in_array('A', $glbvars['opcoesTela']));
 $flgExcluir   = (in_array('E', $glbvars['opcoesTela']));
 $flgIncluir   = (in_array('I', $glbvars['opcoesTela']));	
 
-if ($flgAcesso == '') exibirErro('error','Seu usuário não possui permissão de acesso a tela de '.$nmrotina.'.','Alerta - Ayllos','');
+if ($flgAcesso == '') exibirErro('error','Seu usuário não possui permissão de acesso a tela de '.$nmrotina.'.','Alerta - Aimaro','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>

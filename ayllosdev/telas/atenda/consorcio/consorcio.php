@@ -19,7 +19,7 @@
 	isPostMethod();
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST['nmdatela'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST['nmdatela'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','');
 	
    $labelRot = $_POST['labelRot'];	
 

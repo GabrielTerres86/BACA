@@ -31,7 +31,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
     }
     echo "<script>";
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgErro, 'Alerta - Aimaro', '', false);
     echo "</script>";    
 } else {
     $registros = $xmlObj->roottag->tags;

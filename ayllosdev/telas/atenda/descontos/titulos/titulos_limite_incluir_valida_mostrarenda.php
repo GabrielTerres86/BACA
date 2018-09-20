@@ -124,7 +124,7 @@
 		<script type="text/javascript">
 			hideMsgAguardo();
 			inconfir = "<?php echo $inconfir; ?>";
-			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
 		</script>
 	<?php
 	exit();
@@ -133,7 +133,7 @@
 		<script type="text/javascript">
 			hideMsgAguardo();
 			inconfi2 = "<?php echo $inconfir; ?>";
-			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
 		</script>
 	<?php
 	exit();
@@ -143,7 +143,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -334,6 +334,6 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 
 <?php if ($inconfir == 72 || $inconfir == 19) { ?>
 // Mostra informação e continua
-showError("inform","<?php echo $mensagem; ?>","Alerta - Ayllos","metodoBlock()");
+showError("inform","<?php echo $mensagem; ?>","Alerta - Aimaro","metodoBlock()");
 <?php } ?>
 </script>

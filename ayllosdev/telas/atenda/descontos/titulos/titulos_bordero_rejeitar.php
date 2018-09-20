@@ -77,12 +77,12 @@
 
 	} else if ($confirma == 0 && $root->dados->indrestr->cdata == 1) {
 
-		echo 'showConfirmacao("'.htmlentities($root->dados->msgretorno->cdata).'","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(1);","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("'.htmlentities($root->dados->msgretorno->cdata).'","Confirma&ccedil;&atilde;o - Aimaro","rejeitarBorderoDscTit(1);","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 		exit;
 
 	} else {
 		
-		echo 'showError("inform","'.htmlentities($root->tags[0]->cdata).'","Alerta - Ayllos","carregaBorderosTitulos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("inform","'.htmlentities($root->tags[0]->cdata).'","Alerta - Aimaro","carregaBorderosTitulos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		
 		exit;
 	}
@@ -93,7 +93,7 @@
 
 		echo 'hideMsgAguardo();';
 		//echo 'habilitaBotaoLiberar(\'N\');';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 

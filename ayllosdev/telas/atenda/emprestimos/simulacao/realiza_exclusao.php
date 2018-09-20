@@ -18,7 +18,7 @@
 	$nrsimula = (isset($_POST['nrsimula'])) ? $_POST['nrsimula'] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	// Monta o xml de requisição
@@ -49,7 +49,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ){
-		echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	}
 	else{
 		echo "mostraTabelaSimulacao('TS');";

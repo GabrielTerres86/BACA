@@ -44,7 +44,7 @@
 
     if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
         $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-        exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+        exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial()', false);
     }
 
     $registro           = $xmlObject->roottag->tags[0];
@@ -92,7 +92,7 @@
 
       if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
         $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-        exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+        exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial()', false);
       }
       $subsegmentos = $xmlObject->roottag->tags[0]->tags[1]->tags;
 		
@@ -111,7 +111,7 @@
 
       if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
         $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-        exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+        exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial()', false);
       }
       $vendedores = $xmlObject->roottag->tags[0]->tags[1]->tags;
 		
@@ -130,7 +130,7 @@
 
       if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
         $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-        exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+        exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial()', false);
       }
       $usuarios = $xmlObject->roottag->tags[0]->tags[1]->tags;
 		

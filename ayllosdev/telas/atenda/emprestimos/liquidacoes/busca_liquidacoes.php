@@ -42,7 +42,7 @@ $xmlObj    = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
   $msgErro = $xmlObj->roottag->tags[0]->cdata;
-  exibirErro('error',$msgErro,'Alerta - Ayllos',false);
+  exibirErro('error',$msgErro,'Alerta - Aimaro',false);
 }
 
 $qtmesblq = $xmlObj->roottag->tags[0]->cdata;
@@ -51,7 +51,7 @@ echo 'qtmesblq = '.$qtmesblq.';';
 //parametro criado para tratar PORTABILIDADE
 if ($operacao != 'PORTAB_I' && $operacao != 'PORTAB_A') {
 
-    // exibirErro('error',$dsctrliq,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+    // exibirErro('error',$dsctrliq,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
     // Monta o xml de requisição
     $xml  = "<Root>";
     $xml .= "	<Cabecalho>";
@@ -85,7 +85,7 @@ if ($operacao != 'PORTAB_I' && $operacao != 'PORTAB_A') {
     $xmlObj = getObjectXML($xmlResult);
 
     if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-        exibirErro('error', $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+        exibirErro('error', $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)', false);
     }
 	
     $liquidacoes = $xmlObj->roottag->tags[0]->tags;

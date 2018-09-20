@@ -65,7 +65,7 @@
     // Se ocorrer um erro, mostra crítica
 	if ($root->erro){
 		echo "<script>";
-       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Ayllos","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
+       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Aimaro","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
 		echo "</script>";
 		exit;
 	}
@@ -134,7 +134,7 @@
 
 	<!-- Botoes -->
 	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,2,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
-	<input type="button" class="botao" value="Confirmar Resgate" onClick="showConfirmacao('Confirma resgate dos t&iacute;tulos selecionados?','Confirma&ccedil;&atilde;o - Ayllos','confirmarResgate();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
+	<input type="button" class="botao" value="Confirmar Resgate" onClick="showConfirmacao('Confirma resgate dos t&iacute;tulos selecionados?','Confirma&ccedil;&atilde;o - Aimaro','confirmarResgate();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 </div>
 <script type="text/javascript">
 	dscShowHideDiv("divOpcoesDaOpcao4","divOpcoesDaOpcao1;divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao5");

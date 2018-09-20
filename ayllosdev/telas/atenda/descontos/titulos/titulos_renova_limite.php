@@ -25,7 +25,7 @@
 	
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"V")) <> "") {
-		exibirErro('error',htmlentities($msgError),'Alerta - Ayllos',"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",false);
+		exibirErro('error',htmlentities($msgError),'Alerta - Aimaro',"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",false);
 	}
 	
 	isPostMethod();		
@@ -69,7 +69,7 @@
 		exibirErro(
 			"error",
 			htmlentities($msgErro),
-			"Alerta - Ayllos",
+			"Alerta - Aimaro",
 			"fecharRotinaGenerico('TITULOS');",
 			false);
 	}
@@ -77,6 +77,6 @@
 	echo "showError(
 			\"inform\",
 			\"Opera&ccedil;&atilde;o efetuada com sucesso!\",
-			\"Alerta - Ayllos\",
+			\"Alerta - Aimaro\",
 			\"fecharRotinaGenerico('TITULOS');\");";	
 ?>

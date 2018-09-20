@@ -125,7 +125,7 @@
 	    if (!empty($nmdcampo)) {
 	        $retornoAposErro = $retornoAposErro . " focaCampoErro('" . $nmdcampo . "','frmOpcao');";
 	    }
-	    exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+	    exibirErro('error', $msgErro, 'Alerta - Aimaro', $retornoAposErro, false);
 	}
 
     $associado = $xmlObjeto->roottag->tags[0]->tags[0]->tags; // dados associado  
@@ -134,7 +134,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}

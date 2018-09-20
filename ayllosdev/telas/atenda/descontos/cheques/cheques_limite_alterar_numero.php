@@ -94,12 +94,12 @@
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","$(\'#new_nrctrlim\',\'#frmNumero\').focus();blockBackground(parseInt($(\'#divUsoGenerico\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","$(\'#new_nrctrlim\',\'#frmNumero\').focus();blockBackground(parseInt($(\'#divUsoGenerico\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
 	
 ?>
 <script type="text/javascript">
-	showError("inform","Registro alterado com sucesso.","Alerta - Ayllos","fechaRotinaAltera();");
+	showError("inform","Registro alterado com sucesso.","Alerta - Aimaro","fechaRotinaAltera();");
 </script>

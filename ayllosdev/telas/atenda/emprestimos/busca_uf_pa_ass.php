@@ -28,7 +28,7 @@
 	$retornoAposErro = 'estadoInicial();';
 	
 	//if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-//		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+//		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 //	}
 
 	// Monta o xml dinâmico de acordo com a operação 
@@ -56,7 +56,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 	
 	$uflicenc = $xmlObjeto->roottag->tags[0]->attributes["UFLICENC"];	

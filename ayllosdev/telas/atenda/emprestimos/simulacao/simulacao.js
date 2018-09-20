@@ -47,7 +47,7 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
         });
         if (indarray == '') {
 
-            showError('error', 'Nenhuma simulação selecionada!', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"))');
+            showError('error', 'Nenhuma simulação selecionada!', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"))');
 
             return false;
 
@@ -82,7 +82,7 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
             buscarDadosSimulacao(auxind, operacao,'');
             break;
         case 'E_SIMULACAO':
-            showConfirmacao('Deseja excluir simula&ccedil;&atilde;o ' + auxind + ' ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirSimulacao(' + auxind + ')', 'bloqueiaFundo($(\'#divUsoGenerico\'))', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja excluir simula&ccedil;&atilde;o ' + auxind + ' ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'excluirSimulacao(' + auxind + ')', 'bloqueiaFundo($(\'#divUsoGenerico\'))', 'sim.gif', 'nao.gif');
             break;
         case 'IMP_SIMULACAO':
             showMsgAguardo("Aguarde, Gerando impress&atilde;o da simula&ccedil;&atilde;o...");
@@ -103,12 +103,12 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
 
 
             if (dtlibera != dtmvtolt) {
-                showError("error", "Data de Liberação do recurso deve ser igual a data atual. Altere a Simulação.", "Alerta - Ayllos", "bloqueiaFundo($('#divRotina'));", false);
+                showError("error", "Data de Liberação do recurso deve ser igual a data atual. Altere a Simulação.", "Alerta - Aimaro", "bloqueiaFundo($('#divRotina'));", false);
                 return false;
             }
 
             if (dtdpagto < dtmvtolt) {
-                showError("error", "Data de Pagamento deve ser maior ou igual a data atual. Altere a Simulação.", "Alerta - Ayllos", "bloqueiaFundo($('#divRotina'));", false);
+                showError("error", "Data de Pagamento deve ser maior ou igual a data atual. Altere a Simulação.", "Alerta - Aimaro", "bloqueiaFundo($('#divRotina'));", false);
                 return false;
             }
 
@@ -201,7 +201,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
             $('#btSalvar', '#divBotoesFormSimulacao').css('display', 'none');
         else {
             $('#btSalvar', '#divProcSimulacoesFormulario').bind('click', function() {
-                showConfirmacao('Deseja excluir simula&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirSimulacao(' + nrSimulacao + ')', 'bloqueiaFundo($(\'#divUsoGenerico\'))', 'sim.gif', 'nao.gif');
+                showConfirmacao('Deseja excluir simula&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'excluirSimulacao(' + nrSimulacao + ')', 'bloqueiaFundo($(\'#divUsoGenerico\'))', 'sim.gif', 'nao.gif');
                 return false;
             });
         }
@@ -235,7 +235,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
 		//consiste simulacao de portabilidade para PJ
 		cCdmodali.unbind('change').bind('change', function() {
 			if ( $.trim(inpessoa) == 2 ) {
-				showError('error', 'Finalidade não permitida para conta PJ.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');	
+				showError('error', 'Finalidade não permitida para conta PJ.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');	
 				cCdmodali.val('0');
 			}
 		});	
@@ -280,7 +280,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
             if ($(this).hasClass('campo')) {
                 qtprebem = parseFloat(cQtdParcela.val().replace(',', '.').replace('', '0'));
                 if (qtprebem <= 0) {
-                    showError('error', 'Parcelas a pagar deve ser maior que zero.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');
+                    showError('error', 'Parcelas a pagar deve ser maior que zero.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'qtparepr\',\'frmSimulacao\')');
                 } else {
                     cQtdParcela.removeClass('campoErro');
                 }
@@ -291,7 +291,7 @@ function controlaLayoutSimulacoes(operacao, nrSimulacao) {
         cValor.change(function() {
             valor = parseFloat(cValor.val().replace(',', '.').replace('', '0'));
             if (valor <= 0) {
-                showError('error', 'Valor da simulação de empréstimo deve ser maior que zero.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'vlemprst\',\'frmSimulacao\')');
+                showError('error', 'Valor da simulação de empréstimo deve ser maior que zero.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'vlemprst\',\'frmSimulacao\')');
             } else {
                 cValor.removeClass('campoErro');
             }
@@ -330,7 +330,7 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             try {
@@ -348,7 +348,7 @@ function buscarDadosSimulacao(nrsimula, operacao, tela) {
 					
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -370,18 +370,18 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
     var idfiniof = $("#idfiniof option:selected", "#divProcSimulacoesFormulario").val();
 	
     if ( tpfinali == 2 && cdmodali == 0 ) {
-        showError("error", "Selecione uma modalidade", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");        
+        showError("error", "Selecione uma modalidade", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");        
         return false;
     }
 
 	
 	if ( dtlibera == "" ) {
-		 showError('error', 'Data de Liberação deve ser informada.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'dtlibera\',\'frmSimulacao\')');
+		 showError('error', 'Data de Liberação deve ser informada.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'dtlibera\',\'frmSimulacao\')');
 		return false;
 	}
 	
 	if ( dtdpagto == "" ) {
-		 showError('error', 'Data do Pagamento da Primeira Parcela deve ser informada.', 'Alerta - Ayllos', 'bloqueiaFundo($("#divUsoGenerico"),\'dtdpagto\',\'frmSimulacao\')');
+		 showError('error', 'Data do Pagamento da Primeira Parcela deve ser informada.', 'Alerta - Aimaro', 'bloqueiaFundo($("#divUsoGenerico"),\'dtdpagto\',\'frmSimulacao\')');
 		return false;
 	}
 
@@ -410,7 +410,7 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             try {
@@ -418,7 +418,7 @@ function incluirAlterarSimulacao(operacao, nrsimula) {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -441,14 +441,14 @@ function excluirSimulacao(nrsimula) {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -503,6 +503,6 @@ function gerarProposta() {
         }
     });
 
-    showConfirmacao('Confirma a Geração da Proposta com Base na Simulação Nº ' + aux_nrsimula + ' ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaOperacaoSimulacoes(\'GPR\')', "blockBackground(parseInt($('#divRotina').css('z-index')))", 'sim.gif', 'nao.gif');
+    showConfirmacao('Confirma a Geração da Proposta com Base na Simulação Nº ' + aux_nrsimula + ' ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaOperacaoSimulacoes(\'GPR\')', "blockBackground(parseInt($('#divRotina').css('z-index')))", 'sim.gif', 'nao.gif');
 
 }

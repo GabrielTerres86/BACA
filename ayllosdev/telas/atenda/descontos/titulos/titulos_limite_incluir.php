@@ -31,20 +31,20 @@
 	setVarSession("opcoesTela",$opcoesTela);
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 	}	
 	
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])||
-		!isset($_POST["inconfir"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		!isset($_POST["inconfir"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 
 	$nrdconta = $_POST["nrdconta"];
 	$inconfir = $_POST["inconfir"];
 
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 
 	// Monta o xml de requisição
 	$xml  = "";
@@ -62,7 +62,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro',$funcaoAposErro);
 	}
 	
 	// Monta o xml de requisição
@@ -94,7 +94,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDadosLimIncluir->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		exibirErro('error',$xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 	} 
 	
 	$qtMensagens = count($xmlObjDadosLimIncluir->roottag->tags[2]->tags);	
@@ -104,7 +104,7 @@
 	if ($inconfir == 2) { ?>
 		<script type="text/javascript">
 		hideMsgAguardo();
-		showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Ayllos","carregaDadosInclusaoLimiteDscTit(<? echo $inconfir ?>)","metodoBlock()","sim.gif","nao.gif");
+		showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Aimaro","carregaDadosInclusaoLimiteDscTit(<? echo $inconfir ?>)","metodoBlock()","sim.gif","nao.gif");
 		</script>
 		<? exit();
 	}
@@ -137,7 +137,7 @@
 	$root = $xmlObj->roottag;
 	// Se ocorrer um erro, mostra crítica
 	if ($root->erro){
-		exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		exit;
 	}
 	$flctgmot = $root->dados->flctgmot;

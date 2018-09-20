@@ -40,7 +40,7 @@ $xmlObjeto = getObjectXML($xmlResult);
 
 // Se ocorrer um erro, mostra mensagem
 if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
-	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','',false);
 } 
  
 $dtlibera  = $xmlObjeto->roottag->tags[0]->attributes['DTLIBERA'];

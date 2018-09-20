@@ -186,8 +186,8 @@
 			strHTML +=		'</tbody>';
 			strHTML +=	'</table>';
 						
-			dsmetodo = 'showError("error","<?echo $xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata;?>","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
-			showError("inform","<?echo $aux_mensagem;?>","Alerta - Ayllos","mostraMsgsGrupoEconomico();formataGrupoEconomico();");
+			dsmetodo = 'showError("error","<?echo $xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata;?>","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
+			showError("inform","<?echo $aux_mensagem;?>","Alerta - Aimaro","mostraMsgsGrupoEconomico();formataGrupoEconomico();");
 		
 			<?
 			exit();
@@ -195,14 +195,14 @@
 		}elseif($aux_inconfir == 19){?>
 		
 			hideMsgAguardo();
-			showError("inform","<? echo $aux_mensagem;?>","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));hideMsgAguardo();showError('error','<?echo $xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata;?>','Alerta - Ayllos','blockBackground(parseInt($(\\'#divRotina\\').css(\\'z-index\\')))');");
+			showError("inform","<? echo $aux_mensagem;?>","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')));hideMsgAguardo();showError('error','<?echo $xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata;?>','Alerta - Aimaro','blockBackground(parseInt($(\\'#divRotina\\').css(\\'z-index\\')))');");
 			<?
 			exit();
 		
 		}elseif($aux_inconfir == 72){?>
 		
 			hideMsgAguardo();
-			showError("inform","<? echo $aux_mensagem;?>","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));hideMsgAguardo();showError('error','<?echo $xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata;?>','Alerta - Ayllos','blockBackground(parseInt($(\\'#divRotina\\').css(\\'z-index\\')))');");
+			showError("inform","<? echo $aux_mensagem;?>","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')));hideMsgAguardo();showError('error','<?echo $xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata;?>','Alerta - Aimaro','blockBackground(parseInt($(\\'#divRotina\\').css(\\'z-index\\')))');");
 			<?
 			exit();
 		
@@ -264,42 +264,42 @@
 	
 		hideMsgAguardo();
 		nrbordero = "<?php echo $nrborder; ?>";
-		showError("inform","<?php echo $mensagem; ?>","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaBorderosTitulos();voltaDiv(3,2,4,\"DESCONTO DE T&Iacute;TULOS - BORDER&Ocirc;S\");");
+		showError("inform","<?php echo $mensagem; ?>","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaBorderosTitulos();voltaDiv(3,2,4,\"DESCONTO DE T&Iacute;TULOS - BORDER&Ocirc;S\");");
 		<?
 		
 	}elseif ($inconfir == 2){	?>
 	
 		hideMsgAguardo();
 		aux_inconfir = "<?php echo $inconfir; ?>";	
-		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 		
 	<?
 	}elseif ($inconfir == 12){	?>
 	
 		hideMsgAguardo();
 		aux_inconfi2 = "<?php echo $inconfir; ?>";
-		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 		
 	<?php
 	}elseif ($inconfir == 22){	?>
 	
 		hideMsgAguardo();
 		aux_inconfi3 = "<?php echo $inconfir; ?>";
-		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 
 	<?php
 	}elseif ($inconfir == 31){	?>
 	
 		hideMsgAguardo();
 		aux_inconfi5 = "<?php echo ($inconfir + 1); ?>";
-		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+		showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 
 	<?php
 	}elseif ($inconfir == 72){	?>
 	
 	    hideMsgAguardo();
 		aux_inconfi4 = "<?php echo $inconfir; ?>";
-		showError("inform","<?php echo $mensagem; ?>","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')");
+		showError("inform","<?php echo $mensagem; ?>","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>',aux_inconfir,aux_inconfi2,aux_inconfi3,aux_inconfi4,aux_inconfi5,aux_inconfi6,'<?php echo $indentra; ?>','<?php echo $indrestr; ?>')");
 		
 	<?php
 	}elseif ($inconfir == 52){	?>
@@ -315,7 +315,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

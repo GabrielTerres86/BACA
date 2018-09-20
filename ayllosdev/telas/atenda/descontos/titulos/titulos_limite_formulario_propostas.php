@@ -390,7 +390,7 @@
 
     showConfirmacao(
         "Deseja cancelar a opera&ccedil;&atilde;o?",
-        "Confirma&ccedil;&atilde;o - Ayllos",
+        "Confirma&ccedil;&atilde;o - Aimaro",
 		"carregaLimitesTitulosPropostas();",
         "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
         "sim.gif",

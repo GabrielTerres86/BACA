@@ -30,17 +30,17 @@
 	<? if ($operacao == 'liberarAcessoTaa'){ ?>
 		
 		<a class="botao" onclick="opcaoTAA(); return false;" href="#">Voltar</a>
-		<a class="botao" onClick="showConfirmacao('Deseja liberar o acesso ao sistema TAA?','Confirma&ccedil;&atilde;o - Ayllos','liberarCartaoCreditoTAA();','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Concluir</a>
+		<a class="botao" onClick="showConfirmacao('Deseja liberar o acesso ao sistema TAA?','Confirma&ccedil;&atilde;o - Aimaro','liberarCartaoCreditoTAA();','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Concluir</a>
 	
 	<? }else if ($operacao == 'cadastrarSenhaNumericaTaa'){ ?>
 	
 		<a class="botao" onclick="opcaoTAA(); return false;" href="#">Voltar</a>
-		<a class="botao" onClick="showConfirmacao('Deseja cadastrar senha num&eacute;rica do TAA?','Confirma&ccedil;&atilde;o - Ayllos','alteraSenhaNumericaTAA();','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Concluir</a>
+		<a class="botao" onClick="showConfirmacao('Deseja cadastrar senha num&eacute;rica do TAA?','Confirma&ccedil;&atilde;o - Aimaro','alteraSenhaNumericaTAA();','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Concluir</a>
 	
 	<? }else if ($operacao == 'entregarCartao'){ ?>
 			
 		<a class="botao" onclick="voltaDiv(0,1,4); return false;" href="#">Cancelar</a>
-		<a class="botao" onClick="showConfirmacao('Deseja cadastrar senha num&eacute;rica do TAA?','Confirma&ccedil;&atilde;o - Ayllos','liberarCartaoCreditoTAA(\'<?php echo $operacao ?>\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Continuar</a>
+		<a class="botao" onClick="showConfirmacao('Deseja cadastrar senha num&eacute;rica do TAA?','Confirma&ccedil;&atilde;o - Aimaro','liberarCartaoCreditoTAA(\'<?php echo $operacao ?>\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Continuar</a>
 		
 	<? } ?>
 

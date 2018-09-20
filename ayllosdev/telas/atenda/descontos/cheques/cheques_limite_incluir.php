@@ -29,18 +29,18 @@
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);
 	}	
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])||
-		!isset($_POST["inconfir"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+		!isset($_POST["inconfir"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 
 	$nrdconta = $_POST["nrdconta"];
 	$inconfir = $_POST["inconfir"];
 
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -58,7 +58,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro',$funcaoAposErro);
 	}
 	
 	// Monta o xml de requisição
@@ -90,7 +90,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDadosLimIncluir->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 	} 
 	
 	$qtMensagens = count($xmlObjDadosLimIncluir->roottag->tags[2]->tags);	
@@ -100,7 +100,7 @@
 	if ($inconfir == 2) { ?>
 		<script type="text/javascript">
 		hideMsgAguardo();
-		showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Ayllos","carregaDadosInclusaoLimiteDscChq(<? echo $inconfir ?>)","metodoBlock()","sim.gif","nao.gif");
+		showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Aimaro","carregaDadosInclusaoLimiteDscChq(<? echo $inconfir ?>)","metodoBlock()","sim.gif","nao.gif");
 		</script>
 		<? exit();
 	}
@@ -136,7 +136,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if(count($erros) > 0){
-		exibirErro('error',$xmlObjVerCapital->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$xmlObjVerCapital->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 		
 	} 
 	

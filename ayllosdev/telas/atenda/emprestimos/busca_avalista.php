@@ -59,7 +59,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$avalista = $xmlObj->roottag->tags[0]->tags[0]->tags;
@@ -67,7 +67,7 @@
 	$bens 	  = $xmlObj->roottag->tags[2]->tags;
 	
 	if( count($avalista) == 0 ){
-		exibirErro('error','Nenhum avalista terceiro foi encontrado.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error','Nenhum avalista terceiro foi encontrado.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}else if (in_array($operacao,array('AI_DADOS_AVAL','A_DADOS_AVAL','I_DADOS_AVAL','IA_DADOS_AVAL'))){
 			
 		echo 'arrayAvalBusca.length = 0;';

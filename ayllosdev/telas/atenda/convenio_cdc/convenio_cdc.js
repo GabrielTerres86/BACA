@@ -75,7 +75,7 @@ function acessaOpcaoAba(cddopcao, id) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina)); 
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina)); 
 		},
 		success: function(response) {
 
@@ -176,7 +176,7 @@ function manterRotina(operacao) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			hideMsgAguardo();
@@ -184,7 +184,7 @@ function manterRotina(operacao) {
             // Se NAO possuir matriz volta para tela inicial, caso contratio volta para a listagem de filiais
 			fncRetorno = (idmatriz == idcooperado_cdc ? 'acessaOpcaoAba(\'P\',0)' : 'abreFiliais(\'' + idmatriz + '\')');
 
-			showError('inform',msgRetorno,'Alerta - Ayllos','bloqueiaFundo(divRotina);' + fncRetorno);
+			showError('inform',msgRetorno,'Alerta - Aimaro','bloqueiaFundo(divRotina);' + fncRetorno);
 			eval(response);
 			
 		}				
@@ -329,7 +329,7 @@ function controlaLayout(operacao) {
 		}
     }).unbind('change').bind('change', function(e){
 		if ($(this). val() == 1){
-			showConfirmacao('Deseja importar os dados de endere&ccedil;o da Tela CONTAS?','Confirma&ccedil;&atilde;o - Ayllos','buscaInformacoesCadastro();$(\'#dtinicon\',\'#frmConvenioCdc\').focus();','bloqueiaFundo(divRotina);cDtinicon.focus();','sim.gif','nao.gif');
+			showConfirmacao('Deseja importar os dados de endere&ccedil;o da Tela CONTAS?','Confirma&ccedil;&atilde;o - Aimaro','buscaInformacoesCadastro();$(\'#dtinicon\',\'#frmConvenioCdc\').focus();','bloqueiaFundo(divRotina);cDtinicon.focus();','sim.gif','nao.gif');
 		}
 	});
 	
@@ -570,7 +570,7 @@ function controlaOperacao(operacao) {
          (operacao == 'FCE') && (flgExcluir != '1') ||
          (operacao == 'FCI') && (flgExcluir != '1') ||
          (operacao == 'FCA') && (flgAlterar != '1') ) {
-		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o para realizar esta opera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
+		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o para realizar esta opera&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina);');
 		return false;
 	}
 
@@ -578,7 +578,7 @@ function controlaOperacao(operacao) {
     if ($('#tBodyRegs tr').length == 0 &&
         (operacao == 'FCE' || operacao == 'FCA')) {
         ocultaAbasCDC();    
-        showError('error','Nenhuma filial dispon&iacute;vel.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
+        showError('error','Nenhuma filial dispon&iacute;vel.','Alerta - Aimaro','bloqueiaFundo(divRotina);');
 		return false;
     }
 	
@@ -586,31 +586,31 @@ function controlaOperacao(operacao) {
 
 		// valida cidade
 		if (idcidade == 0 && dscidade != '') {
-		showError('error','Informe o c&oacute;digo da cidade.','Alerta - Ayllos','bloqueiaFundo(divRotina);$(\'#idcidade\', \'#frmConvenioCdc\').focus();');
+		showError('error','Informe o c&oacute;digo da cidade.','Alerta - Aimaro','bloqueiaFundo(divRotina);$(\'#idcidade\', \'#frmConvenioCdc\').focus();');
 		return false;
 	}
 
 		// valida data de inicio convenio cdc
 		if (flgconve == 1 && (dtinicon == "" || dtinicon == null || dtinicon == undefined)) {
-			showError('error', 'Informe a data de inicio do convenio cdc.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'Informe a data de inicio do convenio cdc.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 			return false;
 		}
 
 		// valida data de cancelamento
 		if (flgconve == 0 && (dtcancon == "" || dtcancon == null || dtcancon == undefined)) {
-			showError('error', 'Informe a data de cancelamento.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'Informe a data de cancelamento.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 			return false;
 		}
 
 	    // valida motivo de cancelamento
 	    if (flgconve == 0 && inmotcan == 0) {
-			showError('error', 'Selecione o motivo do cancelamento.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'Selecione o motivo do cancelamento.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 			return false;
 		}
 
 		// validq descricao de outros
 		if (flgconve == 0 && inmotcan == 5 && (dsmotcan == "" || dsmotcan == null || dsmotcan == undefined)) {
-			showError('error', 'Preencha o motivo do cancelamento.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'Preencha o motivo do cancelamento.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 			return false;
 		}
 	}
@@ -625,17 +625,17 @@ function controlaOperacao(operacao) {
 			break;
 		// Alteração para Consulta
 		case 'AC':
-			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		// Finalizar Alteracao
 		case 'ALTERAR':
-			showConfirmacao('Confirma a altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'' + operacao + '\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+			showConfirmacao('Confirma a altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'' + operacao + '\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 			return false;
 			break;
 		// Finalizar Inclusao
 		case 'INCLUIR':
-			showConfirmacao('Confirma a inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'' + operacao + '\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+			showConfirmacao('Confirma a inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'' + operacao + '\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 			return false;
 			break;
 		// Carregar tela de filiais
@@ -644,7 +644,7 @@ function controlaOperacao(operacao) {
             
             var idcooperado_cdc = (normalizaNumero(glbIdMatriz) == 0 ? normalizaNumero($('#idcooperado_cdc', '#frmConvenioCdc').val()) : normalizaNumero(glbIdMatriz));
             if (idcooperado_cdc == 0) {
-                showError('error','Antes de acessar as filiais &eacute; necess&aacute;rio gravar os dados da matriz.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
+                showError('error','Antes de acessar as filiais &eacute; necess&aacute;rio gravar os dados da matriz.','Alerta - Aimaro','bloqueiaFundo(divRotina);');
                 return false;
             } else {
                 abreFiliais(idcooperado_cdc);
@@ -654,7 +654,7 @@ function controlaOperacao(operacao) {
 		// Filial - Consulta para Exclusao
 		case 'FCE':
             cddopcao = 'E';
-            showConfirmacao('Confirma a exclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'' + operacao + '\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+            showConfirmacao('Confirma a exclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'' + operacao + '\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 			return false;
 			break;
 		// Filial - Consulta para Inclusao
@@ -675,7 +675,7 @@ function controlaOperacao(operacao) {
 			break;
 		// Subsegmento - Cancelar inclusão
 		case 'SCI':
-			showConfirmacao('Deseja cancelar a inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'acessaOpcaoAba(\'S\',0);', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja cancelar a inclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'acessaOpcaoAba(\'S\',0);', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 			return false;
             break;
 		default: 
@@ -701,7 +701,7 @@ function controlaOperacao(operacao) {
 		},  
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -813,7 +813,7 @@ function abreFiliais(idmatriz) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina)); 
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina)); 
 		},
 		success: function(response) {
 			$('#divConteudoOpcao').html(response);
@@ -875,7 +875,7 @@ mtSelecaoEndereco = function() {
         },
 		error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina)); 
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina)); 
         },
 		success: function(response) {
 			hideMsgAguardo();
@@ -899,7 +899,7 @@ function buscaInformacoesCadastro(){
         },
 		error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina)); 
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina)); 
         },
 		success: function(response) {
 			hideMsgAguardo();
@@ -1085,7 +1085,7 @@ function manterSubsegmento(cddopcao) {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 		},
 		success: function (response) {
 			eval(response);
@@ -1121,7 +1121,7 @@ function alteraUsuario() {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 		},
 		success: function (response) {
 			eval(response);
@@ -1143,7 +1143,7 @@ function mostraFormInclusaoSeg(idcooperado_cdc) {
 
 	// não deixar incluir segmentos para um lojista desabilitado
 	if (idcooperado_cdc == 0 || idcooperado_cdc==null || idcooperado_cdc==undefined){
-		showError('error', 'Lojista nao esta habilitado!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		showError('error', 'Lojista nao esta habilitado!', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 		return false;
 	}
 
@@ -1159,7 +1159,7 @@ function mostraFormInclusaoSeg(idcooperado_cdc) {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 		},
 		success: function (response) {
 			$('#divConteudoOpcao').html(response);
@@ -1184,7 +1184,7 @@ function mostraFormUsuAlterar(idcooperado_cdc) {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 		},
 		success: function (response) {
 			$('#divConteudoOpcao').html(response);

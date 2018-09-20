@@ -148,7 +148,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -186,7 +186,7 @@
 	
 	<div id="divBotoes" >
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4);return false;">
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/concluir.gif" onClick="showConfirmacao('Deseja alterar a data de vencimento do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','alterarDataDeVencimento()','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/concluir.gif" onClick="showConfirmacao('Deseja alterar a data de vencimento do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','alterarDataDeVencimento()','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 	</div>
 
 </form>

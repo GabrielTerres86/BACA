@@ -94,7 +94,7 @@ function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {
 			}, 
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		});	
 	}
@@ -183,7 +183,7 @@ function carregaTitulos() {
 			},		
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
 			success: function(response) {
 				$("#divOpcoesDaOpcao1").html(response);
@@ -213,7 +213,7 @@ function carregaCheques() {
 			},		
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
 			success: function(response) {
 				$("#divOpcoesDaOpcao1").html(response);
@@ -309,7 +309,7 @@ function formataLayout(nomeForm){
 		
 		$('#btndesinbord').unbind('click').bind('click', function(){
 			if (Chd_insitblq.val() != 1) {return false}
-			showConfirmacao("Confirma Desbloqueio da Inclus&atilde;o de Border&ocirc;?", "Confirma&ccedil;&atilde;o - Ayllos", "desbloqueiaInclusaoBordero();", "blockBackground(parseInt($('#divRotina').css('z-index')));", "sim.gif", "nao.gif");
+			showConfirmacao("Confirma Desbloqueio da Inclus&atilde;o de Border&ocirc;?", "Confirma&ccedil;&atilde;o - Aimaro", "desbloqueiaInclusaoBordero();", "blockBackground(parseInt($('#divRotina').css('z-index')));", "sim.gif", "nao.gif");
 			return false;			
 		});
 				
@@ -1707,7 +1707,7 @@ function formataCampoCmc7(exitCampo, nomeForm){
 	}
 	
 	if ( exitCampo && valorAtual.length < 34) {
-		showError('error','Valor do CMC-7 inv&aacute;lido.','Alerta - Ayllos','hideMsgAguardo(); $(\'#dsdocmc7\', \'#'+nomeForm+'\').focus(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
+		showError('error','Valor do CMC-7 inv&aacute;lido.','Alerta - Aimaro','hideMsgAguardo(); $(\'#dsdocmc7\', \'#'+nomeForm+'\').focus(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
 	}
 	
 	//remover os caracteres de formatação

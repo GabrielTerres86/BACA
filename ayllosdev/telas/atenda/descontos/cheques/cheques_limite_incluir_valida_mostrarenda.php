@@ -33,7 +33,7 @@
 		!isset($_POST["inconfir"]) || 
 		!isset($_POST["inconfi2"]) ||
 		!isset($_POST["inconfi4"])){
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	$nrdconta = $_POST["nrdconta"];
@@ -48,10 +48,10 @@
 	$inconfi4 = $_POST["inconfi4"];
 
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 
 	// Verifica se o do contrato é um inteiro válido
-	if (!validaInteiro($nrctrlim)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrctrlim)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Monta o xml de requisição
 	$xmlGetDadosLimIncluir  = "";
@@ -93,7 +93,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDadosLimIncluir->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 	} 
 	
 	$qtMensagens = count($xmlObjDadosLimIncluir->roottag->tags[0]->tags);
@@ -113,7 +113,7 @@
 		<script type="text/javascript">
 			hideMsgAguardo();
 			inconfir = "<?echo $inconfir; ?>";
-			showConfirmacao("<?echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("<?echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
 		</script>
 	<?
 	exit();
@@ -122,7 +122,7 @@
 		<script type="text/javascript">
 			hideMsgAguardo();
 			inconfi2 = "<?echo $inconfir; ?>";
-			showConfirmacao("<?echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("<?echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","validaPrimeiroPassoInclusao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
 		</script>
 	<?
 	exit();
@@ -276,6 +276,6 @@
 <? if ($inconfir == 72 || $inconfir == 19) { ?>
 	<script type="text/javascript">
 		// Mostra informação e continua
-		showError("inform","<?echo $mensagem; ?>","Alerta - Ayllos","metodoBlock()");
+		showError("informe","<?echo $mensagem; ?>","Alerta - Aimaro","metodoBlock()");
 	</script>
 <? } ?>

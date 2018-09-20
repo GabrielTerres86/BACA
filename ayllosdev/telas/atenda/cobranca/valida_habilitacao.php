@@ -28,7 +28,7 @@ isPostMethod();
 require_once("../../../class/xmlfile.php");
 
 if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
-	exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+	exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 }	
 
 $nrdconta = $_POST["nrdconta"];
@@ -47,7 +47,7 @@ $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "VALIDA_HABILITACAO", $glbva
 $xmlObject = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
-    exibirErro('error',utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+    exibirErro('error',utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 } 
 
 $param    = $xmlObject->roottag->tags[0];

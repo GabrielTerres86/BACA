@@ -96,7 +96,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","bloqueiaFundo(divRotina)");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","bloqueiaFundo(divRotina)");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
 		echo '</script>';
 	}
 	
@@ -184,9 +184,9 @@
 
 	<!-- Botoes -->
 	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,3,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
-	<input type="button" class="botao" value="Remover T&iacute;tulo"  onClick="showConfirmacao('Deseja excluir o t&iacute;tulo do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','removerTituloResumo();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');"/>
+	<input type="button" class="botao" value="Remover T&iacute;tulo"  onClick="showConfirmacao('Deseja excluir o t&iacute;tulo do border&ocirc;?','Confirma&ccedil;&atilde;o - Aimaro','removerTituloResumo();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');"/>
 	<input type="button" class="botao" value="Ver Detalhes da An&aacute;lise" onClick="mostrarDetalhesPagador();return false;"/>
-	<input type="button" class="botao" value="Confirmar Inclus&atilde;o" onClick="showConfirmacao('Confirma inclus&atilde;o do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','confirmarInclusao();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
+	<input type="button" class="botao" value="Confirmar Inclus&atilde;o" onClick="showConfirmacao('Confirma inclus&atilde;o do border&ocirc;?','Confirma&ccedil;&atilde;o - Aimaro','confirmarInclusao();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 	
 </div>
 <script type="text/javascript">

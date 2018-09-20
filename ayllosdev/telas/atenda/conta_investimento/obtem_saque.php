@@ -92,7 +92,7 @@
 		// Se for aviso de aplica&ccedil;&atilde;o bloqueada, mostra mensagem de confirma&ccedil;&atilde;o e pede senha do coordenador para confirmar
 		if ($confirma[0]->cdata == "1") {
 			echo 'hideMsgAguardo();';
-			echo 'showConfirmacao("'.$confirma[1]->cdata.'","Confirma&ccedil;&atilde;o - Ayllos","pedeSenhaCoordenador(2,\'confirmaSaque(2)\',\'divRotina\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+			echo 'showConfirmacao("'.$confirma[1]->cdata.'","Confirma&ccedil;&atilde;o - Aimaro","pedeSenhaCoordenador(2,\'confirmaSaque(2)\',\'divRotina\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 			exit();			
 		} 
 	}		
@@ -114,7 +114,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

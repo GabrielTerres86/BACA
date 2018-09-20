@@ -26,7 +26,7 @@
 	$dscheque = !isset($_POST["dscheque"]) ? "" : $_POST["dscheque"];
 	
 	// Verifica se os parâmetros necessários foram informados	
-	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','',false);
+	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -50,7 +50,7 @@
 			echo "$('#dscritic','" . $id . "').text('" . $critica . "');";
 		}
 		$msgErro = 'Aconteceram erros durante a validação dos emitentes. <br> Verifique os emitentes destacados.';
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 		exit();
 	} else {
 		if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
@@ -58,7 +58,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			}
-			exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 			exit();
 		}else{			
 			// Emitentes já cadastrados, finalizar custodia

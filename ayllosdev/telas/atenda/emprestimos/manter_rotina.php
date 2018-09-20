@@ -275,7 +275,7 @@
 
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodoErro,false);
 		}
 
 		echo 'controlaOperacao(\'\');';
@@ -316,7 +316,7 @@
 		$xmlObj = getObjectXML($xmlResult);
         
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){		   
-           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';           
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';           
            exit;
 		}
 		
@@ -333,11 +333,11 @@
             $dsmensag2 = '<div style=\"text-align:left; height:100px; overflow-x:hidden; padding-right:25px; font-size:11px; font-weight:normal;\">'.$dsmensag2.'</div>';
         }
 
-        echo 'showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';
+        echo 'showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';
         exit;
     }
 
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	//altera caracteres de qubra de linha por espaco em branco
 	$dsjusren = str_replace("\r", '', $dsjusren);
@@ -499,7 +499,7 @@
 
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodoErro,false);
 	}
 
 	if ( $xmlObjeto->roottag->tags[0]->attributes['RECIDEPR'] != '') {
@@ -601,9 +601,9 @@
 	$tpAtlCad = 2;
 	
 	if ($procedure == 'grava-proposta-completa') {
-		exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\');' . $metodoConsultas ,'verificaCriticasRating(\'\'); ' . $metodoConsultas ,false);
+		exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\');' . $metodoConsultas ,'verificaCriticasRating(\'\'); ' . $metodoConsultas ,false);
 	} else {
-		exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\')','verificaCriticasRating(\'\')',false);
+		exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\'\',\'verificaCriticasRating();\')','verificaCriticasRating(\'\')',false);
 	}
 
 ?>

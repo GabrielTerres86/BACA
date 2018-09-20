@@ -26,7 +26,7 @@
 	$cdcooper        = $glbvars["cdcooper"];
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
-	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	   exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	   exit();
     }
 
@@ -49,7 +49,7 @@
 		if ($msgErro == "") {
 				$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 		}
-		exibirErro('error',utf8_encode(str_replace("\"", "",$msgErro)),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',utf8_encode(str_replace("\"", "",$msgErro)),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		exit();
 	}
 	echo "acessaOpcaoAba('S',0);";

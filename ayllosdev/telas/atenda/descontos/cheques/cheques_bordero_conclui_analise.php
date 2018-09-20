@@ -29,8 +29,8 @@
 	$dscheque = !isset($_POST["dscheque"]) ? "" : $_POST["dscheque"];
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
-	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -53,11 +53,11 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
 	}else{
 		$msgErro = 'Border&ocirc; analisado com sucesso';
-		exibirErro('inform',$msgErro,'Alerta - Ayllos','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); gerarImpressao(10,2,\'no\',\'\',0);',false);
+		exibirErro('inform',$msgErro,'Alerta - Aimaro','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); gerarImpressao(10,2,\'no\',\'\',0);',false);
         
        
         

@@ -18,7 +18,7 @@ require_once('../../../../class/xmlfile.php');
 isPostMethod();
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'C')) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
 // Guardo os parâmetos do POST em variáveis	
@@ -55,7 +55,7 @@ $xmlResult = getDataXML($xml);
 $xmlObj = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-    echo 'showError("error","' . $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata . '","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+    echo 'showError("error","' . $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata . '","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 } else {
     $dados_simulacao = $xmlObj->roottag->tags[0]->tags;
     if ($operacao == "GPR" || $operacao == "TI") {

@@ -178,10 +178,10 @@
 			strHTML +=		'</tbody>';
 			strHTML +=	'</table>';
 						
-			dsmetodo = 'showError("error","<?echo $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;?>","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
+			dsmetodo = 'showError("error","<?echo $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;?>","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
 			inconfir = 1;
 			inconfi2 = 30;
-			showError("inform","<?echo $dscmsgge;?>","Alerta - Ayllos","mostraMsgsGrupoEconomico();formataGrupoEconomico();");
+			showError("inform","<?echo $dscmsgge;?>","Alerta - Aimaro","mostraMsgsGrupoEconomico();formataGrupoEconomico();");
 		
 			<?
 			exit();
@@ -190,14 +190,14 @@
 			hideMsgAguardo();
 			inconfir = 1;
 			inconfi2 = 30;
-			showError("inform","<? echo $dscmsgge;?>","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));hideMsgAguardo();showError('error','<?echo $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;?>','Alerta - Ayllos','blockBackground(parseInt($(\\'#divRotina\\').css(\\'z-index\\')))');");
+			showError("inform","<? echo $dscmsgge;?>","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')));hideMsgAguardo();showError('error','<?echo $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;?>','Alerta - Aimaro','blockBackground(parseInt($(\\'#divRotina\\').css(\\'z-index\\')))');");
 			<?
 			exit();
 		
 		}else{
 			echo 'inconfir = 1;';
 			echo 'inconfi2 = 30;';
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 		}
 		

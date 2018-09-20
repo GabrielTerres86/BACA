@@ -67,7 +67,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
                 $("#divConteudoOpcao").html(response);
@@ -86,7 +86,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
                 $("#divConteudoOpcao").html(response);
@@ -109,7 +109,7 @@ function confirmaSaque(inconfir) {
     // Valida valor do saque
     if ($.trim(vlresgat) == "" || !validaNumero(vlresgat, true, 0, 0)) {
         hideMsgAguardo();
-        showError("erro", "Valor do Saque inv&aacute;lido.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#vlresgat','#frmContaInv').focus()");
+        showError("erro", "Valor do Saque inv&aacute;lido.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#vlresgat','#frmContaInv').focus()");
         $("#vlresgat", "#frmContaInv").val("");
         return false;
     }
@@ -126,14 +126,14 @@ function confirmaSaque(inconfir) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -149,7 +149,7 @@ function cancelaSaque() {
     // Valida n&uacute;mero de documento do saque
     if ($.trim(nrdocmto) == "") {
         hideMsgAguardo();
-        showError("error", "N&uacute;mero do Documento inv&aacute;lido.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#nrdocmto','#frmContaInv').focus()");
+        showError("error", "N&uacute;mero do Documento inv&aacute;lido.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#nrdocmto','#frmContaInv').focus()");
         $("#nrdocmto", "#frmContaInv").val("");
         return false;
     }
@@ -165,14 +165,14 @@ function cancelaSaque() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });

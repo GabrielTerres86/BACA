@@ -26,7 +26,7 @@
 	
     // Se parâmetros necessários nao foram informados
     if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"]))
-       exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+       exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 
     $labelRot = $_POST['labelRot'];	
 
@@ -42,7 +42,7 @@
 	$flgExcluir  = (in_array("E", $glbvars["opcoesTela"]));
 	
 	if ($flgAcesso == "") 
-		exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a esta tela.','Alerta - Ayllos','');
+		exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a esta tela.','Alerta - Aimaro','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>

@@ -38,7 +38,7 @@
                 if ($msgErro == "") {
                     $msgErro = $xmlObject->roottag->tags[0]->cdata;
                 }
-                exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+                exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
             }
             echo '$("#dtcarenc", "#frmNovaProp").val("'.getByTagName($xmlObject->roottag->tags[0]->tags,'dtcarenc').'").desabilitaCampo();';
         break;

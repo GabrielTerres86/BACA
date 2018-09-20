@@ -115,7 +115,7 @@
 	    $xmlObj = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){  
-           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';           
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';           
            exit;
 		}
 		
@@ -135,7 +135,7 @@
             $dsmensag2 = '<div style=\"text-align:left; height:100px; overflow-x:hidden; padding-right:25px; font-size:11px; font-weight:normal;\">'.$dsmensag2.'</div>';
         }
 
-        echo 'showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
+        echo 'showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Aimaro","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
         exit;
 
 	}else if ($operacao == 'ENVIAR_ESTEIRA' ) {
@@ -158,13 +158,13 @@
 		
 	    // Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){  
-           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';           
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';           
            exit;
 		}
 		if($xmlObj->roottag->tags[0]){
-			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
+			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
 		} else{
-			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
+			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Aimaro","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
 		}
 
 
@@ -226,7 +226,7 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); fecharRotinaGenerico(\'PROPOSTA\');");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); fecharRotinaGenerico(\'PROPOSTA\');");';
 			}
 		}
 		
@@ -255,14 +255,14 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); fecharRotinaGenerico(\'PROPOSTA\');");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); fecharRotinaGenerico(\'PROPOSTA\');");';
 				exit;
 			} // OK
 		}// != ERROR
 		
 	}else if ($operacao == 'BUSCAR_PAGADOR'){
-		if (!validaInteiro($nrdconta) || $nrdconta == 0) exibirErro('error','Informe o número da conta.','Alerta - Ayllos','$(\'#nrdconta\', \'#'.$form.'\').focus()',false);
-		if (!validaInteiro($nrinssac) || $nrinssac == 0) exibirErro('error','Informe o número do CPF/CNPJ.','Alerta - Ayllos','$(\'#nrinssac\', \'#'.$form.'\').focus()',false);
+		if (!validaInteiro($nrdconta) || $nrdconta == 0) exibirErro('error','Informe o número da conta.','Alerta - Aimaro','$(\'#nrdconta\', \'#'.$form.'\').focus()',false);
+		if (!validaInteiro($nrinssac) || $nrinssac == 0) exibirErro('error','Informe o número do CPF/CNPJ.','Alerta - Aimaro','$(\'#nrinssac\', \'#'.$form.'\').focus()',false);
 		$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "	<Dados>";
@@ -276,7 +276,7 @@
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 			$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-			exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#nmdsacad\', \'#'.$form.'\').val(\'\');$(\'#nrinssac\', \'#'.$form.'\').val(\'\').focus()',false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#nmdsacad\', \'#'.$form.'\').val(\'\');$(\'#nrinssac\', \'#'.$form.'\').val(\'\').focus()',false);
 		} 
 			
 		$nmdsacad	= getByTagname($xmlObjeto->roottag->tags[0]->tags,'nmdsacad');
@@ -439,7 +439,7 @@
 
 	    // Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","hideMsgAguardo();bloqueiaFundo(divRotina);");';
+	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","hideMsgAguardo();bloqueiaFundo(divRotina);");';
 			exit;
 		}
 
@@ -488,7 +488,7 @@
 			
 		    // Se ocorrer um erro, mostra mensagem
 			if (strtoupper($xmlObjDados->roottag->tags[0]->name) == 'ERRO') {
-		       echo 'showError("error","'.$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
+		       echo 'showError("error","'.$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
 				exit;
 			}
 			$dados = $xmlObjDados->roottag->tags[0]->tags[0]->tags;
@@ -497,11 +497,11 @@
 			$per_cddlinha = formataNumericos('zz9',$dados[17]->cdata,'.');
 
 			if($vllimite > $per_vllimite){
-				echo 'showError("inform","Proposta de majora&ccedil;&atilde;o criada com sucesso","Alerta - Ayllos","'
+				echo 'showError("inform","Proposta de majora&ccedil;&atilde;o criada com sucesso","Alerta - Aimaro","'
 		    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
 		    	.'carregaTitulos();");';
 			} else {
-				echo 'showError("inform","Manuten&ccedil;&atilde;o do contrato realizada com sucesso","Alerta - Ayllos","'
+				echo 'showError("inform","Manuten&ccedil;&atilde;o do contrato realizada com sucesso","Alerta - Aimaro","'
 		    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
 		    	.'carregaTitulos();");';
 			}
@@ -525,12 +525,12 @@
 
 		    // Se ocorrer um erro, mostra mensagem
 			if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-		       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","hideMsgAguardo();bloqueiaFundo(divRotina);");';
+		       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","hideMsgAguardo();bloqueiaFundo(divRotina);");';
 				exit;
 
 			} else {
 
-		    	echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
+		    	echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
 			}
 		}
 	}
@@ -564,7 +564,7 @@
 
 	    // Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","hideMsgAguardo();bloqueiaFundo(divRotina);");';
+	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","hideMsgAguardo();bloqueiaFundo(divRotina);");';
 			exit;
 		}
 
@@ -677,7 +677,7 @@
     	$dados = $root->dados;
 
 			
-	    echo 'showError("inform","'.$dados.'","Alerta - Ayllos","carregaTitulos();voltaDiv(3,1,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
+	    echo 'showError("inform","'.$dados.'","Alerta - Aimaro","carregaTitulos();voltaDiv(3,1,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
 			
 	}else if($operacao =='BUSCAR_ACIONAMENTOS_PROPOSTA'){
 
@@ -703,13 +703,13 @@
 				$html .= '<script type="text/javascript">';
 				$html .= '    hideMsgAguardo();';
 				$html .= '    bloqueiaFundo(divRotina);';
-				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\''.$tipo.'\');");';
+				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);fecharRotinaGenerico(\''.$tipo.'\');");';
 				$html .='</script>';
 			} else { // CASO SEJA CONTRATO E NÃO TENHA ACIONAMENTO ELE PERMANECE NA TELA 
 				$html .= '<script type="text/javascript">';
 				$html .= '    hideMsgAguardo();';
 				$html .= '    bloqueiaFundo(divRotina);';
-				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
+				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);");';
 				$html .= '</script>';
 			}
 			$html .=  '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';
@@ -842,7 +842,7 @@
 	function exibeErro($msgErro) { 
 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 
@@ -854,7 +854,7 @@
 	    $msgErro = str_replace('"','',$msgErro);
 	    $msgErro = preg_replace('/\s/',' ',$msgErro);
 	    
-	    echo 'showError("error","' .$msgErro. '","Alerta - Ayllos","liberaCampos(); '.$nmdcampo.'");'; 
+	    echo 'showError("error","' .$msgErro. '","Alerta - Aimaro","liberaCampos(); '.$nmdcampo.'");'; 
 	    exit();
 	}
 

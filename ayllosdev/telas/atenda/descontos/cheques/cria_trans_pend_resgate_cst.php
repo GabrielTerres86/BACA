@@ -47,7 +47,7 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 	exit();
 }
 
@@ -82,11 +82,11 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 	exit();
 }else{
 	$msgErro = 'Pendencias de aprovacao criadas com sucesso';
-	exibirErro('inform',$msgErro,'Alerta - Ayllos','carregaBorderosCheques();',false);
+	exibirErro('inform',$msgErro,'Alerta - Aimaro','carregaBorderosCheques();',false);
 }
 
 ?>

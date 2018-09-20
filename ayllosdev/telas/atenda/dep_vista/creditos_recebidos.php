@@ -26,13 +26,13 @@
 	require_once("../../../class/xmlfile.php");
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 			
 	}	
 	
 	// Verifica se o némero da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}	
 		
 	// Monta o xml de requisição
@@ -52,7 +52,7 @@
 	//Validar se o indice utilizado existe e se ocorrer um erro, mostra crítica
 	if (isset($xmlObjCreditos->roottag->tags[0]->name) &&  strtoupper($xmlObjCreditos->roottag->tags[0]->name) == "ERRO") {
 		
-		exibirErro('error',$xmlObjCreditos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error',$xmlObjCreditos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}
 	
 	$registros = $xmlObjCreditos->roottag->tags;	

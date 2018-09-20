@@ -71,7 +71,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$msgretor = trim($xmlObj->roottag->tags[0]->attributes['MSGRETOR']);
@@ -83,21 +83,21 @@
 		
 		$metodo = 'bloqueiaFundo($(\'#divUsoGenerico\'));';
 		
-		exibirErro('inform',$msgretor,'Alerta - Ayllos',$metodo,false);
+		exibirErro('inform',$msgretor,'Alerta - Aimaro',$metodo,false);
 		
 	}else if( $tpdretor == 'M' ){
 		
 		$metodoSim = 'selecionaLiquidacao();bloqueiaFundo($(\'#divUsoGenerico\'));';		
 		$metodoNao = 'bloqueiaFundo($(\'#divUsoGenerico\'));';
 			
-		exibirConfirmacao($msgretor,'Confirmação - Ayllos',$metodoSim,$metodoNao,false);	
+		exibirConfirmacao($msgretor,'Confirmação - Aimaro',$metodoSim,$metodoNao,false);	
 	}
 	else if ($tpdretor == 'MC') {
 		
 		$metodoSim = "atualizaArray('$operacao')";		
 		$metodoNao = 'bloqueiaFundo(divRotina);';
 			
-		exibirConfirmacao($msgretor,'Confirmação - Ayllos',$metodoSim,$metodoNao,false);		
+		exibirConfirmacao($msgretor,'Confirmação - Aimaro',$metodoSim,$metodoNao,false);		
 	}
 	else if ($tpdretor == 'C') {
 				

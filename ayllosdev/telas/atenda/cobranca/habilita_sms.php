@@ -41,7 +41,7 @@
         if ($msgErro == "") {
             $msgErro = $xmlObj->roottag->tags[0]->cdata;
         }
-        exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', "", true);
+        exibirErro('error', utf8_encode($msgErro), 'Alerta - Aimaro', "", true);
     }
 
     $registros = $xmlObj->roottag->tags;

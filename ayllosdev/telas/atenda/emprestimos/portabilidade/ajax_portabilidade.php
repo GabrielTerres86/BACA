@@ -47,7 +47,7 @@ if ($flgopcao == 'CP') { //carrega campos Portabilidade
             if ($msgErro == null || $msgErro == '') {
                 $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
             }
-            exibirErro('error', $msgErro, 'Alerta - Ayllos', '', true);
+            exibirErro('error', $msgErro, 'Alerta - Aimaro', '', true);
         } else {
             $registros = $xmlObj->roottag->tags;
             

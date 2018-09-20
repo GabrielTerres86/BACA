@@ -18,7 +18,7 @@
 	isPostMethod();		
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> ''){
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}	
 	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
@@ -43,7 +43,7 @@
 		if ($msgErro == "") {
 			$msgErro = $xmlObj->roottag->tags[0]->cdata;
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 	}
 	
 	$nmfuncao = "atualizaArray('V_VALOR');";
@@ -56,7 +56,7 @@
 		}else{
 			$metodo .= $nmfuncao;
 		}
-		exibirErro('inform',getByTagName($xmlObj->roottag->tags[0]->tags,'DSMENSAG'),'Alerta - Ayllos',$metodo,false);		
+		exibirErro('inform',getByTagName($xmlObj->roottag->tags[0]->tags,'DSMENSAG'),'Alerta - Aimaro',$metodo,false);		
 	}else{
 		echo $nmfuncao;
 	}	

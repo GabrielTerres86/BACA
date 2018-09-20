@@ -35,7 +35,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     if ($msgErro == "") {
         $msgErro = $xmlObj->roottag->tags[0]->cdata;
     }
-    exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', "", false);
+    exibirErro('error', utf8_encode($msgErro), 'Alerta - Aimaro', "", false);
 
 } else {
 

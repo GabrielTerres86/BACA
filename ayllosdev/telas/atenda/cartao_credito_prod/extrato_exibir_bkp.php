@@ -25,7 +25,7 @@
 
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"T")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);
 	}
 	
 	// Classe para leitura do xml de retorno
@@ -33,7 +33,7 @@
 
 	// Se par&acirc;metros necess&aacute;rios n&atilde;o foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrcrcard"]) || !isset($_POST["dtextrat"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	$nrcrcard = $_POST["nrcrcard"];
@@ -89,7 +89,7 @@
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}

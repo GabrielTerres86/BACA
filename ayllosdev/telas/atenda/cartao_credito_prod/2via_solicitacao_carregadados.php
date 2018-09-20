@@ -125,7 +125,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -177,7 +177,7 @@
 		
 		<div id="divBotoes" >
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltar();return false;">
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/concluir.gif" onClick="showConfirmacao('Deseja efetuar a solicita&ccedil;&atilde;o de segunda via do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','efetuaSolicitacao2viaCartao(5)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/concluir.gif" onClick="showConfirmacao('Deseja efetuar a solicita&ccedil;&atilde;o de segunda via do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','efetuaSolicitacao2viaCartao(5)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 		</div>
 			
 	</div>
