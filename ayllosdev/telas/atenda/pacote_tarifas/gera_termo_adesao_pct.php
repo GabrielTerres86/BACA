@@ -40,7 +40,7 @@
 	
 		$msgErro  = $xmlObjGeraExtratoRecip->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				 
-		exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);		
+		exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);		
 							
 	} 
 	

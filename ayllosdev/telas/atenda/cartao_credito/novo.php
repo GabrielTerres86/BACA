@@ -32,13 +32,13 @@
 
 	if(isset($xmlSenhaResult->Erro->Registro->erro))
 	{
-		exibirErro('error',utf8ToHtml("(".$xmlSenhaResult->Erro->Registro->cdcritic.")".$xmlSenhaResult->Erro->Registro->dscritic),'Alerta - Ayllos',"");
+		exibirErro('error',utf8ToHtml("(".$xmlSenhaResult->Erro->Registro->cdcritic.")".$xmlSenhaResult->Erro->Registro->dscritic),'Alerta - Aimaro',"");
 		return;
 	}
 	$possuiSenha = ($xmlSenhaResult->Dados->senhas->senha->status == "OK");
 	if(!$possuiSenha)
 	{
-		exibirErro('error',utf8ToHtml("Conta sem senha cadastrada. Vincule a senha para o cartão magnético ou libere a senha da Internet."),'Alerta - Ayllos',"");
+		exibirErro('error',utf8ToHtml("Conta sem senha cadastrada. Vincule a senha para o cartão magnético ou libere a senha da Internet."),'Alerta - Aimaro',"");
 		return;
 	}
 	
@@ -109,7 +109,7 @@
 	$nm = $xml_adm->Dados->cartoes->cartao->operador;
 	
 
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	function contaDoOperador($nrdconta,$glbvars ){
 			//nrcrcard
 			$xml .= "<Root>";
@@ -131,7 +131,7 @@
 			return false;
 	}
 	
-	if (contaDoOperador($nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar cartão de crédito para a própria conta do Operador."),'Alerta - Ayllos',$funcaoAposErro);
+	if (contaDoOperador($nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar cartão de crédito para a própria conta do Operador."),'Alerta - Aimaro',$funcaoAposErro);
 
 	$sNomeCartaoDebito   = 'Cartão CECRED Débito';
 	$sNomeCartaoMultiplo = 'Cartão CECRED Múltiplo';
@@ -175,7 +175,7 @@ function goBB(opt){
         error: function (objAjax, responseError, objExcept) {
 
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao1").html(response);			
@@ -190,14 +190,14 @@ function goCecred(){
 			if($inpessoa ==2)
 				$mensagemDes = utf8ToHtml('Esta conta já possui cartão de crédito CECRED titular.');
 		?>
-			showError("error", "<? echo $mensagemDes;?>", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error", "<? echo $mensagemDes;?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return;
 		<?
 	}
 	?>
 	showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 	if(cdsitdct == 5){
-		showError("error", "<?php echo utf8ToHtml('Situação da conta permite apenas cartões de débito.');?>", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error", "<?php echo utf8ToHtml('Situação da conta permite apenas cartões de débito.');?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		//
 		hideMsgAguardo();
 		return;
@@ -217,7 +217,7 @@ function goCecred(){
         error: function (objAjax, responseError, objExcept) {
 
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao1").html(response);			
@@ -245,7 +245,7 @@ function goAdicional(cdadmcrd){
         error: function (objAjax, responseError, objExcept) {
 
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao1").html(response);			
@@ -328,7 +328,7 @@ function goAdicional(cdadmcrd){
                    onClick="mostraDivDadosCartao();
                    return false;">
             <input type="image" src="<?echo $UrlImagens; ?>botoes/cancelar.gif"
-                   onClick="showConfirmacao('Deseja cancelar a proposta de novo cart&atilde;o de cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'voltaDiv(0,1,4)', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))', 'sim.gif', 'nao.gif');
+                   onClick="showConfirmacao('Deseja cancelar a proposta de novo cart&atilde;o de cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Aimaro', 'voltaDiv(0,1,4)', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))', 'sim.gif', 'nao.gif');
                    return false;">
             <input type="image" id="btSalvar" src="<?echo $UrlImagens; ?>botoes/concluir.gif"
                    onClick="validarAvalistas(4);

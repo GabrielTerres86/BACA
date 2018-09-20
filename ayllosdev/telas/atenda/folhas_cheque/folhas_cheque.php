@@ -32,7 +32,7 @@
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Ayllos","");';
+		echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Aimaro","");';
 		echo '</script>';
 		exit();
 	}
@@ -47,7 +47,7 @@
 if (!in_array("@",$opcoesTela)) { // Executa primeira op&ccedil;&atilde;o da rotina que o operador tem permiss&atilde;o
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","Operador n&atilde;o possui permiss&atilde;o para acessar essa op&ccedil;&atilde;o.","Alerta - Ayllos","encerraRotina(false)");';
+	echo 'showError("error","Operador n&atilde;o possui permiss&atilde;o para acessar essa op&ccedil;&atilde;o.","Alerta - Aimaro","encerraRotina(false)");';
 	echo '</script>';
 	exit();
 }

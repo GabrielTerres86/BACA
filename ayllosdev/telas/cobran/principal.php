@@ -51,7 +51,7 @@
 	$inserasa 			= (isset($_POST['inserasa'])) ? $_POST['inserasa'] : ''  ;
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	switch( $operacao ) {
@@ -115,7 +115,7 @@
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo = $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " $('#".$nmdcampo."','#frmOpcao').focus();"; }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro, false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro, false);
 	} 
 	
 	$registro 	= $xmlObjeto->roottag->tags[0]->tags;

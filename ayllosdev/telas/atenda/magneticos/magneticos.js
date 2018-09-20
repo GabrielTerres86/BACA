@@ -77,7 +77,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divConteudoOpcao").html(response);
@@ -186,7 +186,7 @@ function consultaCartaoMagnetico() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divMagneticosOpcao01").html(response);
@@ -218,7 +218,7 @@ function solicitacaoCartao(cddopcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divMagneticosOpcao01").html(response);
@@ -233,17 +233,17 @@ function validarDadosAlteracao() {
 
     // Valida identificador do titular do através de ajax
     if (tpusucar == "" || !validaNumero(tpusucar, true, 0, 0)) {
-        showError("error", "Titular inv&aacute;lido.", "Alerta - Ayllos", "$('#tpusucar','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Titular inv&aacute;lido.", "Alerta - Aimaro", "$('#tpusucar','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     // Valida o nome do titular
     if ($.trim(nmtitcrd) == "") {
-        showError("error", "Inform o nome do titular.", "Alerta - Ayllos", "$('#nmtitcrd','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Inform o nome do titular.", "Alerta - Aimaro", "$('#nmtitcrd','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
-    showConfirmacao("Deseja alterar o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "alterarCartaoMagnetico(" + tpusucar + ",'" + nmtitcrd + "');", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja alterar o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "alterarCartaoMagnetico(" + tpusucar + ",'" + nmtitcrd + "');", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 }
 
 // Função para alterar dados do cartão magnético
@@ -264,14 +264,14 @@ function alterarCartaoMagnetico(tpusucar, nmtitcrd) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -284,17 +284,17 @@ function validarDadosInclusao() {
 
     // Valida identificador do titular do através de ajax
     if (tpusucar == "" || !validaNumero(tpusucar, true, 0, 0)) {
-        showError("error", "Titular inv&aacute;lido.", "Alerta - Ayllos", "$('#tpusucar','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Titular inv&aacute;lido.", "Alerta - Aimaro", "$('#tpusucar','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     // Valida o nome do titular
     if ($.trim(nmtitcrd) == "") {
-        showError("error", "Inform o nome do titular.", "Alerta - Ayllos", "$('#nmtitcrd','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Inform o nome do titular.", "Alerta - Aimaro", "$('#nmtitcrd','#frmDadosCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
-    showConfirmacao("Deseja incluir o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "incluirCartaoMagnetico(" + tpusucar + ",'" + nmtitcrd + "');", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja incluir o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "incluirCartaoMagnetico(" + tpusucar + ",'" + nmtitcrd + "');", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 }
 
 // Função para incluir novo cartão magnético
@@ -318,14 +318,14 @@ function incluirCartaoMagnetico(tpusucar, nmtitcrd) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -337,7 +337,7 @@ function confirmaExclusaoCartao() {
         return false;
     }
 
-    showConfirmacao("Deseja excluir o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "excluirCartaoMagnetico()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja excluir o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "excluirCartaoMagnetico()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 }
 
 // Função para excluir cartão magnético
@@ -361,14 +361,14 @@ function excluirCartaoMagnetico() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -380,7 +380,7 @@ function confirmaBloqueioCartao() {
         return false;
     }
 
-    showConfirmacao("Deseja bloquear o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "bloquearCartaoMagnetico()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja bloquear o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "bloquearCartaoMagnetico()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 }
 
 // Função para bloquear cartão magnético
@@ -404,14 +404,14 @@ function bloquearCartaoMagnetico() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -423,7 +423,7 @@ function confirmaCancelamentoCartao() {
         return false;
     }
 
-    showConfirmacao("Deseja cancelar o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "cancelarCartaoMagnetico()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja cancelar o cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "cancelarCartaoMagnetico()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 }
 
 // Função para bloquear cartão magnético
@@ -447,14 +447,14 @@ function cancelarCartaoMagnetico() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -488,7 +488,7 @@ function acessaOpcaoSenha(ope) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divMagneticosOpcao01").html(response);
@@ -526,7 +526,7 @@ function opcaoSolicitarLetras(ope) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divMagneticosOpcao01").html(response);
@@ -543,21 +543,21 @@ function validarAlteracaoSenhaCartao(ope) {
     var operacao = ope;
 
     if (nrsenatu == "") {
-        showError("error", "Informe a senha atual.", "Alerta - Ayllos", "$('#nrsenatu','#frmSenhaCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Informe a senha atual.", "Alerta - Aimaro", "$('#nrsenatu','#frmSenhaCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     if (nrsencar == "") {
-        showError("error", "Informe a nova senha.", "Alerta - Ayllos", "$('#nrsencar','#frmSenhaCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Informe a nova senha.", "Alerta - Aimaro", "$('#nrsencar','#frmSenhaCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     if (nrsencon == "") {
-        showError("error", "Confirme a nova senha.", "Alerta - Ayllos", "$('#nrsencon','#frmSenhaCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Confirme a nova senha.", "Alerta - Aimaro", "$('#nrsencon','#frmSenhaCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
-    showConfirmacao("Deseja alterar a senha do cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "alterarSenhaCartao()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja alterar a senha do cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "alterarSenhaCartao()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 }
 
 // Função para validar alteração de senha do cartão magnético
@@ -568,19 +568,19 @@ function validarAlteracaoSenhaLetrasCartao(ope) {
     var operacao = ope;
 
     if (dssennov == "") {
-        showError("error", "Informe as Letras de Seguran&ccedila.", "Alerta - Ayllos", "$('#dssennov','#frmSenhaLetrasCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Informe as Letras de Seguran&ccedila.", "Alerta - Aimaro", "$('#dssennov','#frmSenhaLetrasCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     if (dssencon == "") {
-        showError("error", "Confirme as suas letras.", "Alerta - Ayllos", "$('#dssencon','#frmSenhaLetrasCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Confirme as suas letras.", "Alerta - Aimaro", "$('#dssencon','#frmSenhaLetrasCartaoMagnetico').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     if (operacao == "E") {
-        showConfirmacao("Deseja cadastrar as Letras de Seguran&ccedil;a  do cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "alterarSenhaLetrasCartao()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+        showConfirmacao("Deseja cadastrar as Letras de Seguran&ccedil;a  do cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "alterarSenhaLetrasCartao()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
     } else {
-        showConfirmacao("Deseja alterar as Letras de Seguran&ccedil;a  do cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Ayllos", "alterarSenhaLetrasCartao()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+        showConfirmacao("Deseja alterar as Letras de Seguran&ccedil;a  do cart&atilde;o magn&eacute;tico?", "Confirma&ccedil;&atilde;o - Aimaro", "alterarSenhaLetrasCartao()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
     }
 }
 
@@ -608,14 +608,14 @@ function alterarSenhaCartao() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -644,14 +644,14 @@ function alterarSenhaLetrasCartao() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -712,7 +712,7 @@ function confirmaAtualizacaoPreposto(cddopcao, ope) {
                 }
             }
         }
-        showConfirmacao('Confirma atualiza&ccedil;&atilde;o do preposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'atualizarPreposto("' + cddopcao + '","' + operacao + '")', metodoNo, 'sim.gif', 'nao.gif');
+        showConfirmacao('Confirma atualiza&ccedil;&atilde;o do preposto?', 'Confirma&ccedil;&atilde;o - Aimaro', 'atualizarPreposto("' + cddopcao + '","' + operacao + '")', metodoNo, 'sim.gif', 'nao.gif');
     }
 }
 
@@ -782,7 +782,7 @@ function carregaPrepostosEntrega(ope) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divMagneticosOpcao01").html(response);
@@ -818,14 +818,14 @@ function validaSenhaCartaoMagnetico() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -862,14 +862,14 @@ function entregarCartaoMagnetico() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -1175,7 +1175,7 @@ function acessaOpcao() {
 
 function opcaoLimparLetras() {
 
-    showConfirmacao("Deseja limpar letras?", "Confirma&ccedil;&atilde;o - Ayllos", "limparLetras()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao("Deseja limpar letras?", "Confirma&ccedil;&atilde;o - Aimaro", "limparLetras()", "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 
 }
 
@@ -1195,14 +1195,14 @@ function limparLetras() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });

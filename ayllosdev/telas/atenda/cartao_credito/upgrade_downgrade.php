@@ -21,14 +21,14 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"D")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);	
 	}			
 	
 	// Verifica se o número do cartao foi informado
-	if (!isset($_POST["nrcrcard"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);	
+	if (!isset($_POST["nrcrcard"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);	
+	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 
 	$nrdconta = $_POST["nrdconta"];
 	$nrcrcard = $_POST["nrcrcard"];
@@ -39,10 +39,10 @@
 	
 		
 	// Verifica se o número do cartao é um inteiro válido
-	if (!validaInteiro($nrcrcard)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrcrcard)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 
 	function is_titular_card($nrctrcrd, $nrdconta,$glbvars)
@@ -127,7 +127,7 @@
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);	
 	}else{
 		//Caso consulta retorne dados
 		$admatual = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;

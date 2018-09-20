@@ -62,14 +62,14 @@ function solicitarTalonario () {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
 			try {
                 eval(response);
                 return false;
             } catch (error) {
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
             }
         }
     });
@@ -86,7 +86,7 @@ function validarAcessoLista () {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
 			try {
@@ -94,18 +94,18 @@ function validarAcessoLista () {
 				//carrega_lista();
                 return false;
             } catch (error) {
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
             }
         }
     });
 }
 
 function confirmaChequesNaoCompensados () {
-	showConfirmacao('Deseja visualizar a rela&ccedil;&atilde;o de cheques n&atilde;o compensados?','Confirma&ccedil;&atilde;o - Ayllos','validarAcessoLista();','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
+	showConfirmacao('Deseja visualizar a rela&ccedil;&atilde;o de cheques n&atilde;o compensados?','Confirma&ccedil;&atilde;o - Aimaro','validarAcessoLista();','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
 }
 
 function confirmaSolicitarTalonario () {
-	showConfirmacao('Confirma a solicita&ccedil;&atilde;o do talon&aacute;rio?','Confirma&ccedil;&atilde;o - Ayllos','solicitarTalonario();','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
+	showConfirmacao('Confirma a solicita&ccedil;&atilde;o do talon&aacute;rio?','Confirma&ccedil;&atilde;o - Aimaro','solicitarTalonario();','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
 }
 
 function acessaEntregaTalonario () {

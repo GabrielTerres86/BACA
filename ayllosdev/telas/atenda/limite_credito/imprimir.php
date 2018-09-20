@@ -66,7 +66,7 @@
 	
 	if ($glbvars["cdcooper"] == 3) {
 		$divBloqueia = "blockBackground(parseInt($('#divRotina').css('z-index')))";
-		$imp_rating = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Ayllos',".$divBloqueia.");";
+		$imp_rating = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Aimaro',".$divBloqueia.");";
 	} else {
 		$imp_rating = "carregarImpresso(5,'no','no',0,metodoImpressao);";
 	}
@@ -76,7 +76,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}

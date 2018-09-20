@@ -135,18 +135,18 @@
 	
 	// Se foi atualizado o preposto, gerar termo de responsabilidade
 	if ($nrcpfppt > 0) {		
-		echo 'callafterMagneticos = \'showConfirmacao("Deseja visualizar o termo de responsabilidade?","Confirma&ccedil;&atilde;o - Ayllos","callafterMagneticos = metOpcaoAba;geraTermoResponsabilidade();",metOpcaoAba,"sim.gif","nao.gif");\';';
+		echo 'callafterMagneticos = \'showConfirmacao("Deseja visualizar o termo de responsabilidade?","Confirma&ccedil;&atilde;o - Aimaro","callafterMagneticos = metOpcaoAba;geraTermoResponsabilidade();",metOpcaoAba,"sim.gif","nao.gif");\';';
 	}	
 	
-	echo 'showConfirmacao("Deseja visualizar a declara&ccedil;&atilde;o de recebimento?","Confirma&ccedil;&atilde;o - Ayllos","geraDeclaracaoRecebimento();","opcaoSolicitarLetras(\'E\');","sim.gif","nao.gif");';
+	echo 'showConfirmacao("Deseja visualizar a declara&ccedil;&atilde;o de recebimento?","Confirma&ccedil;&atilde;o - Aimaro","geraDeclaracaoRecebimento();","opcaoSolicitarLetras(\'E\');","sim.gif","nao.gif");';
 		
 	function exibeErro($msgErro,$erro=false) { 
 		echo 'hideMsgAguardo();';
 		
 		if($erro == true){
-			echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","voltarDivPrincipal(\'185\',\'490\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
+			echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","voltarDivPrincipal(\'185\',\'490\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
 		}else{
-			echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
+			echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
 		}
 		
 		exit();

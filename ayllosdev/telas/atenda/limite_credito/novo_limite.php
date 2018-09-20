@@ -23,7 +23,7 @@
  * 008: [25/07/2016] Carlos R.		 (CECRED) : Corrigi a forma de recuperacao de dados do XML de retorno. SD 479874.
 * 009: [05/12/2017] Lombardi         (CECRED) : Gravação do campo idcobope. Projeto 404
  * 010: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crédito foi 
- *                                              cancelado de forma automática pelo Ayllos.  
+ *                                              cancelado de forma automática pelo Aimaro.  
  */	  
 ?>
 
@@ -37,11 +37,11 @@
 
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','');	
+		exibirErro('error',$msgError,'Alerta - Aimaro','');	
 	}	
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 
 	$nrdconta = $_POST["nrdconta"];
 	$cddopcao = $_POST["cddopcao"];
@@ -51,7 +51,7 @@
 	$metodoContinue = '';
 
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','');
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','');
 	
 	
 	// Monta o xml de requisição
@@ -84,7 +84,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjLimite->roottag->tags[0]->name) && strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") 
-		exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','');
+		exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','');
 		
 	$qtMensagens = count($xmlObjLimite->roottag->tags[1]->tags);	
 	$mensagem  	 = ( isset($xmlObjLimite->roottag->tags[1]->tags[$qtMensagens - 1]->tags[1]->cdata) ) ? $xmlObjLimite->roottag->tags[1]->tags[$qtMensagens - 1]->tags[1]->cdata : '';
@@ -93,7 +93,7 @@
 	if ($inconfir == 2) { ?>
 		<script type="text/javascript">		
 		hideMsgAguardo();
-		showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Ayllos","confirmaInclusaoMenor(<? echo $nrdconta.",'".$cddopcao."',".$flpropos.",".$inconfir ?>);","acessaOpcaoAba(<? echo count($glbvars["opcoesTela"]).",0,'@'"?>);","sim.gif","nao.gif");
+		showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Aimaro","confirmaInclusaoMenor(<? echo $nrdconta.",'".$cddopcao."',".$flpropos.",".$inconfir ?>);","acessaOpcaoAba(<? echo count($glbvars["opcoesTela"]).",0,'@'"?>);","sim.gif","nao.gif");
 		</script>
 		<?php exit();
 	}
@@ -119,7 +119,7 @@
 		$saldo = getByTagName($param->tags,'saldo');	
 		
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false); 
 		}	
 
 		if($autnovlim == 1){
@@ -128,14 +128,14 @@
 				$travaCamposLimite = 'S';
 				echo '<script type="text/javascript">';
 				echo 'hideMsgAguardo();';
-				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 				echo '</script>';				
 			}else{			
 				$travaCamposLimite = 'S';
 				// MENSAGEM DE INADIMPLÊNCIA
 				echo '<script type="text/javascript">';
 				echo 'hideMsgAguardo();';
-				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 				echo '</script>';				
 				// PEDE SENHA COORDENADOR
 				echo '<script type="text/javascript">';

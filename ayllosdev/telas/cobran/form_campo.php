@@ -43,7 +43,7 @@
 		  $msgErro = $xmlObj->roottag->tags[0]->cdata;
 	  }
 	  
-	  exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina( $(\'#divRotina\') )', false);
+	  exibirErro('error',$msgErro,'Alerta - Aimaro','fechaRotina( $(\'#divRotina\') )', false);
 	  exit();
 	}
 	

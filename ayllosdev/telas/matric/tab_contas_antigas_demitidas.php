@@ -117,7 +117,7 @@
 		
 		if (lstContasAntigasDemitidas.length > 0) {
 			
-			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'mostrarRotina(\'LCH\');', '$(\'#btVoltar\',\'#divBotoesContasAntigasDemitidas\').focus();', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'mostrarRotina(\'LCH\');', '$(\'#btVoltar\',\'#divBotoesContasAntigasDemitidas\').focus();', 'sim.gif', 'nao.gif');
 		    		
 		}
 		

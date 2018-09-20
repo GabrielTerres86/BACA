@@ -360,7 +360,7 @@
 	echo 'exibirMensagens("'.$stringArrayMsg.'","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));");';
 		
 	if ($flmudfai == 'N') {
-		echo "showConfirmacao('Deseja efetuar as consultas?','Confirma&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));atualizaDadosRating(\"divConteudoOpcao\");','efetuar_consultas();atualizaDadosRating(\"divConteudoOpcao\");','nao.gif','sim.gif');";
+		echo "showConfirmacao('Deseja efetuar as consultas?','Confirma&ccedil;&atilde;o - Aimaro','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));atualizaDadosRating(\"divConteudoOpcao\");','efetuar_consultas();atualizaDadosRating(\"divConteudoOpcao\");','nao.gif','sim.gif');";
 	}	
 	else {
 		// Gravar dados do rating do cooperado
@@ -370,7 +370,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}	
 	

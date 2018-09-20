@@ -25,7 +25,7 @@
 	$params = array('nrdconta','nrctrlim','dsobserv');
 
 	foreach ($params as $nomeParam) {
-		if (!in_array($nomeParam,array_keys($_POST))) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);			
+		if (!in_array($nomeParam,array_keys($_POST))) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);			
 	}
 
 	$nrdconta = $_POST['nrdconta'];
@@ -37,10 +37,10 @@
 	$dsobserv = retiraAcentos($dsobserv);
 	
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se o contrato é valido
-	if (!validaInteiro($nrctrlim)) exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrctrlim)) exibirErro('error','Contrato inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xmlGravaObservacoes  = "";
@@ -71,7 +71,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjAvalista->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	} 
 	
 	// Esconde mensagem de aguardo

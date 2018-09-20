@@ -79,7 +79,7 @@
 						
 		echo '<script type="text/javascript">';
 		echo '   hideMsgAguardo();';
-		echo '   showError("error","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo '   showError("error","'.$gergrupo.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		
 	}	
@@ -125,7 +125,7 @@
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","");';
 		echo '</script>';
 		exit();
 	}

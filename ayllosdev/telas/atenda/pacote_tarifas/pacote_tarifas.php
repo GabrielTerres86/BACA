@@ -19,7 +19,7 @@
 	isPostMethod();
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST['nmdatela'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
+	if (!isset($_POST['nmdatela'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina);');
 	
     $labelRot = $_POST['labelRot'];	
 	
@@ -32,7 +32,7 @@
 	$flgAcesso     = (in_array('@',$glbvars["opcoesTela"]));	
 	$msgErro 	   = 'Acesso n&atilde;o permitido para esta op&ccedil;&atilde;o.';
 				
-	if ($flgAcesso == '') exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina);');
+	if ($flgAcesso == '') exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);');
 	
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">

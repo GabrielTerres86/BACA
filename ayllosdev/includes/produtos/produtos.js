@@ -61,7 +61,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao, opeProdutos) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             $("#divConteudoOpcao").html(response);
@@ -198,7 +198,7 @@ function controlaLayout(ope) {
 
         if (produtosTelasServicos.length == 0) {
 
-            showError("error", "Nenhum servi&ccedil;o foi selecionado.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btSalvar','#divBotoesServicos').focus()");
+            showError("error", "Nenhum servi&ccedil;o foi selecionado.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btSalvar','#divBotoesServicos').focus()");
             return false;
 
         } else {
@@ -221,7 +221,7 @@ function controlaLayout(ope) {
 
         if (!controlaAtualizacaoServicos(2) && flgcadas == 'M') {
 
-            showError("error", "4 produtos devem ser ofertados ao cooperado!", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btSalvar','#divBotoesServicos').focus()");
+            showError("error", "4 produtos devem ser ofertados ao cooperado!", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));$('#btSalvar','#divBotoesServicos').focus()");
             return false;
 
         }
@@ -501,7 +501,7 @@ function alimtentaTelas(operacao) {
                         //CONSORCIO 
                     case "7":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link AILOS CONSORCIOS no portal.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link AILOS CONSORCIOS no portal.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -533,7 +533,7 @@ function alimtentaTelas(operacao) {
                         //DOMICILIO BANCARIO 
                     case "11":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento de DOMICILIO BANCARIO, utilize o sistema SISBR ou preencha a proposta.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(11,true);encerraRotina(false);\",\"atualizarAdesao(11,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento de DOMICILIO BANCARIO, utilize o sistema SISBR ou preencha a proposta.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(11,true);encerraRotina(false);\",\"atualizarAdesao(11,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -585,7 +585,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO AUTO
                     case "17":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link AILOS SEGUROS na intranet.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -617,14 +617,14 @@ function alimtentaTelas(operacao) {
                         // CARTAO DE CREDITO CECRED
                     case "21":
 
-                        produtosTelasServicos[index] = "showError('error','Para o cartão de crédito AILOS deve-se primeiramente preencher proposta pré-impressa.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para o cartão de crédito AILOS deve-se primeiramente preencher proposta pré-impressa.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
 
                     case "22":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link AILOS SEGUROS na intranet.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -632,7 +632,7 @@ function alimtentaTelas(operacao) {
                         // SEGURO EMPRESARIAL
                     case "23":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(23,true);encerraRotina(false);\",\"atualizarAdesao(23,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento do SEGURO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(23,true);encerraRotina(false);\",\"atualizarAdesao(23,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -640,7 +640,7 @@ function alimtentaTelas(operacao) {
                         // CARTAO DE CREDITO EMPRESARIAL
                     case "24":
 
-                        produtosTelasServicos[index] = "showError('error','Para cadastramento do CARTÃO DE CRÉDITO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(24,true);encerraRotina(false);\",\"atualizarAdesao(24,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicos[index] = "showError('error','Para cadastramento do CARTÃO DE CRÉDITO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(24,true);encerraRotina(false);\",\"atualizarAdesao(24,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -784,7 +784,7 @@ function alimtentaTelas(operacao) {
                         //CONSORCIO 
                     case "7":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link AILOS CONSORCIOS no portal.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento de CONS&Oacute;RCIO, utilize o link AILOS CONSORCIOS no portal.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(7,true);encerraRotina(false);\",\"atualizarAdesao(7,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -816,7 +816,7 @@ function alimtentaTelas(operacao) {
                         //DOMICILIO BANCARIO 
                     case "11":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento de DOMICILIO BANCARIO, utilize o sistema SISBR ou preencha a proposta.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(11,true);encerraRotina(false);\",\"atualizarAdesao(11,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento de DOMICILIO BANCARIO, utilize o sistema SISBR ou preencha a proposta.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(11,true);encerraRotina(false);\",\"atualizarAdesao(11,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -869,7 +869,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO AUTO 
                     case "17":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO AUTO, utilize o link AILOS SEGUROS na intranet.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(17,true);encerraRotina(false);\",\"atualizarAdesao(17,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -901,7 +901,7 @@ function alimtentaTelas(operacao) {
                         // CARTAO DE CREDITO CECRED
                     case "21":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para o cartão de crédito AILOS deve-se primeiramente preencher proposta pré-impressa.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para o cartão de crédito AILOS deve-se primeiramente preencher proposta pré-impressa.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(21,true);encerraRotina(false);\",\"atualizarAdesao(21,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -909,7 +909,7 @@ function alimtentaTelas(operacao) {
                         // SEGURO VIDA GRUPO	
                     case "22":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link AILOS SEGUROS na intranet.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO DE VIDA EM GRUPO, utilize o link AILOS SEGUROS na intranet.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(22,true);encerraRotina(false);\",\"atualizarAdesao(22,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -917,7 +917,7 @@ function alimtentaTelas(operacao) {
                         // SEGURO EMPRESARIAL	
                     case "23":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(23,true);encerraRotina(false);\",\"atualizarAdesao(23,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do SEGURO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(23,true);encerraRotina(false);\",\"atualizarAdesao(23,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;
@@ -925,7 +925,7 @@ function alimtentaTelas(operacao) {
                         // CARTAO CECRED EMPRESARIAL	
                     case "24":
 
-                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do CARTÃO DE CRÉDITO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Ayllos','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"atualizarAdesao(24,true);encerraRotina(false);\",\"atualizarAdesao(24,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
+                        produtosTelasServicosAdicionais[index] = "showError('error','Para cadastramento do CARTÃO DE CRÉDITO EMPRESARIAL deve-se primeiro efetuar preenchimento de proposta.','Alerta - Aimaro','showConfirmacao(\"Produto aderido pelo cooperado?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"atualizarAdesao(24,true);encerraRotina(false);\",\"atualizarAdesao(24,false);encerraRotina(false);\",\"sim.gif\",\"nao.gif\");','','sim.gif','nao.gif');";
                         index++;
 
                         break;

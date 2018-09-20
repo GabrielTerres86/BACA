@@ -56,7 +56,7 @@
 		
 		<? if ($flgProposta == "true") { ?>	
 			<input type="image" src="<? echo $UrlImagens; ?>botoes/imprimir_contrato.gif" onClick="verificaEnvioEmail(2,'<? echo $flgimpnp; ?>',<? echo $nrctrpro; ?>);return false;">
-			<input type="image" src="<? echo $UrlImagens; ?>botoes/excluir_novo_limite.gif" onClick="showConfirmacao('Deseja excluir o novo ' + strTitRotinaLC + '?','Confirma&ccedil;&atilde;o - Ayllos','excluirNovoLimite()',metodoBlock,'sim.gif','nao.gif');return false;">
+			<input type="image" src="<? echo $UrlImagens; ?>botoes/excluir_novo_limite.gif" onClick="showConfirmacao('Deseja excluir o novo ' + strTitRotinaLC + '?','Confirma&ccedil;&atilde;o - Aimaro','excluirNovoLimite()',metodoBlock,'sim.gif','nao.gif');return false;">
 			<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/alterar.gif" onClick="aux_inconfir = 1; aux_inconfi2 = 30; validaAdesaoValorProduto('validarAlteracaoLimite('+aux_inconfir+','+aux_inconfi2+');'); return false;">
 		<? } else { ?>
 			<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/validar_novo_limite.gif" onClick="aux_inconfir = 1; aux_inconfi2 = 30; validaAdesaoValorProduto('validarNovoLimite('+aux_inconfir+','+aux_inconfi2+');'); return false;">

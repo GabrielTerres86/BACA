@@ -45,7 +45,7 @@ $xmlObj = getObjectXML($xmlResult);
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	echo "<script type=\"text/javascript\">";
-	echo "showError('error','$msgErro','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";
+	echo "showError('error','$msgErro','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";
 	echo "</script>";
 	exit();
 }
@@ -109,7 +109,7 @@ $xmlObject = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
     $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
-    echo "showError('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";    
+    echo "showError('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";    
 }else{    
     $crapcem = $xmlObject->roottag->tags[0]->tags;
 }    
@@ -127,7 +127,7 @@ $xmlObject = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
     $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
-    echo "showError('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";    
+    echo "showError('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";    
 }else{    
     $cptcem = $xmlObject->roottag->tags[0]->tags;
 }    

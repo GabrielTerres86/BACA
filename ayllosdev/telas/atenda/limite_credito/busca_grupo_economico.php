@@ -69,9 +69,9 @@
 		echo 'hideMsgAguardo();';
 		
 		if($pertgrup == "yes" ){
-			echo 'showError("inform","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));calcEndividRiscoGrupo(\''.$nrdgrupo.'\');");';
+			echo 'showError("inform","'.$gergrupo.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));calcEndividRiscoGrupo(\''.$nrdgrupo.'\');");';
 		}else{
-			echo 'showError("inform","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));validarAvalistas();");';
+			echo 'showError("inform","'.$gergrupo.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));validarAvalistas();");';
 		}
 						
 	}else{
@@ -89,7 +89,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 

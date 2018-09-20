@@ -37,7 +37,7 @@
 	
 		$msgErro  = utf8_encode($xmlObjBuscaPacote->roottag->tags[0]->tags[0]->tags[4]->cdata);
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#cdpacote\').focus();bloqueiaFundo(divRotina)',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#cdpacote\').focus();bloqueiaFundo(divRotina)',false);		
 							
 	} 
 	

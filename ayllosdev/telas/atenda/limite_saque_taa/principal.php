@@ -30,12 +30,12 @@
 		
 		// Verifica permissões de acessa a tela
 		if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "")
-			exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+			exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
 	if (!validaInteiro($nrdconta))
-		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisicao
 	$xml  = "";
@@ -48,7 +48,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}
 
 	$oLimite = ( isset($xmlObjeto->roottag->tags[0]) ) ? $xmlObjeto->roottag->tags[0] : '';	

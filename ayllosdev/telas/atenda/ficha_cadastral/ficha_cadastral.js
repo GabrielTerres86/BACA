@@ -22,7 +22,7 @@
 	idseqttl--;	
 	var callafter = "";
 	if (idseqttl > 0) {
-		callafter = "showConfirmacao('H&aacute; mais um Titular, deseja imprimir?','Confirma&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));imprimeFichaCadastral(" + idseqttl + ");','hideMsgAguardo();','sim.gif','nao.gif');";
+		callafter = "showConfirmacao('H&aacute; mais um Titular, deseja imprimir?','Confirma&ccedil;&atilde;o - Aimaro','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));imprimeFichaCadastral(" + idseqttl + ");','hideMsgAguardo();','sim.gif','nao.gif');";
 	}else{
 		callafter = "hideMsgAguardo();";
 	}

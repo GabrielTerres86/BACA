@@ -25,7 +25,7 @@
 	require_once("../../../class/xmlfile.php");
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}		
 	
 	// Verifica se o número da conta foi informado
@@ -33,7 +33,7 @@
 	    !isset($_POST["nrregist"]) ||
 		!isset($_POST["nriniseq"])) {
 		
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 
 	}	
 
@@ -43,7 +43,7 @@
 	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
-		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}
 	
 	// Monta o xml de requisição
@@ -65,7 +65,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjServicos->roottag->tags[0]->name) && strtoupper($xmlObjServicos->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 	}
 	
 	$registros = ( isset($xmlObjServicos->roottag->tags) ) ? $xmlObjServicos->roottag->tags : array();

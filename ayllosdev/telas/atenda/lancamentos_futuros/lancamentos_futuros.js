@@ -58,7 +58,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
 		},
         success: function (response) {
 			$("#divConteudoOpcao").html(response);
@@ -174,7 +174,7 @@ function controlaLayout() {
 		}
 		
 function confirmaExclusaoLanctoFut(){
-	showConfirmacao('Confirma a exclus&atilde;o do lan&ccedil;amento?','Confirma&ccedil;&atilde;o - Ayllos','excluirLanctoFut();','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
+	showConfirmacao('Confirma a exclus&atilde;o do lan&ccedil;amento?','Confirma&ccedil;&atilde;o - Aimaro','excluirLanctoFut();','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
 		}
 		
 function excluirLanctoFut(){
@@ -191,7 +191,7 @@ function excluirLanctoFut(){
 	}); 
 	
     if (qtexclu != 1) {
-        showError("error","Selecione apenas um registro.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error","Selecione apenas um registro.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
     }
 	
@@ -209,14 +209,14 @@ function excluirLanctoFut(){
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			try {				
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});
@@ -266,11 +266,11 @@ function habilitaBotao(botao, opcao) {
 	}		
 
 function confirmaDebitoSemSaldo(msg) {
-	showConfirmacao(msg,'Confirma&ccedil;&atilde;o - Ayllos','pedeSenhaCoordenador(2,"validarDebitarLanctoFut(\'D\');","divRotina");','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
+	showConfirmacao(msg,'Confirma&ccedil;&atilde;o - Aimaro','pedeSenhaCoordenador(2,"validarDebitarLanctoFut(\'D\');","divRotina");','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
 }
 
 function confirmaDebitoLanctoFut() {
-	showConfirmacao('Confirma o d&eacute;bito do lan&ccedil;amento?','Confirma&ccedil;&atilde;o - Ayllos','validarDebitarLanctoFut(\'V\');','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
+	showConfirmacao('Confirma o d&eacute;bito do lan&ccedil;amento?','Confirma&ccedil;&atilde;o - Aimaro','validarDebitarLanctoFut(\'V\');','bloqueiaFundo(divRotina)','sim.gif','nao.gif');	
 }
 
 function validarDebitarLanctoFut(acao) { // acao => 'D'ebitar - 'V'alidar
@@ -294,7 +294,7 @@ function validarDebitarLanctoFut(acao) { // acao => 'D'ebitar - 'V'alidar
     });
 	
     if (qtselec != qtdebit) {
-        showError("error","Selecione apenas registro de d&eacute;bito.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error","Selecione apenas registro de d&eacute;bito.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 	
@@ -312,14 +312,14 @@ function validarDebitarLanctoFut(acao) { // acao => 'D'ebitar - 'V'alidar
 		}, 
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			try {				
 				eval(response);
             } catch (error) {
 				hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});				

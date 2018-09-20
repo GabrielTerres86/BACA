@@ -104,7 +104,7 @@
 				$idAlteraLim = 1;
 			}
 			
-			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idAlteraLim.",\'".$glbvars["opcoesTela"][$idAlteraLim]."\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Aimaro', 'acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idAlteraLim.",\'".$glbvars["opcoesTela"][$idAlteraLim]."\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
 			exit();
 			}
 		}
@@ -191,14 +191,14 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	
 	// Função para mostrar mensagem de confirmação retornada pela BO
 	function exibeConfirmacao($aux_inconfir,$msgConfirmacao) {
 		echo 'hideMsgAguardo();';
-		echo 'showConfirmacao("'.$msgConfirmacao.'","Confirma&ccedil;&atilde;o - Ayllos","confirmaNovoLimite(\''.($aux_inconfir + 1).'\',\'true\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("'.$msgConfirmacao.'","Confirma&ccedil;&atilde;o - Aimaro","confirmaNovoLimite(\''.($aux_inconfir + 1).'\',\'true\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 		exit();	
 	}
 
