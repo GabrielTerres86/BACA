@@ -18,7 +18,7 @@ SELECT 751,                                               --> CDRELATO
 1,                                                        --> NRVIAMAX 
 'ESTORNOS CC EM PREJUÍZO',                                --> NMRELATO 
 3,                                                        --> NRMODULO 
-'',                                                       --> NMDESTIN 
+' ',                                                       --> NMDESTIN 
 '234col',                                                 --> NMFORMUL
 0,                                                        --> INDAUDIT 
 cop.cdcooper,                                             --> CDCOOPER 
