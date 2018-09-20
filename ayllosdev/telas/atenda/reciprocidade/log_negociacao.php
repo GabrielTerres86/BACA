@@ -49,7 +49,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
 
 <div id='divRegLogNegociacao'>
     <fieldset id='tabConteudo'>
-    <legend><?= utf8ToHtml('Logs da negociação - '); echo formataNumericos("zzz.zzz.zz9",$idrecipr,"."); ?></legend>
+    <legend><?= utf8ToHtml('Logs da Negociação - '); echo formataNumericos("zzz.zzz.zz9",$idrecipr,"."); ?></legend>
 
     <div class='divRegistros'>
         <table>
@@ -66,10 +66,10 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
             <?php foreach ($registros as $r) { ?>
 
                 <tr>
-                    <td><?= getByTagName($r->tags, 'dthorlog'); ?></td>
-                    <td><?= getByTagName($r->tags, 'dscdolog'); ?></td>
-                    <td><?= getByTagName($r->tags, 'dsstatus'); ?></td>
-                    <td><?= getByTagName($r->tags, 'nmoperad'); ?></td>	
+                    <td><?= utf8ToHtml(getByTagName($r->tags, 'dthorlog')); ?></td>
+                    <td><?= utf8ToHtml(getByTagName($r->tags, 'dscdolog')); ?></td>
+                    <td><?= utf8ToHtml(getByTagName($r->tags, 'dsstatus')); ?></td>
+                    <td><?= utf8ToHtml(getByTagName($r->tags, 'nmoperad')); ?></td>	
                 </tr>
 
             <?php } ?>
