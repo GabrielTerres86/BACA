@@ -1118,7 +1118,7 @@ BEGIN
             ELSIF pr_tipoapli = 'A' THEN
               vr_res_vlresmes_a := vr_res_vlresmes_a + pr_vllanmto;
             END IF;
-          WHEN pr_cdhistor = vr_tab_crapcpc(pr_cdprodut).cdhsrvap THEN
+          WHEN pr_cdhistor = vr_tab_crapcpc(pr_cdprodut).cdhsrdap THEN
             IF pr_tipoapli = 'N' THEN
               vr_res_vlrenmes_n := vr_res_vlrenmes_n + pr_vllanmto;
             ELSIF pr_tipoapli = 'A' THEN
@@ -2372,11 +2372,6 @@ BEGIN
               vr_res_vlresmes := vr_res_vlresmes + rw_lac(idx).vllanmto;
           -- Atribuir valores para Pl-Table separando por PF e PJ
               vr_tab_total(rw_lac(idx).inpessoa).vlresmes := vr_tab_total(rw_lac(idx).inpessoa).vlresmes + rw_lac(idx).vllanmto;
-            WHEN rw_lac(idx).cdhistor = 151 THEN
-          -- Atribuir valores para as variáveis agrupando por tipo de pessoa
-              vr_res_vlrenmes := vr_res_vlrenmes + rw_lac(idx).vllanmto;
-          -- Atribuir valores para Pl-Table separando por PF e PJ
-              vr_tab_total(rw_lac(idx).inpessoa).vlrenmes := vr_tab_total(rw_lac(idx).inpessoa).vlrenmes + rw_lac(idx).vllanmto;
             WHEN rw_lac(idx).cdhistor = vr_tab_crapcpc(rw_lac(idx).cdprodut).cdhsprap THEN
           -- Atribuir valores para as variáveis agrupando por tipo de pessoa
               vr_res_vlprvmes := vr_res_vlprvmes + rw_lac(idx).vllanmto;
@@ -2463,6 +2458,11 @@ BEGIN
           -- Atribuir valores para Pl-Table separando por PF e PJ
               vr_tab_total(rw_lac(idx).inpessoa).vlrtirrf := vr_tab_total(rw_lac(idx).inpessoa).vlrtirrf + rw_lac(idx).vllanmto;
               WHEN rw_lac(idx).cdhistor = vr_tab_crapcpc(rw_lac(idx).cdprodut).cdhsrdap THEN
+                -- Atribuir valores para as variáveis agrupando por tipo de pessoa
+                vr_res_vlrenmes := vr_res_vlrenmes + rw_lac(idx).vllanmto;
+                -- Atribuir valores para Pl-Table separando por PF e PJ
+                vr_tab_total(rw_lac(idx).inpessoa).vlrenmes := vr_tab_total(rw_lac(idx).inpessoa).vlrenmes + rw_lac(idx).vllanmto;
+
                 vr_tot_vlrrend := vr_tot_vlrrend - rw_lac(idx).vllanmto;
                 -- Atribuir valores para Pl-Table separando por PF e PJ
                 vr_tab_total(rw_lac(idx).inpessoa).vlrrendi := vr_tab_total(rw_lac(idx).inpessoa).vlrrendi - rw_lac(idx).vllanmto;
