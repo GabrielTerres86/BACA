@@ -328,7 +328,7 @@ function controlaPesquisa(opcao) {
     if (opcao == 1) {
 
 		if ($('#nrdconta', '#' + frmOpcao).hasClass('campoTelaSemBorda')) {
-            return false;
+		   return false;
     }
 
         mostraPesquisaAssociado('nrdconta', frmOpcao);
@@ -2411,7 +2411,10 @@ function Gera_CSV(nmarqcsv) {
     }
     }
 
-    carregaImpressaoAyllos(frmOpcao, action, callafter);
+	//Ao imprimir o csv não é mais necessário voltar ao estado inicial da tela,
+	//deve ficar na mesma tela para permitir imprimir o pdf.
+    //carregaImpressaoAyllos(frmOpcao, action, callafter);
+	carregaImpressaoAyllos(frmOpcao, action);
 
 }
 
@@ -2438,7 +2441,10 @@ function Gera_Impressao(nmarqpdf) {
     }
     }
 
-    carregaImpressaoAyllos(frmOpcao, action, callafter);
+	//Ao imprimir o pdf não é mais necessário voltar ao estado inicial da tela,
+	//deve ficar na mesma tela para permitir imprimir o csv.
+    //carregaImpressaoAyllos(frmOpcao, action, callafter);
+    carregaImpressaoAyllos(frmOpcao, action);
 
 }
 

@@ -2911,22 +2911,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 				IF vr_instatus_sms <> rw_cobran_sms.instatus_sms THEN
 					--
 					vr_instatus_sms := rw_cobran_sms.instatus_sms;
-					vr_tag_aberta   := 'smsagendados';
+					vr_tag_aberta   := 'SMS Agendados';
 					--
 					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-					              ,pr_des_text      => 'smsagendados'
+					              ,pr_des_text      => 'SMS Agendados'
 												);
 					--
 					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'nrdconta;nmprimtl;cdagenci;nmresage;nrnosnum;nmdsacad;dtvencto;vltitulo;dhenvio_sms;nrdofone;dataenvio1;dataenvio2;dataenvio3;dspacote'
+												,pr_des_text      => 'Agencia;Conta;nmresage;nmprimtl;Nosso Numero;Nome do Pagador;Vencimento;Valor Boleto;Data/Hora Envio;Data Envio 1;Data Envio 2;Data Envio 3;Celular'
 												);
 					--
 				END IF;
 				--
 				pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-											,pr_des_text      => TRIM(gene0002.fn_mask_conta(rw_cobran_sms.nrdconta))    || ';' ||
-											                     rw_cobran_sms.nmprimtl                                  || ';' ||
-																					 rw_cobran_sms.cdagenci                                  || ';' ||
+											,pr_des_text      => rw_cobran_sms.cdagenci                                  || ';' ||
+                                           TRIM(gene0002.fn_mask_conta(rw_cobran_sms.nrdconta))    || ';' ||
 																					 rw_cobran_sms.nmresage                                  || ';' ||
 																					 rw_cobran_sms.nrnosnum                                  || ';' ||
 																					 rw_cobran_sms.nmdsacad                                  || ';' ||
@@ -2937,7 +2936,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 																					 rw_cobran_sms.dt_envio_1                                || ';' ||
 																					 rw_cobran_sms.dt_envio_2                                || ';' ||
 																					 rw_cobran_sms.dt_envio_3                                || ';' ||
-																					 rw_cobran_sms.dspacote
+                                           rw_cobran_sms.nrdofone
 											);
 				--
 			-- Verifica se são os SMS Não Enviados
@@ -2954,30 +2953,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 					END IF;
 					--
 					vr_instatus_sms := rw_cobran_sms.instatus_sms;
-					vr_tag_aberta   := 'smsnaoenviados';
+					vr_tag_aberta   := 'SMS Não enviados';
 					--
 					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'smsnaoenviados'
+												,pr_des_text      => 'SMS Não enviados'
 												);
 					--
 					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'nrdconta;nmprimtl;cdagenci;nmresage;nrnosnum;nmdsacad;dtvencto;vltitulo;dhenvio_sms;nrdofone;dspacote'
+												,pr_des_text      => 'Agencia;Conta;nmresage;nmprimtl;Nosso Numero;Nome do Pagador;Vencimento;Valor Boleto;Data/Hora Envio;Celular'
 												);
 					--
 				END IF;
 				--
 				pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-											,pr_des_text      => TRIM(gene0002.fn_mask_conta(rw_cobran_sms.nrdconta))    || ';' ||
+											,pr_des_text      => rw_cobran_sms.cdagenci                                  || ';' ||
+                                           TRIM(gene0002.fn_mask_conta(rw_cobran_sms.nrdconta))    || ';' ||
+											                     rw_cobran_sms.nmresage                                  || ';' ||
 											                     rw_cobran_sms.nmprimtl                                  || ';' ||
-																					 rw_cobran_sms.cdagenci                                  || ';' ||
-																					 rw_cobran_sms.nmresage                                  || ';' ||
 																					 rw_cobran_sms.nrnosnum                                  || ';' ||
 																					 rw_cobran_sms.nmdsacad                                  || ';' ||
 																					 to_char(rw_cobran_sms.dtvencto,'DD/MM/RRRR')            || ';' ||
 																					 rw_cobran_sms.vltitulo                                  || ';' ||
 																					 to_char(rw_cobran_sms.dhenvsms,'DD/MM/RRRR HH24:MI:SS') || ';' ||
-																					 rw_cobran_sms.nrdofone                                  || ';' ||
-																					 rw_cobran_sms.dspacote
+																					 rw_cobran_sms.nrdofone
 											);
 				--
 			-- Verifica se são os SMS Enviados com Sucesso
@@ -2994,30 +2992,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 					END IF;
 					--
 					vr_instatus_sms := rw_cobran_sms.instatus_sms;
-					vr_tag_aberta   := 'smsenviadoscomsucesso';
+					vr_tag_aberta   := 'SMS Enviados com sucesso';
 					--
 					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'smsenviadoscomsucesso'
+												,pr_des_text      => 'SMS Enviados com sucesso'
 												);
 					--
 					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'nrdconta;nmprimtl;cdagenci;nmresage;nrnosnum;nmdsacad;dtvencto;vltitulo;dhenvio_sms;nrdofone;dspacote'
+												,pr_des_text      => 'Agencia;Conta;nmresage;nmprimtl;Nosso Numero;Nome do Pagador;Vencimento;Valor Boleto;Data/Hora Envio;Celular'
 												);
 					--
 				END IF;
 				--
 				pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-											,pr_des_text      => TRIM(gene0002.fn_mask_conta(rw_cobran_sms.nrdconta))    || ';' ||
+											,pr_des_text      => rw_cobran_sms.cdagenci                                  || ';' ||
+                                           TRIM(gene0002.fn_mask_conta(rw_cobran_sms.nrdconta))    || ';' ||
+											                     rw_cobran_sms.nmresage                                  || ';' ||
 											                     rw_cobran_sms.nmprimtl                                  || ';' ||
-																					 rw_cobran_sms.cdagenci                                  || ';' ||
-																					 rw_cobran_sms.nmresage                                  || ';' ||
 																					 rw_cobran_sms.nrnosnum                                  || ';' ||
 																					 rw_cobran_sms.nmdsacad                                  || ';' ||
 																					 to_char(rw_cobran_sms.dtvencto,'DD/MM/RRRR')            || ';' ||
 																					 rw_cobran_sms.vltitulo                                  || ';' ||
 																					 to_char(rw_cobran_sms.dhenvsms,'DD/MM/RRRR HH24:MI:SS') || ';' ||
-																					 rw_cobran_sms.nrdofone                                  || ';' ||
-																					 rw_cobran_sms.dspacote
+																					 rw_cobran_sms.nrdofone
 											);
 				--
 			END IF;

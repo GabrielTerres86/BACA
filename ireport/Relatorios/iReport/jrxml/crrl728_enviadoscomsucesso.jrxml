@@ -173,7 +173,7 @@
 				<textElement>
 					<font fontName="Courier New" size="9"/>
 				</textElement>
-				<text><![CDATA[SMS enviados com sucesso]]></text>
+				<text><![CDATA[SMS Enviados com sucesso]]></text>
 			</staticText>
 			<line>
 				<reportElement positionType="Float" x="20" y="11" width="544" height="1" uuid="0e205ca2-119b-4f49-b090-1aa6779a66b2">
