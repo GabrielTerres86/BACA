@@ -19,6 +19,9 @@ BEGIN
                             - Excluir grupos que não possuem integrante. 
                             PRJ450 - Regulatorio (AMcom - Mario/Odirlei)
 
+                 20/09/2018 - Ajuste para garantir que não inclua cooperado de outra cooperativa no grupo.
+                              PRJ450 - Regulatorio(Odirlei-AMcom)           
+
   ............................................................................ */
 
   DECLARE
@@ -42,6 +45,7 @@ BEGIN
     vr_nrdgrupo_ant               crapgrp.nrdgrupo%TYPE := 0;
     vr_idgrupo_ant                tbcc_grupo_economico.idgrupo%TYPE := 0;
     vr_flggravo                   BOOLEAN;
+    vr_cdcooper_ant               NUMBER;
     
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     -- Definicao do tipo da tabela do Grupo Economico
@@ -206,8 +210,10 @@ BEGIN
             on crapass.cdcooper = crapgrp.cdcooper
            and crapass.nrdconta = crapgrp.nrctasoc     
          WHERE crapgrp.nrdconta <> crapgrp.nrctasoc
-           AND crapgrp.dtmvtolt = crapdat.dtmvtoan
-         ORDER BY crapgrp.nrdgrupo, crapgrp.idseqttl DESC
+          -- AND crapgrp.dtmvtolt = crapdat.dtmvtoan Remover validação, pois existe apenas uma grp ativa, caso estiver com outra data continua sendo a ativa
+         ORDER BY crapgrp.cdcooper,
+                  crapgrp.nrdgrupo, 
+                  crapgrp.idseqttl DESC
            ;
           
     --> Buscar cooperados da mesa base CPF/CNPJ     
@@ -583,8 +589,17 @@ BEGIN
       END IF;
     END LOOP;
         
+    vr_cdcooper_ant := -1;    
+    
     -- Atualizar o grupo atual
     FOR rw_grupo_economico IN cr_grupo_economico LOOP
+    
+      IF vr_cdcooper_ant <> rw_grupo_economico.cdcooper THEN
+        vr_idgrupo_ant  := -1;  
+        vr_nrdgrupo_ant := -1;      
+        vr_cdcooper_ant := rw_grupo_economico.cdcooper;
+      END IF;
+    
       -- Indice do Grupo Economico Novo
       vr_ind_grupo_economico_novo := lpad(rw_grupo_economico.cdcooper,10,'0')||lpad(rw_grupo_economico.nrdconta,10,'0');      
       -- Condicao para verificar se o grupo jah foi criado
@@ -949,6 +964,8 @@ BEGIN
         vr_ind_integrante_grupo := vr_tab_grupo_economico_inte.next(vr_ind_integrante_grupo);
       END LOOP;
     END IF;
+        
+    COMMIT;
         
     -- Processar Cooperativas e incluir contas com o mesmo CPF ou base CNPJ
     FOR rw_crapcop IN cr_crapcop LOOP
