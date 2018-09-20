@@ -1344,7 +1344,7 @@ BEGIN
   END IF;
   --
   pc_cria_craprej(pr_cdhistor => pr_cdhistor,
-                  pr_dtrefere => pr_nmestrut);
+                  pr_dtrefere => substr(pr_nmestrut,1,20));
   -- Verifica a estrutura e se o historico for
   --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
   if upper(pr_nmestrut) = 'CRAPLEM' and
@@ -1380,7 +1380,7 @@ BEGIN
     END IF;
 
     pc_cria_craprej(pr_cdhistor => pr_cdhistor,
-                    pr_dtrefere => vr_dtrefere);
+                    pr_dtrefere => substr(vr_dtrefere,1,20));
   end if;
   --
   
@@ -1425,7 +1425,7 @@ BEGIN
     if pr_cdhistor not in (340, 313, 345, 445, 97, 319, 339, 351, 24, 27, 342, 463, 475, 532) THEN
 
       pc_cria_craprej(pr_cdhistor => vr_cdhistor,
-                      pr_dtrefere => pr_nmestrut);
+                      pr_dtrefere => substr(pr_nmestrut,1,20));
     end if;
     
     vr_indice_agencia_hist_no := vr_tab_agencia_hist_no.next(vr_indice_agencia_hist_no);
