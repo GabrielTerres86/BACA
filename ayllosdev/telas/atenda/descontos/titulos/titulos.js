@@ -45,6 +45,7 @@
  * 028: [30/05/2018] Vitor Shimada Assanuma (GFT): Inclusão do css para alinhar a direita na Manutenção e 
  * 029: [02/06/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao calculaValoresResumoBordero() para calculo do resumo dos valores do bordero
  * 030: [09/08/2018] Vitor Shimada Assanuma (GFT): Validação do parâmetro da #TAB052 de quantidade máxima de títulos ao incluir um título ao borderô
+ * 027: [15/08/2018] Criada tela 'Motivos' e botão 'Anular'. PRJ 438 (Mateus Z - Mouts)
  */
 
  // variaveis propostas
@@ -926,6 +927,7 @@ function selecionaLimiteTitulosProposta(pr_id, pr_qtlimites, pr_nrctrlim, pr_vll
             $("#trLimite" + idLinhaL).css("background-color","#FFB9AB");
         }
     }
+	
     return false;
 }
 
@@ -2652,7 +2654,7 @@ function confirmarInclusao(){
                     }
                 }catch(error){
                 eval(response);
-                }
+            }
             }
         });
     }
@@ -2700,7 +2702,7 @@ function confirmarAlteracao(){
                 }
                 catch(e){
                 eval(response);
-                }   
+            }
             }
         });
     }
@@ -3463,6 +3465,94 @@ function visualizarDetalhesTitulo(){
     });
     return false;
 }
+
+// PRJ 438 - Inicio
+function carregaDadosConsultaMotivos() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando motivos ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_consultar_motivos.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrctrlim,
+            redirect: "html_ajax"
+        },      
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            if (response.indexOf('showError("error"') == -1) {
+                $("#divOpcoesDaOpcao3").html(response);
+            } else {
+                eval(response);
+            }
+        }               
+    });
+    return false;
+}
+
+function formatarTelaConsultaMotivos(){
+
+    $('#frmDadosMotivos').css('width','500px');
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
+    return false;
+}
+
+function gravaMotivosAnulacao(){
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando alterado o motivo");
+
+    var cdmotivo     = $("input[name='cdmotivo']:checked", "#frmDadosMotivos").val();
+    var dsmotivo     = $('#dsmotivo'+cdmotivo,'#frmDadosMotivos').val();
+    var dsobservacao = $('#dsobservacao'+cdmotivo,'#frmDadosMotivos').val();
+
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_grava_motivo.php",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrctrlim,
+            cdmotivo: cdmotivo,
+            dsmotivo: dsmotivo,
+            dsobservacao: dsobservacao,
+            redirect: "script_ajax"
+        }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                eval(response);
+            } catch(error) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }               
+    });
+}
+
+function controlarMotivos(cdMotivo){
+    if($('#cdmotivo'+cdMotivo,'#frmDadosMotivos').is(':checked')) {
+        // Desabilitar todos os outros campos de observação
+        $('input[type=text]', '#frmDadosMotivos').each(function() {
+            $($(this), '#frmDadosMotivos').desabilitaCampo();
+            $($(this), '#frmDadosMotivos').val('');
+        });
+        // Habilitar somente o campo de observação do motivo selecionado
+        $('#dsobservacao'+cdMotivo,'#frmDadosMotivos').habilitaCampo();
+    }
+}
+// PRJ 438 - FIM
 
 function formataTabelaCriticas(div){
     var tabela = div.find("table");

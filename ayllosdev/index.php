@@ -51,6 +51,10 @@
 	// Parâmetros enviados pela tela de login e seleção do sistema
 	$cdcooper   = isset($_POST["cdcooper"]) ? $_POST["cdcooper"] : 3;
 	$gidnumber  = isset($_POST["gidnumber"]) ? $_POST["gidnumber"] : "";
+	$email  = isset($_POST["email"]) ? $_POST["email"] : "";
+	if(isset($_POST["email"])){
+		$_SESSION['dsdemail'] = $_POST["email"];
+	}
 	$mtccserver = isset($_POST["mtccserver"]) ? $_POST["mtccserver"] : "";
 	$cdoperad   = isset($_POST["des_login"]) ? $_POST["des_login"] : (isset($_POST["cdoperad"]) ? $_POST["cdoperad"] : "");
 
@@ -87,6 +91,7 @@
             $xmlLogin .= "      <vldsenha>no</vldsenha>";
             $xmlLogin .= "      <cddsenha></cddsenha>";
             $xmlLogin .= "      <cdpactra>".$cdpactra."</cdpactra>";
+			$xmlLogin .= "      <dsdemail>".$_SESSION['dsdemail']."</dsdemail>";
             $xmlLogin .= "  </Dados>";
 			$xmlLogin .= "</Root>";
 			

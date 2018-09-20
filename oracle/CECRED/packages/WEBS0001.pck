@@ -965,6 +965,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       END IF;
       -- Fim PJ 438 - Márcio (Mouts)
       
+      -- Início PJ 438 - Paulo Martins (Mouts)
+      -- Proposta Anulada
+      IF rw_crawepr.insitest = 6 THEN
+        pr_status      := 202;
+        pr_cdcritic    := 975;
+        pr_msg_detalhe := 'Parecer nao foi atualizado, proposta esta anulada.';
+        RAISE vr_exc_saida;
+      END IF;
+      -- Fim PJ 438 - Paulo Martins (Mouts)      
+      
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_nrctremp => pr_nrctremp);
@@ -1025,7 +1035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           pr_msg_detalhe := 'Parecer nao foi atualizado: '||pr_dscritic;
           RAISE vr_exc_saida;
         END IF;
-    
+        
       END IF;			
       /*Inicio M438*/
       -- Calcular Rating para atualiza no campo rating original
@@ -1068,7 +1078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Vai para o proximo registro
         vr_ind := vr_tab_impress_risco_cl.next(vr_ind);
       END LOOP;          
-      /*Fim 438*/	         
+      /*Fim 438*/	
       
       /* Verificar se a analise da proposta expirou na esteira*/      
       IF pr_insitapr = 99 THEN

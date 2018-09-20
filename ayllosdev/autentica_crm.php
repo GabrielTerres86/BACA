@@ -56,6 +56,7 @@
 		$xmlLogin .= "      <vldsenha>no</vldsenha>";
 		$xmlLogin .= "      <cddsenha></cddsenha>";
 		$xmlLogin .= "      <cdpactra>".$cdpactra."</cdpactra>";
+		$xmlLogin .= "      <dsdemail></dsdemail>";
 		$xmlLogin .= "  </Dados>";
 		$xmlLogin .= "</Root>";
 		

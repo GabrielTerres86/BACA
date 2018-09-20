@@ -149,6 +149,7 @@ PROCEDURE efetua_login:
     DEF  INPUT PARAM par_vldsenha AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_cddsenha LIKE crapope.cddsenha             NO-UNDO.
     DEF  INPUT PARAM par_cdpactra LIKE crapope.cdpactra             NO-UNDO.
+    DEF  INPUT PARAM par_dsdemail AS CHAR                           NO-UNDO. /*P438*/    
 
     DEF OUTPUT PARAM TABLE FOR tt-login.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -327,6 +328,7 @@ PROCEDURE efetua_login:
                              INPUT par_cdoperad,
                              INPUT par_idorigem,
                              INPUT par_cdpactra,
+                             INPUT par_dsdemail,
                              OUTPUT TABLE tt-erro).
     
     IF  RETURN-VALUE = "NOK"  THEN
@@ -950,6 +952,7 @@ PROCEDURE valida-pac-trabalho:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdpactra LIKE crapope.cdpactra             NO-UNDO.
+    DEF  INPUT PARAM par_dsdemail LIKE crapope.dsdemail             NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.  
 
@@ -1008,11 +1011,15 @@ PROCEDURE valida-pac-trabalho:
                         END.
                 END.
             ELSE
+            DO: 
+              IF par_dsdemail <> ? OR par_dsdemail <> " " THEN
+                ASSIGN crabope.dsdemail = par_dsdemail.
+              
             IF  crabope.cdpactra <> par_cdpactra THEN
                 ASSIGN crabope.cdpactra = par_cdpactra.
 
             LEAVE.
-
+            END.
         END. /** Fim do DO .. TO **/
             
         ASSIGN aux_flgtrans = TRUE.

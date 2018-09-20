@@ -50,7 +50,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
     -- dtmvtolt'); ?></td>
     retorno VARCHAR2(150),
     nrctrprp NUMBER,
-    dsprotocolo VARCHAR2(1000)
+    dsprotocolo VARCHAR2(1000),
+    dtexpira    VARCHAR2(30) --PJ 438 - Sprint 2 - Márcio Mouts	   
     );
 
   TYPE typ_reg_crapope IS RECORD(
@@ -434,6 +435,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                    pr_tag_nova => 'efetivada',
                                    pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).efetivada,
                                    pr_des_erro => vr_dscritic);
+            -- Início PJ 438 - Sprint 2 - Márcio Mouts
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                                   pr_tag_pai  => 'inf',
+                                   pr_posicao  => vr_auxconta,
+                                   pr_tag_nova => 'dtexpira',
+                                   pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).dtexpira,
+                                   pr_des_erro => vr_dscritic);
+            -- Fim  PJ 438 - Sprint 2 - Márcio Mouts                                 
           
             -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
             EXIT WHEN(vr_ind_crawepr = vr_tab_crawepr.LAST);
@@ -530,6 +539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 				  27/07/2018 - Adicionado NVL dentro do IF de verificação de último envio (esteira ou motor)
                                ,pois sem o NVL caso uma das datas fossem nulas, estava causando erro. 
                                INC0020322 (Mateus Z / Mouts)			   
+          13/08/2018 - Retornar o campo de data de expiração por decurso de prazo PJ 438 - Sprint 2 - Márcio Mouts	   
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -575,6 +585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 														 ,3,'Analise@Finalizada'
 														 ,4,'Expirado'
 														 ,5,'Expirado Dec. Prazo' -- PJ 438 - Márcio (Mouts)                            
+                             ,6,'Anulada' -- PJ 438 - Sprint 2 - Márcio Mouts                           
                              ,'') situacao_ayllos
                        -- Parecer esteira
                       ,
@@ -619,6 +630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                        
                       ,
                        age.nmresage
+                      ,epr.dtexpira dtexpira   -- PJ 438 - Sprint 2 - Márcio Mouts
                 
                   FROM crawepr epr,
                        crapass ass,
@@ -689,6 +701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                                'Sim',
                                'Nao') efetivada
                       ,age.nmresage                
+                      ,null dtexpira  -- PJ 438 - Sprint 2 - Márcio Mouts                                
                   FROM crawcrd epr,
                        crapass ass,
                        crapage age
@@ -898,6 +911,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
         pr_tab_crawepr(vr_ind_crawepr).nmresage := rw_crawepr.nmresage;
       
+        pr_tab_crawepr(vr_ind_crawepr).dtexpira := to_char(rw_crawepr.dtexpira, 'DD/MM/YYYY'); -- PJ 438 - Sprint 2 - Márcio Mouts	        
+
       END LOOP;
       ELSE
         FOR rw_crawcrd IN cr_crawcrd LOOP
@@ -943,6 +958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
           pr_tab_crawepr(vr_ind_crawepr).efetivada := rw_crawcrd.efetivada;
           pr_tab_crawepr(vr_ind_crawepr).nmresage := rw_crawcrd.nmresage;
           --
+          pr_tab_crawepr(vr_ind_crawepr).nmresage := rw_crawcrd.dtexpira; -- PJ 438 - Sprint 2 - Márcio Mouts	                  
         END LOOP;
       END IF;
     

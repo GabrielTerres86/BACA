@@ -799,6 +799,11 @@
 
           13/08/2018 - P437 - Conversao proc_qualif_operac (James)
 
+          
+          29/08/2018 - Adicionado retorno do 'insitest' na PROC 'obtem-propostas-emprestimo' PRJ 438 (Mateus Z - Mouts)
+
+         31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts          
+          
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2361,7 +2366,10 @@ PROCEDURE obtem-propostas-emprestimo:
                tt-proposta-epr.idcobope = crawepr.idcobope
                tt-proposta-epr.vlfinanc = 0
                tt-proposta-epr.vlrtotal = 0
-               tt-proposta-epr.flintcdc = crapcop.flintcdc.
+               tt-proposta-epr.flintcdc = crapcop.flintcdc
+               tt-proposta-epr.vlrtotal = 0
+               /* PRJ 438 */
+               tt-proposta-epr.insitest = crawepr.insitest.
 
                IF crawepr.idfiniof > 0 THEN
                   DO:
@@ -2528,6 +2536,7 @@ PROCEDURE obtem-propostas-emprestimo:
 					WHEN 3 THEN ASSIGN tt-proposta-epr.dssitest = "Analise Finalizada".
 					WHEN 4 THEN ASSIGN tt-proposta-epr.dssitest = "Expirado".
           WHEN 5 THEN ASSIGN tt-proposta-epr.dssitest = "Expirada por decurso de prazo".
+          WHEN 6 THEN ASSIGN tt-proposta-epr.dssitest = "Anulada". /*PRJ438 - Paulo Martins (Mouts)*/
 					OTHERWISE tt-proposta-epr.dssitest = "-".
 				END CASE.
 
@@ -3135,7 +3144,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.flintcdc = crapcop.flintcdc.
 
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+                       
                 RUN STORED-PROCEDURE pc_verifica_contingencia_cdc
                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
                                                        OUTPUT 0,           /* Indicador de contingencia CDC */
@@ -4908,7 +4917,7 @@ PROCEDURE proc_qualif_operacao:
 
     /* AWAE (GFT) - Chamada para nova funçao de qualificaçao da operacao em Oracle */
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-    
+
     RUN STORED-PROCEDURE pc_proc_qualif_operacao
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                         ,INPUT par_nrdconta
@@ -4944,7 +4953,7 @@ PROCEDURE proc_qualif_operacao:
     /* Se ocorrer critica, abortar e gerar erro.*/
     IF aux_cdcritic <> 0   OR
        aux_dscritic <> ""  THEN
-                    DO:
+					DO:
          RUN gera_erro (INPUT par_cdcooper,
                         INPUT par_cdagenci,
                         INPUT par_nrdcaixa,
@@ -4953,8 +4962,8 @@ PROCEDURE proc_qualif_operacao:
                         INPUT-OUTPUT aux_dscritic).
 
          RETURN "NOK".
-                    END.                
-	    ELSE 
+             END.
+    ELSE
 			DO:
          ASSIGN par_idquapro = aux_idquapro
                 par_dsquapro = aux_dsquapro.

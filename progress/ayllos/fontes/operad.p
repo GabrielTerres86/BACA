@@ -182,6 +182,8 @@
 			   
 			   05/07/2018 - Ajustado para substituir os caracteres acentuados do nome do operador 
 			                para correcao do chamado PRB0040132 (André Bohn - MoutS)
+							
+               01/09/2018 - PJ 438 - Agilidade nas contratações - Incluir campo tel_dsdemail - de e-mail do operador - (Márcio - Mouts)							
 ............................................................................. */
 
 { includes/var_online.i }
@@ -210,6 +212,9 @@ DEF        VAR tel_flgdopgd AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgacres AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgdonet AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_insaqesp AS LOGICAL INITIAL FALSE FORMAT "Sim/Nao" NO-UNDO.
+
+DEF        VAR tel_dsdemail AS CHAR    FORMAT  "x(40)"              NO-UNDO.
+
 DEF        VAR tel_flgutcrm AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgcarta AS LOGICAL                               NO-UNDO.
 
@@ -243,6 +248,7 @@ DEF        VAR log_vlapvcap AS DECIMAL                               NO-UNDO.
 DEF        VAR log_vlpagchq AS DECIMAL                               NO-UNDO.
 DEF        VAR log_vllimted LIKE crapope.vllimted                    NO-UNDO.
 
+DEF        VAR log_dsdemail AS CHAR    FORMAT "x(40)"                NO-UNDO.
 
 DEF        VAR aux_inposniv AS INT                                   NO-UNDO.
 DEF        VAR aux_inpostip AS INT                                   NO-UNDO.
@@ -301,7 +307,7 @@ FORM SPACE(1) WITH ROW 4 COLUMN 1 OVERLAY 16 DOWN WIDTH 80
 
 FORM SKIP
      glb_cddopcao AT 24 LABEL "Opcao" AUTO-RETURN
-     SKIP(1)
+     SKIP
      tel_cdoperad AT 11 LABEL "Codigo do Operador" AUTO-RETURN
          HELP "Informe o codigo ou tecle <F7> para listar os operadores."
          VALIDATE(tel_cdoperad <> "",
@@ -362,6 +368,10 @@ FORM SKIP
      tel_vlapvcap AT 02 LABEL "Valor da Alcada de Captacao"
          HELP "Informe o valor da alcada de captacao."
      tel_flgutcrm AT 46 LABEL "Habilitar acesso CRM" HELP "Informe SIM para liberar o acesso ao CRM."        
+	 SKIP
+     tel_dsdemail AT 12 LABEL "Email do Operador"
+         HELP "Email do operador."
+	 
      WITH ROW 5 COLUMN 2 OVERLAY NO-BOX SIDE-LABELS FRAME f_operad.
 
 FORM SKIP(1)
@@ -659,6 +669,7 @@ DO WHILE TRUE:
                   tel_vlpagchq = crapope.vlpagchq
                   tel_flgdonet = crapope.flgdonet
                   tel_insaqesp = crapope.insaqesp
+				  tel_dsdemail = crapope.dsdemail
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap
@@ -672,6 +683,7 @@ DO WHILE TRUE:
                   log_flgdopgd = tel_flgdopgd
                   log_flgdonet = tel_flgdonet
                   log_insaqesp = tel_insaqesp
+				  log_dsdemail = tel_dsdemail
                   log_flgcarta = tel_flgcarta     
                   log_flgacres = tel_flgacres
                   log_vlapvcap = tel_vlapvcap
@@ -697,6 +709,7 @@ DO WHILE TRUE:
                    tel_cdcomite WHEN crapcop.flgcmtlc
                    tel_dscomite WHEN crapcop.flgcmtlc
                    tel_vlalccre tel_vlapvcap tel_flgutcrm
+				   tel_dsdemail
                    WITH FRAME f_operad.
 
            UPDATE tel_nmoperad                     
@@ -914,6 +927,9 @@ DO WHILE TRUE:
                                   STRING(log_insaqesp,"Sim/Nao"),
                                   STRING(tel_insaqesp,"Sim/Nao")).
                
+               IF   log_dsdemail <> tel_dsdemail   THEN
+                    RUN gera_log ("Email do Operador",log_dsdemail,tel_dsdemail).
+               
                IF   log_flgperac <> tel_flgperac  THEN
                     RUN gera_log ("Acessar contas restritas",
                                   STRING(log_flgperac,"Sim/Nao"),
@@ -1072,6 +1088,7 @@ DO WHILE TRUE:
                   tel_vlpagchq = crapope.vlpagchq
                   tel_flgdonet = crapope.flgdonet
                   tel_insaqesp = crapope.insaqesp
+				  tel_dsdemail = crapope.dsdemail
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap       
@@ -1085,6 +1102,7 @@ DO WHILE TRUE:
                    tel_flgdonet tel_insaqesp tel_cdcomite WHEN crapcop.flgcmtlc
                    tel_dscomite WHEN crapcop.flgcmtlc
                    tel_vlalccre tel_vlapvcap tel_flgutcrm
+				   tel_dsdemail
                    WITH FRAME f_operad.
  
            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -1184,6 +1202,7 @@ DO WHILE TRUE:
                    tel_vllimted = crapope.vllimted
                    tel_flgdonet = crapope.flgdonet
                    tel_insaqesp = crapope.insaqesp
+				   tel_dsdemail = crapope.dsdemail
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
@@ -1199,6 +1218,7 @@ DO WHILE TRUE:
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
                     tel_vlalccre tel_vlapvcap tel_flgutcrm
+					tel_dsdemail
                     WITH FRAME f_operad.
         END.
    ELSE
@@ -1231,6 +1251,7 @@ DO WHILE TRUE:
                    tel_dsdepart = ""
                    tel_vlapvcap = 0
                    tel_flgutcrm = FALSE
+				   tel_dsdemail = ""
                    aux_inposniv = 1
                    aux_inpostip = 1.
 
@@ -1469,7 +1490,8 @@ DO WHILE TRUE:
                          crapope.insaqesp = tel_insaqesp
                          crapope.cddepart = tel_cddepart
                          crapope.vlapvcap = tel_vlapvcap
-                         crapope.flgutcrm = tel_flgutcrm.
+                         crapope.flgutcrm = tel_flgutcrm
+						 crapope.dsdemail = tel_dsdemail.
 
                   IF   CAN-DO("1,3",STRING(crapope.tpoperad))   THEN 
                        FOR EACH craptel WHERE 
@@ -1815,6 +1837,7 @@ DO WHILE TRUE:
                    tel_vlpagchq = crapope.vlpagchq
                    tel_flgdonet = crapope.flgdonet
                    tel_insaqesp = crapope.insaqesp
+				   tel_dsdemail = crapope.dsdemail
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
@@ -1831,6 +1854,7 @@ DO WHILE TRUE:
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
                     tel_vlalccre tel_vlapvcap tel_flgutcrm
+					tel_dsdemail
                     WITH FRAME f_operad.
                    
             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:    
@@ -1928,6 +1952,7 @@ DO WHILE TRUE:
                      tel_vllimted = crapope.vllimted
                      tel_flgdonet = crapope.flgdonet
                      tel_insaqesp = crapope.insaqesp
+					 tel_dsdemail = crapope.dsdemail
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
@@ -1944,6 +1969,7 @@ DO WHILE TRUE:
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
                       tel_vlalccre tel_vlapvcap tel_flgutcrm
+					  tel_dsdemail
                       WITH FRAME f_operad.
              
               UPDATE tel_vlpagchq tel_vllimted WITH FRAME f_operad.
@@ -2237,6 +2263,7 @@ DO WHILE TRUE:
                     tel_vlpagchq = crapope.vlpagchq
                     tel_flgdonet = crapope.flgdonet
                     tel_insaqesp = crapope.insaqesp
+					tel_dsdemail = crapope.dsdemail
                     tel_cdcomite = crapope.cdcomite
                     tel_vlalccre = crapope.vlapvcre
                     tel_vlapvcap = crapope.vlapvcap
@@ -2252,6 +2279,7 @@ DO WHILE TRUE:
                      tel_cdcomite WHEN crapcop.flgcmtlc
                      tel_dscomite WHEN crapcop.flgcmtlc
                      tel_vlalccre tel_vlapvcap tel_flgutcrm
+					 tel_dsdemail
                      WITH FRAME f_operad.
 
              RUN fontes/confirma.p(INPUT "",
@@ -2315,6 +2343,7 @@ DO WHILE TRUE:
                      tel_vlpagchq = crapope.vlpagchq
                      tel_flgdonet = crapope.flgdonet
                      tel_insaqesp = crapope.insaqesp
+					 tel_dsdemail = crapope.dsdemail
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
@@ -2330,6 +2359,7 @@ DO WHILE TRUE:
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
                       tel_vlalccre tel_vlapvcap tel_flgutcrm
+					  tel_dsdemail
                       WITH FRAME f_operad.
              
               UPDATE tel_flgperac WITH FRAME f_operad.
@@ -2384,7 +2414,8 @@ PROCEDURE limpa:
            tel_vlalccre = 0
            tel_flgdonet = TRUE
            tel_insaqesp = TRUE
-           tel_cdcomite = 0.
+           tel_cdcomite = 0
+		   tel_dsdemail = "".
     
     RUN atualiza_dscomite.
     
@@ -2394,6 +2425,7 @@ PROCEDURE limpa:
             tel_cdcomite WHEN crapcop.flgcmtlc
             tel_dscomite WHEN crapcop.flgcmtlc
             tel_vlalccre tel_cdpactra tel_cdagenci
+			tel_dsdemail
             WITH FRAME f_operad.
 
     PAUSE 0 NO-MESSAGE.

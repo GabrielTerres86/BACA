@@ -1490,7 +1490,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        WHERE w.cdcooper = pr_cdcooper
          AND w.nrdconta = pr_nrdconta
          AND w.insitapr IN(1,3)        -- já estao aprovadas
-         AND w.insitest NOT IN(4,5)    -- 4 - Expiradas - 5 - Expirada por decurso de prazo -- PJ 438 - Márcio (Mouts)
+         AND w.insitest NOT IN(4,5,6)  -- 4 - Expiradas - 5 - Expirada por decurso de prazo -- PJ 438 - Márcio (Mouts) - 6 - Anulação -- PJ438 - Paulo Martins - Mouts
          AND w.nrctremp <> pr_nrctremp -- desconsiderar a proposta que esta sendo enviada no momento
          AND NOT EXISTS ( SELECT 1
                             FROM crapepr p
@@ -4117,7 +4117,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND rownum=1
          AND trim(crapbpr.dscatbem) is not NULL;
     rw_crapbpr cr_crapbpr%ROWTYPE;
-    
+       
     --> verificar se dados do CET já foram gravados
     CURSOR cr_tbepr_calculo_cet (pr_cdcooper tbepr_calculo_cet.cdcooper%type
                                 ,pr_nrdconta tbepr_calculo_cet.nrdconta%TYPE
@@ -4132,7 +4132,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND t.nrdconta = pr_nrdconta
          AND t.nrctremp = pr_nrctremp;
     rw_tbepr_calculo_cet cr_tbepr_calculo_cet%ROWTYPE;
-
+    
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER := 0;
@@ -4369,12 +4369,12 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 
       vr_vliofadi := ROUND(((rw_crawepr.vliofadc / rw_crawepr.vlempfin) * 100),2);
       vr_obj_efetivar.put('percentualIofAdicional', ESTE0001.fn_decimal_ibra(vr_vliofadi)); 
-      
+                 
       vr_vlpertar := ROUND(((rw_crawepr.vltarifa / rw_crawepr.vlempfin) * 100),2);
       vr_obj_efetivar.put('percentualTarifa', ESTE0001.fn_decimal_ibra(vr_vlpertar)); 
     END IF;
     -----------------------------------------------------------------------------------------------
-
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento

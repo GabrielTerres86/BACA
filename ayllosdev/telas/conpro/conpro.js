@@ -6,6 +6,9 @@
  * --------------
  * ALTERAÇÕES   : 05/07/2017 - P337 - Prever novas situações criadas pela
  *                             pela implantação da análise automática (Motor)
+ *
+ *                13/08/2018 - P438 - Adicionada a coluna Data de Execução na tabela de consulta
+ *                             e ajustado a largura das colunas (Mateus Z - Mouts)
  * --------------
  */
 
@@ -296,7 +299,7 @@ function LiberaCampos() {
 	cTodosCabecalho.desabilitaCampo();
 	
 	if ( $('#cddopcao', '#frmCab').val() == 'A' ) {
-        
+		
 		$('#frmAciona').css({'display': 'block'});
 		$('#tpproduto', '#frmAciona').focus();
         $('#tpproduto', '#frmAciona').click();
@@ -309,7 +312,7 @@ function LiberaCampos() {
             $(".tpproduto").show();
             $("#tpproduto ").focus();
             alteraProduto(null);
-            
+
         }else if($('#cddopcao', '#frmCab').val() == 'R'){
             $(".tpproduto").hide();
             alteraProduto(3);
@@ -424,10 +427,10 @@ function manterRotina(nriniseq, nrregist) {
 
 
 function formataResultado() {
-	
+
 	var tpProdutoSelecionado = $('#tpproduto', '#' + frmConpro).val();
 	
-	var divRegistro = $('div.divRegistros', '#divResultado');
+    var divRegistro = $('div.divRegistros', '#divResultado');
     var tabela = $('table', divRegistro);
 
     divRegistro.css({ 'height': '250px' });
@@ -461,11 +464,11 @@ function formataResultado() {
     arrayAlinha[12] = 'center';
     arrayAlinha[13] = 'center';
     arrayAlinha[14] = 'center';
-	
+
 	var arrayLargura = new Array();
 
     var metodoTabela = '';
-	
+
     if(tpProdutoSelecionado.toString() == 4){
 		//Altera o Titulo do cabeçalho
 		$(".hr_title_valor_proposta ").text("Valor Limite");
@@ -476,31 +479,32 @@ function formataResultado() {
 		arrayLargura[2] = '85px';
 		arrayLargura[3] = '110px';
 		arrayLargura[4] = '60px';
-		arrayLargura[5] = '140px';
-		arrayLargura[6] = '140px';
-		arrayLargura[7] = '70px';
-		arrayLargura[8] = '140px';
-
-		
+		arrayLargura[5] = '90px';
+		arrayLargura[6] = '90px';
+        arrayLargura[7] = '100px';
+		arrayLargura[8] = '70px';
+		arrayLargura[9] = '100px';
     }
 	else{
 		arrayLargura[0] = '25px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
-		arrayLargura[3] = '110px';
+		arrayLargura[3] = '90px';
 		arrayLargura[4] = '50px';
 		arrayLargura[5] = '40px';
-		arrayLargura[6] = '60px';
+		arrayLargura[6] = '55px';
 		arrayLargura[7] = '50px';
 		arrayLargura[8] = '65px';
-		arrayLargura[9] = '70px';
+        arrayLargura[8] = '60px';
+		arrayLargura[9] = '60px';
 		arrayLargura[10] = '55px';
-		arrayLargura[11] = '50px';
-		arrayLargura[12] = '60px';
-		arrayLargura[13] = '65px';
+		arrayLargura[11] = '55px';
+		arrayLargura[12] = '55px';
+		arrayLargura[13] = '60px';
+        arrayLargura[14] = '60px';
 	}
 	
-	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
     hideMsgAguardo();
 
@@ -550,8 +554,8 @@ function buscaAcionamentos() {
             cddopcao: cddopcao,
             nrdconta: nrdconta,
             nrctremp: nrctremp,
-            dtinicio: dtinicio,
-            dtafinal: dtafinal,
+			      dtinicio: dtinicio,
+			      dtafinal: dtafinal,
             tpproduto: tpproduto,
             redirect: 'html_ajax'
         },

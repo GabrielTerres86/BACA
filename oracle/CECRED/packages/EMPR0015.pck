@@ -62,6 +62,22 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0015 IS
                                 ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
                                 ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                 ,pr_dscritic  OUT crapcri.dscritic%TYPE);                                       
+                                   
+  PROCEDURE pc_gerar_evento_email (pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                  ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                  ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                  ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                  ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                  ,pr_dscritic  OUT crapcri.dscritic%TYPE);
+
+  PROCEDURE pc_valida_email_proposta (pr_cdcooper  IN crapdat.cdcooper%TYPE      --> Codigo da Cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE      --> Numero da conta
+                                     ,pr_nrctremp  IN crawepr.nrctremp%TYPE      --> Numero do contrato de emprestimo
+                                     ,pr_flgenvia  OUT boolean                   --> false não envia email / true envia email                                     
+                                     ,pr_retxml    OUT NOCOPY xmltype            --> Arquivo de retorno do XML
+                                     ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                     ,pr_dscritic  OUT crapcri.dscritic%TYPE);                                  
+
 END EMPR0015;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
@@ -762,7 +778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       vr_qtdpasem    NUMBER(5):= 0;
       vr_qtdpameq    NUMBER(5):= 0;
       vr_idencgar    NUMBER(1):= 0; -- Variável que define que encontrou garantia
-      vr_qtdiaute    NUMBER(5):= 0; -- Guarda a quantidade de dias úteis entre a data de aprovação e a data atual
+      vr_qtdiacor    NUMBER(5):= 0; -- Guarda a quantidade de dias CORRIDOS entre a data de aprovação e a data atual
       
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
 
@@ -793,7 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             -- Inicia a variável com zero pois está dentro do loop
             vr_qtddiexp := 0;
             vr_idencgar := 0;            
-            vr_qtdiaute := 0;
+            vr_qtdiacor := 0;
             -- Com base no retorno das propostas lidas deverá ser verificado se existem garantias, conforme abaixo:
             
             -- Garantia de Imóvel
@@ -876,14 +892,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             IF vr_idencgar = 0 THEN
               vr_qtddiexp:= vr_qtdpasem;
             END IF;
-            -- Verificar a quantidade de dias úteis entre a data de aprovação da proposta e a data atual
-            vr_qtdiaute:= GENE0005.fn_calc_qtd_dias_uteis(rw_crapcop.cdcooper,
-                                                          rw_crawepr.dtaprova,
-                                                          rw_crapdat.dtmvtolt);
+            -- Verificar a quantidade de dias CORRIDOS entre a data de aprovação da proposta e a data atual
+            vr_qtdiacor:= rw_crapdat.dtmvtolt - rw_crawepr.dtaprova;
+            
             -- Se a quantidade de dias úteis entre a data de aprovação e a data atual
             -- for maior que a quantidade de dias de expiração, o sistema deverá realizar
             -- a alteração da situação da proposta para 5 - " expirada por decurso de prazo ".            
-            IF vr_qtdiaute > vr_qtddiexp THEN
+            IF vr_qtdiacor >= vr_qtddiexp THEN
               BEGIN
                 UPDATE
                      crawepr c
@@ -1008,7 +1023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
     vr_qtdpasem    NUMBER := 0;
     vr_qtdiatab    NUMBER := 0;
     vr_dstextab    craptab.dstextab%TYPE;
-    vr_qtdiaute    NUMBER(5):= 0; -- Guarda a quantidade de dias úteis entre a data de aprovação e a data atual
+    vr_qtdiacor    NUMBER(5):= 0; -- Guarda a quantidade de CORRIDOS úteis entre a data de aprovação e a data atual
     vr_controle    NUMBER;
     --
     rw_crapdat     btch0001.cr_crapdat%rowtype;  
@@ -1090,12 +1105,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
         END IF;
       
         -- Verificar a quantidade de dias úteis entre a data de aprovação da proposta e a data atual
-        vr_qtdiaute:= GENE0005.fn_calc_qtd_dias_uteis(rw_crapcop.cdcooper,
-                                                      rw_crawlim.dtaprova,
-                                                      rw_crapdat.dtmvtolt);      
+        vr_qtdiacor:= rw_crapdat.dtmvtolt - rw_crawlim.dtaprova;
         --
         -- Data calculada conforme regras de garantia e tab089 maior que data atual sistema, recebe expiração
-        IF vr_qtdiaute > vr_qtdiatab THEN
+        IF vr_qtdiacor >= vr_qtdiatab THEN
           BEGIN
             -- Realizar a expiração do contrato   
             UPDATE crawlim lim
@@ -1233,6 +1246,463 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
       pr_dscritic := 'Erro na procedure EMPR0012.pc_executa_expiracao: ' || SQLERRM;  
   END pc_executa_expiracao; 
 
+  PROCEDURE pc_gerar_evento_email (pr_cdcooper  IN crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
+                                  ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da conta
+                                  ,pr_nrctremp  IN crawepr.nrctremp%TYPE     --> Numero do contrato de emprestimo
+                                  ,pr_dserro    OUT crapcri.dscritic%TYPE     --> OK - se processar e NOK - se erro
+                                  ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                  ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
+  /* .............................................................................
 
+       Programa: pc_gerar_evento_email
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Márcio(Mouts)
+       Data    : 08/2018                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para procesar as regras de geração de e-mail
+
+       Alteracoes: 
+    ............................................................................. */                                  
+  
+    CURSOR cr_crapcop IS
+      SELECT *
+        FROM crapcop cop
+       WHERE cop.cdcooper = nvl(pr_cdcooper, cop.cdcooper)
+         AND cop.cdcooper <> 3
+         AND cop.flgativo = 1
+      ORDER BY
+              cop.cdcooper; 
+              
+    CURSOR cr_crawepr (prc_cdcooper crawepr.cdcooper%TYPE,
+                       prc_nrdconta crawepr.nrdconta%TYPE,
+                       prc_nrctremp crawepr.nrctremp%TYPE) IS
+      SELECT epr.cdcooper,
+             epr.nrdconta,
+             epr.nrctremp,
+             epr.dtaprova,
+             epr.rowid
+        FROM crawepr epr,
+             crapope c,
+             tbcadast_email_proposta t
+       WHERE epr.cdcooper = prc_cdcooper
+         AND epr.nrdconta = nvl(prc_nrdconta, epr.nrdconta)
+         AND epr.nrctremp = nvl(prc_nrctremp,epr.nrctremp)       
+         AND epr.insitest = 3 -- Situacao Analise Finalizada
+         AND epr.insitapr = 1 -- Decisao aprovada
+         AND epr.dtaprova IS NOT NULL  -- Ter data de 
+         AND epr.cdcooper = c.cdcooper
+         AND epr.cdopeste = c.cdoperad
+         AND c.dsdemail   is not null
+         AND NOT EXISTS (SELECT 1 
+                           FROM crapepr epr2
+                          WHERE epr2.cdcooper = epr.cdcooper
+                            AND epr2.nrdconta = epr.nrdconta
+                            AND epr2.nrctremp = epr.nrctremp)
+         AND t.cdcooper  = epr.cdcooper
+         AND t.tpproduto = 1 -- Emprestimo/financiamento
+         AND t.idativo   = 1 -- ativo                            
+         AND(
+             (epr.dtulteml is null     AND trunc(sysdate) - trunc(epr.dtaprova) >= t.qt_periodicidade) 
+           OR(epr.dtulteml is not null AND trunc(sysdate) - trunc(epr.dtulteml) >= t.qt_periodicidade)
+             )         ;
+                            
+    CURSOR cr_email_proposta(pr_cdcooper  IN tbcadast_email_proposta.cdcooper%TYPE) IS
+      SELECT t.qt_envio
+        FROM tbcadast_email_proposta t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.tpproduto = 1
+         AND t.idativo   = 1;                            
+
+    rw_email_proposta cr_email_proposta%ROWTYPE;
+                                
+    -- Variaveis Excecao
+    vr_exc_erro           EXCEPTION;
+
+    -- Variaveis Erro
+    vr_cdcritic              INTEGER;
+    vr_dscritic              VARCHAR2(4000);
+      
+    --Variáveis locais
+    vr_cdcooper        crapcop.cdcooper%TYPE;
+    vr_nrdconta        crapass.nrdconta%TYPE;
+    vr_nrctremp        crawepr.nrctremp%TYPE;    
+    vr_seg_envio       INTEGER     :=28800; -- O Cálculo será feito em segundos - 28800 é 08:00:00 h
+    vr_tempo_intervalo INTEGER     :=0;
+    vr_qt_envio       tbcadast_email_proposta.qt_envio%type;
+    vr_hora_envio      VARCHAR2(9);
+    rw_crapdat         btch0001.cr_crapdat%ROWTYPE;                             
+    vr_idevento        tbgen_evento_soa.idevento%type;
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    vr_texto_completo  VARCHAR2(32600);      
+  BEGIN
+    pr_dserro := 'OK';
+    vr_cdcooper := NULL;
+    vr_nrdconta := NULL;
+    vr_nrctremp := NULL;
+    
+    IF nvl(pr_cdcooper,0) > 0 THEN
+      vr_cdcooper := pr_cdcooper;
+    END IF;
+    IF nvl(pr_nrdconta,0) > 0 AND 
+       nvl(pr_cdcooper,0) > 0 THEN
+      vr_nrdconta := pr_nrdconta;
+    END IF;
+    IF nvl(pr_nrctremp,0) > 0 AND 
+       nvl(pr_nrdconta,0) > 0 AND 
+       nvl(pr_cdcooper,0) > 0 THEN
+      vr_nrctremp := pr_nrctremp;
+    END IF;    
+
+    FOR rw_crapcop IN cr_crapcop LOOP -- Cursor de Cooperativas
+       
+      -- Buscar Parâmetros de envio do e-mail
+      OPEN cr_email_proposta(rw_crapcop.cdcooper);
+      FETCH cr_email_proposta INTO rw_email_proposta;
+		
+      -- Se não existe
+      IF cr_email_proposta%NOTFOUND THEN
+        CLOSE cr_email_proposta;         
+      ELSE
+        CLOSE cr_email_proposta;         
+        -- Calcular a cada quantos segundos deve enviar um e-mail
+        -- O horário pré-definido para envio do e-mail é das 08:00 as 18:00, ou seja, 10 horas (36000 segundos) para envio
+        vr_tempo_intervalo:= 36000/rw_email_proposta.qt_envio;
+        
+        FOR rw_crawepr IN cr_crawepr(rw_crapcop.cdcooper,
+                                     vr_nrdconta,
+                                     vr_nrctremp) LOOP -- Cursor de Empréstimos
+          vr_qt_envio :=0;          
+          vr_seg_envio:=28800;
+          -- Incluir os eventos de acordo com a quantidade de envios cadastrada
+          WHILE vr_qt_envio < rw_email_proposta.qt_envio LOOP
+            vr_hora_envio := cecred.gene0002.fn_calc_hora(pr_segundos => vr_seg_envio);
+            -- inserir os eventos
+            soap0003.pc_gerar_evento_soa(pr_cdcooper               => rw_crawepr.cdcooper
+                                        ,pr_nrdconta               => rw_crawepr.nrdconta
+                                        ,pr_nrctrprp               => rw_crawepr.nrctremp
+                                        ,pr_tpevento               => 'LEMBRETE_EFETIVACAO'
+                                        ,pr_tproduto_evento        => 'CREDITO'
+                                        ,pr_tpoperacao             => 'EMAIL'
+                                        ,pr_dhoperacao             =>  trunc(sysdate) ||' '||vr_hora_envio                                     
+                                        ,pr_dsconteudo_requisicao  => vr_des_xml
+                                        ,pr_idevento               => vr_idevento
+                                        ,pr_dscritic               => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+            vr_qt_envio := vr_qt_envio + 1;
+          vr_seg_envio:= vr_seg_envio + vr_tempo_intervalo;
+        END LOOP;
+        IF vr_qt_envio > 0 THEN
+          BEGIN
+            UPDATE 
+                  crawepr c
+            SET  
+                  c.dtulteml = sysdate
+            WHERE
+                  c.rowid = rw_crawepr.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar tabela crawepr - Data de envio do último E-mail. ' || SQLERRM;
+              --Sair do programa
+              RAISE vr_exc_erro;           
+          END;                
+        END IF;            
+      END LOOP;-- Cursor de Empréstimos
+      END IF; -- Tem parâmetro de e-mail
+    END LOOP;  -- Cursor de Cooperativas
+    
+    -- Se chegou até o final sem erro retorna OK
+    pr_dserro := 'OK';
+    COMMIT;
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dserro:= 'NOK';
+      IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      pr_cdcritic := NVL(vr_cdcritic, 0);
+      pr_dscritic := vr_dscritic;
+      rollback;
+              
+    WHEN OTHERS THEN
+      pr_dserro:= 'NOK';
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na procedure EMPR0015.pc_gerar_evento_email: ' || SQLERRM;
+      rollback;  
+  END pc_gerar_evento_email; 
+
+  PROCEDURE pc_valida_email_proposta (pr_cdcooper  IN crapdat.cdcooper%TYPE      --> Codigo da Cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE      --> Numero da conta
+                                     ,pr_nrctremp  IN crawepr.nrctremp%TYPE      --> Numero do contrato de emprestimo
+                                     ,pr_flgenvia  OUT boolean                   --> false não envia email / true envia email                                     
+                                     ,pr_retxml    OUT NOCOPY xmltype            --> Arquivo de retorno do XML
+                                     ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                     ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
+   /* .............................................................................
+
+       Programa: pc_valida_push_proposta
+       Sistema : Crédito - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Rafael(Mouts)
+       Data    : 08/2018                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Procedure para procesar as regras de geração de e-mail
+
+       Alteracoes: 
+    ............................................................................. */   
+    CURSOR cr_proposta_efetivada IS    
+      SELECT epr2.rowid 
+        FROM crapepr epr2
+       WHERE epr2.cdcooper = pr_cdcooper
+         AND epr2.nrdconta = pr_nrdconta
+         AND epr2.nrctremp = pr_nrctremp;
+
+    rw_proposta_efetivada cr_proposta_efetivada%ROWTYPE;
+    
+    CURSOR cr_crawepr IS
+      SELECT epr.insitest, -- 3 -- Situacao Analise Finalizada
+             epr.insitapr, -- 1 -- Decisao aprovada
+             epr.dtaprova, -- IS NOT NULL
+             epr.rowid,
+             c.dsdemail,
+             a.nmprimtl,
+             to_char(epr.vlemprst,'999,999,999,990.00') vlemprst,
+             to_char(epr.dtaprova, 'DD/MM/YYYY') dtaprovaimp,
+            trunc(sysdate)-trunc(epr.dtaprova) qt_dias
+        FROM crawepr epr,
+             crapope c,
+             crapass a
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp
+         AND epr.cdcooper = c.cdcooper
+         AND epr.cdopeste = c.cdoperad
+         AND c.dsdemail   is not null
+         AND a.cdcooper = epr.cdcooper
+         AND a.nrdconta = epr.nrdconta
+         AND NOT EXISTS (SELECT 1 
+                           FROM crapepr epr2
+                          WHERE epr2.cdcooper = epr.cdcooper
+                            AND epr2.nrdconta = epr.nrdconta
+                            AND epr2.nrctremp = epr.nrctremp);
+
+    rw_crawepr cr_crawepr%ROWTYPE;
+             
+    CURSOR cr_email_proposta IS
+      SELECT t.ds_assunto
+            ,t.ds_corpo
+        FROM tbcadast_email_proposta t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.tpproduto = 1 -- Emprestimo/financiamento
+         AND t.idativo   = 1; 
+
+    rw_email_proposta cr_email_proposta%ROWTYPE;
+    
+    CURSOR  CR_EMAIL_REMETENTE IS         
+      SELECT
+             cp.dsvlrprm
+         FROM
+             crapprm cp
+        WHERE
+             cp.nmsistem = 'CRED'
+         AND cp.cdacesso = 'EMPR_REMETENTE_PROP_OPE'             
+         AND cp.cdcooper = 0;
+    RW_EMAIL_REMETENTE CR_EMAIL_REMETENTE%ROWTYPE;
+        
+    -- Variaveis Excecao
+    vr_exc_erro           EXCEPTION;
+
+    -- Variaveis Erro
+    vr_cdcritic              INTEGER;
+    vr_dscritic              VARCHAR2(4000);
+      
+    --Variáveis locais
+    vr_ds_corpo       VARCHAR2(4000);     
+    -- Variáveis para armazenar as informações em XML
+    vr_xml            CLOB;             --> XML do retorno
+    vr_texto_completo  VARCHAR2(32600);    
+                                                                     
+  BEGIN
+
+    -- Busca os endereços de e-mail do remetente
+    OPEN cr_email_remetente;
+    FETCH cr_email_remetente INTO rw_email_remetente;
+    IF cr_email_remetente%NOTFOUND THEN
+      CLOSE cr_email_remetente;
+      vr_dscritic := 'E-mail do remetente não cadastrado!';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_email_remetente;      
+    END IF;
+    
+    --> Verifica se a proposta foi efetivada, se foi, atualiza a data de ultimo envio do email para nulo
+    OPEN cr_proposta_efetivada;
+    FETCH cr_proposta_efetivada INTO rw_proposta_efetivada;                  
+    IF cr_proposta_efetivada%FOUND THEN
+      CLOSE cr_proposta_efetivada;
+      -- Como a proposta perdeu foi efetivada, limpar a data de ultimo envio do email
+      BEGIN
+        UPDATE 
+              crawepr c
+        SET  
+              c.dtulteml = null
+        WHERE
+              c.rowid = rw_proposta_efetivada.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar tabela crawepr - Data de envio do último E-mail. ' || SQLERRM;
+          --Sair do programa
+          RAISE vr_exc_erro;           
+      END; 
+                
+      pr_flgenvia:= FALSE;        
+    ELSE
+      CLOSE cr_proposta_efetivada;
+
+      --> Buscar dados do email
+      OPEN cr_email_proposta;
+      FETCH cr_email_proposta INTO rw_email_proposta;                  
+      IF cr_email_proposta%NOTFOUND THEN
+        -- Como não tem mais o parâmetro ou está inativo, não envia o e-mail
+        BEGIN
+          UPDATE 
+                crawepr c
+          SET  
+                c.dtulteml = null
+          WHERE
+                c.cdcooper = pr_cdcooper
+            AND c.nrdconta = pr_nrdconta
+            AND c.nrctremp = pr_nrctremp;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela crawepr - Data de envio do último E-mail. ' || SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_erro;           
+        END; 
+                
+        pr_flgenvia:= FALSE;        
+
+      ELSE
+        CLOSE cr_email_proposta;
+        
+        --> Buscar dados do emprestimo
+        OPEN cr_crawepr;
+        FETCH cr_crawepr INTO rw_crawepr;                  
+        IF cr_crawepr%NOTFOUND THEN
+          vr_cdcritic := 535; --> 535 - Proposta nao encontrada.
+          CLOSE cr_crawepr;
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crawepr;
+        END IF;
+    
+        -- Se a proposta ainda estiver analisada, aprovada e existir o e-mail do operador, envio o e-mail
+        IF    rw_crawepr.insitest = 3 -- Situacao Analise Finalizada
+          AND rw_crawepr.insitapr = 1 -- Decisao aprovada
+          AND rw_crawepr.dtaprova IS NOT NULL 
+          AND rw_crawepr.dsdemail IS NOT NULL THEN
+          pr_flgenvia:= true;
+
+          -- Inicializar as informações do XML de dados para o relatório
+          dbms_lob.createtemporary(vr_xml, TRUE, dbms_lob.CALL);
+          dbms_lob.open(vr_xml, dbms_lob.lob_readwrite);
+
+          -- Inicializa o XML
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo,'<?xml version="1.0" encoding="utf-8"?><notificacao>'||chr(13));
+
+          -- Cria o no de retorno do remetente
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+                   '<remetente>'||rw_email_remetente.dsvlrprm||'</remetente>'||chr(13));    
+               
+          -- Cria o no de retorno do assunto
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+                   '<assunto>'||rw_email_proposta.ds_assunto||'</assunto>'||chr(13));    
+ 
+          vr_ds_corpo:= rw_email_proposta.ds_corpo||chr(13)||chr(13)
+                      ||' N° da conta:'        ||pr_nrdconta||chr(13)
+                      ||' Titular da conta:'   ||rw_crawepr.nmprimtl||chr(13)
+                      ||' N° da proposta:'     ||pr_nrctremp||chr(13)
+                      ||' Valor da proposta:'  ||rw_crawepr.vlemprst||chr(13)
+                      ||' Data de Aprovação:'  ||rw_crawepr.dtaprovaimp||chr(13)
+                      ||' Proposta aprovada à:'||rw_crawepr.qt_dias||' Dias.'||chr(13);
+                  
+          -- Cria o no de retorno do conteudo
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+                   '<conteudo>'||vr_ds_corpo||'</conteudo>'||chr(13));    
+
+          -- Cria o no de retorno do Formato
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+                   '<formatoMensagem>text/plain</formatoMensagem>'||chr(13));    
+
+          -- Popula a linha de detalhes
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+               '<destinatarios>'||chr(13)||
+                 '<destinatario>'||chr(13)||           
+                   '<enderecoEletronico>'||rw_crawepr.dsdemail||'</enderecoEletronico>'||chr(13)||
+                   --tipoDestinatario :1=(TO) Principal  / 2 = (CC) Em Cópia / 3= (CCO) Em cópia Oculta
+                   '<tipoDestinatario>1</tipoDestinatario>'||chr(13)
+                 );
+          -- Finaliza o nó destinatario
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+             '</destinatario>'||chr(13));
+             
+          -- Finaliza o nó destinatarios
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+             '</destinatarios>'||chr(13));
+             
+          -- Cria o no de retorno 
+          gene0002.pc_escreve_xml(vr_xml, vr_texto_completo, 
+                     '</notificacao>',TRUE);
+          -- Converte o CLOB para o XML de retorno
+          pr_retxml := XMLType.createxml(vr_xml);                 
+        ELSE -- Como a proposta perdeu a aprovação, limpar a data de ultimo envio do email
+          BEGIN
+            UPDATE 
+                  crawepr c
+            SET  
+                  c.dtulteml = null
+            WHERE
+                  c.rowid = rw_crawepr.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar tabela crawepr - Data de envio do último E-mail. ' || SQLERRM;
+              --Sair do programa
+              RAISE vr_exc_erro;           
+          END; 
+                
+          pr_flgenvia:= FALSE;        
+        END IF;
+      END IF;        
+    END IF;
+    --gene0002.pc_XML_para_arquivo(pr_retxml
+    --                           ,'/usr/coop/cecred/'
+    --                           ,'TESTE.txt'
+    --                           ,pr_dscritic );
+    COMMIT;
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      pr_cdcritic := NVL(vr_cdcritic, 0);
+      pr_dscritic := vr_dscritic;
+              
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na procedure EMPR0015.pc_valida_email_proposta: ' || SQLERRM;
+        
+  END pc_valida_email_proposta;   
 END EMPR0015;
 /

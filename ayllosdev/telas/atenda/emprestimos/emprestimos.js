@@ -137,6 +137,7 @@
 *                   e habilitado na "Valor da proposta e data de vencimento". (Mateus Z / Mouts - PRJ 438)
 * 110: [13/07/2018] Criada função processaPerdaAprovacao para verificar se haverá perda de aprovacao ao fazer alteração 
 *                   na opção "Valor da proposta de data e vencimento" (Mateus Z / Mouts - PRJ 438)
+* 111: [15/08/2018] Criada tela 'Motivos', botão 'Anular' e controle para não permitir alterar e analisar com situação ANULADA. PRJ 438 (Mateus Z - Mouts)
 * 111: [28/05/2018] P439 - Criado validacoes de contingencia da integracao cdc
 * 112: [12/09/2018] P442 - Ajustes nos tamanhos da tela devido novos campos nas Consultas Automatizadas (Maykon-Envolti)
  * ##############################################################################
@@ -465,7 +466,7 @@ function controlaOperacao(operacao) {
     // Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha
     if (in_array(operacao, ['TA', 'TE', 'TC', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'IMP', 'REG_GRAVAMES', 'VAL_GRAVAMES',
                             'PORTAB_CRED_C', 'VAL_RECALCULAR_EMPRESTIMO', 'RECALCULAR_EMPRESTIMO', 'PORTAB_CRED_A', 'PORTAB_CRED_I', 'ENV_ESTEIRA',
-							'ACIONAMENTOS'])) {
+							'ACIONAMENTOS', 'MOTIVOS'])) {
 
         nrctremp = (nrctremp == '') ? '' : nrctremp;
         tplcremp = (tplcremp == 0) ? 0 : tplcremp;
@@ -489,6 +490,7 @@ function controlaOperacao(operacao) {
                 nrdrecid = $('#nrdrecid', $(this)).val();
                 dsctrliq = $('#dsctrliq', $(this)).val();
                 idcobope = $('#idcobope', $(this)).val();
+				insitest = $('#insitest', $(this)).val();
 
                 nomeAcaoCall = ''; // Reseta a global
             }
@@ -595,6 +597,11 @@ function controlaOperacao(operacao) {
             return false;
             break;
         case 'TA':
+			// PRJ 438 - Adicionado controle para situação ANULADA
+        	if (insitest == 6) {
+        	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Ayllos', '');
+        		return false;
+        	}
             booPrimeiroBen = false; //809763
             idSocio = 0;
             if (msgDsdidade != '') {
@@ -1284,6 +1291,11 @@ function controlaOperacao(operacao) {
             mensagem = 'Carregando Altera&ccedil;&atilde;o de Portabilidade...';
             break;
         case 'ENV_ESTEIRA':
+			// PRJ 438 - Adicionado controle para situação ANULADA
+        	if (insitest == 6) {
+        		showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Ayllos', '');
+        		return false;
+        	}
 			      insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
 			      dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
             mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
@@ -1319,6 +1331,10 @@ function controlaOperacao(operacao) {
                 dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
             }            
             idfiniof = arrayProposta['idfiniof'];
+            break;
+		case 'MOTIVOS' :
+        	carregaDadosConsultaMotivos();
+            return false;
             break;
         default:
             operacao = '';
@@ -9981,3 +9997,106 @@ function processaPerdaAprovacao(){
 	});
 
 }
+
+// PRJ 438 - Inicio
+function carregaDadosConsultaMotivos() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando motivos ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/emprestimos/consultar_motivos.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctremp: nrctremp,
+            redirect: "html_ajax"
+        },      
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            if (response.indexOf('showError("error"') == -1) {
+                $('#divConteudoOpcao').html(response);
+	            layoutPadrao();
+	            hideMsgAguardo();
+	            formatarTelaConsultaMotivos();
+	            divRotina.centralizaRotinaH();
+	            bloqueiaFundo(divRotina);
+            } else {
+                eval(response);
+            }
+        }               
+    });
+    return false;
+}
+
+function formatarTelaConsultaMotivos(){
+
+	divRotina.css('width', '515px');
+    $('#divConteudoOpcao').css({'height': '', 'width': '500px'});
+    $('#frmDadosMotivos').css('width','500px');
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
+    return false;
+}
+
+function gravaMotivosAnulacao(){
+    
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, efetuando alterado o motivo");
+
+    var cdmotivo     = $("input[name='cdmotivo']:checked", "#frmDadosMotivos").val();
+    var dsmotivo     = $('#dsmotivo'+cdmotivo,'#frmDadosMotivos').val();
+    var dsobservacao = $('#dsobservacao'+cdmotivo,'#frmDadosMotivos').val();
+
+    $.ajax({        
+        type: "POST", 
+        url: UrlSite + "telas/atenda/emprestimos/grava_motivo.php",
+        data: {
+            nrdconta: nrdconta,
+            nrctremp: nrctremp,
+            cdmotivo: cdmotivo,
+            dsmotivo: dsmotivo,
+            dsobservacao: dsobservacao,
+            redirect: "script_ajax"
+        }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            try {
+                eval(response);
+            } catch(error) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }               
+    });
+}
+
+function fechaMotivos(encerrarRotina) {
+    $('#divUsoGenerico').html('');
+    fechaRotina($('#divUsoGenerico'));
+    exibeRotina($('#divRotina'));
+    controlaOperacao('');
+    return false;
+}
+
+function controlarMotivos(cdMotivo){
+	if($('#cdmotivo'+cdMotivo,'#frmDadosMotivos').is(':checked')) {
+		// Desabilitar todos os outros campos de observação
+		$('input[type=text]', '#frmDadosMotivos').each(function() {
+            $($(this), '#frmDadosMotivos').desabilitaCampo();
+            $($(this), '#frmDadosMotivos').val('');
+        });
+        // Habilitar somente o campo de observação do motivo selecionado
+		$('#dsobservacao'+cdMotivo,'#frmDadosMotivos').habilitaCampo();
+    }
+}
+// PRJ 438 - FIM
