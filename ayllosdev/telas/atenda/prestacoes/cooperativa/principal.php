@@ -538,6 +538,7 @@
 				arrayAlienacao<? echo $i; ?>['nrrenava'] = '<? echo getByTagName($alienacoes[$i]->tags,'nrrenava'); ?>';
 				arrayAlienacao<? echo $i; ?>['tpchassi'] = '<? echo getByTagName($alienacoes[$i]->tags,'tpchassi'); ?>';
 				arrayAlienacao<? echo $i; ?>['ufdplaca'] = '<? echo getByTagName($alienacoes[$i]->tags,'ufdplaca'); ?>';
+        arrayAlienacao<? echo $i; ?>['uflicenc'] = '<? echo getByTagName($alienacoes[$i]->tags,'uflicenc'); ?>';
 				arrayAlienacao<? echo $i; ?>['nrcpfbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'nrcpfbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['dscpfbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'dscpfbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['vlmerbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlmerbem'); ?>';

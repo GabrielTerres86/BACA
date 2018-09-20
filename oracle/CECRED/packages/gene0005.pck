@@ -215,7 +215,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 		                          ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
 		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
 								  RETURN INTEGER;
-																	
+
   /* Função recebe um string de 2 posições e retorna se é um código válido de UF (1 = válido, 0 = inválido) */
   function fn_valida_uf(pr_uf in tbcadast_uf.cduf%type) return integer;
   

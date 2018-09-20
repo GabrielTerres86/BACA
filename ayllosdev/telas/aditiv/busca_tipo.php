@@ -11,6 +11,7 @@
  *
  *                01/11/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
  *
+ *                06/09/2018 - Inclusao de validacao de permissao. (Jaison/Marcos Martini - PRJ442)
  */
 ?>
  
@@ -31,6 +32,10 @@
 	$tpaplica = (isset($_POST['tpaplica'])) ? $_POST['tpaplica'] : '';
 	$tpctrato = (isset($_POST['tpctrato'])) ? $_POST['tpctrato'] : 0;
 	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
+		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	}  
+  
 	// Monta o xml de requisição
 	$xml  = "";
 	$xml .= "<Root>";
@@ -139,7 +144,9 @@
 	cdaditiv = '<? echo $cdaditiv ?>';
 	cdopcao = '<?php echo $cddopcao ?>';
 	data = '<?php echo $glbvars["dtmvtolt"] ?>';
+	if ( cdopcao == 'I' ) {
 	$("#dtmvtolt").val(data);
+	}
 	$("#cdaditiv option[value='<? echo $cdaditiv ?>']",'#frmCab').prop('selected',true);
 
 	var i = 0;

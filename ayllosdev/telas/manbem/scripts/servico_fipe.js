@@ -44,7 +44,12 @@ $(function(){
             var urlPagina= "telas/manbem/fipe/busca_valor.php";
             var cdMarcaFipe = $("#"+idElementMarca).val();
             var cdModeloFipe = $("#"+idElementModelo).val();
-            var cdAnoFipe = $(this).val();		            
+            var cdAnoFipe;
+			if(modeloBem == '') { 
+				cdAnoFipe = $(this).val(); 
+			} else { 
+				cdAnoFipe = modeloBem; 
+			}
             var data = jQuery.param({idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, redirect: 'script_ajax'});
             buscaFipeServico(urlPagina,data);
         }

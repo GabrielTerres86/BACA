@@ -59,6 +59,7 @@
  * 047: [07/06/2018} P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti    
  * 048: [27/06/2018] Ajustes JS para execução do Ayllos em modo embarcado no CRM. (Christian Grosch - CECRED)
  * 047: [22/05/2018] Ajuste para calcular o desconto parcial da parcela - P298 Pos Fixado. (James)
+ * 048: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -122,6 +123,11 @@ var arrayDadosPortabilidade = new Array();
 var valorTotAPagar, valorAtual , valorTotAtual;
 
 var nrctremp1, qtdregis1, nrdconta1, lstdtvcto1, lstdtpgto1, lstparepr1, lstvlrpag1;
+
+function cpfMascara(val) { 
+	return val.replace(/\D/g, '').length > 11 ? '99.999.999/9999-99' : '999.999.999-99';
+}
+	
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao,nriniseq, nrregist) {
@@ -666,12 +672,12 @@ function controlaLayout(operacao) {
 		altura   = '270px';
 		largura  = '485px';
 		
-		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlttmupr"],label[for="vlpgmupr"],label[for="vliofcpl"],label[for="vlsdprej"],label[for="qtdiaatr"],label[for="tpdrisco"]','#'+nomeForm);
+		var rRotulos     = $('label[for="dtprejuz"],label[for="vlprejuz"],label[for="slprjori"],label[for="vlrpagos"],label[for="vlttmupr"],label[for="vlttjmpr"],label[for="vltiofpr"],label[for="vlsdprej"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
 
-		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlttjmpr"],label[for="vlpgjmpr"],label[for="tpdrisco"],label[for="vlsdprej"]','#'+nomeForm);
+		var rRotuloLinha = $('label[for="vlacresc"],label[for="vljraprj"],label[for="vljrmprj"],label[for="vlrabono"],label[for="vlpgmupr"],label[for="vlpgjmpr"],label[for="vlpiofpr"],label[for="tpdrisco"]','#'+nomeForm);
 
-		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vliofcpl','#'+nomeForm);
+		var cTodosMoeda  = $('#vlrabono,#vlprejuz,#vljrmprj,#slprjori,#vljraprj,#vlrpagos,#vlacresc,#vlsdprej,#vlttmupr,#vlpgmupr,#vlttjmpr,#vlpgjmpr,#vlpiofpr,#vltiofpr,#vliofcpl','#'+nomeForm);
 
 
 		cTodosMoeda.addClass('moeda');
@@ -1010,7 +1016,7 @@ function controlaLayout(operacao) {
 
 		cQntd.css('width','60px').setMask('INTEGER','zz9','','');
 		cConta.addClass('conta pesquisa').css('width','115px');
-		cCPF.addClass('cpf').css('width','134px');
+		cCPF.css('width','134px');
 		cNome.addClass('alphanum').css('width','255px').attr('maxlength','40');
 		cDoc.css('width','50px');
 		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','40');
@@ -1034,7 +1040,7 @@ function controlaLayout(operacao) {
 		rCpf_1.addClass('').css('width','40px');
 
 		cConj.addClass('alphanum').css('width','250px').attr('maxlength','40');
-		cCPF_1.addClass('cpf').css('width','134px');
+		cCPF_1.css('width','134px');
 		cDoc_1.css('width','50px');
 		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','40');
 
@@ -1100,7 +1106,7 @@ function controlaLayout(operacao) {
 
 	} else if (in_array(operacao,['C_PROTECAO_TIT','C_PROTECAO_AVAL','C_PROTECAO_CONJ','C_PROTECAO_SOC'])){
 
-		altura   = '430px';
+		altura   = '550px';
 		largura  = '510px';
 	
 		formata_protecao (operacao, arrayProtCred['nrinfcad'] , arrayProtCred['dsinfcad'] );
@@ -1328,7 +1334,7 @@ function controlaLayout(operacao) {
 		cRenavan.addClass('renavan').css('width','108px');
 		cAnoFab.addClass('').css('width','60px');
 		cAnoMod.addClass('').css('width','108px');
-		cCPF.addClass('cpf').css('width','162px');
+		cCPF.css('width','162px');
 
 		if ( operacao == 'C_ALIENACAO'){
 			cTodos.desabilitaCampo();
@@ -1359,7 +1365,7 @@ function controlaLayout(operacao) {
 		rNacio.css('width','45px');
 
 		cConta.addClass('conta pesquisa').css('width','115px');
-		cCPF.addClass('cpf').css('width','134px');
+		cCPF.css('width','134px');
 		cNome.addClass('alphanum').css('width','255px').attr('maxlength','40');
 		cDoc.css('width','50px');
 		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','40');
@@ -1379,7 +1385,7 @@ function controlaLayout(operacao) {
 		rCpf_1.addClass('').css('width','40px');
 
 		cConj.addClass('alphanum').css('width','250px').attr('maxlength','40');
-		cCPF_1.addClass('cpf').css('width','134px');
+		cCPF_1.css('width','134px');
 		cDoc_1.css('width','50px');
 		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','40');
 
@@ -2038,8 +2044,10 @@ function atualizaTela(){
 		// Tipo de risco
 		$('#tpdrisco','#frmPreju').val( utf8_decode(arrayRegistros['tpdrisco']) );
 
-		/* Novo campo*/
-		//$('#vlsdprej','#frmPreju').val( arrayRegistros['vlsdpjtl'] );
+    // IOF Prejuizo
+    $('#vltiofpr','#frmPreju').val( utf8_decode(arrayRegistros['vltiofpr']) );
+    $('#vlpiofpr','#frmPreju').val( utf8_decode(arrayRegistros['vlpiofpr']) );
+
 		
 	}else if (in_array(operacao,['C_NOVA_PROP','C_NOVA_PROP_V'])){
 
@@ -2128,6 +2136,9 @@ function atualizaTela(){
 		$('#vlrenmes','#frmDadosAval').val( arrayAvalistas[contAvalistas]['vlrenmes'] );
 		$('#nmdavali','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nmdavali'] );
 		$('#nrcpfcgc','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrcpfcgc'] );
+		
+		$('#nrcpfcgc','#frmDadosAval').setMask('INTEGER',cpfMascara($('#nrcpfcgc','#frmDadosAval').val()),'.','');
+		
 		$('#nrdocava','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrdocava'] );
 		$('#nrcpfcjg','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrcpfcjg'] );
 		$('#nrdoccjg','#frmDadosAval').val( arrayAvalistas[contAvalistas]['nrdoccjg'] );
@@ -2174,8 +2185,19 @@ function atualizaTela(){
 		$('#vlmerbem','#frmAlienacao').val( arrayAlienacoes[contAlienacao]['vlmerbem'] );
 		$('#idalibem','#frmAlienacao').val( arrayAlienacoes[contAlienacao]['idalibem'] );
 
+    $("#frmAlienacao #uflicenc option").each(function() {
+        if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
+            $(this).attr('selected', 'selected');
+        }
+    });
+    
+
 		$('#lsbemfin','#frmAlienacao').html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
 
+		
+		$('#nrcpfbem','#frmAlienacao').setMask('INTEGER',cpfMascara($('#nrcpfbem','#frmAlienacao').val()),'.','');
+		
+		
 		contAlienacao++;
 
 	// * 002: alterado a função contIntervis atualizaTela() para que seja colocado os valores nos 3 novos campos do endereco
@@ -2203,6 +2225,9 @@ function atualizaTela(){
 		$('#nrendere','#frmIntevAnuente').val( arrayIntervs[contIntervis]['nrendere'] );
 		$('#complend','#frmIntevAnuente').val( arrayIntervs[contIntervis]['complend'] );
 		$('#nrcxapst','#frmIntevAnuente').val( arrayIntervs[contIntervis]['nrcxapst'] );
+		
+		
+		$('#nrcpfcgc','#frmIntevAnuente').setMask('INTEGER',cpfMascara($('#nrcpfcgc','#frmIntevAnuente').val()),'.','');
 		
 		contIntervis++;
 
@@ -2653,12 +2678,13 @@ function validaPagamentoPreju(){
 	var vlprincipal = retiraMascara($('#vlprincipal', '#frmVlParcPreju').val()) || 0;
 	var vljuros     = retiraMascara($('#vljuros'    , '#frmVlParcPreju').val()) || 0;
 	var vlmulta     = retiraMascara($('#vlmulta'    , '#frmVlParcPreju').val()) || 0;
+    var vlrdiof     = retiraMascara($('#vlrdiof'    , '#frmVlParcPreju').val()) || 0;
 	var vlpagto     = retiraMascara($('#vlpagto'    , '#frmVlParcPreju').val()) || 0;
 	var vlabono     = retiraMascara($('#vlabono'    , '#frmVlParcPreju').val()) || 0;
 
 	//Validar para não permitir que todos os campos estejam vazios/zerados
 	if(vlpagto > 0 || vlabono > 0) {
-		if(vlprincipal > 0 || vljuros > 0 || vlmulta > 0){
+		if(vlprincipal > 0 || vljuros > 0 || vlmulta > 0 || vlrdiof > 0){
 	showConfirmacao('Confirma pagamento do prejuízo?','Confirma&ccedil;&atilde;o - Ayllos','pagPrestPreju();','$(\'#btVoltar\').click();','sim.gif','nao.gif');
 		}else{
 			showError('error','Contrato liquidado.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
@@ -2671,14 +2697,15 @@ function validaPagamentoPreju(){
 function pagPrestPreju (){
 	showMsgAguardo('Aguarde, validando prejuizo...');
 
-	var valordopagto = retiraMascara($($('form#frmVlParcPreju').find('input')[3]).val()) || 0;
-	var valordoabono = retiraMascara($($('form#frmVlParcPreju').find('input')[4]).val()) || 0;
+	var valordopagto = retiraMascara($($('form#frmVlParcPreju').find('input')[4]).val()) || 0;
+	var valordoabono = retiraMascara($($('form#frmVlParcPreju').find('input')[5]).val()) || 0;
 	
 	var vlprincipal = retiraMascara($($('form#frmVlParcPreju').find('input')[0]).val()) || 0;
 	var vljuros = retiraMascara($($('form#frmVlParcPreju').find('input')[1]).val()) || 0;
 	var vlmulta = retiraMascara($($('form#frmVlParcPreju').find('input')[2]).val()) || 0;
+    var vlrdiof = retiraMascara($($('form#frmVlParcPreju').find('input')[3]).val()) || 0;
 	
-	var totalDivida = (vlprincipal + vljuros + vlmulta) || 0;
+	var totalDivida = (vlprincipal + vljuros + vlmulta + vlrdiof) || 0;
 	var totalArredondamento = parseFloat(totalDivida.toFixed(2));
 	var totalPagamento = (valordopagto + valordoabono) || 0;
 	
@@ -3150,6 +3177,8 @@ function carregarImpresso(){
 	$('#nrctremp','#formEmpres').val( nrctremp );
 	$('#sidlogin','#formEmpres').val( $('#sidlogin','#frmMenu').val() );
 	$('#nrcpfcgc','#formEmpres').val( nrcpfcgc );
+	
+	$('#nrcpfcgc','#formEmpres').setMask('INTEGER',cpfMascara($('#nrcpfcgc','#formEmpres').val()),'.','');
     
 	var action = UrlSite + 'telas/atenda/prestacoes/cooperativa/imprimir_dados.php';
 
@@ -4099,10 +4128,11 @@ function calcularSaldo(){
 	var vlprincipal = retiraMascara($('#vlprincipal', '#frmVlParcPreju').val()) || 0;
 	var vljuros     = retiraMascara($('#vljuros'    , '#frmVlParcPreju').val()) || 0;
 	var vlmulta     = retiraMascara($('#vlmulta'    , '#frmVlParcPreju').val()) || 0;
+  var vlrdiof     = retiraMascara($('#vlrdiof'    , '#frmVlParcPreju').val()) || 0;
 	var vlpagto     = retiraMascara($('#vlpagto'    , '#frmVlParcPreju').val()) || 0;
 	var vlabono     = retiraMascara($('#vlabono'    , '#frmVlParcPreju').val()) || 0;
 
-	var vlsaldo = (vlprincipal + vljuros + vlmulta) - (vlpagto + vlabono);
+	var vlsaldo = (vlprincipal + vljuros + vlmulta + vlrdiof) - (vlpagto + vlabono);
 
 	$('#vlsaldo', '#frmVlParcPreju').val(vlsaldo.toFixed(2).replace(".",","));
 

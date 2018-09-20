@@ -4,6 +4,8 @@
  * CRIAÇÃO      : André Socoloski - DB1
  * DATA CRIAÇÃO : 30/03/2011 
  * OBJETIVO     : Formulário da rotina Emprestimos da tela ATENDA
+ * Alterações   
+ *              12/09/2018 - P442 - Não mais utilizar estado fixo (Marcos-Envolti)
  */	
  ?>
 
@@ -46,7 +48,7 @@
 	<input name="nrrenava" id="nrrenava" type="text" value="" />
 	
 	<label for="uflicenc">UF Licenciamento:</label>
-	<? echo selectEstado('uflicenc', 'SC', 1) ?>
+	<? echo selectEstado('uflicenc', '', 1) ?> 
 			
 	<label for="nranobem">Ano Fab.:</label>
 	<input name="nranobem" id="nranobem" type="text" value="" />

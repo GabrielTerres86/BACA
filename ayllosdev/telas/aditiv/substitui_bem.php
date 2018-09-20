@@ -42,8 +42,6 @@
 	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0  ;
     $cdoperad       = (isset($_POST['cdoperad']))   ? $_POST['cdoperad']   : 0  ;
 
-    $cdoperad = "1";
-
     $xmlCarregaDados  = "";
     $xmlCarregaDados .= "<Root>";
     $xmlCarregaDados .= " <Dados>";
@@ -81,17 +79,13 @@
                         ,$glbvars["cdoperad"]
                         ,"</Root>");
 
-    $dom = new DOMDocument;
-        $dom->preserveWhiteSpace = FALSE;
-        $dom->loadXML($xmlResultAlteracao);
-        $dom->save('1subs.xml');
-
     $xmlObjectAlteracao = getObjectXML($xmlResultAlteracao);
 
     if (strtoupper($xmlObjectAlteracao->roottag->tags[0]->name) == 'ERRO') {
         $msgErro = $xmlObjectAlteracao->roottag->tags[0]->tags[0]->tags[4]->cdata;
         $mtdErro = 'bloqueiaFundo(divRotina);';
         if ($msgErro != "") {
+            echo 'intervenienteValidado=false;';
             echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';            
         }
     }
@@ -106,5 +100,8 @@
         echo "$('#table_substitui_bens').hide();";
         echo "trocaBotao( 'imprimir' );";
         echo 'showError("inform","Aditivo contratual gerado com sucesso!","Alerta - Ayllos","");';
+		echo '$("#divUsoGenerico").css("visibility", "hidden");';
+		echo '$("#divUsoGenerico").html("");	';
+		echo 'unblockBackground();';
     }
 ?>

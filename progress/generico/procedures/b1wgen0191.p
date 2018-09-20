@@ -33,6 +33,8 @@
                             retornado (Marcos-Supero)
 
                19/12/2017 - Apresentar erros nos Biros Externos. (Jaison/James - M464)
+			   
+			   19/07/2018 - Ajuste no layout das informações de protesto do SPC (Daniel - Envolti)
 
 ............................................................................ */  
 
@@ -642,7 +644,6 @@ PROCEDURE Imprime_Dados_Proposta:
          tt-central-risco.vlrpreju LABEL "Prej."            FORMAT "z,zzz,zz9.99"
          SKIP
          aux_dsmodbir              NO-LABEL                 FORMAT "x(30)"
-         SKIP(1)
          WITH SIDE-LABELS WIDTH 137 FRAME f_scr_cab.
 
     FORM "CRITICA NA CONSULTA AUTOMATIZADA" 
@@ -705,6 +706,14 @@ PROCEDURE Imprime_Dados_Proposta:
          aux_dsnegati[07]   AT 26 FORMAT "x(11)"        
          aux_vlnegati[07]   AT 40 FORMAT "z,zzz,zz9.99"   
          aux_dtultneg[07]   AT 53 FORMAT "99/99/9999"  
+         "DIVIDA VENCIDA" AT 01
+         aux_dsnegati[10]   AT 26 FORMAT "x(11)"   
+         aux_vlnegati[10]   AT 40 FORMAT "z,zzz,zz9.99"
+         aux_dtultneg[10]   AT 53 FORMAT "99/99/9999" 
+         "INADIMPLENCIA"   AT 01                
+         aux_dsnegati[11]   AT 26 FORMAT "x(11)"        
+         aux_vlnegati[11]   AT 40 FORMAT "z,zzz,zz9.99"   
+         aux_dtultneg[11]   AT 53 FORMAT "99/99/9999"  
          SKIP(1)
          WITH DOWN SIDE-LABELS NO-UNDERLINE NO-BOX NO-LABELS WIDTH 96 
               FRAME f_anotacoes_soc.
@@ -741,6 +750,14 @@ PROCEDURE Imprime_Dados_Proposta:
          aux_dsnegati[07]   AT 26 FORMAT "x(11)"   
          aux_vlnegati[07]   AT 40 FORMAT "z,zzz,zz9.99"
          aux_dtultneg[07]   AT 53 FORMAT "99/99/9999"
+         "DIVIDA VENCIDA" AT 01
+         aux_dsnegati[10]   AT 26 FORMAT "x(11)"   
+         aux_vlnegati[10]   AT 40 FORMAT "z,zzz,zz9.99"
+         aux_dtultneg[10]   AT 53 FORMAT "99/99/9999"
+         "INADIMPLENCIA" AT 01
+         aux_dsnegati[11]   AT 26 FORMAT "x(11)"   
+         aux_vlnegati[11]   AT 40 FORMAT "z,zzz,zz9.99"
+         aux_dtultneg[11]   AT 53 FORMAT "99/99/9999"
          SKIP(1)
          WITH SIDE-LABELS NO-UNDERLINE NO-BOX NO-LABELS WIDTH 96 
               FRAME f_anotacoes_emp.
@@ -1024,6 +1041,11 @@ PROCEDURE Imprime_Dados_Proposta:
                              aux_dsmodbir
                              WITH FRAME f_scr_cab.
 
+       IF   aux_cdbircon = 2   THEN
+         RUN Imprime_Escore (INPUT "N",
+                             INPUT aux_nrconbir,
+                             INPUT aux_nrseqdet).
+                             
        /* Exibe os erros do biro */
        FOR EACH tt-erros-bir BREAK BY tt-erros-bir.dscritic:
          IF FIRST(tt-erros-bir.dscritic) THEN
@@ -1078,6 +1100,12 @@ PROCEDURE Imprime_Dados_Proposta:
                       aux_dsnegati[07]  
                       aux_vlnegati[07] WHEN aux_dsnegati[07] <> "Nada Consta"
                       aux_dtultneg[07]
+                      aux_dsnegati[10]   
+                      aux_vlnegati[10] WHEN aux_dsnegati[10] <> "Nada Consta"
+                      aux_dtultneg[10]
+                      aux_dsnegati[11]  
+                      aux_vlnegati[11] WHEN aux_dsnegati[11] <> "Nada Consta"
+                      aux_dtultneg[11]
                       WITH FRAME f_anotacoes_emp.   
                  
                  RUN Trata_Societarios (INPUT TABLE tt-xml-geral,                             
@@ -1129,6 +1157,12 @@ PROCEDURE Imprime_Dados_Proposta:
                             aux_dsnegati[06]                                        
                             aux_vlnegati[06] WHEN aux_dsnegati[06] <> "Nada Consta" 
                             aux_dtultneg[06]                                        
+                            aux_dsnegati[10]                                        
+                            aux_vlnegati[10] WHEN aux_dsnegati[10] <> "Nada Consta" 
+                            aux_dtultneg[10]                                        
+                            aux_dsnegati[11]                                        
+                            aux_vlnegati[11] WHEN aux_dsnegati[11] <> "Nada Consta" 
+                            aux_dtultneg[11]                                        
                             WITH FRAME f_anotacoes_soc.                             
                                                                                     
                      DOWN WITH FRAME f_anotacoes_soc.                               
@@ -1553,31 +1587,31 @@ PROCEDURE Trata_Pessoa:
                           OUTPUT aux_dscritic,
                           OUTPUT TABLE tt-xml-geral).
 
-       IF   aux_cdbircon = 1   AND   
-            aux_cdmodbir = 1   THEN /*  Consulta SPC – Opção 62  */
-            DO:
-                RUN Trata_Spc_62 (INPUT TABLE tt-xml-geral,
-                                  INPUT par_nrdconta,
-                                  INPUT par_inpessoa,
-                                  INPUT par_dsconsul,
-                                  INPUT TRUE).
-            END.
-       ELSE 
-       IF   aux_cdbircon = 1   AND
-            aux_cdmodbir = 2   THEN /*  Consulta SPC – Opção 65 */
-            DO:
-                RUN Trata_Spc_62 (INPUT TABLE tt-xml-geral,
-                                  INPUT par_nrdconta,
-                                  INPUT par_inpessoa,
-                                  INPUT par_dsconsul,
-                                  INPUT FALSE).
-            END.
+       IF   aux_cdbircon = 1   THEN   
+            IF aux_cdmodbir = 1   THEN /*  Consulta SPC – Opção 62  */
+				DO:
+					RUN Trata_Spc_62 (INPUT TABLE tt-xml-geral,
+									  INPUT par_nrdconta,
+									  INPUT par_inpessoa,
+									  INPUT par_dsconsul,
+									  INPUT TRUE).
+				END.
+			ELSE  /*  Consulta SPC – Opção 65 */
+				DO:
+					RUN Trata_Spc_62 (INPUT TABLE tt-xml-geral,
+									  INPUT par_nrdconta,
+									  INPUT par_inpessoa,
+									  INPUT par_dsconsul,
+									  INPUT FALSE).
+				END.
        ELSE
        IF   aux_cdbircon = 2   AND
             par_inpessoa = 1   THEN /*  Consulta Serasa – PF */
             DO:
                 RUN Trata_Serasa_Pf (INPUT TABLE tt-xml-geral,
-                                     INPUT par_nrdconta,
+                                     INPUT par_nrconbir,
+									 INPUT par_nrseqdet,
+									 INPUT par_nrdconta,
                                      INPUT par_inpessoa,
                                      INPUT par_dsconsul).
             END.
@@ -1586,7 +1620,9 @@ PROCEDURE Trata_Pessoa:
             par_inpessoa = 2   THEN /* Consulta Serasa – PJ */
             DO:
                 RUN Trata_Serasa_Pj (INPUT TABLE tt-xml-geral,
-                                     INPUT par_nrdconta,
+                                     INPUT par_nrconbir,
+									 INPUT par_nrseqdet,
+									 INPUT par_nrdconta,
                                      INPUT par_dsconsul).
             END.
 
@@ -1968,7 +2004,12 @@ PROCEDURE Trata_Spc_65:
 
     DEF VAR aux_qtddeprf AS INTE                                       NO-UNDO.
     DEF VAR aux_qtprotes AS INTE                                       NO-UNDO.
-
+    DEF VAR rel_vlnegati AS DECI                                       NO-UNDO.
+    DEF VAR aux_dsconteu AS CHAR                                       NO-UNDO.
+    
+    FORM rel_dsnegati LABEL "Total de Ocorrencias" FORMAT "x(5)"
+         rel_vlnegati LABEL "Valor total"          FORMAT "z,zzz,zz9.99" 
+         WITH SIDE-LABEL WIDTH 132 FRAME f_tot_ocorrencias_spc_pf.
 
     FORM tt-crapprf.dtvencto LABEL "Data da ultima"
          SPACE(3)
@@ -1981,7 +2022,13 @@ PROCEDURE Trata_Spc_65:
          aux_qtprotes LABEL "Quantidade total"
          WITH WIDTH 132 SIDE-LABELS FRAME f_tit_crapprt_2_65.
 
-    FORM tt-crapprf.dsinstit COLUMN-LABEL "Instituicao" FORMAT "x(20)"            
+    FORM tt-crapprt.dtprotes COLUMN-LABEL "Data"
+         tt-crapprt.vlprotes COLUMN-LABEL "Valor"
+         tt-crapprt.nmcidade COLUMN-LABEL "Cidade" FORMAT "x(25)"
+         tt-crapprt.cdufende COLUMN-LABEL "UF"
+         WITH DOWN WIDTH 132 FRAME f_inf_crapprt_spc_pf.
+
+	FORM tt-crapprf.dsinstit COLUMN-LABEL "Instituicao" FORMAT "x(20)"            
          tt-crapprf.vlregist COLUMN-LABEL "Valor"
          tt-crapprf.dtvencto COLUMN-LABEL "Vencto"
          tt-crapprf.dsmtvreg COLUMN-LABEL "Motivo"      FORMAT "x(20)"
@@ -1992,6 +2039,12 @@ PROCEDURE Trata_Spc_65:
          tt-crapprt.qtprotes COLUMN-LABEL "Qtde"
          WITH DOWN WIDTH 132 FRAME f_inf_crapprt_65.
 
+    RUN Trata_Anotacoes  (INPUT TABLE tt-xml-geral,
+                         OUTPUT aux_dsnegati,
+                         OUTPUT aux_vlnegati,
+                         OUTPUT aux_dtultneg,
+                         OUTPUT TABLE tt-craprpf).
+                         
     RUN Trata_Pefin_Refin (INPUT 1,
                            INPUT TABLE tt-xml-geral,
                           OUTPUT TABLE tt-crapprf).
@@ -2032,43 +2085,118 @@ PROCEDURE Trata_Spc_65:
 
     END.
 
-    ASSIGN aux_qtprotes = 0.
+    /* Dados protesto */
+    ASSIGN aux_dsconteu = "- NADA CONSTA".
 
-    FOR EACH tt-crapprt NO-LOCK:
-        aux_qtprotes = aux_qtprotes + tt-crapprt.qtprotes.
+    FOR EACH tt-crapprt NO-LOCK BREAK BY tt-crapprt.dtprotes DESC:
+
+        IF   FIRST (tt-crapprt.dtprotes)   THEN
+             DO:
+                 ASSIGN aux_dsconteu =  
+                     "PROTESTO (Ocorrencias mais recentes - ate cinco)".   
+                     
+                 RUN separador_item
+                     (INPUT aux_dsconteu,
+                      INPUT TRUE).
+             END.                          
+
+        DISPLAY STREAM str_1 tt-crapprt.dtprotes
+                             tt-crapprt.vlprotes
+                             tt-crapprt.nmcidade
+                             tt-crapprt.cdufende 
+                             WITH FRAME f_inf_crapprt_spc_pf.
+
+        DOWN WITH FRAME f_inf_crapprt_spc_pf.
+
     END.
 
-    IF   aux_qtprotes = 0   THEN
+    IF   NOT aux_dsconteu = "- NADA CONSTA"   THEN
          DO:
-             RUN separador_item (INPUT "PROTESTOS",
-                                 INPUT FALSE).
+             /* Total de ocorrencias */
+             ASSIGN rel_dsnegati = aux_dsnegati[3]
+                    rel_vlnegati = aux_vlnegati[3].
+             
+             DISPLAY STREAM str_1 rel_dsnegati
+                                  rel_vlnegati 
+                                  WITH FRAME f_tot_ocorrencias_spc_pf.             
+         END. 
+    ELSE 
+         DO:
+             RUN separador_item (INPUT "PROTESTO",
+                                 INPUT FALSE).  
          END.
-    ELSE
-         DO: 
-             RUN separador_item (INPUT "PROTESTOS",
-                                 INPUT TRUE).
-
-             DISPLAY STREAM str_1 aux_qtprotes
-                                  WITH FRAME f_tit_crapprt_2_65.
-         END.
-
-    FOR EACH tt-crapprt NO-LOCK BY tt-crapprt.nmlocprt:
-
-        DISPLAY STREAM str_1 tt-crapprt.nmlocprt
-                             tt-crapprt.qtprotes
-                             WITH FRAME f_inf_crapprt_65.
-
-        DOWN WITH FRAME f_inf_crapprt_65.
-
-    END.
 
     RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE Imprime_Escore:
+    DEF INPUT PARAM par_imprisep AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_nrconbir AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrseqdet AS INTE                               NO-UNDO.
+
+    DEF VAR aux_dsescore AS CHAR                              		   NO-UNDO.
+    DEF VAR aux_vlpontua AS DECI                              		   NO-UNDO.
+    DEF VAR aux_dsclassi AS CHAR                              		   NO-UNDO.
+
+	FORM "Descricao: "     AT 01
+	     aux_dsescore      AT 12 NO-LABEL FORMAT "x(30)"     
+		 "Pontuacao: "     AT 45
+		 aux_vlpontua      AT 56 NO-LABEL FORMAT "zzzz9.99"
+		 /*"Classificacao: " AT 65
+		 aux_dsclassi 	   AT 80 NO-LABEL FORMAT "x(30)"*/
+     SKIP(1)
+		 WITH DOWN NO-LABELS WIDTH 132 FRAME f_escore. 
+  
+	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+	/* Efetuar a chamada a rotina Oracle  */
+	RUN STORED-PROCEDURE pc_busca_escore
+	    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_nrconbir,
+		    							     INPUT par_nrseqdet,
+											 INPUT 1,
+											 OUTPUT "",  /* pr_dsescore */
+											 OUTPUT 0,   /* pr_vlpontua */
+											 OUTPUT "",  /* pr_dsclassi */
+											 OUTPUT ""). /* pr_dscritic */
+
+	/* Fechar o procedimento para buscarmos o resultado */
+	CLOSE STORED-PROC pc_busca_escore
+	aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+	ASSIGN	aux_dscritic = pc_busca_escore.pr_dscritic
+						   WHEN pc_busca_escore.pr_dscritic <> ?
+			aux_dsescore = pc_busca_escore.pr_dsescore
+						   WHEN pc_busca_escore.pr_dsescore <> ?
+			aux_vlpontua = int(pc_busca_escore.pr_vlpontua)
+						   WHEN pc_busca_escore.pr_vlpontua <> ?
+			aux_dsclassi = pc_busca_escore.pr_dsclassi
+						   WHEN pc_busca_escore.pr_dsclassi <> ?.
+
+  IF par_imprisep = "S" THEN
+  DO:
+    RUN separador_item (INPUT "SCORE",INPUT TRUE).
+  END.                  
+               
+  DISPLAY STREAM str_1 aux_dsescore
+             aux_vlpontua
+             /*aux_dsclassi*/
+             WITH FRAME f_escore.
+
+  DOWN WITH FRAME f_escore.
+
+  
+	RETURN "OK".
 
 END PROCEDURE.
 
 PROCEDURE Trata_Serasa_Pf:
     
     DEF INPUT PARAM TABLE FOR tt-xml-geral.
+    DEF INPUT PARAM par_nrconbir AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrseqdet AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_inpessoa AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_dsconsul AS CHAR                               NO-UNDO.
@@ -2119,7 +2247,11 @@ PROCEDURE Trata_Serasa_Pf:
                          aux_inreapro
                          aux_dscpfcgc WITH FRAME f_cabecalho_2.
 
-    RUN Imprime_Anotacoes (INPUT TABLE tt-craprpf).
+    RUN Imprime_Escore (INPUT "S",
+                        INPUT par_nrconbir,
+						            INPUT par_nrseqdet).
+	
+	RUN Imprime_Anotacoes (INPUT TABLE tt-craprpf).
 
     IF   aux_dtatuend = ?  THEN
          RUN separador_item 
@@ -2146,6 +2278,8 @@ END PROCEDURE.
 PROCEDURE Trata_Serasa_Pj:
 
     DEF INPUT PARAM TABLE FOR tt-xml-geral.
+    DEF INPUT PARAM par_nrconbir AS INTE                              NO-UNDO.
+    DEF INPUT PARAM par_nrseqdet AS INTE                              NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE                              NO-UNDO.
     DEF INPUT PARAM par_dsconsul AS CHAR                              NO-UNDO.
 
@@ -2180,6 +2314,11 @@ PROCEDURE Trata_Serasa_Pj:
          tt-crapprf.vlregist COLUMN-LABEL "Valor"
          tt-crapprf.dsinstit COLUMN-LABEL "Origem" FORMAT "x(20)" 
          WITH DOWN WIDTH 132 FRAME f_inf_crapprf_serasa_pj.
+
+    FORM tt-crapprf.dtvencto COLUMN-LABEL "Data"
+         tt-crapprf.vlregist COLUMN-LABEL "Valor"
+         tt-crapprf.dsinstit COLUMN-LABEL "Origem" FORMAT "x(20)" 
+         WITH DOWN WIDTH 132 FRAME f_inf_crapprf_serasa_pj2.
 
     FORM tt-crapcsf.dtinclus COLUMN-LABEL "Data"
          tt-crapcsf.nrcheque COLUMN-LABEL "Nr. Cheque"
@@ -2287,6 +2426,10 @@ PROCEDURE Trata_Serasa_Pj:
                             INPUT TABLE tt-xml-geral,
                            OUTPUT TABLE tt-crapprf).
 
+    RUN Trata_Pefin_Refin  (INPUT 4,
+                            INPUT TABLE tt-xml-geral,
+                           OUTPUT TABLE tt-crapprf).
+
     RUN Trata_Acoes (INPUT TABLE tt-xml-geral,
                     OUTPUT TABLE tt-crapabr).
 
@@ -2342,7 +2485,11 @@ PROCEDURE Trata_Serasa_Pj:
                          aux_cdufende
                          aux_nrcepend WITH FRAME f_dados_endereco.
 
-    RUN Imprime_Anotacoes (INPUT TABLE tt-craprpf).
+    RUN Imprime_Escore (INPUT "S",
+                        INPUT par_nrconbir,
+						            INPUT par_nrseqdet).
+	
+	RUN Imprime_Anotacoes (INPUT TABLE tt-craprpf).
 
     ASSIGN aux_dsconteu = "- NADA CONSTA".
     
@@ -2472,7 +2619,6 @@ PROCEDURE Trata_Serasa_Pj:
          
     /* Dados Refin */
     ASSIGN aux_dsconteu = "- NADA CONSTA".
-
     FOR EACH tt-crapprf WHERE tt-crapprf.dstagpai = "crapprf_refin_inf"   AND
                               tt-crapprf.inpefref = 2
                               BREAK BY tt-crapprf.dtvencto DESC:
@@ -2485,7 +2631,6 @@ PROCEDURE Trata_Serasa_Pj:
                  RUN separador_item (INPUT aux_dsconteu,
                                      INPUT TRUE).
              END.
-
         DISPLAY STREAM str_1 tt-crapprf.dtvencto 
                              tt-crapprf.dsmtvreg 
                              tt-crapprf.vlregist 
@@ -2634,7 +2779,47 @@ PROCEDURE Trata_Serasa_Pj:
                                   rel_vlnegati WITH FRAME f_tot_ocorrencias.
          END.
 
-    /* Societarios */
+    /* Dados Dívida Vencida */
+    ASSIGN aux_dsconteu = "- NADA CONSTA".
+
+    FOR EACH tt-crapprf WHERE tt-crapprf.dstagpai = "crapprf_divida_inf"   AND
+                              tt-crapprf.inpefref = 3
+                              BREAK BY tt-crapprf.dtvencto DESC:
+
+        IF   FIRST (tt-crapprf.dtvencto)   THEN
+             DO:
+                 ASSIGN aux_dsconteu = 
+                     "DIVIDA VENCIDA (Ocorrencias mais recentes - ate cinco)".
+
+                 RUN separador_item (INPUT aux_dsconteu,
+                                     INPUT TRUE).
+             END.
+
+        DISPLAY STREAM str_1 tt-crapprf.dtvencto 
+                             tt-crapprf.vlregist 
+                             tt-crapprf.dsinstit 
+                             WITH FRAME f_inf_crapprf_serasa_pj2.
+
+        DOWN WITH FRAME f_inf_crapprf_serasa_pj2.
+
+    END.
+
+    IF   aux_dsconteu = "- NADA CONSTA"   THEN
+         DO:
+             RUN separador_item (INPUT "DIVIDA VENCIDA",
+                                 INPUT FALSE). 
+         END.
+    ELSE
+         DO:
+             /* Total de ocorrencias */
+             ASSIGN rel_dsnegati = aux_dsnegati[1]
+                    rel_vlnegati = aux_vlnegati[1].
+             
+             DISPLAY STREAM str_1 rel_dsnegati
+                                  rel_vlnegati WITH FRAME f_tot_ocorrencias.             
+         END.
+
+	/* Societarios */
     FOR EACH tt-crapcbd WHERE tt-crapcbd.dstagpai = "crapcbd_socio_inf" 
                               BREAK BY tt-crapcbd.pertotal DESC:
 
@@ -2759,6 +2944,10 @@ PROCEDURE Trata_Serasa_Pj:
                     ASSIGN rel_dsnegati = "Cheque sem fundo".
                 WHEN 7 THEN
                     ASSIGN rel_dsnegati = "Cheque Sust./Extrav.".
+                WHEN 10 THEN
+                    ASSIGN rel_dsnegati = "Divida vencida".
+                WHEN 11 THEN
+                    ASSIGN rel_dsnegati = "Inadimplencia".
             END CASE.
                           
             DISPLAY STREAM str_1 rel_dsnegati        
@@ -3021,7 +3210,7 @@ PROCEDURE Trata_Anotacoes:
                 ASSIGN tt-craprpf.dscpfcgc = ""
                        tt-craprpf.innegati = aux_innegati.
             END.    
-    
+
         IF  tt-xml-geral.dstagfil = "qtnegati"   THEN
             ASSIGN tt-craprpf.dsnegati         = tt-xml-geral.dsdvalor
                     par_dsnegati[aux_innegati] = tt-xml-geral.dsdvalor.
@@ -3035,7 +3224,6 @@ PROCEDURE Trata_Anotacoes:
         IF  tt-xml-geral.dstagfil = "dtultneg"   THEN
             ASSIGN tt-craprpf.dtultneg        = DATE(tt-xml-geral.dsdvalor)
                    par_dtultneg[aux_innegati] = DATE(tt-xml-geral.dsdvalor).
-    
 
     END.
 
@@ -3371,6 +3559,9 @@ PROCEDURE Trata_Pefin_Refin:
     ELSE
     IF   par_idconsul = 3   THEN
          ASSIGN aux_dstagavo = "crapprf_refin".
+    ELSE
+    IF   par_idconsul = 4   THEN
+         ASSIGN aux_dstagavo = "crapprf_divida".
 
     ASSIGN aux_dstagpai = aux_dstagavo + "_inf".                
 
@@ -3668,6 +3859,10 @@ PROCEDURE Imprime_Anotacoes:
                 ASSIGN rel_dsnegati = "Cheque sem fundo".
             WHEN 7 THEN
                 ASSIGN rel_dsnegati = "Cheque Sust./Extrav.".
+            WHEN 10 THEN
+                ASSIGN rel_dsnegati = "Divida vencida".
+            WHEN 11 THEN
+                ASSIGN rel_dsnegati = "Inadimplencia".
         END CASE.
         
         DISPLAY STREAM str_1 rel_dsnegati       

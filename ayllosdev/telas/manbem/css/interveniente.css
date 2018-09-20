@@ -1,0 +1,99 @@
+#frmIntevAnuente {		
+    line-height: 25px;
+    margin:0 0 15px 0;
+    text-align: left;
+}
+    #frmIntevAnuente .cabecalho{
+        padding: 10px 0;
+    }
+    #frmIntevAnuente fieldset {
+        clear: both;
+        border: 1px solid #bbb;
+        margin: 3px;
+        padding: 0px 3px 5px 3px;
+    }
+    #frmIntevAnuente fieldset legend{
+       text-align: center;
+    }
+    #frmIntevAnuente .bloco{        
+        display:inline-block;
+        padding:2px 5px;
+        width: 220px;
+        /*border:1px solid #111;*/
+    }
+    #frmIntevAnuente hr{
+        margin:5px 0 5px ;
+        border-bottom: 1px solid #969FA9;
+        width:100%;
+    }
+    #frmIntevAnuente label{
+        min-width:55px;	
+        display:inline-block;
+        text-align:right;
+        height: 25px;
+        font-weight: bold;
+        color: #111;
+    }
+    #frmIntevAnuente select, 
+    #frmIntevAnuente input[type="text"]{
+        width:120px;   
+        height: 20px;   
+        background-color: #fff;
+        border: 1px solid #777;
+        padding: 2px 4px 1px 4px;
+        color: #333;
+        text-transform:uppercase
+    }
+    #frmIntevAnuente select
+    ,#frmIntevAnuente input[type="text"] 
+    ,#frmIntevAnuente label  {
+        font-size: 11px;
+    }
+    #frmIntevAnuente input[type="text"].menor,  #frmIntevAnuente select.menor{
+        width:50px!important;
+        padding: 0!important;
+        min-width: 30px;
+    }
+    #frmIntevAnuente input[type="text"].menor-lupa{
+        width:33px!important;
+        padding: 0!important;
+        min-width: 30px;
+    }
+    #frmIntevAnuente input[type="text"].medio,  #frmIntevAnuente select.medio{
+        width:100px!important;
+        padding: 0!important;
+        min-width: 30px;
+    }
+    #frmIntevAnuente input[type="text"].maior,  #frmIntevAnuente select.maior{
+        width:160px!important;
+        padding: 0!important;
+        min-width: 30px;
+    }
+    select[readonly] {
+        background: #eee;
+        pointer-events: none;
+        touch-action: none;
+    }
+/*
+  
+    
+
+    
+    
+    #frmIntevAnuente input[type="text"].menor, #ufdplaca{
+        width:45px!important;
+        padding: 0!important;
+        min-width: 30px;
+    }
+    #frmIntevAnuente label.menor{
+        min-width:46px!important;
+    }
+    #frmIntevAnuente #nrdplaca{
+         width:101px!important;
+    }
+    
+    #frmIntevAnuente #nrmodbem, #frmIntevAnuente #nrmodbemC
+    {
+        width:102px!important;
+    }
+   */

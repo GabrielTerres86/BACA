@@ -58,6 +58,8 @@
           value: ".$comboItem->value.",
           text: '".utf8_decode($comboItem->text)."'
         }));";
+		
     }
+	echo "verificarTipoVeiculo();";
     /************************************************** Fim Tratamento dados retornados *************************************************************/
 ?>

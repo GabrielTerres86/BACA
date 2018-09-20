@@ -41,6 +41,12 @@
  * 013: 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
  *
  * 014: 16/01/2018 - Lucas Reinert			   : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
+ *
+ * 015: 08/08/2018 - Gabriel (Mouts)           : Ajuste nos campos dschassi, ufdplaca, uflicenc, nrdplaca, dscorbem e dsbemfin para 
+ *                                               formatar os caracteres para caracteres maiusculos - Chamado PRB0040116.
+ *
+ * 016: 20/08/2018 - Maykon (Envolti)          : P442 - Melhoras nos aditivos do tipo 5
+ * 
  * --------------
  *
  */
@@ -64,11 +70,13 @@ var tpctrato        = 90;
 var aplicacao		= new Array();
 var arrayAditiv		= new Array();
 
+var modeloBem;
+
 //Labels/Campos do cabeçalho
 var rCddopcao, rNrdconta, rNrctremp, rNraditiv, rDtmvtolx, rCdaditiv, rCdaditix, rTpctrato,
 	cCddopcao, cNrdconta, cNrctremp, cNraditiv, cDtmvtolx, cCdaditiv, cCdaditix, cTpctrato, cTodosCabecalho, btnOK1, btnOK2;
 
-
+var intervenienteValidado=false;
 $(document).ready(function() {
 	estadoInicial();
 });
@@ -185,15 +193,39 @@ function controlaOperacao(nriniseq, nrregist) {
 	return false;
 }
 
+function verificarModBem(modBem){
+	var modBemVerificado = modBem;
+	var lengthModBem = modBem.split(' ').length - 1;
+	var tipoBem = modBem.split(' ')[lengthModBem].toUpperCase();
+	if($.isNaN(modBem.substr(0, 4))){
+		$.each($('#nrmodbem option', '#frmTipo'), function(){
+			var lengthOption = $(this).text().split(' ').length -1;
+			var tipoBemOption = $(this).text().split(' ')[lengthOption].toUpperCase();
+			if(!$.isNaN($(this).text().substr(0, 4)) && tipoBem == tipoBemOption){
+				modBemVerificado = $(this).text();
+				return false;
+			}
+		});
+	}
+	
+	return modBemVerificado;
+}
 
 
 function manterRotina( operacao ) {
 
-	if(cddopcao == "I")
+	if(cddopcao == "I" && cdaditiv == 5)
 	{
 		if(!validaCamposAditiv())
 		{
 			return false;
+		}
+		else{
+			if(!intervenienteValidado)
+			{
+				validaCPFInterveniente();	
+				return false;
+			}			
 		}
 	}
 
@@ -209,9 +241,12 @@ function manterRotina( operacao ) {
 			break;
 		}
 	}
+  
+  if(cddopcao == "I" && cdaditiv == 5) {	
+  
 	var dscatbem = $('#dscatbem', '#frmTipo').val();	
 	var dstipbem = $('#dstipbem', '#frmTipo').val();
-	var nrmodbem = $('#nranobem option:selected', '#frmTipo').text(); 
+    var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text()); 
 	var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
 	var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
 	
@@ -224,7 +259,7 @@ function manterRotina( operacao ) {
 	var nrdplaca =  $('#nrdplaca', '#frmTipo').val(); // string
 	nrdplaca =  nrdplaca.replace("-","");
 	var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
-	var uflicenc =  $('#uflicenc', '#frmTipo').val(); // string
+    var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val(); // string
     var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
 
 	var dsmarbem =  $('#dsmarbem option:selected', '#frmTipo').text(); 
@@ -235,7 +270,7 @@ function manterRotina( operacao ) {
  	$.trim(dscatbem.toUpperCase());
 	$.trim(dstipbem.toUpperCase());
 	$.trim(nrmodbem.toUpperCase());
-	$.trim(nranobem.toUpperCase());
+    
 	$.trim(dsbemfin.toUpperCase());
 	$.trim(vlrdobem.toUpperCase());
 	$.trim(tpchassi.toUpperCase());
@@ -248,15 +283,13 @@ function manterRotina( operacao ) {
 	$.trim(uflicenc.toUpperCase());
 	$.trim(dsmarbem.toUpperCase());
 	$.trim(vlfipbem.toUpperCase());
+  }
 
 	var idcobert = normalizaNumero($('#idcobert', '#'+frmCab).val());
 
 	var flgpagto = $('#flgpagto', '#frmTipo').val(); //
 	var dtdpagto = $('#dtdpagto', '#frmTipo').val(); //
 	var nrctagar = normalizaNumero( $('#nrctagar', '#frmTipo').val() ); // inteiro
-
-	
-
 	var nrcpfgar = normalizaNumero( $('#nrcpfgar', '#frmTipo').val() ); //
 	var nrdocgar = $('#nrdocgar', '#frmTipo').val(); //
 
@@ -300,12 +333,10 @@ function manterRotina( operacao ) {
 	}
 
 	showMsgAguardo( mensagem );
-	if(cddopcao == "I")
+	if(cddopcao == "I" && cdaditiv == 5)
 	{
-		//TrataDados();
-		
 		ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
-								 ufdplaca, nrdplaca, nrrenava, uflicenc, nrcpfcgc, idseqbem, dsmarbem, vlfipbem)
+								 ufdplaca, nrdplaca, nrrenava, uflicenc, nrcpfcgc, idseqbem, dsmarbem, vlfipbem);
 	}else{
 		$.ajax({
 			type  : 'POST',
@@ -1361,7 +1392,11 @@ function formataTipo5() {
 			cVlrdobem.maskMoney();
 			$("#dstipbem").change(function(){
 			 	bloqueiaCamposVeiculoZero($(this).val());				
-			})
+				if($(this).val() == 'USADO'){ modeloBem = ''; }
+				$('#nrmodbem').val(-1).change();
+				var bemFin = $('#dsbemfin').val();
+				$('#dsbemfin').val(bemFin).change();
+			});
 			
 			busca_uf_pa(nrdconta);
 			$("#uflicenc").prop("readonly", true);
@@ -1511,6 +1546,21 @@ function formataTipo5() {
 	layoutPadrao();
 
 	return false;
+}
+
+function verificarTipoVeiculo(){
+	var tipo = $('#dstipbem option:selected').val();
+	
+	var optionsModBem = $('#nrmodbem option');
+		$.each(optionsModBem, function(){
+			if($(this).text().toUpperCase().search('ZERO KM') != -1){
+				if(modeloBem == '' || modeloBem == null) { modeloBem = $(this).val(); }
+				$(this).remove();
+			}
+		});
+	if(tipo != 'ZERO KM'){
+		modeloBem = '';
+	} 
 }
 
 function formataTipo6() {

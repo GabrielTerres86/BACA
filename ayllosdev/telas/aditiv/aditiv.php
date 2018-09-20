@@ -80,6 +80,12 @@
 															<table width="570" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
+																																			
+																		<!-- INCLUDE DA TELA DE PESQUISA ENDERECO -->
+																		<? require_once("../../includes/pesquisa/pesquisa_endereco.php"); ?>
+
+																		<!-- INCLUDE DA TELA DE INCLUSAO ENDERECO -->
+																		<? require_once("../../includes/pesquisa/formulario_endereco.php"); ?>
 																		<!-- INCLUDE DA TELA DE PESQUISA -->
 																		<? require_once("../../includes/pesquisa/pesquisa.php"); ?>
 																		

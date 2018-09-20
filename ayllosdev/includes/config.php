@@ -95,12 +95,12 @@
 	$GEDServidor = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR']) : $array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR'];
 	
 	// Variaveis para Fipe
-	// PROD
-	$UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  // PROD
+  // $UrlFipe = "http://servicosinternos.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
+  // Homol 
+  $UrlFipe = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
   $AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
-	// Homol 
-	//$UrlFipe = "http://servicosinternosint.cecred.coop.br/osb-soa/ListaDominioRestService/v1/";
-	//$AuthFipe = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
+	
 	
 	// Identificador dos grupos de usuarios nas maquinas HP-UX
 	$gidNumbers[0] = 103; // Cecred

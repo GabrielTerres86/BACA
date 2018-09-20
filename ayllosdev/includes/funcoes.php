@@ -172,6 +172,105 @@ function getObjectXML($xmlResult) {
 	return $xmlObj;
 }
 
+// Função para criação do objeto responsável pelo tratamento do XML
+// Includes necessárias: - includes/xmlfile.php
+function getClassXML($xmlResult){
+	global $UrlLogin;
+	global $glbvars;
+	
+	if (!class_exists('oXmlTag')){
+		class oXmlTag extends XMLTag{
+		    function add_subtag($name, $attributes=0)
+		    {
+		        $tag = new oXmlTag( $this );
+		        $tag->set_name( $name );
+		        if (is_array($attributes)) {
+		            $tag->set_attributes( $attributes );
+		        }
+		        $this->tags[] = &$tag;
+		        $this->curtag = &$tag;
+		    }
+
+		    function __toString(){
+		        return $this->cdata;
+		    }
+
+		    function __get($name){
+		        $tags = $this->find($name);
+		        if($tags){
+		            if(count($tags)===1){
+		                $this->{$name} = $tags[0];
+		                return $tags[0];
+		            }
+		            $this->{$name} = $tags;
+		            return $tags;
+		        }
+		        return false;
+		    }
+
+		    function find($name){
+		        return $this->find_subtags_by_name($name);
+		    }
+
+		    function findFirst($name){
+		        $tags = $this->find_subtags_by_name($name);
+		        if (is_array($tags)){
+		            return $tags[0];
+		        }
+		        return false;
+		    }
+
+		    function getAttribute($name){
+		        if(isset($this->attributes[$name])){
+		            return $this->attributes[$name];
+		        }
+		        return '';
+		    }
+		}
+		class oXmlFile extends XMLFile{
+		    function create_root()
+		    {
+		        $null = 0;
+		        $this->roottag = new oXmlTag($null);
+		        $this->curtag = &$this->roottag;
+		    }
+
+		    function _tag_open( $parser, $tag, $attributes )
+		    {
+		        if (!is_object($this->curtag)) {
+		            $null = 0;
+		            $this->curtag = new oXmlTag($null);
+		            $this->curtag->set_name( $tag );
+		            $this->curtag->set_attributes( $attributes );
+		        }
+		        else {
+		            $this->curtag->add_subtag( $tag, $attributes );
+		            $this->curtag = &$this->curtag->curtag;
+		        }
+		    }
+		}
+	}
+	if (!strpos($xmlResult,"Unable") === false && !strpos($xmlResult,"distribuidor.p") === false) {
+		redirecionaErro($glbvars["redirect"],$UrlLogin,"_parent","Sistema indispon&iacute;vel.");
+	}
+	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObj = new oXmlFile();
+
+	// Executa leitura do XML
+	$xmlObj->read_xml_string($xmlResult);
+	
+	// Verifica se não foi retornado XML, mas retornado HMTL com erro do WEBSPEED
+	if (strtoupper($xmlObj->roottag->name) == "HTML" && !(strpos(strtoupper($xmlObj->roottag->tags[0]->tags[0]->cdata),"WEBSPEED") === false)) {
+		redirecionaErro($glbvars["redirect"],$UrlLogin,"_parent","Sistema indispon&iacute;vel.");
+	}			
+	
+	//Retorna objeto XML tratado
+	return $xmlObj;
+
+}
+
+
 // Função para verificar o método de requisição para telas
 function isPostMethod($flgIndex=false) {
 	global $UrlLogin;
@@ -471,9 +570,9 @@ function retornaUFs() {
 
 function retornaCategorias() {
 	$categorias[0]["IDENTIFICADOR"]  = "AUTOMOVEL";
-	$categorias[0]["DESCRICAO"]   = "Autom??";
+	$categorias[0]["DESCRICAO"]   = "Automóvel";
 	$categorias[1]["IDENTIFICADOR"]  = "CAMINHAO";
-	$categorias[1]["DESCRICAO"]   = "Caminh?;
+	$categorias[1]["DESCRICAO"]   = "Caminhão";
 	$categorias[2]["IDENTIFICADOR"]  = "MOTO";
 	$categorias[2]["DESCRICAO"]   = "Moto";	
 	
@@ -494,6 +593,14 @@ function retornaTiposChassi() {
 	$tiposVeiculos[1]["DESCRICAO"]   = "Normal";
 	
 	return $tiposVeiculos;
+}
+
+function retornaUfsLicenciamento(){
+	$ufs[0]["IDENTIFICADOR"] = "PR";
+	$ufs[1]["IDENTIFICADOR"] = "SC";
+	$ufs[2]["IDENTIFICADOR"] = "RS";
+	
+	return $ufs;
 }
 
 function validaPermissao($nmdatela,$nmrotina,$cddopcao='',$flgsecao=true) {
@@ -627,24 +734,45 @@ function getCpfCnpj( $xml, $tagName ) {
 		}
 	}	
 	$resultado = trim($resultado);
-	if(strlen($resultado)<11)
+	//***** Aplica mascara de acordo com o tipo
+	$tipo = verificaTipoPessoa($resultado);
+	
+	if($tipo==1)
 	{
-		$resultado = str_pad($resultado,11, '0', STR_PAD_LEFT);
-		$resultado  = mask($resultado,'###.###.###-##');
+		$resultado = mascaraCpf($resultado);
+	}else if(tipo==2)
+	{
+		$resultado = mascaraCnpj($resultado);
 	}
-	else if(strlen($resultado)==11)
-	{
-		$resultado  = mask($resultado,'###.###.###-##');
-	}
-	else if(strlen($resultado) > 11)
-	{
-		if(strlen($resultado) < 14)
-		{
-			$resultado = str_pad($resultado,14, '0', STR_PAD_LEFT);
-		}
-		$resultado = mask($resultado,'##.###.###/####-##');
-	}	
 	return $resultado;
+	}
+
+function verificaTipoPessoa($doc)
+{		
+	$tipoPessoa=0;
+	if(strlen($doc) <= 11)
+	{
+		$tipoPessoa = 1;
+	}
+	else if(strlen($doc) <= 14)
+	{
+		$tipoPessoa = 2;
+	}
+	return $tipoPessoa;
+}
+
+function mascaraCpf($doc)
+		{
+	$doc = str_pad($doc,11, '0', STR_PAD_LEFT);
+	$doc  = mask($doc,'###.###.###-##');
+	return $doc;
+		}
+
+function mascaraCnpj($doc)
+{
+	$doc = str_pad($doc,14, '0', STR_PAD_LEFT);
+	$doc = mask($doc,'##.###.###/####-##');
+	return $doc;
 }
 
 
@@ -770,6 +898,19 @@ function selectTipoChassi($nomeCampo,$valorCampo) {
 	for ($i = 0; $i < count($tiposChassi); $i++) {
 		$selected = ($valorCampo == $tiposChassi[$i]["IDENTIFICADOR"]) ? "selected" : "";
 		$retorno .= '<option value="'.$tiposChassi[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$tiposChassi[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+
+function selectUfPa($nomeCampo, $valorCampo){
+	$retorno		= '';
+	$ufs = retornaUfsLicenciamento();
+	$retorno = '<select name"'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	
+	for($i = 0; $i < count($ufs); $i++){
+		$selected = ($valorCampo == $ufs[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$ufs[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$ufs[$i]["IDENTIFICADOR"].'</option>';
 	}
 	$retorno .= '</select>';
 	return $retorno;

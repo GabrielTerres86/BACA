@@ -21,6 +21,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 
+  $cddopcao   = (isset($_POST['cddopcao']))   ? $_POST['cddopcao']   : '' ;
     $operacao		= (isset($_POST['operacao']))   ? $_POST['operacao']   : '' ;
 	$nrdconta		= (isset($_POST['nrdconta']))   ? $_POST['nrdconta']   : 0  ;
 	$nrctremp		= (isset($_POST['nrctremp']))   ? $_POST['nrctremp']   : 0  ;
@@ -42,16 +43,6 @@
 	$idseqbem		= (isset($_POST['idseqbem']))   ? $_POST['idseqbem']   : 0  ;
 	$dsmarbem 		= (isset($_POST['dsmarbem']))   ? $_POST['dsmarbem']   : 0  ;
 	$vlfipbem 		= (isset($_POST['vlfipbem']))   ? $_POST['vlfipbem']   : 0  ;
-
-    switch($operacao) {
-		case 'VD':  $procedure = 'Valida_Dados';	$retornoAposErro = 'bloqueiaFundo( $(\'#divRotina\') );';			break;
-		case 'GD':  $procedure = 'Grava_Dados';		$retornoAposErro = 'bloqueiaFundo( $(\'#divRotina\') );';			break;
-		default:    $retornoAposErro   = 'estadoInicial();'; return false; 			break;
-	}
-    
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
 
 	// Montar o xml de Requisicao
 	$xmlCarregaDados  = "";
@@ -96,7 +87,8 @@
 		if ($msgErro == '') {
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		echo 'intervenienteValidado=false;';
+		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Ayllos').'","","$NaN");';
 	}
 	else {
 
