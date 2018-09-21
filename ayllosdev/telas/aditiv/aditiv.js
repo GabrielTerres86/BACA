@@ -2672,16 +2672,16 @@ function ConsulAditivos(tipsaida,cdcooper) {
  //Desabilita todos os campos do form
     $('input,select', '#frmFiltro').desabilitaCampo();
 		
-    var tparquiv = "TODAS";
-    var nrseqlot = '0';
-    var dtrefere = '';
+    tparquiv = "TODAS";
+    nrseqlot = '0';
+    dtrefere = '';
     //var cddopcao = 'I';
-	var dtrefate = '';
-	var cdagenci = '0';
-	var nrdconta = normalizaNumero(cNrdconta.val()); 
-	var nrctrpro = normalizaNumero(cNrctremp.val()); 
-	var flcritic = 'N';
-	var dschassi = cDschassi.val();
+	dtrefate = '';
+	cdagenci = '0';
+	nrdconta = normalizaNumero(cNrdconta.val()); 
+	nrctrpro = normalizaNumero(cNrctremp.val()); 
+	flcritic = 'N';
+	dschassi = cDschassi.val();
     
 	Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi);
 	return false;

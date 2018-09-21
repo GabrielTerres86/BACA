@@ -29,6 +29,19 @@ var opcao, opcaoButton = "C";
 var glb_nriniseq; 
 var glb_nrregist;
 
+var cdcooper;
+var tparquiv;
+var nrseqlot;
+var dtrefere;
+var cddopcao;
+var dtrefate;
+var cdagenci;
+var nrdconta;
+var nrctrpro;
+var flcritic;
+var dschassi;
+
+
 $(document).ready(function() {	
 	
 	estadoInicial();
@@ -2237,17 +2250,17 @@ function gerarRelatorio670(tipsaida) {
     //Desabilita todos os campos do form
     $('input,select', '#frmFiltro').desabilitaCampo();
 
-	var cdcooper = $('#cdcooper', '#frmFiltro').val();
-    var tparquiv = $('#tparquiv', '#frmFiltro').val();
-    var nrseqlot = normalizaNumero($('#nrseqlot', '#frmFiltro').val());
-    var dtrefere = $('#dtrefere', '#frmFiltro').val();
-    var cddopcao = $('#cddopcao', '#frmCab').val();
-	var dtrefate = $('#dtrefate', '#frmFiltro').val();
-	var cdagenci = normalizaNumero($('#cdagenci', '#frmFiltro').val());
-	var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
-	var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
-	var flcritic = $('#flcritic').is(':checked') ? 'S' : 'N';
-	var dschassi = $('#dschassi', '#frmFiltro').val();
+	cdcooper = $('#cdcooper', '#frmFiltro').val();
+    tparquiv = $('#tparquiv', '#frmFiltro').val();
+    nrseqlot = normalizaNumero($('#nrseqlot', '#frmFiltro').val());
+    dtrefere = $('#dtrefere', '#frmFiltro').val();
+    cddopcao = $('#cddopcao', '#frmCab').val();
+	dtrefate = $('#dtrefate', '#frmFiltro').val();
+	cdagenci = normalizaNumero($('#cdagenci', '#frmFiltro').val());
+	nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+	nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
+	flcritic = $('#flcritic').is(':checked') ? 'S' : 'N';
+	dschassi = $('#dschassi', '#frmFiltro').val();
 	
 	
     $('input,select', '#frmFiltro').removeClass('campoErro');
@@ -2459,7 +2472,7 @@ function buscaIndice(nriniseq, nrregist) {
     glb_nriniseq = nriniseq;
     glb_nrregist = nrregist;
 
-    gerarRelatorio670('TELA');
+    Relatorio670('TELA',cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi);
 
     return false;
 }

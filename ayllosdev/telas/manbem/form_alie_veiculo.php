@@ -10,7 +10,7 @@
  */
 
  ?>
- 	<script src="../../scripts/jquery.maskMoney.js" type="text/javascript"></script>
+ 	
 	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
 	
     <link href="../../css/aditiv_alie_veiculo.css" rel="stylesheet" type="text/css">
