@@ -54,6 +54,8 @@
 
                  13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)
+				 
+				 21/09/2018 - Ajuste na busca da empresa do conjuje (Alcemir - Mout's : INC0021853)
 
 .............................................................................*/
 
@@ -435,17 +437,54 @@ PROCEDURE Busca_Dados_Id:
                   LEAVE Busca.
                END.   
 
-               /* Empresa */
-               FOR FIRST crapemp FIELDS(nmextemp) 
+			   
+			   FOR FIRST crapcje FIELDS(nrdocnpj nmextemp)
+                                 WHERE crapcje.cdcooper = crabttl.cdcooper
+   				                   AND crapcje.nrctacje = crabttl.nrdconta
+                                   AND crapcje.nrcpfcjg = crabttl.nrcpfcgc
+                                   AND crapcje.nrdconta = par_nrdconta
+                                   NO-LOCK:
+               END.
+
+               	        
+	           IF AVAILABLE crapcje THEN
+ 	  	       DO:                            
+
+                   FOR FIRST crapemp FIELDS(nmextemp) 
+                                 WHERE crapemp.cdcooper = crabttl.cdcooper AND
+                                       crapemp.cdempres = crabttl.cdempres AND 
+                                       crapemp.nrdocnpj = crapcje.nrdocnpj
+                                       NO-LOCK:
+                   END.
+
+                   
+                   IF AVAILABLE crapemp THEN 
+                      ASSIGN tt-crapcje.nmextemp = crapemp.nmextemp.
+                   ELSE
+                     DO:
+                       IF (crapcje.nmextemp <> "") and (crapcje.nmextemp <> ?) THEN
+		                  ASSIGN tt-crapcje.nmextemp = crapcje.nmextemp. 
+                       ELSE
+                          ASSIGN tt-crapcje.nmextemp = "NAO CADASTRADO".
+
+                     END.
+                 END.
+               ELSE
+                 DO:
+                    /* Empresa */
+                   FOR FIRST crapemp FIELDS(nmextemp) 
                                  WHERE crapemp.cdcooper = crabttl.cdcooper AND
                                        crapemp.cdempres = crabttl.cdempres 
                                        NO-LOCK:
-               END.
+                   END.
 
-               IF  AVAILABLE crapemp THEN
-                   ASSIGN tt-crapcje.nmextemp = crapemp.nmextemp.
-               ELSE
-                   ASSIGN tt-crapcje.nmextemp = "NAO CADASTRADO".
+	      
+	            IF  AVAILABLE crapemp THEN
+                      ASSIGN tt-crapcje.nmextemp = crapemp.nmextemp.
+                   ELSE
+                      ASSIGN tt-crapcje.nmextemp = "NAO CADASTRADO".
+       
+                END.  
 
                /* Telefone Comercial*/
                FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper  AND
