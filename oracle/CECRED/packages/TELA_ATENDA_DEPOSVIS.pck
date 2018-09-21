@@ -310,6 +310,12 @@ DECLARE
 
       -- Criar cabeçalho do XML de retorno
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+			
+			CECRED.risc0000_tmp.pc_grava_log(pr_cdcooper => vr_cdcooper,
+                            pr_dsmensag => pr_retxml.getClobVal,
+                            pr_nmarquiv => 'MENSAGERIA.lst',
+                            pr_des_erro => vr_dscritic);			
+			
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                               pr_tag_pai  => 'Root',
                               pr_posicao  => 0,
@@ -326,17 +332,16 @@ DECLARE
       FETCH cr_saldos INTO rw_saldos;
       CLOSE cr_saldos;
 
-      vr_data_corte := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
-                                                         ,pr_nmsistem => 'CRED'
-                                                         ,pr_cdacesso => 'DT_CORTE_REGCRE')
-                                                         ,'DD/MM/RRRR');
-
       pc_busca_saldos_juros60(pr_cdcooper => vr_cdcooper
                             , pr_nrdconta => pr_nrdconta
                             , pr_vlsld59d => vr_saldo_devedor_59dias
                             , pr_vljuro60 => vr_vljuros60
                             , pr_cdcritic => vr_cdcritic
                             , pr_dscritic => vr_dscritic);
+														
+			IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+				RAISE vr_exc_saida;
+			END IF;
 
       -- Insere informações dos saldos no XML de retorno
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -380,7 +385,6 @@ DECLARE
                                                      '9G999G990D00',
                                                      'nls_numeric_characters='',.'''),
                               pr_des_erro => vr_dscritic);
-
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := 'Erro geral na rotina da tela TELA_ATENDA_DEPOSVIS - pc_busca_saldos_devedores: ' ||vr_dscritic;
@@ -573,15 +577,14 @@ END pc_busca_saldos_devedores;
 			pr_valorprj := nvl(rw_prejuizo.vlsldprej, 0);
 			pr_dtiniprj := rw_prejuizo.dtinclusao;
 		ELSE 
-    -- Busca registro de linha 100, indicando contrato de prejuizo
-    OPEN cr_crapepr(pr_cdcooper, pr_nrdconta);
-    FETCH cr_crapepr
-     INTO rw_crapepr;
-    -- Fecha o cursor
-    CLOSE cr_crapepr;
+			-- Busca registro de linha 100, indicando contrato de prejuizo
+			OPEN cr_crapepr(pr_cdcooper, pr_nrdconta);
+			FETCH cr_crapepr
+			 INTO rw_crapepr;
+			-- Fecha o cursor
 
-    pr_valorprj := nvl(rw_crapepr.vlsdprej, 0);
-    pr_dtiniprj := rw_crapepr.dtmvtolt;
+			pr_valorprj := nvl(rw_crapepr.vlsdprej, 0);
+			pr_dtiniprj := rw_crapepr.dtmvtolt;
 		END IF;
 		
 		CLOSE cr_prejuizo;
@@ -1566,9 +1569,9 @@ BEGIN
 														 , pr_vlju6038 => vr_jur60_38
 														 , pr_vlju6057 => vr_jur60_57
                              , pr_cdcritic => vr_cdcritic
-                             , pr_dscritic => vr_dscritic);
+                             , pr_dscritic => vr_dscritic);					 
 
-    IF vr_cdcritic >0 OR vr_dscritic IS NOT NULL THEN
+    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
 
@@ -1604,30 +1607,13 @@ DECLARE
 	SELECT * FROM (
 		WITH lancamentos AS (
 			SELECT lcm.dtmvtolt
-       , his.cdhistor
+					 , his.cdhistor
 					 , his.indebcre
 					 , lcm.vllanmto
-    FROM craplcm lcm
-       , craphis his
-   WHERE lcm.cdcooper   = pr_cdcooper
-     AND lcm.nrdconta   = pr_nrdconta
-     AND lcm.dtmvtolt   > pr_dt59datr -- Data em que completou 59 dias em ADP
-     AND (pr_dtlimite IS NULL OR lcm.dtmvtolt <= pr_dtlimite)
-     AND (his.indebcre = 'D'
-      OR (his.indebcre = 'C'
-     AND NOT EXISTS (
-           SELECT 1
-             FROM craplcm aux
-            WHERE aux.cdcooper = lcm.cdcooper
-              AND aux.nrdconta = lcm.nrdconta
-              AND aux.dtmvtolt = lcm.dtmvtolt
-              AND aux.nrdocmto = lcm.nrdocmto
-              AND aux.cdhistor = 2719
-              AND aux.vllanmto = lcm.vllanmto
-         )))
-     AND his.cdhistor   NOT IN (2719)
-     AND his.cdcooper   = lcm.cdcooper
-     AND his.cdhistor   = lcm.cdhistor
+				FROM craplcm lcm
+					 , craphis his
+			 WHERE his.cdcooper = lcm.cdcooper
+				 AND his.cdhistor = lcm.cdhistor
 				 AND lcm.cdcooper = pr_cdcooper
 				 AND lcm.nrdconta = pr_nrdconta
 				 AND lcm.dtmvtolt > pr_dt59datr
@@ -1675,10 +1661,9 @@ DECLARE
 				 , lct.dtmvtolt
 				 , SUM(decode(lct.indebcre, 'C', lct.vllanmto, lct.vllanmto * -1)) valor
 		 FROM lancamentos lct
-		WHERE ((lct.cdhistor NOT IN (37,38,57,2718))
-			 OR (lct.cdhistor = 2323
+		WHERE lct.cdhistor NOT IN (37,38,57,2718)
 			AND (pr_dtprejuz IS NULL
-			 OR lct.dtmvtolt < pr_dtprejuz)))
+			 OR ((lct.dtmvtolt >= pr_dtprejuz AND cdhistor <> 2323) OR (lct.dtmvtolt < pr_dtprejuz)))
 		GROUP BY lct.dtmvtolt
 	)
 	PIVOT
@@ -1824,11 +1809,10 @@ BEGIN
 				vr_index_saldo := vr_tab_saldos.FIRST;
 				IF vr_index_saldo IS NOT NULL THEN
 					-- Acumular Saldo
-					vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index_saldo).vlsddisp, 0) +
-															 NVL(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
+					vr_vlsldisp := ROUND(NVL(vr_tab_saldos(vr_index_saldo).vlsddisp, 0),2);
 				END IF;
 				
-        pr_vlsld59d := abs(vr_vlsldisp - rw_crapass.vllimcre);
+        pr_vlsld59d := abs(vr_vlsldisp) - rw_crapass.vllimcre;
       ELSE
 				 OPEN cr_prejuizo;
 				 FETCH cr_prejuizo INTO vr_dtprejuz;
@@ -1862,7 +1846,7 @@ BEGIN
             pr_vlsld59d := rw_crapsda.vlsddisp - rw_crapass.vllimcre;
 
             -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
-            FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz) LOOP
+            FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz) LOOP						  
               pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_37,0);
 							pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_2718,0); -- AJUSTAR *********
 							pr_vlju6038 := pr_vlju6038 + nvl(rw_craplcm.jur60_38,0);
@@ -1893,25 +1877,25 @@ BEGIN
                 END IF;
 
                 IF rw_craplcm.saldo_dia > 0 AND pr_vlju6038 > 0 THEN
-                    -- Amortiza os juros + 60 (Hist. 38)
+									-- Amortiza os juros + 60 (Hist. 38)
 									IF rw_craplcm.saldo_dia >= pr_vlju6038 THEN
 										rw_craplcm.saldo_dia := rw_craplcm.saldo_dia - pr_vlju6038;
-                      pr_vlju6038 := 0;
-                    ELSE
+										pr_vlju6038 := 0;
+									ELSE
 										pr_vlju6038 := pr_vlju6038 - rw_craplcm.saldo_dia;
 										rw_craplcm.saldo_dia := 0;
-                  END IF;
+									END IF;
                 END IF;
 
 								IF rw_craplcm.saldo_dia > 0 AND pr_vlju6057 > 0 THEN
-                    -- Amortiza os juros + 60 (Hist. 57)
+									-- Amortiza os juros + 60 (Hist. 57)
 									IF rw_craplcm.saldo_dia >= pr_vlju6057 THEN
 										rw_craplcm.saldo_dia := rw_craplcm.saldo_dia - pr_vlju6057;
-                      pr_vlju6057 := 0;
-                    ELSE
+										pr_vlju6057 := 0;
+									ELSE
 										pr_vlju6057 := pr_vlju6057 - rw_craplcm.saldo_dia;
 										rw_craplcm.saldo_dia := 0;
-                  END IF;
+									END IF;
                 END IF;
 
                 IF rw_craplcm.saldo_dia > 0 THEN
@@ -1924,7 +1908,7 @@ BEGIN
                 END IF;
 							ELSIF rw_craplcm.saldo_dia < 0 THEN -- Se fechou o dia com saldo negativo (débito)
 								pr_vlsld59d := pr_vlsld59d + abs(rw_craplcm.saldo_dia);
-              END IF;
+							END IF;
             END LOOP;
 
 						-- Soma o valor de IOF debitado após a transferência para prejuízo ao saldo 59 dias (se não foi pago pelos créditos ocorridos na conta)
@@ -1941,7 +1925,7 @@ BEGIN
       pr_dscritic := 'Não foi possível recuperar o saldo de 59 dias de atraso.';
     WHEN OTHERS THEN
       pr_cdcritic := 9999;
-      pr_dscritic := 'Erro não tratado na "TELA_ATENDA_DEPOSVIS.pc_consulta_saldos_juros60_ab".';
+      pr_dscritic := 'Erro não tratado na "TELA_ATENDA_DEPOSVIS.pc_consulta_saldos_juros60_det".' || SQLERRM;
   END;
 END pc_busca_saldos_juros60_det;
 
