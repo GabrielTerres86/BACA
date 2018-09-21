@@ -23,9 +23,9 @@
 	}
 	
 	$nrseqlot = isset($_POST["nrseqlot"]) ? $_POST["nrseqlot"] : 0;
-  $tparquiv = isset($_POST["tparquiv"]) ? $_POST["tparquiv"] : '';
-  $cdcooper = isset($_POST["cdcooper"]) ? $_POST["cdcooper"] : 0;
-  $dtrefere = isset($_POST["dtrefere"]) ? $_POST["dtrefere"] : 0;
+	$tparquiv = isset($_POST["tparquiv"]) ? $_POST["tparquiv"] : '';
+	$cdcooper = isset($_POST["cdcooper"]) ? $_POST["cdcooper"] : 0;
+	$dtrefere = isset($_POST["dtrefere"]) ? $_POST["dtrefere"] : 0;
 	$dtrefate = isset($_POST["dtrefate"]) ? $_POST["dtrefate"] : 0;
 	$cdagenci = isset($_POST["cdagenci"]) ? $_POST["cdagenci"] : 0;
 	$nrctrpro = isset($_POST["nrctrpro"]) ? $_POST["nrctrpro"] : 0;
@@ -33,6 +33,8 @@
 	$dschassi = isset($_POST["dschassi"]) ? $_POST["dschassi"] : '';
 	$nrdconta = isset($_POST["nrdconta"]) ? $_POST["nrdconta"] : 0;
 	$tipsaida = isset($_POST["tipsaida"]) ? $_POST["tipsaida"] : 'PDF';
+	$nriniseq = !isset($_POST["nriniseq"]) ? 1 : $_POST["nriniseq"];
+	$nrregist = !isset($_POST["nrregist"]) ? 50 : $_POST["nrregist"];
 			
   
 	validaDados();
@@ -52,8 +54,8 @@
   $xml .= "   <flcritic>".$flcritic."</flcritic>";
   $xml .= "   <tipsaida>".$tipsaida."</tipsaida>";
   $xml .= "   <dschassi>".$dschassi."</dschassi>";
-  $xml .= "   <nrregist>30</nrregist>";
-  $xml .= "   <nriniseq>1</nriniseq>";
+  $xml .= "   <nrregist>".$nrregist."</nrregist>";
+  $xml .= "   <nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
@@ -88,7 +90,8 @@
 	} else {
 		
 		$registrosSemRet = $xmlObj->roottag->tags[0]->tags;
-		
+		$qtdregist = $xmlObj->roottag->tags[1]->tags[0]->cdata;
+		echo "<script>console.log('registros ".$qtdregist."');</script>";
 		include('tab_relatorio_670.php');
 	}
 	
@@ -97,10 +100,6 @@
 			
 		IF($GLOBALS["tparquiv"] == '' ){ 
 			exibirErro('error','Tipo de arquivo in&acute;lido.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'tparquiv\',\'frmFiltro\');',false);
-		}
-    
-		IF($GLOBALS["nrseqlot"] == 0 && $GLOBALS["nrdconta"] == 0 && $GLOBALS["dschassi"] == '' ){ 
-			exibirErro('error','Informe um lote, uma conta ou um chassi.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'nrseqlot\',\'frmFiltro\');',false);
 		}
 	}	
 		

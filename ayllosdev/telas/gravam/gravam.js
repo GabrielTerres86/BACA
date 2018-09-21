@@ -26,6 +26,8 @@
 
 var rating = new Object();
 var opcao, opcaoButton = "C";
+var glb_nriniseq; 
+var glb_nrregist;
 
 $(document).ready(function() {	
 	
@@ -48,7 +50,8 @@ function estadoInicial() {
     $('#frmFiltro').css('display', 'none');
     $('#divTabela').html('').css('display','none');
 	$('#frmCons').css({'display':'none'}); 
-       	
+    glb_nriniseq = 1;
+	glb_nrregist = 50;
 }
 
 function formataCabecalho() {
@@ -502,7 +505,8 @@ function formataFiltroImpressao() {
 	//Define ação para CLICK no botão de Concluir
     $("#btConsultar", "#divBotoes").unbind('click').bind('click', function () {
 
-        //showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorioHistorico();', 'formataFiltroHistorico();', 'sim.gif', 'nao.gif');
+		glb_nriniseq = 1;
+		glb_nrregist = 50;
 		showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorio670("TELA");', 'formataFiltroImpressao();', 'sim.gif', 'nao.gif');
 
         return false;
@@ -638,130 +642,6 @@ function formataFiltroArquivo() {
     $("#cdcooper", "#divFiltroArq").focus();
 
 
-    layoutPadrao();
-
-}
-
-function formataFiltroHistorico() {
-
-    // Desabilitar a opção
-    $("#cddopcao", "#frmCab").desabilitaCampo();
-
-    // Seta os valores caso tenha vindo do CRM
-    if ($("#crm_inacesso","#frmCab").val() == 1) {
-        $("#nrdconta","#frmFiltro").val($("#crm_nrdconta","#frmCab").val());
-    }
-    
-    /*##########################################
-
-        Formata os campos da divFiltroHistorico
-
-      #########################################*/
-
-    //rotulo
-    $('label[for="cdcooper"]', "#divFiltroHistorico").addClass("rotulo").css({ "width": "95px" });
-    $('label[for="nrdconta"]', "#divFiltroHistorico").addClass("rotulo-linha").css({ "width": "50px" });
-    $('label[for="nrctrpro"]', "#divFiltroHistorico").addClass("rotulo-linha").css({ "width": "60px" });
-
-    // campo
-    $('#cdcooper', '#divFiltroHistorico').css({ 'width': '150px', 'text-align': 'left' }).habilitaCampo();
-    $("#nrdconta", "#divFiltroHistorico").css({ 'width': '100px', 'text-align': 'right' }).addClass('conta').attr('maxlength', '10').habilitaCampo();
-    $('#nrctrpro', '#divFiltroHistorico').addClass('pesquisa').css({ 'width': '100px', 'text-align': 'right' }).attr('maxlength', '7').habilitaCampo().addClass('inteiro');
-
-    $('#frmFiltro').css({ 'display': 'block' });
-    $('#divBotoes').css({ 'display': 'block' });
-    $('#btConcluir', '#divBotoes').css({ 'display': 'inline' });
-    $('#btProsseguir', '#divBotoes').css({ 'display': 'none' });
-    $('#btVoltar', '#divBotoes').css({ 'display': 'inline' });
-    
-    highlightObjFocus($('#frmFiltro'));
-        
-    
-    $('#divFiltroHistorico').css({ 'display': 'block' });
-
-    //Define ação para o campo cdcooper
-    $("#cdcooper", "#divFiltroHistorico").unbind('keypress').bind('keypress', function (e) {
-
-        $(this).removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {
-
-            $("#nrdconta", "#divFiltroHistorico").focus();
-            return false;
-
-        }
-
-    });
-
-    //Define ação para o campo nrdconta
-    $("#nrdconta", "#divFiltroHistorico").unbind('keypress').bind('keypress', function (e) {
-
-        $(this).removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {
-
-            $("#nrctrpro", "#divFiltroHistorico").focus();
-            return false;
-
-        }
-
-    });
-
-    //Define ação para o campo nrctrpro
-    $("#nrctrpro", "#divFiltroHistorico").unbind('keypress').bind('keypress', function (e) {
-
-        $(this).removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {
-
-            $("#btConcluir", "#divBotoes").click();
-
-            return false;
-
-        }
-
-    });
-
-
-	
-    /*---------------------*/
-    /*  CONTROLE Contratos */
-    /*---------------------*/
-    var linkOperador = $('a:eq(1)', '#divFiltroHistorico');
-
-    if (linkOperador.prev().hasClass('campoTelaSemBorda')) {
-        linkOperador.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
-    } else {
-        linkOperador.css('cursor', 'pointer').unbind('click').bind('click', function () {
-
-            buscaContratosGravames(1, 30);
-
-        });
-    }
-
-    //Define ação para CLICK no botão de Concluir
-    $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
-
-        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gerarRelatorioHistorico();', 'formataFiltroHistorico();', 'sim.gif', 'nao.gif');
-
-        return false;
-
-    });
-
-    //Define ação para CLICK no botão de Voltar
-    $("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
-
-        controlaVoltar('1');
-
-        return false;
-
-    });
-
-    $("#cdcooper", "#divFiltroHistorico").focus();
-        
     layoutPadrao();
 
 }
@@ -1679,67 +1559,6 @@ function Gera_Impressao(nmarqpdf, callback) {
 
 }
 
-function gerarRelatorioHistorico() {
-
-    //Desabilita todos os campos do form
-    $('input,select', '#frmFiltro').desabilitaCampo();
-
-    var cdcooper = $('#cdcooper', '#frmFiltro').val();
-    var tparquiv = $('#tparquiv', '#frmFiltro').val();
-    var nrseqlot = $('#nrseqlot', '#frmFiltro').val();
-    var dtrefere = $('#dtrefere', '#frmFiltro').val();
-    var cddopcao = $('#cddopcao', '#frmCab').val();
-	var dtrefate = $('#dtrefate', '#frmFiltro').val();
-	var cdagenci = $('#cdagenci', '#frmFiltro').val();
-	var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
-	var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
-	var flcritic = $('#flcritic').is(':checked') ? 'S' : 'N';
-	var dschassi = $('#dschassi', '#frmFiltro').val();
-
-    $('input,select', '#frmFiltro').removeClass('campoErro');
-
-    //Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, solicitando relatório...');
-
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: 'POST',
-        url: UrlSite + 'telas/gravam/gerar_relatorio_historico.php',
-        data: {
-            tparquiv: tparquiv,
-            cdcooper: cdcooper,
-            cddopcao: 'I',
-            dtrefere: dtrefere,
-            nrseqlot: nrseqlot,
-			dtrefate: dtrefate,
-			cdagenci: cdagenci,
-			nrdconta: nrdconta,
-			nrctrpro: nrctrpro,
-			flcritic: flcritic,
-			dschassi: dschassi,
-			tipsaida: tipsaida,
-            redirect: 'html_ajax' // Tipo de retorno do ajax
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
-            //showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
-        },
-        success: function (response) {
-            hideMsgAguardo();
-            try {
-                eval(response);
-            } catch (error) {
-				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
-                //showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
-            }
-
-        }
-    });
-
-    return false;
-}
-
 function buscaContratosGravames(nriniseq, nrregist) {
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
@@ -2383,6 +2202,8 @@ function displayNoneButton() {
 	$('#btLibJudicial', '#divBotoes').css({ 'display': 'none' });
 	$('#btBlocJudicial', '#divBotoes').css({ 'display': 'none' });
 	$('#btInclManuGravame', '#divBotoes').css({ 'display': 'none' });
+	
+	
 		
 }
 function mostrabutton() {
@@ -2431,15 +2252,19 @@ function gerarRelatorio670(tipsaida) {
 	
     $('input,select', '#frmFiltro').removeClass('campoErro');
 	
-	Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,flcritic);
+	Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi);
 
     return false;
 }
 
-function Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,flcritic) {
+function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi) {
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, solicitando relatório...');
 
+	if((tparquiv == 'TODAS' || tparquiv == 'BAIXA')  && dtrefere != '' && nrseqlot == 0 && nrdconta == 0 && nrctrpro == 0 && flcritic== 'N' && dschassi == ''){
+		tipsaida == 'PDF';
+	}
+	
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: 'POST',
@@ -2457,6 +2282,8 @@ function Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrs
 			flcritic: flcritic,
 			dschassi: dschassi,
 			tipsaida: tipsaida,
+			nriniseq: glb_nriniseq,
+			nrregist: glb_nrregist,
             redirect: 'html_ajax' // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2494,9 +2321,10 @@ function Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrs
 
 function formatarTabelaRel670(tip){
 	$('#tblTela').css({ 'width': '1000' });
-	$('#fsetFiltro').css({ 'padding': '0 10px 10px 195px' })
+	$('#fsetFiltro').css({ 'padding': '0 10px 10px 195px' });
+	$('#cddopcao').css({ 'width': '91%' });
 	var divRegistro = $('div.divRegistros', '#frmCons');
-	divRegistro.css({'height':'85px','padding-bottom':'1px'}); // 370px
+	divRegistro.css({'padding-bottom':'1px'}); // 370px
 	
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
@@ -2509,11 +2337,11 @@ function formatarTabelaRel670(tip){
 	arrayLargura[0] = '31px';  	//Coop
 	arrayLargura[1] = '30px';	//PA
 	arrayLargura[2] = '101px';	//Operação
-	arrayLargura[3] = '50px';	//Lote
+	arrayLargura[3] = '48px';	//Lote
 	arrayLargura[4] = '65px';	//Conta/DV
 	arrayLargura[5] = '65px';	//Contrato
-	arrayLargura[6] = '130px';	//Chassi
-	arrayLargura[7] = '143px';	//Bem
+	arrayLargura[6] = '140px';	//Chassi
+	arrayLargura[7] = '190px';	//Bem
 	arrayLargura[8] = '65px';	//Data Envio
 	arrayLargura[9] = '65px';	//Data Ret
 	arrayLargura[10] = '';		//Situação
@@ -2624,4 +2452,14 @@ function mostraObservacao(ind) {
     $('.linObs').hide();
     $('#divObservacao').show();
     $('#linObs_' + ind).show();
+}
+
+function buscaIndice(nriniseq, nrregist) {
+
+    glb_nriniseq = nriniseq;
+    glb_nrregist = nrregist;
+
+    gerarRelatorio670('TELA');
+
+    return false;
 }

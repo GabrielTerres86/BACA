@@ -32,7 +32,6 @@
 	
     <option value="S"><? echo utf8ToHtml('S - Alterar dados de bens substituidos via aditivo') ?></option>
 	
-		<option value="H"><? echo utf8ToHtml('H - Hist&oacute;rico') ?></option>
     <option value="I"><? echo utf8ToHtml('I - Imprimir') ?></option>
 	
     <option value="P"><? echo utf8ToHtml('P - Parâmetros GRAVAME') ?></option>

@@ -92,13 +92,54 @@
 			</tbody>
 		</table>
 	</div>
+	
+	<div id="divPesquisaRodape" class="divPesquisaRodape">
+		<table>	
+			<tr>
+				<td>
+					<?php
+					if (isset($qtdregist) and $qtdregist == 0)
+						$nriniseq = 0;
+
+					// Se a paginação não está na primeira, exibe botão voltar
+					if ($nriniseq > 1) {
+						?> <a class='paginacaoAnt'><<< Anterior</a> <?php
+					} else {
+						?> &nbsp; <?php
+						}
+						?>
+                </td>
+                <td>
+                    <?php
+                    if (isset($nriniseq)) {
+                        ?> Exibindo <?php echo $nriniseq; ?> at&eacute; <?php if (($nriniseq + $nrregist) > $qtdregist) {
+                    echo $qtdregist;
+                } else {
+                    echo ($nriniseq + $nrregist - 1);
+                } ?> de <?php echo $qtdregist; ?><?
+                        }
+                        ?>
+                    </td>
+                    <td>
+                        <?php
+                        // Se a paginação não está na &uacute;ltima página, exibe botão proximo
+                        if ($qtdregist > ($nriniseq + $nrregist - 1)) {
+                            ?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?php
+            } else {
+                ?> &nbsp; <?php
+            }
+            ?>			
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+		
 	<div id="divObservacao" style="display:none;">
-		<table class="" style="border-collapse: collapse; width: 500px;">
+		<table style="border-collapse: collapse; width: 100%; margin-top: 3%;">
 			<thead>
 				<tr style="border-bottom: 1px dotted #999;">
-					<th style="font-size: 12px; height: 22px; padding: 0px 5px; cursor: pointer; border-right: 1px dotted #999; background-color: #fff;" ><? echo utf8ToHtml('Data Envio');  ?></th>
-					<th style="font-size: 12px; height: 22px; padding: 0px 5px; cursor: pointer; border-right: 1px dotted #999; background-color: #fff;" ><? echo utf8ToHtml('Data Retorno');  ?></th>
-					<th style="font-size: 12px; height: 22px; padding: 0px 5px; cursor: pointer; border-right: 1px dotted #999; background-color: #fff;" ><? echo utf8ToHtml('Retorno');  ?></th>
+					<th style="font-size: 12px; height: 22px; padding: 0px 5px; cursor: pointer; border-right: 1px dotted #999; background-color: #f7d3ce; text-align: center;" ><? echo utf8ToHtml('Retorno');  ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -107,9 +148,7 @@
 					$dsretor = getByTagName($registrosSemRet[$i]->tags,'desretor') != '' ? getByTagName($registrosSemRet[$i]->tags,'desretor') : 'Sem Retorno para o registro' ;
 					?>
 					<tr class="linObs" id="linObs_<? echo $i; ?>" style="height: 16px; background-color: #ffbaad;">
-						<td style="padding: 0px 5px; border-right: 1px dotted #999; font-size: 12px; color: #333;" ><? echo getByTagName($registrosSemRet[$i]->tags,'dtenvgrv') ?></td>
-						<td style="padding: 0px 5px; border-right: 1px dotted #999; font-size: 12px; color: #333;" ><? echo getByTagName($registrosSemRet[$i]->tags,'dtretgrv') ?></td>
-						<td style="padding: 0px 5px; border-right: 1px dotted #999; font-size: 12px; color: #333;" ><? echo $dsretor; ?></td>
+						<td style="padding: 0px 5px; border-right: 1px dotted #999; font-size: 12px; color: #333; text-align: left;" ><? echo $dsretor; ?></td>
 					</tr>
 				<? } 
 				?> 
@@ -118,7 +157,20 @@
 		</table>
 	</div>
 </div>
-<!--<div id="divBotoes" style="margin-bottom:10px">
-	<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina')); cNrctremp.focus(); return false;">Voltar</a>
-	<a href="#" class="botao" id="btSalvar" onClick="selecionaContrato(); return false;">Continuar</a>
-</div>--!>
+
+<script type="text/javascript">
+    
+	$('#cddopcao', '#frmCab').attr('disabled', true);
+    //$('#cddindexC', '#frmCab').attr('disabled', true);
+    
+	$('a.paginacaoAnt').unbind('click').bind('click', function() {
+		buscaIndice( <?php echo "'".($nriniseq - $nrregist)."'"; ?> , <?php echo "'".$nrregist."'"; ?> );
+    });
+	
+    $('a.paginacaoProx').unbind('click').bind('click', function() {
+		buscaIndice( <?php echo "'".($nriniseq + $nrregist)."'"; ?> , <?php echo "'".$nrregist."'"; ?> );
+    });
+    
+	$('#divPesquisaRodape').formataRodapePesquisa();
+
+</script>
