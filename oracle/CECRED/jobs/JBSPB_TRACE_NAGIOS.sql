@@ -1,3 +1,13 @@
+DECLARE
+
+  CURSOR cr_job (pr_owner    VARCHAR2,
+                 pr_job_name VARCHAR2) IS
+   SELECT 1
+     FROM all_scheduler_jobs j
+    WHERE UPPER(j.owner) = UPPER(pr_owner)
+      AND UPPER(j.job_name) = UPPER(pr_job_name);
+
+  rw_job cr_job%ROWTYPE;
 /*
 
     PROJETO 475 - Melhorias SPB - Sprint A
@@ -23,9 +33,17 @@ begin
 	nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''     
 	nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
 
-	sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBSPB_TRACE_NAGIOS');  
 
-    sys.dbms_scheduler.create_job(job_name          => 'CECRED.JBSPB_TRACE_NAGIOS',
+  -- JOB ANTIGO DEVERÁ SER EXCLUÍDO
+  OPEN cr_job (pr_owner    => 'CECRED', 
+               pr_job_name => 'JBSPB_TRACE_NAGIOS');
+  FETCH cr_job INTO rw_job;
+  IF cr_job%FOUND THEN
+  	sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBSPB_TRACE_NAGIOS');  
+  END IF;
+  CLOSE cr_job;
+
+  sys.dbms_scheduler.create_job(job_name          => 'CECRED.JBSPB_TRACE_NAGIOS',
                                 job_type            => 'PLSQL_BLOCK',
                                 job_action          => 'declare
     vr_cdcritic NUMBER;
@@ -43,4 +61,3 @@ begin
                                 auto_drop           => false,
                                 comments            => 'Gerar os problemas de envio/recepção de mensagens para o JD');
 end;
-/

@@ -1930,10 +1930,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       -- mesmo assim gerar mensagem para controle
       -- Fase 20 - controle mensagem SPB
       IF pr_idagenda = 2 THEN
-        vr_trace_nmmensagem := 'Agend.Aprov.OFSAA'
+        vr_trace_nmmensagem := 'Agend.Aprov.OFSAA';
       ELSE
         vr_trace_nmmensagem := 'Não utiliza OFSAA';
-    END IF;
+      END IF;
       --
       sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
                                  ,pr_nmmensagem             => vr_trace_nmmensagem
@@ -1957,7 +1957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         -- Levantar Excecao
         vr_cdcritic := 0;
         RAISE vr_exc_erro;
-    END IF;
+      END IF;
     --
     END IF;
     ELSE
