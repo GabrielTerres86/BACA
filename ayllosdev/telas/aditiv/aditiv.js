@@ -2662,90 +2662,22 @@ function carregaTipoAditivo() {
     cCdaditiv.html(strCampo2);
 }
 
-function ConsulAditivos(tipsaida) {
+function ConsulAditivos(tipsaida,cdcooper) {
 	
  //Desabilita todos os campos do form
     $('input,select', '#frmFiltro').desabilitaCampo();
-	
-	
-	var cdcooper = $('#cdcooper', '#frmFiltro').val();
-    var tparquiv = $('#tparquiv', '#frmFiltro').val();
-    var nrseqlot = normalizaNumero($('#nrseqlot', '#frmFiltro').val());
-    var dtrefere = $('#dtrefere', '#frmFiltro').val();
-    var cddopcao = $('#cddopcao', '#frmCab').val();
-	var dtrefate = $('#dtrefate', '#frmFiltro').val();
-	var cdagenci = normalizaNumero($('#cdagenci', '#frmFiltro').val());
-	var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
-	var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
-	var flcritic = $('#flcritic').is(':checked') ? 'S' : 'N';
-	var dschassi = $('#dschassi', '#frmFiltro').val();
-	
-	var cdcooper = '';
+		
     var tparquiv = "TODAS";
-    var nrseqlot = '';
+    var nrseqlot = '0';
     var dtrefere = '';
-    var cddopcao = 'I';
+    //var cddopcao = 'I';
 	var dtrefate = '';
-	var cdagenci = '';
-	var nrdconta = '517917';//normalizaNumero(cNrdconta.val());
-	var nrctrpro = '1037172';//normalizaNumero(cNrctremp.val());;
-	var flcritic = '';
-	var dschassi = ''; //cDschassi.val();
+	var cdagenci = '0';
+	var nrdconta = normalizaNumero(cNrdconta.val()); 
+	var nrctrpro = normalizaNumero(cNrctremp.val()); 
+	var flcritic = 'N';
+	var dschassi = cDschassi.val();
     
-	$('input,select', '#frmFiltro').removeClass('campoErro');
-
-    //Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, solicitando relatório...');
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: 'POST',
-        url: UrlSite + 'telas/gravam/gerar_relatorio_670.php',
-        data: {			
-            tparquiv: tparquiv,
-            cdcooper: cdcooper,
-            cddopcao: cddopcao,
-            dtrefere: dtrefere,
-            nrseqlot: nrseqlot,
-			dtrefate: dtrefate,
-			cdagenci: cdagenci,
-			nrdconta: nrdconta,
-			nrctrpro: nrctrpro,
-			flcritic: flcritic,
-			dschassi: dschassi,
-			tipsaida: tipsaida,
-            redirect: 'html_ajax' // Tipo de retorno do ajax
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
-            //showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");
-        },
-        success: function (response) {	
-            hideMsgAguardo();
-			if(response.indexOf('XML error:') != -1){
-				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + response + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");            
-			} else  if (response.indexOf('showError("error"') != -1) {
-				eval(response);
-			} else {
-				try {
-					if(tipsaida == 'PDF'){
-						eval(response);
-					} else {
-						$('input,select','#frmCab').removeClass('campoErro');
-						$('#frmCons').css({'display':'block'}); 
-						$("#divDados").html(response);
-						$('#btProsseguir' ,'#divBotoes').hide();
-						formatarTabelaRel670('M');
-						
-						hideMsgAguardo();
-					}
-				} catch (error) {
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cdcooper','#frmFiltro').focus();");            
-					//showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();$("#cdcooper","#frmFiltro").focus();');
-				}
-			}
-        }
-    });
-
-    return false;	
+	Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,flcritic);
+	return false;
 }

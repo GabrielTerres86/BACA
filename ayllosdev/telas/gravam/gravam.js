@@ -2383,8 +2383,6 @@ function displayNoneButton() {
 	$('#btLibJudicial', '#divBotoes').css({ 'display': 'none' });
 	$('#btBlocJudicial', '#divBotoes').css({ 'display': 'none' });
 	$('#btInclManuGravame', '#divBotoes').css({ 'display': 'none' });
-	
-	
 		
 }
 function mostrabutton() {
@@ -2433,12 +2431,12 @@ function gerarRelatorio670(tipsaida) {
 	
     $('input,select', '#frmFiltro').removeClass('campoErro');
 	
-	Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi);
+	Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,flcritic);
 
     return false;
 }
 
-function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi) {
+function Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,flcritic) {
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, solicitando relatório...');
 
