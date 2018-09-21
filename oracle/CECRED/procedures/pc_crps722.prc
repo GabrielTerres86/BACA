@@ -119,7 +119,6 @@ BEGIN
                                  pr_idgrupo  IN NUMBER,
                                  pr_nrdconta IN crapass.nrdconta%TYPE) IS
       SELECT idgrupo
-            ,idintegrante
             ,cdcooper
             ,nrdconta
             ,tpcarga
@@ -127,7 +126,22 @@ BEGIN
        WHERE itg.dtexclusao IS NULL
          AND itg.cdcooper = pr_cdcooper
          AND itg.nrdconta = pr_nrdconta
-         AND itg.idgrupo  <> pr_idgrupo;
+         AND itg.idgrupo  <> pr_idgrupo
+      UNION
+      SELECT idgrupo
+            ,cdcooper
+            ,nrdconta             
+        FROM tbcc_grupo_economico g
+       --> grupos ativos
+       WHERE g.cdcooper = pr_cdcooper
+         AND g.nrdconta = pr_nrdconta
+         AND g.idgrupo  <> pr_idgrupo
+         AND EXISTS ( SELECT 1
+                        FROM tbcc_grupo_economico_integ i
+                       WHERE g.cdcooper = i.cdcooper
+                         AND g.idgrupo  = i.idgrupo
+                         AND i.dtexclusao IS NULL);
+        
     rw_integrante_outro cr_integrante_outro%ROWTYPE;   
     
     --> Verificar se cooperado é o formador do grupo   
@@ -143,7 +157,9 @@ BEGIN
     
     --> Verificar se a conta formadora ainda pertence ao grupo na grp     
     CURSOR cr_grupo_2(pr_idgrupo   NUMBER,
-                      pr_nrdgrupo  NUMBER) IS
+                      pr_nrdgrupo  NUMBER,
+                      pr_cdcooper  crapcop.cdcooper%TYPE,
+                      pr_nrdconta  crapass.nrdconta%TYPE) IS
       SELECT gre.idgrupo
         FROM tbcc_grupo_economico gre,
              crapass ass_ge,
@@ -153,6 +169,7 @@ BEGIN
        WHERE gre.cdcooper  = ass_ge.cdcooper
          AND gre.nrdconta  = ass_ge.nrdconta
          AND gre.idgrupo   = pr_idgrupo
+         AND grp1.cdcooper = pr_cdcooper
          AND grp1.nrdgrupo = pr_nrdgrupo
          AND grp1.cdcooper = ass_gr1.cdcooper      
          AND grp1.nrdconta = ass_gr1.nrdconta
@@ -175,6 +192,7 @@ BEGIN
          AND gre.idgrupo = pr_idgrupo
          AND gre.dtexclusao IS NULL      
          AND gre.tpcarga = 3
+         AND grp1.cdcooper = pr_cdcooper
          AND grp1.nrdgrupo = pr_nrdgrupo
          AND grp1.cdcooper = ass_gr1.cdcooper
          AND grp1.nrdconta = ass_gr1.nrdconta
@@ -182,7 +200,50 @@ BEGIN
             
          AND grp1.cdcooper = ass_gr2.cdcooper
          AND grp1.nrctasoc = ass_gr2.nrdconta
-         AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base;
+         AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base
+      UNION
+      
+      --> Verificar se o formador do grupo novo pertence a um mesmo grupo no grupo antigo
+      --> a essa conta, justificando permanecerem no mesmo grupo novo
+      SELECT gre.idgrupo
+        FROM tbcc_grupo_economico gre,
+             crapass ass_ge,
+             crapgrp grp1,
+             crapass ass_gr1,
+             crapass ass_gr2           
+       WHERE gre.cdcooper  = ass_ge.cdcooper
+         AND gre.nrdconta  = ass_ge.nrdconta
+         AND gre.idgrupo   = pr_idgrupo
+         AND grp1.cdcooper = pr_cdcooper
+         AND grp1.nrdgrupo <> pr_nrdgrupo
+         AND grp1.cdcooper = ass_gr1.cdcooper      
+         AND grp1.nrdconta = ass_gr1.nrdconta
+         AND ass_ge.cdcooper = ass_gr1.cdcooper
+         AND ass_ge.nrcpfcnpj_base = ass_gr1.nrcpfcnpj_base
+               
+         AND grp1.cdcooper = ass_gr2.cdcooper      
+         AND grp1.nrctasoc = ass_gr2.nrdconta
+         AND ass_ge.cdcooper = ass_gr2.cdcooper
+         AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base
+         AND EXISTS ( SELECT * 
+                        FROM crapgrp grp2,
+                             crapass ass_gr21,
+                             crapass ass_gr22,
+                             crapass ass2
+                      WHERE grp2.nrdgrupo = grp1.nrdgrupo
+                        AND grp2.cdcooper = pr_cdcooper
+                        AND ass2.cdcooper = pr_cdcooper
+                        AND ass2.nrdconta = pr_nrdconta
+                          
+                        AND grp2.cdcooper = ass_gr21.cdcooper      
+                        AND grp2.nrdconta = ass_gr21.nrdconta
+                        AND ass2.cdcooper = ass_gr21.cdcooper
+                        AND ass2.nrcpfcnpj_base = ass_gr21.nrcpfcnpj_base
+                                       
+                        AND grp2.cdcooper = ass_gr22.cdcooper      
+                        AND grp2.nrctasoc = ass_gr22.nrdconta
+                        AND ass2.cdcooper = ass_gr22.cdcooper
+                        AND ass2.nrcpfcnpj_base = ass_gr22.nrcpfcnpj_base) ;
     rw_grupo_2 cr_grupo_2%ROWTYPE;        
             
     -- Busca os contratos
@@ -625,7 +686,9 @@ BEGIN
            rw_integrante.tpcarga <> 3 THEN
           --> Verificar se a conta formadora ainda pertence ao grupo na grp     
           OPEN cr_grupo_2(pr_idgrupo   => rw_integrante.idgrupo,
-                          pr_nrdgrupo  => rw_grupo_economico.nrdgrupo);
+                          pr_nrdgrupo  => rw_grupo_economico.nrdgrupo,
+                          pr_cdcooper  => rw_grupo_economico.cdcooper,
+                          pr_nrdconta  => rw_grupo_economico.nrdconta);
           FETCH cr_grupo_2 INTO rw_grupo_2;
           --> caso o formador do grupo não faz parte do grupo na tabela crapgrp, é sinal que foi reformulado o grupo
           --> sendo necessario criar novo grupo 
@@ -806,7 +869,9 @@ BEGIN
           IF vr_flginteg_outro THEN
             --> Verificar se a conta formadora ainda pertence ao grupo na grp     
             OPEN cr_grupo_2(pr_idgrupo   => rw_integrante_outro.idgrupo,
-                            pr_nrdgrupo  => rw_grupo_economico.nrdgrupo);
+                            pr_nrdgrupo  => rw_grupo_economico.nrdgrupo,
+                            pr_cdcooper  => rw_grupo_economico.cdcooper,
+                            pr_nrdconta  => rw_grupo_economico.nrdconta);
             FETCH cr_grupo_2 INTO rw_grupo_2;
             --> caso o formador do grupo não faz parte do grupo na tabela crapgrp, é sinal que foi reformulado o grupo
             --> sendo necessario criar 
@@ -830,6 +895,9 @@ BEGIN
               RAISE vr_exc_saida;
             END IF;                   
             
+            --> Atualilzar variaveis de controle
+            vr_idgrupo := rw_integrante_outro.idgrupo;
+            vr_idgrupo_ant := rw_integrante_outro.idgrupo;
             
           ELSIF vr_flginteg_outro = FALSE THEN            
             -- Cadastro de Integrante
