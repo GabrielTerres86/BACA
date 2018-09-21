@@ -115,7 +115,7 @@ CREATE OR REPLACE PACKAGE cecred.sspc0002 AS
 
 END sspc0002;
 /
-CREATE OR REPLACE PACKAGE BODY cecred.sspc0002 AS
+CREATE OR REPLACE PACKAGE BODY CECRED.sspc0002 AS
 
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -1147,8 +1147,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.sspc0002 AS
                   ,'D+' || e.qtdfloat qtdfloat
                   ,decode(nvl(e.flcooexp, 0), 1, 'Cooperado Emite e Expede', ' ') flcooexp
                   ,decode(nvl(e.flceeexp, 0), 1, 'Cooperativa Emite e Expede', ' ') flceeexp
-                  ,decode(e.flserasa, '1', 'Sim', 'Nao') flserasa
-                  ,decode(e.flprotes, 1, 'Sim', 'Nao') flprotes
+                  ,decode(e.flserasa, '1', 'Sim', 'Não') flserasa
+                  ,decode(e.flprotes, 1, 'Sim', 'Não') flprotes
                   , -- Conforme e-mail da Patricia, devera sempre ser sim para protesto
                    ' Banco ' || lpad(b.cdbcoctl, 4, '0') || ' Ag./Coop. ' || b.cdagectl || ' Conta ' ||
                    gene0002.fn_mask_conta(e.nrdconta) contadeb
@@ -1577,10 +1577,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.sspc0002 AS
                   ,e.nrdconta
                   ,f.cdagenci
                   ,f.nrcpfcgc nrcpfcgc_sem_mask
-                  ,c.vldesconto_concedido_coo || '%' vldesconto_concedido_coo
-                  ,c.vldesconto_concedido_cee || '%' vldesconto_concedido_cee
-                  ,c.vldesconto_adicional_coo || '%' vldesconto_adicional_coo
-                  ,c.vldesconto_adicional_cee || '%' vldesconto_adicional_cee
+                  ,nvl(c.vldesconto_concedido_coo, 0) || '%' vldesconto_concedido_coo
+                  ,nvl(c.vldesconto_concedido_cee, 0) || '%' vldesconto_concedido_cee
+                  ,nvl(c.vldesconto_adicional_coo, 0) || '%' vldesconto_adicional_coo
+                  ,nvl(c.vldesconto_adicional_cee, 0) || '%' vldesconto_adicional_cee
                   ,'Periodo do desconto: ' || nvl(c.qtdmes_retorno_reciproci, 0) ||
                    ' mes(es), contado(s) da aprovação da Cooperativa' qtdmes_retorno_reciproci
                   ,'Periodo do desconto: ' || nvl(c.idfim_desc_adicional_coo, 0) ||
@@ -1650,8 +1650,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.sspc0002 AS
                   ,crapceb.qtdfloat
                   ,'Modalidade: ' ||
                    fn_retorna_modalidade(nvl(crapceb.flcooexp, 0), nvl(crapceb.flceeexp, 0)) modalidade
-                  ,decode(crapceb.flserasa, '1', 'Sim', 'Nao') flserasa
-                  ,decode(crapceb.flprotes, 1, 'Sim', 'Nao') flprotes
+                  ,decode(crapceb.flserasa, '1', 'Sim', 'Não') flserasa
+                  ,decode(crapceb.flprotes, 1, 'Sim', 'Não') flprotes
                   ,crapceb.insrvprt
                   ,crapceb.qtlimmip
                   ,crapceb.qtlimaxp
