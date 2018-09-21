@@ -71,6 +71,8 @@ var aplicacao		= new Array();
 var arrayAditiv		= new Array();
 
 var modeloBem;
+var glb_nriniseq; 
+var glb_nrregist;
 
 //Labels/Campos do cabeçalho
 var rCddopcao, rNrdconta, rNrctremp, rNraditiv, rDtmvtolx, rCdaditiv, rCdaditix, rTpctrato,
@@ -84,7 +86,10 @@ $(document).ready(function() {
 
 // seletores
 function estadoInicial() {
-
+	
+    glb_nriniseq = 1;
+	glb_nrregist = 30;
+	
 	$('#divTela').fadeTo(0,0.1);
 	$('#frmCab').css({'display':'block'});
 
@@ -2678,6 +2683,6 @@ function ConsulAditivos(tipsaida,cdcooper) {
 	var flcritic = 'N';
 	var dschassi = cDschassi.val();
     
-	Relatorio670(tipsaida,cdcooper,nrdconta,nrctrpro,dschassi,tparquiv, nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,flcritic);
+	Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi);
 	return false;
 }
