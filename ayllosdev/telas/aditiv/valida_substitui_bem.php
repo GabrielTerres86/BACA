@@ -10,6 +10,7 @@
  *   001 [28/02/2014] Guilherme(SUPERO)         : Novos campos NrCpfCgc e validações.
  *	 002 [11/12/2014] Lucas Reinert(CECRED)		: Adicionado campos tpproapl e novo parametro na function arrayTipo
  *   003 [01/11/2017] Passagem do tpctrato e idgaropc. (Jaison/Marcos Martini - PRJ404) 
+ *
  */
 ?>
 

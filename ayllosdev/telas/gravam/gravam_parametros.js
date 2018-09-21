@@ -13,7 +13,7 @@ $(document).ready(function(){
 });
 
 function formataFiltroParametros(){
-	// Desabilitar a opção
+	// Desabilitar a opcao
 	$("#cddopcao", "#frmCab").desabilitaCampo();
 	
 	$("#cddopcao", "#frmCab").css("width", "560px");

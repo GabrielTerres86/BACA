@@ -1,10 +1,11 @@
 var errorMessage = "";
+
 $(function(){
 	$('#vlrdobem').maskMoney();
 	$('#vlrdobem').val($('#vlrdobem').val()).trigger('mask.maskMoney');
 	$('#vlfipbem').maskMoney();
 	$('#vlfipbem').val($('#vlfipbem').val()).trigger('mask.maskMoney');		
-	intervenienteValidado=false;	
+	intervenienteValidado = false;	
 });
 
 function convert_accented_characters(str){

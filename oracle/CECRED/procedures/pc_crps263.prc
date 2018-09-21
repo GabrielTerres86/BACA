@@ -47,7 +47,7 @@ BEGIN
                             Inclusao do total de seguros a vencer de todos os
                             PAs da cooperativa (Carlos)
                             
-               10/02/2015 - Conversão Progress >> Oracle PL/SQL (Vanessa).
+               10/02/2015 - Conversao Progress >> Oracle PL/SQL (Vanessa).
 ............................................................................. */
 
    DECLARE

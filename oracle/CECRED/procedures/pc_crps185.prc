@@ -82,7 +82,7 @@ BEGIN
                             para 8, conforme chamado #233714) em seus conteúdos, pois não estavam suportando o tamanho (Carlos)
 */
     DECLARE
-      -- Código do programa
+      -- Codigo do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS185';
       -- Tratamento de erros
       vr_exc_erro exception;

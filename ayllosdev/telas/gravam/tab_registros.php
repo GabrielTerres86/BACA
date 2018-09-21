@@ -1,6 +1,6 @@
 <?php 
 /*!
- * FONTE        : tab_registros.php                 Última alteração: 14/07/2016
+ * FONTE        : tab_registros.php                 Última alteração: 24/08/2016
  * CRIAÇÃO      : ANDREI - RKAM
  * DATA CRIAÇÃO : mAIO/2016
  * OBJETIVO     : Tabela que apresenta a consulta de ratings da tela RATING

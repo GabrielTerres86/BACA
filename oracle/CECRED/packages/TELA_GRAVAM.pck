@@ -55,7 +55,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_GRAVAM AS
                                   ,pr_des_erro OUT VARCHAR2);        -- Saida OK/NOK     
   
      
-  /*Rotina para criar os arquivos de GRAVAMES*/                             
+  /* Rotina para criar os arquivos de GRAVAMES */                             
   PROCEDURE pc_gera_arquivo(pr_cdcoptel   IN INTEGER            --> 0- Não traz a opção TODAS / 1 - Traz a opção TODAS      
                            ,pr_tparquiv   IN VARCHAR2           --> Tipo do arquivo                      
                            ,pr_cddopcao   IN VARCHAR2           --> Opção da tela
