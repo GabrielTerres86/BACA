@@ -2529,35 +2529,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       rw_crapcje cr_crapcje%ROWTYPE;
       
       -- Cursor para busca das contas do grupo economico
-      CURSOR cr_crapgrp IS
-        SELECT *
-          FROM (SELECT int.tppessoa inpessoa
-                      ,int.nrdconta
-                      ,int.Nrcpfcgc
-                  FROM tbcc_grupo_economico_integ INT
-                      ,tbcc_grupo_economico p
-                 WHERE int.dtexclusao IS NULL
-                   AND int.cdcooper = pr_cdcooper
-                   AND int.idgrupo  = p.idgrupo
-                   AND int.tppessoa = 1  -- Somente PF
-                 UNION
-                SELECT ass.inpessoa
-                      ,pai.nrdconta
-                      ,ass.nrcpfcgc
-                  FROM tbcc_grupo_economico       pai
-                     , crapass                    ass
-                     , tbcc_grupo_economico_integ int
-                 WHERE ass.cdcooper = pai.cdcooper
-                   AND ass.nrdconta = pai.nrdconta
-                   AND int.idgrupo  = pai.idgrupo
-                   AND int.dtexclusao is NULL
-                   AND ass.dtelimin IS NULL -- Somente ativos
-                   AND ass.inpessoa = 1  -- Somente PF
-                   AND ass.cdcooper = pr_cdcooper
-                   AND int.cdcooper = pr_cdcooper
-              ) dados
-         WHERE dados.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada   
-;
+      CURSOR cr_crapgrp (pr_nrdgrupo INTEGER)IS
+        SELECT int.tppessoa inpessoa
+              ,int.nrdconta
+              ,int.Nrcpfcgc
+          FROM tbcc_grupo_economico_integ INT
+              ,tbcc_grupo_economico p
+         WHERE int.dtexclusao IS NULL
+           AND int.cdcooper = pr_cdcooper
+           AND int.idgrupo  = p.idgrupo
+           AND int.tppessoa = 1  -- Somente PF
+           AND int.idgrupo  = pr_nrdgrupo
+           AND int.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada   
+         UNION
+        SELECT ass.inpessoa
+              ,pai.nrdconta
+              ,ass.nrcpfcgc
+          FROM tbcc_grupo_economico       pai
+             , crapass                    ass
+             , tbcc_grupo_economico_integ int
+         WHERE ass.cdcooper = pai.cdcooper
+           AND ass.nrdconta = pai.nrdconta
+           AND int.idgrupo  = pai.idgrupo
+           AND int.dtexclusao is NULL
+           AND ass.dtelimin IS NULL -- Somente ativos
+           AND ass.inpessoa = 1  -- Somente PF
+           AND ass.cdcooper = pr_cdcooper
+           AND int.cdcooper = pr_cdcooper
+           AND pai.idgrupo  = pr_nrdgrupo
+           AND pai.nrdconta <> pr_nrdconta -- Desconsiderar a propria conta, pois ela ja foi analisada   
+           ;
       -- Cursor para busca das contas do grupo economico
       CURSOR cr_crapavt(pr_ingrpeco VARCHAR2)IS
         SELECT crapass.nrdconta,
@@ -2627,7 +2628,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       
       -- Obrigatoriedade analise automatica da Esteira
       vr_inobriga VARCHAR2(1) := 'N';
-      
+
+      vr_nrdgrupo      tbcc_grupo_economico.idgrupo%TYPE;
+      vr_inrisco_grp   tbcc_grupo_economico.inrisco_grupo%TYPE;
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
@@ -2756,18 +2759,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         END IF;
         CLOSE cr_crapcje;
       ELSE
-        -- Busca os cooperados que fazem parte do GRUPO ECONOMICO
-        FOR rw_crapgrp IN cr_crapgrp LOOP
-          -- Insere o integrante do grupo economico para ser consultado
-          vr_ind := vr_ind + 1;
-          vr_tab_consulta(vr_ind).nrdconta := rw_crapgrp.nrdconta;
-          vr_tab_consulta(vr_ind).nrcpfcgc := rw_crapgrp.nrcpfcgc;
-          vr_tab_consulta(vr_ind).inpessoa := rw_crapgrp.inpessoa;
-          vr_tab_consulta(vr_ind).intippes := 4; -- Grupo economico
-          vr_tab_contas(rw_crapgrp.nrdconta).nrdconta := rw_crapgrp.nrdconta;
-          -- Informa que tem grupo economico
-          vr_ingrpeco := 'S';
-        END LOOP;      
+        -- Identificar o grupo da conta
+        risc0004.pc_busca_grupo_economico(pr_cdcooper => pr_cdcooper
+                                        , pr_nrdconta => pr_nrdconta
+                                        , pr_nrcpfcgc => NULL
+                                        , pr_numero_grupo => vr_nrdgrupo
+                                        , pr_risco_grupo  => vr_inrisco_grp);
+      
+        vr_nrdgrupo := nvl(vr_nrdgrupo,0);
+
+        IF vr_nrdgrupo > 0 THEN -- Tem Grupo Economico
+          -- Busca os cooperados que fazem parte do GRUPO ECONOMICO
+          FOR rw_crapgrp IN cr_crapgrp(vr_nrdgrupo) LOOP
+            -- Insere o integrante do grupo economico para ser consultado
+            vr_ind := vr_ind + 1;
+            vr_tab_consulta(vr_ind).nrdconta := rw_crapgrp.nrdconta;
+            vr_tab_consulta(vr_ind).nrcpfcgc := rw_crapgrp.nrcpfcgc;
+            vr_tab_consulta(vr_ind).inpessoa := rw_crapgrp.inpessoa;
+            vr_tab_consulta(vr_ind).intippes := 4; -- Grupo economico
+            vr_tab_contas(rw_crapgrp.nrdconta).nrdconta := rw_crapgrp.nrdconta;
+            -- Informa que tem grupo economico
+            vr_ingrpeco := 'S';
+          END LOOP;
+        END IF;
       END IF;
 
       -- Busca os cooperados que sao os socios da empresa
@@ -3411,7 +3425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       END IF;
     
     END IF;
-    
+/*    
     RISC0004.pc_busca_risco_inclusao(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_dsctrliq => pr_dsctrliq
@@ -3419,7 +3433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                     ,pr_innivris => vr_innivris 
                                     ,pr_cdcritic => vr_cdcritic 
                                     ,pr_dscritic => vr_dscritic);
-    
+*/    
     --> Somente vamos verificar a cessao de credito, caso possui a finalidade
     IF pr_cdfinemp > 0 THEN
       --> Buscar dados da finalidade
