@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------------------
 
-    Ultima Atualizacao : 01/06/2018
+    Ultima Atualizacao : 21/09/2018
                         
     Alteracoes: 20/10/2008 - Chamar BO que envia email-s na procedure
 	                           envia-email (Gabriel).
@@ -34,6 +34,8 @@
 														 eventos EAD na procedure EnviaPac, SD.710219 (Jean Michel)
 
 			    01/06/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+                
+                21/09/2018 - sctask0029112 Melhoria de performance da tela não carregando a aba de PAs imediatamente (Carlos)
 														 
 ------------------------------------------------------------------------------*/
 
@@ -549,12 +551,119 @@ PROCEDURE CriaListaPacs :
   /* Busca os eventos agendados para cada PA */
   FOR EACH cratagp NO-LOCK BY cratagp.nmresage:
     
-      /* Pega os eventos agendados para o PA */
-      FOR EACH  crapeap WHERE crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)   AND
+    /* Pega os eventos agendados para o PA */
+    SELECT count(*)
+      INTO aux_qtevepac
+      FROM crapeap, crapedp
+     WHERE crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
+       AND crapeap.idevento = INTEGER(ab_unmap.aux_idevento)
+       AND crapeap.cdagenci = cratagp.cdagenci
+       AND crapeap.dtanoage = INTEGER(ab_unmap.aux_dtanoage)
+       AND crapedp.cdcooper = crapeap.cdcooper
+       AND crapedp.idevento = crapeap.idevento
+       AND crapedp.cdevento = crapeap.cdevento
+       AND crapedp.dtanoage = crapeap.dtanoage
+       AND crapedp.tpevento <> 10
+       AND crapedp.tpevento <> 11.
+
+      ASSIGN aux_nmevepac = "0:''".
+
+      FIND crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento)  AND
+                         crapagp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)  AND
+                         crapagp.dtanoage = INTEGER(ab_unmap.aux_dtanoage)  AND
+                         crapagp.cdagenci = cratagp.cdagenci                NO-LOCK NO-ERROR.
+
+      IF NOT AVAILABLE crapagp OR crapagp.idstagen = 0 THEN
+        ASSIGN aux_flpacenv = 0. 
+      ELSE
+        ASSIGN aux_flpacenv = 1. 
+
+      ASSIGN aux_conteudo = aux_conteudo + "~{cdagenci:'" + STRING(cratagp.cdagenci)          + 
+                                           "',flpacenv:'" + TRIM(STRING(aux_flpacenv)) + 
+                                           "',nmresage:'" + cratagp.nmresage                  + 
+                                           "',qtevepac:'" + STRING(aux_qtevepac)              + 
+                                           "'," + aux_nmevepac + "~}".
+      
+      RUN RodaJavaScript("mpacs.push(" + aux_conteudo + ")").
+      ASSIGN aux_contador = 0
+             aux_conteudo = "".
+        
+      /* ZERA a quantidade de eventos e o nome dos eventos do PA */
+      ASSIGN aux_qtevepac = 0
+             aux_nmevepac = "".
+  END.
+  /*RUN RodaJavaScript('alert("no CriaListaPacs 4  ' + STRING(TIME,"HH:MM:SS") + ' ");').      */
+  
+  IF aux_conteudo <> "" THEN
+    RUN RodaJavaScript("mpacs.push(" + aux_conteudo + ")").                   
+  
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPacs2 w-html 
+PROCEDURE CriaListaPacs2:
+  
+  DEF VAR aux_conteudo AS CHAR        NO-UNDO.
+  DEF VAR aux_contador AS INT  INIT 0 NO-UNDO.
+
+  ASSIGN aux_qtevepac = 0
+         aux_nmevepac = "".
+
+  /* Limpa a tabela temporária */
+  EMPTY TEMP-TABLE cratagp.
+
+  RUN RodaJavaScript("var mpacs = new Array();").
+  
+  /* Faz o agrupamento dos PA'S */
+  /* PA's agrupadores */
+  FOR EACH crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento)
+                     AND crapagp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
+                     AND crapagp.dtanoage = INTEGER(ab_unmap.aux_dtanoage) 
+                     AND crapagp.cdageagr = crapagp.cdagenci NO-LOCK:
+
+    FOR FIRST crapage FIELDS(nmresage) WHERE crapage.cdcooper = crapagp.cdcooper
+                                         AND crapage.cdagenci = crapagp.cdagenci NO-LOCK. END.
+                        
+    IF NOT AVAILABLE crapage THEN                    
+      DO:
+        ASSIGN msg-erro-aux = 1.
+        RETURN "NOK".
+      END.
+            
+    FOR FIRST cratagp WHERE cratagp.cdagenci = crapagp.cdagenci NO-LOCK. END.
+
+    IF NOT AVAILABLE cratagp THEN
+      DO:
+        CREATE cratagp.
+        ASSIGN cratagp.cdagenci = crapagp.cdagenci
+               cratagp.nmresage = crapage.nmresage.
+      END.
+  END.
+  
+  /* PA's agrupados */
+  FOR EACH crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento)
+                     AND crapagp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
+                     AND crapagp.dtanoage = INTEGER(ab_unmap.aux_dtanoage) 
+                     AND crapagp.cdageagr <> crapagp.cdagenci               NO-LOCK:
+
+      FOR FIRST crapage FIELDS(nmresage) WHERE crapage.cdcooper = crapagp.cdcooper
+                                           AND crapage.cdagenci = crapagp.cdagenci NO-LOCK. END.
+
+      FOR FIRST cratagp WHERE cratagp.cdagenci = crapagp.cdageagr EXCLUSIVE-LOCK. END.
+
+      IF NOT AVAILABLE cratagp THEN
+        ASSIGN cratagp.nmresage = cratagp.nmresage + " / " + (IF AVAIL crapage THEN crapage.nmresage ELSE "").
+  END.
+  
+  /* Busca os eventos agendados para cada PA */
+  FOR EACH cratagp NO-LOCK BY cratagp.nmresage:
+    
+	  FOR EACH  crapeap WHERE crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)   AND
                               crapeap.idevento = INTEGER(ab_unmap.aux_idevento)   AND
                               crapeap.cdagenci = cratagp.cdagenci                 AND
                               crapeap.dtanoage = INTEGER(ab_unmap.aux_dtanoage)   NO-LOCK,
-          /* Busca o nome do Evento */
           FIRST crapedp WHERE crapedp.cdcooper = crapeap.cdcooper                 AND
                               crapedp.idevento = crapeap.idevento                 AND
                               crapedp.cdevento = crapeap.cdevento                 AND 
@@ -562,7 +671,6 @@ PROCEDURE CriaListaPacs :
                               crapedp.tpevento <> 10                              AND 
                               crapedp.tpevento <> 11                              NO-LOCK
                               BY crapedp.nmevento:
-
 
           ASSIGN aux_qtevepac = aux_qtevepac + 1
                  aux_nmevepac = aux_nmevepac + STRING(aux_qtevepac) + ":'- " + crapedp.nmevento + "',".
@@ -1043,7 +1151,13 @@ PROCEDURE process-web-request :
 
         END CASE.
         RUN CriaListaCooperativa.
+        
+        IF opcao = "pas" THEN
+          RUN CriaListaPacs2.
+        ELSE
         RUN CriaListaPacs.
+        
+                
         RUN CriaListaEventos.
         
         IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN

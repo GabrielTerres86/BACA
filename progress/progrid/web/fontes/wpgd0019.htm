@@ -50,6 +50,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
             20/07/2018 - inc0022348 Incluída a flag para recarregar a agenda após acionar as funções salvar, gerar e enviar (Carlos)
 
+            21/09/2018 - sctask0029112 Melhoria de performance, computando apenas o evento selecionado na tela (Carlos)
+
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -975,7 +977,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
         FOR EACH crapadp WHERE crapadp.idevento = gnpapgd.idevento
                            AND crapadp.cdcooper = gnpapgd.cdcooper
-                           AND crapadp.dtanoage = gnpapgd.dtanonov NO-LOCK:
+                           AND crapadp.dtanoage = gnpapgd.dtanonov  
+						   AND crapadp.cdevento = aux_selevento NO-LOCK:
 
           FIND FIRST crapidp WHERE crapidp.idevento = crapadp.idevento
                                AND crapidp.cdcooper = crapadp.cdcooper
