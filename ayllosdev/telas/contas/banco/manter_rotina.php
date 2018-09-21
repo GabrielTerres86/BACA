@@ -37,7 +37,7 @@
 	$vlropera = str_replace('.','',$vlropera);
 		
 	// Se não for informado qual operação, exibir mensagem de erro
-	if ($operacao == "") exibirErro('error','O par&acirc;metro operação n&atilde;o foi informado.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if ($operacao == "") exibirErro('error','O par&acirc;metro operação n&atilde;o foi informado.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 
 	if(in_array($operacao,array('AV','IV'))) validaDados();
 	
@@ -50,7 +50,7 @@
 	if( $operacao == 'VA' ) {$procedure = 'grava_dados' ; $cddopcao = 'A';}
 	if( $operacao == 'VE' ) {$procedure = 'grava_dados' ; $cddopcao = 'E';}
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 			
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = "";
@@ -84,7 +84,7 @@
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
 		$metodoErro = ( $operacao == 'EV' || $operacao == 'VE' ) ? 'controlaOperacao();' : 'bloqueiaFundo(divRotina);';
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodoErro,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodoErro,false);
 	}
 	
 	$msg = Array();
@@ -105,18 +105,18 @@
 	
 	// Se é Validação
 	if( in_array($operacao,array('AV','IV','EV')) ) {
-		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
-		if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Ayllos','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);		
-		if( $operacao == 'EV' ) exibirConfirmacao('Deseja confirmar exclusão?' ,'Confirmação - Ayllos','controlaOperacao(\'VE\')','bloqueiaFundo(divRotina);controlaOperacao();',false);
+		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
+		if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Aimaro','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);		
+		if( $operacao == 'EV' ) exibirConfirmacao('Deseja confirmar exclusão?' ,'Confirmação - Aimaro','controlaOperacao(\'VE\')','bloqueiaFundo(divRotina);controlaOperacao();',false);
 	
 	// Se é Inclusão/Alteração/Exclusão
 	} else {		
 		
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if($msgAtCad!='' && $flgcadas != 'M') {					
-			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0067.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
-			if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0067.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
-			if( $operacao == 'VE' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0067.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0067.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0067.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VE' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0067.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 		
 		// Se não existe necessidade de Revisão Cadastral
 		} else {				
@@ -133,23 +133,23 @@
 		echo '$("input","#frmDadosBancos").removeClass("campoErro");';
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);				
-		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);				
+		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 
 	
 		// Campo desc. do banco
-		if ( ($GLOBALS['cddbanco'] < 1) || ($GLOBALS['cddbanco'] == '') ) exibirErro('error','C&oacute;digo do banco inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cddbanco\',\'frmDadosBancos\')',false);
+		if ( ($GLOBALS['cddbanco'] < 1) || ($GLOBALS['cddbanco'] == '') ) exibirErro('error','C&oacute;digo do banco inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cddbanco\',\'frmDadosBancos\')',false);
 		
 		//Campo operação
-		if ( $GLOBALS['dstipope'] == "" ) exibirErro('error','Campo Operação deve ser preenchido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dstipope\',\'frmDadosBancos\')',false);
+		if ( $GLOBALS['dstipope'] == "" ) exibirErro('error','Campo Operação deve ser preenchido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dstipope\',\'frmDadosBancos\')',false);
 		
 		//Campo Valor
-		if ( str_replace(',','.',$GLOBALS['vlropera']) <= 0 ) exibirErro('error','Campo Valor( R$ ) deve ser preenchido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'vlropera\',\'frmDadosBancos\')',false);
+		if ( str_replace(',','.',$GLOBALS['vlropera']) <= 0 ) exibirErro('error','Campo Valor( R$ ) deve ser preenchido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'vlropera\',\'frmDadosBancos\')',false);
 				
 		//Campo garantia
-		if ( $GLOBALS['garantia'] == "" ) exibirErro('error','Campo Garantia deve ser preenchido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'garantia\',\'frmDadosBancos\')',false);
+		if ( $GLOBALS['garantia'] == "" ) exibirErro('error','Campo Garantia deve ser preenchido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'garantia\',\'frmDadosBancos\')',false);
 		
 		//Campo data vencimento
-		if ( !validaData($GLOBALS['dsvencto']) && $GLOBALS['dsvencto'] != 'VARIOS' ) exibirErro('error','Campo Vencimento deve conter uma data válida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsvencto\',\'frmDadosBancos\')',false);
+		if ( !validaData($GLOBALS['dsvencto']) && $GLOBALS['dsvencto'] != 'VARIOS' ) exibirErro('error','Campo Vencimento deve conter uma data válida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsvencto\',\'frmDadosBancos\')',false);
 	}		
 ?>

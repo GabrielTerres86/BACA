@@ -30,7 +30,7 @@
 
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$opcao)) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$opcao)) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 		
 	// Monta o xml de requisição
 	$xml  = "";
@@ -54,7 +54,7 @@
 	$registro = $xmlObjRegistro->roottag->tags[0]->tags;
 		
     if (strtoupper($xmlObjRegistro->roottag->tags[0]->name) == 'ERRO') {
-        exibirErro('error',$xmlObjRegistro->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+        exibirErro('error',$xmlObjRegistro->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
     }
 	
     if (getByTagName($registro[0]->tags,'cddentid') == 0) {

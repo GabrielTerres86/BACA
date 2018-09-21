@@ -62,7 +62,7 @@
 		default: return false;
 	}
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = "";
@@ -118,7 +118,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 		
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	
 	// Se não retornou erro, então pegar a mensagem de retorno do Progress na variável msgRetorno, para ser utilizada posteriormente
@@ -140,13 +140,13 @@
 	if ($operacao == 'AV') {	
 		
 		// Se chegou até aqui, já realizou a validação, agora precisa solicitar confirmação e alteração		
-		exibirConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirmação - Ayllos','controlaOperacao(\'VA\');','bloqueiaFundo(divRotina);',false);		
+		exibirConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirmação - Aimaro','controlaOperacao(\'VA\');','bloqueiaFundo(divRotina);',false);		
 		
 	} else if ($operacao == 'VA') {
 	
 		// Caso a operação não é validar, então já realizou a validação, agora precisa verificar se existe "Verificação de Revisão Cadastral"
 		if ($msgAtCad != '' && $flgcadas != 'M') {		
-			exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0057.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);
+			exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0057.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);
 		} else {	
 		
 			// Se não é validar, então é alteração, portanto mostrar mensagem de sucesso e retornar para página principal

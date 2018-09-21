@@ -49,7 +49,7 @@
 		default: return false;
 	}	
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xml  = '';
@@ -82,7 +82,7 @@
 		
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') 
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
@@ -101,12 +101,12 @@
 	$tpAtlCad    = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';
 	
 	if( $operacao == 'AV' ) { // Se é Validação
-		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\','.$inpessoa.')','bloqueiaFundo(divRotina)',false);
+		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\','.$inpessoa.')','bloqueiaFundo(divRotina)',false);
 	} else { // Se é Alteração
 		
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if( $msgAtCad != '' && $flgcadas != 'M') {					
-			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0048.p\',\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0048.p\',\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 		
 		// Se não existe necessidade de Revisão Cadastral
 		} else {				
@@ -121,13 +121,13 @@
 		echo '$("input","#frmInfAdicional").removeClass("campoErro");';
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);				
-		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inválida','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);				
+		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inválida','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 			
 		// Valida se cods. são numericos
-		if ( (!validaInteiro($GLOBALS['nrinfcad'])) || ( $GLOBALS['nrinfcad'] == 0 ) ) exibirErro('error','Código inválido','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrinfcad\',\'frmInfAdicional\')',false);	
-		if ( ((!validaInteiro($GLOBALS['nrpatlvr'])) || ( $GLOBALS['nrpatlvr'] == 0 )) && ($GLOBALS['cdcooper'] != 3) ) exibirErro('error','Código inválido','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrpatlvr\',\'frmInfAdicional\')',false);  
-		if ( $inpessoa == 2 && ((!validaInteiro($GLOBALS['nrperger'])) || ( $GLOBALS['nrperger'] == 0 )) && ($GLOBALS['cdcooper'] != 3) ) exibirErro('error','Código inválido','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrperger\',\'frmInfAdicional\')',false);  
+		if ( (!validaInteiro($GLOBALS['nrinfcad'])) || ( $GLOBALS['nrinfcad'] == 0 ) ) exibirErro('error','Código inválido','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrinfcad\',\'frmInfAdicional\')',false);	
+		if ( ((!validaInteiro($GLOBALS['nrpatlvr'])) || ( $GLOBALS['nrpatlvr'] == 0 )) && ($GLOBALS['cdcooper'] != 3) ) exibirErro('error','Código inválido','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrpatlvr\',\'frmInfAdicional\')',false);  
+		if ( $inpessoa == 2 && ((!validaInteiro($GLOBALS['nrperger'])) || ( $GLOBALS['nrperger'] == 0 )) && ($GLOBALS['cdcooper'] != 3) ) exibirErro('error','Código inválido','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrperger\',\'frmInfAdicional\')',false);  
 			
 	}		
 ?>

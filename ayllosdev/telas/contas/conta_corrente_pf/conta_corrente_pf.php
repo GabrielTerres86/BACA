@@ -15,7 +15,7 @@
 	isPostMethod();	
 		
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','');
 	
 	$flgcadas = $_POST["flgcadas"] == "" ? '' : $_POST["flgcadas"];
 

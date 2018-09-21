@@ -104,10 +104,10 @@
 	$xmlResult = getDataXML($xml);	
 	$xmlObjeto = getObjectXML($xmlResult);
 	
-	// exibirErro('error',$xmlObjeto->roottag->tags[0]->name,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	// exibirErro('error',$xmlObjeto->roottag->tags[0]->name,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
@@ -129,11 +129,11 @@
 	if(in_array($operacao,array('VA','VD','VE','VEE','VED'))) {
 		
 		echo 'hideMsgAguardo();';
-		if($operacao=='VA' ) echo "showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'AD\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";
-		if($operacao=='VD' ) echo "showConfirmacao('Deseja confirmar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'ID\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";
-		if($operacao=='VE' ) echo "showConfirmacao('Deseja confirmar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'IE\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";
-		if($operacao=='VED') echo "showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\'ED\')','controlaOperacao()','sim.gif','nao.gif');";
-		if($operacao=='VEE') echo "showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\'EE\')','controlaOperacao()','sim.gif','nao.gif');";
+		if($operacao=='VA' ) echo "showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'AD\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";
+		if($operacao=='VD' ) echo "showConfirmacao('Deseja confirmar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'ID\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";
+		if($operacao=='VE' ) echo "showConfirmacao('Deseja confirmar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'IE\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";
+		if($operacao=='VED') echo "showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','manterRotina(\'ED\')','controlaOperacao()','sim.gif','nao.gif');";
+		if($operacao=='VEE') echo "showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','manterRotina(\'EE\')','controlaOperacao()','sim.gif','nao.gif');";
 		
 	}else{
 		echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\');';
@@ -145,32 +145,32 @@
 			echo '$("input,select","#formDadosSistFinanc").removeClass("campoErro");';
 			
 			// Data Abertura
-			if ( !validaData( $GLOBALS['dtabtcct'] )) exibirErro('error','Data de abertura inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtabtcct\',\'formDadosSistFinanc\')',false);
+			if ( !validaData( $GLOBALS['dtabtcct'] )) exibirErro('error','Data de abertura inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtabtcct\',\'formDadosSistFinanc\')',false);
 			
 			// Cod. do banco
-			if ( $GLOBALS['cdbccxlt'] == '' || !validaInteiro($GLOBALS['cdbccxlt']) ) exibirErro('error','C&oacute;digo do banco inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbccxlt\',\'formDadosSistFinanc\')',false);
+			if ( $GLOBALS['cdbccxlt'] == '' || !validaInteiro($GLOBALS['cdbccxlt']) ) exibirErro('error','C&oacute;digo do banco inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdbccxlt\',\'formDadosSistFinanc\')',false);
 			
 			// Cod. da agencia
-			if ( $GLOBALS['cdageban'] == '' || !validaInteiro($GLOBALS['cdageban']) ) exibirErro('error','C&oacute;digo da ag&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdageban\',\'formDadosSistFinanc\')',false);
+			if ( $GLOBALS['cdageban'] == '' || !validaInteiro($GLOBALS['cdageban']) ) exibirErro('error','C&oacute;digo da ag&ecirc;ncia inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdageban\',\'formDadosSistFinanc\')',false);
 			
 			// Número da conta
-			if ( !validaInteiro($GLOBALS['nrdctasf']) ) exibirErro('error','N&uacute;mero da conta inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdctasf\',\'formDadosSistFinanc\')',false);
+			if ( !validaInteiro($GLOBALS['nrdctasf']) ) exibirErro('error','N&uacute;mero da conta inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdctasf\',\'formDadosSistFinanc\')',false);
 			
 			//Dig. verificador
-			if ( $GLOBALS['dgdconta'] == '' ) exibirErro('error','DV inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dgdconta\',\'formDadosSistFinanc\')',false);
+			if ( $GLOBALS['dgdconta'] == '' ) exibirErro('error','DV inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dgdconta\',\'formDadosSistFinanc\')',false);
 			
 			// Inst. Financeira
-			if ( $GLOBALS['cdbccxlt'] == 0 ) { if ( $GLOBALS['nminsfin'] =='' ) exibirErro('error','Nome Titular deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nminsfin\',\'formDadosSistFinanc\')',false);}
+			if ( $GLOBALS['cdbccxlt'] == 0 ) { if ( $GLOBALS['nminsfin'] =='' ) exibirErro('error','Nome Titular deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nminsfin\',\'formDadosSistFinanc\')',false);}
 			
 		}else if ($op == 'VE' ){
 			// No início das validações, primeiro remove a classe erro de todos os campos
 			echo '$("input,select","#formEmissaoSistFinanc").removeClass("campoErro");';
 			
 			// Cod. do banco
-			if ( $GLOBALS['cdbccxlt'] == '' || !validaInteiro($GLOBALS['cdbccxlt']) || $GLOBALS['cdbccxlt'] == 0 ) exibirErro('error','C&oacute;digo do banco inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbccxlt\',\'formEmissaoSistFinanc\')',false);
+			if ( $GLOBALS['cdbccxlt'] == '' || !validaInteiro($GLOBALS['cdbccxlt']) || $GLOBALS['cdbccxlt'] == 0 ) exibirErro('error','C&oacute;digo do banco inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdbccxlt\',\'formEmissaoSistFinanc\')',false);
 			
 			// Cod. da agencia
-			if ( $GLOBALS['cdageban'] == '' || !validaInteiro($GLOBALS['cdageban']) || $GLOBALS['cdageban'] == 0 ) exibirErro('error','C&oacute;digo da ag&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdageban\',\'formEmissaoSistFinanc\')',false);
+			if ( $GLOBALS['cdageban'] == '' || !validaInteiro($GLOBALS['cdageban']) || $GLOBALS['cdageban'] == 0 ) exibirErro('error','C&oacute;digo da ag&ecirc;ncia inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdageban\',\'formEmissaoSistFinanc\')',false);
 		}
 	}	
 ?>

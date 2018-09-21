@@ -20,7 +20,7 @@
 	isPostMethod();	
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	$nrcpfcgc = $_POST["nrcpfcgc"] == "" ? 0 : $_POST["nrcpfcgc"];
 
@@ -54,7 +54,7 @@
 	
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina(divRotina)',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','fechaRotina(divRotina)',false);
 	}
 	
 	$dados = $xmlObj->roottag->tags[0]->tags[0]->tags;
@@ -74,7 +74,7 @@
 	
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina(divRotina)',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','fechaRotina(divRotina)',false);
 	}
 
 	$socios = $xmlObj->roottag->tags[0]->tags;

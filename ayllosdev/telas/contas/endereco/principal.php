@@ -38,11 +38,11 @@
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op,false)) <> "") {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
-		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$metodo,false);
 	}
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Carrega permissões do operador
 	include("../../../includes/carrega_permissoes.php");	
@@ -56,9 +56,9 @@
 	$idseqttl = $_POST["idseqttl"] == "" ? 0  : $_POST["idseqttl"];
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
-	if ($idseqttl==0) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
+	if ($idseqttl==0) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -83,7 +83,7 @@
 	$xmlObjEnd = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjEnd->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjEnd->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','fechaRotina(divRotina);',false);
+	if (strtoupper($xmlObjEnd->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjEnd->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','fechaRotina(divRotina);',false);
 
 	// Percorre os enderecos retornados
 	for ($i = 0; $i < count( $xmlObjEnd->roottag->tags[0]->tags); $i++) {
@@ -134,7 +134,7 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObjEA->roottag->tags[0]->name) == "ERRO"){ 
-			exibirErro('error',$xmlObjEA->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+			exibirErro('error',$xmlObjEA->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		}
 		
 		$enderecoA = $xmlObjEA->roottag->tags[0]->tags[0]->tags;
@@ -179,9 +179,9 @@
 	}
 	
 	if ( msgConta != '' ) { 
-		showError('inform',msgConta,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');');
+		showError('inform',msgConta,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');');
 	}else if ( msgAlert != '' ) { 
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');');
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');');
 	}
 	if ( operacao == 'EA' ) controlaOperacao('AE'); 
 </script>
@@ -189,7 +189,7 @@
 	if ( $operacao == 'EA' ){
 		if(strtoupper($xmlObjEA->roottag->tags[1]->name) == "ALERTAS"){
 			if($xmlObjEA->roottag->tags[1]->tags[0]->tags[0]->cdata != ""){
-				exibirErro('inform',$xmlObjEA->roottag->tags[1]->tags[0]->tags[0]->cdata,'Alerta - Ayllos','controlaOperacao(\'AE\');',true,420);
+				exibirErro('inform',$xmlObjEA->roottag->tags[1]->tags[0]->tags[0]->cdata,'Alerta - Aimaro','controlaOperacao(\'AE\');',true,420);
 			}
 		}	
 	}

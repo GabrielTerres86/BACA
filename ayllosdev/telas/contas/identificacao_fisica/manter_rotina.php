@@ -102,7 +102,7 @@
 		default: return false;
 	}
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	
 	// Monta o xml dinâmico de acordo com a operação
@@ -208,7 +208,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 		
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		
 	$msg = Array();
 	
@@ -230,16 +230,16 @@
 	if($operacao == "PI"){
 			
 		// Data Nascimento
-		if (!validaData($GLOBALS['dtnasttl'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtnasttl\',\'frmDadosIdentFisica\')',false);			
+		if (!validaData($GLOBALS['dtnasttl'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtnasttl\',\'frmDadosIdentFisica\')',false);			
 		
 		// Responsabilidade Legal
-		if (($GLOBALS['inhabmen'] != 0)&&($GLOBALS['inhabmen'] != 1)&&($GLOBALS['inhabmen'] != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'inhabmen\',\'frmDadosIdentFisica\')',false);
+		if (($GLOBALS['inhabmen'] != 0)&&($GLOBALS['inhabmen'] != 1)&&($GLOBALS['inhabmen'] != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'inhabmen\',\'frmDadosIdentFisica\')',false);
 		
 		// Somente valida a Data de Emancipação quando a Responsabilidade Legal for 1 (Habilitado)
-		if (!validaData($GLOBALS['dthabmen']) && ($GLOBALS['inhabmen'] == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
+		if (!validaData($GLOBALS['dthabmen']) && ($GLOBALS['inhabmen'] == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
 
 		// Data de emancipação não pode ser preenchida para quando a Responsabilidade legal for 0,2.
-		if ($GLOBALS['dthabmen'] != '' && ($GLOBALS['inhabmen'] == 0 || $GLOBALS['inhabmen'] == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
+		if ($GLOBALS['dthabmen'] != '' && ($GLOBALS['inhabmen'] == 0 || $GLOBALS['inhabmen'] == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
 			
 		
 		?>
@@ -257,8 +257,8 @@
 		if(in_array($operacao,array('IV','AV'))) {
 					
 					echo 'hideMsgAguardo();';
-					if($operacao=='IV') exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Ayllos','controlaOperacao(\'VI\');','bloqueiaFundo(divRotina)',false);		
-					if($operacao=='AV') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\');','bloqueiaFundo(divRotina)',false);				
+					if($operacao=='IV') exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Aimaro','controlaOperacao(\'VI\');','bloqueiaFundo(divRotina)',false);		
+					if($operacao=='AV') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\');','bloqueiaFundo(divRotina)',false);				
 				
 		// Se é Inclusão ou Alteração
 		} else {
@@ -271,10 +271,10 @@
 				} else {
 					
 					if ($flgContinuar == 'true') {
-						exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0055.p\',\''.$stringArrayMsg.'\',\'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'',false);								
+						exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0055.p\',\''.$stringArrayMsg.'\',\'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'',false);								
 					} else {
-						if($operacao == 'VI') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0055.p\',\''.$stringArrayMsg.'\',\'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FI\")\')',false);								
-						if($operacao == 'VA') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0055.p\',\''.$stringArrayMsg.'\',\'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);								
+						if($operacao == 'VI') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0055.p\',\''.$stringArrayMsg.'\',\'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FI\")\')',false);								
+						if($operacao == 'VA') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0055.p\',\''.$stringArrayMsg.'\',\'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);								
 					}
 				}
 				
@@ -303,7 +303,7 @@
 		echo '$("input,select","#frmDadosIdentFisica").removeClass("campoErro");';
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);				
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);				
 		
 		/*!
 		 * ALTERAÇÃO : 001
@@ -313,69 +313,69 @@
 		if ( (( $GLOBALS['nrctattl'] == 0 ) || ( $GLOBALS['nrctattl'] == $GLOBALS['nrdconta'] )) && ( $GLOBALS['idseqttl'] == 1 ) ) {
 									
 			// Nome Titular
-			if ($GLOBALS['nmextttl']=='') exibirErro('error','Nome Titular deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmextttl\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['nmextttl']=='') exibirErro('error','Nome Titular deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmextttl\',\'frmDadosIdentFisica\')',false);
 			
 			// Situação do CPF
-			// if (!validaInteiro($GLOBALS['cdsitcpf'])) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentFisica\')',false);
-			// if ($GLOBALS['cdsitcpf'] < 1 || $GLOBALS['cdsitcpf'] > 5) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentFisica\'))',false);		
+			// if (!validaInteiro($GLOBALS['cdsitcpf'])) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentFisica\')',false);
+			// if ($GLOBALS['cdsitcpf'] < 1 || $GLOBALS['cdsitcpf'] > 5) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentFisica\'))',false);		
 			
 			// Data da Consulta do CPF
-			if (!validaData($GLOBALS['dtcnscpf'])) exibirErro('error','Data da Consulta do C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtcnscpf\',\'frmDadosIdentFisica\')',false);
+			if (!validaData($GLOBALS['dtcnscpf'])) exibirErro('error','Data da Consulta do C.P.F. inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtcnscpf\',\'frmDadosIdentFisica\')',false);
 			
 			// Tipo de Documento
-			if (!in_array($GLOBALS['tpdocttl'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocttl\',\'frmDadosIdentFisica\')',false);
+			if (!in_array($GLOBALS['tpdocttl'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpdocttl\',\'frmDadosIdentFisica\')',false);
 			
 			// Numero de Documento
-			if ($GLOBALS['nrdocttl']=='') exibirErro('error','Nr. Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocttl\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['nrdocttl']=='') exibirErro('error','Nr. Documento inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdocttl\',\'frmDadosIdentFisica\')',false);
 			
 			// Orgão Emissor
-			if ($GLOBALS['cdoedttl']=='') exibirErro('error','Org&atilde;o Emissor inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdoedttl\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['cdoedttl']=='') exibirErro('error','Org&atilde;o Emissor inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdoedttl\',\'frmDadosIdentFisica\')',false);
 			
 			// UF Emissor
-			if ($GLOBALS['cdufdttl']=='') exibirErro('error','U.F. Emissor inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdufdttl\',\'frmDadosIdentFisica\')',false);		
+			if ($GLOBALS['cdufdttl']=='') exibirErro('error','U.F. Emissor inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdufdttl\',\'frmDadosIdentFisica\')',false);		
 			
 			// Data Emissão
-			if (!validaData($GLOBALS['dtemdttl'])) exibirErro('error','Data de Emiss&atilde;o do C.P.F. inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtemdttl\',\'frmDadosIdentFisica\')',false);
+			if (!validaData($GLOBALS['dtemdttl'])) exibirErro('error','Data de Emiss&atilde;o do C.P.F. inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtemdttl\',\'frmDadosIdentFisica\')',false);
 			
 			// Tipo Nacionalidade
-			if (!validaInteiro($GLOBALS['tpnacion'])) exibirErro('error','Tipo Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpnacion\',\'frmDadosIdentFisica\')',false);
-			if ($GLOBALS['tpnacion'] == 0) exibirErro('error','Tipo Nacionalidade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpnacion\',\'frmDadosIdentFisica\')',false);
+			if (!validaInteiro($GLOBALS['tpnacion'])) exibirErro('error','Tipo Nacionalidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpnacion\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['tpnacion'] == 0) exibirErro('error','Tipo Nacionalidade deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpnacion\',\'frmDadosIdentFisica\')',false);
 			
 			// Nacionalidade
-			if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
-            if ($GLOBALS['cdnacion'] == 0) exibirErro('error','Nacionalidade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
+            if ($GLOBALS['cdnacion'] == 0) exibirErro('error','Nacionalidade deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosIdentFisica\')',false);
 			
 			// Sexo 
-			if (($GLOBALS['cdsexotl'] != 1)&&($GLOBALS['cdsexotl'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsexotl\',\'frmDadosIdentFisica\')',false);			
+			if (($GLOBALS['cdsexotl'] != 1)&&($GLOBALS['cdsexotl'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdsexotl\',\'frmDadosIdentFisica\')',false);			
 			
 			// Naturalidade
-			if ($GLOBALS['dsnatura']=='') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnatura\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['dsnatura']=='') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsnatura\',\'frmDadosIdentFisica\')',false);
 			
 			// UF Naturalidade
-			if ($GLOBALS['cdufnatu'] == '' ) exibirErro('error','UF de naturalidade deve ser selecionada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdufnatu\',\'frmDadosIdentFisica\');',false);
+			if ($GLOBALS['cdufnatu'] == '' ) exibirErro('error','UF de naturalidade deve ser selecionada.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdufnatu\',\'frmDadosIdentFisica\');',false);
 			
 			// Data Nascimento
-			if (!validaData($GLOBALS['dtnasttl'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtnasttl\',\'frmDadosIdentFisica\')',false);			
+			if (!validaData($GLOBALS['dtnasttl'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtnasttl\',\'frmDadosIdentFisica\')',false);			
 			
 			// Responsabilidade Legal
-			if (($GLOBALS['inhabmen'] != 0)&&($GLOBALS['inhabmen'] != 1)&&($GLOBALS['inhabmen'] != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'inhabmen\',\'frmDadosIdentFisica\')',false);
+			if (($GLOBALS['inhabmen'] != 0)&&($GLOBALS['inhabmen'] != 1)&&($GLOBALS['inhabmen'] != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'inhabmen\',\'frmDadosIdentFisica\')',false);
 			
 			// Somente valida a Data de Emancipação quando a Responsabilidade Legal for 1 (Habilitado)
-			if (!validaData($GLOBALS['dthabmen']) && ($GLOBALS['inhabmen'] == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
+			if (!validaData($GLOBALS['dthabmen']) && ($GLOBALS['inhabmen'] == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
 
 			// Data de emancipação não pode ser preenchida para quando a Responsabilidade legal for 0,2.
-			if ($GLOBALS['dthabmen'] != '' && ($GLOBALS['inhabmen'] == 0 || $GLOBALS['inhabmen'] == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['dthabmen'] != '' && ($GLOBALS['inhabmen'] == 0 || $GLOBALS['inhabmen'] == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
 																															
 			// Estado Civil
-			if (!validaInteiro($GLOBALS['cdestcvl'])) exibirErro('error','Estado Civil inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmDadosIdentFisica\')',false);
-			if ($GLOBALS['cdestcvl'] == 0) exibirErro('error','Estado Civil deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmDadosIdentFisica\')',false);
+			if (!validaInteiro($GLOBALS['cdestcvl'])) exibirErro('error','Estado Civil inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['cdestcvl'] == 0) exibirErro('error','Estado Civil deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmDadosIdentFisica\')',false);
 					
 			// Valida Nome Talão
-			if ($GLOBALS['nmtalttl']=='') exibirErro('error','Nome Tal&atilde;o deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmtalttl\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['nmtalttl']=='') exibirErro('error','Nome Tal&atilde;o deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmtalttl\',\'frmDadosIdentFisica\')',false);
 			
 			// Valida se qtde. folhas do talão é um inteiro
-			if ($GLOBALS['idseqttl'] == 1  && !validaInteiro($GLOBALS['qtfoltal'])) exibirErro('error','Quantidade de Folhas no Tal&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentFisica\')',false);
-			if ($GLOBALS['idseqttl'] == 1  && $GLOBALS['qtfoltal'] <> 10 && $GLOBALS['qtfoltal'] <> 20) exibirErro('error','Quantidade de Folhas no Tal&atilde;o deve ser 10 ou 20.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentFisica\')',false);	
+			if ($GLOBALS['idseqttl'] == 1  && !validaInteiro($GLOBALS['qtfoltal'])) exibirErro('error','Quantidade de Folhas no Tal&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentFisica\')',false);
+			if ($GLOBALS['idseqttl'] == 1  && $GLOBALS['qtfoltal'] <> 10 && $GLOBALS['qtfoltal'] <> 20) exibirErro('error','Quantidade de Folhas no Tal&atilde;o deve ser 10 ou 20.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentFisica\')',false);	
 		}		
 	}	
 ?>

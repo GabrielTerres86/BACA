@@ -132,5 +132,5 @@
 	hideMsgAguardo();
 	
 	// Mensagem de confirmação para exclusão dos titulares
-	showConfirmacao(msgconfi,'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'TE\')','fechaRotina($(\'#divUsoGenerico\'),$(\'#divRotina\'))','sim.gif','nao.gif');
+	showConfirmacao(msgconfi,'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'TE\')','fechaRotina($(\'#divUsoGenerico\'),$(\'#divRotina\'))','sim.gif','nao.gif');
 </script>

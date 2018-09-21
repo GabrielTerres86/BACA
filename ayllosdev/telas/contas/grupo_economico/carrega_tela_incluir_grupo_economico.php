@@ -16,7 +16,7 @@
 	isPostMethod();
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'I')) <> ''){
-		exibirErro('error',$msgError,'Alerta - Ayllos','',true);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',true);
 	}
 	
 	require_once("grupo_economico_inclusao.php");

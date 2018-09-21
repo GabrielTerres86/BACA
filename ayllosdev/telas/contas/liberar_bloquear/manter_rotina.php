@@ -34,7 +34,7 @@
 	$flgcrdpa = strtoupper($flgcrdpa) == 'NO' ? 0 : 1;
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") 
-	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	   exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Monta o xml de requisição
 	$xml  = "";

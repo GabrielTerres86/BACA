@@ -71,7 +71,7 @@
 	if (($msgError = validaPermissao($glbvars['nmdatela'],
 									 $glbvars['nmrotina'],
 									 $cddopcao)) <> '') {
-		exibirErro('error', 'nmrotina: ' . $glbvars['nmrotina'] . ' ' . $msgError, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+		exibirErro('error', 'nmrotina: ' . $glbvars['nmrotina'] . ' ' . $msgError, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)', false);
 	}
 	
 	// Monta o xml dinâmico de acordo com a operação
@@ -129,7 +129,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") 
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
@@ -152,10 +152,10 @@
 	if ($operacao == 'AV' || $operacao == 'PPE') {
 		
 		if ($operacao == 'AV') {
-			exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);	
+			exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);	
 		}
 		if ($operacao == 'PPE') {			
-			exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'PPE_ABA\')','bloqueiaFundo(divRotina)',false);	
+			exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'PPE_ABA\')','bloqueiaFundo(divRotina)',false);	
 		}
 	// Se é Alteração
 	} else {
@@ -165,13 +165,13 @@
 			
 			if( $operacao == 'VA' ) 
 			exibirConfirmacao($msgAtCad,
-			'Confirmação - Ayllos',
+			'Confirmação - Aimaro',
 			'revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0075.p\',\''.$stringArrayMsg.'\')',
 			'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 
 			if( $operacao == 'PPE_ABA') {
 				exibirConfirmacao($msgAtCad,
-								  'Confirmação - Ayllos',
+								  'Confirmação - Aimaro',
 								  'revisaoCadastral(\''.$chaveAlt.'\', \''.$tpAtlCad.'\', \'b1wgen0075.p\', \''.$stringArrayMsg.'\', \'controlaOperacao(\"PPE_ABA_ABRE\")\');',
 								  'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"PPE_ABA_ABRE\")\')',false);
 			}
@@ -179,7 +179,7 @@
 		// Se não existe necessidade de Revisão Cadastral
 		} else {
 			
-			//exibirConfirmacao('operacao' . $operacao,'Confirmação - Ayllos','alert(\'PPE_ABA_ABRE\')','bloqueiaFundo(divRotina)',false);
+			//exibirConfirmacao('operacao' . $operacao,'Confirmação - Aimaro','alert(\'PPE_ABA_ABRE\')','bloqueiaFundo(divRotina)',false);
 			
 			if($operacao == 'VA')      echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\');';
 			if($operacao == 'PPE_ABA') echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"PPE_ABA_ABRE\")\');';
@@ -191,13 +191,13 @@
 		echo '$("input,select","#frmDadosComercial").removeClass("campoErro");';	
 		
 		// Campo Nat. da Ocupação
-		if ( ($GLOBALS['cdnatopc'] == '' ) || ($GLOBALS['cdnatopc'] == 0 ) ) exibirErro('error','Natureza da Ocupação inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnatopc\',\'frmDadosComercial\')',false);
+		if ( ($GLOBALS['cdnatopc'] == '' ) || ($GLOBALS['cdnatopc'] == 0 ) ) exibirErro('error','Natureza da Ocupação inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnatopc\',\'frmDadosComercial\')',false);
 		
 		//Campo Ocupação
-		if ( ($GLOBALS['cdocpttl'] == '' ) || ($GLOBALS['cdocpttl'] == 0 ) ) exibirErro('error','Ocupação inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdocpttl\',\'frmDadosComercial\')',false);		
+		if ( ($GLOBALS['cdocpttl'] == '' ) || ($GLOBALS['cdocpttl'] == 0 ) ) exibirErro('error','Ocupação inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdocpttl\',\'frmDadosComercial\')',false);		
 		
 		//Campo Tp. Ctr. Trb.
-		if ( $GLOBALS['tpcttrab'] == '' ) exibirErro('error','Tipo Ctr. Trb. inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpcttrab\',\'frmDadosComercial\')',false);		
+		if ( $GLOBALS['tpcttrab'] == '' ) exibirErro('error','Tipo Ctr. Trb. inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpcttrab\',\'frmDadosComercial\')',false);		
 
 	}
 		

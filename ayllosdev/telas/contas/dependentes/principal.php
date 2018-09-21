@@ -26,10 +26,10 @@
 	$op = $cddopcao;
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','fechaRotina(divRotina)',false);
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);	
 
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ? 0 : $_POST['idseqttl'];	
@@ -59,8 +59,8 @@
 		exit(); 
 	}
 	
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);	
 	
 	$procedure = (in_array($operacao,array('TA','TE','TI','CF'))) ? 'obtem-dados-operacao' : 'obtem-dependentes';
 		
@@ -87,7 +87,7 @@
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);	
 	
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;
 	$msgAlert  = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) : '';
@@ -125,9 +125,9 @@
 		
 	controlaLayoutDependentes(operacao);	
 	if ( msgConta != '' && operacao == 'SC' ){
-		showError('inform',msgConta,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFocoDependentes(\''+operacao+'\');'); 
+		showError('inform',msgConta,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFocoDependentes(\''+operacao+'\');'); 
 	}else if ( msgAlert != ''   ){ 
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFocoDependentes(\''+operacao+'\');'); 
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFocoDependentes(\''+operacao+'\');'); 
 	}
 	if ( operacao == 'TE' ){ controlaOperacaoDependentes('VE'); }
 </script>

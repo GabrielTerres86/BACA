@@ -28,7 +28,7 @@
 		!isset($_POST['vldrend2']) ||
 		//!isset($_POST['dsjusren']) ||
 		!isset($_POST['dsjusre2'])  ) 
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);	
 	
 	$nrdconta = $_POST['nrdconta'] == '' ?  0  : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ?  0  : $_POST['idseqttl'];
@@ -48,11 +48,11 @@
 		
 		// Campo Origem
 		if ( $tpdrend2 == '' ) 
-			exibirErro('error','Tipo de rendimento inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdrend2\',\'frmManipulaRendi\')',false);
+			exibirErro('error','Tipo de rendimento inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpdrend2\',\'frmManipulaRendi\')',false);
 		
 		//Campo valor
 		if ( $vldrend2 == '' ) 
-			exibirErro('error','Valor não informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'vldrend2\',\'frmManipulaRendi\')',false);
+			exibirErro('error','Valor não informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'vldrend2\',\'frmManipulaRendi\')',false);
 	
 	}
 	
@@ -88,7 +88,7 @@
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina); navegarRendimentos();',false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina); navegarRendimentos();',false);
 		
 	}
 	

@@ -80,7 +80,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1) {
@@ -124,7 +124,7 @@ function controlaOperacao(operacao, flgConcluir) {
         case 'SC': mensagem = 'Aguarde, abrindo formulário ...'; break;
         case 'CA': mensagem = 'Aguarde, abrindo formulário ...'; break;
         case 'CAE': mensagem = 'Aguarde, abrindo formulário ...'; break;
-        case 'AC': showConfirmacao('Deseja cancelar operação?', 'Confirmação - Ayllos', 'controlaOperacao()', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif'); return false; break;
+        case 'AC': showConfirmacao('Deseja cancelar operação?', 'Confirmação - Aimaro', 'controlaOperacao()', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif'); return false; break;
         case 'AV': manterRotina(operacao); return false; break;
         case 'VA': manterRotina(operacao); return false; break;
         case 'PPE': manterRotina(operacao); return false; break;
@@ -188,7 +188,7 @@ function controlaOperacao(operacao, flgConcluir) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1) {
@@ -280,7 +280,7 @@ function manterRotina(operacao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
             try {
@@ -288,7 +288,7 @@ function manterRotina(operacao) {
                 return false;
             } catch (error) {
                 hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
             }
         }
     });
@@ -1022,7 +1022,7 @@ function controlaRendimentos(ope) {
 
                 } else {
                     if (operacao == 'VR') {
-                        showConfirmacao('Deseja cancelar operação?', 'Confirmação - Ayllos', 'navegarRendimentos(\'VV\'); buscaRendimentos(1,30);', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+                        showConfirmacao('Deseja cancelar operação?', 'Confirmação - Aimaro', 'navegarRendimentos(\'VV\'); buscaRendimentos(1,30);', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 
                     }
 
@@ -1072,10 +1072,10 @@ function validaJustificativa(operacao) {
     var rendimento = $('#tpdrend2', '#frmManipulaRendi').val();
 
     if (rendimento == 6 && $('#dsjusre2', '#frmManipulaRendi').val() == '' && operacao != 'E') {
-        showError('inform', 'Deve ser informado uma justificativa.', 'Alerta - Ayllos', '$(\'#dsjusren2\',\'#frmManipulaRendi\').focus;');
+        showError('inform', 'Deve ser informado uma justificativa.', 'Alerta - Aimaro', '$(\'#dsjusren2\',\'#frmManipulaRendi\').focus;');
         return false;
     } else {
-        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'gravaRendimentos(); ', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'gravaRendimentos(); ', 'bloqueiaFundo( $(\'#divRotina\') );', 'sim.gif', 'nao.gif');
 
     }
 
@@ -1111,7 +1111,7 @@ function gravaRendimentos() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#tpdrend2','#frmManipulaRendimentos').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#tpdrend2','#frmManipulaRendimentos').focus()");
         },
         success: function (response) {
             try {
@@ -1120,7 +1120,7 @@ function gravaRendimentos() {
 
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#tpdrend2','#frmManipulaRendimentos').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#tpdrend2','#frmManipulaRendimentos').focus()");
             }
         }
     });
@@ -1149,7 +1149,7 @@ function buscaRendimentos(nriniseq, nrregist) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCabCadlng').focus()");
         },
         success: function (response) {
             try {
@@ -1166,7 +1166,7 @@ function buscaRendimentos(nriniseq, nrregist) {
 
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmPesqti').focus()");
             }
         }
     });
@@ -1194,7 +1194,7 @@ function buscaReferenciaFolha(nrdconta) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCabCadlng').focus()");
         },
         success: function (response) {
             try {
@@ -1203,7 +1203,7 @@ function buscaReferenciaFolha(nrdconta) {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmPesqti').focus()");
             }
         }
     });
@@ -1279,7 +1279,7 @@ function buscaNomePessoa(){
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCabCadlng').focus()");
         },
         success: function (response) {
             try {
@@ -1287,7 +1287,7 @@ function buscaNomePessoa(){
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmPesqti').focus()");
             }
         }
     });
@@ -1327,7 +1327,7 @@ function buscaInfEmpresa(){
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCabCadlng').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmCabCadlng').focus()");
         },
         success: function (response) {
             try {
@@ -1335,7 +1335,7 @@ function buscaInfEmpresa(){
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmPesqti').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#cddopcao','#frmPesqti').focus()");
             }
         }
     });

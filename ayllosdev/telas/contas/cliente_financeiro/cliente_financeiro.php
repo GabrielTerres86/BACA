@@ -21,7 +21,7 @@
 	isPostMethod();	
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 
 	$glbvars["nmrotina"] = (isset($_POST['nmrotina'])) ? $_POST['nmrotina'] : $glbvars["nmrotina"];
 
@@ -38,7 +38,7 @@
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'@',false)) <> '') {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
-		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,($inpessoa == 2));
+		exibirErro('error',$msgError,'Alerta - Aimaro',$metodo,($inpessoa == 2));
 	}	
 	
 ?>

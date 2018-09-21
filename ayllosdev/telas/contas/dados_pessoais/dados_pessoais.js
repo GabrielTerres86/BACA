@@ -104,7 +104,7 @@ function chamaPrincipal (urlScript,nmdireto,nmrotina,nmdfonte,id) {
 			},		
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			},
 			success: function(response) {
 				if ( response.indexOf('showError("error"') == -1 ) {

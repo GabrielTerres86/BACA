@@ -14,10 +14,10 @@ var nomeFormDependentes  = 'frmDependentes';
  
 function controlaOperacaoDependentes(operacao) {
 
-	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TE') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclus&atilde;o.'        ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de incluis&atilde;o.'       ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TE') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclus&atilde;o.'        ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de incluis&atilde;o.'       ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
 	
 	// Se a operação necessita filtrar somente um registro, então filtro abaixo
 	// Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha	
@@ -53,15 +53,15 @@ function controlaOperacaoDependentes(operacao) {
 			cddopcao = 'E';
 			break;			
 		case 'AT' : 
-			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoDependentes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoDependentes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		case 'IT' : 
-			showConfirmacao('Deseja cancelar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoDependentes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoDependentes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		case 'VE' :
-			showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','manterRotinaDependentes(\'VE\')','controlaOperacaoDependentes(\'\')','sim.gif','nao.gif');
+			showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','manterRotinaDependentes(\'VE\')','controlaOperacaoDependentes(\'\')','sim.gif','nao.gif');
 			return false;
 			break;		
 		case 'AV' : manterRotinaDependentes(operacao);return false;break;	
@@ -86,7 +86,7 @@ function controlaOperacaoDependentes(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -130,7 +130,7 @@ function manterRotinaDependentes( operacao ) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
@@ -138,7 +138,7 @@ function manterRotinaDependentes( operacao ) {
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});

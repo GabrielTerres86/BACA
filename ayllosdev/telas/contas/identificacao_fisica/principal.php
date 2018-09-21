@@ -41,11 +41,11 @@
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
-		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$metodo,false);
 	}
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	
 	// Carrega permissões do operador
@@ -64,8 +64,8 @@
 	$cdgraupr = ( isset($_POST['cdgraupr']) )  ? $_POST['cdgraupr'] : '';
 		
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 		
 	// Monta o xml de requisição
 	$xml  = '';
@@ -95,7 +95,7 @@
 		
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco();',false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco();',false);
 	}
 	
 	// Se não retornou erro, então pegar a mensagem de alerta do Progress na variável msgAlert, para ser utilizada posteriormente
@@ -128,7 +128,7 @@
 	controlaLayout(operacao);
 	
 	if ( msgAlert != '' ) { 
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(operacao);');
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(operacao);');
 	}else{
 		controlaFoco();
 	}

@@ -42,7 +42,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina));
 		},
 		success: function(response) {		
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -129,7 +129,7 @@ function efetuaCancelamentoAuto(){
 	});
 	
 	if (!checkprd){
-		showError("error", "Nenhum produto foi selecionado.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+		showError("error", "Nenhum produto foi selecionado.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));");
 		return false;
 	}
 	
@@ -155,7 +155,7 @@ function efetuaCancelamentoAuto(){
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina));
 		},
 		success: function(response) {		
             hideMsgAguardo();
@@ -355,7 +355,7 @@ function efetuaCancelamentoManual(){
 										   'setaImped();' +					
 										   'direcionaTela(\'CONTAS\',\'no\');';
 					produtosCancMAtenda[index] = '';
-					produtosCancMContas[index] = "showError('error','Cooperado possui cart&atilde;o Bancoob, orienta-lo a entrar em contato com a institui&ccedil;&atilde;o para efetuar o cancelamento','Alerta - Ayllos','sequenciaImpedimentos();');";
+					produtosCancMContas[index] = "showError('error','Cooperado possui cart&atilde;o Bancoob, orienta-lo a entrar em contato com a institui&ccedil;&atilde;o para efetuar o cancelamento','Alerta - Aimaro','sequenciaImpedimentos();');";
 					produtosCancMCheque[index] = '';
 					index++;
 
@@ -383,7 +383,7 @@ function efetuaCancelamentoManual(){
 						},
 						error: function(objAjax,responseError,objExcept) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+							showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina));
 						},
 						success: function(response) {		
 							
@@ -393,7 +393,7 @@ function efetuaCancelamentoManual(){
 						}				
 					});
 					
-					//showError('error','Efetue o cancelamento do cartao junto ao Banco do Brasil.','Alerta - Ayllos','');
+					//showError('error','Efetue o cancelamento do cartao junto ao Banco do Brasil.','Alerta - Aimaro','');
 					
 					index++;
 
@@ -469,7 +469,7 @@ function efetuaCancelamentoManual(){
 										   'setaImped();' +					
 										   'direcionaTela(\'CONTAS\',\'no\');';
 					produtosCancMAtenda[index] = '';
-					produtosCancMContas[index] = "showError('error','Orientar o cooperado a transferir o benef&iacute;cio do INSS para outra institui&ccedil;&atilde;o.','Alerta - Ayllos','sequenciaImpedimentos();');";
+					produtosCancMContas[index] = "showError('error','Orientar o cooperado a transferir o benef&iacute;cio do INSS para outra institui&ccedil;&atilde;o.','Alerta - Aimaro','sequenciaImpedimentos();');";
 					produtosCancMCheque[index] = '';
 					index++;
 
@@ -483,7 +483,7 @@ function efetuaCancelamentoManual(){
 										   'setaImped();' +					
 										   'direcionaTela(\'CONTAS\',\'no\');';
 					produtosCancMAtenda[index] = '';
-					produtosCancMContas[index] = "showError('error','Verificar na Sede se cooperado possui produtos Procapcred, Finame, Cart&atilde;o BNDES e Inovacred.','Alerta - Ayllos','sequenciaImpedimentos();');";
+					produtosCancMContas[index] = "showError('error','Verificar na Sede se cooperado possui produtos Procapcred, Finame, Cart&atilde;o BNDES e Inovacred.','Alerta - Aimaro','sequenciaImpedimentos();');";
 					produtosCancMCheque[index] = '';
 					index++;
 
@@ -565,7 +565,7 @@ function efetuaCancelamentoManual(){
 	
 	if (produtosCancM.length == 0) {
 
-		showError("error", "Nenhum produto foi selecionado.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+		showError("error", "Nenhum produto foi selecionado.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));");
 		return false;
 
 	} else {

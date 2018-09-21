@@ -18,10 +18,10 @@
 	isPostMethod();		
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','fechaRotina(divRotina)');
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','fechaRotina(divRotina)');
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta 	 = $_POST["nrdconta"] 	 == "" ?  0   : $_POST["nrdconta"];
@@ -39,8 +39,8 @@
 	$tipoimpr = 0;
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 	
 	if ($tpimpressao == 'titular'){
 		$tipoimpr = 1;
@@ -130,7 +130,7 @@
 			} else {
 				$metodo = 'bloqueiaFundo(divRotina);controlaOperacao();';
 			}		
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 		}		
 				
 		?>

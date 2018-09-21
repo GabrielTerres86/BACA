@@ -73,7 +73,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao,operacao) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina));
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -133,7 +133,7 @@ function controlaOperacao(operacao) {
 			msgOperacao = 'abrindo formul&aacute;rio de dados';
 			break;
 		case 'CO': // Cancela opereção de inclusão/alteração de ambos os formulários
-			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		case 'FI': // Abre Formulario Dados em modo inclusão
@@ -207,7 +207,7 @@ function controlaOperacao(operacao) {
 		},  
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina));
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {						
@@ -217,7 +217,7 @@ function controlaOperacao(operacao) {
 				controlaFoco( operacao );
 			}
 			if ( (operacao=='I') || (operacao=='FA') ) {
-				showError('inform','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Retorno - Ayllos',bloqueiaFundo(divRotina));
+				showError('inform','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Retorno - Aimaro',bloqueiaFundo(divRotina));
 				if (operacao=='I') {
 					obtemTitular();
 				}
@@ -292,14 +292,14 @@ function manterRotina(operacao) {
 		},                                                                                  
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina));
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',bloqueiaFundo(divRotina));
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro',bloqueiaFundo(divRotina));
 			}
 		}				
 	});
@@ -514,7 +514,7 @@ function controlaLupas(operacao) {
 		if ( nomeFormulario == 'formDadosSistFinanc'){
 			// if ( $(this).val() == 0 || $(this).val() == '' ) {
 			if ( $(this).val() == 0 ) {
-				showError('error','Informe o banco','Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+				showError('error','Informe o banco','Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
 				$('#cdbccxlt,#nmdbanco').val('');
 				return false;
 				// $('#nminsfin','#formDadosSistFinanc').habilitaCampo();
@@ -528,7 +528,7 @@ function controlaLupas(operacao) {
 	// Agencia
 	$('#cdageban','#'+nomeFormulario).unbind('change').bind('change', function() {	
 		if ($('#cdbccxlt','#'+nomeFormulario).val() == '') {
-			showError('error','Informe o banco','Alerta - Ayllos', 'bloqueiaFundo(divRotina)');			
+			showError('error','Informe o banco','Alerta - Aimaro', 'bloqueiaFundo(divRotina)');			
 			return false;
 		}		
 		buscaDescricao('b1wgen0059.p','busca_agencia','Agencia',$(this).attr('name'),'nmageban',$(this).val(),'nmageban','cdbccxlt',nomeFormulario);

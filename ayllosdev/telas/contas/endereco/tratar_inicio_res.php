@@ -46,7 +46,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	} else {
 		$nranores = $xmlObjeto->roottag->tags[0]->attributes['NRANORES'];
 		echo "$('#nranores','#frmEndereco').val('".$nranores."');";

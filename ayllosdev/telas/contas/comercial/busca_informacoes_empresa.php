@@ -51,7 +51,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjeto = getObjectXML($xmlResult);	
 	
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$result = $xmlObjeto->roottag->tags;
 

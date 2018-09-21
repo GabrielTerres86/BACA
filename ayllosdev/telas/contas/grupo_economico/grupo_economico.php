@@ -19,7 +19,7 @@
 	
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) 
-	   exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	   exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 
 	// Carrega permissões do operador
 	include("../../../includes/carrega_permissoes.php");	
@@ -30,7 +30,7 @@
 	$flgAcesso   = (in_array("@", $glbvars["opcoesTela"]));
 	
 	if ($flgAcesso == "") 
-		exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Filia&ccedil;&atilde;o.','Alerta - Ayllos','');
+		exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Filia&ccedil;&atilde;o.','Alerta - Aimaro','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>

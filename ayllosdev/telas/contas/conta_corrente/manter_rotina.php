@@ -92,7 +92,7 @@
 	
 	if ( $operacao == 'VA' ) {
 	  // Tipo de Conta
-		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
+		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
 	}
 	
 	// Dependendo da operação, chamo uma procedure diferente
@@ -133,7 +133,7 @@
 		// Se ocorrer um erro, mostra crítica
 		if ($xmlObjeto->Erro->Registro->dscritic != "") {
 			$msgErro = $xmlObjeto->Erro->Registro->dscritic;
-			exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
+			exibirErro("error",$msgErro,"Alerta - Aimaro","",false);
 		}
 		
 		foreach($xmlObjeto->operador as $operador){
@@ -163,13 +163,13 @@
 		// Se ocorrer um erro, mostra crítica
 		if ($xmlObjeto->Erro->Registro->dscritic != "") {
 			$msgErro = $xmlObjeto->Erro->Registro->dscritic;
-			exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
+			exibirErro("error",$msgErro,"Alerta - Aimaro","",false);
 		}
 		
 		echo 'hideMsgAguardo();';
 		//Fim Melhoria 147
 	} else {
-		if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 		// Monta o xml dinâmico de acordo com a operação
 		$xml  = '';
@@ -229,9 +229,9 @@
 			$nmdcampo = ( isset($xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'] : '';
 
 			if ( $nmdcampo == "" ) {
-				exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+				exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 			} else {
-				exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','bloqueiaFundo(divRotina,\''.$nmdcampo.'\',\'frmContaCorrente\')',false);
+				exibirErro('error',utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Aimaro','bloqueiaFundo(divRotina,\''.$nmdcampo.'\',\'frmContaCorrente\')',false);
 			}
 		}
 		
@@ -273,13 +273,13 @@
 						echo 'mostraTabelaTitulares();';
 					} else {			
 						if ( $tipconfi == 0 ) $msgconfi = 'Deseja confirmar altera&ccedil;&atilde;o?';			
-						exibirConfirmacao($msgconfi,'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\''.$opeconfi.'\')','bloqueiaFundo(divRotina)',false);
+						exibirConfirmacao($msgconfi,'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\''.$opeconfi.'\')','bloqueiaFundo(divRotina)',false);
 					}
 				} else if ( $tipconfi == 2 ) {
 					echo 'hideMsgAguardo();';
-					echo "showConfirmacao('Deseja visualizar as cr&iacute;ticas?','Confirma&ccedil;&atilde;o - Ayllos','imprimeCritica(\'\');','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";		
+					echo "showConfirmacao('Deseja visualizar as cr&iacute;ticas?','Confirma&ccedil;&atilde;o - Aimaro','imprimeCritica(\'\');','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";		
 				} else if ( $tipconfi == 3 ) {		
-					exibirConfirmacao(utf8_encode($msgconfi),'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\''.$opeconfi.'\')','bloqueiaFundo(divRotina)',false);
+					exibirConfirmacao(utf8_encode($msgconfi),'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\''.$opeconfi.'\')','bloqueiaFundo(divRotina)',false);
 				}
 			}
 		
@@ -320,7 +320,7 @@
 
 				if ($xmlObjeto->Erro->Registro->dscritic != "") {
 					$msgErro = $xmlObjeto->Erro->Registro->dscritic;
-					exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
+					exibirErro("error",$msgErro,"Alerta - Aimaro","",false);
 				
 			}
 			//Fim Melhoria 126
@@ -353,14 +353,14 @@
 				if($msgErro == null || $msgErro == ''){
 					$msgErro = $xmlObjeto1->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				}								
-				exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
+				exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);								
 			} 			
 			//Fim melhoria 69
 			
 			// Verificar se existe "Verificacaoo de Revisão Cadastral"
 			$stringArrayMsg = "";
 			if ($msgAtCad != '' && $flgcadas != 'M') {
-				exibirConfirmacao($msgAtCad,'Confirma&ccedil;&atilde;o - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0074.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"OC\")\')',false);
+				exibirConfirmacao($msgAtCad,'Confirma&ccedil;&atilde;o - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0074.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"OC\")\')',false);
 			}else{
 				echo 'controlaOperacao(\''.$opeconfi.'\')';
 			}
@@ -372,21 +372,21 @@
 		echo '$("input","#frmContaCorrente").removeClass("campoErro");';
 	
 		// PA
-		if ( $GLOBALS['cdagepac'] == '' ) exibirErro('error','PA deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdagepac\',\'frmContaCorrente\')',false); 
+		if ( $GLOBALS['cdagepac'] == '' ) exibirErro('error','PA deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdagepac\',\'frmContaCorrente\')',false); 
 		
 		// Situação
-		if ( $GLOBALS['cdsitdct'] == '' ) exibirErro('error','Situação deve ser selecionada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsitdct\',\'frmContaCorrente\')',false); 
+		if ( $GLOBALS['cdsitdct'] == '' ) exibirErro('error','Situação deve ser selecionada.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdsitdct\',\'frmContaCorrente\')',false); 
 		
 		// Tipo de Conta
-		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
+		if ( $GLOBALS['cdtipcta'] == '' ) exibirErro('error','Tipo de conta deve ser selecionado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdtipcta\',\'frmContaCorrente\')',false); 
 		
 		// Categoria
-		if ( $GLOBALS['inpessoa'] == 1 && ($GLOBALS['cdcatego'] == '' || $GLOBALS['cdcatego'] == 0)) exibirErro('error','Categoria deve ser informada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcatego\',\'frmContaCorrente\')',false); 
+		if ( $GLOBALS['inpessoa'] == 1 && ($GLOBALS['cdcatego'] == '' || $GLOBALS['cdcatego'] == 0)) exibirErro('error','Categoria deve ser informada.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdcatego\',\'frmContaCorrente\')',false); 
 		
 		// Banco emi. cheque
-		if ( ($GLOBALS['cdbcochq'] == '') ) exibirErro('error','Banco emissão do cheque deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbcochq\',\'frmContaCorrente\')',false);
+		if ( ($GLOBALS['cdbcochq'] == '') ) exibirErro('error','Banco emissão do cheque deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdbcochq\',\'frmContaCorrente\')',false);
 		
 		// Destino extrato
-		if ( ($GLOBALS['cdsecext'] == '') ) exibirErro('error','Destino extrato deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsecext\',\'frmContaCorrente\')',false);	
+		if ( ($GLOBALS['cdsecext'] == '') ) exibirErro('error','Destino extrato deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdsecext\',\'frmContaCorrente\')',false);	
 	}
 ?>

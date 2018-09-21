@@ -33,7 +33,7 @@
 	$inacordo 			  =	(isset($_POST['inacordo'])) 			? $_POST['inacordo'] : '' ;
 	$nrdconta 			  =	(isset($_POST['nrdconta'])) 			? $_POST['nrdconta'] : '' ;
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	if($operacao == 'AV') validaDados();
 
@@ -73,7 +73,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			}								
-			exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);								
+			exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);								
 		}
 
 		echo 'exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\');';
@@ -82,7 +82,7 @@
 
 	if( $operacao == 'AV' ) { // Se é Validação
 
-		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);
+		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);
 		
 	}
 
@@ -92,15 +92,15 @@
 		echo '$("input","#frmInfAdicional").removeClass("campoErro");';
 
 		if($GLOBALS["inobrigacao_exterior"] == ''){
-			exibirErro('error','Favor informar o campo: Cooperado possui domic&iacute;lio ou qualquer obrigac&ccedil;&atilde;o fiscal fora do Brasil?.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
+			exibirErro('error','Favor informar o campo: Cooperado possui domic&iacute;lio ou qualquer obrigac&ccedil;&atilde;o fiscal fora do Brasil?.','Alerta - Aimaro','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
 		}
 		
 		if($GLOBALS["inobrigacao_exterior"] == 'S' && ($GLOBALS["cdpais"] === '' || $GLOBALS["cdpais"] === 0)){
-			exibirErro('error','Favor informar o c&oacute;digo do pa&iacute;s.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
+			exibirErro('error','Favor informar o c&oacute;digo do pa&iacute;s.','Alerta - Aimaro','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
 		}
 
 		if(($GLOBALS["inacordo"] == 'FATCA') && $GLOBALS["inobrigacao_exterior"] == 'S' && $GLOBALS["nridentificacao"] == ''){
-			exibirErro('error','Favor informar o NIF.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
+			exibirErro('error','Favor informar o NIF.','Alerta - Aimaro','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'dsnacion\',\'frmDetalhes\');',false);
 		}			
 	}		
 ?>

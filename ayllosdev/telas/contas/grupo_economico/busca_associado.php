@@ -17,7 +17,7 @@
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'@')) <> ""){
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$nrdconta = $_POST["nrdconta"] == "" ? 0 : $_POST["nrdconta"];
@@ -42,7 +42,7 @@
 		if ($msgErro == "") {
 			$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 		}
-		exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos',"bloqueiaFundo($('#divUsoGenerico'));",false);
+		exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro',"bloqueiaFundo($('#divUsoGenerico'));",false);
 	}
 	
 	if (getByTagName($xmlObjeto->roottag->tags[0]->tags,'total') > 1){
