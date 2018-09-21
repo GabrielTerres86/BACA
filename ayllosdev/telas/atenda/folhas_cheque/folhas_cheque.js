@@ -131,13 +131,13 @@ function acessaEntregaTalonario () {
 					$("#divEntregaTalionario").html(response);
                     return false;
                 } catch (error) {
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));");
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')));");
                 }
             }
 		}				
@@ -171,7 +171,6 @@ function formataLayout(nomeForm, ultimo_talao){
 		Ctprequis2 = $('#tprequis_2','#'+nomeForm);
 		Cnrinichq = $('#nrinichq','#'+nomeForm);
 		Cnrfinchq = $('#nrfinchq','#'+nomeForm);
-		ultimoTalao = $('#'+ultimo_talao,'#'+nomeForm);
 		
 		btnVoltar	 = $('#btnVoltar','#divBotoes');
 		btnContinuar = $('#btnContinuar','#divBotoes');
@@ -217,14 +216,17 @@ function formataLayout(nomeForm, ultimo_talao){
 			}
 		});
 		
-		ultimoTalao.unbind('keydown').bind('keydown', function (e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if (e.keyCode == 9 || e.keyCode == 13) {
-				$(this).removeClass('campoErro');
-				btnContinuar.focus();
-				return false;
-			}
-		});
+		if (document.getElementById('#'+ultimo_talao) != null){
+			ultimoTalao = $('#'+ultimo_talao,'#'+nomeForm);
+			ultimoTalao.unbind('keydown').bind('keydown', function (e) {
+				if ( divError.css('display') == 'block' ) { return false; }
+				if (e.keyCode == 9 || e.keyCode == 13) {
+					$(this).removeClass('campoErro');
+					btnContinuar.focus();
+					return false;
+				}
+			});
+		}
 		
 		//Evento keypress do campo Ccpfterce
 		btnVoltar.unbind('keydown').bind('keydown', function (e) {
