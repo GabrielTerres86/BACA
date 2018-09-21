@@ -18,7 +18,7 @@
 
 
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
 	
 	setVarSession("opcoesTela",$opcoesTela);
@@ -35,8 +35,8 @@
 			
 
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	
 
 	// Monta o xml de requisição
@@ -76,7 +76,7 @@
 	
 	// Se ocorrer um erro, mostra mensagem
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') 
-	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','fechaRotina(divRotina);',false);	
+	exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','fechaRotina(divRotina);',false);	
 	
 	
 	$ppe = $xmlObjeto->roottag->tags[0]->tags[0]->tags;	
@@ -87,7 +87,7 @@
 	echo "<script>$('#".$nomeForm."').append('<input type=\"hidden\" id=\"inpolexp\" name=\"inpolexp\" value=\"".$inpolexp."\" />');</script>";
 	
     if ($inpolexp == 2) {
-		exibirErro('error','A definição de pessoa exposta politicamente está pendente no cadastro.','Alerta - Ayllos','fechaRotina(divRotina);',true);
+		exibirErro('error','A definição de pessoa exposta politicamente está pendente no cadastro.','Alerta - Aimaro','fechaRotina(divRotina);',true);
 	}
 	
 	$tpexposto        = getByTagName($ppe,'tpexposto');

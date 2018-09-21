@@ -103,7 +103,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			hideMsgAguardo();
@@ -128,7 +128,7 @@ function controlaOperacao(operacao, flgConcluir) {
 		case 'SC' : mensagem = 'Aguarde, abrindo formulário ...'; break;	
 		case 'CA' : mensagem = 'Aguarde, abrindo formulário ...'; flgAlterando = true; break;	
 		case 'CAE': mensagem = 'Aguarde, abrindo formulário ...'; break;	
-		case 'AC' : showConfirmacao('Deseja cancelar operação?','Confirmação - Ayllos','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false; break;
+		case 'AC' : showConfirmacao('Deseja cancelar operação?','Confirmação - Aimaro','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false; break;
 		case 'AV' : manterRotina(operacao); return false; break;	
 		case 'VA' : manterRotina(operacao); opcao = 'A'; return false; break;
 		case 'PPE': manterRotina(operacao); return false; break;
@@ -177,7 +177,7 @@ function controlaOperacao(operacao, flgConcluir) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -237,7 +237,7 @@ function manterRotina(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			hideMsgAguardo();
@@ -245,7 +245,7 @@ function manterRotina(operacao) {
 				eval(response);				
 				return false;
 			} catch(error) {				
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});
@@ -487,7 +487,7 @@ function salvarPpe() {
 			}, 
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			},
 			success: function(response) {
 				hideMsgAguardo();
@@ -501,7 +501,7 @@ function salvarPpe() {
 					
 					return false;
 				} catch(error) {				
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 				}
 			}				
 		});	
@@ -558,21 +558,21 @@ function validarPpe() {
 	
 		nrcnpj_empresa = normalizaNumero(nrcnpj_empresa);
 		if (nrcnpj_empresa != '' && !validaCpfCnpj(nrcnpj_empresa,2)) {
-			showError('error','CNPJ inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcnpj_empresa\',\''+nomeForm+'\');');
+			showError('error','CNPJ inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcnpj_empresa\',\''+nomeForm+'\');');
 			return false;
 		}
 	
 		if (trim(cdocpttl) == '' || 
 			trim(cdocpttl) == 0  ||
 		    trim(dtinicio) == '') {			
-			showError('error',"Os campos 'Ocupação' e 'Data de início' devem ser preenchidos",'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error',"Os campos 'Ocupação' e 'Data de início' devem ser preenchidos",'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			return false;
 		}
 	} else if (tpexposto == 2) {  // relacionamento
 	
 		nrcpf_politico = normalizaNumero(nrcpf_politico);
 		if (!validaCpfCnpj(nrcpf_politico,1)) {
-			showError('error','CPF inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpf_politico\',\''+nomeForm+'\');');
+			showError('error','CPF inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpf_politico\',\''+nomeForm+'\');');
 			return false;
 		}
 
@@ -581,12 +581,12 @@ function validarPpe() {
 		    trim(nmpolitico)       == '' || 
 			trim(nrcpf_politico)   == '' ||
 			trim(cdrelacionamento) == '') {
-			showError('error',"Os campos 'Ocupação', 'Nome político', 'CPF' e 'Tipo de relacionamento' devem ser preenchidos",'Alerta - Ayllos','bloqueiaFundo(divRotina)');			
+			showError('error',"Os campos 'Ocupação', 'Nome político', 'CPF' e 'Tipo de relacionamento' devem ser preenchidos",'Alerta - Aimaro','bloqueiaFundo(divRotina)');			
 			return false;
 		}
 	} else {
 		if (inpolexp == 1) { // pessoa exposta politicamente
-			showError('error',"Escolha uma opção do campo 'Tipo exposto'",'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error',"Escolha uma opção do campo 'Tipo exposto'",'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			return false;
 		}
 	}	
@@ -602,14 +602,14 @@ function proximaRotina () {
 	inpolexp         = $('#inpolexp',  '#'+nomeForm).val();
 	
 	if (inpolexp == 1 && tpexposto == '') { // pessoa exposta politicamente
-		showError('error',"Escolha uma opção do campo 'Tipo exposto'",'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		showError('error',"Escolha uma opção do campo 'Tipo exposto'",'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		return false;
 	}
 
 	if (flgAlterando && 
 		inpolexp == 1 && 
 		(tpexposto == 1 || tpexposto == 2)) { // Se clicou em alterar...
-		showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos',
+		showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro',
 						'salvarPpe();',
 						'function foo() { return false }',
 						'sim.gif','nao.gif');

@@ -1,4 +1,4 @@
-<?php
+ <?php
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : Gabriel Capoia - DB1 Informatica
@@ -26,10 +26,10 @@
 	$op           = ( $cddopcao == '' ) ? '@'  : $cddopcao;
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Verifica se o número da conta e o titular foram informados
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Guardo o número da conta e titular em variáveis
 	$nrdconta  = ( isset($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0;
@@ -50,8 +50,8 @@
 	$flgPoderes   = (in_array('P', $glbvars['opcoesTela']));
 		
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Monta o xml de requisição
 	$xml  = '';
@@ -87,7 +87,7 @@
 		} else {
 			$metodo = 'bloqueiaFundo(divRotina);controlaOperacaoProcuradores();';
 		}		
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 	}
 	
 	$estadoCivil = ( isset($registros[0]->tags) ) ? getByTagName($registros[0]->tags,'cdestcvl') : '';
@@ -119,7 +119,7 @@
 		
 		
 		// Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObjetoBens->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaOperacaoProcuradores()',false);	
+		if (strtoupper($xmlObjetoBens->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaOperacaoProcuradores()',false);	
 		
 		$controle = true;
 	}

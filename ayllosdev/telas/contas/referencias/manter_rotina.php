@@ -53,7 +53,7 @@
 	$nmcidade = trim($nmcidade);	
 	
 	// Verifica os valores permitidos para operação
-	if(!in_array($operacao,array('AV','VA','IV','VI','CE'))) exibirErro('error','O parâmetro operação inválido. Valor informado '.$operacao.'.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if(!in_array($operacao,array('AV','VA','IV','VI','CE'))) exibirErro('error','O parâmetro operação inválido. Valor informado '.$operacao.'.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Dependendo da operação, chamo uma procedure diferente
 	$procedure = '';
@@ -63,7 +63,7 @@
 	if( $operacao == 'AV' ) { $procedure = 'validar-dados-contato'; $cddopcao = 'A';}
 	if( $operacao == 'IV' ) { $procedure = 'validar-dados-contato'; $cddopcao = 'I';}
 		
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 		
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = '';
@@ -108,7 +108,7 @@
 	$retorno = ( $operacao == 'CE') ? 'controlaOperacao()' : 'bloqueiaFundo(divRotina)';
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$retorno,false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$retorno,false);
 	
 	$msg = Array();
 	
@@ -126,20 +126,20 @@
 	$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
 	$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];	
 	
-	// exibirErro('error','operacao='.$operacao.'| nrdconta='.$nrdconta.'| idseqttl='.$idseqttl.'| procedure='.$procedure.'| nrdrowid='.$nrdrowid,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	// exibirErro('error','operacao='.$operacao.'| nrdconta='.$nrdconta.'| idseqttl='.$idseqttl.'| procedure='.$procedure.'| nrdrowid='.$nrdrowid,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 	
 	// Se é Validação
 	if( ($operacao == 'AV') || ($operacao == 'IV') ) {				
-		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
-		if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Ayllos','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);		
+		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
+		if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Aimaro','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);		
 	
 	// Se é Inclusão/Alteração/Exclusão
 	} else {		
 		
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if($msgAtCad!='' && $flgcadas != 'M') {					
-			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0049.p\',\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
-			if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0049.p\',\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0049.p\',\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0049.p\',\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 		
 		// Se não existe necessidade de Revisão Cadastral
 		} else {

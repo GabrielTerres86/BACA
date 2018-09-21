@@ -52,7 +52,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -68,10 +68,10 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 
 function controlaOperacao(operacao) {
 
-	if ( (operacao == 'CA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'CC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TE') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclus&atilde;o.'        ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'CI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de incluis&atilde;o.'       ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'CA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'CC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TE') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclus&atilde;o.'        ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'CI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de incluis&atilde;o.'       ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
 	
 	if ( in_array(operacao,['CA','TE','CC']) ) {
 		nrdrowid = '';
@@ -90,9 +90,9 @@ function controlaOperacao(operacao) {
 		case 'CC' : msgOperacao = 'abrindo consulta...';break;
 		case 'CB' : msgOperacao = 'buscando dados...';break;
 		case 'TE' : msgOperacao = 'processando exlus&atilde;o...';break;
-		case 'CE' : showConfirmacao('Deseja confirmar exlus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\''+operacao+'\')','controlaOperacao()','sim.gif','nao.gif');return false;break;					
-		case 'AC' : showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');return false;break;
-		case 'IC' : showConfirmacao('Deseja cancelar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');return false;break;
+		case 'CE' : showConfirmacao('Deseja confirmar exlus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','manterRotina(\''+operacao+'\')','controlaOperacao()','sim.gif','nao.gif');return false;break;					
+		case 'AC' : showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');return false;break;
+		case 'IC' : showConfirmacao('Deseja cancelar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');return false;break;
 		case 'AV' : manterRotina(operacao);return false;break;	
 		case 'VA' : manterRotina(operacao);return false;break;
 		case 'IV' : manterRotina(operacao);return false;break;
@@ -117,7 +117,7 @@ function controlaOperacao(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -192,7 +192,7 @@ function manterRotina( operacao ) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
@@ -200,7 +200,7 @@ function manterRotina( operacao ) {
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});
@@ -403,7 +403,7 @@ function controlaLayout(operacao) {
 						controlaPesquisas();
 						cNom.focus();
 					} else {
-						if ( !validaNroConta(nrconta) ) { showError('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina);'); return false; }
+						if ( !validaNroConta(nrconta) ) { showError('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina);'); return false; }
 						nrdctato = nrconta;
 						controlaOperacao('CB');
 					}
@@ -558,7 +558,7 @@ function btLimpar(){
 				cNome.focus();
 				
 			} else {
-				if ( !validaNroConta(nrconta) ) { showError('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina);'); return false; }
+				if ( !validaNroConta(nrconta) ) { showError('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina);'); return false; }
 				nrdctato = nrconta;
 				controlaOperacao('CB');
 			}

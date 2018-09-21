@@ -39,7 +39,7 @@
 	$nmpescto = trim($nmpescto);	
 	
 	// Verifica os valores permitidos para operação
-	//if(!in_array($operacao,array('AV','VA','IV','VI','EV','VE'))) exibirErro('error','O parâmetro operação inválido. Valor informado '.$operacao.'.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	//if(!in_array($operacao,array('AV','VA','IV','VI','EV','VE'))) exibirErro('error','O parâmetro operação inválido. Valor informado '.$operacao.'.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	if(in_array($operacao,array('AV','IV'))) validaDados();
 
@@ -52,7 +52,7 @@
 	if ( $operacao == 'VA' ) { $procedure = 'gerenciar-telefone'; $cddopcao = 'A'; }
 	if ( $operacao == 'VE' ) { $procedure = 'gerenciar-telefone'; $cddopcao = 'E'; }
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = '';
@@ -96,7 +96,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if ( isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') 
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$retorno,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$retorno,false);
 	
 	$msg = Array();
 	
@@ -118,18 +118,18 @@
 	
 	// Se é Validação
 	if( ($operacao == 'AV') || ($operacao == 'IV') || ($operacao == 'EV') ) {				
-		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
-		if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Ayllos','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);
-		if( $operacao == 'EV' ) exibirConfirmacao('Deseja confirmar exclusão?' ,'Confirmação - Ayllos','controlaOperacao(\'VE\')','bloqueiaFundo(divRotina);controlaOperacao(\'\');',false);
+		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
+		if( $operacao == 'IV' ) exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Aimaro','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);
+		if( $operacao == 'EV' ) exibirConfirmacao('Deseja confirmar exclusão?' ,'Confirmação - Aimaro','controlaOperacao(\'VE\')','bloqueiaFundo(divRotina);controlaOperacao(\'\');',false);
 	
 	// Se é Inclusão/Alteração/Exclusão
 	} else {		
 
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if($msgAtCad!='' && $flgcadas != 'M') {					
-			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0070.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
-			if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0070.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
-			if( $operacao == 'VE' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0070.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0070.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VI' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0070.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VE' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0070.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 
 		// Se não existe necessidade de Revisão Cadastral
 		} else {
@@ -144,24 +144,24 @@
 		// No início das validações, primeiro remove a classe erro de todos os campos
 		echo '$("input,select","#frmTelefones").removeClass("campoErro");';
 		
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inválida.'   ,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inválida','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inválida.'   ,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inválida','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
-		if( $GLOBALS['tptelefo'] == '' ) exibirErro('error','A Identificação deve ser informada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tptelefo\',\'frmTelefones\')',false);
-		if( $GLOBALS['nrdddtfc'] == '' ) exibirErro('error','O DDD deve ser informado.'          ,'Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdddtfc\',\'frmTelefones\')',false);
-		if( $GLOBALS['nrtelefo'] == '' ) exibirErro('error','O Nr. Telefone deve ser informado.' ,'Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrtelefo\',\'frmTelefones\')',false);
+		if( $GLOBALS['tptelefo'] == '' ) exibirErro('error','A Identificação deve ser informada.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tptelefo\',\'frmTelefones\')',false);
+		if( $GLOBALS['nrdddtfc'] == '' ) exibirErro('error','O DDD deve ser informado.'          ,'Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdddtfc\',\'frmTelefones\')',false);
+		if( $GLOBALS['nrtelefo'] == '' ) exibirErro('error','O Nr. Telefone deve ser informado.' ,'Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrtelefo\',\'frmTelefones\')',false);
 		
-		if( $GLOBALS['idsittfc'] == '' ) exibirErro('error','A Situação deve ser informada.' ,'Alerta - Ayllos','bloqueiaFundo(divRotina,\'idsittfc\',\'frmTelefones\')',false);
-		if( $GLOBALS['idorigem'] == '' ) exibirErro('error','A Origem deve ser informada.' ,'Alerta - Ayllos','bloqueiaFundo(divRotina,\'idorigem\',\'frmTelefones\')',false);
+		if( $GLOBALS['idsittfc'] == '' ) exibirErro('error','A Situação deve ser informada.' ,'Alerta - Aimaro','bloqueiaFundo(divRotina,\'idsittfc\',\'frmTelefones\')',false);
+		if( $GLOBALS['idorigem'] == '' ) exibirErro('error','A Origem deve ser informada.' ,'Alerta - Aimaro','bloqueiaFundo(divRotina,\'idorigem\',\'frmTelefones\')',false);
 		
 		// Se é tipo Celular, Operadora deve ser informada 
-		if( ($GLOBALS['tptelefo'] == 2 ) && ($GLOBALS['cdopetfn'] == '') ) exibirErro('error','A Operadora deve ser informada.' ,'Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdopetfn\',\'frmTelefones\')',false);
+		if( ($GLOBALS['tptelefo'] == 2 ) && ($GLOBALS['cdopetfn'] == '') ) exibirErro('error','A Operadora deve ser informada.' ,'Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdopetfn\',\'frmTelefones\')',false);
 		
 		// Se é tipo Comercial, o nome do Contato deve ser informado
-		if( ($GLOBALS['tptelefo'] == 3 ) && ($GLOBALS['nmpescto'] == '') ) exibirErro('error','O nome do Contato deve ser informado.' ,'Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmpescto\',\'frmTelefones\')',false);
+		if( ($GLOBALS['tptelefo'] == 3 ) && ($GLOBALS['nmpescto'] == '') ) exibirErro('error','O nome do Contato deve ser informado.' ,'Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmpescto\',\'frmTelefones\')',false);
 		
 		// Se é tipo Contato, o nome do Contato deve ser informado
-		if( ($GLOBALS['tptelefo'] == 4 ) && ($GLOBALS['nmpescto'] == '') ) exibirErro('error','O nome do Contato deve ser informado.' ,'Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmpescto\',\'frmTelefones\')',false);
+		if( ($GLOBALS['tptelefo'] == 4 ) && ($GLOBALS['nmpescto'] == '') ) exibirErro('error','O nome do Contato deve ser informado.' ,'Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmpescto\',\'frmTelefones\')',false);
 		
 	}
 ?>

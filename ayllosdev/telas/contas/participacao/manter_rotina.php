@@ -54,7 +54,7 @@
 		default: return false;
 	}
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = "";
@@ -98,7 +98,7 @@
 	
 	$saida =  ( $operacao == 'EV' || $operacao == 'E' ) ? 'controlaOperacao();' : 'bloqueiaFundo(divRotina);' ;
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$saida,false);	
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$saida,false);	
 			
 	$msg = Array();
 	
@@ -120,10 +120,10 @@
 	// Se é Validação
 	if(in_array($operacao,array('VI','VA','EV'))) {		
 				
-		if ( $msgAlerta != '' ) exibirErro('inform',$msgAlerta,'Alerta - Ayllos','bloqueiaFundo(divConfirm)',false);		
-		if($operacao=='VI') exibirConfirmacao('Deseja confirmar inclusão?','Confirmação - Ayllos','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);	
-		if($operacao=='VA') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);
-		if($operacao=='EV') exibirConfirmacao('Deseja confirmar exclusão?','Confirmação - Ayllos','controlaOperacao(\'E\')','controlaOperacao(\'EC\')',false);
+		if ( $msgAlerta != '' ) exibirErro('inform',$msgAlerta,'Alerta - Aimaro','bloqueiaFundo(divConfirm)',false);		
+		if($operacao=='VI') exibirConfirmacao('Deseja confirmar inclusão?','Confirmação - Aimaro','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);	
+		if($operacao=='VA') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);
+		if($operacao=='EV') exibirConfirmacao('Deseja confirmar exclusão?','Confirmação - Aimaro','controlaOperacao(\'E\')','controlaOperacao(\'EC\')',false);
 		
 	// Se é Inclusão ou Alteração
 	} else {
@@ -131,8 +131,8 @@
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if($msgAtCad!='') {
 		
-			if($operacao=='I') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0080.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"CT\")\')',false);
-			if($operacao=='A') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0080.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"CT\")\')',false);
+			if($operacao=='I') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0080.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"CT\")\')',false);
+			if($operacao=='A') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0080.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"CT\")\')',false);
 			
 		// Se não existe necessidade de Revisão Cadastral
 		} else {	
@@ -147,26 +147,26 @@
 	function validaDados() {
 		echo '$("input,select","#frmParticipacaoEmpresas").removeClass("campoErro");';		
 				
-		if ( $GLOBALS['nrcpfcgc'] == '' ) exibirErro('error','CNPJ inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmParticipacaoEmpresas\')',false);
+		if ( $GLOBALS['nrcpfcgc'] == '' ) exibirErro('error','CNPJ inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmParticipacaoEmpresas\')',false);
 
 		// Nomes
-		if ( $GLOBALS['nmprimtl'] == '' ) exibirErro('error','Raz&atilde;o social deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmprimtl\',\'frmParticipacaoEmpresas\')',false);
-		if ( $GLOBALS['nmfatasi'] == '' ) exibirErro('error','Nome Fantasia deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmfatasi\',\'frmParticipacaoEmpresas\')',false);
+		if ( $GLOBALS['nmprimtl'] == '' ) exibirErro('error','Raz&atilde;o social deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmprimtl\',\'frmParticipacaoEmpresas\')',false);
+		if ( $GLOBALS['nmfatasi'] == '' ) exibirErro('error','Nome Fantasia deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmfatasi\',\'frmParticipacaoEmpresas\')',false);
 	
 
 		// Dt. Início Atividade
-		if (!validaData($GLOBALS['dtiniatv'])) exibirErro('error','Data de In&iacute;cio Atividade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtiniatv\',\'frmParticipacaoEmpresas\')',false);
+		if (!validaData($GLOBALS['dtiniatv'])) exibirErro('error','Data de In&iacute;cio Atividade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtiniatv\',\'frmParticipacaoEmpresas\')',false);
 
 		// Natureza Jurídica
-		if (!validaInteiro($GLOBALS['cdnatjur'])) exibirErro('error','Natureza Jur&iacute;dica inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmParticipacaoEmpresas\')',false);
-		if ($GLOBALS['cdnatjur'] == 0) exibirErro('error','Natureza Jur&iacute;dica deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmParticipacaoEmpresas\')',false);
+		if (!validaInteiro($GLOBALS['cdnatjur'])) exibirErro('error','Natureza Jur&iacute;dica inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmParticipacaoEmpresas\')',false);
+		if ($GLOBALS['cdnatjur'] == 0) exibirErro('error','Natureza Jur&iacute;dica deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmParticipacaoEmpresas\')',false);
 
 		// Setor Econômico
-		if (!validaInteiro($GLOBALS['cdseteco'])) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdseteco\',\'frmParticipacaoEmpresas\')',false);
-		if ($GLOBALS['cdseteco'] < 1 || $cdseteco > 4) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdseteco\',\'frmParticipacaoEmpresas\')',false);
+		if (!validaInteiro($GLOBALS['cdseteco'])) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdseteco\',\'frmParticipacaoEmpresas\')',false);
+		if ($GLOBALS['cdseteco'] < 1 || $cdseteco > 4) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdseteco\',\'frmParticipacaoEmpresas\')',false);
 
 		// Ramo Atividade
-		if (!validaInteiro($GLOBALS['cdrmativ'])) exibirErro('error','Ramo de Atividade inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmParticipacaoEmpresas\')',false);
-		if ($GLOBALS['cdrmativ'] == 0) exibirErro('error','Ramo de Atividade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmParticipacaoEmpresas\')',false);
+		if (!validaInteiro($GLOBALS['cdrmativ'])) exibirErro('error','Ramo de Atividade inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmParticipacaoEmpresas\')',false);
+		if ($GLOBALS['cdrmativ'] == 0) exibirErro('error','Ramo de Atividade deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmParticipacaoEmpresas\')',false);
 	}
 ?>

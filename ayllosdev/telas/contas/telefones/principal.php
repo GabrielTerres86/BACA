@@ -32,11 +32,11 @@
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
-		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,false);	
+		exibirErro('error',$msgError,'Alerta - Aimaro',$metodo,false);	
 	}
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 
 	// Carrega permissões do operador
 	include('../../../includes/carrega_permissoes.php');
@@ -54,8 +54,8 @@
 	$operacao = ( isset($_POST['operacao']) ) ? $_POST['operacao'] : '';
 	$nrdrowid = ( isset($_POST['nrdrowid']) ) ? $_POST['nrdrowid'] : '';
 			
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 	
 	$procedure = (in_array($operacao,array('TA','TX','TI','CF'))) ? 'obtem-dados-gerenciar-telefone' : 'obtem-telefone-cooperado';
 		
@@ -84,9 +84,9 @@
 	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){ 
 		if( $cddopcao == 'I' ){
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaOperacao(\'TI\')',false);
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaOperacao(\'TI\')',false);
 		}else{
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		}
 	}
 	
@@ -149,9 +149,9 @@
 	controlaLayout(operacao);
 	
 	if ( msgConta != '' && operacao == 'SC' ){
-		showError('inform',msgConta,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');'); 
+		showError('inform',msgConta,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');'); 
 	}else if ( msgAlert != ''   ){ 
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');'); 
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(\''+operacao+'\');'); 
 	}
 	if ( operacao == 'TX' ){ controlaOperacao('EV'); }
 </script>

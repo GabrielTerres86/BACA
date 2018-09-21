@@ -45,7 +45,7 @@
 		default: return false;
 	}
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -79,7 +79,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 		
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
@@ -99,11 +99,11 @@
 		
 	// Se é Validação
 	if( $operacao == 'AV' ) {
-		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
+		if( $operacao == 'AV' ) exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
 	// Se é Alteração
 	} else {
 		if($msgAtCad!='' && $flgcadas != 'M') {					
-			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0068.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+			if( $operacao == 'VA' ) exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0068.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 		
 		// Se não existe necessidade de Revisão Cadastral
 		} else {				
@@ -117,12 +117,12 @@
 		echo '$("input","#frmDadosResultados").removeClass("campoErro");';
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);				
-		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);				
+		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 
 	
 		// Campos Data basa
-		if (!validaInteiro($GLOBALS['ddprzrec']) || $GLOBALS['ddprzrec'] > 999 ) exibirErro('error','Valor deve ser mês v&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'ddprzrec\',\'frmDadosResultados\')',false);
-        if (!validaInteiro($GLOBALS['ddprzpag']) || $GLOBALS['ddprzpag'] > 999 ) exibirErro('error','Valor deve ser um ano v&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'ddprzpag\',\'frmDadosResultados\')',false);
+		if (!validaInteiro($GLOBALS['ddprzrec']) || $GLOBALS['ddprzrec'] > 999 ) exibirErro('error','Valor deve ser mês v&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'ddprzrec\',\'frmDadosResultados\')',false);
+        if (!validaInteiro($GLOBALS['ddprzpag']) || $GLOBALS['ddprzpag'] > 999 ) exibirErro('error','Valor deve ser um ano v&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'ddprzpag\',\'frmDadosResultados\')',false);
 	}	
 ?>									 
