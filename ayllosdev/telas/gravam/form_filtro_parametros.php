@@ -56,11 +56,11 @@
 			<input id="nrdiaenv" name="nrdiaenv" class="campo" maxlength="3" style="width: 50px; text-align: center;" value="<?php echo getByTagName($xmlRegist->tags,'nrdiaenv'); ?>" />
 
 			<label for="hrenvi01" class="rotulo"><? echo utf8ToHtml('Horário(s) dos envios das baixas/cancelamentos:') ?></label>
-			<input type="time" id="hrenvi01" name="hrenvi01" maxlength="5" class="campo" value="<?php echo getByTagName($xmlRegist->tags,'hrenvi01'); ?>" />
+			<input type="time" id="hrenvi01" name="hrenvi01" maxlength="5" class="campo" value="<?php echo getByTagName($xmlRegist->tags,'hrenvi01'); ?>" style="width: 75px" />
 			
-			<input type="time" id="hrenvi02" name="hrenvi02" maxlength="5" class="campo" style="padding-left: 1px;" value="<?php echo getByTagName($xmlRegist->tags,'hrenvi02'); ?>" />
+			<input type="time" id="hrenvi02" name="hrenvi02" maxlength="5" class="campo" style="width: 75px; padding-left: 1px;" value="<?php echo getByTagName($xmlRegist->tags,'hrenvi02'); ?>" />
 			
-			<input type="time" id="hrenvi03" name="hrenvi03" maxlength="5" class="campo" value="<?php echo getByTagName($xmlRegist->tags,'hrenvi03'); ?>" />
+			<input type="time" id="hrenvi03" name="hrenvi03" maxlength="5" class="campo" value="<?php echo getByTagName($xmlRegist->tags,'hrenvi03'); ?>" style="width: 75px" />
 			
 			<label for="aprvcord" class="rotulo"><? echo utf8ToHtml('Solicita senha de coord. para aditiv.') ?></label>
 			<select id="aprvcord" name="aprvcord" class="campo">
