@@ -34,7 +34,7 @@
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E',false)) <> '') 
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$nrcpfcgc = isset($_POST['nrcpfcgc']) ? $_POST['nrcpfcgc'] : 0;
 	
@@ -53,7 +53,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$nmprimtl = $xmlObject->roottag->tags[0]->cdata;

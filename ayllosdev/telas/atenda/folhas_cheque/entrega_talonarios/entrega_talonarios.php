@@ -29,7 +29,7 @@
 	
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'E',false)) <> '') 
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$nrdconta = isset($_POST['nrdconta']) && $_POST['nrdconta'] != '' ? $_POST['nrdconta'] : 0;
 	$tprequis = isset($_POST['tprequis']) && $_POST['tprequis'] != '' ? $_POST['tprequis'] : 0;
@@ -64,7 +64,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	if ($verifica == 1) {
 		if ($terceiro == 1)
@@ -73,6 +73,6 @@
 			$executa = "solicitaSenhaMagnetico(\"entregaTalonario(0)\",".$nrdconta.",\"s\")";
 		echo $executa;
 	} else {
-		exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Ayllos','voltarConteudo(\'divConteudoOpcao\',\'divEntregaTalionario\');bloqueiaFundo(divRotina)',false);
+		exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Aimaro','voltarConteudo(\'divConteudoOpcao\',\'divEntregaTalionario\');bloqueiaFundo(divRotina)',false);
 	}
 ?>
