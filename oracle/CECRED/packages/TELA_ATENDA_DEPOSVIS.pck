@@ -203,6 +203,39 @@ BEGIN
     RETURN vr_data;
 END fn_soma_dias_uteis_data;
 
+FUNCTION fn_valida_dia_util(pr_cdcooper NUMBER, pr_dtmvtolt DATE)
+    RETURN BOOLEAN AS vr_dia_util BOOLEAN;
+
+
+  CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE
+                 ,pr_dtcompar IN crapfer.dtferiad%TYPE) IS
+  SELECT cf.dsferiad
+    FROM crapfer cf
+   WHERE cf.cdcooper = pr_cdcooper
+     AND cf.dtferiad = pr_dtcompar;
+  rw_crapfer cr_crapfer%ROWTYPE;
+
+  ----->>> VARIÁVEIS <<<-----
+
+  vr_dtcompar DATE;
+  vr_contador   INTEGER := 0;
+
+BEGIN
+    vr_dtcompar := pr_dtmvtolt;
+
+
+		-- Busca se a data é feriado
+		OPEN cr_crapfer(pr_cdcooper, vr_dtcompar);
+		FETCH cr_crapfer INTO rw_crapfer;
+
+		-- Se a data não for sabado ou domingo ou feriado
+		vr_dia_util := NOT(TO_CHAR(vr_dtcompar, 'd') IN (1,7) OR cr_crapfer%FOUND);
+
+		CLOSE cr_crapfer;
+
+    RETURN vr_dia_util;
+END fn_valida_dia_util;
+
 PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COnta para a qual se deseja obter os saldos
                                   , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -1582,7 +1615,7 @@ BEGIN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
       pr_cdcritic := 9999;
-      pr_dscritic := 'Erro não tratado na "TELA_ATENDA_DEPOSVIS.pc_consulta_saldos_juros60".';
+      pr_dscritic := 'Erro não tratado na "TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60".';
   END;
 END pc_busca_saldos_juros60;
 
@@ -1599,7 +1632,7 @@ PROCEDURE pc_busca_saldos_juros60_det(pr_cdcooper IN crapris.cdcooper%TYPE --> C
                                     , pr_dscritic OUT crapcri.dscritic%TYPE)  IS          --> Valor dos juros +60
 
 BEGIN
-
+ 
 DECLARE
   -- Recupera dados da CRAPLCM para compor saldo devedor até 59 dias e valores de juros +60
   CURSOR cr_craplcm(pr_dt59datr IN crapris.dtinictr%TYPE
@@ -1738,6 +1771,8 @@ DECLARE
 
   vr_exc_saldo_indisponivel EXCEPTION;  --> Exceção para o caso de saldo indisponível na base de dados
   vr_qtddiaatr INTEGER;                 --> Quantidade de dias de atraso da conta
+	
+	vr_datasaldo DATE;
 BEGIN
     -- Busca data de corte para contagem de dias de atraso em dias corridos
     vr_data_corte_dias_uteis := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -1778,7 +1813,7 @@ BEGIN
     pr_vlju6038 := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
 		pr_vlju6057 := 0; -- Assume que a conta não tem juros +60, caso a conta não tenha ultrapassado os 60 dias de atraso
 
-    IF rw_saldos.dtrisclq IS NULL THEN -- Se a conta não está em atraso
+    IF vr_qtddiaatr = 0 THEN -- Se a conta não está em atraso
       pr_vlsld59d := 0;
     ELSE
       IF vr_qtddiaatr < 60 THEN -- Se a conta não ultrapassou os 60 dias de atraso
@@ -1833,9 +1868,15 @@ BEGIN
          IF vr_data_59dias_atraso < vr_dtcorte_rendaprop THEN
            vr_data_59dias_atraso := vr_dtcorte_rendaprop;
          END IF;
+				 
+				 vr_datasaldo := vr_data_59dias_atraso;
+				 
+				 WHILE NOT fn_valida_dia_util(pr_cdcooper, vr_datasaldo)  LOOP
+					 vr_datasaldo := vr_datasaldo - 1;
+				 END LOOP;
 
          -- Busca os saldo do dia em que a conta completou 59 dias de atraso
-         OPEN cr_crapsda(vr_data_59dias_atraso);
+         OPEN cr_crapsda(vr_datasaldo);
          FETCH cr_crapsda INTO rw_crapsda;
 
          IF cr_crapsda%NOTFOUND THEN -- Se não encontrou o saldo para o dia em questão
