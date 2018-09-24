@@ -382,6 +382,10 @@ DO WHILE TRUE:
                   VALIDATE craplot.
               END.
                 
+           IF  NOT VALID-HANDLE(h-b1wgen0200) THEN
+               RUN sistema/generico/procedures/b1wgen0200.p 
+                   PERSISTENT SET h-b1wgen0200.
+  
             RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
             (INPUT craplot.dtmvtolt               /* par_dtmvtolt */
             ,INPUT craplot.cdagenci               /* par_cdagenci */
