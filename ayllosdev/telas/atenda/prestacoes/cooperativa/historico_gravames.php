@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : detalhes_gravames.php
+ * FONTE        : historico_gravames.php
  * CRIAÇÃO      : Christian Grauppe - Envolti
  * DATA CRIAÇÃO : 19/09/2018 
  * OBJETIVO     : Tabela que apresenta os detalhes do GRAVAMES do bem
@@ -18,10 +18,12 @@
 
 	//$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
-	$nrctrpro = (isset($_POST['nrctrpro'])) ? $_POST['nrctrpro'] : '';
+	$nrctrpro = (isset($_POST['nrctrpro'])) ? $_POST['nrctrpro'] : 0;
 	$dschassi = (isset($_POST['dschassi'])) ? $_POST['dschassi'] : '';
+	$nrregist = 1000;//(isset($_POST["nrregist"])) ? $_POST["nrregist"] : 15;
+	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
 
-	if ($nrseqpag.length > 0) {
+	if ($nrctrpro.length > 0) {
 
 		/* / Monta o xml de requisição
 		$xml  = '';
@@ -47,14 +49,18 @@
 		$xml .= "		<nrseqlot>0</nrseqlot>";
 		$xml .= "		<dtrefere/>";
 		$xml .= "		<dtrefate/>";
-		$xml .= "		<cdagenci/>";
+		$xml .= "		<cdagenci>0</cdagenci>";
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-//		$xml .= "		<nrctrpro>".$nrctrpro."</nrctrpro>";
+		$xml .= "		<nrctrpro>".$nrctrpro."</nrctrpro>";
 		$xml .= "		<flcritic>N</flcritic>"; 
 		$xml .= "		<tipsaida>TELA</tipsaida>";
 		$xml .= "		<dschassi>".$dschassi."</dschassi>";
+		$xml .= "		<nrregist>".$nrregist."</nrregist>";	
+		$xml .= "		<nriniseq>".$nriniseq."</nriniseq>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
+		
+		//var_dump($xml); die;
 
 		// Executa script para envio do XML e cria objeto para classe de tratamento de XML
 		$xmlResult = mensageria($xml
@@ -75,7 +81,9 @@
 			exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro);
 		}
 
-		$detalhesGrav = $xmlObjeto->roottag->tags;
+		$detalhesGrav = $xmlObjeto->roottag->tags[0]->tags;//->roottag->tags;
+		$qtregist  = count($detalhesGrav);
+
 	}
 ?>
 <script type="text/javascript" src="../../../../scripts/funcoes.js"></script>
@@ -83,17 +91,17 @@
 <table id="tbdetgra"cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>
 		<td align="center">		
-			<table border="0" cellpadding="0" cellspacing="0" width="700">
+			<table border="0" cellpadding="0" cellspacing="0" width="100%">
 				<tr>
 					<td>
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">DETALHES GRAVAMES</td>
+								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">HIST&Oacute;RICO DE GRAVAMES</td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>
-						</table>     
+						</table>
 					</td> 
 				</tr>    
 				<tr>
@@ -115,7 +123,7 @@
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
 									<div id="divConteudoOpcao">
 										<?
-										include("tabela_detalhes_gravames.php");
+										include("tabela_historico_gravames.php");
 										?>
 									</div>
 								</td>

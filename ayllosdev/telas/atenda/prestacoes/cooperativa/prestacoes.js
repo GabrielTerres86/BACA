@@ -480,13 +480,8 @@ function controlaOperacao(operacao) {
             }
             return false;
 			break;
-		case 'C_DETALHES_GRAVAMES' :
-			//initArrayBens('C_BENS_ASSOC');
-			var dschassi = $("#dschassi","#frmTipo").val();
-			var cdcoptel = cdcooper;
-			//var nrctrpro = '';
-			alert ( ' dschassi:' + dschassi + ' - cdcoptel:' + cdcoptel + ' - nrdconta:' + nrdconta + ' - nrctrpro: + nrctrpro' );
-			//mostraTabelaDetalhesGravames();//mostraTabelaBens('BT','C_BENS_ASSOC');
+		case 'C_HISTORICO_GRAVAMES' :
+			mostraTabelaHistoricoGravames();
 			return false;
 			break;
 			
@@ -1323,7 +1318,7 @@ function controlaLayout(operacao) {
 		var cAnoFab	   = $('#nranobem','#'+nomeForm);
 		var cAnoMod	   = $('#nrmodbem','#'+nomeForm);
 		var cCPF	   = $('#nrcpfbem','#'+nomeForm);
-
+		
 		rRotulo.addClass('rotulo').css('width','67px');
 		rNrBem.css('width','245px');
 		rVlBem.css('width','140px');
@@ -2175,7 +2170,7 @@ function atualizaTela(){
 		
 		$('legend:first','#frmDadosAval').html('Dados dos Avalistas/Fiadores ' + contAvalistas);
 
-	} else if (in_array(operacao,['C_ALIENACAO','A_ALIENACAO'])){
+	} else if (in_array(operacao,['C_ALIENACAO','A_ALIENACAO'])) {
 		nomeForm = 'frmTipo';
 
 		$('#dscatbem','#'+nomeForm).append($('<option>', {
@@ -2252,7 +2247,7 @@ function atualizaTela(){
 		$("#nrmodbem").hide();
 
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO'])) {
-			$("#btDetalhesGravame").show();
+			$("#btHistoricoGravame").show();
 		}
 
 		$("#"+nomeForm+" #dstipbem option").each(function() {
@@ -2271,11 +2266,11 @@ function atualizaTela(){
 			}
 		});
 		$("#"+nomeForm+" #uflicenc option").each(function() {
-        if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
-            $(this).attr('selected', 'selected');
-        }
-    });
-    
+			if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+
 		$('#lsbemfin','#'+nomeForm).html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
 		$('#lsbemfin').css({'width': '100%', 'text-align': 'center'});
 
@@ -2445,23 +2440,30 @@ function mostraTelaPagamentoAvalista() {
 	return false;
 }
 
-function mostraTabelaDetalhesGravames( ) {
+function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 
-	showMsgAguardo('Aguarde, buscando detalhes...');
-
+	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
+	limpaDivGenerica();
+	$('#divUsoGenerico').css('width','750px');
 	exibeRotina($('#divUsoGenerico'));
+
+	var dschassi = $("#dschassi","#frmTipo").val();
+	var cdcoptel = cdcooper;
+	var nrctrpro = nrctremp;
 
 	// Executa script de confirmação através de ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/detalhes_gravames.php',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
 		data: {
 			operacao: operacao,
 			nrdconta: nrdconta,
-//			nrctrpro: nrctrpro,
+			nrctrpro: nrctrpro,
 			dschassi: dschassi,
-//			cdcoptel: cdcoptel,
+			cdcoptel: cdcoptel,
+			nriniseq: nriniseq,
+			nrregist: nrregist,
 			redirect: 'html_ajax'
 			},
 		error: function(objAjax,responseError,objExcept) {
@@ -2470,31 +2472,56 @@ function mostraTabelaDetalhesGravames( ) {
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);
-			controlaLayoutDetalhesGravames( );
+			controlaLayoutHistoricoGravames( );
 		}
 	});
 	return false;
 }
 
-function controlaLayoutDetalhesGravames(){
+function controlaLayoutHistoricoGravames() {
 
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
-	var linha       = $('table > tbody > tr', divRegistro);	
-	divRegistro.css({'height':'350px'});
-	
+	var linha       = $('table > tbody > tr', divRegistro);
+	divRegistro.css({'height':'250px'});
+	$('div.divRegistros').css({'height':'200px'});
+	$('div.divRegistros table tr td:nth-of-type(8)').css({'text-transform':'uppercase'});
+	$('div.divRegistros .dtenvgrv').css({'width':'25px'});
+	$('div.divRegistros .dtretgrv').css({'width':'25px'});
+
 	var ordemInicial = new Array();
 	ordemInicial = [[0,0]];
-	
+
 	var arrayLargura = new Array();
-	arrayLargura[0] = '25px';
-	arrayLargura[1] = '120px';
-	
+	arrayLargura[0] = '30px';
+	arrayLargura[1] = '20px';
+	arrayLargura[2] = '60px';
+	arrayLargura[3] = '40px';
+	arrayLargura[4] = '55px';
+	arrayLargura[5] = '50px';
+	arrayLargura[6] = '115px';
+	arrayLargura[7] = '';
+	arrayLargura[8] = '25px';
+	arrayLargura[9] = '25px';
+	arrayLargura[10] = '55px';
+
 	var arrayAlinha = new Array();
-	arrayAlinha[0] = 'left';
-	arrayAlinha[1] = 'left';
+	arrayAlinha[0] = 'right';
+	arrayAlinha[1] = 'right';
 	arrayAlinha[2] = 'left';
-	//tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+	arrayAlinha[3] = 'right';
+	arrayAlinha[4] = 'right';
+	arrayAlinha[5] = 'right';
+	arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'left';
+	arrayAlinha[8] = 'left';
+	arrayAlinha[9] = 'left';
+	arrayAlinha[10] = 'left';
+	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+	for( var i in arrayLargura ) {
+		$('td:eq('+i+')', tabela ).css('width', arrayLargura[i] );
+	}
 
 	layoutPadrao();
 	hideMsgAguardo();
@@ -2666,7 +2693,8 @@ function limpaDivGenerica(){
 	$('#tdNP').remove();
 	$('#tbfiador').remove();
 	$('#tbprestacoes').remove();
-	
+
+	$('#tbdetgra').remove(); // Christian Grauppe
 	$('#tdAntecip').remove(); // Daniel
 	
 	return false;

@@ -6,7 +6,7 @@
  * OBJETIVO     : Formulário da rotina Emprestimos da tela ATENDA
  * Alterações   
  *              12/09/2018 - P442 - Não mais utilizar estado fixo (Marcos-Envolti)
- */	
+  */	
 
 include('../../../manbem/form_alie_veiculo.php');
 
@@ -62,14 +62,14 @@ include('../../../manbem/form_alie_veiculo.php');
 	<label for="nrcpfbem">CPF/CNPJ Propr.:</label>
 	<input name="nrcpfbem" id="nrcpfbem" type="text" value="" />
 	<br />
-		
+
 </form>
 */ ?>
 
 <div id="divBotoes">
 	<? if ($operacao == 'C_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('C_NOVA_PROP_V'); return false;">Voltar</a>
-		<a href="#" hidden="hidden" class="botao" id="btDetalhesGravame" onClick="controlaOperacao('C_DETALHES_GRAVAMES'); return false;">Detalhes do Gravames</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_ALIENACAO'); return false;">Continuar</a>
 	<? } ?>
 </div>
