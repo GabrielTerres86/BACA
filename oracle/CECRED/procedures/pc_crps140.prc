@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/95                      Ultima atualizacao: 06/08/2018
+   Data    : Novembro/95                      Ultima atualizacao: 23/09/2018
 
    Dados referentes ao programa:
 
@@ -130,6 +130,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
                15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)  
 
                08/08/2018 - Inclusão da Apl. Programada - Proj. 411.2 - CIS Corporate
+              
+               23/09/2018 - Melhora performance - CIS Corporate
               
 ............................................................................. */
 BEGIN
@@ -1323,12 +1325,14 @@ BEGIN
           vr_idxindc := null;
         END IF;
 
+        vr_cdcritic := null;
+        vr_dscritic := null;
+
         -- Iterar sobre a PL Table
         LOOP
           BEGIN
             EXIT WHEN vr_idxindc IS NULL;
-            vr_cdcritic := NULL;
-            vr_dscritic := NULL;
+
             -- Sempre irá testar o índice futuro para executar atribuição de dados pelo índice anterior
             IF vr_tab_craprpp(vr_idxindc).nrdconta = rw_crapass.nrdconta THEN
               -- Passa para o próximo registro
@@ -1339,30 +1343,7 @@ BEGIN
                 RAISE vr_iterar;
               END IF;
 
-              -- Calcular o saldo até a data do movimento
-              IF vr_tab_craprpp(vr_idxindc).cdprodut < 1 THEN
-              	      vr_rpp_vlsdrdpp := vr_tab_craprpp(vr_idxindc).vlslfmes;
-	          ELSE
-                      apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
-                                               ,pr_dstextab  => vr_dextabi
-                                               ,pr_cdprogra  => vr_cdprogra
-                                               ,pr_inproces  => rw_crapdat.inproces
-                                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                               ,pr_dtmvtopr  => rw_crapdat.dtmvtopr
-                                               ,pr_rpp_rowid => vr_tab_craprpp(vr_idxindc).rowid
-                                               ,pr_vlsdrdpp  => vr_rpp_vlsdrdpp
-                                               ,pr_cdcritic  => vr_cdcritic
-                                               ,pr_des_erro  => vr_dscritic);
-              END IF;
-
-              -- Se encontrar erros na execução
-              IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-                IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-                  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-                END IF;
-                vr_dscritic := 'Conta '||vr_tab_craprpp(vr_idxindc).nrdconta||' Rowid Poup '||vr_tab_craprpp(vr_idxindc).rowid|| ' -> ' ||vr_dscritic;
-                RAISE vr_exc_saida;
-              END IF;
+              vr_rpp_vlsdrdpp := vr_tab_craprpp(vr_idxindc).vlslfmes; -- Os valores estão atualizados
 
               -- Atribuir valores para as variáveis
               vr_vlsdpoup := vr_vlsdpoup + nvl(vr_rpp_vlsdrdpp, 0);

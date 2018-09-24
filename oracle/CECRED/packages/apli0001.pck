@@ -5452,7 +5452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
              craprpp.vlsdrdpp,
              craprpp.dtiniper,
              craprpp.dtfimper,
-             craprpp.vlabcpmf,
+             nvl(craprpp.vlabcpmf,0) vlabcpmf,
              craprpp.qtmesext,
              craprpp.nrdconta,
              craprpp.nrctrrpp,
@@ -9618,7 +9618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               ,craprpp.flgctain
               ,craprpp.dtiniper
               ,craprpp.dtfimper
-              ,craprpp.vlabcpmf
+              ,nvl(craprpp.vlabcpmf,0) vlabcpmf 
               ,craprpp.cdsitrpp
               ,craprpp.vlsdrdpp
               ,craprpp.cdprodut
