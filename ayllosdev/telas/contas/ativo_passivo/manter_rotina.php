@@ -40,7 +40,7 @@
 	$cdopejfn = (isset($_POST['cdopejfn'])) ? $_POST['cdopejfn'] : '';
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';
 	
-	// exibirErro('error','ano= '.$data,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	// exibirErro('error','ano= '.$data,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	if(in_array($operacao,array('AV'))) validaDados();
 		

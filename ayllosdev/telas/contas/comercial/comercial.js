@@ -108,7 +108,7 @@ function controlaOperacao(operacao, flgConcluir) {
         return false;
     }
 
-    if ((operacao == 'CA') && (flgAlterar != '1')) { showError('error', 'Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)'); return false; }
+    if ((operacao == 'CA') && (flgAlterar != '1')) { showError('error', 'Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)'); return false; }
 
     if (!verificaContadorSelect()) return false;
 

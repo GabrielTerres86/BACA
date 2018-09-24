@@ -42,7 +42,7 @@
 	}
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$ope)) <> "") {
-	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	   exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
    
 	switch ($operacao){
@@ -72,7 +72,7 @@
 				if ($msgErro == "") {
 					$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 				}
-				exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+				exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 			}
 			
 			echo "fechaRotina($('#divUsoGenerico'), $('#divRotina'));buscaDadosGrupoEconomico();";
@@ -111,7 +111,7 @@
 				if ($msgErro == "") {
 					$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 				}
-				exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos',"bloqueiaFundo($('#divUsoGenerico'));",false);
+				exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro',"bloqueiaFundo($('#divUsoGenerico'));",false);
 			}			
 			echo 'carregaTelaConsultarIntegrantes();abreTelaInclusaoIntegrante();';
 		break;
@@ -139,7 +139,7 @@
 				if ($msgErro == "") {
 					$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 				}
-				exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+				exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 			}			
 			echo 'carregaTelaConsultarIntegrantes();';		
 		break;

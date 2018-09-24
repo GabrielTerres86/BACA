@@ -74,7 +74,7 @@
 		default: return false;
 	}
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = '';
@@ -122,7 +122,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 		
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
@@ -175,49 +175,49 @@
 		echo '$("input,select","#frmDadosIdentJuridica").removeClass("campoErro");';		
 
 		// Nome Fantasia GLOBALS
-		if ( $GLOBALS['nmfatasi'] == '' ) exibirErro('error','Nome Fantasia deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmfatasi\',\'frmDadosIdentJuridica\')',false);
+		if ( $GLOBALS['nmfatasi'] == '' ) exibirErro('error','Nome Fantasia deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmfatasi\',\'frmDadosIdentJuridica\')',false);
 
 		// Regime de tributação - apenas para PJ - não usar validaInteiro pois zero retorna true, e neste caso zero deve retornar false (empty garante isso)
         $inPessoa = (int)substr($GLOBALS['inpessoa'], 0, 1);
- 		if (($inPessoa >= 2) && (empty($GLOBALS['tpregtrb']))) exibirErro('error','Faltou informar o Regime tribut&aacute;rio.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpregtrb\',\'frmDadosIdentJuridica\')',false);
-		//if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);
+ 		if (($inPessoa >= 2) && (empty($GLOBALS['tpregtrb']))) exibirErro('error','Faltou informar o Regime tribut&aacute;rio.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpregtrb\',\'frmDadosIdentJuridica\')',false);
+		//if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);
 
 		// Data Consulta CPF
-		if (!validaData($GLOBALS['dtcnscpf'])) exibirErro('error','Data da Consulta C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtcnscpf\',\'frmDadosIdentJuridica\')',false);	
+		if (!validaData($GLOBALS['dtcnscpf'])) exibirErro('error','Data da Consulta C.P.F. inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtcnscpf\',\'frmDadosIdentJuridica\')',false);	
 
 		// Situação do CPF 
-		if (!validaInteiro($GLOBALS['cdsitcpf'])) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentJuridica\')',false);
-		if ($GLOBALS['cdsitcpf'] < 1 || $GLOBALS['cdsitcpf'] > 4) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentJuridica\')',false);				
+		if (!validaInteiro($GLOBALS['cdsitcpf'])) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['cdsitcpf'] < 1 || $GLOBALS['cdsitcpf'] > 4) exibirErro('error','Situa&ccedil;&atilde;o da Consulta do C.P.F. inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdsitcpf\',\'frmDadosIdentJuridica\')',false);				
 
 		// Dt. Início Atividade
-		if (!validaData($GLOBALS['dtiniatv'])) exibirErro('error','Data de In&iacute;cio Atividade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtiniatv\',\'frmDadosIdentJuridica\')',false);
+		if (!validaData($GLOBALS['dtiniatv'])) exibirErro('error','Data de In&iacute;cio Atividade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtiniatv\',\'frmDadosIdentJuridica\')',false);
 
 		// Natureza Jurídica
-		if (!validaInteiro($GLOBALS['cdnatjur'])) exibirErro('error','Natureza Jur&iacute;dica inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmDadosIdentJuridica\')',false);
-		if ($GLOBALS['cdnatjur'] == 0) exibirErro('error','Natureza Jur&iacute;dica deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmDadosIdentJuridica\')',false);
+		if (!validaInteiro($GLOBALS['cdnatjur'])) exibirErro('error','Natureza Jur&iacute;dica inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['cdnatjur'] == 0) exibirErro('error','Natureza Jur&iacute;dica deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnatjur\',\'frmDadosIdentJuridica\')',false);
 
 		// Setor Econômico
-		if (!validaInteiro($GLOBALS['cdseteco'])) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdseteco\',\'frmDadosIdentJuridica\')',false);
-		if ($GLOBALS['cdseteco'] < 1 || $cdseteco > 4) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdseteco\',\'frmDadosIdentJuridica\')',false);
+		if (!validaInteiro($GLOBALS['cdseteco'])) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdseteco\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['cdseteco'] < 1 || $cdseteco > 4) exibirErro('error','Setor Econ&ocirc;mico inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdseteco\',\'frmDadosIdentJuridica\')',false);
 
 		// Ramo Atividade
-		if (!validaInteiro($GLOBALS['cdrmativ'])) exibirErro('error','Ramo de Atividade inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
-		if ($GLOBALS['cdrmativ'] == 0) exibirErro('error','Ramo de Atividade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
+		if (!validaInteiro($GLOBALS['cdrmativ'])) exibirErro('error','Ramo de Atividade inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['cdrmativ'] == 0) exibirErro('error','Ramo de Atividade deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
 
 		// CNAE
-        if (!validaInteiro($GLOBALS['cdcnae'])) exibirErro('error','CNAE inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
-		if ($GLOBALS['cdcnae'] == 0) exibirErro('error','CNAE deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
+        if (!validaInteiro($GLOBALS['cdcnae'])) exibirErro('error','CNAE inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['cdcnae'] == 0) exibirErro('error','CNAE deve ser diferente de zero.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
 
 		// Nome no Talão
-		if ($GLOBALS['nmtalttl']=='') exibirErro('error','Nome Tal&atilde;o deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmtalttl\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['nmtalttl']=='') exibirErro('error','Nome Tal&atilde;o deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmtalttl\',\'frmDadosIdentJuridica\')',false);
 
 		// Qtde. folhas do Talão 
-		if (!validaInteiro($GLOBALS['qtfoltal'])) exibirErro('error','Quantidade de Folhas no Tal&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentJuridica\')',false);
-		if ($GLOBALS['qtfoltal'] <> 10 && $GLOBALS['qtfoltal'] <> 20) exibirErro('error','Quantidade de Folhas no Tal&atilde;o deve ser 10 ou 20.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentJuridica\')',false);	
+		if (!validaInteiro($GLOBALS['qtfoltal'])) exibirErro('error','Quantidade de Folhas no Tal&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['qtfoltal'] <> 10 && $GLOBALS['qtfoltal'] <> 20) exibirErro('error','Quantidade de Folhas no Tal&atilde;o deve ser 10 ou 20.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'qtfoltal\',\'frmDadosIdentJuridica\')',false);	
 
 		if ( $GLOBALS['nrlicamb'] != '' && $GLOBALS['nrlicamb'] > 0 ){
 		  if ( $GLOBALS['dtvallic'] == '' ) {
-		    exibirErro('error','Data de validade da licen&ccedil;a deve ser preechida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtvallic\',\'frmDadosIdentJuridica\')',false);
+		    exibirErro('error','Data de validade da licen&ccedil;a deve ser preechida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtvallic\',\'frmDadosIdentJuridica\')',false);
 		  }
 		}
 	}
