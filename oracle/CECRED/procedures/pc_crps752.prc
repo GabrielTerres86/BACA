@@ -127,9 +127,9 @@ BEGIN
   IF to_char(rw_crapdat.dtmvtolt,'MM') <> to_char(rw_crapdat.dtmvtopr,'MM') THEN
   
     -- Calcula e debita da corrente corrente em prejuízo os juros remuneratórios
-    CECRED.PREJ0003.pc_calc_juro_prejuizo_mensal(pr_cdcooper => pr_cdcooper
-                                                ,pr_cdcritic => vr_cdcritic
-                                                ,pr_dscritic => vr_dscritic);
+    PREJ0003.pc_calc_juro_prejuizo_mensal( pr_cdcooper => pr_cdcooper
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
                                               
     IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_saida;    
@@ -137,29 +137,29 @@ BEGIN
   END IF;                                          
 
   -- Resgata créditos bloqueados em contas em prejuízo não movimentados há mais de X dias
-  CECRED.PREJ0003.pc_resgata_cred_bloq_preju( pr_cdcooper => pr_cdcooper
-                                            , pr_cdcritic => vr_cdcritic
-                                            , pr_dscritic => vr_dscritic);
+  PREJ0003.pc_resgata_cred_bloq_preju ( pr_cdcooper => pr_cdcooper
+                                       , pr_cdcritic => vr_cdcritic
+                                       , pr_dscritic => vr_dscritic);
 
   IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_saida;    
   END IF;
     
   -- Efetua o pagamento automático do prejuízo com os créditos disponíveis para operações na conta corrente
-  CECRED.PREJ0003.pc_pagar_prejuizo_cc_autom(pr_cdcooper => pr_cdcooper
-                                            ,pr_cdcritic => vr_cdcritic
-                                            ,pr_dscritic => vr_dscritic
-                                            ,pr_tab_erro => vr_tab_erro );
+  PREJ0003.pc_pagar_prejuizo_cc_autom( pr_cdcooper => pr_cdcooper
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic
+                                      ,pr_tab_erro => vr_tab_erro );
 
   IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_saida;    
   END IF;
   
   -- Processa liquidação do prejuízo para contas corrente que tiveram todo o saldo de prejuízo pago
-  CECRED.PREJ0003.pc_liquida_prejuizo_cc(pr_cdcooper => pr_cdcooper
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic
-                                        ,pr_tab_erro => vr_tab_erro );
+  PREJ0003.pc_liquida_prejuizo_cc( pr_cdcooper => pr_cdcooper
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic
+                                  ,pr_tab_erro => vr_tab_erro );
   
   IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_saida;    
