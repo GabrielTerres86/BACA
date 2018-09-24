@@ -1321,7 +1321,7 @@ function controlaOperacao(operacao) {
 	
     showMsgAguardo('Aguarde, ' + mensagem);
 
-    // Executa script de através de ajax
+    // Executa script de através de ajax -- Ponto de erro da função
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1350,7 +1350,6 @@ function controlaOperacao(operacao) {
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
-			
 			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
 				$('.divRegistros').remove();
 			}
@@ -1359,7 +1358,6 @@ function controlaOperacao(operacao) {
             showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
-			
 			if ( operacao != 'RECALCULAR_EMPRESTIMO') {
 				$('.divRegistros').remove();
 			}
@@ -3145,7 +3143,7 @@ function controlaLayout(operacao) {
 
     } else if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO'])) {
 
-        nomeForm = 'frmAlienacao';
+        nomeForm = 'frmTipo';
         altura = '215px';
         largura = '462px';
 
@@ -3296,7 +3294,7 @@ function controlaLayout(operacao) {
             }
         } else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO') {
             cTodos.habilitaCampo();
-            strSelect(lscatbem, 'dscatbem', 'frmAlienacao');
+            strSelect(lscatbem, 'dscatbem', 'frmTipo');
             $('#' + nomeForm).limpaFormulario();
             rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
             cTpChassi.val(2)
@@ -4190,22 +4188,22 @@ function attArray(novaOp, cdcooper) {
 
         atual = contAlienacao - 1;
 
-        arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfin', '#frmAlienacao').val().replace("<", "").replace(">", "")));
-        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmAlienacao').val().replace("<", "").replace(">", "")));
-        arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrrenava'] = $('#nrrenava', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['dscpfbem'] = $('#dscpfbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmAlienacao').val();
-        arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc', '#frmAlienacao').val(); // GRAVAMES */
+        arrayAlienacoes[atual]['dscatbem'] = $('#dscatbem', '#frmTipo').val();
+        arrayAlienacoes[atual]['dstipbem'] = $('#dstipbem', '#frmTipo').val();
+        arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfin', '#frmTipo').val().replace("<", "").replace(">", "")));
+        arrayAlienacoes[atual]['dscorbem'] = removeAcentos(removeCaracteresInvalidos($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", "")));
+        arrayAlienacoes[atual]['dschassi'] = $('#dschassi', '#frmTipo').val();
+        arrayAlienacoes[atual]['nranobem'] = $('#nranobem', '#frmTipo').val();
+        arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem', '#frmTipo').val();
+        arrayAlienacoes[atual]['nrdplaca'] = $('#nrdplaca', '#frmTipo').val();
+        arrayAlienacoes[atual]['nrrenava'] = $('#nrrenava', '#frmTipo').val();
+        arrayAlienacoes[atual]['tpchassi'] = $('#tpchassi', '#frmTipo').val();
+        arrayAlienacoes[atual]['ufdplaca'] = $('#ufdplaca', '#frmTipo').val();
+        arrayAlienacoes[atual]['nrcpfbem'] = $('#nrcpfbem', '#frmTipo').val();
+        arrayAlienacoes[atual]['dscpfbem'] = $('#dscpfbem', '#frmTipo').val();
+        arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmTipo').val();
+        arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmTipo').val();
+        arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc', '#frmTipo').val(); // GRAVAMES */
 		arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
 
@@ -4323,7 +4321,7 @@ function verificaDelecao() {
 
     } else if (in_array(operacao, ['IA_ALIENACAO', 'A_ALIENACAO'])) {
 
-        if (contAlienacao > 1 && $('#dscatbem', '#frmAlienacao').val() == '' && $('#dsbemfin', '#frmAlienacao').val() == '') {
+        if (contAlienacao > 1 && $('#dscatbem', '#frmTipo').val() == '' && $('#dsbemfin', '#frmTipo').val() == '') {
                 novaOp = (operacao == 'IA_ALIENACAO') ? 'I_ALIENACAO' : operacao;
                 mtdRetorno = 'deletaAlienacao("' + novaOp + '");';
             }
@@ -4487,30 +4485,30 @@ function atualizaTela() {
 
     } else if (in_array(operacao, ['C_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO'])) {
 
-        strSelect(lscatbem, 'dscatbem', 'frmAlienacao');
+        strSelect(lscatbem, 'dscatbem', 'frmTipo');
 
-        $('#dscatbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dscatbem']);
-        $('#dstipbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dstipbem']);
-        $('#dsbemfin', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dsbemfin']);
-        $('#dscorbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dscorbem']);
-        $('#dschassi', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dschassi']);
-        $('#nranobem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nranobem']);
-        $('#nrmodbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrmodbem']);
-        $('#nrdplaca', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
-        $('#nrrenava', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrrenava']);
-        $('#tpchassi', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['tpchassi']);
-        $('#ufdplaca', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
-        $('#nrcpfbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
-        $('#dscpfbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['dscpfbem']);
-        $('#vlmerbem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['vlmerbem']);
-        $('#idalibem', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['idalibem']);
-        $('#uflicenc', '#frmAlienacao').val(arrayAlienacoes[contAlienacao]['uflicenc']); //GRAVAMES */
-        $('#lsbemfin', '#frmAlienacao').html(arrayAlienacoes[contAlienacao]['lsbemfin']);
+        $('#dscatbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscatbem']);
+        $('#dstipbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dstipbem']);
+        $('#dsbemfin', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dsbemfin']);
+        $('#dscorbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscorbem']);
+        $('#dschassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dschassi']);
+        $('#nranobem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nranobem']);
+        $('#nrmodbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrmodbem']);
+        $('#nrdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
+        $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']);
+        $('#tpchassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['tpchassi']);
+        $('#ufdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
+        $('#nrcpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
+        $('#dscpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscpfbem']);
+        $('#vlmerbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['vlmerbem']);
+        $('#idalibem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['idalibem']);
+        $('#uflicenc', '#frmTipo').val(arrayAlienacoes[contAlienacao]['uflicenc']); //GRAVAMES */
+        $('#lsbemfin', '#frmTipo').html(arrayAlienacoes[contAlienacao]['lsbemfin']);
 
         if (arrayAlienacoes[contAlienacao]['dstipbem'] == 'ZERO KM') {
-            $('#ufdplaca', '#frmAlienacao').val('').desabilitaCampo();
-            $('#nrdplaca', '#frmAlienacao').val('').desabilitaCampo();
-            $('#nrrenava', '#frmAlienacao').val('').desabilitaCampo();
+            $('#ufdplaca', '#frmTipo').val('').desabilitaCampo();
+            $('#nrdplaca', '#frmTipo').val('').desabilitaCampo();
+            $('#nrrenava', '#frmTipo').val('').desabilitaCampo();
         }
 
         idseqbem = arrayAlienacoes[contAlienacao]['idseqbem'];
@@ -4735,21 +4733,21 @@ function insereAlienacao(operacao, opContinua) {
     i = arrayAlienacoes.length;
 
     eval('var arrayAlienacao' + i + ' = new Object();');
-    eval('arrayAlienacao' + i + '["dscatbem"] = $("#dscatbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["dstipbem"] = $("#dstipbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfin","#frmAlienacao").val().replace("<","").replace(">","")));');
-    eval('arrayAlienacao' + i + '["dscorbem"] = removeAcentos(removeCaracteresInvalidos($("#dscorbem","#frmAlienacao").val().replace("<","").replace(">","")));');
-    eval('arrayAlienacao' + i + '["dschassi"] = $("#dschassi","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nranobem"] = $("#nranobem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrmodbem"] = $("#nrmodbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrdplaca"] = $("#nrdplaca","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrrenava"] = $("#nrrenava","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["tpchassi"] = $("#tpchassi","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["ufdplaca"] = $("#ufdplaca","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["nrcpfbem"] = $("#nrcpfbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["dscpfbem"] = $("#dscpfbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlmerbem","#frmAlienacao").val();');
-    eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmAlienacao").val();'); // GRAVAMES*/
+    eval('arrayAlienacao' + i + '["dscatbem"] = $("#dscatbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["dstipbem"] = $("#dstipbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfin","#frmTipo").val().replace("<","").replace(">","")));');
+    eval('arrayAlienacao' + i + '["dscorbem"] = removeAcentos(removeCaracteresInvalidos($("#dscorbem","#frmTipo").val().replace("<","").replace(">","")));');
+    eval('arrayAlienacao' + i + '["dschassi"] = $("#dschassi","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["nranobem"] = $("#nranobem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["nrmodbem"] = $("#nrmodbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["nrdplaca"] = $("#nrdplaca","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["nrrenava"] = $("#nrrenava","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["tpchassi"] = $("#tpchassi","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["ufdplaca"] = $("#ufdplaca","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["nrcpfbem"] = $("#nrcpfbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["dscpfbem"] = $("#dscpfbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["vlmerbem"] = $("#vlmerbem","#frmTipo").val();');
+    eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val();'); // GRAVAMES*/
     eval('arrayAlienacao' + i + '["idseqbem"] = ' + idseqbem + ';');
     eval('arrayAlienacao' + i + '["idalibem"] = "";');
     eval('arrayAlienacao' + i + '["lsbemfin"] = "";');
@@ -5453,7 +5451,7 @@ function validaHipoteca(nmfuncao, operacao) {
 
 function validaAlienacao(nmfuncao, operacao) {
 	
-    if (((typeof $('#dscatbem', '#frmAlienacao').val() == 'object') || $('#dscatbem', '#frmAlienacao').val() == '') && $('#dsbemfin', '#frmAlienacao').val() == '' && booPrimeiroBen) {//809763
+    if (((typeof $('#dscatbem', '#frmTipo').val() == 'object') || $('#dscatbem', '#frmTipo').val() == '') && $('#dsbemfin', '#frmTipo').val() == '' && booPrimeiroBen) {//809763
         eval(nmfuncao);
         return false;
 }
@@ -5463,22 +5461,22 @@ function validaAlienacao(nmfuncao, operacao) {
     $('input,select', '#' + nomeForm).removeClass('campoErro');
 
     // Alteracao 069
-    $('#dsbemfin', '#frmAlienacao').val(retiraCaracteres($('#dsbemfin', '#frmAlienacao').val(), "'|;", false));
+    $('#dsbemfin', '#frmTipo').val(retiraCaracteres($('#dsbemfin', '#frmTipo').val(), "'|;", false));
 
-    var dscatbem  = $.trim($('#dscatbem', '#frmAlienacao').val());
-    var vlmerbem  = $.trim(number_format(parseFloat($('#vlmerbem', '#frmAlienacao').val().replace(/[. ]*/g, '').replace(',', '.')), 2, ',', ''));
-    var dsbemfin  = removeAcentos(removeCaracteresInvalidos($.trim($('#dsbemfin', '#frmAlienacao').val().replace("<", "").replace(">", ""))));
-    var tpchassi  = $.trim($('#tpchassi', '#frmAlienacao').val());
-    var dscorbem  = removeAcentos(removeCaracteresInvalidos($.trim($('#dscorbem', '#frmAlienacao').val().replace("<", "").replace(">", ""))));
-    var ufdplaca  = $.trim($('#ufdplaca', '#frmAlienacao').val());
-    var nrdplaca  = $.trim($('#nrdplaca', '#frmAlienacao').val());
-    var dschassi  = $.trim($('#dschassi', '#frmAlienacao').val());
-    var nrrenava  = $.trim(normalizaNumero($('#nrrenava', '#frmAlienacao').val()));
-    var nranobem  = $.trim($('#nranobem', '#frmAlienacao').val());
-    var nrmodbem  = $.trim($('#nrmodbem', '#frmAlienacao').val());
-    var nrcpfbem  = $.trim(normalizaNumero($('#nrcpfbem', '#frmAlienacao').val()));
-    var uflicenc  = $.trim($('#uflicenc', '#frmAlienacao').val());
-    var dstipbem  = $.trim($('#dstipbem', '#frmAlienacao').val());
+    var dscatbem  = $.trim($('#dscatbem', '#frmTipo').val());
+    var vlmerbem  = $.trim(number_format(parseFloat($('#vlmerbem', '#frmTipo').val().replace(/[. ]*/g, '').replace(',', '.')), 2, ',', ''));
+    var dsbemfin  = removeAcentos(removeCaracteresInvalidos($.trim($('#dsbemfin', '#frmTipo').val().replace("<", "").replace(">", ""))));
+    var tpchassi  = $.trim($('#tpchassi', '#frmTipo').val());
+    var dscorbem  = removeAcentos(removeCaracteresInvalidos($.trim($('#dscorbem', '#frmTipo').val().replace("<", "").replace(">", ""))));
+    var ufdplaca  = $.trim($('#ufdplaca', '#frmTipo').val());
+    var nrdplaca  = $.trim($('#nrdplaca', '#frmTipo').val());
+    var dschassi  = $.trim($('#dschassi', '#frmTipo').val());
+    var nrrenava  = $.trim(normalizaNumero($('#nrrenava', '#frmTipo').val()));
+    var nranobem  = $.trim($('#nranobem', '#frmTipo').val());
+    var nrmodbem  = $.trim($('#nrmodbem', '#frmTipo').val());
+    var nrcpfbem  = $.trim(normalizaNumero($('#nrcpfbem', '#frmTipo').val()));
+    var uflicenc  = $.trim($('#uflicenc', '#frmTipo').val());
+    var dstipbem  = $.trim($('#dstipbem', '#frmTipo').val());
 	var fVlemprst = arrayProposta['vlemprst'];
 		fVlemprst = number_format(parseFloat(fVlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 
@@ -9943,3 +9941,328 @@ function processaPerdaAprovacao(){
 	});
 
 }
+
+/**
+ * Funções para utilizar formulário genérico da MANBEN
+ */
+function manterRotina( operacao ) {
+	if(cddopcao == "I" && cdaditiv == 5){			
+		if(!validaCamposAditiv()){
+			return false;
+		}else{
+			if(!intervenienteValidado){
+				validaCPFInterveniente();	
+				return false;
+			}			
+		}
+	}
+
+	hideMsgAguardo();
+
+	var mensagem = '';
+	var radios = $('input[name=nrbem]');
+	for (var i = 0, length = radios.length; i < length; i++){
+		if (radios[i].checked){
+			var idseqbem = normalizaNumero($.trim(radios[i].value));			
+			break;
+		}
+	}
+  
+  if(cddopcao == "I" && cdaditiv == 5) {	
+    var dscatbem = $('#dscatbem', '#frmTipo').val();	
+    var dstipbem = $('#dstipbem', '#frmTipo').val();
+    var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text()); 
+    var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
+    var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
+    
+    var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
+    var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val()); // inteiro
+    var dschassi =  $('#dschassi', '#frmTipo').val(); // string
+
+    var dscorbem =  $('#dscorbem', '#frmTipo').val();; // string
+    var ufdplaca =  $('#ufdplaca', '#frmTipo').val(); // string
+    var nrdplaca =  $('#nrdplaca', '#frmTipo').val(); // string
+    nrdplaca =  nrdplaca.replace("-","");
+    var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
+    var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val(); // string
+    var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
+
+    var dsmarbem =  $('#dsmarbem option:selected', '#frmTipo').text(); 
+    var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
+    vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
+    vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
+
+    $.trim(dscatbem.toUpperCase());
+    $.trim(dstipbem.toUpperCase());
+    $.trim(nrmodbem.toUpperCase());
+    
+    $.trim(dsbemfin.toUpperCase());
+    $.trim(vlrdobem.toUpperCase());
+    $.trim(tpchassi.toUpperCase());
+    $.trim(dschassi.toUpperCase());
+
+    $.trim(dscorbem.toUpperCase());
+    $.trim(ufdplaca.toUpperCase());
+    $.trim(nrdplaca.toUpperCase());
+    $.trim(nrrenava);
+    $.trim(uflicenc.toUpperCase());
+    $.trim(dsmarbem.toUpperCase());
+    $.trim(vlfipbem.toUpperCase());
+  }
+  
+	var idcobert = normalizaNumero($('#idcobert', '#'+frmCab).val());
+
+	var flgpagto = $('#flgpagto', '#frmTipo').val(); //
+	var dtdpagto = $('#dtdpagto', '#frmTipo').val(); //
+	var nrctagar = normalizaNumero( $('#nrctagar', '#frmTipo').val() ); // inteiro
+	var nrcpfgar = normalizaNumero( $('#nrcpfgar', '#frmTipo').val() ); //
+	var nrdocgar = $('#nrdocgar', '#frmTipo').val(); //
+
+	var nrpromi1 = $('#nrpromi1', '#frmTipo').val(); //
+	var nrpromi2 = $('#nrpromi2', '#frmTipo').val(); //
+	var nrpromi3 = $('#nrpromi3', '#frmTipo').val(); //
+	var nrpromi4 = $('#nrpromi4', '#frmTipo').val(); //
+	var nrpromi5 = $('#nrpromi5', '#frmTipo').val(); //
+	var nrpromi6 = $('#nrpromi6', '#frmTipo').val(); //
+	var nrpromi7 = $('#nrpromi7', '#frmTipo').val(); //
+	var nrpromi8 = $('#nrpromi8', '#frmTipo').val(); //
+	var nrpromi9 = $('#nrpromi9', '#frmTipo').val(); //
+	var nrprom10 = $('#nrprom10', '#frmTipo').val(); //
+
+	var vlpromi1 = cdaditiv == 7 ? $('#vlpromi1', '#frmTipo').val() : $('#vlpromis', '#frmTipo').val(); //
+	var vlpromi2 = $('#vlpromi2', '#frmTipo').val(); //
+	var vlpromi3 = $('#vlpromi3', '#frmTipo').val(); //
+	var vlpromi4 = $('#vlpromi4', '#frmTipo').val(); //
+	var vlpromi5 = $('#vlpromi5', '#frmTipo').val(); //
+	var vlpromi6 = $('#vlpromi6', '#frmTipo').val(); //
+	var vlpromi7 = $('#vlpromi7', '#frmTipo').val(); //
+	var vlpromi8 = $('#vlpromi8', '#frmTipo').val(); //
+	var vlpromi9 = $('#vlpromi9', '#frmTipo').val(); //
+	var vlprom10 = $('#vlprom10', '#frmTipo').val(); //
+
+	var tpaplic1 = $('#tpaplic1', '#frmTipo').val();
+	var tpaplic3 = $('#tpaplic3', '#frmTipo').val();
+	var tpaplic5 = $('#tpaplic5', '#frmTipo').val();
+	var tpaplic7 = $('#tpaplic7', '#frmTipo').val();
+	var tpaplic8 = $('#tpaplic8', '#frmTipo').val();
+
+	var tpproap1 = $('#tpproap1', '#frmTipo').val();
+	var tpproap3 = $('#tpproap3', '#frmTipo').val();
+	var tpproap5 = $('#tpproap5', '#frmTipo').val();
+	var tpproap7 = $('#tpproap7', '#frmTipo').val();
+	var tpproap8 = $('#tpproap8', '#frmTipo').val();
+	
+	switch ( operacao ) {
+		case 'VD': mensagem = 'Aguarde, validando dados...'; break;
+		case 'GD': mensagem = 'Aguarde, gravando dados...'; break;
+	}
+
+	showMsgAguardo( mensagem );
+	if(cddopcao == "I" && cdaditiv == 5){		
+		ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
+								 ufdplaca, nrdplaca, nrrenava, uflicenc, nrcpfcgc, idseqbem, dsmarbem, vlfipbem);
+	}else{
+		$.ajax({
+			type  : 'POST',
+			url   : UrlSite + 'telas/atenda/emprestimos/manter_rotina_mamben.php',
+			data: {
+				operacao	: operacao,
+				cddopcao	: cddopcao, // global
+				nraditiv	: nraditiv, // global
+				cdaditiv	: cdaditiv, // global
+
+				nrdconta	: nrdconta, // global
+				nrctremp	: nrctremp, // global
+                tpctrato    : tpctrato, // global
+
+				dscatbem    : dscatbem,
+				dstipbem	: dstipbem,
+				nrmodbem    : nrmodbem,
+				nranobem  	: nranobem,
+
+				dsbemfin	: dsbemfin,
+				vlrdobem	: vlrdobem,
+				tpchassi    : tpchassi,
+				dschassi	: dschassi,
+				dscorbem	: dscorbem,
+				ufdplaca    : ufdplaca,
+				nrdplaca	: nrdplaca,
+				nrrenava    : nrrenava,
+				uflicenc    : uflicenc,
+                nrcpfcgc    : nrcpfcgc,
+				idseqbem	: idseqbem,
+				dsmarbem    : dsmarbem,
+				vlfipbem	: vlfipbem,
+
+				flgpagto	: flgpagto,
+				dtdpagto	: dtdpagto,
+				flgaplic	: flgaplic,
+				nrctagar	: nrctagar,
+				nrcpfgar	: nrcpfgar,
+				nrdocgar	: nrdocgar,
+				nmdgaran	: nmdgaran,
+				nrpromi1	: nrpromi1,
+				nrpromi2    : nrpromi2,
+				nrpromi3    : nrpromi3,
+				nrpromi4    : nrpromi4,
+				nrpromi5    : nrpromi5,
+				nrpromi6    : nrpromi6,
+				nrpromi7    : nrpromi7,
+				nrpromi8    : nrpromi8,
+				nrpromi9    : nrpromi9,
+				nrprom10    : nrprom10,
+
+				vlpromi1	: vlpromi1,
+				vlpromi2	: vlpromi2,
+				vlpromi3	: vlpromi3,
+				vlpromi4	: vlpromi4,
+				vlpromi5	: vlpromi5,
+				vlpromi6	: vlpromi6,
+				vlpromi7	: vlpromi7,
+				vlpromi8	: vlpromi8,
+				vlpromi9	: vlpromi9,
+				vlprom10	: vlprom10,
+
+				tpaplic1	: tpaplic1,
+				tpaplic3	: tpaplic3,
+				tpaplic5	: tpaplic5,
+				tpaplic7	: tpaplic7,
+				tpaplic8	: tpaplic8,
+
+				tpproap1	: tpproap1,
+				tpproap3    : tpproap3,
+				tpproap5    : tpproap5,
+				tpproap7    : tpproap7,
+				tpproap8    : tpproap8,
+				
+				idgaropc    : idcobert,
+				
+				redirect	: 'script_ajax'
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+			},
+			success: function(response) {
+				try {
+					eval(response);
+					return false;
+				} catch(error) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				}
+			}
+		});
+	}
+	
+	return false;
+}
+
+function buscaTipo() {
+	arrayAditiv.length = 0;
+	showMsgAguardo('Aguarde, buscando ...');
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos/busca_tipo.php',
+		data: {
+			cddopcao: cddopcao,
+			nrdconta: nrdconta,
+			nrctremp: nrctremp,
+			nraditiv: nraditiv,
+			cdaditiv: cdaditiv,
+            tpctrato: tpctrato,
+			redirect: 'script_ajax'
+			},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+		},
+		success: function(response) {
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divConteudo', '#divRotina').html(response);
+
+					if ( cddopcao == 'X' && parseInt(regtotal) == 0 ) {
+						estadoInicial();
+					} else {
+						exibeRotina( $('#divRotina') );
+					}
+
+					if ( cddopcao == 'E' && cdaditiv != 2 && cdaditiv != 3 ) {
+						$('#divBotoes', '#divRotina').css({'display':'none'});
+						manterRotina('VD');
+					}
+
+					return false;
+				} catch(error) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+				}
+			} else {
+				try {
+					eval( response );
+				} catch(error) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+				}
+			}
+		}
+	});
+
+	return false;
+}
+
+function verificarTipoVeiculo(){
+	var tipo = $('#dstipbem option:selected').val();
+	
+	var optionsModBem = $('#nrmodbem option');
+		$.each(optionsModBem, function(){
+			if($(this).text().toUpperCase().search('ZERO KM') != -1){
+				if(modeloBem == '' || modeloBem == null) { modeloBem = $(this).val(); }
+				$(this).remove();
+			}
+		});
+	if(tipo != 'ZERO KM'){
+		modeloBem = '';
+	} 
+}
+
+function selecionaComplemento(tr) {
+	$('#idseqbem','#'+frmCab).val($('#idseqbem', tr).val());
+	$('#nrdplaca','.complemento').html($('#nrdplaca', tr).val());
+	$('#ufdplaca','.complemento').html($('#ufdplaca', tr).val());
+	$('#dscorbem','.complemento').html($('#dscorbem', tr).val());
+	$('#nranobem','.complemento').html($('#nranobem', tr).val());
+	$('#nrmodbem','.complemento').html($('#nrmodbem', tr).val());
+    $('#uflicenc','.complemento').html($('#uflicenc', tr).val());
+    
+	return false;
+}
+
+//TODO Continuar daqui
+function mostraAplicacao(tpaplica) {
+	showMsgAguardo('Aguarde, buscando ...');
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos//aplicacao.php',
+		data: {
+			redirect: 'html_ajax'
+			},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+			$('#divUsoGenerico').html(response);
+			buscaAplicacao(tpaplica);
+			return false;
+		}
+    });
+    
+	return false;
+}
+

@@ -1012,6 +1012,13 @@
 ?>
 <script type="text/javascript">
 	$('#divConteudoOpcao').css({'-moz-opacity':'0','filter':'alpha(opacity=0)','opacity':'0'});
+	<?
+		if (in_array($operacao,array('I_PROTECAO_TIT','A_PROTECAO_AVAL','A_PROTECAO_TIT','A_PROTECAO_CONJ','C_PROTECAO_TIT','C_PROTECAO_AVAL','C_PROTECAO_CONJ','C_PROTECAO_SOC','A_PROTECAO_SOC'))) {		
+	?>
+		$('#divConteudoOpcao').css({'height': "550px"});
+	<?
+		}
+	?>
 </script>
 <?
 

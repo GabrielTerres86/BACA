@@ -17,68 +17,10 @@
  *      [13/01/2015] Adicionado Tipo de Veiculo. (Jorge/Gielow) - SD 241854.
  *		[25/01/2016] Alterar a chamada do botao Salvar. (James) 
  */
+
+  	require_once("./lib/metadados.php");
+	include('../../manbem/form_alie_veiculo.php');
  ?>
-
-<form name="frmAlienacao" id="frmAlienacao" class="formulario">
-
-	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
-
-	<label id="lsbemfin"></label>
-	<br />
-
-	<label for="dscatbem">Categoria:</label>
-	<select name="dscatbem" id="dscatbem" onChange="formataCategoriaBem(this.value);" ></select>
-	<label for="dstipbem">Tipo Ve&iacute;culo:</label>
-	<select name="dstipbem" id="dstipbem">
-		<option value="ZERO KM"> 1 - Zero KM</option>
-		<option value="USADO" selected> 2 - Usado</option>
-	</select>
-	<br />
-
-	<label for="dsbemfin"><? echo utf8ToHtml('Descrição:') ?></label>
-	<input name="dsbemfin" id="dsbemfin" type="text" value="" />
-
-	<label for="tpchassi">Tipo Chassi:</label>
-	<select name="tpchassi" id="tpchassi">
-		<option value="1"> 1 - Remarcado</option>
-		<option value="2" selected> 2 - Normal</option>
-	</select>
-	<br />
-
-	<label for="dscorbem">Cor/Classe:</label>
-	<input name="dscorbem" id="dscorbem" type="text" value="" />
-	<label for="vlmerbem">Valor de Mercado:</label>
-	<input name="vlmerbem" id="vlmerbem" type="text" value="" />
-	<br />
-
-	<label for="ufdplaca">UF/Placa:</label>
-	<? echo selectEstado('ufdplaca', '', 1) ?>
-	<input name="nrdplaca" id="nrdplaca" type="text" value="" />
-
-	<label for="dschassi">Chassi/N.Serie:</label>
-	<input name="dschassi" id="dschassi" type="text" value="" />
-	<br />
-
-	<label for="nrrenava">RENAVAM:</label>
-	<input name="nrrenava" id="nrrenava" type="text" value="" />
-
-	<label for="uflicenc">UF Licenciamento:</label>
-    <input name="uflicenc" id="uflicenc" type="text" value="" disabled />
-
-
-	<label for="nranobem">Ano Fab.:</label>
-	<input name="nranobem" id="nranobem" type="text" value="" />
-	<br />
-
-	<label for="nrmodbem">Ano Mod.:</label>
-	<input name="nrmodbem" id="nrmodbem" type="text" value="" />
-
-	<label for="nrcpfbem">CPF/CNPJ Propr.:</label>
-	<input name="nrcpfbem" id="nrcpfbem" onKeyPress="VerificaPessoa(this.value)" onKeyUp="VerificaPessoa(this.value)" type="text" value="" />
-	<br />
-
-</form>
-
 <div id="divBotoes">
 	<? if ( $operacao == 'A_ALIENACAO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
@@ -101,9 +43,8 @@
 </div>
 
 <script>
-
-	$(document).ready(function() {
-        highlightObjFocus($('#frmAlienacao'));
+	/*$(document).ready(function() {
+        highlightObjFocus($('#frmTipo'));
 	});
 
 	function VerificaPessoa( campo ){
@@ -120,18 +61,5 @@
 
         $('#nrdplaca', '#frmAlienacao').removeClass('placa');
 		$('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzzzzzz','','');
-		/*
-        //$('#nrrenava', '#frmAlienacao').removeClass('renavan');
-        if (dscatbem == 'AUTOMOVEL' ||
-            dscatbem == 'MOTO'      ||
-            dscatbem == 'CAMINHAO') {
-            $('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzz-zzzz','-','');
-          //  $('#nrrenava', '#frmAlienacao').setMask('INTEGER','zz.zzz.zzz.zz9','.','');
-        }
-        else{
-            $('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzz-zzzz','-','');
-           // $('#nrrenava', '#frmAlienacao').setMask('INTEGER','zzz.zzz.zzz.zz9','.','');
-        }*/
-    };
-
+    };*/
 </script>
