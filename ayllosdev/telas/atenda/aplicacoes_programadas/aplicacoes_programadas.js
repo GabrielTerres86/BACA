@@ -153,7 +153,7 @@ function acessaOpcaoCancelar() {
 		return false;
 	}
 	if (cdprodut < 0) {
-		showError("error","N&atilde;o &eacute; permitido cancelar planos de poupan&ccedil;a programada que foram migrados. O n&uacute;mero de contrato do novo plano &eacute;  "+(cdprodut*-1).toString()+".","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		showError("error","N&atilde;o &eacute; permitido cancelar planos de poupan&ccedil;a programada que foram migrados.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 	
@@ -993,27 +993,33 @@ function incluirAplProg(dtinirpp,diadtvct,mesdtvct,anodtvct,vlprerpp,tpemiext,cd
 
 // Função para impressão da autorização da poupança programada
 function imprimirAutorizacao(registro,tparquiv) {
-	registro = registro == "" ? nrdrowid : registro;
-	tparquiv = tparquiv == "" ? cdtiparq : tparquiv;
+    registro = registro == "" ? nrdrowid : registro;
+    tparquiv = tparquiv == "" ? cdtiparq : tparquiv;
+
+    if (cdprodut < 1){
+		alert ('Este \u00e9 um plano antigo que n\u00e3o pode ter o termo de ades\u00e3o impresso.');
+		return false;
+		}
 
 	if (registro == 0 || registro == "") {
 		return false;
-	}
-	
+		}
+	showMsgAguardo("Aguarde, imprimindo termo de ades&atilde;o ...");
 	$("#nrdconta","#frmAutorizacao").val(nrdconta);
-	$("#nrdrowid","#frmAutorizacao").val(registro);
 	$("#cdtiparq","#frmAutorizacao").val(tparquiv);
+	$("#nrdrowid","#frmAutorizacao").val(nrctrrpp);
+	$("#nrctrrpp","#frmAutorizacao").val(nrctrrpp);
+
 	var action = $("#frmAutorizacao").attr("action");
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
-	
+
 	if (callafterPoupanca != '') {
 		callafter = callafterPoupanca;
 		callafterPoupanca = '';
-	}
-	
-	carregaImpressaoAyllos("frmAutorizacao",action,callafter);
-	
 }
+    carregaImpressaoAyllos("frmAutorizacao",action,callafter);
+
+    }
 
 function controlaLayout( nomeForm ){
 
