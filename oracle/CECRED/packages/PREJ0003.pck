@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Rangel Decker - AMCom
-   Data    : Maio/2018                      Ultima atualizacao: 28/08/2018
+   Data    : Maio/2018                      Ultima atualizacao: 25/09/2018
 
    Dados referentes ao programa:
 
@@ -21,6 +21,8 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                06/08/2018 - 9318:Pagamento de Emprestimo   -pc_pagar_contrato_emprestimo   Rangel Decker (AMcom)
                28/08/2018 - Criação de rotina para trazer o registro para estorno de prejuízo de conta corrente
                             PJ 450 - Diego Simas (AMcom)
+			   25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
+							PJ 450 - Diego Simas (AMcom)
 
 ..............................................................................*/
 
@@ -4675,7 +4677,10 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
     Frequencia :
     Objetivo   : Rotina responsável por gerar os históricos específicos para o estorno da CC em prejuízo.
-    Alterações :
+    Alterações : 
+	
+		         25/09/2018 - Validar campo justificativa do estorno da Conta Transitória
+						  	  PJ 450 - Diego Simas (AMcom)
 
     -------------------------------------------------------------------------------------------------------------*/
 
@@ -4789,6 +4794,13 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                            pr_des_erro => vr_dscritic);
 
     -----> PROCESSAMENTO PRINCIPAL <-----
+
+	IF nvl(ltrim(pr_justific), 'VAZIO') = 'VAZIO'  THEN
+	   vr_cdcritic := 0;
+	   vr_dscritic := 'Obrigatório o preenchimento do campo justificativa';
+	   RAISE vr_exc_erro;
+	END IF;
+
     OPEN cr_detalhe_ult_lanc(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta);
 
