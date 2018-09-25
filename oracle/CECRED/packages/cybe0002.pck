@@ -357,6 +357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --                           chamado quando ocorrer erro (Carlos)
   --              
   --              03/08/2018 - Ajustes e comentários para definir onde estiver COBEMP para funcionar para COBTIT também - Luis Fernando (GFT)
+  --              25/09/2018 - Ajuste para organizar os arquivos antes de começar o envio para o Bureaux. (Saquetta)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -5852,6 +5853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     -- 07/10/2015 - PRJ210 - Adaptar envio para remessas sob-demanda (Marcos-Supero)
     -- 10/10/2017 - M434 - Adicionar novos parametros para o SPC Brasil neste momento será fixo em caracter 
     --                     emergencial posteriormente deverá ser criado parametros na tela LOGRBC. (Oscar)
+	-- 25/09/2018 - Ajuste para organizar os arquivos antes de começar o envio para o Bureaux. (Saquetta)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis auxiliares
@@ -5932,16 +5934,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               ,arb.nmarqren
               ,arb.blarquiv
               ,arb.rowid
-          FROM craparb arb
+          FROM craparb arb_org
+              ,craparb arb
               ,crapcrb crb
-         WHERE crb.idtpreme = arb.idtpreme
+         WHERE arb_org.nrseqarq (+) = arb.nrseqant
+           AND arb_org.dtmvtolt (+) = arb.dtmvtolt
+           AND arb_org.idtpreme (+) = arb.idtpreme
+           --
+           AND crb.idtpreme = arb.idtpreme
            AND crb.dtmvtolt = arb.dtmvtolt
            AND arb.dtmvtolt = pr_dtmvtolt
            AND arb.idtpreme = pr_idtpreme
            AND arb.cdestarq = 3  --> Envio
            AND arb.flproces = 0  --> Não processado
            AND arb.dtcancel IS NULL
-           AND crb.dtcancel IS NULL;
+           AND crb.dtcancel IS NULL
+         order by arb_org.nmarquiv asc, arb.nmarquiv asc;
       rw_arb cr_arb%ROWTYPE;
     BEGIN
   	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
