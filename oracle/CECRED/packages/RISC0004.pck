@@ -12,6 +12,17 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0004 IS
   --
   ---------------------------------------------------------------------------------------------------------------
 
+  TYPE typ_reg_grupos IS
+     RECORD ( cdcooper      crapris.cdcooper%TYPE
+             ,nrdconta      crapris.nrdconta%TYPE
+             ,nrdgrupo      crapris.nrdgrupo%TYPE
+             ,inrisco_grupo tbcc_grupo_economico.inrisco_grupo%TYPE);
+  TYPE typ_tab_grupos IS TABLE OF typ_reg_grupos
+    INDEX BY VARCHAR2(18);
+  vr_tab_grupos typ_tab_grupos;
+
+  vr_execucao PLS_INTEGER :=0;
+
 -- Calendário da cooperativa selecionada
 CURSOR cr_dat(pr_cdcooper INTEGER) IS
 SELECT dat.dtmvtolt
@@ -577,39 +588,20 @@ END fn_traduz_cdmodali_tpctr;
 
 -- Busca nível de risco do grupo economico
 FUNCTION fn_busca_niv_risco_ge(pr_cdcooper     IN NUMBER
-                                 ,pr_nrdconta     IN NUMBER
-                                 ,pr_nrcpfcgc     IN NUMBER
+                              ,pr_nrdconta     IN NUMBER
+                              ,pr_nrcpfcgc     IN NUMBER
                               ,pr_nrdgrupo     IN NUMBER)
   RETURN crapris.innivris%TYPE AS vr_risco_grupo crapris.innivris%TYPE;
 
   CURSOR cr_grupo IS
-      SELECT DISTINCT inrisco_grupo
-        FROM (SELECT p.inrisco_grupo
-                    ,int.idgrupo
-                    ,int.nrdconta
-                FROM tbcc_grupo_economico_integ INT
-                    ,tbcc_grupo_economico p
-               WHERE int.dtexclusao IS NULL
-                 AND int.cdcooper = pr_cdcooper
-                 AND int.idgrupo  = p.idgrupo
-               UNION
-              SELECT pai.inrisco_grupo
-                    ,pai.idgrupo
-                    ,pai.nrdconta
+    SELECT inrisco_grupo
                 FROM tbcc_grupo_economico       pai
-                   , crapass                    ass
-                   , tbcc_grupo_economico_integ int
-               WHERE ass.cdcooper = pai.cdcooper
-                 AND ass.nrdconta = pai.nrdconta
-                 AND int.idgrupo  = pai.idgrupo
-                 AND int.dtexclusao is NULL
-                 AND ass.cdcooper = pr_cdcooper
-                 AND int.cdcooper = pr_cdcooper
-            ) dados
-       WHERE dados.idgrupo = pr_nrdgrupo;
+     WHERE pai.cdcooper = pr_cdcooper
+       AND pai.idgrupo  = pr_nrdgrupo;
   rw_grupo cr_grupo%ROWTYPE;
 
 BEGIN
+  rw_grupo := NULL;
   OPEN cr_grupo;
   FETCH cr_grupo INTO rw_grupo;
 
@@ -684,13 +676,32 @@ PROCEDURE pc_busca_grupo_economico(pr_cdcooper     IN NUMBER
             ) dados
        WHERE dados.nrdconta = pr_nrdconta;
     rw_grupo cr_grupo%ROWTYPE;
+  
+  -- variaveis
+  vr_indice  VARCHAR2(18);  
+  vr_dscritic VARCHAR2(500);
+    
 BEGIN
-  OPEN cr_grupo;
-  FETCH cr_grupo INTO rw_grupo;
-  CLOSE cr_grupo;
+  rw_grupo := NULL;
+  
+  vr_indice := LPAD(pr_cdcooper,3,'0') || LPAD(pr_nrdconta,15,'0');
+  
+  -- Verifica se a conta está na VR_TAB (Desempenho) (Batch)
+  IF  vr_tab_grupos.exists(vr_indice) THEN
+    pr_numero_grupo := vr_tab_grupos(vr_indice).nrdgrupo;
+    pr_risco_grupo  := vr_tab_grupos(vr_indice).inrisco_grupo;
+  ELSE -- Se nao estiver, busca na tabela de Grupos (Tela)
+  
+    IF vr_execucao = 0 THEN    -- Não é pela OCR
+      OPEN cr_grupo;
+      FETCH cr_grupo INTO rw_grupo;
+      CLOSE cr_grupo;
 
-  pr_numero_grupo := rw_grupo.idgrupo;
-  pr_risco_grupo  := rw_grupo.inrisco_grupo;
+      pr_numero_grupo := rw_grupo.idgrupo;
+      pr_risco_grupo  := rw_grupo.inrisco_grupo;
+    END IF;
+
+  END IF;
 
 END pc_busca_grupo_economico;
 
@@ -707,6 +718,7 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
   );
   TYPE typ_tab_risco_cpf IS TABLE OF typ_reg_risco_cpf INDEX BY VARCHAR2(14);
   vr_tab_risco_cpf typ_tab_risco_cpf;
+
 
   -- Carrega os dados da CRAPRIS (base para preenchimento da TBRISCO_CENTRAL_OCR)
   CURSOR cr_crapris(pr_cdcooper crapris.cdcooper%TYPE
@@ -828,6 +840,35 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
      AND ocr.nrdconta = pr_nrdconta
      AND ocr.dtrefere = pr_dtrefere;
 
+  -- Cursor para carregar vr_tab de grupos
+  CURSOR cr_grupos (pr_cdcooper crapris.cdcooper%TYPE) IS
+    SELECT p.inrisco_grupo
+          ,int.idgrupo
+          ,int.nrdconta
+      FROM tbcc_grupo_economico_integ INT
+          ,tbcc_grupo_economico p
+     WHERE int.dtexclusao IS NULL
+       AND int.cdcooper = pr_cdcooper
+       AND int.idgrupo  = p.idgrupo
+     UNION
+    SELECT pai.inrisco_grupo
+          ,pai.idgrupo
+          ,pai.nrdconta
+      FROM tbcc_grupo_economico       pai
+         , crapass                    ass
+         , tbcc_grupo_economico_integ int
+     WHERE ass.cdcooper = pai.cdcooper
+       AND ass.nrdconta = pai.nrdconta
+       AND int.idgrupo  = pai.idgrupo
+       AND int.dtexclusao is NULL
+       AND ass.cdcooper = pr_cdcooper
+       AND int.cdcooper = pr_cdcooper
+     ORDER BY idgrupo, nrdconta;
+  rw_grupos cr_grupos%ROWTYPE;
+
+     
+     
+  ----------- VARIAVEIS ------------------
   rw_crapdat cr_dat%ROWTYPE;     -- Calendário de datas da cooperativa
 
   vr_nrctremp crapris.nrctremp%TYPE;
@@ -837,6 +878,7 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
   vr_chtabcpf VARCHAR2(14);           -- Chave para a tabela que armazena o risco CPF
   vr_indrowid INTEGER;                -- Índice para a tabela de ROWIDs a atualizar para o risco CPF
   vr_rowidocr ROWID;                  -- ROWID do registro inserido na TBRISCO_CENTRAL_OCR
+  vr_idx_grp  VARCHAR2(18);
 
   vr_inrisco_inclusao tbrisco_central_ocr.inrisco_inclusao%TYPE;
   vr_inrisco_rating   tbrisco_central_ocr.inrisco_rating%TYPE;
@@ -854,6 +896,22 @@ BEGIN
   OPEN cr_dat(pr_cdcooper);
   FETCH cr_dat INTO rw_crapdat;
   CLOSE cr_dat;
+
+
+  vr_idx_grp  := NULL;
+  vr_execucao := 1;
+  -- Carregar Grupos da Cooperativa
+  FOR rw_grupos IN cr_grupos (pr_cdcooper) LOOP
+    vr_idx_grp := LPAD(pr_cdcooper,3,'0') || LPAD(rw_grupos.nrdconta,15,'0');
+    
+    -- Evitar duplicados
+    IF NOT vr_tab_grupos.exists(vr_idx_grp) THEN
+      vr_tab_grupos(vr_idx_grp).nrdgrupo      := rw_grupos.idgrupo;
+      vr_tab_grupos(vr_idx_grp).inrisco_grupo := rw_grupos.inrisco_grupo;
+      vr_tab_grupos(vr_idx_grp).cdcooper      := pr_cdcooper;
+      vr_tab_grupos(vr_idx_grp).nrdconta      := rw_grupos.nrdconta;
+    END IF;
+  END LOOP;
 
   -- Percorre os dados carregados da CRAPRIS
   FOR rw_crapris IN cr_crapris(pr_cdcooper, rw_crapdat.dtmvtoan) LOOP

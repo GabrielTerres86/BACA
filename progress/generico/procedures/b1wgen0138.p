@@ -130,8 +130,8 @@
                              
                 05/03/2014 - Incluso VALIDATE (Daniel). 
                 
-                12/07/2018 - P450 - Altera rotina calc_endivid_grupo para chamar a 
-                             nova rotina oracle
+                12/07/2018 - P450 - Altera rotina calc_endivid_grupo para
+                             chamar a nova rotina oracle
                              pc_calc_endivid_grupo_prog. Eliminada lógica 
                              progess. Renato Cordeiro (AMcom)
                              
@@ -1144,15 +1144,17 @@ PROCEDURE calc_endivid_grupo:
                     ASSIGN tt-grupo.nrctasoc = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrctasoc" NO-ERROR.
                     ASSIGN tt-grupo.nrdconta = INT(xText:NODE-VALUE)   WHEN xField:NAME = "nrdconta" NO-ERROR.
                     ASSIGN tt-grupo.idseqttl = INT(xText:NODE-VALUE)   WHEN xField:NAME = "idseqttl" NO-ERROR.
-                    ASSIGN tt-grupo.nrcpfcgc = DECI(xText:NODE-VALUE)   WHEN xField:NAME = "nrcpfcgc" NO-ERROR.
+                    ASSIGN tt-grupo.nrcpfcgc = DECI(xText:NODE-VALUE)  WHEN xField:NAME = "nrcpfcgc" NO-ERROR.
                     ASSIGN tt-grupo.dsdrisco = xText:NODE-VALUE        WHEN xField:NAME = "dsdrisco" NO-ERROR.
                     ASSIGN tt-grupo.innivris = INT(xText:NODE-VALUE)   WHEN xField:NAME = "innivris" NO-ERROR.
                     ASSIGN tt-grupo.dsdrisgp = xText:NODE-VALUE        WHEN xField:NAME = "dsdrisgp" NO-ERROR.
                     ASSIGN tt-grupo.inpessoa = INT(xText:NODE-VALUE)   WHEN xField:NAME = "inpessoa" NO-ERROR.
                     ASSIGN tt-grupo.cdagenci = INT(xText:NODE-VALUE)   WHEN xField:NAME = "cdagenci" NO-ERROR.
                     ASSIGN tt-grupo.innivrge = INT(xText:NODE-VALUE)   WHEN xField:NAME = "innivrge" NO-ERROR.
-                    ASSIGN tt-grupo.vlendivi = INT(xText:NODE-VALUE)   WHEN xField:NAME = "vlendivi" NO-ERROR.
-                    ASSIGN tt-grupo.vlendigp = INT(xText:NODE-VALUE)   WHEN xField:NAME = "vlendigp" NO-ERROR.
+                    ASSIGN tt-grupo.vlendivi = DECI(xText:NODE-VALUE)
+                        WHEN xField:NAME = "vlendivi" NO-ERROR.
+                    ASSIGN tt-grupo.vlendigp = DECI(xText:NODE-VALUE)
+                        WHEN xField:NAME = "vlendigp" NO-ERROR.
              END.
                           
         END.
