@@ -113,31 +113,36 @@ BEGIN
     vr_qtdjobs := NVL(GENE0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_PARALE_CRPS724'),10);
 
     -- Debitador Unico - 29/08/2018 - inicio:
-    -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
-    gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
-                                                ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)                              
-                                                ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica  
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
+    IF pr_cdcooper = 3 THEN
+      vr_flultexe := 1;
+      vr_qtdexec  := 1;
+    ELSE
+      -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
+      gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
+                                                  ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)                              
+                                                  ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica  
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
 
-    /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
-    SICR0001.pc_controle_exec_deb ( pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
-                                   ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
-                                   ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
-                                   ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa                                  
-                                   ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
-                                   ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
-                                   ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
-                                   ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+      /* Procedimento para verificar/controlar a execução da DEBNET e DEBSIC */
+      SICR0001.pc_controle_exec_deb ( pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
+                                     ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                     ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
+                                     ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa                                  
+                                     ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                     ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                     ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                     ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+      IF nvl(vr_cdcritic,0) > 0 OR
+      TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida; 
+      END IF;             
 
-    IF nvl(vr_cdcritic,0) > 0 OR
-    TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_saida; 
-    END IF;             
+      --Commit para garantir o controle de execucao do programa.
+      COMMIT;
 
-    --Commit para garantir o controle de execucao do programa.
-    COMMIT;
+    END IF; --  pr_cdcooper = 3 then
 
     -- Buscar parâmetro de execução na cadeia noturna além do debitador único.
     -- Valida Programa do cadastro do Debitador
@@ -292,7 +297,7 @@ BEGIN
     WHEN vr_exc_saida THEN
       vr_cdcritic := NVL(vr_cdcritic, 0);
       IF vr_cdcritic > 0 THEN
-        vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
       END IF;
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
