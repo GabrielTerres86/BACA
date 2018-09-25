@@ -146,7 +146,7 @@ create or replace package body cecred.CNSO0001 is
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                       Ultima atualizacao: 24/04/2018
+   Data    : Julho/2013                       Ultima atualizacao: 20/09/2018
 
    Dados referentes ao programa:
 
@@ -193,6 +193,9 @@ create or replace package body cecred.CNSO0001 is
                             							
 	             24/04/2018 - Migracao do Progress (crps663.i) para Oracle
 			                     (Teobaldo Jamunda, AMcom - PRJ Debitador Unico)
+                           
+               20/09/2018 - inc0024147 correção no usao das vars de crítica, o programa estava 
+                            atribuindo cdcritic e dscritic para os parâmetros de saída diretamente (Carlos)
 .............................................................................*/
 
   -- Cursores genericos
@@ -630,8 +633,8 @@ create or replace package body cecred.CNSO0001 is
             -- Fecha o cursor para as próximas iterações
             CLOSE cr_crapass;
             -- Gerando a crítica
-            pr_cdcritic := 9;
-            pr_dscritic := 'Erro em  CNSO0001.pc_obtem_consorcio. Coop./Conta: ' ||
+            vr_cdcritic := 9;
+            vr_dscritic := 'Erro em  CNSO0001.pc_obtem_consorcio. Coop./Conta: ' ||
                            rw_craplau.cdcooper || '/' || rw_craplau.nrdconta || ' não existe.';
             -- gerando exceção
             RAISE vr_exc_erro;
@@ -947,7 +950,7 @@ create or replace package body cecred.CNSO0001 is
           -- Se nao encontrar
           IF cr_crapass%NOTFOUND THEN
             -- Fechar o cursor pois haverá raise
-            pr_cdcritic := 9;
+            vr_cdcritic := 9;
             vr_dscritic := 'Associado nao cadastrado.';
             CLOSE cr_crapass;
           ELSE
