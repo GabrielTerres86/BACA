@@ -21,6 +21,47 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                         
   rw_titulo cr_titulos%ROWTYPE;
 
+  CURSOR cr_tbfin_recursos_movimento(pr_dtinicial    IN VARCHAR2
+                                     ,pr_dtfinal       IN VARCHAR2
+                                     ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE
+                                     ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE
+                                     ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
+                                     ,pr_flgcon        IN INTEGER) IS
+    SELECT ted.idlancto
+          ,cartorio.nmcartorio as nome_cartorio
+          ,ted.nmtitular_debitada as nome_remetente
+          ,ted.nrcnpj_debitada as cnpj_cpf
+          --,banco.nmresbcc as nome_banco
+          ,banco.cdbccxlt  as nome_banco
+          --,agencia.nmageban as nome_agencia
+          ,agencia.cdageban as nome_agencia
+          ,ted.dsconta_debitada as conta
+          ,ted.dtmvtolt as data_recebimento
+          ,ted.vllanmto as valor
+          --,municipio.cdestado as nome_estado
+          --,municipio.dscidesp as nome_cidade
+          ,caf.cdufresd as nome_estado
+          ,caf.nmcidade as nome_cidade
+          ,'PENDENTE' as status
+    FROM tbfin_recursos_movimento ted
+         inner join crapban banco on (ted.nrispbif = banco.nrispbif)
+         inner join crapagb agencia on (agencia.cddbanco = banco.cdbccxlt and cdagenci_debitada = agencia.cdageban)
+         -- left join crapmun municipio on (municipio.cdcidade = agencia.cdcidade)
+         left join crapcaf caf on (caf.cdcidade = agencia.cdcidade)
+         left join tbcobran_cartorio_protesto cartorio on (ted.nrcnpj_debitada = cartorio.nrcpf_cnpj 
+                                                    /*and ted.nmtitular_debitada = cartorio.nmcartorio*/)
+    WHERE ted.dsdebcre = 'C' AND TED.INDEVTED_MOTIVO = 0 
+     and ((ted.dtmvtolt between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
+         or (pr_dtinicial is null and pr_dtfinal is null))
+     and ((ted.vllanmto >= pr_vlinicial and ted.vllanmto <= pr_vlfinal) 
+         or (pr_vlinicial = 0 and pr_vlfinal = 0))
+     and (ted.nrcnpj_debitada = pr_cartorio or pr_cartorio is null)
+     and ((pr_flgcon = 1 and ted.dtconciliacao IS NOT NULL) or (pr_flgcon = 0 and ted.dtconciliacao IS NULL))
+     
+    ORDER BY ted.dtmvtolt, ted.nrcnpj_debitada;  
+    rw_tbfin_recursos_movimento cr_tbfin_recursos_movimento%ROWTYPE;
+
+
   TYPE titulos_tbl_type IS TABLE OF cr_titulos%ROWTYPE INDEX BY PLS_INTEGER;
 
   PROCEDURE pc_consulta_teds(pr_dtinicial     IN VARCHAR2 -- Data inicial de recebimento de ted
@@ -243,54 +284,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   --  Programa : TELA_MANPRT
   --  Sistema  : Ayllos Web
   --  Autor    : Helinton Steffens (Supero)
-  --  Data     : Janeiro - 2018                 Ultima atualizacao: 29/01/2018
+  --  Data     : Janeiro - 2018                 Ultima atualizacao: 24/09/2018
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela PARPRT
   --
   -- Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
+  --																	  
+  -- 24/09/2018: Ajuste no cursor tbfin_recursos_movimento CS 25859 (Andre Supero)
   --
   ---------------------------------------------------------------------------
-    CURSOR cr_tbfin_recursos_movimento(pr_dtinicial    IN VARCHAR2
-                                     ,pr_dtfinal       IN VARCHAR2
-                                     ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE
-                                     ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE
-                                     ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
-                                     ,pr_flgcon        IN INTEGER) IS
-    SELECT ted.idlancto
-          ,cartorio.nmcartorio as nome_cartorio
-          ,ted.nmtitular_debitada as nome_remetente
-          ,ted.nrcnpj_debitada as cnpj_cpf
-          --,banco.nmresbcc as nome_banco
-          ,banco.cdbccxlt  as nome_banco
-          --,agencia.nmageban as nome_agencia
-          ,agencia.cdageban as nome_agencia
-          ,ted.dsconta_debitada as conta
-          ,ted.dtmvtolt as data_recebimento
-          ,ted.vllanmto as valor
-          --,municipio.cdestado as nome_estado
-          --,municipio.dscidesp as nome_cidade
-          ,caf.cdufresd as nome_estado
-          ,caf.nmcidade as nome_cidade
-          ,'PENDENTE' as status
-    FROM tbfin_recursos_movimento ted
-         inner join crapban banco on (ted.nrispbif = banco.nrispbif)
-         inner join crapagb agencia on (agencia.cddbanco = banco.cdbccxlt and cdagenci_debitada = agencia.cdageban)
-         -- left join crapmun municipio on (municipio.cdcidade = agencia.cdcidade)
-         left join crapcaf caf on (caf.cdcidade = agencia.cdcidade)
-         left join tbcobran_cartorio_protesto cartorio on (ted.nrcnpj_debitada = cartorio.nrcpf_cnpj 
-                                                    /*and ted.nmtitular_debitada = cartorio.nmcartorio*/)
-    WHERE ted.dsdebcre = 'C' AND TED.INDEVTED_MOTIVO = 0 
-     and ((ted.dtmvtolt between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
-         or (pr_dtinicial is null and pr_dtfinal is null))
-     and ((ted.vllanmto >= pr_vlinicial and ted.vllanmto <= pr_vlfinal) 
-         or (pr_vlinicial = 0 and pr_vlfinal = 0))
-     and (ted.nrcnpj_debitada = pr_cartorio or pr_cartorio is null)
-     and ((pr_flgcon = 1 and ted.dtconciliacao IS NOT NULL) or (pr_flgcon = 0 and ted.dtconciliacao IS NULL))
-     
-    ORDER BY ted.dtmvtolt, ted.nrcnpj_debitada;  
-    rw_tbfin_recursos_movimento cr_tbfin_recursos_movimento%ROWTYPE;
     
     
     CURSOR cr_tbcobran_conciliacao_ieptb(pr_dtinicial    IN VARCHAR2
