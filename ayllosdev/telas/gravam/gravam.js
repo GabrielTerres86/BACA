@@ -42,7 +42,7 @@ var flcritic;
 var dschassi;
 
 
-$(document).ready(function() {	
+$(document).ready(function() {		
 	
 	estadoInicial();
 		

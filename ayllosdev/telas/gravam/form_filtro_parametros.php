@@ -82,7 +82,7 @@
 			<label for="nrdnaoef" class="rotulo"><? echo utf8ToHtml('Número de dias para aviso via e-mail de propostas com gravames e não efetivadas:') ?></label>
 			<input id="nrdnaoef" name="nrdnaoef" maxlength="6" class="campo" style="width: 100px; text-align: center" value="<?php echo getByTagName($xmlRegist->tags,'nrdnaoef'); ?>" />
 			
-			<label form="emlnaoef" class="rotulo"><? echo utf8ToHtml('E-mail(s) para enviar relatório de propostas com gravames e não efetivadas::') ?></label>
+			<label form="emlnaoef" class="rotulo"><? echo utf8ToHtml('E-mail(s) para enviar relatório de propostas com gravames e não efetivadas:') ?></label>
 			<textarea id="emlnaoef" name="emlnaoef" class="campo" style="width: 100%; height: 80px;" maxlength="1000"><?php echo getByTagName($xmlRegist->tags,'emlnaoef'); ?></textarea>
 			
 		</div> 
