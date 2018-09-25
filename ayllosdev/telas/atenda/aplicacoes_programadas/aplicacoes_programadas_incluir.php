@@ -153,7 +153,11 @@
 	echo "(executandoProdutos == true) ? callafterPoupanca = \"encerraRotina(true)\" : callafterPoupanca = \"".$acessaaba."\";";	
 	
 	// Efetua a impressão do termo de entrega
-	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\');","'.$acessaaba.'","sim.gif","nao.gif");';	
+
+// Comentado temporariamente - pois a impressao por aqui, acaba pegando o registro selecionado no grid
+// echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\');","'.$acessaaba.'","sim.gif","nao.gif");';
+ echo 'showError("inform","Para visualizar o termo de ades&atilde;o utilize o bot&atilde;o Imprimir.","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+ echo $acessaaba;
 
 	
 	// Função para exibir erros na tela através de javascript
