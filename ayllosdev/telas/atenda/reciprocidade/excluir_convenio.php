@@ -42,7 +42,7 @@ $xml .= "   <idrecipr>".$idrecipr."</idrecipr>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "VALIDA_EXCLUSAO_CONVENIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "VALIDA_EXCLUSAO_CONVENIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
 $xmlDados = $xmlObject->roottag;
 

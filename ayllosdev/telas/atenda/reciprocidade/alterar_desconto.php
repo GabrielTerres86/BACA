@@ -87,7 +87,7 @@ $xml .= "   <vldescontoconcedido_cee>".converteFloat($vldescontoconcedido_cee)."
 $xml .= " </Dados>";
 $xml .= "</Root>";
 //exit('hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'); // debug
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "ALTERA_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "ALTERA_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
 
 $xmlDados = $xmlObject->roottag;

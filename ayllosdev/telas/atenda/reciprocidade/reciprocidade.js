@@ -3388,5 +3388,4 @@ $('body').delegate('#divConvenios input[type="checkbox"]', 'change', function ()
     } else if (!$(this).is(':checked') && i >= 0) {
         novosConvenios.splice(i, 1);
     }
-    console.log(novosConvenios.length);
 });

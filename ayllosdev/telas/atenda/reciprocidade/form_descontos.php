@@ -64,7 +64,7 @@ $xml .= " </Dados>";
 $xml .= "</Root>";
 
 // Executa script para envio do XML
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "CONSULTA_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "CONSULTA_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
 
 $dados = $xmlObj->roottag;
@@ -183,7 +183,7 @@ if ($cddopcao != 'C' || $idvinculacao == 0 || empty($nmvinculacao)) {
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= " </Dados>";     
 	$xml .= "</Root>";
-	$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "BUSCA_VINCULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "BUSCA_VINCULACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$vinculacao = getObjectXML($xmlResult);
 	$vinculacao = $vinculacao->roottag->tags[0];
 	// Se ocorrer um erro, mostra crítica

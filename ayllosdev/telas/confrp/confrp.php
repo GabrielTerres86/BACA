@@ -45,7 +45,7 @@ $dslogcfg              = (isset($_POST['dslogcfg']))              ? $_POST['dslo
 	$xmlBuscaConf .= "</Root>";
   
 	// Executa script para envio do XML	
-	$xmlResult = mensageria($xmlBuscaConf, "TELA_CONFRP_AUG", "BUSCA_CONF_AUG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xmlBuscaConf, "TELA_CONFRP", "BUSCA_CONF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	
 	$xmlObjBuscaConf = getObjectXML($xmlResult);
 	

@@ -84,9 +84,9 @@ $xml .= "   <vldescontoconcedido_coo>".floatval($vldescontoconcedido_coo)."</vld
 $xml .= "   <vldescontoconcedido_cee>".floatval($vldescontoconcedido_cee)."</vldescontoconcedido_cee>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
+die($xml);
 
-
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AND", "INCLUI_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "INCLUI_DESCONTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObject = getObjectXML($xmlResult);
 $xmlDados = $xmlObject->roottag;
 //print_r($xmlDados);

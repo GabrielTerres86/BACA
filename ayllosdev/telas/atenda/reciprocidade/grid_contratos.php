@@ -50,7 +50,7 @@ $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN_AUG", "BUSCA_CONTRATOS_ATENDA_AUG", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "BUSCA_CONTRATOS_ATENDA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObjeto = getObjectXML($xmlResult);
 
 if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
