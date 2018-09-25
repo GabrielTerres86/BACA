@@ -6,7 +6,6 @@
  * OBJETIVO     : Monta o form de filtro correspondente a opção selecionada
  * --------------
  * ALTERAÇÕES   : 
- *
  */
 
     session_start();
@@ -25,7 +24,8 @@
 	if($cddopcao == "G" ||
 	   $cddopcao == "H" ||
 	   $cddopcao == "I" ||
-	   $cddopcao == "R" ){
+	   $cddopcao == "R" ||
+	   $cddopcao == "P"){
 		   
 		// Monta o xml de requisição		
 		$xml  		= "";
