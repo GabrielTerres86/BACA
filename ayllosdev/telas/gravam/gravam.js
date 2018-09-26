@@ -1535,6 +1535,7 @@ function controlaVoltar(ope,tpconsul) {
             //Limpa formulario
             $('input[type="text"]', '#frmFiltro').limpaFormulario();
             $('#divTabela').html('').css('display', 'none');
+			
             formataFiltro();
 
         break;
@@ -1581,6 +1582,21 @@ function controlaVoltar(ope,tpconsul) {
 				return false;
 			}
         break;
+		
+		case '6':
+		$('input[type="text"]', '#frmFiltro').limpaFormulario();
+		$('#divDados').html('').css('display', 'none');
+		
+		formataFiltroImpressao();
+		
+		$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
+
+			controlaVoltar('1');
+	
+			return false;
+
+		});
+		break;
 
     }
 
@@ -2351,7 +2367,7 @@ function gerarRelatorio670(tipsaida) {
 
 function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi) {
     //Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, solicitando relatório...');
+    showMsgAguardo('Aguarde, buscando informações...');
 
 	if((tparquiv == 'TODAS' || tparquiv == 'BAIXA')  && dtrefere != '' && nrseqlot == 0 && nrdconta == 0 && nrctrpro == 0 && flcritic== 'N' && dschassi == ''){
 		tipsaida == 'PDF';
@@ -2394,9 +2410,19 @@ function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtre
 					} else {
 						$('input,select','#frmCab').removeClass('campoErro');
 						$('#frmCons').css({'display':'block'}); 
-						$("#divDados").html(response);
+						$("#divDados").html(response).css('display', 'block');
 						$('#btProsseguir' ,'#divBotoes').hide();
 						formatarTabelaRel670('M');
+						
+						
+					//Define ação para CLICK no botão de Voltar
+					$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
+				
+						controlaVoltar('6');
+				
+						return false;
+				
+					});
 						
 						hideMsgAguardo();
 					}

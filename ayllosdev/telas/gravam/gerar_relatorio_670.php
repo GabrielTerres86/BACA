@@ -60,7 +60,6 @@
 	$xml .= "</Root>";
 	
 	$xmlResult = mensageria($xml, "GRVM0001", "REL670", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	echo "<script>console.log('".$xmlResult."');</script>";
 	$xmlObj = getObjectXML($xmlResult);		
 		
 	//-----------------------------------------------------------------------------------------------
@@ -91,7 +90,6 @@
 		
 		$registrosSemRet = $xmlObj->roottag->tags[0]->tags;
 		$qtdregist = $xmlObj->roottag->tags[1]->tags[0]->cdata;
-		echo "<script>console.log('registros ".$qtdregist."');</script>";
 		include('tab_relatorio_670.php');
 	}
 	
