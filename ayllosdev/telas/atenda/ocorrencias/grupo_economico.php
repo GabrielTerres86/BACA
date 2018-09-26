@@ -178,7 +178,14 @@
 								<?php echo formataContaDV($grupo[$i]->tags[2]->cdata); ?>																
 						</td>
 						<td><span><?php echo $grupo[$i]->tags[5]->cdata;  ?></span>
-								<?php echo formataNumericos('999.999.999-10',$grupo[$i]->tags[5]->cdata,'.-'); ?>								
+                        <?php
+                          if (getByTagName($grupo[$i]->tags,"inpessoa") == 1){
+                            echo formataNumericos('999.999.999-10',$grupo[$i]->tags[5]->cdata,'.-');
+                          }
+                          else {
+                            echo formataNumericos('999.999.999-9999-99',$grupo[$i]->tags[5]->cdata,'.-');
+                          }
+                          ?>
 						</td>
 						<td><span><?php echo $grupo[$i]->tags[6]->cdata; ?></span>
 								<?php echo $grupo[$i]->tags[6]->cdata; ?>
