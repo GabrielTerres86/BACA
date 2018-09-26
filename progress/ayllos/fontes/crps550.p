@@ -363,7 +363,7 @@ PROCEDURE proc_processa_arquivo:
                    ,INPUT "O arquivo lido na ABBC no momento do processo do dia" 
                 + " " + STRING(glb_dtmvtolt,"99/99/9999")  + " " + STRING(TIME,"HH:MM:SS") + ", não é o arquivo referente ao movimento anterior que é de" + " " + STRING(glb_dtmvtoan,"99/99/9999") + " " 
                 + "É necessário verificar com a ABBC a disponibilização do arquivo correto em seu FTP, e em seguida efetuar a execução manual do arquivo através da tela PRCCTL." 
-				+ "Data do arquivo:" + SUBSTR(aux_setlinha,16,2) + "/" + SUBSTR(aux_setlinha,14,2) + "/" + SUBSTR(aux_setlinha,10,4)                                       
+				+ "Arquivo:" + SUBSTR(aux_setlinha,4,6) + "Data do arquivo:" + SUBSTR(aux_setlinha,16,2) + "/" + SUBSTR(aux_setlinha,14,2) + "/" + SUBSTR(aux_setlinha,10,4)                                       
                    ,INPUT   " "              
                    ,INPUT  "N"                
                    ,INPUT  "N"                
