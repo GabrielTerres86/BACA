@@ -6820,7 +6820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         vr_tab_aplica(vr_ind_aplica).qtdiaapl := TRIM(rw_craprac.qtdiaapl);            --> Qtd dias de aplicacao
 				
         IF rw_craprac.idblqrgt = 0 THEN 
-				  vr_tab_aplica(vr_ind_aplica).dsblqrgt := TRIM('DISPONIVEL');                 --> Descrição do indicador de bloque de resgate
+				  vr_tab_aplica(vr_ind_aplica).dsblqrgt := TRIM('DISPONÍVEL');                 --> Descrição do indicador de bloque de resgate
 				ELSE 
 				  vr_tab_aplica(vr_ind_aplica).dsblqrgt := TRIM('BLOQUEADA');                  --> Descrição do indicador de bloque de resgate
 				END IF;

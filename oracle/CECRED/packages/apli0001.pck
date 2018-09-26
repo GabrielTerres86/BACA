@@ -12980,7 +12980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       -- Define a situacao da aplicacao
       IF vr_indebcre = 'D'  THEN
-        pr_saldo_rdca(vr_ind).dssitapl := 'DISPONIVEL';
+        pr_saldo_rdca(vr_ind).dssitapl := 'DISPONÍVEL';
       ELSIF vr_indebcre = 'B' THEN
         pr_saldo_rdca(vr_ind).dssitapl := 'BLOQUEADA';
       ELSE

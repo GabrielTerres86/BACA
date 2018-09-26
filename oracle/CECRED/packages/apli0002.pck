@@ -10005,36 +10005,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         CLOSE cr_crapsnh;
         
         -- Validar bloqueios para resgate de aplicacao
-        pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
-                                  ,pr_cdagenci => pr_cdagenci
-                                  ,pr_nrdcaixa => pr_nrdcaixa
-                                  ,pr_cdoperad => pr_cdoperad
-                                  ,pr_nmdatela => pr_nmdatela
-                                  ,pr_idorigem => pr_idorigem
-                                  ,pr_nrdconta => pr_nrdconta
-                                  ,pr_nraplica => 0
-                                  ,pr_idseqttl => pr_idseqttl
-                                  ,pr_cdprogra => pr_nmdatela
-                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                  ,pr_vlresgat => pr_vlaplica
-                                  ,pr_flgerlog => 0
-                                  ,pr_innivblq => 0
-                                  ,pr_vlsldinv => 0
-                                  ,pr_des_reto => vr_des_reto
-                                  ,pr_tab_erro => vr_tab_erro);
-        
-        -- Verifica se houve erro recuperando informacoes de log                              
-        IF vr_des_reto = 'NOK' THEN
-          -- Tenta buscar o erro no vetor de erro
-          IF vr_tab_erro.COUNT > 0 THEN
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
-          ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Retorno "NOK" na APLI0002.pc_ver_val_bloqueio_aplica e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
-      END IF;
-          -- Levantar Excecao
-          RAISE vr_exc_erro;
+        IF NVL(pr_vlaplica,0) > 0 THEN
+          pc_ver_val_bloqueio_aplica(pr_cdcooper => pr_cdcooper
+                                    ,pr_cdagenci => pr_cdagenci
+                                    ,pr_nrdcaixa => pr_nrdcaixa
+                                    ,pr_cdoperad => pr_cdoperad
+                                    ,pr_nmdatela => pr_nmdatela
+                                    ,pr_idorigem => pr_idorigem
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nraplica => 0
+                                    ,pr_idseqttl => pr_idseqttl
+                                    ,pr_cdprogra => pr_nmdatela
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                    ,pr_vlresgat => pr_vlaplica
+                                    ,pr_flgerlog => 0
+                                    ,pr_innivblq => 0
+                                    ,pr_vlsldinv => 0
+                                    ,pr_des_reto => vr_des_reto
+                                    ,pr_tab_erro => vr_tab_erro);
+          
+          -- Verifica se houve erro recuperando informacoes de log                              
+          IF vr_des_reto = 'NOK' THEN
+            -- Tenta buscar o erro no vetor de erro
+            IF vr_tab_erro.COUNT > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic || ' Conta: '||rw_crapass.nrdconta;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Retorno "NOK" na APLI0002.pc_ver_val_bloqueio_aplica e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta||' Aplica: 0.';
+            END IF;
+            -- Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
         END IF;
       
       END IF;

@@ -460,7 +460,7 @@ IF  aux_dtvencto = ?  THEN
     ASSIGN aux_dtvencto = " ".
 
 IF  TRIM(aux_dssitapl) = ""  THEN
-    ASSIGN aux_dssitapl = "DISPONIVEL".
+    ASSIGN aux_dssitapl = "DISPONÍVEL".
     
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<APLICACOES dssitapl='" + aux_dssitapl + "'" +
