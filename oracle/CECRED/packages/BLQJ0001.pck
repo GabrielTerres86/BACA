@@ -172,6 +172,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
 
 				30/11/2017 - M460 bancenJud - Demetrius\Thiago Rodrigues
         25/06/2018 - Início Chamado - SCTASK0018254 e SCTASK0018252 - Márcio Mouts
+        18/09/2018 - Ajuste na busca do saldo das cotas do cooperado no controle de garantias.
+                     Ajustado cursor cr_creprlcr para não filtrar a linha de crédito, sendo emprestimos
+                     deve considerar. INC0023682 - Wagner - Sustentação.  
 
   .............................................................................*/
   
@@ -551,8 +554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
          AND epr.vlsdeved > 0
          AND epr.dtmvtolt >= to_date('01/10/2014','dd/mm/yyyy') 
          AND lcr.cdlcremp = epr.cdlcremp  
-         AND lcr.cdcooper = epr.cdcooper
-         AND lcr.dsoperac IN ('EMPRESTIMO','FINANCIAMENTO');
+         AND lcr.cdcooper = epr.cdcooper;
     
     -- Buscar os dados de endereço do cooperado
     CURSOR cr_crapenc(pr_cdcooper  IN crapenc.cdcooper%TYPE
