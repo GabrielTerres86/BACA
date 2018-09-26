@@ -25,6 +25,8 @@
                12/06/2018 - P450 - Chamada da rotina para consistir lançamento em conta corrente(LANC0001) 
                             na tabela CRAPLCM  - José Carvalho(AMcom)
                                           
+               26/09/2018 - P450 - Correção mensagem de erro no retorno da rotina 0200 - gera lançamento
+			                Renato Cordeiro (AMcom)
 ............................................................................ */
 
 { sistema/generico/includes/var_internet.i } 
@@ -224,8 +226,7 @@ PROCEDURE tranf-salario-intercooperativa:
           
         IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
            DO:  
-             MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
-             RETURN "NOK".
+             LEAVE Transf.
            END.   
         ELSE 
            DO:
@@ -933,7 +934,6 @@ PROCEDURE cria-lancamento:
 
                  IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
                     DO:  
-                       MESSAGE  aux_cdcritic  aux_dscritic  aux_incrineg VIEW-AS ALERT-BOX.    
                        RETURN "NOK".
                     END.
                  ELSE 
