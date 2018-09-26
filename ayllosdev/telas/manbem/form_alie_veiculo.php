@@ -11,6 +11,7 @@
 
  ?>
  	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
+ 	<script src="../../scripts/jquery.maskMoney.js" type="text/javascript"></script>
 
     <link href="../../css/aditiv_alie_veiculo.css" rel="stylesheet" type="text/css">
 
@@ -21,10 +22,8 @@
 
 	<form name="frmTipo" id="frmTipo">
 		<fieldset>
-      <!-- Cabeçalho disponível somente para ADITIV -->
-      <?
-        if($glbvars['nmdatela'] == "ADITIV"){
-      ?>
+		<!-- Cabeçalho disponível somente para ADITIV -->
+		<? if($glbvars['nmdatela'] == "ADITIV"){ ?>
 			<legend>5 - Substituição de Veículo - Alienação</legend>
 			<div class="cabecalho">
 				<input id="nrctremp" name="nrctremp" type="hidden" value="" />
@@ -38,9 +37,12 @@
 				<input type="text" id="dtmvtolt" name="dtmvtolt" value="<? echo getByTagName($dados,'dtmvtolt')?>" />
 			</div>
 			<hr >
-      <?
-        }
-      ?>
+		<? } else { ?>
+			<div class="cabecalho">
+				<input id="nrctremp" name="nrctremp" type="hidden" value="" />
+				<label id="lsbemfin"></label>
+			</div>
+		<? } ?>
 			<div class="bloco">
 				<div>
 					<label for="dscatbem" > Categoria :</label>

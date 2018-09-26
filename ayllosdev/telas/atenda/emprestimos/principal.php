@@ -472,7 +472,7 @@
 				arrayAlienacao<? echo $i; ?>['idalibem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idalibem'); ?>';
                 arrayAlienacao<? echo $i; ?>['idseqbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idseqbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['cdcoplib'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdcoplib'); ?>';
-/*
+
 				arrayAlienacao<? echo $i; ?>['dsmarbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'dsmarbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['vlrdobem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlrdobem'); ?>';
 				arrayAlienacao<? echo $i; ?>['vlfipbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlfipbem'); ?>';
@@ -480,7 +480,7 @@
 				arrayAlienacao<? echo $i; ?>['cdoperad'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdoperad'); ?>';
 				arrayAlienacao<? echo $i; ?>['dssitgrv'] = '<? echo getByTagName($alienacoes[$i]->tags,'dssitgrv'); ?>';
 				arrayAlienacao<? echo $i; ?>['dstpcomb'] = '<? echo getByTagName($alienacoes[$i]->tags,'dstpcomb'); ?>';
-*/
+
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 
 			<?}?>
@@ -998,7 +998,7 @@
 		$xmlResult = getDataXML($xml);
 		$xmlCET = getObjectXML($xmlResult);
 
-		if (strtoupper($xmlCET->roottag->tags[0]->name) == "ERRO") {			
+		if (strtoupper($xmlCET->roottag->tags[0]->name) == "ERRO") {
 		   exibirErro('error','4 - '.$xmlCET->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
 		}
 

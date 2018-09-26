@@ -18,18 +18,23 @@
  *		[25/01/2016] Alterar a chamada do botao Salvar. (James) 
  */
 
+if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO'))) {
   	require_once("./lib/metadados.php");
+}
 	include('../../manbem/form_alie_veiculo.php');
  ?>
 <div id="divBotoes">
 	<? if ( $operacao == 'A_ALIENACAO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
 		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'A_ALIENACAO\');','A_ALIENACAO'); return false;">Continuar</a>
 	<? } else if ($operacao == 'AI_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
 		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'A_ALIENACAO\',\'A_INTEV_ANU\');','A_ALIENACAO'); return false;">Continuar</a>		
 	<? } else if ($operacao == 'C_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('CF'); return false;">Voltar</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_ALIENACAO'); return false;">Continuar</a>
 	<? } else if ($operacao == 'E_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
