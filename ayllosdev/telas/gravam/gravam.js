@@ -87,9 +87,24 @@ function formataCabecalho() {
     $("#cddopcao", "#frmCab").unbind('keypress').bind('keypress', function (e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 
-            montaFormFiltro();
-
+            // Se esta desabilitado o campo 
+		
+		cddopcao = $("#cddopcao", "#frmCab").val();
+		opcaoButton = cddopcao;
+		
+		mostrabutton();
+        if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
             return false;
+        }
+
+		if (!ValidAcesso(cddopcao)){
+			return false;
+		}
+        montaFormFiltro();
+
+        $(this).unbind('click');
+		
+		return false;
 
         }
 
