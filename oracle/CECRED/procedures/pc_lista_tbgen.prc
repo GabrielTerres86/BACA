@@ -26,6 +26,10 @@ BEGIN
   
   Alterações: 06/09/2018 - Ajuste do padrão Decimal/Data
                            (Envolti - Belli - Chamado - REQ0026091)
+                           
+              20/09/2018 - Usar na GENE0001 PC CONTROLE EXEC a consulta 02, levando em conta se a data de parâmetro
+                           for diferente da data do cadastro então nesta data não executou.
+                           (Envolti - Belli - Chamado - REQ0027434)
   ....................................................................................... */
     
 DECLARE
@@ -3128,9 +3132,11 @@ DECLARE
       IF SUBSTR(NVL(vr_dsvlrprm,'N'),1,1) <> 'S' THEN
         vr_ctnaoaut := vr_ctnaoaut + 1;
       ELSE 
+      -- Consulta 02, levando em conta se a data de parâmetro for diferente da data do cadastro 
+      -- então nesta data não executou - 20/09/2018 - REQ0027434
       -- Verificar se já executou
       CECRED.gene0001.pc_controle_exec(pr_cdcooper  => vr_cdcooper   -- Código da coopertiva
-                                      ,pr_cdtipope  => 'C'           -- Tipo de operacao I-incrementar e C-Consultar
+                                      ,pr_cdtipope  => 'C2'          -- Tipo de operacao I-incrementar e C-Consultar
                                       ,pr_dtmvtolt  => SYSDATE       -- Data do movimento
                                       ,pr_cdprogra  => 'PCLISBATCH'    -- Codigo do programa
                                       ,pr_flultexe  => vr_flultexe   -- Retorna se é a ultima execução do procedimento
