@@ -2255,7 +2255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         pc_saldo_rdca_resgate(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                              ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                              ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
-                             ,pr_cdprogra => 'INTERNETBANK'      --> Programa chamador
+                             ,pr_cdprogra => pr_cdprogra         --> Programa chamador /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                              ,pr_nrdconta => pr_nrdconta         --> Conta da aplicacao RDCA
                              ,pr_dtaplica => pr_dtmvtolt         --> Data pada resgate da aplicacao
                              ,pr_nraplica => pr_nraplica         --> Numero da aplicacao RDCA
@@ -2915,7 +2915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         pc_saldo_rdca_resgate(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
                              ,pr_cdagenci => pr_cdagenci         --> Codigo da agencia
                              ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
-                             ,pr_cdprogra => 'INTERNETBANK'      --> Programa chamador
+                             ,pr_cdprogra => pr_cdprogra         --> Programa chamador /* Projeto 363 - Novo ATM -> estava fixo 'INTERNETBANK' */
                              ,pr_nrdconta => pr_nrdconta         --> Conta da aplicacao RDCA
                              ,pr_dtaplica => pr_dtmvtopr         --> Data para resgate da aplicacao
                              ,pr_nraplica => pr_nraplica         --> Numero da aplicacao RDCA
@@ -12980,7 +12980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       -- Define a situacao da aplicacao
       IF vr_indebcre = 'D'  THEN
-        pr_saldo_rdca(vr_ind).dssitapl := 'DISPONÍVEL';
+        pr_saldo_rdca(vr_ind).dssitapl := 'DISPONIVEL';
       ELSIF vr_indebcre = 'B' THEN
         pr_saldo_rdca(vr_ind).dssitapl := 'BLOQUEADA';
       ELSE

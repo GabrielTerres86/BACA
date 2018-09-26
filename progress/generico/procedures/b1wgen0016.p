@@ -2231,7 +2231,10 @@ PROCEDURE cadastrar-agendamento:
     DEF  INPUT PARAM par_nrdconta LIKE crapttl.nrdconta             NO-UNDO.
     DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl             NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt             NO-UNDO.
+    /* Projeto 363 - Novo ATM */
+    DEF  INPUT PARAM par_idorigem AS   INTE                         NO-UNDO.
     DEF  INPUT PARAM par_dsorigem LIKE craplau.dsorigem             NO-UNDO.
+    DEF  INPUT PARAM par_nmprogra AS   CHAR                         NO-UNDO.
     DEF  INPUT PARAM par_cdtiptra LIKE craplau.cdtiptra             NO-UNDO.
     DEF  INPUT PARAM par_idtpdpag AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dscedent LIKE craplau.dscedent             NO-UNDO.
@@ -2282,7 +2285,10 @@ PROCEDURE cadastrar-agendamento:
                           INPUT par_nrdconta,
                           INPUT par_idseqttl,                          
                           INPUT par_dtmvtolt,
+                          /* Projeto 363 - Novo ATM */
+                          INPUT par_idorigem,
                           INPUT par_dsorigem,
+                          INPUT par_nmprogra,
                           INPUT par_cdtiptra,
                           INPUT par_idtpdpag,
                           INPUT par_dscedent,
@@ -2314,6 +2320,7 @@ PROCEDURE cadastrar-agendamento:
                           INPUT par_iptransa,  /* pr_iptransa */
 						              INPUT pr_cdctrlcs, /* pr_cdctrlcs*/
                           INPUT par_iddispos,
+                         OUTPUT 0, /* pr_idlancto */
                          OUTPUT "",  /* pr_dstransa */                         
                          OUTPUT "",
                          OUTPUT 0,
@@ -5884,7 +5891,10 @@ PROCEDURE aprova_trans_pend:
                                                                           INPUT par_nrdconta,
                                                                           INPUT par_idseqttl,
                                                                           INPUT par_dtmvtolt,
+                                                                          /* Projeto 363 - Novo ATM */ 
+                                                                          INPUT par_idorigem,
                                                                           INPUT aux_dsorigem,
+                                                                          INPUT par_nmdatela,
                                                                           INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                           INPUT 0,
                                                                           INPUT '',
@@ -6053,7 +6063,10 @@ PROCEDURE aprova_trans_pend:
                                                                           INPUT par_nrdconta,
                                                                           INPUT par_idseqttl,
                                                                           INPUT par_dtmvtolt,
+                                                                          /* Projeto 363 - Novo ATM */ 
+                                                                          INPUT par_idorigem,
                                                                           INPUT aux_dsorigem,
+                                                                          INPUT par_nmdatela,
                                                                           INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                           INPUT 0,
                                                                           INPUT '',
@@ -6510,7 +6523,10 @@ PROCEDURE aprova_trans_pend:
                                                                INPUT par_nrdconta,
                                                                INPUT par_idseqttl,
                                                                INPUT par_dtmvtolt,
+                                                               /* Projeto 363 - Novo ATM */ 
+                                                               INPUT par_idorigem,
                                                                INPUT aux_dsorigem,
+                                                               INPUT par_nmdatela,
                                                                INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                INPUT 0,
                                                                INPUT '',
@@ -6971,7 +6987,10 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT par_nrdconta,
                                                                   INPUT par_idseqttl,
                                                                   INPUT par_dtmvtolt,
+                                                                  /* Projeto 363 - Novo ATM */ 
+                                                                  INPUT par_idorigem,
                                                                   INPUT aux_dsorigem,
+                                                                  INPUT par_nmdatela,
                                                                   INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                   INPUT 1,
                                                                   INPUT tt-tbpagto_trans_pend.dscedente,
@@ -7251,7 +7270,10 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT par_nrdconta,
                                                                   INPUT par_idseqttl,
                                                                   INPUT par_dtmvtolt,
+                                                                  /* Projeto 363 - Novo ATM */ 
+                                                                  INPUT par_idorigem,
                                                                   INPUT aux_dsorigem,
+                                                                  INPUT par_nmdatela,
                                                                   INPUT tt-tbgen_trans_pend.tptransacao, /** PAGAMENTO/TRANSF **/
                                                                   INPUT 2,
                                                                   INPUT tt-tbpagto_trans_pend.dscedente,
@@ -10664,6 +10686,16 @@ PROCEDURE aprova_trans_pend:
                                                                aux_conttran = 1 THEN 1 
                                                             ELSE  3        /* pr_aprvpend */
                                                      ,INPUT 0
+                                                     /* Projeto 363 - Novo ATM */ 
+                                                     ,INPUT 3 /* pr_idorigem */
+                                                     ,INPUT 90 /* pr_cdagenci */
+                                                     ,INPUT 900 /*pr_nrdcaixa */
+                                                     ,INPUT "INTERNETBANK" /*pr_nmprogra */
+                                                     ,INPUT 0 /*pr_cdcoptfn  */
+                                                     ,INPUT 0 /*pr_cdagetfn */
+                                                     ,INPUT 0 /*pr_nrterfin */
+                                                     ,INPUT 0 /*pr_nrcartao */
+                                                     ,OUTPUT "" /*pr_xml_idlancto */
                                                      ,OUTPUT ""
                                                      ,OUTPUT 0
                                                      ,OUTPUT "").

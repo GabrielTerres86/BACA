@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : James Prust Junior
-   Data    : Julho/2014.                       Ultima atualizacao: 19/01/2016
+   Data    : Julho/2014.                       Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa:
    
@@ -20,6 +20,8 @@
                             
                16/03/2016 - Adição do campo vllimctr na tt-dados-cpa (Dionathan)
 
+               09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -39,6 +41,8 @@ DEF  INPUT PARAM par_nmdatela AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_nrdconta AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_idseqttl AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope AS DECI                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
@@ -88,7 +92,7 @@ RUN STORED-PROCEDURE pc_verifica_rep_assinatura
                    (INPUT  par_cdcooper,
                     INPUT  par_nrdconta,
                     INPUT  par_idseqttl,
-                    INPUT  3,   /* cdorigem */
+                    INPUT  par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/   /* cdorigem */
                     OUTPUT 0,   /* idastcjt */
                     OUTPUT 0,   /* nrcpfcgc */
                     OUTPUT "",  /* nmprimtl */
@@ -137,7 +141,7 @@ IF VALID-HANDLE(h-b1wgen0188) THEN
                                         INPUT par_nrdcaixa,
                                         INPUT par_cdoperad,
                                         INPUT par_nmdatela,
-                                        INPUT 3, /* par_cdorigem */
+                                        INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* par_cdorigem */
                                         INPUT par_nrdconta,
                                         INPUT IF aux_idastcjt = 0 THEN par_idseqttl ELSE 1,
                                         INPUT par_nrcpfope,

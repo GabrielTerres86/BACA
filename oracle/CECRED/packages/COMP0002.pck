@@ -270,6 +270,12 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                       ,pr_retxml   OUT xmltype               --> Arquivo de retorno do XML                                        
                                       ,pr_dsretorn OUT VARCHAR2);            -- OK/NOK                                      
                                                                                                                                                         
+  PROCEDURE pc_detalhe_compr_deposito(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                     ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                     ,pr_dsprotoc IN crappro.dsprotoc%TYPE --> Protocolo
+                                     ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                     ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                     ,pr_dsretorn OUT VARCHAR2);          -- OK/NOK                                                                  
                                                                   
   PROCEDURE pc_detalhe_compr_doc ( pr_cdcooper IN craplcm.cdcooper%TYPE  --> Código da cooperativa
 																	,pr_nrdconta IN craplcm.nrdconta%TYPE  --> Número da conta
@@ -421,11 +427,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
        vr_dstippro varchar(1000);     
      BEGIN   
        vr_dstippro := pr_reg_protocolo.dsinform##1;
-       CASE
-         WHEN pr_reg_protocolo.cdtippro = 1 THEN
+       CASE pr_reg_protocolo.cdtippro
+         WHEN 1 THEN
            vr_dstippro := 'Transferência';
-         ELSE
-           vr_dstippro := pr_reg_protocolo.dsinform##1;
+         WHEN 16 THEN -- Pagamento de DARF
+           vr_dstippro := 'Pagamento de ' || vr_dstippro;
+         WHEN 17 THEN --Pagamento de DAS
+           vr_dstippro := 'Pagamento de ' || vr_dstippro;
+         WHEN 23 THEN --Pagamento de DAE
+           vr_dstippro := 'Pagamento de ' || vr_dstippro;
+         WHEN 24 THEN --Pagamento de FGTS
+           vr_dstippro := 'Pagamento de ' || vr_dstippro;
        END CASE;
        RETURN vr_dstippro;
      EXCEPTION        
@@ -508,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
         vr_realizados := TRUE;
         IF pr_cdtipmod = 1 THEN -- Pagamento
           -- Pagamento (Tit/Cnv); Operações DebAut; Pagamento/Agendamento GPS; Pagamento DebAut; Pagamento DARF; Agendamento DARF; Pagamento DAS; Agendamento DAS
-          vr_dstippro := '2;11;13;15;16;17;18;19'||
+          vr_dstippro := '2;6;11;13;15;16;17;18;19'||
                          --;Pagamento FGTS;Pagamento DAE
                          ';24;23'; 
   			
@@ -599,7 +611,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 				
 	    gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
-                               ,pr_texto_novo     => '</Comprovante>');
+                               ,pr_texto_novo     =>   '<idlstdom>' || vr_prot_fltr(vr_ind).idlstdom || '</idlstdom>' ||
+                                                       '<dsorigem>' || vr_prot_fltr(vr_ind).dsorigem || '</dsorigem>' ||
+                                                     '</Comprovante>');
 																			 															 				
       END LOOP;
       
@@ -751,6 +765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                                   '</infosac>' ||
+                                 /* Projeto 363 - Novo ATM */
+                                 '<idlstdom>' || vr_protocolo(vr_ind).idlstdom                                             || '</idlstdom>' ||
+                                 '<dsorigem>' || vr_protocolo(vr_ind).dsorigem                                             || '</dsorigem>' ||
                                  '</dados>' );         
       END LOOP;
       
@@ -931,6 +948,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                                   '</infosac>' ||                                  
+                                 /* Projeto 363 - Novo ATM */ 
+                                 '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                 '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' ||
                                '</dados>' );          
       END LOOP;
       
@@ -1154,6 +1174,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                                   '</infosac>'  ||
+                                 /* Projeto 363 - Novo ATM */ 
+                                 '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                 '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' ||
                                  '</dados>' );        
                                            
       END LOOP;
@@ -1303,6 +1326,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                                   '</infosac>' ||                                  
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' ||
                                  '</dados>' );           
       END LOOP;
       
@@ -1517,7 +1543,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                 '</infosac>' );
+                                 '</infosac>' ||
+                                 /* Projeto 363 - Novo ATM */ 
+                                 '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                 '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' 
+                                  );
       
         vr_cdbarras := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, vr_protocolo(vr_ind).dsinform##3, '#')), ':'));
         
@@ -1720,7 +1750,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');            
+                                  '</infosac>'||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
 
       END LOOP;
       
@@ -1862,7 +1895,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');																	
+                                  '</infosac>' ||
+                                 /* Projeto 363 - Novo ATM */ 
+                                 '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                 '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>');
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -2010,7 +2046,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');               
+                                  '</infosac>' ||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>');
 
       END LOOP;
       
@@ -2155,6 +2194,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
                                   '</infosac>' ||                                  
+                                 /* Projeto 363 - Novo ATM */ 
+                                 '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                 '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' ||
                                '</dados>' );                   
 
       END LOOP;
@@ -2371,7 +2413,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');
+                                  '</infosac>'||
+                                 /* Projeto 363 - Novo ATM */ 
+                                 '<idlstdom>' || pr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                 '<dsorigem>' || pr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -2471,7 +2516,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');            
+                                  '</infosac>' ||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || pr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || pr_protocolo(vr_ind).dsorigem  || '</dsorigem>');
 
       END LOOP;
       
@@ -2570,7 +2618,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');
+                                  '</infosac>'||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || pr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || pr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -2669,7 +2720,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');
+                                  '</infosac>' ||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || pr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || pr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -2768,7 +2822,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');
+                                  '</infosac>' ||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || pr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || pr_protocolo(vr_ind).dsorigem  || '</dsorigem>');
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -2867,7 +2924,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');
+                                  '</infosac>'||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || pr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || pr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -2966,7 +3026,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
                                       '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
                                       '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
                                       '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-                                  '</infosac>');
+                                  '</infosac>' ||
+                                  /* Projeto 363 - Novo ATM */ 
+                                  '<idlstdom>' || pr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                  '<dsorigem>' || pr_protocolo(vr_ind).dsorigem  || '</dsorigem>');
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -3222,6 +3285,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																				'<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
 																		'</infosac>');
         END IF;
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => /* Projeto 363 - Novo ATM */ 
+                                                     '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                                     '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
 
       END LOOP;
       
@@ -3479,6 +3548,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'</infosac>');                                 
         END IF;      
 
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => /* Projeto 363 - Novo ATM */ 
+                                                     '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                                     '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
+
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -3633,7 +3708,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
 																		'<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
 																		'<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-																'</infosac>');
+																'</infosac>'||
+                                                                /* Projeto 363 - Novo ATM */ 
+                                                                '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                                                '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' );
       END LOOP;
       
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -3795,7 +3873,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
 																		'<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
 																		'<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
-																'</infosac>');                           
+																'</infosac>'||
+                                                                /* Projeto 363 - Novo ATM */ 
+                                                                '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                                                '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>');
 
       END LOOP;
       
@@ -3882,6 +3963,13 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
                                   ,pr_cdorigem => pr_cdorigem
                                   ,pr_retxml =>   pr_retxml
                                   ,pr_dsretorn => pr_dsretorn);    
+        WHEN pr_cdtippro = 5 THEN
+          pc_detalhe_compr_deposito(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_dsprotoc => pr_dsprotoc
+                                   ,pr_cdorigem => pr_cdorigem
+                                   ,pr_retxml =>   pr_retxml
+                                   ,pr_dsretorn => pr_dsretorn);    
         WHEN pr_cdtippro = 9 THEN
           pc_detalhe_compr_ted(pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
@@ -4475,13 +4563,13 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<Comprovante>');       
   
-      IF vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem <= 11 THEN    
+      IF LENGTH(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem) <= 11 THEN    
         vr_inpesrem := 1; -- FISICA
       ELSE
         vr_inpesrem := 2; -- JURIDICA
       END IF;
 
-      IF vr_tab_logspb_detalhe(vr_idx_ted).dscpfdst <= 11 THEN    
+      IF LENGTH(vr_tab_logspb_detalhe(vr_idx_ted).dscpfdst) <= 11 THEN    
         vr_inpesdst := 1; -- FISICA
       ELSE
         vr_inpesdst := 2; -- JURIDICA
@@ -5051,6 +5139,15 @@ END pc_comprovantes_recebidos;
                              ,pr_texto_completo => vr_xml_temp      
                              ,pr_texto_novo     => vr_dsdlinha);               
                      
+      /* Projeto 363 - Novo ATM */
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<idlstdom>' || vr_protocolo(vr_ind).idlstdom || '</idlstdom>' ||
+                     '<dsorigem>' || vr_protocolo(vr_ind).dsorigem || '</dsorigem>';
+
+      gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);  
+                     
     END LOOP;
       
     gene0002.pc_escreve_xml(pr_xml            => vr_retxml
@@ -5332,6 +5429,14 @@ END pc_comprovantes_recebidos;
                              ,pr_texto_completo => vr_xml_temp      
                              ,pr_texto_novo     => vr_dsdlinha);               
                      
+      /* Projeto 363 - Novo ATM */
+      vr_dsdlinha := NULL;      
+      vr_dsdlinha := '<idlstdom>' || vr_protocolo(vr_ind).idlstdom || '</idlstdom>' ||
+                     '<dsorigem>' || vr_protocolo(vr_ind).dsorigem || '</dsorigem>';
+
+      gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                             ,pr_texto_completo => vr_xml_temp      
+                             ,pr_texto_novo     => vr_dsdlinha);  
     END LOOP;
       
     gene0002.pc_escreve_xml(pr_xml            => vr_retxml
@@ -5357,6 +5462,233 @@ END pc_comprovantes_recebidos;
       pr_dsretorn := 'NOK';
 			    
   END pc_detalhe_compr_pag_dae;
+
+  -- Comprovante de Depósito
+  PROCEDURE pc_detalhe_compr_deposito(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                    ,pr_nrdconta IN crappro.nrdconta%TYPE  --> Número da conta
+                                    ,pr_dsprotoc IN crappro.dsprotoc%TYPE --> Protocolo
+                                    ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                    ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
+                                    ,pr_dsretorn OUT VARCHAR2) IS          -- OK/NOK
+
+  BEGIN
+    
+    /* ................................................................................
+
+     Programa: pc_detalhe_compr_deposito
+     Sistema : Internet Banking
+     Sigla   : COMP
+     Autor   : Douglas Quisinski
+     Data    : Abril/2018                   Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina de consulta comprovantes de depósito
+
+     Observacao: -----
+
+     Alteracoes: 
+
+     ..................................................................................*/  
+    
+    DECLARE
+    
+      vr_protocolo   gene0006.typ_tab_protocolo;    --> PL Table para armazenar registros (retorno protocolo)
+      vr_exc_erro    EXCEPTION;       --> Controle de exceção      
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_dscritic crapcri.dscritic%TYPE;
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_info_sac typ_reg_info_sac;     
+      vr_des_erro  VARCHAR2(4000);
+      
+      vr_nmrescop crapcop.nmrescop%TYPE;
+      vr_dstippro VARCHAR2(35);
+      vr_dadostaa VARCHAR2(15);
+      vr_dsinform1 VARCHAR2(130);
+      vr_dsinform2 VARCHAR2(50);
+      vr_dstextab craptab.dstextab%TYPE;
+      vr_flghorar BOOLEAN;
+      
+      CURSOR cr_crapcop (pr_cdagectl IN crapcop.cdagectl%TYPE) IS --> Código de agência da cooperativa na Central
+        SELECT c.cdcooper
+              ,c.cdbcoctl
+              ,c.cdagectl
+              ,c.nmrescop
+          FROM crapcop c
+         WHERE c.cdagectl = pr_cdagectl;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+      CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE
+                       ,pr_dtferiad IN crapfer.dtferiad%TYPE) IS
+        SELECT fer.cdcooper, fer.dtferiad
+          FROM crapfer fer
+         WHERE fer.cdcooper = pr_cdcooper
+           AND fer.dtferiad = pr_dtferiad;
+      rw_crapfer cr_crapfer%ROWTYPE;
+    
+    BEGIN
+    
+      pr_dsretorn := 'NOK';
+			
+      -- Buscar dados do associado
+      OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+					
+        vr_dscritic := 'Associado nao cadastrado.';
+        vr_des_erro := 'Erro em pc_detalhe_compr_deposito:' || vr_dscritic;
+							
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapass;
+      END IF;
+      
+      gene0006.pc_busca_protocolo_por_protoc(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => pr_nrdconta
+                                            ,pr_dsprotoc => pr_dsprotoc
+                                            ,pr_cdorigem => pr_cdorigem
+                                            ,pr_protocolo => vr_protocolo
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se retornou erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        vr_des_erro := 'Erro em pc_detalhe_compr_capital:' || vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;
+      
+      vr_info_sac := fn_info_sac(pr_cdcooper => pr_cdcooper);
+      
+      dbms_lob.createtemporary(pr_retxml, TRUE);
+      dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+       
+       -- Criar cabecalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<Comprovante>');        
+      
+      vr_dsinform1 := 'A CONFIRMACAO DO DEPOSITO NA CONTA DO FAVORECIDO ' ||
+                      'SERA EFETUADA APOS A ABERTURA DO ENVELOPE E A ' ||
+                      'VERIFICACAO DOS VALORES CONTIDOS.';
+      
+      FOR vr_ind IN 1..vr_protocolo.count LOOP
+        
+        IF UPPER(vr_protocolo(vr_ind).dsinform##1) = 'DEPOSITO TAA - CHQ' THEN
+          vr_dstippro := 'COMPROVANTE DE DEPOSITO EM CHEQUE';
+        ELSE 
+          vr_dstippro := 'COMPROVANTE DE DEPOSITO EM DINHEIRO';
+        END IF;
+        
+        OPEN cr_crapcop (pr_cdagectl => vr_protocolo(vr_ind).cdagectl);
+        FETCH cr_crapcop INTO rw_crapcop;
+        
+        vr_nmrescop := '';
+        IF cr_crapcop%FOUND THEN
+          vr_nmrescop := rw_crapcop.nmrescop;
+        END IF;
+        CLOSE cr_crapcop;
+        
+        
+        vr_dadostaa := replace(gene0002.fn_busca_entrada(2, vr_protocolo(vr_ind).dsinform##3, '#'), 'TAA:' , null);
+
+        vr_dsinform2 := '';
+        -- Essa regra foi verificada no programas do TAA
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => to_number(GENE0002.fn_busca_entrada(1, vr_dadostaa, '/' ))
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'GENERI'
+                                                 ,pr_cdempres => 0
+                                                 ,pr_cdacesso => 'HRTRENVELO'
+                                                 ,pr_tpregist => to_number(GENE0002.fn_busca_entrada(2, vr_dadostaa, '/' )));
+
+        IF TRIM(vr_dstextab) IS NOT NULL THEN
+          IF  vr_protocolo(vr_ind).hrautent > to_number(SUBSTR(vr_dstextab,1,5))  THEN
+            vr_flghorar := false;
+          ELSE
+            vr_flghorar := true;
+          END IF;
+        ELSE
+          vr_flghorar := false;
+        END IF;
+
+        /* no caso de fim de semana ou feriado, faz corte para 
+           o proximo dia util */
+        OPEN cr_crapfer(pr_cdcooper => to_number(GENE0002.fn_busca_entrada(1, vr_dadostaa, '/' ))
+                       ,pr_dtferiad => vr_protocolo(vr_ind).dttransa);
+        FETCH cr_crapfer INTO rw_crapfer;
+
+        -- Se não encontrar
+        IF cr_crapfer%FOUND OR to_char(vr_protocolo(vr_ind).dttransa,'D') IN (1,7) THEN
+          -- Fechar o cursor
+          CLOSE cr_crapfer;
+          vr_flghorar := false;
+        ELSE
+          -- Fechar o cursor
+          CLOSE cr_crapfer;
+        END IF;
+
+        IF NOT vr_flghorar THEN
+          vr_dsinform2 := 'ESTE ENVELOPE SERA PROCESSADO NO PROXIMO DIA UTIL';
+        END IF;
+
+        gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                               ,pr_texto_completo => vr_xml_temp      
+                               ,pr_texto_novo     => 
+                                  '<cdtippro>' || to_char(vr_protocolo(vr_ind).cdtippro)                                                      || '</cdtippro>' ||
+                                  '<dstippro>' || vr_dstippro                                                                                 || '</dstippro>' ||
+                                  '<nrdocmto>' || to_char(vr_protocolo(vr_ind).nrdocmto)                                                      || '</nrdocmto>' ||
+                                  '<cdbcoctl>' || to_char(vr_protocolo(vr_ind).cdbcoctl)                                                      || '</cdbcoctl>' ||
+                                  '<cdagectl>' || to_char(vr_protocolo(vr_ind).cdagectl)                                                      || '</cdagectl>' ||
+                                  '<nmrescop>' || vr_nmrescop                                                                                 || '</nmrescop>' ||
+                                  '<nrdconta>' || to_char(pr_nrdconta)                                                                        || '</nrdconta>' ||
+                                  '<nmtitula>' || to_char(rw_crapass.nmextttl)                                                                || '</nmtitula>' ||																	
+                                  '<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
+                                  '<dttransa>' || to_char(vr_protocolo(vr_ind).dttransa, 'DD/MM/RRRR')                                        || '</dttransa>' ||
+                                  '<hrautent>' || to_char(to_date(vr_protocolo(vr_ind).hrautent,'SSSSS'),'hh24:mi:ss')                        || '</hrautent>' ||
+                                  '<nrseqaut>' || vr_protocolo(vr_ind).nrseqaut                                                               || '</nrseqaut>' ||
+                                  '<dtmvtolt>' || to_char(vr_protocolo(vr_ind).dtmvtolt, 'DD/MM/RRRR')                                        || '</dtmvtolt>' ||
+                                  '<dsprotoc>' || vr_protocolo(vr_ind).dsprotoc                                                               || '</dsprotoc>' ||
+                                  '<infosac>' ||
+                                      '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
+                                      '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
+                                      '<hrinisac>' || vr_info_sac.hrinisac || '</hrinisac>' || 
+                                      '<hrfimsac>' || vr_info_sac.hrfimsac || '</hrfimsac>' || 
+                                      '<hriniouv>' || vr_info_sac.hriniouv || '</hriniouv>' || 
+                                      '<hrfimouv>' || vr_info_sac.hrfimouv || '</hrfimouv>' ||   
+                                  '</infosac>' ||
+                                 /* Projeto 363 - Novo ATM */ 
+                                 '<idlstdom>' || vr_protocolo(vr_ind).idlstdom  || '</idlstdom>' ||
+                                 '<dsorigem>' || vr_protocolo(vr_ind).dsorigem  || '</dsorigem>' ||
+                                 '<dsinform1>' || vr_dsinform1 || '</dsinform1>' ||
+                                 '<dsinform2>' || vr_dsinform2 || '</dsinform2>' );
+      END LOOP;
+      
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</Comprovante>'
+                             ,pr_fecha_xml      => TRUE);      
+			
+			pr_dsretorn := 'OK';   
+       
+      EXCEPTION								
+				WHEN vr_exc_erro THEN  							
+					
+					pr_retxml := '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+					pr_dsretorn := 'NOK';
+																 
+				WHEN OTHERS THEN
+								
+					vr_des_erro := 'Erro ao criar XML: ' || SQLERRM;
+					pr_retxml :=   '<dsmsgerr>'|| vr_des_erro ||'</dsmsgerr>';
+					pr_dsretorn := 'NOK';                            
+                                           
+    END;
+    
+  END pc_detalhe_compr_deposito;
 
 PROCEDURE pc_detalhe_compr_doc ( pr_cdcooper IN craplcm.cdcooper%TYPE  --> Código da cooperativa
 																	,pr_nrdconta IN craplcm.nrdconta%TYPE  --> Número da conta
@@ -5679,8 +6011,6 @@ PROCEDURE pc_detalhe_compr_doc ( pr_cdcooper IN craplcm.cdcooper%TYPE  --> Códig
       pr_dsretorn := 'NOK';
 																	
 END pc_detalhe_compr_doc;
-
-
 
 END;
 /

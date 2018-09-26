@@ -74,12 +74,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         4 - Desconto de Titulos
         5 - Plano de Previdencia Privada
         6 - Benefício do INSS para acessar o ECO
+        7 - Pacote de Serviços
+        8 - Pagamento por Arquivo
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar a configuracao dos itens de menu que podem ser exibidos/escondidos
     
     Alteracoes: 09/05/2018 - Criação (Douglas Quisinski)
     
+
     ............................................................................. */
     DECLARE
       -- Flag Recarga de Celular
@@ -94,6 +97,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       vr_flgprevd INTEGER;
       -- Flag Benefício do INSS
       vr_flgbinss INTEGER;
+      -- Flag Pacote de Serviço
+      vr_flgpctse INTEGER;
+      -- Flag Pagamento por Arquivo - Remessa
+      vr_fluppgto INTEGER;
+      -- Flag Pagamento por Arquivo - Retorno
+      vr_flrempgt INTEGER;
+      
+      -- Retorna dados do credito pre aprovado      
+      vr_tab_dados_cpa EMPR0002.typ_tab_dados_cpa;
+      
+      -- Variáveis de ERRO
+      vr_cdcritic INTEGER;
+      vr_dscritic VARCHAR2(5000);
+      vr_des_reto VARCHAR2(5);
+      vr_tab_erro gene0001.typ_tab_erro;
       
       -- XML
       vr_xml_temp VARCHAR2(32726) := '';
@@ -118,18 +136,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       --------------------------------------------------------------------------------------
       -- Inicializar a imagem de cheque como como desabilitada do menu
       vr_flgsitim := 0;
+
       
       --------------------------------------------------------------------------------------
       -------------- VERIFICAR SE A RECARGA DE CELULAR ESTÁ HABILITADA NO CANAL ------------
       --------------------------------------------------------------------------------------
       -- Inicializar a recarga de celular como desabilitada do menu
       vr_flgsitrc := 0;
+      BEGIN 
+        -- Carregar a opcao que é cadatrasda na tela PARREC na CECRED
+        RCEL0001.pc_situacao_canal_recarga(pr_cdcooper => pr_cdcooper,
+                                           pr_idorigem => pr_idorigem,
+                                           pr_flgsitrc => vr_flgsitrc,
+                                           pr_cdcritic => vr_cdcritic,
+                                           pr_dscritic => vr_dscritic);
+      EXCEPTION
+        WHEN OTHERS THEN
+          CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 
+                                      ,pr_compleme => 'MENU0001.pc_carrega_config_menu - Recarga de Celular.');
+      END;
 
       --------------------------------------------------------------------------------------
       ----------------- VERIFICAR SE O PRE-APROVADO ESTÁ HABILITADA A CONTA ----------------
       --------------------------------------------------------------------------------------
       -- Inicializar o pré-aprovado como desabilitado do menu
       vr_flgpreap := 0;
+      BEGIN 
+        -- Verificar se o cooperado possui pré-aprovado
+        EMPR0002.pc_busca_dados_cpa(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_nrdcaixa => pr_nrdcaixa
+                                   ,pr_cdoperad => '1' -- InternetBank.w e TAA_autorizador enviam fixo '1'
+                                   ,pr_nmdatela => pr_nmdatela
+                                   ,pr_idorigem => pr_idorigem
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_idseqttl => pr_idseqttl
+                                   ,pr_nrcpfope => pr_nrcpfope
+                                   ,pr_tab_dados_cpa => vr_tab_dados_cpa
+                                   ,pr_des_reto => vr_des_reto
+                                   ,pr_tab_erro => vr_tab_erro);
+        -- Verificar se não ocorreu erro
+        IF NVL(vr_des_reto,'OK') != 'NOK' THEN
+          -- Verificar se existe informação de contratação do pré-aprovado
+          IF vr_tab_dados_cpa.COUNT > 0 THEN
+            -- Verificar se o valor para contratação do pré-aprovado é maior que zero
+            IF vr_tab_dados_cpa(vr_tab_dados_cpa.FIRST).vldiscrd > 0 THEN
+              vr_flgpreap := 1;
+            END IF;
+          END IF;
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          CECRED.Pc_Internal_Exception(pr_cdcooper => pr_cdcooper 
+                                      ,pr_compleme => 'MENU0001.pc_carrega_config_menu - Pré-Aprovado.');
+      END;
 
       --------------------------------------------------------------------------------------
       ----------------- VERIFICAR SE O DESCONTO DE TIUTLOS ESTÁ HABILITADA NA CONTA --------
@@ -150,6 +210,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       --------------------------------------------------------------------------------------
       -- Inicializar como desabilitado do menu
       vr_flgbinss := 0;
+      
+      --------------------------------------------------------------------------------------
+      ----------------- VERIFICAR SE DEVERA EXIBIR O PACOTE DE SERVICOS  -------------------
+      --------------------------------------------------------------------------------------
+      -- Inicializar como desabilitado do menu
+      vr_flgpctse := 0;
+      
+      --------------------------------------------------------------------------------------
+      --------------- VERIFICAR SE O COOPERADO REALIZA PAGAMENTO POR ARQUIVO  --------------
+      --------------------------------------------------------------------------------------
+      -- Inicializar como desabilitado do menu
+      vr_fluppgto := 0;
+      vr_flrempgt := 0;
+      
 
       --------------------------------------------------------------------------------------
       ------------------------------- GERAR O XML DE RETORNO -------------------------------
@@ -204,7 +278,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                              ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 6 -- Lista de Dominio "6 - Empréstimo Consignado Online"
                                                                         ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                         ,pr_habilitado => vr_flgbinss) ); -- Identifica se o cooperado possui beneficio do INSS para acessar o ECO e habilita no canal
+      -- Adicionar o Item de Menu do Pacote de Serviços
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 7 -- Lista de Dominio "7 - Pacote de Serviços"
+                                                                        ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                        ,pr_habilitado => vr_flgpctse) ); -- Identifica se o cooperado possui acesso ao pacote de serviços
 
+      -- Adicionar o Item de Menu do Pagamento por Arquivos - Remessa
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 8 -- Lista de Dominio "8 - Pagamento por Arquivo - Remessa"
+                                                                        ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                        ,pr_habilitado => vr_fluppgto) ); -- Identifica se o cooperado realiza Pagamentos por Arquivo
+
+      -- Adicionar o Item de Menu do Pagamento por Arquivos - Retorno 
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 9 -- Lista de Dominio "8 - Pagamento por Arquivo - Retorno"
+                                                                        ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                        ,pr_habilitado => vr_flrempgt) ); -- Identifica se o cooperado realiza Pagamentos por Arquivo
 
       -- Fecha o XML de retorno
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob

@@ -29,6 +29,9 @@
                21/04/2018 - Alterar para retornar o campo idlstdom na chamada
                             deste servico (Anderson - P285)
               
+              12/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                           servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+
 			   30/05/2018 - Adicionado campo dscomple no xml (Alcemir Mout's - Prj. 467).
 
 ..............................................................................*/
@@ -65,6 +68,11 @@ DEF  INPUT PARAM par_flglsext AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_flglschq AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_flglsdep AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_flglsfut AS LOGI                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -95,11 +103,11 @@ IF  xml_dsmsgerr <> ""  THEN
 IF  par_flglsext  THEN
     DO:
         RUN extrato-paginado IN h-b1wgen0001 (INPUT par_cdcooper,
-                                              INPUT 90,
-                                              INPUT 900,
+                                              INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                              INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                               INPUT "996",
-                                              INPUT "INTERNETBANK",
-                                              INPUT 3,
+                                              INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
+                                              INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                               INPUT par_nrdconta,
                                               INPUT par_idseqttl,
                                               INPUT par_dtiniper,
@@ -196,11 +204,11 @@ IF  par_flglschq  THEN
     DO:
         RUN obtem-cheques-deposito IN h-b1wgen0001 
                                   (INPUT par_cdcooper,
-                                   INPUT 90,
-                                   INPUT 900,
+                                   INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                   INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                    INPUT "996",
-                                   INPUT "INTERNETBANK",
-                                   INPUT 3,
+                                   INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
+                                   INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                    INPUT par_nrdconta,
                                    INPUT par_idseqttl,
                                    INPUT par_dtiniper,
@@ -265,11 +273,11 @@ IF  par_flglsdep  THEN
     DO:
         RUN obtem-depositos-identificados IN h-b1wgen0001 
                                          (INPUT par_cdcooper,
-                                          INPUT 90,
-                                          INPUT 900,
+                                          INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                          INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                           INPUT "996",
-                                          INPUT "INTERNETBANK",
-                                          INPUT 3,
+                                          INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
+                                          INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                           INPUT par_nrdconta,
                                           INPUT par_idseqttl,
                                           INPUT par_dtiniper,
@@ -336,13 +344,13 @@ IF  par_flglsfut  THEN /** Lista lancamentos futuros **/
     DO:
         RUN consulta-lancamento IN h-b1wgen0003
                                (INPUT par_cdcooper,
-                                INPUT 90,         
-                                INPUT 900,        
+                                INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                 INPUT "996",      
                                 INPUT par_nrdconta,
-                                INPUT 3,          
+                                INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
                                 INPUT par_idseqttl,
-                                INPUT "INTERNETBANK",
+                                INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                 INPUT FALSE,      
                                OUTPUT TABLE tt-totais-futuros,
                                OUTPUT TABLE tt-erro,

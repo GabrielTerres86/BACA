@@ -11,11 +11,11 @@
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Carregar informacoes gerais da conta corrente.
 
-   Alteracoes: 26/06/2018 - Inclusao de novos campos para retorno de dados da conta.
-                            PRJ-CDC (Odirlei-AMcom)
-
    Alteracoes: 27/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
                             servico da conta online (PRJ 363 - Douglas Quisinski)
+
+               26/06/2018 - Inclusao de novos campos para retorno de dados da conta.
+                            PRJ-CDC (Odirlei-AMcom)
 
 ..............................................................................*/
 
@@ -54,10 +54,10 @@ DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
 DEF VAR aux_nrcpfpre LIKE crapsnh.nrcpfcgc                             NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
-
 /*  Projeto 363 - Novo ATM */
 DEF VAR aux_flgemiss AS INTE                                           NO-UNDO.
 DEF VAR aux_xml      AS CHAR                                           NO-UNDO.
+
 
 DEF BUFFER crabass FOR crapass.
 
@@ -252,7 +252,7 @@ ELSE
                 END.
             END.
     END.
-
+    
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
 RUN STORED-PROCEDURE pc_retorna_idpessoa
@@ -288,60 +288,60 @@ ASSIGN aux_idpessoa = 0
 IF par_cdorigem = 3  OR    /* Internet Bank */
    par_cdorigem = 10 THEN  /* Mobile */ 
 DO:
-    RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT
-        SET h-b1wnet0002.
+RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT
+    SET h-b1wnet0002.
 
-    IF  VALID-HANDLE(h-b1wnet0002)  THEN
-        DO:
+IF  VALID-HANDLE(h-b1wnet0002)  THEN
+    DO:
 
             /* Somente a conta online armazena o acesso anterior,
                com isso os parametros nao foram ajustados para 
                o projeto 363 Novo caixa eletronico */
-            RUN obtem-acesso-anterior IN h-b1wnet0002
-                                     (INPUT par_cdcooper,
-                                      INPUT 90,
-                                      INPUT 900,
-                                      INPUT "996",
-                                      INPUT "InternetBank",
-                                      INPUT 3,
-                                      INPUT par_nrdconta,
-                                      INPUT par_idseqttl,
-                                      INPUT par_nrcpfope,
-                                      INPUT FALSE,
-                                      INPUT par_flmobile,
-                                     OUTPUT TABLE tt-erro,
-                                     OUTPUT TABLE tt-acesso).
+        RUN obtem-acesso-anterior IN h-b1wnet0002
+                                 (INPUT par_cdcooper,
+                                  INPUT 90,
+                                  INPUT 900,
+                                  INPUT "996",
+                                  INPUT "InternetBank",
+                                  INPUT 3,
+                                  INPUT par_nrdconta,
+                                  INPUT par_idseqttl,
+                                  INPUT par_nrcpfope,
+                                  INPUT FALSE,
+                                  INPUT par_flmobile,
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-acesso).
 
-            DELETE PROCEDURE h-b1wnet0002.
+        DELETE PROCEDURE h-b1wnet0002.
 
-            IF  RETURN-VALUE = "NOK"  THEN
-                DO:
-                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+        IF  RETURN-VALUE = "NOK"  THEN
+            DO:
+                FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                    IF  AVAILABLE tt-erro  THEN
-                        aux_dscritic = tt-erro.dscritic.
-                    ELSE
-                        aux_dscritic = "Nao foi possivel carregar os " +
-                                       "saldos.".
+                IF  AVAILABLE tt-erro  THEN
+                    aux_dscritic = tt-erro.dscritic.
+                ELSE
+                    aux_dscritic = "Nao foi possivel carregar os " +
+                                   "saldos.".
 
-                    xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                                   "</dsmsgerr>".
+                xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+                               "</dsmsgerr>".
 
-                    RUN proc_geracao_log (INPUT FALSE).
+                RUN proc_geracao_log (INPUT FALSE).
 
-                    RETURN "NOK".
-                END.                
+                RETURN "NOK".
+            END.                
 
-            FIND FIRST tt-acesso NO-LOCK NO-ERROR.
+        FIND FIRST tt-acesso NO-LOCK NO-ERROR.
 
-            IF  AVAILABLE tt-acesso  THEN
-                ASSIGN aux_dtultace = IF  tt-acesso.dtultace <> ?  THEN
-                                          STRING(tt-acesso.dtultace,
-                                                 "99/99/9999")
-                                      ELSE
-                                          ""
-                       aux_hrultace = STRING(tt-acesso.hrultace,"HH:MM:SS").                           
-        END.
+        IF  AVAILABLE tt-acesso  THEN
+            ASSIGN aux_dtultace = IF  tt-acesso.dtultace <> ?  THEN
+                                      STRING(tt-acesso.dtultace,
+                                             "99/99/9999")
+                                  ELSE
+                                      ""
+                   aux_hrultace = STRING(tt-acesso.hrultace,"HH:MM:SS").                           
+    END.
 END.
 
 

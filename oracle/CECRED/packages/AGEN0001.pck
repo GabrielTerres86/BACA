@@ -1,5 +1,21 @@
 CREATE OR REPLACE PACKAGE CECRED.AGEN0001 IS
 
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : AGEN0001
+  --  Sistema  : Rotinas para busca de agendamentos
+  --  Sigla    : AGEN
+  --  Autor    : Ricardo Linhares
+  --  Data     : Julho/2017.                   Ultima atualizacao: 16/07/2018
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: - Sempre que chamado
+  -- Objetivo  : Disponibilizar rotinas de busca de agendamentos para SOA
+  --
+  -- Alterações: 16/07/2018 - Incluido campo dsorigem de retorno no XML da procedure pc_lista_agendamentos, Prj. 363 (Jean Michel)
+  ---------------------------------------------------------------------------------------------------------------
+
   PROCEDURE pc_lista_agendamentos(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                  ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Numero da Conta
                                  ,pr_dsorigem  IN VARCHAR2               --> Descricao da Origem
@@ -61,13 +77,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
   --  Sistema  : Rotinas para busca de agendamentos
   --  Sigla    : AGEN
   --  Autor    : Ricardo Linhares
-  --  Data     : Julho/2017.                   Ultima atualizacao: 
+  --  Data     : Julho/2017.                   Ultima atualizacao: 16/07/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: - Sempre que chamado
   -- Objetivo  : Disponibilizar rotinas de busca de agendamentos para SOA
   --
+  -- Alterações: 16/07/2018 - Incluido campo dsorigem de retorno no XML da procedure pc_lista_agendamentos, Prj. 363 (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
@@ -76,6 +93,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 	SELECT ass.cdcooper
 				,ass.nrdconta
 				,ass.inpessoa
+                ,ttl.nrcpfcgc
 				,ttl.nmextttl
 		FROM crapass ass
 				,crapttl ttl
@@ -91,6 +109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 	SELECT ass.cdcooper
 				,ass.nrdconta
 				,ass.inpessoa
+                ,ass.nrcpfcgc
 				,ass.nmprimtl nmextttl
 		FROM crapass ass
 	 WHERE ass.inpessoa <> 1 -- Pessoa Jurídica
@@ -166,7 +185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 06/12/2017
+     Data    : Julho/17.                    Ultima atualizacao: 16/07/2018
 
      Dados referentes ao programa:
 
@@ -186,6 +205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                  03/01/2017 - Incluido tipos de guias FGTS e DAE.
                               PRJ406-FGTS(Odirlei-AMcom)                                     
 
+                 16/07/2018 - Incluido campo dsorigem de retorno no XML, Prj. 363 (Jean Michel)                                     
      ..................................................................................*/   
      
    DECLARE
@@ -230,10 +250,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 				END IF;
 						
 				PAGA0002.pc_obtem_agendamentos(pr_cdcooper => pr_cdcooper
-																			,pr_cdagenci => 90
+																			,pr_cdagenci => NULL
 																			,pr_nrdcaixa => 900
 																			,pr_nrdconta => pr_nrdconta
-																			,pr_dsorigem => pr_dsorigem
+																			,pr_dsorigem => NULL
 																			,pr_dtmvtolt => rw_crapdat.dtmvtolt
 																			,pr_dtageini => pr_dtageini
 																			,pr_dtagefim => pr_dtagefim
@@ -302,6 +322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<vldocmto>' || to_char(vr_agendm_fltr(vr_idx).vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
 																		'<incancel>' || vr_agendm_fltr(vr_idx).incancel                                                               || '</incancel>' ||
 																		'<dscritic>' || vr_agendm_fltr(vr_idx).dscritic                                                               || '</dscritic>' ||
+                                    '<dsorigem>' || vr_agendm_fltr(vr_idx).dsorigem                                                               || '</dsorigem>' ||
 																	'</Agendamento>');																															 
 				END LOOP;
 			END IF;
@@ -330,6 +351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																		'<nrtelefo>' || gene0002.fn_mask(vr_tab_age_recarga(vr_idx).nrcelular,'99999-9999')                                || '</nrtelefo>' ||
 																		'<nmoperad>' || vr_tab_age_recarga(vr_idx).nmoperadora                                                             || '</nmoperad>' ||
 																		'<dscritic>' || vr_tab_age_recarga(vr_idx).dscritic                                                                || '</dscritic>' ||
+                                    '<dsorigem>' || vr_tab_age_recarga(vr_idx).dsorigem                                                               || '</dsorigem>' ||
 																'</Agendamento>');
                                 
             IF vr_idx > pr_nrregist THEN
@@ -789,7 +811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
      Sistema : Internet Banking
      Sigla   : AGEN0001
      Autor   : Ricardo Linhares
-     Data    : Julho/17.                    Ultima atualizacao: 18/10/2017
+     Data    : Julho/17.                    Ultima atualizacao: 01/05/2018
 
      Dados referentes ao programa:
 
@@ -799,7 +821,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Observacao: -----
 
-     Alteracoes: 18/10/2017 - Inclusão dos campo nrcpfpre e nrcpfope, Prj. 285 (Jean Michel).
+     Alteracoes: 18/10/2017 - Inclusão dos campos nrcpfpre e nrcpfope, Prj. 285 (Jean Michel).
+
+                 01/05/2018 - Inclusão dos campos: vr_nmpagado, vr_nrcpfpag, vr_vltitulo, vr_vlencarg,
+                              vr_vldescto, vr_nrcpfben, Prj. 363 - Novo ATM. (Jean Michel).
 
      ..................................................................................*/       
        
@@ -813,6 +838,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
       vr_idlstdom NUMBER;
 			vr_info_sac COMP0002.typ_reg_info_sac;    
       
+      vr_nmpagado VARCHAR2(100) := '';
+      vr_nrcpfpag VARCHAR2(100) := '';
+      vr_nrcpfben VARCHAR2(100) := '';
+      vr_vltitulo VARCHAR2(100) := '0,00';
+      vr_vlencarg VARCHAR2(100) := '0,00';
+      vr_vldescto VARCHAR2(100) := '0,00';
+      vr_cdbccxlt INTEGER       := 0;
+      vr_nmextbcc crapban.nmextbcc%TYPE := '';
+
+      --> Buscar dados da consulta
+      CURSOR cr_cons_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE ) IS
+        SELECT con.dsxml,
+               con.flgcontingencia
+          FROM tbcobran_consulta_titulo con
+         WHERE con.cdctrlcs = pr_cdctrlcs;
+             
+      --Selecionar informacoes dos bancos
+      CURSOR cr_crapban (pr_cdbccxlt IN crapban.cdbccxlt%type) IS
+        SELECT crapban.nmresbcc
+              ,crapban.nmextbcc
+              ,crapban.cdbccxlt
+        FROM crapban
+        WHERE crapban.cdbccxlt = pr_cdbccxlt;
+      rw_crapban cr_crapban%ROWTYPE;
+         
+      rw_cons_titulo cr_cons_titulo%ROWTYPE;
+      vr_tbtitulo   NPCB0001.typ_reg_TituloCIP;
+
       CURSOR cr_agendamento(pr_idlancto IN craplau.idlancto%TYPE) IS
       SELECT cop.cdcooper
 				    ,cop.cdbcoctl
@@ -840,6 +893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             ,lau.dscedent
             ,nvl(lau.dslindig, '') AS dslindig
 						,lau.nrseqagp
+            ,lau.cdctrlcs
        FROM craplau lau
   LEFT JOIN crapcop cop
 	       ON cop.cdcooper = lau.cdcooper
@@ -907,6 +961,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
           vr_idlstdom := 1; -- Título
         END IF;
         
+        
+        IF TRIM(rw_agendamento.cdctrlcs) IS NOT NULL THEN -- Consulta na CIP
+          --> Buscar dados da consulta
+          OPEN cr_cons_titulo (pr_cdctrlcs => rw_agendamento.cdctrlcs);
+          FETCH cr_cons_titulo INTO rw_cons_titulo;
+              
+          IF cr_cons_titulo%NOTFOUND THEN
+            CLOSE cr_cons_titulo;
+            vr_des_erro := 'Não foi possivel localizar consulta NPC ' || TO_CHAR(rw_agendamento.cdctrlcs);
+            RAISE vr_exc_erro;  
+          ELSE
+            CLOSE cr_cons_titulo;
+          END IF;
+
+          BEGIN
+            --> Rotina para retornar dados do XML para temptable
+            NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
+                                              ,pr_tbtitulo => vr_tbtitulo
+                                              ,pr_des_erro => vr_des_erro
+                                              ,pr_dscritic => vr_des_erro);
+
+            -- Se for retornado um erro
+            IF vr_des_erro = 'NOK' THEN
+              RAISE vr_exc_erro; 
+            END IF;    
+
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_des_erro := 'Erro ao validar titulo CIP: ' || TO_CHAR(rw_agendamento.cdctrlcs);
+            RAISE vr_exc_erro; 
+          END;
+
+          vr_nmpagado := TRIM(vr_tbtitulo.Nom_RzSocPagdr);
+          vr_nrcpfpag := TRIM(vr_tbtitulo.CNPJ_CPFPagdr);
+          vr_vltitulo := TO_CHAR(vr_tbtitulo.VlrTit,'fm999g999g990d00');
+          vr_vlencarg := TRIM(to_char((nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdJuros,0) + nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdMulta,0)), 'fm999g999g990d00'));
+          vr_vldescto := TRIM(to_char((nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdDesct,0) + nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdAbatt,0)), 'fm999g999g990d00'));
+          vr_nrcpfben := TRIM(vr_tbtitulo.CNPJ_CPFBenfcrioOr);
+
+        ELSE
+          -- Se não for boleto registrado na CIP
+          vr_nmpagado := TRIM(rw_crapass.nmextttl);
+          vr_nrcpfpag := TRIM(rw_crapass.nrcpfcgc);
+          vr_vltitulo := to_char(rw_agendamento.vllanaut,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS=,.');
+          vr_vlencarg := '0,00';
+          vr_vldescto := '0,00';
+
+        END IF;
+        
+        -- verificar se existe a linah digitável
+        IF TRIM(rw_agendamento.dslindig) IS NOT NULL THEN
+          -- Buscar o Banco
+          vr_cdbccxlt:= TO_NUMBER(SUBSTR(rw_agendamento.dslindig,1,3));
+          --Selecionar Banco
+          OPEN cr_crapban (pr_cdbccxlt => vr_cdbccxlt);
+          --Posicionar no proximo registro
+          FETCH cr_crapban INTO rw_crapban;
+          --Se encontrar
+          IF cr_crapban%FOUND THEN
+            -- Nome do Banco
+            vr_nmextbcc := TRIM(rw_crapban.nmextbcc);
+          END IF;
+          --Fechar Cursor
+          CLOSE cr_crapban;        
+        END IF;
+        
+        
         dbms_lob.createtemporary(pr_retxml, TRUE);
         dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
          
@@ -917,8 +1038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                                
         gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                                ,pr_texto_completo => vr_xml_temp      
-                               ,pr_texto_novo     => 
-															  '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
+                               ,pr_texto_novo     => '<cdtiptra>' || rw_agendamento.cdtiptra || '</cdtiptra>' ||
 																'<dstiptra>' || rw_agendamento.dstiptra || '</dstiptra>' ||
 																'<idlstdom>' || TO_CHAR(vr_idlstdom)    || '</idlstdom>' ||                                                                
 															  '<nrdocmto>' || rw_agendamento.nrdocmto || '</nrdocmto>' ||
@@ -938,6 +1058,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 																'<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||
 																'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||
 																'<dslinhad>' || rw_agendamento.dslindig || '</dslinhad>' ||
+                                                     '<nmpagado>' || TO_CHAR(vr_nmpagado)    || '</nmpagado>' ||
+                                                     '<nrcpfpag>' || TO_CHAR(vr_nrcpfpag)    || '</nrcpfpag>' ||
+                                                     '<vltitulo>' || TO_CHAR(vr_vltitulo)    || '</vltitulo>' ||
+                                                     '<vlencarg>' || TO_CHAR(vr_vlencarg)    || '</vlencarg>' ||
+                                                     '<vldescto>' || TO_CHAR(vr_vldescto)    || '</vldescto>' ||
+                                                     '<nrcpfben>' || TO_CHAR(vr_nrcpfben)    || '</nrcpfben>' ||
+                                                     '<cdbccxlt>' || TO_CHAR(vr_cdbccxlt) || '</cdbccxlt>' || 
+                                                     '<nmextbcc>' || vr_nmextbcc     || '</nmextbcc>' || 
                                 '<infosac>'  ||
                                     '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                     '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 

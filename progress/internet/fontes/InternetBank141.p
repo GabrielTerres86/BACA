@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Junho/2015                        Ultima atualizacao: 12/05/2017
+   Data    : Junho/2015                        Ultima atualizacao: 05/07/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -22,6 +22,9 @@
 							
 			   12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
          
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de sa�da
+                            Prj.363 (Jean Michel).
+
 ................................................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -88,6 +91,8 @@ DEF VAR aux_idastcjt AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
 DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
+DEF VAR aux_cdtarifa AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdfaixav AS CHAR                                           NO-UNDO.
 
 DEF VAR h-b1wgen0014 AS HANDLE                                         NO-UNDO.
              
@@ -348,7 +353,7 @@ ELSE IF  par_tpoperac = 4 THEN DO: /* Aprovar registros selecionados */
                                   INPUT par_dtmvtolt,   /* Data do movimento                                                */
                                   INPUT par_cdcooper,   /* Codigo da cooperativa                                            */
                                   INPUT par_nrdconta,   /* Numero da Conta                                                  */
-                                  INPUT par_flsolest,   /* Indicador de solicitacao de estouro de conta (0 – Nao / 1 – Sim) */
+                                  INPUT par_flsolest,   /* Indicador de solicitacao de estouro de conta (0 - Nao / 1 - Sim) */
                                   INPUT par_lisrowid,   /* Lista de ROWIDS                                                  */
                                   INPUT aux_idastcjt,   /* Indicador de Assinatura Conjunta                                 */
                                   OUTPUT 0,             /* Codigo de Critica                                                */
@@ -796,7 +801,7 @@ ELSE IF  par_tpoperac = 9 THEN DO: /* Gravar arquivo folha */
     ASSIGN xml_operacao.dslinxml = xml_req.
 
 END.
-ELSE IF  par_tpoperac = 10 THEN DO: /* Busca dados de pagamentos para tela de alteraçăo via arquivo */
+ELSE IF  par_tpoperac = 10 THEN DO: /* Busca dados de pagamentos para tela de alteracao via arquivo */
         
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_consulta_arq_folha_ib aux_handproc = PROC-HANDLE NO-ERROR
@@ -930,7 +935,10 @@ ELSE IF  par_tpoperac = 12 THEN DO: /* Busca informacoes de pagamento para alter
                          aux_qtregpag = STRING(xRoot:GET-ATTRIBUTE("qtregpag")) 
                          aux_vllctpag = STRING(xRoot:GET-ATTRIBUTE("vllctpag")) 
                          aux_flgrvsal = STRING(xRoot:GET-ATTRIBUTE("flgrvsal"))
-                         aux_vltarapr = STRING(xRoot:GET-ATTRIBUTE("vltarapr")). 
+                         aux_vltarapr = STRING(xRoot:GET-ATTRIBUTE("vltarapr"))
+                         aux_cdtarifa = STRING(xRoot:GET-ATTRIBUTE("cdtarifa"))
+                         aux_cdfaixav = STRING(xRoot:GET-ATTRIBUTE("cdfaixav")). 
+                         
                          
                 END.
                 
@@ -973,10 +981,9 @@ ELSE IF  par_tpoperac = 12 THEN DO: /* Busca informacoes de pagamento para alter
    
    CREATE xml_operacao.
       ASSIGN xml_operacao.dslinxml = "<dados dtcredit =""" + aux_dtcredit + """ dtdebito =""" + aux_dtdebito + """ idopdebi =""" + aux_idopdebi + """ qtlctpag =""" + aux_qtregpag + """
-                                             vllctpag =""" + aux_vllctpag + """ flgrvsal =""" + aux_flgrvsal + """ vltarapr =""" + aux_vltarapr + """ >".
+                                             vllctpag =""" + aux_vllctpag + """ flgrvsal =""" + aux_flgrvsal + """ vltarapr =""" + aux_vltarapr + """ cdtarifa=""" + aux_cdtarifa + """ cdfaixav=""" + aux_cdfaixav + """>".
                                             
    FOR EACH xml_operacao141 WHERE NO-LOCK:   
-      MESSAGE "l".
       CREATE xml_operacao.
       ASSIGN xml_operacao.dslinxml = "<lanctos><cdcooper>" + xml_operacao141.cdcooper + "</cdcooper>" +
                                      "<cdempres>" + xml_operacao141.cdempres + "</cdempres>" +
@@ -1104,10 +1111,10 @@ ELSE IF  par_tpoperac = 14 THEN DO: /* Gerar arquivo de retorno */
 													 
 			   END. 
 				
-END.
-
+			END.
+		
 		SET-SIZE(ponteiro_xml) = 0. 
-
+  
 	END.
 	
 	/*Elimina os objetos criados*/

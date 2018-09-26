@@ -70,6 +70,9 @@
                29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                             PRJ404 - Garantia.(Odirlei-AMcom)             
 
+               12/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+
                09/04/2018 - Ajuste para retornar o valor total disponível para
                             resgate através do canal de autoatendimento.
                             Ou seja, somando apenas RDCPOS (Anderson P285).
@@ -119,12 +122,16 @@ DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                     NO-UNDO.
 DEF INPUT PARAM par_cdagenci LIKE crapage.cdagenci                     NO-UNDO.
 DEF INPUT PARAM par_nrdcaixa AS INT                                    NO-UNDO.
 DEF INPUT PARAM par_cdoperad LIKE crapope.cdoperad                     NO-UNDO.
-DEF INPUT PARAM par_idorigem AS INT                                    NO-UNDO.
-DEF INPUT PARAM par_nmdatela AS CHAR                                   NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF INPUT PARAM par_cdorigem AS INT                                    NO-UNDO.
+DEF INPUT PARAM par_nmprogra AS CHAR                                   NO-UNDO.
 DEF INPUT PARAM par_nrdconta LIKE crapttl.nrdconta                     NO-UNDO.
 DEF INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                     NO-UNDO.
 DEF INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                     NO-UNDO.
 DEF INPUT PARAM par_intipapl AS INT                                    NO-UNDO.
+/*  Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -206,8 +213,8 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                  INPUT par_cdagenci,
                                  INPUT par_nrdcaixa,
                                  INPUT par_cdoperad,
-                                 INPUT par_nmdatela,
-                                 INPUT par_idorigem,
+                                 INPUT par_nmprogra, /*  Projeto 363 - Novo ATM -> ajustado nome parametro */
+                                 INPUT par_cdorigem, /*  Projeto 363 - Novo ATM -> ajustado nome parametro */
                                  INPUT 2, /*Busca horario limite*/
                                  OUTPUT 0,
                                  OUTPUT 0,
@@ -282,13 +289,13 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
     RUN STORED-PROCEDURE pc_lista_aplicacoes_car
        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,     /* Código da Cooperativa */
                                             INPUT "996",            /* Código do Operador */
-                                            INPUT "InternetBank",   /* Nome da Tela */
-                                            INPUT 3,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
-                                            INPUT 900,              /* Numero do Caixa */
+                                            INPUT par_nmprogra,     /* Projeto 363 - Novo ATM -> estava fixo "InternetBank",*/   /* Nome da Tela */
+                                            INPUT par_cdorigem,     /* Projeto 363 - Novo ATM -> estava fixo 3,*/  /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
+                                            INPUT par_nrdcaixa,     /* Projeto 363 - Novo ATM -> estava fixo 900,*/  /* Numero do Caixa */
                                             INPUT par_nrdconta,     /* Número da Conta */
                                             INPUT 1,                /* Titular da Conta */
-                                            INPUT 90,               /* Codigo da Agencia */
-                                            INPUT "InternetBank",   /* Codigo do Programa */
+                                            INPUT par_cdagenci,     /* Projeto 363 - Novo ATM -> estava fixo 90,*/      /* Codigo da Agencia */
+                                            INPUT par_nmprogra,     /* Projeto 363 - Novo ATM -> estava fixo "InternetBank",*/   /* Codigo do Programa */
                                             INPUT 0,                /* Número da Aplicação - Parâmetro Opcional */
                                             INPUT 0,                /* Código do Produto – Parâmetro Opcional */ 
                                             INPUT crapdat.dtmvtolt, /* Data de Movimento */
@@ -414,8 +421,8 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
           DO:
               /* Para cada aplicação, validar se ela possui bloqueio de resgate */
               RUN busca-blqrgt IN h-b1wgen0148 (INPUT par_cdcooper,
-                                                INPUT 90, /* cdagenci */
-                                                INPUT 900, /* nrdcaixa */
+                                                INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90,*/ /* cdagenci */
+                                                INPUT par_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900,*/ /* nrdcaixa */
                                                 INPUT "996", /* cdoperad */
                                                 INPUT par_nrdconta,
                                                 INPUT tt-saldo-rdca.tpaplica,
@@ -622,13 +629,13 @@ PROCEDURE proc_geracao_log:
             RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                           INPUT "996",
                                           INPUT aux_dscritic,
-                                          INPUT "INTERNET",
+                                          INPUT par_dsorigem, /* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/
                                           INPUT aux_dstransa,
                                           INPUT TODAY,
                                           INPUT par_flgtrans,
                                           INPUT TIME,
                                           INPUT par_idseqttl,
-                                          INPUT "INTERNETBANK",
+                                          INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/
                                           INPUT par_nrdconta,
                                           OUTPUT aux_nrdrowid).
                                            

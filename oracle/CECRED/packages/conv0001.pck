@@ -382,6 +382,14 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                                        ,pr_qtdigito OUT INTEGER              --> Qtd. maxima de digitos                                       
                                        ,pr_cdcritic OUT NUMBER               --> Codigo da critica
                                        ,pr_dscritic OUT VARCHAR2);
+
+  PROCEDURE pc_busca_conv_cdbarras (pr_cdcooper IN INTEGER  --> Codigo do convenio
+                                   ,pr_lindigi1 IN VARCHAR2 --> Linha Digitavel 1 
+                                   ,pr_lindigi2 IN VARCHAR2 --> Linha Digitavel 2 
+                                   ,pr_lindigi3 IN VARCHAR2 --> Linha Digitavel 3 
+                                   ,pr_lindigi4 IN VARCHAR2 --> Linha Digitavel 4 
+                                   ,pr_dsxml    OUT NOCOPY XMLType --> XML com o retorno
+                                   ,pr_dscritic OUT VARCHAR2); --> Mensagem de erro
 END CONV0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
@@ -3774,6 +3782,183 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         pr_dscritic:= 'Erro na rotina CONV0001.pc_retorna_referencia_conv - ' || sqlerrm;
     END;
   END pc_retorna_referencia_conv;
+
+
+  PROCEDURE pc_busca_conv_cdbarras (pr_cdcooper IN INTEGER  --> Codigo do convenio
+                                   ,pr_lindigi1 IN VARCHAR2 --> Linha Digitavel 1 
+                                   ,pr_lindigi2 IN VARCHAR2 --> Linha Digitavel 2 
+                                   ,pr_lindigi3 IN VARCHAR2 --> Linha Digitavel 3 
+                                   ,pr_lindigi4 IN VARCHAR2 --> Linha Digitavel 4 
+                                   ,pr_dsxml    OUT NOCOPY XMLType --> XML com o retorno
+                                   ,pr_dscritic OUT VARCHAR2) IS --> Mensagem de erro
+  /*-------------------------------------------------------------------------------------------------
+  
+    Programa : pc_busca_conv_cdbarras
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Douglas Quisinski
+    Data     : 22/05/2018               Ultima atualizacao: 
+  
+   Dados referentes ao programa:
+  
+   Frequencia: Sempre que for chamado
+   Objetivo  : Retornar os dados do convenio, com base na linha digitável 
+   Alteracoes:
+	
+  --------------------------------------------------------------------------------------------------*/
+  BEGIN
+
+    DECLARE
+      
+      vr_flgachou BOOLEAN;
+      vr_cdempcon crapcon.cdempcon%TYPE;
+      vr_nmextcon crapcon.nmextcon%TYPE;
+      vr_nmrescon crapcon.nmrescon%TYPE;
+      vr_cdsegmto crapcon.cdsegmto%TYPE;
+      vr_cdhistor crapcon.cdhistor%TYPE;
+      
+      -- XML de retorno 
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_clob     CLOB;
+      
+    
+      --> Verificar qual cooperativa de destino
+      CURSOR cr_crapcop (pr_cdcooper  crapcop.cdcooper%TYPE) IS
+        SELECT crapcop.cdcooper,
+               crapcop.flgofatr
+          FROM crapcop
+         WHERE crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+      --> Verificar se eh convenio SICREDI
+      CURSOR cr_crapcon (pr_cdcooper  crapcon.cdcooper%TYPE,
+                         pr_cdempcon  crapcon.cdempcon%TYPE,
+                         pr_cdsegmto  crapcon.cdsegmto%TYPE ) IS
+        SELECT crapcon.cdcooper
+              ,crapcon.flginter
+              ,crapcon.nmextcon
+              ,crapcon.flgcnvsi
+              ,crapcon.cdhistor
+              ,crapcon.nmrescon
+              ,crapcon.cdsegmto
+              ,crapcon.cdempcon
+          FROM crapcon
+         WHERE crapcon.cdcooper = pr_cdcooper
+           AND crapcon.cdempcon = pr_cdempcon
+           AND crapcon.cdsegmto = pr_cdsegmto;
+      rw_crapcon cr_crapcon%ROWTYPE;
+
+      /* Validar se o convenio pode ser ofertado comoo debito automatico */
+      CURSOR cr_gnconve (pr_cdhistor gnconve.cdhiscxa%TYPE) IS
+        SELECT gnconve.cdhisdeb
+          FROM gnconve
+         WHERE gnconve.cdhiscxa = pr_cdhistor
+           AND gnconve.flgativo = 1 --TRUE
+           AND gnconve.nmarqatu IS NOT NULL
+           AND nvl(gnconve.cdhisdeb,0) <> 0;
+      rw_gnconve cr_gnconve%ROWTYPE;
+
+      -- Cursr com os dados do convenio do SICREDI
+      CURSOR cr_crapscn (pr_cdempcon IN crapscn.cdempcon%TYPE
+                        ,pr_cdsegmto IN crapscn.cdsegmto%TYPE) IS
+         SELECT crapscn.cdsegmto
+               ,crapscn.cdempcon
+               ,crapscn.dsoparre
+               ,crapscn.cddmoden
+           FROM crapscn
+         WHERE crapscn.cdempcon = pr_cdempcon AND
+               crapscn.cdsegmto = pr_cdsegmto AND
+               crapscn.dsoparre = 'E'         AND
+              (crapscn.cddmoden = 'A'         OR
+               crapscn.cddmoden = 'C');
+       rw_crapscn cr_crapscn%ROWTYPE;      
+      
+      
+    BEGIN
+
+      -- Buscar cooperativa para verificar se pode ofertar o débito automático
+      OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      
+      --> Verificar se eh convenio SICREDI
+      OPEN cr_crapcon (pr_cdcooper => pr_cdcooper,
+                       pr_cdempcon => SUBSTR(to_char(pr_lindigi2,'fm000000000000'),5,4),
+                       pr_cdsegmto => SUBSTR(to_char(pr_lindigi1,'fm000000000000'),2,1));
+      FETCH cr_crapcon INTO rw_crapcon;
+      -- Verificar se localizou
+      IF cr_crapcon%FOUND THEN
+        -- Historico do lancamento na conta
+        vr_cdhistor := rw_crapcon.cdhistor;
+        
+        -- Verifica se NAO eh convenio SICREDI
+        IF  rw_crapcon.flgcnvsi = 0 THEN
+          OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);
+          FETCH cr_gnconve INTO rw_gnconve;
+          vr_flgachou := cr_gnconve%FOUND;
+          CLOSE cr_gnconve;
+          -- Se encontrou utiliza o historico do 
+          IF vr_flgachou THEN
+            vr_cdhistor := rw_gnconve.cdhisdeb;
+          END IF;
+          
+        ELSE
+          -- Busca os dados do convenio SICREDI
+          OPEN cr_crapscn (pr_cdempcon  => rw_crapcon.cdempcon
+                          ,pr_cdsegmto  => rw_crapcon.cdsegmto);
+          FETCH cr_crapscn INTO rw_crapscn;
+          vr_flgachou := cr_crapscn%FOUND;
+          
+        END IF;
+        
+        IF vr_flgachou THEN
+          vr_cdempcon := rw_crapcon.cdempcon;
+          vr_nmextcon := rw_crapcon.nmextcon;
+          vr_nmrescon := rw_crapcon.nmrescon;
+          vr_cdsegmto := rw_crapcon.cdsegmto;
+        END IF;
+
+      END IF;
+
+      --------------------------------------------------------------------------------------
+      ------------------------------- GERAR O XML DE RETORNO -------------------------------
+      --------------------------------------------------------------------------------------
+      -- Monta Retorno XML
+      dbms_lob.createtemporary(vr_clob, TRUE);
+      dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+                  
+      -- Cabecalho do XML
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?><CECRED>');
+      
+      -- Detalhes do XML
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<flgofatr>' || to_char(NVL(rw_crapcop.flgofatr,0)) || '</flgofatr>' || -- Ofertar débito automático
+                                                   '<cdempcon>' || to_char(vr_cdempcon) || '</cdempcon>' ||         -- Código do Convenio
+                                                   '<nmextcon>' || to_char(vr_nmextcon) || '</nmextcon>' ||         -- Nome por extenso do Convenio
+                                                   '<nmrescon>' || to_char(vr_nmrescon) || '</nmrescon>' ||         -- Nome resumido do Convenio
+                                                   '<cdsegmto>' || to_char(vr_cdsegmto) || '</cdsegmto>' ||         -- Segmento
+                                                   '<cdhistor>' || to_char(vr_cdhistor) || '</cdhistor>');          -- Histórico para lançamento
+
+      -- Fecha o XML de retorno
+      GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</CECRED>'
+                             ,pr_fecha_xml      => TRUE);
+
+      -- Atualiza o XML de retorno
+      pr_dsxml := xmltype(vr_clob);
+               
+      -- Libera a memoria do CLOB
+      dbms_lob.close(vr_clob);
+      dbms_lob.freetemporary(vr_clob);
+
+    EXCEPTION      
+      WHEN OTHERS THEN
+        pr_dscritic:= 'Erro na rotina CONV0001.pc_busca_conv_cdbarras - ' || sqlerrm;
+    END;
+  END pc_busca_conv_cdbarras;
 
 END CONV0001;
 /

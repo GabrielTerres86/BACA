@@ -568,7 +568,20 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                               ,pr_dtmvtolt      DATE          --Data Lancamento
                               ,pr_cdcritic      OUT INTEGER   --Codigo Critica
                               ,pr_dscritic      OUT VARCHAR2);--Descricao Critica                              
+
   PROCEDURE pc_envia_email_tarifa(pr_rowid  IN rowid,pr_des_erro OUT varchar2);
+
+  /* Verificar se o saque será tarifado e o valor da tarifa */
+  PROCEDURE pc_verifica_tarifa_saque(pr_cdcooper IN NUMBER                   --> Codigo da Cooperativa
+                                    ,pr_dtmvtolt IN DATE                     --> Data Lancamento
+                                    ,pr_idorigem IN INTEGER                  --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
+                                    ,pr_nrdconta IN INTEGER                  --> Numero da Conta
+                                    ,pr_tipostaa IN INTEGER                  --> Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
+                                    ,pr_fliseope OUT INTEGER                 --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
+                                    ,pr_vltarifa OUT NUMBER                  --> Valor da Tarifa
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo da critica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao da critica  
+                              
 END TARI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
@@ -9048,6 +9061,430 @@ BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
       ROLLBACK;
       pr_des_erro := 'TARI0001.pc_envia_email_tarifa --> : '|| sqlerrm;
   END pc_envia_email_tarifa;   
+  
+  
+  /* Verificar se o saque será tarifado e o valor da tarifa */
+  PROCEDURE pc_verifica_tarifa_saque(pr_cdcooper IN NUMBER                     --> Codigo da Cooperativa
+                                    ,pr_dtmvtolt IN DATE                       --> Data Lancamento
+                                    ,pr_idorigem IN INTEGER                    --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
+                                    ,pr_nrdconta IN INTEGER                    --> Numero da Conta
+                                    ,pr_tipostaa IN INTEGER                    --> Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
+                                    ,pr_fliseope OUT INTEGER                   --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
+                                    ,pr_vltarifa OUT NUMBER                    --> Valor da Tarifa
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica  
+    /* ............................................................................
+    
+       Programa: pc_verifica_tarifa_saque
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Douglas Quisinski
+       Data    : Abril/2018                        Ultima atualizacao: 
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Sempre que chamado
+       Objetivo  : Verificar se o saque será tarifado e o valor da tarifa
+    
+       Alteracoes: 
+    ............................................................................ */
+  
+    ------------------- CURSOR --------------------
+    CURSOR cr_crapass IS
+      SELECT ass.cdcooper
+            ,ass.nrdconta
+            ,ass.inpessoa
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+  
+    CURSOR cr_tbcc_operacoes_diarias IS
+      SELECT COUNT(tbc.cdcooper) AS numregis,
+             NVL(MAX(tbc.nrsequen), 0) AS nrsequen
+        FROM tbcc_operacoes_diarias tbc
+       WHERE tbc.cdcooper = pr_cdcooper
+         AND tbc.nrdconta = pr_nrdconta
+         AND tbc.cdoperacao = 1 -- SAQUE
+         AND TO_CHAR(tbc.dtoperacao, 'MM/RRRR') = TO_CHAR(pr_dtmvtolt, 'MM/RRRR');
+    rw_tbcc_operacoes_diarias cr_tbcc_operacoes_diarias%ROWTYPE;
+  
+    -- Verifica pacote de tarifas
+    CURSOR cr_tbtarif_contas_pacote(pr_cdcooper crapcop.cdcooper%TYPE,
+                                    pr_nrdconta crapass.nrdconta%TYPE,
+                                    pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+      SELECT cta.cdcooper, cta.nrdconta, cta.cdpacote
+        FROM tbtarif_contas_pacote cta
+       WHERE cta.cdcooper = pr_cdcooper
+         AND cta.nrdconta = pr_nrdconta
+         AND cta.flgsituacao = 1
+         AND cta.dtinicio_vigencia <= pr_dtmvtolt;
+    rw_tbtarif_contas_pacote cr_tbtarif_contas_pacote%ROWTYPE;
+  
+    --Selecionar faixa valor por cooperativa
+    CURSOR cr_crapfco(pr_cdfvlcop IN crapfco.cdfvlcop%TYPE) IS
+      SELECT crapfco.cdfaixav
+        FROM crapfco
+       WHERE crapfco.cdfvlcop = pr_cdfvlcop;
+    rw_crapfco cr_crapfco%ROWTYPE;
+  
+    -- Consultar faixas de valores
+    CURSOR cr_crapfvl(pr_cdfaixav IN crapfvl.cdfaixav%TYPE) IS
+      SELECT crapfvl.cdtarifa
+        FROM crapfvl
+       WHERE crapfvl.cdfaixav = pr_cdfaixav;
+    rw_crapfvl cr_crapfvl%ROWTYPE;
+  
+    CURSOR cr_tbtarif_servicos(pr_cdpacote tbtarif_servicos.cdpacote%TYPE,
+                               pr_cdtarif  tbtarif_servicos.cdtarifa%TYPE) IS
+      SELECT tbtarif_servicos.qtdoperacoes
+        FROM tbtarif_servicos
+       WHERE tbtarif_servicos.cdpacote = pr_cdpacote
+         AND tbtarif_servicos.cdtarifa = pr_cdtarif;
+    rw_tbtarif_servicos cr_tbtarif_servicos%ROWTYPE;
+  
+    --Tipo de Dados para cursor data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    ------------------ VARIAVEIS ------------------
+  
+    -- Variaveis de critica
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    vr_exc_saida EXCEPTION;
+    vr_exc_null  EXCEPTION;
+  
+    -- Variaveis locais
+    vr_cdbattar      crapbat.cdbattar%TYPE;
+    vr_dsconteu      VARCHAR(100); --> Auxiliar para retornar da funcao de busca de parametro
+    
+    vr_des_erro      VARCHAR2(100);
+    vr_tab_erro      GENE0001.typ_tab_erro;
+  
+    vr_cdhistor INTEGER; --Codigo Historico
+    vr_cdhisest NUMBER; --Historico Estorno
+    vr_vltarifa NUMBER; --Valor tarifa
+    vr_dtdivulg DATE; --Data Divulgacao
+    vr_dtvigenc DATE; --Data Vigencia
+    vr_cdfvlcop INTEGER; --Codigo faixa valor cooperativa
+    vr_cdparame VARCHAR2(10);
+    vr_cdbatsaq VARCHAR2(50);
+    vr_saqativo BOOLEAN := FALSE;
+
+  BEGIN
+    -- Leitura do calendário da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat
+      INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_cdcritic := 1;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+  
+    -- Buscar os dados do cooperado
+    OPEN cr_crapass;
+    FETCH cr_crapass
+      INTO rw_crapass;
+  
+    -- Se não encontrar
+    IF cr_crapass%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE cr_crapass;
+      -- Montar mensagem de critica
+      vr_cdcritic := 9;
+      RAISE vr_exc_saida;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE cr_crapass;
+    END IF;
+
+    -- Verificar o tipo de pessoa
+    IF rw_crapass.inpessoa = 3 THEN
+      RAISE vr_exc_null;
+    END IF;
+  
+    pr_fliseope := 0; -- Não isentar tarifa
+    pr_vltarifa := 0; -- Inicializar o valor da tarifa
+  
+    IF rw_crapass.inpessoa = 1 THEN
+      -- Pessoa Fisica
+      vr_cdparame := 'SAQISENTPF';
+      vr_cdbatsaq := 'SAQUEPACPF'; /* Tarifa do pacote */
+    ELSIF rw_crapass.inpessoa = 2 THEN
+      -- Pessoa Juridica
+      vr_cdparame := 'SAQISENTPJ';
+      vr_cdbatsaq := 'SAQUEPACPJ'; /* Tarifa do pacote */
+    END IF;
+    
+    CASE pr_idorigem
+      WHEN 2 THEN
+        -- Caixa Online
+        IF rw_crapass.inpessoa = 1 THEN
+          -- Pessoa Fisica
+          vr_cdbattar := 'SAQUEPREPF';
+        ELSIF rw_crapass.inpessoa = 2 THEN
+          -- Pessoa Juridica
+          vr_cdbattar := 'SAQUEPREPJ';
+        END IF;
+      WHEN 4 THEN
+        -- TAA
+        CASE pr_tipostaa
+          WHEN 0 THEN
+            -- Cooperativas Filiadas
+            IF rw_crapass.inpessoa = 1 THEN
+              -- Pessoa Fisica
+              vr_cdbattar := 'SAQUETAAPF';
+            ELSIF rw_crapass.inpessoa = 2 THEN
+              -- Pessoa Juridica
+              vr_cdbattar := 'SAQUETAAPJ';
+            END IF;
+          WHEN 1 THEN
+            -- BB
+            IF rw_crapass.inpessoa = 1 THEN
+              -- Pessoa Fisica
+              vr_cdbattar := 'SAQCRTBBPF';
+            ELSIF rw_crapass.inpessoa = 2 THEN
+              -- Pessoa Juridica
+              vr_cdbattar := 'SAQCRTBBPJ';
+            END IF;
+          WHEN 2 THEN
+            -- Banco 24h
+            IF rw_crapass.inpessoa = 1 THEN
+              -- Pessoa Fisica
+              vr_cdbattar := 'SAQBAN24PF';
+            ELSIF rw_crapass.inpessoa = 2 THEN
+              -- Pessoa Juridica
+              vr_cdbattar := 'SAQBAN24PJ';
+            END IF;
+          WHEN 3 THEN
+            -- Banco 24h compartilhado
+            IF rw_crapass.inpessoa = 1 THEN
+              -- Pessoa Fisica
+              vr_cdbattar := 'SAQREDCOPF';
+            ELSIF rw_crapass.inpessoa = 2 THEN
+              -- Pessoa Juridica
+              vr_cdbattar := 'SAQREDCOPJ';
+            END IF;
+          WHEN 4 THEN
+            -- Rede Cirrus
+            IF rw_crapass.inpessoa = 1 THEN
+              -- Pessoa Fisica
+              vr_cdbattar := 'SAQCIRRUPF';
+            ELSIF rw_crapass.inpessoa = 2 THEN
+              -- Pessoa Juridica
+              vr_cdbattar := 'SAQCIRRUPJ';
+            END IF;
+          ELSE
+            -- Origem desconhecida
+            vr_dscritic := 'Chamada de origem desconhecida.';
+            RAISE vr_exc_saida;
+        END CASE;
+      ELSE
+        -- Origem desconhecida
+        vr_dscritic := 'Origem desconhecida.';
+        RAISE vr_exc_saida;
+    END CASE;
+  
+    -- Verificar se existe pacote de tarifas ativo/vigente na tabela tbtarif_contas_pacote:   
+    OPEN cr_tbtarif_contas_pacote(pr_cdcooper => pr_cdcooper,
+                                  pr_nrdconta => pr_nrdconta,
+                                  pr_dtmvtolt => rw_crapdat.dtmvtolt);
+  
+    FETCH cr_tbtarif_contas_pacote
+      INTO rw_tbtarif_contas_pacote;
+
+    IF cr_tbtarif_contas_pacote%FOUND THEN
+    
+      CLOSE cr_tbtarif_contas_pacote;
+    
+      TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper,
+                                            pr_cdbattar => vr_cdbatsaq,
+                                            pr_vllanmto => 0,
+                                            pr_cdprogra => '',
+                                            pr_cdhistor => vr_cdhistor,
+                                            pr_cdhisest => vr_cdhisest,
+                                            pr_vltarifa => vr_vltarifa,
+                                            pr_dtdivulg => vr_dtdivulg,
+                                            pr_dtvigenc => vr_dtvigenc,
+                                            pr_cdfvlcop => vr_cdfvlcop,
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic,
+                                            pr_tab_erro => vr_tab_erro);
+    
+      -- Verifica se Houve Erro no Retorno
+      IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 OR
+         vr_tab_erro.count > 0 THEN
+        -- Envio Centralizado de Log de Erro
+        IF vr_tab_erro.count > 0 THEN
+        
+          -- Recebe Descrição do Erro
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          RAISE vr_exc_saida;
+        END IF;
+        RAISE vr_exc_saida;
+      END IF;
+    
+      OPEN cr_crapfco(pr_cdfvlcop => vr_cdfvlcop);
+    
+      FETCH cr_crapfco
+        INTO rw_crapfco;
+    
+      IF cr_crapfco%NOTFOUND THEN
+        CLOSE cr_crapfco;
+        vr_cdcritic := 0;
+        vr_dscritic := 'Registro de ligacao entre faixas de valores das tarifas e cooperativa nao encontrado.';
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_crapfco;
+      END IF;
+    
+      OPEN cr_crapfvl(pr_cdfaixav => rw_crapfco.cdfaixav);
+    
+      FETCH cr_crapfvl
+        INTO rw_crapfvl;
+    
+      IF cr_crapfvl%NOTFOUND THEN
+        CLOSE cr_crapfvl;
+        vr_cdcritic := 0;
+        vr_dscritic := 'Registro de faixas de tarifa nao encontrado.';
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_crapfvl;
+      END IF;
+    
+      OPEN cr_tbtarif_servicos(pr_cdpacote => rw_tbtarif_contas_pacote.cdpacote,
+                               pr_cdtarif  => rw_crapfvl.cdtarifa);
+    
+      FETCH cr_tbtarif_servicos
+        INTO rw_tbtarif_servicos;
+    
+      IF cr_tbtarif_servicos%NOTFOUND THEN
+      
+        CLOSE cr_tbtarif_servicos;
+      ELSE
+        CLOSE cr_tbtarif_servicos;
+      
+        -- Operação de saque
+        vr_saqativo := TRUE; -- Possui servico de saque ativo
+      
+        -- Consulta quantidade de saques já efetuados
+        OPEN cr_tbcc_operacoes_diarias;
+          
+        FETCH cr_tbcc_operacoes_diarias
+          INTO rw_tbcc_operacoes_diarias;
+        CLOSE cr_tbcc_operacoes_diarias;
+        
+        -- Verificar se o próximo saque é tarifado
+        IF rw_tbcc_operacoes_diarias.numregis < rw_tbtarif_servicos.qtdoperacoes THEN
+          pr_fliseope := 1; -- Não tarifar    
+        END IF;
+        
+        RAISE vr_exc_null;
+      
+      END IF;
+    ELSE
+      CLOSE cr_tbtarif_contas_pacote;
+    END IF;
+  
+    -- Verifica quantidade de saques isentos
+    TARI0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => pr_cdcooper,
+                                           pr_cdbattar => vr_cdparame,
+                                           pr_dsconteu => vr_dsconteu,
+                                           pr_cdcritic => vr_cdcritic,
+                                           pr_dscritic => vr_dscritic,
+                                           pr_des_erro => vr_des_erro,
+                                           pr_tab_erro => vr_tab_erro);
+  
+    -- Verifica se Houve Erro no Retorno
+    IF vr_des_erro = 'NOK' OR vr_tab_erro.count > 0 OR
+       vr_dscritic IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 THEN
+      -- Envio Centralizado de Log de Erro
+      IF vr_tab_erro.count > 0 THEN
+      
+        -- Recebe Descrição do Erro
+        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        RAISE vr_exc_saida;
+      END IF;
+      RAISE vr_exc_saida;
+    END IF;
+  
+    -- Consulta quantidade de saques já efetuados
+    OPEN cr_tbcc_operacoes_diarias;
+  
+    FETCH cr_tbcc_operacoes_diarias
+      INTO rw_tbcc_operacoes_diarias;
+    CLOSE cr_tbcc_operacoes_diarias;
+  
+    -- Se nao possui servico de saque no pacote, verifica parametros de insencao da cooperativa
+    IF NOT vr_saqativo THEN
+    
+      -- Verificar se o próximo saque é tarifado
+      IF rw_tbcc_operacoes_diarias.numregis < vr_dsconteu THEN
+      
+        pr_fliseope := 1; -- Não tarifar
+        RAISE vr_exc_null;
+      
+      END IF;
+    
+    END IF;
+  
+    TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper,
+                                          pr_cdbattar => vr_cdbattar,
+                                          pr_vllanmto => 0,
+                                          pr_cdprogra => '',
+                                          pr_cdhistor => vr_cdhistor,
+                                          pr_cdhisest => vr_cdhisest,
+                                          pr_vltarifa => vr_vltarifa,
+                                          pr_dtdivulg => vr_dtdivulg,
+                                          pr_dtvigenc => vr_dtvigenc,
+                                          pr_cdfvlcop => vr_cdfvlcop,
+                                          pr_cdcritic => vr_cdcritic,
+                                          pr_dscritic => vr_dscritic,
+                                          pr_tab_erro => vr_tab_erro);
+  
+    -- Verifica se Houve Erro no Retorno
+    IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic, 0) > 0 OR
+       vr_tab_erro.count > 0 THEN
+      -- Envio Centralizado de Log de Erro
+      IF vr_tab_erro.count > 0 THEN
+      
+        -- Recebe Descrição do Erro
+        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        RAISE vr_exc_saida;
+      END IF;
+      RAISE vr_exc_saida;
+    END IF;
+  
+    IF vr_vltarifa > 0 THEN
+      pr_vltarifa := vr_vltarifa;
+    END IF;
+  
+  EXCEPTION
+    WHEN vr_exc_null THEN
+      pr_cdcritic := 0;
+      pr_dscritic := '';
+    WHEN vr_exc_saida THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      ROLLBACK;
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na TARI0001.pc_verifica_tarifa_saque para conta ' ||
+                     pr_nrdconta || ':' || SQLERRM;
+      ROLLBACK;
+  END pc_verifica_tarifa_saque;
+  
   
 END TARI0001;
 /

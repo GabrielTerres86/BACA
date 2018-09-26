@@ -35,6 +35,56 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CASH IS
                                ,pr_nmdcampo     OUT VARCHAR2 --> Nome do campo com erro
                                ,pr_des_erro     OUT VARCHAR2); --> Erros do processo
 
+  PROCEDURE pc_incluir_caixa_eletronico(pr_cdcooper      IN INTEGER  --> Cooperativa
+                                       ,pr_cdagenci      IN INTEGER  --> Numero do PA
+                                       ,pr_nmnarede      IN VARCHAR2 --> Nome na rede
+                                       ,pr_nrdendip      IN VARCHAR2 --> Numero de IP
+                                       ,pr_nrtempor      IN INTEGER  --> Temporizador
+                                       ,pr_qtcasset      IN INTEGER  --> Quantidade de Cassetes
+                                       ,pr_dsfabtfn      IN VARCHAR2 --> Fabricante
+                                       ,pr_dsmodelo      IN VARCHAR2 --> Modelo
+                                       ,pr_dsdserie      IN VARCHAR2 --> Numero de Série
+                                       ,pr_flgntcem      IN INTEGER  --> Aceita Notas de 100 ?
+                                       ,pr_nmterfin      IN tbsite_taa.nmterminal%TYPE --> Nome do TAA para apresentacao
+                                       ,pr_flganexo_pa   IN tbsite_taa.flganexo_pa%TYPE --> TAA localiza-se no PA: 1-Sim / 0-Nao
+                                       ,pr_dslogradouro  IN tbsite_taa.dslogradouro%TYPE --> Descricao do logradouro
+                                       ,pr_dscomplemento IN tbsite_taa.dscomplemento%TYPE --> Descricao do complemento
+                                       ,pr_nrendere      IN tbsite_taa.nrendere%TYPE --> Numero da localizacao do TAA
+                                       ,pr_nmbairro      IN tbsite_taa.nmbairro%TYPE --> Nome do bairro
+                                       ,pr_nrcep         IN tbsite_taa.nrcep%TYPE --> Numero do CEP
+                                       ,pr_idcidade      IN tbsite_taa.idcidade%TYPE --> Identificador da cidade
+                                       ,pr_nrlatitude    IN tbsite_taa.nrlatitude%TYPE --> Latitude da localizacao
+                                       ,pr_nrlongitude   IN tbsite_taa.nrlongitude%TYPE --> Longitude da localizacao
+                                       ,pr_dshorario     IN tbsite_taa.dshorario%TYPE --> Horario de atendimento
+                                       ,pr_nrterfin     OUT tbsite_taa.nrterfin%TYPE --> Número do TA que foi cadastrado
+                                       ,pr_cdcritic     OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic     OUT VARCHAR2); --> Descricao da critica
+
+  PROCEDURE pc_alterar_caixa_eletronico(pr_cdcooper      IN INTEGER  --> Cooperativa
+                                       ,pr_cdagenci      IN INTEGER  --> Numero do PA
+                                       ,pr_nrterfin      IN tbsite_taa.nrterfin%TYPE --> Número do TA que foi cadastrado
+                                       ,pr_nmnarede      IN VARCHAR2 --> Nome na rede
+                                       ,pr_nrdendip      IN VARCHAR2 --> Numero de IP
+                                       ,pr_nrtempor      IN INTEGER  --> Temporizador
+                                       ,pr_qtcasset      IN INTEGER  --> Quantidade de Cassetes
+                                       ,pr_dsfabtfn      IN VARCHAR2 --> Fabricante
+                                       ,pr_dsmodelo      IN VARCHAR2 --> Modelo
+                                       ,pr_dsdserie      IN VARCHAR2 --> Numero de Série
+                                       ,pr_flgntcem      IN INTEGER  --> Aceita Notas de 100 ?
+                                       ,pr_nmterfin      IN tbsite_taa.nmterminal%TYPE --> Nome do TAA para apresentacao
+                                       ,pr_flganexo_pa   IN tbsite_taa.flganexo_pa%TYPE --> TAA localiza-se no PA: 1-Sim / 0-Nao
+                                       ,pr_dslogradouro  IN tbsite_taa.dslogradouro%TYPE --> Descricao do logradouro
+                                       ,pr_dscomplemento IN tbsite_taa.dscomplemento%TYPE --> Descricao do complemento
+                                       ,pr_nrendere      IN tbsite_taa.nrendere%TYPE --> Numero da localizacao do TAA
+                                       ,pr_nmbairro      IN tbsite_taa.nmbairro%TYPE --> Nome do bairro
+                                       ,pr_nrcep         IN tbsite_taa.nrcep%TYPE --> Numero do CEP
+                                       ,pr_idcidade      IN tbsite_taa.idcidade%TYPE --> Identificador da cidade
+                                       ,pr_nrlatitude    IN tbsite_taa.nrlatitude%TYPE --> Latitude da localizacao
+                                       ,pr_nrlongitude   IN tbsite_taa.nrlongitude%TYPE --> Longitude da localizacao
+                                       ,pr_dshorario     IN tbsite_taa.dshorario%TYPE --> Horario de atendimento
+                                       ,pr_cdcritic     OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic     OUT VARCHAR2); --> Descricao da critica
+
 END TELA_CASH;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CASH IS
@@ -660,6 +710,505 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CASH IS
     END;
 
   END pc_grava_dados_site;
+
+  PROCEDURE pc_incluir_caixa_eletronico(pr_cdcooper      IN INTEGER  --> Cooperativa
+                                       ,pr_cdagenci      IN INTEGER  --> Numero do PA
+                                       ,pr_nmnarede      IN VARCHAR2 --> Nome na rede
+                                       ,pr_nrdendip      IN VARCHAR2 --> Numero de IP
+                                       ,pr_nrtempor      IN INTEGER  --> Temporizador
+                                       ,pr_qtcasset      IN INTEGER  --> Quantidade de Cassetes
+                                       ,pr_dsfabtfn      IN VARCHAR2 --> Fabricante
+                                       ,pr_dsmodelo      IN VARCHAR2 --> Modelo
+                                       ,pr_dsdserie      IN VARCHAR2 --> Numero de Série
+                                       ,pr_flgntcem      IN INTEGER  --> Aceita Notas de 100 ?
+                                       ,pr_nmterfin      IN tbsite_taa.nmterminal%TYPE --> Nome do TAA para apresentacao
+                                       ,pr_flganexo_pa   IN tbsite_taa.flganexo_pa%TYPE --> TAA localiza-se no PA: 1-Sim / 0-Nao
+                                       ,pr_dslogradouro  IN tbsite_taa.dslogradouro%TYPE --> Descricao do logradouro
+                                       ,pr_dscomplemento IN tbsite_taa.dscomplemento%TYPE --> Descricao do complemento
+                                       ,pr_nrendere      IN tbsite_taa.nrendere%TYPE --> Numero da localizacao do TAA
+                                       ,pr_nmbairro      IN tbsite_taa.nmbairro%TYPE --> Nome do bairro
+                                       ,pr_nrcep         IN tbsite_taa.nrcep%TYPE --> Numero do CEP
+                                       ,pr_idcidade      IN tbsite_taa.idcidade%TYPE --> Identificador da cidade
+                                       ,pr_nrlatitude    IN tbsite_taa.nrlatitude%TYPE --> Latitude da localizacao
+                                       ,pr_nrlongitude   IN tbsite_taa.nrlongitude%TYPE --> Longitude da localizacao
+                                       ,pr_dshorario     IN tbsite_taa.dshorario%TYPE --> Horario de atendimento
+                                       ,pr_nrterfin     OUT tbsite_taa.nrterfin%TYPE --> Número do TA que foi cadastrado
+                                       ,pr_cdcritic     OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic     OUT VARCHAR2) IS --> Descricao da critica
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_incluir_caixa_eletronico
+    Sistema : CECRED
+    Autor   : Douglas Quisinski
+    Data    : Maio/2018                   Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para cadastrar os dados do TAA 
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis
+      vr_nrterfin      craptfn.nrterfin%TYPE;
+      vr_dslogradouro  tbsite_taa.dslogradouro%TYPE;
+      vr_dscomplemento tbsite_taa.dscomplemento%TYPE;
+      vr_nrendere      tbsite_taa.nrendere%TYPE;
+      vr_nmbairro      tbsite_taa.nmbairro%TYPE;
+      vr_nrcep         tbsite_taa.nrcep%TYPE;
+      vr_idcidade      tbsite_taa.idcidade%TYPE;
+      vr_nrlatitude    tbsite_taa.nrlatitude%TYPE;
+      vr_nrlongitude   tbsite_taa.nrlongitude%TYPE;
+      vr_dshorario     tbsite_taa.dshorario%TYPE;
+
+      -- CURSOR para buscar o próximo número de caixa eletrônico
+      CURSOR cr_proximo_atm (pr_cdcooper IN INTEGER) IS
+        SELECT NVL(MAX(tfn.nrterfin), 0) + 1 next_atm
+          FROM craptfn tfn
+         WHERE tfn.cdcooper = pr_cdcooper;
+         
+      -- CURSOR para buscar o próximo número de caixa eletrônico
+      CURSOR cr_crapage (pr_cdcooper IN INTEGER
+                        ,pr_cdagenci IN INTEGER ) IS
+        SELECT age.cdagenci
+          FROM crapage age
+         WHERE age.cdcooper = pr_cdcooper
+           AND age.cdagenci = pr_cdagenci;
+      rw_crapage cr_crapage%ROWTYPE;
+         
+      -- Cursor generico de calendario
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+
+    BEGIN
+      -- validar se o nome do terminal foi preenchido
+      IF TRIM(pr_nmterfin) IS NULL THEN
+        vr_dscritic := 'Informe o nome.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- verificar se a agencia existe
+      OPEN cr_crapage(pr_cdcooper => pr_cdcooper
+                     ,pr_cdagenci => pr_cdagenci);
+      FETCH cr_crapage INTO rw_crapage;
+      IF cr_crapage%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_crapage;
+        -- PA não encontrado
+        vr_cdcritic := 962;
+        RAISE vr_exc_erro;
+      ELSE 
+        -- Fechar o cursor
+        CLOSE cr_crapage;
+      END IF;
+
+      -- Validar a quantidade de cassestes
+      IF  pr_qtcasset = 0 THEN
+        vr_cdcritic := 375;
+        vr_dscritic := 'Quantidade de cassetes.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Buscar a data 
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        pr_dscritic := 'Problemas ao recuperar a data do sistema. Favor, entre em contato com seu PA!';
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      -- Na inclusão deverá ser gerado o próximo número de ATM
+      OPEN cr_proximo_atm(pr_cdcooper => pr_cdcooper);
+      FETCH cr_proximo_atm INTO vr_nrterfin;
+      CLOSE cr_proximo_atm;
+      
+      -- Inserir o registro de caixa eletrônico
+      INSERT INTO craptfn
+        (cdcooper
+        ,cdagenci
+        ,cdsitfin
+        ,nrterfin
+        ,tpterfin
+        ,nmnarede
+        ,nrdendip
+        ,nmterfin
+        ,nrtempor
+        ,qtcasset
+        ,dsfabtfn
+        ,dsmodelo
+        ,dsdserie
+        ,flsistaa
+        ,flgntcem)
+      VALUES
+        (pr_cdcooper
+        ,pr_cdagenci
+        ,8  /* cdsitfin - Desativado */
+        ,vr_nrterfin
+        ,6 /* tpterfin - Tipo de Terminal */
+        ,LOWER(TRIM(pr_nmnarede))
+        ,TRIM(pr_nrdendip)
+        ,UPPER(pr_nmterfin)
+        ,pr_nrtempor 
+        ,pr_qtcasset
+        ,UPPER(pr_dsfabtfn)
+        ,UPPER(pr_dsmodelo)       
+        ,pr_dsdserie
+        ,1  /* inicial desbloqueado */
+        ,pr_flgntcem);
+
+      -- Inserir o saldo do terminal financeiro para o dia atual
+      INSERT INTO crapstf
+        (cdcooper
+        ,nrterfin
+        ,dtmvtolt)
+      VALUES
+        (pr_cdcooper
+        ,vr_nrterfin
+        ,rw_crapdat.dtmvtolt);
+      
+      -- Inserir o saldo do terminal financeiro para o dia anterior
+      INSERT INTO crapstf
+        (cdcooper
+        ,nrterfin
+        ,dtmvtolt)
+      VALUES
+        (pr_cdcooper
+        ,vr_nrterfin
+        ,rw_crapdat.dtmvtoan);
+                    
+      -- Se NAO for o mesmo endereco do PA
+      IF pr_flganexo_pa = 0 THEN
+        vr_dslogradouro  := pr_dslogradouro;
+        vr_dscomplemento := pr_dscomplemento;
+        vr_nmbairro      := pr_nmbairro;
+        vr_nrendere      := (CASE WHEN pr_nrendere > 0 THEN pr_nrendere ELSE NULL END);
+        vr_nrcep         := (CASE WHEN pr_nrcep    > 0 THEN pr_nrcep    ELSE NULL END);
+        vr_idcidade      := (CASE WHEN pr_idcidade > 0 THEN pr_idcidade ELSE NULL END);
+        vr_nrlatitude    := pr_nrlatitude;
+        vr_nrlongitude   := pr_nrlongitude;
+      END IF;
+
+      -- Remove o CDATA da String
+      vr_dshorario := GENE0007.fn_remove_cdata(pr_dshorario);
+
+      -- Insere ou atualiza os dados
+      BEGIN
+        INSERT INTO tbsite_taa
+                   (cdcooper
+                   ,nrterfin
+                   ,nmterminal
+                   ,flganexo_pa
+                   ,dshorario
+                   ,dslogradouro
+                   ,dscomplemento
+                   ,nrendere
+                   ,nmbairro
+                   ,nrcep
+                   ,idcidade
+                   ,nrlatitude
+                   ,nrlongitude)
+             VALUES(pr_cdcooper
+                   ,vr_nrterfin
+                   ,pr_nmterfin
+                   ,pr_flganexo_pa
+                   ,vr_dshorario
+                   ,vr_dslogradouro
+                   ,vr_dscomplemento
+                   ,vr_nrendere
+                   ,vr_nmbairro
+                   ,vr_nrcep
+                   ,vr_idcidade
+                   ,NVL(vr_nrlatitude,0)
+                   ,NVL(vr_nrlongitude,0));
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          -- Se ja existir atualiza
+          UPDATE tbsite_taa
+             SET tbsite_taa.nmterminal = pr_nmterfin
+                ,tbsite_taa.flganexo_pa = pr_flganexo_pa
+                ,tbsite_taa.dshorario = vr_dshorario
+                ,tbsite_taa.dslogradouro = vr_dslogradouro
+                ,tbsite_taa.dscomplemento = vr_dscomplemento
+                ,tbsite_taa.nrendere = vr_nrendere
+                ,tbsite_taa.nmbairro = vr_nmbairro
+                ,tbsite_taa.nrcep = vr_nrcep
+                ,tbsite_taa.idcidade = vr_idcidade
+                ,tbsite_taa.nrlatitude = NVL(vr_nrlatitude,0)
+                ,tbsite_taa.nrlongitude = NVL(vr_nrlongitude,0)
+           WHERE tbsite_taa.cdcooper = pr_cdcooper
+             AND tbsite_taa.nrterfin = vr_nrterfin;
+
+        WHEN OTHERS THEN
+          vr_dscritic := 'Problema ao gravar dados para o site da cooperativa: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+      
+      pr_nrterfin := vr_nrterfin;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          IF TRIM(vr_dscritic) IS NULL THEN
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          ELSE 
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' - ' || vr_dscritic;
+          END IF;
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina de cadastro do caixa eletronico. ' || SQLERRM;
+    END;
+
+  END pc_incluir_caixa_eletronico;
+
+
+  PROCEDURE pc_alterar_caixa_eletronico(pr_cdcooper      IN INTEGER  --> Cooperativa
+                                       ,pr_cdagenci      IN INTEGER  --> Numero do PA
+                                       ,pr_nrterfin      IN tbsite_taa.nrterfin%TYPE --> Número do TA que foi cadastrado
+                                       ,pr_nmnarede      IN VARCHAR2 --> Nome na rede
+                                       ,pr_nrdendip      IN VARCHAR2 --> Numero de IP
+                                       ,pr_nrtempor      IN INTEGER  --> Temporizador
+                                       ,pr_qtcasset      IN INTEGER  --> Quantidade de Cassetes
+                                       ,pr_dsfabtfn      IN VARCHAR2 --> Fabricante
+                                       ,pr_dsmodelo      IN VARCHAR2 --> Modelo
+                                       ,pr_dsdserie      IN VARCHAR2 --> Numero de Série
+                                       ,pr_flgntcem      IN INTEGER  --> Aceita Notas de 100 ?
+                                       ,pr_nmterfin      IN tbsite_taa.nmterminal%TYPE --> Nome do TAA para apresentacao
+                                       ,pr_flganexo_pa   IN tbsite_taa.flganexo_pa%TYPE --> TAA localiza-se no PA: 1-Sim / 0-Nao
+                                       ,pr_dslogradouro  IN tbsite_taa.dslogradouro%TYPE --> Descricao do logradouro
+                                       ,pr_dscomplemento IN tbsite_taa.dscomplemento%TYPE --> Descricao do complemento
+                                       ,pr_nrendere      IN tbsite_taa.nrendere%TYPE --> Numero da localizacao do TAA
+                                       ,pr_nmbairro      IN tbsite_taa.nmbairro%TYPE --> Nome do bairro
+                                       ,pr_nrcep         IN tbsite_taa.nrcep%TYPE --> Numero do CEP
+                                       ,pr_idcidade      IN tbsite_taa.idcidade%TYPE --> Identificador da cidade
+                                       ,pr_nrlatitude    IN tbsite_taa.nrlatitude%TYPE --> Latitude da localizacao
+                                       ,pr_nrlongitude   IN tbsite_taa.nrlongitude%TYPE --> Longitude da localizacao
+                                       ,pr_dshorario     IN tbsite_taa.dshorario%TYPE --> Horario de atendimento
+                                       ,pr_cdcritic     OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic     OUT VARCHAR2) IS --> Descricao da critica
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_alterar_caixa_eletronico
+    Sistema : CECRED
+    Autor   : Douglas Quisinski
+    Data    : Maio/2018                   Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para alterar os dados do TAA 
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis
+      vr_dslogradouro  tbsite_taa.dslogradouro%TYPE;
+      vr_dscomplemento tbsite_taa.dscomplemento%TYPE;
+      vr_nrendere      tbsite_taa.nrendere%TYPE;
+      vr_nmbairro      tbsite_taa.nmbairro%TYPE;
+      vr_nrcep         tbsite_taa.nrcep%TYPE;
+      vr_idcidade      tbsite_taa.idcidade%TYPE;
+      vr_nrlatitude    tbsite_taa.nrlatitude%TYPE;
+      vr_nrlongitude   tbsite_taa.nrlongitude%TYPE;
+      vr_dshorario     tbsite_taa.dshorario%TYPE;
+
+      -- CURSOR para buscar o PA
+      CURSOR cr_crapage (pr_cdcooper IN INTEGER
+                        ,pr_cdagenci IN INTEGER ) IS
+        SELECT age.cdagenci
+          FROM crapage age
+         WHERE age.cdcooper = pr_cdcooper
+           AND age.cdagenci = pr_cdagenci;
+      rw_crapage cr_crapage%ROWTYPE;
+         
+      -- CURSOR para buscar o caixa eletronico
+      CURSOR cr_craptfn (pr_cdcooper IN INTEGER
+                        ,pr_nrterfin IN INTEGER ) IS
+        SELECT tfn.nrterfin
+          FROM craptfn tfn
+         WHERE tfn.cdcooper = pr_cdcooper
+           AND tfn.nrterfin = pr_nrterfin;
+      rw_craptfn cr_craptfn%ROWTYPE;
+    BEGIN
+      -- validar se o nome do terminal foi preenchido
+      IF TRIM(pr_nmterfin) IS NULL THEN
+        vr_dscritic := 'Informe o nome.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- verificar se o caixa eletronico existe
+      OPEN cr_craptfn(pr_cdcooper => pr_cdcooper
+                     ,pr_nrterfin => pr_nrterfin);
+      FETCH cr_craptfn INTO rw_craptfn;
+      IF cr_craptfn%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_craptfn;
+        -- caixa eletronico não encontrado
+        vr_dscritic := 'Terminal financeiro nao cadastrado!';
+        RAISE vr_exc_erro;
+      ELSE 
+        -- Fechar o cursor
+        CLOSE cr_craptfn;
+      END IF;
+      
+      -- verificar se a agencia existe
+      OPEN cr_crapage(pr_cdcooper => pr_cdcooper
+                     ,pr_cdagenci => pr_cdagenci);
+      FETCH cr_crapage INTO rw_crapage;
+      IF cr_crapage%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_crapage;
+        -- PA não encontrado
+        vr_cdcritic := 962;
+        RAISE vr_exc_erro;
+      ELSE 
+        -- Fechar o cursor
+        CLOSE cr_crapage;
+      END IF;
+
+      -- Validar a quantidade de cassestes
+      IF  pr_qtcasset = 0 THEN
+        vr_cdcritic := 375;
+        vr_dscritic := 'Quantidade de cassetes.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Inserir o registro de caixa eletrônico
+      UPDATE craptfn tfn 
+         SET tfn.cdagenci = pr_cdagenci
+            ,tfn.nmnarede = LOWER(TRIM(pr_nmnarede))
+            ,tfn.nrdendip = TRIM(pr_nrdendip)
+            ,tfn.nmterfin = UPPER(pr_nmterfin)
+            ,tfn.nrtempor = pr_nrtempor 
+            ,tfn.qtcasset = pr_qtcasset
+            ,tfn.dsfabtfn = UPPER(pr_dsfabtfn)
+            ,tfn.dsmodelo = UPPER(pr_dsmodelo)   
+            ,tfn.dsdserie = pr_dsdserie
+            ,tfn.flgntcem = pr_flgntcem
+       WHERE tfn.cdcooper = pr_cdcooper
+         AND tfn.nrterfin = pr_nrterfin;
+        
+      -- Se NAO for o mesmo endereco do PA
+      IF pr_flganexo_pa = 0 THEN
+        vr_dslogradouro  := pr_dslogradouro;
+        vr_dscomplemento := pr_dscomplemento;
+        vr_nmbairro      := pr_nmbairro;
+        vr_nrendere      := (CASE WHEN pr_nrendere > 0 THEN pr_nrendere ELSE NULL END);
+        vr_nrcep         := (CASE WHEN pr_nrcep    > 0 THEN pr_nrcep    ELSE NULL END);
+        vr_idcidade      := (CASE WHEN pr_idcidade > 0 THEN pr_idcidade ELSE NULL END);
+        vr_nrlatitude    := pr_nrlatitude;
+        vr_nrlongitude   := pr_nrlongitude;
+      END IF;
+
+      -- Remove o CDATA da String
+      vr_dshorario := GENE0007.fn_remove_cdata(pr_dshorario);
+
+      -- Insere ou atualiza os dados
+      BEGIN
+        INSERT INTO tbsite_taa
+                   (cdcooper
+                   ,nrterfin
+                   ,nmterminal
+                   ,flganexo_pa
+                   ,dshorario
+                   ,dslogradouro
+                   ,dscomplemento
+                   ,nrendere
+                   ,nmbairro
+                   ,nrcep
+                   ,idcidade
+                   ,nrlatitude
+                   ,nrlongitude)
+             VALUES(pr_cdcooper
+                   ,pr_nrterfin
+                   ,pr_nmterfin
+                   ,pr_flganexo_pa
+                   ,vr_dshorario
+                   ,vr_dslogradouro
+                   ,vr_dscomplemento
+                   ,vr_nrendere
+                   ,vr_nmbairro
+                   ,vr_nrcep
+                   ,vr_idcidade
+                   ,NVL(vr_nrlatitude,0)
+                   ,NVL(vr_nrlongitude,0));
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          -- Se ja existir atualiza
+          UPDATE tbsite_taa
+             SET tbsite_taa.nmterminal = pr_nmterfin
+                ,tbsite_taa.flganexo_pa = pr_flganexo_pa
+                ,tbsite_taa.dshorario = vr_dshorario
+                ,tbsite_taa.dslogradouro = vr_dslogradouro
+                ,tbsite_taa.dscomplemento = vr_dscomplemento
+                ,tbsite_taa.nrendere = vr_nrendere
+                ,tbsite_taa.nmbairro = vr_nmbairro
+                ,tbsite_taa.nrcep = vr_nrcep
+                ,tbsite_taa.idcidade = vr_idcidade
+                ,tbsite_taa.nrlatitude = NVL(vr_nrlatitude,0)
+                ,tbsite_taa.nrlongitude = NVL(vr_nrlongitude,0)
+           WHERE tbsite_taa.cdcooper = pr_cdcooper
+             AND tbsite_taa.nrterfin = pr_nrterfin;
+
+        WHEN OTHERS THEN
+          vr_dscritic := 'Problema ao gravar dados para o site da cooperativa: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          IF TRIM(vr_dscritic) IS NULL THEN
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          ELSE 
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' - ' || vr_dscritic;
+          END IF;
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina de alterar o caixa eletronico. ' || SQLERRM;
+    END;
+
+  END pc_alterar_caixa_eletronico;
+
 
 END TELA_CASH;
 /

@@ -463,6 +463,11 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                ,pr_tab_comp_medias OUT typ_tab_comp_medias --> Retorna complemento medias
                                ,pr_cdcritic        OUT PLS_INTEGER         --> Código da crítica
                                ,pr_dscritic        OUT VARCHAR2);          --> Descrição da crítica
+
+  PROCEDURE pc_busca_saldo_cooperado(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
+                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
+                                    ,pr_vlsaldo   OUT NUMBER                --> Saldo do cooperado
+                                    ,pr_dscritic  OUT VARCHAR2);            --> Descrição do erro                                
 END EXTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
@@ -7953,6 +7958,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END IF;
   END pc_carrega_medias;    
   
+  /* Buscar o valor de saldo que o cooperado tem disponivel */
+  PROCEDURE pc_busca_saldo_cooperado(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
+                                    ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Conta do associado
+                                    ,pr_vlsaldo   OUT NUMBER                --> Saldo do cooperado
+                                    ,pr_dscritic  OUT VARCHAR2) IS          --> Descrição do erro                                
+    vr_des_reto VARCHAR2(03);           --> OK ou NOK
+    vr_tab_erro GENE0001.typ_tab_erro;  --> Tabela com erros
+    vr_tab_saldos  typ_tab_saldos;      --> Tabela de retorno da rotina
+    
+    vr_dscritic VARCHAR2(4000);
+    vr_exec_err EXCEPTION;
+    
+    -- Cursor para encontrar a conta/corrente
+    CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT ass.cdcooper
+            ,ass.nrdconta
+            ,ass.inpessoa
+            ,ass.vllimcre
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+    
+  BEGIN
+    -- Inicializar o valor de saldo do cooperado
+    pr_vlsaldo := 0;  
+    
+    OPEN cr_crapass (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      -- Associado não encontrado
+      vr_dscritic := gene0001.fn_busca_critica(9);
+      RAISE vr_exec_err;
+    END IF;
+
+    pc_obtem_saldo_dia_sd(pr_cdcooper => rw_crapass.cdcooper
+                         ,pr_cdagenci => 0
+                         ,pr_nrdcaixa => 0
+                         ,pr_cdoperad => 996
+                         ,pr_nrdconta => rw_crapass.nrdconta
+                         ,pr_vllimcre => rw_crapass.vllimcre
+                         ,pr_tipo_busca => 'A'
+                         ,pr_des_reto => vr_des_reto
+                         ,pr_tab_sald => vr_tab_saldos
+                         ,pr_tab_erro => vr_tab_erro);
+
+    -- Verifica se deu erro
+    IF vr_des_reto = 'NOK' THEN
+      IF TRIM(vr_tab_erro(vr_tab_erro.first).dscritic) IS NULL THEN
+        vr_tab_erro(vr_tab_erro.first).dscritic := gene0001.fn_busca_critica(vr_tab_erro(vr_tab_erro.first).cdcritic);
+      END IF;
+      
+      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      RAISE vr_exec_err;
+    END IF;
+    
+    -- Se nao ocorreu erro, devolvemos o valor de saldo disponivel da conta do cooperado
+    pr_vlsaldo := NVL(vr_tab_saldos(vr_tab_saldos.first).vlsddisp, 0) +
+                  NVL(vr_tab_saldos(vr_tab_saldos.first).vlsdchsl, 0);
+    
+  EXCEPTION
+    WHEN vr_exec_err THEN
+      -- Se ocorreu erro, devolvemos o saldo com ZERO e a mensagem de erro
+      pr_vlsaldo  := 0;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      -- Se ocorreu erro, devolvemos o saldo com ZERO e a mensagem de erro
+      pr_vlsaldo  := 0;
+      pr_dscritic := '<dscritic>Erro nao tratado na rotina EXTR0001.pc_busca_saldo_cooperado: '||sqlerrm || '</dscritic>';
+      
+  END pc_busca_saldo_cooperado;
 
 END EXTR0001;
 /

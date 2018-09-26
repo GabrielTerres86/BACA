@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 07/06/2016
+   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa:
 
@@ -14,6 +14,10 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
    Objetivo  : Centralizar as rotinas referente ao Serviço Folha de Pagamento
 
    Alteracoes: 07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+  
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
+                            da procedure: pc_consulta_arq_folha_ib e da função: fn_cdtarifa_cdfaixav,
+                            Prj.363 (Jean Michel).           
   
 ..............................................................................*/
 
@@ -49,6 +53,10 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                  ,pr_vllanmto IN crappfp.vllctpag%TYPE --> Valor do lançamento
                                  ,pr_cdprogra IN crapprg.cdprogra%TYPE DEFAULT 'FOLH0001') --> Programa chamador
                                  RETURN craphis.cdhistor%TYPE;
+  
+  -- Função para retornar código de tarifa e faixa da tarifa
+  FUNCTION fn_cdtarifa_cdfaixav(pr_cdocorre IN craptar.cdocorre%TYPE --> Contem o codigo da ocorrencia.
+                               )RETURN VARCHAR2;
   
   -- Função para centralizar a montagem do nome do operador ou preposto para log
   FUNCTION fn_nmoperad_log(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -266,7 +274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 18/06/2018
+   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa:
 
@@ -297,6 +305,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                18/06/2018 - sctask0012758 Na rotina pc_busca_sit_salario, melhoria do cursor cr_lanaut;
                             rotina pc_busca_rendas_aut, melhoria do cursor cr_tbfolha_lanaut e ajustes de 
                             performance no xml (Carlos)
+
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
+                            da procedure: pc_consulta_arq_folha_ib e da função: fn_cdtarifa_cdfaixav,
+                            Prj.363 (Jean Michel).             
+
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -744,6 +757,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     
     RETURN TRUE;
   END fn_verifica_hist_folha;
+
+  -- Função para retornar código de tarifa e faixa da tarifa
+  FUNCTION fn_cdtarifa_cdfaixav(pr_cdocorre IN craptar.cdocorre%TYPE --> Contem o codigo da ocorrencia.
+                               )RETURN VARCHAR2 IS                                
+  
+    CURSOR cr_craptar IS
+      SELECT craptar.cdtarifa || ',' || crapfvl.cdfaixav
+        FROM craptar
+            ,crapfvl
+       WHERE craptar.cdtarifa = crapfvl.cdtarifa
+         AND craptar.cdinctar = (SELECT crapint.cdinctar FROM crapint WHERE UPPER(crapint.dsinctar) LIKE UPPER('FOLHA'||'%'))
+         AND craptar.cdocorre = pr_cdocorre
+         AND craptar.inpessoa = 2;
+     
+    vr_dstarfai VARCHAR2(20) := '';                        
+  BEGIN
+    OPEN cr_craptar;
+    FETCH cr_craptar INTO vr_dstarfai;
+    
+    RETURN vr_dstarfai;
+  END fn_cdtarifa_cdfaixav;
 
   
   /* Procedure de Reprovacao automatica de estouros fora do horario */
@@ -12232,7 +12266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Internet Bankig
   --  Sigla    : CRED
   --  Autor    : Renato Darosci - SUPERO
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 27/01/2016
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 05/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -12241,6 +12275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -- Alterações
   --             27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
   --
+  --             05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída, Prj.363 (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Buscar o registro pai na tabela CRAPPFP
@@ -12283,6 +12318,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
     vr_excerror    EXCEPTION;
 
+    vr_cdtarifa VARCHAR2(10);
+    vr_cdfaixav VARCHAR2(10);
+    vr_dstarfai VARCHAR2(20);
   BEGIN
 
     -- Buscar os dados da CRAPPFP
@@ -12300,6 +12338,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
     -- Fechar o cursor
     CLOSE cr_crappfp;
+    vr_dstarfai := FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => rw_crappfp.idopdebi);
+    vr_cdtarifa := gene0002.fn_busca_entrada(1,vr_dstarfai,',');
+    vr_cdfaixav := gene0002.fn_busca_entrada(2,vr_dstarfai,',');
 
     -- Montar o XML com os dados
     pr_retxml := '<criticas dtcredit="'||to_char(rw_crappfp.dtcredit,'DD/MM/RRRR')||'" '||
@@ -12309,7 +12350,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                            'qtregerr="0" '||
                            'qtdregok="'||NVL(rw_crappfp.qtregpag,0)||'" '||
                            'qtregtot="'||NVL(rw_crappfp.qtregpag,0)||'" '||
-                           'vltotpag="'||to_char(rw_crappfp.vllctpag,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')||'">';
+                           'vltotpag="'||to_char(rw_crappfp.vllctpag,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')||'" '||
+                           'cdtarifa="'||TO_CHAR(vr_cdtarifa)||'" '||
+                           'cdfaixav="'||TO_CHAR(vr_cdfaixav)||'" '||'>';
 
     -- Listar todos os registros filhos no XML
     FOR rw_craplfp IN cr_craplfp(rw_crappfp.cdcooper
