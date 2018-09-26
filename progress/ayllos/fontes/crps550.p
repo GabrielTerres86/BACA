@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 30/11/2016
+   Data    : Marco/2010                        Ultima atualizacao: 26/05/2018
 
    Dados referentes ao programa:
 
@@ -41,9 +41,15 @@
                             (Lucas R./Rodrigo)  
 
                29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
-               
+
+			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
+
                29/05/2018 - Alteracao no layout. Sera gerado respeitando o layout CCF607 da ABBC. 
                             Chamado SCTASK0012791 (Heitor - Mouts)
+			   
+			   04/09/2018 - Inclusão de nova regra para validar o HEADER. Verificar se a data do arquivo 
+							é diferente que a data do movimento anterior, se for, gerar a critica: 
+							"Data invalida no arquivo" e enviar um e-mail para a COMPE. Chamado PRB0040283 (Douglas - Mouts)
 
 ..............................................................................*/
 
@@ -99,6 +105,8 @@ DEF VAR aux_nmarqdat AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqlog AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqrel AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsdoerro AS CHAR                                           NO-UNDO.
+DEF VAR h-b1wgen0011 AS HANDLE										   NO-UNDO.
+DEF VAR aux_dscritic AS CHAR										   NO-UNDO.
 
 DEF VAR aux_vlcheque AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
@@ -330,6 +338,42 @@ PROCEDURE proc_processa_arquivo:
     IF  SUBSTR(aux_setlinha,4,6) <> "CCF617"
     AND SUBSTR(aux_setlinha,4,6) <> "CCF627" THEN
         ASSIGN glb_cdcritic = 887.
+
+	
+	IF  SUBSTR(aux_setlinha,10,8) <> STRING(glb_dtmvtoan,"99999999")  then
+    do:  
+    ASSIGN glb_cdcritic = 789.     
+    
+  
+
+/* enviar email */ 
+
+       RUN sistema/generico/procedures/b1wgen0011.p
+                        PERSISTENT SET h-b1wgen0011.
+         
+                IF VALID-HANDLE(h-b1wgen0011) THEN
+                  do:
+                 RUN solicita_email_oracle IN h-b1wgen0011
+				 (  INPUT  1
+                   ,INPUT  "CRPS550"    
+                   ,INPUT  "compe@ailos.coop.br"       
+                   ,INPUT "Arquivo de retorno da ABBC-CCF - " + STRING(glb_dtmvtolt,"99/99/9999") 
+                   ,INPUT "O arquivo lido na ABBC no momento do processo do dia" 
+                + " " + STRING(glb_dtmvtolt,"99/99/9999")  + " " + STRING(TIME,"HH:MM:SS") + ", não é o arquivo referente ao movimento anterior que é de" + " " + STRING(glb_dtmvtoan,"99/99/9999") + " " 
+                + "É necessário verificar com a ABBC a disponibilização do arquivo correto em seu FTP, e em seguida efetuar a execução manual do arquivo através da tela PRCCTL."                                        
+                   ,INPUT   " "              
+                   ,INPUT  "N"                
+                   ,INPUT  "N"                
+                   ,INPUT  " "
+                   ,INPUT  " " 
+                   ,INPUT  "N"                 
+                   ,INPUT  "N"                 
+                   ,OUTPUT aux_dscritic 
+				).      
+				END.
+	END.					
+
+	
 
 	/*** CCF617 ***/
 	IF SUBSTR(aux_setlinha,4,6) = "CCF617" THEN
@@ -684,7 +728,7 @@ PROCEDURE proc_processa_arquivo:
                     END.
     END. /*** Fim do DO WHILE TRUE ***/
             END. 
-           
+     
     INPUT STREAM str_1 CLOSE.
    
     UNIX SILENT VALUE("rm " + crawarq.nmarquiv + ".q 2> /dev/null").
