@@ -3814,7 +3814,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                     ,pr_des_erro     OUT VARCHAR2) IS          --> Erros do processo
     -- ..........................................................................
     --
-    --  Programa : pc_listar_talonarios_web
+    --  Programa : pc_listar_talonarios_web    Antigo: siscaixa/web/dbo/b1crap05.p/retorna-taloes
     --  Sistema  : Rotinas para listar talonarios Web
     --  Sigla    : CHEQUE
     --  Autor    : Lombardi
@@ -4014,7 +4014,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                     ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
     -- ..........................................................................
     --
-    --  Programa : pc_entrega_talonario_web
+    --  Programa : pc_entrega_talonario_web    Antigo: siscaixa/web/dbo/b1crap05.p/solicita-entrega-talao
     --  Sistema  : Rotina para entrega de talonario.
     --  Sigla    : CHEQUE
     --  Autor    : Lombardi
@@ -4873,7 +4873,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                    ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
     -- ..........................................................................
     --
-    --  Programa : pc_busca_conta_pelo_cpf
+    --  Programa : pc_busca_conta_pelo_cpf     Antigo: siscaixa/web/dbo/b1crap05.p/busca-info-terceiro
     --  Sistema  : Rotina para buscar a conta pelo CPF.
     --  Sigla    : CHEQUE
     --  Autor    : Lombardi
