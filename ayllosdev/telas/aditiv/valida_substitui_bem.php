@@ -110,7 +110,7 @@
     //echo ("console.log('funcaoSim: $funcaoSim');");
     
 		$funcaoNao = 'CancelaSubstituicao();';
-		$msgAvisoDefault = "Este processo irá retirar a alienação do veículo selecionado e alienar o novo veículo.";
+		$msgAvisoDefault = "Este processo irá primeiro alienar o novo veículo e depois baixar/cancelar a alienação do veículo a ser substituído.";
     
     // Se ha mensagem
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
