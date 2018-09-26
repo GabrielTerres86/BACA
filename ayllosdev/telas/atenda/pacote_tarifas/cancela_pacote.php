@@ -44,15 +44,15 @@
 	
 		$msgErro  = $xmlObjValidaInclusao->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);		
 	} 
 
 	$dtcancel = implode('', array_reverse(explode('/', $dtcancel)));
 	$dtinivig = implode('', array_reverse(explode('/', $dtinivig)));
 	
 	if ($dtcancel >= $dtinivig){
-		 exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso! </br> Os servi&ccedil;os permanecer&atilde;o vigentes at&eacute; o final deste m&ecirc;s.', 'Alerta - Ayllos', 'acessaOpcaoAba(1,0,0);', false);
+		 exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso! </br> Os servi&ccedil;os permanecer&atilde;o vigentes at&eacute; o final deste m&ecirc;s.', 'Alerta - Aimaro', 'acessaOpcaoAba(1,0,0);', false);
 	}else{
-		exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!', 'Alerta - Ayllos', 'acessaOpcaoAba(1,0,0);', false);
+		exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!', 'Alerta - Aimaro', 'acessaOpcaoAba(1,0,0);', false);
 	}
 ?>

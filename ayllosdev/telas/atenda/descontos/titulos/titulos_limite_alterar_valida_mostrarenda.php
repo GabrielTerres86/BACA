@@ -119,14 +119,14 @@
 	?>
 			hideMsgAguardo();
 			inconfir = "<?php echo $inconfir; ?>";
-			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","validaPrimeiroPassoAlteracao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","validaPrimeiroPassoAlteracao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
 	<?php
 	exit();
 	} elseif ($inconfir == 12) {
 	?>
 			hideMsgAguardo();
 			inconfi2 = "<?php echo $inconfir; ?>";
-			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Ayllos","validaPrimeiroPassoAlteracao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("<?php echo $mensagem; ?>","Confirma&ccedil;&atilde;o - Aimaro","validaPrimeiroPassoAlteracao(inconfir,inconfi2)","metodoBlock()","sim.gif","nao.gif");
 	<?php
 	exit();
 	}
@@ -134,7 +134,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	
@@ -153,5 +153,5 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 
 <?php if ($inconfir == 72 || $inconfir == 19) { ?>
 // Mostra informação e continua
-showError("inform","<?php echo $mensagem; ?>","Alerta - Ayllos","metodoBlock()");
+showError("inform","<?php echo $mensagem; ?>","Alerta - Aimaro","metodoBlock()");
 <?php } ?>

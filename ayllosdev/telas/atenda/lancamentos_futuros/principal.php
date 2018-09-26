@@ -8,7 +8,7 @@
 	    Objetivo  : Listar os Lancamentos Futuros
 
         Alteracoes:
-              30/06/2011 - Alterado para layout padr√£o (Rogerius - DB1).		
+              30/06/2011 - Alterado para layout padr„o (Rogerius - DB1).		
 			  
 			  21/07/2015 - Exclusao de lancamentos futuros (Tiago)
 		
@@ -16,7 +16,7 @@
 
 			   04/11/2017 - Ajuste permitir apenas consulta de extrato quando contas demitidas
                            (Jonata - RKAM P364).
-              Maio/2018 - PRJ364 - SM4 - Permitido edi√ß√£o para situa√ß√£o 7 ( Paulo Martins - Mouts )
+              Maio/2018 - PRJ364 - SM4 - Permitido ediÁ„o para situaÁ„o 7 ( Paulo Martins - Mouts )
 
 	  ************************************************************************/
 	
@@ -87,7 +87,7 @@
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -174,7 +174,7 @@
 	<a href="#" class="botao" id="btVoltar">Voltar</a>
 	
 	<?php
-	   //Projeto CRM: Para a situa√ß√µes de conta abaixo, a tela deve ser apresentada apenas para consulta.
+	   //Projeto CRM: Para a situaÁıes de conta abaixo, a tela deve ser apresentada apenas para consulta.
 		if(!($sitaucaoDaContaCrm == '4' || 
 			// $sitaucaoDaContaCrm == '7' ||  SM4
 			 $sitaucaoDaContaCrm == '8' || 

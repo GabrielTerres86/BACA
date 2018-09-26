@@ -24,13 +24,13 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"G")) <> '') {
 
-        exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 		
     }
 		
 	// Se parametros necessarios nao foram informados
 	if (!isset($_POST["camposPc"]) || !isset($_POST["dadosPrc"]) || !isset($_POST["operauto"])) {  
-		exibirErro('error',"Par&acirc;metros incorretos.",'Alerta - Ayllos','',false);
+		exibirErro('error',"Par&acirc;metros incorretos.",'Alerta - Aimaro','',false);
 	}	
 
 	$camposPc = $_POST["camposPc"];
@@ -38,7 +38,7 @@
   $operauto = $_POST["operauto"];
 			
 	if((count($camposPc) == 0) || (count($dadosPrc) == 0)){
-		exibirErro('error',"Conta(s) n&atilde;o encontrada(s).",'Alerta - Ayllos','',false);
+		exibirErro('error',"Conta(s) n&atilde;o encontrada(s).",'Alerta - Aimaro','',false);
 
 	}	
 		
@@ -66,11 +66,11 @@
             $nmdcampo = "opcao";
         }
 
-        exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','controlaFoco(\''.$nmdcampo.'\');',false);
+        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','controlaFoco(\''.$nmdcampo.'\');',false);
 
     }
 
-    exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','controlaVoltar();', false);
+    exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso.','Alerta - Aimaro','controlaVoltar();', false);
 
 	
 	

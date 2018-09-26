@@ -30,7 +30,7 @@
 		
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : "";
@@ -39,11 +39,11 @@
   
 	//Data
   if ( $idseqttl == "" ){
-    exibirErro('error','O campo Sequencial do Titular n&atilde;o foi preenchido!','Alerta - Ayllos','',false);
+    exibirErro('error','O campo Sequencial do Titular n&atilde;o foi preenchido!','Alerta - Aimaro','',false);
   }
   
   if ( $nrdconta == "" ){
-    exibirErro('error','O campo Numero da Conta n&atilde;o foi preenchido!','Alerta - Ayllos','',false);
+    exibirErro('error','O campo Numero da Conta n&atilde;o foi preenchido!','Alerta - Aimaro','',false);
   }
   
 	$xmlConsultaLog  = "";
@@ -69,7 +69,7 @@
 			$nmdcampo = "nrrecben";
 		}
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);		
 							
 	}
   
@@ -83,7 +83,7 @@
       break;
     
     case 'BLOQUEADA':
-      exibirErro('error','Senha bloqueada.','Alerta - Ayllos','',false);
+      exibirErro('error','Senha bloqueada.','Alerta - Aimaro','',false);
       break;
 
     case 'CANCELADA':

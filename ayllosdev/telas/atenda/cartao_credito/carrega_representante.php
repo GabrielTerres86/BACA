@@ -22,7 +22,7 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;	
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos',"fechaRotina($('#divUsoGenerico'),divRotina);",false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro',"fechaRotina($('#divUsoGenerico'),divRotina);",false);
 	
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -37,7 +37,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"fechaRotina($('#divUsoGenerico'),divRotina);",false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"fechaRotina($('#divUsoGenerico'),divRotina);",false);
 	}
 
 	$avalistas = $xmlObjeto->roottag->tags[0]->tags;

@@ -11,7 +11,7 @@
 	//***			  SD 479874 (Carlos R.)								   ***//	
 	//***                                                                  ***//	
 	//************************************************************************//
-
+ 
 	session_start();
 	
 	// Includes para controle da session, variaveis globais de controle, biblioteca de funcoes e leitura do xml de retorno
@@ -57,7 +57,7 @@
 	if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
 	
 		$msgErro  = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#cddsenh1\',\'#'.$frmSenha.'\').focus();limpaCamposSenha();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#cddsenh1\',\'#'.$frmSenha.'\').focus();limpaCamposSenha();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
 	}
 	
 	echo 'criarAlterarSenhaURA();';

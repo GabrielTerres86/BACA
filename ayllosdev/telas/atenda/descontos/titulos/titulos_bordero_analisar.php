@@ -68,14 +68,14 @@
 		exit;
 	}
 
-	echo 'showError("inform","'.htmlentities($root->dados->analisebordero->msgretorno->cdata).'","Alerta - Ayllos","carregaBorderosTitulos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo 'showError("inform","'.htmlentities($root->dados->analisebordero->msgretorno->cdata).'","Alerta - Aimaro","carregaBorderosTitulos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 
 		echo 'hideMsgAguardo();';
 		//echo 'habilitaBotaoLiberar(\'N\');';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 

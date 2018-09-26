@@ -36,6 +36,8 @@
 
 				 26/04/2018 - Ajuste na funcao de chamada da proposta e manutencao (Vitor Shimada Assanuma - GFT)
 
+				 14/08/2018 - Incluido novo botao 'Anular'. PRJ 438 (Mateus Z - Mouts)
+
 	************************************************************************/
 	
 	session_start();
@@ -114,7 +116,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -317,6 +319,17 @@
 			echo 'onClick="efetuarNovoLimite();" ';
 		} ?>/>
 	
+	<input 
+		type="button"
+		class="botao"
+		value="Anular"
+		id="btnAnular"
+		name="btnAnular"
+		<?php if ($qtLimites == 0) {
+			echo 'onClick="return false;"';
+		} else {
+			echo 'onClick="carregaDadosConsultaMotivos();" ';
+		} ?>/>	
 
 </div>
 

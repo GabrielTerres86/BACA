@@ -15,7 +15,7 @@ function controlaOperacaoFiliacao(operacao, msgRetorno) {
 	
 	// Verifica permissões de acesso
 	if ( (operacao == 'CA') && (flgAlterarFiliacao != '1') ) { 
-		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
+		showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina);');
 		return false;
 	} 
 		
@@ -29,7 +29,7 @@ function controlaOperacaoFiliacao(operacao, msgRetorno) {
 			break;
 		// Alteração para Consulta
 		case 'AC': 
-			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoFiliacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoFiliacao(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;	
 		// Alteração para Validação - Validando Alteração
@@ -68,7 +68,7 @@ function controlaOperacaoFiliacao(operacao, msgRetorno) {
 		},  
 		error: function(objAjax,responseError,objExcept) {	
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possivel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possivel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {			
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -106,14 +106,14 @@ function manterRotinaFiliacao(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});

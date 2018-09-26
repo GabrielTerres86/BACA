@@ -21,7 +21,7 @@ isPostMethod();
 // Se par&acirc;metros necess&aacute;rios n&atilde;o foram informados
 if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Ayllos","");';
+	echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Aimaro","");';
 	
 	exit();
 }

@@ -95,7 +95,7 @@
 
 		if ($confirma[0]->cdata == 1) {
 			echo 'hideMsgAguardo();';
-			echo 'showError("inform","'.$confirma[1]->cdata.'","Notifica&ccedil;&atilde;o - Ayllos","cancelaSenhaAcesso('.($confirma[0]->cdata + 1).')");';
+			echo 'showError("inform","'.$confirma[1]->cdata.'","Notifica&ccedil;&atilde;o - Aimaro","cancelaSenhaAcesso('.($confirma[0]->cdata + 1).')");';
 			
 			exit();
 		} else {					
@@ -118,14 +118,14 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgError) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgError.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgError.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	
 	// Função para mostrar mensagem de confirmação retornada pela BO
 	function exibeConfirmacao($aux_inconfir,$msgConfirmacao) {
 		echo 'hideMsgAguardo();';
-		echo 'showConfirmacao("'.$msgConfirmacao.'","Confirma&ccedil;&atilde;o - Ayllos","cancelaSenhaAcesso('.($aux_inconfir + 1).')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("'.$msgConfirmacao.'","Confirma&ccedil;&atilde;o - Aimaro","cancelaSenhaAcesso('.($aux_inconfir + 1).')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 		exit();	
 	}	
 	

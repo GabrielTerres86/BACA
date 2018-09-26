@@ -65,7 +65,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);
 	}
 	
 	$solcoord = $xmlObj->roottag->tags[0]->cdata;
@@ -73,7 +73,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if ($mensagem != "") {
-		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"validaDadosLimites(".$inpessoa.");\\\");" : ""),false);
+		exibirErro("error",$mensagem,"Alerta - Aimaro", ($solcoord == 1 ? "senhaCoordenador(\\\"validaDadosLimites(".$inpessoa.");\\\");" : ""),false);
 	} else {
 			
 		// Monta o xml de requisição
@@ -94,7 +94,7 @@
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);
 		}
 		
 		$solcoord = $xmlObj->roottag->tags[0]->cdata;
@@ -102,7 +102,7 @@
 		
 		// Se ocorrer um erro, mostra crítica
 		if ($mensagem != "") {
-			exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"validaDadosLimites(".$inpessoa.");\\\");" : ""),false);
+			exibirErro("error",$mensagem,"Alerta - Aimaro", ($solcoord == 1 ? "senhaCoordenador(\\\"validaDadosLimites(".$inpessoa.");\\\");" : ""),false);
 		} else {
 			echo "validaDadosLimites(".$inpessoa.");";
 		}

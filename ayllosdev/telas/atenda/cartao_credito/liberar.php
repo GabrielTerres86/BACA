@@ -84,7 +84,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -98,7 +98,7 @@
 			
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0,1,4);return false;" />
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif" onClick="liberacaoCartao(1);return false;" />
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer a libera&ccedil;&atilde;o do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','desfazLiberacaoCartao()','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer a libera&ccedil;&atilde;o do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','desfazLiberacaoCartao()','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
 			
 		</fieldset>
 	</form>

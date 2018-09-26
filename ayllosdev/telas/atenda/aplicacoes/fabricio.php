@@ -108,7 +108,7 @@ function selecionaAplicacoes(@$par_vlrg){
 		
 			if (getByTagName($aplicacoes[$y]->tags,"DTVENCTO") > $glbvars["dtmvtolt"]){
 				if ((getByTagName($aplicacoes[$y]->tags,"DTVENCTO") - $glbvars["dtmvtolt"]) < 10){
-					echo 'showConfirmacao("Aplica&ccedil;&atilde;o numero '.getByTagName($aplicacoes[$y]->tags,"NRAPLICA").' vencera em '.getByTagName($aplicacoes[$y]->tags,"DTVENCTO").'. Resgatar?","Confirma&ccedil;&atilde;o - Ayllos","'.$flgrgt = "true"'","'$flgrgt = "false"'","sim.gif","nao.gif");';
+					echo 'showConfirmacao("Aplica&ccedil;&atilde;o numero '.getByTagName($aplicacoes[$y]->tags,"NRAPLICA").' vencera em '.getByTagName($aplicacoes[$y]->tags,"DTVENCTO").'. Resgatar?","Confirma&ccedil;&atilde;o - Aimaro","'.$flgrgt = "true"'","'$flgrgt = "false"'","sim.gif","nao.gif");';
 				}
 			}
 			

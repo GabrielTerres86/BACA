@@ -108,17 +108,17 @@
 	
 	// Se o índice da opção "@" foi encontrado 
 	if (!($idPrincipal === false)) {
-		echo 'showError("inform","'.$dsmensag.'","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',\''.$idPrincipal.'\',\''.$glbvars["opcoesTela"][$idPrincipal].'\');");';
+		echo 'showError("inform","'.$dsmensag.'","Notifica&ccedil;&atilde;o - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',\''.$idPrincipal.'\',\''.$glbvars["opcoesTela"][$idPrincipal].'\');");';
 	
 	}	else {
-		echo 'showError("inform","'.$dsmensag.'","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');");';
+		echo 'showError("inform","'.$dsmensag.'","Notifica&ccedil;&atilde;o - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');");';
 		
 	}		
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

@@ -47,7 +47,7 @@
 										</form>
 										<br />
 										<input type="image" class="rotulo" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="fechaMotivoCancelamento();return false;" />
-										<input type="image" class="rotulo" id="btContinuar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','cancelarSeguro();','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false;" />
+										<input type="image" class="rotulo" id="btContinuar" src="<?php echo $UrlImagens; ?>botoes/continuar.gif" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','cancelarSeguro();','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false;" />
 										<br />
 									</div>
 								</td>

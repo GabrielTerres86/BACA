@@ -54,7 +54,7 @@
 		if ($msgErro == "") {
 			$msgErro = $xmlObj->roottag->tags[0]->cdata;
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 	}
 
 	$dados = $xmlObj->roottag->tags[0]->tags;
@@ -63,9 +63,9 @@
 
 	// idpeapro irá retornar 0 quando nao haverá perda de aprovacao e 1 para quando terá perda de aprovacao
 	if ($idpeapro == 0) {
-		echo "showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'F_VALOR\');', 'undoValor();bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');";
+		echo "showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'F_VALOR\');', 'undoValor();bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');";
 	} else {
-		echo "showConfirmacao('Com a altera&ccedil;&atilde;o a situa&ccedil;&atilde;o da proposta ser&aacute; modificada! Confirma altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'F_VALOR\');', '', 'sim.gif', 'nao.gif');";
+		echo "showConfirmacao('Com a altera&ccedil;&atilde;o a situa&ccedil;&atilde;o da proposta ser&aacute; modificada! Confirma altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'F_VALOR\');', '', 'sim.gif', 'nao.gif');";
 	}
 
 ?>

@@ -44,10 +44,10 @@
 	
 		$msgErro  = $xmlObjValidaInclusao->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);		
 							
 	} 
 	
-	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Ayllos','acessaOpcaoAba(1,0,0);',false);
+	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Alerta - Aimaro','acessaOpcaoAba(1,0,0);',false);
 	
 ?>

@@ -24,7 +24,7 @@
 			$this->AddPage();		
 			
 			$this->SetFont("Courier","B",9);
-			$this->Cell(18,0.5,"MANUAL DE AJUDA DAS TELAS - Sistema AYLLOS",0,1,"C",0,"");
+			$this->Cell(18,0.5,"MANUAL DE AJUDA DAS TELAS - Sistema AIMARO",0,1,"C",0,"");
 			$this->Ln();
 			
 			$this->Cell(18,0.5,"TELA  : ".$dados_F2["NMDATELA"]." - ".$dados_F2["TLDATELA"],0,1,"L",0,"");

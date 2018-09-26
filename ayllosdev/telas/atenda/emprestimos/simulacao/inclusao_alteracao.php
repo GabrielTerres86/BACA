@@ -34,7 +34,7 @@ $idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1';
 $cddopcao = (($operacao == "A_SIMULACAO") ? "A" : "I");
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
 // Monta o xml de requisição
@@ -92,7 +92,7 @@ echo "$('#vlrtotal','#frmSimulacao').val('" . $vlrtotal . "');";
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
     echo 'hideMsgAguardo();';
-    echo 'showError("error","' . $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata . '","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+    echo 'showError("error","' . $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata . '","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 } else {
 
     if ($operacao == "I_SIMULACAO") {

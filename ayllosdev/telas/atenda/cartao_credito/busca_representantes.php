@@ -25,12 +25,12 @@
 	
 	/* RENATO - SUPERO - 22/10/2014
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}*/
 	
 	// Verifica se os parâmetros necessários foram informados	
 	if(!isset($_POST["nrdconta"]) || !isset($_POST["tpctrato"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro,false);
 	}else{
 	
 		$nrdconta = $_POST["nrdconta"];
@@ -43,7 +43,7 @@
 		$nrcpfcgc = !isset($_POST["nrcpfcgc"]) ? 0 : $_POST["nrcpfcgc"];
 		
 		// Verifica se número da conta ou tpctrato é um inteiro válido
-		if (!validaInteiro($nrdconta) || !validaInteiro($tpctrato)) exibirErro('error','Op&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+		if (!validaInteiro($nrdconta) || !validaInteiro($tpctrato)) exibirErro('error','Op&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	}
 			
 	// Montar o xml de Requisicao
@@ -64,7 +64,7 @@
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	} else {
 	
 		$registros = $xmlObj->roottag->tags[0]->tags;		

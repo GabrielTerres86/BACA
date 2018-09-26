@@ -65,7 +65,7 @@
 	}
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	

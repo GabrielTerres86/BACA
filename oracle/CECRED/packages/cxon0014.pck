@@ -203,6 +203,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
 														
 					     19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
 							              InternetBanking (Projeto 338 - Lucas Lunelli)
+               12/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
+                            Marcelo Telles Coelho - Mouts
 														
 ..............................................................................*/
 
@@ -1337,6 +1339,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
     --   05/12/2014 - De acordo com a circula 3.656 do Banco Central,substituir
     --                nomenclaturas Cedente por Beneficiário e  Sacado por Pagador
     --                Chamado 229313 (Jean Reddiga - RKAM).
+    --   30/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
+    --                Marcelo Telles Coelho - Mouts
   BEGIN
     DECLARE
       --Variaveis Locais
@@ -1365,6 +1369,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+
+      --Variaveis Projeto 475
+      vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem20    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+
     BEGIN
       --Inicializar parametros erro
       pr_cdcritic:= NULL;
@@ -1532,9 +1542,107 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
          vr_sufixo   := 'C';
       END IF;
 
-      --Numero Contrato
-      vr_nrctrlif:= '1'||To_Char(rw_crapdat.dtmvtocd,'MMDD')||gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
-                    substr(To_Char(SYSTIMESTAMP,'MISSFF'),1,10)|| vr_sufixo;
+      -- Marcelo Telles Coelho - Projeto 475
+      -- Passar a gerar o número de controle no mesmo padrão de TED/TEC
+      -- --Numero Contrato
+      -- vr_nrctrlif:= '1'||To_Char(rw_crapdat.dtmvtocd,'MMDD')||gene0002.fn_mask(rw_crapcop.cdagectl,'9999')||
+      --               substr(To_Char(SYSTIMESTAMP,'MISSFF'),1,10)|| vr_sufixo;
+      --
+      vr_nrctrlif := '1'
+		  || to_char(SYSDATE,'rrmmdd')
+		  || gene0002.fn_mask(rw_crapcop.cdagectl,'9999')
+		  || to_char(SYSDATE,'sssss')
+		  /* para evitar duplicidade devido paralelismo */
+		  || to_char(SEQ_TEDENVIO.nextval,'fm000')
+                  || vr_sufixo;
+      -- Fim Projeto 475
+
+      -- Marcelo Telles Coelho - Projeto 475
+      -- Gerar registro de rastreio de mensagens
+      -- Fase 10
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                 ,pr_idorigem               => 'E'
+                                 ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => NULL
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Criar erro
+        CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_cod_erro => 0
+                             ,pr_dsc_erro => vr_dscritic
+                             ,pr_flg_erro => TRUE
+                             ,pr_cdcritic => vr_cd_erro
+                             ,pr_dscritic => vr_des_erro);
+
+          IF vr_des_erro IS NOT NULL THEN
+             vr_dscritic := vr_dscritic || ' - ' || vr_des_erro;
+          END IF;
+
+          IF vr_cdcritic IS NULL THEN
+          vr_cdcritic:= 0;
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+      END IF;
+      --
+      -- Gerar registro de rastreio de mensagens
+      -- Fase 20
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => 'Nao Utiliza OFSAA'
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => NULL
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Criar erro
+        CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_cod_erro => 0
+                             ,pr_dsc_erro => vr_dscritic
+                             ,pr_flg_erro => TRUE
+                             ,pr_cdcritic => vr_cd_erro
+                             ,pr_dscritic => vr_des_erro);
+
+          IF vr_des_erro IS NOT NULL THEN
+             vr_dscritic := vr_dscritic || ' - ' || vr_des_erro;
+          END IF;
+
+          IF vr_cdcritic IS NULL THEN
+          vr_cdcritic:= 0;
+          END IF;
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+      END IF;
+      -- Fim Projeto 475
 
       /** Enviar mensagem STR0026 para a cabine SPB **/
       SSPB0001.pc_proc_envia_vr_boleto (pr_cdcooper => pr_cdcooper  /* Cooperativa*/

@@ -30,10 +30,10 @@
 	}
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta = ($_POST['nrdconta'] == '') ? 0 : $_POST['nrdconta'];
@@ -42,8 +42,8 @@
 		
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl não foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl não foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xml  = '';
@@ -73,7 +73,7 @@
 	$registro = $xmlObjRegistro->roottag->tags[0]->tags[0]->tags;
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjConjuge->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjConjuge->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+	if (strtoupper($xmlObjConjuge->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjConjuge->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	
 	// Se não retornou erro, então pegar a mensagem de alerta do Progress na variável msgAlert, para ser utilizada posteriormente
 	$msgAlert = trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']);		
@@ -85,7 +85,7 @@
 	var operacao = '<? echo $operacao; ?>';		
 	controlaLayout(operacao);	
 	if ( msgAlert != '' ) { 
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(operacao);');
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(operacao);');
 	} else {
 		controlaFoco(operacao);
 	}

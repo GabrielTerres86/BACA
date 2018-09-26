@@ -31,8 +31,8 @@
 	$executandoProdutos = $_POST['executandoProdutos'];
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
-	if ($dscheque === "" && $dscheque_exc === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if ($dscheque === "" && $dscheque_exc === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -58,7 +58,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
 	}else{
 		$msgErro = ($cddopcao == 'I') ? 'Border&ocirc; inclu&iacute;do com sucesso' : 'Border&ocirc; alterado com sucesso';
@@ -66,11 +66,11 @@
 		//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
 		if ($executandoProdutos == 'true') {
 			
-			exibirErro('inform',$msgErro,'Alerta - Ayllos','encerraRotina(true);',false);
+			exibirErro('inform',$msgErro,'Alerta - Aimaro','encerraRotina(true);',false);
 			
 		}else{
 		
-		exibirErro('inform',$msgErro,'Alerta - Ayllos','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); carregaBorderosCheques();',false);
+		exibirErro('inform',$msgErro,'Alerta - Aimaro','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); carregaBorderosCheques();',false);
 		
 		}
 		

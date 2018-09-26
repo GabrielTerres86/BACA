@@ -93,12 +93,12 @@
 		exibeErro($xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	echo 'hideMsgAguardo();';
-	echo 'showConfirmacao("Deseja incluir o limite de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscChq(\'I\');","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	echo 'showConfirmacao("Deseja incluir o limite de desconto de cheques?","Confirma&ccedil;&atilde;o - Aimaro","gravaLimiteDscChq(\'I\');","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 		

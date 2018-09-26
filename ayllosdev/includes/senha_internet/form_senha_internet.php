@@ -63,7 +63,7 @@
 function exibeErroNew($tpdmsg,$msgErro) {
     echo '<script>';
     echo 'hideMsgAguardo();';
-    echo 'showError("'.$tpdmsg.'","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");';
+    echo 'showError("'.$tpdmsg.'","' . $msgErro . '","Alerta - Aimaro","desbloqueia()");';
     echo '</script>';
 }    
 	

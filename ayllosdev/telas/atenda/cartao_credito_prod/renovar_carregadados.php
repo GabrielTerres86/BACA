@@ -27,12 +27,12 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);
 	}			
 	
 	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrcrd"]) || !isset($_POST["nrcrcard"]) || !isset($_POST["inpessoa"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	$nrdconta = $_POST["nrdconta"];
@@ -41,13 +41,13 @@
 	$inpessoa = $_POST["inpessoa"];
 
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Verifica se número do contrato é um inteiro válido
-	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Verifica se tipo de pessoa é um inteiro válido
-	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Monta o xml de requisição
 	$xmlSetRenovar  = "";
@@ -78,7 +78,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjRenovar->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjRenovar->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$xmlObjRenovar->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 	}	
 
 	$dtvalatu = $xmlObjRenovar->roottag->tags[0]->tags[0]->tags[1]->cdata;
@@ -129,7 +129,7 @@
 		?>
 		<div id="divBotoes">
 			<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0,1,4);return false;">
-			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a renova&ccedil;&atilde;o do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos',funcaoVoltar,'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a renova&ccedil;&atilde;o do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro',funcaoVoltar,'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 			<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarAvalistas(3);return false;">
 		</div>
 	</div>

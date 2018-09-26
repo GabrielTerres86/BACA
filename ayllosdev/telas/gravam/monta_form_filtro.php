@@ -24,7 +24,8 @@
 	if($cddopcao == "G" ||
 	   $cddopcao == "H" ||
 	   $cddopcao == "I" ||
-	   $cddopcao == "R" ){
+	   $cddopcao == "R" ||
+	   $cddopcao == "P"){
 		   
 		// Monta o xml de requisição		
 		$xml  		= "";
@@ -101,6 +102,9 @@
 		</script>
 
 		<?
+		
+	}else if($cddopcao == "P"){
+		include('form_filtro_parametros.php');
 		
 	}else{
 		

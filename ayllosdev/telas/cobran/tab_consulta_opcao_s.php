@@ -25,7 +25,7 @@
     // Classe para leitura do xml de retorno
     require_once("../../class/xmlfile.php");	
     if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"S")) <> "") {
-        exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
+        exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
     }
  
     $telcdcop  = $_POST["telcdcop"];
@@ -50,7 +50,7 @@
 	    
 		// Validar se usuario possui permissao para Aprovar/Reprovar
 		if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
-			exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
+			exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
 		}
 
         // Montar o xml de Requisicao
@@ -71,10 +71,10 @@
         if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
             
             $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);            
-            exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
+            exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
             die;                   
         }else{            
-            exibirErro('inform','Convenio atualizado com sucesso.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
+            exibirErro('inform','Convenio atualizado com sucesso.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
         }             
     }    
     
@@ -108,7 +108,7 @@
         if ( $insitceb_atu != 0 && $msgError == "Dados nao encontrados!"  ){
             null; // nao apresentar a critica  
         }else {         
-            exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
+            exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();',true);
         }
     }else{
         

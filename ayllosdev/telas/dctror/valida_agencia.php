@@ -56,7 +56,7 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 		if (!empty($nmdcampo)) { $mtdErro = $mtdErro . "$('#".$nmdcampo."','#frmDctror').focus();";  }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 ?>

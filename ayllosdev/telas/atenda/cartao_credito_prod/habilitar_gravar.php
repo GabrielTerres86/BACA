@@ -272,12 +272,12 @@
 	echo 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));';	
 	
 	echo "metOpcaoAba = \"".$acessaaba."\";";	
-	echo 'callafterCartaoCredito = \'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","callafterCartaoCredito = metOpcaoAba;gerarImpressao(2,2,0,'.$nrctrcrd.',0);",metOpcaoAba,"sim.gif","nao.gif");\';';
+	echo 'callafterCartaoCredito = \'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","callafterCartaoCredito = metOpcaoAba;gerarImpressao(2,2,0,'.$nrctrcrd.',0);",metOpcaoAba,"sim.gif","nao.gif");\';';
 
 	/************************************************************************
 	  Impressão comentada para Projeto Cartões Bancoob - Lucas Lunelli - 04/07/2014
 	*************************************************************************
-	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","gerarImpressao(2,3,0,'.$nrctrcrd.',0);",metOpcaoAba,"sim.gif","nao.gif");';// Efetua a impressão do termo de solicitação de 2 via de senha
+	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","gerarImpressao(2,3,0,'.$nrctrcrd.',0);",metOpcaoAba,"sim.gif","nao.gif");';// Efetua a impressão do termo de solicitação de 2 via de senha
 	*************************************************************************/
 	
 	echo $acessaaba;	
@@ -285,7 +285,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 

@@ -46,12 +46,12 @@ $funcaoAposErro = 'bloqueiaFundo(divRotina);';
 
 	// Verifica permissão
 /*	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro,false);
 	}
 */	
 	// Verifica se os parâmetros necessários foram informados
 if (!isset($_POST["nrdconta"]) || !isset($_POST["cdadmcrd"]) || !isset($_POST["nrcpfcgc"])) {
-    exibirErro('error', 'Par&acirc;metros incorretos.', 'Alerta - Ayllos', $funcaoAposErro, false);
+    exibirErro('error', 'Par&acirc;metros incorretos.', 'Alerta - Aimaro', $funcaoAposErro, false);
 }
 
 $nrdconta = $_POST["nrdconta"];
@@ -64,8 +64,8 @@ $glbadc = $_POST['glbadc'];
 $inpessoa = $_POST["inpessoa"];
 	
 	// Verifica se número da conta é um inteiro válido
-if (!validaInteiro($nrdconta)) exibirErro('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Ayllos', $funcaoAposErro, false);
-if (!validaInteiro($cdadmcrd)) exibirErro('error', 'Administradora de Cart&atilde;o inv&aacute;lida.', 'Alerta - Ayllos', $funcaoAposErro, false);
+if (!validaInteiro($nrdconta)) exibirErro('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Aimaro', $funcaoAposErro, false);
+if (!validaInteiro($cdadmcrd)) exibirErro('error', 'Administradora de Cart&atilde;o inv&aacute;lida.', 'Alerta - Aimaro', $funcaoAposErro, false);
 	
     // Monta o xml de requisição
 $xmlSetCartao = "";
@@ -100,7 +100,7 @@ $xmlObjCartao = getObjectXML($xmlResult);
 if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
     $msgErro = $xmlObjCartao->roottag->tags[0]->cdata;
     $msgErro = $msgErro == null || $msgErro == '' ? $xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata : $msgErro;
-    echo 'showError("error","' . $msgErro . '","Alerta - Ayllos","voltaDiv(0,1,5); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
+    echo 'showError("error","' . $msgErro . '","Alerta - Aimaro","voltaDiv(0,1,5); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 } else {
     //Caso consulta retorne dados
     $dddebito = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;

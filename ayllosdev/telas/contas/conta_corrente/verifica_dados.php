@@ -67,19 +67,19 @@
 	if ( $operacao == 'VD' ){
 		// Se ocorrer um erro, mostra crítica
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		} else if ( $xmlObj->roottag->tags[0]->attributes['TIPCONFI'] == 0 ){
 			echo "controlaLayout('CB');";
 		} else if ( $xmlObj->roottag->tags[0]->attributes['TIPCONFI'] == 1 ){
-			echo "showConfirmacao('".$msgTitular."','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao(\'XT\')','controlaLayout(\'CA\')','sim.gif','nao.gif');";
+			echo "showConfirmacao('".$msgTitular."','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao(\'XT\')','controlaLayout(\'CA\')','sim.gif','nao.gif');";
 		} else if ( $xmlObj->roottag->tags[0]->attributes['TIPCONFI'] == 2 ){
-			echo "showConfirmacao('Deseja visualizar as cr&iacute;ticas?','Confirma&ccedil;&atilde;o - Ayllos','imprimeCritica(\'\');','bloqueiaFundo(divRotina);','sim.gif','nao.gif');";
+			echo "showConfirmacao('Deseja visualizar as cr&iacute;ticas?','Confirma&ccedil;&atilde;o - Aimaro','imprimeCritica(\'\');','bloqueiaFundo(divRotina);','sim.gif','nao.gif');";
 			//echo "controlaLayout('CA');";
 		}
 	} else if ( $operacao == 'VB' ){
 		// Se ocorrer um erro, mostra crítica
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		} else if ( $xmlObj->roottag->tags[0]->attributes['TIPCONFI'] == 0 ){
 			echo 'controlaLayout(\'CD\');';
 		}	

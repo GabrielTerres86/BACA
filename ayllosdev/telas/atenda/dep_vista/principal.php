@@ -97,7 +97,7 @@
 
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos');
+		exibirErro('error',$msgErro,'Alerta - Aimaro');
 	}
 
 	$camposPrejuizo = $xmlObjeto->roottag->tags[0]->tags;
@@ -121,7 +121,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 	
 	$depvista  = $xmlGetDepVista->roottag->tags[0]->tags[0]->tags;
@@ -144,7 +144,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	} 
@@ -230,5 +230,5 @@ hideMsgAguardo();
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
-<?php if ($msgLibera <> "") { echo 'showError("inform","'.$msgLibera.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");'; } ?>
+<?php if ($msgLibera <> "") { echo 'showError("inform","'.$msgLibera.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");'; } ?>
 </script>

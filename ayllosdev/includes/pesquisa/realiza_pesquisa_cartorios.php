@@ -18,7 +18,7 @@
 	// Verifica se os parâmtros necessários foram informados
 	if (!isset($_POST["cdpesqui"]) || 
 		!isset($_POST["tpdorgan"])) {
-		exibirErro('error','Par&acirc;metros incorretos para a pesquisa.','Alerta - Ayllos','bloqueiaFundo($(\'#divPesquisaCartorios\'))',true);
+		exibirErro('error','Par&acirc;metros incorretos para a pesquisa.','Alerta - Aimaro','bloqueiaFundo($(\'#divPesquisaCartorios\'))',true);
 	}	
 
 	
@@ -55,7 +55,7 @@
 
 	// Se ocorrer um erro, mostra cr&iacute;tica
 	if (isset($xmlObjPesquisa->roottag->tags[0]->name) && strtoupper($xmlObjPesquisa->roottag->tags[0]->name) == "ERRO") 
-		exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divPesquisa\'))');
+		exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#divPesquisa\'))');
 	
 	$pesquisa = ( isset($xmlObjPesquisa->roottag->tags[0]->tags[0]->tags) ) ? $xmlObjPesquisa->roottag->tags : array(); 
 

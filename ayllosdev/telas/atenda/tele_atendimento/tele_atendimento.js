@@ -55,7 +55,7 @@ function acessaOpcaoPrincipal() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
@@ -63,7 +63,7 @@ function acessaOpcaoPrincipal() {
                 controlaEventos();
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
             controlaFoco();
         }
@@ -197,14 +197,14 @@ function criarAlterarSenhaURA() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus()");
             }
         }
     });
@@ -225,20 +225,20 @@ function verifica_senha_ura() {
 
     if (cddsenh1 == "") {
         hideMsgAguardo();
-        showError("error", "Senha incorreta.", "Alerta - Ayllos", "cCddsenh1.focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Senha incorreta.", "Alerta - Aimaro", "cCddsenh1.focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     if (cddsenh2 == "") {
         hideMsgAguardo();
-        showError("error", "Senha incorreta.", "Alerta - Ayllos", "cCddsenh2.focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Senha incorreta.", "Alerta - Aimaro", "cCddsenh2.focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
     if (cddsenh1 != cddsenh2) {
         hideMsgAguardo();
         limpaCamposSenha();
-        showError("error", "Senha incorreta.", "Alerta - Ayllos", "cCddsenh1.focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Senha incorreta.", "Alerta - Aimaro", "cCddsenh1.focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
 
@@ -255,14 +255,14 @@ function verifica_senha_ura() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabAtenda').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#nrdconta','#frmCabAtenda').focus()");
             }
         }
     });

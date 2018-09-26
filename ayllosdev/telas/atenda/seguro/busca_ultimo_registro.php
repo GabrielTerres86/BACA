@@ -62,7 +62,7 @@ $xmlObjeto = getObjectXML($xmlResult);
 
 if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
 		$mtdErro = 'bloqueiaFundo(divRotina);';
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 }
 $ultimo  = $xmlObjeto->roottag->tags[0]->tags[0];
 $nrctrseg  = getByTagName($ultimo->tags,'nrctrseg');

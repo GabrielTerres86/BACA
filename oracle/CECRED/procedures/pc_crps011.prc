@@ -271,7 +271,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
                      ,rpp.nrdconta
                      ,rpp.nrctrrpp
                          ,rpp.vlsdrdpp
-                union
+                union all
                 select rpp.cdcooper,
                        rpp.nrdconta,
                        rpp.nrctrrpp,

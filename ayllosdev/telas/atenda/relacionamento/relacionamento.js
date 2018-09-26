@@ -64,7 +64,7 @@ function acessaOpcaoPrincipal() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			try {
@@ -73,7 +73,7 @@ function acessaOpcaoPrincipal() {
                 controlaFoco();
             } catch (error) {
 				hideMsgAguardo();					
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 	
@@ -144,7 +144,7 @@ function mostraQuestionario() {
 // Função para mostrar a opção Histórico de participação
 function mostraHistParticipacao() {
     if ($("#qthistor", "#frmRelacionamento").val() == 0) {
-        showError("error", "N&atilde;o foi encontrado nenhum hist&oacute;rico de participa&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "N&atilde;o foi encontrado nenhum hist&oacute;rico de participa&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
@@ -160,7 +160,7 @@ function mostraHistParticipacao() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao1").html(response);
@@ -190,14 +190,14 @@ function alterarDatasQuestionario() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			try {
 				eval(response);
             } catch (error) {
 				hideMsgAguardo();					
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 	
@@ -221,14 +221,14 @@ function buscaEventosPeriodo() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			try {
 				eval(response);
             } catch (error) {
 				hideMsgAguardo();					
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});
@@ -237,7 +237,7 @@ function buscaEventosPeriodo() {
 
 function confirmaEventosHistCooperado() {
 
-    showConfirmacao('Deseja visualizar o historico em PDF ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeHistCooperado() ', 'buscaEventosHistCooperado() ', 'sim.gif', 'nao.gif');
+    showConfirmacao('Deseja visualizar o historico em PDF ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeHistCooperado() ', 'buscaEventosHistCooperado() ', 'sim.gif', 'nao.gif');
 
 }
 
@@ -296,7 +296,7 @@ function buscaEventosHistCooperado() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao2").html(response);		
@@ -310,7 +310,7 @@ function mostraEventosEmAndamento(dsobs) {
 	// Mostra mensagem de aguardo
     if (dsobs == "P") {
         if ($("#qtpenden", "#frmRelacionamento").val() == 0) {
-            showError("error", "N&atilde;o foi encontrada nenhuma pr&eacute;-inscri&ccedil;&atilde;o pendente.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi encontrada nenhuma pr&eacute;-inscri&ccedil;&atilde;o pendente.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
         } else {
 			showMsgAguardo("Aguarde, carregando eventos em andamento pendentes ...");
@@ -318,7 +318,7 @@ function mostraEventosEmAndamento(dsobs) {
 	}
     else if (dsobs == "") {
         if ($("#qtandame", "#frmRelacionamento").val() == 0) {
-            showError("error", "Nenhum evento est&aacute; em andamento neste PA.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "Nenhum evento est&aacute; em andamento neste PA.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
         } else {
 			showMsgAguardo("Aguarde, carregando eventos em andamento ...");
@@ -326,7 +326,7 @@ function mostraEventosEmAndamento(dsobs) {
 	}
     else if (dsobs == "C") {
         if ($("#qtconfir", "#frmRelacionamento").val() == 0) {
-            showError("error", "N&atilde;o foi encontrada nenhuma inscri&ccedil;&atilde;o confirmada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi encontrada nenhuma inscri&ccedil;&atilde;o confirmada.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
         } else {
 			showMsgAguardo("Aguarde, carregando eventos em andamento confirmados ...");
@@ -347,7 +347,7 @@ function mostraEventosEmAndamento(dsobs) {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao1").html(response);
@@ -375,7 +375,7 @@ function mostraDetalhesEvento() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao2").html(response);
@@ -388,7 +388,7 @@ function mostraDetalhesEvento() {
 function mostraSituacaoDaInscricaoEvento() {
 
     if (dsobserv.search("H") >= 0 || dsobserv == "") {
-        showError("error", "N&atilde;o existe pr&eacute;-inscri&ccedil;&atilde;o para este evento.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "N&atilde;o existe pr&eacute;-inscri&ccedil;&atilde;o para este evento.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
@@ -409,7 +409,7 @@ function mostraSituacaoDaInscricaoEvento() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao2").html(response);
@@ -437,7 +437,7 @@ function mostraPreInscricao() {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao2").html(response);
@@ -473,7 +473,7 @@ function prosseguirPreInscricao(flgcoope, listaInscricoes) {
 					  '</table>' +
 					  '<br>Deseja prosseguir com a pre-inscricao?';
 					  
-    showConfirmacao(listaInscricoes, 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaExclusivoCooperado("' + flgcoope + '")', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+    showConfirmacao(listaInscricoes, 'Confirma&ccedil;&atilde;o - Aimaro', 'verificaExclusivoCooperado("' + flgcoope + '")', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 }
 
 // Verifica se o evento é exclusivo a cooperados
@@ -482,7 +482,7 @@ function verificaExclusivoCooperado(flgcoope) {
 	// Nao propria e evento exclusivo a cooperados 
     if ($("#tpinseve" + idseqttl, "#frmPreInscricao").val() != "yes" && flgcoope == "yes") {
 			
-        showConfirmacao('Evento exclusivo para cooperados. Confirma inscri&ccedil;&atilde;o de um n&atilde;o cooperado?', 'Confirma&ccedil;&atilde;o - Ayllos', 'criaPreInscricao () ', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
+        showConfirmacao('Evento exclusivo para cooperados. Confirma inscri&ccedil;&atilde;o de um n&atilde;o cooperado?', 'Confirma&ccedil;&atilde;o - Aimaro', 'criaPreInscricao () ', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 		
 	}
 	else {
@@ -520,7 +520,7 @@ function criaPreInscricao() {
         error: function (objAjax, responseError, objExcept) {
 			
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			
 		},
         success: function (response) {
@@ -529,7 +529,7 @@ function criaPreInscricao() {
 				eval(response);
             } catch (error) {
 				hideMsgAguardo();					
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}	
 				
 		}
@@ -542,7 +542,7 @@ function criaPreInscricao() {
 function mostraHistoricoEvento() {
 
     if (dsobserv == "") {
-        showError("error", "O evento selecionado n&atilde;o possui hist&oacute;rico.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "O evento selecionado n&atilde;o possui hist&oacute;rico.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
@@ -563,7 +563,7 @@ function mostraHistoricoEvento() {
 		},
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			$("#divOpcoesDaOpcao2").html(response);
@@ -581,7 +581,7 @@ function msgConfirmaStatus(opcaosit,imptermo) {
         msgconfir = 'Deseja alterar a situa&ccedil;&atilde;o?';
     }
 
-	showConfirmacao(msgconfir,'Confirma&ccedil;&atilde;o - Ayllos','alteraStatusEventoSI(' + opcaosit + ',"' + imptermo + '")','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
+	showConfirmacao(msgconfir,'Confirma&ccedil;&atilde;o - Aimaro','alteraStatusEventoSI(' + opcaosit + ',"' + imptermo + '")','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
 }
 
 // Alterar o status de um determinado evento
@@ -602,14 +602,14 @@ function alteraStatusEventoSI(opcaosit, imptermo) {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			try {
 				eval(response);
             } catch (error) {
 				hideMsgAguardo();					
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});	

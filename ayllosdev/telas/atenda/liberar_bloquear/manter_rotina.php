@@ -46,10 +46,10 @@
 	$flcnaulc = strtoupper($flcnaulc) == 'NO' ? 0 : 1;
 	
 	if ($operacao == 'ALTERARC' && $flmajora == 0 && $dsmotmaj == '')
-	  exibirErro('error',"&Eacute; obrigat&oacute;rio informar o motivo do bloqueio.",'Alerta - Ayllos',"$(\'#motivo_bloqueio_maj\',\'#frmContaCorrente\').focus();hideMsgAguardo();bloqueiaFundo(divRotina);",false);
+	  exibirErro('error',"&Eacute; obrigat&oacute;rio informar o motivo do bloqueio.",'Alerta - Aimaro',"$(\'#motivo_bloqueio_maj\',\'#frmContaCorrente\').focus();hideMsgAguardo();bloqueiaFundo(divRotina);",false);
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") 
-	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	   exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	if ($operacao == 'ALTERAR') {
 		// Monta o xml de requisição
@@ -94,7 +94,7 @@
 		exibeErro($msgErro);
 	}
 	
-	echo "showError('inform','Altera&ccedil;&atilde;o salva com sucesso!','Notifica&ccedil;&atilde;o - Ayllos','controlaOperacao(\'\');');";
+	echo "showError('inform','Altera&ccedil;&atilde;o salva com sucesso!','Notifica&ccedil;&atilde;o - Aimaro','controlaOperacao(\'\');');";
 	
 	function exibeErro($msgErro) {
 		echo 'showError("error"," '.$msgErro.'","Alerta - Atenda","$(\'#flgrenli\',\'#frmContaCorrente\').focus();hideMsgAguardo();bloqueiaFundo(divRotina);");';

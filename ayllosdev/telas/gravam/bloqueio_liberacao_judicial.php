@@ -25,7 +25,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
   
   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -77,19 +77,19 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);		
 					
 	} 
 		
   //Se for boqueio judicial
   if($cddopcao == "J"){ 
   
-    echo "showError('inform','Bloqueio do bem registrado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";
+    echo "showError('inform','Bloqueio do bem registrado com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";
         
   //Liberação judicial      
   }else{
   
-    echo "showError('inform','Desbloqueio do bem registrado com sucesso!','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+    echo "showError('inform','Desbloqueio do bem registrado com sucesso!','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";	
     
   }
 	  
@@ -97,32 +97,32 @@
   function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == '' ){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["nrctrpro"] == '' ){ 
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["cddopcao"] == 'J' && $GLOBALS["dsblqjud"] == 'SIM' ){ 
-			exibirErro('error','Bloqueio do bem j&aacute; registrado.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Bloqueio do bem j&aacute; registrado.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF ( ($GLOBALS["cddopcao"] == 'L' && $GLOBALS["dsblqjud"] == 'NAO')){
-      exibirErro('error','Libera&ccedil;&atilde;o do bem j&aacute; registrada.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);    
+      exibirErro('error','Libera&ccedil;&atilde;o do bem j&aacute; registrada.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);    
     
     }
     
     IF($GLOBALS["tpctrpro"] == 0 ){ 
-			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["idseqbem"] == 0 ){ 
-			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["dschassi"] == '' ||  $GLOBALS["ufdplaca"] == '' || $GLOBALS["nrdplaca"] == '' || $GLOBALS["nrrenava"] == 0){ 
-			exibirErro('error','Chassi, UF, Nr. da Placa e Renavam s&atilde;o obrigat&oacute;rios!','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Chassi, UF, Nr. da Placa e Renavam s&atilde;o obrigat&oacute;rios!','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     

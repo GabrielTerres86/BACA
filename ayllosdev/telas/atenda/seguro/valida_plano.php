@@ -23,7 +23,7 @@
 	}
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	if (!isset($_POST['nrdconta'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);	
 
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
 	$cdsegura = $_POST['cdsegura'] == '' ? 0 : $_POST['cdsegura'];

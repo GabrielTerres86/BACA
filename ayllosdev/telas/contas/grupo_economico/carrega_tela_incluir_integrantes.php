@@ -16,11 +16,11 @@
 	isPostMethod();
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'I')) <> ''){
-		exibirErro('error',$msgError,'Alerta - Ayllos','',true);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',true);
 	}
 	
 	if (!isset($_POST["idgrupo"])){
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 
 	$idgrupo = $_POST["idgrupo"] == "" ? 0  : $_POST["idgrupo"];
@@ -40,7 +40,7 @@
 		if ($msgErro == "") {
 			$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 		}
-		exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}
 	
     //echo ;

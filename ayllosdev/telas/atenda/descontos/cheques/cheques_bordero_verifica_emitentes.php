@@ -27,8 +27,8 @@
 	$vlcompcr = !isset($_POST["vlcompcr"]) ? 0  : $_POST["vlcompcr"];
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
-	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -50,7 +50,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
 	}else{
 		if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'EMITENTES')){

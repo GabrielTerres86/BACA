@@ -22,10 +22,10 @@
 	$op = $cddopcao;
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	// Verifica se o número da conta e o titular foram informados
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl']))  exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Guardo o número da conta e titular em variáveis
 	$nrdconta = $_POST['nrdconta'] == '' ? 0    : $_POST['nrdconta'];
@@ -36,7 +36,7 @@
 	$operacao = $_POST['operacao'] == '' ? 'CT' : $_POST['operacao'];
 		
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Monta o xml de requisição
 	$xml  = '';
@@ -72,7 +72,7 @@
 		} else {
 			$metodo = 'bloqueiaFundo(divRotina);controlaOperacao();';
 		}		
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 	}
 ?>
  

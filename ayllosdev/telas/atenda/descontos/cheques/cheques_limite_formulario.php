@@ -294,7 +294,7 @@
 	$("#btnContinuarLimite","#divBotoesLimite").unbind("click").bind("click",function() {
 		
 		if(parseInt($("#vllimite","#frmDadosLimiteDscChq").val().replace(",","")) == 0){
-			showError("error","Valor do limite deve ser maior que zero.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","Valor do limite deve ser maior que zero.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
 		}
 		

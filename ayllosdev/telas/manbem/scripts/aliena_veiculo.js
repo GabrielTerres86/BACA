@@ -1,10 +1,11 @@
 var errorMessage = "";
+
 $(function(){
 	$('#vlrdobem').maskMoney();
 	$('#vlrdobem').val($('#vlrdobem').val()).trigger('mask.maskMoney');
 	$('#vlfipbem').maskMoney();
 	$('#vlfipbem').val($('#vlfipbem').val()).trigger('mask.maskMoney');		
-	intervenienteValidado=false;	
+	intervenienteValidado = false;	
 });
 
 function convert_accented_characters(str){
@@ -97,7 +98,7 @@ function validaCamposAditiv(){
 	if(invalidos>0)
 	{
 		$("#msgErro").show();
-		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Ayllos','');
+		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Aimaro','');
 		return false;
 	}
 	else{
@@ -167,7 +168,7 @@ function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem,
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 			},
 			success: function(response) {
 				try {
@@ -176,7 +177,7 @@ function ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem,
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 				}
 			}
 		});
@@ -283,7 +284,7 @@ function SubstituiBem(){
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 			},
 			success: function(response) {
 				try {
@@ -291,7 +292,7 @@ function SubstituiBem(){
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 				}
 			}
 		});
@@ -300,7 +301,7 @@ function SubstituiBem(){
 	
 }
 $("#nrdplaca").keydown(function(){ 
-	 $("#nrdplaca").mask("AAA9999");
+	 $("#nrdplaca").mask("AAAAAAA");
 });
 
 function VerificaPessoa( campo ){
@@ -330,7 +331,7 @@ function busca_uf_pa(nrdconta) {
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {			
-            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'Não foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
         },
         success: function(response) {
             eval(response);

@@ -62,13 +62,13 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 							
 		if ($msgErro == 'Conta Sicredi nao cadastrada.') {
-			$metodo = "showConfirmacao('Deseja gerar conta Sicredi?','Confirma&ccedil;&atilde;o - Ayllos','gerarContaSicredi();','','sim.gif','nao.gif');";
+			$metodo = "showConfirmacao('Deseja gerar conta Sicredi?','Confirma&ccedil;&atilde;o - Aimaro','gerarContaSicredi();','','sim.gif','nao.gif');";
 		}		
 		else {		
 			$metodo = '$(\'#flgsicre\',\'#frmAutori\').focus();$(\'#flgmanua\',\'#frmAutori\').desabilitaCampo();';	
 		}		
 				
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$metodo,false);
 		
 	}
 	

@@ -6716,14 +6716,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
             OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_tpctrato => pr_tpctrato
-                            ,pr_nrctrato => pr_tpctrato);
+                            ,pr_nrctrato => pr_nrctrato);
             FETCH cr_crawlim INTO rw_craplim4;
             IF    cr_crawlim%NOTFOUND THEN
                   CLOSE cr_crawlim;
                   OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_tpctrato => pr_tpctrato
-                                  ,pr_nrctrato => pr_tpctrato);
+                                  ,pr_nrctrato => pr_nrctrato);
                   FETCH cr_craplim  INTO rw_craplim4;
                   CLOSE cr_craplim;
             ELSE
@@ -9100,14 +9100,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
             OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_tpctrato => pr_tpctrato
-                            ,pr_nrctrato => pr_tpctrato);
+                            ,pr_nrctrato => pr_nrctrato);
             FETCH cr_crawlim INTO rw_craplim7;
             IF    cr_crawlim%NOTFOUND THEN
                   CLOSE cr_crawlim;
                   OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_tpctrato => pr_tpctrato
-                                  ,pr_nrctrato => pr_tpctrato);
+                                  ,pr_nrctrato => pr_nrctrato);
                   FETCH cr_craplim INTO rw_craplim7;
                   CLOSE cr_craplim;
             ELSE

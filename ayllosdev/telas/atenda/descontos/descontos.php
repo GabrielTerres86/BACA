@@ -26,7 +26,7 @@
 	
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');	
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');	
 	}	
 
 	$cdproduto = $_POST['cdproduto'];

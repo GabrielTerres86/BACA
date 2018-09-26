@@ -150,14 +150,14 @@ function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodi
 			}, 
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos",'bloqueiaFundo(divRotina);return false;');
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro",'bloqueiaFundo(divRotina);return false;');
 			},
 			success: function(response) {
 				try {
 					eval(response);
 				} catch(error) {
 					hideMsgAguardo();
-					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos",'bloqueiaFundo(divRotina);return false;');
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro",'bloqueiaFundo(divRotina);return false;');
 				}
 			}	
 		});	
@@ -732,7 +732,7 @@ function realizaPesquisaDominios(nriniseq, quantReg, businessObject, nomeProcedu
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#frmConsulta').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#frmConsulta').css('z-index')))");
 		},
 		success: function(response) {
 		    $("#divResultadoPesquisa").html(response);
@@ -815,7 +815,7 @@ function realizaPesquisa(nriniseq, quantReg, businessObject, nomeProcedure, titu
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#frmConsulta').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#frmConsulta').css('z-index')))");
 		},
 		success: function(response) {
 		    $("#divResultadoPesquisa").html(response);
@@ -952,7 +952,7 @@ function montaSelect(businessObject, nomeProcedure, campoTela, valorRetorno, des
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel montar o select.","Alerta - Ayllos",'');
+			showError("error","N&atilde;o foi poss&iacute;vel montar o select.","Alerta - Aimaro",'');
 		},
 		success: function(response) {			
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -968,14 +968,14 @@ function montaSelect(businessObject, nomeProcedure, campoTela, valorRetorno, des
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
 				}
 			} else {
 				try {
 					eval( response );
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
 				}
 			}
 		
@@ -1180,21 +1180,21 @@ function pesquisaAssociado(nriniseq) {
     // Verifica código do PAC
     if ((cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq, true, 0, 999))) {
         hideMsgAguardo();
-        showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Aimaro', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
         return false;
     }
 
     // Verifica código do PAC
     if (cdpesqui == '2' && nrdctitg == '') {
         hideMsgAguardo();
-        showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Ayllos', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Aimaro', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
         return false;
     }
 
     // Verifica código do PAC
     if (cdpesqui == '3' && nrcpfcgc == '') {
         hideMsgAguardo();
-        showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Aimaro', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
         return false;
     }
 
@@ -1216,7 +1216,7 @@ function pesquisaAssociado(nriniseq) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaAssociado'));");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', "bloqueiaFundo($('#divPesquisaAssociado'));");
         },
         success: function (response) {
             $('#divResultadoPesquisaAssociado').html(response);
@@ -1240,19 +1240,19 @@ function pesquisaCartorio(nriniseq) {
 	var cdcooper = $('#cdcooper', '#frmPesquisaCartorios').val();
     if (cdpesqui == '1' && nmdbusca == '') {
         hideMsgAguardo();
-        showError('error', 'Informe o nome do cart&oacuterio.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
+        showError('error', 'Informe o nome do cart&oacuterio.', 'Alerta - Aimaro', "$('#cdagpesq','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
         return false;
     }
 
     if (cdpesqui == '2' && cdcidade == '') {
         hideMsgAguardo();
-        showError('error', 'Informe o nome da cidade do cart&oacuterio.', 'Alerta - Ayllos', "$('#cdcidade','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
+        showError('error', 'Informe o nome da cidade do cart&oacuterio.', 'Alerta - Aimaro', "$('#cdcidade','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
         return false;
     }
 
     if (cdpesqui == '3' && nrcpfcgc == '') {
         hideMsgAguardo();
-        showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
+        showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Aimaro', "$('#nrcpfcgc','#frmPesquisaCartorios').focus();bloqueiaFundo($('#divPesquisaCartorios'));");
         return false;
     }
 
@@ -1273,7 +1273,7 @@ function pesquisaCartorio(nriniseq) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaCartorios'));");
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', "bloqueiaFundo($('#divPesquisaCartorios'));");
         },
         success: function (response) {
             $('#divResultadoPesquisaCartorio').html(response);
@@ -1325,14 +1325,14 @@ function pesquisaAssociado_2_OnKeyDown(nriniseq) {
 	// Verifica código do PAC
             if ((cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq, true, 0, 999))) {
 		hideMsgAguardo();
-                showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Aimaro', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
 		return false;
 	}	
 	
 	// Verifica código do PAC
 	if (cdpesqui == '2' && nrdctitg == '') {
 		hideMsgAguardo();
-                showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Ayllos', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Aimaro', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
                 $('#btnError').click();
 		return false;
 	}	
@@ -1340,7 +1340,7 @@ function pesquisaAssociado_2_OnKeyDown(nriniseq) {
 	// Verifica código do PAC
 	if (cdpesqui == '3' && nrcpfcgc == '') {
 		hideMsgAguardo();
-                showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Aimaro', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
 		return false;
 	}	
 
@@ -1361,7 +1361,7 @@ function pesquisaAssociado_2_OnKeyDown(nriniseq) {
 		},
                 error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaAssociado'));");
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', "bloqueiaFundo($('#divPesquisaAssociado'));");
 		},			
                 success: function (response) {
 			$('#divResultadoPesquisaAssociado').html(response);			
@@ -1581,7 +1581,7 @@ function realizaPesquisaEndereco2(nriniseq, quantReg, auto, idRotina) {
 		error: function(objAjax,responseError,objExcept) {
 			semaforo--;
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","bloqueiaFundo($('#divPesquisaEndereco'))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","bloqueiaFundo($('#divPesquisaEndereco'))");
 		},
 		success: function(response) {
 			semaforo--;
@@ -1668,7 +1668,7 @@ function manterEndereco( operacao ) {
 		error: function(objAjax,responseError,objExcept) {
 			semaforo--;
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			semaforo--;
@@ -1677,7 +1677,7 @@ function manterEndereco( operacao ) {
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error',' N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error',' N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});

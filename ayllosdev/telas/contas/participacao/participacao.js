@@ -62,7 +62,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -81,10 +81,10 @@ function controlaOperacao( operacao ){
 	if ( operacao != 'EV' && operacao !='EC' && !verificaContadorSelect() ) return false;
 	
 	// Se não possui acesso para alterar, emitir mensagem	
-	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }	
-	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de inclus&atilde;o.'        ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TX') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclux&atilde;o.'        ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }	
+	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de inclus&atilde;o.'        ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TX') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclux&atilde;o.'        ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
 	
 	if ( in_array(operacao,['TC','TA','TX']) ) {
 		nrcpfcgc 	= '';
@@ -126,12 +126,12 @@ function controlaOperacao( operacao ){
 			break;
 		// Alteração para consulta tabela 		
 		case 'AT': 
-			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		// Formulario em modo inclusão para tabela consulta		
 		case 'IT': 
-           showConfirmacao('Deseja cancelar inclus&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+           showConfirmacao('Deseja cancelar inclus&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
             break;	
 		// Tabela consulta para inclusão		
@@ -207,7 +207,7 @@ function controlaOperacao( operacao ){
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -246,7 +246,7 @@ function manterRotina(operacao) {
 
 	nrcpfcgc = $('#nrcpfcgc','#frmParticipacaoEmpresas').val();
 	nrcpfcgc = normalizaNumero( nrcpfcgc );
-	if ( !validaCpfCnpj(nrcpfcgc,2) ) { showError('error','CNPJ inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmParticipacaoEmpresas\');'); return false; }
+	if ( !validaCpfCnpj(nrcpfcgc,2) ) { showError('error','CNPJ inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmParticipacaoEmpresas\');'); return false; }
 	
 	hideMsgAguardo();		
 	var msgOperacao = '';
@@ -315,14 +315,14 @@ function manterRotina(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});
@@ -461,7 +461,7 @@ function controlaLayout( operacao ) {
 				}
 					
 				// Verifica se a conta é válida
-				if ( !validaNroConta(nrdctato) ) { showError('error','Conta/dv inválida.','Alerta - Ayllos','focaCampoErro(\'nrdctato\',\'frmParticipacaoEmpresas\');'); return false; }
+				if ( !validaNroConta(nrdctato) ) { showError('error','Conta/dv inválida.','Alerta - Aimaro','focaCampoErro(\'nrdctato\',\'frmParticipacaoEmpresas\');'); return false; }
 				
 				// Se chegou até aqui, a conta é diferente do vazio e é válida, então realizar a operação desejada
 				nrcpfcgc = '';				
@@ -488,7 +488,7 @@ function controlaLayout( operacao ) {
 				if ( cpf == 0 ) { return false; }
 					
 				// Verifica se a conta é válida
-				if ( !validaCpfCnpj(cpf ,2) ) { showError('error','CNPJ inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmParticipacaoEmpresas\');'); return false; }
+				if ( !validaCpfCnpj(cpf ,2) ) { showError('error','CNPJ inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmParticipacaoEmpresas\');'); return false; }
 				
 				// Se chegou até aqui, a conta é diferente do vazio e é válida, então realizar a operação desejada
 				nrcpfcgc 	= cpf;

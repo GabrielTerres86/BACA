@@ -5,6 +5,8 @@
                               a escrita será PA (André Euzébio - Supero).
                               
                  10/08/2015 - Ajustes para projeto 229 - Melhorias OQS (Jean Michel).             
+                 
+                 21/09/2018 - sctask0029112 Melhoria de performance da tela não carregando a aba de PAs imediatamente (Carlos)
     -->
     <html>
     <head>
@@ -83,7 +85,7 @@
                               <table width="88" id="AbaPAC" border="0" cellpadding="0" cellspacing="0">
                                 <tr style="cursor:hand">
                                   <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
-                                  <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divPAC')">PAs</td>
+                                  <td width="80" align="center" class="txtTituloHid" onclick="mostraPAs()">PAs</td>
                                   <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
                                 </tr>
                               </table>
@@ -190,6 +192,8 @@
     }
 
     function mudaCoop(){
+       document.form.aux_nmpagina.value='divEventos';   
+    
        document.form.aux_cdcooper.value = document.form.aux_nmrescop.value;
        document.form.aux_dtanoage.value = '';
        document.form.submit();
@@ -302,8 +306,16 @@
        }
     }
 
+    function mostraPAs() {
+        document.form.aux_nmpagina.value='divPAC';
+    
+        document.form.aux_cddopcao.value = "pas";
+        document.form.submit();
+    }
+    
     function mostraDiv(nomediv)
     {   
+    
        var nomeaba = '';
 
        if (nomediv=='')

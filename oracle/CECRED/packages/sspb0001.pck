@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 /*
     Programa: sspb0001                        Antigo: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 30/11/2016
+    Data    : Outubro/2009                    Ultima Atualizacao: 12/07/2018
 
     Dados referentes ao programa:
 
@@ -84,6 +84,9 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
 			    10/07/2018 - Inclusao de logs e ajuste na validação de problemas para que erros nao passem
 							 despercebidos. (INC0018421 - Kelvin)
+
+                12/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
+                             Marcelo Telles Coelho - Mouts
 
 ..............................................................................*/
 
@@ -307,6 +310,48 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                           ,pr_cdcritic OUT INTEGER   --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2);--> Descricao do erro 
 
+  /******************************************************************************/
+  /**                         Envia TED/TEC  - SPB                             **/
+  /******************************************************************************/
+  PROCEDURE pc_proc_envia_tec_ted_prog
+                          (pr_cdcooper IN INTEGER   --> Cooperativa
+                          ,pr_cdagenci IN INTEGER   --> Cod. Agencia
+                          ,pr_nrdcaixa IN INTEGER   --> Numero  Caixa
+                          ,pr_cdoperad IN VARCHAR2  --> Operador
+                          ,pr_titulari IN INTEGER   --> Mesmo Titular.
+                          ,pr_vldocmto IN NUMBER    --> Vlr. DOCMTO
+                          ,pr_nrctrlif IN VARCHAR2  --> NumCtrlIF
+                          ,pr_nrdconta IN INTEGER   --> Nro Conta
+                          ,pr_cdbccxlt IN INTEGER   --> Codigo Banco
+                          ,pr_cdagenbc IN INTEGER   --> Cod Agencia
+                          ,pr_nrcctrcb IN NUMBER    --> Nr.Ct.destino
+                          ,pr_cdfinrcb IN INTEGER   --> Finalidade
+                          ,pr_tpdctadb IN INTEGER   --> Tp. conta deb
+                          ,pr_tpdctacr IN INTEGER   --> Tp conta cred
+                          ,pr_nmpesemi IN VARCHAR2  --> Nome Do titular
+                          ,pr_nmpesde1 IN VARCHAR2  --> Nome De 2TTT
+                          ,pr_cpfcgemi IN NUMBER    --> CPF/CNPJ Do titular
+                          ,pr_cpfcgdel IN NUMBER    --> CPF sec TTL
+                          ,pr_nmpesrcb IN VARCHAR2  --> Nome Para
+                          ,pr_nmstlrcb IN VARCHAR2  --> Nome Para 2TTL
+                          ,pr_cpfcgrcb IN NUMBER    --> CPF/CNPJ Para
+                          ,pr_cpstlrcb IN NUMBER    --> CPF Para 2TTL
+                          ,pr_tppesemi IN INTEGER   --> Tp. pessoa De
+                          ,pr_tppesrec IN INTEGER   --> Tp. pessoa Para
+                          ,pr_flgctsal IN INTEGER   --> CC Sal
+                          ,pr_cdidtran IN VARCHAR2  --> tipo de transferencia
+                          ,pr_cdorigem IN INTEGER   --> Cod. Origem
+                          ,pr_dtagendt IN DATE      --> data egendamento
+                          ,pr_nrseqarq IN INTEGER   --> nr. seq arq.
+                          ,pr_cdconven IN INTEGER   --> Cod. Convenio
+                          ,pr_dshistor IN VARCHAR2  --> Dsc do Hist.
+                          ,pr_hrtransa IN INTEGER   --> Hora transacao
+                          ,pr_cdispbif IN INTEGER   --> ISPB Banco
+                          ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED
+                          --------- SAIDA --------
+                          ,pr_cdcritic OUT INTEGER   --> Codigo do erro
+                          ,pr_dscritic OUT VARCHAR2);--> Descricao do erro
+
 PROCEDURE pc_trfsal_opcao_b(pr_cdcooper IN INTEGER    --> Cooperativa
                             ,pr_cdagenci IN INTEGER   --> Cod. Agencia  
                             ,pr_nrdcaixa IN INTEGER   --> Numero  Caixa  
@@ -469,6 +514,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     AND  (pr_flgdispb = 9 OR crapban.flgdispb = pr_flgdispb);
   rw_crapban cr_crapban%ROWTYPE;
 
+  -- Variaveis Projeto 475
+  vr_dsxml_mensagem     VARCHAR2(4000);
+  vr_nrseq_mensagem_xml TBSPB_MSG_XML.NRSEQ_MENSAGEM_XML%TYPE;
   
   /* Procedure para gerar xml boleto */
   PROCEDURE pc_gera_xml_vr_boleto (pr_cdcooper   IN INTEGER   --Codigo Cooperativa
@@ -524,6 +572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       --Variaveis para o arquivo XML
       vr_XMLType     XMLType;
       vr_des_xml     CLOB;
+      vr_des_log     VARCHAR2(4000);
 
       --Variaveis Locais
       vr_contador  INTEGER;
@@ -561,6 +610,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         --Escrever no arquivo XML
         vr_xml_str := vr_xml_str || pr_des_dados;
         dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
+        -- Marcelo Telles Coelho - Projeto 475
+        -- Guardar texto do XML para ser salvo na tabela TBSPB_MSG_XML
+        vr_dsxml_mensagem := vr_xml_str;
       END;
 
     BEGIN
@@ -679,35 +731,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       --Gera arquivo XML no diretorio salvar
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,vr_nom_direto,vr_nmarqxml, 0);
 
-      /* Com o comando SUDO pois para conecta no MQ atrav¿s do script o usu¿rio precisa ser ROOT
-      '/usr/bin/sudo /usr/local/cecred/bin/mqcecred_envia.pl' */
-
-      vr_dsparam:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'MQ_SUDO_ENVIA');
-      --Se nao encontrou sai com erro
-      IF vr_dsparam IS NULL THEN
-        --Montar mensagem de erro
-        vr_des_erro:= 'Não foi encontrado diretório para execução MQ.';
-        --Levantar Exceção
-        RAISE vr_exc_erro;
-      END IF;
-
-      --Montar comando
-      -- /usr/local/bin/exec_comando_oracle.sh mqcecred_envia (conforme solicitacao Tiago Wagner)
-      vr_comando:= '/usr/local/bin/exec_comando_oracle.sh mqcecred_envia ' || Chr(39) || vr_xml_str || Chr(39) || ' '
-                                                                           || Chr(39) || to_char(pr_cdcooper) || Chr(39) || ' '
-                                                                           || Chr(39) || vr_nmarqxml || Chr(39);
-
-      --Executar Comando Unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-      --Se ocorreu erro dar RAISE
-      IF vr_typ_saida = 'ERR' THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Nao foi possivel executar comando unix. Erro '|| vr_dscritic||': '||vr_comando;--odirlei
-        RAISE vr_exc_erro;
-      END IF;
+      -- Marcelo Telles Coelho - Projeto 475
+      -- Não gera/envia mais arquivo físico
+      -- O envio acontecera pelo SSPB0001.pc_grava_XML que ira inserir na tabela TB_CONSUMO_BARRAMENTO
+      -- O envio será efetivado pelo SOA
+      -- /* Com o comando SUDO pois para conecta no MQ atrav¿s do script o usu¿rio precisa ser ROOT
+      -- '/usr/bin/sudo /usr/local/cecred/bin/mqcecred_envia.pl' */
+      --
+      -- vr_dsparam:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'MQ_SUDO_ENVIA');
+      -- --Se nao encontrou sai com erro
+      -- IF vr_dsparam IS NULL THEN
+      --   --Montar mensagem de erro
+      --   vr_des_erro:= 'Não foi encontrado diretório para execução MQ.';
+      --   --Levantar Exceção
+      --   RAISE vr_exc_erro;
+      -- END IF;
+      --
+      -- --Montar comando
+      -- -- /usr/local/bin/exec_comando_oracle.sh mqcecred_envia (conforme solicitacao Tiago Wagner)
+      -- vr_comando:= '/usr/local/bin/exec_comando_oracle.sh mqcecred_envia ' || Chr(39) || vr_xml_str || Chr(39) || ' '
+      --                                                                      || Chr(39) || to_char(pr_cdcooper) || Chr(39) || ' '
+      --                                                                      || Chr(39) || vr_nmarqxml || Chr(39);
+      --
+      -- --Executar Comando Unix
+      -- GENE0001.pc_OScommand(pr_typ_comando => 'S'
+      --                      ,pr_des_comando => vr_comando
+      --                      ,pr_typ_saida   => vr_typ_saida
+      --                      ,pr_des_saida   => vr_dscritic);
+      -- --Se ocorreu erro dar RAISE
+      -- IF vr_typ_saida = 'ERR' THEN
+      --   vr_cdcritic := 0;
+      --   vr_dscritic := 'Nao foi possivel executar comando unix. Erro '|| vr_dscritic||': '||vr_comando;--odirlei
+      --   RAISE vr_exc_erro;
+      -- END IF;
+      -- Fim Projeto 475
 
       -- Liberando a mem¿ria alocada pro CLOB
       dbms_lob.close(vr_des_xml);
@@ -852,6 +909,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+
+      -- Marcelo Telles Coelho - Mouts - Projeto 475
+      vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem20    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+      vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+
     BEGIN
       --Inicializar parametros erro
       pr_cdcritic:= NULL;
@@ -1010,6 +1073,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_fldebcred:= 'D'; /* Debito */
       /*    crapcop.dssigaut   */
       vr_nroperacao:= pr_nrctrlif;
+
+      -- Marcelo Telles Coelho - Projeto 475
+      -- Gerar registro de rastreio de mensagens
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                 ,pr_idorigem               => 'E'
+                                 ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                 ,pr_nrcontrole             => pr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => NULL
+                                 ,pr_dsxml_completo         => NULL
+                                 ,pr_nrseq_mensagem_xml     => NULL
+                                 ,pr_nrdconta               => NULL
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(pr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      --
+      -- Gerar registro de rastreio de mensagens
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                                 ,pr_nrcontrole             => pr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => NULL
+                                 ,pr_dsxml_completo         => NULL
+                                 ,pr_nrseq_mensagem_xml     => NULL
+                                 ,pr_nrdconta               => NULL
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      -- Fim Projeto 475
+
       /*-- Monta o BODY --*/
       SSPB0001.pc_gera_xml_vr_boleto (pr_cdcooper   => pr_cdcooper  --Codigo Cooperativa
                                      ,pr_cdorigem   => pr_cdorigem  --Identificador Origem
@@ -1045,6 +1158,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      --
+      -- Incluir o XML na tabela TBSPB_MSG_XML
+      -- Marcelo Telles Coelho - Projeto 475
+      sspb0003.pc_grava_xml(pr_nmmensagem         => 'STR0026'
+                           ,pr_inorigem_mensagem  => 'E'
+                           ,pr_dhmensagem         => SYSDATE
+                           ,pr_dsxml_mensagem     => SUBSTR(vr_dsxml_mensagem,1,4000)
+                           ,pr_dsxml_completo     => vr_dsxml_mensagem
+                           ,pr_inenvio            => 1 -- Mensagem ser enviada para o JD
+                           ,pr_cdcooper           => pr_cdcooper
+                           ,pr_nrdconta           => NULL
+                           ,pr_cdproduto          => 30 -- TED
+                           ,pr_nrseq_mensagem_xml => vr_nrseq_mensagem_xml
+                           ,pr_dscritic           => vr_dscritic
+                           ,pr_des_erro           => vr_des_erro
+                           );
+      -- se retornou critica, abortar programa
+      IF nvl(vr_des_erro,'OK') <> 'OK' OR
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+      --
+      -- Altera o nome da mensagem para o correto e grava o número do ID da XML
+      sspb0003.pc_acerta_nmmensagem(pr_nmmensagem         => 'STR0026'             --> Nome da mensagem enviada
+                                   ,pr_nmmensagem_OLD     => 'MSG_TEMPORARIA'
+                                   ,pr_nrcontrole_if      => pr_nrctrlif           --> Nr.controle da Instituição Financeira
+                                   ,pr_nrseq_mensagem_xml => vr_nrseq_mensagem_xml --> Nr.sequencial do XML da mensagem
+                                   ,pr_dscritic           => vr_dscritic
+                                   ,pr_des_erro           => vr_des_erro);
+      -- se retornou critica, abortar programa
+      IF nvl(vr_des_erro,'OK') <> 'OK' OR
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+      -- Fim Projeto 475
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
@@ -2616,14 +2766,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         vr_nrctadif := REGEXP_REPLACE(pr_nrctadif,'([^1234567890])','0');
     END;
 
+    -- Marcelo Telles Coelho - Projeto 475
+    -- Incluído o INSERT dentro de um LOOP para tentar evitar o erro de duplicidade de chave
+    -- Este erro ocorreu uma única vez nas homologações do projeto 475
+    --
+    FOR I IN 1..3
+    LOOP
     /* Busca a proxima sequencia do campo CRAPLMT.NRSEQUEN */
     vr_nrsequen := fn_sequence( 'CRAPLMT'
                                ,'NRSEQUEN'
                                , pr_cdcooper ||';'||
                                  to_char(pr_dttransa,'DD/MM/RRRR') ||';'||
-                                 vr_nrdconta
+                                   NVL(vr_nrdconta,0) -- Marcelo Telles Coellho - Projeto 475
                                ,'N');
-
     BEGIN
       INSERT INTO craplmt
                ( craplmt.cdcooper
@@ -2684,13 +2839,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 ,nvl(pr_nrispbif,0)     --> craplmt.nrispbif
                 ,nvl(pr_inestcri,0)     --> craplmt.inestcri
                 ,nvl(pr_cdifconv,0));   --> craplmt.cdifconv
-
+        EXIT;
     EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          NULL; -- Erro não tratado, pois irá tentar por 3 vezes.
       WHEN OTHERS THEN
+          pr_cdcritic := 0;
         pr_dscritic := 'Não foi possivel gravar crplmt: '||SQLERRM;
     END;
+    END LOOP;
   EXCEPTION
     WHEN OTHERS THEN
+      pr_cdcritic := 0;
       pr_dscritic := 'Não foi possivel gerar log TED: '||SQLERRM;
   END pc_grava_log_ted;
 
@@ -2817,8 +2977,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
       --> String que recebe a mensagem enviada por buffer
       vr_dsarqenv := vr_dsarqenv||pr_des_dados;
+      dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
+      -- Salvar texto do XML para ser salvo na tabela TBSPB_MSG_XML
+      -- Marcelo Telles Coelho - Projeto 475
+      vr_dsxml_mensagem := vr_dsarqenv;
     END;
-  BEGIN
+  BEGIN -- inicio pc_gera_xml
     -- Separador decimal de centavos deve ser "."
     vr_vldocmto := REPLACE(to_char(pr_vldocmto),',','.');
 
@@ -3103,14 +3267,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     
     -- descarregar buffer
     pc_escreve_xml(' ',TRUE);
-    gene0002.pc_XML_para_arquivo(pr_XML     => vr_des_xml,
-                                 pr_caminho => vr_dsdircop||'/salvar/',
-                                 pr_arquivo => vr_nmarquiv,
-                                 pr_des_erro=> vr_dscritic);
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-
+    -- Marcelo Telles Coelho - Projeto 475
+    -- Não gera/envia mais arquivo físico
+    -- O envio acontecera pelo SSPB0001.pc_grava_XML que ira inserir na tabela TB_CONSUMO_BARRAMENTO
+    -- O envio será efetivado pelo SOA
+    -- gene0002.pc_XML_para_arquivo(pr_XML     => vr_des_xml,
+    --                              pr_caminho => vr_dsdircop||'/salvar/',
+    --                              pr_arquivo => vr_nmarquiv,
+    --                              pr_des_erro=> vr_dscritic);
+    -- IF TRIM(vr_dscritic) IS NOT NULL THEN
+    --   RAISE vr_exc_erro;
+    -- END IF;
+    -- Fim Projeto 475
 
     -- gravar log craplmt
     pc_grava_log_ted ( pr_cdcooper => pr_cdcooper    --> Codigo cooperativo
@@ -3148,22 +3316,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       raise vr_exc_erro;
     END IF;*/
 
-    -- Montar comando
-    -- /usr/local/bin/exec_comando_oracle.sh mqcecred_envia (conforme solicitacao Tiago Wagner)
-    vr_comando:= '/usr/local/bin/exec_comando_oracle.sh mqcecred_envia ' || Chr(39) || vr_dsarqenv || Chr(39) || ' '
-                                                                         || Chr(39) || pr_cdcooper || Chr(39) || ' '
-                                                                         || Chr(39) || vr_nmarqxml || Chr(39);
-    --Executar Comando Unix
-    GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                         ,pr_des_comando => vr_comando
-                         ,pr_typ_saida   => vr_typ_saida
-                         ,pr_des_saida   => vr_dscritic);
-    --Se ocorreu erro dar RAISE
-    IF vr_typ_saida = 'ERR' THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao executar o comando ' || vr_comando || '. Saida ' || vr_typ_saida || ' . Erro '|| vr_dscritic;
-      RAISE vr_exc_erro;
-    END IF;
+    -- Marcelo Telles Coelho - Projeto 475
+    -- Não gera/envia mais arquivo físico
+    -- O envio acontecera pelo SSPB0001.pc_grava_XML que ira inserir na tabela TB_CONSUMO_BARRAMENTO
+    -- O envio será efetivado pelo SOA
+    -- -- Montar comando
+    -- -- /usr/local/bin/exec_comando_oracle.sh mqcecred_envia (conforme solicitacao Tiago Wagner)
+    -- vr_comando:= '/usr/local/bin/exec_comando_oracle.sh mqcecred_envia ' || Chr(39) || vr_dsarqenv || Chr(39) || ' '
+    --                                                                      || Chr(39) || pr_cdcooper || Chr(39) || ' '
+    --                                                                      || Chr(39) || vr_nmarqxml || Chr(39);
+    -- --Executar Comando Unix
+    -- GENE0001.pc_OScommand(pr_typ_comando => 'S'
+    --                      ,pr_des_comando => vr_comando
+    --                      ,pr_typ_saida   => vr_typ_saida
+    --                      ,pr_des_saida   => vr_dscritic);
+    -- --Se ocorreu erro dar RAISE
+    -- IF vr_typ_saida = 'ERR' THEN
+    --   vr_cdcritic := 0;
+    --   vr_dscritic := 'Erro ao executar o comando ' || vr_comando || '. Saida ' || vr_typ_saida || ' . Erro '|| vr_dscritic;
+    --   RAISE vr_exc_erro;
+    -- END IF;
+    -- Fim Projeto 475
+    --
     -- Uma vez executado o script não pode mais abortar o envio
     -- por isso realizado o commit;
     COMMIT;
@@ -4092,7 +4266,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+    --
+    -- Incluir o XML na tabela TBSPB_MSG_XML
+    -- Marcelo Telles Coelho - Projeto 475
+    sspb0003.pc_grava_xml(pr_nmmensagem         => vr_nmmsgenv
+                         ,pr_inorigem_mensagem  => 'E'
+                         ,pr_dhmensagem         => SYSDATE
+                         ,pr_dsxml_mensagem     => SUBSTR(vr_dsxml_mensagem,1,4000)
+                         ,pr_dsxml_completo     => vr_dsxml_mensagem
+                         ,pr_inenvio            => 1 -- Mensagem ser enviada para o JD
+                         ,pr_cdcooper           => pr_cdcooper
+                         ,pr_nrdconta           => pr_nrdconta
+                         ,pr_cdproduto          => 30 -- TED
+                         ,pr_nrseq_mensagem_xml => vr_nrseq_mensagem_xml
+                         ,pr_dscritic           => vr_dscritic
+                         ,pr_des_erro           => vr_des_erro
+                         );
+    -- Everton Souza - Projeto 475
+    -- Acertar nome da mensagens na tabela tbspb_msg_enviada_fase
+    sspb0003.pc_acerta_nmmensagem(pr_nmmensagem         => vr_nmmsgenv           --> Nome da mensagem enviada
+                                 ,pr_nmmensagem_OLD     => 'MSG_TEMPORARIA'
+                                 ,pr_nrcontrole_if      => pr_nrctrlif           --> Nr.controle da Instituição Financeira
+                                 ,pr_nrseq_mensagem_xml => vr_nrseq_mensagem_xml --> Nr.sequencial do XML da mensagem
+                                 ,pr_dscritic           => vr_dscritic
+                                 ,pr_des_erro           => vr_des_erro);
 
+    -- se retornou critica, abortar programa
+    IF nvl(vr_des_erro,'OK') <> 'OK' OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      vr_cdcritic := 0;
+      RAISE vr_exc_erro;
+    END IF;
+    -- Fim Projeto 475
+    --
+    --
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic:= vr_cdcritic;
@@ -4102,6 +4309,188 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_cdcritic:= 0;
       pr_dscritic:= 'Não foi possivel enviar TEC/TED para o SPB. '|| sqlerrm;
   END pc_proc_envia_tec_ted;
+
+  PROCEDURE pc_proc_envia_tec_ted_prog
+                          (pr_cdcooper IN INTEGER   --> Cooperativa
+                          ,pr_cdagenci IN INTEGER   --> Cod. Agencia
+                          ,pr_nrdcaixa IN INTEGER   --> Numero  Caixa
+                          ,pr_cdoperad IN VARCHAR2  --> Operador
+                          ,pr_titulari IN INTEGER   --> Mesmo Titular.
+                          ,pr_vldocmto IN NUMBER    --> Vlr. DOCMTO
+                          ,pr_nrctrlif IN VARCHAR2  --> NumCtrlIF
+                          ,pr_nrdconta IN INTEGER   --> Nro Conta
+                          ,pr_cdbccxlt IN INTEGER   --> Codigo Banco
+                          ,pr_cdagenbc IN INTEGER   --> Cod Agencia
+                          ,pr_nrcctrcb IN NUMBER    --> Nr.Ct.destino
+                          ,pr_cdfinrcb IN INTEGER   --> Finalidade
+                          ,pr_tpdctadb IN INTEGER   --> Tp. conta deb
+                          ,pr_tpdctacr IN INTEGER   --> Tp conta cred
+                          ,pr_nmpesemi IN VARCHAR2  --> Nome Do titular
+                          ,pr_nmpesde1 IN VARCHAR2  --> Nome De 2TTT
+                          ,pr_cpfcgemi IN NUMBER    --> CPF/CNPJ Do titular
+                          ,pr_cpfcgdel IN NUMBER    --> CPF sec TTL
+                          ,pr_nmpesrcb IN VARCHAR2  --> Nome Para
+                          ,pr_nmstlrcb IN VARCHAR2  --> Nome Para 2TTL
+                          ,pr_cpfcgrcb IN NUMBER    --> CPF/CNPJ Para
+                          ,pr_cpstlrcb IN NUMBER    --> CPF Para 2TTL
+                          ,pr_tppesemi IN INTEGER   --> Tp. pessoa De
+                          ,pr_tppesrec IN INTEGER   --> Tp. pessoa Para
+                          ,pr_flgctsal IN INTEGER   --> CC Sal
+                          ,pr_cdidtran IN VARCHAR2  --> tipo de transferencia
+                          ,pr_cdorigem IN INTEGER   --> Cod. Origem
+                          ,pr_dtagendt IN DATE      --> data egendamento
+                          ,pr_nrseqarq IN INTEGER   --> nr. seq arq.
+                          ,pr_cdconven IN INTEGER   --> Cod. Convenio
+                          ,pr_dshistor IN VARCHAR2  --> Dsc do Hist.
+                          ,pr_hrtransa IN INTEGER   --> Hora transacao
+                          ,pr_cdispbif IN INTEGER   --> ISPB Banco
+                          ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED
+                          --------- SAIDA --------
+                          ,pr_cdcritic OUT INTEGER   --> Codigo do erro
+                          ,pr_dscritic OUT VARCHAR2) IS --> Descricao do erro
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+      Programa : proc_envia_tec_ted_prog        Antigo:
+      Sistema  : Comunicação com SPB
+      Sigla    : CRED
+      Autor    :
+      Data     : Julho/2018                    Ultima atualizacao:   /  /
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Procedure para que o progress invoque a "pc_proc_envia_tec_ted"
+
+      Alteração :
+
+  ---------------------------------------------------------------------------------------------------------------*/
+    ---------------> VARIAVEIS <-----------------
+    vr_titulari BOOLEAN; --> Mesmo Titular.
+    vr_flgctsal BOOLEAN;  --> CC Sal
+
+    -- Marcelo Telles Coelho - Mouts - Projeto 475
+    vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem20    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+    vr_des_erro            VARCHAR2(100);
+    vr_dscritic            VARCHAR2(1000);
+    vr_exc_erro            EXCEPTION;
+
+  BEGIN -- inicio pc_proc_envia_tec_ted_prog
+
+    -- Inicializar com FALSE
+    vr_titulari := FALSE;
+    vr_flgctsal := FALSE;
+
+    -- Converter os valores inteiros em booleanos
+    IF pr_titulari = 1 THEN
+      vr_titulari := TRUE;
+    END IF;
+
+    IF pr_flgctsal = 1 THEN
+      vr_flgctsal := TRUE;
+    END IF;
+
+    -- Marcelo Telles Coelho - Projeto 475
+    -- Gerar registro de rastreio de mensagens
+    sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                               ,pr_idorigem               => 'E'
+                               ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                               ,pr_nrcontrole             => pr_nrctrlif
+                               ,pr_nrcontrole_str_pag     => NULL
+                               ,pr_nrcontrole_dev_or      => NULL
+                               ,pr_dhmensagem             => sysdate
+                               ,pr_insituacao             => 'OK'
+                               ,pr_dsxml_mensagem         => NULL
+                               ,pr_dsxml_completo         => NULL
+                               ,pr_nrseq_mensagem_xml     => NULL
+                               ,pr_nrdconta               => pr_nrdconta
+                               ,pr_cdcooper               => pr_cdcooper
+                               ,pr_cdproduto              => 30 -- TED
+                               ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                               ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                               ,pr_dscritic               => vr_dscritic
+                               ,pr_des_erro               => vr_des_erro);
+    -- Se ocorreu erro
+    IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(pr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    --
+    -- Gerar registro de rastreio de mensagens
+    sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                               ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                               ,pr_nrcontrole             => pr_nrctrlif
+                               ,pr_nrcontrole_str_pag     => NULL
+                               ,pr_nrcontrole_dev_or      => NULL
+                               ,pr_dhmensagem             => sysdate
+                               ,pr_insituacao             => 'OK'
+                               ,pr_dsxml_mensagem         => NULL
+                               ,pr_dsxml_completo         => NULL
+                               ,pr_nrseq_mensagem_xml     => NULL
+                               ,pr_nrdconta               => pr_nrdconta
+                               ,pr_cdcooper               => pr_cdcooper
+                               ,pr_cdproduto              => 30 -- TED
+                               ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                               ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                               ,pr_dscritic               => vr_dscritic
+                               ,pr_des_erro               => vr_des_erro);
+    -- Se ocorreu erro
+    IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    -- Fim Projeto 475
+
+    SSPB0001.pc_proc_envia_tec_ted
+                          (pr_cdcooper => pr_cdcooper   --> Cooperativa
+                          ,pr_cdagenci => pr_cdagenci   --> Cod. Agencia
+                          ,pr_nrdcaixa => pr_nrdcaixa   --> Numero  Caixa
+                          ,pr_cdoperad => pr_cdoperad   --> Operador
+                          ,pr_titulari => vr_titulari   --> Mesmo Titular.
+                          ,pr_vldocmto => pr_vldocmto   --> Vlr. DOCMTO
+                          ,pr_nrctrlif => pr_nrctrlif   --> NumCtrlIF
+                          ,pr_nrdconta => pr_nrdconta   --> Nro Conta
+                          ,pr_cdbccxlt => pr_cdbccxlt   --> Codigo Banco
+                          ,pr_cdagenbc => pr_cdagenbc   --> Cod Agencia
+                          ,pr_nrcctrcb => pr_nrcctrcb   --> Nr.Ct.destino
+                          ,pr_cdfinrcb => pr_cdfinrcb   --> Finalidade
+                          ,pr_tpdctadb => pr_tpdctadb   --> Tp. conta deb
+                          ,pr_tpdctacr => pr_tpdctacr   --> Tp conta cred
+                          ,pr_nmpesemi => pr_nmpesemi   --> Nome Do titular
+                          ,pr_nmpesde1 => pr_nmpesde1   --> Nome De 2TTT
+                          ,pr_cpfcgemi => pr_cpfcgemi   --> CPF/CNPJ Do titular
+                          ,pr_cpfcgdel => pr_cpfcgdel   --> CPF sec TTL
+                          ,pr_nmpesrcb => pr_nmpesrcb   --> Nome Para
+                          ,pr_nmstlrcb => pr_nmstlrcb   --> Nome Para 2TTL
+                          ,pr_cpfcgrcb => pr_cpfcgrcb   --> CPF/CNPJ Para
+                          ,pr_cpstlrcb => pr_cpstlrcb   --> CPF Para 2TTL
+                          ,pr_tppesemi => pr_tppesemi   --> Tp. pessoa De
+                          ,pr_tppesrec => pr_tppesrec   --> Tp. pessoa Para
+                          ,pr_flgctsal => vr_flgctsal   --> CC Sal
+                          ,pr_cdidtran => pr_cdidtran   --> tipo de transferencia
+                          ,pr_cdorigem => pr_cdorigem   --> Cod. Origem
+                          ,pr_dtagendt => pr_dtagendt   --> data egendamento
+                          ,pr_nrseqarq => pr_nrseqarq   --> nr. seq arq.
+                          ,pr_cdconven => pr_cdconven   --> Cod. Convenio
+                          ,pr_dshistor => pr_dshistor   --> Dsc do Hist.
+                          ,pr_hrtransa => pr_hrtransa   --> Hora transacao
+                          ,pr_cdispbif => pr_cdispbif   --> ISPB Banco
+                          ,pr_flvldhor => pr_flvldhor   --> Flag para verificar se deve validar o horario permitido para TED(1-valida,0-nao valida)
+                          --------- SAIDA --------
+                          ,pr_cdcritic => pr_cdcritic   --> Codigo do erro
+                          ,pr_dscritic => pr_dscritic); --> Descricao do erro
+
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+    -- Marcelo Telles Coelho - Projeto 475
+      pr_cdcritic:= 0;
+      pr_dscritic:= vr_dscritic;
+    WHEN OTHERS THEN
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Não foi possivel enviar TEC/TED para o SPB (2). '|| sqlerrm;
+  END pc_proc_envia_tec_ted_prog;
 
   /******************************************************************************/
   /**                         Tela TRFSAL Opção B                              **/
@@ -4301,6 +4690,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_clobxmlc CLOB;
     vr_hrlimted NUMBER;
 
+    -- Marcelo Telles Coelho - Mouts - Projeto 475
+    vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem20    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+    vr_des_erro            VARCHAR2(100);
+
   BEGIN
 
     /* Busca dados da cooperativa */
@@ -4432,6 +4827,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                  pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                  pr_cdempres => pr_cdempres) LOOP
 
+      -- 
+      -- Se estiver setado como estado de crise e não for crédito intercooperativa
+      IF  vr_inestcri > 0  and rw_crapccs.cdbantrf <> 85 THEN
+          --
+          BEGIN
+            UPDATE craplfp
+               SET idsitlct = 'E'  --Erro
+                  ,dsobslct = 'Erro encontrado - Estado de Crise Ativo'
+             WHERE progress_recid = rw_crapccs.nrridlfp;
+
+          EXCEPTION
+              WHEN OTHERS THEN
+                vr_cdcritic := 9999;
+                vr_dscritic := 'Erro ao atualizar o registro na CRAPLFP: '||SQLERRM;
+                -- Executa a exceção
+                RAISE vr_exc_erro;
+          END;          
+          --
+          --
+          BEGIN
+               INSERT INTO craplcs
+                          (cdcooper,
+                           dtmvtolt,
+                           nrdconta,
+                           vllanmto,
+                           dttransf,
+                           cdopetrf,
+                           hrtransf,
+                           cdopecrd,
+                           nrdocmto,
+                           cdsitlcs,
+                           nmarqenv,
+                           cdhistor,
+                           nrdolote,
+                           nrautdoc,
+                           cdagenci,
+                           cdbccxlt,
+                           flgenvio,
+                           idopetrf,
+                           flgopfin,
+                           nrridlfp)
+                    SELECT cdcooper,
+                           dtmvtolt,
+                           nrdconta,
+                           vllanmto,
+                           dttransf,
+                           cdopetrf,
+                           hrtransf,
+                           cdopecrd,
+                           nrdocmto,
+                           cdsitlcs,
+                           nmarqenv,
+                           gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIST_REC_TECSAL'),
+                           nrdolote,
+                           nrautdoc,
+                           cdagenci,
+                           cdbccxlt,
+                           flgenvio,
+                           idopetrf,
+                           flgopfin,
+                           nrridlfp
+                      FROM craplcs lcs
+                     WHERE lcs.progress_recid = rw_crapccs.rowidlcs;
+
+           EXCEPTION
+                WHEN OTHERS THEN
+                  vr_cdcritic := 9999;
+                  vr_dscritic := 'Erro ao inserir craplcs: ' || rw_crapccs.rowidlcs || SQLERRM;
+                  -- Executa a exceção
+                  RAISE vr_exc_erro;
+           END;          
+          --
+          continue; -- passa para próximo registro
+          --
+      END IF;
+      --
 
      /* Atualiza o registro de credito do salario como enviado */
         BEGIN
@@ -4692,6 +5163,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             WHEN OTHERS THEN
               vr_tab_crattem(vr_idxtbtem).nrctatrf := to_number(vr_tab_crattem(vr_idxtbtem).nrctatrf || '0');
           END;
+
+          -- Marcelo Telles Coelho - Projeto 475
+          -- Gerar registro de rastreio de mensagens
+          sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                     ,pr_idorigem               => 'E'
+                                     ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                     ,pr_nrcontrole             => vr_nrctrlif
+                                     ,pr_nrcontrole_str_pag     => NULL
+                                     ,pr_nrcontrole_dev_or      => NULL
+                                     ,pr_dhmensagem             => sysdate
+                                     ,pr_insituacao             => 'OK'
+                                     ,pr_dsxml_mensagem         => NULL
+                                     ,pr_dsxml_completo         => NULL
+                                     ,pr_nrseq_mensagem_xml     => NULL
+                                     ,pr_nrdconta               => vr_tab_crattem(vr_idxtbtem).nrdconta
+                                     ,pr_cdcooper               => rw_crapcop.cdcooper
+                                     ,pr_cdproduto              => 30 -- TED
+                                     ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                     ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                     ,pr_dscritic               => vr_dscritic
+                                     ,pr_des_erro               => vr_des_erro);
+          -- Se ocorreu erro
+          IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(pr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          --
+          -- Gerar registro de rastreio de mensagens
+          sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                     ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                                     ,pr_nrcontrole             => vr_nrctrlif
+                                     ,pr_nrcontrole_str_pag     => NULL
+                                     ,pr_nrcontrole_dev_or      => NULL
+                                     ,pr_dhmensagem             => sysdate
+                                     ,pr_insituacao             => 'OK'
+                                     ,pr_dsxml_mensagem         => NULL
+                                     ,pr_dsxml_completo         => NULL
+                                     ,pr_nrseq_mensagem_xml     => NULL
+                                     ,pr_nrdconta               => vr_tab_crattem(vr_idxtbtem).nrdconta
+                                     ,pr_cdcooper               => rw_crapcop.cdcooper
+                                     ,pr_cdproduto              => 30 -- TED
+                                     ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                     ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                     ,pr_dscritic               => vr_dscritic
+                                     ,pr_des_erro               => vr_des_erro);
+          -- Se ocorreu erro
+          IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          -- Fim Projeto 475
 
           pc_proc_envia_tec_ted (pr_cdcooper => rw_crapcop.cdcooper                     --> Cooperativa
                                 ,pr_cdagenci => vr_tab_crattem(vr_idxtbtem).cdagenci   --> Cod. Agencia
@@ -4982,6 +5502,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrdcomto craplcs.nrdocmto%TYPE := 0;
     vr_inestcri INTEGER;
     vr_clobxmlc CLOB;
+
+    -- Marcelo Telles Coelho - Mouts - Projeto 475
+    vr_nrseq_mensagem10    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem20    tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+    vr_des_erro            VARCHAR2(100);
+
   BEGIN
 
     /* Busca dados da cooperativa */
@@ -5284,6 +5811,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             WHEN OTHERS THEN
               vr_tab_crattem(vr_idxtbtem).nrctatrf := to_number(vr_tab_crattem(vr_idxtbtem).nrctatrf || '0');
           END;
+
+          -- Marcelo Telles Coelho - Projeto 475
+          -- Gerar registro de rastreio de mensagens
+          sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                     ,pr_idorigem               => 'E'
+                                     ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                     ,pr_nrcontrole             => vr_nrctrlif
+                                     ,pr_nrcontrole_str_pag     => NULL
+                                     ,pr_nrcontrole_dev_or      => NULL
+                                     ,pr_dhmensagem             => sysdate
+                                     ,pr_insituacao             => 'OK'
+                                     ,pr_dsxml_mensagem         => NULL
+                                     ,pr_dsxml_completo         => NULL
+                                     ,pr_nrseq_mensagem_xml     => NULL
+                                     ,pr_nrdconta               => vr_tab_crattem(vr_idxtbtem).nrdconta
+                                     ,pr_cdcooper               => rw_crapcop.cdcooper
+                                     ,pr_cdproduto              => 30 -- TED
+                                     ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                     ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                     ,pr_dscritic               => vr_dscritic
+                                     ,pr_des_erro               => vr_des_erro);
+          -- Se ocorreu erro
+          IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(pr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          --
+          -- Gerar registro de rastreio de mensagens
+          sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                     ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                                     ,pr_nrcontrole             => vr_nrctrlif
+                                     ,pr_nrcontrole_str_pag     => NULL
+                                     ,pr_nrcontrole_dev_or      => NULL
+                                     ,pr_dhmensagem             => sysdate
+                                     ,pr_insituacao             => 'OK'
+                                     ,pr_dsxml_mensagem         => NULL
+                                     ,pr_dsxml_completo         => NULL
+                                     ,pr_nrseq_mensagem_xml     => NULL
+                                     ,pr_nrdconta               => vr_tab_crattem(vr_idxtbtem).nrdconta
+                                     ,pr_cdcooper               => rw_crapcop.cdcooper
+                                     ,pr_cdproduto              => 30 -- TED
+                                     ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                     ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                     ,pr_dscritic               => vr_dscritic
+                                     ,pr_des_erro               => vr_des_erro);
+          -- Se ocorreu erro
+          IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          -- Fim Projeto 475
 
           pc_proc_envia_tec_ted (pr_cdcooper => rw_crapcop.cdcooper                     --> Cooperativa
                                 ,pr_cdagenci => vr_tab_crattem(vr_idxtbtem).cdagenci   --> Cod. Agencia

@@ -25,7 +25,7 @@
 	                'nrctaav2','nmdaval2','nrcpfav2','cpfcjav2','ende1av2','redirect','cddopcao');
 
 	foreach ($params as $nomeParam) {
-		if (!in_array($nomeParam,array_keys($_POST))) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		if (!in_array($nomeParam,array_keys($_POST))) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$nrdconta = $_POST['nrdconta'];
@@ -44,25 +44,25 @@
 	$cddopcao = $_POST['cddopcao'];
 
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se número da conta do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav1)) exibirErro('error','Conta/dv do 1o Avalista inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrctaav1)) exibirErro('error','Conta/dv do 1o Avalista inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se número da conta do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav2)) exibirErro('error','Conta/dv do 2o Avalista inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrctaav2)) exibirErro('error','Conta/dv do 2o Avalista inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se CPF do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav1)) exibirErro('error','CPF do 1o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrcpfav1)) exibirErro('error','CPF do 1o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se CPF do Conjugê do 1° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav1)) exibirErro('error','CPF do Conjug&ecirc; do 1o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($cpfcjav1)) exibirErro('error','CPF do Conjug&ecirc; do 1o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Verifica se CPF do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav2)) exibirErro('error','CPF do 2o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrcpfav2)) exibirErro('error','CPF do 2o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Verifica se CPF do Conjugê do 2° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav2)) exibirErro('error','CPF do Conjug&ecirc; do 2o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($cpfcjav2)) exibirErro('error','CPF do Conjug&ecirc; do 2o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xmlValidaAvalista  = "";
@@ -103,7 +103,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjAvalista->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	} 
 	
 	// Esconde mensagem de aguardo
@@ -113,6 +113,6 @@
 	if ($cddopcao == "I") { // Incluir
 		echo 'validaNrContrato();';
 	}elseif ($cddopcao == "A") { // Alterar
-		echo 'showConfirmacao("Deseja alterar os dados do limite de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscChq(\'A\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja alterar os dados do limite de desconto de cheques?","Confirma&ccedil;&atilde;o - Aimaro","gravaLimiteDscChq(\'A\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	}
 ?>

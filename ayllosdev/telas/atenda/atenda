@@ -103,7 +103,7 @@ $(document).ready(function() {
 		
 		// Valida número da conta
 		if (!validaNroConta(retiraCaracteres($(this).val(),"0123456789",true))) {
-			showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrdconta','#frmCabAtenda').focus()");
+			showError("error","Conta/dv inv&aacute;lida.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
 			limparDadosCampos();
 			return false;
 		} 
@@ -214,7 +214,7 @@ function buscaAnotacoes() {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divAnotacoes').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divAnotacoes').css('z-index')))");
 		},
 		success: function(response) {
 			$("#divListaAnotacoes").html(response);
@@ -265,7 +265,7 @@ function acessaRotina(nomeValidar,nomeTitulo,nomeURL) {
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","");
 			},
 			success: function(response) {
 				$("#divRotina").html(response);
@@ -315,7 +315,7 @@ function obtemCabecalho() {
 	// Se nenhum dos tipos de conta foi informado
 	if (nrdconta == "" && nrdctitg == "") {
 		hideMsgAguardo();
-		showError("error","Informe o n&uacute;mero da Conta/dv ou da Conta/Itg.","Alerta - Ayllos","$('#nrdconta','#frmCabAtenda').focus()");
+		showError("error","Informe o n&uacute;mero da Conta/dv ou da Conta/Itg.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
 		return false;
 	}
 
@@ -323,7 +323,7 @@ function obtemCabecalho() {
 	if (nrdconta != "") { 
 		if (!validaNroConta(nrdconta)) {
 			hideMsgAguardo();
-			showError("error","Conta/dv inv&aacute;lida.","Alerta - Ayllos","$('#nrdconta','#frmCabAtenda').focus()");
+			showError("error","Conta/dv inv&aacute;lida.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
 			limparDadosCampos();
 			return false;
 		}
@@ -341,7 +341,7 @@ function obtemCabecalho() {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","$('#nrdconta','#frmCabAtenda').focus()");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");
 		},
 		success: function(response) {			
 			try {
@@ -358,7 +358,7 @@ function obtemCabecalho() {
 				}
 			} catch(error) {
 				hideMsgAguardo();					
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","$('#nrdconta','#frmCabAtenda').focus()");				
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Aimaro","$('#nrdconta','#frmCabAtenda').focus()");				
 			}			
 		}				
 	}); 

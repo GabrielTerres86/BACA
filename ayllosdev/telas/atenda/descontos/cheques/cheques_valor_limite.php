@@ -24,7 +24,7 @@
 	setVarSession("nmrotina","DSC CHQS - LIMITE");
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"R",false)) <> '') {
-		exibirErro("error",$msgError,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))",true);
+		exibirErro("error",$msgError,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))",true);
 	}
 	
 	$vllimite = (isset($_POST['vllimite'])) ? $_POST['vllimite'] : 0;

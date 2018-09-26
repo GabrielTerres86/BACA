@@ -26,7 +26,7 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);	
 	}	
 	
 	// Verifica se os parâmetros necessários foram informados
@@ -34,7 +34,7 @@
         !isset($_POST["nrctrcrd"]) ||
 		!isset($_POST["nrcrcard"]) ||
 		!isset($_POST["inpessoa"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 	}
 
 	$nrdconta = $_POST["nrdconta"];
@@ -43,13 +43,13 @@
 	$nrcrcard = $_POST["nrcrcard"];
 
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Verifica se tipo de pessoa é um inteiro válido
-	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Verifica se número do contrato é um inteiro válido
-	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Monta o xml de requisição
 	$xmlSetLimCredCrd  = "";
@@ -80,7 +80,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjLimCredCrd->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjLimCredCrd->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$xmlObjLimCredCrd->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	$vllimcre = $xmlObjLimCredCrd->roottag->tags[0]->tags[0]->tags[0]->cdata;
@@ -156,7 +156,7 @@
 		?>
 		<div id="divBotoes">
 			<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4);return false;">
-			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a altera&ccedil;&atilde;o de limite de cr&eacute;dito do cart&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','voltaDiv(0,2,4)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a altera&ccedil;&atilde;o de limite de cr&eacute;dito do cart&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','voltaDiv(0,2,4)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 			<input type="image" src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarAvalistas(1);return false;">
 		</div>
 	</div>

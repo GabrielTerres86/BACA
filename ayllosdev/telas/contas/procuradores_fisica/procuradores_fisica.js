@@ -60,11 +60,11 @@ function controlaOperacaoProcuradores( operacao ){
 	if ( operacao != 'EV' && operacao !='EC' && !verificaContadorSelect() ) return false;
 	
 	// Se não possui acesso para alterar, emitir mensagem	
-	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ctilde;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }	
-	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de inclus&atilde;o.'        ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TX') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclux&atilde;o.'        ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TP') && (flgPoderes	 != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de poderes.'        		  ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ctilde;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }	
+	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de inclus&atilde;o.'        ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TX') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclux&atilde;o.'        ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TP') && (flgPoderes	 != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de poderes.'        		  ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
 	
 	if ( in_array(operacao,['TC','TA','TX','TP']) ) {
 		nrcpfcgc 	= '';
@@ -118,12 +118,12 @@ function controlaOperacaoProcuradores( operacao ){
 			break;		
 		// Alteração para consulta tabela 	
 		case 'AT': 
-			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoProcuradores()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoProcuradores()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		// Formulario em modo inclusão para tabela consulta		
 		case 'IT': 
-           showConfirmacao('Deseja cancelar inclus&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoProcuradores()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+           showConfirmacao('Deseja cancelar inclus&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoProcuradores()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
             break;	
 		// Tabela consulta para inclusão		
@@ -196,7 +196,7 @@ function controlaOperacaoProcuradores( operacao ){
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -244,7 +244,7 @@ function manterRotinaProcuradores(operacao) {
 			}else{
 				// Verifica se a conta é válida
 				if ( !validaNroConta(nrdctato) ) { 
-					showError('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdctato\',\'frmDadosProcuradores\');'); return false; 
+					showError('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdctato\',\'frmDadosProcuradores\');'); return false; 
 				}else{				
 					// Se chegou até aqui, a conta é diferente do vazio e é válida, então realizar a operação desejada
 					nrcpfcgc = '';				
@@ -260,7 +260,7 @@ function manterRotinaProcuradores(operacao) {
 				cpf = campoCpf.val();
 				cpf = normalizaNumero( cpf );
 				if ( !validaCpfCnpj(cpf,1) ) { 
-					showError('error','CPF inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmDadosProcuradores\');'); return false; 
+					showError('error','CPF inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmDadosProcuradores\');'); return false; 
 				}else{
 					// Se chegou até aqui, a CPF é diferente do vazio e é válido, então realizar a operação desejada
 					cpfaux 		= cpf;	
@@ -370,14 +370,14 @@ function manterRotinaProcuradores(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});
@@ -689,7 +689,7 @@ function controlaLayoutProcuradores( operacao ) {
 				}
 					
 				// Verifica se a conta é válida
-				if ( !validaNroConta(nrdctato) ) { showError('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdctato\',\'frmDadosProcuradores\');'); return false; }
+				if ( !validaNroConta(nrdctato) ) { showError('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdctato\',\'frmDadosProcuradores\');'); return false; }
 				
 				// Se chegou até aqui, a conta é diferente do vazio e é válida, então realizar a operação desejada
 				nrcpfcgc = '';				
@@ -714,7 +714,7 @@ function controlaLayoutProcuradores( operacao ) {
 				if ( cpf == 0 ) { return false; }
 					
 				// Verifica se a conta é válida
-				if ( !validaCpfCnpj(cpf ,1) ) { showError('error','CPF inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmDadosProcuradores\');'); return false; }
+				if ( !validaCpfCnpj(cpf ,1) ) { showError('error','CPF inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmDadosProcuradores\');'); return false; }
 				
 				// Se chegou até aqui, a conta é diferente do vazio e é válida, então realizar a operação desejada
 				cpfaux 		= cpf;	
@@ -995,7 +995,7 @@ function mostraTabelaBens( operacao ) {
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);
@@ -1042,7 +1042,7 @@ function controlaOperacaoBens(operacao) {
 				$('#divProcBensTabela').css('display','none');
 				msgOperacao = 'abrindo formulário de bens';
 			}else{
-				showError('error','Limite de cadastramento atingido','Alerta - Ayllos',"bloqueiaFundo($('#divUsoGenerico'));");				
+				showError('error','Limite de cadastramento atingido','Alerta - Aimaro',"bloqueiaFundo($('#divUsoGenerico'));");				
 				return false;
 			}
 			break;
@@ -1054,7 +1054,7 @@ function controlaOperacaoBens(operacao) {
 			break;
 		case 'BR':
 			// Oculto o formulario e mostro a tabela
-			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','mostraTabelaBens(\'BT\')','bloqueiaFundo($(\'#divUsoGenerico\'))','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','mostraTabelaBens(\'BT\')','bloqueiaFundo($(\'#divUsoGenerico\'))','sim.gif','nao.gif');
 			return false;
 			break;
 		
@@ -1201,7 +1201,7 @@ function controlaLayoutBens( operacao ) {
 			persemon = parseFloat( cPercentual.val().replace(',','.') );			
 			// Se maior do que 100, mostra mensagem de erro e retorna o foco no mesmo campo
 			if ( persemon > 100 ) {
-				showError('error','Valor Percentual sem &ocirc;nus deve ser menor ou igual a 100,00.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'persemon\',\'frmProcBens\')');
+				showError('error','Valor Percentual sem &ocirc;nus deve ser menor ou igual a 100,00.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'persemon\',\'frmProcBens\')');
 			} else {
 				cPercentual.removeClass('campoErro');
 				if ( persemon == 100 ) {
@@ -1223,7 +1223,7 @@ function controlaLayoutBens( operacao ) {
 			if ( $(this).hasClass('campo') ) { 
 				qtprebem = parseFloat( cQtParcela.val().replace(',','.').replace('','0') );
 				if ( qtprebem <= 0 )	{
-					showError('error','Parcelas a pagar deve ser maior que zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'qtprebem\',\'frmProcBens\')');
+					showError('error','Parcelas a pagar deve ser maior que zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'qtprebem\',\'frmProcBens\')');
 				} else {
 					cQtParcela.removeClass('campoErro');
 				}
@@ -1235,7 +1235,7 @@ function controlaLayoutBens( operacao ) {
 			if ( $(this).hasClass('campo') ) { 
 				vlprebem = parseFloat( cVlParcela.val().replace(',','.').replace('','0') );
 				if ( vlprebem <= 0 ) {
-					showError('error','Valor da parcela deve ser maior que zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'vlprebem\',\'frmProcBens\')');
+					showError('error','Valor da parcela deve ser maior que zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'vlprebem\',\'frmProcBens\')');
 				} else {
 					cVlParcela.removeClass('campoErro');
 				}
@@ -1246,7 +1246,7 @@ function controlaLayoutBens( operacao ) {
 		cVlBem.change(function () {
 			vlrdobem = parseFloat( cVlBem.val().replace(',','.').replace('','0') );
 			if ( vlrdobem <= 0 ) {
-				showError('error','Valor do Bem deve ser maior que zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'vlrdobem\',\'frmProcBens\')');
+				showError('error','Valor do Bem deve ser maior que zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'vlrdobem\',\'frmProcBens\')');
 			} else {
 				cVlBem.removeClass('campoErro');
 			}
@@ -1285,21 +1285,21 @@ function validaBens(operacao){
 	vlrdobem = parseFloat( cVlBem.val().replace(',','.').replace('','0') );
 	
 	// Descrição do bem não pode ser vazia
-	if ( dsrelbem == '' ) { showError('error','Descri&ccedil;&atilde;o do bem deve se preenchido.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'dsrelbem\',\'frmProcBens\')');return false; } 
+	if ( dsrelbem == '' ) { showError('error','Descri&ccedil;&atilde;o do bem deve se preenchido.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'dsrelbem\',\'frmProcBens\')');return false; } 
 	
 	// Não aceita percentual sem ônus maior do que 100%	
-	if ( persemon > 100 ) {	showError('error','Percentual sem &ocirc;nus deve ser menor ou igual a 100,00.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'persemon\',\'frmProcBens\')');return false; }
+	if ( persemon > 100 ) {	showError('error','Percentual sem &ocirc;nus deve ser menor ou igual a 100,00.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'persemon\',\'frmProcBens\')');return false; }
 	
 	// Se percentual sem ônus for 100%, então qtde. e valor das parcelas deve ser zero
-	if ( ( persemon == 100 ) && ( qtprebem > 0 ) ) {showError('error','Parcelas a pagar deve ser zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'qtprebem\',\'frmProcBens\')');return false; }
-	if ( ( persemon == 100 ) && ( vlprebem > 0 ) ) {showError('error','Valor da parcela deve ser zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'vlprebem\',\'frmProcBens\')');return false; }
+	if ( ( persemon == 100 ) && ( qtprebem > 0 ) ) {showError('error','Parcelas a pagar deve ser zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'qtprebem\',\'frmProcBens\')');return false; }
+	if ( ( persemon == 100 ) && ( vlprebem > 0 ) ) {showError('error','Valor da parcela deve ser zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'vlprebem\',\'frmProcBens\')');return false; }
 
 	// Se percentual sem ônus for menor do que 100%, então qtde. e valor das parcelas devem ser maiores do que zero
-	if ( ( persemon < 100 ) && ( qtprebem == 0 ) ) {showError('error','Parcelas a pagar deve ser maior que zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'qtprebem\',\'frmProcBens\')');return false; }
-	if ( ( persemon < 100 ) && ( vlprebem == 0 ) ) {showError('error','Parcelas a pagar deve ser maior que zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'vlprebem\',\'frmProcBens\')');return false; }
+	if ( ( persemon < 100 ) && ( qtprebem == 0 ) ) {showError('error','Parcelas a pagar deve ser maior que zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'qtprebem\',\'frmProcBens\')');return false; }
+	if ( ( persemon < 100 ) && ( vlprebem == 0 ) ) {showError('error','Parcelas a pagar deve ser maior que zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'vlprebem\',\'frmProcBens\')');return false; }
 	
 	// Valida valor do bem
-	if( vlrdobem <= 0 ) {showError('error','Valor do Bem deve ser maior que zero.','Alerta - Ayllos','bloqueiaFundo($("#divUsoGenerico"),\'vlrdobem\',\'frmProcBens\')');return false; }
+	if( vlrdobem <= 0 ) {showError('error','Valor do Bem deve ser maior que zero.','Alerta - Aimaro','bloqueiaFundo($("#divUsoGenerico"),\'vlrdobem\',\'frmProcBens\')');return false; }
 	
 	controlaOperacaoBens(operacao);
 	return false;
@@ -1368,15 +1368,15 @@ function controlaLayoutPoder() {
 }
 
 function controlaOperacaoPoderes(operacao){
-    switch (operacao) {
+	switch (operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
-		    showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 	}
-        }
+}
 
 function salvarPoderes(){
 	
@@ -1454,8 +1454,8 @@ function salvarPoderes(){
 		success: function(response) {
 			hideMsgAguardo();
 			if (response != "" &&
-				response != 'hideMsgAguardo();showError("error","yes","Alerta - Ayllos","","NaN");' &&
-				response != 'hideMsgAguardo();showError("error","no","Alerta - Ayllos","","NaN");'){
+				response != 'hideMsgAguardo();showError("error","yes","Alerta - Aimaro","","NaN");' &&
+				response != 'hideMsgAguardo();showError("error","no","Alerta - Aimaro","","NaN");'){
 				eval(response);
 			}else{
 				acessaOpcaoAbaDados(6,2,'@');

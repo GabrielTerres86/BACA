@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 25/06/2018
+   Data    : Outubro/2011                      Ultima atualizacao: 20/07/2018
 
    Dados referentes ao programa:
 
@@ -127,6 +127,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
 			   
 			   25/06/2018 - Adicionado CPF/CNPJ e nome do favorecido no e-mail enviado em casos de fraude.
 							(SCTASK0015124 - Kelvin).
+               20/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
+                            Everton Souza - Mouts
 							
 ..............................................................................*/
   --  antigo tt-protocolo-ted 
@@ -1322,7 +1324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 24/08/2018
+      Data     : Junho/2015.                   Ultima atualizacao: 28/08/2018
   
       Dados referentes ao programa:
   
@@ -1367,6 +1369,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
                                
                   24/08/2018 - Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE - TIAGO)                 
+                  
+                  28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -1495,6 +1499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     --Variaveis de erro    
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(4000);
     vr_tab_erro GENE0001.typ_tab_erro;
     vr_tab_saldo EXTR0001.typ_tab_saldos;
     
@@ -1534,6 +1539,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_vlsldisp   NUMBER;
     vr_vltarifa   NUMBER;
     vr_debtarifa  BOOLEAN := FALSE;
+    -- Everton - Mouts - Projeto 475
+    vr_trace_nmmensagem tbspb_msg_enviada.nmmensagem%TYPE;
+    vr_nrseq_mensagem10 tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem20 tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+
 
     --Rowid lancamento tarifa
     vr_rowid_craplat ROWID;
@@ -1859,7 +1870,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-     
+    -- Everton - Mouts - Projeto 475
+    -- Fase 10 - controle mensagem SPB
+    sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                               ,pr_idorigem               => 'E'
+                               ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                               ,pr_nrcontrole             => vr_nrctrlif
+                               ,pr_nrcontrole_str_pag     => NULL
+                               ,pr_nrcontrole_dev_or      => NULL
+                               ,pr_dhmensagem             => sysdate
+                               ,pr_insituacao             => 'OK'
+                               ,pr_dsxml_mensagem         => null
+                               ,pr_dsxml_completo         => null
+                               ,pr_nrseq_mensagem_xml     => null
+                               ,pr_nrdconta               => pr_nrdconta
+                               ,pr_cdcooper               => pr_cdcooper
+                               ,pr_cdproduto              => 30 -- TED
+                               ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                               ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                               ,pr_dscritic               => vr_dscritic
+                               ,pr_des_erro               => vr_des_erro);
+    -- Se ocorreu erro
+    IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levantar Excecao
+      vr_cdcritic := 0;
+      RAISE vr_exc_erro;
+    END IF;
     --> Para as origens InternetBank e Mobile,
     --> Deve ser gerado o registro de analise de fraude antes de
     --> realizar a operação
@@ -1888,7 +1924,94 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                           ,pr_idanalise_fraude => vr_idanalise_fraude
                                           ,pr_dscritic   => vr_dscritic);
       vr_dscritic := NULL;
+    ELSE
+      -- Everton - Mouts - Projeto 475
+      -- Se não entrou na rotina para Inclusao do registro de analise de fraude
+      -- mesmo assim gerar mensagem para controle
+      -- Fase 20 - controle mensagem SPB
+      IF pr_idagenda = 2 THEN
+        vr_trace_nmmensagem := 'Agend.Aprov.OFSAA';
+      ELSE
+        vr_trace_nmmensagem := 'Não utiliza OFSAA';
+      END IF;
+      --
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => vr_trace_nmmensagem
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => pr_nrdconta
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+    --
     END IF;
+    ELSE
+      -- Everton - Mouts - Projeto 475
+      -- Fase 10 - controle mensagem SPB
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 10
+                                 ,pr_idorigem               => 'E'
+                                 ,pr_nmmensagem             => 'MSG_TEMPORARIA'
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => pr_nrdconta
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem10
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+      -- Fase 20 - controle mensagem SPB
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => 'Não utiliza OFSAA'
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => pr_nrdconta
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+    --
     END IF;
 	--Fim Bacenjud - SM 1
     
@@ -1930,6 +2053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,craptvl.flgpesdb
                 ,craptvl.flgpescr
                 ,craptvl.idanafrd
+                ,craptvl.idmsgenv
                )
          VALUES (rw_crapcop.cdcooper     --> craptvl.cdcooper
                 ,3                       --> craptvl.tpdoctrf
@@ -1973,6 +2097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                     ELSE 0        /*FALSE*/
                   END)
                 ,vr_idanalise_fraude     --> craptvl.idanafrd
+                ,vr_nrseq_mensagem10 --> craptvl.idmsgenv
                 )
         RETURNING craptvl.tpdctadb, craptvl.flgtitul
              INTO rw_craptvl.tpdctadb, rw_craptvl.flgtitul;
@@ -2374,6 +2499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	
     --Caso for TEDs de mesm titularidade passar pela monitoração (Problema com FRAUDE)    
     IF pr_nrcpfcgc = pr_nrcpffav THEN    
+      BEGIN
       AFRA0004.pc_monitora_operacao (pr_cdcooper   => rw_crapcop.cdcooper
                                     ,pr_nrdconta   => pr_nrdconta
                                     ,pr_idseqttl   => pr_idseqttl
@@ -2384,6 +2510,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                     ,pr_idanalis   => vr_idanalise_fraude
                                     ,pr_cdcritic   => vr_cdcritic
                                     ,pr_dscritic   => vr_dscritic);                                     
+                                    
+        IF nvl(vr_cdcritic,0) > 0 OR                                    
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;   
+        END IF;
+
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+            vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 2, --> erro tratado
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - CXON0020.pc_enviar_ted --> ' || 
+                                                          vr_cdcritic||' -> '||vr_dscritic,
+                                       pr_nmarqlog     => vr_nmarqlog);
+
+            vr_cdcritic := NULL;                         
+            vr_dscritic := NULL;    
+        WHEN OTHERS THEN
+              vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                          ' - CXON0020.pc_enviar_ted --> ' || sqlerrm,
+                                         pr_nmarqlog     => vr_nmarqlog);
+                                                
+              vr_cdcritic := NULL;                         
+              vr_dscritic := NULL;                         
+      END;
+                                                                       
                                     
     END IF;
 

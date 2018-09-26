@@ -71,7 +71,7 @@
 		
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	switch( $operacao ) {
@@ -169,7 +169,7 @@
 		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmOpcao');"; }
 		
 		echo 'hideMsgAguardo();';
-		echo 'showError("error", "' . $msgErro . '", "Alerta - Ayllos", "' . $retornoAposErro . '");';
+		echo 'showError("error", "' . $msgErro . '", "Alerta - Aimaro", "' . $retornoAposErro . '");';
 		
 		exit();
 	}
@@ -210,12 +210,12 @@
 		} else if ( $cddopcao == 'R' ) {
 			echo "cCdagenci.val('".getByTagName($associado,'cdagenci')."');";
 			
-			echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","Gera_Impressao();","hideMsgAguardo();","sim.gif","nao.gif");';
+			echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","Gera_Impressao();","hideMsgAguardo();","sim.gif","nao.gif");';
 			exit();
 		}		
 		
 	} else if ( $operacao == 'EA' ) {
-		exibirErro('inform','Arquivo gerado com sucesso!','Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
+		exibirErro('inform','Arquivo gerado com sucesso!','Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
 	
 	} else if ( $operacao == 'VI' ) {
 		echo "hideMsgAguardo();";
@@ -227,7 +227,7 @@
 		}
 		
 	} else if ( $operacao == 'GI' ) {
-		exibirErro('inform','Instrução efetuada com sucesso!','Alerta - Ayllos','',false);
+		exibirErro('inform','Instrução efetuada com sucesso!','Alerta - Aimaro','',false);
 		echo "hideMsgAguardo();";
 		echo "fechaRotina($('#divUsoGenerico'));";
 		echo "fechaRotina($('#divRotina'));";

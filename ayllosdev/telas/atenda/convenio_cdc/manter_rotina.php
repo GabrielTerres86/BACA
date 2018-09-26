@@ -50,7 +50,7 @@
 	$flgitctr           = (isset($_POST['flgitctr']))           ? $_POST['flgitctr']           : '';
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
-	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	   exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
     }
 
 	// Monta o xml de requisição
@@ -94,6 +94,6 @@
         if ($msgErro == "") {
             $msgErro = $xmlObjeto->roottag->tags[0]->cdata;
         }
-        exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',"bloqueiaFundo(divRotina)",false);
+        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro',"bloqueiaFundo(divRotina)",false);
     }
 ?>

@@ -21,12 +21,12 @@ $dtresgat = !isset($_POST["dtresgat"]) ? "" : $_POST["dtresgat"];
 $nrcheque = !isset($_POST["nrcheque"]) ? "" : $_POST["nrcheque"];
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"L")) <> '') {
-	exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 }
 
 // Verifica se os parâmetros necessários foram informados
-if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','',false);
-if ($dtresgat == "" && $nrcheque == "") exibirErro('error','Preencha a data ou n&uacute;mero do cheque.','Alerta - Ayllos','',false);
+if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','',false);
+if ($dtresgat == "" && $nrcheque == "") exibirErro('error','Preencha a data ou n&uacute;mero do cheque.','Alerta - Aimaro','',false);
 
 // Montar o xml de Requisicao
 $xml  = "<Root>";
@@ -48,7 +48,7 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 	exit();
 }
 

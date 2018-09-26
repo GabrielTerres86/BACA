@@ -227,13 +227,13 @@
 		if($tpaplica == "N"){
 		?>
 			auxExcluir = 1;
-			showConfirmacao('Confirma a exclusao da aplica&ccedil;&atilde;o <?php echo $dsaplica; ?> ?','Confirma&ccedil;&atilde;o - Ayllos','buscaDadosAplicacao("E");','voltarDivPrincipal(); auxExcluir = 0;','sim.gif','nao.gif');
+			showConfirmacao('Confirma a exclusao da aplica&ccedil;&atilde;o <?php echo $dsaplica; ?> ?','Confirma&ccedil;&atilde;o - Aimaro','buscaDadosAplicacao("E");','voltarDivPrincipal(); auxExcluir = 0;','sim.gif','nao.gif');
 		<?php
 		}else{
 		?>
 			cFlgrecnoPos.hide();
 			rFlgrecnoPos.hide();
-			showConfirmacao('Confirma a exclusao da aplica&ccedil;&atilde;o <?php echo $dsaplica; ?> ?','Confirma&ccedil;&atilde;o - Ayllos','controlarAplicacao(false,"<?php echo $cddopcao; ?>"); auxExcluir = 0;','voltarDivPrincipal(); auxExcluir = 0;','sim.gif','nao.gif');
+			showConfirmacao('Confirma a exclusao da aplica&ccedil;&atilde;o <?php echo $dsaplica; ?> ?','Confirma&ccedil;&atilde;o - Aimaro','controlarAplicacao(false,"<?php echo $cddopcao; ?>"); auxExcluir = 0;','voltarDivPrincipal(); auxExcluir = 0;','sim.gif','nao.gif');
 		<?php
 		}
 		
@@ -270,7 +270,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

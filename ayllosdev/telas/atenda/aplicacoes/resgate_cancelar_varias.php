@@ -84,7 +84,7 @@
 		
 	// Esconde mensagem de aguardo	
 	echo 'hideMsgAguardo();';
-	echo 'showError("inform","Resgate(s) cancelado(s) com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo 'showError("inform","Resgate(s) cancelado(s) com sucesso!","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	
 	// Carregar novamente os resgates programados
 	echo 'obtemResgatesVarias(true);';
@@ -92,7 +92,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

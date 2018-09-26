@@ -8,7 +8,7 @@
  * ALTERACOES   : 29/09/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *							 13/07/2016 - Correcao do uso da variavel $op indefinida. SD 479874. Carlos R.
  */	
-
+ 
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');		
@@ -23,11 +23,11 @@
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
-		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$metodo,false);
 	}
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 	
 	// Carrega permissões do operador
 	include('../../../includes/carrega_permissoes.php');	

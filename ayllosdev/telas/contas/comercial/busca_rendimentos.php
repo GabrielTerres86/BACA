@@ -18,7 +18,7 @@
 	isPostMethod();		
 	
 	
-	if (!isset($_POST['nrdrowid']) ) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);	
+	if (!isset($_POST['nrdrowid']) ) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);	
 			
 	$nrdrowid = $_POST['nrdrowid'] == '' ?  0  : $_POST['nrdrowid'];	
 	$nriniseq = $_POST['nriniseq'] == '' ?  0  : $_POST['nriniseq'];	
@@ -46,7 +46,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;

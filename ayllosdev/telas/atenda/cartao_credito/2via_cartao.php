@@ -36,7 +36,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -50,7 +50,7 @@
 			<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(1,1,4);return false;">
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/solicitar.gif" onClick="solicita2viaCartao();return false;">
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/entregar.gif"  onClick="entrega2viaCartao();return false;">
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer solicita&ccedil;&atilde;o de segunda via do cart&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','desfazSolicitacao2viaCartao()','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer solicita&ccedil;&atilde;o de segunda via do cart&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','desfazSolicitacao2viaCartao()','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 			
 		</fieldset>
 	</form>

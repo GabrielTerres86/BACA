@@ -31,12 +31,12 @@
 	<? if (($operacao == 'cadastrarSenhaLetrasTaa') || ($operacao == 'liberarAcessoTaa')){ ?>
 	
 		<a class="botao" onclick="opcaoTAA(); return false;" href="#">Voltar</a>
-		<a class="botao" onClick="showConfirmacao('Deseja cadastrar letras de seguran&ccedil;a do TAA?','Confirma&ccedil;&atilde;o - Ayllos','alteraSenhaLetrasTAA(\'<?php echo $operacao ?>\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Concluir</a>
+		<a class="botao" onClick="showConfirmacao('Deseja cadastrar letras de seguran&ccedil;a do TAA?','Confirma&ccedil;&atilde;o - Aimaro','alteraSenhaLetrasTAA(\'<?php echo $operacao ?>\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Concluir</a>
 		
 	<? } else if ($operacao == 'entregarCartao'){ ?>
 
 		<a class="botao" onclick="voltaDiv(0,1,4); return false;" href="#">Cancelar</a>
-		<a class="botao" onClick="showConfirmacao('Deseja cadastrar letras de seguran&ccedil;a do TAA?','Confirma&ccedil;&atilde;o - Ayllos','alteraSenhaLetrasTAA(\'<?php echo $operacao ?>\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Continuar</a>
+		<a class="botao" onClick="showConfirmacao('Deseja cadastrar letras de seguran&ccedil;a do TAA?','Confirma&ccedil;&atilde;o - Aimaro','alteraSenhaLetrasTAA(\'<?php echo $operacao ?>\');','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" href="#">Continuar</a>
 
 	<? } ?>	
 	

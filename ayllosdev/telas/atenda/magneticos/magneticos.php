@@ -29,7 +29,7 @@
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Ayllos","");';
+		echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Aimaro","");';
 		echo '</script>';
 		exit();
 	}

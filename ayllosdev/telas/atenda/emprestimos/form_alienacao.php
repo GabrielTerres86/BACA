@@ -16,6 +16,7 @@
  *      [12/11/2014] Projeto consultas automatizadas (Jonata-RKAM).
  *      [13/01/2015] Adicionado Tipo de Veiculo. (Jorge/Gielow) - SD 241854.
  *		[25/01/2016] Alterar a chamada do botao Salvar. (James) 
+ *
  */
  ?>
 
@@ -119,7 +120,7 @@
     function formataCategoriaBem(dscatbem) {
 
         $('#nrdplaca', '#frmAlienacao').removeClass('placa');
-		$('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzz-zzzz','-','');
+		$('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzzzzzz','','');
 		/*
         //$('#nrrenava', '#frmAlienacao').removeClass('renavan');
         if (dscatbem == 'AUTOMOVEL' ||

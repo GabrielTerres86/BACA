@@ -1,8 +1,8 @@
 <?php 
 
 	/************************************************************************
-	Fonte: estouros.php
-	Autor: Guilherme
+	      Fonte: estouros.php
+	      Autor: Guilherme
 	Data : Fevereiro/2008               Ultima Alteracao: 13/07/2011
 
     Objetivo  : Mostrar opcao de Estouros da rotina de Ocorrencias da tela ATENDA
@@ -77,7 +77,7 @@
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}

@@ -17,10 +17,10 @@ var nomeFormContatos  = 'frmContatos';
 
 function controlaOperacaoContatos(operacao) {
 
-	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TX') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclus&atilde;o.'        ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de incluis&atilde;o.'       ,'Alerta - Ayllos','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TA') && (flgAlterar   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TC') && (flgConsultar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de consulta.'               ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TX') && (flgExcluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de exclus&atilde;o.'        ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'TI') && (flgIncluir   != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de incluis&atilde;o.'       ,'Alerta - Aimaro','bloqueiaFundo(divRotina)'); return false; }
 	
 	// Se a operação necessita filtrar somente um registro, então filtro abaixo
 	// Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha	
@@ -42,7 +42,7 @@ function controlaOperacaoContatos(operacao) {
 			cddopcao = 'A';
 			break;
 		case 'AT' : 
-			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoContatos(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoContatos(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		case 'TC' : 
@@ -64,15 +64,15 @@ function controlaOperacaoContatos(operacao) {
 			cddopcao = 'E';
 			break;
 		case 'TE' : 
-			showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','manterRotinaContatos(\'E\')','controlaOperacaoContatos(\'\')','sim.gif','nao.gif');
+			showConfirmacao('Deseja confirmar exclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','manterRotinaContatos(\'E\')','controlaOperacaoContatos(\'\')','sim.gif','nao.gif');
 			return false;
 			break;					
 		case 'AT' : 
-			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoContatos(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoContatos(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		case 'IT' : 
-			showConfirmacao('Deseja cancelar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Ayllos','controlaOperacaoContatos(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+			showConfirmacao('Deseja cancelar inclus&atilde;o?'        ,'Confirma&ccedil;&atilde;o - Aimaro','controlaOperacaoContatos(\'\')','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 		case 'AV' : manterRotinaContatos(operacao);return false;break;	
@@ -101,7 +101,7 @@ function controlaOperacaoContatos(operacao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {			
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -146,7 +146,7 @@ function manterRotinaContatos( operacao ) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
@@ -154,7 +154,7 @@ function manterRotinaContatos( operacao ) {
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}				
 	});
@@ -289,7 +289,7 @@ function controlaLayoutContatos(operacao) {
 					cNom.focus();
 					
 				} else {
-					if ( !validaNroConta(nrconta) ) { showError('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina);'); return false; }
+					if ( !validaNroConta(nrconta) ) { showError('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina);'); return false; }
 					nrdctato = nrconta;
 					controlaOperacaoContatos('TB');
 				}

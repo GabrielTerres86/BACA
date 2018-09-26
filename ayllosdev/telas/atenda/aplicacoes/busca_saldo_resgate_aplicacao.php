@@ -39,7 +39,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$dados = $xmlObj->roottag->tags[0]->tags;

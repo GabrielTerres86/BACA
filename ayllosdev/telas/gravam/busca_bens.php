@@ -28,7 +28,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
   
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -60,7 +60,7 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltro();focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','formataFiltro();focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);		
 					
 	}
 	
@@ -83,7 +83,7 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltro();focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','formataFiltro();focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);
 					
 	}
 	
@@ -91,7 +91,7 @@
 	
 	if ($qtregist == 0) { 		
 		
-		exibirErro('inform','Nenhum registro foi encontrado.','Alerta - Ayllos','formataFiltro();$(\'#nrdconta\',\'#frmFiltro\').focus();');		
+		exibirErro('inform','Nenhum registro foi encontrado.','Alerta - Aimaro','formataFiltro();$(\'#nrdconta\',\'#frmFiltro\').focus();');		
 		
 	} else {      
 		
@@ -102,15 +102,15 @@
 	function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == 0 ){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','formataFiltro(); focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','formataFiltro(); focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);
 		}
     
     IF($GLOBALS["nrctrpro"] == 0 ){ 
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','formataFiltro(); focaCampoErro(\'nrctrpro\',\'frmFiltro\');',false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Aimaro','formataFiltro(); focaCampoErro(\'nrctrpro\',\'frmFiltro\');',false);
 		}
     
     IF($GLOBALS["nrgravam"] == ''  ){ 
-			exibirErro('error','N&uacute;mero do registro inv&aacute;lido.','Alerta - Ayllos','formataFiltro(); focaCampoErro(\'nrgravam\',\'frmFiltro\');',false);
+			exibirErro('error','N&uacute;mero do registro inv&aacute;lido.','Alerta - Aimaro','formataFiltro(); focaCampoErro(\'nrgravam\',\'frmFiltro\');',false);
 		}
 				
 	}	

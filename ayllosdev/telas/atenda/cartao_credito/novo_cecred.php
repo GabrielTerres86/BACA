@@ -22,11 +22,11 @@ $funcaoAposErro = 'bloqueiaFundo(divRotina);';
 
 // Verifica permissão
 if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-    exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);
+    exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);
 }
 
 // Verifica se o número da conta foi informado
-if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 
 $filter = "CECRED";
 
@@ -34,7 +34,7 @@ $filter = "CECRED";
 $nrdconta = $_POST["nrdconta"];
 
 // Verifica se o número da conta é um inteiro válido
-if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 
 // Monta o xml de requisição
 $xmlGetNovoCartao  = "";
@@ -66,7 +66,7 @@ $xmlResult = getDataXML($xmlGetNovoCartao);
 $xmlObjNovoCartao = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObjNovoCartao->roottag->tags[0]->name) == "ERRO") {
-     exibirErro('error',$xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"voltaDiv(0,1,4)");
+     exibirErro('error',$xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"voltaDiv(0,1,4)");
 	 return;
 }
 
@@ -108,7 +108,7 @@ $erro = $objXml->Erro->Registro->dscritic;
 if(strlen($erro) > 0){
 	$erro =  str_replace(" ]"," ]<br>",$erro);
 	$erro =  str_replace("\u00C3\u0192\u00C2\u00A1","a",$erro);
-	echo"<script>showError('error', '".utf8ToHtml($erro)."', 'Alerta - Ayllos', 'voltaDiv(0, 1, 4);') </script>";
+	echo"<script>showError('error', '".utf8ToHtml($erro)."', 'Alerta - Aimaro', 'voltaDiv(0, 1, 4);') </script>";
 }
 
 $mensagem = $objXml->Dados->sugestoes->sugestao->mensagem;
@@ -130,7 +130,7 @@ if(($contingenciaMoto!="") || ($contingenciaIbra!="")){
 		$msgconti .= (strlen($msgconti) >0)? "<br> $contingenciaMoto":"$contingenciaMoto";
 	}
 	$contigenciaAtiva = true;
-	echo"<script>showError('inform', '".utf8ToHtml($msgconti)."', 'Alerta - Ayllos', ''); globalesteira = true; </script>";
+	echo"<script>showError('inform', '".utf8ToHtml($msgconti)."', 'Alerta - Aimaro', ''); globalesteira = true; </script>";
 }
 $mensagem =utf8ToHtml( str_replace("Ã§Ã£","ção",$mensagem));
 //utf8ToHtml($mensagem)
@@ -148,8 +148,8 @@ if (count($arMessage) > 1) {
         
         
 if(strlen($mensagem) > 0 && !$contigenciaAtiva){
-	echo '<script> showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");</script>';
-	//echo"<script>showError('error', '".utf8ToHtml($mensagem)."', 'Alerta - Ayllos', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));') </script>";
+	echo '<script> showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Aimaro","bloqueiaFundo(divRotina);");</script>';
+	//echo"<script>showError('error', '".utf8ToHtml($mensagem)."', 'Alerta - Aimaro', 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));') </script>";
 }
 
 $idacionamento = $json_sugestoes['protocolo'];
@@ -164,7 +164,7 @@ for($j = 0; $j < $qtdSugestoes; $j++){
 $counter = count($cartoes);
 /*
 if($conter == 0){
-	exibirErro('error','Conta sem sugestões.','Alerta - Ayllos','voltaDiv(0, 1, 4);');
+	exibirErro('error','Conta sem sugestões.','Alerta - Aimaro','voltaDiv(0, 1, 4);');
 	return; 
 }*/
 
@@ -290,11 +290,11 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 				var vlMaxlimcrd = select[3];
 				
                 if($("#valorLimite").val().length < 1){
-                    showError("error", '<? echo utf8ToHtml("Por favor, preencha o valor de limite desejado.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+                    showError("error", '<? echo utf8ToHtml("Por favor, preencha o valor de limite desejado.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
                     return;
                 }
                 if($("#justificativa").val().length < 1){
-                    showError("error", '<? echo utf8ToHtml("Por favor, preencha a justificativa");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+                    showError("error", '<? echo utf8ToHtml("Por favor, preencha a justificativa");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
                     return;
                 }
 				var limiteSolicitado = $("#valorLimite").val();
@@ -304,21 +304,21 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 				/*if(limiteSolicitado == 0){
 					var permiteZero = !(select[1] != 12) ; /*
 					if( !permiteZero){
-						showError("error", '<? echo utf8ToHtml("Limite R$0 não permitido para a bandeira solicitada.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+						showError("error", '<? echo utf8ToHtml("Limite R$0 não permitido para a bandeira solicitada.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 						return;
 					}
 					
 				}*/
 				if(limiteSolicitado > vlMaxlimcrd){
-					showError("error", '<? echo utf8ToHtml("Não é possível solictar limite acima do máximo da categoria");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
+					showError("error", '<? echo utf8ToHtml("Não é possível solictar limite acima do máximo da categoria");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
                     return;
                 }
 				
 				if(limiteSolicitado <= parseFloat(vlSugMotor) && select[4] == 't'){					
-					showError("error", '<? echo utf8ToHtml("Limite solicitado dentro dos valores sugeridos, por favor utilize as caixas de seleção.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
+					showError("error", '<? echo utf8ToHtml("Limite solicitado dentro dos valores sugeridos, por favor utilize as caixas de seleção.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");
                     return;
 				}else if(select[4] == 'n' && limiteSolicitado < parseFloat(vlSugMotor) ){
-					showError("error", '<? echo utf8ToHtml("Limite solicitado abaixo do limite mínimo da categoria.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");						
+					showError("error", '<? echo utf8ToHtml("Limite solicitado abaixo do limite mínimo da categoria.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");						
 					return;
 				}
 				
@@ -332,21 +332,21 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 				var min = $(inputLimite ).attr("min");
 				var max = $(inputLimite ).attr("max").replace('.', "").replace(",",".");
 				//if(parseFloat(value) == 0 && $(inputLimite ).attr("cdadm") != 11 /*&& $(inputLimite ).attr("cdadm") != 12*/){ /*
-				/*	showError("error", '<? echo utf8ToHtml("Limite com valor R$0 deve ser enviado para análise da esteira.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+				/*	showError("error", '<? echo utf8ToHtml("Limite com valor R$0 deve ser enviado para análise da esteira.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
 				}*/
 				if(parseFloat(value) > parseFloat(max)){
-					showError("error", '<? echo utf8ToHtml("Valor maior que o permitido, por favor selecione a opção  na parte inferior da tela.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+					showError("error", '<? echo utf8ToHtml("Valor maior que o permitido, por favor selecione a opção  na parte inferior da tela.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
 				} else if(parseFloat(value) < parseFloat(min)){
-					showError("error", '<? echo utf8ToHtml("Valor inferior ao mínimo do cartão.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+					showError("error", '<? echo utf8ToHtml("Valor inferior ao mínimo do cartão.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
                 }
 	            if(parseFloat(value) > parseFloat(max)){
-					showError("error", '<? echo utf8ToHtml("Valor maior que o permitido, por favor selecione a opção  na parte inferior da tela.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+					showError("error", '<? echo utf8ToHtml("Valor maior que o permitido, por favor selecione a opção  na parte inferior da tela.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
 				} else if(parseFloat(value) < parseFloat(min)){
-					showError("error", '<? echo utf8ToHtml("Valor inferior ao mínimo do cartão.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
+					showError("error", '<? echo utf8ToHtml("Valor inferior ao mínimo do cartão.");?>', "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
 				}
 		
@@ -685,7 +685,7 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
                 ?>
                 <div id="divBotoes">
                     <!-- <input type="image" id="btVoltar" src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick="mostraDivDadosCartao();return false;">
-					 <input type="image" src="<?echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','voltaDiv(0,1,4)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+					 <input type="image" src="<?echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','voltaDiv(0,1,4)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 					 <input type="image" id="btSalvar" src="<?echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarAvalistas(4);return false;"> -->
 
                 </div>
@@ -755,7 +755,7 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
             }
             
             if (!validaCpfCnpj(retiraCaracteres($(this).val(),"0123456789",true),1)) {
-                showError("error","CPF inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error","CPF inv&aacute;lido.","Alerta - Aimaro","$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
                 return false;
             }
             var nrdoc = $(this).val();
@@ -816,7 +816,7 @@ foreach(get_object_vars($xmlAdicionalResult->Dados->cartoes->cartao) as $key => 
 		dbt = $("#flgdebit").attr("dtb");
 		var chk = $("#flgdebit").attr("checked");
 		if(chk && chk=="checked" && dbt =='1'){
-			showConfirmacao('<? echo utf8ToHtml("Deseja solicitar um Cartão Puro crédito?");?>', 'Confirma&ccedil;&atilde;o - Ayllos', '$("#flgdebit").removeAttr("checked");$("#flgdebit").attr("dtb",0);', "", 'sim.gif', 'nao.gif');
+			showConfirmacao('<? echo utf8ToHtml("Deseja solicitar um Cartão Puro crédito?");?>', 'Confirma&ccedil;&atilde;o - Aimaro', '$("#flgdebit").removeAttr("checked");$("#flgdebit").attr("dtb",0);', "", 'sim.gif', 'nao.gif');
 		}
 		$("#flgdebit").attr("checked",true);
 		$("#flgdebit").attr("dtb",1);

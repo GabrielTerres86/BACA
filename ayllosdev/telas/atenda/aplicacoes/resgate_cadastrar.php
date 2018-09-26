@@ -187,14 +187,14 @@
 			$msgConfirma = $xmlObjResgate->roottag->tags[0]->tags;		
 			
 			if (count($msgConfirma) > 1) {			
-				echo 'var metodoConfirm = \'showConfirmacao("'.$msgConfirma[0]->tags[1]->cdata.'","Confirma&ccedil;&atilde;o - Ayllos","cadastrarResgate(\\\'no\\\')","blockBackground(parseInt($(\\\'#divRotina\\\').css(\\\'z-index\\\')))","sim.gif","nao.gif")\';';				
+				echo 'var metodoConfirm = \'showConfirmacao("'.$msgConfirma[0]->tags[1]->cdata.'","Confirma&ccedil;&atilde;o - Aimaro","cadastrarResgate(\\\'no\\\')","blockBackground(parseInt($(\\\'#divRotina\\\').css(\\\'z-index\\\')))","sim.gif","nao.gif")\';';				
 				// Quebrar mensagem em duas linhas
 				$strMsg = $msgConfirma[1]->tags[1]->cdata;
 				$strMsg = trim(substr($strMsg,0,strpos($strMsg,".") + 1))."<br>".trim(substr($strMsg,strpos($strMsg,".") + 1));
 
-				echo 'showError("inform","'.$strMsg.'","Notifica&ccedil;&atilde;o - Ayllos",metodoConfirm);';			
+				echo 'showError("inform","'.$strMsg.'","Notifica&ccedil;&atilde;o - Aimaro",metodoConfirm);';			
 			} else {				
-				echo 'showConfirmacao("Confirma opera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","cadastrarResgate(\'no\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+				echo 'showConfirmacao("Confirma opera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","cadastrarResgate(\'no\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 			}
 		} else {
 			echo 'flgoprgt = true;';
@@ -247,14 +247,14 @@
 			exit();
 		}else{
 			echo 'hideMsgAguardo();';
-			echo "showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','cadastraNovaAplicacaoResgate()','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))','sim.gif','nao.gif');";	
+			echo "showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Aimaro','cadastraNovaAplicacaoResgate()','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))','sim.gif','nao.gif');";	
 		}
 	}
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

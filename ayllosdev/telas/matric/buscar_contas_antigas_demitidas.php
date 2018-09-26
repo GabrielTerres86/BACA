@@ -24,7 +24,7 @@
 
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"G")) <> '') {
 
-        exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        exibirErro('error',$msgError,'Alerta - Aimaro','',false);
     }
 	
 	$nriniseq = isset($_POST["nriniseq"]) ? $_POST["nriniseq"] : 0;
@@ -52,7 +52,7 @@
 		
 		$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
 				 
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','controlaVoltar();',false);		
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','controlaVoltar();',false);		
 							
 	}   	
 	

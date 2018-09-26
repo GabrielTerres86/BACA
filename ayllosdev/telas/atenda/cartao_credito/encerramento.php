@@ -86,7 +86,7 @@
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -105,7 +105,7 @@
 			
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(0,1,4);return false;" />
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/encerrar.gif" onClick="encerrarCart('<?php echo $indposic; ?>');return false;" />
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer o encerramento do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','desfazEncCartao(\'<?php echo $indposic; ?>\')','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer o encerramento do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','desfazEncCartao(\'<?php echo $indposic; ?>\')','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
 			
 		</fieldset>
 	</form>

@@ -89,7 +89,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -106,12 +106,12 @@
 			<?php if ($flgadmbb == "yes") { // Cartão BB ?>		
 			
 				<input type="image" src="<?php echo $UrlImagens; ?>botoes/bloqueio.gif" onClick="tipoCancBlq(2);return false;" />
-				<input type="image" src="<?php echo $UrlImagens; ?>botoes/desbloqueio.gif" onClick="showConfirmacao('Deseja desbloquear o cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','desfazCancBlqCartao(2)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
+				<input type="image" src="<?php echo $UrlImagens; ?>botoes/desbloqueio.gif" onClick="showConfirmacao('Deseja desbloquear o cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','desfazCancBlqCartao(2)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
 			
 			<?php } else { // Cecred Visa ?>
 			
 				<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="tipoCancBlq(1);return false;" />
-				<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer o cancelamento do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','desfazCancBlqCartao(1)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
+				<input type="image" src="<?php echo $UrlImagens; ?>botoes/desfazer.gif" onClick="showConfirmacao('Deseja desfazer o cancelamento do cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','desfazCancBlqCartao(1)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
 			
 			<?php } ?>
 									

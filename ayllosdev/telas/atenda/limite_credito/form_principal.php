@@ -114,10 +114,10 @@
 					<td style="background-color: #E3E2DD;" class="txtNormal" align="center">&nbsp;&nbsp;&nbsp;Novo contrato <strong><?php echo formataNumericos("zzz.zzz.zzz",$nrctrpro,"."); ?></strong> da linha de cr&eacute;dito <strong><?php echo $cdlinpro; ?></strong>&nbsp;&nbsp;&nbsp;<br>&nbsp;&nbsp;&nbsp;no valor de R$ <strong><?php echo number_format(str_replace(",",".",$vllimpro),2,",","."); ?></strong>, <?php if ($flgenpro == "no") { ?>nao <?php } ?> enviado a sede.&nbsp;&nbsp;&nbsp;</td>
 					 <td class="txtNormalBold" align="center">>></td> &nbsp;
 					
-					<td><input type="image" src="<?php echo $UrlImagens; ?>botoes/confirmar_novo_limite.gif" onClick="showConfirmacao('Deseja confirmar novo ' + strTitRotinaLC + '?','Confirma&ccedil;&atilde;o - Ayllos','confirmaNovoLimite(1,false)',metodoBlock,'sim.gif','nao.gif');return false;"></td>					
+					<td><input type="image" src="<?php echo $UrlImagens; ?>botoes/confirmar_novo_limite.gif" onClick="showConfirmacao('Deseja confirmar novo ' + strTitRotinaLC + '?','Confirma&ccedil;&atilde;o - Aimaro','confirmaNovoLimite(1,false)',metodoBlock,'sim.gif','nao.gif');return false;"></td>					
 					
 					<? if (strtoupper($dssitlli) == "ATIVO"){ ?>
-						<td><input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','validaAdesaoValorProduto(\'renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)\',<?php echo $vllimite; ?>)',metodoBlock,'sim.gif','nao.gif');return false;"></td>
+						<td><input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Aimaro','validaAdesaoValorProduto(\'renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)\',<?php echo $vllimite; ?>)',metodoBlock,'sim.gif','nao.gif');return false;"></td>
 					<?	
 					   }
 					} 
@@ -128,11 +128,11 @@
 				
 		<div id="divBotoes" align="center">
 			<?php if (intval($nrctrlim) > 0 && strtolower($flgpropo) == "no") { ?>
-				<a target="_blank" onClick="showConfirmacao('Deseja cancelar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','cancelarLimiteAtual(<?php echo intval($nrctrlim); ?>)',metodoBlock,'sim.gif','nao.gif');return false;">
+				<a target="_blank" onClick="showConfirmacao('Deseja cancelar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Aimaro','cancelarLimiteAtual(<?php echo intval($nrctrlim); ?>)',metodoBlock,'sim.gif','nao.gif');return false;">
 				<img src="<?php echo $UrlImagens; ?>botoes/cancelar_limite_atual.gif" /></a>
 				
 				<? if (strtoupper($dssitlli) == "ATIVO"){ ?>
-				<input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','validaAdesaoValorProduto(\'renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)\',<?php echo $vllimite; ?>)',metodoBlock,'sim.gif','nao.gif');return false;">
+				<input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Aimaro','validaAdesaoValorProduto(\'renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)\',<?php echo $vllimite; ?>)',metodoBlock,'sim.gif','nao.gif');return false;">
 				<? } ?>
 				
 				<a onclick="window.open('http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $tpdocmto ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos("z.zzz.zz9",$nrctrlim,"."); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>', '_blank')">						

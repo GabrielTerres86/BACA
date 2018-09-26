@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0016 is
   --  Sistema  : CRM
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2017.                   Ultima atualizacao: 
+  --  Data     : Agosto/2017.                   Ultima atualizacao: 06/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -13,7 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0016 is
   -- Objetivo  : Rotinas para atualizar informações de cadastro da estrutura nova para 
   --             estrutura antiga
   --
-  -- Alteracoes:   
+  -- Alteracoes: 	06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+	--							             corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)  
   --    
   --  
   ---------------------------------------------------------------------------------------------------------------*/
@@ -420,6 +421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Erro nao tratado pc_retorna_contas: '||SQLERRM; 
   END pc_retorna_contas;
   
@@ -485,6 +487,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);
+                                 
       pr_dscritic := 'Erro nao tratado pc_ret_conta_recente: '||SQLERRM; 
   END pc_ret_conta_recente;  
   
@@ -534,6 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar dtalteracao no cadastro de pessoa: '||SQLERRM; 
   END pc_atlz_dtaltera_pessoa;
   
@@ -660,6 +667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND enc.tpendass = pr_endereco_old.tpendereco;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar endereco: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;
@@ -689,6 +697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND enc.tpendass = nvl(pr_endereco_old.tpendereco,pr_endereco_new.tpendereco);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar endereço:'||SQLERRM;     
                 RAISE vr_exc_erro;      
             END;
@@ -744,6 +753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     vr_nrseq_end := vr_nrseq_end + 1;  
                   
                   WHEN OTHERS THEN
+                    cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                     vr_dscritic := 'Erro ao inserir endereco: '||SQLERRM; 
                     RAISE vr_exc_erro;
                 END;
@@ -776,6 +786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar endereço do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -799,6 +810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar endereço do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -827,6 +839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar endereço do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -850,6 +863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar endereço do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -880,6 +894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar endereço do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -902,6 +917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar endereço do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -921,6 +937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar endereco: '||SQLERRM; 
   END pc_atualiza_endereco;
   
@@ -941,15 +958,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(AMcom)
-    --  Data     : Julho/2017.                   Ultima atualizacao: 
+    --  Data     : Julho/2017.                   Ultima atualizacao: 06/09/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para atualizar endereço na estrutura antiga
     --
-    --  Alteração :
-    --
+    --  Alteração : 	06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+		--					                   corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     -- ..........................................................................*/
     
@@ -1032,6 +1049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND nvl(tfc.nrdramal,0) = nvl(pr_telefone_old.nrramal,0);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar telefone: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -1063,6 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 --> Irá atualizar no update abaixo
                 NULL; 
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar telefone:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -1093,6 +1112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND nvl(tfc.nrdramal,0) = nvl(pr_telefone_new.nrramal,0);
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar telefone:'||SQLERRM; 
                   RAISE vr_exc_erro;          
               END;
@@ -1133,8 +1153,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                               nvl(pr_telefone_new.tporigem_cadastro,0), --> idorigem                        
                               nvl(pr_telefone_new.flgaceita_sms,0));  --> flgacsms
                                   
+              
               EXCEPTION
+                WHEN DUP_VAL_ON_INDEX THEN
+                  /*Devido a base de dados estar com os dados inconsistentes na tabela TFC
+                    caso ocorra duplicação de chave neste momento adicionamos + 1 para o 
+                    sequencial. Kelvin/Wagner*/
+                  INSERT INTO craptfc
+                            ( cdcooper, 
+                              nrdconta, 
+                              idseqttl, 
+                              cdseqtfc, 
+                              cdopetfn, 
+                              nrdddtfc, 
+                              tptelefo, 
+                              nmpescto, 
+                              nrtelefo, 
+                              nrdramal, 
+                              secpscto, 
+                              idsittfc, 
+                              idorigem, 
+                              flgacsms)
+                     VALUES ( vr_tab_contas(idx).cdcooper,            --> cdcooper
+                              vr_tab_contas(idx).nrdconta,            --> nrdconta
+                              vr_tab_contas(idx).idseqttl,            --> idseqttl
+                              (SELECT NVL(MAX(cdseqtfc),0) + 1
+                                FROM craptfc 
+                               WHERE cdcooper = vr_tab_contas(idx).cdcooper 
+                                 AND nrdconta = vr_tab_contas(idx).nrdconta 
+                                 AND idseqttl = vr_tab_contas(idx).idseqttl), --> cdseqtfc
+                              pr_telefone_new.cdoperadora,            --> cdopetfn
+                              pr_telefone_new.nrddd,                  --> nrdddtfc
+                              pr_telefone_new.tptelefone,             --> tptelefo
+                              pr_telefone_new.nmpessoa_contato,       --> nmpescto
+                              pr_telefone_new.nrtelefone,             --> nrtelefo
+                              nvl(pr_telefone_new.nrramal,0),         --> nrdramal
+                              pr_telefone_new.nmsetor_pessoa_contato, --> secpscto
+                              pr_telefone_new.insituacao,             --> idsittfc                        
+                              nvl(pr_telefone_new.tporigem_cadastro,0), --> idorigem                        
+                              nvl(pr_telefone_new.flgaceita_sms,0));  --> flgacsms
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa ||
+                                                             ' cdcooper: ' || vr_tab_contas(idx).cdcooper ||
+                                                             ' nrdconta: ' || vr_tab_contas(idx).nrdconta ||
+                                                             ' idseqttl: ' || vr_tab_contas(idx).idseqttl ||
+                                                             ' nrseq_telefone: ' || pr_telefone_new.nrseq_telefone ||
+                                                             ' nrramal: ' || nvl(pr_telefone_new.nrramal,0) ||
+                                                             ' nrtelefone: ' || pr_telefone_new.nrtelefone);
+                  
+                  
                   vr_dscritic := 'Erro ao inserir telefone: '||SQLERRM; 
                   RAISE vr_exc_erro;
               END;
@@ -1161,6 +1228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar telefone do conjuge: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -1180,6 +1248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar telefone do conjuge: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -1205,6 +1274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar telefone do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -1223,6 +1293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar teelfone do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -1243,6 +1314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar telefone: '||SQLERRM; 
   END pc_atualiza_telefone;
   
@@ -1352,6 +1424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND upper(cem.dsdemail)   = UPPER(pr_email_old.dsemail);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar email: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -1375,6 +1448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               WHEN dup_val_on_index THEN
                 NULL;
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar email:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -1409,6 +1483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 WHEN dup_val_on_index THEN
                   NULL;
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao inserir email: '||SQLERRM; 
                   RAISE vr_exc_erro;
               END;
@@ -1432,6 +1507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar email do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -1450,6 +1526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar email do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -1470,6 +1547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar email: '||SQLERRM; 
   END pc_atualiza_email;
   
@@ -1580,6 +1658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND pol.idseqttl   = vr_tab_contas(idx).idseqttl;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar politicamente exposto: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -1604,6 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar politicamente exposto:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -1640,6 +1720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                                                             
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao inserir politicamente exposto: '||SQLERRM; 
                   RAISE vr_exc_erro;
               END;
@@ -1658,6 +1739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar politicamente exposto: '||SQLERRM; 
   END pc_atualiza_polexp;
   
@@ -1754,6 +1836,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND ttl.idseqttl   = vr_tab_contas(idx).idseqttl;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar renda complementar do titular: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -1790,6 +1873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND ttl.idseqttl   = vr_tab_contas(idx).idseqttl;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar renda complementar do titular:'||SQLERRM; 
                   RAISE vr_exc_erro;          
               END;
@@ -1815,6 +1899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar renda complementar: '||SQLERRM; 
   END pc_atualiza_rendacompl;
   
@@ -1943,6 +2028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND ttl.idseqttl   = vr_tab_contas(idx).idseqttl;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar renda complementar do titular: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -1977,6 +2063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND ttl.idseqttl   = vr_tab_contas(idx).idseqttl;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar renda do titular:'||SQLERRM; 
                   RAISE vr_exc_erro;          
               END;
@@ -2011,6 +2098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND nvl(cje.nrctacje,0) = 0;                 
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar renda do conjuge: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -2036,6 +2124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar renda do conjuge: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -2054,6 +2143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar renda: '||SQLERRM; 
   END pc_atualiza_renda;
   
@@ -2169,6 +2259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND ttl.idseqttl   = vr_tab_contas(idx).idseqttl;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar dados de pessoa estrangeira do titular: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -2198,6 +2289,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND ttl.idseqttl   = vr_tab_contas(idx).idseqttl;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar dados de pessoa estrangeira do titular:'||SQLERRM; 
                   RAISE vr_exc_erro;          
               END;
@@ -2236,6 +2328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND ass.nrdconta   = vr_tab_contas(idx).nrdconta;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar dados de pessoa estrangeira do associado: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -2262,6 +2355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND ass.nrdconta   = vr_tab_contas(idx).nrdconta;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar dados de pessoa estrangeira do titular:'||SQLERRM; 
                   RAISE vr_exc_erro;          
               END;
@@ -2285,6 +2379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar dados de pessoa estrangeira: '||SQLERRM; 
   END pc_atualiza_estrangeira;
   
@@ -2403,6 +2498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar dados de banco de PJ: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -2459,6 +2555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar dados de banco de PJ:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -2536,6 +2633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                              );
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao inserir dados de banco de PJ:'||SQLERRM; 
                   RAISE vr_exc_erro;         
               END;            
@@ -2553,6 +2651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar dados de banco de PJ: '||SQLERRM; 
   END pc_atualiza_juridica_bco;
   
@@ -2680,6 +2779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar dados de faturamento de PJ: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -2745,6 +2845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar dados de faturamento de PJ:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -2838,6 +2939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                              );
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao inserir dados de faturamento de PJ:'||SQLERRM; 
                   RAISE vr_exc_erro;         
               END;             
@@ -2856,6 +2958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar dados de faturamento de PJ: '||SQLERRM; 
   END pc_atualiza_juridica_fat;
   
@@ -2954,6 +3057,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar resultados financeiros de PJ: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -2984,6 +3088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar resultados financeiros de PJ:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -3028,6 +3133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                              to_char(pr_juridica_fnc_new.dtmes_base,'RRRR'));
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar resultados financeiros de PJ:'||SQLERRM; 
                   RAISE vr_exc_erro;         
               END;                   
@@ -3047,6 +3153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar resultados financeiros de PJ: '||SQLERRM; 
   END pc_atualiza_juridica_fnc;
   
@@ -3177,6 +3284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND epa.nrdocsoc = rw_pessoa_jur.nrcnpj;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar paticipacao societaria de PJ: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -3218,6 +3326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND epa.nrdocsoc = rw_pessoa_jur.nrcnpj;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar paticipacao societaria de PJ:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -3261,6 +3370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                              );
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar paticipacao societaria de PJ:'||SQLERRM; 
                   RAISE vr_exc_erro;         
               END;                   
@@ -3280,6 +3390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar participacao societaria de PJ: '||SQLERRM; 
   END pc_atualiza_juridica_ptp;
   
@@ -3357,6 +3468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel buscar os bens: '||SQLERRM; 
   END pc_ret_bens_pessoa;
      
@@ -3455,7 +3567,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     rw_crapass cr_crapass%ROWTYPE;
     
     ---------------> VARIAVEIS <----------------- 
-    vr_dscritic    VARCHAR2(1000);
+    vr_dscritic    VARCHAR2(32767);
     vr_exc_erro    EXCEPTION; 
     
     vr_tab_bens     typ_tab_bens;    
@@ -3564,10 +3676,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
           
           EXCEPTION
             WHEN OTHERS THEN
+              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                         , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                         ' nrdconta: ' || pr_nrdconta);                
               vr_dscritic := 'Nao foi possivel atualizar avalista com conta: '||SQLERRM;
               RAISE vr_exc_erro;
           END;
         WHEN OTHERS THEN
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                     , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                     ' nrdconta: ' || pr_nrdconta);                
           vr_dscritic := 'Nao foi possivel cria avalista com conta: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
@@ -3642,10 +3760,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                             , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                              ' nrdconta: ' || pr_nrdconta);                
                   vr_dscritic := 'Nao foi possivel atualizar avalista(PJ) com conta: '||SQLERRM;
                   RAISE vr_exc_erro;
               END;
             WHEN OTHERS THEN
+              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                         , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                          ' nrdconta: ' || pr_nrdconta);                
               vr_dscritic := 'Nao foi possivel cria avalista(PJ) sem conta: '||SQLERRM;
               RAISE vr_exc_erro;
           END;  
@@ -3655,8 +3779,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     
         --> Buscar naturalidade
         IF rw_pessoa_fis.cdnaturalidade > 0 THEN
-          vr_dsnatura := cada0014.fn_desc_naturalidade( pr_cdnatura => rw_pessoa_fis.cdnaturalidade, 
-                                                        pr_dscritic => vr_dscritic);
+          vr_dsnatura := SUBSTR(cada0014.fn_desc_naturalidade( pr_cdnatura => rw_pessoa_fis.cdnaturalidade, 
+                                                               pr_dscritic => vr_dscritic),1,50);
         
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
@@ -3699,11 +3823,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
         FETCH cr_telefone INTO rw_telefone;
         CLOSE cr_telefone;
         
-        vr_nmpaicto := fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_aval,
-                                           pr_tprelacao=> 3);
+        vr_nmpaicto := SUBSTR(fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_aval,
+                                                  pr_tprelacao=> 3),1,42);
         
-        vr_nmmaecto := fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_aval,
-                                           pr_tprelacao=> 4);
+        vr_nmmaecto := SUBSTR(fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_aval,
+                                                  pr_tprelacao=> 4),1,42);
       
         --> Criar avalista Sem numero de conta
         BEGIN
@@ -3803,11 +3927,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                       rw_pessoa_fis.inhabilitacao_menor,       --> inhabmen
                       rw_pessoa_fis.dthabilitacao_menor,       --> dthabmen
                       nvl(rw_pessoa_fis.cdnacionalidade,0),    --> cdnacion
-                      nvl(vr_dsnatura,' '),                    --> dsnatura
+                      SUBSTR(nvl(vr_dsnatura,' '),1,50),        --> dsnatura
                       --> pessoa_relacao tprelacao=> 3, -- Pai      
-                      vr_nmpaicto,                                                         
+                      SUBSTR(vr_nmpaicto,1,42),                                                         
                       --> pessoa_relacao tprelacao=> 4 -- Mae       
-                      vr_nmmaecto,
+                      SUBSTR(vr_nmmaecto,1,42),
                       --> cadast_pessoa_endereco                    
                       rw_endereco.nrcep,                       --> nrcepend
                       rw_endereco.nmlogradouro,                --> dsendres
@@ -3875,11 +3999,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      inhabmen = rw_pessoa_fis.inhabilitacao_menor,       
                      dthabmen = rw_pessoa_fis.dthabilitacao_menor,       
                      cdnacion = nvl(rw_pessoa_fis.cdnacionalidade,0),    
-                     dsnatura = nvl(vr_dsnatura,' '),                             
+                     dsnatura = SUBSTR(nvl(vr_dsnatura,' '),1,50),                             
                       --> pessoa_relacao tprelacao=> 3, -- Pai      
-                     nmpaicto = vr_nmpaicto,                                                    
+                     nmpaicto = SUBSTR(vr_nmpaicto,1,42),                                                    
                       --> pessoa_relacao tprelacao=> 4 -- Mae       
-                     nmmaecto = vr_nmmaecto,
+                     nmmaecto = SUBSTR(vr_nmmaecto,1,42),
                       --> cadast_pessoa_endereco                    
                      nrcepend = rw_endereco.nrcep,                       
                      dsendres##1 = rw_endereco.nmlogradouro,                
@@ -3937,10 +4061,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
             
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                           , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                            ' nrdconta: ' || pr_nrdconta);                
                 vr_dscritic := 'Nao foi possivel atualizar avalista com conta: '||SQLERRM;
                 RAISE vr_exc_erro;
             END;
           WHEN OTHERS THEN
+            cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                       , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                        ' nrdconta: ' || pr_nrdconta);                
             vr_dscritic := 'Nao foi possivel cria avalista sem conta: '||SQLERRM;
             RAISE vr_exc_erro;
         END;  
@@ -3954,6 +4084,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);                
       pr_dscritic := 'Nao foi possivel criar avalista: '||SQLERRM; 
   END pc_incluir_avalista;
  
@@ -4086,6 +4219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND avt.nrcpfcgc = nvl(rw_pessoa_rep.nrcpfcgc,0);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar paticipacao societaria de PJ: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -4150,6 +4284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND avt.nrcpfcgc = nvl(rw_pessoa_rep.nrcpfcgc,0);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar representante do PJ:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -4183,6 +4318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  WHERE avt.rowid = vr_rowidavt;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar representante do PJ:'||SQLERRM; 
                   RAISE vr_exc_erro;          
               END;
@@ -4202,6 +4338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar paticipacao societaria de PJ: '||SQLERRM; 
   END pc_atualiza_juridica_rep;
   
@@ -4322,6 +4459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND avt.nmdavali = rw_pessoa_ref.nmpessoa;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar pessoa referencia: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;   
@@ -4349,6 +4487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                        AND avt.nrdctato = vr_tab_contas_old(idx_old).nrdconta;
                   EXCEPTION
                     WHEN OTHERS THEN
+                      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                       vr_dscritic := 'Erro ao deletar pessoa referencia: '||SQLERRM; 
                       RAISE vr_exc_erro;
                   END; 
@@ -4397,6 +4536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar pessoa referencia: '||SQLERRM; 
   END pc_atualiza_pessoa_referencia;
   
@@ -4520,6 +4660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND dep.nmdepend = rw_pessoa_dep.nmpessoa;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar pessoa dependente: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;                
@@ -4541,6 +4682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar dependente:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -4566,6 +4708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                                   
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao inserir dependente: '||SQLERRM; 
                   RAISE vr_exc_erro;
               END;
@@ -4584,6 +4727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar dependentes: '||SQLERRM; 
   END pc_atualiza_pessoa_fisica_dep;
   
@@ -4648,7 +4792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     rw_endereco cr_endereco%ROWTYPE;
     
     ---------------> VARIAVEIS <----------------- 
-    vr_dscritic    VARCHAR2(1000);
+    vr_dscritic    VARCHAR2(32767);
     vr_exc_erro    EXCEPTION; 
     
     vr_dsnatura     crapavt.dsnatura%TYPE;
@@ -4709,6 +4853,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     )RETURNING ROWID INTO pr_rowidcrl ;
       EXCEPTION
         WHEN OTHERS THEN
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                     , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                     ' nrdconta: ' || pr_nrdconta);                
           vr_dscritic := 'Nao foi possivel cria responsavel legal com conta: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
@@ -4716,8 +4863,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       --> Buscar naturalidade
       vr_dsnatura := ' ';
       IF rw_pessoa_fis.cdnaturalidade > 0 THEN
-        vr_dsnatura := cada0014.fn_desc_naturalidade( pr_cdnatura => rw_pessoa_fis.cdnaturalidade, 
-                                                      pr_dscritic => vr_dscritic);
+        vr_dsnatura := SUBSTR(cada0014.fn_desc_naturalidade( pr_cdnatura => rw_pessoa_fis.cdnaturalidade, 
+                                                             pr_dscritic => vr_dscritic),1,50);
       
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
@@ -4732,11 +4879,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       FETCH cr_endereco INTO rw_endereco;
       CLOSE cr_endereco;
       
-      vr_nmpaicto := fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_resp,
-                                         pr_tprelacao=> 3);
+      vr_nmpaicto := SUBSTR(fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_resp,
+                                         pr_tprelacao=> 3),1,42);
       
-      vr_nmmaecto := fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_resp,
-                                         pr_tprelacao=> 4);
+      vr_nmmaecto := SUBSTR(fn_nome_pes_relacao(pr_idpessoa => pr_idpessoa_resp,
+                                                pr_tprelacao=> 4),1,42);
     
       --> Criar avalista Sem numero de conta
       BEGIN
@@ -4783,7 +4930,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     rw_pessoa_fis.dtnascimento,         --> dtnascin
                     rw_pessoa_fis.tpsexo,               --> cddosexo
                     rw_pessoa_fis.cdestado_civil,       --> cdestciv
-                    vr_dsnatura,                        --> dsnatura
+                    SUBSTR(vr_dsnatura,1,50),                        --> dsnatura
                     rw_endereco.nrcep,                  --> cdcepres
                     rw_endereco.nmlogradouro,           --> dsendres
                     rw_endereco.nrlogradouro,           --> nrendres
@@ -4792,8 +4939,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     0,                                  --> nrcxpost
                     nvl(rw_endereco.dscidade,' '),      --> dscidres
                     nvl(rw_endereco.cdestado,' '),      --> dsdufres
-                    vr_nmpaicto,                        --> nmpairsp
-                    vr_nmmaecto,                        --> nmmaersp
+                    SUBSTR(vr_nmpaicto,1,42),           --> nmpairsp
+                    SUBSTR(vr_nmmaecto,1,42),           --> nmmaersp
                     rw_pessoa_fis.tpdocumento,          --> tpdeiden
                     rw_pessoa_fis.nridentificacao,      --> nridenti
                     trunc(SYSDATE),                     --> dtmvtolt
@@ -4804,6 +4951,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     ) RETURNING ROWID INTO pr_rowidcrl ;
       EXCEPTION
         WHEN OTHERS THEN
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                     , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                     ' nrdconta: ' || pr_nrdconta);                
           vr_dscritic := 'Nao foi possivel cria avalista sem conta: '||SQLERRM;
           RAISE vr_exc_erro;
       END;  
@@ -4815,6 +4965,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);                
       pr_dscritic := 'Nao foi possivel criar responsavel legal: '||SQLERRM; 
   END pc_incluir_resp_legal;
  
@@ -4947,6 +5100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND crl.nmrespon = rw_pessoa_resp.nmpessoa;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao deletar responsavel legal: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;   
@@ -4974,6 +5128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                        AND crl.nrdconta = vr_tab_contas_old(idx_old).nrdconta;
                   EXCEPTION
                     WHEN OTHERS THEN
+                      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                       vr_dscritic := 'Erro ao deletar responsavel legal: '||SQLERRM; 
                       RAISE vr_exc_erro;
                   END; 
@@ -5005,6 +5160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND crl.nmrespon = rw_pessoa_resp.nmpessoa;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                 vr_dscritic := 'Erro ao atualizar responsavel legal: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;   
@@ -5035,6 +5191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                        AND crl.nrdconta = vr_tab_contas_new(idx_new).nrdconta;
                   EXCEPTION
                     WHEN OTHERS THEN
+                      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                       vr_dscritic := 'Erro ao atuaalizar responsavel legal: '||SQLERRM; 
                       RAISE vr_exc_erro;
                   END; 
@@ -5078,6 +5235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
       pr_dscritic := 'Nao foi possivel atualizar responsavel legal: '||SQLERRM; 
   END pc_atualiza_pessoa_fisica_resp;
   
@@ -5257,10 +5415,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
              
           EXCEPTION
             WHEN OTHERS THEN
+              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);                
               vr_dscritic := 'Nao foi possivel atualizar conjuge com conta: '||SQLERRM;
               RAISE vr_exc_erro;
           END;
         WHEN OTHERS THEN
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);                
           vr_dscritic := 'Nao foi possivel cria conjuge com conta: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
@@ -5366,11 +5530,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
              
           EXCEPTION
             WHEN OTHERS THEN
+              cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);                
               vr_dscritic := 'Nao foi possivel atualizar conjuge sem conta: '||SQLERRM;
               RAISE vr_exc_erro;
           END;
           
         WHEN OTHERS THEN
+          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);                
           vr_dscritic := 'Nao foi possivel cria conjuge sem conta: '||SQLERRM;
           RAISE vr_exc_erro;
       END;      
@@ -5381,6 +5551,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                 , pr_compleme => 'cdcooper: ' || pr_cdcooper || 
+                                                 ' nrdconta: ' || pr_nrdconta);                
       pr_dscritic := 'Nao foi possivel criar conjuge: '||SQLERRM; 
   END pc_incluir_conjuge;
 
@@ -5437,7 +5610,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     rw_pessoa_rel_new   cr_pessoa_fis%ROWTYPE; 
     
     ---------------> VARIAVEIS <----------------- 
-    vr_dscritic    VARCHAR2(1000);
+    vr_dscritic    VARCHAR2(32767);
     vr_exc_erro    EXCEPTION; 
     
     vr_tab_contas     cada0010.typ_tab_conta;
@@ -5526,6 +5699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND ttl.idseqttl = vr_tab_contas(idx).idseqttl;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                   vr_dscritic := 'Erro ao excluir pai do titular: '||SQLERRM; 
                   RAISE vr_exc_erro;
               END;
@@ -5534,8 +5708,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
             ELSIF vr_tab_contas(idx).tprelacao IN(10) THEN
               BEGIN          
                 UPDATE crapavt avt
-                   SET avt.nmpaicto = decode(pr_pessoa_relac_old.tprelacao,3,' ',avt.nmpaicto),
-                       avt.nmmaecto = decode(pr_pessoa_relac_old.tprelacao,4,' ',avt.nmmaecto)
+                   SET avt.nmpaicto = SUBSTR(decode(pr_pessoa_relac_old.tprelacao,3,' ',avt.nmpaicto),1,42),
+                       avt.nmmaecto = SUBSTR(decode(pr_pessoa_relac_old.tprelacao,4,' ',avt.nmmaecto),1,42)
                  WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                    AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                    AND avt.nrcpfcgc = vr_tab_contas(idx).idseqttl
@@ -5544,6 +5718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND nvl(avt.nrdctato ,0) = 0 ;                
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao excluir pai do avalista: '||SQLERRM;
                   RAISE vr_exc_erro;                    
               END;
@@ -5551,8 +5726,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
             ELSIF vr_tab_contas(idx).tprelacao IN(20) THEN
               BEGIN          
                 UPDATE crapavt avt
-                   SET avt.nmpaicto = decode(pr_pessoa_relac_old.tprelacao,3,' ',avt.nmpaicto),
-                       avt.nmmaecto = decode(pr_pessoa_relac_old.tprelacao,4,' ',avt.nmmaecto)
+                   SET avt.nmpaicto = SUBSTR(decode(pr_pessoa_relac_old.tprelacao,3,' ',avt.nmpaicto),1,42),
+                       avt.nmmaecto = SUBSTR(decode(pr_pessoa_relac_old.tprelacao,4,' ',avt.nmmaecto),1,42)
                  WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                    AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                    AND nvl(avt.nrcpfcgc,0) = nvl(rw_pessoa.nrcpfcgc,0)
@@ -5561,6 +5736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND nvl(avt.nrdctato ,0) = 0 ;                
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao excluir pai do avalista: '||SQLERRM;
                   RAISE vr_exc_erro;                    
               END;  
@@ -5577,6 +5753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND nvl(crl.nrcpfcgc, 0) = nvl(rw_pessoa.nrcpfcgc,0);                
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                   vr_dscritic := 'Erro ao excluir pai do responsavel legal: '||SQLERRM;
                   RAISE vr_exc_erro;                    
               END;
@@ -5596,6 +5773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND nvl(cje.nrctacje,0) = 0;  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao excluir conjuge: '||SQLERRM;
                 RAISE vr_exc_erro;            
             END;
@@ -5618,6 +5796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 WHEN dup_val_on_index THEN
                   NULL;
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao incluir conjuge vazio: '||SQLERRM;
                   RAISE vr_exc_erro;            
               END;
@@ -5645,6 +5824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                        AND nvl(cje.nrctacje,0) = vr_tab_contas_old(idx_old).nrdconta;  
                   EXCEPTION
                     WHEN OTHERS THEN
+                      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                       vr_dscritic := 'Erro ao excluir conjuge: '||SQLERRM;
                       RAISE vr_exc_erro;            
                   END;
@@ -5667,6 +5847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                       WHEN dup_val_on_index THEN
                         NULL;
                       WHEN OTHERS THEN
+                        cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                         vr_dscritic := 'Erro ao incluir conjuge vazio: '||SQLERRM;
                         RAISE vr_exc_erro;            
                     END;
@@ -5712,6 +5893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND ttl.idseqttl = vr_tab_contas(idx).idseqttl;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar pai do titular: '||SQLERRM; 
                   RAISE vr_exc_erro;
               END;
@@ -5720,8 +5902,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
             ELSIF vr_tab_contas(idx).tprelacao IN(10) THEN
               BEGIN          
                 UPDATE crapavt avt
-                   SET avt.nmpaicto = decode(pr_pessoa_relac_new.tprelacao,3,rw_pessoa_rel_new.nmpessoa,avt.nmpaicto),
-                       avt.nmmaecto = decode(pr_pessoa_relac_new.tprelacao,4,rw_pessoa_rel_new.nmpessoa,avt.nmmaecto)
+                   SET avt.nmpaicto = SUBSTR(decode(pr_pessoa_relac_new.tprelacao,3,rw_pessoa_rel_new.nmpessoa,avt.nmpaicto),1,42),
+                       avt.nmmaecto = SUBSTR(decode(pr_pessoa_relac_new.tprelacao,4,rw_pessoa_rel_new.nmpessoa,avt.nmmaecto),1,42)
                  WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                    AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                    AND avt.nrcpfcgc = vr_tab_contas(idx).idseqttl
@@ -5730,6 +5912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND nvl(avt.nrdctato ,0) = 0 ;                
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar pai do avalista: '||SQLERRM;
                   RAISE vr_exc_erro;                    
               END;
@@ -5738,8 +5921,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
             ELSIF vr_tab_contas(idx).tprelacao IN(20) THEN
               BEGIN          
                 UPDATE crapavt avt
-                   SET avt.nmpaicto = decode(pr_pessoa_relac_new.tprelacao,3,rw_pessoa_rel_new.nmpessoa,avt.nmpaicto),
-                       avt.nmmaecto = decode(pr_pessoa_relac_new.tprelacao,4,rw_pessoa_rel_new.nmpessoa,avt.nmmaecto)
+                   SET avt.nmpaicto = SUBSTR(decode(pr_pessoa_relac_new.tprelacao,3,rw_pessoa_rel_new.nmpessoa,avt.nmpaicto),1,42),
+                       avt.nmmaecto = SUBSTR(decode(pr_pessoa_relac_new.tprelacao,4,rw_pessoa_rel_new.nmpessoa,avt.nmmaecto),1,42)
                  WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                    AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                    AND nvl(avt.nrcpfcgc,0) = nvl(rw_pessoa.nrcpfcgc,0)
@@ -5748,6 +5931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND nvl(avt.nrdctato ,0) = 0 ;                
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                   vr_dscritic := 'Erro ao atualizar pai do avalista: '||SQLERRM;
                   RAISE vr_exc_erro;                    
               END;  
@@ -5763,6 +5947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND nvl(crl.nrcpfcgc, 0) = nvl(rw_pessoa.nrcpfcgc,0);                
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao atualizar pai do responsavel legal: '||SQLERRM;
                   RAISE vr_exc_erro;                    
               END;
@@ -5815,6 +6000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar pessoas de relacionamento: '||SQLERRM; 
   END pc_atualiza_pessoa_relacao;
   
@@ -5931,6 +6117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND bem.idseqbem   = pr_bem_old.nrseq_bem;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao excluir bem: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;    
@@ -5955,6 +6142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar bem:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -5992,6 +6180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                                   
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Erro ao inserir bem: '||SQLERRM; 
                   RAISE vr_exc_erro;
               END;
@@ -6050,6 +6239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao limpar bem do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -6103,6 +6293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar bens do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -6123,6 +6314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar bem: '||SQLERRM; 
   END pc_atualiza_bem;
   
@@ -6215,6 +6407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND nvl(cje.nrctacje,0) = 0;                 
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar renda do conjuge: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -6231,6 +6424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                 
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                 vr_dscritic := 'Não foi possivel atualizar empresa onde titular trabalha:'||SQLERRM;
                 RAISE vr_exc_erro;
             END;
@@ -6249,6 +6443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                   
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Não foi possivel atualizar pai do titular:'||SQLERRM;
                   RAISE vr_exc_erro;
               END;
@@ -6268,6 +6463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                   
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                   vr_dscritic := 'Não foi possivel atualizar pai do titular:'||SQLERRM;
                   RAISE vr_exc_erro;
               END;
@@ -6304,6 +6500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     
                 EXCEPTION
                   WHEN OTHERS THEN
+                    cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                     vr_dscritic := 'Não foi possivel atualizar associado:'||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
@@ -6332,6 +6529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                   
                 EXCEPTION
                   WHEN OTHERS THEN
+                    cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                     vr_dscritic := 'Não foi possivel atualizar titular:'||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
@@ -6352,6 +6550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                   
                 EXCEPTION
                   WHEN OTHERS THEN
+                    cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                     vr_dscritic := 'Não foi possivel atualizar pessoa juridica:'||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
@@ -6374,6 +6573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                   
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                   vr_dscritic := 'Não foi possivel atualizar empresa onde titular trabalha:'||SQLERRM;
                   RAISE vr_exc_erro;
               END;
@@ -6395,6 +6595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -6417,6 +6618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                 vr_dscritic := 'Erro ao atualizar avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;  
@@ -6426,12 +6628,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
 
             BEGIN          
               UPDATE crapavt avt
-                 SET avt.nmpaicto = decode(vr_tab_contas(idx).tprelacao,23,
+                 SET avt.nmpaicto = SUBSTR(decode(vr_tab_contas(idx).tprelacao,23,
                                                                         pr_pessoa_new.nmpessoa,
-                                                                        avt.nmpaicto),
-                     avt.nmmaecto = decode(vr_tab_contas(idx).tprelacao,24,
+                                                                     avt.nmpaicto),1,42),
+                     avt.nmmaecto = SUBSTR(decode(vr_tab_contas(idx).tprelacao,24,
                                                                         pr_pessoa_new.nmpessoa,
-                                                                        avt.nmmaecto)
+                                                                     avt.nmmaecto),1,42)
                WHERE avt.cdcooper = vr_tab_contas(idx).cdcooper
                  AND avt.nrdconta = vr_tab_contas(idx).nrdconta
                  AND nvl(avt.nrcpfcgc,0) = nvl(nvl(pr_pessoa_old.nrcpfcgc,
@@ -6443,6 +6645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                 vr_dscritic := 'Erro ao atualizar pai/mae do avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;             
@@ -6462,6 +6665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                                         pr_pessoa_new.nmpessoa);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar responsavel legal: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;   
@@ -6486,6 +6690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                                         pr_pessoa_new.nmpessoa);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar pai/mae do responsavel legal: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;
@@ -6504,6 +6709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar dependente: '||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -6524,6 +6730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar politicamente exposto:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -6542,6 +6749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                                         pr_pessoa_new.nrcpfcgc);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar paticipacao societaria de PJ:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -6556,6 +6764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar pessoa: '||SQLERRM; 
   END pc_atualiza_pessoa;
   
@@ -6688,6 +6897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND nvl(cje.nrctacje,0) = 0;                 
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar renda do conjuge: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -6732,6 +6942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                       
                   EXCEPTION
                     WHEN OTHERS THEN
+                      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                       vr_dscritic := 'Não foi possivel atualizar associado pessoa fisica:'||SQLERRM;
                       RAISE vr_exc_erro;
                   END;    
@@ -6806,6 +7017,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                   
                 EXCEPTION
                   WHEN OTHERS THEN
+                    cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                     vr_dscritic := 'Não foi possivel atualizar titular:'||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
@@ -6859,6 +7071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
               
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar avalista: '||SQLERRM;
                 RAISE vr_exc_erro;                    
             END;
@@ -6900,6 +7113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND crl.nmrespon = rw_pessoa.nmpessoa;
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar responsavel legal: '||SQLERRM; 
                 RAISE vr_exc_erro;
             END;   
@@ -6922,6 +7136,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar dependente: '||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;
@@ -6953,6 +7168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
       pr_dscritic := 'Nao foi possivel atualizar pessoa fisica: '||SQLERRM; 
   END pc_atualiza_pessoa_fisica;
   
@@ -7094,6 +7310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     
                 EXCEPTION
                   WHEN OTHERS THEN
+                    cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                     vr_dscritic := 'Não foi possivel atualizar associado:'||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
@@ -7153,6 +7370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                   
                 EXCEPTION
                   WHEN OTHERS THEN
+                    cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                     vr_dscritic := 'Não foi possivel atualizar pessoa juridica:'||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
@@ -7166,6 +7384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    AND jfn.nrdconta   = vr_tab_contas(idx).nrdconta;
               EXCEPTION
                 WHEN OTHERS THEN
+                  cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
                   vr_dscritic := 'Erro ao atualizar resultados financeiros de PJ:'||SQLERRM; 
                   RAISE vr_exc_erro;          
               END;
@@ -7233,6 +7452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  AND epa.nrdocsoc = nvl(rw_pessoa.nrcpfcgc,0);
             EXCEPTION
               WHEN OTHERS THEN
+                cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);
                 vr_dscritic := 'Erro ao atualizar paticipacao societaria de PJ:'||SQLERRM; 
                 RAISE vr_exc_erro;          
             END;          
@@ -7251,6 +7471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'idpessoa: ' || pr_idpessoa);              
       pr_dscritic := 'Nao foi possivel atualizar pessoa juridica: '||SQLERRM; 
   END pc_atualiza_pessoa_juridica;
   

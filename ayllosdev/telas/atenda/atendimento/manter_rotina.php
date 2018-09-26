@@ -29,7 +29,7 @@
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 		
 	}	
 	
@@ -39,7 +39,7 @@
 		!isset($_POST["hratendimento"])        ||
 		!isset($_POST["cdservico"])            ||
 		!isset($_POST["dsservico_solicitado"]) ) {		
-		exibirErro('error',"Par&acirc;metros incorretos.",'Alerta - Ayllos',"$('input,textarea','#frmServicos').removeClass('campoErro');$('#btVoltar','#divBotoesServicos').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",false);
+		exibirErro('error',"Par&acirc;metros incorretos.",'Alerta - Aimaro',"$('input,textarea','#frmServicos').removeClass('campoErro');$('#btVoltar','#divBotoesServicos').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",false);
 	}	
 
 	$nrdconta      = $_POST["nrdconta"];
@@ -85,7 +85,7 @@
 			$mtdErro = "$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))";  
 		}
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 						
 	}
 		
@@ -96,38 +96,38 @@
 		
 		//Conta
 		if ( $GLOBALS["nrdconta"] == 0 || !validaInteiro($GLOBALS["nrdconta"])){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		if($GLOBALS["cddopcao"] == 'I'){
 			
 			//Data atendimento
 			if ( $GLOBALS["dtatendimento"] == ''){ 
-				exibirErro('error','Data de atendimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtatendimento\',\'frmServicos\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+				exibirErro('error','Data de atendimento inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtatendimento\',\'frmServicos\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			}
 			
 			//Hora atendimento
 			if ( $GLOBALS["hratendimento"] == '' ){ 
 				
-				exibirErro('error','Hora de atendimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'hratendimento\',\'frmServicos\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+				exibirErro('error','Hora de atendimento inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'hratendimento\',\'frmServicos\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			}
 		}else{
 			
 			//Data atendimento
 			if ( $GLOBALS["dtatendimento"] == ''){ 
-				exibirErro('error','Data de atendimento inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+				exibirErro('error','Data de atendimento inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			}
 			
 			//Hora atendimento
 			if ( $GLOBALS["hratendimento"] == '' ){ 
 				
-				exibirErro('error','Hora de atendimento inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+				exibirErro('error','Hora de atendimento inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesServicos\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			}
 		}
 		
 		//Código do serviço
 		if ( $GLOBALS["cddopcao"] != 'E' && $GLOBALS["cdservico"] == 0){ 
-			exibirErro('error','C&oacute;digo do servi&ccedil;o inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'cdservico\',\'frmServicos\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','C&oacute;digo do servi&ccedil;o inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'cdservico\',\'frmServicos\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 	}

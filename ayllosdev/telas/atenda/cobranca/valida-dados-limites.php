@@ -30,7 +30,7 @@ isPostMethod();
 require_once("../../../class/xmlfile.php");
 
 if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
-	exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+	exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 }	
 
 $cddopcao  = $_POST["cddopcao"];
@@ -57,7 +57,7 @@ $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "VALIDA_DADOS", $glbvars["cd
 $xmlObject = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
-    exibirErro('error',utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+    exibirErro('error',utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 }
 
 echo 'hideMsgAguardo();';

@@ -31,7 +31,7 @@
 		
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : "";
@@ -40,11 +40,11 @@
   
 	//Data
   if ( $idseqttl == "" ){
-    exibirErro('error','O campo Sequencial do Titular n&atilde;o foi preenchido!','Alerta - Ayllos','$(\'#idseqttl\',\'#divBeneficio\').habilitaCampo();focaCampoErro(\'idseqttl\',\'divBeneficio\');',false);
+    exibirErro('error','O campo Sequencial do Titular n&atilde;o foi preenchido!','Alerta - Aimaro','$(\'#idseqttl\',\'#divBeneficio\').habilitaCampo();focaCampoErro(\'idseqttl\',\'divBeneficio\');',false);
   }
   
   if ( $nrdconta == "" ){
-    exibirErro('error','O campo Numero da Conta n&atilde;o foi preenchido!','Alerta - Ayllos','$(\'#nrdconta\',\'#divBeneficio\').habilitaCampo();focaCampoErro(\'nrdconta\',\'divBeneficio\');',false);
+    exibirErro('error','O campo Numero da Conta n&atilde;o foi preenchido!','Alerta - Aimaro','$(\'#nrdconta\',\'#divBeneficio\').habilitaCampo();focaCampoErro(\'nrdconta\',\'divBeneficio\');',false);
   }
   
 	$xmlConsultaLog  = "";
@@ -70,7 +70,7 @@
 			$nmdcampo = "nrrecben";
 		}
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
 							
 	}
   
@@ -84,7 +84,7 @@
       break;
     
     case 'BLOQUEADA':
-      exibirErro('error','Senha bloqueada.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+      exibirErro('error','Senha bloqueada.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
       break;
 
     case 'CANCELADA':

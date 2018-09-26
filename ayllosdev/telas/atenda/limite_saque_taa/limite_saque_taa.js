@@ -26,7 +26,7 @@ function acessaOpcaoAbaLimiteSaqueTAA() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", bloqueiaFundo(divRotina));
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", bloqueiaFundo(divRotina));
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1) {
@@ -149,7 +149,7 @@ function controlaOperacaoLimiteSaqueTAA(operacao, nomeRotinaPai) {
             break;
             // Alteração para Consulta
         case 'AC':
-            showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaOperacaoLimiteSaqueTAA(\'\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja cancelar altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaOperacaoLimiteSaqueTAA(\'\')', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
             return false;
             break;
             // Finalizar Alteracao	
@@ -159,7 +159,7 @@ function controlaOperacaoLimiteSaqueTAA(operacao, nomeRotinaPai) {
             } else {
                 msgOperacao = 'Deseja confirmar a altera&ccedil;&atilde;o?';
             }
-            showConfirmacao(msgOperacao, 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotinaLimiteSaqueTAA("' + nomeRotinaPai + '")', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+            showConfirmacao(msgOperacao, 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotinaLimiteSaqueTAA("' + nomeRotinaPai + '")', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
             return false;
             break;
         default:
@@ -183,7 +183,7 @@ function controlaOperacaoLimiteSaqueTAA(operacao, nomeRotinaPai) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
             if (response.indexOf('showError("error"') == -1) {
@@ -215,14 +215,14 @@ function manterRotinaLimiteSaqueTAA(nomeRotinaPai) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
                 return;
             }
             hideMsgAguardo();

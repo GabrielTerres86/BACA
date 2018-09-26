@@ -9,7 +9,7 @@
 	                                                                  	 
 	 Alteracoes: 09/02/2011 - Incluir parametro na chamada da Procedure (Gabriel).                                                  
 
-				 14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+					14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
 
 				 27/07/2016 - Corrigi o retorno XML e o uso de variaveis do array XML. SD 479874 (Carlos R.)
 	************************************************************************/
@@ -112,7 +112,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}	

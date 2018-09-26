@@ -136,7 +136,7 @@
 		echo "callafterMagneticos = metOpcaoAba;";	
 		
 		// Efetua a impressão do termo de entrega
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","geraTermoResponsabilidade();",metOpcaoAba,"sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","geraTermoResponsabilidade();",metOpcaoAba,"sim.gif","nao.gif");';
 	} else {		
 		echo $metodo;
 	}
@@ -144,7 +144,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

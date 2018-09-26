@@ -24,7 +24,7 @@
 	$nmdatela = $_POST["nmdatela"];
 	$flgcadas = $_POST["flgcadas"];
 		
-	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Responsavel Legal.','Alerta - Ayllos','');
+	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Responsavel Legal.','Alerta - Aimaro','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>

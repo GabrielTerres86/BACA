@@ -40,7 +40,7 @@ $nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
 $nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
 switch ($operacao) {
@@ -110,7 +110,7 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
     if (!empty($nmdcampo)) {
         $retornoAposErro = $retornoAposErro . " $('#" . $nmdcampo . "','#" . $formulario . "').focus();";
     }
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+    exibirErro('error', $msgErro, 'Alerta - Aimaro', $retornoAposErro, false);
 }
 
 $registro = $xmlObjeto->roottag->tags[0]->tags;

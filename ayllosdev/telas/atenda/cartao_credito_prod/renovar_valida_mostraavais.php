@@ -103,7 +103,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 
@@ -207,7 +207,7 @@ hideMsgAguardo();
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
 // Mostra mensagem de confirmação para finalizar a operação
-showConfirmacao('Deseja renovar o cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','efetuaRenovacaoCartao()','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
+showConfirmacao('Deseja renovar o cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','efetuaRenovacaoCartao()','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
 
 <?php 
 

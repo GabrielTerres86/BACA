@@ -36,7 +36,7 @@
 		default: return false;
 	}	
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],'A')) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -67,7 +67,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 		
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	$msg = Array();
 	
@@ -89,13 +89,13 @@
 	
 	// Se é Validação
 	if( $operacao == 'AV' ) {
-		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacaoFiliacao(\'VA\');','bloqueiaFundo(divRotina)',false);		
+		exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacaoFiliacao(\'VA\');','bloqueiaFundo(divRotina)',false);		
 	// Se é Inclusão ou Alteração
 	} else {
 	
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if($msgAtCad!='') {
-			if($operacao=='VA') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0054.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoFiliacao(\"FA\")\');',false);			
+			if($operacao=='VA') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0054.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoFiliacao(\"FA\")\');',false);			
 						
 		// Se não existe necessidade de Revisão Cadastral
 		} else {	
@@ -112,10 +112,10 @@
 		echo '$("input","#frmDadosFiliacao").removeClass("campoErro");';
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);				
-		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);				
+		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 
 		// Valida nome da mãe - Obrigatório
-		if ($GLOBALS['nmmaettl'] == '') exibirErro('error','O nome da M&atilde;e &eacute; de preenchimento obrigat&oacute;rio.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmmaettl\',\'frmDadosFiliacao\')',false);
+		if ($GLOBALS['nmmaettl'] == '') exibirErro('error','O nome da M&atilde;e &eacute; de preenchimento obrigat&oacute;rio.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmmaettl\',\'frmDadosFiliacao\')',false);
 	}		
 ?>

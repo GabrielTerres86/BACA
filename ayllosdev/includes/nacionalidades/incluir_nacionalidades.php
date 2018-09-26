@@ -46,10 +46,10 @@
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input,select\',\'#divConteudo\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divConteudo\');',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input,select\',\'#divConteudo\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divConteudo\');',false);
 	}
 	
-	/*exibirErro('inform','Nacionalidade incluida com sucesso.','Alerta - Ayllos','estadoInicial();',false);	*/
+	/*exibirErro('inform','Nacionalidade incluida com sucesso.','Alerta - Aimaro','estadoInicial();',false);	*/
 	echo 'bloqueiaFundo($("#divUsoGenerico"));';
 							
 							

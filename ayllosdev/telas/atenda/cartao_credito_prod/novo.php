@@ -38,16 +38,16 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);	
 	}			
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);	
+	if (!isset($_POST["nrdconta"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 
 	$nrdconta = $_POST["nrdconta"];
 
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 
 	// Monta o xml de requisição
 	$xmlGetNovoCartao  = "";
@@ -78,7 +78,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjNovoCartao->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	$dados = $xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags;
@@ -323,7 +323,7 @@
 		?>
 		<div id="divBotoes">
 			<input type="image" id="btVoltar" src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick="mostraDivDadosCartao();return false;">
-			<input type="image" src="<?echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','voltaDiv(0,1,4)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+			<input type="image" src="<?echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','voltaDiv(0,1,4)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 			<input type="image" id="btSalvar" src="<?echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarAvalistas(4);return false;">
 		</div>
 	</div>
@@ -375,7 +375,7 @@
 				}
 				
 				if (!validaCpfCnpj(retiraCaracteres($(this).val(),"0123456789",true),1)) {
-					showError("error","CPF inv&aacute;lido.","Alerta - Ayllos","$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error","CPF inv&aacute;lido.","Alerta - Aimaro","$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return false;
 				}
 				

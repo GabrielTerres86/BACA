@@ -56,13 +56,13 @@
 	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}else{
-		echo 'showError("inform","Os alertas para este dispositivo foram desativados com sucesso.","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));desativarPush()");';
+		echo 'showError("inform","Os alertas para este dispositivo foram desativados com sucesso.","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));desativarPush()");';
 	}
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

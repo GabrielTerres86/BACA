@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /*************************************************************************
 	Fonte: log_conveio.php
@@ -43,7 +43,7 @@ $xmlObject = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
     $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
-    echo "showError('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";
+    echo "showError('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";
     
 }else{
     

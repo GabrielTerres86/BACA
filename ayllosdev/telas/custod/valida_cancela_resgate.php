@@ -20,12 +20,12 @@
 	$dscheque = !isset($_POST["dscheque"]) ? "" : $_POST["dscheque"];
 	$inresgte = !isset($_POST["inresgte"]) ? 0 : $_POST["inresgte"];
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"X")) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','',false);
-	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','',false);
+	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -61,7 +61,7 @@
 			echo "$('#aux_dscritic','" . $id . "').text('" . $critica . "');";
 		}
 		$msgErro = 'Não é possível efetuar o cancelamento do resgate pois existem cheques com críticas. <br> Remova-os e tente novamente.';
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 		exit();
 	} else {
 		if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
@@ -69,7 +69,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			}
-			exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 			exit();
 		}
 	}
@@ -96,7 +96,7 @@
 				echo "$('" . $id . "').css('background', '#FF8C69');";
 			}
 			$msgErro = 'Não foi possível efetuar o cancelamento do resgate de ' || $contErro || ' cheque(s). <br> Verifique cheque(s) destacado(s)..';
-			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);
 			exit();
 		}else {
 			if($xmlObj->roottag->tags[0]->name && strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
@@ -104,13 +104,13 @@
 				if($msgErro == null || $msgErro == ''){
 					$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				}
-				exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+				exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 				exit();
 			}else{
 				echo 'limpaGridCheques();';
 				echo 'estadoInicial();';
 				$msgErro = 'Cancelamento de resgate efetuado com sucesso!';
-				exibirErro('inform',$msgErro,'Alerta - Ayllos','',false);
+				exibirErro('inform',$msgErro,'Alerta - Aimaro','',false);
 			}
 		}
 	}

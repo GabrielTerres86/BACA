@@ -24,7 +24,7 @@
 	$opcao  	= (isset($_POST['opcao']))    ? $_POST['opcao']    : '' ;
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	// Monta o xml dinâmico de acordo com a operação 
@@ -59,7 +59,7 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
 		$mtdErro = 'bloqueiaFundo( $(\'#divRotina\') ); $(\'#operauto\',\'#frmSenha\').focus();';
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}	
 	
 	echo "hideMsgAguardo();";

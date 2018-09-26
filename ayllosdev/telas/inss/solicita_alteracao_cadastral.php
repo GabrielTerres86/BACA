@@ -36,7 +36,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -110,71 +110,71 @@
 		$nmdcampo = $xmlObjSolicitaAlteracao->roottag->tags[0]->attributes['NMDCAMPO'];
 			
 		if ( !empty($nmdcampo) ) { $mtdErro = "$('input','#frmAlteracaoCadastral').removeClass('campoErro');focaCampoErro('".$nmdcampo."','frmAlteracaoCadastral');";  }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro.'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		
 	}   
 	
 	include('altera_secao_nmrotina.php');
 	
 	echo 'fechaRotina($("#divRotina"));';
-	exibirErro('inform','Cadastro atualizado com sucesso.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); solicitaConsultaBeneficiario($(\'#cddopcao\',\'#frmCabInss\').val());',false);
+	exibirErro('inform','Cadastro atualizado com sucesso.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); solicitaConsultaBeneficiario($(\'#cddopcao\',\'#frmCabInss\').val());',false);
 	
 
 	function validaDados(){
 		
 		//NB
 		if ( $GLOBALS["nrrecben"] == 0){ 
-			exibirErro('error','NB deve ser informado.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','NB deve ser informado.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//Tipo do NB
 		if ( $GLOBALS["tpnrbene"] == ''){ 
-			exibirErro('error','Tipo do benef&iacute;cio inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Tipo do benef&iacute;cio inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//Filiação
 		if ( $GLOBALS["nomdamae"] == ''){ 
-			exibirErro('error','Filia&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Filia&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 			
 		//OP
 		if ( $GLOBALS["cdorgins"] == ''){ 
-			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}		
 		
 		//Unidade de atendimento
 		if ( $GLOBALS["cdagepac"] == 0){ 
-			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 
 		//Situação
 		if ( $GLOBALS["dscsitua"] == ''){ 
-			exibirErro('error','Situa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Situa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//Agência SICREDI
 		if ( $GLOBALS["cdagesic"] == 0){ 
-			exibirErro('error','Ag&ecirc;ncia SCIREDI inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Ag&ecirc;ncia SCIREDI inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}	
 		
 		//Conta
 		if ( $GLOBALS["nrdconta"] == 0){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}	
 		
 		//CPF
 		if ( $GLOBALS["nrcpfcgc"] == 0){ 
-			exibirErro('error','CPF inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','CPF inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//ID beneficiário
 		if ( $GLOBALS["idbenefi"] == 0){ 
-			exibirErro('error','C&oacute;digo do benefici&aacute;rio inv&acute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','C&oacute;digo do benefici&aacute;rio inv&acute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//UF
 		if ( $GLOBALS["cdufende"] == ''){ 
-			exibirErro('error','UF inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','UF inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 				
 	}	

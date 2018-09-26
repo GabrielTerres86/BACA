@@ -40,7 +40,7 @@
         if ($msgErro == "") {
             $msgErro = $xmlObj->roottag->tags[0]->cdata;
         }
-        exibirErro('error', $msgErro, 'Alerta - Ayllos', "", false);
+        exibirErro('error', $msgErro, 'Alerta - Aimaro', "", false);
     }
 
     $registros = $xmlObj->roottag->tags;

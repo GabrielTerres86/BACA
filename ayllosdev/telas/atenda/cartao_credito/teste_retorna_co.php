@@ -20,11 +20,11 @@
 	$sNumeroCartao			 = $_POST['numeroCartao'];	
 	
 	if ($sIdentificadorTransacao == ""){
-		exibirErro('error','Identificador inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);	
+		exibirErro('error','Identificador inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);	
 	}
 	
 	if (!validaInteiro($sNumeroCartao)){
-		exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);	
+		exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);	
 	}	
 	
 	$aParametros = array();
@@ -44,7 +44,7 @@
 		break;
 	
 		default:
-			exibirErro('error',$oConfirmaTrocaSenhaCabal->getCodigoRetorno()." - Erro ao alterar senha.",'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+			exibirErro('error',$oConfirmaTrocaSenhaCabal->getCodigoRetorno()." - Erro ao alterar senha.",'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		break;
 	}
 ?>

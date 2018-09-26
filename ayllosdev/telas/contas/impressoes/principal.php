@@ -24,10 +24,10 @@
 	isPostMethod();		
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','fechaRotina(divRotina)');
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','fechaRotina(divRotina)');
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta = $_POST["nrdconta"] == "" ?  0  : $_POST["nrdconta"];
@@ -36,8 +36,8 @@
 	$tpregtrb = $_POST["tpregtrb"] == "" ?  0  : $_POST["tpregtrb"];
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -79,7 +79,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error', $msg, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+		exibirErro('error', $msg, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)', false);
 	}
 	$pessoaJuridicaCooperativa = $xmlObjDados->roottag->tags[0]->cdata;
 ?>

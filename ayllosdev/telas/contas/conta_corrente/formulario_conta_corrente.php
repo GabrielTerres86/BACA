@@ -64,7 +64,7 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial();',false);
 }
 
 $tipos_conta = $xmlObj->roottag->tags[0]->tags;
@@ -91,7 +91,7 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial();',false);
 }
 
 $situacoes = $xmlObj->roottag->tags[0]->tags;
@@ -314,7 +314,7 @@ foreach($tipos_conta as $tipo_conta) {
 		<? if ($btencitg == 'yes') { ?> <input type="image" id="btEncerrar" src="<? echo $UrlImagens; ?>botoes/encerrar_itg.gif" onClick="controlaOperacao('VG');" /> <? } ?>		
 		<? if ($btexcttl == 'yes') { ?> <input type="image" id="btExcluir"  src="<? echo $UrlImagens; ?>botoes/excluir_titulares.gif" onClick="controlaOperacao('VT');" /> <? } ?>
 		
-		<input type="image" id="btGerarConta" src="<? echo $UrlImagens; ?>botoes/gerar_conta_sicredi.gif" onClick="showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina( \'GC\');',' bloqueiaFundo(divRotina); ','sim.gif','nao.gif'); return false;" /> 
+		<input type="image" id="btGerarConta" src="<? echo $UrlImagens; ?>botoes/gerar_conta_sicredi.gif" onClick="showConfirmacao('Confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','manterRotina( \'GC\');',' bloqueiaFundo(divRotina); ','sim.gif','nao.gif'); return false;" /> 
 				
 	<? } else if ($operacao == 'CA' ) { ?> 
 	

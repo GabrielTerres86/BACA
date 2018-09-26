@@ -21,7 +21,9 @@
  *                             (Mateus Z - Mouts) 
  *                 05/07/2018 - Ajustado rotina para que nao haja inconsistencia nas informacoes da empresa
  *							   (CODIGO, NOME E CNPJ DA EMPRESA). (INC0018113 - Kelvin)
- */	
+ *				   20/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+ *	                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
+ */
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
 	<input type="hidden" id="tpdrendi" name="tpdrendi">
@@ -63,7 +65,7 @@
 		<br />
 		
 		<label for="nrcpfemp">C.N.P.J.:</label>
-		<input name="nrcpfemp" id="nrcpfemp" type="text"  value="<?php if ($operacao == 'CAE') { echo $nrdocnpj; } else {echo getByTagName($comercial,'nrcpfemp');} ?>" />
+		<input name="nrcpfemp" id="nrcpfemp" type="text"  value="<?php if ($operacao == 'CAE') { echo $nrcnpjot; } else {echo getByTagName($comercial,'nrcpfemp');} ?>" />
 		
 		<label for="nmextemp">Nome Empresa:</label>
 		<input name="nmextemp" id="nmextemp" disabled type="text" value="<?php if ($operacao == 'CAE') { echo $nmpessoa;} else {echo getByTagName($comercial,'nmextemp');} ?>" />		

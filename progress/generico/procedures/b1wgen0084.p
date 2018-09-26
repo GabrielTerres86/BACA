@@ -321,6 +321,8 @@
               16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
                            PJ 450 - Diego Simas (AMcom)
                            
+              31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts              
+                           
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -4062,8 +4064,72 @@ PROCEDURE grava_efetivacao_proposta:
              
       IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
          UNDO EFETIVACAO , LEAVE EFETIVACAO.
+      /* Inicio P438 */
+      /* Se for PP */
+      IF  crawepr.tpemprst = 1  THEN
+          DO:
+              /* Caso NAO seja Refinanciamento efetua credito na conta  */
+              IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                                         AND crawepr.nrdconta = par_nrdconta
+                                         AND crawepr.nrctremp = par_nrctremp
+                                         AND (crawepr.nrctrliq[1]  > 0   OR
+                                              crawepr.nrctrliq[2]  > 0   OR
+                                              crawepr.nrctrliq[3]  > 0   OR
+                                              crawepr.nrctrliq[4]  > 0   OR
+                                              crawepr.nrctrliq[5]  > 0   OR
+                                              crawepr.nrctrliq[6]  > 0   OR
+                                              crawepr.nrctrliq[7]  > 0   OR
+                                              crawepr.nrctrliq[8]  > 0   OR
+                                              crawepr.nrctrliq[9]  > 0   OR
+                                              crawepr.nrctrliq[10] > 0)) THEN
+                  DO:
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
          
+                      /* Efetuar a chamada a rotina Oracle  */
+                      RUN STORED-PROCEDURE pc_credito_online_pp
+                          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                               INPUT par_nrdconta,
+                                                               INPUT par_nrctremp,
+                                                               INPUT par_nmdatela,
+                                                               INPUT crapass.inpessoa,
+                                                               INPUT par_cdagenci,
+                                                               INPUT par_nrdcaixa,
+                                                               INPUT par_cdagenci, /* pr_cdpactra */
+                                                               INPUT par_cdoperad,
+                                                              OUTPUT 0,   /* pr_vltottar */
+                                                              OUTPUT 0,   /* pr_vltariof */
+                                                              OUTPUT 0,   /* pr_cdcritic */
+                                                              OUTPUT ""). /* pr_dscritic */
 
+                      /* Fechar o procedimento para buscarmos o resultado */ 
+                      CLOSE STORED-PROC pc_credito_online_pp
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                      
+                      ASSIGN aux_vltottar = 0
+                             aux_vltariof = 0
+                             aux_cdcritic = 0
+                             aux_dscritic = ""
+                             aux_vltottar = pc_credito_online_pp.pr_vltottar
+                                            WHEN pc_credito_online_pp.pr_vltottar <> ?
+                             aux_vltariof = pc_credito_online_pp.pr_vltariof
+                                            WHEN pc_credito_online_pp.pr_vltariof <> ?
+                             aux_cdcritic = INT(pc_credito_online_pp.pr_cdcritic) 
+                                            WHEN pc_credito_online_pp.pr_cdcritic <> ?
+                             aux_dscritic = pc_credito_online_pp.pr_dscritic
+                                            WHEN pc_credito_online_pp.pr_dscritic <> ?
+                             aux_vltarifa = aux_vltottar.
+
+                      IF   aux_cdcritic <> 0    OR
+                           aux_dscritic <> ""   THEN
+                           UNDO EFETIVACAO , LEAVE EFETIVACAO.
+
+                  END. /* NOT CAN-FIND */
+
+          END. /* crawepr.tpemprst = 1 */
+      /* Fim P438 */
+      /**/
       /* Se for Pos-Fixado */
       IF  crawepr.tpemprst = 2  THEN
           DO:
@@ -4157,7 +4223,7 @@ PROCEDURE grava_efetivacao_proposta:
 
                  END.
 
-          END.
+                 END.
        /***********************
           CALCULO DATA RISCO REFIN
           Se houve alguma liquidacao de contrato
@@ -4221,7 +4287,7 @@ PROCEDURE grava_efetivacao_proposta:
                aux_dsctrliq = aux_dsctrliq + 
                  TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
             END.                      
-       
+
        /* Acionar rotina que gera a qualificacao da operacao */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -4265,8 +4331,8 @@ PROCEDURE grava_efetivacao_proposta:
                ASSIGN tt-erro.cdcritic = aux_cdcritic
                       tt-erro.dscritic = aux_dscritic.
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
-           END.
-           
+          END.
+
        /* Requalifica a operacao na proposta                 */
        /* INICIO                                             */       
        FIND FIRST b-crawepr
@@ -4329,7 +4395,8 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.qttolatr = crawepr.qttolatr
               crapepr.vltarifa = aux_vltarifa
               crapepr.vlaqiofc = aux_vlaqiofc
-              crapepr.vltariof = (IF crawepr.tpemprst = 2 THEN aux_vltariof ELSE aux_vltotiof)
+              /*P438 Incluir a tratativa para PP*/
+              crapepr.vltariof = (IF CAN-DO("1,2", STRING(crawepr.tpemprst)) THEN aux_vltariof ELSE aux_vltotiof)
               crapepr.iddcarga = aux_idcarga
               crapepr.idfiniof = crawepr.idfiniof
               crapepr.dtinicio_atraso_refin = aux_dtrisref.
@@ -4905,7 +4972,8 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
          END.
 
     /* Se for Pos-Fixado */
-    IF  crapepr.tpemprst = 2  THEN
+    /*INICIO P438*/
+    IF CAN-DO("1,2", STRING(crapepr.tpemprst)) THEN
         DO:
            /* Caso NAO seja Refinanciamento, exibe critica  */
            IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
@@ -4937,7 +5005,7 @@ PROCEDURE busca_desfazer_efetivacao_emprestimo:
                END. /* NOT CAN-FIND */
 
         END. /* crapepr.tpemprst = 2 */
-
+        /*FIM P438*/
     FIND   FIRST craplem NO-LOCK WHERE
                  craplem.cdcooper = crapepr.cdcooper AND
                  craplem.dtmvtolt = crapepr.dtmvtolt AND
@@ -5126,6 +5194,30 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                ASSIGN aux_dscritic = "Ja possui lancamento em conta".
                UNDO Desfaz , LEAVE Desfaz.
            END.
+        /* INICIO P438 - Se for PP */
+        IF  crapepr.tpemprst = 1  THEN
+            DO:
+               /* Caso NAO seja Refinanciamento, exibe critica  */
+               IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper
+                                          AND crawepr.nrdconta = par_nrdconta
+                                          AND crawepr.nrctremp = par_nrctremp
+                                          AND (crawepr.nrctrliq[1]  > 0   OR
+                                               crawepr.nrctrliq[2]  > 0   OR
+                                               crawepr.nrctrliq[3]  > 0   OR
+                                               crawepr.nrctrliq[4]  > 0   OR
+                                               crawepr.nrctrliq[5]  > 0   OR
+                                               crawepr.nrctrliq[6]  > 0   OR
+                                               crawepr.nrctrliq[7]  > 0   OR
+                                               crawepr.nrctrliq[8]  > 0   OR
+                                               crawepr.nrctrliq[9]  > 0   OR
+                                               crawepr.nrctrliq[10] > 0)) THEN
+                   DO:
+                       ASSIGN aux_dscritic = "Operacao nao permitida para emprestimo do tipo PP.".
+                       UNDO Desfaz , LEAVE Desfaz.
+
+                   END. /* NOT CAN-FIND */
+
+            END. /* FIM P438 crapepr.tpemprst = 1 */           
 
         /* Se for Pos-Fixado */
         IF  crapepr.tpemprst = 2  THEN

@@ -149,7 +149,7 @@ function realizaOperacao() {
 
 	// Verifica se a conta é válida
 	if ( !validaNroConta(nrdconta) ) { 
-		showError('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\''+ frmCab +'\');'); 
+		showError('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\''+ frmCab +'\');'); 
 		return false; 
 	}
 	
@@ -200,7 +200,7 @@ function buscaExtrato( nriniseq, nrregist ) {
 				},
 		error   : function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 				},
 		success : function(response) {
 					hideMsgAguardo();
@@ -210,14 +210,14 @@ function buscaExtrato( nriniseq, nrregist ) {
 							return false;
 						} catch(error) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 						}
 					} else {
 						try {
 							eval( response );
 						} catch(error) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 						}
 					}
 

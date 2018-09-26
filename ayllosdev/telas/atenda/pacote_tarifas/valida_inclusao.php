@@ -46,7 +46,7 @@
 	
 		$msgErro  = utf8_encode($xmlObjValidaInclusao->roottag->tags[0]->tags[0]->tags[4]->cdata);
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);		
 							
 	} 
 	$resultado = $xmlObjValidaInclusao->roottag->tags[0]->tags[0]->name;

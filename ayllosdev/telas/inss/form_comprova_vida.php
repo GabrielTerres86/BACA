@@ -22,8 +22,8 @@
 	<br />
 	
 	<a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('V5');">Voltar</a>
-	<a href="#" class="botao" id="btCmpBene" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','solicitaComprovacaoVida(\'BENEFICIARIO\',\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;" >Comprovar pelo Beneficiário</a> 
-	<a href="#" class="botao" id="btCmpProc" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','solicitaComprovacaoVida(\'PROCURADOR\',\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;">Comprovar pelo Procurador</a> 
+	<a href="#" class="botao" id="btCmpBene" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','solicitaComprovacaoVida(\'BENEFICIARIO\',\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;" >Comprovar pelo Beneficiário</a> 
+	<a href="#" class="botao" id="btCmpProc" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','solicitaComprovacaoVida(\'PROCURADOR\',\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;">Comprovar pelo Procurador</a> 
 
 	<br />
 	<br />

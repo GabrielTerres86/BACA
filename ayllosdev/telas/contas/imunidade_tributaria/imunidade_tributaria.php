@@ -23,13 +23,13 @@
 	isPostMethod();	
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 
 	$flgcadas  = $_POST['flgcadas'];
 	
 	if (($msgError = validaPermissao($_POST["nmdatela"],$_POST["nmrotina"],'@',false)) <> '') {
 		$metodo =  'proximaRotina();';
-		exibirErro('error', $msgError ,'Alerta - Ayllos',$metodo,true);
+		exibirErro('error', $msgError ,'Alerta - Aimaro',$metodo,true);
 	}
 	
 	// Carrega permissões do operador

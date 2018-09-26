@@ -1,21 +1,21 @@
 <?php 
 
 	/************************************************************************
-	Fonte: grupo_economico.php
-	Autor: Adriano
-	Data : Outubro/2012              		Última Alteração: 10/02/2014
+	      Fonte: grupo_economico.php
+	      Autor: Adriano
+	      Data : Outubro/2012              		Última Alteração: 10/02/2014
 
-    Objetivo  : Mostrar opcao de Grupo Economico da rotina de Ocorrencias
-                da tela ATENDA
+          Objetivo  : Mostrar opcao de Grupo Economico da rotina de Ocorrencias
+                      da tela ATENDA
 
-	Alterações: 21/03/2013 - Ajustes realizados:
-							- Corrigido a grafia do título da coluna "Endividamento"
-							- Atribuido o valor correto a coluna "Endividamento" 
-							(Adriano).
-				12/08/2013 - Alteração da sigla PAC para PA. (Carlos)
-				10/02/2014 - Correção relativa ao Valor do Endividamento (Lucas).
+	      Alterações: 21/03/2013 - Ajustes realizados:
+									- Corrigido a grafia do título da coluna "Endividamento"
+								    - Atribuido o valor correto a coluna "Endividamento" 
+									(Adriano).
+					  12/08/2013 - Alteração da sigla PAC para PA. (Carlos)
+					  10/02/2014 - Correção relativa ao Valor do Endividamento (Lucas).
 				25/07/2016 - Corrigi a forma de recuperacao dos dados do XML. SD 479874 (Carlos R.)							
-
+											
 	************************************************************************/
 
 	session_start();
@@ -79,7 +79,7 @@
 						
 		echo '<script type="text/javascript">';
 		echo '   hideMsgAguardo();';
-		echo '   showError("error","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo '   showError("error","'.$gergrupo.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		
 	}	
@@ -125,7 +125,7 @@
 	function exibeErro($msgErro) {
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","");';
 		echo '</script>';
 		exit();
 	}

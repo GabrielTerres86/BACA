@@ -37,7 +37,7 @@ if ($dsprotocolo) {
 
     // Se ocorrer um erro, mostra crítica
     if ($xmlObjeto->roottag->tags[0]->name == "ERRO") {
-        exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
+        exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)', false);
     }
 
     // Obtem nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
@@ -52,7 +52,7 @@ if ($dsprotocolo) {
 // Mostra a listagem
 } else {
 
-    echo 'showError("error","Operação inválida!","Alerta - Ayllos","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
+    echo 'showError("error","Operação inválida!","Alerta - Aimaro","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
     exit;
 }
    

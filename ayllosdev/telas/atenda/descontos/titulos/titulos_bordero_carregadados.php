@@ -163,7 +163,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -261,7 +261,7 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 
 <?php if ($flgnewbor == 0 && $flgverbor == 1 && $dtlibbdt){ ?>
 	hideMsgAguardo();	
-	showError("inform","ATEN&Ccedil;&Atilde;O: Border&ocirc; liberado no processo antigo!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
+	showError("inform","ATEN&Ccedil;&Atilde;O: Border&ocirc; liberado no processo antigo!","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
 <?php }	?>
 
 flgverbor = <?=$flgverbor?>
@@ -282,12 +282,12 @@ flgverbor = <?=$flgverbor?>
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
 			if(flgverbor){
-				showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
+				showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Aimaro","liberaBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
 			}
 			else{
-			showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Aimaro","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
 			}
 <?php } elseif ($cddopcao == "E") { ?>
-			showConfirmacao("Deseja excluir o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","excluirBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("Deseja excluir o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Aimaro","excluirBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
 <?php } ?>
 </script>

@@ -31,7 +31,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"C")) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$nrctaori = (isset($_POST["nrctaori"])) ? $_POST["nrctaori"] : 0;
@@ -66,11 +66,11 @@
 			$nmdcampo = "vldsaque";
 		}
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#frmSaqueParcial\').removeClass(\'campoErro\');$(\'#'.$nmdcampo.'\',\'#frmSaqueParcial\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input\',\'#frmSaqueParcial\').removeClass(\'campoErro\');$(\'#'.$nmdcampo.'\',\'#frmSaqueParcial\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
 							
 	}   	
 	
-	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso','Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);		
+	exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso','Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);		
 	
 	
 					
@@ -78,17 +78,17 @@
 		
 		//Conta origem
 		if ( $GLOBALS["nrctaori"] == 0){ 
-			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//Conta destino
 		if ( $GLOBALS["nrctadst"] == 0){ 
-			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//Valor do saque
 		if ( $GLOBALS["vldsaque"] == 0){ 
-			exibirErro('error','Valor para saque inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'vldsaque\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Valor para saque inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'vldsaque\',\'frmSaqueParcial\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		

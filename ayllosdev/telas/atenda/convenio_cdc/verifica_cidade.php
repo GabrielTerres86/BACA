@@ -43,7 +43,7 @@
         if ($msgErro == "") {
             $msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 		}
-        exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',"bloqueiaFundo(divRotina)",false);
+        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro',"bloqueiaFundo(divRotina)",false);
 	}
 	
     $idcidade = $xmlObjeto->roottag->tags[0]->cdata;

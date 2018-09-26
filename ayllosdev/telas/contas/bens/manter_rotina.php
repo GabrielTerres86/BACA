@@ -8,7 +8,7 @@
  * ALTERACOES   : Reformulacao cadastral (Gabriel-RKAM).
  *								14/07/2016 - Corrigi a forma de recuperacao das variaveis do XML. SD 479874. Carlos R.
  */
-
+ 
     session_start();
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
@@ -40,7 +40,7 @@
 	$idseqbem = (in_array($operacao,array('IV','VI'))) ? "" : $idseqbem;
 	
 	// Se não for informado qual operação, exibir mensagem de erro
-	if ($operacao == "") exibirErro('error','O par&acirc;metro operação n&atilde;o foi informado.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if ($operacao == "") exibirErro('error','O par&acirc;metro operação n&atilde;o foi informado.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 
 	
 	// Dependendo da operação, chamo uma procedure diferente
@@ -51,7 +51,7 @@
 	if( $operacao == 'VA' ) {$procedure = 'altera-registro'; $cddopcao ='A'; }
 	if( $operacao == 'CE' ) {$procedure = 'exclui-registro'; $cddopcao ='E'; }
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml  = "";
@@ -86,13 +86,13 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjeto = getObjectXML($xmlResult);
 	
-	//exibirErro('error','Op.: '.$operacao.' | Procedure: '.$procedure,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	//exibirErro('error','Op.: '.$operacao.' | Procedure: '.$procedure,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 	
 	$metodo = ( $operacao == 'CE' ) ? 'controlaOperacao();' : 'bloqueiaFundo(divRotina);' ;
 	
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") 
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 	
 	$msg = Array();
 	
@@ -112,12 +112,12 @@
 	$chaveAlt    = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
 	$tpAtlCad    = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';	
 	
-	// exibirErro('error','OP- '.$operacao,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	// exibirErro('error','OP- '.$operacao,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	// Se é Validação
 	if(in_array($operacao,array('IV','AV'))) {
 		
-		if($operacao=='AV') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);
-		if($operacao=='IV') exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Ayllos','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);
+		if($operacao=='AV') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);
+		if($operacao=='IV') exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Aimaro','controlaOperacao(\'VI\')','bloqueiaFundo(divRotina)',false);
 		
 	// Se é Inclusão ou Alteração
 	} else {
@@ -125,11 +125,11 @@
 		// Verificar se existe "Verificação de Revisão Cadastral"
 		if($msgAtCad != '' && $flgcadas != 'M') {
 					
-			if($operacao=='VI') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FI\")\')',false);
+			if($operacao=='VI') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FI\")\')',false);
 			
-			if($operacao=='VA') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);
+			if($operacao=='VA') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);
 			
-			if($operacao=='CE') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FE\")\')',false);
+			if($operacao=='CE') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0056.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FE\")\')',false);
 			
 		// Se não existe necessidade de Revisão Cadastral
 		} else {	

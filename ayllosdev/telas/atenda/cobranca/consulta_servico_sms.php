@@ -207,7 +207,7 @@ function exibeErroNew($tpdmsg,$msgErro,$dsdacao) {
     
     echo '<script>';
     echo 'hideMsgAguardo();';
-    echo 'showError("'.$tpdmsg.'","' . $msgErro . '","Alerta - Ayllos","desbloqueia();'. $dsdacao .'");';
+    echo 'showError("'.$tpdmsg.'","' . $msgErro . '","Alerta - Aimaro","desbloqueia();'. $dsdacao .'");';
     echo '</script>';
 }
 

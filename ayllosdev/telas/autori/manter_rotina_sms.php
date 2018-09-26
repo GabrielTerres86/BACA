@@ -73,7 +73,7 @@
 		if ( !empty($nmdcampo) ) { 
 			$mtdErro = "$('#".$nmdcampo."','#frmSms').focus();";
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 	$registro = $xmlObjeto->roottag->tags[0]->tags;
@@ -81,11 +81,11 @@
     switch($operacao) {
 		case 'S2':
 			echo "hideMsgAguardo();";
-			echo 'showError("inform","Telefone cadastrado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","controlaOperacao(\'\');");';		
+			echo 'showError("inform","Telefone cadastrado com sucesso.","Notifica&ccedil;&atilde;o - Aimaro","controlaOperacao(\'\');");';		
 			break;
 		case 'S3': 
 			echo "hideMsgAguardo();";
-			echo 'showError("inform","Telefone excluido com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","controlaOperacao(\'\');");';		
+			echo 'showError("inform","Telefone excluido com sucesso.","Notifica&ccedil;&atilde;o - Aimaro","controlaOperacao(\'\');");';		
 			break;
 	}
 ?>

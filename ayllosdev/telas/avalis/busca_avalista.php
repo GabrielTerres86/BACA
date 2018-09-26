@@ -30,7 +30,7 @@
 	$retornoAposErro = 'estadoInicial();';
 		
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$retornoAposErro,false);
 	}	
 	
 	$xmlBuscaAvalista  = "";
@@ -50,7 +50,7 @@
 		$msgErro	= $xmlObjBuscaAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$mtdErro = " $('#nmdavali','#frmAvalis').habilitaCampo().focus().addClass(\'campoErro\');bloqueiaFundo( $('#divRotina') );"; 
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);		
 		
 	} 
 	

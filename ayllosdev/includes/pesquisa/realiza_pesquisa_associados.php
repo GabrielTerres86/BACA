@@ -29,7 +29,7 @@
 		!isset($_POST["tpdapesq"]) || 
 		!isset($_POST["cdagpesq"]) || 
 		!isset($_POST["nrdctitg"])) {
-		exibirErro('error','Par&acirc;metros incorretos para a pesquisa.','Alerta - Ayllos','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
+		exibirErro('error','Par&acirc;metros incorretos para a pesquisa.','Alerta - Aimaro','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
 	}	
 	
 	$cdpesqui = $_POST["cdpesqui"];
@@ -52,16 +52,16 @@
 	$teste = $cdpesqui." | ".$nmdbusca." | ".$tpdapesq." | ".$cdagpesq." | ".$nrdctitg;	
 
 	// Verifica se tipo de pesquisa é válido
-	if (!validaInteiro($cdpesqui) || ($cdpesqui <> "1" && $cdpesqui <> "2" && $cdpesqui <> "3")) exibirErro('error','Tipo de pesquisa inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
+	if (!validaInteiro($cdpesqui) || ($cdpesqui <> "1" && $cdpesqui <> "2" && $cdpesqui <> "3")) exibirErro('error','Tipo de pesquisa inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
 	
 	// Valida tipo de titular
-	if ($cdpesqui == "1" && (!validaInteiro($tpdapesq) || $tpdapesq < 0 || $tpdapesq > 4)) exibirErro('error','Tipo de Titular inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
+	if ($cdpesqui == "1" && (!validaInteiro($tpdapesq) || $tpdapesq < 0 || $tpdapesq > 4)) exibirErro('error','Tipo de Titular inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
 
 	// Valida tipo de titular
-	if ($cdpesqui == "3" && (!validaInteiro($tpdapesq) || $tpdapesq < 1 || $tpdapesq > 2)) exibirErro('error','Tipo de Pesquisa inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
+	if ($cdpesqui == "3" && (!validaInteiro($tpdapesq) || $tpdapesq < 1 || $tpdapesq > 2)) exibirErro('error','Tipo de Pesquisa inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
 	
 	// Verifica se códgio do PA é um inteiro válido
-	if ($cdpesqui == "1" && !validaInteiro($cdagpesq)) exibirErro('error','C&oacute;digo de PA inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
+	if ($cdpesqui == "1" && !validaInteiro($cdagpesq)) exibirErro('error','C&oacute;digo de PA inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo($(\'#divConsultaAssociado\'))',true);
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
 	$xmlSetPesquisa  = "";
@@ -95,7 +95,7 @@
 	$xmlObjPesquisa = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjPesquisa->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divConsultaAssociado\'))');
+	if (strtoupper($xmlObjPesquisa->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#divConsultaAssociado\'))');
 	
 	$pesquisa = $xmlObjPesquisa->roottag->tags[0]->tags;
 

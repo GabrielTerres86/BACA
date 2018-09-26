@@ -42,7 +42,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjRating->roottag->tags[0]->name) == "ERRO") {
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$xmlObjRating->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$xmlObjRating->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		
 	}
 	

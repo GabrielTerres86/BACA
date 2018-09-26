@@ -26,7 +26,7 @@
 	$vlcheque = !isset($_POST["vlcheque"]) ? 0  : $_POST["vlcheque"];
 
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -48,7 +48,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
 	}else{
 		if($xmlObj->roottag->tags[0]->cdata == 1)

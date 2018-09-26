@@ -32,7 +32,7 @@
   
   if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
     
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
   
   $dtreglog = (isset($_POST["dtreglog"])) ? $_POST["dtreglog"] : "";
@@ -73,7 +73,7 @@
 			$nmdcampo = "nrrecben";
 		}
 				 
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
 							
 	}   
 	
@@ -168,7 +168,7 @@
         </table>
       </div>
     </fieldset>
-<?} else { echo "showError('error','Nenhum registro encontrado!','Alerta - Ayllos','$(\'#dtmvtolt\',\'#divConsultaLog\').focus();');";exit();}?>
+<?} else { echo "showError('error','Nenhum registro encontrado!','Alerta - Aimaro','$(\'#dtmvtolt\',\'#divConsultaLog\').focus();');";exit();}?>
 <div id="divBotoesDetalhar" style="margin-top:5px; margin-bottom :10px; display:block; text-align: center;">
   <a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('V10');return false;">Voltar</a>
   <?if ($qtregist > 0) {?><a href="#" class="botao" id="btDetalhar" onClick="carregarDetalheLog(0); return false;" >Detalhar</a><?}?>

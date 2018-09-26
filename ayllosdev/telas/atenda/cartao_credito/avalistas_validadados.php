@@ -26,7 +26,7 @@
 	                'nrctaav2','nmdaval2','nrcpfav2','cpfcjav2','ende1av2','redirect','tipoacao');
 
 	foreach ($params as $nomeParam) {
-		if (!in_array($nomeParam,array_keys($_POST))) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		if (!in_array($nomeParam,array_keys($_POST))) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$nrdconta = $_POST['nrdconta'];
@@ -45,25 +45,25 @@
 	$tipoacao = $_POST['tipoacao'];
 
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se número da conta do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav1)) exibirErro('error','Conta/dv do 1o Avalista inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrctaav1)) exibirErro('error','Conta/dv do 1o Avalista inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se número da conta do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav2)) exibirErro('error','Conta/dv do 2o Avalista inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrctaav2)) exibirErro('error','Conta/dv do 2o Avalista inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se CPF do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav1)) exibirErro('error','CPF do 1o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrcpfav1)) exibirErro('error','CPF do 1o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se CPF do Conjugê do 1° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav1)) exibirErro('error','CPF do Conjug&ecirc; do 1o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($cpfcjav1)) exibirErro('error','CPF do Conjug&ecirc; do 1o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Verifica se CPF do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav2)) exibirErro('error','CPF do 2o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($nrcpfav2)) exibirErro('error','CPF do 2o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Verifica se CPF do Conjugê do 2° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav2)) exibirErro('error','CPF do Conjug&ecirc; do 2o Avalista inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!validaInteiro($cpfcjav2)) exibirErro('error','CPF do Conjug&ecirc; do 2o Avalista inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Monta o xml de requisição
 	$xmlValidaAvalista  = "";
@@ -104,7 +104,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjAvalista->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjAvalista->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	} 
 	
 	// Esconde mensagem de aguardo
@@ -112,16 +112,16 @@
 	echo 'bloqueiaFundo(divRotina);';
 
 	if ($tipoacao == 1) {
-		echo 'showConfirmacao("Deseja cadastrar o novo limite de cr&eacute;dito do cart&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","alteraLimCre()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja cadastrar o novo limite de cr&eacute;dito do cart&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","alteraLimCre()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	} elseif ($tipoacao == 2) {
-		echo 'showConfirmacao("Deseja cadastrar entrega de segunda via do cr&eacute;dito do cart&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","efetuaEntrega2viaCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja cadastrar entrega de segunda via do cr&eacute;dito do cart&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","efetuaEntrega2viaCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	} elseif ($tipoacao == 3) {
-		echo 'showConfirmacao("Deseja renovar o cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Ayllos","efetuaRenovacaoCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja renovar o cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Aimaro","efetuaRenovacaoCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	} elseif ($tipoacao == 4) {
-	 	echo 'showConfirmacao("Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Ayllos","cadastrarNovoCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	 	echo 'showConfirmacao("Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Aimaro","cadastrarNovoCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	} elseif ($tipoacao == 5) {
-	 	echo 'showConfirmacao("Deseja gravar os dados de habilita&ccedil;&atilde;o para cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Ayllos","gravarDadosHabilitacao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	 	echo 'showConfirmacao("Deseja gravar os dados de habilita&ccedil;&atilde;o para cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Aimaro","gravarDadosHabilitacao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	} else {
-		exibirErro('error','Tipo de a&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error','Tipo de a&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 ?>

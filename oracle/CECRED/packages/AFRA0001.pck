@@ -24,6 +24,9 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                    04/04/2018 - Criacao das rotinas pc_ler_parametros_fraude e fn_envia_analise,
                                 e alteracoes na rotina pc_crias_analise_antifraude             
                                 PRJ381 - Antifraude (Teobaldo J. - AMcom) 
+
+                   20/07/2018 - Alterações referentes ao projeto 475 - MELHORIAS SPB CONTINGÊNCIA
+                                Everton Souza - Mouts
 																
                    15/08/2018 - Alterada procedure pc_aprovacao_analise para enviar campo 
 				                "IdentificacaoPessoa" com o formato correto. (Reinert)
@@ -4896,10 +4899,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND aut.nrsequen = pr_nrsequen;    
     rw_crapaut cr_crapaut%ROWTYPE;
     
+    -- Marcelo Telles Coelho - Projeto 475
+    CURSOR cr_craptvl_OFSAA IS
+      SELECT c.nrcontrole_if
+        FROM craptvl a,
+             tbspb_msg_enviada c
+       WHERE a.idanafrd = pr_idanalis
+         and a.idmsgenv = c.nrseq_mensagem;
+
+    rw_craptvl_OFSAA cr_craptvl_OFSAA%ROWTYPE;
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
     
     vr_tab_dscomple  typ_tab_campos;
@@ -4920,6 +4933,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_mmaacomp      VARCHAR2(6);
     vr_cdidenti      VARCHAR2(20);
     
+    --Variaveis Projeto 475
+    vr_nrseq_mensagem      tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type;
+
   BEGIN
   
     --> Buscar analise de fraude
@@ -5205,6 +5222,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       END IF;
     END IF;   
     
+    -- Marcelo Telles Coelho - Projeto 475
+    -- Buscar número de controle da instuição financeira
+    OPEN cr_craptvl_OFSAA;
+    FETCH cr_craptvl_OFSAA INTO rw_craptvl_OFSAA;
+
+    IF cr_craptvl_OFSAA%NOTFOUND THEN
+      CLOSE cr_craptvl_OFSAA;
+    ELSE
+      CLOSE cr_craptvl_OFSAA;
+      --
+      -- Fase 20 - controle mensagem SPB
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => 'Aprovada pelo OFSAA'
+                                 ,pr_nrcontrole             => rw_craptvl_OFSAA.nrcontrole_if
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => rw_craplgp.nrdconta
+                                 ,pr_cdcooper               => rw_fraude.cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      --
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    -- Fim Projeto 475
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -5266,12 +5320,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     
+    -- Marcelo Telles Coelho - Projeto 475
+    CURSOR cr_craptvl_OFSAA IS
+      SELECT c.nrcontrole_if
+        FROM craptvl a,
+             tbspb_msg_enviada c
+       WHERE a.idanafrd = pr_idanalis
+         and a.idmsgenv = c.nrseq_mensagem;
+
+    rw_craptvl_OFSAA cr_craptvl_OFSAA%ROWTYPE;
+
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
     
+    --Variaveis Projeto 475
+    vr_nrseq_mensagem      tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type;
+    vr_nrseq_mensagem_xml  tbspb_msg_xml.nrseq_mensagem_xml%type;
     
   BEGIN
   
@@ -5380,6 +5449,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       RAISE vr_exc_erro;
     END IF;
     
+    -- Marcelo Telles Coelho - Projeto 475
+    -- Buscar número de controle da instuição financeira
+    OPEN cr_craptvl_OFSAA;
+    FETCH cr_craptvl_OFSAA INTO rw_craptvl_OFSAA;
+
+    IF cr_craptvl_OFSAA%NOTFOUND THEN
+      CLOSE cr_craptvl_OFSAA;
+    ELSE
+      CLOSE cr_craptvl_OFSAA;
+      --
+      --
+      -- Fase 20 - controle mensagem SPB
+      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => 'Reprovada pelo OFSAA'
+                                 ,pr_nrcontrole             => rw_craptvl_OFSAA.nrcontrole_if
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'NOK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => rw_fraude.nrdconta
+                                 ,pr_cdcooper               => rw_fraude.cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+      --
+      -- Se ocorreu erro
+      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levantar Excecao
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+      -- Acertar nome da mensagens na tabela tbspb_msg_enviada_fase
+      sspb0003.pc_acerta_nmmensagem(pr_nmmensagem         => 'Reprovada pelo OFSAA'
+                                   ,pr_nmmensagem_OLD     => 'MSG_TEMPORARIA'
+                                   ,pr_nrcontrole_if      => rw_craptvl_OFSAA.nrcontrole_if
+                                   ,pr_insituacao         => 'NOK'
+                                   ,pr_nrseq_mensagem_xml => vr_nrseq_mensagem_xml
+                                   ,pr_dscritic           => vr_dscritic
+                                   ,pr_des_erro           => vr_des_erro);
+
+      -- se retornou critica, abortar programa
+      IF nvl(vr_des_erro,'OK') <> 'OK' OR
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    -- Fim Projeto 475
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       
@@ -5434,6 +5557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
+    vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;    
     
@@ -6242,11 +6366,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
          AND fra.idanalise_fraude = pr_idanalis; 
     rw_fraude cr_fraude%ROWTYPE;
     
+    CURSOR cr_craptvl IS
+      SELECT c.nrcontrole_if
+        FROM craptvl a,
+             tbspb_msg_enviada c
+       WHERE a.idanafrd = pr_idanalis
+         and a.idmsgenv = c.nrseq_mensagem;
+
+    rw_craptvl cr_craptvl%ROWTYPE;
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(4000);
+    vr_des_erro VARCHAR2(4000);
     vr_dscritic_aux VARCHAR2(4000);
     vr_dsdetcri VARCHAR2(4000);
     vr_exc_erro EXCEPTION;  
@@ -6261,6 +6394,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_cdcanal  INTEGER         := NULL;
     
     vr_cdprogra   VARCHAR2(50) := 'pc_reg_conf_entrega_antifraude';
+
+    --everton
+    vr_nrseq_mensagem tbspb_msg_enviada_fase.nrseq_mensagem%type;
+    vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
+    vr_situacao_OFSAA      VARCHAR2(20);
 
   BEGIN
   

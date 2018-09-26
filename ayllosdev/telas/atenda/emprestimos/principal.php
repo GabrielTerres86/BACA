@@ -63,18 +63,18 @@
 
     // Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao,false)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','controlaOperacao();',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','controlaOperacao();',false);
 	// Caso seja para 'Alterar Somente Avalistas' verifica a permissao para tal operacao
     } else if ($nomeAcaoCall == 'A_AVALISTA' && ($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'O',false)) <> '') {
         // Exibe o erro e Reseta a global 'nomeAcaoCall' do JS
-        exibirErro('error',$msgError,'Alerta - Ayllos',"nomeAcaoCall=''; controlaOperacao();",false);
+        exibirErro('error',$msgError,'Alerta - Aimaro',"nomeAcaoCall=''; controlaOperacao();",false);
     }
 
 	// Verifica se os parametros foram informados
 	if (!isset($_POST['nrdconta']) || 
 		!isset($_POST['idseqttl']) ||
 		!isset($_POST["inconfir"])) 
-		exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+		exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
 	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ? 1 : $_POST['idseqttl'];
@@ -103,8 +103,8 @@
 	$flgImp = 0;
 	if ( $operacao == 'DIV_IMP' ) { $flgImp = 1;$operacao = ''; $nrctremp = 0;}
 
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 
 	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
 
@@ -144,7 +144,7 @@
                 $mtdErro = 'controlaOperacao();';
             }
             
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 		}
 		
 		if ($operacao == "TI") {
@@ -163,7 +163,7 @@
 			
 			// Se ocorrer um erro, mostra crítica
 			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") { 
-				exibirErro('inform','Conta n&atilde;o permite empr&eacute;stimo. Permitido apenas inclus&atilde;o de propostas de CDC e linhas 100, 800, 900 e 6901.','Alerta - Ayllos',"bloqueiaFundo(divRotina);",true);
+				exibirErro('inform','Conta n&atilde;o permite empr&eacute;stimo. Permitido apenas inclus&atilde;o de propostas de CDC e linhas 100, 800, 900 e 6901.','Alerta - Aimaro',"bloqueiaFundo(divRotina);",true);
 			}
 		}
 		
@@ -209,7 +209,7 @@
 			if ($inconfir == 2) { ?>
 				<script type="text/javascript">
 				hideMsgAguardo();
-				showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Ayllos","confirmaInclusaoMenor(<? echo "'".$cddopcao."','".$operacao."',".$inconfir ?>);","controlaOperacao('');metodoBlock();","sim.gif","nao.gif");
+				showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Aimaro","confirmaInclusaoMenor(<? echo "'".$cddopcao."','".$operacao."',".$inconfir ?>);","controlaOperacao('');metodoBlock();","sim.gif","nao.gif");
 				</script>
 				<?php exit();
 			}
@@ -614,7 +614,7 @@
 		$xmlObjeto = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 		}
 
 		$parcelas  = $xmlObjeto->roottag->tags[0]->tags;
@@ -677,7 +677,7 @@
 		$xmlObj = getObjectXML($xmlResult);
 
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));controlaOperacao()',false);
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));controlaOperacao()',false);
 		}
 
 		if($operacao == 'T_EFETIVA'){
@@ -799,9 +799,9 @@
 
 		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
             if ( $operacao == 'REG_GRAVAMES' ) {
-                exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));controlaOperacao(\'\')',false);
+                exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));controlaOperacao(\'\')',false);
             }else{
-                exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));controlaOperacao(\'DIV_IMP\')',false);
+                exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo($(\'#divRotina\'));controlaOperacao(\'DIV_IMP\')',false);
             }
 		}
 	}else if(in_array($operacao,array('RECALCULAR_EMPRESTIMO'))) {
@@ -834,12 +834,12 @@
 		$xmlObj = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){
-		   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';
+		   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';
            exit;
 		}
 		
 		$oMensagem = $xmlObj->roottag->tags[0]->tags[0];		
-        echo 'showError("inform","'.getByTagName($oMensagem->tags,'dsmensag').'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';
+        echo 'showError("inform","'.getByTagName($oMensagem->tags,'dsmensag').'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';
         exit;
     }else if(in_array($operacao,array('ACIONAMENTOS'))) {
 	
@@ -859,7 +859,7 @@
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 			
-		   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';
+		   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","bloqueiaFundo(divRotina);controlaOperacao();");';
            exit;
 
 		}
@@ -896,7 +896,7 @@
 		$xmlObjTarifa = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
 
 		if (strtoupper($xmlObjTarifa->roottag->tags[0]->name) == "ERRO") {			
-			exibirErro('error','2 - '.$xmlObjTarifa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+			exibirErro('error','2 - '.$xmlObjTarifa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		}
 		$tagTarifa = $xmlObjTarifa->roottag->tags[0]->tags;
 
@@ -930,7 +930,7 @@
 		$xmlObjIOF = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));		
 
 		if (strtoupper($xmlObjIOF->roottag->tags[0]->name) == "ERRO") {			
-		   exibirErro('error','3 - '.$xmlObjIOF->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		   exibirErro('error','3 - '.$xmlObjIOF->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		}
 		$tagIOF = $xmlObjIOF->roottag->tags[0]->tags;
 
@@ -995,7 +995,7 @@
 		$xmlCET = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlCET->roottag->tags[0]->name) == "ERRO") {			
-		   exibirErro('error','4 - '.$xmlCET->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		   exibirErro('error','4 - '.$xmlCET->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 		}
 
 		$txcetano = $xmlCET->roottag->tags[0]->attributes['TXCETANO'];

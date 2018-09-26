@@ -64,7 +64,7 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", bloqueiaFundo(divRotina));
+            showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", bloqueiaFundo(divRotina));
         },
         success: function (response) {
             if (flgcadas == 'M') { // Se vem da MATRIC (Cadastro de nova c/c) abrir a impressao completa automaticamente e vai para a ATENDA
@@ -95,9 +95,9 @@ function verificaMsg(idImpressao, inpessoa) {
         impressaoCartaoAssinatura(inpessoa, idImpressao);
     } else if (typeof relatorios[idImpressao] != typeof undefined && relatorios[idImpressao]['msg'] != '') {
         if (relatorios[idImpressao]['flag'] == 'yes') {
-            showError("error", relatorios[idImpressao]['msg'], "Alerta - Ayllos", 'bloqueiaFundo(divRotina)');
+            showError("error", relatorios[idImpressao]['msg'], "Alerta - Aimaro", 'bloqueiaFundo(divRotina)');
         } else {
-            showError("inform", relatorios[idImpressao]['msg'], "Alerta - Ayllos", 'bloqueiaFundo(divRotina)');
+            showError("inform", relatorios[idImpressao]['msg'], "Alerta - Aimaro", 'bloqueiaFundo(divRotina)');
             controlaImpressao(idImpressao, inpessoa);
         }
     } else {
@@ -112,26 +112,26 @@ function verificaMsg(idImpressao, inpessoa) {
 function controlaImpressao(idImpressao, inpessoa) {
 
     if (idImpressao == 'ficha_cadastral') {
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeFichaCadastral(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeFichaCadastral(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
         return true;
     } else if (idImpressao == 'financeiro') {
-        showConfirmacao('Deseja o informativo financeiro preenchido ?', 'Confirma&ccedil;&atilde;o - Ayllos', 'bloqueiaFundo(divRotina);imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);imprime(\'' + idImpressao + '\',\'NO\',\'' + inpessoa + '\');', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja o informativo financeiro preenchido ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'bloqueiaFundo(divRotina);imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);imprime(\'' + idImpressao + '\',\'NO\',\'' + inpessoa + '\');', 'sim.gif', 'nao.gif');
         return true;
     } else if (idImpressao == 'cartao_assinatura') {
         telaCartaoAssinatura(inpessoa);
     } else if (idImpressao == 'declaracao_pep') {
-        showConfirmacao('Deseja visualizar a impress&atilde;o da declara&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeDeclaracao();', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o da declara&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeDeclaracao();', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
         return true;
     } else if (idImpressao == 'declaracao_optante_simples_nacional'){
-		showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeDeclaracaoSimplesNacional(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+		showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeDeclaracaoSimplesNacional(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
         return true;
     } else if (idImpressao == 'declaracao_pj_cooperativa'){
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeDeclaracaoPJCooperativa(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeDeclaracaoPJCooperativa(divRotina);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
         return true;
 	} else if (idImpressao == 'declaracao_fatca_crs') {
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');	
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');	
     } else if (idImpressao != '') {
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprime(\'' + idImpressao + '\',\'YES\',\'' + inpessoa + '\');', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
     }
 }
 
@@ -349,7 +349,7 @@ function telaCartaoAssinatura(inpessoa) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", bloqueiaFundo(divRotina));
+            showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", bloqueiaFundo(divRotina));
         },
         success: function (response) {
             $("#divConteudoOpcao").html(response);
@@ -380,7 +380,7 @@ function impressaoCartaoAssinatura(inpessoa, tpimpressao) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", bloqueiaFundo(divRotina));
+                showError("error", "N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", bloqueiaFundo(divRotina));
             },
             success: function (response) {
                 $("#divConteudoOpcao").html(response);
@@ -412,7 +412,7 @@ function imprimirCartaoAssinatura(tipoimpr) {
         $('#frmImpressao').append('<input type="hidden" id="nrdctato" name="nrdctato" value="' + nrdctato + '" />');
         $('#frmImpressao').append('<input type="hidden" id="tppessoa" name="tppessoa" value="1" />');
 
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeCartaoAssinatura(1);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeCartaoAssinatura(1);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
     } else if (tipoimpr == 2) { /* Procurador */
 
         $('table > tbody > tr', 'div.divRegistros').each(function () {
@@ -429,7 +429,7 @@ function imprimirCartaoAssinatura(tipoimpr) {
         $('#frmImpressao').append('<input type="hidden" id="nrdctato" name="nrdctato" value="' + nrdctato + '" />');
         $('#frmImpressao').append('<input type="hidden" id="tppessoa" name="tppessoa" value="2" />');
 
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeCartaoAssinatura(2);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeCartaoAssinatura(2);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
     } else if (tipoimpr == 3) { /* Todos */
 
         $('#frmImpressao').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + nrdconta + '" />');
@@ -438,7 +438,7 @@ function imprimirCartaoAssinatura(tipoimpr) {
         $('#frmImpressao').append('<input type="hidden" id="nrdctato" name="nrdctato" value="0" />');
         $('#frmImpressao').append('<input type="hidden" id="tppessoa" name="tppessoa" value="3" />');
 
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'imprimeCartaoAssinatura(3);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'imprimeCartaoAssinatura(3);', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
     }
 }
 

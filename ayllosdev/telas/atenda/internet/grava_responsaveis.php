@@ -62,9 +62,9 @@
 	
 	// Verifica se houve algum erro nas atualizacoes
 	if($flgerror){
-		exibirErro('error',$dscritic,'Alerta - Ayllos','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));',false);
+		exibirErro('error',$dscritic,'Alerta - Aimaro','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));',false);
 	}else{
-		//exibirErro('inform','Atualiza&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','acessaOpcaoAba(7, 0, \"@\");',false);
-		exibirErro('inform','Atualiza&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		//exibirErro('inform','Atualiza&ccedil;&atilde;o efetuada com sucesso.','Alerta - Aimaro','acessaOpcaoAba(7, 0, \"@\");',false);
+		exibirErro('inform','Atualiza&ccedil;&atilde;o efetuada com sucesso.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 	}
 ?>

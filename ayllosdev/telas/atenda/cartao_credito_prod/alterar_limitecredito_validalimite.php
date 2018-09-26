@@ -99,7 +99,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	
@@ -205,7 +205,7 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 
 	// Mostra se Bo retornar mensagem de % da cooperativa
 	if ($idconfir == 1) {
-		echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("inform","'.$dsmensag.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	} 
 } else { 
 	
@@ -219,5 +219,5 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 <?php 
 
 	// Mostra mensagem de confirmação para finalizar a operação
-	echo "showConfirmacao('".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar o novo limite de cr&eacute;dito do cart&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','alteraLimCre()','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))','sim.gif','nao.gif');";
+	echo "showConfirmacao('".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar o novo limite de cr&eacute;dito do cart&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','alteraLimCre()','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))','sim.gif','nao.gif');";
 }

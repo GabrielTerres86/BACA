@@ -1,4 +1,4 @@
-	var tipoPessoa = 1;
+var tipoPessoa = 1;
 
 	var dsendre1 = "";
 	var nmdavali = "";
@@ -23,15 +23,11 @@
 
 	var nomeForm = "";
 	var camposOrigem = '';
-
-	var cpfMascara = function (val) { return val.replace(/\D/g, '').length > 11 ? '99.999.999/9999-99' : '999.999.999-999';},
-		cpfOptions = {onKeyPress: function(val, e, field, options) {field.mask(cpfMascara.apply({}, arguments), options);}};
-
-		$('.mascara-cpfcnpj').mask(cpfMascara, cpfOptions);
-
+	
+	
 function validaCPFInterveniente()
 {	
-	var nrcpfcgc =$('#nrcpfcgc', '#frmTipo').val();
+	nrcpfcgc =$('#nrcpfcgc', '#frmTipo').val();
 	nrcpfcgc=normalizaNumero(nrcpfcgc);	
 	$.ajax({
 		type  : 'POST',
@@ -45,7 +41,7 @@ function validaCPFInterveniente()
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
 		},
 		success: function(response) {
 			try 
@@ -54,7 +50,7 @@ function validaCPFInterveniente()
 				var responseJson = $.parseJSON(response);	
 				if(responseJson.hasOwnProperty('error'))
 				{
-					showError('error',responseJson.error.msg,'Alerta - Ayllos','');
+					showError('error',responseJson.error.msg,'Alerta - Aimaro','');
 				}
 				else if(responseJson.hasOwnProperty('success'))
 				{
@@ -72,10 +68,36 @@ function validaCPFInterveniente()
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','');
 			}
 		}
 	});
+}
+
+function chamaPesquisaCep()
+{
+	showMsgAguardo("Buscando CEP ...");
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/manbem/interveniente/pesquisa_cep.php",
+		data: {
+			nrcepend : nrcepend,
+			redirect: "html_ajax"
+		},		
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
+		},
+        success: function (response) {
+			$("#divUsoGAROPC").html(response);
+			$("#divUsoGAROPC").centralizaRotinaH();
+			$("#divPesquisaEndereco").css("visibility","visible");
+			$("#divUsoGAROPC").setCenterPosition();
+			
+		}				
+	});
+	hideMsgAguardo(); 
 }
 
 
@@ -98,7 +120,7 @@ function chamaCadastroIntervenienteGarantidor(nrcpfcgc) {
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
 		},
         success: function (response) {
 			$("#divUsoGenerico").html(response);
@@ -111,31 +133,29 @@ function chamaCadastroIntervenienteGarantidor(nrcpfcgc) {
 	
 }
 
-function chamaPesquisaCep()
+function salvaFormInterveniente()
 {
-	showMsgAguardo("Buscando CEP ...");
-	$.ajax({		
-		type: "POST", 
-		dataType: "html",
-		url: UrlSite + "telas/manbem/interveniente/pesquisa_cep.php",
-		data: {
-			nrcepend : nrcepend,
-			redirect: "html_ajax"
-		},		
-        error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
-		},
-        success: function (response) {
-			$("#divUsoGAROPC").html(response);
-			$("#divUsoGAROPC").centralizaRotinaH();
-			$("#divPesquisaEndereco").css("visibility","visible");
-			$("#divUsoGAROPC").setCenterPosition();
-			
-		}				
-	});
-	hideMsgAguardo(); 
+		nrcepend       =	$('#nrcepend', '#frmIntevAnuente').val();
+		dsendre1       =	$('#dsendre1', '#frmIntevAnuente').val();
+		nmdavali       =	$('#nmdavali', '#frmIntevAnuente').val();
+		tpdocava       =	$('#tpdocava', '#frmIntevAnuente').val();
+		nrdocava       =	$('#nrdocava', '#frmIntevAnuente').val();       
+		nmconjug       =	$('#nmconjug', '#frmIntevAnuente').val();
+		nrcpfcjg       =	$('#nrcpfcjg', '#frmIntevAnuente').val();
+		tpdoccjg       =	$('#tpdoccjg', '#frmIntevAnuente').val();
+		nrdoccjg       =	$('#nrdoccjg', '#frmIntevAnuente').val();
+		cdnacion       =	$('#cdnacion', '#frmIntevAnuente').val();
+		dsnacion       =	$('#dsnacion', '#frmIntevAnuente').val();		
+		dsendre2       = 	$('#dsendre2', '#frmIntevAnuente').val();
+		nrfonres       = 	$('#nrfonres', '#frmIntevAnuente').val();
+		dsdemail       = 	$('#dsdemail', '#frmIntevAnuente').val();
+		nmcidade       = 	$('#nmcidade', '#frmIntevAnuente').val();
+		cdufresd       = 	$('#cdufresd', '#frmIntevAnuente').val();
+		nrendere       = 	$('#nrendere', '#frmIntevAnuente').val();
+		complend       = 	$('#complend', '#frmIntevAnuente').val();
+		nrcxapst       = 	$('#nrcxapst', '#frmIntevAnuente').val();
 }
+
 /*!
  * OBJETIVO: 
  */	
@@ -153,15 +173,13 @@ function cancelaPesquisaCep() {
 		unblockBackground();
 
 }
+
 /****************************************   Validações   ****************************************************/
 function validaInterveniente()
 {
-	if(!validaCamposInterveniente())
+	if(validaCamposInterveniente())
 	{
-		return false;
-	}
-	else{
-
+		
 		nrcepend       =	$('#nrcepend', '#frmIntevAnuente').val();
 		dsendre1       =	$('#dsendre1', '#frmIntevAnuente').val();
 		nmdavali       =	$('#nmdavali', '#frmIntevAnuente').val();
@@ -225,12 +243,12 @@ function validaInterveniente()
 						tpdoccjg    :   tpdoccjg,
 						nrdoccjg    :   nrdoccjg,
 						cdnacion    :   cdnacion,
-						nrcpfcgc 	: 	nrcpfcgc,
+						//nrcpfcgc 	: 	nrcpfcgc,
 						redirect	: 	"html_ajax"
 				},		
 				error: function (objAjax, responseError, objExcept) {
 					hideMsgAguardo();
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
 				},
 				success: function (response) {
 					try 
@@ -239,17 +257,17 @@ function validaInterveniente()
 						var responseJson = $.parseJSON(response);	
 						if(responseJson.hasOwnProperty('error'))
 						{
-							showError('error',responseJson.error.msg,'Alerta - Ayllos','');
+							showError('error',responseJson.error.msg,'Alerta - Aimaro','');
 						}
 						else if(responseJson.hasOwnProperty('success'))
 						{
-							intervenienteValidado=true;;
+							intervenienteValidado=true;
 							manterRotina('VD'); 
 						}		
 						return false;
 					} catch(error) {
 						hideMsgAguardo();
-						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 					}
 				}				
 			}); 
@@ -274,7 +292,7 @@ function validaCamposInterveniente(){
 	if(invalidos>0)
 	{
 		$("#msgErro").show();
-		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Ayllos','');
+		showError('error','Preencha os seguintes campos obrigatorios:<br/><br/>'+errorMessage ,'Alerta - Aimaro','');
 		return false;
 	}
 	else{
@@ -297,9 +315,8 @@ function ajustaParaPessoaJuridica()
 	bloqueiaCampo($('#tpdoccjg', '#frmIntevAnuente'));
 	bloqueiaCampo($('#nrdoccjg', '#frmIntevAnuente'));
 	
-	$("label[for='nrcpfcgc']").text("C.N.P.J :");	
+	//$("label[for='nrcpfcgc']").text("C.N.P.J :");	
 }
-
 
 function gravaInterveniente(){
 	$.ajax({		
@@ -334,7 +351,7 @@ function gravaInterveniente(){
 				},		
 				error: function (objAjax, responseError, objExcept) {
 					hideMsgAguardo();
-					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "");
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "");
 				},
 				success: function (response) {
 					try {
@@ -342,13 +359,12 @@ function gravaInterveniente(){
 						return false;
 					} catch(error) {
 						hideMsgAguardo();
-						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+						//showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','estadoInicial();');
 					}
 				}				
 			}); 
 
 }
-
 
 /*************************************************  Pesquisas ***************************************************************/
 
@@ -370,7 +386,7 @@ function pesquisa(id)
 			$("#divPesquisa").css('z-index', 1000);
 		break;
 		case "nrcepend":
-			mostraPesquisaEndereco('frmIntevAnuente', camposOrigem, divRotina,);
+			mostraPesquisaEndereco('frmIntevAnuente', camposOrigem, divRotina);
 		break;
 	}
 }
@@ -408,28 +424,6 @@ function controlaPesquisa()
 
 }
 
-function salvaFormInterveniente()
-{
-		nrcepend       =	$('#nrcepend', '#frmIntevAnuente').val();
-		dsendre1       =	$('#dsendre1', '#frmIntevAnuente').val();
-		nmdavali       =	$('#nmdavali', '#frmIntevAnuente').val();
-		tpdocava       =	$('#tpdocava', '#frmIntevAnuente').val();
-		nrdocava       =	$('#nrdocava', '#frmIntevAnuente').val();       
-		nmconjug       =	$('#nmconjug', '#frmIntevAnuente').val();
-		nrcpfcjg       =	$('#nrcpfcjg', '#frmIntevAnuente').val();
-		tpdoccjg       =	$('#tpdoccjg', '#frmIntevAnuente').val();
-		nrdoccjg       =	$('#nrdoccjg', '#frmIntevAnuente').val();
-		cdnacion       =	$('#cdnacion', '#frmIntevAnuente').val();
-		dsnacion       =	$('#dsnacion', '#frmIntevAnuente').val();		
-		dsendre2       = 	$('#dsendre2', '#frmIntevAnuente').val();
-		nrfonres       = 	$('#nrfonres', '#frmIntevAnuente').val();
-		dsdemail       = 	$('#dsdemail', '#frmIntevAnuente').val();
-		nmcidade       = 	$('#nmcidade', '#frmIntevAnuente').val();
-		cdufresd       = 	$('#cdufresd', '#frmIntevAnuente').val();
-		nrendere       = 	$('#nrendere', '#frmIntevAnuente').val();
-		complend       = 	$('#complend', '#frmIntevAnuente').val();
-		nrcxapst       = 	$('#nrcxapst', '#frmIntevAnuente').val();
-}
 function recuperaFormInterveniente()
 {
 	
@@ -452,8 +446,4 @@ function recuperaFormInterveniente()
 	$('#nrendere', '#frmIntevAnuente').val(nrendere);
 	$('#complend', '#frmIntevAnuente').val(complend);
 	$('#nrcxapst', '#frmIntevAnuente').val(nrcxapst);
-}
-function limpaFormInterveniente()
-{
-	
 }

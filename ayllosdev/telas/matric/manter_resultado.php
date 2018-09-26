@@ -17,10 +17,11 @@
 
 					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
 				 
-                 26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
+				     26/06/2017 - Ajustes para inclusão da nova opção "G" (Jonata - RKAM P364).
+
+				 28/08/2017 - Criando opcao de solicitar relacionamento caso cnpj informado
+                              esteja cadastrado na cooperativa. (Kelvin)
 					 
-				 
-				 	 
                  23/10/2017 - Ajustado para chamar a rotina de reposavel legal apos a inclusão devido a 
                               replicação dos dados da pessoa. (PRJ339 Odirlei/AMcom)                    
                               
@@ -47,7 +48,7 @@
 			$mtdErro = 'unblockBackground()';
 		}		
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}	
 	
 	//----------------------------------------------------------------------------------------------------------------------------------	
@@ -56,7 +57,7 @@
 	if (isset($xmlObjeto->Erro->Registro->dscritic) && $xmlObjeto->Erro->Registro->dscritic != '') {	
 		$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 		$mtdErro = 'unblockBackground()';
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 	
@@ -334,7 +335,7 @@
 																			 '$comercialCdEstado', '$comercialDsCidade', '$comercialTporigem', '$nrInscricao', '$nrLicenca', '$cdNatureza', '$cdSetor', '$cdRamo',
 																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao', '$cdNacionalidade', '$cdCadastroEmpresa');");
 			
-			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Ayllos');";
+			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Aimaro');";
 			
 			exibirConfirmacao('Cadastro já existe na base, deseja iniciar relacionamento?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
 			
@@ -347,7 +348,7 @@
 		$nrctanov = ( isset($xmlObjeto->roottag->tags[0]->attributes['NRCTANOV']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'] : '';	
 
 		if ($nrctanov == 0 || $nrctanov == '') {
-			exibirErro('error','Não foi possivel gerar a nova C/C.','Alerta - Ayllos','',false);
+			exibirErro('error','Não foi possivel gerar a nova C/C.','Alerta - Aimaro','',false);
 		}
 		
 		$nomeForm = ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
@@ -360,7 +361,7 @@
 	}
 	else 
 	if ($operacao == 'DCC') { // Duplicar a C/C
-		exibirErro('inform','A conta utilizada foi ' . formataContaDVsimples($nrdconta) . '.','Alerta - Ayllos','impressao_inclusao();',false);
+		exibirErro('inform','A conta utilizada foi ' . formataContaDVsimples($nrdconta) . '.','Alerta - Aimaro','impressao_inclusao();',false);
 	}
 		
 		

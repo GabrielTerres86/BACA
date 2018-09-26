@@ -39,12 +39,12 @@
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
-		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$metodo,false);
 	}
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) 
-		exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)');
+		exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)');
 
 	// Carrega permissões do operador
 	include("../../../includes/carrega_permissoes.php");
@@ -65,8 +65,8 @@
 
 		
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','fechaRotina(divRotina)');
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl não foi informada.','Alerta - Ayllos','fechaRotina(divRotina)');
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','fechaRotina(divRotina)');
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl não foi informada.','Alerta - Aimaro','fechaRotina(divRotina)');
 	
 	// Monta o xml de requisição
 	$xml  = '';
@@ -104,7 +104,7 @@
 	$btexcttl = getByTagName($registro,'btexcttl');
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','fechaRotina(divRotina);');
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','fechaRotina(divRotina);');
 
 	// Se não retornou erro, então pegar a mensagem de alerta do Progress na variável msgAlert, para ser utilizada posteriormente
 	$msgAlert = ( isset($xmlObj->roottag->tags[0]->attributes['MSGALERT']) ) ? trim($xmlObj->roottag->tags[0]->attributes['MSGALERT']) : '';
@@ -189,7 +189,7 @@
 	}
 
 	if ( msgAlert != '' ) {
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(operacao);');
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(operacao);');
 	} else {
 		controlaFoco(operacao);
 	}

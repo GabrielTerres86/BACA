@@ -49,7 +49,7 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
     }
 
@@ -68,7 +68,7 @@
 		
 		if ($flgassin == '1'){
 			$msgErro = 'Esta opera&ccedil;&atilde;o n&atilde;o ser&aacute; liberada enquanto o cooperado n&atilde;o assinar o border&ocirc;.';
-			echo 'showConfirmacao("Esta opera&ccedil;&atilde;o depende da assinatura do cooperado. Confirmar assinatura?","Confirma&ccedil;&atilde;o - Ayllos","'.$aux_acao.'","showError(\'error\',\''.$msgErro.'\',\'Alerta - Ayllos\',\'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));\');","sim.gif","nao.gif");';
+			echo 'showConfirmacao("Esta opera&ccedil;&atilde;o depende da assinatura do cooperado. Confirmar assinatura?","Confirma&ccedil;&atilde;o - Aimaro","'.$aux_acao.'","showError(\'error\',\''.$msgErro.'\',\'Alerta - Aimaro\',\'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));\');","sim.gif","nao.gif");';
 		}
 	}else{
 		echo $aux_acao;

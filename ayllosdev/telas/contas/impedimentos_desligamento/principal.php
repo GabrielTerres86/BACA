@@ -32,10 +32,10 @@
 	}
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	$nrdconta = ( isset($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0;
 	$idseqttl = ( isset($_POST['idseqttl']) ) ? $_POST['idseqttl'] : 0;
@@ -58,7 +58,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjServicos->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);fechaRotina(divRotina);');
+		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);fechaRotina(divRotina);');
 	}
 		
 	//Pega todos os servicos essenciais
@@ -90,7 +90,7 @@
 		
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjServicos2->roottag->tags[0]->name) && strtoupper($xmlObjServicos2->roottag->tags[0]->name) == 'ERRO') {	
-		exibirErro('error',$xmlObjServicos2->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);fechaRotina(divRotina);',false);
+		exibirErro('error',$xmlObjServicos2->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);fechaRotina(divRotina);',false);
 	}
 
 	//Pega todos os servicos essenciais

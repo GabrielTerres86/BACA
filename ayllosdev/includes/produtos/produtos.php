@@ -17,7 +17,7 @@
 	$flgcadas = $_POST['flgcadas'];
     $labelRot = $_POST['labelRot'];
 	
-	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Produtos.','Alerta - Ayllos','');
+	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Produtos.','Alerta - Aimaro','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>

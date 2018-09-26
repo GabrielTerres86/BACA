@@ -108,7 +108,7 @@
 	}
 
 	if ( strtoupper($xmlObjPendentes->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error', $xmlObjPendentes->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error', $xmlObjPendentes->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 		exit();
 	}
 	
@@ -119,14 +119,14 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	
 		
 	function exibeConfirmacao($intipdif,$nomeform) {
 		echo 'hideMsgAguardo();';
-		echo 'showConfirmacao("Deseja alterar os dados da Conta?","Confirma&ccedil;&atilde;o - Ayllos","alteraDadosConta('.$intipdif.',\''.$nomeform.'\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja alterar os dados da Conta?","Confirma&ccedil;&atilde;o - Aimaro","alteraDadosConta('.$intipdif.',\''.$nomeform.'\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 		exit();	
 	}	
 	

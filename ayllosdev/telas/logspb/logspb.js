@@ -465,7 +465,7 @@ function obtemLog() {
 
         // Se nenhum dos tipos de conta foi informado
         if (dtmvtlog == "") {
-            showError("error", "Informe a data do log.", "Alerta - Ayllos", "$('#dtmvtlog','#frmLogSPB').focus()");
+            showError("error", "Informe a data do log.", "Alerta - Aimaro", "$('#dtmvtlog','#frmLogSPB').focus()");
             return false;
         }
 
@@ -497,14 +497,14 @@ function obtemLog() {
                 },
                 error: function (objAjax, responseError, objExcept) {
                     hideMsgAguardo();
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
                 },
                 success: function (response) {
                     try {
                         eval(response);
                     } catch (error) {
                         hideMsgAguardo();
-                        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
+                        showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
                     }
                 }
             });
@@ -578,14 +578,14 @@ function controlaOperacao(nriniseq, nrregist) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#flgidlog','#frmLogSPB').focus()");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Aimaro", "$('#flgidlog','#frmLogSPB').focus()");
             }
         }
     });
@@ -678,9 +678,9 @@ function obtemLogTedsMigradas() {
 
 function ImprimirTodos(tipo) {
     if (tipo == 1) {
-        showConfirmacao('Deseja exportar relat&oacute;rio?', 'Confirma&ccedil;&atilde;o - Ayllos', 'Csv();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja exportar relat&oacute;rio?', 'Confirma&ccedil;&atilde;o - Aimaro', 'Csv();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
     } else {
-        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'Pdf();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
+        showConfirmacao('Deseja visualizar a impress&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'Pdf();', 'bloqueiaFundo(divRotina);hideMsgAguardo();', 'sim.gif', 'nao.gif');
     }
 }
 

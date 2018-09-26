@@ -191,7 +191,7 @@ function Gera_Impressao() {
 	
 	var dsseqdig = geraSelecao();
 
-	if ( dsseqdig == '' ){showError('error','Nao ha cheques selecionados!','Alerta - Ayllos','registro.focus();');return false;}		
+	if ( dsseqdig == '' ){showError('error','Nao ha cheques selecionados!','Alerta - Aimaro','registro.focus();');return false;}		
 	
 	$('#dsseqdig', '#'+frmCab ).val( dsseqdig );	
 	$('#nrdcontaImp', '#'+frmCab ).val( $('#nrdconta', '#'+frmCab ).val() );	
@@ -232,7 +232,7 @@ function buscaContrato2() {
 				},
 		error   : function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
-					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrdconta\',\'#frmCab\').focus();');
+					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$(\'#nrdconta\',\'#frmCab\').focus();');
 				},
 		success : function(response) { 
 					hideMsgAguardo();
@@ -246,14 +246,14 @@ function buscaContrato2() {
 							return false;
 						} catch(error) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrdconta\',\'#frmCab\').focus();');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$(\'#nrdconta\',\'#frmCab\').focus();');
 						}
 					} else {
 						try {
 							eval( response );
 						} catch(error) {
 							hideMsgAguardo();
-							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrdconta\',\'#frmCab\').focus();');
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','$(\'#nrdconta\',\'#frmCab\').focus();');
 						}
 					}
 					
@@ -367,7 +367,7 @@ function mostraTitular() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "unblockBackground()");
         },
         success: function(response) {
             $('#divRotina').html(response);
@@ -395,7 +395,7 @@ function buscaTitular() {
 			}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();			
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
 		},
 		success: function(response) {
 		
@@ -406,14 +406,14 @@ function buscaTitular() {
 					return false;
 				} catch(error) {
 					hideMsgAguardo();					
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 				}
 			} else {
 				try {
 					eval( response );
 				} catch(error) {
 					hideMsgAguardo();					
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 				}
 			}
 		}				
@@ -482,11 +482,11 @@ function Regulariza(){
 
 	// Se nao selecionou cheque
 	if (aux_mensagem == undefined) {		   	    		
-		showError('error','Selecione um cheque.','Alerta - Ayllos','registro.focus();');
+		showError('error','Selecione um cheque.','Alerta - Aimaro','registro.focus();');
 		return false;
 	}	
 	
-	showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'regulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
+	showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'regulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
 
     return false;
 }
@@ -499,12 +499,12 @@ function RefazRegulariza(){
 
 	// Se nao selecionou cheque
 	if (aux_mensagem == undefined) {		   	    		
-		showError('error','Selecione um cheque.','Alerta - Ayllos','registro.focus();');
+		showError('error','Selecione um cheque.','Alerta - Aimaro','registro.focus();');
 		return false;
 	}		
 
 	aux_mensagem = 'Confirma reenvio para regulariza&ccedil;&atilde;o do Cheque: ' + mascara(nrdocmtosrt, '###.###.#') + ' ?';
-	showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'refazRegulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');
+	showConfirmacao(aux_mensagem, 'Confirma&ccedil;&atilde;o - Aimaro', 'manterRotina(\'refazRegulariza\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');
 
     return false;
 }
@@ -541,7 +541,7 @@ function manterRotina( operacao ) {
             },
             error: function(objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
             },
             success: function(response) {
                 try {
@@ -550,7 +550,7 @@ function manterRotina( operacao ) {
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
                 }
             }
         });

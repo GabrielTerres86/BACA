@@ -21,7 +21,7 @@
 		
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"F")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}
 	
 	include('form_entrega_cartao_bancoob.php');
@@ -48,7 +48,7 @@ $("#nrcarfor").change(function(){
 		},		
         error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
         success: function (response) {
 			eval(response);

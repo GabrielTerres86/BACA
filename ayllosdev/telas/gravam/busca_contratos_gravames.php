@@ -26,7 +26,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -51,7 +51,7 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoes\').focus();',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoes\').focus();',false);		
 					
 	} 
 		

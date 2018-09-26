@@ -55,11 +55,11 @@
 		if($msgErro == null || $msgErro == ''){
 			$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 		}
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
 	}else{
 		$msgErro = 'Border&ocirc; liberado com sucesso';
-		exibirErro('inform',$msgErro,'Alerta - Ayllos','carregaBorderosCheques();',false);
+		exibirErro('inform',$msgErro,'Alerta - Aimaro','carregaBorderosCheques();',false);
 	}
 	
 ?>

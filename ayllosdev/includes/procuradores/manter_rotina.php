@@ -96,7 +96,7 @@
 		
 	}
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	if ($nmrotina != "MATRIC" || ($nmrotina == "MATRIC" && $idseqttl != 2)){
 				
@@ -275,7 +275,7 @@
 		$saida =  ( $operacao_proc == 'EV' || $operacao_proc == 'E' ) ? 'controlaOperacaoProc();' : 'bloqueiaFundo(divRotina);' ;
 		
 		// Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$saida,false);	
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$saida,false);	
 				
 		$msg = Array();
 		
@@ -299,16 +299,16 @@
 	if($operacao_proc == "PI"){	
 		
 		// Data Nascimento
-		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtnascto\',\'frmDadosProcuradores\')',false);
+		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtnascto\',\'frmDadosProcuradores\')',false);
 		
 		// Responsabilidade Legal
-		if (($inhabmen != 0)&&($inhabmen != 1)&&($inhabmen != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'inhabmen\',\'frmDadosIdentFisica\')',false);
+		if (($inhabmen != 0)&&($inhabmen != 1)&&($inhabmen != 2)) exibirErro('error','Responsabilidade Legal inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'inhabmen\',\'frmDadosIdentFisica\')',false);
 		
 		// Somente valida a Data de Emancipação quando a Responsabilidade Legal for 1 (Habilitado)
-		if (!validaData($dthabmen) && ($inhabmen == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
+		if (!validaData($dthabmen) && ($inhabmen == 1)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
 
 		// Data de emancipação não pode ser preenchida para quando a Responsabilidade legal for 0,2.
-		if ($dthabmen != '' && ($inhabmen == 0 || $inhabmen == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
+		if ($dthabmen != '' && ($inhabmen == 0 || $inhabmen == 2)) exibirErro('error','Data de Emancipa&ccedil;&atilde;o n&atilde;o pode ser preenchida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dthabmen\',\'frmDadosIdentFisica\')',false);
 			
 		?>  
 			nrdeanos_proc = <? echo $xmlObjeto->roottag->tags[0]->attributes["NRDEANOS"]; ?>;
@@ -329,7 +329,7 @@
 				
 					if ( $msgAlerta != '' ){
 					
-						exibirErro('inform',$msgAlerta,'Alerta - Ayllos','controlaArrayProc(\'VA\'); bloqueiaFundo(divConfirm);',false);
+						exibirErro('inform',$msgAlerta,'Alerta - Aimaro','controlaArrayProc(\'VA\'); bloqueiaFundo(divConfirm);',false);
 					
 					}else{?>
 					
@@ -349,7 +349,7 @@
 				
 					if ( $msgAlerta != '' ){
 					
-						exibirErro('inform',$msgAlerta,'Alerta - Ayllos','controlaArrayProc(\'VI\'); bloqueiaFundo(divConfirm);',false);
+						exibirErro('inform',$msgAlerta,'Alerta - Aimaro','controlaArrayProc(\'VI\'); bloqueiaFundo(divConfirm);',false);
 					
 					}else{?>
 					
@@ -387,19 +387,19 @@
 					
 					// Se for exclusão e representante possui cartão - Renato Darosci - 11/02/2015
 					if ($operacao_proc == 'EV' && $fltemcrd == 2) {
-					  exibirErro('inform','Exclusao nao permitida, pois responsavel possui cartao aprovado/solicitado.','Alerta - Ayllos','controlaOperacaoProc(\'EC\')',false);
+					  exibirErro('inform','Exclusao nao permitida, pois responsavel possui cartao aprovado/solicitado.','Alerta - Aimaro','controlaOperacaoProc(\'EC\')',false);
 					  ?>}<?
 					  exit();
 					} else {
-					  if ( $msgAlerta != '' ) exibirErro('inform',$msgAlerta,'Alerta - Ayllos','bloqueiaFundo(divConfirm)',false);		
-					  if($operacao_proc=='VI') exibirConfirmacao('Deseja confirmar inclusão?','Confirmação - Ayllos','controlaOperacaoProc(\'VI\')','bloqueiaFundo(divRotina)',false);	
-					  if($operacao_proc=='VA') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacaoProc(\'VA\')','bloqueiaFundo(divRotina)',false);
-					  if($operacao_proc=='EV') exibirConfirmacao('Deseja confirmar exclusão?','Confirmação - Ayllos','controlaOperacaoProc(\'E\')','controlaOperacaoProc(\'EC\')',false);
+					  if ( $msgAlerta != '' ) exibirErro('inform',$msgAlerta,'Alerta - Aimaro','bloqueiaFundo(divConfirm)',false);		
+					  if($operacao_proc=='VI') exibirConfirmacao('Deseja confirmar inclusão?','Confirmação - Aimaro','controlaOperacaoProc(\'VI\')','bloqueiaFundo(divRotina)',false);	
+					  if($operacao_proc=='VA') exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacaoProc(\'VA\')','bloqueiaFundo(divRotina)',false);
+					  if($operacao_proc=='EV') exibirConfirmacao('Deseja confirmar exclusão?','Confirmação - Aimaro','controlaOperacaoProc(\'E\')','controlaOperacaoProc(\'EC\')',false);
 					}
 					
 					// Se for exclusão e representante possui cartão - Renato Darosci - 11/02/2015
 					if ($operacao_proc == 'EV' && $fltemcrd == 1) {
-					  exibirErro('inform','ATENCAO: Responsavel possui cartoes ativos.','Alerta - Ayllos','bloqueiaFundo(divConfirm);\$(\"#btnYesConfirm\").focus();',false);
+					  exibirErro('inform','ATENCAO: Responsavel possui cartoes ativos.','Alerta - Aimaro','bloqueiaFundo(divConfirm);\$(\"#btnYesConfirm\").focus();',false);
 					}
 				?>}<?
 				
@@ -413,8 +413,8 @@
 			// Verificar se existe "Verificação de Revisão Cadastral"
 			if($msgAtCad!='') {
 			
-				if($operacao_proc=='I') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0058.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoProc(\"CT\")\')',false);
-				if($operacao_proc=='A') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0058.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoProc(\"CT\")\')',false);
+				if($operacao_proc=='I') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0058.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoProc(\"CT\")\')',false);
+				if($operacao_proc=='A') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0058.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacaoProc(\"CT\")\')',false);
 				
 			// Se não existe necessidade de Revisão Cadastral
 			} else {	
@@ -434,72 +434,72 @@
 		echo '$("input,select","#frmDadosProcuradores").removeClass("campoErro");';
 	
 		//Campo nome do represem.
-		if ($GLOBALS['nmdavali']=='') exibirErro('error','Nome inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmdavali\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['nmdavali']=='') exibirErro('error','Nome inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmdavali\',\'frmDadosProcuradores\')',false);
 				
 		// Data Nascimento
-		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtnascto\',\'frmDadosProcuradores\')',false);
+		if (!validaData($GLOBALS['dtnascto'])) exibirErro('error','Data de Nascimento inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtnascto\',\'frmDadosProcuradores\')',false);
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdctato'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		if (!validaInteiro($GLOBALS['nrdctato'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 				
 		// Tipo de Documento
-		if (!in_array($GLOBALS['tpdocava'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpdocava\',\'frmDadosProcuradores\')',false);
+		if (!in_array($GLOBALS['tpdocava'],array('CI','CN','CH','RE','PP','CT'))) exibirErro('error','Tipo de Documento inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpdocava\',\'frmDadosProcuradores\')',false);
 		
 		// Numero de Documento
-		if ($GLOBALS['nrdocava']=='') exibirErro('error','Nr. Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['nrdocava']=='') exibirErro('error','Nr. Documento inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrdocava\',\'frmDadosProcuradores\')',false);
 		
 		// Orgão Emissor
-		if ($GLOBALS['cdoeddoc']=='') exibirErro('error','Org&atilde;o Emissor inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdoeddoc\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['cdoeddoc']=='') exibirErro('error','Org&atilde;o Emissor inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdoeddoc\',\'frmDadosProcuradores\')',false);
 		
 		// UF Emissor
-		if ($GLOBALS['cdufddoc']=='') exibirErro('error','U.F. Emissor inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdufddoc\',\'frmDadosProcuradores\')',false);		
+		if ($GLOBALS['cdufddoc']=='') exibirErro('error','U.F. Emissor inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdufddoc\',\'frmDadosProcuradores\')',false);		
 		
 		// Data Emissão
-		if (!validaData($GLOBALS['dtemddoc'])) exibirErro('error','Data de Emiss&atilde;o inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtemddoc\',\'frmDadosProcuradores\')',false);
+		if (!validaData($GLOBALS['dtemddoc'])) exibirErro('error','Data de Emiss&atilde;o inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtemddoc\',\'frmDadosProcuradores\')',false);
 		
 		// Estado Civil
-		if (!validaInteiro($GLOBALS['cdestcvl'])) exibirErro('error','Estado Civil inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmDadosProcuradores\')',false);
+		if (!validaInteiro($GLOBALS['cdestcvl'])) exibirErro('error','Estado Civil inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdestcvl\',\'frmDadosProcuradores\')',false);
 		
 		// Sexo 
-		if (($GLOBALS['cdsexcto'] != 1)&&($GLOBALS['cdsexcto'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'sexoMas\',\'frmDadosProcuradores\')',false);
+		if (($GLOBALS['cdsexcto'] != 1)&&($GLOBALS['cdsexcto'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'sexoMas\',\'frmDadosProcuradores\')',false);
 		
 		// Nacionalidade
-		if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosProcuradores\')',false);
 		
 		// Naturalidade
-		if ($GLOBALS['dsnatura']=='') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnatura\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['dsnatura']=='') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsnatura\',\'frmDadosProcuradores\')',false);
 		
 		//CEP
-		if ( $GLOBALS['nrcepend'] == '' || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcepend\',\'frmDadosProcuradores\')',false);
+		if ( $GLOBALS['nrcepend'] == '' || $GLOBALS['nrcepend'] == 0 ) exibirErro('error','CEP inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcepend\',\'frmDadosProcuradores\')',false);
 
 		//End. residencial
-		if ($GLOBALS['dsendres']=='') exibirErro('error','End. residencial inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsendres\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['dsendres']=='') exibirErro('error','End. residencial inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsendres\',\'frmDadosProcuradores\')',false);
 		
 		//Numer. residencial
-		if (!validaInteiro($GLOBALS['nrendere'])) exibirErro('error','Nr. residencial inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrendere\',\'frmDadosProcuradores\')',false);
+		if (!validaInteiro($GLOBALS['nrendere'])) exibirErro('error','Nr. residencial inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrendere\',\'frmDadosProcuradores\')',false);
 				
 		//Bairro
-		if ($GLOBALS['nmbairro']=='') exibirErro('error','Bairro inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmbairro\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['nmbairro']=='') exibirErro('error','Bairro inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmbairro\',\'frmDadosProcuradores\')',false);
 		
 		// UF Emissor
-		if ($GLOBALS['cdufresd']=='') exibirErro('error','U.F. Endere&ccedil;o inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdufresd\',\'frmDadosProcuradores\')',false);				
+		if ($GLOBALS['cdufresd']=='') exibirErro('error','U.F. Endere&ccedil;o inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdufresd\',\'frmDadosProcuradores\')',false);				
 
 		//Cidade
-		if ($GLOBALS['nmcidade']=='') exibirErro('error','Cidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmcidade\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['nmcidade']=='') exibirErro('error','Cidade inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmcidade\',\'frmDadosProcuradores\')',false);
 		
 		// Filiação Mãe
-		if ($GLOBALS['nmmaecto']=='') exibirErro('error','Nome da m&atilde;e inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmmaecto\',\'frmDadosProcuradores\')',false);		
+		if ($GLOBALS['nmmaecto']=='') exibirErro('error','Nome da m&atilde;e inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmmaecto\',\'frmDadosProcuradores\')',false);		
 		
 		// Data Vigência
-		if (!validaData($GLOBALS['dtvalida'])) exibirErro('error','Data de Vig&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtvalida\',\'frmDadosProcuradores\')',false);
+		if (!validaData($GLOBALS['dtvalida'])) exibirErro('error','Data de Vig&ecirc;ncia inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtvalida\',\'frmDadosProcuradores\')',false);
 		
 		// Cargo
-		if ($GLOBALS['dsproftl']=='') exibirErro('error','Cargo inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsproftl\',\'frmDadosProcuradores\')',false);		
+		if ($GLOBALS['dsproftl']=='') exibirErro('error','Cargo inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsproftl\',\'frmDadosProcuradores\')',false);		
 		
 		// Data Admissao somente é obrigatória para SÓCIOS/PROPRIETÁRIOS
 		if ( ($GLOBALS['dsproftl'] == 'SOCIO/PROPRIETARIO') ) {
-			if (!validaData($GLOBALS['dtadmsoc'])) exibirErro('error','Data de Admiss&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtadmsoc\',\'frmDadosProcuradores\')',false);
-			//if (!validaDecimal($GLOBALS['tpdrendi'])) exibirErro('error','Data de Admiss&atilde;o inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtadmsoc\',\'frmDadosProcuradores\')',false);
+			if (!validaData($GLOBALS['dtadmsoc'])) exibirErro('error','Data de Admiss&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtadmsoc\',\'frmDadosProcuradores\')',false);
+			//if (!validaDecimal($GLOBALS['tpdrendi'])) exibirErro('error','Data de Admiss&atilde;o inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtadmsoc\',\'frmDadosProcuradores\')',false);
 		}
 	}
 ?>

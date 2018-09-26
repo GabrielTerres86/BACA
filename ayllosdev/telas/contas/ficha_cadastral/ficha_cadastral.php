@@ -22,10 +22,10 @@
 	isPostMethod();	
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','');
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','');
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');
 	
 	// Carrega permissões do operador
 	include('../../../includes/carrega_permissoes.php');
@@ -35,9 +35,9 @@
 	// Carregas as opções da Rotina de Bens
 	$flgAcesso = (in_array("@", $glbvars["opcoesTela"]));	
 
-	if ($flgAcesso == "") exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a impress&atilde;o da Ficha Cadastral.','Alerta - Ayllos','');
+	if ($flgAcesso == "") exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a impress&atilde;o da Ficha Cadastral.','Alerta - Aimaro','');
 ?>
 
 <script type="text/javascript">
-	showConfirmacao('Deseja visualizar a impress&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','imprimeFichaCadastral();','hideMsgAguardo();','sim.gif','nao.gif');
+	showConfirmacao('Deseja visualizar a impress&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','imprimeFichaCadastral();','hideMsgAguardo();','sim.gif','nao.gif');
 </script>

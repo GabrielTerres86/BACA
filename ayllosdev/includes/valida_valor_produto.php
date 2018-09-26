@@ -38,7 +38,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$solcoord = $xmlObj->roottag->tags[0]->cdata;
@@ -49,7 +49,7 @@
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		
-		exibirErro("error",$mensagem,"Alerta - Ayllos", "pedeSenhaCoordenador(2,\\\"".$executar."\\\",\\\"".$nmdivfnc."\\\");",false);
+		exibirErro("error",$mensagem,"Alerta - Aimaro", "pedeSenhaCoordenador(2,\\\"".$executar."\\\",\\\"".$nmdivfnc."\\\");",false);
 	} else {
 		echo $executar;
 	}

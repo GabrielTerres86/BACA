@@ -7,7 +7,7 @@
 		require_once('../../../class/xmlfile.php');
 		isPostMethod();		
 		if((!isset($_POST['nrdconta'])) || ( !isset($_POST['nrctrcrd']))){
-			echo "showError(\"error\", \"Erro ao buscar retorno do bancoob.\", \"Alerta - Ayllos\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
+			echo "showError(\"error\", \"Erro ao buscar retorno do bancoob.\", \"Alerta - Aimaro\", \"blockBackground(parseInt($('#divRotina').css('z-index')))\");";
 			return;
 		}
 		$nrdconta = $_POST['nrdconta'];
@@ -35,10 +35,10 @@
 			}
 		}
 		if($erro)
-			echo "showError(\"error\", \"".preg_replace( "/\r|\n/", " ", addslashes(utf8ToHtml(str_replace("ã","&atilde;",$erro) )))."\", \"Alerta - Ayllos\", \"\");";
+			echo "showError(\"error\", \"".preg_replace( "/\r|\n/", " ", addslashes(utf8ToHtml(str_replace("ã","&atilde;",$erro) )))."\", \"Alerta - Aimaro\", \"\");";
 		else{
 			echo "nrctrcrd =  $nrctrcrd;";
-			echo "showError(\"error\", \"".utf8ToHtml(str_replace("Ã£",'a', $procXML->Dados->inf->mensagem))."\", \"Alerta - Ayllos\", \" carregaHistorico(0);\");";
+			echo "showError(\"error\", \"".utf8ToHtml(str_replace("Ã£",'a', $procXML->Dados->inf->mensagem))."\", \"Alerta - Aimaro\", \" carregaHistorico(0);\");";
 			?>	
 				//$("#emiteTermoBTN").attr("nrctrcrd","<? echo $nrctrcrd;?>");
 				//$("#emiteTermoBTN").click();

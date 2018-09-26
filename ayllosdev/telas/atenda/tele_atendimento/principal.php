@@ -19,13 +19,13 @@
 	                                                                  
 	             30/09/2015 - Ajuste para inclusão das novas telas "Produtos"
 				              (Gabriel - Rkam -> Projeto 217).			  
-
+					
 				 25/07/2016 - Corrigi o tratamento do retorno de erro no XML.SD 479874 (Carlos R.)
 					
 	************************************************************************/
-
+	
 	session_start();
-
+	
 	// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de fun&ccedil;&otilde;es
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
@@ -115,7 +115,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}	
 	

@@ -17,7 +17,7 @@
 	isPostMethod();		
 	
 	// Verifica se tem permissões de impressão
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'M')) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','controlaOperacao("");',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'M')) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','controlaOperacao("");',false);
 	
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
@@ -56,7 +56,7 @@
 	$mtdErro = 'bloqueiaFundo(divRotina);';
 		
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 	}
 	echo "inobriga = '".$xmlObj->roottag->tags[0]->attributes['INOBRIGA']."';";
 	echo 'mostraDivImpressao("'.$operacao.'");';	

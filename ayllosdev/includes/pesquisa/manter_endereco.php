@@ -30,7 +30,7 @@
 	$dscmplog = (isset($_POST['dscmplog'])) ? retiraAcentos(utf8_decode(trim($_POST['dscmplog']))) : '';
 	
 	// Verifica os valores permitidos para operação
-	if(!in_array($operacao,array('S','V'))) exibirErro('error','O parâmetro operação inválido. Valor informado '.$operacao.'.','Alerta - Ayllos','bloqueiaFundo($(\'#divFormularioEndereco\'))',false);
+	if(!in_array($operacao,array('S','V'))) exibirErro('error','O parâmetro operação inválido. Valor informado '.$operacao.'.','Alerta - Aimaro','bloqueiaFundo($(\'#divFormularioEndereco\'))',false);
 	
 	if( $operacao == 'V' ) validaDados();
 	
@@ -80,12 +80,12 @@
 		if($focus != ""){
 			$addclass = "$(\'#".$focus."\').addClass(\'campoErro\');";
 		}
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$addclass.'bloqueiaFundo($(\'#divFormularioEndereco\'),\''.$focus.'\',\'formFormularioEndereco\');',false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$addclass.'bloqueiaFundo($(\'#divFormularioEndereco\'),\''.$focus.'\',\'formFormularioEndereco\');',false);
 	}
 	
 	// Se é Validação
 	if ($operacao == 'V') {				
-		exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Ayllos','manterEndereco(\'S\')','bloqueiaFundo($(\'#divFormularioEndereco\'))',false);
+		exibirConfirmacao('Deseja confirmar inclusão?' ,'Confirmação - Aimaro','manterEndereco(\'S\')','bloqueiaFundo($(\'#divFormularioEndereco\'))',false);
 	} else {
 		echo "$('#nrcepend','#formPesquisaEndereco').val('".$nrcepend."');";		
 		echo "$('#formPesquisaEndereco').css({'display':'none'});";
@@ -97,11 +97,11 @@
 		// No início das validações, primeiro remove a classe erro de todos os campos
 		echo '$("input, select","#formFormularioEndereco").removeClass("campoErro");';
 		
-		if ( $GLOBALS['nrcepend'] == 0  ) exibirErro('error','O CEP deve ser informado.','Alerta - Ayllos','$(\'#nrcepend\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nrcepend\',\'formFormularioEndereco\')',false);		
-		if ( $GLOBALS['dstiplog'] == '' ) exibirErro('error','Tipo Logradouro deve ser informado.','Alerta - Ayllos','$(\'#dstiplog\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'dstiplog\',\'formFormularioEndereco\')',false);				
-		if ( $GLOBALS['nmreslog'] == '' ) exibirErro('error','Logradouro deve ser informado.','Alerta - Ayllos','$(\'#nmreslog\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nmreslog\',\'formFormularioEndereco\')',false);				
-		if ( $GLOBALS['nmresbai'] == '' ) exibirErro('error','Bairro deve ser informado.','Alerta - Ayllos','$(\'#nmresbai\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nmresbai\',\'formFormularioEndereco\')',false);				
-		if ( $GLOBALS['nmrescid'] == '' ) exibirErro('error','Cidade deve ser informada.','Alerta - Ayllos','$(\'#nmrescid\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nmrescid\',\'formFormularioEndereco\')',false);		
-		if ( $GLOBALS['cdufende'] == '' || $GLOBALS['cdufende'] == 'null') exibirErro('error','Estado deve ser informado.','Alerta - Ayllos','bloqueiaFundo($(\'#divFormularioEndereco\'),\'cdufende\',\'formFormularioEndereco\')',false);		
+		if ( $GLOBALS['nrcepend'] == 0  ) exibirErro('error','O CEP deve ser informado.','Alerta - Aimaro','$(\'#nrcepend\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nrcepend\',\'formFormularioEndereco\')',false);		
+		if ( $GLOBALS['dstiplog'] == '' ) exibirErro('error','Tipo Logradouro deve ser informado.','Alerta - Aimaro','$(\'#dstiplog\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'dstiplog\',\'formFormularioEndereco\')',false);				
+		if ( $GLOBALS['nmreslog'] == '' ) exibirErro('error','Logradouro deve ser informado.','Alerta - Aimaro','$(\'#nmreslog\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nmreslog\',\'formFormularioEndereco\')',false);				
+		if ( $GLOBALS['nmresbai'] == '' ) exibirErro('error','Bairro deve ser informado.','Alerta - Aimaro','$(\'#nmresbai\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nmresbai\',\'formFormularioEndereco\')',false);				
+		if ( $GLOBALS['nmrescid'] == '' ) exibirErro('error','Cidade deve ser informada.','Alerta - Aimaro','$(\'#nmrescid\').addClass(\'campoErro\');bloqueiaFundo($(\'#divFormularioEndereco\'),\'nmrescid\',\'formFormularioEndereco\')',false);		
+		if ( $GLOBALS['cdufende'] == '' || $GLOBALS['cdufende'] == 'null') exibirErro('error','Estado deve ser informado.','Alerta - Aimaro','bloqueiaFundo($(\'#divFormularioEndereco\'),\'cdufende\',\'formFormularioEndereco\')',false);		
 	}
 ?>

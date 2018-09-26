@@ -17,7 +17,7 @@
 	isPostMethod();
 	
 	if (!isset($_POST["dataWk"]) || !isset($_POST["dataPin"])){		
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}
 	
 	$sWorkingKey = base64_decode($_POST['dataWk']);

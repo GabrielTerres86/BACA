@@ -199,14 +199,14 @@ function buscaCooperativas() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -240,7 +240,7 @@ function buscaAgeCtl(flag) {
                 },
             error: function (objAjax, responseError, objExcept) {
                     hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
                 },
             success: function (response) {
 
@@ -249,7 +249,7 @@ function buscaAgeCtl(flag) {
                         return false;
                 } catch (error) {
                         hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
                     }
                 }
             });
@@ -290,7 +290,7 @@ function preGerarPDF() {
         var metodoSim = "cobraTariva();";
         var metodoNao = "consultaCheque();";
 
-        showConfirmacao("Deseja efetuar cobrança de tarifa?", "Confirma&ccedil;&atilde;o - Ayllos", metodoSim, metodoNao, "sim.gif", "nao.gif");
+        showConfirmacao("Deseja efetuar cobrança de tarifa?", "Confirma&ccedil;&atilde;o - Aimaro", metodoSim, metodoNao, "sim.gif", "nao.gif");
     } else {
         if (cBancochq.val() == 85) {
             $.ajax({
@@ -303,7 +303,7 @@ function preGerarPDF() {
                 },
                 error: function (objAjax, responseError, objExcept) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                    showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
                 },
                 success: function (response) {
                     fechaRotina($('#divUsoGenerico'), $('#divRotina'));
@@ -346,7 +346,7 @@ function cobraTariva() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
         },
         success: function (response) {
             fechaRotina($('#divUsoGenerico'), $('#divRotina'));
@@ -376,7 +376,7 @@ function consultaCheque() {
 
     if (dtcompen == "") {
         hideMsgAguardo();
-        showError("error", "Data de compensa&ccedil;&atilde;o n&atilde;o informada.", "Alerta - Ayllos", "$('#dtcompen','#frmConsultaImagem').focus()");
+        showError("error", "Data de compensa&ccedil;&atilde;o n&atilde;o informada.", "Alerta - Aimaro", "$('#dtcompen','#frmConsultaImagem').focus()");
         return false;
     }
 
@@ -385,7 +385,7 @@ function consultaCheque() {
     
     if ((!validaNumero(cdagechq, true, 0, 0)) || (cdagechq == "")) {
         hideMsgAguardo();
-        showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Ayllos", "$('#agencchq','#frmConsultaImagem').focus();");
+        showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Aimaro", "$('#agencchq','#frmConsultaImagem').focus();");
         return false;
     }
 
@@ -396,13 +396,13 @@ function consultaCheque() {
 
         if ((!validaNumero(cdcmpchq, true, 0, 0)) || (cdcmpchq == "")) {
             hideMsgAguardo();
-            showError("error", "Compe inv&aacute;lida.", "Alerta - Ayllos", "$('#compechq','#frmConsultaImagem').focus();");
+            showError("error", "Compe inv&aacute;lida.", "Alerta - Aimaro", "$('#compechq','#frmConsultaImagem').focus();");
             return false;
         }
 
         if ((!validaNumero(cdbanchq, true, 0, 0)) || (cdbanchq == "")) {
             hideMsgAguardo();
-            showError("error", "Banco inv&aacute;lido.", "Alerta - Ayllos", "$('#bancochq','#frmConsultaImagem').focus();");
+            showError("error", "Banco inv&aacute;lido.", "Alerta - Aimaro", "$('#bancochq','#frmConsultaImagem').focus();");
             return false;
         }
     } else
@@ -417,13 +417,13 @@ function consultaCheque() {
 
     if ((!validaNumero(nrctachq, true, 0, 0)) || (nrctachq == "")) {
         hideMsgAguardo();
-        showError("error", "Conta do cheque inv&aacute;lida.", "Alerta - Ayllos", "$('#contachq','#frmConsultaImagem').focus();");
+        showError("error", "Conta do cheque inv&aacute;lida.", "Alerta - Aimaro", "$('#contachq','#frmConsultaImagem').focus();");
         return false;
     }
 
     if ((!validaNumero(nrcheque, true, 0, 0)) || (nrcheque == "")) {
         hideMsgAguardo();
-        showError("error", "N&uacute;mero do cheque inv&aacute;lido.", "Alerta - Ayllos", "$('#numechq','#frmConsultaImagem').focus();");
+        showError("error", "N&uacute;mero do cheque inv&aacute;lido.", "Alerta - Aimaro", "$('#numechq','#frmConsultaImagem').focus();");
         return false;
     }
 
@@ -450,14 +450,14 @@ function consultaCheque() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -486,7 +486,7 @@ function SalvarZip() {
 
     if (dtcompen == "") {
         hideMsgAguardo();
-        showError("error", "Data de compensa&ccedil;&atilde;o n&atilde;o informada.", "Alerta - Ayllos", "$('#dtcompen','#frmConsultaImagem').focus()");
+        showError("error", "Data de compensa&ccedil;&atilde;o n&atilde;o informada.", "Alerta - Aimaro", "$('#dtcompen','#frmConsultaImagem').focus()");
         return false;
     }
 
@@ -497,19 +497,19 @@ function SalvarZip() {
 
         if ((!validaNumero(cdcmpchq, true, 0, 0)) || (cdcmpchq == "")) {
             hideMsgAguardo();
-            showError("error", "Compe inv&aacute;lida.", "Alerta - Ayllos", "$('#compechq','#frmConsultaImagem').focus();");
+            showError("error", "Compe inv&aacute;lida.", "Alerta - Aimaro", "$('#compechq','#frmConsultaImagem').focus();");
             return false;
         }
 
         if ((!validaNumero(cdbanchq, true, 0, 0)) || (cdbanchq == "")) {
             hideMsgAguardo();
-            showError("error", "Banco inv&aacute;lido.", "Alerta - Ayllos", "$('#bancochq','#frmConsultaImagem').focus();");
+            showError("error", "Banco inv&aacute;lido.", "Alerta - Aimaro", "$('#bancochq','#frmConsultaImagem').focus();");
             return false;
         }
 
         if ((!validaNumero(cdagechq, true, 0, 0)) || (cdagechq == "")) {
             hideMsgAguardo();
-            showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Ayllos", "$('#agencchq','#frmConsultaImagem').focus();");
+            showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Aimaro", "$('#agencchq','#frmConsultaImagem').focus();");
             return false;
         }
 
@@ -525,13 +525,13 @@ function SalvarZip() {
 
     if ((!validaNumero(nrctachq, true, 0, 0)) || (nrctachq == "")) {
         hideMsgAguardo();
-        showError("error", "Conta do cheque inv&aacute;lida.", "Alerta - Ayllos", "$('#contachq','#frmConsultaImagem').focus();");
+        showError("error", "Conta do cheque inv&aacute;lida.", "Alerta - Aimaro", "$('#contachq','#frmConsultaImagem').focus();");
         return false;
     }
 
     if ((!validaNumero(nrcheque, true, 0, 0)) || (nrcheque == "")) {
         hideMsgAguardo();
-        showError("error", "N&uacute;mero do cheque inv&aacute;lido.", "Alerta - Ayllos", "$('#numechq','#frmConsultaImagem').focus();");
+        showError("error", "N&uacute;mero do cheque inv&aacute;lido.", "Alerta - Aimaro", "$('#numechq','#frmConsultaImagem').focus();");
         return false;
     }
 
@@ -560,14 +560,14 @@ function SalvarZip() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -595,14 +595,14 @@ function limpaChequeTemp(imgrefe, frente, verso) {
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
                 }
             }
         });
@@ -626,14 +626,14 @@ function gravaLog(dsdocmc7, nrdconta) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             try {
                 eval(response);
             } catch (error) {
                 hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }
     });
@@ -751,7 +751,7 @@ function validarNumeroConta() {
     // Validar se o número da conta é válido
     if (!validaNroConta(nrdconta)) {
         hideMsgAguardo();
-        showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Ayllos", "cContachq.focus()");
+        showError("error", "Conta/dv inv&aacute;lida.", "Alerta - Aimaro", "cContachq.focus()");
         return false;
     }
 

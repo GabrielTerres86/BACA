@@ -78,6 +78,7 @@ if($operacao == 'C_AUTO'){
         exibeErro("Contrato inv&aacute;lido!");
     }
     $flgNovo = true;
+
 }else if($operacao == 'C_CASA'){
 	$procedure = 'buscar_seguro_geral';
 }else if($operacao == 'SEGUR'){
@@ -186,7 +187,7 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
             arraySeguroCasa['cdufresd'] = '<?php echo getByTagName($seguros,'cdufresd'); ?>';
 
             arraySeguroCasa['tpendcor'] = '<?php echo getByTagName($seguros,'tpendcor'); ?>';
-		
+
 	</script><?
     }else if($operacao == 'SEGUR'){
         $seguradoras  = $xmlObjeto->roottag->tags[0]->tags;
@@ -213,7 +214,7 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
         if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 
             $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-            exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+            exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial();',false);
 
         }
         //$seguro_auto = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
@@ -260,7 +261,7 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
         if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 
             $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-            exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+            exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial();',false);
 
         }
         //$seguro_auto = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
@@ -305,7 +306,7 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
         if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 
             $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-            exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+            exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial();',false);
 
         }
         //$seguro_auto = $xmlObjeto->roottag->tags;
@@ -325,7 +326,7 @@ if ($idPrincipal === false) {
 function exibeErro($msgErro) {
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	echo '</script>';
 	exit();
 }

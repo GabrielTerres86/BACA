@@ -59,6 +59,8 @@
                09/11/2015 - Aumentado format do campo de GRUPO (Lunelli SD 353723)
 
 			   10/05/2018 - Ajuste no campo de GRUPO para 4 posicoes (Andrey Formigari - Mouts)
+
+			   17/09/2018 - Ajuse na listagem das linhas de crédito (Andrey Formigari - Mouts)
 ............................................................................. */
 
 DEF BUFFER crabtab FOR craptab.
@@ -250,7 +252,7 @@ DO WHILE TRUE:
                     CREATE tt-grupo1.
                     ASSIGN tt-grupo1.nrdlinha = aux_contador2
                            tt-grupo1.grupo_taxa = "   " + 
-                                STRING(craplcr.nrgrplcr,"zz9") + "   " +
+                                STRING(craplcr.nrgrplcr,"zzz9") + "   " +
                                 STRING(craplcr.txbaspre,"zz9.99") + " % |".
 
                     ASSIGN aux_contador2 = aux_contador2 + 1.
@@ -263,7 +265,7 @@ DO WHILE TRUE:
                     CREATE tt-grupo1.
                     ASSIGN tt-grupo1.nrdlinha = aux_contador2
                            tt-grupo1.grupo_taxa = "   " + 
-                                   STRING(craplcr.nrgrplcr,"zz9") + "   " +
+                                   STRING(craplcr.nrgrplcr,"zzz9") + "   " +
                                    STRING(craplcr.txbaspre,"zz9.99") + " % |".
 
                     ASSIGN aux_modCount = aux_modCount - 1
@@ -276,7 +278,7 @@ DO WHILE TRUE:
                     CREATE tt-grupo2.
                     ASSIGN tt-grupo2.nrdlinha = aux_contador2 - aux_contador
                            tt-grupo2.grupo_taxa = "   " +
-                                   STRING(craplcr.nrgrplcr,"zz9") + "   " +
+                                   STRING(craplcr.nrgrplcr,"zzz9") + "   " +
                                    STRING(craplcr.txbaspre,"zz9.99") + " % |".
 
                     ASSIGN aux_contador2 = aux_contador2 + 1.
@@ -289,7 +291,7 @@ DO WHILE TRUE:
                     CREATE tt-grupo2.
                     ASSIGN tt-grupo2.nrdlinha = aux_contador2 - aux_contador.
                            tt-grupo2.grupo_taxa = "   " + 
-                                   STRING(craplcr.nrgrplcr,"zz9") + "   " +
+                                   STRING(craplcr.nrgrplcr,"zzz9") + "   " +
                                    STRING(craplcr.txbaspre,"zz9.99") + " % |".
 
                     ASSIGN aux_modCount = aux_modCount - 1
@@ -303,7 +305,7 @@ DO WHILE TRUE:
                     ASSIGN tt-grupo3.nrdlinha = 
                                             aux_contador2 - (aux_contador * 2)
                            tt-grupo3.grupo_taxa = "   " +
-                                   STRING(craplcr.nrgrplcr,"zz9") + "   " +
+                                   STRING(craplcr.nrgrplcr,"zzz9") + "   " +
                                    STRING(craplcr.txbaspre,"zz9.99") + " % |".
 
                     ASSIGN aux_contador2 = aux_contador2 + 1.
@@ -316,7 +318,7 @@ DO WHILE TRUE:
                     ASSIGN tt-grupo3.nrdlinha = 
                                             aux_contador2 - (aux_contador * 2)
                            tt-grupo3.grupo_taxa = "   " + 
-                                   STRING(craplcr.nrgrplcr,"zz9") + "   " +
+                                   STRING(craplcr.nrgrplcr,"zzz9") + "   " +
                                    STRING(craplcr.txbaspre,"zz9.99") + " % |".
 
                     ASSIGN aux_modCount = aux_modCount - 1
@@ -329,7 +331,7 @@ DO WHILE TRUE:
                     ASSIGN tt-grupo4.nrdlinha = 
                                             aux_contador2 - (aux_contador * 3)
                            tt-grupo4.grupo_taxa = "   " +
-                                   STRING(craplcr.nrgrplcr,"zz9") + "   " +
+                                   STRING(craplcr.nrgrplcr,"zzz9") + "   " +
                                    STRING(craplcr.txbaspre,"zz9.99") + " %".
                                     
                     ASSIGN aux_contador2 = aux_contador2 + 1.

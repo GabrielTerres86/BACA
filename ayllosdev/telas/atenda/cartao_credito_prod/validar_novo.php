@@ -33,7 +33,7 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro,false);
 	}	
 	
 	// Verifica se os parâmetros necessários foram informados
@@ -51,7 +51,7 @@
         !isset($_POST["nrdoccrd"]) ||
 		!isset($_POST["dsrepinc"]) ||
         !isset($_POST["flgimpnp"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro,false);
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
@@ -73,31 +73,31 @@
 	$nmempres = $_POST["nmempres"];
 	
 	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
-	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Ayllos',$funcaoAposErro,false);
+	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se tipo de pessoa é um inteiro válido
-	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se valor do limite é um decimal válido
-	if (!validaDecimal($vllimpro)) exibirErro('error','Valor do Limite de Cr&eacute;dito inv&aacute;lido ERRO.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vllimpro)) exibirErro('error','Valor do Limite de Cr&eacute;dito inv&aacute;lido ERRO.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se valor do limite é um decimal válido
-	if (!validaDecimal($vllimdeb)) exibirErro('error','Valor do Limite de D&eacute;bito inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaDecimal($vllimdeb)) exibirErro('error','Valor do Limite de D&eacute;bito inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 
 	// Verifica se valor do limite é um decimal válido
-	if (!validaInteiro($nrcpfcgc)) exibirErro('error','N&uacute;mero de CPF inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaInteiro($nrcpfcgc)) exibirErro('error','N&uacute;mero de CPF inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se data de nascimento é uma data válida
-	if (!validaData($dtnasccr)) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (!validaData($dtnasccr)) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se a forma de pagamento foi selecionada
-	if ($tpdpagto == 0) exibirErro('error','Forma de Pagamento inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
+	if ($tpdpagto == 0) exibirErro('error','Forma de Pagamento inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);
 	
 	// Verifica se a empresa do plastico foi informada
-	if (empty($nmempres) && $inpessoa == 2) exibirErro('error','Empresa do Plastico deve ser informada.','Alerta - Ayllos',$funcaoAposErro,false);
+	if (empty($nmempres) && $inpessoa == 2) exibirErro('error','Empresa do Plastico deve ser informada.','Alerta - Aimaro',$funcaoAposErro,false);
 	
     // Monta o xml de requisição
 	$xmlSetCartao  = "";
@@ -138,7 +138,7 @@
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro,false);	
 	} 	
 
 	// Mostra se Bo retornar mensagem de atualização de cadastro
@@ -155,7 +155,7 @@
 		$executar .= "bloqueiaFundo(divRotina,\"nrctaav1\",\"frmNovoCartao\",false);";		
 		
 		// Mostra mensagem de confirmação para finalizar a operação
-		$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
+		$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
 		
 	} else {
 	   
@@ -169,12 +169,12 @@
 		// Esconde mensagem de aguardo
 		$executar .= "hideMsgAguardo();";
 		$executar .= "bloqueiaFundo(divRotina);";
-		$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Aimaro\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		
 
 		// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB
 		if ($idconfir == 1) {
-			$executar .= "showError(\"inform\",\"".$dsmensag."\",\"Alerta - Ayllos\",\"bloqueiaFundo(divRotina,\\\"nrctaav1\\\",\\\"frmNovoCartao\\\",false)\");";
+			$executar .= "showError(\"inform\",\"".$dsmensag."\",\"Alerta - Aimaro\",\"bloqueiaFundo(divRotina,\\\"nrctaav1\\\",\\\"frmNovoCartao\\\",false)\");";
 		} 	
 		} 	
 	
@@ -186,7 +186,7 @@
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		
-		exibirErro("error",$xmlObjCartao->roottag->tags[1]->tags[0]->tags[4]->cdata,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+		exibirErro("error",$xmlObjCartao->roottag->tags[1]->tags[0]->tags[4]->cdata,"Alerta - Aimaro", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
 		
 	} else {
 		echo $executar;

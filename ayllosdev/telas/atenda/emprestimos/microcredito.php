@@ -41,7 +41,7 @@
 	
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	  $msgErro = $xmlObj->roottag->tags[0]->cdata;
-	  exibirErro('error',$msgErro,'Alerta - Ayllos',false);
+	  exibirErro('error',$msgErro,'Alerta - Aimaro',false);
 	}
 	
 	$xml_geral = simplexml_load_string($xmlResult);

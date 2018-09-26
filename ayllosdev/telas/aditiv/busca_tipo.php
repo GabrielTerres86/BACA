@@ -11,7 +11,8 @@
  *
  *                01/11/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
  *
- *                06/09/2018 - Inclusao de validacao de permissao. (Jaison/Marcos Martini - PRJ442)
+ *                06/09/2018 - Inclusao de validacao de permissao. (Jaison/Marcos Martini - PRJ442) 
+ *
  */
 ?>
  
@@ -33,7 +34,7 @@
 	$tpctrato = (isset($_POST['tpctrato'])) ? $_POST['tpctrato'] : 0;
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}  
   
 	// Monta o xml de requisição
@@ -72,7 +73,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','',false);
 	}
 	
 	$registros 	= $xmlObj->roottag->tags[0]->tags;
@@ -94,7 +95,7 @@
 
 	$xmlBensObj = getObjectXML($xmlBensResult);
 	if ( strtoupper($xmlBensObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlBensObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+		exibirErro('error',$xmlBensObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','',false);
 	}
 	$registrosBens 	= $xmlBensObj->roottag->tags[0]->tags;
 	$dadosBens 		= $xmlBensObj->roottag->tags[0]->tags[0]->tags;
@@ -144,7 +145,9 @@
 	cdaditiv = '<? echo $cdaditiv ?>';
 	cdopcao = '<?php echo $cddopcao ?>';
 	data = '<?php echo $glbvars["dtmvtolt"] ?>';
-	$("#dtmvtolt").val(data);
+	if ( cdopcao == 'I' ) {
+		$("#dtmvtolt").val(data);
+	}
 	$("#cdaditiv option[value='<? echo $cdaditiv ?>']",'#frmCab').prop('selected',true);
 
 	var i = 0;

@@ -44,11 +44,11 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','btnVoltar();',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','btnVoltar();',false);
 	exit();
 }else{
 	$msgErro = 'Opera&ccedil;&atilde;o efetuada com sucesso!';
-	exibirErro('inform',$msgErro,'Alerta - Ayllos','btnVoltar();',false);
+	exibirErro('inform',$msgErro,'Alerta - Aimaro','btnVoltar();',false);
 }
 
 ?>

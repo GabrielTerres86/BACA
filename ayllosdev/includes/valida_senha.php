@@ -89,7 +89,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","$(\'#cdopelib\',\'#frmSenhaCoordenador\').focus();blockBackground(parseInt($(\'#divUsoGenerico\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","$(\'#cdopelib\',\'#frmSenhaCoordenador\').focus();blockBackground(parseInt($(\'#divUsoGenerico\').css(\'z-index\')))");';
 		exit();
 	}
 	

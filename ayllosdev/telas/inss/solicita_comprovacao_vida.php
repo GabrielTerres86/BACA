@@ -38,7 +38,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -95,7 +95,7 @@
 	
 		//Esta sendo utilizado a função utf8_encode devido ao SICREDI nos retornar mensagens com acentuação.
 		$msgErro = utf8_encode($xmlObjSolicitaComprovacaoVida->roottag->tags[0]->tags[0]->tags[4]->cdata);
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);		
 					
 	}   	
 	
@@ -108,7 +108,7 @@
   
   
 	if($msgretor != ''){
-		exibirErro('inform',$msgretor,'Alerta - Ayllos',$strGeraImpressao,false);		
+		exibirErro('inform',$msgretor,'Alerta - Aimaro',$strGeraImpressao,false);		
 	
 	}else{		
 		echo $strGeraImpressao;
@@ -119,68 +119,68 @@
 		
 		//Conta
 		if ( $GLOBALS["nrdconta"] == 0){ 
-			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//CPF
 		if ( $GLOBALS["nrcpfcgc"] == 0){ 
-			exibirErro('error','CPF inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error','CPF inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		}
 		
 		//Nome do beneficiário
 		if ( $GLOBALS["nmextttl"] == ""){ 
-			exibirErro('error','Nome inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Nome inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		//Orgão pagador
 		if ( $GLOBALS["cdorgins"] == 0){ 
-			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','&Oacute;rg&atilde;o pagador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		//NB
 		if ( $GLOBALS["nrrecben"] == 0){ 
-			exibirErro('error','NB inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','NB inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		//Tipo do NB
 		if ( $GLOBALS["tpnrbene"] == ""){ 
-			exibirErro('error','Tipo do NB inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Tipo do NB inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		//Unidade de atendimento
 		if ( $GLOBALS["cdagepac"] == ""){ 
-			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Unidade de atendimento inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		//ID do beneficiário
 		if ( $GLOBALS["idbenefi"] == 0){ 
-			exibirErro('error','ID do benefici&aacute;rio inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','ID do benefici&aacute;rio inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		//Agência SICREDI
 		if ( $GLOBALS["cdagesic"] == 0){ 
-			exibirErro('error','Ag&ecirc;ncia SCIREDI inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Ag&ecirc;ncia SCIREDI inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		//Responsavel pela renovacao
 		if ( $GLOBALS["respreno"] != 'PROCURADOR' && $GLOBALS["respreno"] != 'BENEFICIARIO'){ 
-			exibirErro('error','Respons&aacute;vel pela renova&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+			exibirErro('error','Respons&aacute;vel pela renova&ccedil;&atilde;o inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 		}
 		
 		if ( $GLOBALS["respreno"] == 'PROCURADOR'){ 
 			
 			//Nome do procurador
 			if ( $GLOBALS["nmprocur"] == ''){ 
-				exibirErro('error','Nome do procurador inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+				exibirErro('error','Nome do procurador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 			}
 			
 			//CPF do procurador
 			if ( $GLOBALS["nrdocpro"] == ''){ 
-				exibirErro('error','C.P.F. do procurador inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+				exibirErro('error','C.P.F. do procurador inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 			}
 				
 			if ($GLOBALS["dtvalprc"] == '' ){
-				exibirErro('error','Validade do procurador inv&aacute;lida.','Alerta - Ayllos','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
+				exibirErro('error','Validade do procurador inv&aacute;lida.','Alerta - Aimaro','$(\'#btVoltar\',\'#divComprovaVida\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);			
 			}
 							
 		}

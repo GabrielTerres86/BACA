@@ -91,7 +91,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -148,7 +148,7 @@
 <div id="divBotoes" >
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltarDivResgate();return false;" />
 	<? if ($flgcance == "yes" && $qtResgates > 0) { ?>
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar o resgate?','Confirma&ccedil;&atilde;o - Ayllos','cancelarResgates()',metodoBlock,'sim.gif','nao.gif');return false;" />
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar o resgate?','Confirma&ccedil;&atilde;o - Aimaro','cancelarResgates()',metodoBlock,'sim.gif','nao.gif');return false;" />
 	<?}?>
 </div>
 

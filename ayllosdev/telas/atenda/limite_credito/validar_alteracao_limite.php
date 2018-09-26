@@ -164,10 +164,10 @@
 			echo "strHTML +=	'</table>';";
 				
 			$metodo = "blockBackground(parseInt($(\\'#divRotina\\').css(\\'z-index\\')));";
-			echo 'dsmetodo = \'showError("error","'.$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","'.$metodo.'"     );\';';
+			echo 'dsmetodo = \'showError("error","'.$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Aimaro","'.$metodo.'"     );\';';
 			
 			echo 'hideMsgAguardo();';
-			echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","mostraMsgsGrupoEconomico();formataGrupoEconomico();");';
+			echo 'showError("inform","'.$dsmensag.'","Alerta - Aimaro","mostraMsgsGrupoEconomico();formataGrupoEconomico();");';
 						
 			exit();
 			
@@ -175,7 +175,7 @@
 		}elseif($inconfir == 3){ 
 		
 			echo 'hideMsgAguardo();';
-			echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();showError(\'error\',\''.$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata.'\',\'Alerta - Ayllos\',\'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))\');");';
+			echo 'showError("inform","'.$dsmensag.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));hideMsgAguardo();showError(\'error\',\''.$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata.'\',\'Alerta - Aimaro\',\'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))\');");';
 			exit();
 			
 		}else{
@@ -199,14 +199,14 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}	
 	
 	// Função para mostrar mensagem de confirmação retornada pela BO
 	function exibeConfirmacao($msgConfirmacao) {
 		echo 'hideMsgAguardo();';
-		echo 'showConfirmacao("'.$msgConfirmacao.'","Confirma&ccedil;&atilde;o - Ayllos","validarNovoLimite(aux_inconfir,aux_inconfi2)","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("'.$msgConfirmacao.'","Confirma&ccedil;&atilde;o - Aimaro","validarNovoLimite(aux_inconfir,aux_inconfi2)","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 		exit();	
 	}	
 	

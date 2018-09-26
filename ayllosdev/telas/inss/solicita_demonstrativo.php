@@ -34,7 +34,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);	
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);	
 			
 	}		
 	
@@ -72,7 +72,7 @@
 		$nmdcampo = $xmlObjSolicitaDemonstrativo->roottag->tags[0]->attributes['NMDCAMPO'];
 				
 		if ( !empty($nmdcampo) ) { $mtdErro = "$('input','#frmDemonstrativo').removeClass('campoErro');focaCampoErro('".$nmdcampo."','frmDemonstrativo');";  }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 		
 	}   
 	
@@ -85,27 +85,27 @@
 		
 		//Nrdconta
 		if ( $GLOBALS["nrdconta"] == 0){ 
-			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
+			exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
 		}
 		
 		//Cdagesic
 		if ( $GLOBALS["cdagesic"] == 0){ 
-			exibirErro('error','Ag&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
+			exibirErro('error','Ag&ecirc;ncia inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
 		}
 		
 		//Nrcpfcgc
 		if ( $GLOBALS["nrcpfcgc"] == 0){ 
-			exibirErro('error','CPF inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
+			exibirErro('error','CPF inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
 		}
 		
 		//Dtvalida
 		if ( $GLOBALS["dtvalida"] == 0){ 
-			exibirErro('error','M&ecirc;s da compet&ecirc;ncia deve ser informado.','Alerta - Ayllos','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
+			exibirErro('error','M&ecirc;s da compet&ecirc;ncia deve ser informado.','Alerta - Aimaro','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
 		}	
 		
 		//Nrrecben
 		if ( $GLOBALS["nrrecben"] == 0){ 
-			exibirErro('error','NB deve ser informado.','Alerta - Ayllos','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
+			exibirErro('error','NB deve ser informado.','Alerta - Aimaro','focaCampoErro(\'dtvalida\',\'frmDemonstrativo\');',false);
 		}	
 			
 	}

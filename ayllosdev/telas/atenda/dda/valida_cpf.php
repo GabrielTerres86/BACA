@@ -79,11 +79,11 @@ if ($nmrotina == "imprimirTermoCancelamento" || $nmrotina == "imprimirTermoCance
 		
 	// Da rotina COBRANCA / ATENDA - Cancelamento Convênio
 	if ($nmrotina == "imprimirTermoCancelamento") {
-	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"2\");realizaExclusao();","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"2\");realizaExclusao();","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
 	}
 	// Da rotina COBRANCA / ATENDA - Cancelamento Protesto
 	else {
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"3\");confirmaHabilitacaoSerasa(\'A\');","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"3\");confirmaHabilitacaoSerasa(\'A\');","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
 	}
 
 	
@@ -94,13 +94,13 @@ if ($nmrotina == "imprimirTermoCancelamento" || $nmrotina == "imprimirTermoCance
 		$dsdtitul = "1";
 		
 		//confirmação para gerar impressao
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\");","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\");","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
 
 	}
 	// Da rotina DDA / CONTAS
 	else { 
 		//confirmação para gerar impressao
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","termo(\''.$nmrotina.'\');","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","termo(\''.$nmrotina.'\');","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
 	}
 	
 }
@@ -108,7 +108,7 @@ if ($nmrotina == "imprimirTermoCancelamento" || $nmrotina == "imprimirTermoCance
 // Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 function exibeErro($msgErro) {
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	exit();
 }	
 

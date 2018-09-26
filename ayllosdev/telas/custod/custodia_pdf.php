@@ -21,7 +21,7 @@
 	isPostMethod();	
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I",false)) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	// Classe para geração de arquivos PDF

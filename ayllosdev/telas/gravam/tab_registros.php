@@ -1,6 +1,6 @@
 <?php 
 /*!
- * FONTE        : tab_registros.php                 Última alteração: 14/07/2016
+ * FONTE        : tab_registros.php                 Última alteração: 24/08/2016
  * CRIAÇÃO      : ANDREI - RKAM
  * DATA CRIAÇÃO : mAIO/2016
  * OBJETIVO     : Tabela que apresenta a consulta de ratings da tela RATING
@@ -171,7 +171,7 @@
             <input type="hidden" id="dsbemfin" name="dsbemfin" value="<? echo getByTagName($bens[$i]->tags,'dsbemfin'); ?>" />
             <input type="hidden" id="vlmerbem" name="vlmerbem" value="<? echo getByTagName($bens[$i]->tags,'vlmerbem'); ?>" />
             <input type="hidden" id="tpchassi" name="tpchassi" value="<? echo getByTagName($bens[$i]->tags,'tpchassi'); ?>" />
-            <input type="hidden" id="nrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($bens[$i]->tags,'nrdplaca'),'###-####'); ?>" />
+            <input type="hidden" id="nrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($bens[$i]->tags,'nrdplaca'),'#######'); ?>" />
             <input type="hidden" id="nranobem" name="nranobem" value="<? echo getByTagName($bens[$i]->tags,'nranobem'); ?>" />
             <input type="hidden" id="dscpfbem" name="dscpfbem" value="<? echo getByTagName($bens[$i]->tags,'dscpfbem'); ?>" />
             <input type="hidden" id="uflicenc" name="uflicenc" value="<? echo getByTagName($bens[$i]->tags,'uflicenc'); ?>" />
@@ -242,7 +242,7 @@
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" onclick="controlaVoltar('2'); return false;">Voltar</a>
   <a href="#" class="botao" id="btConcluir">Concluir</a>
-	<!-- <a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>-->
+	<!-- <a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>-->
 </div>
 
 <script type="text/javascript">

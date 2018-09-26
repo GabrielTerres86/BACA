@@ -25,7 +25,7 @@
 	$metodo       = ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
 	
 		
-	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Responsavel Legal.','Alerta - Ayllos',$metodo,$tagScript);
+	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Responsavel Legal.','Alerta - Aimaro',$metodo,$tagScript);
 ?>
 
 <div id="divOpcoesDaOpcao2">&nbsp;</div>

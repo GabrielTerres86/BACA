@@ -22,7 +22,7 @@
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;	
 		
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	$nrdconta = ( isset($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0;
 	$idseqttl = ( isset($_POST['idseqttl']) ) ? $_POST['idseqttl'] : 0;
@@ -66,9 +66,9 @@
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjServicos->roottag->tags[0]->name) == 'ERRO') {
-		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);acessaRotina(\'IMPEDIMENTOS DESLIGAMENTO\', \'Impedimentos\', \'impedimentos_desligamento\');',false);
+		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);acessaRotina(\'IMPEDIMENTOS DESLIGAMENTO\', \'Impedimentos\', \'impedimentos_desligamento\');',false);
 	}else{
-		exibirErro('inform',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[1]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);acessaRotina(\'IMPEDIMENTOS DESLIGAMENTO\', \'Impedimentos\', \'impedimentos_desligamento\');',false);
+		exibirErro('inform',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[1]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);acessaRotina(\'IMPEDIMENTOS DESLIGAMENTO\', \'Impedimentos\', \'impedimentos_desligamento\');',false);
 	}
 	
 ?>

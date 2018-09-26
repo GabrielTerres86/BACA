@@ -20,7 +20,7 @@
 	isPostMethod();	
 	
 	if (!isset($_POST["data"]) || !isset($_POST["dataPin"])){
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);		
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);		
 	}
 
 	$sTagData  = base64_decode($_POST['data']);
@@ -59,7 +59,7 @@
 		break;
 	
 		default:
-			exibirErro('error',$oTrocaSenhaCabal->getRetorno()." - Erro ao alterar senha.",'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);			
+			exibirErro('error',$oTrocaSenhaCabal->getRetorno()." - Erro ao alterar senha.",'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);			
 		break;
 	}
 ?>

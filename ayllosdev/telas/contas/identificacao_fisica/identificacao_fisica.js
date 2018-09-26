@@ -90,7 +90,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 ) {
@@ -139,7 +139,7 @@ function abrirRotina(nomeValidar,nomeTitulo,nomeScript,nomeURL,ope) {
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","Não foi possível concluir a requisição.","Alerta - Ayllos","");
+				showError("error","Não foi possível concluir a requisição.","Alerta - Aimaro","");
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").css('display','none');
@@ -164,8 +164,8 @@ function controlaOperacao( novaOp ) {
 	operacao = ( typeof novaOp != 'undefined' ) ? novaOp : operacao;
 
 	// Verifica permissões de acesso
-	if ( (operacao == 'CA' || operacao == 'BA') && (flgAlterar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Ayllos','semaforo--;bloqueiaFundo(divRotina)'); return false; }
-	if ( (operacao == 'CI' || operacao == 'BI') && (flgIncluir != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de inclus&atilde;o.','Alerta - Ayllos','semaforo--;bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'CA' || operacao == 'BA') && (flgAlterar != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de altera&ccedil;&atilde;o.','Alerta - Aimaro','semaforo--;bloqueiaFundo(divRotina)'); return false; }
+	if ( (operacao == 'CI' || operacao == 'BI') && (flgIncluir != '1') ) { showError('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de inclus&atilde;o.','Alerta - Aimaro','semaforo--;bloqueiaFundo(divRotina)'); return false; }
 
 
 	var mensagem = '';
@@ -175,8 +175,8 @@ function controlaOperacao( novaOp ) {
 		case 'CA': liberaOperacao(); return false; break;
 		case 'CI': liberaOperacao(); return false; break;
 
-		case 'AC': showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','semaforo--;controlaOperacao(\'\')','semaforo--;operacao=\'CA\';bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false; break;
-		case 'IC': showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','semaforo--;controlaOperacao(\'\')','semaforo--;operacao=\'CI\';bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false; break;
+		case 'AC': showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','semaforo--;controlaOperacao(\'\')','semaforo--;operacao=\'CA\';bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false; break;
+		case 'IC': showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','semaforo--;controlaOperacao(\'\')','semaforo--;operacao=\'CI\';bloqueiaFundo(divRotina)','sim.gif','nao.gif'); return false; break;
 
 		case 'AV': manterRotina(); return false; break;
 		case 'VA': manterRotina(); return false; break;
@@ -229,7 +229,7 @@ function controlaOperacao( novaOp ) {
 		error: function(objAjax,responseError,objExcept) {
 			semaforo--;
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			semaforo--;
@@ -410,7 +410,7 @@ function liberaOperacao() {
 
 		// Não permitir mais do que 4 titulares em uma conta
 		if ( $('#idseqttl > option','#frmCabContas').length >= 4 ) {
-			showError('error','Limite m&aacute;ximo de 4 (quatro) titulares por conta atingido.','Alerta - Ayllos','semaforo--;bloqueiaFundo(divRotina)');
+			showError('error','Limite m&aacute;ximo de 4 (quatro) titulares por conta atingido.','Alerta - Aimaro','semaforo--;bloqueiaFundo(divRotina)');
 			return false;
 		} else {
 			formulario.limpaFormulario();
@@ -524,7 +524,7 @@ function manterRotina() {
 		},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
@@ -539,7 +539,7 @@ function manterRotina() {
 				return false;
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}
 		}
 	});
@@ -809,7 +809,7 @@ function keypressCPF() {
 	cdgraupr_aux = cdgraupr;
 
 	if ( cdgraupr == '' ) {
-		showError('error','Relacionamento inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdgraupr\',\'frmDadosIdentFisica\');');
+		showError('error','Relacionamento inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdgraupr\',\'frmDadosIdentFisica\');');
 
 		return false;
 
@@ -827,7 +827,7 @@ function keypressCPF() {
 	}
 
 	if ( !validaCpfCnpj(nrcpfcgc ,1) ) {
-		showError('error','CPF inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmDadosIdentFisica\');');
+		showError('error','CPF inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcpfcgc\',\'frmDadosIdentFisica\');');
 
 		return false;
 
@@ -1086,7 +1086,7 @@ function mostraNacionalidade() {
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
 		},
 		success: function(response) {
 			hideMsgAguardo();
@@ -1114,7 +1114,7 @@ function dossieDigidoc() {
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
 
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
 		},
 		success: function(response) {
 			hideMsgAguardo();

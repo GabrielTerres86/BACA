@@ -39,7 +39,7 @@
 
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
         
-        exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
+        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
 
     }
     
@@ -63,7 +63,7 @@
 
         $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		
-        exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','fechaRotina($(\'#divRotina\'));',false);
+        exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','fechaRotina($(\'#divRotina\'));',false);
 
     }
 	

@@ -55,7 +55,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"$('#cdfinemp').val('');$('#dsfinemp').val('');$('#cdfinemp').attr('aux','');",false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"$('#cdfinemp').val('');$('#dsfinemp').val('');$('#cdfinemp').attr('aux','');",false);
 	}else{
 		$proposta = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 		echo "aDadosPropostaFinalidade['flgcescr'] = '".((getByTagName($proposta,'flgcescr') == 'yes') ? true : false)."';";

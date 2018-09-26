@@ -33,7 +33,7 @@
         if ($msgErro == "") {
             $msgErro = $xmlObject->roottag->tags[0]->cdata;
         }
-        exibirErro('error',$msgErro,'Alerta - Ayllos','acessaOpcaoAba(\'P\',0)');
+        exibirErro('error',$msgErro,'Alerta - Aimaro','acessaOpcaoAba(\'P\',0)');
     }
 
     $registros = $xmlObject->roottag->tags[0]->tags;

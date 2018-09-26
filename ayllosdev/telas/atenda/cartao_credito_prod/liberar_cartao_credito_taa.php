@@ -30,12 +30,12 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$opcao)) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}	
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
-		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}
 
     // Monta o xml de requisição
@@ -69,7 +69,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-	    exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);		
+	    exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);		
 	}
 	
 	$oDados   = $xmlObjCartao->roottag->tags[0];
@@ -80,9 +80,9 @@
 		
 		// Verifica se jah possui senha das letras cadastradas
 		if ($flgcadas == 'yes'){
-			echo "showError('inform','Cartão liberado com sucesso.','Alerta - Ayllos','opcaoTAA()');";
+			echo "showError('inform','Cartão liberado com sucesso.','Alerta - Aimaro','opcaoTAA()');";
 		}else{
-			echo "showError('inform','Cartão liberado com sucesso! Favor cadastrar as letras de segurança.','Alerta - Ayllos','validaDadosSenhaLetrasTAA(\'".$operacao."\')');";
+			echo "showError('inform','Cartão liberado com sucesso! Favor cadastrar as letras de segurança.','Alerta - Aimaro','validaDadosSenhaLetrasTAA(\'".$operacao."\')');";
 		}	
 		
 	// Operacao da tela de entrega de cartao de credito 

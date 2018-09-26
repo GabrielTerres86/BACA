@@ -51,6 +51,10 @@
 	// Parâmetros enviados pela tela de login e seleção do sistema
 	$cdcooper   = isset($_POST["cdcooper"]) ? $_POST["cdcooper"] : 3;
 	$gidnumber  = isset($_POST["gidnumber"]) ? $_POST["gidnumber"] : "";
+	$email  = isset($_POST["email"]) ? $_POST["email"] : "";
+	if(isset($_POST["email"])){
+		$_SESSION['dsdemail'] = $_POST["email"];
+	}
 	$mtccserver = isset($_POST["mtccserver"]) ? $_POST["mtccserver"] : "";
 	$cdoperad   = isset($_POST["des_login"]) ? $_POST["des_login"] : (isset($_POST["cdoperad"]) ? $_POST["cdoperad"] : "");
 
@@ -87,6 +91,7 @@
             $xmlLogin .= "      <vldsenha>no</vldsenha>";
             $xmlLogin .= "      <cddsenha></cddsenha>";
             $xmlLogin .= "      <cdpactra>".$cdpactra."</cdpactra>";
+			$xmlLogin .= "      <dsdemail>".$_SESSION['dsdemail']."</dsdemail>";
             $xmlLogin .= "  </Dados>";
 			$xmlLogin .= "</Root>";
 			
@@ -199,7 +204,7 @@
 <script type="text/javascript"> 
 $(document).ready(function () { 
 	<?php if (isset($dsmsgerr)) { ?>
-	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Ayllos","$('#cdpactra').focus()");
+	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Aimaro","$('#cdpactra').focus()");
 	<?php } else { ?>
 	// Setar foco no campo Operador
 	$("#cdpactra").focus();	
@@ -209,12 +214,12 @@ $(document).ready(function () {
 	$("#frmLogin").submit(function () {				
 		// Validar código do operador
 		if ($("#cdoperad").val() == "") {
-			showError("error","Informe o c&oacute;digo do Operador!","Alerta - Ayllos","$('#cdoperad').focus()");
+			showError("error","Informe o c&oacute;digo do Operador!","Alerta - Aimaro","$('#cdoperad').focus()");
 			return false;
 		}				
 		// Validar PAC do operador
 		if ($("#cdpactra").val() == "") {
-			showError("error","Informe o PA do Operador!","Alerta - Ayllos","$('#cdpactra').focus()");
+			showError("error","Informe o PA do Operador!","Alerta - Aimaro","$('#cdpactra').focus()");
 			return false;		
 		}
 
@@ -245,7 +250,7 @@ $(document).ready(function () {
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();					
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","unblockBackground()");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","unblockBackground()");
 			},
 			success: function(response) {				
 				try {				    
@@ -253,7 +258,7 @@ $(document).ready(function () {
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 				}
 			}
 		});	
@@ -281,7 +286,7 @@ $(document).ready(function () {
 				},
 				error: function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();					
-					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","unblockBackground()");
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","unblockBackground()");
 				},
 				success: function(response) {				
 					try {				    
@@ -289,7 +294,7 @@ $(document).ready(function () {
 						return false;
 					} catch(error) {
 						hideMsgAguardo();
-						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 					}
 				}
 }); 
@@ -316,7 +321,7 @@ $(document).ready(function () {
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();					
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","unblockBackground()");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","unblockBackground()");
 			},
 			success: function(response) {				
 				try {				    
@@ -324,7 +329,7 @@ $(document).ready(function () {
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 				}
 			}
 		});

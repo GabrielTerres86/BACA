@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Marco/96.                           Ultima atualizacao: 12/05/2015
+   Data    : Marco/96.                           Ultima atualizacao: 28/08/2017
 
    Dados referentes ao programa:
 
@@ -402,7 +402,7 @@ FORM SKIP
      "Documento:"             AT 2
      tt-dados-avais.tpdoccjg  FORMAT "x(2)" 
          VALIDATE(tt-dados-avais.tpdoccjg = " "  OR              
-                  tt-dados-avais.tpdoccjg = "CI" OR              
+                  tt-dados-avais.tpdoccjg = "CI" OR
                   tt-dados-avais.tpdoccjg = "CN" OR                  
                   tt-dados-avais.tpdoccjg = "CH" OR
                   tt-dados-avais.tpdoccjg = "RE" OR
@@ -480,7 +480,7 @@ FORM SKIP(1)
      SKIP
      tt-bens-alienacao.ufdplaca AT  2 FORMAT "xx"    LABEL "UF/Placa         " 
                                                      AUTO-RETURN
-     tt-bens-alienacao.nrdplaca       FORMAT "xxx-xxxx" NO-LABEL 
+     tt-bens-alienacao.nrdplaca       FORMAT "xxxxxxx" NO-LABEL 
      tt-bens-alienacao.uflicenc       LABEL  "UF Licenciamento"     AT  47
      SKIP
      tt-bens-alienacao.nrrenava AT  2 FORMAT "zzz,zzz,zzz,zz9" 

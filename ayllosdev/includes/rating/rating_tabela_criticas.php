@@ -109,7 +109,7 @@
 		// Aciona função para continuidade da operação
 		echo 'eval(fncRatingSuccess);';		
 	} else {
-		echo 'showError("error","'.$msgCritica.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';	
+		echo 'showError("error","'.$msgCritica.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';	
 	}
 	
 ?>

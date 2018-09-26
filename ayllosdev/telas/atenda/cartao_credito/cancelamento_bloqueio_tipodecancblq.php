@@ -127,7 +127,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -162,7 +162,7 @@
 </form>
 <div class="divBotoes">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4);return false;" />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/<?php if ($cancbloq == "1"){ echo "cancelar"; } else { echo "bloquear"; } ?>.gif" onClick="showConfirmacao('Deseja' + <?php if ($cancbloq == "1"){ echo "' cancelar '"; } else { echo "' bloquear '"; } ?> + 'o cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','cancelarBloquearCartao(<?php if ($cancbloq == "1"){ echo "1"; } else { echo "2"; } ?>)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/<?php if ($cancbloq == "1"){ echo "cancelar"; } else { echo "bloquear"; } ?>.gif" onClick="showConfirmacao('Deseja' + <?php if ($cancbloq == "1"){ echo "' cancelar '"; } else { echo "' bloquear '"; } ?> + 'o cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Aimaro','cancelarBloquearCartao(<?php if ($cancbloq == "1"){ echo "1"; } else { echo "2"; } ?>)','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;" />
 </div>
 
 

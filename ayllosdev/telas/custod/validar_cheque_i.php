@@ -21,12 +21,12 @@
 	$dscheque = !isset($_POST["dscheque"]) ? "" : $_POST["dscheque"];
 		
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"I")) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','',false);
-	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','',false);
+	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -45,7 +45,7 @@
 	
 	if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'VALIDAR_CMC7')){
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[1]->cdata);
-		exibirErro('error',$msgErro,'Alerta - Ayllos','novoCheque();',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','novoCheque();',false);
 		exit();
 	} else {
 		if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
@@ -53,7 +53,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			}
-			exibirErro('error',$msgErro,'Alerta - Ayllos','novoCheque();',false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro','novoCheque();',false);
 			exit();
 		}else{			
 			// Se retornou inemiten falta cadastrar emitentes

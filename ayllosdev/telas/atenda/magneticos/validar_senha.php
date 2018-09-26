@@ -24,14 +24,14 @@
 	require_once("../../../class/xmlfile.php");	
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"B")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}	
 	
 	// Se par&acirc;metros necess&aacute;rios n&atilde;o foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrcartao"]) || 
 		!isset($_POST["nrsenatu"]) || !isset($_POST["nrsencar"]) || 
 		!isset($_POST["nrsencon"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
@@ -42,12 +42,12 @@
 	
 	// Verifica se n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
-		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}	
 	
 	// Verifica se o n&uacute;mero do cart&atilde;o &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrcartao)) {
-		exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error','N&uacute;mero do cart&atilde;o inv&aacute;lido.','Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
@@ -82,7 +82,7 @@
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
 	if (strtoupper($xmlObjSenha->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjSenha->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+		exibirErro('error',$xmlObjSenha->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 	}
 	echo 'abreTelaLimiteSaque();';
 ?>

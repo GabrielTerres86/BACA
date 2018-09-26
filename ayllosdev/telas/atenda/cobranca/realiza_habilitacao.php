@@ -54,7 +54,7 @@
 	require_once("../../../class/xmlfile.php");	
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 	}
 		
 	$nrdconta = $_POST["nrdconta"];
@@ -122,7 +122,7 @@
     $xmlObjCarregaDados = getObjectXML($xmlResult);
 
 	if (strtoupper($xmlObjCarregaDados->roottag->tags[0]->name) == 'ERRO') {
-		exibirErro('error',utf8_encode($xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',utf8_encode($xmlObjCarregaDados->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 	} 
 
 	// Se foi alterado a flag de Serasa
@@ -163,7 +163,7 @@
 	if ($dsdmesag != "") {  // Se esta incluindo um novo e convenio CEB tem numeracao mostrar o numero 	
 		echo 'showError("inform",
 					    "'.$dsdmesag.'",
-						"Alerta - Ayllos",
+						"Alerta - Aimaro",
 						"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.($flgimpri == "1" ? "confirmaImpressao('".$flgregis."','');" : $metodo ).'");';
 	}
 	else

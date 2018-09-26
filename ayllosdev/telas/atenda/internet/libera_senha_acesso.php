@@ -25,7 +25,7 @@
 
                  17/06/2016 - M181 - Alterar o CDAGENCI para          
                            passar o CDPACTRA (Rafael Maciel - RKAM) 
-				
+							  
 				 26/07/2016 - Corrigi a recuperacao de dados do XML. SD 479874 (Carlos R.)			  
 
 	************************************************************************/
@@ -141,12 +141,12 @@
 	}
 	
 	// Carregar contrato de responsabilidade de acesso a Internet
-	echo 'showError("inform","'.$strMsg.'","Notifica&ccedil;&atilde;o - Ayllos","'.'carregarContrato(\"'.$flgletca.'\",\"'.$flgimpte.'\",\"'.$metodo.'\");'.$metodo.'");';
+	echo 'showError("inform","'.$strMsg.'","Notifica&ccedil;&atilde;o - Aimaro","'.'carregarContrato(\"'.$flgletca.'\",\"'.$flgimpte.'\",\"'.$metodo.'\");'.$metodo.'");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

@@ -6,6 +6,9 @@
  * --------------
  * ALTERAÇÕES   : 05/07/2017 - P337 - Prever novas situações criadas pela
  *                             pela implantação da análise automática (Motor)
+ *
+ *                13/08/2018 - P438 - Adicionada a coluna Data de Execução na tabela de consulta
+ *                             e ajustado a largura das colunas (Mateus Z - Mouts)
  * --------------
  */
 
@@ -476,28 +479,29 @@ function formataResultado() {
 		arrayLargura[2] = '85px';
 		arrayLargura[3] = '110px';
 		arrayLargura[4] = '60px';
-		arrayLargura[5] = '140px';
-		arrayLargura[6] = '140px';
-		arrayLargura[7] = '70px';
-		arrayLargura[8] = '140px';
-
-		
+		arrayLargura[5] = '90px';
+		arrayLargura[6] = '90px';
+        arrayLargura[7] = '100px';
+		arrayLargura[8] = '70px';
+		arrayLargura[9] = '100px';
     }
 	else{
 		arrayLargura[0] = '25px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
-		arrayLargura[3] = '110px';
+		arrayLargura[3] = '90px';
 		arrayLargura[4] = '50px';
 		arrayLargura[5] = '40px';
-		arrayLargura[6] = '60px';
+		arrayLargura[6] = '55px';
 		arrayLargura[7] = '50px';
 		arrayLargura[8] = '65px';
-		arrayLargura[9] = '70px';
+        arrayLargura[8] = '60px';
+		arrayLargura[9] = '60px';
 		arrayLargura[10] = '55px';
-		arrayLargura[11] = '50px';
-		arrayLargura[12] = '60px';
-		arrayLargura[13] = '65px';
+		arrayLargura[11] = '55px';
+		arrayLargura[12] = '55px';
+		arrayLargura[13] = '60px';
+        arrayLargura[14] = '60px';
 	}
 	
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);

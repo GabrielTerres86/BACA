@@ -1,7 +1,7 @@
 <?php 
 	/************************************************************************
-	Fonte: spc.php
-	Autor: Guilherme
+	      Fonte: spc.php
+	      Autor: Guilherme
 	Data : Fevereiro/2008               Ultima Alteracoes: 25/07/2016 
 
 	Objetivo  : Mostrar opcao SPC da rotina de OCORRENCIAS da tela ATENDA
@@ -76,7 +76,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}

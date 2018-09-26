@@ -156,7 +156,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ){ ?> 
 									<a 	href="#" 
-										onclick="showConfirmacao('Deseja reenviar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviarBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   																			
+										onclick="showConfirmacao('Deseja reenviar a proposta?', 'Confirma&ccedil;&atilde;o - Aimaro', 'reenviarBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   																			
 										class="botao" 
 										id="btRenviar">Reenviar Proposta</a>
 									<?}?>
@@ -170,7 +170,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 										 ($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ||
 										 ($sitcrd==strtolower("Solicitado") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Manual") ) ){ ?> 
 									<a href="#" 
-										onclick="showConfirmacao('Deseja solicitar o retorno do Bancoob?', 'Confirma&ccedil;&atilde;o - Ayllos', 'verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   
+										onclick="showConfirmacao('Deseja solicitar o retorno do Bancoob?', 'Confirma&ccedil;&atilde;o - Aimaro', 'verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   
 									   class="botao" 
 									   id="btRenviar">Solicitar Retorno</a>
 									<?}
@@ -184,7 +184,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 										 (($sitcrd==strtolower("Aprovado") || $sitcrd==strtolower("Aprov."))  && $sitest==strtolower("Sem Aprovacao") && $sitdec==strtolower("Enviada Analise Manual") ) ){ ?> 
 									<a 
 										href="#" 
-										onclick="showConfirmacao('<? echo utf8ToHtml("Deseja reenviar a proposta para a esteira de crédito"); ;?>', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviaEsteira(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   										
+										onclick="showConfirmacao('<? echo utf8ToHtml("Deseja reenviar a proposta para a esteira de crédito"); ;?>', 'Confirma&ccedil;&atilde;o - Aimaro', 'reenviaEsteira(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   										
 										class="botao" 
 										id="btRenviar">Reenvia Esteira</a>
 									<?}?>

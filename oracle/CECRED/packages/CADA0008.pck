@@ -144,7 +144,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
 
 
   -- Buscar dados complementares do titular para cadastramento do titular
-	PROCEDURE pc_busca_crapttl_compl( pr_nrcpfcgc     IN crapttl.nrcpfcgc%TYPE,
+	PROCEDURE pc_busca_crapttl_compl( pr_cdcooper     IN crapttl.cdcooper%TYPE,
+                                    pr_cdempres     IN crapttl.cdempres%TYPE,
+                                    pr_nrcpfcgc     IN crapttl.nrcpfcgc%TYPE,         
                               pr_cdnatopc    OUT crapttl.cdnatopc%TYPE,
                               pr_cdocpttl    OUT crapttl.cdocpttl%TYPE,
                               pr_tpcttrab    OUT crapttl.tpcttrab%TYPE,
@@ -246,6 +248,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
                                  pr_cdcooper IN crapcop.cdcooper%TYPE,
                                  pr_nrdconta IN crapass.nrdconta%TYPE,
                                  pr_idseqttl IN crapttl.idseqttl%TYPE,
+                                 pr_nrdocnpj IN crapemp.nrdocnpj%TYPE,
+                                 pr_nmpessoa IN tbcadast_pessoa.nmpessoa%TYPE,                             
                                  pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
                                  pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
                                  pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
@@ -256,10 +260,14 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0008 is
   PROCEDURE pc_busca_inf_emp(pr_cdcooper IN crapemp.cdcooper%TYPE,
                              pr_cdempres IN crapemp.cdempres%TYPE,    
                              pr_nrdconta IN crapass.nrdconta%TYPE,
-                             pr_idseqttl IN crapttl.idseqttl%TYPE,   
-                             pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
+                             pr_idseqttl IN crapttl.idseqttl%TYPE,
+                             pr_nrdocnpj IN crapemp.nrdocnpj%TYPE,
+                             pr_nmpessoa IN tbcadast_pessoa.nmpessoa%TYPE,
+                             pr_nmpessot OUT tbcadast_pessoa.nmpessoa%TYPE,
                              pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
-                             pr_nrdocnpj OUT crapemp.nrdocnpj%TYPE,
+                             pr_nrcnpjot OUT crapemp.nrdocnpj%TYPE,
+                             pr_nmempout OUT crapemp.nmresemp%TYPE,
+                             pr_cdemprot OUT crapemp.cdempres%TYPE,
                              pr_dscritic OUT VARCHAR2);                                     
                               
                                       
@@ -1300,36 +1308,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
   
   
   -- Buscar dados complementares do titular para cadastramento do titular
-	PROCEDURE pc_busca_crapttl_compl( pr_nrcpfcgc     IN crapttl.nrcpfcgc%TYPE,
-                              pr_cdnatopc    OUT crapttl.cdnatopc%TYPE,
-                              pr_cdocpttl    OUT crapttl.cdocpttl%TYPE,
-                              pr_tpcttrab    OUT crapttl.tpcttrab%TYPE,
-                              pr_nmextemp    OUT crapttl.nmextemp%TYPE,
-                              pr_nrcpfemp    OUT crapttl.nrcpfemp%TYPE,
-                              pr_dtadmemp    OUT crapttl.dtadmemp%TYPE,
-                              pr_dsproftl    OUT crapttl.dsproftl%TYPE,
-                              pr_cdnvlcgo    OUT crapttl.cdnvlcgo%TYPE,
-                              pr_vlsalari    OUT crapttl.vlsalari%TYPE,
-                              pr_cdturnos    OUT crapttl.cdturnos%TYPE,
-                              pr_dsjusren    OUT crapttl.dsjusren%TYPE,
-                              pr_dtatutel    OUT crapttl.dtatutel%TYPE,
-                              pr_cdgraupr    OUT crapttl.cdgraupr%TYPE,
-                              pr_cdfrmttl    OUT crapttl.cdfrmttl%TYPE,
-                              pr_tpdrendi##1 OUT crapttl.tpdrendi##1%TYPE,
-                              pr_vldrendi##1 OUT crapttl.vldrendi##1%TYPE,
-                              pr_tpdrendi##2 OUT crapttl.tpdrendi##1%TYPE,
-                              pr_vldrendi##2 OUT crapttl.vldrendi##1%TYPE,
-                              pr_tpdrendi##3 OUT crapttl.tpdrendi##1%TYPE,
-                              pr_vldrendi##3 OUT crapttl.vldrendi##1%TYPE,
-                              pr_tpdrendi##4 OUT crapttl.tpdrendi##1%TYPE,
-                              pr_vldrendi##4 OUT crapttl.vldrendi##1%TYPE,
-                              pr_tpdrendi##5 OUT crapttl.tpdrendi##1%TYPE,
-                              pr_vldrendi##5 OUT crapttl.vldrendi##1%TYPE,
-                              pr_tpdrendi##6 OUT crapttl.tpdrendi##1%TYPE,
-                              pr_vldrendi##6 OUT crapttl.vldrendi##1%TYPE,
-                              pr_nmpaittl    OUT crapttl.nmpaittl%TYPE,
-                              pr_nmmaettl    OUT crapttl.nmmaettl%TYPE,
-                              pr_dscritic    OUT crapcri.dscritic%TYPE) IS
+	PROCEDURE pc_busca_crapttl_compl( pr_cdcooper     IN crapttl.cdcooper%TYPE,
+                                    pr_cdempres     IN crapttl.cdempres%TYPE,
+                                    pr_nrcpfcgc     IN crapttl.nrcpfcgc%TYPE,
+                                    pr_cdnatopc    OUT crapttl.cdnatopc%TYPE,
+                                    pr_cdocpttl    OUT crapttl.cdocpttl%TYPE,
+                                    pr_tpcttrab    OUT crapttl.tpcttrab%TYPE,
+                                    pr_nmextemp    OUT crapttl.nmextemp%TYPE,
+                                    pr_nrcpfemp    OUT crapttl.nrcpfemp%TYPE,
+                                    pr_dtadmemp    OUT crapttl.dtadmemp%TYPE,
+                                    pr_dsproftl    OUT crapttl.dsproftl%TYPE,
+                                    pr_cdnvlcgo    OUT crapttl.cdnvlcgo%TYPE,
+                                    pr_vlsalari    OUT crapttl.vlsalari%TYPE,
+                                    pr_cdturnos    OUT crapttl.cdturnos%TYPE,
+                                    pr_dsjusren    OUT crapttl.dsjusren%TYPE,
+                                    pr_dtatutel    OUT crapttl.dtatutel%TYPE,
+                                    pr_cdgraupr    OUT crapttl.cdgraupr%TYPE,
+                                    pr_cdfrmttl    OUT crapttl.cdfrmttl%TYPE,
+                                    pr_tpdrendi##1 OUT crapttl.tpdrendi##1%TYPE,
+                                    pr_vldrendi##1 OUT crapttl.vldrendi##1%TYPE,
+                                    pr_tpdrendi##2 OUT crapttl.tpdrendi##1%TYPE,
+                                    pr_vldrendi##2 OUT crapttl.vldrendi##1%TYPE,
+                                    pr_tpdrendi##3 OUT crapttl.tpdrendi##1%TYPE,
+                                    pr_vldrendi##3 OUT crapttl.vldrendi##1%TYPE,
+                                    pr_tpdrendi##4 OUT crapttl.tpdrendi##1%TYPE,
+                                    pr_vldrendi##4 OUT crapttl.vldrendi##1%TYPE,
+                                    pr_tpdrendi##5 OUT crapttl.tpdrendi##1%TYPE,
+                                    pr_vldrendi##5 OUT crapttl.vldrendi##1%TYPE,
+                                    pr_tpdrendi##6 OUT crapttl.tpdrendi##1%TYPE,
+                                    pr_vldrendi##6 OUT crapttl.vldrendi##1%TYPE,
+                                    pr_nmpaittl    OUT crapttl.nmpaittl%TYPE,
+                                    pr_nmmaettl    OUT crapttl.nmmaettl%TYPE,
+                                    pr_dscritic    OUT crapcri.dscritic%TYPE) IS
     /* ..........................................................................
     --
     --  Programa : pc_busca_dados_ttl_compl
@@ -1343,7 +1353,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para Buscar dados complementares do titular para cadastramento do titular
     --
-    --  Alteração :
+    --  Alteração : 06/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+    --                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     --
     -- ..........................................................................*/
@@ -1375,23 +1386,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
        ORDER BY r.nrseq_renda ASC;
     rw_pessoa_renda_compl cr_pessoa_renda_compl%ROWTYPE;
     
+    CURSOR cr_crapemp(pr_cdcooper crapttl.cdcooper%TYPE
+                     ,pr_cdempres crapttl.cdempres%TYPE) IS
+      SELECT emp.nrdocnpj
+            ,emp.nmextemp
+        FROM crapemp emp
+       WHERE emp.cdcooper = pr_cdcooper
+         AND emp.cdempres = pr_cdempres;
+         
+      rw_crapemp cr_crapemp%ROWTYPE;
 	BEGIN
   
     --> retonar dados da pessoa fisica
     OPEN cr_pessoa_fisica;
-    FETCH cr_pessoa_fisica INTO rw_pessoa_fisica;
+      FETCH cr_pessoa_fisica 
+        INTO rw_pessoa_fisica;
     CLOSE cr_pessoa_fisica;
     
     --> buscar dados da renda
     OPEN cr_pessoa_renda (pr_idpessoa => rw_pessoa_fisica.idpessoa);
-    FETCH cr_pessoa_renda INTO rw_pessoa_renda;
+      FETCH cr_pessoa_renda 
+        INTO rw_pessoa_renda;
     CLOSE cr_pessoa_renda;		
     
+    OPEN cr_crapemp(pr_cdcooper
+                   ,pr_cdempres);
+      FETCH cr_crapemp
+        INTO rw_crapemp;
+    CLOSE cr_crapemp;
+      
     pr_cdnatopc := rw_pessoa_fisica.cdnatureza_ocupacao;
     pr_cdocpttl := rw_pessoa_renda.cdocupacao;
     pr_tpcttrab := rw_pessoa_renda.tpcontrato_trabalho;
-    pr_nmextemp := substr(rw_pessoa_renda.nmpessoa,1,40);
-    pr_nrcpfemp := rw_pessoa_renda.nrcpfcgc;
+    
+    --Atribuicao dos valores atraves da tabela crapemp
+    pr_nmextemp := NVL(substr(rw_crapemp.nmextemp,1,40),' ');
+    pr_nrcpfemp := NVL(rw_crapemp.nrdocnpj,0);      
+
     pr_dtadmemp := rw_pessoa_renda.dtadmissao;
     pr_dsproftl := rw_pessoa_fisica.dsprofissao ;
     pr_cdnvlcgo := rw_pessoa_renda.cdnivel_cargo;
@@ -1475,7 +1506,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                 ,pr_ind_tipo_log => 1 -- Processo normal
                                 ,pr_nmarqlog => 'CRM' 
                                 ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                   'Entrou');
+                                   'Parâmetros -> cdcooper: '|| pr_cdcooper 
+                                             || ', nrdconta: '|| pr_nrdconta
+                                             || ', idseqttl: '|| pr_idseqttl);
 
       
       --> marcar registro para ser processado apenas 
@@ -1621,6 +1654,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     COMMIT;
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                   , pr_compleme => 'cdcooper: '|| pr_cdcooper 
+                                               || ', nrdconta: '|| pr_nrdconta
+                                               || ', idseqttl: '|| pr_idseqttl);       
     
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_marca_replica_ayllos-'||w_nmtabela||': ' ||
@@ -1630,7 +1667,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                       ,pr_ind_tipo_log => 1 -- Processo normal
                                       ,pr_nmarqlog => 'CRM' 
                                       ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
-                                         pr_dscritic);                     
+                                       'Parâmetros -> cdcooper: '|| pr_cdcooper 
+                                             || ', nrdconta: '|| pr_nrdconta
+                                             || ', idseqttl: '|| pr_idseqttl 
+                                             || ', Erro -> '  || pr_dscritic);                     
   END pc_marca_replica_ayllos;
   
   -- Rotina para buscar o nome da pessoa e indicador se o nome pode ser alterado ou nao
@@ -1726,9 +1766,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                              pr_cdempres IN crapemp.cdempres%TYPE,    
                              pr_nrdconta IN crapass.nrdconta%TYPE,
                              pr_idseqttl IN crapttl.idseqttl%TYPE,
-                             pr_nmpessoa OUT tbcadast_pessoa.nmpessoa%TYPE,
+                             pr_nrdocnpj IN crapemp.nrdocnpj%TYPE,
+                             pr_nmpessoa IN tbcadast_pessoa.nmpessoa%TYPE,
+                             pr_nmpessot OUT tbcadast_pessoa.nmpessoa%TYPE,
                              pr_idaltera OUT PLS_INTEGER, -- Indicador se permite alterar nome (0-Nao permite, 1-Permite alterar nome)
-                             pr_nrdocnpj OUT crapemp.nrdocnpj%TYPE,
+                             pr_nrcnpjot OUT crapemp.nrdocnpj%TYPE,
+                             pr_nmempout OUT crapemp.nmresemp%TYPE,
+                             pr_cdemprot OUT crapemp.cdempres%TYPE,
                              pr_dscritic OUT VARCHAR2) IS
                              
     /* ..........................................................................
@@ -1737,15 +1781,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Kelvin Ott
-    --  Data     : Julho/2018.                   Ultima atualizacao: 
+    --  Data     : Julho/2018.                   Ultima atualizacao: 20/09/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para buscar informacoes da empresa 
     --
-    --  Alteração :
-    --
+    --  Alteração : 20/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+    --                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     -- ..........................................................................*/
     
@@ -1753,6 +1797,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     CURSOR cr_crapemp (pr_cdcooper IN crapemp.cdcooper%TYPE,
                        pr_cdempres IN crapemp.cdempres%TYPE) IS
       SELECT emp.nrdocnpj
+            ,emp.nmextemp
+            ,emp.nmresemp
         FROM crapemp emp
        WHERE emp.cdcooper = pr_cdcooper
          AND emp.cdempres = pr_cdempres;
@@ -1764,6 +1810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                        pr_idseqttl IN crapttl.idseqttl%TYPE) IS
       SELECT ttl.nrcpfemp
            , ttl.nmextemp
+           , ttl.cdempres
         FROM crapttl ttl
        WHERE ttl.cdcooper = pr_cdcooper
          AND ttl.nrdconta = pr_nrdconta
@@ -1771,6 +1818,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
 
     rw_crapttl cr_crapttl%ROWTYPE;
   
+    -- Cursor sobre o cadastro de pessoa
+    CURSOR cr_crapemp_cnpj (pr_cdcooper IN crapemp.cdcooper%TYPE,
+                            pr_nrdocnpj IN crapemp.nrdocnpj%TYPE) IS
+      SELECT emp.cdempres 
+            ,emp.nmextemp
+            ,emp.nrdocnpj  
+            ,emp.nmresemp         
+        FROM crapemp emp
+       WHERE emp.cdcooper = pr_cdcooper
+         AND emp.nrdocnpj = pr_nrdocnpj;
+      
+    rw_crapemp_cnpj cr_crapemp_cnpj%ROWTYPE;
+    
     --Variaveis
     vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
     vr_idaltera PLS_INTEGER;
@@ -1789,26 +1849,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     
     --Significa que é alguma empresa especial ou empresas diversas
     IF rw_crapemp.nrdocnpj = 0 THEN
-      pr_nmpessoa := '';
+      pr_nmpessot := '';
       pr_idaltera := 1; --Permite alterar
     
-      IF pr_cdempres = 80 THEN
-        pr_nmpessoa := 'APOSENTADOS';
-        pr_nrdocnpj := rw_crapemp.nrdocnpj;
-      ELSE
-        OPEN cr_crapttl(pr_cdcooper, pr_nrdconta, pr_idseqttl);
-        FETCH cr_crapttl INTO rw_crapttl;
-        CLOSE cr_crapttl;
-            
-        IF nvl(rw_crapttl.nrcpfemp,0) <> 0
-        OR nvl(rw_crapttl.nmextemp,' ') <> ' ' THEN
-          pr_nrdocnpj := rw_crapttl.nrcpfemp;
-          pr_nmpessoa := rw_crapttl.nmextemp;
+      IF nvl(pr_nrdocnpj,0) <> 0 THEN
+        
+        OPEN cr_crapemp_cnpj(pr_cdcooper
+                            ,pr_nrdocnpj);
+          FETCH cr_crapemp_cnpj
+            INTO rw_crapemp_cnpj;
+        CLOSE cr_crapemp_cnpj;
+        
+        IF rw_crapemp_cnpj.cdempres IS NOT NULL THEN
+          pr_cdemprot := rw_crapemp_cnpj.cdempres;  
+          pr_nmempout := rw_crapemp_cnpj.nmresemp;
+          pr_nmpessot := rw_crapemp_cnpj.nmextemp;
+          pr_nrcnpjot := rw_crapemp_cnpj.nrdocnpj; 
+          pr_idaltera := 0;         
         ELSE
-          pr_nrdocnpj := rw_crapemp.nrdocnpj;
-        END IF;
-      END IF;
+          --------
+          -- Tenta localizar a pessoa no cadastro unificado
+          --------
+          
+          CADA0008.pc_busca_nome_pessoa(pr_nrcpfcgc => pr_nrdocnpj,
+                                        pr_nmpessoa => vr_nmpessoa,
+                                        pr_idaltera => vr_idaltera,
+                                        pr_dscritic => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF; 
+          pr_nmpessot := NVL(vr_nmpessoa,pr_nmpessoa);
+          pr_idaltera := vr_idaltera; 
+          
+          pr_cdemprot := pr_cdempres;
+          pr_nmempout := rw_crapemp.nmresemp;          
+          pr_nrcnpjot := pr_nrdocnpj;
+
+        END IF;        
+      ELSE
+        IF rw_crapemp.nmextemp LIKE '%APOSENTADO%' THEN
+          pr_nmpessot := 'APOSENTADOS';
+          pr_nrcnpjot := rw_crapemp.nrdocnpj;
+          pr_cdemprot := pr_cdempres;
+          pr_nmempout := rw_crapemp.nmresemp;
+        ELSE
+            OPEN cr_crapttl(pr_cdcooper, pr_nrdconta, pr_idseqttl);
+              FETCH cr_crapttl 
+                INTO rw_crapttl;
+            CLOSE cr_crapttl;
+                
+            IF nvl(rw_crapttl.nrcpfemp,0) <> 0
+            OR TRIM(rw_crapttl.nmextemp) IS NOT NULL THEN
+              pr_nrcnpjot := rw_crapttl.nrcpfemp;
+              pr_nmpessot := rw_crapttl.nmextemp;
+              pr_cdemprot := pr_cdempres;
+              pr_nmempout := rw_crapemp.nmresemp;
+            ELSE
+              pr_nrcnpjot := pr_nrdocnpj; 
+              pr_nmpessot := pr_nmpessoa;
+              pr_cdemprot := pr_cdempres;
+              pr_nmempout := rw_crapemp.nmresemp;
+            END IF;
+          END IF;
+      END IF;      
     ELSE
+     
       -- Busca o nome da empresa
       CADA0008.pc_busca_nome_pessoa(pr_nrcpfcgc => rw_crapemp.nrdocnpj,
                                     pr_nmpessoa => vr_nmpessoa,
@@ -1817,10 +1922,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF; 
-     
-     pr_nmpessoa := vr_nmpessoa;
-     pr_idaltera := vr_idaltera;
-    pr_nrdocnpj := rw_crapemp.nrdocnpj;    
+       
+        
+      pr_nmpessot := vr_nmpessoa;
+      pr_idaltera := vr_idaltera;
+      pr_nrcnpjot := rw_crapemp.nrdocnpj;
+      pr_cdemprot := pr_cdempres;  
+      pr_nmempout := rw_crapemp.nmresemp;
+        
     END IF;
   EXCEPTION
     WHEN OTHERS THEN
@@ -1833,6 +1942,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                  pr_cdcooper IN crapcop.cdcooper%TYPE,
                                  pr_nrdconta IN crapass.nrdconta%TYPE,
                                  pr_idseqttl IN crapttl.idseqttl%TYPE,
+                                 pr_nrdocnpj IN crapemp.nrdocnpj%TYPE,
+                                 pr_nmpessoa IN tbcadast_pessoa.nmpessoa%TYPE,                             
                                  pr_xmllog   IN VARCHAR2,               --> XML com informações de LOG
                                  pr_cdcritic OUT PLS_INTEGER,           --> Código da crítica
                                  pr_dscritic OUT VARCHAR2,              --> Descrição da crítica
@@ -1853,7 +1964,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para buscar informacoes da empresa 
     --
-    --  Alteração :
+    --  Alteração : 20/09/2018 - Ajustes nas rotinas envolvidas na unificação cadastral e CRM para
+    --                           corrigir antigos e evitar futuros problemas. (INC002926 - Kelvin)
     --
     --
     -- ..........................................................................*/
@@ -1861,7 +1973,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     --Variaveis
     vr_nmpessoa tbcadast_pessoa.nmpessoa%TYPE;
     vr_idaltera PLS_INTEGER;
-    vr_nrdocnpj crapemp.nrdocnpj%TYPE;
+    vr_nrcnpjot crapemp.nrdocnpj%TYPE;
+    vr_cdemprot crapemp.cdempres%TYPE;
+    vr_nmempout crapemp.nmresemp%TYPE;
     
     -- Controle de erro
     vr_dscritic VARCHAR2(1000);
@@ -1882,9 +1996,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                               pr_cdempres => pr_cdempres,
                               pr_nrdconta => pr_nrdconta,
                               pr_idseqttl => pr_idseqttl,
-                              pr_nmpessoa => vr_nmpessoa,
-                              pr_nrdocnpj => vr_nrdocnpj,
+                              pr_nrdocnpj => pr_nrdocnpj,
+                              pr_nmpessoa => pr_nmpessoa,
+                              pr_nmpessot => vr_nmpessoa,
+                              pr_nrcnpjot => vr_nrcnpjot,
+                              pr_nmempout => vr_nmempout,
                               pr_idaltera => vr_idaltera,
+                              pr_cdemprot => vr_cdemprot,
                               pr_dscritic => vr_dscritic);
                               
     IF vr_dscritic IS NOT NULL THEN
@@ -1897,7 +2015,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     -- Preenche os dados
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nmpessoa', pr_tag_cont => vr_nmpessoa, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'idaltera', pr_tag_cont => vr_idaltera, pr_des_erro => vr_dscritic);
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nrdocnpj', pr_tag_cont => vr_nrdocnpj, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nrcnpjot', pr_tag_cont => vr_nrcnpjot, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'cdemprot', pr_tag_cont => vr_cdemprot, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nmempout', pr_tag_cont => vr_nmempout, pr_des_erro => vr_dscritic);
                                   
   EXCEPTION
     WHEN vr_exc_saida THEN

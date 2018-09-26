@@ -32,7 +32,7 @@ include("../../includes/carrega_permissoes.php");
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js"></script>
         <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-        <script type="text/javascript" src="tab089.js"></script>
+        <script type="text/javascript" src="tab089.js?keyrand=<?php echo mt_rand(); ?>"></script>
     </head>
     <body>
         <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -57,7 +57,7 @@ include("../../includes/carrega_permissoes.php");
                                             <table width="100%"  border="0" cellspacing="0" cellpadding="0">
                                                 <tr>
                                                     <td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-                                                    <td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">TAB089 - Parametros Op. Taxas Pr&eacute;-fixadas</td>
+                                                    <td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">TAB089 - Parâmetros de Operações de Crédito</td>
                                                     <td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
                                                     <td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
                                                     <td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -76,6 +76,30 @@ include("../../includes/carrega_permissoes.php");
                                                                     <table width="670" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
                                                                         <tr>
                                                                             <td>
+                                                                                <table border="0" cellspacing="0" cellpadding="0">
+                                                                                    <tr style="height:22px;">
+                                                                                        <!-- Parâmetros -->  
+                                                                                        <td width="1px"></td>                                           
+                                                                                        <td align="center" style="background-color: #C6C8CA; border-radius:3px;" id="imgAbaCen0">
+                                                                                            <a href="#" id="linkAba0" onClick="acessaAbaParametros()" class="txtNormalBold">&nbsp; Parâmetros &nbsp; </a>
+                                                                                        </td>
+                                                                                        <td width="1px"></td>
+                                                                                        <!-- Motivos -->
+                                                                                        <td align="center" style="background-color: #C6C8CA; border-radius:3px; " id="imgAbaCen1">
+                                                                                            <a href="#" id="linkAba1" onClick="acessaAbaMotivos()" class="txtNormalBold">&nbsp; Motivos de Anulação &nbsp; </a>
+                                                                                        </td>
+                                                                                        <td width="1px"></td>
+                                                                                        <!-- E-mail -->
+                                                                                        <td align="center" style="background-color: #C6C8CA; border-radius:3px;" id="imgAbaCen2">
+                                                                                            <a href="#" id="linkAba2" onClick="acessaAbaEmail()" class="txtNormalBold">&nbsp; E-mail de Acompanhamento &nbsp;</a>
+                                                                                        </td>
+                                                                                        <td width="1px"></td>
+                                                                                    </tr>
+                                                                                </table>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
                                                                                 <!-- INCLUDE DA TELA DE PESQUISA -->
                                                                                 <?php require_once("../../includes/pesquisa/pesquisa.php"); ?>
 
@@ -86,15 +110,9 @@ include("../../includes/carrega_permissoes.php");
                                                                                 <div id="divUsoGenerico"></div>
 
                                                                                 <div id="divTela">
-                                                                                    <?php include('form_cabecalho.php'); ?>
-                                                                                    <?php include('form_tab089.php'); ?>
 
-                                                                                    <div id="divBotoes" name="divBotoes" style="margin-bottom:5px">
-                                                                                        <a href="#" class="botao" id="btVoltar"  onclick="estadoInicial();
-                                                                                                return false;">Voltar</a>
-                                                                                        <a href="#" class="botao" id="btContinuar"  onClick="confirmaOperacao();
-                                                                                                return false;">Alterar</a>
-                                                                                    </div>
+                                                                                    <div id="divCabecalho"></div>
+                                                                                    <div id="divConteudoOpcao"></div>
 
                                                                                 </div>
 

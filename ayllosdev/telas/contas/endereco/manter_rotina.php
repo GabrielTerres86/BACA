@@ -69,7 +69,7 @@
 		default: return false;
 	}	
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$op)) <> "") exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	// Monta o xml de requisição
 	$xml  = "";
@@ -125,7 +125,7 @@
 		$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$mtdErro = 'bloqueiaFundo(divRotina);';
 		$mtdErro .= ($operacao == 'CC' || $operacao == 'AV') ? '' : 'controlaOperacao();';
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 	
@@ -158,7 +158,7 @@
 		} else if ($tpendass == 13) {
 			echo "manterRotina('AV' , 'fieldComplementar');";
 		} else {
-			exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Ayllos','controlaOperacao(\'VA\');','bloqueiaFundo(divRotina)',false);
+			exibirConfirmacao('Deseja confirmar alteração?','Confirmação - Aimaro','controlaOperacao(\'VA\');','bloqueiaFundo(divRotina)',false);
 		}
 		
 	// Se é Inclusão ou Alteração
@@ -173,9 +173,9 @@
 			// Verificar se existe "Verificação de Revisão Cadastral"
 			if( $msgAtCad != '' && $flgcadas != 'M' ) {			
 				
-				if($operacao=='VA') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0038.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);		
-				if($operacao=='AE') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0038.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FAE\")\')',false);		
-				if($operacao=='EI') exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0038.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FEI\")\')',false);		
+				if($operacao=='VA') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0038.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FA\")\')',false);		
+				if($operacao=='AE') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0038.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FAE\")\')',false);		
+				if($operacao=='EI') exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0038.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"FEI\")\')',false);		
 				
 			// Se não existe necessidade de Revisão Cadastral
 			} else {				
@@ -191,7 +191,7 @@
 				$root = $xmlObj->roottag;
 				// Se ocorrer um erro, mostra crítica
 				if ($root->erro){
-					exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+					exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 					exit;
 				}		
 
@@ -213,37 +213,37 @@
 		echo '$("input, select","#frmEndereco").removeClass("campoErro");';
 		
 		// Número da conta e o titular são inteiros válidos
-		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);				
-		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+		if (!validaInteiro($GLOBALS['nrdconta'])) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);				
+		if (!validaInteiro($GLOBALS['idseqttl'])) exibirErro('error','Seq. Titular inv&aacute;lida.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 		
 		//Campo imóvel
-		if ( $GLOBALS['incasprp'] == "" ) exibirErro('error','Tipo de imóvel inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'incasprp\',\'frmEndereco\')',false);
+		if ( $GLOBALS['incasprp'] == "" ) exibirErro('error','Tipo de imóvel inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'incasprp\',\'frmEndereco\')',false);
 	
 		//Campo CEP
-		if ( (( $GLOBALS['nrcepend'] == "" ) || ( $GLOBALS['nrcepend'] == 0 ))  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','CEP inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrcepend\',\'frmEndereco\')',false);
+		if ( (( $GLOBALS['nrcepend'] == "" ) || ( $GLOBALS['nrcepend'] == 0 ))  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','CEP inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nrcepend\',\'frmEndereco\')',false);
 
 		// Campo endereço
-		if ( $GLOBALS['dsendere'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Endereço inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsendere\',\'frmEndereco\')',false);
+		if ( $GLOBALS['dsendere'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Endereço inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dsendere\',\'frmEndereco\')',false);
 		
 		//Campo bairro
-		if ( $GLOBALS['nmbairro'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Nome do bairro inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmbairro\',\'frmEndereco\')',false);
+		if ( $GLOBALS['nmbairro'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Nome do bairro inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmbairro\',\'frmEndereco\')',false);
 			
 		//Campo cidade
-		if ( $GLOBALS['nmcidade'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Nome da cidade inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmcidade\',\'frmEndereco\')',false);
+		if ( $GLOBALS['nmcidade'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Nome da cidade inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'nmcidade\',\'frmEndereco\')',false);
 		
 		//Campo UF
-		if ( $GLOBALS['cdufende'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Cód. do estado (UF) inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdufende\',\'frmEndereco\')',false);
+		if ( $GLOBALS['cdufende'] == ""  && ($tpendass == 10 || $tpendass == 9)) exibirErro('error','Cód. do estado (UF) inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdufende\',\'frmEndereco\')',false);
 
 		//Campo Inicio de Residencia
-		if ( $GLOBALS['dtinires'] == "" ) exibirErro('error','Inicio de residencia deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtinires\',\'frmEndereco\')',false);
+		if ( $GLOBALS['dtinires'] == "" ) exibirErro('error','Inicio de residencia deve ser informado.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtinires\',\'frmEndereco\')',false);
 
 		//Campo Inicio de Residencia
-		if ( !is_numeric($mes) or $mes < 1 or $mes > 12) exibirErro('error','Data invalida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtinires\',\'frmEndereco\')',false);
+		if ( !is_numeric($mes) or $mes < 1 or $mes > 12) exibirErro('error','Data invalida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtinires\',\'frmEndereco\')',false);
 
 		//Campo Inicio de Residencia
-		if ( !is_numeric($ano) or $ano < 1850 or $ano > date('Y')) exibirErro('error','Data invalida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtinires\',\'frmEndereco\')',false);
+		if ( !is_numeric($ano) or $ano < 1850 or $ano > date('Y')) exibirErro('error','Data invalida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'dtinires\',\'frmEndereco\')',false);
 		
 		//Campo Origem
-		if (( $GLOBALS['idorigem'] == "" ) && ( $GLOBALS['nrcepend'] != 0 )) exibirErro('error','Origem do endereco deve ser informada.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'idorigem\',\'frmEndereco\')',false); 
+		if (( $GLOBALS['idorigem'] == "" ) && ( $GLOBALS['nrcepend'] != 0 )) exibirErro('error','Origem do endereco deve ser informada.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'idorigem\',\'frmEndereco\')',false); 
 	}	
 ?>									 

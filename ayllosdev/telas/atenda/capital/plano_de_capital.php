@@ -103,7 +103,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -168,14 +168,15 @@
 
 <div id="divBotoesAutorizacao" style="display:none;">
 	
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao('Deseja cancelar o plano de capital atual?','Confirma&ccedil;&atilde;o - Ayllos','excluirPlano()',metodoBlock,'sim.gif','nao.gif');return false;">
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao('Deseja cancelar o plano de capital atual?','Confirma&ccedil;&atilde;o - Aimaro','excluirPlano()',metodoBlock,'sim.gif','nao.gif');return false;">
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false,false);return false;">
 	<input type="image" id="btImprimir" src="<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
+		
 </div>
 					
 
 <div id="divBotoesSenha" style="display:none;">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick='showConfirmacao("Deseja cancelar o plano de capital atual?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cancelarPlanoAtual()\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");return false;'>
+	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick='showConfirmacao("Deseja cancelar o plano de capital atual?","Confirma&ccedil;&atilde;o - Aimaro","solicitaSenhaMagnetico(\'cancelarPlanoAtual()\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");return false;'>
   <input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_novo_plano.gif" onClick="validaNovoPlano(false,true);return false;">
   <input type="image" id="btImprimir" src=""<?php echo $UrlImagens; ?>botoes/imprimir_plano.gif" onClick="imprimeNovoPlano();return false;">
 </div>				
@@ -188,6 +189,7 @@
 <input type="hidden" name="nrdconta" id="nrdconta" value="">
 <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>	
+
 <script type="text/javascript"> 
 
 // Configura propriedades do campo "flgpagto" conforme tipo de d&eacute;bito
@@ -232,8 +234,8 @@ var cTodos       = $('select,input','#frmNovoPlano');
 $('#divBotoesSenha','#divConteudoOpcao').html("");
 $('#divBotoesAutorizacao','#divConteudoOpcao').html("");
 
-$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'solicitaSenhaMagnetico(\\\'cancelarPlanoAtual()\\\',\\\'<?php echo $nrdconta ?>\\\')\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
-$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirPlano()\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
+$('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'solicitaSenhaMagnetico(\\\'cancelarPlanoAtual()\\\',\\\'<?php echo $nrdconta ?>\\\')\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
+$('#divBotoesAutorizacao','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar_plano_atual.gif" onClick="showConfirmacao(\'Deseja cancelar o plano de capital atual?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'excluirPlano()\',metodoBlock,\'sim.gif\',\'nao.gif\');return false;">');
 
 if (aux_flcancel == "yes") {
     $('#divBotoesSenha','#divConteudoOpcao').append('<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar_plano.gif" style="margin-left:5px;" onClick="validaNovoPlano(true,true);return false;">');

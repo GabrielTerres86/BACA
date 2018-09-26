@@ -65,6 +65,6 @@
 <div id="divBotoesAlteracaoCadastral" style="margin-top:5px; margin-bottom :10px; display:none; text-align: center;">
 		
 	<a href="#" class="botao" id="btVoltar" onClick="controlaVoltar('V5');">Voltar</a>
-	<a href="#" class="botao" id="btConcluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','solicitaAlteracaoCadastral(\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divBotoesAlteracaoCadastral\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;">Concluir</a>
+	<a href="#" class="botao" id="btConcluir" onClick="showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','solicitaAlteracaoCadastral(\'<?echo $cddopcao;?>\');','$(\'#btVoltar\',\'#divBotoesAlteracaoCadastral\').focus();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));','sim.gif','nao.gif');return false;">Concluir</a>
 	
 </div>

@@ -25,7 +25,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
   
   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -60,37 +60,37 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','focaCampoErro(\'dsjstbxa\',\'frmBens\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','focaCampoErro(\'dsjstbxa\',\'frmBens\');',false);		
 					
 	} 
 		
-  echo "showError('inform','Registro de baixa manual efetuada com sucesso! Ao efetuar a baixa manual, &eacute; necess&aacute;rio efetuar a baixa manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+  echo "showError('inform','Registro de baixa manual efetuada com sucesso! Ao efetuar a baixa manual, &eacute; necess&aacute;rio efetuar a baixa manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";	
 	  
   
   function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == '' ){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["nrctrpro"] == '' ){ 
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["nrgravam"] == '' ){ 
-			exibirErro('error','N&uacute;mero do gravame inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','N&uacute;mero do gravame inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["tpctrpro"] == 0 ){ 
-			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["idseqbem"] == 0 ){ 
-			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
     IF($GLOBALS["dsjstbxa"] == '' ){ 
-			exibirErro('error','Justificativa da baixa deve ser informada.','Alerta - Ayllos','formataFormularioBens();',false);
+			exibirErro('error','Justificativa da baixa deve ser informada.','Alerta - Aimaro','formataFormularioBens();',false);
 		}
 				
 	}	

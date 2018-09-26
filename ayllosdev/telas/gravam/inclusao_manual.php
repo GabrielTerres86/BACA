@@ -25,7 +25,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
   
   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
@@ -67,25 +67,25 @@
 			$nmdcampo = "dtmvttel";
 		}
     
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
 					
 	} 
 	  
-	echo "showError('inform','Inclus&atilde;o manual do registro efetuada com sucesso! Ao efetuar uma aliena&ccedil;&atilde;o manual, &eacute; necess&aacute;rio efetuar a aliena&ccedil;&atilde;o manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+	echo "showError('inform','Inclus&atilde;o manual do registro efetuada com sucesso! Ao efetuar uma aliena&ccedil;&atilde;o manual, &eacute; necess&aacute;rio efetuar a aliena&ccedil;&atilde;o manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Aimaro','buscaBens(1, 30);');";	
 	  
   
 	function validaDados(){
 			
 		IF($GLOBALS["dtmvttel"] == '' ){ 
-			exibirErro('error','Data do registro deve ser informada!.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
+			exibirErro('error','Data do registro deve ser informada!.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
 		}
     
 		IF($GLOBALS["dsjustif"] == '' ){ 
-			exibirErro('error','Justificativa deve ser informada!','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+			exibirErro('error','Justificativa deve ser informada!','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
     
 		IF($GLOBALS["nrgravam"] == 0 ){ 
-			exibirErro('error','O n&uacute;mero do registro deve ser informado!','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'nrgravam\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero do registro deve ser informado!','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'nrgravam\',\'frmBens\');',false);
 		}
 				
 	}	

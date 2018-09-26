@@ -21,12 +21,12 @@ $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '@';
 
 // Verifica permissões de acessa a tela
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', 'controlaOperacao();', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', 'controlaOperacao();', false);
 }
 
 // Verifica se o número da conta foi informado
 if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) {
-    exibirErro('error', 'Parâmetros incorretos.', 'Alerta - Ayllos', 'fechaRotina(divRotina)', false);
+    exibirErro('error', 'Parâmetros incorretos.', 'Alerta - Aimaro', 'fechaRotina(divRotina)', false);
 }
 
 $nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
@@ -39,10 +39,10 @@ if ($operacao == 'DIV_IMP') {
 }
 
 if (!validaInteiro($nrdconta)) {
-    exibirErro('error', 'Conta/dv inválida.', 'Alerta - Ayllos', 'fechaRotina(divRotina)', false);
+    exibirErro('error', 'Conta/dv inválida.', 'Alerta - Aimaro', 'fechaRotina(divRotina)', false);
 }
 if (!validaInteiro($idseqttl)) {
-    exibirErro('error', 'Seq.Ttl inválida.', 'Alerta - Ayllos', 'fechaRotina(divRotina)', false);
+    exibirErro('error', 'Seq.Ttl inválida.', 'Alerta - Aimaro', 'fechaRotina(divRotina)', false);
 }
 
 $xml = "<Root>";
@@ -68,7 +68,7 @@ $xmlResult = getDataXML($xml);
 $xmlObjeto = getObjectXML($xmlResult);
 
 if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-    exibirErro('error', $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos', 'fechaSimulacoes()', false);
+    exibirErro('error', $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Aimaro', 'fechaSimulacoes()', false);
 }
 
 $simulacoes = $xmlObjeto->roottag->tags[0]->tags;

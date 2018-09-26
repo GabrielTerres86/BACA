@@ -28,7 +28,7 @@ isPostMethod();
 require_once("../../../class/xmlfile.php");	
 
 if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X")) <> "") {
-	exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+	exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 }	
 	
 $inapurac = $_POST["inapurac"];
@@ -53,10 +53,10 @@ $xmlObject = getObjectXML($xmlResult);
 if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
     $msgError = utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
     if ($inapurac == 1) {
-        exibirConfirmacao($msgError,'Confirma&ccedil;&atilde;o - Ayllos','realizaExclusao(0);','acessaOpcaoAba();',false);
+        exibirConfirmacao($msgError,'Confirma&ccedil;&atilde;o - Aimaro','realizaExclusao(0);','acessaOpcaoAba();',false);
 	exit();
     } else {
-        exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+        exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     }
 }
 

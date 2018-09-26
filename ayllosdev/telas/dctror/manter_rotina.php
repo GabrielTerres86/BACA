@@ -104,7 +104,7 @@
 	}
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	// Monta o xml dinâmico de acordo com a operação 
@@ -160,7 +160,7 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 		if (!empty($nmdcampo)) { $mtdErro = $mtdErro . "$('#".$nmdcampo."','#frmDctror').focus();";  }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}	
 	
 	// Consulta e Alteracao - valida-agechq
@@ -197,7 +197,7 @@
 
 		if ( $operacao == 'A24' ) {
 		    if ($aux_flprovis == 'yes' ) {
-			exibirConfirmacao('Passar Contra-Ordem Provisória para Permanente?','Confirmação - Ayllos','setaFlag(0);','setaFlag(1);',false);
+			exibirConfirmacao('Passar Contra-Ordem Provisória para Permanente?','Confirmação - Aimaro','setaFlag(0);','setaFlag(1);',false);
 			}
 		}
 	}
@@ -214,7 +214,7 @@
 		echo "tplotmov = '".$tplotmov."';";
 		echo "controle = '6';";
 		echo "operacao = 'A26';";
-		exibirConfirmacao('Confirma a operação?','Confirmação - Ayllos','manterRotina();','estadoInicial();',false);
+		exibirConfirmacao('Confirma a operação?','Confirmação - Aimaro','manterRotina();','estadoInicial();',false);
 	}
 
 	// Exclusao e Inclusão - Grava-dados

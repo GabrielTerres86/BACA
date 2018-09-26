@@ -141,11 +141,12 @@ ix_1 [DAT_TRANSACAO]
         $mtccsistema          = $atributos[0]["mtccsistema"][0];
         $mtccserver           = $atributos[0]["mtccserver"];
         $mtccacessoexporadico = $atributos[0]["mtccacessoexporadico"][0]; // Formato YYYYMMDDHHIIHHII
+		$email = $atributos[0]["mail"][0];
 
         if ($mtccshadowflag == 1) { // Usuário Bloqueado
             $msgErro = "Usuário não habilitado.";
         } elseif ($IND_SISTEMA == "1" && $mtccsistema <> "1" && $mtccsistema <> "3" && $mtccsistema <> "5" && $mtccsistema <> "7") { // Sem permissão para acesso ao Ayllos
-            $msgErro = "Sem permissão para acesso ao Ayllos.";
+            $msgErro = "Sem permissão para acesso ao Aimaro.";
         } elseif ($accountexpires>1 && ldap_date_diferenca(date("Y-m-d"), date('Y-m-d',time_AD2Unix($accountexpires)-1)) < 0) { //Verifica se a conta do usuário não expirou
           $msgErro = "O usuário expirou.";
         } elseif (!ldapAD_login($dsAD, $DES_LOGIN, $DES_SENHA)) {
@@ -226,6 +227,7 @@ ix_1 [DAT_TRANSACAO]
                     <form name="frmRedirect" id="frmRedirect" action="<?php echo $urlLogin; ?>" method="post">
                     <input type="hidden" name="cdcooper" id="cdcooper" value="<?php echo $COD_COOPER; ?>">
                     <input type="hidden" name="gidnumber" id="gidnumber" value="<?php echo $gidnumber; ?>">
+					<input type="hidden" name="email" id="email" value="<?php echo $email; ?>">
                     <?php for ($i = 0; $i < count($mtccserver); $i++) { ?>
                     <input type="hidden" name="mtccserver[]" id="mtccserver[]" value="<?php echo $mtccserver[$i]; ?>">
                     <?php } ?>
@@ -317,7 +319,7 @@ function validaCampos() {
                                                         <td class="txtNormal"><strong>Sistema:</strong></td>
                                                         <td colspan="2">
                                                             <select name="IND_SISTEMA" class="Campo" id="IND_SISTEMA" style="width: 130px;">
-                                                                <option value="1" selected>Ayllos</option>
+                                                                <option value="1" selected>Aimaro</option>
                                                                 <option value="2">Gestão de Eventos</option>
                                                             </select>
                                                         </td>

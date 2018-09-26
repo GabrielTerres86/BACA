@@ -92,7 +92,7 @@ session_cache_limiter("private");
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$msg = Array();
@@ -118,13 +118,13 @@ session_cache_limiter("private");
 		echo '$("input,select","#frmDadosComercial").removeClass("campoErro");';	
 		
 		// Campo Nat. da Ocupação
-		if ( ($GLOBALS['cdnatopc'] == '' ) || ($GLOBALS['cdnatopc'] == 0 ) ) exibirErro('error','Natureza da Ocupação inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnatopc\',\'frmDadosComercial\')',false);
+		if ( ($GLOBALS['cdnatopc'] == '' ) || ($GLOBALS['cdnatopc'] == 0 ) ) exibirErro('error','Natureza da Ocupação inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdnatopc\',\'frmDadosComercial\')',false);
 		
 		//Campo Ocupação
-		if ( ($GLOBALS['cdocpttl'] == '' ) || ($GLOBALS['cdocpttl'] == 0 ) ) exibirErro('error','Ocupação inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdocpttl\',\'frmDadosComercial\')',false);		
+		if ( ($GLOBALS['cdocpttl'] == '' ) || ($GLOBALS['cdocpttl'] == 0 ) ) exibirErro('error','Ocupação inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'cdocpttl\',\'frmDadosComercial\')',false);		
 		
 		//Campo Tp. Ctr. Trb.
-		if ( $GLOBALS['tpcttrab'] == '' ) exibirErro('error','Tipo Ctr. Trb. inválido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'tpcttrab\',\'frmDadosComercial\')',false);		
+		if ( $GLOBALS['tpcttrab'] == '' ) exibirErro('error','Tipo Ctr. Trb. inválido.','Alerta - Aimaro','bloqueiaFundo(divRotina,\'tpcttrab\',\'frmDadosComercial\')',false);		
 
 	}
 		

@@ -31,7 +31,7 @@
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 	
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 		
 	// Guardo os parâmetos do POST em variáveis	
@@ -52,17 +52,17 @@
 			
 			case 'A':
 				$tituloTela = "Altera Cadastro";
-				if (!in_array('A', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Ayllos','',false);
+				if (!in_array('A', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Aimaro','',false);
 			break;
 			
 			case 'C':
 				$tituloTela = "Comprova Vida";
-				if (!in_array('C', $glbvars['opcoesRotina'])){  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Ayllos','',false);}
+				if (!in_array('C', $glbvars['opcoesRotina'])){  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Aimaro','',false);}
 			break;
 					
 			case 'T':	
 				$tituloTela = "Troca Conta Corrente";
-				if (!in_array('T', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Ayllos','',false);
+				if (!in_array('T', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Aimaro','',false);
 			break;
 			
 		}
@@ -75,19 +75,19 @@
 			//Beneficios pagos
 			case 'A':			
 				$tituloTela = "Benef&iacute;cios pagos";
-				if (!in_array('A', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Ayllos','',false);		
+				if (!in_array('A', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Aimaro','',false);		
 			break;
 			
 			//Beneficios a pagar e bloqueados
 			case 'B':				
 				$tituloTela = "Benef&iacute;cios a pagar e bloqueados";
-				if (!in_array('B', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Ayllos','',false);				
+				if (!in_array('B', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Aimaro','',false);				
 			break;
 			
 			//Histórico cadastral
 			case 'D':				
 				$tituloTela = "Hist&oacute;rico cadastral";
-				if (!in_array('B', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Ayllos','',false);				
+				if (!in_array('B', $glbvars['opcoesRotina']))  exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a rotina '.'\"'.$tituloTela.'\"'.'.','Alerta - Aimaro','',false);				
 			break;
 									
 		}

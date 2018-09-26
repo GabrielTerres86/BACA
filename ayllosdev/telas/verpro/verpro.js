@@ -94,7 +94,7 @@ function estadoInicial() {
     if ($("#crm_inacesso","#frmCab").val() == 1) {
         $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
 		btnOK.click();
-}
+    }
 
 }
 
@@ -129,7 +129,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
                 },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'estadoInicial();');
         },
         success: function(response) {
             hideMsgAguardo();
@@ -139,14 +139,14 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
                     return false;
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
                 }
             } else {
                 try {
                     eval(response);
                 } catch (error) {
                     hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Aimaro', 'unblockBackground()');
                 }
             }
         }
@@ -272,7 +272,7 @@ function formataCabecalho() {
 
         // Verifica se a conta é válida
         if (!validaNroConta(nrdconta)) {
-            showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Ayllos', 'focaCampoErro(\'nrdconta\',\'' + frmCab + '\');');
+            showError('error', 'Conta/dv inv&aacute;lida.', 'Alerta - Aimaro', 'focaCampoErro(\'nrdconta\',\'' + frmCab + '\');');
             return false;
         }
 
@@ -447,7 +447,7 @@ function mostraProtocolo() {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Aimaro', "unblockBackground()");
         },
         success: function(response) {
             $('#divRotina').html(response);
@@ -527,7 +527,7 @@ function formataVerpro() {
 	rHrautdrf = $('label[for="vltotfat"]', '#' + frmDados);
 	rNrdocmto_das  = $('label[for="nrdocmto_das"]', '#' + frmDados);
 	rNrdocmto_drf = $('label[for="nrdocmto_drf"]', '#' + frmDados);
-  
+	
   //DAE
   rNrdocmto_dae = $('label[for="nrdocmto_dae"]', '#' + frmDados);
   
@@ -608,7 +608,7 @@ function formataVerpro() {
 	rDtmvtdrf.addClass('rotulo').css({'width': '130px'});	
 	rHrautdrf.addClass('rotulo').css({'width': '130px'});	
 	rNrdocmto_das.addClass('rotulo').css({'width': '130px'});	
-	rNrdocmto_drf.addClass('rotulo').css({'width': '130px'});
+	rNrdocmto_drf.addClass('rotulo').css({'width': '130px'});	
 
   //DAE
   rNrdocmto_dae.addClass('rotulo').css({'width': '130px'});
@@ -689,7 +689,7 @@ function formataVerpro() {
 	cHrautdrf = $('#hrautdrf', '#' + frmDados);
 	cNrdocmto_das  = $('#nrdocmto_das', '#' + frmDados);
 	cNrdocmto_drf = $('#nrdocmto_das', '#' + frmDados);
-  
+
   //DAE
   cNrdocmto_dae = $('#nrdocmto_dae', '#' + frmDados);
   
@@ -768,7 +768,7 @@ function formataVerpro() {
 	cHrautdrf.css({'width': '400px'});
 	cNrdocmto_das.css({'width': '400px'});
 	cNrdocmto_drf.css({'width': '400px'});
-  
+
   //DAE
   cNrdocmto_dae.css({'width': '400px'});
   
@@ -822,7 +822,7 @@ function formataVerpro() {
 	cHrrecarga 	 = $('#hrrecarga', 	 '#' + frmDados).css({'width': '174px'});
 	cDtdebito 	 = $('#dtdebito', 	 '#' + frmDados).css({'width': '425px'});
 	cNsuopera 	 = $('#nsuopera', 	 '#' + frmDados).css({'width': '425px'});
-  
+	
 	// Campos Recarga de Celular: Fim
 	
     if ($.browser.msie) {
@@ -923,7 +923,7 @@ function formataVerpro() {
 	rHrautdrf.css({'display': 'none'});
 	rNrdocmto_das.css({'display': 'none'});
 	rNrdocmto_drf.css({'display': 'none'});
-  
+
   //DAE
   rNrdocmto_dae.css({'display': 'none'});
   
@@ -955,7 +955,7 @@ function formataVerpro() {
 	cHrautdrf.css({'display': 'none'});
 	cNrdocmto_das.css({'display': 'none'});
 	cNrdocmto_drf.css({'display': 'none'});
-  
+
   //DAE
   cNrdocmto_dae.css({'display': 'none'});
   
@@ -974,7 +974,7 @@ function formataVerpro() {
     cVlliquid.css({'display': 'none'});
 
     rDsageban.html('Agencia Favorecido:');
-    
+
     if (cdtippro == '1' || cdtippro == '2' || cdtippro == '4' || cdtippro == '6') {
 
         if (cdtippro == '1') {
@@ -1251,7 +1251,7 @@ function formataVerpro() {
 		cDttransa.css({'display': 'none'});
 		
 		rVldocmto.css({'display': 'none'});
-    cVldocmto.css({'display': 'none'});
+        cVldocmto.css({'display': 'none'});
 		
 		rDtmvtolt.css({'display': 'none'});
 		cDtmvtolt.css({'display': 'none'});
@@ -1517,7 +1517,7 @@ function formataVerpro() {
 			cNrdocmto_dae.css({'display': 'block'});
     }
     
-  }else {
+	}else {
 
         if (cdtippro == '3') {
             rDsdbanco.html('Nr. do Plano:');

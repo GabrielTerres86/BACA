@@ -42,11 +42,11 @@ if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){
 	if($msgErro == null || $msgErro == ''){
 		$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
-	exibirErro('error',$msgErro,'Alerta - Ayllos','buscaRemessas(glbTabNriniseq, glbTabNrregist);',false);
+	exibirErro('error',$msgErro,'Alerta - Aimaro','buscaRemessas(glbTabNriniseq, glbTabNrregist);',false);
 	exit();
 }else{
 	$msgErro = 'Opera&ccedil;&atilde;o efetuada com sucesso!';
-	exibirErro('inform',$msgErro,'Alerta - Ayllos','buscaRemessas(glbTabNriniseq, glbTabNrregist);',false);
+	exibirErro('inform',$msgErro,'Alerta - Aimaro','buscaRemessas(glbTabNriniseq, glbTabNrregist);',false);
 }
 
 ?>

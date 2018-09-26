@@ -64,7 +64,7 @@
 			echo '});';
 		}
 		
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 	// Monta o xml de requisição
@@ -98,7 +98,7 @@
 								
 		}
 			
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);		
 				
 	}
 	
@@ -143,7 +143,7 @@
 	
 		echo 'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));';
 		echo '$("#btConcluir","#divBotoesTrocaOpContaCorrente").unbind("click").bind("click", function(){';
-		echo '	 showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'solicitaTrocaOPContaCorrente("'.$cddopcao.'");\',\'$("#nrdconta","#frmTrocaOpContaCorrente").focus();blockBackground(parseInt($("#divRotina").css("z-index")));\',"sim.gif","nao.gif");';
+		echo '	 showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'solicitaTrocaOPContaCorrente("'.$cddopcao.'");\',\'$("#nrdconta","#frmTrocaOpContaCorrente").focus();blockBackground(parseInt($("#divRotina").css("z-index")));\',"sim.gif","nao.gif");';
 		echo '	 return false;';
 		echo '});';
 		echo '$("#idseqttl","#frmTrocaOpContaCorrente").html("'.$titulares.'").habilitaCampo().focus();';
@@ -152,10 +152,10 @@
 	
 		echo '$("#btConcluir","#divBotoesTrocaDomicilio").unbind("click").bind("click", function(){';
 		echo '	if(inclusao){';
-		echo '		showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'solicitaTrocaDomicilio("'.$cddopcao.'",$("#idseqttl","#frmTrocaDomicilio").val());\',\'$("#nrdconta","#frmTrocaDomicilio").focus();\',"sim.gif","nao.gif");		';		
+		echo '		showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'solicitaTrocaDomicilio("'.$cddopcao.'",$("#idseqttl","#frmTrocaDomicilio").val());\',\'$("#nrdconta","#frmTrocaDomicilio").focus();\',"sim.gif","nao.gif");		';		
 		echo '		return false;';
 		echo '	}else{';
-		echo '		showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'solicitaTrocaOpContaCorrenteEntreCoop("'.$cddopcao.'",$("#idseqttl","#frmTrocaDomicilio").val());\',\'$("#nrdconta","#frmTrocaDomicilio").focus();\',"sim.gif","nao.gif");';
+		echo '		showConfirmacao(\'Deseja confirmar opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'solicitaTrocaOpContaCorrenteEntreCoop("'.$cddopcao.'",$("#idseqttl","#frmTrocaDomicilio").val());\',\'$("#nrdconta","#frmTrocaDomicilio").focus();\',"sim.gif","nao.gif");';
 		echo '		return false;';
 		echo '	}';
 		echo '});';

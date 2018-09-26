@@ -26,10 +26,10 @@
 	$op = ( $cddopcao == "C" ) ? "@" : $cddopcao ;
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	// Verifica se o número da conta e o titular foram informados
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
@@ -39,10 +39,10 @@
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 			
 	// Verifica se o número da conta e o titular são inteiros válidos
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','fechaRotina(divRotina)',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','fechaRotina(divRotina)',false);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Aimaro','fechaRotina(divRotina)',false);
 	
-	// exibirErro('error','nrdlinha='.$nrdlinha.'| cddopcao='.$cddopcao,'Alerta - Ayllos','controlaOperacao()');
+	// exibirErro('error','nrdlinha='.$nrdlinha.'| cddopcao='.$cddopcao,'Alerta - Aimaro','controlaOperacao()');
 	
 	// Monta o xml de requisição
 	$xml  = '';
@@ -71,7 +71,7 @@
 	$xmlObjeto = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra mensagem
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','controlaOperacao()',false);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','controlaOperacao()',false);
 	
 	// Define a variágel que guarda todos os itens
 	$registros = $xmlObjeto->roottag->tags[0]->tags;	
@@ -103,6 +103,6 @@
 	var msgAlert = '<? echo $msgAlert; ?>';
 	var operacao = '<? echo $operacao; ?>';
 	controlaLayout(operacao);
-	if ( msgAlert != ''   ){ showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(operacao);'); }
+	if ( msgAlert != ''   ){ showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFoco(operacao);'); }
 	if ( operacao == 'TE' ){ controlaOperacao('EV'); }
 </script>

@@ -26,8 +26,8 @@
 	$dscheque = !isset($_POST["dscheque"]) ? "" : $_POST["dscheque"];
 	
 	// Verifica se os parâmetros necessários foram informados
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
-	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+	if ($dscheque === "") exibirErro('error','Parametro inv&aacute;lido.','Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";
@@ -53,7 +53,7 @@
 			echo "$('#aux_dscritic','" . $id . "').text('" . $critica . "');";
 		}
 		$msgErro = 'Aconteceram erros durante a validação dos cheques para inclusão no borderô. <br> Verifique os cheques destacados.';
-		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
 	} else {
 		if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
@@ -61,7 +61,7 @@
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			}
-			exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
+			exibirErro('error',$msgErro,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 			exit();
 		}else{
 			echo 'adicionarChqsBordero(1, "tbChequesNovos");';

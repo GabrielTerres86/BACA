@@ -20,7 +20,7 @@
 	$dsctrliq = (isset($_POST['dsctrliq'])) ? $_POST['dsctrliq'] : ''; 
 			
 	// exibirErro('error','dsctrliq= '.$dtmvtoep.'\n'.
-	                   // 'nrdconta= '.$vlsdeved,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+	                   // 'nrdconta= '.$vlsdeved,'Alerta - Aimaro','bloqueiaFundo(divRotina);',false);
 					  
 		
 	// Monta o xml de requisição
@@ -50,13 +50,13 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$dsquapro = trim($xmlObj->roottag->tags[0]->attributes['DSQUAPRO']);
 	$idquapro = trim($xmlObj->roottag->tags[0]->attributes['IDQUAPRO']);
 	
-	// exibirErro('error',$msgretor.' | '.$tpdretor,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	// exibirErro('error',$msgretor.' | '.$tpdretor,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 	if( $dsquapro != '' and $idquapro != '' ){
 		

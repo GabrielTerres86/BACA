@@ -18,7 +18,7 @@ isPostMethod();
 
 /*
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'R')) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
 // Monta o xml de requisição
@@ -45,7 +45,7 @@ $xmlObjeto = getObjectXML($xmlResult);
 // Se ocorrer um erro, mostra mensagem
 if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
     $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgErro, 'Alerta - Aimaro', '', false);
 }
 
 $dtmvtini = $xmlObjeto->roottag->tags[0]->attributes['DTMVTINI'];

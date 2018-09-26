@@ -8,7 +8,7 @@
  */
 ?>
 
-<form name="frmTab089" id="frmTab089" class="formulario" style="display:block;">	
+<form name="frmTab089" id="frmTab089" class="formulario">	
     <br style="clear:both" />
 	<input type="hidden" id="dsdepart" name="dsdepart" value="<?php echo $glbvars["dsdepart"]; ?>" />
     <input type="hidden" id="idctrlab" name="idctrlaba" value="COOPER" />
@@ -126,3 +126,10 @@
 	</fieldset>    
     <!-- Fim PJ438 - Márcio (Mouts)-->	
 </form>
+
+<div id="divBotoes" name="divBotoes" style="margin-bottom:5px">
+	<a href="#" class="botao" id="btVoltar"  onclick="estadoInicial();
+	return false;">Voltar</a>
+	<a href="#" class="botao" id="btContinuar"  onClick="confirmaOperacao();
+	return false;">Alterar</a>
+</div>

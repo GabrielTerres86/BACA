@@ -53,7 +53,7 @@
     
     function exibeErroNew($msgErro) {
         echo 'hideMsgAguardo();';
-        echo 'showError("error","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");';
+        echo 'showError("error","' . $msgErro . '","Alerta - Aimaro","desbloqueia()");';
         exit();
     }
 ?>

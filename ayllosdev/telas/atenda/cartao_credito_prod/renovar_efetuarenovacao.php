@@ -254,7 +254,7 @@
 		echo "callafterCartaoCredito = \"".$acessaaba."\";";
 		
 		// mostrar confirmacao de impressão do contrato de renovação
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","gerarImpressao(2,0,0,'.$nrctrcrd.',0);","'.$acessaaba.'","sim.gif","nao.gif");';		
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","gerarImpressao(2,0,0,'.$nrctrcrd.',0);","'.$acessaaba.'","sim.gif","nao.gif");';		
 	} else {		
 		echo $acessaaba;		
 	}
@@ -262,7 +262,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 ?>

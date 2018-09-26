@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%TYPE --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392 (pr_cdcooper  IN craptab.cdcooper%TYPE --> Cooperativa solicitada
                                       ,pr_flgresta  IN PLS_INTEGER            --> Flag 0/1 para utilizar restart na chamada
                                       ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
                                       ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
@@ -78,6 +78,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
               
                14/08/2018 - Inclusão da Aplicação Programada - cursor cr_craplpp2
                             Proj. 411.2 - CIS Corporate 
+              
+               05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).
               
 ............................................................................. */
   
@@ -339,7 +341,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
                                ,264,861,862,868,871,150,151,158,863,870,492,493,494
                                ,495,496,482,484,485,486,487,488,489,490,491,647,648)
               
-        UNION
+        UNION ALL 
         SELECT decode (lac.cdhistor
                       ,cpc.cdhsraap,150
                       ,cpc.cdhsnrap,150

@@ -22,22 +22,22 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','');	
+		exibirErro('error',$msgError,'Alerta - Aimaro','');	
 	}			
 	
 	// Verifica se o número da conta foi informado
 	if ( !isset($_POST["nrdconta"]) ||
-		 !isset($_POST["nrctrcrd"]) ) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');	
+		 !isset($_POST["nrctrcrd"]) ) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro','');	
 	
 
 	$nrdconta = $_POST["nrdconta"];
 	$nrctrcrd = $_POST["nrctrcrd"];
 
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','');	
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro','');	
 	
 	// Verifica se o número do contrato é um inteiro válido
-	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero de contrato inv&aacute;lido.','Alerta - Ayllos','');	
+	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero de contrato inv&aacute;lido.','Alerta - Aimaro','');	
 
 	// Monta o xml de requisição
 	$xmlGetAvais  = "";
@@ -69,7 +69,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjAvais->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjAvais->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','');
+		exibirErro('error',$xmlObjAvais->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','');
 	} 
 	
 	$avais = $xmlObjAvais->roottag->tags[0]->tags;

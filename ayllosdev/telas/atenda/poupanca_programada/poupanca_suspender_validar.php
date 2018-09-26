@@ -89,12 +89,12 @@
 	echo 'hideMsgAguardo();';	
 	
 	// Confirma operação
-	echo 'showConfirmacao("Deseja suspender a poupan&ccedil;a programada?","Confirma&ccedil;&atilde;o - Ayllos","suspenderPoupanca('.$nrmesusp.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';	
+	echo 'showConfirmacao("Deseja suspender a poupan&ccedil;a programada?","Confirma&ccedil;&atilde;o - Aimaro","suspenderPoupanca('.$nrmesusp.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';	
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

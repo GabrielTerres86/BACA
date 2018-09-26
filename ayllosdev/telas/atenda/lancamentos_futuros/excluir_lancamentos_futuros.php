@@ -51,13 +51,13 @@
 	echo 'hideMsgAguardo();';
 	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
 	$msgErro = 'Lancamento excluido com sucesso.';
-	echo 'showError("inform","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';	
+	echo 'showError("inform","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';	
 	echo "acessaOpcaoAba(1,0,0);";
 	
 	// Funcao para exibir erros na tela atraves de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}		
 ?>

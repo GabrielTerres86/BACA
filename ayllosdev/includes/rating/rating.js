@@ -96,19 +96,19 @@ function validaDadosRating(cdcooper , operacao , inprodut) {
 	
 		if (nrgarope != "" && validaNumero(nrgarope,true,0,0)) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o pode ser informado nenhuma garantia.","Alerta - Ayllos","$('#nrgarope','#frmDadosRating').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","N&atilde;o pode ser informado nenhuma garantia.","Alerta - Aimaro","$('#nrgarope','#frmDadosRating').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
 		}
 		
 		if (nrpatlvr != "" && validaNumero(nrpatlvr,true,0,0)) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o pode ser informado nenhum Patrim&ocirc;nio Pessoal Livre.","Alerta - Ayllos","$('#nrpatlvr','#frmDadosRating').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","N&atilde;o pode ser informado nenhum Patrim&ocirc;nio Pessoal Livre.","Alerta - Aimaro","$('#nrpatlvr','#frmDadosRating').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
 		}	
 		
 		if (inpessoa != 1 && (nrperger != "" && validaNumero(nrperger,true,0,0))) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o pode ser informado nenhuma Percep&ccedil;&atilde;o Geral.","Alerta - Ayllos","$('#nrperger','#frmDadosRating').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","N&atilde;o pode ser informado nenhuma Percep&ccedil;&atilde;o Geral.","Alerta - Aimaro","$('#nrperger','#frmDadosRating').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
 		}
 	
@@ -133,14 +133,14 @@ function validaDadosRating(cdcooper , operacao , inprodut) {
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 
@@ -168,14 +168,14 @@ function atualizaDadosRating(iddivcri) {
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});	
@@ -205,14 +205,14 @@ function imprimirRating(flgefeti,tpctrato,nrctrato,iddivcri,fnfinish) {
 			},		
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
 			success: function(response) {
 				try {
 					eval(response);
 				} catch(error) {
 					hideMsgAguardo();
-					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 				}
 			}				
 		}); 	
@@ -240,14 +240,14 @@ function imprimirRatingProposta(flgefeti,tpctrato,nrctrato,iddivcri,fnfinish) {
 			},
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 			},
 			success: function(response) {
 				try {
 					eval(response);
 				} catch(error) {
 					hideMsgAguardo();
-					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
 				}
 			}				
 		}); 	

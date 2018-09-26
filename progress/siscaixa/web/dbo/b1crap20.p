@@ -2908,47 +2908,53 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
     /* Gera um arquivo do TED on-line - SPB */
     IF (c-tipo-docto = 'TED C' OR c-tipo-docto = 'TED D') AND aux_flgopspb  THEN
         DO:        
-            RUN sistema/generico/procedures/b1wgen0046.p
-                PERSISTENT SET h-b1wgen0046.
-
-            RUN proc_envia_tec_ted IN h-b1wgen0046
-                                      (INPUT crapcop.cdcooper,
-                                       INPUT p-cod-agencia,
-                                       INPUT p-nro-caixa,
-                                       INPUT p-cod-operador,
-                                       INPUT p-titular,
-                                       INPUT p-val-doc,
-                                       INPUT aux_nrctrlif,
-                                       INPUT p-nro-conta-de,
-                                       INPUT p-cod-banco,
-                                       INPUT p-cod-agencia-banco,
-                                       INPUT p-nro-conta-para,  
-                                       INPUT p-cod-finalidade,
-                                       INPUT p-tipo-conta-db,
-                                       INPUT p-tipo-conta-cr,
-                                       INPUT p-nome-de,
-                                       INPUT p-nome-de1,
-                                       INPUT DECIMAL(p-cpfcnpj-de),
-                                       INPUT DECIMAL(p-cpfcnpj-de1),
-                                       INPUT p-nome-para,
-                                       INPUT p-nome-para1,
-                                       INPUT DECIMAL(p-cpfcnpj-para),
-                                       INPUT DECIMAL(p-cpfcnpj-para1),
-                                       INPUT p-tipo-pessoa-de,
-                                       INPUT p-tipo-pessoa-para,
-                                       INPUT FALSE,/*Conta Salario*/
-                                       INPUT p-cod-id-transf,
-                                       INPUT 2, /* origem 2 = Caixa Online */
-                                       INPUT ?,
-                                       INPUT 0,
-                                       INPUT 0,
-                                       INPUT p-desc-hist,
-                                       INPUT aux_hrtransa,
-                                       INPUT p-ispb-if,
-                                       OUTPUT c-desc-erro).
-            
-            DELETE PROCEDURE h-b1wgen0046.
-
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+          RUN STORED-PROCEDURE pc_proc_envia_tec_ted_prog 
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT crapcop.cdcooper /* Cooperativa */
+                                     ,INPUT p-cod-agencia    /* Cod. Agencia */
+                                     ,INPUT p-nro-caixa      /* Numero  Caixa */
+                                     ,INPUT p-cod-operador   /* Operador */
+                                     ,INPUT 1                /* Mesmo Titular */
+                                     ,INPUT p-val-doc        /* Vlr. DOCMTO */
+                                     ,INPUT aux_nrctrlif     /* NumCtrlIF */
+                                     ,INPUT p-nro-conta-de   /* Nro Conta */
+                                     ,INPUT p-cod-banco      /* Codigo Banco */
+                                     ,INPUT p-cod-agencia-banco /* Cod Agencia */
+                                     ,INPUT p-nro-conta-para /* Nr.Ct.destino  */
+                                     ,INPUT p-cod-finalidade /* Finalidade  */
+                                     ,INPUT p-tipo-conta-db /* Tp. conta deb */
+                                     ,INPUT p-tipo-conta-cr /* Tp conta cred  */
+                                     ,INPUT p-nome-de /* Nome Do titular */
+                                     ,INPUT p-nome-de1 /* Nome De 2TTT */
+                                     ,INPUT DECIMAL(p-cpfcnpj-de) /* CPF/CNPJ Do titular */
+                                     ,INPUT DECIMAL(p-cpfcnpj-de1) /* CPF sec TTL */
+                                     ,INPUT p-nome-para /* Nome Para */
+                                     ,INPUT p-nome-para1 /* Nome Para 2TTL */
+                                     ,INPUT DECIMAL(p-cpfcnpj-para) /* CPF/CNPJ Para */
+                                     ,INPUT DECIMAL(p-cpfcnpj-para1) /* CPF Para 2TTL */
+                                     ,INPUT p-tipo-pessoa-de /* Tp. pessoa De  */
+                                     ,INPUT p-tipo-pessoa-para /* Tp. pessoa Para */
+                                     ,INPUT 0 /* FALSE - Conta Salario */
+                                     ,INPUT p-cod-id-transf /* tipo de transferencia */
+                                     ,INPUT 2 /* origem 2 = Caixa Online */   
+                                     ,INPUT ? /* data egendamento */
+                                     ,INPUT 0 /* nr. seq arq. */
+                                     ,INPUT 0 /* Cod. Convenio */
+                                     ,INPUT p-desc-hist /* Dsc do Hist.*/
+                                     ,INPUT aux_hrtransa /* Hora transacao */
+                                     ,INPUT p-ispb-if /* ISPB Banco */
+                                     ,INPUT 1 /* DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED */
+                                     ,OUTPUT 0    /* Codigo do erro */
+                                     ,OUTPUT ""). /* Descriçao da crítica */
+                  CLOSE STORED-PROC pc_proc_envia_tec_ted_prog
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  ASSIGN c-desc-erro = ""
+                         c-desc-erro = pc_proc_envia_tec_ted_prog.pr_dscritic
+                                         WHEN pc_proc_envia_tec_ted_prog.pr_dscritic <> ?.
             IF   c-desc-erro <> ""   THEN
                  DO: 
                     ASSIGN i-cod-erro  = 0.

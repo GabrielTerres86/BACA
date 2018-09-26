@@ -562,6 +562,8 @@
 			   
 			  26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+               29/08/2018 - Adicionado controle para situaçao(insitlim) ANULADA na proc 'busca_dados_proposta'. PRJ 438 (Mateus Z - Mouts)
+               
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3011,6 +3013,12 @@ PROCEDURE busca_limites:
                             crawlim.tpctrlim = craplim.tpctrlim   AND
                             crawlim.nrctrmnt = craplim.nrctrlim   AND
                             crawlim.insitlim = 8 /*438 - Expirada decurso de prazo*/ )                            
+                           OR /*438*/
+                           (crawlim.cdcooper = craplim.cdcooper   AND
+                            crawlim.nrdconta = craplim.nrdconta   AND
+                            crawlim.tpctrlim = craplim.tpctrlim   AND
+                            crawlim.nrctrmnt = craplim.nrctrlim   AND
+                            crawlim.insitlim = 9 /*438 - Anulada - Paulo Martins (Mouts)*/ )                                
                            NO-LOCK NO-ERROR.
 
         IF  AVAILABLE crawlim  THEN
@@ -4096,10 +4104,11 @@ PROCEDURE busca_dados_proposta:
     ELSE
     IF  par_cddopcao = "A"  THEN
         DO:
-            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3) or (crawlim.insitlim = 4))   THEN
+            /* PRJ 438 - Adicionado controle para situaçao ANULADA */
+            IF  ((crawlim.insitlim = 2) or (crawlim.insitlim = 3) or (crawlim.insitlim = 4) or (crawlim.insitlim = 9))  THEN
                 DO:
                     ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA ou CANCELADA ou VIGENTE".
+                           aux_dscritic = "Não é permitido alterar uma proposta com a situação ATIVA, CANCELADA, ANULADA ou VIGENTE".
                           
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT par_cdagenci,
@@ -18959,6 +18968,12 @@ PROCEDURE busca_dados_limite_manutencao:
                         crawlim.tpctrlim = 3              AND
                         crawlim.nrctrmnt = par_nrctrlim   AND
                         crawlim.insitlim = 8 /*expirada por decurso de prazo*/)
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 9 /*Anulado - PRJ438 - Paulo Martins - (Mouts)*/)                        
                        NO-LOCK NO-ERROR.
 
     IF  AVAILABLE crawlim  THEN
@@ -18979,6 +18994,9 @@ PROCEDURE busca_dados_limite_manutencao:
             IF  crawlim.insitlim = 8  THEN
                 ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
                                       " com a situação EXPIRADA DECURSO DE PRAZO".
+            IF  crawlim.insitlim = 9  THEN /*PRJ438 - Paulo Martins (Mouts)*/
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação ANULADA".                                      
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,

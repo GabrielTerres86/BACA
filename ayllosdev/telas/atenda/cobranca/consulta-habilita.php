@@ -120,7 +120,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 function exibeErro($msgErro) { 
 	echo '<script type="text/javascript">';
 	echo 'hideMsgAguardo();';
-	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	echo '</script>';
 	exit();
 }	
@@ -622,7 +622,7 @@ $("#flprotes","#frmConsulta").unbind('click').bind('click', function(e) {
     if ($(this).is(':checked')) {
         var cco_flprotes = '<?php echo (int) $cco_flprotes; ?>';
         if (cco_flprotes == '0') {
-            showError('error', 'Conv&ecirc;nio n&atilde;o permite envio de Protesto!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'Conv&ecirc;nio n&atilde;o permite envio de Protesto!', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
             return false;
         }
     }
@@ -633,7 +633,7 @@ $("#qtlimmip","#frmConsulta").unbind('blur').bind('blur', function(e) {
     if ($(this).val() == '' ||
         $(this).val() < parseInt(cco_qtlimmip)) {
         $(this).val(cco_qtlimmip);
-        showError('error', 'Intervalo protesto inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtlimmip; ?> at&eacute; <?php echo $cco_qtlimaxp; ?>!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);$("#qtlimmip","#frmConsulta").focus();');
+        showError('error', 'Intervalo protesto inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtlimmip; ?> at&eacute; <?php echo $cco_qtlimaxp; ?>!', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);$("#qtlimmip","#frmConsulta").focus();');
         return false;
     }
 });
@@ -643,7 +643,7 @@ $("#qtlimaxp","#frmConsulta").unbind('blur').bind('blur', function(e) {
     if ($(this).val() == '' ||
         $(this).val() > parseInt(cco_qtlimaxp)) {
         $(this).val(cco_qtlimaxp);
-        showError('error', 'Intervalo protesto inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtlimmip; ?> at&eacute; <?php echo $cco_qtlimaxp; ?>!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);$("#qtlimaxp","#frmConsulta").focus();');
+        showError('error', 'Intervalo protesto inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtlimmip; ?> at&eacute; <?php echo $cco_qtlimaxp; ?>!', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);$("#qtlimaxp","#frmConsulta").focus();');
         return false;
     }
 });
@@ -656,7 +656,7 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         $(this).val() < parseInt(cco_qtdecini) || 
         $(this).val() > parseInt(cco_qtdecate)) {
         $(this).val('');
-        showError('error', 'Decurso de Prazo inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtdecini; ?> at&eacute; <?php echo $cco_qtdecate; ?>!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina);$("#qtdecprz","#frmConsulta").focus();');
+        showError('error', 'Decurso de Prazo inv&aacute;lido! Favor selecionar um per&iacute;odo de <?php echo $cco_qtdecini; ?> at&eacute; <?php echo $cco_qtdecate; ?>!', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);$("#qtdecprz","#frmConsulta").focus();');
         return false;
     }
 });
@@ -720,7 +720,7 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         <?php
     } else if ($dsdmesag != "" && $dsorgarq == "INTERNET" ) { // Nao tem senha liberada para Internet
         ?>
-        showError("inform","<?php echo $dsdmesag; ?>","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
+        showError("inform","<?php echo $dsdmesag; ?>","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
         <?php
     }
 	

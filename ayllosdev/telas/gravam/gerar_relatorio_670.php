@@ -19,7 +19,7 @@
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	$nrseqlot = isset($_POST["nrseqlot"]) ? $_POST["nrseqlot"] : 0;
@@ -59,7 +59,7 @@
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
     
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltroImpressao(); focaCampoErro(\''.$nmdcampo.'\',\'frmFiltro\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro','formataFiltroImpressao(); focaCampoErro(\''.$nmdcampo.'\',\'frmFiltro\');',false);		
 		
 	} 
 	
@@ -72,11 +72,11 @@
 	function validaDados(){
 			
 		IF($GLOBALS["tparquiv"] == '' ){ 
-			exibirErro('error','Tipo de arquivo in&acute;lido.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'tparquiv\',\'frmFiltro\');',false);
+			exibirErro('error','Tipo de arquivo in&acute;lido.','Alerta - Aimaro','formataFiltroImpressao();focaCampoErro(\'tparquiv\',\'frmFiltro\');',false);
 		}
     
     IF($GLOBALS["dtrefere"] == 0 ){ 
-			exibirErro('error','Informe uma data de refer&ecirc;ncia.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'dtrefere\',\'frmFiltro\');',false);
+			exibirErro('error','Informe uma data de refer&ecirc;ncia.','Alerta - Aimaro','formataFiltroImpressao();focaCampoErro(\'dtrefere\',\'frmFiltro\');',false);
 		}
 				
 	}	

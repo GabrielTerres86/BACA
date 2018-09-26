@@ -15,7 +15,7 @@
 		
 	// Verifica permissões de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'S',false)) <> '') 
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 		
 	$nrdconta = isset($_POST['nrdconta']) ? $_POST['nrdconta'] : 0;
 	
@@ -34,9 +34,9 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
-	exibirErro('inform','Talonário solicitado com sucesso.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	exibirErro('inform','Talonário solicitado com sucesso.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	
 ?>

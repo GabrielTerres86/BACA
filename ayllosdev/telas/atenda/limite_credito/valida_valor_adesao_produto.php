@@ -33,7 +33,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','',false);
 	}
 	
 	$vllimite = str_replace(',','.',$vllimite);
@@ -56,7 +56,7 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 	}
 	
 	$solcoord = $xmlObj->roottag->tags[0]->cdata;
@@ -64,7 +64,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if ($solcoord == 1) {
-		exibirErro("error",$mensagem,"Alerta - Ayllos", "senhaCoordenador(\\\"".$executar."\\\");",false);
+		exibirErro("error",$mensagem,"Alerta - Aimaro", "senhaCoordenador(\\\"".$executar."\\\");",false);
 	} else {
 		echo $executar;
 	}

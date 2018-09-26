@@ -33,7 +33,7 @@
 	$retornoAposErro = 'focaCampoErro(\'nrdconta\', \'frmCab\');';
 		
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'I')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}	
 
 
@@ -68,7 +68,7 @@
 		
 		if (!empty($nmdcampo)) { $mtdErro = " $('#".$nmdcampo."','#frmCab').focus();"; }
 		
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);		
 	} 
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;

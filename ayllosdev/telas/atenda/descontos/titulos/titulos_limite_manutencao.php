@@ -107,7 +107,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo 'bloqueiaFundo("#divError");';
 		echo '</script>';
 		exit();
@@ -252,7 +252,7 @@
 
 		showConfirmacao(
 			"Deseja alterar a proposta de majora&ccedil;&atilde;o?",
-			"Confirma&ccedil;&atilde;o - Ayllos",
+			"Confirma&ccedil;&atilde;o - Aimaro",
 			"realizarManutencaoDeLimite(2, '"+flgstlcr+"');",
 			"blockBackground(parseInt($('#divRotina').css('z-index'))",
 			"sim.gif",

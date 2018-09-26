@@ -7,7 +7,7 @@
 	                                                                  
 	 Objetivo  : Alterar datas de entrega/devolução do questionário
 	                                                                  	 
-	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).   
+	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).                                                      
 				 27/07/2016 - Corrigi o retorno XML erro. SD 479874 (Carlos R.)                                                   
 	************************************************************************/
 
@@ -94,7 +94,7 @@
 	// Função para exibir erros na tela atravé de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}	
 	

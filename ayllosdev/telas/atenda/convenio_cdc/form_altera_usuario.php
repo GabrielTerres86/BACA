@@ -34,7 +34,7 @@
   $param = $xmlObjeto->roottag->tags[0]->tags[0];
 
   if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-    exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+    exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false); 
   }else{  
     $senhaUsuario = getByTagName($param->tags,'senha');	    
     $tipo = getByTagName($param->tags,'tipo');	    

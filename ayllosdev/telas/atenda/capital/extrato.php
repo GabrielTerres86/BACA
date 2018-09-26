@@ -84,7 +84,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -122,7 +122,7 @@ $("#dtiniper","#frmExtCapital").bind("blur",function() {
 		
 		if (newDate2 > newDate1) {
 			$(this).val("");
-			showError("error","Data inicial inv&aacute;lida. Deve ser maior ou igual a 01/01/2005.","Alerta - Ayllos","$('#dtiniper','#frmExtCapital').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error","Data inicial inv&aacute;lida. Deve ser maior ou igual a 01/01/2005.","Alerta - Aimaro","$('#dtiniper','#frmExtCapital').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
 		}	
 	}

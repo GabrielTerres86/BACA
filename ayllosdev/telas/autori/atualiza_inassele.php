@@ -56,7 +56,7 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
 		$mtdErro = '';
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}else{
 		echo "fechaRotina($('#divRotina'));";
 		echo "hideMsgAguardo();";

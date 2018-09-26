@@ -25,7 +25,6 @@
 	$operacao 			= (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 	$cddopcao 			= (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ;
 	$nrdconta			= (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
-	$nrcnvcob			= (isset($_POST['nrcnvcob'])) ? $_POST['nrcnvcob'] : 0  ;
 	$nrdcontx			= (isset($_POST['nrdcontx'])) ? $_POST['nrdcontx'] : 0  ;
 	$ininrdoc			= (isset($_POST['ininrdoc'])) ? $_POST['ininrdoc'] : 0  ;
 	$fimnrdoc			= (isset($_POST['fimnrdoc'])) ? $_POST['fimnrdoc'] : 0  ;
@@ -52,7 +51,7 @@
 	$inserasa 			= (isset($_POST['inserasa'])) ? $_POST['inserasa'] : ''  ;
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	switch( $operacao ) {
@@ -116,7 +115,7 @@
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo = $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " $('#".$nmdcampo."','#frmOpcao').focus();"; }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro, false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro, false);
 	} 
 	
 	$registro 	= $xmlObjeto->roottag->tags[0]->tags;

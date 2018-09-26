@@ -21,16 +21,16 @@
 	require_once('../../class/xmlfile.php');
 	
 	$cdinstru 	= $_POST['cdinstru'];
-	
-	if ($cdinstru == 80) {
 	$nrdconta 	= $_POST['nrdconta'];
-		$nrcnvcob 	= $_POST['nrcnvcob'];
+	$nrconven 	= $_POST['nrconven'];
+	$nrcnvceb	= '0';
 	
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-		$xml .= "   <nrconven>".$nrcnvcob."</nrconven>";
+	$xml .= "   <nrconven>".$nrconven."</nrconven>";
+	$xml .= "   <nrcnvceb>".$nrcnvceb."</nrcnvceb>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
@@ -43,13 +43,12 @@
 		  $msgErro = $xmlObj->roottag->tags[0]->cdata;
 	  }
 	  
-	  exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina( $(\'#divRotina\') )', false);
+	  exibirErro('error',$msgErro,'Alerta - Aimaro','fechaRotina( $(\'#divRotina\') )', false);
 	  exit();
 	}
 	
-		$qtlimmip = $xmlObj->roottag->tags[0]->tags[0]->cdata;
-		$qtlimaxp = $xmlObj->roottag->tags[0]->tags[1]->cdata;
-	}
+	$qtlimmip = $xmlObj->roottag->tags[0]->tags[4]->tags[0]->cdata;
+	$qtlimaxp = $xmlObj->roottag->tags[0]->tags[4]->tags[1]->cdata;
 ?>
 
 <table cellpadding="0" cellspacing="0" border="0" >

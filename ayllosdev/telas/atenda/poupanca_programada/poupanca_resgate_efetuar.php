@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: poupanca_resgate_efetuar.php                              ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Março/2010                   Última Alteração: 22/06/2015 ***//
+	//*** Data : Março/2010                   Última Alteração: 26/07/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Efetuar resgate para poupança programada             ***//	
 	//***                                                                  ***//	 
@@ -14,6 +14,8 @@
 	//***             18/05/2018 - Validar bloqueio de poupança programada ***//
     //***                          (SM404).                                ***//
 	//***                                                                  ***//
+	//***			  26/07/2016 - Corrigi o tratamento para retorno de    ***//
+	//***						   erro do XML. SD 479874 (Carlos R.)	   ***//
 	//************************************************************************//
 	
 	session_start();
@@ -162,7 +164,7 @@
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 	

@@ -34,7 +34,7 @@
 	
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	$xml  = "";
@@ -68,9 +68,9 @@
 
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
 		$mtdErro = "fechaMotivoCancelamento();controlaOperacao('')";
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 	echo "fechaMotivoCancelamento();	
-		  showConfirmacao('Deseja imprimir o termo de cancelamento?','Confirma&ccedil;&atilde;o - Ayllos','imprimirTermoCancelamento();','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));controlaOperacao(\'\');','sim.gif','nao.gif');";
+		  showConfirmacao('Deseja imprimir o termo de cancelamento?','Confirma&ccedil;&atilde;o - Aimaro','imprimirTermoCancelamento();','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));controlaOperacao(\'\');','sim.gif','nao.gif');";
 ?>

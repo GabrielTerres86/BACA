@@ -16,7 +16,7 @@
 	isPostMethod();	
 	
 	// Se parâmetros necessários não foram informados
-	if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','');
+	if (!isset($_POST['nmdatela']) || !isset($_POST['nmrotina'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','');
 	
 	// Carrega permissões do operador
 	include('../../../includes/carrega_permissoes.php');
@@ -28,7 +28,7 @@
 	$flgIncluir  = (in_array('I', $glbvars['opcoesTela']));	
 	$flgExcluir  = (in_array('E', $glbvars['opcoesTela']));	
 	
-	if ($flgAcesso == '') exibirErro('error','Seu usuário não possui permissão de acesso a tela de Informativos.','Alerta - Ayllos','');
+	if ($flgAcesso == '') exibirErro('error','Seu usuário não possui permissão de acesso a tela de Informativos.','Alerta - Aimaro','');
 ?>
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 	<tr>

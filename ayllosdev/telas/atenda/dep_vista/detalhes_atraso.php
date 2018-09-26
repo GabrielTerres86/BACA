@@ -28,7 +28,7 @@ $xmlObjCreditos = getObjectXML($xmlResult);
 
 // Se ocorrer um erro, mostra crьtica
 if (strtoupper($xmlObjCreditos->roottag->tags[0]->name) == "ERRO") {
-	exibirErro('error',$xmlObjCreditos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+	exibirErro('error',$xmlObjCreditos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 }
 
 $registros = $xmlObjCreditos->roottag;

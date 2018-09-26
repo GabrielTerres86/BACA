@@ -157,7 +157,7 @@
 	</form>
 		
 	<div id="divBtnAplicacao" style="margin:9px">
-		<a href="#" class="botao" id="btCancelar" onClick="showConfirmacao('Deseja cancelar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','voltarDivPrincipal(); ativaCampo();',metodoBlock,'sim.gif','nao.gif');return false;">Cancelar</a>
+		<a href="#" class="botao" id="btCancelar" onClick="showConfirmacao('Deseja cancelar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro','voltarDivPrincipal(); ativaCampo();',metodoBlock,'sim.gif','nao.gif');return false;">Cancelar</a>
 		<a href="#" class="botao" id="btConcluir" onClick="controlarAplicacao(true,'I');return false;">Concluir</a>
 	</div>
 	

@@ -29,12 +29,12 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"2")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);
 	}	
 	
 	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrcrd"]) || !isset($_POST["inpessoa"])) {
-		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);
+		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);
 	}
 
 	$nrdconta = $_POST["nrdconta"];
@@ -42,10 +42,10 @@
 	$inpessoa = $_POST["inpessoa"];
 
 	// Verifica se número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 
 	// Verifica se número do contrato é um inteiro válido
-	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrctrcrd)) exibirErro('error','N&uacute;mero do contrato inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro);
 
 	// Monta o xml de requisição
 	$xmlSetCartao  = "";
@@ -73,7 +73,7 @@
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro);	
 	}
 	
 	$dados = $xmlObjCartao->roottag->tags[0]->tags;
@@ -148,7 +148,7 @@
 			include('../../../includes/avalistas/form_avalista.php'); 
 		?>
 		<div id="divBotoes">
-			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a entrega de segunda via do cr&eacute;dito do cart&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos',funcaoVoltar,'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
+			<input type="image" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="showConfirmacao('Deseja cancelar a entrega de segunda via do cr&eacute;dito do cart&atilde;o?','Confirma&ccedil;&atilde;o - Aimaro',funcaoVoltar,'blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))','sim.gif','nao.gif');return false;">
 			<input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="validarAvalistas(2);return false;">
 		</div>
 	</div>

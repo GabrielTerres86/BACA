@@ -23,10 +23,10 @@
 	$op           = ( $cddopcao == '' ) ? '@'  : $cddopcao;	
 	
 	// Verifica permissões de acessa a tela
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op)) <> '') exibirErro('error',$msgError,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);	
 	
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Parâmetros incorretos.','Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
 
 	$nrdconta  = ( isset($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0;
 	$idseqttl    = ( isset($_POST['idseqttl']) ) ? $_POST['idseqttl'] : 0;
@@ -62,8 +62,8 @@
 	$arrayRetirada = array('.','-','/','_');
 	$nrdctato = str_replace($arrayRetirada,'',$nrdctato);	
 	
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
-	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');	
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Aimaro','bloqueiaFundo(divRotina)');	
 		
 	$xml  = '';
 	$xml .= '<Root>';
@@ -95,7 +95,7 @@
 			case 'TI': $metodo = 'bloqueiaFundo(divRotina);controlaFocoContatos(\'TI\');'; break;
 			default  : $metodo = 'bloqueiaFundo(divRotina);'; break;
 		}
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$metodo,false);
+		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$metodo,false);
 	}
 
 	$registros = $xmlObjeto->roottag->tags[0]->tags;
@@ -126,7 +126,7 @@
 		
 	controlaLayoutContatos(operacao);
 	if ( msgAlert != '' ) { 
-		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFocoContatos(operacao);');
+		showError('inform',msgAlert,'Alerta - Aimaro','bloqueiaFundo(divRotina);controlaFocoContatos(operacao);');
 	}
 	if ( operacao == 'TX' ){ controlaOperacaoContatos('TE'); }
 </script>

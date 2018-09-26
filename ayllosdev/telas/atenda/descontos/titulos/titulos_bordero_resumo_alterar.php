@@ -61,7 +61,7 @@
     // Se ocorrer um erro, mostra crítica
 	if ($root->erro){
 		echo "<script>";
-       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Ayllos","hideMsgAguardo()");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
+       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Aimaro","hideMsgAguardo()");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
 		echo "</script>";
 		exit;
 	}
@@ -81,7 +81,7 @@
     // Se ocorrer um erro, mostra crítica
 	if ($root->erro){
 		echo "<script>";
-       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Ayllos","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
+       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Aimaro","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
 		echo "</script>";
 	}
 
@@ -99,7 +99,7 @@
     // Se ocorrer um erro, mostra crítica
 	if ($root->erro){
 		echo "<script>";
-       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Ayllos","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
+       	echo 'showError("error","'.htmlentities($root->erro->registro->dscritic).'","Alerta - Aimaro","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
 		echo "</script>";
 		exit;
 	}
@@ -190,9 +190,9 @@
 
 	<!-- Botoes -->
 	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,3,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
-	<input type="button" class="botao" value="Remover T&iacute;tulo"  onClick="showConfirmacao('Deseja excluir o t&iacute;tulo do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','removerTituloResumo();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');"/>
+	<input type="button" class="botao" value="Remover T&iacute;tulo"  onClick="showConfirmacao('Deseja excluir o t&iacute;tulo do border&ocirc;?','Confirma&ccedil;&atilde;o - Aimaro','removerTituloResumo();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');"/>
 	<input type="button" class="botao" value="Ver Detalhes da An&aacute;lise" onClick="mostrarDetalhesPagador();return false;"/>
-	<input type="button" class="botao" value="Confirmar Altera&ccedil;&atilde;o" onClick="showConfirmacao('Confirma altera&ccedil;&atilde;o do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','confirmarAlteracao();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
+	<input type="button" class="botao" value="Confirmar Altera&ccedil;&atilde;o" onClick="showConfirmacao('Confirma altera&ccedil;&atilde;o do border&ocirc;?','Confirma&ccedil;&atilde;o - Aimaro','confirmarAlteracao();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 </div>
 
 <script type="text/javascript">

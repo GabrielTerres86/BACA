@@ -38,14 +38,14 @@
 		$idquaprc = getByTagName($param->tags,'idquaprc');
 		
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false); 
 		}			
 
 	}else{				
 
 		if($idquaprc > 5){
 			echo "<script>";
-			echo "showError('inform','Opera&ccedil;&atilde;o inexistente! Favor informar uma opera&ccedil;&atilde;o v&aacute;lida.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\',5000)));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
+			echo "showError('inform','Opera&ccedil;&atilde;o inexistente! Favor informar uma opera&ccedil;&atilde;o v&aacute;lida.','Notifica&ccedil;&atilde;o - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\',5000)));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
 			echo "</script>";
 		}else{
 			$xml  = "";
@@ -61,11 +61,11 @@
 			$xmlObj = getObjectXML($xmlResult);
 
 			if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+				exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',"controlaOperacao('');",false); 
 			}
 
 			echo "<script>";
-			echo "showError('inform','Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o alterada com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
+			echo "showError('inform','Qualifica&ccedil;&atilde;o da Opera&ccedil;&atilde;o alterada com sucesso.','Notifica&ccedil;&atilde;o - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fechaRotina($(\'#divUsoGenerico\'),divRotina);');";		
 			echo "</script>";
 		}				
 	}

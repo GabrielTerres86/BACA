@@ -66,7 +66,7 @@
 	}
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$mtdErro,false);
 	}
 	
 	// Condicao para veriricar se apresenta mensagem para o usuario
@@ -80,7 +80,7 @@
 		}else{
 			$metodo .= addslashes($nmfuncao);
 		}	
-		exibirErro('inform',$xmlObj->roottag->tags[0]->attributes['DSMENSAG'],'Alerta - Ayllos',$metodo,false);		
+		exibirErro('inform',$xmlObj->roottag->tags[0]->attributes['DSMENSAG'],'Alerta - Aimaro',$metodo,false);		
 	}else{
 		echo $nmfuncao;
 	}

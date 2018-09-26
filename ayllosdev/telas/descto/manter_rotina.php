@@ -44,7 +44,7 @@ if ($operacao == 'VC') {
 }
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
 switch ($operacao) {
@@ -101,7 +101,7 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
     if (!empty($nmdcampo)) {
         $retornoAposErro = $retornoAposErro . " $('#" . $nmdcampo . "','#frmOpcao').focus();";
     }
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+    exibirErro('error', $msgErro, 'Alerta - Aimaro', $retornoAposErro, false);
 }
 
 // Associado
@@ -111,7 +111,7 @@ if ($operacao == 'BA') {
     echo "controlaAssociado();";
 } else if ($operacao == 'VC') {
     echo "hideMsgAguardo();";
-    echo "showConfirmacao('Confirmar alteracao?','Confirma&ccedil;&atilde;o - Ayllos','manterRotina(\'AC\');','estadoInicial();','sim.gif','nao.gif');";
+    echo "showConfirmacao('Confirmar alteracao?','Confirma&ccedil;&atilde;o - Aimaro','manterRotina(\'AC\');','estadoInicial();','sim.gif','nao.gif');";
 } else if ($operacao == 'AC') {
     echo "estadoInicial();";
 }

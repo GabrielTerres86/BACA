@@ -38,7 +38,7 @@
 				$nmdcampo = "nrrecben";
 			}
 					 
-			exibirErro('error',$msgErro,'Alerta - Ayllos','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
+			exibirErro('error',$msgErro,'Alerta - Aimaro','$(\'input\',\'#divBeneficio\').removeClass(\'campoErro\');unblockBackground(); $(\'#'.$nmdcampo.'\',\'#divBeneficio\').habilitaCampo(); focaCampoErro(\''.$nmdcampo.'\',\'divBeneficio\');',false);		
 								
 		}   
 		
@@ -49,7 +49,7 @@
 		// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 		function exibeErro($msgErro) {
 			echo 'hideMsgAguardo();';
-			echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+			echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 			exit();
 		}
 	}

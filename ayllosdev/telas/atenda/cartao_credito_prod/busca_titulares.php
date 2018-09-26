@@ -23,20 +23,20 @@
 	
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro);	
+		exibirErro('error',$msgError,'Alerta - Aimaro',$funcaoAposErro);	
 	}			
 	
 	// Verifica se o número da conta ou sequencial de titular foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro);	
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Aimaro',$funcaoAposErro);	
 	
 	$nrdconta = $_POST["nrdconta"];
 	$idseqttl = $_POST["idseqttl"];
 		
 	// Verifica se o número do titular é um inteiro válido
-	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($idseqttl)) exibirErro('error','Titular inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	
 	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 
 	// Monta o xml de requisição
 	$xmlGetCartao  = "";
@@ -67,7 +67,7 @@
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
+		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$funcaoAposErro,false);	
 	} 	
 
 	$idconfir = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;
@@ -75,7 +75,7 @@
 	
 	// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB
 	if ($idconfir == 1) {
-		echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false)");';
+		echo 'showError("inform","'.$dsmensag.'","Alerta - Aimaro","bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false)");';
 	} else{
 		$nrcgccpf = formatar($xmlObjCartao->roottag->tags[0]->tags[0]->tags[3]->cdata,'cpf',true);
 		$dsmensag = "Titular inexistente";
@@ -87,7 +87,7 @@
 			echo ('$("#nrdoccrd","#frmNovoCartao").val("'.$xmlObjCartao->roottag->tags[0]->tags[0]->tags[8]->cdata.'");');
 			echo ('$("#dtnasccr","#frmNovoCartao").val("'.$xmlObjCartao->roottag->tags[0]->tags[0]->tags[12]->cdata.'");');		
 		}else{
-			echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false)");';
+			echo 'showError("inform","'.$dsmensag.'","Alerta - Aimaro","bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false)");';
 		}		
 	}		
 ?>

@@ -54,7 +54,7 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
 		$mtdErro = 'bloqueiaFundo( $(\'#divUsoGenerico\') ); $(\'#operauto\',\'#frmSenha\').focus();';
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}	
 	
 	echo "hideMsgAguardo();	fechaRotina($('#divUsoGenerico')); bloqueiaFundo($('#divRotina'));";

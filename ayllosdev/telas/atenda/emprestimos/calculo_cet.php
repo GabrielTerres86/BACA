@@ -77,7 +77,7 @@ $txcetano = $xmlObjeto->roottag->tags[0]->attributes['TXCETANO'];
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
     $mtdErro = "bloqueiaFundo(divRotina);controlaOperacao('" . $operacao . "');";
-    exibirErro('error', $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos: Calculo do CET', $mtdErro, false);
+    exibirErro('error', $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Aimaro: Calculo do CET', $mtdErro, false);
 }
 echo "arrayProposta['percetop'] = '" . $txcetano . "';";
 echo "$('#percetop','#frmNovaProp').val('" . $txcetano . "');";

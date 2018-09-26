@@ -16,11 +16,9 @@
 	require_once('../../../../includes/funcoes.php');
 	require_once('../../../../class/xmlfile.php');
 	
-	/*
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"D")) <> "") {
-		exibirErro('error',htmlentities($msgError),'Alerta - Ayllos',"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",false);
+		exibirErro('error',htmlentities($msgError),'Alerta - Aimaro',"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",false);
 	}
-	*/
 	
 	isPostMethod();		
 	  
@@ -46,9 +44,9 @@
 		if ($msgErro == "") {
 			$msgErro = $xmlObjRenovaLimite->roottag->tags[0]->cdata;
 		}
-		exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))",false);
+		exibirErro('error',htmlentities($msgErro),'Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))",false);
 	}
 	
-	echo "showError(\"inform\",\"Opera&ccedil;&atilde;o efetuada com sucesso!\",\"Alerta - Ayllos\",\"fechaRotina($('#divUsoGenerico'),divRotina);carregaCheques();\");";
+	echo "showError(\"inform\",\"Opera&ccedil;&atilde;o efetuada com sucesso!\",\"Alerta - Aimaro\",\"fechaRotina($('#divUsoGenerico'),divRotina);carregaCheques();\");";
 	
 ?>

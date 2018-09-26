@@ -51,19 +51,19 @@
 		
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));',false);
 	}else{
 		/*if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 0){
-			echo 'showConfirmacao("Confirma atualiza&ccedil;&atilde;o dos respons&aacute;veis pela assinatura conjunta?","Confirma&ccedil;&atilde;o - Ayllos","salvarRepresentantes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+			echo 'showConfirmacao("Confirma atualiza&ccedil;&atilde;o dos respons&aacute;veis pela assinatura conjunta?","Confirma&ccedil;&atilde;o - Aimaro","salvarRepresentantes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}else{
-			echo 'showConfirmacao("Essa conta possui transações pendentes de aprovação.<br><br>Se o poder de assinatura conjunta for modificado essas transações<br>não poderão ser aprovadas e ficarão pendentes até o prazo de expiração.<br><br>Confirma a alteração no poder de assinatura conjunta?","Confirma&ccedil;&atilde;o - Ayllos","salvarRepresentantes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+			echo 'showConfirmacao("Essa conta possui transações pendentes de aprovação.<br><br>Se o poder de assinatura conjunta for modificado essas transações<br>não poderão ser aprovadas e ficarão pendentes até o prazo de expiração.<br><br>Confirma a alteração no poder de assinatura conjunta?","Confirma&ccedil;&atilde;o - Aimaro","salvarRepresentantes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}*/
 		if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 0){
-			echo 'showConfirmacao("H&aacute; transa&ccedil;&otilde;es pendentes de aprova&ccedil;&atilde;o. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+			echo 'showConfirmacao("H&aacute; transa&ccedil;&otilde;es pendentes de aprova&ccedil;&atilde;o. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 1){
-			echo 'showConfirmacao("Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+			echo 'showConfirmacao("Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 2){
-			echo 'showConfirmacao("Revise a senha de acesso a Conta Online do novo respons&aacute;vel pela assinatura conjunta. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+			echo 'showConfirmacao("Revise a senha de acesso a Conta Online do novo respons&aacute;vel pela assinatura conjunta. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}
 	}
 	

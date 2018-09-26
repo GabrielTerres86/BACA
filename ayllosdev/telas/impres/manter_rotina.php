@@ -58,7 +58,7 @@ switch ($operacao) {
 }
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
-    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
+    exibirErro('error', $msgError, 'Alerta - Aimaro', '', false);
 }
 
 if ($tpextrat == '10') {
@@ -117,7 +117,7 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
     if (!empty($nmdcampo)) {
         $retornoAposErro = $retornoAposErro . " $('#" . $nmdcampo . "').focus();";
     }
-    exibirErro('error', $msgErro, 'Alerta - Ayllos', $retornoAposErro, false);
+    exibirErro('error', $msgErro, 'Alerta - Aimaro', $retornoAposErro, false);
 }
 
 $dsextrat = '';
@@ -163,7 +163,7 @@ if (($cddopcao == 'I' and $operacao == 'VO')) {
 if (!empty($msgretor)) {
 
     $sim = $flgemiss == "no" ? "manterRotina(\'GD\');" : "controlaLayout(\'" . $operacao . "\');";
-    echo "showConfirmacao('" . $msgretor . "','Confirma&ccedil;&atilde;o - Ayllos','" . $sim . "','controlaLayout(\'NO\');','sim.gif','nao.gif');";
+    echo "showConfirmacao('" . $msgretor . "','Confirma&ccedil;&atilde;o - Aimaro','" . $sim . "','controlaLayout(\'NO\');','sim.gif','nao.gif');";
 } else if ($operacao == 'VO' and $flgemiss == 'no') {
     echo "manterRotina('GD');";
 } else {

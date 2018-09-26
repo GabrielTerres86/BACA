@@ -125,7 +125,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS140(pr_cdcooper  IN NUMBER            
                07/12/2015 - Adicionado validacao para limpar o buffer da string de xml
                             quando montar as tags com os totais. (Douglas - Chamado 368794)
               
-               15/05/2017 - Projeto Revitalização Sistemas - Andreatta (MOUTs)  
+               15/05/2018 - Projeto Revitalização Sistemas - Transformação do programa
+			                em paralelo por Agência - Andreatta (MOUTs)
               
                15/07/2018 - Proj. 411.2, desconsiderar as Aplicações Programadas. (Cláudio - CIS Corporate)  
 
@@ -1332,7 +1333,8 @@ BEGIN
         LOOP
           BEGIN
             EXIT WHEN vr_idxindc IS NULL;
-
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
             -- Sempre irá testar o índice futuro para executar atribuição de dados pelo índice anterior
             IF vr_tab_craprpp(vr_idxindc).nrdconta = rw_crapass.nrdconta THEN
               -- Passa para o próximo registro
@@ -1344,7 +1346,7 @@ BEGIN
               END IF;
 
               -- Calcular o saldo até a data do movimento
-              IF vr_tab_craprpp(vr_idxindc).cdprodut > 0 THEN
+              IF vr_tab_craprpp(vr_idxindc).cdprodut < 1 THEN
               	      vr_rpp_vlsdrdpp := vr_tab_craprpp(vr_idxindc).vlslfmes;
 	     ELSE
               apli0001.pc_calc_poupanca(pr_cdcooper  => pr_cdcooper
@@ -1913,14 +1915,14 @@ BEGIN
                                     ,pr_des_erro => vr_dscritic);                        
                                     
       ELSE
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
-        END IF;
+      END IF;
       END IF;
       
       -- Efetuar rollback

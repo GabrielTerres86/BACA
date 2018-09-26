@@ -93,7 +93,7 @@
 	
 	if ($aux_flgsaldo == "no")
 		// Mensagem para confirmar se realiza a integralizacao mesmo com saldo insuficiente
-		echo 'showConfirmacao("Saldo c/c insuficiente para esta opera&ccedil;&atilde;o. Confirma a opera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","mostraSenha()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Saldo c/c insuficiente para esta opera&ccedil;&atilde;o. Confirma a opera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Aimaro","mostraSenha()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	else {
 		
 		$metodo = "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));";
@@ -102,7 +102,7 @@
 			$metodo .= "encerraRotina();";
 		}
 		
-		echo 'showError("inform","Integraliza&ccedil;&atilde;o realizada com sucesso!","Alerta - Ayllos","' . $metodo . '");';
+		echo 'showError("inform","Integraliza&ccedil;&atilde;o realizada com sucesso!","Alerta - Aimaro","' . $metodo . '");';
 		
 		echo '$("#vintegra","#divIntegralizacao").val("");';
 	}	
@@ -110,7 +110,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}	
 	

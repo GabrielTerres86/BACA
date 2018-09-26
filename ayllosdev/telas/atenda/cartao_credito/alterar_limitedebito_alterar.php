@@ -114,7 +114,7 @@
 	
 	// Mostra a mensagem de informa&ccedil;&atilde;o para verificar atualiza&ccedil;&atilde;o cadastral se for adm BB
 	if ($idconfir == 1) {
-		echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","");';
+		echo 'showError("inform","'.$dsmensag.'","Alerta - Aimaro","");';
 	} else if ($idconfir == 2){
 		exibeErro($dsmensag);
 	}	
@@ -129,7 +129,7 @@
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 

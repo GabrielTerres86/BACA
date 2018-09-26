@@ -82,7 +82,7 @@ BEGIN
                             para 8, conforme chamado #233714) em seus conteúdos, pois não estavam suportando o tamanho (Carlos)
 */
     DECLARE
-      -- Código do programa
+      -- Codigo do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS185';
       -- Tratamento de erros
       vr_exc_erro exception;
@@ -475,7 +475,7 @@ BEGIN
             end if;
 
             if trim(rw_crapbpr.nrdplaca) is not null then
-              vr_rel_nmprimtl := vr_rel_nmprimtl || ', placa ' || gene0002.fn_mask(rpad(rw_crapbpr.nrdplaca,7,' '),'zzz-zzzz');
+              vr_rel_nmprimtl := vr_rel_nmprimtl || ', placa ' || trim(rw_crapbpr.nrdplaca);
             else
               vr_rel_nmprimtl := vr_rel_nmprimtl || ' .';
             end if;

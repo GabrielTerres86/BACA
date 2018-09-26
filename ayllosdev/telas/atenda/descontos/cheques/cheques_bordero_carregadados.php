@@ -119,7 +119,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -224,8 +224,8 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30; 
 			aux_inconfi6 = 51;
-			showConfirmacao("Deseja liberar o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscChq('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("Deseja liberar o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Aimaro","liberaAnalisaBorderoDscChq('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
 <?php } elseif ($cddopcao == "E") { ?>
-			showConfirmacao("Deseja excluir o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","ValidExcluirBorderoDscChq()","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("Deseja excluir o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Aimaro","ValidExcluirBorderoDscChq()","metodoBlock()","sim.gif","nao.gif");
 <?php } ?>
 </script>

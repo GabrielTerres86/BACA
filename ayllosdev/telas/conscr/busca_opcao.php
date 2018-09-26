@@ -29,7 +29,7 @@
 	$cdsubmod = (isset($_POST['cdsubmod'])) ? $_POST['cdsubmod'] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	switch( $cddopcao ) {
@@ -90,7 +90,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 	
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 
 	$registro 	= $xmlObj->roottag->tags[0]->tags;

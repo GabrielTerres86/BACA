@@ -3,11 +3,11 @@
 	/************************************************************************
 	 Fonte: titulos_restricoes.php                                       
 	 Autor: Jaison
-	 Data : Junho/2016                Ultima Alteracao: 25/08/2016
+	 Data : Junho/2016                Ultima Alteracao: 
 	                                                                  
 	 Objetivo  : Mostrar as restricoes de descontos de titulos
 	                                                                  	 
-	 Alteracoes: 25/08/2016 - Remocao de aprovacao do coordenador na analise. (Jaison/James)
+	 Alteracoes: 
 				 
 	************************************************************************/
 	
@@ -83,7 +83,7 @@
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
 	}
@@ -117,13 +117,7 @@
 
 <div id="divBotoes">
     <input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onclick="carregaBorderosTitulos();return false;" />
-    <?php
-        if ($cddopcao == 'L') { // Liberacao
-            ?><input type="image" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="pedeSenhaCoordenador(2,'liberaAnalisaBorderoDscTit(\'<?php echo $cddopcao; ?>\',\'<?php echo $inconfir; ?>\',\'<?php echo $inconfi2; ?>\',\'<?php echo $inconfi3; ?>\',\'<?php echo $inconfi4; ?>\',\'<?php echo $inconfi5; ?>\',\'<?php echo $inconfi6; ?>\',\'<?php echo $indentra; ?>\',\'<?php echo $indrestr; ?>\');','divRotina');return false;" /><?php
-        } else { // Analise - 'N'
-            ?><input type="image" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="liberaAnalisaBorderoDscTit('<?php echo $cddopcao; ?>','<?php echo $inconfir; ?>','<?php echo $inconfi2; ?>','<?php echo $inconfi3; ?>','<?php echo $inconfi4; ?>','<?php echo $inconfi5; ?>','<?php echo $inconfi6; ?>','<?php echo $indentra; ?>','<?php echo $indrestr; ?>');" /><?php
-        }
-    ?>
+	<input type="image" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="pedeSenhaCoordenador(2,'liberaAnalisaBorderoDscTit(\'<?php echo $cddopcao; ?>\',\'<?php echo $inconfir; ?>\',\'<?php echo $inconfi2; ?>\',\'<?php echo $inconfi3; ?>\',\'<?php echo $inconfi4; ?>\',\'<?php echo $inconfi5; ?>\',\'<?php echo $inconfi6; ?>\',\'<?php echo $indentra; ?>\',\'<?php echo $indrestr; ?>\');','divRotina');return false;" />
 </div>
 
 <script type="text/javascript">
