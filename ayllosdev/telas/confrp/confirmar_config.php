@@ -44,7 +44,7 @@
 	$xmlConfirmaConf .= "</Root>";
   
 	// Executa script para envio do XML	
-	$xmlResult = mensageria($xmlConfirmaConf, "TELA_CONFRP", "CONFIRMA_CONF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xmlConfirmaConf, "CONFRP", "CONFIRMA_CONF", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	
 	$xmlObjConfirmaConf = getObjectXML($xmlResult);
 	
