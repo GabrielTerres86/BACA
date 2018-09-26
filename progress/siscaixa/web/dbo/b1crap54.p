@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 24/05/2018
+   Data    : Marco/2001                      Ultima atualizacao: 28/08/2018
 
    Dados referentes ao programa:
 
@@ -74,6 +74,9 @@
 
                24/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                             norturno rodando (Douglas Pagel - AMcom).
+                            
+               28/08/2018 - Alteraçoes para Prj. Acelera, tratamento do histórico 2553
+                            (Jean Michel / Kledir Dalçóquio).
                             
 ............................................................................ **/
 
@@ -184,7 +187,7 @@ PROCEDURE valida-cheque-avulso-conta:
   
     FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper NO-LOCK NO-ERROR.
  
-    IF   p-opcao = "R"   THEN /* Recibo */
+    IF   p-opcao = "R" OR p-opcao = "BR" THEN /* Recibo */
          DO:
              IF  p-nro-conta = 0  THEN 
                  DO:
@@ -514,8 +517,9 @@ PROCEDURE valida-permissao-saldo-conta:
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
                 
-    IF   p-opcao = "C"   THEN
+    IF   p-opcao = "B" OR p-opcao = "C"  THEN
                     DO: 
+                    
             RUN sistema/generico/procedures/b1wgen0025.p 
                  PERSISTENT SET h-b1wgen0025.
                         
@@ -815,6 +819,13 @@ PROCEDURE atualiza-cheque-avulso:
             RETURN "NOK".
         END.
 
+    IF (p-opcao = "R" )  THEN
+      ASSIGN aux_cdhistor = 22.
+    ELSE IF (p-opcao = "B" OR p-opcao = "BR") THEN  
+      ASSIGN aux_cdhistor = 2553.
+    ELSE
+      ASSIGN aux_cdhistor = 1030.
+      
     CREATE craplcm.
     ASSIGN craplcm.cdcooper = crapcop.cdcooper
            craplcm.dtmvtolt = crapdat.dtmvtocd
@@ -824,10 +835,7 @@ PROCEDURE atualiza-cheque-avulso:
            craplcm.nrdconta = p-nro-conta
            craplcm.nrdocmto = p-nrdocto
            craplcm.vllanmto = p-valor 
-           craplcm.cdhistor = IF   (p-opcao = "R" )   THEN   
-                                   22
-                              ELSE  
-                                   1030
+           craplcm.cdhistor = aux_cdhistor
            craplcm.nrseqdig = craplot.nrseqdig + 1 
            craplcm.nrdctabb = p-nro-conta
            craplcm.nrdctitg = STRING(p-nro-conta,"99999999")
@@ -919,10 +927,14 @@ PROCEDURE atualiza-cheque-avulso:
                            string(p-cod-agencia,"999") +
                             "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
                            substr(p-cod-operador,1,10)  
-           c-literal[4]  = " " 
-           c-literal[5]  = "     ** RECIBO DE SAQUE AVULSO " +
-            string(p-nrdocto,"ZZZ,ZZ9")  + " **" 
-           c-literal[6]  = " " 
+           c-literal[4]  = " ". 
+           
+           IF aux_cdhistor <> 2553 THEN
+             ASSIGN c-literal[5]  = "     ** RECIBO DE SAQUE AVULSO " + STRING(p-nrdocto,"ZZZ,ZZ9")  + " **".
+           ELSE
+             ASSIGN c-literal[5]  = "     ** RECIBO DE PAGAMENTO " + STRING(p-nrdocto,"ZZZ,ZZ9")  + " **".
+             
+           ASSIGN c-literal[6]  = " " 
            c-literal[7]  = "CONTA: "    +   
            trim(string(craplcm.nrdconta,"zzzz,zzz,9"))
            c-literal[8]  = "       "    +   trim(c-nome-titular1)
@@ -1034,7 +1046,7 @@ PROCEDURE atualiza-cheque-avulso:
     RELEASE craplcm.
     RELEASE craplot.
 
-    IF crapcop.flsaqpre = FALSE THEN DO:
+    IF crapcop.flsaqpre = FALSE AND aux_cdhistor <> 2553 THEN DO:
     
     /*VERIFICACAO TARIFAS DE SAQUE*/
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
@@ -1098,8 +1110,12 @@ PROCEDURE atualiza-cheque-avulso:
         ASSIGN aux_cdhistor = 22
                aux_idtipcar = 0
                aux_nrcartao = 0.
-    ELSE  
+    ELSE IF (p-opcao = "C" )  THEN
         ASSIGN aux_cdhistor = 1030
+               aux_idtipcar = p-idtipcar
+               aux_nrcartao = p-nrcartao.
+    ELSE IF (p-opcao = "B" OR p-opcao = "BR")  THEN
+        ASSIGN aux_cdhistor = 2553
                aux_idtipcar = p-idtipcar
                aux_nrcartao = p-nrcartao.
                

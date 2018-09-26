@@ -4,7 +4,7 @@
    Sistema : CAIXA ON-LINE - Cooperativa de Credito
    Sigla   : CRED
    Autor   :               
-   Data    :                                   Ultima atualizacao: 18/03/2015
+   Data    :                                   Ultima atualizacao: 28/08/2018
 
    Dados referentes ao programa:
 
@@ -23,6 +23,9 @@
                13/12/2013 - Adicionado validate para tabela crapcbl (Tiago). 
                
                18/03/2015 - Melhoria SD 260475 (Lunelli).
+               
+               28/08/2018 - Alteaçao do label do botao "Saque" para "Debito C/C",
+                            Prj. Acelera (Jean Michel / Kledir Dalçóquio).
                
 ..............................................................................*/
 
@@ -345,13 +348,13 @@ PROCEDURE process-web-request :
            {&OUT}
                '  <tr>' SKIP
                 '    <td width="15%" align="right" class="linhaform" nowrap>&nbsp;Saldo:</td>' SKIP
-                '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco + DEC(get-value("v_vlr_sacar")),">>>,>>>,>>9.99-"))'" style="BACKGROUND-COLOR:RED; text-align: right; font-weight: bold; color: white"> &nbsp;&nbsp;<input type="submit" value="Saque" name="saque" id="saque" class="button1"></td>' SKIP
+                '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco + DEC(get-value("v_vlr_sacar")),">>>,>>>,>>9.99-"))'" style="BACKGROUND-COLOR:RED; text-align: right; font-weight: bold; color: white"> &nbsp;&nbsp;<input style="width: 80px;" type="submit" value="Debito C/C" name="saque" id="saque" class="button1"></td>' SKIP
                '</tr>' SKIP.
       ELSE
            {&OUT}
                '  <tr>' SKIP
                 '    <td width="15%" align="right" class="linhaform" nowrap>&nbsp;Saldo:</td>' SKIP
-                '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco + DEC(get-value("v_vlr_sacar")),">>>,>>>,>>>,>>9.99-"))'" disabled style="text-align: right"> &nbsp;&nbsp;<input type="submit" value="Saque" name="saque" id="saque" class="button1"></td>' SKIP
+                '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco + DEC(get-value("v_vlr_sacar")),">>>,>>>,>>>,>>9.99-"))'" disabled style="text-align: right"> &nbsp;&nbsp;<input style="width: 80px;" type="submit" value="Debito C/C" name="saque" id="saque" class="button1"></td>' SKIP
                '</tr>' SKIP.  
   END.
   ELSE
@@ -397,7 +400,7 @@ PROCEDURE process-web-request :
         /* Saque */
         ASSIGN tel_vlr_sacar = get-value("v_vlr_sacar").
 
-        IF get-value("saque") = "Saque"  THEN DO:
+        IF get-value("saque") = "Debito C/C"  THEN DO:
 
           IF  crapcbl.nrdconta > 0 THEN
               DO:
@@ -415,7 +418,11 @@ PROCEDURE process-web-request :
           
           {&OUT} '<script>this.opener.location.href = "crap054.html?v_conta="      + "' STRING(crapcbl.nrdconta) '" +
                                                                   "&v_nome= "      + "' v_nome '" +
-                                                                  "&v_vlr_sacar= " + "' TRIM(get-value("v_vlr_sacar")) '"</script>'.
+                                                                  "&cdhistor= "      + "2553" +
+                                                                  "&v_vlr_sacar= " + "' STRING(ABSOLUTE(DECIMAL(TRIM(get-value("v_troco")))),">>>,>>>,>>9.99") '" +
+                                                                  "&v_flgbl=1";' 
+                 'window.close();'
+                 '</script>'.
         END.
 
       END.
@@ -467,13 +474,13 @@ PROCEDURE process-web-request :
                {&OUT}
                    '  <tr>' SKIP
                     '    <td width="15%" align="right" class="linhaform" nowrap>&nbsp;Saldo:</td>' SKIP
-                    '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco,">>>,>>>,>>9.99-"))'" style="BACKGROUND-COLOR:RED; text-align: right; font-weight: bold; color: white"> &nbsp;&nbsp;<input type="submit" value="Saque" name="saque" id="saque" class="button1"></td>' SKIP
+                    '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco,">>>,>>>,>>9.99-"))'" style="BACKGROUND-COLOR:RED; text-align: right; font-weight: bold; color: white"> &nbsp;&nbsp;<input style="width: 80px;" type="submit" value="Debito C/C" name="saque" id="saque" class="button1"></td>' SKIP
                    '</tr>' SKIP.
           ELSE
                {&OUT}
                    '  <tr>' SKIP
                     '    <td width="15%" align="right" class="linhaform" nowrap>&nbsp;Saldo:</td>' SKIP
-                    '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco,">>>,>>>,>>>,>>9.99-"))'" disabled style="text-align: right"> &nbsp;&nbsp;<input type="submit" value="Saque" name="saque" id="saque" class="button1"></td>' SKIP
+                    '    <td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" id="v_troco" size="21" class="input" value="'TRIM(string(de_troco,">>>,>>>,>>>,>>9.99-"))'" disabled style="text-align: right"> &nbsp;&nbsp;<input style="width: 80px;" type="submit" value="Debito C/C" name="saque" id="saque" class="button1"></td>' SKIP
                    '</tr>' SKIP.
 
           IF get-value("ok") <> "" THEN DO:

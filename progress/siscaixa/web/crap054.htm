@@ -3,15 +3,15 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 16/01/2018
+   Data    : Marco/2001                      Ultima atualizacao: 28/08/2018
 
   Alteracoes: 	03/07/2009 - Aumento do campo Operador (Diego).
   
-				21/08/2009 - Aumento do campo Código(operador) (Diego). 	
+                21/08/2009 - Aumento do campo Código(operador) (Diego). 	
 			  
-				13/12/2011 - Saque com cartao magnetico (Gabriel).
+                13/12/2011 - Saque com cartao magnetico (Gabriel).
               
-				19/08/2013 - Alterações p/ visualização de informações no PINPAD (Jean Michel).
+                19/08/2013 - Alterações p/ visualização de informações no PINPAD (Jean Michel).
                 
                 25/09/2013 - Alterações p/ rotina de saque com recibo (Jean Michel).
                 
@@ -20,18 +20,23 @@
                 08/11/2013 - Nova forma de chamar as agências, de PAC agora 
                              a escrita será PA (Guilherme Gielow).
 
-				23/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
+                23/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                              PinPad Novo (Lucas Lunelli - [PROJ290])
 
                 05/09/2016 - Melhoria para usar copiar e colar o numero de conta
-			                 nas rotinas do caixa online SD 474875 (Tiago/Elton).               
+                             nas rotinas do caixa online SD 474875 (Tiago/Elton).               
     
                 12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                 
+                
                 03/11/2016 - Ajustes para TAB e ESC funcionarem de acrodo com o padrão
                              de navegação e ajustado a chamada do callBlass para callBLass 
                              pq nao funcionava (Tiago/Elton SD535217).
 							 
-				16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)			   							 
+                16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)		
+                
+                28/08/2018 - Inclusao de novo campo de tipo de saque (Boletim),
+                             Prj. Acelera (Jean Michel / Kledir Dalçóquio)
+                
 ----------------------------------------------------------------------------------------------->
 
 <html>
@@ -155,11 +160,23 @@ function replaceAll(strTexto, strAntiga, strNova) {
     *@autor: Jean Michel - 05/07/2013
 */
 function coopConfSaque(){
-    var opcao = (document.getElementById('v_opcao1').checked ) ? "R" : "C";
-    if(opcao == "C"){
+    
+    var opcao = "";
+    
+    if(document.getElementById('v_opcao1').checked){
+      opcao = "B";
+    }else if(document.getElementById('v_opcao2').checked){
+      opcao = "BR";
+    }else if(document.getElementById('v_opcao3').checked){
+      opcao = "C";
+    }else if(document.getElementById('v_opcao4').checked){
+      opcao = "R";
+    }
+        
+    if(opcao == "C" || opcao == "B"){
         document.getElementById('divConfirmaSaque').style.display = "none";
         bematech.PinpadLimpaTela(100);
-		solicitaSenhaPinpadNovo('');
+        solicitaSenhaPinpadNovo('');
         document.getElementById('v_senhaCartao').focus();
     }
 }
@@ -171,14 +188,25 @@ function coopConfSaque(){
     *@autor: Jean Michel - 09/06/2013
 */
 function confirmaSaque(){
-    var opcao = (document.getElementById('v_opcao1').checked ) ? "R" : "C";
+    var opcao = "";
+    
+    if(document.getElementById('v_opcao1').checked){
+      opcao = "B";
+    }else if(document.getElementById('v_opcao2').checked){
+      opcao = "BR";
+    }else if(document.getElementById('v_opcao3').checked){
+      opcao = "C";
+    }else if(document.getElementById('v_opcao4').checked){
+      opcao = "R";
+    }
+    
     var dblValorSaque = document.getElementById('v_valor').value;
     var strValorSaque = "";
     var strEspacoSaque = "";
     
-    if (opcao == "C") {
+    if (opcao == "C" || opcao == "B"){
         bematech.PinpadLimpaTela(0);
-    	bematech.PinpadPosicionaEscreveDisplay(1,1,"Valor do Saque",300);
+        bematech.PinpadPosicionaEscreveDisplay(1,1,"Valor do Saque",300);
         
         strValorSaque = dblValorSaque;
         intQtdCaractSaque = strValorSaque.length;
@@ -195,6 +223,13 @@ function confirmaSaque(){
     	
     	document.getElementById('divConfirmaSaque').style.display = "block";
     	document.getElementById('btnConfirmaSaque').focus();
+		if (opcao == "C"){
+			document.getElementById('msgConfirma').innerHTML = "Cooperado Confirma Saque?";
+		}else{
+			document.getElementById('msgConfirma').innerHTML = "Cooperado Confirma Pagamento?";
+		}
+    } else {
+		document.getElementById('sok').focus();
     }
     
 	
@@ -208,7 +243,18 @@ function confirmaSaque(){
 */
 function inicializa() {
 		
-	var opcao = (document.getElementById('v_opcao1').checked ) ? "R" : "C";
+    var opcao = "";
+    
+    if(document.getElementById('v_opcao1').checked){
+      opcao = "B";
+    }else if(document.getElementById('v_opcao2').checked){
+      opcao = "BR";
+    }else if(document.getElementById('v_opcao3').checked){
+      opcao = "C";
+    }else if(document.getElementById('v_opcao4').checked){
+      opcao = "R";
+    }
+    
     var numCartao = document.getElementById('v_cartao').value;
     var strSenha = document.getElementById('v_senhaCartao').value;
     var vConta = document.getElementById('v_conta').value;
@@ -222,84 +268,84 @@ function inicializa() {
     var intQtdCaractSaldo = 0;
     var intLimpaSenha = 0;
 
-	bematech.PinpadLimpaTela(0);
-    document.getElementById('v_opcao1').focus;
-    
-	modelaOpcao(opcao,false);
-	
+    bematech.PinpadLimpaTela(0);
+	document.getElementById('v_opcao1').focus();
+		
+	modelaOpcao(opcao,false,false,false);
+
     if(numCartao != "" && numCartao != null){
         numCartao = "S";
     }else{
         numCartao = "N";
     }
-
+  
     //Verifica se opção é cartão e se já foi passado na leitora
-    if(opcao == "C" && numCartao == "S" && vConta != "" && strSenha == ""){
+    if((opcao == "C" || opcao == "B") && numCartao == "S" && vConta != "" && strSenha == ""){
+      
         document.getElementById('divCartao').display = 'block';
         intSaldoAtual = replaceAll(dblSaldoAtual, ".", "");
         intSaldoAtual = parseInt(intSaldoAtual);
         
-		// Tenta conectar com PinPad novo
-		cnxPinpad = conexaoPinpadNovo(cnxPinpad);
+      // Tenta conectar com PinPad novo
+      cnxPinpad = conexaoPinpadNovo(cnxPinpad);
 		
-        if(intSaldoAtual > 9999999){
+      if(intSaldoAtual > 9999999){
             
-            bematech.PinpadPosicionaEscreveDisplay(1,1,"Saldo Disponivel",0);
+        bematech.PinpadPosicionaEscreveDisplay(1,1,"Saldo Disponivel",0);
 						            
-            strSaldoFinal = dblSaldoAtual;
-            intQtdCaractSaldo = strSaldoFinal.length;
+        strSaldoFinal = dblSaldoAtual;
+        intQtdCaractSaldo = strSaldoFinal.length;
     
-            //Alinhamento de texto Direita -> Esquerda Pinpad
+        //Alinhamento de texto Direita -> Esquerda Pinpad
 
-            while(intQtdCaractSaldo < 16){
-               strSaldoFinal = "";                       
-               strEspacoSaldo = strEspacoSaldo + " ";
-               strSaldoFinal = strEspacoSaldo + dblSaldoAtual;
-               intQtdCaractSaldo = strSaldoFinal.length;
-            }
+        while(intQtdCaractSaldo < 16){
+          strSaldoFinal = "";                       
+          strEspacoSaldo = strEspacoSaldo + " ";
+          strSaldoFinal = strEspacoSaldo + dblSaldoAtual;
+          intQtdCaractSaldo = strSaldoFinal.length;
+        }
     
-			bematech.PinpadPosicionaEscreveDisplay(2,1,strSaldoFinal,300);
-        }else{
+        bematech.PinpadPosicionaEscreveDisplay(2,1,strSaldoFinal,300);
+      }else{
             
-            strContaFinal = "Cta:" + strEspacoConta + vConta;
-            intQtdCaractConta = strContaFinal.length;
+        strContaFinal = "Cta:" + strEspacoConta + vConta;
+        intQtdCaractConta = strContaFinal.length;
             
-            //Alinhamento de texto Direita -> Esquerda Pinpad
+        //Alinhamento de texto Direita -> Esquerda Pinpad
 
-            while(intQtdCaractConta < 16){
-               strContaFinal = "";                       
-               strEspacoConta = strEspacoConta + " ";
-               strContaFinal = "Cta:" + strEspacoConta + vConta;
-               intQtdCaractConta = strContaFinal.length; 
-            }
+        while(intQtdCaractConta < 16){
+          strContaFinal = "";                       
+          strEspacoConta = strEspacoConta + " ";
+          strContaFinal = "Cta:" + strEspacoConta + vConta;
+          intQtdCaractConta = strContaFinal.length; 
+        }
             
-			// Verifica se é utilizado PinPad Novo
-			if (cnxPinpad == false) {
-			bematech.PinpadPosicionaEscreveDisplay(1,1,strContaFinal,200);
-			}
+        // Verifica se é utilizado PinPad Novo
+        if (cnxPinpad == false) {
+          bematech.PinpadPosicionaEscreveDisplay(1,1,strContaFinal,200);
+        }
 			
-            strSaldoFinal = "Sld:" + strEspacoSaldo + dblSaldoAtual;
-            intQtdCaractSaldo = strSaldoFinal.length;
+        strSaldoFinal = "Sld:" + strEspacoSaldo + dblSaldoAtual;
+        intQtdCaractSaldo = strSaldoFinal.length;
     
-            //Alinhamento de texto Direita -> Esquerda Pinpad
+        //Alinhamento de texto Direita -> Esquerda Pinpad
 
-            while(intQtdCaractSaldo < 16){
-               strSaldoFinal = "";                       
-               strEspacoSaldo = strEspacoSaldo + " ";
-               strSaldoFinal = "Sld:" + strEspacoSaldo + dblSaldoAtual;
-               intQtdCaractSaldo = strSaldoFinal.length; 
-            }
+        while(intQtdCaractSaldo < 16){
+          strSaldoFinal = "";                       
+          strEspacoSaldo = strEspacoSaldo + " ";
+          strSaldoFinal = "Sld:" + strEspacoSaldo + dblSaldoAtual;
+          intQtdCaractSaldo = strSaldoFinal.length; 
+        }
    
-			// Verifica se é utilizado PinPad Novo
-			if (cnxPinpad == false) {
-			bematech.PinpadPosicionaEscreveDisplay(2,1,strSaldoFinal,600);
+        // Verifica se é utilizado PinPad Novo
+        if (cnxPinpad == false) {
+          bematech.PinpadPosicionaEscreveDisplay(2,1,strSaldoFinal,600);
         } 
 						
-			if (cnxPinpad != false) {
-				escreveDadosCoopPinPadNovo(cnxPinpad, strContaFinal, strSaldoFinal );
-			}
-			
-        } 		
+        if (cnxPinpad != false) {
+          escreveDadosCoopPinPadNovo(cnxPinpad, strContaFinal, strSaldoFinal );
+        }			
+      }
     }
 }
 
@@ -311,21 +357,23 @@ function inicializa() {
 */
 function selectOpcao (opcao) {
 
-	if (opcao == "C"){
-	
+	if (opcao == "C" || opcao == "B"){	
 		cnxPinpad = conexaoPinpadNovo(cnxPinpad);
 		if (cnxPinpad != false && typeof cnxPinpad != 'undefined') {
 			document.getElementById('v_cartao').focus();
 		}
-	}
-	if (opcao == "R"){
+	}else{
 		cnxPinpad = fechaConexaoPinpadNovo(cnxPinpad);
 	}
 	
-    //Este trecho de codigo deve ser mantido para que não gere erro de senha incorreta de forma errada
-    document.action.ok.value='';    
+  //Este trecho de codigo deve ser mantido para que não gere erro de senha incorreta de forma errada
+  document.action.ok.value='';    
 	bematech.PinpadLimpaTela(0); 
-	modelaOpcao(opcao,true);
+	if (document.action.v_flgbl.value == "1"){
+		modelaOpcao(opcao,false,true,true);
+	} else {
+		modelaOpcao(opcao,true,true,false);
+	}
 						
 }
 /*************** ROTINAS PINPAD NOVO ********************************/
@@ -348,13 +396,11 @@ function lerCartaoPinpadNovo(oPinpad) {
 	setTimeout(function(){
 	
 		while (document.getElementById('v_cartao').value == "") {
-									
 			if  (contador > 2) { break; }
 			
 			solicitaPassagemPinpadNovo(oPinpad, document.getElementById('v_cartao'));
 			contador = contador + 1;	
 		}
-		
 		oPinpad = fechaConexaoPinpadNovo(oPinpad);
 		
 		if  (document.getElementById('v_cartao').value != "") {
@@ -391,8 +437,8 @@ function solicitaSenhaPinpadNovo(oPinpad) {
     *@autor: Desconhecido
     *@autor: Última Modificação: Jean Michel - 02/08/2013
 */
-function modelaOpcao (opcao,limpa) {
-	var exibe = (opcao == "R" ) ? "none" : "block";
+function modelaOpcao (opcao,limpa,foco,selectBL) {
+	var exibe = (opcao == "R" || opcao == 'BR') ? "none" : "block";
 	var coordenador = (limpa) ? "none" : (document.getElementById('v_habilita').value == "no") ? "none" : "block";
     var v_coordenador = (limpa) ? "no" : (document.getElementById('v_habilita').value == "no") ? "no" : "yes";
     var desabilita;
@@ -425,25 +471,40 @@ function modelaOpcao (opcao,limpa) {
 	desabilita = (document.action.v_conta.value == "");
 	
 	// Numero da conta sempre desabilitado para opcao 'C'	
-	document.action.v_conta.disabled = (opcao == 'C') ? true : false;
+	document.action.v_conta.disabled = (opcao == 'B' || opcao == 'C') ? true : false;
 	
 	// Se opcao 'C' e Cartao nao validado ainda entao desabilita senao habilita
-	document.action.v_valor.disabled = (opcao == 'C') ? desabilita : false;
-	document.action.v_senhaCartao.disabled = (opcao == 'C') ? desabilita : false;
-		
-	// Se nome ja foi prenchido e nao informado valor, foco no valor	
-	if  (document.action.v_nome.value != "" ) {
-		 if (document.action.v_valor.value.replace(",",".").replace(".","") <= 0) {
-             document.action.v_valor.focus();
-         }
-	}	
-	else	
-	if  (opcao == "R") {  // Recibo
-		document.action.v_conta.focus();    
-    }else { 				  // Cartao	
-		document.action.v_cartao.focus();
-	}
+	document.action.v_valor.disabled = (opcao == 'B' || opcao == 'C') ? desabilita : false;
+	document.action.v_senhaCartao.disabled = (opcao == 'B' || opcao == 'C') ? desabilita : false;
 	
+	if (document.action.v_flgbl.value == "1"){
+		if (!selectBL && document.action.v_cartao.value == ""){
+			document.action.v_opcao1.focus();
+		} else if  (opcao == "R" || opcao == "BR") {  // Saque com Recibo // Pagamento com Recibo
+			document.action.v_valor.focus();
+		} else if (opcao == "C" || opcao == "B"){  // Saque com Cartao	// Pagamento com Cartao
+			if  (document.action.v_cartao.value != "" ) {
+				document.action.v_cartao.focus();
+			} else {
+				document.action.v_valor.focus();
+			}
+		}
+	// Se nome ja foi prenchido e nao informado valor, foco no valor	
+	} else if  (document.action.v_nome.value != "") {
+		 //if (document.action.v_valor.value.replace(",",".").replace(".","") <= 0) {
+             document.action.v_valor.focus();
+     //}
+	} else if  (opcao == "R" || opcao == "BR") {  // Saque com Recibo // Pagamento com Recibo
+    document.action.v_conta.focus();    
+	} else if (opcao == "C" || opcao == "B"){  // Saque com Cartao	// Pagamento com Cartao
+     if  (document.action.v_nome.value != "" ) {
+       if (document.action.v_valor.value.replace(",",".").replace(".","") <= 0) {
+         document.action.v_valor.focus();
+       }
+		} else if (foco){
+			document.action.v_cartao.focus();
+     }
+	}	
 }
 
 /**
@@ -485,8 +546,20 @@ function changeConta (){
 */
 function submitFormulario() {
    var strSenha = document.getElementById('v_senhaCartao').value;
-   var opcao = (document.getElementById('v_opcao1').checked ) ? "R" : "C";
-   if (opcao == "C") {
+   
+   var opcao = "R";
+    
+    if(document.getElementById('v_opcao1').checked){
+      var opcao = "B";
+    }else if(document.getElementById('v_opcao2').checked){
+      var opcao = "BR";
+    }else if(document.getElementById('v_opcao3').checked){
+      var opcao = "C";
+    }else if(document.getElementById('v_opcao4').checked){
+      var opcao = "R";
+    }
+    
+   if (opcao == "C" || opcao == "B"){
        if (strSenha != "" && strSenha != " ") {
            document.action.v_action.value='Ok';
            document.action.ok.value='Ok';
@@ -530,7 +603,7 @@ function cancelFormulario() {
    document.getElementById('v_coordenador').value = "no";
 	
 	document.getElementById('v_opcao1').checked = true;
-	selectOpcao('R');
+	selectOpcao('B');
 	
    document.getElementById("frmSaque").submit();
    
@@ -587,37 +660,95 @@ function verificaCartao(){
     }
 }
 
-
-// Evento onKeyDown no campo "nrdconta"
-$("#v_conta").bind("keydown", function (e) {
-    //Verificar tecla ENTER para realizar acao
-    var code = (e.keyCode ? e.keyCode : e.which);
-    if (code == 13) {
-        changeConta();
-        e.preventDefault();
-}
-
-    // Seta máscara ao campo
-    return $("#v_conta").setMaskOnKeyDown("INTEGER", "zzzz.zzz.z", ".", e);
-});
-
 $(document).ready(function () {
 
+	document.getElementById('v_opcao1').onmouseup = function(e) {
+	   selectOpcao('B');
+	};
+	
+	document.getElementById('v_opcao2').onmouseup = function(e) {
+	   selectOpcao('BR');
+	};
+	
+	document.getElementById('v_opcao3').onmouseup = function(e) {
+	   selectOpcao('C');
+	};
+	
+	document.getElementById('v_opcao4').onmouseup = function(e) {
+	   selectOpcao('R');
+	};
+
+	$("#v_opcao1").unbind("keydown").bind("keydown", function (e) {
+		//Verificar tecla ENTER para realizar acao
+        var code = (e.keyCode ? e.keyCode : e.which);
+        if (code == 13 || code == 9) {
+			selectOpcao('B');
+		}
+	});
+	
+	$("#v_opcao2").unbind("keydown").bind("keydown", function (e) {
+		//Verificar tecla ENTER para realizar acao
+        var code = (e.keyCode ? e.keyCode : e.which);
+        if (code == 13 || code == 9) {
+			selectOpcao('BR');
+		}
+	});
+	
+	$("#v_opcao3").unbind("keydown").bind("keydown", function (e) {
+		//Verificar tecla ENTER para realizar acao
+        var code = (e.keyCode ? e.keyCode : e.which);
+        if (code == 13 || code == 9) {
+			selectOpcao('C');
+		}
+	});
+	
+	$("#v_opcao4").unbind("keydown").bind("keydown", function (e) {
+		//Verificar tecla ENTER para realizar acao
+        var code = (e.keyCode ? e.keyCode : e.which);
+        if (code == 13 || code == 9) {
+			selectOpcao('R');
+		}
+	});
+	
     // Evento onKeyDown no campo "nrdconta"
     $("#v_conta").unbind("keydown").bind("keydown", function (e) {
         //Verificar tecla ENTER para realizar acao
         var code = (e.keyCode ? e.keyCode : e.which);
-        if (code == 13 || code == 9) {
+		if (code == 13 || (!e.shiftKey && code == 9)) {
             changeConta();
             e.preventDefault();
+        } else if (code == 27){
+			top.frames[0].document.forms[0].v_rotina.focus();
         }
 
         // Seta máscara ao campo
         return $("#v_conta").setMaskOnKeyDown("INTEGER", "zzzz.zzz.z", ".", e);
     });
 
+
+    // Evento onKeyDown no campo "v_valor"
+    $("#v_valor").unbind("keydown").bind("keydown", function (e) {
+        //Verificar tecla ENTER para realizar acao
+        var code = (e.keyCode ? e.keyCode : e.which);
+        if (code == 13 || (!e.shiftKey && code == 9)) {
+          confirmaSaque();
+        }
+    });
+	
+	// Evento onKeyDown no campo "v_valor"
+    $("#v_valor").unbind("keyup").bind("keyup", function (e) {
+        //Verificar tecla ENTER para realizar acao
+        var code = (e.keyCode ? e.keyCode : e.which);
+		if (e.shiftKey && code == 9) {
+			if (document.getElementById('v_opcao1').checked){
+				document.getElementById('v_opcao1').focus();
+			} else if (document.getElementById('v_opcao3').checked){
+				document.getElementById('v_opcao3').focus();
+			}
+		}
 });
 
+});
 
 </script>
 <title>LANÇAMENTO INCLUSÃO - BOLETIM CAIXA</title></head>
@@ -637,7 +768,7 @@ $(document).ready(function () {
         <input type="hidden" name="v_action">
 		<input type="hidden" name="v_habilita" id="v_habilita">
 		<input type="hidden" name="v_coordenador" id="v_coordenador">
-
+		<input type="hidden" name="v_flgbl">
 		<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
 		
 		<div align="center">
@@ -680,13 +811,37 @@ $(document).ready(function () {
 									<tr>  
 										<td align="right" class="linhaform" style="width:14%">&nbsp;</td>
 										<td>
-											<table cellspacing="0" cellpadding="0" width="100%">
-												<tr>
-													<td class="linhaform" style="width: 30%;">
-														<input type="radio" name="v_opcao" id="v_opcao1" value="R"    onClick="JavaScript:selectOpcao('R');" checked> Recibo
+											<table cellspacing="0" cellpadding="0" width="400px">
+												<tr style="padding: 4px;">
+													<td class="linhaform" colspan="2" >PAGAMENTO:</td>
+												</tr>
+												<tr style="border-bottom: 1px solid black; padding: 4px;">
+													<td class="linhaform" style="width: 50%;">
+														<input type="radio" name="v_opcao" id="v_opcao1" value="B"  checked> Pagar com cart&atilde;o
 													</td>  
-													<td class="linhaform" style="width: 70%;">	
-														<input type="radio" name="v_opcao" id="v_opcao2" value="C"    onClick="JavaScript:selectOpcao('C');" > Cartão
+													<td class="linhaform" style="width: 50%;">	
+														<input type="radio" name="v_opcao" id="v_opcao2" value="BR" > Pagar com recibo
+													</td>                                      
+												</tr>
+												<tr>
+													<td class="linhaform" colspan="2">
+														<hr>
+													</td>
+												</tr>
+												<tr style="padding: 4px;">
+													<td class="linhaform" colspan="2">SAQUE:</td>
+												</tr>												
+												<tr style="border-bottom: 1px solid black; padding: 4px;">
+													<td class="linhaform" style="width: 50%;">	
+														<input type="radio" name="v_opcao" id="v_opcao3" value="C" > Sacar com cart&atilde;o
+													</td>                                      
+													<td class="linhaform" style="width: 50%;">
+														<input type="radio" name="v_opcao" id="v_opcao4" value="R"  > Sacar com recibo
+													</td>
+												</tr>
+												<tr>
+													<td class="linhaform" colspan="2">
+														<hr>
 													</td>                                      
 												</tr>
 											</table>
@@ -704,7 +859,7 @@ $(document).ready(function () {
 			<tr>
 				<td align="right" class="linhaform" style="width:14%">Cartão:</td>
 				<td> 
-									<input type="password" name="v_cartao" id="v_cartao" size="50" class="input" maxlength="36" onFocus="if(this.value.length <= 0) { lerCartaoPinpadNovo(''); } else { v_valor.focus(); }"    onBlur="if(this.value.length <= 0) { v_opcao2.focus(); }" onKeyDown="JavaScript:validaInteiro(event); " onkeyup="if (this.value.length == 36){validaCartao();}" onChange="JavaScript:validaCartao();" onClick="lerCartaoPinpadNovo('');"  style="text-align: right">
+									<input type="password" name="v_cartao" id="v_cartao" size="50" class="input" maxlength="36" onFocus="if(this.value.length <= 0) { lerCartaoPinpadNovo(''); } else { v_valor.focus(); }"    onBlur="if(this.value.length <= 0) { v_opcao1.focus(); }" onKeyDown="JavaScript:validaInteiro(event); " onkeyup="if (this.value.length == 36){validaCartao();}" onChange="JavaScript:validaCartao();" onClick="lerCartaoPinpadNovo('');"  style="text-align: right">
 				</td>
 			</tr>				  
 		 </table> 
@@ -799,7 +954,7 @@ $(document).ready(function () {
         <table class="tableForm" style="text-align:center; background-color:rgb(255, 255, 206); width: 250px;">
     		<tr>
     			<td colspan="2">
-    				<font style="font-family: Arial, Verdana, sans-serif; font-size:11pt;">Cooperado Confirma Saque?</font>
+    				<font id="msgConfirma" style="font-family: Arial, Verdana, sans-serif; font-size:11pt;">
     			</td>
     		<tr>
     		<tr>
