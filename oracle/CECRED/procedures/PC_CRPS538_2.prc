@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2                --> flag de avaliar a execuÁ„o
+CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2                --> flag de avaliar a execu√ß√£o
                                                ,pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                                ,pr_nmtelant IN VARCHAR2                --> Nome tela anterior
                                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 11/08/2017
+   Data    : Agosto/2017.                   Ultima atualizacao: 15/03/2018
    
    Projeto:  Chamado 714566.
 
@@ -21,27 +21,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
    Frequencia: Diario (Batch).
    Objetivo: 
      Foi retirada essas rotinas do programa cprs538 
-     para priorizar as liberaÁıes do sistema para os clientes.
+     para priorizar as libera√ß√µes do sistema para os clientes.
      - Gerar e enviar arquivo de retorno para o cooperado - PAG0001.pc_gera_arq_cooperado
      - Gerar Relatorio - pc_gera_relatorio_574 - INTEGRACAO DE DEVOLUCAO TITULOS - ABBC
-     - GeraÁ„o do arquivo de devoluÁ„o - pc_gerar_arq_devolucao
+     - Gera√ß√£o do arquivo de devolu√ß√£o - pc_gerar_arq_devolucao
 
    Alteracoes: 
-       05/12/2017 - Inclus„o de validaÁ„o ˙ltimo dia mÍs, para buscar arquivos da pasta /win12/salvar/
-                    Retirada da validaÁ„o com a vari·vel vr_dtleiarq
+       05/12/2017 - Inclus√£o de valida√ß√£o √∫ltimo dia m√™s, para buscar arquivos da pasta /win12/salvar/
+                    Retirada da valida√ß√£o com a vari√°vel vr_dtleiarq
                     Ana - Envolti - Chamado 806333
 
-       06/12/2017 - Ajustar data do arquivo de devoluÁ„o para o prÛximo dia ˙til
-                    quando a data do movimento for igual ao ˙ltimo dia do ano. (Rafael)
+       06/12/2017 - Ajustar data do arquivo de devolu√ß√£o para o pr√≥ximo dia √∫til
+                    quando a data do movimento for igual ao √∫ltimo dia do ano. (Rafael)
 
-       06/12/2017 - SubstituiÁ„o do comando pc_set_modulo por pc_informa_acesso, para gerar as casas 
+       06/12/2017 - Substitui√ß√£o do comando pc_set_modulo por pc_informa_acesso, para gerar as casas 
                     decimais corretamente
 
-       07/12/2017 - Sustituir o tempo de espera do job de 30 minutos pela funÁ„o fn_param_sistema
+       07/12/2017 - Sustituir o tempo de espera do job de 30 minutos pela fun√ß√£o fn_param_sistema
                     Ana - Envolti - Chamado 804921
 
-       07/02/2018 - se o mÍs de dtmvtoan È diferente do mÍs de dtmvtolt ent„o buscar arquivos
+       07/02/2018 - se o m√™s de dtmvtoan √© diferente do m√™s de dtmvtolt ent√£o buscar arquivos
                     da pasta win12 - SD#842900 (AJFink)
+                    
+       15/03/2018 - Ajustar os padr√µes:
+                     - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                     - Eliminando mensagens de erro e informa√ß√£o gravadas fixas
+                    (Belli - Envolti - Chamado 801483)  
 
    ................................................................................................*/
 
@@ -107,63 +112,50 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        vr_inproces          crapdat.inproces%TYPE;       
        vr_dtmvtaux          crapdat.dtmvtoan%TYPE;       
        vr_dtmvtpro          crapdat.dtmvtolt%TYPE;
-     
-       --Variaveis locais arquivo
+
+       -- Vari√°veis relacionadas - Chamado SD#842900
+       vr_idprglog          tbgen_prglog.idprglog%TYPE := 0; 
+       vr_dsassunt          VARCHAR2(4000);
+       vr_dsmensag          VARCHAR2(4000);
        vr_interminocoopers   NUMBER(1);
        
        -- Variaveis de controle de DBA SCHEDULER JOB LOG      
        vr_dsplsql         VARCHAR2(2000);
        vr_jobname         VARCHAR2(100);  
-       vr_idprglog_cobr0009 tbgen_prglog.idprglog%TYPE;
 
-    -- Controla Controla log em banco de dados
-    PROCEDURE pc_controla_log_programa(pr_dstiplog     IN VARCHAR2, -- Tipo de Log
-                                       pr_tpocorrencia in number,   -- Tipo de ocorrencia
-                                       pr_dscritic     IN VARCHAR2  -- DescriÁ„o do Log
-                                      ,pr_cdcooperprog IN crapcop.cdcooper%TYPE DEFAULT pr_cdcooper   -- Codigo da cooperativa programada
+    -- Ajuste log - 15/03/2018 - Chamado 801483 
+    -- Controla log em banco de dados
+    PROCEDURE pc_controla_log_programa( pr_dstiplog      IN VARCHAR2 -- Tipo do log: I - in√≠cio; F - fim; O - ocorr√™ncia; E - Erro
+                                       ,pr_tpocorrencia  IN NUMBER   DEFAULT NULL -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensage
+                                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL -- Descri√ß√£o do Log
+                                       ,pr_cdcritic      IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0 -- cdcritic
+                                       ,pr_cdcooperprog  IN crapcop.cdcooper%TYPE DEFAULT pr_cdcooper  -- Codigo da cooperativa programada
+                                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 2 -- Nivel (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
                                       )
     IS
-      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+      -- Passada variavel vr_idprglog para o inicio da prc - Chamado SD#842900
     BEGIN         
-      --> Controlar geraÁ„o de log de execuÁ„o dos jobs                                
-      CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog, 
-                             pr_cdprograma    => vr_cdprogra, 
-                             pr_cdcooper      => pr_cdcooper, 
-                             pr_tpexecucao    => 2, --job
-                             pr_tpocorrencia  => pr_tpocorrencia,
-                             pr_cdcriticidade => 0, --baixa
-                             pr_dsmensagem    => pr_dscritic ||
-                                                 ' - pr_flavaexe: ' || pr_flavaexe ||
-                                                 ' ,pr_cdcooper: ' || pr_cdcooper ||
-                                                 ' ,pr_nmtelant: ' || pr_nmtelant ||
-                                                 ' ,pr_cdcooperprog: ' || pr_cdcooperprog,
-                             pr_idprglog      => vr_idprglog);
-      vr_idprglog_cobr0009 := vr_idprglog;
+      --> Controlar gera√ß√£o de log de execu√ß√£o dos jobs                                
+      CECRED.pc_log_programa( pr_dstiplog      => pr_dstiplog 
+                             ,pr_cdprograma    => vr_cdprogra 
+                             ,pr_cdcooper      => pr_cdcooper 
+                             ,pr_tpexecucao    => 2 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                             ,pr_tpocorrencia  => pr_tpocorrencia
+                             ,pr_cdcriticidade => pr_cdcriticidade
+                             ,pr_dsmensagem    => pr_dscritic ||
+                                                 '  pr_flavaexe:'     || pr_flavaexe ||
+                                                 ', pr_cdcooper:'     || pr_cdcooper ||
+                                                 ', pr_nmtelant:'     || pr_nmtelant ||
+                                                 ', pr_cdcooperprog:' || pr_cdcooperprog
+                             ,pr_cdmensagem    => pr_cdcritic
+                             ,pr_idprglog      => vr_idprglog);
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
     END pc_controla_log_programa;
 
-    procedure pc_captura_registra_log(pr_dsmensag in varchar2) is
-      --
-      /*captura as informaÁıes da exceÁ„o e grava o log*/
-      --
-      vr_dscritic varchar2(4000);
-      --
-    begin
-      --
-      vr_dscritic := pr_dsmensag
-                   ||dbms_utility.format_error_backtrace
-            ||' - '||dbms_utility.format_error_stack;
-      --
-      pc_controla_log_programa(pr_dstiplog      => 'E'
-                              ,pr_tpocorrencia  => 2
-                              ,pr_dscritic      => vr_dscritic);
-      --
-    end pc_captura_registra_log;
-
-    --> Procedimento para geraÁ„o do arquivo de devoluÁ„o DVC605
+    --> Procedimento para gera√ß√£o do arquivo de devolu√ß√£o DVC605
     PROCEDURE pc_gerar_arq_devolucao(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
                                     ,pr_cdcritic  OUT INTEGER
@@ -216,7 +208,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
     BEGIN
 
      --06/12/2017
-     --Rotina para achar o ultimo dia ˙til do ano
+     --Rotina para achar o ultimo dia √∫til do ano
      vr_dtultdia := add_months(TRUNC(vr_dtmvtpro,'RRRR'),12)-1;    
      CASE to_char(vr_dtultdia,'d') 
        WHEN '1' THEN vr_dtultdia := vr_dtultdia - 2;
@@ -224,14 +216,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        ELSE vr_dtultdia := add_months(TRUNC(vr_dtmvtpro,'RRRR'),12)-1;
      END CASE;        
 
-     -- se a data de devoluÁ„o for o ultimo dia do ano, entao o arquivo de devoluÁ„o
-     -- dever· ser com a data do prÛximo dia ˙til     
+     -- se a data de devolu√ß√£o for o ultimo dia do ano, entao o arquivo de devolu√ß√£o
+     -- dever√° ser com a data do pr√≥ximo dia √∫til     
      IF vr_dtultdia = vr_dtmvtpro THEN
        vr_dtmvtpro := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
                                                   pr_dtmvtolt  => vr_dtmvtpro + 1,
                                                   pr_tipo      => 'P',
                                                   pr_feriado   => TRUE,
                                                   pr_excultdia => TRUE);
+       -- Retorna nome do modulo logado
+       GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);   
      END IF;                                                  
            
      -- Definir sigra do mes
@@ -258,10 +252,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          vr_vltotarq := 0;
                  
          --> Definir nome do arquivo
-         vr_nmarquiv:= '2' ||                                    --> arquivo de cobranÁa
+         vr_nmarquiv:= '2' ||                                    --> arquivo de cobran√ßa
                        to_char(rw_devolucao.cdagectl,'fm0000')|| --> Agencia
-                       vr_cddomes ||                             --> cÛdigo do mÍs
-                       to_char(vr_dtmvtpro,'DD') ||              --> n˙mero do dia do movimento
+                       vr_cddomes ||                             --> c√≥digo do m√™s
+                       to_char(vr_dtmvtpro,'DD') ||              --> n√∫mero do dia do movimento
                        '.DVS';
 
          -- Inicializar o CLOB
@@ -273,7 +267,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
            --MONTAR HEADER
            vr_dsdlinha := lpad('0',47,'0')                || -->  1 001-047   X(047)  Controle do header 
                           'DVC605'                        || -->  2 048-053   X(006)  Nome do arquivo 
-                          '0000001'                       || -->  3 054-060   9(007)  Vers„o do arquivo
+                          '0000001'                       || -->  3 054-060   9(007)  Vers√£o do arquivo
                           lpad(' ',4,' ')                 || -->  4 061-064   X(004)  Filler - Preencher com brancos 
                           '7'                             || -->  5 065-065   9(001)  Indicador de remessa
                           to_char(vr_dtmvtpro,'RRRRMMDD') || -->  6 066-073   9(008)  Data do movimento 
@@ -281,8 +275,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                           to_char(rw_devolucao.nrispbif_cop,
                                     'fm00000000')         || -->  8 132-139   9(008)  ISPB IF remetente  
                           lpad(' ',11,' ')                || -->  9 140-150   X(011)  Filler - Preencher com brancos 
-                          to_char(vr_nrseqlin,               --> 10 151-160   9(010)  Sequencial de arquivo N˙mero sequencial do registro no arquivo, iniciando em 1 no 
-                                    'fm0000000000') || chr(10);                                  --> Header, com evoluÁ„o de +1 a cada novo registro, inclusive o Trailer ;
+                          to_char(vr_nrseqlin,               --> 10 151-160   9(010)  Sequencial de arquivo N√∫mero sequencial do registro no arquivo, iniciando em 1 no 
+                                    'fm0000000000') || chr(10);                                  --> Header, com evolu√ß√£o de +1 a cada novo registro, inclusive o Trailer ;
                    
            -- Inicilizar as informacoes do XML
            gene0002.pc_escreve_xml(vr_dslobdev,vr_dsbufdev,vr_dsdlinha);
@@ -291,14 +285,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
              
          EXCEPTION
            WHEN OTHERS THEN
-             pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao.MONTAR HEADER:');
-             cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devoluÁ„o'
-                                          ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devoluÁ„o.'
-                                                        ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(1))'
-                                          ,pr_idprglog => vr_idprglog_cobr0009);
              -- No caso de erro de programa gravar tabela especifica de log
              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-             vr_dscritic := 'Montar Header do arquivo de devolucao - '||SQLERRM;
+             --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+             vr_cdcritic := 9999;
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                            '  Montar Header do arquivo de devolucao' || 
+                            ', vr_dtmvtpro:'  || vr_dtmvtpro ||      
+                            ', nrispbif_cop:' || rw_devolucao.nrispbif_cop ||
+                            ', vr_nrseqlin:'  || vr_nrseqlin ||          
+                            ' - ' || SQLERRM;
              RAISE vr_exc_saida; 
          END;  
        END IF;
@@ -312,31 +308,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          vr_dschave_troca := substr(rw_devolucao.dslinarq,57,57);
                
          --MONTAR LINHA DETALHE
-         vr_dsdlinha := rw_devolucao.dscodbar           || -->  1  001-044  X(044)  CÛdigo de barras do documento 
+         vr_dsdlinha := rw_devolucao.dscodbar           || -->  1  001-044  X(044)  C√≥digo de barras do documento 
                         lpad(' ', 2,' ')                || -->  2  045-046  X(002) Filler - Preencher com brancos 
                         '   '                           || -->  3  047-049  X(003) Filler Preenchimento livre 
                         rw_devolucao.tpcaptura          || -->  4  050-050  9(001) Tipo de captura informado na troca: 
-                                                                                  --> 1 (para GuichÍ de Caixa) 
+                                                                                  --> 1 (para Guich√™ de Caixa) 
                                                                                   --> 2 (para Terminal de Auto Atendimento) 
-                                                                                  --> 3 (para Internet ñ home/office banking) 
+                                                                                  --> 3 (para Internet ‚Äì home/office banking) 
                                                                                   --> 5 (para Correspondente) 
                                                                                   --> 6 (para Telefone) 
-                                                                                  --> 7 (para Arquivo EletrÙnico) 
-                        to_char(rw_devolucao.cdmotdev,'fm00')  || -->  5  051-052  9(002) Motivo de devoluÁ„o
+                                                                                  --> 7 (para Arquivo Eletr√¥nico) 
+                        to_char(rw_devolucao.cdmotdev,'fm00')  || -->  5  051-052  9(002) Motivo de devolu√ß√£o
                         lpad(' ', 4,' ')                       || -->  6  053-056  X(004) Filler Preencher com branco 
                                 
                         vr_dschave_troca  || --> chave para troca extraida da linha original, contem campos abaixo
-                                -->  7  057-060  9(004)  N˙mero da agÍncia remetentedo documento na troca 
-                                -->  8  061-067  9(007) N˙mero atribuÌdo ao lote que contÈmo documento na troca 
-                                -->  9  068-070  9(003) N˙mero sequencial do documento no lote da troca 
-                                --> 10  071-078  9(008)  Data do movimento de troca no formato ìAAAAMMDDî 
-                                --> 11  079-084  X(006) Centro processador InformaÁ„o para controle do remetente 
-                                --> 12  085-096  9(012) Valor lÌquido do tÌtulo
-                                --> 13  097-103  9(007) N˙mero da vers„o do arquivodo remetente da troca 
-                                --> 14  104-113  9(010) N˙mero sequencial do registro no arquivo do remetente da troca
+                                -->  7  057-060  9(004)  N√∫mero da ag√™ncia remetentedo documento na troca 
+                                -->  8  061-067  9(007) N√∫mero atribu√≠do ao lote que cont√©mo documento na troca 
+                                -->  9  068-070  9(003) N√∫mero sequencial do documento no lote da troca 
+                                --> 10  071-078  9(008)  Data do movimento de troca no formato ‚ÄúAAAAMMDD‚Äù 
+                                --> 11  079-084  X(006) Centro processador Informa√ß√£o para controle do remetente 
+                                --> 12  085-096  9(012) Valor l√≠quido do t√≠tulo
+                                --> 13  097-103  9(007) N√∫mero da vers√£o do arquivodo remetente da troca 
+                                --> 14  104-113  9(010) N√∫mero sequencial do registro no arquivo do remetente da troca
                         lpad(' ',18,' ')                                || --> 15  114-131  X(018) Filler - Preencher com brancos 
-                        to_char(rw_devolucao.nrispbif,'fm00000000')     || --> 16  132-139  9(008)  CÛdigo ISPB do participante recebedor 
-                        to_char(rw_devolucao.nrispbif_cop,'fm00000000') || --> 17  140-147  9(008)  CÛdigo ISPB do participante favorecido 
+                        to_char(rw_devolucao.nrispbif,'fm00000000')     || --> 16  132-139  9(008)  C√≥digo ISPB do participante recebedor 
+                        to_char(rw_devolucao.nrispbif_cop,'fm00000000') || --> 17  140-147  9(008)  C√≥digo ISPB do participante favorecido 
                         to_char(41,'fm000')                             || --> 18  148-150  9(003) Tipo de documento 
                         to_char(vr_nrseqlin,'fm0000000000')             || --> 19  151-160  9(010) Sequencial de arquivo
                         chr(10);
@@ -348,18 +344,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
        EXCEPTION
          WHEN OTHERS THEN
-           pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao.MONTAR LINHA DETALHE:');
-           cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devoluÁ„o'
-                                        ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devoluÁ„o.'
-                                                      ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(2))'
-                                        ,pr_idprglog => vr_idprglog_cobr0009);
            -- No caso de erro de programa gravar tabela especifica de log
            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-           vr_dscritic := 'Montar linha detalhe do arquivo de devolucao - '||SQLERRM;
+           --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+           vr_cdcritic := 9999;
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                          '  Montar linha detalhe do arquivo de devolucao' || 
+                          ', dscodbar:'  || rw_devolucao.dscodbar          ||
+                          ', tpcaptura:' || rw_devolucao.tpcaptura         ||
+                          ', cdmotdev:'  || rw_devolucao.cdmotdev          ||
+                          ', vr_dschave_troca:' || vr_dschave_troca        ||             
+                          ', nrispbif:'     || rw_devolucao.nrispbif       ||
+                          ', nrispbif_cop:' || rw_devolucao.nrispbif_cop   ||
+                          ', vr_nrseqlin:'  || vr_nrseqlin                 ||
+                          ' - ' || SQLERRM;
            RAISE vr_exc_saida; 
        END; 
                
-       --> Verificar se È o ultimo registro
+       --> Verificar se √© o ultimo registro
        IF rw_devolucao.nrseqrec = rw_devolucao.nrqtdrec THEN
          BEGIN 
            vr_nrseqlin := vr_nrseqlin + 1;
@@ -367,12 +369,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
            --MONTAR TRAILER
            vr_dsdlinha := lpad('9',47,'9')                || -->  1 001-047   X(047)  Controle do header 
                           'DVC605'                        || -->  2 048-053   X(006)  Nome do arquivo 
-                          '0000001'                       || -->  3 054-060   9(007)  Vers„o do arquivo
+                          '0000001'                       || -->  3 054-060   9(007)  Vers√£o do arquivo
                           lpad(' ',4,' ')                 || -->  4 061-064   X(004)  Filler - Preencher com brancos 
                           '7'                             || -->  5 065-065   9(001)  Indicador de remessa
                           to_char(vr_dtmvtpro,'RRRRMMDD') || -->  6 066-073   9(008)  Data do movimento 
                           to_char(vr_vltotarq * 100,
-                                   'fm00000000000000000') || --> 7 074-090 9(017) SomatÛrio do valor dos detalhes do arquivo (*) 
+                                   'fm00000000000000000') || --> 7 074-090 9(017) Somat√≥rio do valor dos detalhes do arquivo (*) 
                           lpad(' ',41,' ')                || --> 8  091-131  X(041) Filler - Preencher com brancos
                           to_char(rw_devolucao.nrispbif_cop,
                                     'fm00000000')         || -->  9  132-139  9(008)  ISPB IF remetente
@@ -387,14 +389,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
            GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
          EXCEPTION
            WHEN OTHERS THEN
-             pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao.MONTAR TRAILER:');
-             cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devoluÁ„o'
-                                          ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devoluÁ„o.'
-                                                        ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(3))'
-                                          ,pr_idprglog => vr_idprglog_cobr0009);
              -- No caso de erro de programa gravar tabela especifica de log
              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-             vr_dscritic := 'Montar Trailer do arquivo de devolucao - '||SQLERRM;
+             --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+             vr_cdcritic := 9999;
+             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                          '  Montar Trailer do arquivo de devolucao' || 
+                          ', vr_dtmvtpro:'  || vr_dtmvtpro ||
+                          ', vr_vltotarq:'  || vr_vltotarq || 
+                          ', nrispbif_cop:' || rw_devolucao.nrispbif_cop ||
+                          ', vr_nrseqlin:'  || vr_nrseqlin ||
+                          ' - ' || SQLERRM;
              RAISE vr_exc_saida; 
          END;
 
@@ -412,22 +417,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                             ,pr_dtmvtolt  => vr_dtmvtaux              --> Data do movimento atual
                                             ,pr_dsxml     => vr_dslobdev              --> Arquivo XML de dados
                                             ,pr_dsarqsaid => vr_dsdircop_arq || '/' || vr_nmarquiv    --> Arquivo final com o path
-                                            ,pr_cdrelato  => NULL                     --> CÛdigo fixo para o relatÛrio
+                                            ,pr_cdrelato  => NULL                     --> C√≥digo fixo para o relat√≥rio
                                             ,pr_flg_gerar => 'S'                      --> Apenas submeter
                                             ,pr_dspathcop => vr_dsdirmic_arq
                                             ,pr_fldoscop  => 'S'
-                                            ,pr_flappend  => 'N'                      --> Indica que a solicitaÁ„o ir· incrementar o arquivo
-                                            ,pr_des_erro  => vr_dscritic);            --> SaÌda com erro                
-          -- Retorna nome do modulo logado
-          GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
+                                            ,pr_flappend  => 'N'                      --> Indica que a solicita√ß√£o ir√° incrementar o arquivo
+                                            ,pr_des_erro  => vr_dscritic);            --> Sa√≠da com erro   
           -- Testar se houve erro
           IF vr_dscritic IS NOT NULL THEN
             -- Gerar excecao
-            vr_dscritic := 'retorno gene0002.pc_solicita_relato_arquivo - ' || vr_dscritic;
+            --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+            vr_cdcritic := 1197;
+            vr_dscritic := vr_dscritic ||
+                           ' - gene0002.pc_solicita_relato_arquivo';
             RAISE vr_exc_saida;
-          END IF;
+          END IF;             
+          -- Retorna nome do modulo logado
+          GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
 
-          -- Liberando a memÛria alocada pro CLOB
+          -- Liberando a mem√≥ria alocada pro CLOB
           dbms_lob.close(vr_dslobdev);
           dbms_lob.freetemporary(vr_dslobdev);
                
@@ -436,21 +444,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
      END LOOP;
 
     EXCEPTION
+     --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
      WHEN vr_exc_saida THEN
-       pr_dscritic := vr_dscritic;
        pr_cdcritic := vr_cdcritic;
+       pr_dscritic := vr_dscritic ||
+                      ', pc_gerar_arq_devolucao';
      WHEN OTHERS THEN
-       pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao:');
-       cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devoluÁ„o'
-                                    ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devoluÁ„o.'
-                                                  ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(4))'
-                                    ,pr_idprglog => vr_idprglog_cobr0009);
        -- No caso de erro de programa gravar tabela especifica de log
        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
        --Variavel de erro recebe erro ocorrido
-       pr_cdcritic:= NULL;
-       pr_dscritic:= sqlerrm;  
-               
+       pr_cdcritic := 9999;
+       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                      ', pc_gerar_arq_devolucao' || SQLERRM;                
     END pc_gerar_arq_devolucao;
                     
     --Gerar Relatorio 574
@@ -499,19 +504,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                 
       CASE rw_devolucao.cdmotdev
        WHEN 53 THEN
-         vr_dsmotdev := 'ApresentaÁ„o indevida';
+         vr_dsmotdev := 'Apresenta√ß√£o indevida';
        WHEN 63 THEN               
-         vr_dsmotdev := 'CÛdigo de barras em desacordo com as especificaÁıes';
+         vr_dsmotdev := 'C√≥digo de barras em desacordo com as especifica√ß√µes';
        WHEN 72 THEN
-         vr_dsmotdev := 'DevoluÁ„o de Pagamento Fraudado';
+         vr_dsmotdev := 'Devolu√ß√£o de Pagamento Fraudado';
        WHEN 73 THEN
-         vr_dsmotdev := 'Benefici·rio sem contrato de cobranÁa';
+         vr_dsmotdev := 'Benefici√°rio sem contrato de cobran√ßa';
        WHEN 74 THEN
-         vr_dsmotdev := 'Benefici·rio inv·lido ou boleto n„o encontrado';
+         vr_dsmotdev := 'Benefici√°rio inv√°lido ou boleto n√£o encontrado';
        WHEN 77 THEN
-         vr_dsmotdev := 'Boleto em cartÛrio ou protestado';
+         vr_dsmotdev := 'Boleto em cart√≥rio ou protestado';
        ELSE
-         vr_dsmotdev := 'DescriÁ„o de motivo n„o encontrada';
+         vr_dsmotdev := 'Descri√ß√£o de motivo n√£o encontrada';
       END CASE;    
 
       --Escrever no Arquivo XML
@@ -557,17 +562,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                  ,pr_nmformul  => NULL                --> Nome do formul?rio para impress?o
                                  ,pr_nrcopias  => 1                   --> N?mero de c?pias
                                  ,pr_flg_gerar => 'S'                 --> gerar PDF
-                                 ,pr_dspathcop => vr_caminho_rlnsv    --> Lista sep. por ';' de diretÛrios a copiar o relatÛrio
+                                 ,pr_dspathcop => vr_caminho_rlnsv    --> Lista sep. por ';' de diret√≥rios a copiar o relat√≥rio
                                  ,pr_des_erro  => vr_dscritic);       --> Sa?da com erro
-      -- Retorna nome do modulo logado
-      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
       
       -- Testar se houve erro
       IF vr_dscritic IS NOT NULL THEN
-        vr_dscritic := 'retorna gene0002.pc_solicita_relato - ' || vr_dscritic;
+        --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+        vr_cdcritic := 1197;
+        vr_dscritic := vr_dscritic ||
+                       ' - gene0002.pc_solicita_relato';
         -- Gerar excecao
         RAISE vr_exc_saida;
       END IF;
+      -- Retorna nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
 
       -- Liberando a memoria alocada pro CLOB
       dbms_lob.close(vr_des_xml);
@@ -577,19 +585,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
     EXCEPTION
       -- apenas repassar as criticas
       WHEN vr_exc_saida THEN
-        pr_dscritic := vr_dscritic;
         pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic ||
+                       ' pr_cdcooper:'  || pr_cdcooper ||
+                       ', pr_dtmvtolt:' || pr_dtmvtolt ||
+                       ', pc_gera_relatorio_574';
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_gera_relatorio_574:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar relatÛrio 574'
-                                     ,pr_dsmensag => 'Ocorreu falhar ao gerar relatÛrio 574.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(5))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+        --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;           
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' pr_cdcooper:'  || pr_cdcooper ||
+                       ', pr_dtmvtolt:' || pr_dtmvtolt ||
+                       ', pc_gera_relatorio_574 - ' || SQLERRM; 
     END pc_gera_relatorio_574;
                         
     --Gera Arq pc_trata_arq_cooperado 
@@ -619,12 +629,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       -- Busca todos os convenios da IF CECRED que foram gerados pela internet
       FOR rw_crapcco IN cr_crapcco_ativo(pr_cdcooper => rw_crapcop.cdcooper
                                         ,pr_cddbanco => rw_crapcop.cdbcoctl) LOOP
-        
-        -- Rotina padr„o de geraÁ„o de Log   
-        pc_controla_log_programa('O', -- Tipo de Log
-                                 4,
-                                 'Gerando arq retorno ao cooperado: convenio ' ||
-                                  to_char(rw_crapcco.nrconven));  -- DescriÁ„o da mensagem
+
+        -- Ajuste log - 15/03/2018 - Chamado 801483 
+        vr_cdcritic := 340; -- Gerando arq retorno ao cooperado: convenio
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       ' de retorno ao cooperado: convenio:' ||
+                       to_char(rw_crapcco.nrconven);
+        -- Controla log em banco de dados
+        pc_controla_log_programa( pr_dstiplog       => 'O'
+                                 ,pr_tpocorrencia   => 4
+                                 ,pr_cdcritic       => vr_cdcritic
+                                 ,pr_dscritic       => vr_dscritic
+                                 ,pr_cdcriticidade  => 0
+                                 ,pr_cdcooperprog   => rw_crapcop.cdcooper
+                                ); 
+        vr_cdcritic := NULL;
+        vr_dscritic := NULL;                                  
         
         -- Gerar e enviar arquivo de retorno para o cooperado
         PAGA0001.pc_gera_arq_cooperado(pr_cdcooper => rw_crapcco.cdcooper   --Codigo Cooperativa 
@@ -637,34 +657,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                       ,pr_tab_arq_cobranca => vr_tab_arq_cobranca --Tabela Cobranca
                                       ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
                                       ,pr_dscritic => vr_dscritic);         --Descricao da critica
-
-        -- Retorna nome do modulo logado
-        GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'Retorno PAGA0001.pc_gera_arq_cooperado - ' || vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
+        -- Retorna nome do modulo logado
+        GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
            
       END LOOP;
       
     EXCEPTION
+      --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
       -- apenas repassar as criticas
       WHEN vr_exc_saida THEN
-        pr_dscritic := vr_dscritic;
         pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic ||
+                       ' pr_cdcooper:' || pr_cdcooper ||
+                       ', pc_gera_arq_cooperado';
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_gera_arq_cooperado:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de retorno do cooperado'
-                                     ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de retorno do cooperado.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(6))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;           
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' pr_cdcooper:' || pr_cdcooper ||
+                       ', pc_gera_arq_cooperado - ' || SQLERRM; 			
     END pc_gera_arq_cooperado; 
                                        
     -- pc_verifica_ja_executou
@@ -682,77 +700,48 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       vr_cdcritic    PLS_INTEGER      := NULL;
       vr_dscritic    VARCHAR2(4000)   := NULL;
     BEGIN
-      --> Verificar a execuÁ„o
-      CECRED.gene0001.pc_controle_exec(pr_cdcooper  => pr_cdcooperexec         --> CÛdigo da coopertiva
+      --> Verificar a execu√ß√£o
+      CECRED.gene0001.pc_controle_exec(pr_cdcooper  => pr_cdcooperexec         --> C√≥digo da coopertiva
                                       ,pr_cdtipope  => pr_cdtipope           --> Tipo de operacao I-incrementar e C-Consultar
                                       ,pr_dtmvtolt  => pr_dtprocess      --> Data do movimento
                                       ,pr_cdprogra  => pr_cdprogra       --> Codigo do programa
-                                      ,pr_flultexe  => vr_flultexe       --> Retorna se È a ultima execuÁ„o do procedimento
+                                      ,pr_flultexe  => vr_flultexe       --> Retorna se √© a ultima execu√ß√£o do procedimento
                                       ,pr_qtdexec   => vr_qtdexec        --> Retorna a quantidade
                                       ,pr_cdcritic  => vr_cdcritic       --> Codigo da critica de erro
-                                      ,pr_dscritic  => vr_dscritic);     --> descriÁ„o do erro se ocorrer
-      -- Retorna nome do modulo logado
-      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
+                                      ,pr_dscritic  => vr_dscritic);     --> descri√ß√£o do erro se ocorrer
       pr_qtdexec := vr_qtdexec;                                                               
       --Trata retorno
       IF nvl(vr_cdcritic,0) > 0         OR
         TRIM(vr_dscritic)   IS NOT NULL THEN
           RAISE vr_exc_saida;
       END IF;
+      -- Retorna nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
     EXCEPTION
+      --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
       -- apenas repassar as criticas
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Retorno gene0001.pc_controle_exec - ' || vr_dscritic ||
-                       ' - dtprocess: '  || pr_dtprocess   ||
-                       ' - cdtipope: '   || pr_cdtipope    ||
-                       ' - cdprogra: '   || pr_cdprogra;
+        pr_dscritic := vr_dscritic ||
+                       ' pr_cdcooperexec:' || pr_cdcooperexec ||
+                       ', dtprocess:'  || pr_dtprocess ||
+                       ', cdtipope:'   || pr_cdtipope  ||
+                       ', cdprogra:'   || pr_cdprogra  ||
+                       ', pc_verifica_ja_executou';
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_verifica_ja_executou:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao verificar execuÁ„o processo'
-                                     ,pr_dsmensag => 'Ocorreu falhar ao verificar execuÁ„o processo.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(7))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= 'Retorno gene0001.pc_controle_exec - ' || sqlerrm;           
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' pr_cdcooperexec:' || pr_cdcooperexec ||
+                       ', dtprocess:'  || pr_dtprocess ||
+                       ', cdtipope:'   || pr_cdtipope  ||
+                       ', cdprogra:'   || pr_cdprogra  ||
+                       ', pc_verifica_ja_executou - '           || SQLERRM; 		           
     END pc_verifica_ja_executou; 
-                                        
-    -- pc_avalia_execucao 
-    PROCEDURE pc_avalia_execucao(pr_cdcritic OUT INTEGER
-                                ,pr_dscritic OUT VARCHAR2
-                                ) 
-    IS    
-    BEGIN           
 
-      -- Gera arq cooperado
-      pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic);
-      --Se ocorreu erro
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        --Levantar Excecao
-        vr_dscritic := 'pc_gera_arq_cooperado - '||vr_dscritic;
-        RAISE vr_exc_saida;
-      END IF;              
-
-    EXCEPTION
-      WHEN vr_exc_final THEN
-        --nao tem arquivo para processar
-        pr_cdcritic:= NULL;
-        pr_dscritic:= NULL;
-      WHEN vr_exc_saida THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
-      WHEN OTHERS THEN
-        -- No caso de erro de programa gravar tabela especifica de log  
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
-        --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;      
-    END pc_avalia_execucao;               
+    -- Elimina√ß√£o paragrafo pc_avalia_execucao - Chamado SD#842900                                              
                                     
     -- pc_posiciona_dat 
     PROCEDURE pc_posiciona_dat(pr_cdcooperprog IN crapcop.cdcooper%TYPE
@@ -772,6 +761,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                                  --pr_feriado IN BOOLEAN DEFAULT TRUE,   --> Considerar feriados
                                                  --pr_excultdia IN BOOLEAN DEFAULT FALSE --> Desconsiderar Feriado 31/12
                                                  );
+      -- Retorna nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);                                           
+      
       IF vr_datautil <> vr_dataexecucao THEN
         pr_fgferiado := FALSE;
       END IF;
@@ -784,7 +776,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         -- Fechar o cursor pois havera raise
         CLOSE BTCH0001.cr_crapdat;
         -- Montar mensagem de critica
-        vr_cdcritic:= 1;
+        vr_cdcritic := 1;
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;
       ELSE
@@ -792,7 +784,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         CLOSE BTCH0001.cr_crapdat;
       END IF;
       
-      --Esse processa executa apÛs o termino da cadeia ent„o busca as datas anteriores                        
+      --Esse processa executa ap√≥s o termino da cadeia ent√£o busca as datas anteriores                        
       --Determinar a data para arquivo de retorno
       vr_dtmvtaux := rw_crapdat.dtmvtoan;  
       vr_dtmvtpro := rw_crapdat.dtmvtolt;        
@@ -800,20 +792,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       vr_inproces := rw_crapdat.Inproces;        
 
     EXCEPTION
+      --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
+        pr_dscritic := vr_dscritic||
+                       ' pr_cdcooperprog:' || pr_cdcooperprog ||
+                       ', pc_posiciona_dat';
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_posiciona_dat:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao posicionar data do processo'
-                                     ,pr_dsmensag => 'Ocorreu falhar ao posicionar data do processo.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(8))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic := NULL;
-        pr_dscritic := sqlerrm;      
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' pr_cdcooperprog:' || pr_cdcooperprog ||
+                       ', pc_posiciona_dat - ' || SQLERRM; 	    
     END pc_posiciona_dat;   
                                     
     -- pc_detalhe_execucao 
@@ -823,7 +815,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
     IS
     BEGIN
       
-      -- Verifica se programa anterior j· executou
+      -- Verifica se programa anterior j√° executou
       pc_verifica_ja_executou( pr_cdcooperexec => pr_cdcooper
                               ,pr_dtprocess => vr_dtmvtaux
                               ,pr_cdtipope  => 'C'
@@ -834,16 +826,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_verifica_ja_executou - CRPS538_1 - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;
 
       IF vr_qtdexec = 0 THEN
+        --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
         --Levantar Excecao
-        vr_dscritic := 'Faltou executar programa anterior crps538_1';
+        vr_cdcritic := 144; -- Faltou executar programa anterior
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                       ' crps538_1';
         RAISE vr_exc_saida;
       END IF;
-      -- Verifica se programa j· executou
+      -- Verifica se programa j√° executou
       pc_verifica_ja_executou( pr_cdcooperexec => pr_cdcooper
                               ,pr_dtprocess => vr_dtmvtaux
                               ,pr_cdtipope  => 'I'
@@ -854,23 +848,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_verifica_ja_executou - '||vr_cdprogra||' - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;                       
       
       -- Busca o diretorio da cooperativa conectada
       vr_caminho_rl := gene0001.fn_diretorio(pr_tpdireto => 'C' --> usr/coop
                                             ,pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsubdir => NULL);                    
+                                            ,pr_nmsubdir => NULL);									  
       -- Buscar o diretorio padrao da cooperativa conectada
-      vr_caminho_rl  := vr_caminho_rl||'/rl';    
+      vr_caminho_rl  := vr_caminho_rl||'/rl';		
 
-      pc_avalia_execucao(pr_cdcritic => vr_cdcritic
-                        ,pr_dscritic => vr_dscritic);
+      -- Gera arq cooperado
+      pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_avalia_execucao - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;                      
 
@@ -882,11 +876,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_gera_relatorio_574 - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;          
 
-      --Gerar arq devoluÁ„o
+      --Gerar arq devolu√ß√£o
       pc_gerar_arq_devolucao(pr_cdcooper => pr_cdcooper
                             ,pr_dtmvtolt => vr_dtmvtaux
                             ,pr_cdcritic => vr_cdcritic
@@ -894,35 +887,38 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_gerar_arq_devolucao - ' || vr_dscritic;
         RAISE vr_exc_saida;
       END IF;             
 
-      pc_controla_log_programa('O'
-                              ,4
-                              ,'Executou pc_detalhe_execucao, dtmvtaux: ' ||vr_dtmvtaux||' , cdprogra: '||vr_cdprogra
-                              ,rw_crapcop_ativas.cdcooper
-                              );
-            
+      --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+      vr_cdcritic := 1067; -- Executou pc_detalhe_execucao
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                     ' pc_detalhe_execucao'||
+                     ', dtmvtaux: ' || vr_dtmvtaux ||
+                     ', cdprogra: ' || vr_cdprogra;   
+      -- Controla log em banco de dados
+      pc_controla_log_programa( pr_dstiplog       => 'O'
+                               ,pr_tpocorrencia   => 4
+                               ,pr_cdcritic       => vr_cdcritic
+                               ,pr_dscritic       => vr_dscritic
+                               ,pr_cdcriticidade  => 0
+                               ,pr_cdcooperprog   => rw_crapcop_ativas.cdcooper
+                              );       
+      vr_cdcritic := NULL;
+      vr_dscritic := NULL;   
     EXCEPTION
-      WHEN vr_exc_final THEN
-        --nao tem arquivo para processar
-        pr_cdcritic:= NULL;
-        pr_dscritic:= NULL;
+      -- Excluido vr_exc_final - 15/03/2018 - Chamado 801483 
       WHEN vr_exc_saida THEN
         pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
+        pr_dscritic:= vr_dscritic ||
+                      ', pc_detalhe_execucao' ;
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_detalhe_execucao:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao detalhar processamento'
-                                     ,pr_dsmensag => 'Ocorreu falhar ao detalhar processamento.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(9))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;      
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ', pc_detalhe_execucao - ' || SQLERRM; 	    
     END pc_detalhe_execucao;      
                                     
     -- pc_cria_job 
@@ -955,36 +951,42 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          END IF;
        END;';
       -- Faz a chamada ao programa paralelo atraves de JOB
-      gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooperprog --> CÛdigo da cooperativa
-                            ,pr_cdprogra  => vr_cdprogra     --> CÛdigo do programa
+      gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooperprog --> C√≥digo da cooperativa
+                            ,pr_cdprogra  => vr_cdprogra     --> C√≥digo do programa
                             ,pr_dsplsql   => vr_dsplsql      --> Bloco PLSQL a executar
-                            ,pr_dthrexe   => ( SYSDATE + (pr_qtminutos /1440) ) --> Horario da execuÁ„o
+                            ,pr_dthrexe   => ( SYSDATE + (pr_qtminutos /1440) ) --> Horario da execu√ß√£o
                             ,pr_interva   => NULL            --> apenas uma vez
                             ,pr_jobname   => vr_jobname      --> Nome randomico criado
                             ,pr_des_erro  => vr_dscritic);
 
       IF TRIM(vr_dscritic) is not null THEN
-        vr_dscritic := 'retorno gene0001.pc_submit_job' ||
-                       ' , vr_jobname: '  || vr_jobname ||
-                       ' , vr_dsplsql: '   || vr_dsplsql ||
-                       ' , vr_dscritic: '  || vr_dscritic;
+        --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+        vr_cdcritic := 1197;
+        vr_dscritic := vr_dscritic ||
+                       ' vr_jobname:'  || vr_jobname ||
+                       ', vr_dsplsql:' || vr_dsplsql ||
+                       ' - gene0001.pc_submit_job';	
         RAISE vr_exc_saida;              
-      END IF;  
+      END IF;
+      -- Retorna nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);  
     EXCEPTION
+      --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
       WHEN vr_exc_saida THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic ||
+                       ' pr_cdcooperprog:' || pr_cdcooperprog ||
+                       ', pr_qtminutos:'   || pr_qtminutos    ||
+                       ', pc_detalhe_execucao - ' ;
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_cria_job:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao criar job'
-                                     ,pr_dsmensag => 'Ocorreu falhar ao criar job.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(10))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;      
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ' pr_cdcooperprog:' || pr_cdcooperprog ||
+                       ' pr_qtminutos:'    || pr_qtminutos    ||
+                       ', pc_detalhe_execucao - ' || SQLERRM;   
     END pc_cria_job;  
         
     -- Verifica termino de todas coooperativas e do ultimo 538_2 
@@ -1012,7 +1014,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           pr_interminocoopers := 2;
           EXIT;
         ELSE
-          -- Verifica se programa 538_2 j· executou
+          -- Verifica se programa 538_2 j√° executou
           pc_verifica_ja_executou( pr_cdcooperexec => rw_crapcop_termino.cdcooper
                                   ,pr_dtprocess => vr_dtmvtaux
                                   ,pr_cdtipope  => 'C'
@@ -1023,7 +1025,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           --Se ocorreu erro
           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
             --Levantar Excecao
-            vr_dscritic := 'pc_verifica_ja_executou - '||vr_dscritic;
             RAISE vr_exc_saida;
           END IF;
       
@@ -1036,16 +1037,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       END LOOP;  
       
     EXCEPTION
+      --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
       -- apenas repassar as criticas
       WHEN vr_exc_saida THEN
-        pr_dscritic := vr_dscritic;
         pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic ||
+                       ', pc_ver_termino_coopers';
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;      
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ', pc_ver_termino_coopers - ' || SQLERRM;         
     END pc_ver_termino_coopers;                                    
                                         
     -- pc_controle_coop_especifica 
@@ -1078,12 +1082,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
-        vr_dscritic := 'pc_posiciona_dat - '||vr_dscritic;
         RAISE vr_exc_saida;
       END IF;
       -- verifica se ontem foi feriado e se for gera erro para chamado
       IF vr_fgferiado THEN
-        vr_dscritic := 'Rotina n„o executa em feriado';
+        --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+        vr_cdcritic := 1198; -- Rotina n√£o executa em feriado
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;
       END IF;
       
@@ -1094,11 +1099,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'pc_ver_termino_coopers - '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
       ELSE    
-        -- Para coopers clientes n„o verifica a regra de termino ent„o fica 1 fixo
+        -- Para coopers clientes n√£o verifica a regra de termino ent√£o fica 1 fixo
         vr_interminocoopers := 1;
       END IF; 
                             
@@ -1111,7 +1115,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'pc_detalhe_execucao - '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
       ELSE         
@@ -1127,30 +1130,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'pc_cria_job - '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
       END IF;           
       
-    EXCEPTION
-      WHEN vr_exc_final THEN
-        --nao tem arquivo para processar
-        pr_cdcritic:= NULL;
-        pr_dscritic:= NULL;
+    EXCEPTION   
+      -- Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+      -- Excluido vr_exc_final - 15/03/2018 - Chamado 801483
       WHEN vr_exc_saida THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic||
+                       ', pc_controle_coop_especifica';
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_controle_coop_especifica:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha no controle do processo'
-                                     ,pr_dsmensag => 'Ocorreu falhar no controle do processo.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(11))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;      
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ', pc_controle_coop_especifica - ' || SQLERRM;               
     END pc_controle_coop_especifica;  
                                     
     -- pc_controle_execucao 
@@ -1168,7 +1165,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         -- verifica a quantidade de cooperativas a processar
         vr_totcoop := vr_totcoop + 1;
         
-        -- Verifica sabado para n„o executar a Cecred
+        -- Verifica sabado para n√£o executar a Cecred
         BEGIN
           SELECT TO_CHAR(SYSDATE,'D') 
           INTO   vr_diaSemana 
@@ -1177,19 +1174,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log
             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+            --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
             --Variavel de erro recebe erro ocorrido
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Select dia da semana - ' || sqlerrm;
+            vr_cdcritic := 1036;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           'Select dia da semana DUAL ' || SQLERRM; 		
             RAISE vr_exc_saida;    
         END;
         
-        IF vr_diaSemana                  = 1     THEN -- domingo n„o executa nenhuma cooper
+        IF vr_diaSemana                  = 1     THEN -- domingo n√£o executa nenhuma cooper
           CONTINUE; 
         ELSIF vr_diaSemana               = 2 AND      -- segunda 
               rw_crapcop_ativas.cdcooper <> 3    THEN -- Processa somente a cooper Cecred                                                                       
           CONTINUE;             
         ELSIF vr_diaSemana               = 7 AND      -- sabado  
-              rw_crapcop_ativas.cdcooper = 3     THEN -- N„o Processa apenas a cooper Cecred                                                      
+              rw_crapcop_ativas.cdcooper = 3     THEN -- N√£o Processa apenas a cooper Cecred                                                      
           CONTINUE;
         END IF;
                 
@@ -1201,12 +1200,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'pc_posiciona_dat - '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
-        -- verifica se ontem foi feriado e se for: Rotina n„o ser· executada
+        -- verifica se ontem foi feriado e se for: Rotina n√£o ser√° executada
         IF vr_fgferiado THEN
-          pc_controla_log_programa('O', 4,  'Feriado ent„o Rotina n„o ser· executada', rw_crapcop_ativas.cdcooper);          
+          --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+          --Variavel de erro recebe codigo devido
+          vr_cdcritic := 1198; -- Feriado ent√£o Rotina n√£o ser√° executada
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          -- Controla log em banco de dados
+          pc_controla_log_programa( pr_dstiplog       => 'O'
+                                   ,pr_tpocorrencia   => 4
+                                   ,pr_cdcritic       => vr_cdcritic
+                                   ,pr_dscritic       => vr_dscritic
+                                   ,pr_cdcriticidade  => 0
+                                   ,pr_cdcooperprog   => rw_crapcop_ativas.cdcooper
+                                  );  
+          vr_cdcritic := NULL;
+          vr_dscritic := NULL;        
           CONTINUE;
         END IF;
                 
@@ -1228,7 +1239,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'pc_cria_job - '||vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
              
@@ -1236,30 +1246,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       
       -- Verifica quantidade de cooperativas a processar
       IF vr_totcoop = 0 THEN
-        vr_cdcritic:= 0;
-        vr_dscritic := 'N„o encontrada nenhuma cooperativa ativa ou cadastrada';
+        --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+        --Variavel de erro recebe codigo devido
+        vr_cdcritic := 1199; -- N√£o encontrada nenhuma cooperativa ativa ou cadastrada
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;
       END IF;
 
     EXCEPTION
-      WHEN vr_exc_final THEN
-        --nao tem arquivo para processar
-        pr_cdcritic:= NULL;
-        pr_dscritic:= NULL;
+      --Ajuste mensagem de erro - 15/03/2018 - Chamado 801483 
+      -- Excluido vr_exc_final - 15/03/2018 - Chamado 801483 
       WHEN vr_exc_saida THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic ||
+                       ', pc_controle_execucao';
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'pc_controle_execucao:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha no controle do processo'
-                                     ,pr_dsmensag => 'Ocorreu falhar no controle do processo.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(12))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic:= NULL;
-        pr_dscritic:= sqlerrm;      
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       ', pc_controle_execucao - ' || SQLERRM;   
     END pc_controle_execucao;              
     
     ---------------------------------------
@@ -1273,9 +1280,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
 
       -- Retorna nome do modulo logado
       GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
+      
+      vr_dsassunt := vr_cdprogra || ' - Falha no controle do processo';
+      vr_dsmensag := 'Ocorreu falha no controle do processo.' ||
+                     ' Entre em contato com a √°rea de Sustenta√ß√£o de Sistemas para analise dos logs.' ||
+                     ' idprglog:';                    
 
-      --Programa CRPS538_2 iniciado
-      pc_controla_log_programa('I', NULL, NULL);
+      -- Controla log em banco de dados - 15/03/2018 - Chamado 801483
+      pc_controla_log_programa( pr_dstiplog => 'I' );
 
       IF pr_flavaexe = 'S' THEN      
         --pc_controle_execucao
@@ -1284,45 +1296,65 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'pc_controle_execucao - ' || vr_dscritic;
           RAISE vr_exc_saida;
         END IF;       
       ELSE
 
         pc_controle_coop_especifica(pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic);
+                                   ,pr_dscritic => vr_dscritic);
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-          vr_dscritic := 'pc_controle_coop_especifica - ' || vr_dscritic;
           RAISE vr_exc_saida;
         END IF;       
       END IF;      
 
       --Salvar informacoes no banco de dados
       COMMIT;
+
+      -- Controla log em banco de dados - 15/03/2018 - Chamado 801483  
+      pc_controla_log_programa(pr_dstiplog => 'F');
       
-      -- Programa CRPS538_2 Finalizado com Sucesso
-      pc_controla_log_programa('F', NULL, NULL);
-      
+      GENE0001.pc_informa_acesso(pr_module => NULL, pr_action => NULL);      
     EXCEPTION
       WHEN vr_exc_saida THEN
-        -- Devolvemos codigo e critica encontradas     
+        -- Devolvemos codigo e critica encontradas	   
         pr_cdcritic := nvl(vr_cdcritic,0);
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
-        pc_controla_log_programa('E', 2, pr_dscritic);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic) ||
+                       '  pr_flavaexe:' || pr_flavaexe ||
+                       ', pr_cdcooper:' || pr_cdcooper ||
+                       ', pr_nmtelant:' || pr_nmtelant;
+        -- Controla log em banco de dados - 15/03/2018 - Chamado 801483
+        pc_controla_log_programa( pr_dstiplog       => 'E'
+                                 ,pr_tpocorrencia   => 2
+                                 ,pr_cdcritic       => pr_cdcritic
+                                 ,pr_dscritic       => pr_dscritic
+                                 ,pr_cdcriticidade  => 2
+                                 ,pr_cdcooperprog   => pr_cdcooper
+                                ); 
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => vr_dsassunt
+                                     ,pr_dsmensag => vr_dsmensag || vr_idprglog ||'.'
+                                     ,pr_idprglog => vr_idprglog);
       WHEN OTHERS THEN
-        pc_captura_registra_log(pr_dsmensag => 'Falha geral:');
-        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha no processo'
-                                     ,pr_dsmensag => 'Ocorreu falhar no processo.'
-                                                   ||' Entre em contato com a ·rea de SustentaÁ„o de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(14))'
-                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
-        -- Efetuar retorno do erro n„o tratado
-        pr_cdcritic := 0;
-        pr_dscritic := sqlerrm;
-        pc_controla_log_programa('E', 2, sqlerrm);
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+        pr_cdcritic := 9999;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                       '  pr_flavaexe:' || pr_flavaexe ||
+                       ', pr_cdcooper:' || pr_cdcooper ||
+                       ', pr_nmtelant:' || pr_nmtelant ||        
+                       ', PC_CRPS538_2 - ' || SQLERRM; 
+        -- Controla log em banco de dados - 15/03/2018 - Chamado 801483
+        pc_controla_log_programa( pr_dstiplog       => 'E'
+                                 ,pr_tpocorrencia   => 2
+                                 ,pr_cdcritic       => pr_cdcritic
+                                 ,pr_dscritic       => pr_dscritic
+                                 ,pr_cdcriticidade  => 2
+                                 ,pr_cdcooperprog   => pr_cdcooper
+                                );
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => vr_dsassunt
+                                     ,pr_dsmensag => vr_dsmensag || vr_idprglog ||'.'
+                                     ,pr_idprglog => vr_idprglog);        	
     END;
   END PC_CRPS538_2;
 /
