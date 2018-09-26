@@ -237,6 +237,171 @@ INSERT INTO crapaca(nmdeacao
 									,'pr_cdcooper,pr_cdalcada_aprovacao,pr_idcalculo_reciproci,pr_idstatus,pr_dsjustificativa'
 						      ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADRES')
 									);
+									
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('VALIDA_ALCADA'
+									 ,'TELA_CADRES'
+									 ,'pc_valida_alcada'
+									 ,'pr_cdcooper'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADRES')
+									 );
+
+UPDATE crapaca
+   SET lstparam = 'pr_cdcooper,pr_idindica,pr_cdprodut,pr_inpessoa,pr_vlminimo,pr_vlmaximo,pr_perscore,pr_pertoler,pr_perpeso,pr_perdesc'
+ WHERE nmpackag = 'TELA_PARIDR'
+   AND nmdeacao = 'INSERE_PAR_IND';
+
+UPDATE crapaca
+   SET lstparam = 'pr_cdcooper,pr_idindica,pr_cdprodut,pr_inpessoa,pr_vlminimo,pr_vlmaximo,pr_perscore,pr_pertoler,pr_perpeso,pr_perdesc'
+ WHERE nmpackag = 'TELA_PARIDR'
+   AND nmdeacao = 'ALTERA_PAR_IND';
+
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('BUSCA_VINCULACOES'
+									 ,'TELA_CADIDR'
+									 ,'pc_obtem_vinculacoes'
+									 ,NULL
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADIDR')
+                   );
+ 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('BUSCA_IDVINCULACAO'
+									 ,'TELA_CADIDR'
+									 ,'pc_obtem_idvinculacao'
+									 ,NULL
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADIDR')
+									 );
+ 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('INSERE_VINCULACAO'
+									 ,'TELA_CADIDR'
+									 ,'pc_insere_vinculacao'
+									 ,'pr_idvinculacao,pr_nmvinculacao,pr_flgativo'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADIDR')
+									 );
+ 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('ALTERA_VINCULACAO'
+									 ,'TELA_CADIDR'
+									 ,'pc_altera_vinculacao'
+									 ,'pr_idvinculacao,pr_nmvinculacao,pr_flgativo'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADIDR')
+									 );
+ 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('EXCLUI_VINCULACAO'
+									 ,'TELA_CADIDR'
+									 ,'pc_exclui_vinculacao'
+									 ,'pr_idvinculacao'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADIDR')
+									 );
+									 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('OBTEM_VINCULACAO'
+									 ,'TELA_PARIDR'
+									 ,'pc_obtem_vinculacoes'
+									 ,'pr_cdcooper'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_PARIDR')
+									 );
+    
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+					   VALUES('PESQUISA_VINCULACOES'
+									 ,'TELA_PARIDR'
+									 ,'pc_pesquisa_vinculacoes'
+									 ,'pr_nmvinculacao'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_PARIDR')
+									 );
+    
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+             VALUES('INSERE_PAR_VINCULACAO'
+									 ,'TELA_PARIDR'
+									 ,'pc_insere_param_vinculacao'
+									 ,'pr_cdcooper,pr_idvinculacao,pr_cdprodut,pr_inpessoa,pr_perpeso,pr_perdesc'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_PARIDR')
+									 );
+    
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr)
+						VALUES('ALTERA_PAR_VINCULACAO'
+									,'TELA_PARIDR'
+									,'pc_altera_param_vinculacao'
+									,'pr_cdcooper,pr_idvinculacao,pr_cdprodut,pr_inpessoa,pr_perpeso,pr_perdesc'
+									,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_PARIDR')
+									);
+    
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('EXCLUI_PAR_VINCULACAO'
+									 ,'TELA_PARIDR'
+									 ,'pc_exclui_param_vinculacao'
+									 ,'pr_cdcooper,pr_idvinculacao,pr_cdprodut,pr_inpessoa'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_PARIDR')
+									 );
+    
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('VALIDA_VINCULACAO'
+									 ,'TELA_PARIDR'
+									 ,'pc_valida_vinculacao'
+									 ,'pr_idvinculacao'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_PARIDR')
+									 );
 
 INSERT INTO crapaca(nmdeacao
                    ,nmpackag
@@ -309,12 +474,127 @@ INSERT INTO crapaca(nmdeacao
 									 ,lstparam
 									 ,nrseqrdr
 									 )
+             VALUES('BUSCA_VINCULACAO'
+						       ,'TELA_ATENDA_COBRAN'
+									 ,'fn_busca_vinculacao'
+									 ,'pr_nrdconta'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_COBRAN')
+									 );
+									 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+             VALUES('CANCELA_DESCONTO'
+						       ,'TELA_ATENDA_COBRAN'
+									 ,'pc_cancela_descontos'
+									 ,'pr_idrecipr'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_COBRAN')
+									 );
+
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+             VALUES('CONSULTA_DESCONTO'
+									 ,'TELA_ATENDA_COBRAN'
+									 ,'pc_consulta_descontos'
+									 ,'pr_idcalculo_reciproci,pr_cdcooper,pr_nrdconta'
+									 ,(SELECT nrseqrdr FROM craprdr r WHERE r.nmprogra = 'TELA_ATENDA_COBRAN')
+									 );
+ 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+             VALUES('INCLUI_DESCONTO'
+									 ,'TELA_ATENDA_COBRAN'
+									 ,'pc_inclui_descontos'
+									 ,'pr_cdcooper,pr_nrdconta,pr_ls_convenios,pr_boletos_liquidados,pr_volume_liquidacao,pr_qtdfloat,pr_vlaplicacoes,pr_vldeposito,pr_dtfimcontrato,pr_flgdebito_reversao,pr_vldesconto_coo,pr_dtfimadicional_coo,pr_vldesconto_cee,pr_dtfimadicional_cee,pr_txtjustificativa,pr_idvinculacao,pr_perdesconto,pr_vldescontoconcedido_coo,pr_vldescontoconcedido_cee'
+									 ,(SELECT nrseqrdr FROM craprdr r WHERE r.nmprogra = 'TELA_ATENDA_COBRAN')
+									 );
+    
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+             VALUES('ALTERA_DESCONTO'
+									 ,'TELA_ATENDA_COBRAN'
+									 ,'pc_altera_descontos'
+									 ,'pr_idcalculo_reciproci,pr_cdcooper,pr_nrdconta,pr_ls_convenios,pr_boletos_liquidados,pr_volume_liquidacao,pr_qtdfloat,pr_vlaplicacoes,pr_vldeposito,pr_dtfimcontrato,pr_flgdebito_reversao,pr_vldesconto_coo,pr_dtfimadicional_coo,pr_vldesconto_cee,pr_dtfimadicional_cee,pr_txtjustificativa,pr_idvinculacao,pr_perdesconto,pr_vldescontoconcedido_coo,pr_vldescontoconcedido_cee'
+									 ,(SELECT nrseqrdr FROM craprdr r WHERE r.nmprogra = 'TELA_ATENDA_COBRAN')
+									 );
+
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('BUSCA_OPERADORES_REG'
+									 ,'TELA_ATENDA_COBRAN'
+									 ,'pc_busca_operadores_reg'
+									 ,'pr_nmoperad,pr_nriniseq,pr_nrregist'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_COBRAN')
+									 );
+									 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('VALIDA_EXCLUSAO_CONVENIO'
+									 ,'TELA_ATENDA_COBRAN'
+									 ,'pc_valida_exclusao_conven'
+									 ,'pr_nrdconta,pr_nrconven,pr_idrecipr'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_COBRAN'));
+
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
 						 VALUES('BUSCA_CODIGO_BARRAS'
 						       ,'TELA_COBRAN'
 									 ,'pc_consulta_cod_barras_web'
 									 ,'pr_dtvencto,pr_cdbandoc,pr_vltitulo,pr_nrcnvcob,pr_nrdconta,pr_nrdocmto'
 									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBRAN')
 									 );
+
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+						 VALUES('GERA_SMS_CSV'
+						       ,'COBR0005'
+									 ,'pc_relat_anali_envio_csv_web'
+									 ,'pr_nrdconta,pr_dtiniper,pr_dtfimper,pr_dsiduser,pr_instatus'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'COBRAN')
+									 );
+									 
+INSERT INTO crapaca(nmdeacao
+                   ,nmpackag
+									 ,nmproced
+									 ,lstparam
+									 ,nrseqrdr
+									 )
+             VALUES('IMPTERMO_RECIPROCI'
+									 ,'sspc0002'
+									 ,'pc_imprimir_termo_reciproci'
+									 ,'pr_nrdconta, pr_nmdtest1, pr_cpftest1, pr_nmdtest2, pr_cpftest2, pr_idcalculo_reciproci, pr_tpimpres'
+									 ,(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'sspc0002'));
 
 -- ------------------------------------------
 -- Inclusão dos indicadores da reciprocidade
@@ -427,3 +707,11 @@ VALUES ('ATENDA','5','@,C,H,X','Cadastro de Cobranca','Reciprocidade','0','1','R
  
 INSERT INTO craptel (NMDATELA,NRMODULO,CDOPPTEL,TLDATELA,TLRESTEL,FLGTELDF,FLGTELBL,NMROTINA,LSOPPTEL,INACESSO,CDCOOPER,IDSISTEM,IDEVENTO,NRORDROT,NRDNIVEL,NMROTPAI,IDAMBTEL)
 VALUES ('ATENDA','5','@,C,H,X','Cadastro de Cobranca','Reciprocidade','0','1','RECIPROCIDADE','ACESSO,CONSULTA,HABILITACAO,CANCELAMENTO','2','17','1','0','20','1',' ','2');
+
+INSERT INTO craptel (NMDATELA,NRMODULO,CDOPPTEL,TLDATELA,TLRESTEL,FLGTELDF,FLGTELBL,NMROTINA,LSOPPTEL,INACESSO,CDCOOPER,IDSISTEM,IDEVENTO,NRORDROT,NRDNIVEL,NMROTPAI,IDAMBTEL)
+VALUES ('ATENDA','5','@,C,H,X','Cadastro de Cobranca','Reciprocidade','0','1','RECIPROCIDADE','ACESSO,CONSULTA,HABILITACAO,CANCELAMENTO','2','1','1','0','20','1',' ','2');
+-- ----------------
+-- Demais scripts
+-- ----------------
+
+UPDATE crapcat SET fldesman = 1;
