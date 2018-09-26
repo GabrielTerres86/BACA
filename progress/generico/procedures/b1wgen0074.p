@@ -263,9 +263,13 @@
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
                 30/05/2018 - Retirar solicitaçao automática de Conta ITG (Renato Darosci - Supero).
-				
+                
 				24/09/2018 - Ao encerrar a conta ITG, não mudar a situação da conta principal do cooperado.
                              INC0022957 - Wagner - Sustentação.
+			   
+                25/09/2018 - Tratamento temporario para nao permitir solicitacao
+                             ou encerramento de conta ITG devido a migracao do BB.
+                             (Lombardi/Elton)
 
 .............................................................................*/
 
@@ -585,24 +589,24 @@ PROCEDURE Busca_Dados:
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl > 1) THEN
             ASSIGN tt-conta-corr.btexcttl = NO.
-/*
+
         /* Tratamento temporario para nao permitir solicitacao
            ou encerramento de conta ITG devido a migracao do BB */
-        IF  (CAN-DO ("6,12", STRING(par_cdcooper)) AND /* Credifiesc / Crevisc */
-             par_dtmvtolt >= 10/18/2017 AND par_dtmvtolt <= 10/24/2017)  OR
-            (CAN-DO ("2,16", STRING(par_cdcooper)) AND /* Acredicoop / Alto Vale */
-             par_dtmvtolt >= 10/19/2017 AND par_dtmvtolt <= 10/25/2017)  OR
-            (CAN-DO ("8,9,11", STRING(par_cdcooper)) AND /* Credelesc / Transpocred / Credifoz */
-             par_dtmvtolt >= 10/20/2017 AND par_dtmvtolt <= 10/26/2017)  OR
-            (CAN-DO ("5,7,10", STRING(par_cdcooper)) AND /* Acentra / Credcrea / Credicomin */
-             par_dtmvtolt >= 10/23/2017 AND par_dtmvtolt <= 10/27/2017)  OR
+        IF  (CAN-DO ("10,8,5,6,2,11,16", STRING(par_cdcooper)) AND /* Credcomin / Credelesc / Acentra / Credifiesc / Acredicoop / Credifoz / Alto Vale */
+             par_dtmvtolt >= 11/08/2018 AND par_dtmvtolt <= 11/19/2018)  OR
             (par_cdcooper = 1 AND /* Viacredi */
-             par_dtmvtolt >= 10/24/2017 AND par_dtmvtolt <= 10/30/2017)  THEN
+             par_dtmvtolt >= 11/14/2018 AND par_dtmvtolt <= 11/23/2018)  OR
+            (par_cdcooper = 12 AND /* Crevisc */
+             par_dtmvtolt >= 10/04/2018 AND par_dtmvtolt <= 10/15/2018)  OR
+            (par_cdcooper = 9 AND /* Transpocred */
+             par_dtmvtolt >= 10/10/2018 AND par_dtmvtolt <= 10/19/2018)  OR
+            (par_cdcooper = 7 AND /* Credcrea */
+             par_dtmvtolt >= 10/18/2018 AND par_dtmvtolt <= 10/26/2018)  THEN
             DO:
                ASSIGN tt-conta-corr.btencitg = NO
                       tt-conta-corr.btsolitg = NO.
             END.
-*/
+
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
                 PERSISTENT SET h-b1wgen0060.
