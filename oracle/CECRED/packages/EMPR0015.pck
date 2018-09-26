@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0015 IS
   PROCEDURE pc_valida_email_proposta (pr_cdcooper  IN crapdat.cdcooper%TYPE      --> Codigo da Cooperativa
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE      --> Numero da conta
                                      ,pr_nrctremp  IN crawepr.nrctremp%TYPE      --> Numero do contrato de emprestimo
-                                     ,pr_flgenvia  OUT boolean                   --> false não envia email / true envia email                                     
+                                     ,pr_flgenvia  OUT NUMBER                   --> false não envia email / true envia email                                     
                                      ,pr_retxml    OUT NOCOPY xmltype            --> Arquivo de retorno do XML
                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE);                                  
@@ -1442,7 +1442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
   PROCEDURE pc_valida_email_proposta (pr_cdcooper  IN crapdat.cdcooper%TYPE      --> Codigo da Cooperativa
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE      --> Numero da conta
                                      ,pr_nrctremp  IN crawepr.nrctremp%TYPE      --> Numero do contrato de emprestimo
-                                     ,pr_flgenvia  OUT boolean                   --> false não envia email / true envia email                                     
+                                     ,pr_flgenvia  OUT NUMBER                    --> 0 não envia email / 1 envia email
                                      ,pr_retxml    OUT NOCOPY xmltype            --> Arquivo de retorno do XML
                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS
@@ -1567,7 +1567,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           RAISE vr_exc_erro;           
       END; 
                 
-      pr_flgenvia:= FALSE;        
+      pr_flgenvia:= 0;        
     ELSE
       CLOSE cr_proposta_efetivada;
 
@@ -1592,7 +1592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             RAISE vr_exc_erro;           
         END; 
                 
-        pr_flgenvia:= FALSE;        
+        pr_flgenvia:= 0;        
 
       ELSE
         CLOSE cr_email_proposta;
@@ -1613,7 +1613,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
           AND rw_crawepr.insitapr = 1 -- Decisao aprovada
           AND rw_crawepr.dtaprova IS NOT NULL 
           AND rw_crawepr.dsdemail IS NOT NULL THEN
-          pr_flgenvia:= true;
+          pr_flgenvia:= 1;
 
           -- Inicializar as informações do XML de dados para o relatório
           dbms_lob.createtemporary(vr_xml, TRUE, dbms_lob.CALL);
@@ -1682,7 +1682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               RAISE vr_exc_erro;           
           END; 
                 
-          pr_flgenvia:= FALSE;        
+          pr_flgenvia:= 0;        
         END IF;
       END IF;        
     END IF;
