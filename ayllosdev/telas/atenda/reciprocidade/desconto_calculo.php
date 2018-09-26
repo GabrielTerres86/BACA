@@ -39,11 +39,9 @@ $idcee = ( (!empty($_POST['idcee'])) ? $_POST['idcee'] : 0 );
 
 // Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 function exibeErro($msgErro) {
-  echo '<script type="text/javascript">';
   echo 'hideMsgAguardo();';
   echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-  echo '</script>';
-  exit();
+  exit;
 }
 
 $xml  = "";
@@ -67,7 +65,7 @@ $xmlObject = getObjectXML($xmlResult);
 //print_r($xmlObject);
 
 if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
-  exibeErro(utf8_encode($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata));
+  exibeErro($xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata);
 }
 
 $result = $xmlObject->roottag->tags[0]->tags[0]->tags;
@@ -78,11 +76,7 @@ $vldedconto_coo =  getByTagName($result,'VLDEDCONTO_COO');
 $vldesconto_cee = floatval(str_replace(',', '.', $vldesconto_cee))*100;
 $vldedconto_coo = floatval(str_replace(',', '.', $vldedconto_coo))*100;
 
-echo json_encode(
-    array(
-        'vldesconto_cee' => $vldesconto_cee,
-        'vldedconto_coo' => $vldedconto_coo
-    )
-);
-
-?>
+echo 'hideMsgAguardo();';
+echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
+echo "$('#vldescontoconcedido_cee', '.tabelaDesconto').val('".number_format($vldesconto_cee, 2, ',', '.')."');";
+echo "$('#vldescontoconcedido_coo', '.tabelaDesconto').val('".number_format($vldesconto_coo, 2, ',', '.')."');";

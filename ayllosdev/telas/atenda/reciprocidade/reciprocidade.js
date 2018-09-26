@@ -3295,7 +3295,7 @@ function calcula_desconto() {
     showMsgAguardo("Aguarde, carregando ...");
     // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
     $.ajax({
-            dataType: "json",
+            dataType: "html",
             type: "POST",
             url: UrlSite + "telas/atenda/reciprocidade/desconto_calculo.php",
             data: {
@@ -3315,10 +3315,7 @@ function calcula_desconto() {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
             },
             success: function (response) {
-                hideMsgAguardo();
-                blockBackground(parseInt($("#divRotina").css("z-index")));
-                $('#vldescontoconcedido_cee', '.tabelaDesconto').val(number_format(response.vldesconto_cee, 2, ',', '.'));
-                $('#vldescontoconcedido_coo', '.tabelaDesconto').val(number_format(response.vldedconto_coo, 2, ',', '.'));
+                eval(response);
             }
     });
 }

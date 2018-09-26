@@ -32,7 +32,7 @@ function exibeErro($msgErro) {
 	echo 'hideMsgAguardo();';
 	echo 'showError("error","'.addslashes($msgErro).'","Alerta - Ayllos","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")))");';
 	echo '</script>';
-	exit();
+	//exit();
 }
 
 function getArrayByTagName( $xml, $tagName ) {
@@ -187,8 +187,8 @@ if ($cddopcao != 'C' || $idvinculacao == 0 || empty($nmvinculacao)) {
 	$vinculacao = getObjectXML($xmlResult);
 	$vinculacao = $vinculacao->roottag->tags[0];
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($vinculacao->roottag->tags[0]->name) == "ERRO") {
-		$msgErro = $vinculacao->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	if (strtoupper($vinculacao->name) == "ERRO") {
+		$msgErro = $vinculacao->tags[0]->tags[4]->cdata;
 		exibeErro(utf8_encode($msgErro));
 	}
 	$nmvinculacao = getByTagName($vinculacao->tags, "nmvinculacao");
