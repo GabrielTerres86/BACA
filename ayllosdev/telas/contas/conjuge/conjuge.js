@@ -386,6 +386,8 @@ function controlaLayout(operacao) {
 					showMsgAguardo('Aguarde, buscando dados ...');	
 					controlaOperacao('CB');
 				}
+				
+				return false;
 			}
 		});	
 
