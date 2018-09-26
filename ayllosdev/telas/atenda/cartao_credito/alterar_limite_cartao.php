@@ -32,12 +32,12 @@ try {
     if (!(validaInteiro($nrdconta)))
         throw new Exception(utf8ToHtml("Conta inválida"));
 } catch (Exception $e) {
-    exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
+    exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
     return;
 }
 
-if (verificaPendencia($nrctrcrd, $nrdconta,$glbvars)){ exibirErro('error', utf8ToHtml("Proposta de alteração de limite pendente na esteira"),'Alerta - Ayllos',$funcaoAposErro); return;};
-if (contaDoOperador($nrdconta, $glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar alteração de limite para cartão de crédito da conta do Operador."),'Alerta - Ayllos',$funcaoAposErro);
+if (verificaPendencia($nrctrcrd, $nrdconta,$glbvars)){ exibirErro('error', utf8ToHtml("Proposta de alteração de limite pendente na esteira"),'Alerta - Aimaro',$funcaoAposErro); return;};
+if (contaDoOperador($nrdconta, $glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar alteração de limite para cartão de crédito da conta do Operador."),'Alerta - Aimaro',$funcaoAposErro);
 if(is_null($opcao)){
   $titular = is_titular_card($nrctrcrd, $nrdconta,$glbvars,$limiteatual,$limitetitular);
 } else if ($opcao == 'G'){
@@ -54,7 +54,7 @@ if ($titular){
 }
 
 
-//if (!is_titular_card($nrctrcrd, $nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar alteração de limite para cartão de crédito adicional."),'Alerta - Ayllos',$funcaoAposErro);
+//if (!is_titular_card($nrctrcrd, $nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar alteração de limite para cartão de crédito adicional."),'Alerta - Aimaro',$funcaoAposErro);
 
 ?>
 <script>
@@ -196,6 +196,13 @@ $vlsugmot = number_format(0,2,",",".");
 	$objXml = simplexml_load_string($xmlResult);
 	echo "<!-- SUGESTAO_LIMITE_CRD_ALT \n   $xmlResult  \n -->";
 		
+	
+	
+	if(isset($objXml->Erro) && (strlen($objXml->Erro->Registro->dscritic) > 0)){
+		$mssg = str_replace(" ]"," ]<br>", $objXml->Erro->Registro->dscritic);
+		$mssg =  str_replace("\u00C3\u0192\u00C2\u00A1","a",$mssg);
+			echo"<script>showError('error', '".utf8ToHtml($mssg)."', 'Alerta - Aimaro', 'voltaDiv(0, 1, 4);') </script>";
+	}
 	$xmlObj = getObjectXML($xmlResult);
 	
 	$mensagem = $objXml->Dados->sugestoes->sugestao->mensagem;
@@ -218,7 +225,7 @@ $vlsugmot = number_format(0,2,",",".");
 			$msgconti .= (strlen($msgconti) >0)? "<br> $contingenciaMoto":"$contingenciaMoto";
 		}
 		$contigenciaAtiva = true;
-		echo"<script>showError('inform', '".utf8ToHtml($msgconti)."', 'Alerta - Ayllos', ''); globalesteira = true; </script>";
+		echo"<script>showError('inform', '".utf8ToHtml($msgconti)."', 'Alerta - Aimaro', ''); globalesteira = true; </script>";
 	}
 	else
 	{
@@ -237,7 +244,7 @@ $vlsugmot = number_format(0,2,",",".");
 		}		
 		
 		if(strlen($mensagem) > 0 && !$contigenciaAtiva){
-			echo '<script> showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");</script>';
+			echo '<script> showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Aimaro","bloqueiaFundo(divRotina);");</script>';
 		}
 	}
 	
@@ -528,7 +535,7 @@ $vlsugmot = number_format(0,2,",",".");
 			var vllimmin  = <? echo strToNm($vllimmin);?>;
 			var valorSugerido = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
             console.log("valorSugerido > vllimmax = "+valorSugerido > vllimmax);
-            if(valorSugerido > vllimmax || (cdadmcrd == 12 && valorSugerido == 0 )){
+            if(valorSugerido > vllimmax ){ 
 			//if(valorSugerido > limiteatualCC || (cdadmcrd == 12 && valorSugerido == 0 )){ item 169 - homol prj
 				$("#justificativaRow").show();
 				obgjustificativa = true;
@@ -543,7 +550,7 @@ $vlsugmot = number_format(0,2,",",".");
 		var vllimtit = <? echo strToNm($limitetitular);?>;
 		var vllimdif = parseFloat($("#vllimdif").val().replace(/\./g,'').replace(",","."));
 		if(vllimdif > vllimtit){
-			showError("error", "O Limite deve ser igual ou menor que o Limite do Titular.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError("error", "O Limite deve ser igual ou menor que o Limite do Titular.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             return false;
 		}
 		return true;
@@ -572,19 +579,19 @@ $vlsugmot = number_format(0,2,",",".");
 				valorSugerido = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
 				/*if (valorSugerido > 49500)
 				{
-					showError("error", "<? echo utf8ToHtml("Valor de limite solicitado acima do limite máximo de R$49.500,00."); ?>", "Alerta - Ayllos", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error", "<? echo utf8ToHtml("Valor de limite solicitado acima do limite máximo de R$49.500,00."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
 				}*/
 				/*if(valorSugerido == 0){
-					showError("error", "Por favor informe um valor sugerido para o novo limite.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error", "Por favor informe um valor sugerido para o novo limite.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
 				}*/
 				if(obgjustificativa && $("#justificativa").val().length == 0){
-					showError("error", "<? echo utf8ToHtml("Por favor,selecione uma justificativa."); ?>", "Alerta - Ayllos", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error", "<? echo utf8ToHtml("Por favor,selecione uma justificativa."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
 				}
 				if(valorSugerido > vlLimiteMaximo){
-					showError("error", "<? echo utf8ToHtml("Não é possível solicitar um valor de limite acima do limite da categoria."); ?>", "Alerta - Ayllos", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error", "<? echo utf8ToHtml("Não é possível solicitar um valor de limite acima do limite da categoria."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
 				}
 				
@@ -593,13 +600,14 @@ $vlsugmot = number_format(0,2,",",".");
 					tipo = '<? echo (is_null($opcao))? '' : $opcao; ?>';  /* $("#tplimite").val();	 */
 				}
 				if( istitular &&(valorSugerido < vllimmin)){
-					showError("error", "<? echo utf8ToHtml("Valor do limite solicitado abaixo do limite mínimo."); ?>", "Alerta - Ayllos", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+					showError("error", "<? echo utf8ToHtml("Valor do limite solicitado abaixo do limite mínimo."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					return;
 				}else if(obgjustificativa  && valorSugerido > vllimmax){
 					if($("#justificativa").val().length == 0)
-						showError("error", "<? echo utf8ToHtml("Por favor selecione uma justificativa."); ?>", "Alerta - Ayllos", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+						showError("error", "<? echo utf8ToHtml("Por favor selecione uma justificativa."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					else
-						senhaCoordenador("alterarBancoob(false,"+inpessoa+",'"+tipo+"' )");
+						alterarBancoob(false,inpessoa,tipo );
+						//senhaCoordenador("alterarBancoob(false,"+inpessoa+",'"+tipo+"' )");
 				}else{
 					//alterarBancoob(false,inpessoa,tipo );
 					alterarBancoob(true,inpessoa,tipo );
