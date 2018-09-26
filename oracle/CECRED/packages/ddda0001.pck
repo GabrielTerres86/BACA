@@ -442,7 +442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0079.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 29/08/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -1732,6 +1732,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             05/09/2018 - Alterar modelo de cálculo de 01 para 04.
     --                          Mudança para 01 somente poderá ser realizada em 06/10/2018 (INC0023384 - AJFink)
     --
+    --             20/09/2018 - Retirar o código fixo do modelo de cálculo e incluir um parâmetro
+    --                          para que seja possível alterar o modelo de cálculo de forma on-line
+    --                          sem necessidade de liberação do programa. (PRB0040338 - AJFink)
+    --
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1837,6 +1841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dsmsglog   crapcol.dslogtit%TYPE;
       vr_data  VARCHAR2(20) := To_Char(SYSDATE, 'YYYYMMDDHH24MISS');
       vr_datamov number(8);
+      vr_tpmodcal varchar2(100);
       
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2360,8 +2365,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_tab_remessa_dda(vr_index).dsinstru := vr_dsdinstr;
       /* regra nova da CIP - titulos emitidos apos 17/03/2012 sao
       registrados com tipo de calculo "01" (Rafael) */
+      vr_tpmodcal := nvl(trim(gene0001.fn_param_sistema('CRED',0,'NPC_MODELO_CALCULO')),'04');--PRB0040338
       IF rw_crapcob.dtmvtolt >= To_Date('03/17/2012', 'MM/DD/YYYY') THEN
-        pr_tab_remessa_dda(vr_index).tpmodcal := '04'; -->  INC0023384 - CIP calcula boletos a vencer e vencido.
+        pr_tab_remessa_dda(vr_index).tpmodcal := vr_tpmodcal; --PRB0040338
+        --pr_tab_remessa_dda(vr_index).tpmodcal := '04'; -->INC0023384 - CIP calcula boletos a vencer e vencido.
         --pr_tab_remessa_dda(vr_index).tpmodcal := '01'; --SCTASK0025280 - Instituição Recebedora calcula
       ELSE
         pr_tab_remessa_dda(vr_index).tpmodcal := '00';
