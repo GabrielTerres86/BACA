@@ -25,7 +25,7 @@
 ************************************************************************/
 
 var rating = new Object();
-var opcao, opcaoButton = "C";
+var opcao, opcaoButton ;
 var glb_nriniseq; 
 var glb_nrregist;
 
@@ -42,7 +42,7 @@ var flcritic;
 var dschassi;
 
 
-$(document).ready(function() {		
+$(document).ready(function() {	
 	
 	estadoInicial();
 		
@@ -54,7 +54,7 @@ function estadoInicial() {
     rating = new Object();
 
     formataCabecalho();
-
+	
     //opcao, opcaoButton = "C";
 	$('#tblTela').css({ 'width': '650' });
     $('#cddopcao', '#frmCab').habilitaCampo().focus().val('C');
@@ -62,7 +62,7 @@ function estadoInicial() {
 	$('#divBotoesBens').css({ 'display': 'none' });
     $('#frmFiltro').css('display', 'none');
     $('#divTabela').html('').css('display','none');
-	$('#frmCons').css({'display':'none'}); 
+	$('#frmCons').css({'display':'none'});
     glb_nriniseq = 1;
 	glb_nrregist = 50;
 }
@@ -80,6 +80,7 @@ function formataCabecalho() {
     $('#frmCab').css({ 'display': 'block' });
     highlightObjFocus($('#frmCab'));
 
+	
     $('input[type="text"],select', '#frmCab').limpaFormulario().removeClass('campoErro');
 
     //Define ação para ENTER e TAB no campo Opção
@@ -97,21 +98,29 @@ function formataCabecalho() {
     //Define ação para CLICK no botão de OK
     $("#btnOK", "#frmCab").unbind('click').bind('click', function () {
 
-        // Se esta desabilitado o campo 
+		// Se esta desabilitado o campo 
+		
+		cddopcao = $("#cddopcao", "#frmCab").val();
+		opcaoButton = cddopcao;
+		
+		mostrabutton();
         if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
             return false;
         }
 
+		if (!ValidAcesso(cddopcao)){
+			return false;
+		}
         montaFormFiltro();
 
         $(this).unbind('click');
-
-        return false;
-        
+		
+		return false;
+		
     });
 
     layoutPadrao();
-
+ 	
     return false;
 }
 
@@ -286,10 +295,14 @@ function formataFiltro() {
         });
 
     }
+	
+	
 
     //Define ação para CLICK no botão de Concluir
     $("#btProsseguir", "#divBotoes").unbind('click').bind('click', function () {
 
+		opcaoButton = cddopcao;
+		
 		mostrabutton();
 		buscaBens(1, 30);
 		});
@@ -318,7 +331,6 @@ function formataFiltro() {
 
 function buscaContratosGravames(nriniseq, nrregist) {
 
-    var cddopcao = $("#cddopcao", "#frmCab").val();
     var nrdconta = normalizaNumero($("#nrdconta", "#frmFiltro").val());
 
     showMsgAguardo("Aguarde ...");
@@ -408,7 +420,7 @@ function formataFiltroImpressao() {
     $('#frmFiltro').css({ 'display': 'block' });
     $('#divBotoes').css({ 'display': 'block' });
     $('#btConcluir', '#divBotoes').css({ 'display': 'none' });
-	$('#btConsultar', '#divBotoes').css({ 'display': 'inline' });
+	
     $('#btProsseguir', '#divBotoes').css({ 'display': 'none' });
     $('#btVoltar', '#divBotoes').css({ 'display': 'inline' });
 	$('#btImprimir', '#divBotoes').css({ 'display': 'inline' });
@@ -1018,12 +1030,7 @@ function formataFormularioBens() {
 }
 
 function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctrpro, tpinclus, permisit) {
-
-    //if ($('#cddopcao', '#frmCab').val() == 'C'){
-		
 	
-	//if ($('#cddopcao', '#frmCab').val() == 'C'){
-	mostrabutton();
 	if (opcaoButton == 'A'){	
         
         /* alteracoes apenas quando for situacao 
@@ -1361,8 +1368,9 @@ function selecionaBens(tr) {
 	$('#situacao_anterior', '#divBens').val($('#cdsitgrv', tr).val());
 	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
 
-    controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
-    
+    if (ValidAcesso(opcao)){
+		controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
+    }
 }
 
 function controlaPesquisa(valor) {
@@ -1425,16 +1433,73 @@ function controlaPesquisaAgencia() {
     return false;
 
 }
+function ValidAcesso(opcao) {
+	
+	switch (opcao) {
+	    case "M":            
+            if ($('#vlbtIncluir').val() != '') {
+				showError("error",$('#vlbtIncluir').val(),'Alerta - Ayllos','',false);
+				return false
+			}
+		break;
+		
+        case "A":            
+            if ($('#vlbtAlterar').val() != '') {
+				showError("error",$('#vlbtAlterar').val(),'Alerta - Ayllos','',false);
+				return false;
+			}			
+        break;
+		
+        case "B":          
+            if ($('#vlbtBaixar').val() != '') {
+				showError("error",$('#vlbtBaixar').val(),'Alerta - Ayllos','',false);
+				return false;
+			}		
+        break;
+		
+        case "X":              
+            if ($('#vlbtCancelar').val() != '') {
+				showError("error",$('#vlbtCancelar').val(),'Alerta - Ayllos','',false);
+				return false;
+			}			       
+        break;
+		
+        case "L":            
+            if ($('#vlbtLibJudicial').val() != '') {
+				showError("error",$('#vlbtLibJudicial').val(),'Alerta - Ayllos','',false);
+				return false;
+			}			       
+        break;
+		
+        case "J":             
+            if ($('#vlbtBlocJudicial').val() != '') {
+				showError("error",$('#vlbtBlocJudicial').val(),'Alerta - Ayllos','',false);
+				return false;
+			}			               
+        break;		
+		case "S":
+            if ($('#vlbtAltBensSubsA').val() != '') {
+				showError("error",$('#vlbtAltBensSubsA').val(),'Alerta - Ayllos','',false);
+				return false;
+			}			               
+        break;		
+    }
+	
+	return true;
+}
+
 function controlaAtleraBaixa(opcao) {
 	
 	opcaoButton = opcao;
 	
-	$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });
-	$('#btAlterar', '#divBotoesBens').css({ 'display': 'none' });
-	$('#btBaixar', '#divBotoesBens').css({ 'display': 'none' });
-
-
-	controlaCampos($('#possuictr').val(), $('#cdsitgrv').val(), $('#idseqbem').val(), $('#dsjustif').val(), $('#tpjustif').val(), $('#tpctrpro').val(), $('#tpinclus').val(), $('#permisit', '#divBens').val());			
+	if (ValidAcesso(opcao)){
+		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });
+		$('#btAlterar', '#divBotoesBens').css({ 'display': 'none' });
+		$('#btBaixar', '#divBotoesBens').css({ 'display': 'none' });
+		$('#btIncluir', '#divBotoesBens').css({ 'display': 'none' });
+		$('#btCancelar', '#divBotoesBens').css({ 'display': 'none' });
+		controlaCampos($('#possuictr').val(), $('#cdsitgrv').val(), $('#idseqbem').val(), $('#dsjustif').val(), $('#tpjustif').val(), $('#tpctrpro').val(), $('#tpinclus').val(), $('#permisit', '#divBens').val());			
+	}
 	return false;
 
 }
@@ -1509,10 +1574,13 @@ function controlaVoltar(ope,tpconsul) {
 }
 
 function montaFormFiltro() {
-
-    var cddopcao = $("#cddopcao", "#frmCab").val();
-	opcaoButton = $("#cddopcao", "#frmCab").val();
-
+	
+	if (cddopcao == 'I'){
+		$('#btConsultar', '#divBotoes').css({ 'display': 'inline' });
+	}else{
+		$('#btConsultar', '#divBotoes').css({ 'display': 'none' });
+	}
+		
     showMsgAguardo("Aguarde ...");
 
     //Requisição para montar o form correspondente a opção escolhida
@@ -2216,29 +2284,25 @@ function displayNoneButton() {
 	$('#btBlocJudicial', '#divBotoes').css({ 'display': 'none' });
 	$('#btInclManuGravame', '#divBotoes').css({ 'display': 'none' });
 	
-	
-		
 }
 function mostrabutton() {
-	
 	
 	$('#btConcluir','#divBotoesBens').css({ 'display': 'none' });
 	$('#btAlterar','#divBotoesBens').css({ 'display': 'none' });
 	$('#btBaixar', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btCancelar', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btIncluir', '#divBotoesBens').css({ 'display': 'none' });
-		
 	$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'none' });
 	
-	if (opcaoButton == "C") {
-		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });
-		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline' });
-		$('#btCancelar', '#divBotoesBens').css({ 'display': 'inline' });
-		$('#btIncluir', '#divBotoesBens').css({ 'display': 'inline' });
+	if (opcaoButton == "C") {		
+		$('#btIncluir','#divBotoesBens').css({ 'display': 'inline' });				
+		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });				
+		$('#btBaixar','#divBotoesBens').css({ 'display': 'inline' });				
+		$('#btCancelar','#divBotoesBens').css({ 'display': 'inline' });
 	}else if (opcaoButton == "J") {	
-		$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'inline' });
-		$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'inline' });
+		$('#btLibJudicial','#divBotoesBens').css({ 'display': 'inline' });				
+		$('#btBlocJudicial','#divBotoesBens').css({ 'display': 'inline' });				
 	}else if (opcaoButton == "M" || opcaoButton == "A" || opcaoButton == "B") {	
 		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });    
 	}

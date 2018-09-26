@@ -17,8 +17,7 @@
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
 	isPostMethod();	
-
-?>
+	?>
 
 <form id="frmBens" name="frmBens" class="formulario" style="display:none;">
 
@@ -193,6 +192,8 @@
             <input type="hidden" id="possuictr" name="possuictr" value="<? echo $possuictr; ?>" />
             <input type="hidden" id="idseqbem" name="idseqbem" value="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>" />
             <input type="hidden" id="tpinclus" name="tpinclus" value="<? echo getByTagName($bens[$i]->tags,'tpinclus'); ?>" />
+			
+            
           </tr>
 
           <?}?>
@@ -241,7 +242,8 @@
 
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" 		onclick="controlaVoltar('5'); 		return false;">Voltar</a>
-	<a href="#" class="botao" id="btIncluir" 		onclick="controlaAtleraBaixa('M'); 	return false;">Incluir</a>	
+	
+	<a href="#" class="botao" id="btIncluir" 		onclick="controlaAtleraBaixa('M'); 	return false;">Incluir</a>
 	<a href="#" class="botao" id="btAlterar"	 	onclick="controlaAtleraBaixa('A'); 	return false;">Alterar</a>	
 	<a href="#" class="botao" id="btBaixar" 		onclick="controlaAtleraBaixa('B'); 	return false;">Baixar</a>
 	<a href="#" class="botao" id="btCancelar" 		onclick="controlaAtleraBaixa('X'); 	return false;">Cancelamento</a>	
