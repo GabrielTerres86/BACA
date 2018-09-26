@@ -606,11 +606,11 @@ $vlsugmot = number_format(0,2,",",".");
 					if($("#justificativa").val().length == 0)
 						showError("error", "<? echo utf8ToHtml("Por favor selecione uma justificativa."); ?>", "Alerta - Aimaro", "$('#nrcpfcgc','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 					else
-						alterarBancoob(false,inpessoa,tipo );
+						alterarBancoob(false,inpessoa,tipo,<?echo $nrctrcrd; ?> );
 						//senhaCoordenador("alterarBancoob(false,"+inpessoa+",'"+tipo+"' )");
 				}else{
 					//alterarBancoob(false,inpessoa,tipo );
-					alterarBancoob(true,inpessoa,tipo );
+					alterarBancoob(true,inpessoa,tipo,<?echo $nrctrcrd; ?> );
 				}
 			} else {
 				valorSugerido = parseFloat($("#vllimdif").val().replace(/\./g,'').replace(",","."));
@@ -621,7 +621,7 @@ $vlsugmot = number_format(0,2,",",".");
 				if(inpessoa == 2){
 					tipo = '<? echo (is_null($opcao))? '' : $opcao; ?>';
 				}
-				alterarBancoob(true,inpessoa,tipo );
+				alterarBancoob(true,inpessoa,tipo,<?echo $nrctrcrd; ?>);
 			}
 			
 		}
