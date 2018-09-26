@@ -432,6 +432,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               ,dtdsdclq crapsld.dtdsdclq%TYPE
               ,qtddsdev crapsld.qtddsdev%TYPE
               ,vlblqjud crapsld.vlsddisp%TYPE
+              ,vlblqprj crapsld.vlblqprj%TYPE
               ,vlsldtot NUMBER
               ,vr_rowid ROWID);
 
@@ -1916,7 +1917,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               substr(tab.dsxml,instr(tab.dsxml,'#',1,10)+1,instr(tab.dsxml,'#',1,11)-instr(tab.dsxml,'#',1,10)-1) vlblqjud,
               substr(tab.dsxml,instr(tab.dsxml,'#',1,11) +1,instr(tab.dsxml,'#',1,12)-instr(tab.dsxml,'#',1,11)-1) vlsldtot,
               substr(tab.dsxml,instr(tab.dsxml,'#',1,12)+1,instr(tab.dsxml,'#',1,13)-instr(tab.dsxml,'#',1,12)-1) vr_rowid,
-              substr(tab.dsxml,instr(tab.dsxml,'#',1,13)+1,instr(tab.dsxml,'#',1,14)-instr(tab.dsxml,'#',1,13)-1) vr_indice
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,13)+1,instr(tab.dsxml,'#',1,14)-instr(tab.dsxml,'#',1,13)-1) vr_vlblqprj,
+              substr(tab.dsxml,instr(tab.dsxml,'#',1,14)+1,instr(tab.dsxml,'#',1,15)-instr(tab.dsxml,'#',1,14)-1) vr_indice
          from (select wrk.dschave dsxml
                  from tbgen_batch_relatorio_wrk wrk
                 where wrk.cdcooper    = pr_cdcooper
@@ -2072,6 +2074,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                vr_tab_crapsld(r_crapsld.vr_indice).vlblqjud := r_crapsld.vlblqjud;
                vr_tab_crapsld(r_crapsld.vr_indice).vlsldtot := r_crapsld.vlsldtot;
                vr_tab_crapsld(r_crapsld.vr_indice).vr_rowid := r_crapsld.vr_rowid;
+               vr_tab_crapsld(r_crapsld.vr_indice).vlblqprj := r_crapsld.vr_vlblqprj;
+               
            END LOOP;
 
            -- Total bloqueado da agencia - VR_TAB_LIS_AGNSDBTL
@@ -3493,6 +3497,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                        vr_tab_crapsld(vr_indice).vlblqjud||ds_character_separador||                                              
                        vr_tab_crapsld(vr_indice).vlsldtot||ds_character_separador||                                              
                        vr_tab_crapsld(vr_indice).vr_rowid||ds_character_separador||
+                       vr_tab_crapsld(vr_indice).vlblqprj||ds_character_separador||                       
                        vr_indice||ds_character_separador;                                            
 
                                           
@@ -8075,6 +8080,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            vr_tab_crapsld(rw_crapsld_1.nrdconta).qtddsdev:= rw_crapsld_1.qtddsdev;
            vr_tab_crapsld(rw_crapsld_1.nrdconta).vlsldtot:= rw_crapsld_1.vlsldtot;
            vr_tab_crapsld(rw_crapsld_1.nrdconta).vlblqjud:= rw_crapsld_1.vlblqjud;
+           vr_tab_crapsld(rw_crapsld_1.nrdconta).vlblqprj:= rw_crapsld_1.vlblqprj;
          END LOOP;
 
          -- projeto ligeirinho abrir o cursor acima para filtar por agencia
@@ -8164,6 +8170,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                rw_crapsld.qtddsdev:= vr_tab_crapsld(rw_crapass.nrdconta).qtddsdev;
                rw_crapsld.vlsldtot:= vr_tab_crapsld(rw_crapass.nrdconta).vlsldtot;
                rw_crapsld.vlblqjud:= vr_tab_crapsld(rw_crapass.nrdconta).vlblqjud;
+               rw_crapsld.vlblqprj:= vr_tab_crapsld(rw_crapass.nrdconta).vlblqprj;
+               
              END IF;
 
              --Executar rotina gravar movimentos CI
