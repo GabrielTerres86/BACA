@@ -263,8 +263,9 @@
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
                 30/05/2018 - Retirar solicitaçao automática de Conta ITG (Renato Darosci - Supero).
-                
-			   
+				
+				24/09/2018 - Ao encerrar a conta ITG, não mudar a situação da conta principal do cooperado.
+                             INC0022957 - Wagner - Sustentação.
 
 .............................................................................*/
 
@@ -5669,9 +5670,6 @@ PROCEDURE Grava_Dados_Encerra:
                 UNDO GravaEncerra, LEAVE GravaEncerra.
              END.
         
-        IF  crabass.cdsitdct <> 4 AND aux_inctaitg = 1 THEN
-            ASSIGN crapass.cdsitdct = 1.
-
         ASSIGN crabass.flgctitg = 3.
         
         UNIX SILENT VALUE
