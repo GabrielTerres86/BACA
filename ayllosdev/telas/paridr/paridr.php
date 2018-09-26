@@ -140,12 +140,12 @@ else{
 																			<table border="0" cellspacing="0" cellpadding="0">
 																			<tr>
 																				<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq0"></td>
-																				<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="acessaOpcaoAba(0);return false;">Indicadores</a></td>
+																				<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="voltarTabela();acessaOpcaoAba(0);return false;">Indicadores</a></td>
 																				<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir0"></td>
 																				<td width="1"></td>
 
 																				<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq1"></td>
-																				<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="acessaOpcaoAba(1);return false;">Vincula&ccedil;&otilde;es</a></td>
+																				<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="voltarTabela();acessaOpcaoAba(1);return false;">Vincula&ccedil;&otilde;es</a></td>
 																				<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir1"></td>
 																				<td width="1"></td>
 																			</tr>

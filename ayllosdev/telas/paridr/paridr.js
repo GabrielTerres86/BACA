@@ -290,13 +290,13 @@ function voltarCab() {
 }
 
 function voltarTabela(){
-	$('#btAlterar',getDivBotoes()).toggle();
-	$('#btIncluir',getDivBotoes()).toggle();
-	$('#btExcluir',getDivBotoes()).toggle();
-	$('#btProsseguir',getDivBotoes()).toggle();
-	getForm().toggle();
+	$('#btAlterar',getDivBotoes()).show();
+	$('#btIncluir',getDivBotoes()).show();
+	$('#btExcluir',getDivBotoes()).show();
+	$('#btProsseguir',getDivBotoes()).hide();
+	getForm().hide();
 	getForm().limpaFormulario();
-	getDivFormulario().toggle();
+	getDivFormulario().show();
 	$("#btVoltar", getDivBotoes()).attr('onClick', "voltarCab();");				
 	return false;
 }
