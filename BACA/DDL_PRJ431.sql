@@ -72,6 +72,7 @@ CREATE TABLE cecred.tbrecip_param_aprovador
  ,cdalcada_aprovacao NUMBER(10)    NOT NULL
  ,cdaprovador        VARCHAR2(10)  NOT NULL
  ,dsemail_aprovador  VARCHAR2(100) NOT NULL
+ ,flativo            NUMBER(1) DEFAULT 0 NOT NULL
 );
 
 -- Add comments to the table
@@ -87,6 +88,8 @@ comment on column cecred.tbrecip_param_aprovador.cdaprovador
               is 'Codigo do usuario do aprovador.';
 comment on column cecred.tbrecip_param_aprovador.dsemail_aprovador
               is 'Endreco de ermail do aprovador.';
+comment on column cecred.tbrecip_param_aprovador.flativo
+              is 'Flag para indicar se o aprovador está ativo (0=Nao/1=Sim).';
 
 -- Create/Recreate primary, unique and foreign key constraints
 alter table cecred.tbrecip_param_aprovador
@@ -354,3 +357,10 @@ comment on column cecred.tbrecip_parame_indica_coop.vlpercentual_peso
                is 'Parametrizacao do peso do indicador no calculo de reciprocidade.';
 comment on column cecred.tbrecip_parame_indica_calculo.vlpercentual_peso
                is 'Parametrizacao do desconto do indicador no calculo de reciprocidade.';
+
+-- -------------------
+-- Criação de índice
+-- -------------------
+
+CREATE INDEX CRAPCOB##CRAPCOB13
+  ON cecred.crapcob(cdcooper, nrcnvcob, incobran, dtdpagto, dtdbaixa, dtelimin);
