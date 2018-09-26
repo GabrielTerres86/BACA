@@ -1163,7 +1163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                 ,crawepr.dsdscore = NVL(pr_dsdscore,crawepr.dsdscore)
                 ,crawepr.vlempori = crawepr.vlemprst /*M438*/
                 ,crawepr.vlpreori = crawepr.vlpreemp /*M438*/
-                ,crawepr.dsratori = vr_rating /* M438 */
+                ,crawepr.dsratori = coalesce(vr_rating,crawepr.dsratori,' ') /* M438 */
                 ,crawepr.flgpreap = NVL(pr_flgpreap,crawepr.flgpreap)
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
