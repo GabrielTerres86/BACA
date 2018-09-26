@@ -30,7 +30,6 @@ CREATE OR REPLACE PACKAGE CECRED.tela_spbfse AS
                                 ,pr_qttempo_alerta IN tbspb_fase_mensagem.qttempo_alerta%TYPE       --> Quantidade de tempo em minutos para geracao de alerta
                                 ,pr_qtmensagem_alerta IN tbspb_fase_mensagem.qtmensagem_alerta%TYPE --> Quantidade de mensagens fora do padrao para geracao de alerta
                                 ,pr_idconversao IN tbspb_fase_mensagem.idconversao%TYPE             --> Identificador de fase de conversao de mensagem no JDSPB (0-Nao / 1-Sim)
-                                ,pr_idreprocessa_mensagem IN tbspb_fase_mensagem.idreprocessa_mensagem %TYPE   --> Indica se a mensagem pode ser reprocessada (0=Nao, 1=Sim)
                                 
 																,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
 																,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -48,7 +47,6 @@ CREATE OR REPLACE PACKAGE CECRED.tela_spbfse AS
                                   ,pr_qtmensagem_alerta IN tbspb_fase_mensagem.qtmensagem_alerta%TYPE --> Quantidade de mensagens fora do padrao para geracao de alerta
 			                            ,pr_idativo IN tbspb_fase_mensagem.idativo%TYPE --> Identificador de fase ativa (0-Nao / 1-Sim)
                                   ,pr_idconversao IN tbspb_fase_mensagem.idconversao%TYPE             --> Identificador de fase de conversao de mensagem no JDSPB (0-Nao / 1-Sim)
-                                  ,pr_idreprocessa_mensagem IN tbspb_fase_mensagem.idreprocessa_mensagem %TYPE   --> Indica se a mensagem pode ser reprocessada (0=Nao, 1=Sim)
 
                                   ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -254,7 +252,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_spbfse AS
 																,pr_qttempo_alerta IN tbspb_fase_mensagem.qttempo_alerta%TYPE       --> Quantidade de tempo em minutos para geracao de alerta
                                 ,pr_qtmensagem_alerta IN tbspb_fase_mensagem.qtmensagem_alerta%TYPE --> Quantidade de mensagens fora do padrao para geracao de alerta
                                 ,pr_idconversao IN tbspb_fase_mensagem.idconversao%TYPE             --> Identificador de fase de conversao de mensagem no JDSPB (0-Nao / 1-Sim)
-                                ,pr_idreprocessa_mensagem IN tbspb_fase_mensagem.idreprocessa_mensagem %TYPE   --> Indica se a mensagem pode ser reprocessada (0=Nao, 1=Sim)
                                 
 																,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
 																,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -351,7 +348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_spbfse AS
        pr_idconversao,
        1,
        null,
-       pr_idreprocessa_mensagem
+       null -- pr_idreprocessa_mensagem
       );
     EXCEPTION
       WHEN dup_val_on_index THEN
@@ -416,7 +413,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_spbfse AS
                                   ,pr_qtmensagem_alerta IN tbspb_fase_mensagem.qtmensagem_alerta%TYPE --> Quantidade de mensagens fora do padrao para geracao de alerta
 			                            ,pr_idativo IN tbspb_fase_mensagem.idativo%TYPE --> Identificador de fase ativa (0-Nao / 1-Sim)
                                   ,pr_idconversao IN tbspb_fase_mensagem.idconversao%TYPE             --> Identificador de fase de conversao de mensagem no JDSPB (0-Nao / 1-Sim)
-                                  ,pr_idreprocessa_mensagem IN tbspb_fase_mensagem.idreprocessa_mensagem %TYPE   --> Indica se a mensagem pode ser reprocessada (0=Nao, 1=Sim)
 
                                   ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -520,7 +516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_spbfse AS
             ,qtmensagem_alerta = pr_qtmensagem_alerta
             ,idativo = pr_idativo
             ,idconversao = pr_idconversao
-            ,idreprocessa_mensagem = pr_idreprocessa_mensagem
+            ,idreprocessa_mensagem = null -- pr_idreprocessa_mensagem
        WHERE cdfase = pr_cdfase;
        --
     EXCEPTION
