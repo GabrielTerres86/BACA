@@ -618,7 +618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: 17/05/2018
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -645,6 +645,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 	--             17/05/2018 - Inclusão do novo motivo "Insuf. saldo e/ou Inadimplencia (autom.)" na
 	--                          procedure "pc_buscar_motivo_can".
 	--                          (Reginaldo - AMcom - PRJ450)
+  --          
+  --             20/09/2018 - Validar se automovel existe antes de inserir
+  --                          (Lucas Eduardo Ranghetti INC0023969)
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -7086,7 +7089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Guilherme/SUPERO
-  --  Data     : Maio/2016.                   Ultima atualizacao: 03/07/2017
+  --  Data     : Maio/2016.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -7097,7 +7100,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                          ( Belli - Envolti - #667957)
   -- 
-
+  --             20/09/2018 - Validar se automovel existe antes de inserir
+  --                          (Lucas Eduardo Ranghetti INC0023969)
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
@@ -7123,6 +7127,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
      SELECT NVL(MAX(idveiculo),0) + 1
        FROM tbseg_auto_veiculos auto
       WHERE auto.idcontrato = p_idcontrato;
+
+    CURSOR cr_tbseg_auto_veiculos(p_idcontrato IN tbseg_auto_veiculos.idcontrato%TYPE
+                                 ,pr_dschassi  IN tbseg_auto_veiculos.dschassi%TYPE
+                                 ,pr_dsplaca   IN tbseg_auto_veiculos.dsplaca%TYPE) IS
+     SELECT 1 
+       FROM tbseg_auto_veiculos veiculo
+      WHERE veiculo.idcontrato = p_idcontrato
+        AND nvl(veiculo.dschassi, ' ') = nvl(pr_dschassi, ' ')
+        AND nvl(veiculo.dsplaca, ' ')  = nvl(pr_dsplaca, ' ');
+      rw_tbseg_auto_veiculos cr_tbseg_auto_veiculos%ROWTYPE;        
 
     BEGIN
 
@@ -7358,6 +7372,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             FOR vr_idx_auto IN pr_auto.FIRST..pr_auto.LAST LOOP
               IF pr_tipatu.tp_auto = 'I' THEN -- Incluir o Veiculo no Seguro
 
+                OPEN cr_tbseg_auto_veiculos(p_idcontrato => vr_idcontrato(vr_indice)
+                                           ,pr_dschassi  => pr_auto(vr_idx_auto).dschassi
+                                           ,pr_dsplaca   => pr_auto(vr_idx_auto).dsplaca);
+                FETCH cr_tbseg_auto_veiculos INTO rw_tbseg_auto_veiculos;
+                
+                IF cr_tbseg_auto_veiculos%NOTFOUND THEN
+                  
+                  CLOSE cr_tbseg_auto_veiculos;
+                  
                 OPEN cr_max_veiculo(p_idcontrato => vr_idcontrato(vr_indice));
                 FETCH cr_max_veiculo INTO vr_idveiculo;
 
@@ -7390,6 +7413,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     vr_dscritic := 'Erro ao inserir Veículo do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
                 END;
+                ELSE
+                  CLOSE cr_tbseg_auto_veiculos;
+                END IF;
               ELSIF pr_tipatu.tp_auto = 'A' THEN -- Atualizar o Veiculo existente
                 BEGIN
                   UPDATE tbseg_auto_veiculos auto
