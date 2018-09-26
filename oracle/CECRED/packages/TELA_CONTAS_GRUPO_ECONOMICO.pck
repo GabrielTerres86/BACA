@@ -467,10 +467,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       -- Verifica se a retornou registro para poder inserir integrante
       IF cr_crapass%FOUND THEN
 
---        IF rw_crapass.nrdconta <> pr_contaref THEN
-
           -- inicia dados xml
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+          -- Atenção IDINTEGRANTE incluido como zero, pois é a conta que está como formadora
+          -- Tratamento na exclusao considera esse idintegrante = 0 e nao deixa excluir
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'idintegrante', pr_tag_cont => 0, pr_des_erro => vr_dscritic);
 
           -- Informacao do CPF/CNPJ
@@ -1250,15 +1250,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
         RAISE vr_exc_saida;
       END IF;
 
-      -- Não pode excluir integrante com mais de 50% de participacao
-      IF rw_tbcc_grupo_economico_integ.peparticipacao > 50 THEN
-        vr_dscritic := 'Não é possível efetuar a exclusão do integrante, verificar participação societária.';
-        RAISE vr_exc_saida;
-      END IF;
-      
       -- Não pode excluir integrante que foram incluidos pelo sistema, pois no dia seguinte irá incluilo 
       IF rw_tbcc_grupo_economico_integ.tpcarga = 2 THEN
         vr_dscritic := 'Não é possível efetuar a exclusão, integrante incluso automaticamente pelo sistema.';
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Não pode excluir integrante com mais de 50% de participacao se não for Manual
+      IF  rw_tbcc_grupo_economico_integ.peparticipacao > 50
+      AND rw_tbcc_grupo_economico_integ.tpcarga <> 3 THEN -- Exceto Manual
+        vr_dscritic := 'Não é possível efetuar a exclusão do integrante, verificar participação societária.';
         RAISE vr_exc_saida;
       END IF;
       

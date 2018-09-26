@@ -3174,32 +3174,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GECO0001 IS
          ORDER BY DECODE(pr_tpdecons,0, nrcpfcgc --Se for por CPF
                                     ,1, nrctasoc);
 
-/*
-
-        SELECT *
-          FROM (SELECT grp.nrcpfcgc
-                      ,grp.nrctasoc
-                      ,grp.nrdgrupo
-                      ,grp.cdcooper
-                      ,grp.nrdconta
-                      ,grp.inpessoa
-                      ,grp.innivris
-                      ,grp.dsdrisco
-                      ,grp.dsdrisgp
-                      ,grp.idseqttl
-                      ,grp.cdagenci
-                      ,grp.dtmvtolt
-                      ,grp.dtrefere
-                      ,row_number() OVER(PARTITION BY grp.nrcpfcgc ORDER BY grp.nrcpfcgc, grp.progress_recid) indice_cpf -- Ordena os registros por cpf
-                      ,row_number() OVER(PARTITION BY grp.nrctasoc ORDER BY grp.nrctasoc, grp.progress_recid) indice_conta -- Ordena os registros por conta
-                  FROM crapgrp grp
-                 WHERE grp.cdcooper = pr_cdcooper
-                   AND grp.nrdgrupo = pr_nrdgrupo)
-         WHERE DECODE(pr_tpdecons,0, indice_cpf --Se for por CPF, obtém o primeiro registro de cada cpf (ignora os repetidos)
-                                 ,1, indice_conta) = 1 --Se for por Conta, obtém o primeiro registro de cada conta (ignora os repetidos)
-        ORDER BY DECODE(pr_tpdecons,0, nrcpfcgc --Se for por CPF
-                                   ,1, nrctasoc); --Se for por Conta
-*/      
       -- Informações de data do sistema
       rw_crapdat  btch0001.rw_crapdat%TYPE; 
       
@@ -3247,7 +3221,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GECO0001 IS
                                                       WHEN TRUE THEN 1
                                                       ELSE 0
                                                   END) LOOP
+
         IF rw_crapgrp.nrctasoc > 0  THEN
+          vr_opt_vlendivi := 0;
           pc_calc_endividamento_individu(pr_cdcooper    => rw_crapgrp.cdcooper
                                         ,pr_cdagenci    => pr_cdagenci
                                         ,pr_nrdcaixa    => pr_nrdcaixa
@@ -3264,7 +3240,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GECO0001 IS
 
           -- Verifica se ocorreram erros
           IF vr_des_erro <> 'OK' OR nvl(vr_cdcritic, 0) > 0 THEN
-            RAISE vr_exc_saida;
+            vr_opt_vlendivi := 0;
+            IF vr_cdcritic <> 0 THEN
+              vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            END IF;
+            -- pc_saldo_atualiza critica associado inativo
+            IF vr_cdcritic <> 9 THEN
+              pc_gera_log(pr_cdcooper      => pr_cdcooper
+                         ,pr_cdprogra      => null
+                         ,pr_dstiplog      => 'E'
+                         ,pr_dscritic      => vr_dscritic || ' G.E.: ' || pr_nrdgrupo || ' Conta/DV: ' || rw_crapgrp.nrctasoc
+                         ,pr_cdcriticidade => 1
+                         ,pr_cdmensagem    => vr_cdcritic
+                         ,pr_tpocorrencia  => 2);  --grava 1
+            END IF;
           END IF;
 
           -- Inclui nome do modulo logado - 29/11/2017 - Ch 813390 / 813391
@@ -3361,6 +3350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GECO0001 IS
   
   /* Procedure responsavel por executar a rotina pc_calc_endivid_grupo, convertendo o campo pr_tab_grupo
      para table */
+  
   PROCEDURE pc_calc_endivid_grupo_prog(pr_cdcooper  IN INTEGER                    --> Codigo da cooperativa
                                  ,pr_cdagenci  IN INTEGER                    --> Codigo da agencia
                                  ,pr_nrdcaixa  IN INTEGER                    --> Numero do caixa
@@ -3407,7 +3397,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GECO0001 IS
                         );
 
    -- transforma table oracle para xml
-
     IF pr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;

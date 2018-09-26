@@ -5,6 +5,12 @@
  * OBJETIVO     : Biblioteca de funções da tela TAB089
  * ---------------
  * ALTERAÇÕES
+ *                30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+ *                             PRJ 450 - Diego Simas (AMcom)
+ * 
+ *                20/06/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC *
+ *                             PRJ 450 - Diego Simas (AMcom)
+ * 
  * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
  * 22/08/2018 - PJ 438 - Alterado a tela para o modo abas - Mateus Z (Mouts)
  * ---------------
@@ -90,18 +96,20 @@ function formataCampos() {
     cQtdpaava = $('#qtdpaava', '#frmTab089');    
     cQtdpaapl = $('#qtdpaapl', '#frmTab089');    
     cQtdpasem = $('#qtdpasem', '#frmTab089');    
-    cQtdpameq = $('#qtdpameq', '#frmTab089'); //PJ438 - Márcio (Mouts)	
     cQtdibaut = $('#qtdibaut', '#frmTab089'); 
     cQtdibapl = $('#qtdibapl', '#frmTab089'); 
     cQtdibsem = $('#qtdibsem', '#frmTab089'); 
-    cQtditava = $('#qtditava', '#frmTab089'); //PJ438 - Márcio (Mouts)	
-    cQtditapl = $('#qtditapl', '#frmTab089'); //PJ438 - Márcio (Mouts)	
-    cQtditsem = $('#qtditsem', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cQtdictcc = $('#qtdictcc', '#frmTab089');
 	
     cVlempres = $('#vlempres', '#frmTab089'); 
     cVlmaxest = $('#vlmaxest', '#frmTab089'); 
     cVltolemp = $('#vltolemp', '#frmTab089'); 
     cPcaltpar = $('#pcaltpar', '#frmTab089'); 
+    cPctaxpre = $('#pctaxpre', '#frmTab089');
+    cQtdpameq = $('#qtdpameq', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cQtditava = $('#qtditava', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cQtditapl = $('#qtditapl', '#frmTab089'); //PJ438 - Márcio (Mouts)	
+    cQtditsem = $('#qtditsem', '#frmTab089'); //PJ438 - Márcio (Mouts)	
 
     //Máscara para quantidade de dias
     cPrtlmult.css('width', '40px').setMask('INTEGER','zzz','','');
@@ -112,10 +120,12 @@ function formataCampos() {
     cQtdpaava.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdpaapl.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdpasem.css('width', '40px').setMask('INTEGER','zzz','','');
-	cQtdpameq.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
     cQtdibaut.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdibapl.css('width', '40px').setMask('INTEGER','zzz','','');
     cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
+    cQtdictcc.css('width', '40px').setMask('INTEGER', 'zzz', '', '');
+
+    cQtdpameq.css('width', '40px').setMask('INTEGER', 'zzz', '', ''); //PJ438 - Márcio (Mouts)
 	cQtditava.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
 	cQtditapl.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
 	cQtditsem.css('width', '40px').setMask('INTEGER','zzz','',''); // PJ438 - Márcio (Mouts)
@@ -123,6 +133,7 @@ function formataCampos() {
     //Máscara para porcentagem
     cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
     cPcaltpar.css('width', '50px').setMask('DECIMAL','zzz,zz','','');
+    cPctaxpre.css('width', '50px').setMask('DECIMAL', 'zzz,zz', '', '');
     //Máscara para moedas (Valor Monetário)
     cVlempres.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     cVlmaxest.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
@@ -248,6 +259,7 @@ function controlaFoco() {
             return false;
         }
     });
+
 // Início PJ438 - Márcio (Mouts)
     $('#qtdpameq', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -271,6 +283,14 @@ function controlaFoco() {
             return false;
         }
     });
+
+    $('#qtdibsem', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#pctaxpre', '#frmTab089').focus();
+            return false;
+        }
+    });
+
 // Início PJ438 - Márcio (Mouts)
     $('#qtdibsem', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -292,6 +312,19 @@ function controlaFoco() {
     })	
 // Fím PJ438 - Márcio (Mouts)	
 	
+    $('#qtditsem', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#pctaxpre', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#pctaxpre', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#qtdictcc', '#frmTab089').focus();
+            return false;
+        }
+    });
 	
 }
 
@@ -348,10 +381,16 @@ function manterRotina(cddopcao) {
 	var cQtditava = normalizaNumero($('#qtditava', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
 	var cQtditapl = normalizaNumero($('#qtditapl', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
     var cQtditsem = normalizaNumero($('#qtditsem', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+    var cQtdictcc = normalizaNumero($('#qtdictcc', '#frmTab089').val());
     var cVlempres = normalizaNumero($('#vlempres', '#frmTab089').val());
     var cVlmaxest = normalizaNumero($('#vlmaxest', '#frmTab089').val());
     var cVltolemp = normalizaNumero($('#vltolemp', '#frmTab089').val());
     var cPcaltpar = normalizaNumero($('#pcaltpar', '#frmTab089').val());
+    var cPctaxpre = normalizaNumero($('#pctaxpre', '#frmTab089').val());
+    var cQtdpameq = normalizaNumero($('#qtdpameq', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+    var cQtditava = normalizaNumero($('#qtditava', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+    var cQtditapl = normalizaNumero($('#qtditapl', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
+    var cQtditsem = normalizaNumero($('#qtditsem', '#frmTab089').val()); // PJ438 - Márcio (Mouts)
 
     var mensagem = 'Aguarde, efetuando solicita&ccedil;&atilde;o...';
     showMsgAguardo(mensagem);
@@ -377,11 +416,13 @@ function manterRotina(cddopcao) {
             qtdibsem : cQtdibsem,
 			qtditava : cQtditava, //PJ438 - Márcio (Mouts)
 			qtditapl : cQtditapl, //PJ438 - Márcio (Mouts)
-			qtditsem : cQtditsem, //PJ438 - Márcio (Mouts)			
+			qtditsem : cQtditsem, //PJ438 - Márcio (Mouts)
+            qtdictcc : cQtdictcc,
             vlempres : cVlempres,
             vlmaxest : cVlmaxest,
             vltolemp : cVltolemp,
             pcaltpar : cPcaltpar,
+            pctaxpre : cPctaxpre,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

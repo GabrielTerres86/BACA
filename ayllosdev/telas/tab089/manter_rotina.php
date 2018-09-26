@@ -6,8 +6,14 @@
  * DATA CRIAÇÃO : 15/01/2018
  * OBJETIVO     : Rotina para controlar as operações da tela TAB089
  * --------------
- * ALTERAÇÕES
+ * ALTERAÇÕES   : 30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+ *                             PRJ 450 - Diego Simas (AMcom)
+ *
+ *                20/06/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
+ *							   PRJ 450 - Diego Simas (AMcom)
+ *  
  * 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
+ * 
  */
 
 session_start();
@@ -28,6 +34,8 @@ $vlempres = isset($_POST['vlempres']) ? $_POST['vlempres'] : 0;
 $pzmaxepr = isset($_POST['pzmaxepr']) ? $_POST['pzmaxepr'] : 0;
 $vlmaxest = isset($_POST['vlmaxest']) ? $_POST['vlmaxest'] : 0;
 $pcaltpar = isset($_POST['pcaltpar']) ? $_POST['pcaltpar'] : 0;
+$pctaxpre = isset($_POST['pctaxpre']) ? $_POST['pctaxpre'] : 0;
+$qtdictcc = isset($_POST['qtdictcc']) ? $_POST['qtdictcc'] : 0;
 $vltolemp = isset($_POST['vltolemp']) ? $_POST['vltolemp'] : 0;
 $qtdpaimo = isset($_POST['qtdpaimo']) ? $_POST['qtdpaimo'] : 0;
 $qtdpaaut = isset($_POST['qtdpaaut']) ? $_POST['qtdpaaut'] : 0;
@@ -84,7 +92,8 @@ if ($cdopcao == 'C') {
 	$xml .= "   <qtditava>".$qtditava."</qtditava>"; // PJ438 - Márcio (Mouts)
 	$xml .= "   <qtditapl>".$qtditapl."</qtditapl>"; // PJ438 - Márcio (Mouts)
 	$xml .= "   <qtditsem>".$qtditsem."</qtditsem>"; // PJ438 - Márcio (Mouts)	
-
+    $xml .= "   <pctaxpre>".str_replace(',','.', $pctaxpre)."</pctaxpre>";
+    $xml .= "   <qtdictcc>".$qtdictcc."</qtdictcc>";    
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -117,6 +126,8 @@ if ($cdopcao == 'C') {
         echo '$("#vlmaxest", "#frmTab089").val("' . getByTagName($r->tags, 'vlmaxest') . '");';
 		// NOVOS (2)
         echo '$("#pcaltpar", "#frmTab089").val("' . getByTagName($r->tags, 'pcaltpar') . '");';
+        echo '$("#pctaxpre", "#frmTab089").val("' . getByTagName($r->tags, 'pctaxpre') . '");';
+        echo '$("#qtdictcc", "#frmTab089").val("' . getByTagName($r->tags, 'qtdictcc') . '");';
         echo '$("#vltolemp", "#frmTab089").val("' . getByTagName($r->tags, 'vltolemp') . '");';
 		// NOVOS (5)
 		echo '$("#qtdpaimo", "#frmTab089").val("' . getByTagName($r->tags, 'qtdpaimo') . '");';

@@ -37,7 +37,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0138.p
     Autor     : Guilherme
-    Data      : Maio/2012                   Ultima Atualizacao: 12/07/2018
+    Data      : Maio/2012                   Ultima Atualizacao: 21/09/2018
     
     Dados referentes ao programa:
 
@@ -130,11 +130,13 @@
                              
                 05/03/2014 - Incluso VALIDATE (Daniel). 
                              
-                12/07/2018 - P450 - Altera rotina calc_endivid_grupo para chamar a 
-                             nova rotina oracle
+                12/07/2018 - P450 - Altera rotina calc_endivid_grupo para
+                             chamar a nova rotina oracle
                              pc_calc_endivid_grupo_prog. Eliminada lógica 
                              progess. Renato Cordeiro (AMcom)
-                             
+
+                21/09/2018 - P450 - Ajuste do INT para DECI no tratamento do
+                             XML (Guilherme/AMcom)                             
 .............................................................................*/
 
 
@@ -1151,8 +1153,10 @@ PROCEDURE calc_endivid_grupo:
                     ASSIGN tt-grupo.inpessoa = INT(xText:NODE-VALUE)   WHEN xField:NAME = "inpessoa" NO-ERROR.
                     ASSIGN tt-grupo.cdagenci = INT(xText:NODE-VALUE)   WHEN xField:NAME = "cdagenci" NO-ERROR.
                     ASSIGN tt-grupo.innivrge = INT(xText:NODE-VALUE)   WHEN xField:NAME = "innivrge" NO-ERROR.
-                    ASSIGN tt-grupo.vlendivi = INT(xText:NODE-VALUE)   WHEN xField:NAME = "vlendivi" NO-ERROR.
-                    ASSIGN tt-grupo.vlendigp = INT(xText:NODE-VALUE)   WHEN xField:NAME = "vlendigp" NO-ERROR.
+                    ASSIGN tt-grupo.vlendivi = DECI(xText:NODE-VALUE)
+                        WHEN xField:NAME = "vlendivi" NO-ERROR.
+                    ASSIGN tt-grupo.vlendigp = DECI(xText:NODE-VALUE)
+                        WHEN xField:NAME = "vlendigp" NO-ERROR.
              END.
                           
         END.

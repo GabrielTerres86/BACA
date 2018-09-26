@@ -4,11 +4,19 @@
  * CRIAÇÃO      : Diego Simas/Reginaldo Silva/Letícia Terres - AMcom
  * DATA CRIAÇÃO : 12/01/2018
  * OBJETIVO     : Formulário de exibição da tela TAB089
- * ALTERAÇÃO    : 10/07/2018 - PJ 438 - Agilidade nas contratacões de Crédito - Márcio (Mouts)
+ * ALTERAÇÕES   : 
+ *                30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+ *                             PRJ 450 - Diego Simas (AMcom)
+ *
+ *                20/06/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
+ *							               PRJ 450 - Diego Simas (AMcom)	
+ *
+ *                10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
+ *
  */
 ?>
 
-<form name="frmTab089" id="frmTab089" class="formulario">	
+<form name="frmTab089" id="frmTab089" class="formulario" style="display:block;">	
     <br style="clear:both" />
 	<input type="hidden" id="dsdepart" name="dsdepart" value="<?php echo $glbvars["dsdepart"]; ?>" />
     <input type="hidden" id="idctrlab" name="idctrlaba" value="COOPER" />
@@ -50,6 +58,8 @@
 		
 		<label for="vltolemp" class='labelPri'>Toler&acirc;ncia por valor de empr&eacute;stimo:</label>
 		<input type="text" id="vltolemp" name="vltolemp" class="moeda" value="<?php echo $vltolemp == 0 ? '' : $vltolemp ?>" style="text-align:right;"/>
+		<br style="clear:both" />
+
     </fieldset>
 	
 	<fieldset>
@@ -105,6 +115,7 @@
 		<label>&nbsp;dia(s)</label>
 		<br style="clear:both" />
 	</fieldset>    
+				 
     <!-- Início PJ438 - Márcio (Mouts)-->	
 	<fieldset>
 		<legend>Limite de Descontos de T&iacute;tulos - Prazo de validade da an&aacute;lise para efetiva&ccedil;&atilde;o</legend>
@@ -125,6 +136,21 @@
 		<br style="clear:both" />
 	</fieldset>    
     <!-- Fim PJ438 - Márcio (Mouts)-->	
+
+	<fieldset>
+		<legend>Preju&iacute;zo</legend>
+		
+		<label for="pctaxpre" class='labelPri'>Taxa de juros remunerat&oacute;rio de preju&iacute;zo:</label>
+		<input type="text" id="pctaxpre" name="pctaxpre" class="moeda" value="<?php echo $pctaxpre == 0 ? '' : $pctaxpre ?>" maxlength="6" style="text-align:right;width:50px;"/>	
+		<label>&nbsp;%</label>
+		<br style="clear:both" />
+		
+		<label for="qtdictcc" class='labelPri'>Prazo p/ transfer&ecirc;ncia autom&aacute;tica de valor de preju&iacute;zo bloqueado para a CC:</label>
+		<input type="text" id="qtdictcc" name="qtdictcc" value="<?php echo $qtdictcc == 0 ? '' : $qtdictcc ?>" maxlength="3" style="text-align:right;"/>	
+		<label>&nbsp;dia(s)</label>
+		<br style="clear:both" />
+
+	</fieldset>
 </form>
 
 <div id="divBotoes" name="divBotoes" style="margin-bottom:5px">
