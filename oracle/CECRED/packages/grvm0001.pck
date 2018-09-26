@@ -304,6 +304,20 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                      ,pr_des_erro OUT VARCHAR2);          --Saida OK/NOK
+
+  -- Alertar gravames sem efetivação por email                                                                                                       
+  procedure pc_alerta_gravam_sem_efetiva;
+  
+  -- Traduzir dominio de situações Gravames
+  FUNCTION fn_des_situa_gravames(pr_cdsitgrv crapbpr.cdsitgrv%TYPE) RETURN VARCHAR2;
+
+  
+  -- Buscar Situação Gravames do Bem repasasdo
+  FUNCTION fn_situac_gravames_bem(pr_cdcooper in crapbpr.cdcooper%TYPE
+                                 ,pr_nrdconta in crapbpr.nrdconta%TYPE
+                                 ,pr_nrctrpro in crapbpr.nrctrpro%TYPE
+                                 ,pr_idseqbem in crapbpr.idseqbem%TYPE) RETURN VARCHAR2;
+
                                                              
 PROCEDURE pc_valida_alienacao_fiduciaria (pr_cdcooper IN crapcop.cdcooper%type   -- Código da cooperativa
                                          ,pr_nrdconta IN crapass.nrdconta%type   -- Numero da conta do associado
@@ -7364,6 +7378,288 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
 
     END;
   END pc_gravames_processa_retorno;
+  
+  procedure pc_alerta_gravam_sem_efetiva is
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_alerta_gravam_sem_efetiva
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Daniel - Envolti
+    Data     : Setembro/2018                         Ultima atualizacao: 18/09/2018
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Gerar e enviar e-mail informando que existem propostas com veículos alienados não efetivadas.
+    
+    Alterações : xx/xx/xxxx - 
+
+    -------------------------------------------------------------------------------------------------------------*/    
+
+    vr_idprglog   number;
+   
+    -- Busca cooperativas, data de movimento e parâmetros
+    cursor cr_crapcop is
+      select cop.cdcooper,
+             cop.nmrescop,
+             dat.dtmvtolt,
+             gene0001.fn_param_sistema('CRED', cop.cdcooper, 'GRAVAM_DIA_AVISO_NAO_EFT') qtdias,
+             gene0001.fn_param_sistema('CRED', cop.cdcooper, 'GRAVAM_MAIL_AVIS_NAO_EFT') dsmail
+        from crapcop cop,
+             crapdat dat
+       where dat.cdcooper = cop.cdcooper;
+
+    -- Busca propostas aprovadas mas não efetivadas, e que tenham gravames
+    cursor cr_crawepr (pr_cdcooper in crawepr.cdcooper%type,
+                       pr_dtmvtolt in crawepr.dtaprova%type,
+                       pr_qtdias in number) is
+      select epr.nrdconta,
+             epr.nrctremp,
+             epr.vlemprst,
+             bpr.dtatugrv,
+             pr_dtmvtolt - bpr.dtatugrv nrdias,
+             bpr.vlmerbem,
+             decode(bpr.dsmarbem,
+                    null, bpr.dsbemfin,
+                    bpr.dsmarbem||'/'||bpr.dsbemfin) dsbemfin,
+             bpr.idseqbem
+        from crawepr epr,
+             crapbpr bpr
+       where epr.cdcooper = pr_cdcooper
+         and not exists (select 1
+                           from crapepr epr2
+                          where epr2.cdcooper = epr.cdcooper
+                            and epr2.nrdconta = epr.nrdconta
+                            and epr2.nrctremp = epr.nrctremp)
+         and bpr.cdcooper = epr.cdcooper
+         and bpr.nrdconta = epr.nrdconta
+         and bpr.nrctrpro = epr.nrctremp
+         and bpr.cdsitgrv <> 0
+         and bpr.flgalien = 1
+         and bpr.flgalfid = 1
+         and bpr.flginclu = 0
+         and bpr.cdsitgrv = 2
+         and bpr.dtatugrv < pr_dtmvtolt - pr_qtdias
+       order by bpr.dtatugrv,
+                bpr.nrdconta,
+                bpr.nrctrpro;
+    vr_cdcooper       crapcop.cdcooper%type;
+    --Variaveis de E-mail
+    vr_email_assunto  varchar2(300);
+    vr_email_corpo    varchar2(32767);
+    -- Guardar HMTL texto
+    vr_dsarqanx       varchar2(500);
+    vr_dsdirarq       constant varchar2(30) := gene0001.fn_diretorio('C',1,'arq'); -- Diretório temporário para arquivos
+    vr_dshmtl         clob;
+    vr_dshmtl_aux     varchar2(32767);
+    -- Variaveis de Erro
+    vr_dscritic       varchar2(4000);
+    -- Variaveis Exceção
+    vr_exc_erro       exception;
+  begin
+    for r_crapcop in cr_crapcop loop
+      if r_crapcop.qtdias is null or
+         r_crapcop.dsmail is null then
+        continue;
+      end if;
+      --
+      vr_cdcooper := r_crapcop.cdcooper;
+      vr_dshmtl_aux := null;
+      -- Monta o cabeçalho do email
+      vr_email_assunto := 'Propostas com veículos alienados e não efetivadas - ' || vr_cdcooper;
+      vr_email_corpo := 'Verifique o arquivo em anexo para o detalhamento das propostas com veículos alienados e não efetivadas.<br><br>'||
+                        'Obs.: O prazo para cancelamento (desistência) da alienação é de 30 dias corridos. Após este prazo, o cancelamento no Detran poderá ser realizado somente via documentação (cópias autenticadas com assinatura do cooperado) enviada à B3 em Florianópolis.';
+      -- Montar o início da tabela (Num clob para evitar estouro)
+      dbms_lob.createtemporary(vr_dshmtl, TRUE, dbms_lob.CALL);
+      dbms_lob.open(vr_dshmtl,dbms_lob.lob_readwrite);
+      gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >');
+      gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<table border="1" style="width:1000px; margin: 10px auto; font-family: Tahoma,sans-serif; font-size: 12px; color: #686868;" >');
+      -- Montando header
+      gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<thead align="center" style="background-color: #DCDCDC;">' ||
+                                                        '<td width="100px">' ||
+                                                          '<b>Conta</b>' ||
+                                                        '</td>' ||
+                                                        '<td width="100px">' ||
+                                                          '<b>Contrato</b>' ||
+                                                        '</td>' ||
+                                                        '<td width="120px">' ||
+                                                          '<b>Valor Proposta</b>' ||
+                                                        '</td>' ||
+                                                        '<td width="120px">' ||
+                                                          '<b>Data Alienação</b>' ||
+                                                        '</td>' ||
+                                                        '<td width="80px">' ||
+                                                          '<b>Dias</b>' ||
+                                                        '</td>' ||
+                                                        '<td width="120px">' ||
+                                                          '<b>Valor Bem</b>' ||
+                                                        '</td>' ||
+                                                        '<td width="250px">' ||
+                                                          '<b>Descrição Bem</b>' ||
+                                                        '</td>' ||
+                                                      '</thead>' ||
+                                                      '<tbody align="center" style="background-color: #F0F0F0;">');
+      vr_dsarqanx := null;
+      for r_crawepr in cr_crawepr (vr_cdcooper,
+                                   r_crapcop.dtmvtolt,
+                                   r_crapcop.qtdias) loop
+        -- Inclui a proposta no arquivo
+        vr_dsarqanx := r_crapcop.nmrescop||'_'||to_char(r_crapcop.dtmvtolt, 'ddmmyyyy')||'.html';
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'<tr>' ||
+                                                          '<td>' ||
+                                                            gene0002.fn_mask_conta(r_crawepr.nrdconta) ||
+                                                          '</td>' ||
+                                                          '<td>' ||
+                                                            r_crawepr.nrctremp ||
+                                                          '</td>' ||
+                                                          '<td>' ||
+                                                            'R$ ' || to_char(r_crawepr.vlemprst, 'fm9g999g999g999g999g990d00') ||
+                                                          '</td>' ||
+                                                          '<td>' ||
+                                                            to_char(r_crawepr.dtatugrv, 'dd/mm/yyyy') ||
+                                                          '</td>' ||
+                                                          '<td>' ||
+                                                            r_crawepr.nrdias ||
+                                                          '</td>' ||
+                                                          '<td>' ||
+                                                            'R$ ' || to_char(r_crawepr.vlmerbem, 'fm9g999g999g999g999g990d00') ||
+                                                          '</td>' ||
+                                                          '<td>' ||
+                                                            r_crawepr.dsbemfin ||
+                                                          '</td>' ||
+                                                        '</tr>');
+      end loop;
+      -- Somente se encontrou alguma proposta
+      if vr_dsarqanx is not null then
+        -- Encerrar o texto e o clob
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'</tbody></table>');
+        gene0002.pc_escreve_xml(vr_dshmtl,vr_dshmtl_aux,'',true);
+        -- Gerar o arquivo na pasta converte
+        gene0002.pc_clob_para_arquivo(pr_clob     => vr_dshmtl,
+                                      pr_caminho  => vr_dsdirarq,
+                                      pr_arquivo  => vr_dsarqanx,
+                                      pr_des_erro => vr_dscritic);
+        -- Envia o e-mail
+        gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper,
+                                   pr_cdprogra        => 'GRVM0001',
+                                   pr_des_destino     => r_crapcop.dsmail,
+                                   pr_des_assunto     => vr_email_assunto,
+                                   pr_des_corpo       => vr_email_corpo,
+                                   pr_des_anexo       => vr_dsdirarq||'/'||vr_dsarqanx,
+                                   pr_flg_remove_anex => 'S',  --> Remover os anexos passados
+                                   pr_flg_remete_coop => 'S',  --> Se o envio sera do e-mail da Cooperativa
+                                   pr_flg_enviar      => 'S',  --> Enviar o e-mail na hora
+                                   pr_des_erro        => vr_dscritic);
+        if vr_dscritic is not null  then
+          vr_dscritic := to_char(sysdate,'dd/mm/rrrr hh24:mi:ss') || ' - GRVM0001 --> Erro na rotina pc_alerta_gravam_sem_efetiva: ' || vr_dscritic;
+          raise vr_exc_erro;
+        end if;
+      end if;
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_dshmtl);
+      dbms_lob.freetemporary(vr_dshmtl);
+    end loop;
+    -- Efetua Commit
+    commit;
+  exception
+    when vr_exc_erro then
+      -- Desfazer a operacao
+      rollback;
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_dshmtl);
+      dbms_lob.freetemporary(vr_dshmtl);
+      -- envia ao LOG o problema ocorrido
+      cecred.pc_log_programa(pr_dstiplog => 'O',
+                             pr_cdprograma => 'GRVM0001',
+                             pr_cdcooper => vr_cdcooper,
+                             pr_tpexecucao => 0,
+                             pr_tpocorrencia => 1,
+                             pr_dsmensagem => vr_dscritic,
+                             pr_idprglog => vr_idprglog);
+    when others then
+      -- Desfazer a operacao
+      rollback;
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_dshmtl);
+      dbms_lob.freetemporary(vr_dshmtl);
+      
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper);
+      
+      -- envia ao LOG o problema ocorrido
+      cecred.pc_log_programa(pr_dstiplog => 'O',
+                             pr_cdprograma => 'GRVM0001',
+                             pr_cdcooper => vr_cdcooper,
+                             pr_tpexecucao => 0,
+                             pr_tpocorrencia => 1,
+                             pr_dsmensagem => to_char(sysdate,'dd/mm/rrrr hh24:mi:ss') || ' - GRVM0001 --> Erro na rotina pc_alerta_gravam_sem_efetiva: ' || sqlerrm,
+                             pr_idprglog => vr_idprglog);
+      
+  end;
+  
+  -- Traduzir dominio de situações Gravames
+  FUNCTION fn_des_situa_gravames(pr_cdsitgrv crapbpr.cdsitgrv%TYPE) RETURN VARCHAR2 IS
+  BEGIN
+    CASE pr_cdsitgrv
+      WHEN 0 THEN
+        RETURN 'Nao enviado';
+      WHEN 1 THEN
+        RETURN 'Em processamento';
+      WHEN 2 THEN
+        RETURN 'Alienacao';
+      WHEN 3 THEN
+        RETURN 'Processado com Critica';
+      WHEN 4 THEN
+        RETURN 'Baixado';
+      WHEN 5 THEN
+        RETURN 'Cancelado';
+      ELSE 
+        RETURN 'Nao enviado';  
+    END CASE;
+  END;
+  
+    
+  -- Buscar Situação Gravames do Bem repasasdo
+  FUNCTION fn_situac_gravames_bem(pr_cdcooper in crapbpr.cdcooper%TYPE
+                                 ,pr_nrdconta in crapbpr.nrdconta%TYPE
+                                 ,pr_nrctrpro in crapbpr.nrctrpro%TYPE
+                                 ,pr_idseqbem in crapbpr.idseqbem%TYPE) RETURN varchar2 IS
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : fn_situac_gravames_bem             
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Marcos Martini - Envolti
+    Data     : Setembro/2018                           Ultima atualizacao:  
+  
+    Dados referentes ao programa:
+   
+    Frequencia: -----
+    Objetivo   : Função para buscar situação gravames bem enviado
+  
+    Alterações :  
+                
+  ---------------------------------------------------------------------------------------------------------------*/                                    
+    cursor cr_crapbpr is
+      select bpr.cdsitgrv
+        from crapbpr bpr
+       where bpr.cdcooper = pr_cdcooper
+         and bpr.nrdconta = pr_nrdconta
+         and bpr.tpctrpro IN(90,99) -- Pode ser bem ativo ou substituido
+         and bpr.nrctrpro = pr_nrctrpro
+         and bpr.idseqbem = pr_idseqbem;
+    --
+    vr_cdsitgrv crapbpr.cdsitgrv%TYPE := 0;
+  BEGIN
+    open cr_crapbpr;
+    fetch cr_crapbpr into vr_cdsitgrv;
+    close cr_crapbpr;
+    --
+    return(vr_cdsitgrv);
+  exception
+    when others then
+      RETURN 0;
+  END;
 
 PROCEDURE pc_registrar_gravames(pr_cdcooper IN crapcop.cdcooper%TYPE -- Numero da cooperativa
                                ,pr_nrdconta IN crapcop.nrdconta%TYPE -- Numero da conta do associado

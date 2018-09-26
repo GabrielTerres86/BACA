@@ -553,7 +553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
     END;  
     
     -- Validar horários para envio
-    IF trim(pr_hrenvi01) IS NULL AND trim(pr_hrenvi02) IS NULL AND trim(pr_hrenvi03) IS NULL THEN
+    IF nvl(trim(pr_hrenvi01),'00:00') = '00:00' AND nvl(trim(pr_hrenvi02),'00:00') = '00:00' AND nvl(trim(pr_hrenvi03),'00:00') = '00:00' THEN
       vr_dscritic := gene0007.fn_convert_db_web('Informe pelo menos um Horário(s) dos envios das baixas/cancelamentos:');
       RAISE vr_exc_erro;
     ELSE
@@ -571,7 +571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
             vr_valteste := pr_hrenvi03;
           END IF;
           -- Somente se existir valor
-          IF trim(vr_valteste) IS NOT NULL THEN
+          IF nvl(trim(vr_valteste),'00:00') <> '00:00' THEN
             -- Converter para data
             vr_datteste := to_date(to_char(SYSDATE,'ddmmrrrr')||vr_valteste,'ddmmrrrrhh24:mi');
             -- Se chegou aqui é uma data válida
@@ -583,7 +583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
         END LOOP;
       EXCEPTION
         WHEN OTHERS THEN 
-          vr_dscritic := gene0007.fn_convert_db_web('Horário [] para envio inválido! Favor informar um horário entre as 05:00 e as 23:00!');
+          vr_dscritic := gene0007.fn_convert_db_web('Horário ['||vr_valteste||'] para envio inválido! Favor informar um horário entre as 05:00 e as 23:00!');
           RAISE vr_exc_erro;
       END;
     END IF;
@@ -672,13 +672,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GRAVAM AS
       vr_hrenvi03 VARCHAR2(5);
     BEGIN
       -- Posicionar os horários em pltable
-      IF trim(pr_hrenvi01) IS NOT NULL THEN
+      IF nvl(trim(pr_hrenvi01),'00:00') <> '00:00' THEN
         vr_tab_horarios(pr_hrenvi01) := pr_hrenvi01;
       END IF;
-      IF trim(pr_hrenvi02) IS NOT NULL THEN
+      IF nvl(trim(pr_hrenvi02),'00:00') <> '00:00' THEN
         vr_tab_horarios(pr_hrenvi02) := pr_hrenvi02;
       END IF;      
-      IF trim(pr_hrenvi03) IS NOT NULL THEN
+      IF nvl(trim(pr_hrenvi03),'00:00') <> '00:00' THEN
         vr_tab_horarios(pr_hrenvi03) := pr_hrenvi03;
       END IF; 
       -- Varrer a pltable e gravar nas variaveis corretas
