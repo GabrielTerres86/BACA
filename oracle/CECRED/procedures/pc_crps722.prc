@@ -19,6 +19,9 @@ BEGIN
                             - Excluir grupos que não possuem integrante. 
                             PRJ450 - Regulatorio (AMcom - Mario/Odirlei)
 
+                 20/09/2018 - Ajuste para garantir que não inclua cooperado de outra cooperativa no grupo.
+                              PRJ450 - Regulatorio(Odirlei-AMcom)           
+
   ............................................................................ */
 
   DECLARE
@@ -42,7 +45,8 @@ BEGIN
     vr_nrdgrupo_ant               crapgrp.nrdgrupo%TYPE := 0;
     vr_idgrupo_ant                tbcc_grupo_economico.idgrupo%TYPE := 0;
     vr_flggravo                   BOOLEAN;
-    
+    vr_cdcooper_ant               NUMBER;
+
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     -- Definicao do tipo da tabela do Grupo Economico
     TYPE typ_reg_grupo_economico_novo IS
@@ -115,15 +119,29 @@ BEGIN
                                  pr_idgrupo  IN NUMBER,
                                  pr_nrdconta IN crapass.nrdconta%TYPE) IS
       SELECT idgrupo
-            ,idintegrante
             ,cdcooper
             ,nrdconta
-            ,tpcarga
+            
         FROM tbcc_grupo_economico_integ itg
        WHERE itg.dtexclusao IS NULL
          AND itg.cdcooper = pr_cdcooper
          AND itg.nrdconta = pr_nrdconta
-         AND itg.idgrupo  <> pr_idgrupo;
+         AND itg.idgrupo  <> pr_idgrupo
+      UNION
+      SELECT idgrupo
+            ,cdcooper
+            ,nrdconta             
+        FROM tbcc_grupo_economico g
+       --> grupos ativos
+       WHERE g.cdcooper = pr_cdcooper
+         AND g.nrdconta = pr_nrdconta
+         AND g.idgrupo  <> pr_idgrupo
+         AND EXISTS ( SELECT 1
+                        FROM tbcc_grupo_economico_integ i
+                       WHERE g.cdcooper = i.cdcooper
+                         AND g.idgrupo  = i.idgrupo
+                         AND i.dtexclusao IS NULL);
+        
     rw_integrante_outro cr_integrante_outro%ROWTYPE;   
     
     --> Verificar se cooperado é o formador do grupo   
@@ -139,7 +157,9 @@ BEGIN
     
     --> Verificar se a conta formadora ainda pertence ao grupo na grp     
     CURSOR cr_grupo_2(pr_idgrupo   NUMBER,
-                      pr_nrdgrupo  NUMBER) IS
+                      pr_nrdgrupo  NUMBER,
+                      pr_cdcooper  crapcop.cdcooper%TYPE,
+                      pr_nrdconta  crapass.nrdconta%TYPE) IS
       SELECT gre.idgrupo
         FROM tbcc_grupo_economico gre,
              crapass ass_ge,
@@ -149,6 +169,7 @@ BEGIN
        WHERE gre.cdcooper  = ass_ge.cdcooper
          AND gre.nrdconta  = ass_ge.nrdconta
          AND gre.idgrupo   = pr_idgrupo
+         AND grp1.cdcooper = pr_cdcooper
          AND grp1.nrdgrupo = pr_nrdgrupo
          AND grp1.cdcooper = ass_gr1.cdcooper      
          AND grp1.nrdconta = ass_gr1.nrdconta
@@ -171,6 +192,7 @@ BEGIN
          AND gre.idgrupo = pr_idgrupo
          AND gre.dtexclusao IS NULL      
          AND gre.tpcarga = 3
+         AND grp1.cdcooper = pr_cdcooper
          AND grp1.nrdgrupo = pr_nrdgrupo
          AND grp1.cdcooper = ass_gr1.cdcooper
          AND grp1.nrdconta = ass_gr1.nrdconta
@@ -178,7 +200,50 @@ BEGIN
             
          AND grp1.cdcooper = ass_gr2.cdcooper
          AND grp1.nrctasoc = ass_gr2.nrdconta
-         AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base;
+         AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base
+      UNION
+      
+      --> Verificar se o formador do grupo novo pertence a um mesmo grupo no grupo antigo
+      --> a essa conta, justificando permanecerem no mesmo grupo novo
+      SELECT gre.idgrupo
+        FROM tbcc_grupo_economico gre,
+             crapass ass_ge,
+             crapgrp grp1,
+             crapass ass_gr1,
+             crapass ass_gr2           
+       WHERE gre.cdcooper  = ass_ge.cdcooper
+         AND gre.nrdconta  = ass_ge.nrdconta
+         AND gre.idgrupo   = pr_idgrupo
+         AND grp1.cdcooper = pr_cdcooper
+         AND grp1.nrdgrupo <> pr_nrdgrupo
+         AND grp1.cdcooper = ass_gr1.cdcooper      
+         AND grp1.nrdconta = ass_gr1.nrdconta
+         AND ass_ge.cdcooper = ass_gr1.cdcooper
+         AND ass_ge.nrcpfcnpj_base = ass_gr1.nrcpfcnpj_base
+            
+         AND grp1.cdcooper = ass_gr2.cdcooper
+         AND grp1.nrctasoc = ass_gr2.nrdconta
+         AND ass_ge.cdcooper = ass_gr2.cdcooper
+         AND ass_ge.nrcpfcnpj_base = ass_gr2.nrcpfcnpj_base
+         AND EXISTS ( SELECT * 
+                        FROM crapgrp grp2,
+                             crapass ass_gr21,
+                             crapass ass_gr22,
+                             crapass ass2
+                      WHERE grp2.nrdgrupo = grp1.nrdgrupo
+                        AND grp2.cdcooper = pr_cdcooper
+                        AND ass2.cdcooper = pr_cdcooper
+                        AND ass2.nrdconta = pr_nrdconta
+                          
+                        AND grp2.cdcooper = ass_gr21.cdcooper      
+                        AND grp2.nrdconta = ass_gr21.nrdconta
+                        AND ass2.cdcooper = ass_gr21.cdcooper
+                        AND ass2.nrcpfcnpj_base = ass_gr21.nrcpfcnpj_base
+                                       
+                        AND grp2.cdcooper = ass_gr22.cdcooper      
+                        AND grp2.nrctasoc = ass_gr22.nrdconta
+                        AND ass2.cdcooper = ass_gr22.cdcooper
+                        AND ass2.nrcpfcnpj_base = ass_gr22.nrcpfcnpj_base) ;
     rw_grupo_2 cr_grupo_2%ROWTYPE;        
             
     -- Busca os contratos
@@ -206,8 +271,10 @@ BEGIN
             on crapass.cdcooper = crapgrp.cdcooper
            and crapass.nrdconta = crapgrp.nrctasoc     
          WHERE crapgrp.nrdconta <> crapgrp.nrctasoc
-           AND crapgrp.dtmvtolt = crapdat.dtmvtoan
-         ORDER BY crapgrp.nrdgrupo, crapgrp.idseqttl DESC
+          -- AND crapgrp.dtmvtolt = crapdat.dtmvtoan Remover validação, pois existe apenas uma grp ativa, caso estiver com outra data continua sendo a ativa
+         ORDER BY crapgrp.cdcooper,
+                  crapgrp.nrdgrupo, 
+                  crapgrp.idseqttl DESC
            ;
           
     --> Buscar cooperados da mesa base CPF/CNPJ     
@@ -247,12 +314,12 @@ BEGIN
            AND a.cdcooper = ge.cdcooper
            AND a.inpessoa = gi.tppessoa
            AND a.nrdconta = gi.nrdconta
-           AND a.dtelimin IS NULL
+           --AND a.dtelimin IS NULL
            --
            AND a.cdcooper = a2.cdcooper
            AND a.nrcpfcnpj_base = a2.nrcpfcnpj_base
            AND a2.nrdconta <> gi.nrdconta
-           AND a2.dtdemiss IS NULL
+           --AND a2.dtdemiss IS NULL
                
             --
         UNION
@@ -274,11 +341,11 @@ BEGIN
                            AND i.dtexclusao IS NULL)
            AND a.cdcooper = ge.cdcooper
            AND a.nrdconta = ge.nrdconta
-           AND a.dtelimin IS NULL
+           --AND a.dtelimin IS NULL
            AND a.cdcooper = a2.cdcooper
            AND a.nrcpfcnpj_base = a2.nrcpfcnpj_base
            AND a2.nrdconta <> ge.nrdconta
-           AND a2.dtdemiss IS NULL
+           --AND a2.dtdemiss IS NULL
           order by  1, 4, 2, 3;   
      
     --> buscar dados da conta     
@@ -560,7 +627,7 @@ BEGIN
         pr_dscritic := 'Erro ao incorporar cooperados do grupo '||pr_idgrupo_ori||
                        ' para '||pr_idgrupo_dst||': '||SQLERRM;           
     END pc_incorpora_grupo;     
-          
+                
   BEGIN
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
     vr_tab_grupo_economico_novo.DELETE;
@@ -583,8 +650,17 @@ BEGIN
       END IF;
     END LOOP;
         
+    vr_cdcooper_ant := -1;    
+    
     -- Atualizar o grupo atual
     FOR rw_grupo_economico IN cr_grupo_economico LOOP
+    
+      IF vr_cdcooper_ant <> rw_grupo_economico.cdcooper THEN
+        vr_idgrupo_ant  := -1;  
+        vr_nrdgrupo_ant := -1;      
+        vr_cdcooper_ant := rw_grupo_economico.cdcooper;
+      END IF;
+    
       -- Indice do Grupo Economico Novo
       vr_ind_grupo_economico_novo := lpad(rw_grupo_economico.cdcooper,10,'0')||lpad(rw_grupo_economico.nrdconta,10,'0');      
       -- Condicao para verificar se o grupo jah foi criado
@@ -610,7 +686,9 @@ BEGIN
            rw_integrante.tpcarga <> 3 THEN
           --> Verificar se a conta formadora ainda pertence ao grupo na grp     
           OPEN cr_grupo_2(pr_idgrupo   => rw_integrante.idgrupo,
-                          pr_nrdgrupo  => rw_grupo_economico.nrdgrupo);
+                          pr_nrdgrupo  => rw_grupo_economico.nrdgrupo,
+                          pr_cdcooper  => rw_grupo_economico.cdcooper,
+                          pr_nrdconta  => rw_grupo_economico.nrdconta);
           FETCH cr_grupo_2 INTO rw_grupo_2;
           --> caso o formador do grupo não faz parte do grupo na tabela crapgrp, é sinal que foi reformulado o grupo
           --> sendo necessario criar novo grupo 
@@ -699,22 +777,22 @@ BEGIN
         
       
         IF vr_flginteg = FALSE THEN
-        BEGIN
-          INSERT INTO tbcc_grupo_economico
-                      (cdcooper
-                      ,nrdconta
-                      ,nmgrupo
-                      ,dtinclusao)
-               VALUES (rw_grupo_economico.cdcooper
-                      ,rw_grupo_economico.nrdconta
-                      ,'Grupo Carga Manutencao'
-                      ,TRUNC(SYSDATE))
-                      RETURNING tbcc_grupo_economico.idgrupo INTO vr_idgrupo;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao gravar o grupo economico: '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
+          BEGIN
+            INSERT INTO tbcc_grupo_economico
+                        (cdcooper
+                        ,nrdconta
+                        ,nmgrupo
+                        ,dtinclusao)
+                 VALUES (rw_grupo_economico.cdcooper
+                        ,rw_grupo_economico.nrdconta
+                        ,'Grupo Carga Manutencao'
+                        ,TRUNC(SYSDATE))
+                        RETURNING tbcc_grupo_economico.idgrupo INTO vr_idgrupo;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao gravar o grupo economico: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
         
         --> caso ja tenha gravado como integrante  
         ELSIF vr_flggravo = TRUE THEN
@@ -791,7 +869,9 @@ BEGIN
           IF vr_flginteg_outro THEN
             --> Verificar se a conta formadora ainda pertence ao grupo na grp     
             OPEN cr_grupo_2(pr_idgrupo   => rw_integrante_outro.idgrupo,
-                            pr_nrdgrupo  => rw_grupo_economico.nrdgrupo);
+                            pr_nrdgrupo  => rw_grupo_economico.nrdgrupo,
+                            pr_cdcooper  => rw_grupo_economico.cdcooper,
+                            pr_nrdconta  => rw_grupo_economico.nrdconta);
             FETCH cr_grupo_2 INTO rw_grupo_2;
             --> caso o formador do grupo não faz parte do grupo na tabela crapgrp, é sinal que foi reformulado o grupo
             --> sendo necessario criar 
@@ -815,45 +895,48 @@ BEGIN
               RAISE vr_exc_saida;
             END IF;                   
             
+            --> Atualilzar variaveis de controle
+            vr_idgrupo := rw_integrante_outro.idgrupo;
+            vr_idgrupo_ant := rw_integrante_outro.idgrupo;
             
           ELSIF vr_flginteg_outro = FALSE THEN            
-        -- Cadastro de Integrante
-        BEGIN
-          INSERT INTO tbcc_grupo_economico_integ
-                      (idgrupo
-                      ,nrcpfcgc
-                      ,cdcooper
-                      ,nrdconta
-                      ,tppessoa
-                      ,tpcarga
-                      ,tpvinculo
-                      ,peparticipacao
-                      ,dtinclusao
-                      ,cdoperad_inclusao
-                      ,nmintegrante)
-               VALUES (vr_idgrupo
-                      ,rw_grupo_economico.nrcpfcgc
-                      ,rw_grupo_economico.cdcooper
-                      ,rw_grupo_economico.nrctasoc
-                      ,rw_grupo_economico.inpessoa
-                      ,2 -- Carga JOB
-                      ,rw_grupo_economico.tpvinculo
-                      ,rw_grupo_economico.persocio
-                      ,TRUNC(SYSDATE)
-                      ,1
-                      ,rw_grupo_economico.nmprimtl)
-                      RETURNING tbcc_grupo_economico_integ.idintegrante INTO vr_idintegrante;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao gravar o integrante do grupo economico: '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
+            -- Cadastro de Integrante
+            BEGIN
+              INSERT INTO tbcc_grupo_economico_integ
+                          (idgrupo
+                          ,nrcpfcgc
+                          ,cdcooper
+                          ,nrdconta
+                          ,tppessoa
+                          ,tpcarga
+                          ,tpvinculo
+                          ,peparticipacao
+                          ,dtinclusao
+                          ,cdoperad_inclusao
+                          ,nmintegrante)
+                   VALUES (vr_idgrupo
+                          ,rw_grupo_economico.nrcpfcgc
+                          ,rw_grupo_economico.cdcooper
+                          ,rw_grupo_economico.nrctasoc
+                          ,rw_grupo_economico.inpessoa
+                          ,2 -- Carga JOB
+                          ,rw_grupo_economico.tpvinculo
+                          ,rw_grupo_economico.persocio
+                          ,TRUNC(SYSDATE)
+                          ,1
+                          ,rw_grupo_economico.nmprimtl)
+                          RETURNING tbcc_grupo_economico_integ.idintegrante INTO vr_idintegrante;
+		    
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao gravar o integrante do grupo economico: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
         
-        vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).idintegrante := vr_idintegrante;
-        vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).tpcarga      := 2;
-        vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).flgexcluir   := FALSE;
-      END IF;     
+            vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).idintegrante := vr_idintegrante;
+            vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).tpcarga      := 2;
+            vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).flgexcluir   := FALSE;
+          END IF;     
 
           
         END IF;
@@ -929,16 +1012,16 @@ BEGIN
             CLOSE cr_tbintegrante_exc;
           
           
-          BEGIN
-            UPDATE tbcc_grupo_economico_integ SET
-                   dtexclusao        = TRUNC(SYSDATE)
-                  ,cdoperad_exclusao = '1'
-             WHERE idintegrante = vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).idintegrante;          
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao atualizar o integrante do grupo economico: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
+            BEGIN
+              UPDATE tbcc_grupo_economico_integ SET
+                     dtexclusao        = TRUNC(SYSDATE)
+                    ,cdoperad_exclusao = '1'
+               WHERE idintegrante = vr_tab_grupo_economico_inte(vr_ind_integrante_grupo).idintegrante;          
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar o integrante do grupo economico: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
           ELSE
             CLOSE cr_tbintegrante_exc;
           END IF;
@@ -949,6 +1032,8 @@ BEGIN
         vr_ind_integrante_grupo := vr_tab_grupo_economico_inte.next(vr_ind_integrante_grupo);
       END LOOP;
     END IF;
+        
+    COMMIT;
         
     -- Processar Cooperativas e incluir contas com o mesmo CPF ou base CNPJ
     FOR rw_crapcop IN cr_crapcop LOOP
