@@ -452,6 +452,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	  27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
 
 	  05/09/2018 - Alterado posição do ROLLBACK no exception - INC0023398
+
+      27/09/2018 - INC0023556 Incluído parametro resgate cheque para não executar.
 				              
   --------------------------------------------------------------------------------------------------------------*/
 
@@ -8856,6 +8858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 																						 ,pr_nrdconta => pr_nrdconta
 																						 ,pr_dscheque => pr_tab_cheques(vr_index).dsdocmc7
 																						 ,pr_cdoperad => pr_cdoperad
+                                             ,pr_exclui_desconto => 'N' -- Não dispara exclusão de desconto
 																						 ,pr_tab_erro_resg => vr_tab_resgate_erro
 																						 ,pr_cdcritic => vr_cdcritic
 																						 ,pr_dscritic => vr_dscritic);
@@ -9168,6 +9171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_dscheque => rw_crapcdb.dsdocmc7
                                          ,pr_cdoperad => pr_cdoperad
+                                         ,pr_exclui_desconto => 'N' -- Não dispara exclusão de desconto
                                          ,pr_tab_erro_resg => vr_tab_resgate_erro
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
