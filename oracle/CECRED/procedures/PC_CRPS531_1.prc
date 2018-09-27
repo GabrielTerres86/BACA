@@ -744,7 +744,6 @@ end;
     vr_nrseq_mensagem_fase      TBSPB_MSG_ENVIADA_FASE.nrseq_mensagem_fase%TYPE;
     vr_aux_tagCABInfConvertida  BOOLEAN := FALSE;
     vr_aux_tagCABInfCCL         BOOLEAN := FALSE;
-    vr_aux_CabInf_erro          BOOLEAN := FALSE;
     vr_nrcontrole_if            TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE;
     vr_aux_NumCtrlRem_Or        VARCHAR2(100);
     vr_dtmovimento              DATE;
@@ -2523,7 +2522,6 @@ end;
         -- Identificar se existe a CABInfCancelamento
         vr_aux_tagCABInfCCL        := FALSE;
         vr_aux_tagCABInfConvertida := FALSE;
-        vr_aux_CabInf_erro         := FALSE;
         --
         IF vr_node_name IN('CABInfCancelamento') THEN
           vr_aux_tagCABInfCCL := TRUE;
@@ -2594,17 +2592,6 @@ end;
           END IF;
         END LOOP;
         --
-        -- Marcelo Telles Coelho - Projeto 475
-        -- As mensagens com erro não tem o NrControleIF, por isso será utilizado NrOperacao
-        IF vr_aux_NumCtrlIF IS NULL THEN
-          vr_aux_NumCtrlIF := vr_aux_NrOperacao;
-          vr_nrcontrole_if := vr_aux_NrOperacao;
-          IF vr_aux_CD_SITUACAO = 'E' THEN
-            vr_aux_tagCABInfCCL := TRUE;
-            vr_aux_CabInf_erro  := TRUE;
-          END IF;
-        END IF;
-        -- Fim Projeto 475
       EXCEPTION
         WHEN OTHERS THEN
           pr_dscritic := 'Erro no tratamento do Node pc_trata_CABinf -->'||sqlerrm;
@@ -7364,54 +7351,10 @@ END pc_trata_arquivo_ldl;
               RAISE vr_exc_next;
             END IF;
             -- Se encontramos mensagem
-            IF trim(vr_aux_CodMsg) IS NOT NULL
-            OR vr_aux_CabInf_erro     -- Marcelo Telles Coelho - Projeto 475
-            THEN
+            IF trim(vr_aux_CodMsg) IS NOT NULL THEN
               -- Marcelo Telles Coelho - Projeto 475
               -- Tratamento de mensagens rejeitadas pela cabine (ex: Duplicidade)
-              IF vr_aux_CabInf_erro THEN
-                -- Gera LOG SPB
-                pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
-                               ,pr_msgderro  => 'Inconsistencia dados - rejeição automática');
-                --
-                SSPB0003.pc_grava_trace_spb (pr_cdfase                 => 40 -- Confirmação recebimento JD / rejeição automática
-                                            ,pr_idorigem               => NULL
-                                            ,pr_nmmensagem             => 'Retorno JD Rejeição'
-                                            ,pr_nrcontrole             => vr_aux_NumCtrlIF
-                                            ,pr_nrcontrole_str_pag     => vr_aux_NumCtrlRem
-                                            ,pr_nrcontrole_dev_or      => NULL
-                                            ,pr_dhmensagem             => SYSDATE
-                                            ,pr_insituacao             => 'NOK'
-                                            ,pr_dsxml_mensagem         => NULL
-                                            ,pr_dsxml_completo         => NULL
-                                            ,pr_nrseq_mensagem_xml     => vr_nrseq_mensagem_xml
-                                            ,pr_cdcooper               => rw_crapcop_mensag.cdcooper
-                                            ,pr_nrdconta               => NVL(vr_aux_CtCredtd,vr_aux_CtDebtd)
-                                            ,pr_cdproduto              => 30 -- TED
-                                            ,pr_nrseq_mensagem         => vr_nrseq_mensagem
-                                            ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
-                                            ,pr_dscritic               => vr_dscritic
-                                            ,pr_des_erro               => vr_des_erro
-                                            );
-                IF vr_dscritic IS NOT NULL THEN
-                  BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
-                                            ,pr_ind_tipo_log  => 2 -- Erro não tratado
-                                            ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
-                                                              ||' - '|| vr_glb_cdprogra ||' --> '
-                                                              ||'Erro execucao - '
-                                                              || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
-                                                              || 'Mensagem: CabInfSituacao - Rejeicao '
-                                                              || 'Na Rotina PC_CRPS531_1 --> '||vr_dscritic
-                                            ,pr_nmarqlog      => vr_logprogr
-                                            ,pr_cdprograma    => vr_glb_cdprogra
-                                            ,pr_dstiplog      => 'E'
-                                            ,pr_tpexecucao    => 3
-                                            ,pr_cdcriticidade => 0
-                                            ,pr_flgsucesso    => 1
-                                            ,pr_cdmensagem    => vr_cdcritic);
-                  RAISE vr_exc_saida;
-                END IF;
-              ELSIF vr_aux_tagCABInfCCL THEN
+              IF vr_aux_tagCABInfCCL THEN
                 -- Rejeitada pela Cabine Vem com mesmo CodMsg da mensagem gerada pela cooperativa
                 --
                 -- Marcelo Telles Coelho - Projeto 475
