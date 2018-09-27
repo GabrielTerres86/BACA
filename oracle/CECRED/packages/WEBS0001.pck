@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   --  Sistema  : Rotinas referentes ao WebService de Propostas
   --  Sigla    : EMPR
   --  Autor    : James Prust Junior
-  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 05/05/2018
+  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 18/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -24,6 +24,8 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   --             01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 		  
   --                          motor de credito e enviar para esteira - Diego Simas (AMcom)
   --
+  --             18/09/2018 - Incluso novo parametro na pc_retorno_analise_aut e ajustado para ela gerenciar
+  --  						  as chamadas das procedures de atualização de limite de desc titulo e emprestimo (Daniel)
   ---------------------------------------------------------------------------
   PROCEDURE pc_atuaretorn_proposta_esteira(pr_usuario  IN VARCHAR2              --> Usuario
                                           ,pr_senha    IN VARCHAR2              --> Senha
@@ -108,6 +110,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                   ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
                                   ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
                                   ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
+                                  ,pr_inopeatr IN NUMBER                --> Contem o identificador da operacao de credito em atraso que vai para esteira
                                   ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
                                   ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
                                   ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
@@ -4657,6 +4660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                   ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
                                   ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
                                   ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
+                                  ,pr_inopeatr IN NUMBER                --> Contem o identificador da operacao de credito em atraso que vai para esteira
                                   ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
                                   ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
                                   ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
@@ -4734,7 +4738,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                     ,pr_nrinfcad => pr_nrinfcad
                     ,pr_nrliquid => pr_nrliquid
                     ,pr_nrgarope => pr_nrgarope
-                    ,pr_inopeatr => NULL
+                    ,pr_inopeatr => pr_inopeatr
                     ,pr_nrparlvr => pr_nrparlvr
                     ,pr_nrperger => pr_nrperger
                     ,pr_desscore => pr_desscore

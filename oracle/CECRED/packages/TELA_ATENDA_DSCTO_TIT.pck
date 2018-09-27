@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
     Programa : TELA_ATENDA_DSCTO_TIT
     Sistema  : Ayllos Web
     Autor    : Paulo Penteado (GFT) / Gustavo Sene (GFT)
-    Data     : Março - 2018                 Ultima atualizacao: 01/03/2018
+    Data     : Março - 2018                 Ultima atualizacao: 04/09/2018
 
     Dados referentes ao programa:
 
@@ -46,7 +46,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                   insitapr craptdb.insitapr%TYPE,
                   nrctrdsc tbdsct_titulo_cyber.nrctrdsc%TYPE,
                   dssituac CHAR(1),
-                  sitibrat CHAR(1));
+                  sitibrat CHAR(1),
+                  dssittit VARCHAR2(100));
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
        INDEX BY VARCHAR2(50);
@@ -827,6 +828,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
       21/05/2018 - Adicionada procedure para trazer se a esteira e o motor estão em contingencia (Luis Fernando (GFT))
       13/04/2018 - Criadas funcionalidades de inclusão, alteração e resgate de borderôes (Luis Fernando (GFT)
 	  23/08/2018 - PRJ 438 - Gravar, Alterar e Consultar motivos de anulação - Paulo Martins - Mouts
+	  19/09/2018 - Alterado a procedure pc_busca_titulos_bordero para adicionar retorno da descrição da 
+                   situação do titulo dssittit (Paulo Penteado GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -6348,7 +6351,7 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
     Alteração : 
               09/04/2018 - Adicionados novos campos na lista de titulos - Luis Fernando (GFT)
               21/07/2018 - Adicionado opção de paginação. Utilizado na dsct0004 do IB (Paulo Penteado GFT)
-
+              19/09/2018 - Adicionado retorno da descrição da situação do titulo dssittit (Paulo Penteado GFT)
   ---------------------------------------------------------------------------------------------------------------------*/
 
    -- Variável de críticas
@@ -6488,6 +6491,7 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
              pr_tab_tit_bordero(vr_index).nrctrdsc := vr_tab_tit_bordero(vr_index).nrctrdsc;
              pr_tab_tit_bordero(vr_index).dssituac := vr_situacao;
              pr_tab_tit_bordero(vr_index).sitibrat := vr_ibratan;
+             pr_tab_tit_bordero(vr_index).dssittit := vr_tab_tit_bordero(vr_index).dssittit;
          END IF;
          vr_countpag := vr_countpag + 1; 
             
@@ -6533,6 +6537,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
     vr_cdagenci varchar2(100);
     vr_nrdcaixa varchar2(100);
     vr_idorigem varchar2(100);
+    vr_dssittit VARCHAR2(100);
     
     -- Variável de críticas
      vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
@@ -6588,11 +6593,16 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                              
       while vr_index is not null LOOP
             vr_tit_vencido := 0;
+            vr_dssittit    := vr_tab_tit_bordero(vr_index).dssittit;
             
             --Verifica se o titulo está vencido
             IF (vr_tab_tit_bordero(vr_index).insittit NOT IN (1,2,3))
              AND (gene0005.fn_valida_dia_util(vr_cdcooper, vr_tab_tit_bordero(vr_index).dtvencto) < rw_crapdat.dtmvtolt) THEN
               vr_tit_vencido := 1;
+              
+              IF vr_tab_tit_bordero(vr_index).insitapr <> 2 THEN
+                vr_dssittit := 'Vencido';
+            END IF;
             END IF;
             
             pc_escreve_xml('<titulo>'||
@@ -6614,6 +6624,7 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               '<tvencido>' || vr_tit_vencido                        || '</tvencido>' || -- Verifica a partir do calendario de feriados se esta vencido ou nao
                               '<vlsldtit>' || vr_tab_tit_bordero(vr_index).vlsldtit || '</vlsldtit>' || --Saldo devedor do título
                               '<nrctrdsc>' || vr_tab_tit_bordero(vr_index).nrctrdsc || '</nrctrdsc>' || --Numero de contrato Cyber
+                              '<dssittit>' || vr_dssittit || '</dssittit>' || --FIELD dssittit LIKE descrição da craptdb.insittit
                            '</titulo>'
                           );
           /* buscar proximo */
