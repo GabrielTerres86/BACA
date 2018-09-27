@@ -41,12 +41,12 @@
                             (Lucas R./Rodrigo)  
 
                29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
-
+               
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
                29/05/2018 - Alteracao no layout. Sera gerado respeitando o layout CCF607 da ABBC. 
                             Chamado SCTASK0012791 (Heitor - Mouts)
-			   
+
 			   04/09/2018 - Inclusão de nova regra para validar o HEADER. Verificar se a data do arquivo 
 							é diferente que a data do movimento anterior, se for, gerar a critica: 
 							"Data invalida no arquivo" e enviar um e-mail para a COMPE. Chamado PRB0040283 (Douglas - Mouts)
@@ -340,7 +340,9 @@ PROCEDURE proc_processa_arquivo:
         ASSIGN glb_cdcritic = 887.
 
 	
-	IF  SUBSTR(aux_setlinha,10,8) <> STRING(glb_dtmvtoan,"99999999")  then
+	IF  SUBSTR(aux_setlinha,10,8) <> STRING(YEAR(glb_dtmvtoan),"9999") + 
+									 STRING(MONTH(glb_dtmvtoan),"99") + 
+									 STRING(DAY(glb_dtmvtoan),"99")  then 
     do:  
     ASSIGN glb_cdcritic = 789.     
     
@@ -360,7 +362,8 @@ PROCEDURE proc_processa_arquivo:
                    ,INPUT "Arquivo de retorno da ABBC-CCF - " + STRING(glb_dtmvtolt,"99/99/9999") 
                    ,INPUT "O arquivo lido na ABBC no momento do processo do dia" 
                 + " " + STRING(glb_dtmvtolt,"99/99/9999")  + " " + STRING(TIME,"HH:MM:SS") + ", não é o arquivo referente ao movimento anterior que é de" + " " + STRING(glb_dtmvtoan,"99/99/9999") + " " 
-                + "É necessário verificar com a ABBC a disponibilização do arquivo correto em seu FTP, e em seguida efetuar a execução manual do arquivo através da tela PRCCTL."                                        
+                + "É necessário verificar com a ABBC a disponibilização do arquivo correto em seu FTP, e em seguida efetuar a execução manual do arquivo através da tela PRCCTL." 
+				+ "Arquivo:" + SUBSTR(aux_setlinha,4,6) + "Data do arquivo:" + SUBSTR(aux_setlinha,16,2) + "/" + SUBSTR(aux_setlinha,14,2) + "/" + SUBSTR(aux_setlinha,10,4)                                       
                    ,INPUT   " "              
                    ,INPUT  "N"                
                    ,INPUT  "N"                
@@ -728,7 +731,7 @@ PROCEDURE proc_processa_arquivo:
                     END.
     END. /*** Fim do DO WHILE TRUE ***/
             END. 
-     
+           
     INPUT STREAM str_1 CLOSE.
    
     UNIX SILENT VALUE("rm " + crawarq.nmarquiv + ".q 2> /dev/null").
