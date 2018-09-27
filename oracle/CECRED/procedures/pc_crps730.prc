@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 06/09/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 24/09/2018
 
    Dados referentes ao programa:
 
@@ -17,6 +17,8 @@
    
    06/09/2018 - INC0023422 Inclusão de logs de exception para capturar possíveis problemas de processamento;
                 inclusão de pc_set_modulo (Carlos)
+
+   24/09/2018 - Merge de atualização CS 25888 - Ajuste no controle da varivel vr_tot_outros_cra_tarifa (Nagasava Supero)
    
   ............................................................................. */
   
@@ -1065,12 +1067,12 @@
 					--
 					IF pr_tpregist = vr_tab_lancto(vr_index_lancto).vr_tpregist THEN
 						--
-						IF pr_tpregist IN('vr_tot_outras_cra_tarifa', 'vr_tot_sp_cra_tarifa') THEN
+						IF pr_tpregist IN('vr_tot_outros_cra_tarifa', 'vr_tot_sp_cra_tarifa') THEN
 							--
 							vr_idlancto_tarifa := pr_idretorno;
 							vr_idlancto_custas := NULL;
 							--
-						ELSIF pr_tpregist IN('vr_tot_outras_cra_custas', 'vr_tot_sp_cra_custas') THEN
+						ELSIF pr_tpregist IN('vr_tot_outros_cra_custas', 'vr_tot_sp_cra_custas') THEN
 							--
 							vr_idlancto_custas := pr_idretorno;
 							vr_idlancto_tarifa := NULL;
@@ -3149,6 +3151,11 @@
 						END IF;
 						--
 					END IF;
+					
+          --
+				END IF;
+				--
+				IF (vr_vlcuscar + vr_vlcusdis + vr_vldemdes + vr_vlgraele) > 0 THEN
 					-- Totaliza por cooperativa
 					pc_totaliza_cooperativa(pr_cdcooper => rw_crapcob.cdcooper                       -- IN
 					                       ,pr_cdfedera => vr_tab_arquivo(vr_index_reg).campot30     -- IN
@@ -3630,12 +3637,6 @@ BEGIN
 	-- Executa a conciliação automática
 	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
 	--
-  IF pr_dscritic IS NOT NULL THEN
-    --
-    RAISE vr_exc_erro;
-    --
-  END IF;
-	
   GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_gera_movimento_pagamento');
 	-- Gera as movimentações
 	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);

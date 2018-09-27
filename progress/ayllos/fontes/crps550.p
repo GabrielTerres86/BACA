@@ -340,7 +340,9 @@ PROCEDURE proc_processa_arquivo:
         ASSIGN glb_cdcritic = 887.
 
 	
-	IF  SUBSTR(aux_setlinha,10,8) <> STRING(glb_dtmvtoan,"99999999")  then
+	IF  SUBSTR(aux_setlinha,10,8) <> STRING(YEAR(glb_dtmvtoan),"9999") + 
+									 STRING(MONTH(glb_dtmvtoan),"99") + 
+									 STRING(DAY(glb_dtmvtoan),"99")  then 
     do:  
     ASSIGN glb_cdcritic = 789.     
     
@@ -360,7 +362,8 @@ PROCEDURE proc_processa_arquivo:
                    ,INPUT "Arquivo de retorno da ABBC-CCF - " + STRING(glb_dtmvtolt,"99/99/9999") 
                    ,INPUT "O arquivo lido na ABBC no momento do processo do dia" 
                 + " " + STRING(glb_dtmvtolt,"99/99/9999")  + " " + STRING(TIME,"HH:MM:SS") + ", não é o arquivo referente ao movimento anterior que é de" + " " + STRING(glb_dtmvtoan,"99/99/9999") + " " 
-                + "É necessário verificar com a ABBC a disponibilização do arquivo correto em seu FTP, e em seguida efetuar a execução manual do arquivo através da tela PRCCTL."                                        
+                + "É necessário verificar com a ABBC a disponibilização do arquivo correto em seu FTP, e em seguida efetuar a execução manual do arquivo através da tela PRCCTL." 
+				+ "Arquivo:" + SUBSTR(aux_setlinha,4,6) + "Data do arquivo:" + SUBSTR(aux_setlinha,16,2) + "/" + SUBSTR(aux_setlinha,14,2) + "/" + SUBSTR(aux_setlinha,10,4)                                       
                    ,INPUT   " "              
                    ,INPUT  "N"                
                    ,INPUT  "N"                

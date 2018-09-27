@@ -747,7 +747,7 @@ end;
     vr_nrcontrole_if            TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE;
     vr_aux_NumCtrlRem_Or        VARCHAR2(100);
     vr_dtmovimento              DATE;
-    vr_trace_dsxml_mensagem     VARCHAR2(32000);
+    vr_trace_dsxml_mensagem     CLOB;
     vr_trace_cdfase             TBSPB_MSG_ENVIADA_FASE.CDFASE%TYPE;
     vr_trace_idorigem           TBSPB_MSG_XML.INORIGEM_MENSAGEM%TYPE;
     vr_trace_nmmensagem         TBSPB_MSG_ENVIADA.NMMENSAGEM%TYPE;
@@ -2471,7 +2471,7 @@ end;
       vr_output_file       UTL_FILE.file_type;
       vr_getlinha          varchar2(32767);
       vr_setlinha          varchar2(32767);
-      vr_txtmensg          varchar2(32767);
+      vr_txtmensg          CLOB; -- varchar2(32767);
       vr_aux_msgspb_xml    varchar2(32767);
 
       -- Documento
@@ -3896,35 +3896,36 @@ END pc_trata_arquivo_ldl;
       vr_inmsg_GEN    := 'N';
 
       -- Efetuar leitura do arquivo limpo em CLOB e já instanciá-lo como XML
-      BEGIN
         -- Marcelo Telles Coelho - Projeto 475
         -- Utilizar o parametro XMLType
         vr_xmltype := pr_dsxmltype;
-        -- Converter o XMLTYPE em CLOB e salvar em VARCHAR2
         vr_txtmensg:= xmltype.getClobVal(pr_dsxmltype);
         --
-        -- Salvar o CLOB em um arquivo, para facilitar a homologação
-        DECLARE
-          vr_dscaminho VARCHAR2(1000);
-          vr_clob      CLOB;
-        BEGIN
-          vr_dscaminho := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3)||'/log';
-          vr_clob      := xmltype.getClobVal(pr_dsxmltype);
-          -- Call the procedure
-          cecred.gene0002.pc_clob_para_arquivo(pr_clob     => vr_clob,
-                                               pr_caminho  => vr_dscaminho,
-                                               pr_arquivo  => 'pc_crps531_1_'||TO_CHAR(SYSTIMESTAMP,'yyyymmdd_hh24miss_ffff')||'.xml',
-                                               pr_flappend => 'W',
-                                               pr_des_erro => vr_des_erro);
-        END;
-        --
-        -- vr_xmltype := XMLType.createXML(gene0002.fn_arq_para_clob(pr_caminho => vr_nmdirarq||'/'
-        --                                                          ,pr_arquivo => vr_nmarquiv));
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao converter o arquivo '||vr_nmarquiv||' para xml --> '||sqlerrm;
-          RAISE vr_exc_saida;
-      END;
+      -- BEGIN
+      --   -- Converter o XMLTYPE em CLOB e salvar em VARCHAR2
+      --   --
+      --   -- Salvar o CLOB em um arquivo, para facilitar a homologação
+      --   DECLARE
+      --     vr_dscaminho VARCHAR2(1000);
+      --     vr_clob      CLOB;
+      --   BEGIN
+      --     vr_dscaminho := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3)||'/log';
+      --     vr_clob      := xmltype.getClobVal(pr_dsxmltype);
+      --     -- Call the procedure
+      --     cecred.gene0002.pc_clob_para_arquivo(pr_clob     => vr_clob,
+      --                                          pr_caminho  => vr_dscaminho,
+      --                                          pr_arquivo  => 'pc_crps531_1_'||TO_CHAR(SYSTIMESTAMP,'yyyymmdd_hh24miss_ffff')||'.xml',
+      --                                          pr_flappend => 'W',
+      --                                          pr_des_erro => vr_des_erro);
+      --   END;
+      --   --
+      --   -- vr_xmltype := XMLType.createXML(gene0002.fn_arq_para_clob(pr_caminho => vr_nmdirarq||'/'
+      --   --                                                          ,pr_arquivo => vr_nmarquiv));
+      -- EXCEPTION
+      --   WHEN OTHERS THEN
+      --     vr_dscritic := 'Erro ao converter o arquivo '||vr_nmarquiv||' para xml --> '||sqlerrm;
+      --     RAISE vr_exc_saida;
+      -- END;
 
       -- Faz o parse do XMLTYPE para o XMLDOM e libera o parser ao fim
       vr_parser := xmlparser.newParser;
@@ -8975,6 +8976,7 @@ END pc_trata_arquivo_ldl;
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE '%R2'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'STR%'
           AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'PAG%'
+          AND NVL(vr_aux_CodMsg,'Sem <CodMsg>') NOT LIKE 'SLC%'
           AND NOT vr_aux_tagCABInf
           THEN
             IF NOT fn_verifica_processo THEN

@@ -4065,8 +4065,8 @@ PROCEDURE grava_efetivacao_proposta:
       IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
          UNDO EFETIVACAO , LEAVE EFETIVACAO.
       /* Inicio P438 */
-      /* Se for PP */
-      IF  crawepr.tpemprst = 1  THEN
+      /* Se for PP e origem Ayllos Web*/
+      IF  crawepr.tpemprst = 1 AND crawepr.cdorigem = 5 THEN
           DO:
               /* Caso NAO seja Refinanciamento efetua credito na conta  */
               IF  NOT CAN-FIND(crawepr WHERE crawepr.cdcooper = par_cdcooper

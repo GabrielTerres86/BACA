@@ -1277,9 +1277,9 @@ BEGIN
     END IF;
     -- Fechar Cursor
     CLOSE cr_crawepr;
-
-    -- Se for Pos-Fixado
-    IF rw_crawepr.tpemprst = 2 THEN
+    /*P438 - Incluir a tratativa para PP*/
+    -- Se for PP e Pos-Fixado
+    IF rw_crawepr.tpemprst IN (1,2) THEN
 
       -- Se NAO for Refinanciamento
       IF NVL(rw_crawepr.nrctrliq##1, 0) = 0 AND
