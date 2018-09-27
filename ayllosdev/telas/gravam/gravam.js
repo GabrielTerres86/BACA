@@ -1120,37 +1120,33 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
             return false;
         });
 
-	} else if (opcaoButton == 'J') {
+	} else if (opcaoButton == 'J' || opcaoButton == 'L') {
     //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
 
 
         $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
-//		$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
 
         //Define ação para CLICK no botão de Concluir
-        //$("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
+        $("#btBlocJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            //showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
-			showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '', 'sim.gif', 'nao.gif');
             return false;
 
-        //});
+        });
 
-    } else if (opcaoButton == 'L') {
+    //} else if (opcaoButton == 'L') {
     //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
 
         $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
-	//	$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
        
         //Define ação para CLICK no botão de Concluir
-        //$("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
+        $("#btLibJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            //showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
-			showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', 'validPermiss("J");', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '', 'sim.gif', 'nao.gif');
 
             return false;
 
-        //});
+        });
 
     } else if ($('#cddopcao', '#frmCab').val() == 'S') {
 
@@ -1370,9 +1366,8 @@ function selecionaBens(tr) {
 	$('#situacao_anterior', '#divBens').val($('#cdsitgrv', tr).val());
 	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
 
-    //if (ValidAcesso(opcao)){
-	//	controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
-    //}
+	controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
+    
 }
 
 function controlaPesquisa(valor) {
@@ -2143,7 +2138,7 @@ function blqLibJudicial(idseqbem, tpctrpro) {
     //Desabilita todos os campos do form
     $('input,select', '#frmBens').desabilitaCampo();
 
-    var cddopcao = $("#cddopcao", "#frmCab").val();
+    var cddopcao = opcaoButton;
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
     var dsblqjud = $("#dsblqjud", "#frmBens").val();
