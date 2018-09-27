@@ -101,6 +101,8 @@ function habilitaSetor(setorLogado) {
  // Acessar tela principal da rotina
  function acessaOpcaoContratos() {
 
+    document.getElementById('btSair').onclick=function(){encerraRotina(true);return false;}
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando os conv&ecirc;nios ...");
 
@@ -197,6 +199,7 @@ function habilitaSetor(setorLogado) {
  }
 
  function voltarParaDesconto() {
+    document.getElementById('btSair').onclick=function(){acessaOpcaoContratos();}
     $("#divOpcaoConsulta").css('display', 'none');
     $("#divConteudoOpcao").css('display', 'block');
     validaHabilitacaoCamposBtn();
@@ -1713,8 +1716,8 @@ function acessaAba(id,cddopcao) {
         document.getElementById('btSair').onclick=function(){acessaOpcaoContratos();}
     }else if (linkContinuar == 2){
         $("#btnContinuar", "#divOpcaoConsulta").click(function(){validaDadosLimites('true','',cddopcao);});
-        document.getElementById("btVoltar").onclick=function(){atualizarDescontos();}
-        document.getElementById('btSair').onclick=function(){atualizarDescontos();}
+        document.getElementById("btVoltar").onclick=function(){acessaOpcaoContratos();}
+        document.getElementById('btSair').onclick=function(){voltarParaDesconto();}
     }
 
     // Removido esta forma de atribuir pois não funciona com modo de compatibilidade
