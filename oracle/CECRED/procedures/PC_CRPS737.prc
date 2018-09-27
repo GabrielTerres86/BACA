@@ -984,7 +984,7 @@ BEGIN
          RAISE vr_exc_p2;
        when vr_exc_erro then
          vr_cdcritic := 0;
-         raise vr_exc_erro;
+         raise vr_exc_saida;
        WHEN OTHERS THEN
          vr_cdcritic := 0;
          vr_dscritic := 'Erro ao validar dados: ' || SQLERRM;
