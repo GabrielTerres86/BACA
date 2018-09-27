@@ -71,10 +71,10 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 $result = $xmlObject->roottag->tags[0]->tags[0]->tags;
 
 $vldesconto_cee =  getByTagName($result,'VLDESCONTO_CEE');
-$vldedconto_coo =  getByTagName($result,'VLDEDCONTO_COO');
+$vldesconto_coo =  getByTagName($result,'VLDESCONTO_COO');
 
 $vldesconto_cee = floatval(str_replace(',', '.', $vldesconto_cee))*100;
-$vldedconto_coo = floatval(str_replace(',', '.', $vldedconto_coo))*100;
+$vldesconto_coo = floatval(str_replace(',', '.', $vldesconto_coo))*100;
 
 echo 'hideMsgAguardo();';
 echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';

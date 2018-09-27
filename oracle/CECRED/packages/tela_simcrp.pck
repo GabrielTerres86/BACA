@@ -1888,7 +1888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 		--
 		pc_escreve_xml('<inf>'||
 											'<vldesconto_cee>' || vr_desconto_total_cee ||'</vldesconto_cee>' ||
-											'<vldedconto_coo>' || vr_desconto_total_coo ||'</vldedconto_coo>' ||
+											'<vldesconto_coo>' || vr_desconto_total_coo ||'</vldesconto_coo>' ||
 									 '</inf>');
 		--
 		IF cr_indicador%ROWCOUNT > 0 THEN
