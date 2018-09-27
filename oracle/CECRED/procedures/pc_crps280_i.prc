@@ -4841,7 +4841,7 @@ BEGIN
                                                       ,pr_dtefetiv => pr_rw_crapdat.dtmvtolt                        -- Data da efetivacao do emprestimo.
                                                       ,pr_qtpreemp => 1                                             -- Quantidade de prestacoes.
                                                       ,pr_vlemprst => vr_vldivida                                   -- Valor emprestado.
-                                                      ,pr_vlsdeved => vr_vldivida + vr_tab_crapris(vr_des_chave_crapris).vliofmes                                 -- Saldo devedor
+                                                      ,pr_vlsdeved => vr_vldivida + NVL(vr_tab_crapris(vr_des_chave_crapris).vliofmes,0)   -- Saldo devedor
                                                       ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
                                                       ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
                                                       ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
