@@ -5713,9 +5713,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      '<dtvalidade>'      || to_char(vr_dtvencto,'DD/MM/RRRR') ||'</dtvalidade>'     ||
                      '<competencia>'     || to_char(vr_dtcompet,'DD/MM/RRRR') ||'</competencia>'    ||
                      '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
-                     '<identificador>'   || lpad(vr_nrrecolh,15,'0')           ||'</identificador>'  ||   
+                     '<identificador>'   || lpad(vr_nrrecolh,15,'0')          ||'</identificador>'  ||   
                      '<nrdocumento>'     || lpad(vr_nrdocmto,17,'0')          ||'</nrdocumento>'    ||      
-                     '<vlrtotal>'        || vr_vldocmto                       ||'</vlrtotal>';
+                     '<vlrtotal>'        || to_char(vr_vldocmto,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vlrtotal>';
                      
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      
