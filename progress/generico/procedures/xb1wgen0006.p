@@ -67,6 +67,7 @@ DEF VAR aux_flgdbpar AS INTE                                           NO-UNDO.
 DEF VAR aux_dtmaxvct AS DATE FORMAT "99/99/9999"                       NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
+DEF VAR aux_nrrdcapp AS INTE										   NO-UNDO.
 
 { sistema/generico/includes/b1wgen0006tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -1003,6 +1004,7 @@ PROCEDURE incluir-aplicacao-programada:
 											 INPUT aux_flgteimo,
 											 INPUT aux_flgdbpar,
                                             OUTPUT aux_nrdrowid,
+											OUTPUT aux_nrrdcapp,
                                             OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -1023,6 +1025,7 @@ PROCEDURE incluir-aplicacao-programada:
         DO:
             RUN piXmlNew.
             RUN piXmlAtributo (INPUT "nrdrowid",INPUT STRING(aux_nrdrowid)).
+            RUN piXmlAtributo (INPUT "nrrdcapp",INPUT STRING(aux_nrrdcapp)).
             RUN piXmlSave.
         END.
 

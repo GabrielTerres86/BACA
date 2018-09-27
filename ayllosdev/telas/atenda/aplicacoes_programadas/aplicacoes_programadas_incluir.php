@@ -8,8 +8,8 @@
 	 Objetivo  : Script para incluir aplicação programada              
 	                                                                  
 	 Alterações:  27/07/2018 - Derivação para Aplicação Programada              
-                              (Proj. 411.2 - CIS Corporate)                     
-							   
+                               (Proj. 411.2 - CIS Corporate)      
+				
 	***************************************************************************/
 	
 	session_start();
@@ -132,7 +132,7 @@
 	}
 
 	$nrdrowid = $xmlObjIncluir->roottag->tags[0]->attributes["NRDROWID"];	
-
+	$nrrdcapp = $xmlObjIncluir->roottag->tags[0]->attributes["NRRDCAPP"];	
 	
 	// Procura índice da opção "@"
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);	
@@ -151,15 +151,12 @@
 	
 	//Se esta tela foi chamada pela rotina "Produtos" então encerra a tela, do contrário, chama uma opção da tela. 	
 	echo "(executandoProdutos == true) ? callafterPoupanca = \"encerraRotina(true)\" : callafterPoupanca = \"".$acessaaba."\";";	
+
+	echo "nrctrrpp=".$nrrdcapp.";";
 	
 	// Efetua a impressão do termo de entrega
-
-// Comentado temporariamente - pois a impressao por aqui, acaba pegando o registro selecionado no grid
-// echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\');","'.$acessaaba.'","sim.gif","nao.gif");';
- echo 'showError("inform","Para visualizar o termo de ades&atilde;o utilize o bot&atilde;o Imprimir.","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
- echo $acessaaba;
-
-	
+	echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","imprimirAutorizacao(\''.$nrdrowid.'\',\'1\',\''.$cdprodut.'\');","'.$acessaaba.'","sim.gif","nao.gif");';	
+                                                                                                                           
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
