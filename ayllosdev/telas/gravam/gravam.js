@@ -87,24 +87,9 @@ function formataCabecalho() {
     $("#cddopcao", "#frmCab").unbind('keypress').bind('keypress', function (e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 
-            // Se esta desabilitado o campo 
-		
-		cddopcao = $("#cddopcao", "#frmCab").val();
-		opcaoButton = cddopcao;
-		
-		mostrabutton();
-        if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
+            montaFormFiltro();
+
             return false;
-        }
-
-		if (!ValidAcesso(cddopcao)){
-			return false;
-		}
-        montaFormFiltro();
-
-        $(this).unbind('click');
-		
-		return false;
 
         }
 
@@ -126,6 +111,7 @@ function formataCabecalho() {
 		if (!ValidAcesso(cddopcao)){
 			return false;
 		}
+		
         montaFormFiltro();
 
         $(this).unbind('click');
@@ -318,8 +304,8 @@ function formataFiltro() {
 
 		opcaoButton = cddopcao;
 		
-		mostrabutton();
 		buscaBens(1, 30);
+		//mostrabutton();
 		});
     /*
     $("#btAlterar", "#divBotoes").unbind('click').bind('click', function () {
@@ -1081,7 +1067,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 				else
 					funcao = 'verificaSituacaoGravames(' + idseqbem + ',' + tpctrpro + ');';
 				
-				showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', funcao, 'controlaAtleraBaixa("A");', 'sim.gif', 'nao.gif');
+				showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', funcao, 'validPermiss("A");', 'sim.gif', 'nao.gif');
 
                 return false;
 
@@ -1130,22 +1116,22 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
-			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'controlaAtleraBaixa("M");', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
             return false;
         });
 
-	} else if (opcaoButton == 'Q') {
+	} else if (opcaoButton == 'J') {
     //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
 
 
-        $('#dsjustif', '#frmBens').val(dsjustif);
+        $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
 //		$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
 
         //Define ação para CLICK no botão de Concluir
         //$("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
             //showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
-			showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', 'controlaAtleraBaixa("J");', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '', 'sim.gif', 'nao.gif');
             return false;
 
         //});
@@ -1153,14 +1139,14 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
     } else if (opcaoButton == 'L') {
     //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
 
-        $('#dsjustif', '#frmBens').val(dsjustif);
+        $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
 	//	$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
        
         //Define ação para CLICK no botão de Concluir
         //$("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 
             //showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
-			showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', 'controlaAtleraBaixa("J");', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', 'validPermiss("J");', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1380,12 +1366,13 @@ function selecionaBens(tr) {
     $('#nrmodbem', '#divBens').val($('#nrmodbem', tr).val());
     $('#dtoperac', '#divBens').val($('#dtoperac', tr).val());
     $('#dsblqjud', '#divBens').val($('#dsblqjud', tr).val());
+	$('#dsjustif', '#frmBens').val($('#dsjustif', tr).val());
 	$('#situacao_anterior', '#divBens').val($('#cdsitgrv', tr).val());
 	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
 
-    if (ValidAcesso(opcao)){
-		controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
-    }
+    //if (ValidAcesso(opcao)){
+	//	controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
+    //}
 }
 
 function controlaPesquisa(valor) {
@@ -1449,11 +1436,12 @@ function controlaPesquisaAgencia() {
 
 }
 function ValidAcesso(opcao) {
-	
+		
 	switch (opcao) {
 	    case "M":            
             if ($('#vlbtIncluir').val() != '') {
 				showError("error",$('#vlbtIncluir').val(),'Alerta - Ayllos','',false);
+				opcaoButton = 'C';
 				return false
 			}
 		break;
@@ -1461,6 +1449,7 @@ function ValidAcesso(opcao) {
         case "A":            
             if ($('#vlbtAlterar').val() != '') {
 				showError("error",$('#vlbtAlterar').val(),'Alerta - Ayllos','',false);
+				opcaoButton = 'C';
 				return false;
 			}			
         break;
@@ -1468,6 +1457,7 @@ function ValidAcesso(opcao) {
         case "B":          
             if ($('#vlbtBaixar').val() != '') {
 				showError("error",$('#vlbtBaixar').val(),'Alerta - Ayllos','',false);
+				opcaoButton = 'C';
 				return false;
 			}		
         break;
@@ -1475,6 +1465,7 @@ function ValidAcesso(opcao) {
         case "X":              
             if ($('#vlbtCancelar').val() != '') {
 				showError("error",$('#vlbtCancelar').val(),'Alerta - Ayllos','',false);
+				opcaoButton = 'C';
 				return false;
 			}			       
         break;
@@ -1503,21 +1494,16 @@ function ValidAcesso(opcao) {
 	return true;
 }
 
-function controlaAtleraBaixa(opcao) {
+function controlaAlteraBaixa(cddopcao) {
+	opcaoButton = cddopcao;
+	mostrabutton();
 	
-	opcaoButton = opcao;
 	
-	if (ValidAcesso(opcao)){
-		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });
-		$('#btAlterar', '#divBotoesBens').css({ 'display': 'none' });
-		$('#btBaixar', '#divBotoesBens').css({ 'display': 'none' });
-		$('#btIncluir', '#divBotoesBens').css({ 'display': 'none' });
-		$('#btCancelar', '#divBotoesBens').css({ 'display': 'none' });
-		controlaCampos($('#possuictr').val(), $('#cdsitgrv').val(), $('#idseqbem').val(), $('#dsjustif').val(), $('#tpjustif').val(), $('#tpctrpro').val(), $('#tpinclus').val(), $('#permisit', '#divBens').val());			
-	}
-	return false;
+	controlaCampos($('#possuictr').val(), $('#cdsitgrv').val(), $('#idseqbem').val(), $('#dsjustif').val(), $('#tpjustif').val(), $('#tpctrpro').val(), $('#tpinclus').val(), $('#permisit', '#divBens').val());
 
+	return false;
 }
+
 function controlaVoltar(ope,tpconsul) {
     
     var opbt = opcaoButton
@@ -1535,7 +1521,6 @@ function controlaVoltar(ope,tpconsul) {
             //Limpa formulario
             $('input[type="text"]', '#frmFiltro').limpaFormulario();
             $('#divTabela').html('').css('display', 'none');
-			
             formataFiltro();
 
         break;
@@ -1562,11 +1547,7 @@ function controlaVoltar(ope,tpconsul) {
         break;
 
         case '5':
-			if (opbt == 'C' || opbt == 'J' || opbt == 'Q' || opbt == 'L') {				
-				$('input[type="text"]', '#frmFiltro').limpaFormulario();
-				$('#divTabela').html('').css('display', 'none');
-				formataFiltro();
-			}else {
+			if (opbt == 'M' || opbt == 'A' || opbt == 'X' || opbt == 'B') {				
 				$('#dschassi', '#frmBens').desabilitaCampo();
 				$('#ufdplaca', '#frmBens').desabilitaCampo();
 				$('#nrdplaca', '#frmBens').desabilitaCampo();
@@ -1578,30 +1559,54 @@ function controlaVoltar(ope,tpconsul) {
 				$('#dsjustif', '#divJustificativa').desabilitaCampo();
 				dtmvttel
 				opcaoButton = 'C';
-				controlaAtleraBaixa(opcaoButton);
-				return false;
+				validPermiss(opcaoButton);				
+			}else{
+				$('input[type="text"]', '#frmFiltro').limpaFormulario();
+				$('#divTabela').html('').css('display', 'none');
+				formataFiltro();
 			}
         break;
-		
-		case '6':
-		$('input[type="text"]', '#frmFiltro').limpaFormulario();
-		$('#divDados').html('').css('display', 'none');
-		
-		formataFiltroImpressao();
-		
-		$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
-
-			controlaVoltar('1');
-	
-			return false;
-
-		});
-		break;
 
     }
 
     return false;
 
+}
+
+function validPermiss(cddopcao){
+	 showMsgAguardo("Aguarde, efetuando bloqueio ...");
+
+    //Requisição para processar a opção que foi selecionada
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/gravam/val_permiss.php",
+        data: {
+            cddopcao: cddopcao,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+        },
+        success: function (response) {
+
+            hideMsgAguardo();
+            try {
+                //eval(response);
+				
+				if (response ==''){
+					controlaAlteraBaixa(cddopcao);				
+				}else{
+					showError("error",response,'Alerta - Ayllos','',false);							
+				}
+            } catch (error) {
+                showError("error", "Não foi possível concluir a requisição. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            }
+
+        }
+
+    });
+	
 }
 
 function montaFormFiltro() {
@@ -2279,6 +2284,7 @@ function buscaBens(nriniseq, nrregist) {
                 try {
 
                     $('#divTabela').html(response);
+					mostrabutton();
                     return false;
                 } catch (error) {
 
@@ -2324,19 +2330,24 @@ function mostrabutton() {
 	$('#btCancelar', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btIncluir', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'none' });
-	$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'none' });
+	$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'none ' });
+	$('#dsjustif', '#frmBens').desabilitaCampo();
 	
 	if (opcaoButton == "C") {		
 		$('#btIncluir','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btBaixar','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btCancelar','#divBotoesBens').css({ 'display': 'inline' });
-	}else if (opcaoButton == "J") {	
+	}else if (opcaoButton == "J" || opcaoButton == "L") {	
+		$('#dsjustif', '#frmBens').habilitaCampo();
 		$('#btLibJudicial','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btBlocJudicial','#divBotoesBens').css({ 'display': 'inline' });				
 	}else if (opcaoButton == "M" || opcaoButton == "A" || opcaoButton == "B") {	
 		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });    
+	}else if (opcaoButton == "X" ) {	
+		$('#dsjustif', '#frmBens').habilitaCampo();
 	}
+	
 }
 
 
@@ -2367,7 +2378,7 @@ function gerarRelatorio670(tipsaida) {
 
 function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi) {
     //Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, buscando informações...');
+    showMsgAguardo('Aguarde, solicitando relatório...');
 
 	if((tparquiv == 'TODAS' || tparquiv == 'BAIXA')  && dtrefere != '' && nrseqlot == 0 && nrdconta == 0 && nrctrpro == 0 && flcritic== 'N' && dschassi == ''){
 		tipsaida == 'PDF';
@@ -2410,19 +2421,9 @@ function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtre
 					} else {
 						$('input,select','#frmCab').removeClass('campoErro');
 						$('#frmCons').css({'display':'block'}); 
-						$("#divDados").html(response).css('display', 'block');
+						$("#divDados").html(response);
 						$('#btProsseguir' ,'#divBotoes').hide();
 						formatarTabelaRel670('M');
-						
-						
-					//Define ação para CLICK no botão de Voltar
-					$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
-				
-						controlaVoltar('6');
-				
-						return false;
-				
-					});
 						
 						hideMsgAguardo();
 					}

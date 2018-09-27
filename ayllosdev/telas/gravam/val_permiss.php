@@ -1,9 +1,9 @@
 <?php
 	/*!
-	 * FONTE        : gerar_relatorio_670.php
-	 * CRIAÇÃO      : Andrei - RKAM
-	 * DATA CRIAÇÃO : Maio/2016
-	 * OBJETIVO     : Rotina para gerar relatorio 670 - RELATORIO DE PROCESSAMENTO GRAVAMES
+	 * FONTE        : val_permis.php
+	 * CRIAÇÃO      : Diogo Ferreira - Envolti
+	 * DATA CRIAÇÃO : setembro/2018
+	 * OBJETIVO     : Validar permição do botão
 	 * --------------
 	 * ALTERAÇÕES   : 
 	 * -------------- 
@@ -18,8 +18,9 @@
 	
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao, false)) <> '') {
+		//exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		echo $msgError;
 	}
 		
 ?>
