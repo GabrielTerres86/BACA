@@ -324,10 +324,10 @@ end;
 
     -- Constantes do programa
     vr_glb_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'crps531';
-    vr_glb_cdagenci  CONSTANT PLS_INTEGER := 1;
-    vr_glb_cdbccxlt  CONSTANT PLS_INTEGER := 100;
-    vr_glb_nrdolote  CONSTANT PLS_INTEGER := 10115;
-    vr_glb_tplotmov  CONSTANT PLS_INTEGER := 1;
+    vr_glb_cdagenci CONSTANT NUMBER := 1;
+    vr_glb_cdbccxlt CONSTANT NUMBER := 100;
+    vr_glb_nrdolote CONSTANT NUMBER := 10115;
+    vr_glb_tplotmov CONSTANT NUMBER := 1;
     vr_glb_dataatual CONSTANT DATE := SYSDATE;
 
     -- Tratamento de erros
@@ -397,13 +397,13 @@ end;
 
     /* Variaveis genéricos */
     vr_aux_dtintegr DATE;
-    vr_aux_flestcri PLS_INTEGER;
-    vr_aux_inestcri PLS_INTEGER := 0;
+    vr_aux_flestcri NUMBER;
+    vr_aux_inestcri NUMBER := 0;
 
     /* Variavel para manter arquivo fisico */
     vr_aux_manter_fisico BOOLEAN;
     /* Variavel para armazenar/remover as mensagens de TED processadas */
-    vr_msgspb_mover  PLS_INTEGER;
+    vr_msgspb_mover  NUMBER;
     /* Variavel para armazenar as mensagens de TED que nao serao copiadas */
     vr_msgspb_nao_copiar VARCHAR2(4000);
 
@@ -416,13 +416,13 @@ end;
     vr_aux_NumCtrlRem           VARCHAR2(100);
     vr_aux_NumCtrlIF            VARCHAR2(100);
     vr_aux_ISPBIFDebtd          VARCHAR2(100);
-    vr_aux_BancoDeb             PLS_INTEGER := 0;
+    vr_aux_BancoDeb             NUMBER := 0;
     vr_aux_AgDebtd              VARCHAR2(100);
     vr_aux_CtDebtd              VARCHAR2(100);
     vr_aux_CNPJ_CPFDeb          VARCHAR2(100);
     vr_aux_NomCliDebtd          VARCHAR2(100);
     vr_aux_ISPBIFCredtd         VARCHAR2(100);
-    vr_aux_BancoCre             PLS_INTEGER := 0;
+    vr_aux_BancoCre             NUMBER := 0;
     vr_aux_AgCredtd             VARCHAR2(100);
     vr_aux_CtCredtd             VARCHAR2(100);
     vr_aux_CNPJ_CPFCred         VARCHAR2(100);
@@ -449,23 +449,23 @@ end;
     vr_aux_DtMovto              VARCHAR2(100);
     vr_aux_SitLanc              VARCHAR2(100);
     vr_aux_dadosdeb             VARCHAR2(100);
-    vr_aux_codierro             PLS_INTEGER := 0;
+    vr_aux_codierro             NUMBER := 0;
     vr_aux_dsdehist             VARCHAR2(1000);
     vr_aux_tagCABInf            BOOLEAN := FALSE;
-    vr_aux_nrctacre             PLS_INTEGER := 0;
-    vr_aux_nrconven             PLS_INTEGER := 0;
-    vr_aux_nrdconta             PLS_INTEGER := 0;
+    vr_aux_nrctacre             NUMBER := 0;
+    vr_aux_nrconven             NUMBER := 0;
+    vr_aux_nrdconta             NUMBER := 0;
     vr_aux_nrdocmto             NUMBER := 0;
     vr_aux_msgrejei             VARCHAR2(300);
     vr_aux_nmdirxml             VARCHAR2(300);
     vr_aux_nmarqxml             VARCHAR2(300);
     vr_aux_flgderro             BOOLEAN := FALSE;
     vr_aux_nrctrole             VARCHAR2(100);
-    vr_aux_cdageinc             PLS_INTEGER := 0;
-    vr_aux_nrctremp             PLS_INTEGER := 0;
-    vr_aux_tpemprst             PLS_INTEGER := 2;
-    vr_aux_qtregist             PLS_INTEGER := 0;
-    vr_aux_vlsldliq             PLS_INTEGER := 0;
+    vr_aux_cdageinc             NUMBER := 0;
+    vr_aux_nrctremp             NUMBER := 0;
+    vr_aux_tpemprst             NUMBER := 2;
+    vr_aux_qtregist             NUMBER := 0;
+    vr_aux_vlsldliq             NUMBER := 0;
     vr_aux_Hist                 VARCHAR2(200);
     vr_aux_FinlddCli            VARCHAR2(100);
     vr_aux_NumCtrlLTR           VARCHAR2(100);
@@ -501,14 +501,14 @@ end;
 
     vr_aux_msgderro       VARCHAR(1000);
     vr_tab_situacao_if    SSPB0001.typ_tab_situacao_if;
-    vr_aux_nrispbif       pls_integer;
-    vr_aux_cddbanco       pls_integer;
+    vr_aux_nrispbif       NUMBER;
+    vr_aux_cddbanco       NUMBER;
     vr_aux_nmdbanco       VARCHAR2(300);
     vr_aux_CodProdt       VARCHAR2(300);
     vr_aux_dtinispb       VARCHAR2(300);
-    vr_aux_flgrespo       pls_integer;
+    vr_aux_flgrespo       NUMBER;
     vr_aux_NUPortdd       VARCHAR2(300);
-    vr_aux_cdtiptrf       pls_integer;
+    vr_aux_cdtiptrf       NUMBER;
     vr_aux_dsarqenv       VARCHAR2(1000);
 
     /* Variáveis da LDL */
@@ -529,10 +529,10 @@ end;
     vr_aux_vlfatura       NUMBER;
     vr_aux_flgvenci       BOOLEAN;
     vr_aux_liqaposb       BOOLEAN;
-    vr_aux_cdbanpag       PLS_INTEGER;
+    vr_aux_cdbanpag       NUMBER;
     vr_aux_dsmotivo       VARCHAR2(100);
-    vr_ret_nrremret       PLS_INTEGER;
-    vr_aux_nrridflp       PLS_INTEGER;
+    vr_ret_nrremret       NUMBER;
+    vr_aux_nrridflp       NUMBER;
 
     -- Pagamentos de titulos
     vr_tab_lcm_consolidada paga0001.typ_tab_lcm_consolidada;
@@ -541,9 +541,9 @@ end;
     vr_idx_descontar       VARCHAR2(20);
 
     /* Temp-table para Numerarios */
-    TYPE typ_reg_numerario IS RECORD(cdcatego PLS_INTEGER
+    TYPE typ_reg_numerario IS RECORD(cdcatego NUMBER
                                     ,vlrdenom NUMBER
-                                    ,qtddenom PLS_INTEGER);
+                                    ,qtddenom NUMBER);
     TYPE typ_tab_numerario IS TABLE OF typ_reg_numerario
                               INDEX BY PLS_INTEGER;
     vr_tab_numerario typ_tab_numerario;
@@ -599,7 +599,7 @@ end;
     rw_craplcs cr_craplcs%ROWTYPE;
 
     -- Buscar convênio Boleto
-    CURSOR cr_crapcco(pr_nrconven PLS_INTEGER) IS
+    CURSOR cr_crapcco(pr_nrconven NUMBER) IS
       SELECT cdcooper
             ,cddbanco
             ,nrdctabb
@@ -744,6 +744,7 @@ end;
     vr_nrseq_mensagem_fase      TBSPB_MSG_ENVIADA_FASE.nrseq_mensagem_fase%TYPE;
     vr_aux_tagCABInfConvertida  BOOLEAN := FALSE;
     vr_aux_tagCABInfCCL         BOOLEAN := FALSE;
+    vr_aux_CabInf_erro          BOOLEAN := FALSE;
     vr_nrcontrole_if            TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE;
     vr_aux_NumCtrlRem_Or        VARCHAR2(100);
     vr_dtmovimento              DATE;
@@ -761,6 +762,7 @@ end;
     vr_trace_dhdthr_bc          DATE;
     vr_node_valor               VARCHAR2(100);
     vr_inmsg_GEN                VARCHAR2(01);
+    vr_aux_CD_SITUACAO          VARCHAR2(100);
 
     -- Procedimento para mover o XML processado
     PROCEDURE pc_mover_arquivo_xml(pr_nmarq_mover IN VARCHAR2
@@ -880,7 +882,7 @@ end;
       rw_conta cr_conta%ROWTYPE;
       
       -- Variaveis locais
-      vr_val_cdcooper PLS_INTEGER;
+      vr_val_cdcooper NUMBER;
       vr_val_nrdconta NUMBER;
       vr_val_tppessoa VARCHAR2(10);
       vr_val_nrcpfcgc NUMBER;
@@ -1895,7 +1897,7 @@ end;
     END pc_gera_log_SPB_transferida;
 
     -- Cria registro da mensagem Devolvida
-    PROCEDURE pc_cria_gnmvcen(pr_cdagenci IN PLS_INTEGER
+    PROCEDURE pc_cria_gnmvcen(pr_cdagenci IN NUMBER
                              ,pr_dtmvtolt IN DATE
                              ,pr_dsmensag IN VARCHAR2
                              ,pr_dsdebcre IN VARCHAR2
@@ -1936,6 +1938,7 @@ end;
       -- Comando SO
       vr_dsparam VARCHAR2(4000);
       vr_comando VARCHAR2(4000);
+      --
     BEGIN
 
       -- Se já foi lida a Cooperativa da mensagem
@@ -2462,7 +2465,7 @@ end;
       vr_dscomora          VARCHAR2(4000);
       vr_dsdirbin          VARCHAR2(4000);
       vr_comando           VARCHAR2(4000);
-      vr_aux_cdagectl_pesq PLS_INTEGER;
+      vr_aux_cdagectl_pesq NUMBER;
       vr_aux_nro_controle  VARCHAR2(100);
       vr_nmdirarq          VARCHAR2(1000);
       vr_nmarquiv          VARCHAR2(1000);
@@ -2520,6 +2523,7 @@ end;
         -- Identificar se existe a CABInfCancelamento
         vr_aux_tagCABInfCCL        := FALSE;
         vr_aux_tagCABInfConvertida := FALSE;
+        vr_aux_CabInf_erro         := FALSE;
         --
         IF vr_node_name IN('CABInfCancelamento') THEN
           vr_aux_tagCABInfCCL := TRUE;
@@ -2589,6 +2593,18 @@ end;
             END LOOP;
           END IF;
         END LOOP;
+        --
+        -- Marcelo Telles Coelho - Projeto 475
+        -- As mensagens com erro não tem o NrControleIF, por isso será utilizado NrOperacao
+        IF vr_aux_NumCtrlIF IS NULL THEN
+          vr_aux_NumCtrlIF := vr_aux_NrOperacao;
+          vr_nrcontrole_if := vr_aux_NrOperacao;
+          IF vr_aux_CD_SITUACAO = 'E' THEN
+            vr_aux_tagCABInfCCL := TRUE;
+            vr_aux_CabInf_erro  := TRUE;
+          END IF;
+        END IF;
+        -- Fim Projeto 475
       EXCEPTION
         WHEN OTHERS THEN
           pr_dscritic := 'Erro no tratamento do Node pc_trata_CABinf -->'||sqlerrm;
@@ -2842,7 +2858,7 @@ end;
         vr_valu_node_grpsit xmldom.DOMNode;
 
         -- VAriaveis genéricas
-        vr_idx_numerario PLS_INTEGER;
+        vr_idx_numerario NUMBER;
         vr_aux_descrica  VARCHAR2(1000);
 
       BEGIN -- inicio pc_trata_numerario
@@ -3541,7 +3557,6 @@ BEGIN -- inicio pc_trata_arquivo_slc0001
                          ELSIF vr_node_name_grpsit2 = 'TpTranscSLC' THEN
                             vr_valu_node_grpsit2 := xmldom.getFirstChild(vr_item_node_grpsit2);
                             vr_aux_TpTranscSLC := fn_getValue(vr_valu_node_grpsit2);
-
                             IF  vr_aux_TpInf = 'D' THEN -- Apenas para mensagens com tipo = D - Definitiva
 
                                 cecred.ccrd0006.pc_insere_msg_slc(vr_aux_VlrLanc
@@ -3980,6 +3995,12 @@ END pc_trata_arquivo_ldl;
               -- Buscar valor da TAG
               vr_valu_node_segcab := xmldom.getFirstChild(vr_item_node_segcab);
               vr_aux_NrOperacao   := fn_getValue(vr_valu_node_segcab);
+            END IF;
+            -- Para a tag CD_SITUACAO
+            IF vr_node_name_segcab = 'CD_SITUACAO' THEN
+              -- Buscar valor da TAG
+              vr_valu_node_segcab := xmldom.getFirstChild(vr_item_node_segcab);
+              vr_aux_CD_SITUACAO  := fn_getValue(vr_valu_node_segcab);
             END IF;
           END LOOP;
         ELSE
@@ -5039,7 +5060,7 @@ END pc_trata_arquivo_ldl;
       rw_b_crapdat btch0001.cr_crapdat%rowtype;
       rw_b_craplot cr_craplot%ROWTYPE;
       -- Variaveis
-      vr_aux_hrtransa pls_integer := to_char(vr_glb_dataatual,'sssss');
+      vr_aux_hrtransa NUMBER := to_char(vr_glb_dataatual,'sssss');
       vr_aux_dtmvtolt DATE;
       vr_aux_strmigra VARCHAR2(400);
       vr_aux_nmarqimp VARCHAR2(400);
@@ -5425,7 +5446,7 @@ END pc_trata_arquivo_ldl;
     PROCEDURE pc_trata_lancamentos(pr_dscritic OUT varchar2) IS
 
       -- Variaveis auxiliares
-      vr_aux_cdhistor  PLS_INTEGER;
+      vr_aux_cdhistor  NUMBER;
       vr_aux_cdpesqbb  VARCHAR2(200);
       vr_aux_dtmvtolt  DATE;
       vr_tab_dados_epr empr0001.typ_tab_dados_epr;
@@ -5574,7 +5595,6 @@ END pc_trata_arquivo_ldl;
         NULL;
         -- Fim Projeto 475
       END IF;
-
       -- Para estado de crise
       IF vr_aux_flestcri = 0 THEN
         -- Marcelo Telles Coelho - Projeto 475
@@ -7344,10 +7364,54 @@ END pc_trata_arquivo_ldl;
               RAISE vr_exc_next;
             END IF;
             -- Se encontramos mensagem
-            IF trim(vr_aux_CodMsg) IS NOT NULL THEN
+            IF trim(vr_aux_CodMsg) IS NOT NULL
+            OR vr_aux_CabInf_erro     -- Marcelo Telles Coelho - Projeto 475
+            THEN
               -- Marcelo Telles Coelho - Projeto 475
               -- Tratamento de mensagens rejeitadas pela cabine (ex: Duplicidade)
-              IF vr_aux_tagCABInfCCL THEN
+              IF vr_aux_CabInf_erro THEN
+                -- Gera LOG SPB
+                pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
+                               ,pr_msgderro  => 'Inconsistencia dados - rejeição automática');
+                --
+                SSPB0003.pc_grava_trace_spb (pr_cdfase                 => 40 -- Confirmação recebimento JD / rejeição automática
+                                            ,pr_idorigem               => NULL
+                                            ,pr_nmmensagem             => 'Retorno JD Rejeição'
+                                            ,pr_nrcontrole             => vr_aux_NumCtrlIF
+                                            ,pr_nrcontrole_str_pag     => vr_aux_NumCtrlRem
+                                            ,pr_nrcontrole_dev_or      => NULL
+                                            ,pr_dhmensagem             => SYSDATE
+                                            ,pr_insituacao             => 'NOK'
+                                            ,pr_dsxml_mensagem         => NULL
+                                            ,pr_dsxml_completo         => NULL
+                                            ,pr_nrseq_mensagem_xml     => vr_nrseq_mensagem_xml
+                                            ,pr_cdcooper               => rw_crapcop_mensag.cdcooper
+                                            ,pr_nrdconta               => NVL(vr_aux_CtCredtd,vr_aux_CtDebtd)
+                                            ,pr_cdproduto              => 30 -- TED
+                                            ,pr_nrseq_mensagem         => vr_nrseq_mensagem
+                                            ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                            ,pr_dscritic               => vr_dscritic
+                                            ,pr_des_erro               => vr_des_erro
+                                            );
+                IF vr_dscritic IS NOT NULL THEN
+                  BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                            ,pr_ind_tipo_log  => 2 -- Erro não tratado
+                                            ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                                              ||' - '|| vr_glb_cdprogra ||' --> '
+                                                              ||'Erro execucao - '
+                                                              || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
+                                                              || 'Mensagem: CabInfSituacao - Rejeicao '
+                                                              || 'Na Rotina PC_CRPS531_1 --> '||vr_dscritic
+                                            ,pr_nmarqlog      => vr_logprogr
+                                            ,pr_cdprograma    => vr_glb_cdprogra
+                                            ,pr_dstiplog      => 'E'
+                                            ,pr_tpexecucao    => 3
+                                            ,pr_cdcriticidade => 0
+                                            ,pr_flgsucesso    => 1
+                                            ,pr_cdmensagem    => vr_cdcritic);
+                  RAISE vr_exc_saida;
+                END IF;
+              ELSIF vr_aux_tagCABInfCCL THEN
                 -- Rejeitada pela Cabine Vem com mesmo CodMsg da mensagem gerada pela cooperativa
                 --
                 -- Marcelo Telles Coelho - Projeto 475
@@ -7533,11 +7597,14 @@ END pc_trata_arquivo_ldl;
             END IF;
           ELSE -- Se não encontrou
             CLOSE cr_busca_coop;
-            -- Verificar processo
-            IF NOT fn_verifica_processo THEN
-              -- Arquivo será ignorado
-              RAISE vr_exc_next;
-            END IF;
+            -- Marcelo Telles Coelho - Projeto 475
+            -- Não é necessário verificar o processo, pois vai gerar uma devolução e não movimento a conta de cooperado.
+            -- -- Verificar processo
+            -- IF NOT fn_verifica_processo THEN
+            --   -- Arquivo será ignorado
+            --   RAISE vr_exc_next;
+            -- END IF;
+            -- Fim Projeto 475
             -- CECRED
             pc_trata_cecred (pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4)
                             ,pr_dscritic => vr_dscritic);
@@ -7621,7 +7688,7 @@ END pc_trata_arquivo_ldl;
                 END IF;
                 vr_trace_nrdconta := NVL(vr_aux_CtDebtd,vr_aux_CtCredtd);
               ELSE
-                IF vr_aux_CodMsg IN ('LDL0021','SLB0001','CMP0004') THEN
+                IF vr_aux_CodMsg IN ('LDL0021','SLB0001','CMP0002','CMP0004') THEN
                   IF vr_aux_CodMsg = 'CMP0004' THEN
                     vr_aux_NumCtrlIF := NULL;
                   END IF;
@@ -8491,11 +8558,14 @@ END pc_trata_arquivo_ldl;
 
           -- Se gerou erro
           IF vr_aux_flgderro THEN
-            -- Se não validar processo
-            IF NOT fn_verifica_processo THEN
-              -- Ir ao próximo registro
-              RAISE vr_exc_next;
-            END IF;
+            -- Marcelo Telles Coelho - Projeto 475
+            -- Não é necessário verificar o processo, pois vai gerar uma devolução e não movimento a conta de cooperado.
+            -- -- Se não validar processo
+            -- IF NOT fn_verifica_processo THEN
+            --   -- Ir ao próximo registro
+            --   RAISE vr_exc_next;
+            -- END IF;
+            -- Fim Projeto 475
             -- Rodar trata Cecred
             pc_trata_cecred (pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4)
                             ,pr_dscritic => vr_dscritic);
@@ -8602,11 +8672,14 @@ END pc_trata_arquivo_ldl;
 
           -- Se houve erro
           IF vr_aux_flgderro THEN
-            -- Se não validar processo
-            IF NOT fn_verifica_processo THEN
-              -- Ir ao próximo registro
-              RAISE vr_exc_next;
-            END IF;
+            -- Marcelo Telles Coelho - Projeto 475
+            -- Não é necessário verificar o processo, pois vai gerar uma devolução e não movimento a conta de cooperado.
+            -- -- Se não validar processo
+            -- IF NOT fn_verifica_processo THEN
+            --   -- Ir ao próximo registro
+            --   RAISE vr_exc_next;
+            -- END IF;
+            -- Fim Projeto 475
             -- Rodar trata Cecred
             pc_trata_cecred (pr_cdagectl => vr_aux_AgCredtd
                             ,pr_dscritic => vr_dscritic);
