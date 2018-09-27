@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 14/06/2018
+   Data    : Novembro/98                     Ultima atualizacao: 20/09/2018
 
    Dados referentes ao programa:
 
@@ -634,6 +634,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                16/08/2018 - Forçado indice no cursor cr_craplcm5 pois estava fazendo o programa
                             ficar lento no processo batch (Tiago )
+
+               20/09/2018 - Considerar o valor dos juros de mora na carteira de desconto de titulos do cooperado. (Paulo Penteado GFT)
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -3850,7 +3852,10 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                         pr_flverbor IN crapbdt.flverbor%TYPE) is
       select /*+ index (craptdb craptdb##craptdb2)*/
              crapass.cdagenci,
-             sum(craptdb.vltitulo) vltitulo
+             SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
+                           craptdb.vlsldtit + (craptdb.vlmratit - craptdb.vlpagmra)
+                      ELSE craptdb.vltitulo
+                 END) vltitulo
         from crapbdt,
              crapass,
              crapcob,
@@ -3876,7 +3881,10 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                           pr_insittit in craptdb.insittit%type,
                           pr_flgregis in crapcob.flgregis%TYPE,
                           pr_flverbor IN crapbdt.flverbor%TYPE)IS
-      SELECT SUM(craptdb.vltitulo) vltitulo
+      SELECT SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
+                           craptdb.vlsldtit + (craptdb.vlmratit - craptdb.vlpagmra)
+                      ELSE craptdb.vltitulo
+                 END) vltitulo
             ,crapass.cdagenci
             ,DECODE(crapass.inpessoa,3,2,crapass.inpessoa) inpessoa
         FROM crapbdt

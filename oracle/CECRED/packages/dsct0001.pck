@@ -27,6 +27,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --              16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
   --                          (Gustavo Sene - GFT)
   --
+  --              11/09/2018 - Fix removendo histórico de lançamento de borderô na pc_abatimento_juros_titulo - (Andrew Albuquerque - GFT)
+  --
   ---------------------------------------------------------------------------------------------------------------
  
   -- Constantes
@@ -290,6 +292,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             no sistema antes da nova versão de funcionalidade do bordero, quando houver o pagamento da operação de 
                             desconto, ou seja, do título vencido, através do débito em conta corrente deverá ser atualizada a coluna 
                             “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
+    
+               11/09/2018 - Fix removendo histórico de lançamento de borderô na pc_abatimento_juros_titulo - (Andrew Albuquerque - GFT)
     
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -6333,6 +6337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             1 - Operação de Crédito
   
       Alteração : 09/06/2018 - Criação (Paulo Penteado (GFT))
+                  11/09/2018 - Fix removendo histórico de lançamento de borderô - (Andrew Albuquerque - GFT)
   
     ----------------------------------------------------------------------------------------------------------*/
     vr_cdhistor   craphis.cdhistor%TYPE;
@@ -6875,27 +6880,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END;
-      END IF;
-      
-      -- Lançar valor da renda antecipada de juros nos lançamentos do borderô
-      IF pr_cdorigpg = 1 THEN
-        dsct0003.pc_inserir_lancamento_bordero(pr_cdcooper => pr_cdcooper
-                                              ,pr_nrdconta => rw_craptdb.nrdconta
-                                              ,pr_nrborder => rw_craptdb.nrborder
-                                              ,pr_dtmvtolt => pr_dtmvtolt
-                                              ,pr_cdbandoc => rw_craptdb.cdbandoc
-                                              ,pr_nrdctabb => rw_craptdb.nrdctabb
-                                              ,pr_nrcnvcob => rw_craptdb.nrcnvcob
-                                              ,pr_nrdocmto => rw_craptdb.nrdocmto
-                                              ,pr_nrtitulo => rw_craptdb.nrtitulo
-                                              ,pr_cdorigem => 5
-                                              ,pr_cdhistor => dsct0003.vr_cdhistordsct_pgtomultacc
-                                              ,pr_vllanmto => vr_vltotjur
-                                              ,pr_dscritic => vr_dscritic );
-
-        IF trim(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
       END IF;
     END IF;
   EXCEPTION

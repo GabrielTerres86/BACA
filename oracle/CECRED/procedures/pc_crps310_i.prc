@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 12/09/2018
+     Data    : Maio/2001                       Ultima atualizacao: 20/09/2018
      
      Dados referentes ao programa:
 
@@ -320,7 +320,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  15/08/2018 - Ajustado os valores do risco para os borderos (Luis Fernando - GFT)
 
                  12/09/2018 - P450 - Ajuste Calculo Juros60 CC (Reginaldo/AMcom)
-                            - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
+                            - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom) 
+
+                 20/09/2018 - Considerar o valor dos juros de mora no valor da divida do desconto de titulos. (Paulo Penteado GFT)
 
   ............................................................................ */
 
@@ -5863,7 +5865,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               IF NOT (rw_crapbdt.insittit = 2 AND (rw_crapbdt.indpagto IN(1,3,4) OR (rw_crapbdt.indpagto = 0 AND rw_crapbdt.cdbandoc = 085))) THEN
                 -- Acumular no valor do risco o valor líquido do titulo
                 IF (rw_crapbdt.flverbor=1) THEN 
-                  vr_vlsrisco := rw_crapbdt.vlliquid - (rw_crapbdt.vltitulo - rw_crapbdt.vlsldtit);--pagamento do titulo parcial
+                  vr_vlsrisco := (rw_crapbdt.vlliquid - (rw_crapbdt.vltitulo - rw_crapbdt.vlsldtit) + (rw_crapbdt.vlmratit - rw_crapbdt.vlpagmra));--pagamento do titulo parcial
                 ELSE
                   vr_vlsrisco := rw_crapbdt.vlliquid;
                 END IF;
