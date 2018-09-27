@@ -519,7 +519,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
             ?><input type="image" src="<? echo $UrlImagens; ?>botoes/outros_titulares.gif" onClick="titulares('<? echo $cddopcao; ?> ' , ' <? echo $titulares; ?> ');return false;" /><?php
         }
     ?>
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="sairDescontoConvenio();" id="btnVoltar" />
+	<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="sairDescontoConvenio();" id="btVoltar" />
 </div>
 
 <script type="text/javascript">

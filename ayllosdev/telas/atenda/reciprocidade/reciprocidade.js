@@ -1709,15 +1709,17 @@ function acessaAba(id,cddopcao) {
 
     if (linkContinuar == 1){
         $("#btnContinuar", "#divOpcaoConsulta").click(function(){atualizarConvenios(cddopcao);});
-        document.getElementById("btnVoltar").onclick=function(){voltarParaDesconto();}
+        document.getElementById("btVoltar").onclick=function(){acessaOpcaoContratos();}
+        document.getElementById('btSair').onclick=function(){acessaOpcaoContratos();}
     }else if (linkContinuar == 2){
         $("#btnContinuar", "#divOpcaoConsulta").click(function(){validaDadosLimites('true','',cddopcao);});
-        document.getElementById("btnVoltar").onclick=function(){atualizarDescontos();}
+        document.getElementById("btVoltar").onclick=function(){atualizarDescontos();}
+        document.getElementById('btSair').onclick=function(){atualizarDescontos();}
     }
 
     // Removido esta forma de atribuir pois não funciona com modo de compatibilidade
     //$("#btnContinuar").attr("onclick",linkContinuar);
-    //$("#btnVoltar").attr("onClick",linkVoltar);
+    //$("#btVoltar").attr("onClick",linkVoltar);
     return false;
 }
 

@@ -493,7 +493,7 @@ function mostraAjudaF2(){
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","");
 		},
 		success: function(response) {
 			$("#divF2").html(response);
@@ -1094,7 +1094,7 @@ function pedeSenhaCoordenador(nvopelib,nmfuncao,nmdivfnc) {
 		},		
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","");
 		},
 		success: function(response) {
 			$("#divUsoGenerico").html(response);
@@ -1116,14 +1116,14 @@ function confirmaSenhaCoordenador(nmfuncao) {
 	// Valida operador
 	if ($.trim(cdopelib) == "") {
 		hideMsgAguardo();
-		showError("erro","Informe o " + (nvopelib == 1 ? "Operador" : nvopelib == 2 ? "Coordenador" : "Gerente") + ".","Alerta - Ayllos","blockBackground(parseInt($('#divUsoGenerico').css('z-index')));$('#cdopelib','#frmSenhaCoordenador').focus()");
+		showError("erro","Informe o " + (nvopelib == 1 ? "Operador" : nvopelib == 2 ? "Coordenador" : "Gerente") + ".","Alerta - Aimaro","blockBackground(parseInt($('#divUsoGenerico').css('z-index')));$('#cdopelib','#frmSenhaCoordenador').focus()");
 		return false;
 	} 
 	
 	// Valida senha
 	if ($.trim(cddsenha) == "") {
 		hideMsgAguardo();
-		showError("erro","Informe a Senha.","Alerta - Ayllos","blockBackground(parseInt($('#divUsoGenerico').css('z-index')));$('#cddsenha','#frmSenhaCoordenador').focus()");
+		showError("erro","Informe a Senha.","Alerta - Aimaro","blockBackground(parseInt($('#divUsoGenerico').css('z-index')));$('#cddsenha','#frmSenhaCoordenador').focus()");
 		return false;
 	} 	
 	
@@ -1140,14 +1140,14 @@ function confirmaSenhaCoordenador(nmfuncao) {
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
 			}
 		}				
 	});				
@@ -1432,7 +1432,7 @@ function montaHtmlImpressao( titulo ) {
 	var htmlImpressao = '';
 	htmlImpressao  = '<html>';
 	htmlImpressao += '	<head>';
-	htmlImpressao += '		<title>Impressão CECRED - '+titulo+'</title>';
+	htmlImpressao += '		<title>Impressão Ailos - '+titulo+'</title>';
 	htmlImpressao += '		<style type="text/css">';
 	htmlImpressao += '      	body{background-color:#DEE3D6;text-align:center;font-size:12px;color:#333;padding:50px;}';
 	htmlImpressao += '		</style>';
@@ -1481,14 +1481,14 @@ function revisaoCadastral(chavealt, tpatlcad, businobj, stringArrayMsg, metodo) 
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possével concluir a revis&atilde;o cadastral.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			showError('error','N&atilde;o foi possével concluir a revis&atilde;o cadastral.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
 			try {
 				eval(response);
 			} catch(error) {
 				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a revis&atilde;o cadastral.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a revis&atilde;o cadastral.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
 			}		
 		}				
 	});	 
@@ -1591,7 +1591,7 @@ function exibirMensagens( strArray, metodo  ) {
 		elementoAtual	= arrayMensagens.pop();
 		arrayMensagens 	= implode( '|' , arrayMensagens);
 		// Exibindo mensagem de erro
-		showError('inform',elementoAtual,'Alerta - Ayllos',"exibirMensagens('"+arrayMensagens+"','"+metodo+"')");
+		showError('inform',elementoAtual,'Alerta - Aimaro',"exibirMensagens('"+arrayMensagens+"','"+metodo+"')");
 	} else {
 		eval(metodo);
 	}
@@ -2331,13 +2331,13 @@ function verificaAguardoImpressao(callback) {
 		}
 	} catch (err) {
 		hideMsgAguardo();
-		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.","Alerta - Ayllos","");
+		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Aimaro.","Alerta - Aimaro","");
 	}			
 
 	return true;
 }
 
-function carregaImpressaoAyllos(form,action,callback) {	
+function carregaImpressaoAimaro(form,action,callback) {	
 	
 	try {
 		showMsgAguardo('Aguarde, carregando impress&atilde;o ...');
@@ -2360,7 +2360,7 @@ function carregaImpressaoAyllos(form,action,callback) {
 		verificaAguardoImpressao(callback);	
 	} catch (err) {	
 		hideMsgAguardo();
-		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.","Alerta - Ayllos","");
+		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Aimaro.","Alerta - Aimaro","");
 	}
 	
 	return true;
