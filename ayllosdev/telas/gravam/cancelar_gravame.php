@@ -33,6 +33,7 @@
   $tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
   $tpcancel = (isset($_POST["tpcancel"])) ? $_POST["tpcancel"] : 0;
+  $dsjustif = (isset($_POST["dsjustif"])) ? $_POST["dsjustif"] : '';
   
   
   validaDados();
@@ -47,6 +48,7 @@
   $xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
   $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
   $xml 	   .= "     <tpcancel>".$tpcancel."</tpcancel>";
+  $xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
@@ -94,6 +96,10 @@
     IF($GLOBALS["idseqbem"] == 0 ){ 
 			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
+		
+	IF($GLOBALS["dsjustif"] == '' ){ 
+		exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+	}
 				
 	}	
   

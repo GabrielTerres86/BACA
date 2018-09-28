@@ -103,7 +103,7 @@
       <label for="nrmodbem"><? echo utf8ToHtml('Ano/Modelo:') ?></label>
       <input id="nrmodbem" name="nrmodbem" type="text" ></input>
 
-      <label for="dscpfbem"><? echo utf8ToHtml('CPF/CNPJ Prop.:') ?></label>
+      <label for="dscpfbem"><? echo utf8ToHtml('CPF/CNPJ Interv.:') ?></label>
       <input id="dscpfbem" name="dscpfbem" type="text" ></input>
 
       <br />
@@ -256,8 +256,8 @@
 	<a href="#" class="botao" id="btCancelar" onclick="validPermiss('X'); return false;">Cancelamento</a>
 	<a href="#" class="botao" id="btBaixar"   onclick="validPermiss('B'); return false;">Baixar</a>
 	
-	<a href="#" class="botao" id="btLibJudicial" 	onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
-	<a href="#" class="botao" id="btBlocJudicial" 	onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>																																			
+	<a href="#" class="botao" id="btLibJudicial" onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
+	<a href="#" class="botao" id="btBlocJudicial" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>																																			
 												
   <a href="#" class="botao" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>

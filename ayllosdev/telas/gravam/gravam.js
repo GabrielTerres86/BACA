@@ -87,9 +87,7 @@ function formataCabecalho() {
     $("#cddopcao", "#frmCab").unbind('keypress').bind('keypress', function (e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 
-            montaFormFiltro();
-
-            return false;
+            $("#btnOK", "#frmCab").trigger('click');
 
         }
 
@@ -1099,8 +1097,9 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
+			funcao = '$(\'html, body\').animate({scrollTop:0}, \'fast\');pedeSenhaCoordenador(2,\'cancelarGravame(' + idseqbem + ',' + tpctrpro + ');\',\'\');';
 
-            showConfirmacao('Deseja cancelar o registro da aliena&ccedil;&atilde;o no Gravames?', 'Confirma&ccedil;&atilde;o - Ayllos', 'cancelarGravame(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja cancelar o registro da aliena&ccedil;&atilde;o no Gravames?', 'Confirma&ccedil;&atilde;o - Ayllos', funcao, '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
             return false;
 
@@ -1120,8 +1119,8 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
             return false;
         });
 
-	} else if (opcaoButton == 'J' || opcaoButton == 'L') {
-    //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
+    } else if (opcaoButton == 'J' || opcaoButton == 'L') {
+        //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
 
 
         $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
@@ -1129,26 +1128,26 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //Define ação para CLICK no botão de Concluir
         $("#btBlocJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
 
-            showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '', 'sim.gif', 'nao.gif');
+            showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' +idseqbem + ',' +tpctrpro + ');', '', 'sim.gif', 'nao.gif');
             return false;
 
-        });
+    });
 
-    //} else if (opcaoButton == 'L') {
-    //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
+        //} else if (opcaoButton == 'L') {
+        //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
 
-        $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
-       
-        //Define ação para CLICK no botão de Concluir
-        $("#btLibJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
+            $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
 
-            showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' + idseqbem + ',' + tpctrpro + ');', '', 'sim.gif', 'nao.gif');
+            //Define ação para CLICK no botão de Concluir
+            $("#btLibJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
+
+            showConfirmacao('Deseja liberar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' +idseqbem + ',' +tpctrpro + ');', '', 'sim.gif', 'nao.gif');
 
             return false;
 
-        });
+            });
 
-    } else if ($('#cddopcao', '#frmCab').val() == 'S') {
+            } else if ($('#cddopcao', '#frmCab').val() == 'S') {
 
         /* alteracoes apenas quando for situacao 
                For contrato efetivado ou
@@ -1366,8 +1365,7 @@ function selecionaBens(tr) {
 	$('#situacao_anterior', '#divBens').val($('#cdsitgrv', tr).val());
 	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
 
-	controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
-    
+    controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
 }
 
 function controlaPesquisa(valor) {
@@ -1561,6 +1559,20 @@ function controlaVoltar(ope,tpconsul) {
 				formataFiltro();
 			}
         break;
+		case '6':
+		$('input[type="text"]', '#frmFiltro').limpaFormulario();
+		$('#divDados').html('').css('display', 'none');
+		
+		formataFiltroImpressao();
+		
+		$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
+
+			controlaVoltar('1');
+	
+			return false;
+
+		});
+		break;
 
     }
 
@@ -2093,6 +2105,7 @@ function cancelarGravame(idseqbem, tpctrpro) {
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
     var tpcancel = $("#tpcancel", "#frmFiltro").val();
+	var dsjustif = $("#dsjustif", "#frmBens").val();
     
     $('input,select', '#frmBens').removeClass('campoErro');
 
@@ -2109,6 +2122,7 @@ function cancelarGravame(idseqbem, tpctrpro) {
             tpctrpro: tpctrpro,
             tpcancel: tpcancel,
             idseqbem: idseqbem,
+			dsjustif: dsjustif,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2133,11 +2147,14 @@ function cancelarGravame(idseqbem, tpctrpro) {
 
 }
 
+
+
 function blqLibJudicial(idseqbem, tpctrpro) {
 
     //Desabilita todos os campos do form
     $('input,select', '#frmBens').desabilitaCampo();
-
+	idseqbem = $('#idseqbem').val();
+	tpctrpro = $('#tpctrpro').val();
     var cddopcao = opcaoButton;
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
@@ -2146,47 +2163,48 @@ function blqLibJudicial(idseqbem, tpctrpro) {
     var ufdplaca = $("#ufdplaca", "#frmBens").val();
     var nrdplaca = $("#nrdplaca", "#frmBens").val();
     var nrrenava = $("#nrrenava", "#frmBens").val();
+	var dsjustif = $("#dsjustif", "#frmBens").val();
    
     $('input,select', '#frmBens').removeClass('campoErro');
 
     showMsgAguardo("Aguarde, efetuando bloqueio ...");
+	
 
     //Requisição para processar a opção que foi selecionada
     $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/gravam/bloqueio_liberacao_judicial.php",
-        data: {
-            cddopcao: cddopcao,
-            nrdconta: normalizaNumero(nrdconta),
-            nrctrpro: normalizaNumero(nrctrpro),
-            tpctrpro: tpctrpro,
-            dsblqjud: dsblqjud,
-            idseqbem: idseqbem,
-            dschassi: dschassi,
-            ufdplaca: ufdplaca,
-            nrdplaca: nrdplaca,
-            nrrenava: normalizaNumero(nrrenava),
-            redirect: "script_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
-        },
-        success: function (response) {
-
-            hideMsgAguardo();
-            try {
-                eval(response);
-            } catch (error) {
-
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
-            }
-
-        }
-
+		type: "POST",
+		url: UrlSite + "telas/gravam/bloqueio_liberacao_judicial.php",
+		data: {
+			cddopcao: cddopcao,
+			nrdconta: normalizaNumero(nrdconta),
+			nrctrpro: normalizaNumero(nrctrpro),
+			tpctrpro: tpctrpro,
+			dsblqjud: dsblqjud,
+			idseqbem: idseqbem,
+			dschassi: dschassi,
+			ufdplaca: ufdplaca,
+			nrdplaca: nrdplaca,
+			nrrenava: normalizaNumero(nrrenava),
+			dsjustif: dsjustif,
+			redirect: "script_ajax"
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+		},
+		success: function (response) {
+		
+			hideMsgAguardo();
+			try {
+				eval(response);
+			} catch (error) {
+			
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+			}
+			
+		}
+    
     });
-
-    return false;
 
 }
 
@@ -2341,6 +2359,7 @@ function mostrabutton() {
 		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });    
 	}else if (opcaoButton == "X" ) {	
 		$('#dsjustif', '#frmBens').habilitaCampo();
+		$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
 	}
 	
 }
@@ -2373,7 +2392,7 @@ function gerarRelatorio670(tipsaida) {
 
 function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi) {
     //Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, solicitando relatório...');
+    showMsgAguardo('Aguarde, buscando informações...');
 
 	if((tparquiv == 'TODAS' || tparquiv == 'BAIXA')  && dtrefere != '' && nrseqlot == 0 && nrdconta == 0 && nrctrpro == 0 && flcritic== 'N' && dschassi == ''){
 		tipsaida == 'PDF';
@@ -2419,6 +2438,15 @@ function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtre
 						$("#divDados").html(response);
 						$('#btProsseguir' ,'#divBotoes').hide();
 						formatarTabelaRel670('M');
+						
+						//Define ação para CLICK no botão de Voltar
+					$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
+				
+						controlaVoltar('6');
+				
+						return false;
+				
+					});
 						
 						hideMsgAguardo();
 					}
