@@ -453,6 +453,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
 	  05/09/2018 - Alterado posição do ROLLBACK no exception - INC0023398
 
+      19/09/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
+
       27/09/2018 - INC0023556 Incluído parametro resgate cheque para não executar.
 				              
   --------------------------------------------------------------------------------------------------------------*/
@@ -6440,7 +6442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_calcular_bordero_composto
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao:
+    Data    : Dezembro/2016                 Ultima atualizacao: 10/06/2018
 
     Dados referentes ao programa:
 
@@ -6448,7 +6450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para cálculo de juros da operação do borderô (juros simples)
 
-    Alteracoes: -----
+    Alteracoes: 19/09/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -6693,7 +6695,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			FETCH cr_craplot INTO rw_craplot;
 			-- Fechar cursor
 			CLOSE cr_craplot;
+      
+    ELSE
+      -- Fechar cursor
+			CLOSE cr_craplot;
 		END IF;
+			
+    vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
+                              to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
+                              rw_craplot.cdagenci||';'||
+                              rw_craplot.cdbccxlt||';'||
+                              rw_craplot.nrdolote);
 			
 		BEGIN
 			-- Criar lançamento de desconto de bordero
@@ -6720,10 +6732,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,rw_craplot.cdbccxlt
 							,rw_craplot.nrdolote
 							,pr_nrdconta
-							,rw_craplot.nrseqdig + 1
+							,vr_nrseqdig
 							,pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori)
 							,271
-							,rw_craplot.nrseqdig + 1
+							,vr_nrseqdig
 							,pr_nrdconta
 							,to_char(pr_nrdconta, 'fm00000000')
 							,0
@@ -6733,7 +6745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,pr_tab_cheques.cdbanchq
 							,pr_tab_cheques.cdagechq
 							,pr_tab_cheques.nrctachq)
-			RETURNING nrseqdig, vllanmto INTO vr_nrseqdig , vr_vllanmto;
+			RETURNING vllanmto INTO vr_vllanmto;
 		EXCEPTION
 			WHEN OTHERS THEN      
 				-- Gerar crítica
@@ -6810,7 +6822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_calcular_bordero_simples
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao:
+    Data    : Dezembro/2016                 Ultima atualizacao: 10/06/2018
 
     Dados referentes ao programa:
 
@@ -6818,7 +6830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para cálculo de juros de resgate do borderô (juros simples)
 
-    Alteracoes: -----
+    Alteracoes: 19/09/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7072,7 +7084,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			FETCH cr_craplot INTO rw_craplot;
 			-- Fechar cursor
 			CLOSE cr_craplot;
+      
+    ELSE
+      -- Fechar cursor
+			CLOSE cr_craplot;
 		END IF;
+			
+    vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
+                              to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
+                              rw_craplot.cdagenci||';'||
+                              rw_craplot.cdbccxlt||';'||
+                              rw_craplot.nrdolote);
 			
 		BEGIN
 			-- Criar lançamento de desconto de bordero
@@ -7099,10 +7121,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,rw_craplot.cdbccxlt
 							,rw_craplot.nrdolote
 							,pr_nrdconta
-							,rw_craplot.nrseqdig + 1
+							,vr_nrseqdig
 							,vr_vlliquid
 							,271
-							,rw_craplot.nrseqdig + 1
+							,vr_nrseqdig
 							,pr_nrdconta
 							,to_char(pr_nrdconta, 'fm00000000')
 							,0
@@ -7112,7 +7134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,pr_tab_cheques.cdbanchq
 							,pr_tab_cheques.cdagechq
 							,pr_tab_cheques.nrctachq)
-			RETURNING nrseqdig, vllanmto INTO vr_nrseqdig , vr_vllanmto;
+			RETURNING  vllanmto INTO  vr_vllanmto;
 		EXCEPTION
 			WHEN OTHERS THEN      
 				-- Gerar crítica
@@ -7393,6 +7415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                 
                 27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
                 
+                                
   ..............................................................................*/																			 
 	-- Variável de críticas
   vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
