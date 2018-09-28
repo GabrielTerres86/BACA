@@ -1141,7 +1141,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
             showConfirmacao('Deseja efetuar o bloqueio judicial da aliena&ccedil;&atilde;o do gravame?', 'Confirma&ccedil;&atilde;o - Ayllos', 'blqLibJudicial(' +idseqbem + ',' +tpctrpro + ');', '', 'sim.gif', 'nao.gif');
             return false;
 
-    });
+		});
 
         //} else if (opcaoButton == 'L') {
         //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
@@ -1157,7 +1157,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
             });
 
-            } else if ($('#cddopcao', '#frmCab').val() == 'S') {
+    } else if ($('#cddopcao', '#frmCab').val() == 'S') {
 
         /* alteracoes apenas quando for situacao 
                For contrato efetivado ou
@@ -1172,6 +1172,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         } else {
 
             $('#btConcluir', '#divBotoesBens').css('display', 'inline').unbind('click');
+			$('#btBaixaManual', '#divBotoesBens').css('display', 'inline').unbind('click');
 
             $('#dschassi', '#frmBens').habilitaCampo().focus();
             $('#ufdplaca', '#frmBens').habilitaCampo();
@@ -1182,12 +1183,20 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
             //Define ação para CLICK no botão de Concluir
             $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
-
+			
                 showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarBensSubAditivo(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
                 return false;
 
             });
+			
+			$("#btBaixaManual", "#divBotoesBens").unbind('click').bind('click', function () {
+        
+			showConfirmacao('Este processo informa ao sistema que o veículo foi baixado manualmente na Cetip. Confirmar?', 'Confirma&ccedil;&atilde;o - Ayllos', 'baixaManual(' +idseqbem + ',' +tpctrpro + ');', '', 'sim.gif', 'nao.gif');
+			
+			return false;
+        
+        });
 
         }
 
@@ -1490,6 +1499,12 @@ function ValidAcesso(opcao) {
 		case "S":
             if ($('#vlbtAltBensSubsA').val() != '') {
 				showError("error",$('#vlbtAltBensSubsA').val(),'Alerta - Ayllos','',false);
+				return false;
+			}			               
+        break;
+		case "Z":
+            if ($('#vlbtBaixaManual').val() != '') {
+				showError("error",$('#vlbtBaixaManual').val(),'Alerta - Ayllos','',false);
 				return false;
 			}			               
         break;		
@@ -2257,6 +2272,7 @@ function baixaManual(idseqbem,tpctrpro) {
             hideMsgAguardo();
             try {
                 eval(response);
+				mostrabutton();
             } catch (error) {
 
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
@@ -2345,6 +2361,7 @@ function displayNoneButton() {
 	$('#btBlocJudicial', '#divBotoes').css({ 'display': 'none' });
 	$('#btInclManuGravame', '#divBotoes').css({ 'display': 'none' });
 	
+	$('#btBaixaManual', '#divBotoes').css({ 'display': 'none' });
 }
 function mostrabutton() {
 	
@@ -2355,6 +2372,7 @@ function mostrabutton() {
 	$('#btIncluir', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'none ' });
+	$('#btBaixaManual', '#divBotoesBens').css({ 'display': 'none ' });
 	$('#dsjustif', '#frmBens').desabilitaCampo();
 	
 	if (opcaoButton == "C") {		

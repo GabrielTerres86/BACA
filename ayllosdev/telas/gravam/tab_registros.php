@@ -37,7 +37,7 @@
       <select id="ddl_descrbem" name="ddl_descrbem" >
 	  <?foreach($bens as &$bem)
 	  {?>
-		<option value="<? echo getByTagName($bem->tags,'nrseqbem' );?>"><? echo getByTagName($bem->tags,'dsbemfin' );?></option>
+		<option value="<? echo getByTagName($bem->tags,'nrseqbem' );?>"><? echo getByTagName($bem->tags,'nrseqbem');?> - <? echo getByTagName($bem->tags,'dsbemfin' );?></option>
 	  <?}?>
 	  </select>
 	  
@@ -260,6 +260,7 @@
     <input type="hidden" id="vlbtAlterar" 		name="vlbtAlterar" 		value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A',false); ?>" />
     <input type="hidden" id="vlbtBaixar" 		name="vlbtBaixar" 		value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'B',false); ?>" />
     <input type="hidden" id="vlbtCancelar" 		name="vlbtCancelar" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'X',false); ?>" />
+	<input type="hidden" id="vlbtBaixaManual" 	name="vlbtBaixaManual" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'Z',false); ?>" />
 	
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" 		onclick="controlaVoltar('5'); 		return false;">Voltar</a>
@@ -272,7 +273,7 @@
 	<a href="#" class="botao" id="btLibJudicial" onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
 	<a href="#" class="botao" id="btBlocJudicial" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>
 
-
+	<a href="#" class="botao" id="btBaixaManual"   onclick="validPermiss('Z'); return false;">Baixa Manual</a>	
 												
   <a href="#" class="botao" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>
