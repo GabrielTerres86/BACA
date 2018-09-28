@@ -416,7 +416,7 @@
   </form>
   <div id="divBotoes">
 		<!-- JMD --><input type="image" id="btnVoltarOpcao" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;"  >
-    <input type="image" src="<?php echo $UrlImagens; ?>botoes/bloqueio.gif" <?php if (in_array("B",$glbvars["opcoesTela"])) { ?>onClick="showConfirmacao('Deseja bloquear a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','bloqueiaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/bloqueio.gif" <?php if (in_array("B",$glbvars["opcoesTela"])) { ?>onClick="showConfirmacao('Deseja bloquear a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Aimaro','bloqueiaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelamento.gif" <?php if (in_array("X",$glbvars["opcoesTela"])) { ?>onClick="cancelaSenhaAcesso(1);return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/impressao.gif" <?php if (in_array("M",$glbvars["opcoesTela"])) { ?>onClick="carregarContrato('','yes');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/senha.gif" <?php if (in_array("S",$glbvars["opcoesTela"])) { ?>onClick="mostraDivAlteraSenha();return false;"<?php } else {?>style="cursor: default;" onClick="return false;"<?php } ?> />
@@ -443,7 +443,7 @@
   </form>
   <div id="divBotoes1">
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="mostraDivAlteraSenha();return false;" />
-    <input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="showConfirmacao('Deseja alterar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','alteraSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="showConfirmacao('Deseja alterar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Aimaro','alteraSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
   </div>
 </div>
 
@@ -472,7 +472,7 @@
   </form>
   <div id="divBotoes2">
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="mostraOpcaoPrincipal();return false;" />
-    <input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif" onClick="showConfirmacao('Deseja liberar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','liberaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif" onClick="showConfirmacao('Deseja liberar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Aimaro','liberaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
   </div>
 </div>
 
@@ -564,7 +564,7 @@
   qtdTitular = qtdTitular;
 
   if(qtdTitular <= 1 && pr_idastcjt ==1 ){
-  showError("error","Selecione no minimo 2 responsaveis pela assinatura conjunta.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+  showError("error","Selecione no minimo 2 responsaveis pela assinatura conjunta.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
   return false;
   }
 

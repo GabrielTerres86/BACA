@@ -109,7 +109,7 @@ function carrega_dados(){
 	
 	// Valida número da conta
 	if (!validaNroConta(nrdconta)) {
-		showError("error","Conta/dv inválida.","Alerta - Ayllos","$('#nrdconta','#frmCabAltera').focus();");
+		showError("error","Conta/dv inválida.","Alerta - Aimaro","$('#nrdconta','#frmCabAltera').focus();");
 		return false;
 	}
 

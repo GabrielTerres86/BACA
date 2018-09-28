@@ -72,12 +72,12 @@
 	} 	
 	
 	$msgErro = 'Motivo salvo com sucesso.';
-	exibirErro('inform',$msgErro,'Alerta - Ayllos','fechaMotivos();',false);
+	exibirErro('inform',$msgErro,'Alerta - Aimaro','fechaMotivos();',false);
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
 		

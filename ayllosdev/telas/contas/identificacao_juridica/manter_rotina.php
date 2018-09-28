@@ -143,7 +143,7 @@
 	
 	if ($operacao == 'AV') {	
 
-		exibirConfirmacao('Deseja confirmar alteração?' ,'Confirmação - Ayllos','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
+		exibirConfirmacao('Deseja confirmar alteração?' ,'Confirmação - Aimaro','controlaOperacao(\'VA\')','bloqueiaFundo(divRotina)',false);		
 		
 	} else if ($operacao == 'VA') {	
 		
@@ -153,7 +153,7 @@
 			if ($flgcadas == 'M') {
 				echo 'revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0055.p\',\''.$stringArrayMsg.'\',\'\');';
 			} else {
-				exibirConfirmacao($msgAtCad,'Confirmação - Ayllos','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0053.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
+				exibirConfirmacao($msgAtCad,'Confirmação - Aimaro','revisaoCadastral(\''.$chaveAlt.'\',\''.$tpAtlCad.'\',\'b1wgen0053.p\',\''.$stringArrayMsg.'\')','exibirMensagens(\''.$stringArrayMsg.'\',\'controlaOperacao(\"\")\')',false);
 			}
 			
 			if ($impDecPJCoop == 'S'){

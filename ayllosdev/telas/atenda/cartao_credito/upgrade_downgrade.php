@@ -34,7 +34,7 @@
 	$nrcrcard = $_POST["nrcrcard"];
 	$nrctrcrd = $_POST['nrctrcrd'];
 	
-	if (!is_titular_card($nrctrcrd, $nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Upgrade/Downgrade nao permitido para cartao adicional."),'Alerta - Ayllos',$funcaoAposErro);
+	if (!is_titular_card($nrctrcrd, $nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Upgrade/Downgrade nao permitido para cartao adicional."),'Alerta - Aimaro',$funcaoAposErro);
 
 	
 		

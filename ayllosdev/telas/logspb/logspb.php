@@ -201,7 +201,7 @@
 																							
 																							  <label for="dsorigem" class="txtNormalBold">Origem:</label>
 																							  <select name="dsorigem" id="dsorigem" class="campo">
-																								  <option value="1">Ayllos</option>
+																								  <option value="1">Aimaro</option>
 																								  <option value="2">Caixa Online</option>
 																								  <option value="3">Internet</option>
 																								  <option value="0" selected>Todos</option>

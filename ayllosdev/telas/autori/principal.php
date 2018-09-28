@@ -144,6 +144,6 @@
 	}
 	if (operacao == 'I1') { controlaOperacao('I2'); }
 	if (operacao == 'R1') { controlaOperacao('R2'); }
-	if (operacao == 'E3') { showConfirmacao("Deseja cancelar este optante do servico de Debito Automatico?", "Confirmacao - Ayllos","controlaOperacao(\'E5\')","controlaOperacao(\'\');",'sim.gif','nao.gif');  }  //controlaOperacao('E5');
+	if (operacao == 'E3') { showConfirmacao("Deseja cancelar este optante do servico de Debito Automatico?", "Confirmacao - Aimaro","controlaOperacao(\'E5\')","controlaOperacao(\'\');",'sim.gif','nao.gif');  }  //controlaOperacao('E5');
 	
 </script>

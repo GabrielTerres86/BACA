@@ -107,7 +107,7 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 		if (!empty($nmdcampo)) { $mtdErro = $mtdErro . "focaCampoErro('".$nmdcampo."','frmMantal');"; }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);
 	}	
 	
 	// Busca agencia
