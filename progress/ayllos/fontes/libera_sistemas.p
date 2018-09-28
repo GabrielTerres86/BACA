@@ -42,7 +42,7 @@ def browse b_escolhe query q_escolhe
                    with 14 down.
 
 
-form "1- AYLLOS"              SKIP
+form "1- AIMARO"              SKIP
      "2- CAIXA ON-LINE"       SKIP
      "3- PROGRID"             SKIP
      "4- CRM/INTERNET"        SKIP
@@ -162,7 +162,7 @@ procedure ayllos:
     def var aux_lsdireto as char  extent 2  init["fontes","includes"] no-undo.
     
     ASSIGN aux_caminho  = "/usr/coop/sistema/ayllos/"
-           aux_dssistem = "AYLLOS".
+           aux_dssistem = "AIMARO".
 
     do  aux_contador = 1 to aux_qtdireto:
         run carrega_arquivos(INPUT "ls " + aux_caminho +
@@ -394,7 +394,7 @@ procedure libera_ayllos:
          
             /* verifica o uso do campo cdcooper nas tabelas */
             run /usr/coop/sistema/ayllos/fontes/check_cdcooper.p
-                (input "ayllos",
+                (input "aimaro",
                  input substring(par_nmarquiv,r-index(par_nmarquiv,"/") + 1)).
          
             if   return-value <> "OK"   then
@@ -422,7 +422,7 @@ procedure libera_ayllos:
                  do:
                     /* mostra os resultados */
                     run /usr/coop/sistema/ayllos/fontes/check_cdcooper2.p
-                        (input "ayllos",
+                        (input "aimaro",
                          input substring(par_nmarquiv,
                                          r-index(par_nmarquiv,"/") + 1)).
 

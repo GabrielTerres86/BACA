@@ -441,8 +441,8 @@ DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
         /* BB - Cecred visa caixa eletr - cobrança - internet - visanet - ura */
                                                                        /* BB */
         ASSIGN aux_header = "Cartao Multiplo;Data;Cartoes;Cooperados;Percentual;" +
-                    "Limite BB C;Limite Ayllos C; Saldo - C; Limite BB D;" +
-                    "Limite Ayllos D; Saldo - D;" + 
+                    "Limite BB C;Limite Aimaro C; Saldo - C; Limite BB D;" +
+                    "Limite Aimaro D; Saldo - D;" + 
                     "Quant. Saques;Total sacado;Quant. Transacoes;" + 
                     "Total Transacoes;Quant. Debitos;" + 
                     "Total Debitos;Faturas;Total Faturas" + ";" +

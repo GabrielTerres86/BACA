@@ -112,7 +112,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                             INPUT tel_cdagechq,
                                             INPUT tel_nrinichq,
                                             INPUT tel_nrfinchq,
-                                            INPUT "AYLLOS",
+                                            INPUT "AIMARO",
                                             INPUT glb_cdoperad,
                                            OUTPUT par_cdagechq).
 
@@ -164,7 +164,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                                   INPUT tel_nrinichq,
                                                   INPUT tel_nrfinchq,
                                                   INPUT glb_cdoperad,
-                                                  INPUT "AYLLOS",
+                                                  INPUT "AIMARO",
                                                   INPUT "",
                                                   INPUT "",
                                                   INPUT 0,

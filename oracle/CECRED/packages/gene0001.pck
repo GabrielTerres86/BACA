@@ -87,7 +87,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** ---------------------------------------------------------**/
 
   TYPE typ_des_dorigens IS VARRAY(13) OF VARCHAR2(13);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','AYLLOS WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AIMARO','CAIXA','INTERNET','CASH','AIMARO WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
 
 
   /** ---------------------------------------------------- **/

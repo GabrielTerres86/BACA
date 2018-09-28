@@ -129,7 +129,7 @@ function carregaTela () {
 	}
 						
 	if (!existeTela(nmdatela)) {
-		showError("error","Tela n&atilde;o dispon&iacute;vel.","Alerta - Ayllos","$('#tela','#frmAcesso').focus()");	
+		showError("error","Tela n&atilde;o dispon&iacute;vel.","Alerta - Aimaro","$('#tela','#frmAcesso').focus()");	
 		return;
 	}
 			
@@ -166,7 +166,7 @@ function carregaTela () {
 	// Se tem que trocar de senha , nao permitir mudar de tela
 	if   (flgcriti) {
 		if   ($('#flgdsenh','#frmAcesso').val() == "yes" && $('#telatual','#frmAcesso').val() == "MUDSEN") {
-			showError("error","&Eacute; preciso trocar a senha do operador.","Alerta - Ayllos","$('#cdoperad','#frmMudsen').focus()");	
+			showError("error","&Eacute; preciso trocar a senha do operador.","Alerta - Aimaro","$('#cdoperad','#frmMudsen').focus()");	
 			return;
 		}
 	}

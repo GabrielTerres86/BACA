@@ -76,7 +76,7 @@ f_conectagener().
 
 
 /* diretorio de cada sistema */
-if   par_nmsistem = "ayllos"   then
+if   par_nmsistem = "aimaro"   then
      aux_dsdireto[1] = "/usr/coop/sistema/ayllos/fontes/".
 else
 if   par_nmsistem = "siscaixa"   then

@@ -755,7 +755,7 @@ end pc_obrigacao_analise_autom;
               GENE0001.pc_gera_log(pr_cdcooper => rw_crawlim.cdcooper
                                   ,pr_cdoperad => 'MOTOR'
                                   ,pr_dscritic => ' '
-                                  ,pr_dsorigem => 'AYLLOS'
+                                  ,pr_dsorigem => 'AIMARO'
                                   ,pr_dstransa => 'Expiracao da Analise Automatica'
                                   ,pr_dttransa => TRUNC(SYSDATE)
                                   ,pr_flgtrans => 1 --> FALSE

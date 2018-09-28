@@ -787,7 +787,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => 1
                           ,pr_dscritic => null
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Busca saldo do contrato: ' ||
                                           rw_crappep.nrctremp ||
                                           ' Processo: ' ||
@@ -1031,7 +1031,7 @@ BEGIN
 
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => 1
-                              ,pr_dsorigem => 'AYLLOS'
+                              ,pr_dsorigem => 'AIMARO'
                               ,pr_dscritic => null
                               ,pr_dstransa => 'Efetiva parcela normal, contrato: ' ||
                                               rw_crappep.nrctremp ||
@@ -1141,7 +1141,7 @@ BEGIN
           /* Sem nada para pagar */
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => 1
-                              ,pr_dsorigem => 'AYLLOS'
+                              ,pr_dsorigem => 'AIMARO'
                               ,pr_dscritic => null
                               ,pr_dstransa => 'Nada a pagar, contrato: ' ||
                                               rw_crappep.nrctremp ||
@@ -1231,7 +1231,7 @@ BEGIN
 
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                             ,pr_cdoperad => 1
-                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dsorigem => 'AIMARO'
                             ,pr_dscritic => null
                             ,pr_dstransa => 'Efetiva parcela atraso, contrato: ' ||rw_crappep.nrctremp||
                                             '  Saldo em ' ||rw_crapdat.dtmvtoan || ': ' ||

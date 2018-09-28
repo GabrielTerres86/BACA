@@ -1041,7 +1041,7 @@ PROCEDURE imprime_help.
                 ASSIGN aux_cabdatel = 
                              STRING("\022\024\033\120\033\105","x(74)") +
                              STRING(" ","x(15)") +
-                             "MANUAL DE AJUDA DAS TELAS - Sistema AYLLOS" +
+                             "MANUAL DE AJUDA DAS TELAS - Sistema AIMARO" +
                              STRING(" ","x(90)") +
                              "TELA  : " + STRING(tel_nmdatela,"x(6)") + " - " +
                              STRING(crabtel.tldatela,"x(57)") +
@@ -1076,7 +1076,7 @@ PROCEDURE imprime_help.
             ASSIGN aux_cabdatel = 
                              STRING("\022\024\033\120\033\105","x(74)") +
                              STRING(" ","x(15)") +
-                             "MANUAL DE AJUDA DAS TELAS - Sistema AYLLOS" +
+                             "MANUAL DE AJUDA DAS TELAS - Sistema AIMARO" +
                              STRING(" ","x(90)") +
                              "TELA  : " + STRING(tel_nmdatela,"x(6)") + " - " +
                              STRING(crabtel.tldatela,"x(57)") +

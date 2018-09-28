@@ -199,7 +199,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                                      INPUT tel_cdagechq,
                                                      INPUT tel_nrinichq,
                                                      INPUT tel_nrfinchq,
-                                                     INPUT "AYLLOS").
+                                                     INPUT "AIMARO").
 
             /* Elimina a instancia da BO */
             DELETE PROCEDURE h-b1crap06.

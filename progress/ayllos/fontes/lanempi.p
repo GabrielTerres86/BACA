@@ -879,7 +879,7 @@ DO WHILE TRUE:
               RUN proc_gerar_log (INPUT glb_cdcooper, 
                                   INPUT glb_cdoperad,
                                   INPUT "",
-                                  INPUT "AYLLOS",
+                                  INPUT "AIMARO",
                                   INPUT "Pag. Emp/Fin Nr: " + STRING(tel_nrctremp) + " Cred. Contrato",
                                   INPUT TRUE,
                                   INPUT 1,

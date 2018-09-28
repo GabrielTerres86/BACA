@@ -461,7 +461,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
               GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => '1'
                                   ,pr_dscritic => vr_dscritic
-                                  ,pr_dsorigem => 'AYLLOS'
+                                  ,pr_dsorigem => 'AIMARO'
                                   ,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
                                   ,pr_dttransa => trunc(SYSDATE)
                                   ,pr_flgtrans => 0

@@ -1624,7 +1624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                             ,pr_cdoperad => pr_cdoperad
                             ,pr_dscritic => null
-                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dsorigem => 'AIMARO'
                             ,pr_dstransa => vr_dstransa
                             ,pr_dttransa => trunc(sysdate)
                             ,pr_flgtrans => 1
@@ -1830,7 +1830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                             ,pr_cdoperad => pr_cdoperad
                             ,pr_dscritic => null
-                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dsorigem => 'AIMARO'
                             ,pr_dstransa => vr_dstransa
                             ,pr_dttransa => trunc(sysdate)
                             ,pr_flgtrans => 1
@@ -3045,7 +3045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0001 AS
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                              ,pr_cdoperad => pr_cdoperad
                              ,pr_dscritic => null
-                             ,pr_dsorigem => 'AYLLOS'
+                             ,pr_dsorigem => 'AIMARO'
                              ,pr_dstransa => vr_dstransa
                              ,pr_dttransa => pr_dtmvtolt
                              ,pr_flgtrans => 1
@@ -3625,7 +3625,7 @@ BEGIN
        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                            ,pr_cdoperad => pr_cdoperad
                            ,pr_dscritic => null
-                           ,pr_dsorigem => 'AYLLOS'
+                           ,pr_dsorigem => 'AIMARO'
                            ,pr_dstransa => vr_dstransa
                            ,pr_dttransa => pr_dtmvtolt
                            ,pr_flgtrans => 1

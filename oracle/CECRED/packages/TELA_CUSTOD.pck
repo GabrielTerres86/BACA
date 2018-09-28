@@ -3669,7 +3669,7 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
         gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => ' '
-                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dsorigem => 'AIMARO'
                             ,pr_dstransa => vr_dstransa
                             ,pr_dttransa => trunc(SYSDATE)
                             ,pr_flgtrans => 1

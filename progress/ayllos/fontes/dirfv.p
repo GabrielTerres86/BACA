@@ -932,7 +932,7 @@ PROCEDURE pi_carrega_temp_dados:
         IF   aux_dsorireg = ""   THEN
              DO:
                 IF   crapdrf.tporireg = 1   THEN
-                     aux_dsorireg = "AYLLOS".
+                     aux_dsorireg = "AIMARO".
                 ELSE
                 IF   crapdrf.tporireg = 2   THEN
                      aux_dsorireg = "DIGITACAO".

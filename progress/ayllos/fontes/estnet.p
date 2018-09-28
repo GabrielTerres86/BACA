@@ -214,7 +214,7 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
              RUN gera_log IN h-b1wgen0014 (INPUT glb_cdcooper,
                                            INPUT glb_cdoperad,
                                            INPUT aux_dscritic,
-                                           INPUT "AYLLOS",
+                                           INPUT "AIMARO",
                                            INPUT aux_dstransa,
                                            INPUT glb_dtmvtolt,
                                            INPUT aux_fltransa,

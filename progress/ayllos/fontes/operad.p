@@ -334,8 +334,8 @@ FORM SKIP
                                          "016 - PA informado nao eh valido.")
      tel_cdpactra FORMAT "zzz9" AT 46 LABEL "PA de Trabalho"
      
-     tel_flgdonet AT  3 LABEL "Acessar Sistema Ayllos WEB"
-         HELP "Informe SIM para liberar a tela Ayllos WEB."
+     tel_flgdonet AT  3 LABEL "Acessar Sistema Aimaro WEB"
+         HELP "Informe SIM para liberar a tela Aimaro WEB."
      
      tel_insaqesp AT  40 LABEL "Libera Saque Especie"
          HELP "Informe SIM para liberar saque especie."
@@ -918,7 +918,7 @@ DO WHILE TRUE:
                     RUN gera_log ("PA do operador",log_cdagenci,tel_cdagenci).
                
                IF   log_flgdonet <> tel_flgdonet   THEN
-                    RUN gera_log ("Acessar Sistema Ayllos INTRANET",
+                    RUN gera_log ("Acessar Sistema Aimaro INTRANET",
                                   STRING(log_flgdonet,"Sim/Nao"),
                                   STRING(tel_flgdonet,"Sim/Nao")).
                

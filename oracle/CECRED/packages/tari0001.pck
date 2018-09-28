@@ -4843,7 +4843,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        vr_indice   PLS_INTEGER;
        vr_ind_tari PLS_INTEGER := 0;
        vr_nrdrowid ROWID;
-       vr_dsorigem VARCHAR2(500) := 'AYLLOS,CAIXA,INTERNET,TAA,AYLLOS WEB,URA';
+       vr_dsorigem VARCHAR2(500) := 'AIMARO,CAIXA,INTERNET,TAA,AIMARO WEB,URA';
        vr_fposcred BOOLEAN;
        
        vr_dscritic VARCHAR2(4000);       

@@ -40,7 +40,7 @@ IF   aux_idusuari = ""   THEN
      aux_idusuari = "root".
 
 IF   aux_nmcooper = "progrid"   OR   aux_nmcooper = "gener"  OR 
-     aux_nmcooper = "ayllos"  THEN
+     aux_nmcooper = "aimaro"  THEN
      aux_nmcooper = "cecred".
 ELSE     
 IF   aux_nmcooper = ""   THEN

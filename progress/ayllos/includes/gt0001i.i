@@ -356,7 +356,7 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
              DO:
                  FIND crapthi WHERE crapthi.cdcooper = glb_cdcooper AND
                                     crapthi.cdhistor = tel_cdhisdeb AND
-                                    crapthi.dsorigem = "AYLLOS"     
+                                    crapthi.dsorigem = "AIMARO"     
                                     NO-LOCK NO-ERROR.
                                  
                  IF  NOT AVAIL crapthi  THEN

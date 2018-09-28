@@ -655,7 +655,7 @@ PROCEDURE Busca_Historico:
                        AND crapthi.cdhistor = craphis.cdhistor   
                      NO-LOCK:
                                                          
-        IF   crapthi.dsorigem = "AYLLOS"   THEN                          
+        IF   crapthi.dsorigem = "AIMARO"   THEN                          
              ASSIGN tt-histor.vltarayl = crapthi.vltarifa.                     
         ELSE                                                             
         IF   crapthi.dsorigem = "CAIXA"   THEN          
@@ -1161,7 +1161,7 @@ PROCEDURE Grava_Dados:
         FOR EACH crapthi WHERE crapthi.cdcooper = par_cdcooper AND
                                crapthi.cdhistor = par_cdhistor NO-LOCK:
         
-            IF   crapthi.dsorigem = "AYLLOS"   THEN
+            IF   crapthi.dsorigem = "AIMARO"   THEN
                  ASSIGN aux_vltarayl = crapthi.vltarifa.
             ELSE
             IF   crapthi.dsorigem = "CAIXA"   THEN
@@ -1348,7 +1348,7 @@ PROCEDURE Grava_Dados:
                             CREATE crapthi.
                             ASSIGN crapthi.cdcooper = craphis.cdcooper
                                    crapthi.cdhistor = craphis.cdhistor
-                                   crapthi.dsorigem = "AYLLOS"
+                                   crapthi.dsorigem = "AIMARO"
                                    crapthi.vltarifa = par_vltarayl.
                                     
                             CREATE crapthi.
@@ -1374,7 +1374,7 @@ PROCEDURE Grava_Dados:
                                            AND crapthi.cdhistor = craphis.cdhistor 
                                          EXCLUSIVE-LOCK:
                           
-                            IF  crapthi.dsorigem = "AYLLOS"  THEN
+                            IF  crapthi.dsorigem = "AIMARO"  THEN
                                 crapthi.vltarifa = par_vltarayl.
                             ELSE
                             IF  crapthi.dsorigem = "CAIXA"  THEN
@@ -1539,7 +1539,7 @@ PROCEDURE Replica_Dados:
         CREATE tt-crapthi.
         BUFFER-COPY crapthi TO tt-crapthi.
 
-        IF crapthi.dsorigem = "AYLLOS"   THEN                          
+        IF crapthi.dsorigem = "AIMARO"   THEN                          
             ASSIGN aux_vltarayl = crapthi.vltarifa.                     
         ELSE                                                             
         IF crapthi.dsorigem = "CAIXA"   THEN          
@@ -1574,7 +1574,7 @@ PROCEDURE Replica_Dados:
             FOR EACH bf-crapthi WHERE bf-crapthi.cdcooper = crapcop.cdcooper 
                                   AND bf-crapthi.cdhistor = tt-crapthi.cdhistor 
                                 NO-LOCK:
-                IF bf-crapthi.dsorigem = "AYLLOS"   THEN                          
+                IF bf-crapthi.dsorigem = "AIMARO"   THEN                          
                     ASSIGN log_vltarayl = bf-crapthi.vltarifa.                     
                 ELSE                                                             
                 IF bf-crapthi.dsorigem = "CAIXA"   THEN          
@@ -2263,7 +2263,7 @@ PROCEDURE gera_item_log:
                       INPUT par_cdoperad,
                       INPUT par_cdhistor,
                       INPUT par_cdcoprep,
-                      INPUT "Tarifa Ayllos",
+                      INPUT "Tarifa Aimaro",
                       INPUT STRING(log_vltarayl,"zzz,zzz,zz9.99"),
                       INPUT STRING(aux_vltarayl,"zzz,zzz,zz9.99")).
  

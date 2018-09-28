@@ -916,7 +916,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 	/* Verificacao de tipo de conta e se exige assinatura conjunta JMD */
 	IF aux_idastcjt = 1 THEN
 		DO:
-			MESSAGE "Conta exige assinatura conjunta. Utilize o Ayllos Web.".
+			MESSAGE "Conta exige assinatura conjunta. Utilize o Aimaro Web.".
 			PAUSE 3 NO-MESSAGE.
 			HIDE MESSAGE.
 			LEAVE.

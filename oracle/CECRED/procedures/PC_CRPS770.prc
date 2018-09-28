@@ -159,7 +159,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => '(1) Atencao - Pagamento nao permitido. Verifique situacao da conta'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -178,7 +178,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => '(2) Atencao - Pagamento nao permitido. Verifique situacao da conta'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -201,7 +201,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => '(3) Pagamento nao permitido, conta possui motivo 1,2,7 e VIP'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -227,7 +227,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Erro ao buscar se existe acordo com modulo - RECP0001'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -244,7 +244,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Pagamento nao permitido, emprestimo em acordo - Modulo'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -304,7 +304,7 @@ BEGIN
         gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
                             ,pr_cdoperad => '1'
                             ,pr_dscritic => vr_dscritic
-                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dsorigem => 'AIMARO'
                             ,pr_dstransa => 'Falha ao pagar Prejuizo Automatico Contrato sem Garantia'
                             ,pr_dttransa => TRUNC(SYSDATE)
                             ,pr_flgtrans => 1
@@ -349,7 +349,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => '(3) Atencao - Pagamento nao permitido. Verifique situacao da conta'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -368,7 +368,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => '(4) Atencao - Pagamento nao permitido. Verifique situacao da conta'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -391,7 +391,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => '(5) Pagamento nao permitido, conta possui motivo 1,2,7 e VIP'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -417,7 +417,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Erro ao buscar se existe acordo com modulo - RECP0001'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -434,7 +434,7 @@ BEGIN
       gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => vr_dscritic
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => '(2) Pagamento nao permitido, emprestimo em acordo - Modulo'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
@@ -494,7 +494,7 @@ BEGIN
         gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
                             ,pr_cdoperad => '1'
                             ,pr_dscritic => vr_dscritic
-                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dsorigem => 'AIMARO'
                             ,pr_dstransa => 'Falha ao pagar Prejuizo Automatico Contrato com Garantia'
                             ,pr_dttransa => TRUNC(SYSDATE)
                             ,pr_flgtrans => 1

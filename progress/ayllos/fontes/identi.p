@@ -76,7 +76,7 @@ FORM SKIP(5)
                         HELP "Informe o seu codigo de operador."
      SKIP(1)
      glb_nmdatela AT 33 LABEL "Nome da Tela" AUTO-RETURN
-       HELP "Informe o nome da tela desejada ou FIM para sair sistema AYLLOS."
+       HELP "Informe o nome da tela desejada ou FIM para sair sistema AIMARO."
      SKIP(1)
      tel_cdpactra AT 33 LABEL "PA trabalho" AUTO-RETURN
                                HELP "Informe o PA de trabalho do operador."

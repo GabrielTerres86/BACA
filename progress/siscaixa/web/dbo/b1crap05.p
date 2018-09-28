@@ -1000,7 +1000,7 @@ PROCEDURE solicita-entrega-talao:
                     DO:
                        /* Para o AYLLOS, o registro ja deveria ter sido
                           criado na tela LOTREQ */
-                       IF p-sistema = "AYLLOS"   THEN
+                       IF p-sistema = "AIMARO"   THEN
                           DO:
                               ASSIGN i-cod-erro  = 63
                                      c-desc-erro = "".

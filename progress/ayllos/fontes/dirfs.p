@@ -38,7 +38,7 @@ FORM SKIP(2)
                                    crapdrf.nranocal = tel_nranocal NO-LOCK), 
                           "Nao existem dados para o ano calendario informado!")
      SKIP(1)
-     tel_qtlanapl  AT 02 LABEL "Total Lanc. Aplicacoes (Ayllos)"
+     tel_qtlanapl  AT 02 LABEL "Total Lanc. Aplicacoes (Aimaro)"
      SKIP(1)
      tel_flarqint  AT 12 LABEL "Integracao de Arquivo"
      "->" tel_qtlanint FORMAT "zz,zz9" "Lancamentos"

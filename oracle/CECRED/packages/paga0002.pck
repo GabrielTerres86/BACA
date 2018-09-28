@@ -6682,7 +6682,7 @@ create or replace package body cecred.PAGA0002 is
             vr_tpdvalor := 2;
           END IF;
 
-          IF pr_dsorigem LIKE '%AYLLOS%' THEN
+          IF pr_dsorigem LIKE '%AIMARO%' THEN
             vr_cdprodut := 10; -- Débito automático
           ELSE
             vr_cdprodut := 29; -- Débito Automático Fácil

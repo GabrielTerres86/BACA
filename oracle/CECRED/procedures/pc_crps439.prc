@@ -915,7 +915,7 @@ begin
           GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => '1'
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'AYLLOS' --vr_dsorigem
+                              ,pr_dsorigem => 'AIMARO' --vr_dsorigem
                               ,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
                               ,pr_dttransa => trunc(SYSDATE)
                               ,pr_flgtrans => 0

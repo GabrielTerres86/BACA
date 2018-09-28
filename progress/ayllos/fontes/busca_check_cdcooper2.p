@@ -71,13 +71,13 @@ on return of b_buscas in frame f_fonte do:
    
    if   w_buscas.fonte = ""   then
         do:
-            if   par_nmsistem = "ayllos"   then
+            if   par_nmsistem = "aimaro"   then
                  aux_caminho = "/usr/coop/sistema/ayllos/fontes/" +
                                par_nmprogra.
         end.
    else
         do:
-            if   par_nmsistem = "ayllos"   then
+            if   par_nmsistem = "aimaro"   then
                  aux_caminho = "/usr/coop/sistema/ayllos/includes/" +
                                w_buscas.fonte.
         end.

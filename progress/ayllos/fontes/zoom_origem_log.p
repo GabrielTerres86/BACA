@@ -42,7 +42,7 @@ ON RETURN OF bcraplgm-b
    END.
 
    CREATE crawlgm.
-   ASSIGN crawlgm.dsorige = "AYLLOS".
+   ASSIGN crawlgm.dsorige = "AIMARO".
        
    CREATE crawlgm.
    ASSIGN crawlgm.dsorige = "CAIXA".

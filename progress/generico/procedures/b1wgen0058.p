@@ -780,7 +780,7 @@ PROCEDURE Busca_Dados_Cto:
                              NO-LOCK NO-ERROR.
                         IF NOT AVAILABLE tt-crapavt THEN
                         DO:
-                          ASSIGN par_dscritic = "CPF nao encontrado no Ayllos e CRM".
+                          ASSIGN par_dscritic = "CPF nao encontrado no Aimaro e CRM".
                           LEAVE BuscaCto.
                         END.
                       END.

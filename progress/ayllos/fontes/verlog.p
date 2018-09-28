@@ -51,6 +51,9 @@
                  29/06/2017 - Alterada busca da opcao INTRANET, para que busque origens
                               INTRANET e AYLLOS WEB.
                               Heitor (Mouts) - Chamado 686993
+                 27/09/2018 - Alterada busca da opcao INTRANET, para que busque origens
+                              INTRANET e AYLLOS WEB e AIMARO WEB
+                              Paulo Martins (Mouts) - PRJ413            
 
 ............................................................................ */
 
@@ -589,7 +592,7 @@ DO WHILE TRUE:
                              END.
                            ELSE
                              DO:
-                               aux_query = aux_query + "AND CAN-DO('INTRANET,AYLLOS WEB', craplgm.dsorigem)".
+                               aux_query = aux_query + "AND CAN-DO('INTRANET,AYLLOS WEB','AIMARO WEB', craplgm.dsorigem)".
                              END.
                          END.
 

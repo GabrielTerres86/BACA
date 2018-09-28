@@ -717,7 +717,7 @@ PROCEDURE imprime_coop.
          DO:
             PAGE STREAM str_1.
     
-            ASSIGN aux_nmextcab = "==> Nao integradas no Ayllos <=="
+            ASSIGN aux_nmextcab = "==> Nao integradas no Aimaro <=="
                    aux_flimpres = TRUE.
     
             DISPLAY STREAM str_1 aux_dtiniprg aux_dtfimprg 
@@ -824,7 +824,7 @@ PROCEDURE imprime_pac.
          DO:
             PAGE STREAM str_1.
     
-            ASSIGN aux_nmextcab = "Nao integradas no Ayllos"
+            ASSIGN aux_nmextcab = "Nao integradas no Aimaro"
                    aux_flimpres = TRUE.
     
             DISPLAY STREAM str_1 aux_dtiniprg aux_dtfimprg   

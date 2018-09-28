@@ -5024,7 +5024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
               gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => 1
                                   ,pr_dscritic => ''
-                                  ,pr_dsorigem => 'AYLLOS'
+                                  ,pr_dsorigem => 'AIMARO'
                                   ,pr_dstransa => 'Envio de informativo: '||pr_tab_env_extrato(vr_ind_reg).informat
                                   ,pr_dttransa => pr_dtmvtolt
                                   ,pr_flgtrans => 1 --> TRUE

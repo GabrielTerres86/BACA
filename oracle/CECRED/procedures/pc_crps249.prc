@@ -811,7 +811,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            crapthi
      where crapthi.cdcooper = pr_cdcooper
        and crapthi.vltarifa > 0
-       and crapthi.dsorigem = 'AYLLOS'
+       and crapthi.dsorigem = 'AIMARO'
        and craprej.cdcooper = crapthi.cdcooper
        and craprej.cdhistor = crapthi.cdhistor
        and craprej.cdpesqbb = pr_cdprogra
@@ -1901,7 +1901,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       from crapthi
      where crapthi.cdcooper = pr_cdcooper
        and crapthi.cdhistor = pr_cdhistor
-       and crapthi.dsorigem = 'AYLLOS';
+       and crapthi.dsorigem = 'AIMARO';
   rw_crapthi2     cr_crapthi2%rowtype;
 
   -- Buscar os históricos a serem processados
@@ -8821,7 +8821,7 @@ BEGIN
     -- Busca a tarifa
     open cr_crapthi(pr_cdcooper,
                     rw_craphis.cdhistor,
-                    'AYLLOS');
+                    'AIMARO');
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
@@ -10767,7 +10767,7 @@ BEGIN
     --
     open cr_crapthi(pr_cdcooper,
                     547,
-                    'AYLLOS');
+                    'AIMARO');
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
@@ -11132,7 +11132,7 @@ BEGIN
       --
       open cr_crapthi(pr_cdcooper,
                       266,  -- CREDITO DE COBRANCA BANCO DO BRASIL
-                      'AYLLOS');
+                      'AIMARO');
         fetch cr_crapthi into rw_crapthi;
         if cr_crapthi%notfound then
           close cr_crapthi;
@@ -12125,7 +12125,7 @@ BEGIN
   -- Prefeitura Municipal Blumenau
   open cr_crapthi(pr_cdcooper,
                   373,
-                  'AYLLOS');
+                  'AIMARO');
     fetch cr_crapthi into rw_crapthi;
     if cr_crapthi%notfound then
       close cr_crapthi;
@@ -12206,7 +12206,7 @@ BEGIN
   --
   open cr_crapthi(pr_cdcooper,
                   750,
-                  'AYLLOS');
+                  'AIMARO');
     fetch cr_crapthi into rw_crapthi;
     if cr_crapthi%notfound then
       close cr_crapthi;
@@ -12283,7 +12283,7 @@ BEGIN
   --
   open cr_crapthi(pr_cdcooper,
                   459,
-                  'AYLLOS');
+                  'AIMARO');
     fetch cr_crapthi into rw_crapthi;
     if cr_crapthi%notfound then
       close cr_crapthi;
@@ -12518,7 +12518,7 @@ BEGIN
   if vr_cdhistor = 1414 then
     open cr_crapthi(pr_cdcooper,
                     vr_cdhistor,
-                    'AYLLOS');
+                    'AIMARO');
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;
@@ -12905,7 +12905,7 @@ BEGIN
 
     open cr_crapthi(pr_cdcooper,
                     547,
-                    'AYLLOS');
+                    'AIMARO');
       fetch cr_crapthi into rw_crapthi;
       if cr_crapthi%notfound then
         close cr_crapthi;

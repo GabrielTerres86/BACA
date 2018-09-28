@@ -1426,7 +1426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
          pr_tab_logspb_detalhe(vr_idx).nrdcaixa := rw_craplmt.nrdcaixa ;
          pr_tab_logspb_detalhe(vr_idx).cdoperad := rw_craplmt.cdoperad ;
          pr_tab_logspb_detalhe(vr_idx).dsorigem := (CASE rw_craplmt.idorigem
-                                                     WHEN 1 THEN 'AYLLOS'
+                                                     WHEN 1 THEN 'AIMARO'
                                                      WHEN 2 THEN 'CAIXA ONLINE'
                                                      WHEN 3 THEN 'INTERNET'
                                                      WHEN 4 THEN 'TAA'
@@ -1596,7 +1596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         pr_tab_logspb_detalhe(vr_idx).cdagenci := rw_spb_devolvida.cdagenci;
         pr_tab_logspb_detalhe(vr_idx).nrdcaixa := rw_spb_devolvida.nrdcaixa;
         pr_tab_logspb_detalhe(vr_idx).cdoperad := rw_spb_devolvida.cdoperad;
-        pr_tab_logspb_detalhe(vr_idx).dsorigem := 'AYLLOS';
+        pr_tab_logspb_detalhe(vr_idx).dsorigem := 'AIMARO';
                 
         -- Variaveis CHAR
         --     Como pode haver digito X nas contas - adicionar 0 a frente
