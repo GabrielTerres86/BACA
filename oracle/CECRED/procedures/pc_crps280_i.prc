@@ -21,7 +21,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 29/06/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 28/09/2018
 
      Dados referentes ao programa:
 
@@ -371,8 +371,11 @@ BEGIN
                               (Andrew Albuquerque - GFT)
                  17/06/2018 - Revisão de campos para envio de Títulos para a Cyber (Andrew Albuquerque - GFT)
 
-								 29/08/2018 - Acréscimo do valor dos juros +60 aos saldos devedores para a modalidade 0101 (ADP)
-								              nos relatórios 227 e 354. (Reginaldo/AMcom - P450)
+                 29/08/2018 - P450 - Ajuste para Novo Grupo Economico (Guilherme/AMcom)
+                              P450 - Acréscimo do valor dos juros +60 aos saldos devedores para a modalidade 0101 (ADP)
+                              nos relatórios 227 e 354. (Reginaldo/AMcom - P450)
+
+                 28/09/2018 - P450 - Ajuste do vliofmes dentro das tabelas do paralelismo (Guilherme/AMcom)
 
   ............................................................................. */
 
@@ -3082,7 +3085,9 @@ BEGIN
                      vr_tab_crapris(vr_indice_crapris).qtdiaatr || ds_character_separador ||
                      vr_tab_crapris(vr_indice_crapris).dsinfaux || ds_character_separador ||
                      vr_tab_crapris(vr_indice_crapris).tpemprst || ds_character_separador ||
-                     vr_tab_crapris(vr_indice_crapris).fleprces || ds_character_separador;
+                     vr_tab_crapris(vr_indice_crapris).fleprces || ds_character_separador ||
+                     vr_tab_crapris(vr_indice_crapris).vliofmes || ds_character_separador ||
+                     vr_tab_crapris(vr_indice_crapris).inprejuz || ds_character_separador ;
 
         pc_popular_tbgen_batch_rel_wrk(pr_cdcooper     => pr_cdcooper,
                                        pr_nmtabmemoria => 'VR_TAB_CRAPRIS',
@@ -3129,6 +3134,8 @@ BEGIN
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 24) + 1, instr(tab.dsxml, '#', 1, 25) - instr(tab.dsxml, '#', 1, 24) - 1) dsinfaux,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 25) + 1, instr(tab.dsxml, '#', 1, 26) - instr(tab.dsxml, '#', 1, 25) - 1) tpemprst,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 26) + 1, instr(tab.dsxml, '#', 1, 27) - instr(tab.dsxml, '#', 1, 26) - 1) fleprces,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 27) + 1, instr(tab.dsxml, '#', 1, 28) - instr(tab.dsxml, '#', 1, 27) - 1) vliofmes,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 28) + 1, instr(tab.dsxml, '#', 1, 29) - instr(tab.dsxml, '#', 1, 28) - 1) inprejuz,
                tab.dschave vr_indice
           from (select wrk.dscritic dsxml,
                        wrk.dschave
@@ -3169,6 +3176,8 @@ BEGIN
           vr_tab_crapris(r_crapris.vr_indice).dsinfaux := r_crapris.dsinfaux;
           vr_tab_crapris(r_crapris.vr_indice).tpemprst := r_crapris.tpemprst;
           vr_tab_crapris(r_crapris.vr_indice).fleprces := r_crapris.fleprces;
+          vr_tab_crapris(r_crapris.vr_indice).vliofmes := r_crapris.vliofmes;
+          vr_tab_crapris(r_crapris.vr_indice).inprejuz := r_crapris.inprejuz;
           --vr_tab_dados_epr(r_dados_epr.vr_indice).vlindice:= r_dados_epr.vr_indice;
         END LOOP;
       EXCEPTION
@@ -4596,47 +4605,47 @@ BEGIN
           IF NOT (vr_tab_crapris(vr_des_chave_crapris).inprejuz = 1
           AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101) THEN
 
-          -- Enviar registro para o XML 1
-          vr_des_xml_gene := '<atraso>'
-                           ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
-                           ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
-                           ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
-                           ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
-                           ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_crapris(vr_des_chave_crapris).nrctremp,'zzzzzzz9'))||'</nrctremp>'
-                           ||' <vldivida>'||to_char(vr_vldivida,'fm999g999g990d00')||'</vldivida>'
-                           ||' <vljura60>'||to_char(vr_tab_crapris(vr_des_chave_crapris).vljura60,'fm999g999g990d00')||'</vljura60>'
-                           ||' <vlpreemp>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).vlpreemp,0),'fm999g990d00')||'</vlpreemp>'
-                           ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
-                           ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
-                           ||' <vltotatr>'||to_char(vr_vltotatr,'fm999g999g990d00')||'</vltotatr>'
-                           ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
-                           ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
-                           ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
-                           ||' <pertenge>'||vr_pertenge||'</pertenge>'
-                           ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
-                           ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
-                           ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
-                           ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>';
+            -- Enviar registro para o XML 1
+            vr_des_xml_gene := '<atraso>'
+                             ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
+                             ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
+                             ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
+                             ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
+                             ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_crapris(vr_des_chave_crapris).nrctremp,'zzzzzzz9'))||'</nrctremp>'
+                             ||' <vldivida>'||to_char(vr_vldivida,'fm999g999g990d00')||'</vldivida>'
+                             ||' <vljura60>'||to_char(vr_tab_crapris(vr_des_chave_crapris).vljura60,'fm999g999g990d00')||'</vljura60>'
+                             ||' <vlpreemp>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).vlpreemp,0),'fm999g990d00')||'</vlpreemp>'
+                             ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
+                             ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
+                             ||' <vltotatr>'||to_char(vr_vltotatr,'fm999g999g990d00')||'</vltotatr>'
+                             ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
+                             ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
+                             ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
+                             ||' <pertenge>'||vr_pertenge||'</pertenge>'
+                             ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
+                             ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
+                             ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
+                             ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>';
 
-          -- Somente enviar limite de crédio com origem = 'E'
-          IF vr_dsorigem = 'E' THEN
+            -- Somente enviar limite de crédio com origem = 'E'
+            IF vr_dsorigem = 'E' THEN
               vr_des_xml_gene := vr_des_xml_gene || '<cdlcremp>'||vr_tab_crapris(vr_des_chave_crapris).cdlcremp||'</cdlcremp>';
-          ELSE
-            vr_des_xml_gene := vr_des_xml_gene || '<cdlcremp/>';
-          END IF;
+            ELSE
+              vr_des_xml_gene := vr_des_xml_gene || '<cdlcremp/>';
+            END IF;
 
-          -- Não enviar nivel em caso de ser AA
-          IF vr_dsnivris <> 'AA' THEN
+            -- Não enviar nivel em caso de ser AA
+            IF vr_dsnivris <> 'AA' THEN
               vr_des_xml_gene := vr_des_xml_gene || '<dsnivris>'||vr_dsnivris||'</dsnivris>';
-          ELSE
-            vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
-          END IF;
+            ELSE
+              vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
+            END IF;
 
-          -- Fechar tag atraso enviando pro XML
+            -- Fechar tag atraso enviando pro XML
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_227
                                   ,pr_texto_completo => vr_txtauxi_227
                                   ,pr_texto_novo     => vr_des_xml_gene || '</atraso>');
-                END IF;
+          END IF;
 
         END IF;
 
@@ -4657,43 +4666,43 @@ BEGIN
           IF NOT (vr_tab_crapris(vr_des_chave_crapris).inprejuz = 1
           AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 101) THEN
 
-          -- Enviar registro para o XML 2
-          vr_des_xml_gene :='<divida>'
-                          ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
-                          ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
-                          ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
-                          ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
-                          ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_crapris(vr_des_chave_crapris).nrctremp,'zzzzzzz9'))||'</nrctremp>'
-                          ||' <vldivida>'||to_char(vr_vldivida,'fm999g999g990d00')||'</vldivida>'
-                          ||' <vljura60>'||to_char(vr_tab_crapris(vr_des_chave_crapris).vljura60,'fm999g990d00')||'</vljura60>'
-                          ||' <vlpreemp>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).vlpreemp,0),'fm999g990d00')||'</vlpreemp>'
-                          ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
-                          ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
-                          ||' <vltotatr>'||to_char(vr_vltotatr,'fm999g999g990d00')||'</vltotatr>'
-                          ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
-                          ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
-                          ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
-                          ||' <pertenge>'||vr_pertenge||'</pertenge>'
-                          ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
-                          ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
-                          ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
-                          ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>';
+            -- Enviar registro para o XML 2
+            vr_des_xml_gene :='<divida>'
+                            ||' <nrdconta>'||LTRIM(gene0002.fn_mask_conta(vr_tab_crapris(vr_des_chave_crapris).nrdconta))||'</nrdconta>'
+                            ||' <nmprimtl>'||SUBSTR(vr_tab_crapris(vr_des_chave_crapris).nmprimtl,1,35)||'</nmprimtl>'
+                            ||' <tpemprst>'||vr_tab_crapris(vr_des_chave_crapris).tpemprst||'</tpemprst>'
+                            ||' <dsorigem>'||vr_dsorigem||'</dsorigem>'
+                            ||' <nrctremp>'||LTRIM(gene0002.fn_mask(vr_tab_crapris(vr_des_chave_crapris).nrctremp,'zzzzzzz9'))||'</nrctremp>'
+                            ||' <vldivida>'||to_char(vr_vldivida,'fm999g999g990d00')||'</vldivida>'
+                            ||' <vljura60>'||to_char(vr_tab_crapris(vr_des_chave_crapris).vljura60,'fm999g990d00')||'</vljura60>'
+                            ||' <vlpreemp>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).vlpreemp,0),'fm999g990d00')||'</vlpreemp>'
+                            ||' <nroprest>'||to_char(nvl(vr_tab_crapris(vr_des_chave_crapris).nroprest,0),'fm990d00')||'</nroprest>'
+                            ||' <qtatraso>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtatraso,'fm990d00')||'</qtatraso>'
+                            ||' <vltotatr>'||to_char(vr_vltotatr,'fm999g999g990d00')||'</vltotatr>'
+                            ||' <cdagenci>'||vr_tab_crapris(vr_des_chave_crapris).cdagenci||'</cdagenci>'
+                            ||' <vlpreatr>'||to_char(vr_vlpreatr,'fm999g999g990d00')||'</vlpreatr>'
+                            ||' <percentu>'||to_char(vr_percentu,'fm990d00')||'</percentu>'
+                            ||' <pertenge>'||vr_pertenge||'</pertenge>'
+                            ||' <nivrisco>'||vr_nivrisco||'</nivrisco>'
+                            ||' <dtdrisco>'||to_char(vr_dtdrisco,'dd/mm/rr')||'</dtdrisco>'
+                            ||' <qtdiaris>'||to_char(vr_qtdiaris,'fm9990')||'</qtdiaris>'
+                            ||' <qtdiaatr>'||to_char(vr_tab_crapris(vr_des_chave_crapris).qtdiaatr,'fm999990')||'</qtdiaatr>';
 
-          -- Somente enviar limite de crédio com origem = 'E'
-          IF vr_dsorigem = 'E' THEN
+            -- Somente enviar limite de crédio com origem = 'E'
+            IF vr_dsorigem = 'E' THEN
                vr_des_xml_gene := vr_des_xml_gene || '<cdlcremp>'||vr_tab_crapris(vr_des_chave_crapris).cdlcremp||'</cdlcremp>';
-          ELSE
-            vr_des_xml_gene := vr_des_xml_gene || '<cdlcremp/>';
-          END IF;
+            ELSE
+              vr_des_xml_gene := vr_des_xml_gene || '<cdlcremp/>';
+            END IF;
 
-          -- Não enviar nivel em caso de ser AA
-          IF vr_dsnivris <> 'AA' THEN
+            -- Não enviar nivel em caso de ser AA
+            IF vr_dsnivris <> 'AA' THEN
                vr_des_xml_gene := vr_des_xml_gene || '<dsnivris>'||vr_dsnivris||'</dsnivris>';
-          ELSE
-            vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
-          END IF;
+            ELSE
+              vr_des_xml_gene := vr_des_xml_gene || '<dsnivris/>';
+            END IF;
 
-          -- Finalmente enviar para o XML
+            -- Finalmente enviar para o XML
             gene0002.pc_escreve_xml(pr_xml            => vr_clobxml_354
                                    ,pr_texto_completo => vr_txtauxi_354
                                    ,pr_texto_novo     => vr_des_xml_gene||'</divida>');
@@ -4816,11 +4825,12 @@ BEGIN
             -- Origem de conta corrente e Adiant. a Depositante
             -- Somente se a conta não está em prejuízo (e se não foi liquidada na data atual)
             -- Contas em prejuízo são procesadas na PC_CRPS656 (Reginaldo/AMcom - P450)
-               ELSIF vr_dsorigem = 'C' AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 0101 
-							 AND nvl(vr_tab_crapris(vr_des_chave_crapris).inprejuz,0) = 0 
-							 AND NOT PREJ0003.fn_verifica_liquidacao_preju(pr_cdcooper => pr_cdcooper
-							                                             , pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-																													 , pr_dtmvtolt => pr_rw_crapdat.dtmvtolt) THEN
+               ELSIF vr_dsorigem = 'C'
+                 AND vr_tab_crapris(vr_des_chave_crapris).cdmodali = 0101 
+                 AND nvl(vr_tab_crapris(vr_des_chave_crapris).inprejuz,0) = 0 
+                 AND NOT PREJ0003.fn_verifica_liquidacao_preju(pr_cdcooper => pr_cdcooper
+                                                             , pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
+                                                             , pr_dtmvtolt => pr_rw_crapdat.dtmvtolt) THEN
 
               -- Grupo economico
               IF vr_pertenge = '*'  THEN
@@ -4845,7 +4855,7 @@ BEGIN
                                                       ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
                                                       ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
                                                       ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
-                                                      ,pr_vlpreapg => vr_vldivida                                   -- Valor a regularizar
+                                                      ,pr_vlpreapg => vr_vldivida + NVL(vr_tab_crapris(vr_des_chave_crapris).vliofmes,0)   -- Valor a regularizar
                                                       ,pr_vldespes => vr_vlpreatr                                   -- Valor despesas
                                                       ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
                                                       ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
