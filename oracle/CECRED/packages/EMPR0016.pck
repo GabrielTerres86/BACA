@@ -659,7 +659,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
     pr_vltottar := NVL(vr_vltottar, 0);
     pr_vltariof := NVL(vr_vltariof, 0);      
     
-    COMMIT;
+    --COMMIT;
     
   EXCEPTION
     WHEN vr_exc_erro THEN -- Exceção para tratar erros

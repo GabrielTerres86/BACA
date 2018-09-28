@@ -453,8 +453,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
 	  05/09/2018 - Alterado posição do ROLLBACK no exception - INC0023398
 
-      19/09/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
-
+      27/09/2018 - INC0023556 Incluído parametro resgate cheque para não executar.
+				              
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -6440,7 +6440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_calcular_bordero_composto
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao: 10/06/2018
+    Data    : Dezembro/2016                 Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -6448,7 +6448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para cálculo de juros da operação do borderô (juros simples)
 
-    Alteracoes: 19/09/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
+    Alteracoes: -----
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -6693,17 +6693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			FETCH cr_craplot INTO rw_craplot;
 			-- Fechar cursor
 			CLOSE cr_craplot;
-      
-    ELSE
-      -- Fechar cursor
-			CLOSE cr_craplot;
 		END IF;
-			
-    vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
-                              to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
-                              rw_craplot.cdagenci||';'||
-                              rw_craplot.cdbccxlt||';'||
-                              rw_craplot.nrdolote);
 			
 		BEGIN
 			-- Criar lançamento de desconto de bordero
@@ -6730,10 +6720,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,rw_craplot.cdbccxlt
 							,rw_craplot.nrdolote
 							,pr_nrdconta
-							,vr_nrseqdig
+							,rw_craplot.nrseqdig + 1
 							,pr_tab_cheques.vlcheque - (vr_vlliqnov - vr_vlliqori)
 							,271
-							,vr_nrseqdig
+							,rw_craplot.nrseqdig + 1
 							,pr_nrdconta
 							,to_char(pr_nrdconta, 'fm00000000')
 							,0
@@ -6743,7 +6733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,pr_tab_cheques.cdbanchq
 							,pr_tab_cheques.cdagechq
 							,pr_tab_cheques.nrctachq)
-			RETURNING vllanmto INTO vr_vllanmto;
+			RETURNING nrseqdig, vllanmto INTO vr_nrseqdig , vr_vllanmto;
 		EXCEPTION
 			WHEN OTHERS THEN      
 				-- Gerar crítica
@@ -6820,7 +6810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_calcular_bordero_simples
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao: 10/06/2018
+    Data    : Dezembro/2016                 Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -6828,7 +6818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para cálculo de juros de resgate do borderô (juros simples)
 
-    Alteracoes: 19/09/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
+    Alteracoes: -----
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7082,17 +7072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			FETCH cr_craplot INTO rw_craplot;
 			-- Fechar cursor
 			CLOSE cr_craplot;
-      
-    ELSE
-      -- Fechar cursor
-			CLOSE cr_craplot;
 		END IF;
-			
-    vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
-                              to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
-                              rw_craplot.cdagenci||';'||
-                              rw_craplot.cdbccxlt||';'||
-                              rw_craplot.nrdolote);
 			
 		BEGIN
 			-- Criar lançamento de desconto de bordero
@@ -7119,10 +7099,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,rw_craplot.cdbccxlt
 							,rw_craplot.nrdolote
 							,pr_nrdconta
-							,vr_nrseqdig
+							,rw_craplot.nrseqdig + 1
 							,vr_vlliquid
 							,271
-							,vr_nrseqdig
+							,rw_craplot.nrseqdig + 1
 							,pr_nrdconta
 							,to_char(pr_nrdconta, 'fm00000000')
 							,0
@@ -7132,7 +7112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							,pr_tab_cheques.cdbanchq
 							,pr_tab_cheques.cdagechq
 							,pr_tab_cheques.nrctachq)
-			RETURNING  vllanmto INTO  vr_vllanmto;
+			RETURNING nrseqdig, vllanmto INTO vr_nrseqdig , vr_vllanmto;
 		EXCEPTION
 			WHEN OTHERS THEN      
 				-- Gerar crítica
@@ -7413,7 +7393,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                 
                 27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
                 
-                                
   ..............................................................................*/																			 
 	-- Variável de críticas
   vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -8879,6 +8858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 																						 ,pr_nrdconta => pr_nrdconta
 																						 ,pr_dscheque => pr_tab_cheques(vr_index).dsdocmc7
 																						 ,pr_cdoperad => pr_cdoperad
+                                             ,pr_exclui_desconto => 'N' -- Não dispara exclusão de desconto
 																						 ,pr_tab_erro_resg => vr_tab_resgate_erro
 																						 ,pr_cdcritic => vr_cdcritic
 																						 ,pr_dscritic => vr_dscritic);
@@ -9191,6 +9171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_dscheque => rw_crapcdb.dsdocmc7
                                          ,pr_cdoperad => pr_cdoperad
+                                         ,pr_exclui_desconto => 'N' -- Não dispara exclusão de desconto
                                          ,pr_tab_erro_resg => vr_tab_resgate_erro
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);

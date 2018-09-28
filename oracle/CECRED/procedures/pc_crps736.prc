@@ -26,6 +26,9 @@ BEGIN
                             histórico ctb 2667 (Apropriação Juros Remuneratórios), assim pode ser consultado os 
                             valores na tela LISLOT (Paulo Penteado GFT)
 
+               25/09/2018 - Alterado o valor do lançamento da apropriação dos juros de mora (histor 2668). Anteriormente 
+                            lançava o valor acumulado dos juros de mora calculado no título, agora irá lançar somente o
+                            valor do juros apropriado no mês (Paulo Penteado GFT)
   ............................................................................ */
   DECLARE
 
@@ -98,6 +101,29 @@ BEGIN
      GROUP BY ljt.nrdconta,
               ljt.nrborder;
     
+    CURSOR cr_lancboraprop(pr_cdcooper IN craptdb.cdcooper%TYPE --> Código da Cooperativa
+                          ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                          ,pr_nrborder IN crapbdt.nrborder%TYPE --> numero do bordero
+                          ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE --> Data do movimento atual
+                          ,pr_cdhistor IN craphis.cdhistor%TYPE --> Codigo do historico do lancamento
+                          ,pr_cdbandoc IN craptdb.cdbandoc%TYPE --> Codigo do banco impresso no boleto
+                          ,pr_nrdctabb IN craptdb.nrdctabb%TYPE --> Numero da conta base do titulo
+                          ,pr_nrcnvcob IN craptdb.nrcnvcob%TYPE --> Numero do convenio de cobranca
+                          ,pr_nrdocmto IN craptdb.nrdocmto%TYPE --> Numero do documento
+                          ) IS
+    SELECT SUM(lcb.vllanmto) vllanmto
+      FROM tbdsct_lancamento_bordero lcb
+     WHERE lcb.cdcooper = pr_cdcooper
+       AND lcb.nrdconta = pr_nrdconta
+       AND lcb.nrborder = pr_nrborder
+       AND lcb.cdbandoc = pr_cdbandoc
+       AND lcb.nrdctabb = pr_nrdctabb
+       AND lcb.nrcnvcob = pr_nrcnvcob
+       AND lcb.nrdocmto = pr_nrdocmto
+       AND lcb.cdhistor = pr_cdhistor
+       AND lcb.dtmvtolt < pr_dtmvtolt;
+    rw_lancboraprop cr_lancboraprop%ROWTYPE;
+
   BEGIN
     -- ainda não comecou a rodar o paralelismo
     IF (nvl(pr_idparale,0)=0) THEN
@@ -204,6 +230,19 @@ BEGIN
           CONTINUE;
         END IF;
         
+        OPEN cr_lancboraprop(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => rw_craptdb.nrdconta
+                            ,pr_nrborder => rw_craptdb.nrborder
+                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                            ,pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmra
+                            ,pr_cdbandoc => rw_craptdb.cdbandoc
+                            ,pr_nrdctabb => rw_craptdb.nrdctabb
+                            ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                            ,pr_nrdocmto => rw_craptdb.nrdocmto
+                            );
+        FETCH cr_lancboraprop INTO rw_lancboraprop;
+        CLOSE cr_lancboraprop;
+        
         -- Lança os juros de mora mensal na operação de desconto de titulos
         DSCT0003.pc_inserir_lancamento_bordero( pr_cdcooper => pr_cdcooper
                                                ,pr_nrdconta => rw_craptdb.nrdconta
@@ -211,7 +250,7 @@ BEGIN
                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                ,pr_cdorigem => 7 -- batch
                                                ,pr_cdhistor => DSCT0003.vr_cdhistordsct_apropjurmra
-                                               ,pr_vllanmto => (rw_craptdb.vlmratit - rw_craptdb.vlpagmra)
+                                               ,pr_vllanmto => (rw_craptdb.vlmratit - nvl(rw_lancboraprop.vllanmto,0))
                                                ,pr_cdbandoc => rw_craptdb.cdbandoc
                                                ,pr_nrdctabb => rw_craptdb.nrdctabb
                                                ,pr_nrcnvcob => rw_craptdb.nrcnvcob
