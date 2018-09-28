@@ -33,6 +33,14 @@
       <input type="hidden" id="situacao_anterior" name="situacao_anterior" />
       <input type="hidden" id="chassi_anterior" name="chassi_anterior" />
 	  
+	  <label for="ddl_descrbem"><? echo utf8ToHtml('Descri&ccedil;&atilde;o:') ?></label>
+      <select id="ddl_descrbem" name="ddl_descrbem" >
+	  <?foreach($bens as &$bem)
+	  {?>
+		<option value="<? echo getByTagName($bem->tags,'nrseqbem' );?>"><? echo getByTagName($bem->tags,'dsbemfin' );?></option>
+	  <?}?>
+	  </select>
+	  
 	  <label for="dtmvttel"><? echo utf8ToHtml('Data do registro:') ?></label>
       <input id="dtmvttel" name="dtmvttel" type="text" ></input>
 
@@ -40,6 +48,9 @@
       <input id="dsseqbem" name="dsseqbem" type="text" ></input>
 
       <br />
+	  
+	  <label for=""></label>
+	  
 
       <label for="nrgravam"><? echo utf8ToHtml('N&uacute;mero de registro:') ?></label>
       <input id="nrgravam" name="nrgravam" type="text" ></input>
@@ -62,11 +73,11 @@
       <label for="dsblqjud"><? echo utf8ToHtml('Bloqueado:') ?></label>
       <input id="dsblqjud" name="dsblqjud" type="text" ></input>
 
-      <br />
+      <!--<br />
 
       <label for="dsbemfin"><? echo utf8ToHtml('Descri&ccedil;&atilde;o:') ?></label>
-      <input id="dsbemfin" name="dsbemfin" type="text" ></input>
-
+      <input id="dsbemfin" name="dsbemfin" type="text" ></input>-->
+	  
       <br />
 
       <label for="dscorbem"><? echo utf8ToHtml('Cor/Classe:') ?></label>
@@ -130,7 +141,8 @@
 
   </fieldset>
 
-  <fieldset id="fsetBens" name="fsetBens" style="padding:0px; margin:0px; padding-bottom:10px;">
+ 
+  <fieldset id="fsetBens" name="fsetBens" style="padding:0px; margin:0px; padding-bottom:10px; display: none">
 
     <legend>Bens</legend>
 
@@ -149,7 +161,7 @@
         
           < count($bens); $i++){?>
 
-          <tr>
+          <tr id="<? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>">
             <td>
               <span>
                 <? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>
@@ -167,6 +179,7 @@
           
             </td>
 
+			<input type="hidden" id="nrseqbem" name="nrseqbem" value="<? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>" />
             <input type="hidden" id="nrgravam" name="nrgravam" value="<? echo getByTagName($bens[$i]->tags,'nrgravam'); ?>" />
             <input type="hidden" id="dsseqbem" name="dsseqbem" value="<? echo getByTagName($bens[$i]->tags,'dsseqbem'); ?>" />
             <input type="hidden" id="dsbemfin" name="dsbemfin" value="<? echo getByTagName($bens[$i]->tags,'dsbemfin'); ?>" />
@@ -257,7 +270,9 @@
 	<a href="#" class="botao" id="btBaixar"   onclick="validPermiss('B'); return false;">Baixar</a>
 	
 	<a href="#" class="botao" id="btLibJudicial" onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
-	<a href="#" class="botao" id="btBlocJudicial" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>																																			
+	<a href="#" class="botao" id="btBlocJudicial" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>
+
+
 												
   <a href="#" class="botao" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>

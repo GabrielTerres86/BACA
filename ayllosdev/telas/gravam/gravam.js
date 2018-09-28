@@ -675,6 +675,7 @@ function formataFormularioBens() {
     highlightObjFocus($('#frmBens'));  
 
     //rotulo
+	$('label[for="ddl_descrbem"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
     $('label[for="dtmvttel"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
     $('label[for="dsseqbem"]', "#frmBens").addClass("rotulo-linha").css({ "width": "5px" });
     $('label[for="nrgravam"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
@@ -698,6 +699,7 @@ function formataFormularioBens() {
     $('label[for="dsjustif"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
     
     // campo
+	$('#ddl_descrbem', '#frmBens').css({ 'width': '400px', 'text-align': 'left' });
     $('#dtmvttel', '#frmBens').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo(); //.addClass('data');
     $("#dsseqbem", "#frmBens").css({ 'width': '290px', 'text-align': 'left' }).desabilitaCampo();
     $('#nrgravam', '#frmBens').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '9').desabilitaCampo();
@@ -722,8 +724,15 @@ function formataFormularioBens() {
     $('#dsjustif', '#divJustificativa').desabilitaCampo();
 
     $('#frmBens').css({ 'display': 'block' });    
+	
+	$('#divRegistros').css({ 'display': 'none' });
        
     layoutPadrao();
+	
+	$('#ddl_descrbem', '#frmBens').unbind('change').bind('change', function(e){
+		var tr = $('.divRegistros table').find("[id="+ e.currentTarget.value +"]");
+		selecionaBens(tr);
+	});
 
     if ($('#cddopcao', '#frmCab').val() == 'A') {
 
@@ -1038,6 +1047,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         if((possuictr == "0" && cdsitgrv != '3')) {
 
             $('input,select','#frmBens').desabilitaCampo();
+			$('#ddl_descrbem', '#frmBens').habilitaCampo();
             //$('#btConcluir', '#divBotoesBens').css('display', 'none').unbind('click');
             //$('#btVoltar', '#divBotoesBens').focus();
             
@@ -1155,6 +1165,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         if ((possuictr == "0" && cdsitgrv != '3') || (cdsitgrv != 0 && cdsitgrv != 3)) {
 
             $('input,select', '#frmBens').desabilitaCampo();
+			$('#ddl_descrbem', '#frmBens').habilitaCampo();
             $('#btConcluir', '#divBotoesBens').css('display', 'none').unbind('click');
           
 
@@ -2394,10 +2405,6 @@ function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtre
     //Mostra mensagem de aguardo
     showMsgAguardo('Aguarde, buscando informações...');
 
-	if((tparquiv == 'TODAS' || tparquiv == 'BAIXA')  && dtrefere != '' && nrseqlot == 0 && nrdconta == 0 && nrctrpro == 0 && flcritic== 'N' && dschassi == ''){
-		tipsaida == 'PDF';
-	}
-	
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: 'POST',

@@ -95,9 +95,12 @@
 	
 	
 	function validaDados(){
-			
 		IF($GLOBALS["tparquiv"] == '' ){ 
 			exibirErro('error','Tipo de arquivo in&acute;lido.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'tparquiv\',\'frmFiltro\');',false);
+		}
+		
+		IF($GLOBALS["nrdconta"] == 0 && $GLOBALS["dschassi"] == '' && $GLOBALS["dtrefere"] == '' && $GLOBALS["nrseqlot"] == 0){ 
+			exibirErro('error','Informe pelo menos uma opção: Lote, Conta, Chassi ou Data.','Alerta - Ayllos','formataFiltroImpressao();focaCampoErro(\'nrseqlot\',\'frmFiltro\');',false);
 		}
 	}	
 		
