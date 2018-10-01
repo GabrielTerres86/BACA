@@ -177,7 +177,7 @@
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
-					<text><![CDATA[SITUAÇÃO AYLLOS]]></text>
+					<text><![CDATA[SITUAÇÃO AIMARO]]></text>
 				</staticText>
 				<staticText>
 					<reportElement uuid="3a261b86-4878-4585-bf2c-2ec56e4358ea" x="300" y="16" width="55" height="8"/>

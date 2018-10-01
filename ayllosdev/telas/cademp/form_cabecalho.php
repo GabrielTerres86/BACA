@@ -1,4 +1,4 @@
-<?php
+<?
 /*!
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : Cristian Filipe Fernandes
@@ -6,11 +6,13 @@
  * OBJETIVO     : Cabecalho para a tela CADEMP
  * --------------
  * ALTERAÇÕES   : 27/01/2014 - Melhorado o descritivo das opções (Carlos)
- *				  05/08/2014 - Inclusão da opção de Pesquisa de Empresas (Vanessa)
- *                03/07/2015 - Projeto 158 - Folha de pagamento (Andre Santos - SUPERO)
- *				  28/07/2016 - Removi o comando session_start desnecessário. SD 491425 (Carlos R.)
+				  05/08/2014 - Inclusão da opção de Pesquisa de Empresas (Vanessa)
+ *                03/07/2015 - Projeto 158 - Folha de pagamento
+ *                (Andre Santos - SUPERO)
  * ------------------------------------------------------------------------------------
  */
+
+	session_start();
 
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');

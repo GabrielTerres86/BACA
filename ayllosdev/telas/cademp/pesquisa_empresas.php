@@ -1,13 +1,16 @@
-<?php
+<? 
 /*!
  * FONTE        : pesquisa_empresas.php
  * CRIAÇÃO      : Vanessa Klein
  * DATA CRIAÇÃO : 05/08/2014 
  * OBJETIVO     : Formulário para pesquisar empresas que pode ser chamado de diferentes pontos do sistema
-	*
-	ALTERACOES     : 28/07/2016 - Removi o comando session_start desnecessário. SD 491425 (Carlos R.)
+ 
+ ALTERACOES     : 
+ 
  */	
  
+	session_start();
+	
 	// Includes para controle da session, vari&aacute;veis globais de controle, e biblioteca de fun&ccedil;&otilde;es	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");	
@@ -54,7 +57,7 @@
 														<input type="radio" name="cdtppesq" id="nomeEmpresa" checked value="1" class="radio" /> 
 														<label for="nomeEmpresa" class="radio">Nome da Empresa</label> 														
 														<input type="radio" name="cdtppesq" id="razaoSocial" value="0" class="radio" /> 
-														<label for="razaoSocial" class="radio">Raz&atilde;o Social</label>													
+														<label for="razaoSocial" class="radio">Razão Social</label>													
 																								
 														<br /><br />
 														<label for="nmdbusca" style="float:left;">Nome a pesquisar:</label>
@@ -70,16 +73,20 @@
 														<table width="100%" border="0" cellspacing="0" cellpadding="0">
 															<thead>
 																<tr>
-																    <td style="font-size:11px;width:50px">C&oacute;digo</td>  
+																    <td style="font-size:11px;width:50px">Codigo</td>  
 																	<td style="font-size:11px;width:250px">Empresa</td>
-																	<td style="font-size:11px;width:250px">Raz&atilde;o Social</td>
+																	<td style="font-size:11px;width:250px">Razao Social</td>
 																</tr>
 															</thead>
 														</table>
 													</div>
-													<div id="divConteudo" style="height:270px;"></div>
+													<div id="divConteudo" style="height:270px;">
+																													
+													</div>
+
 												</td>
 											</tr>
+																				
 										</table>																												
 									</td>
 								</tr>

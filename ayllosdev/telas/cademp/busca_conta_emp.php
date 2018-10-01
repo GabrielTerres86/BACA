@@ -1,11 +1,13 @@
-<?php 
+<? 
 /*!
  * FONTE        : busca_contas_emp.php
  * CRIAÇÃO      : Andre Santos - SUPERO
  * DATA CRIAÇÃO : 17/07/2015
  * OBJETIVO     : Tela de Pesquisa de Associados
  */	 
+?> 
 
+<?	
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -31,7 +33,7 @@
 	$retornoAposErro = 'estadoInicial();';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	$xml  = '';
@@ -55,10 +57,10 @@
 	
 	$xmlObjeto = getObjectXML($xmlResult);
 	
-	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 
-		$msgErro	= ( isset($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata) ) ? $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata : '';
-		$nmdcampo	= ( isset($xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'] : '';
+		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 
 		if ($nrdconta==0){
 			if (!empty($nmdcampo)) { $mtdErro = " $('#nmprimtl','#frmContaEmp').focus();bloqueiaFundo( $(\'#divRotina\') );"; }
@@ -66,7 +68,7 @@
 			$mtdErro = " $('#nrdconta','#frmInfEmpresa').focus();$('#nrdconta','#frmInfEmpresa').val('');$('#nmextttl','#frmInfEmpresa').val('');";			
 		}
 
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);		
 	} 
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;

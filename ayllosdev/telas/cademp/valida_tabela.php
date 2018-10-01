@@ -8,8 +8,6 @@
  *
  *                19/01/2015 - Retirando a atualizacao do campo dtfchfol pois o mesmo nao retornava registro
  *                             e substitua o valor atual da exibicao do campo (Andre Santos - SUPERO)
- *
- *				  28/07/2016 - Corrigi a utilizacao da variavel cdbccxlt. SD 491925. (Carlos R.)
  */
 	session_start();
 	require_once('../../includes/config.php');
@@ -21,22 +19,12 @@
     $cddopcao = $_POST['cddopcao'];
     
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 	
 	
 	function dadosCampos($cdacesso,$glbvars, $tpTabela =  'GENERI'){
 		
-		$cdbccxlt = ( isset($glbvars["cdbccxlt"]) ) ? $glbvars["cdbccxlt"] : '';
-		$cdcooper = ( isset($glbvars["cdcooper"]) ) ? $glbvars["cdcooper"] : '';
-		$cdagenci = ( isset($glbvars["cdagenci"]) ) ? $glbvars["cdagenci"] : '';
-		$nrdcaixa = ( isset($glbvars["nrdcaixa"]) ) ? $glbvars["nrdcaixa"] : '';
-		$cdoperad = ( isset($glbvars["cdoperad"]) ) ? $glbvars["cdoperad"] : '';
-		$dtmvtolt = ( isset($glbvars["dtmvtolt"]) ) ? $glbvars["dtmvtolt"] : '';
-		$idorigem = ( isset($glbvars["idorigem"]) ) ? $glbvars["idorigem"] : '';
-		$nmdatela = ( isset($glbvars["nmdatela"]) ) ? $glbvars["nmdatela"] : '';
-		$cdprogra = ( isset($glbvars["cdprogra"]) ) ? $glbvars["cdprogra"] : '';
-
 		if($tpTabela ==  'GENERI'){
 			$xml  = "";
 			$xml .= "<Root>";
@@ -45,15 +33,15 @@
 			$xml .= "        <Proc>Busca_tabela</Proc>";
 			$xml .= "  </Cabecalho>";
 			$xml .= "  <Dados>";
-			$xml .= "        <cdcooper>".$cdcooper."</cdcooper>";
-			$xml .= "        <cdagenci>".$cdagenci."</cdagenci>";
-			$xml .= "        <nrdcaixa>".$nrdcaixa."</nrdcaixa>";
-			$xml .= "        <cdoperad>".$cdoperad."</cdoperad>";
-			$xml .= "        <dtmvtolt>".$dtmvtolt."</dtmvtolt>";
-			$xml .= "        <idorigem>".$idorigem."</idorigem>";
-			$xml .= "        <nmdatela>".$nmdatela."</nmdatela>";
-			$xml .= "        <cdprogra>".$cdprogra."</cdprogra>";
-			$xml .= "        <cdbccxlt>".$cdbccxlt."</cdbccxlt>";
+			$xml .= "        <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+			$xml .= "        <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+			$xml .= "        <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+			$xml .= "        <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+			$xml .= "        <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+			$xml .= "        <idorigem>".$glbvars["idorigem"]."</idorigem>";
+			$xml .= "        <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+			$xml .= "        <cdprogra>".$glbvars["cdprogra"]."</cdprogra>";
+			$xml .= "        <cdbccxlt>".$glbvars["cdbccxlt"]."</cdbccxlt>";
 			$xml .= '       <nmsistem>CRED</nmsistem>';
 			$xml .= '       <tptabela>GENERI</tptabela>';
 			$xml .= '       <cdempres>00</cdempres>';
@@ -69,15 +57,15 @@
 			$xml .= "        <Proc>Busca_tabela</Proc>";
 			$xml .= "  </Cabecalho>";
 			$xml .= "  <Dados>";
-			$xml .= "        <cdcooper>".$cdcooper."</cdcooper>";
-			$xml .= "        <cdagenci>".$cdagenci."</cdagenci>";
-			$xml .= "        <nrdcaixa>".$nrdcaixa."</nrdcaixa>";
-			$xml .= "        <cdoperad>".$cdoperad."</cdoperad>";
-			$xml .= "        <dtmvtolt>".$dtmvtolt."</dtmvtolt>";
-			$xml .= "        <idorigem>".$idorigem."</idorigem>";
-			$xml .= "        <nmdatela>".$nmdatela."</nmdatela>";
-			$xml .= "        <cdprogra>".$cdprogra."</cdprogra>";
-			$xml .= "        <cdbccxlt>".$cdbccxlt."</cdbccxlt>";
+			$xml .= "        <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+			$xml .= "        <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+			$xml .= "        <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+			$xml .= "        <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+			$xml .= "        <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+			$xml .= "        <idorigem>".$glbvars["idorigem"]."</idorigem>";
+			$xml .= "        <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+			$xml .= "        <cdprogra>".$glbvars["cdprogra"]."</cdprogra>";
+			$xml .= "        <cdbccxlt>".$glbvars["cdbccxlt"]."</cdbccxlt>";
 			$xml .= '       <nmsistem>CRED</nmsistem>';
 			$xml .= '       <tptabela>USUARI</tptabela>';
 			$xml .= '       <cdempres>'.$_POST['cdempres'].'</cdempres>';
@@ -97,11 +85,11 @@
 		$xmlObj = getObjectXML($xmlResult);
 		
 		
-		if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','',false);
 		}
 
-		$registros = ( isset($xmlObj->roottag->tags[0]->tags) ) ? $xmlObj->roottag->tags[0]->tags : array();
+		$registros = $xmlObj->roottag->tags[0]->tags;
 		
 		return $registros;
 	}
@@ -171,7 +159,7 @@
 	if($avisos){
 		$avisos = '<p align="left">'.$avisos.'</p>';
 		echo "blockBackground();";
-		echo "showError('error', '{$avisos}','Alerta - Ayllos','unblockBackground()');";
+		echo "showError('error', '{$avisos}','Alerta - Aimaro','unblockBackground()');";
 	}
 
 	echo "

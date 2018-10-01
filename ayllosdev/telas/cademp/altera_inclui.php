@@ -177,19 +177,19 @@
     $xmlObj = getObjectXML($xmlResult);
 
     if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-        exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+        exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','',false);
         die;
     }
     if(isset($xmlObj->roottag->tags[0]->attributes['DSCRITIC'])){
         if(trim($xmlObj->roottag->tags[0]->attributes['DSCRITIC'])){
             if(trim($xmlObj->roottag->tags[0]->attributes['DSCRITIC'] == 'Dia Fechamento Folha deve ser entre 1 e 28.')){
-            exibirErro('error',$xmlObj->roottag->tags[0]->attributes['DSCRITIC'],'Alerta - Ayllos','focaCampoErro(\'dtfchfol\', \'frmOpcao\')',false);
+            exibirErro('error',$xmlObj->roottag->tags[0]->attributes['DSCRITIC'],'Alerta - Aimaro','focaCampoErro(\'dtfchfol\', \'frmOpcao\')',false);
             die;
             }else if(trim($xmlObj->roottag->tags[0]->attributes['DSCRITIC'] == "Codigo da Empresa deve ser maior que '0'.")){
-                exibirErro('error',$xmlObj->roottag->tags[0]->attributes['DSCRITIC'],'Alerta - Ayllos','focaCampoErro(\'cdempfol\', \'frmOpcao\')',false);
+                exibirErro('error',$xmlObj->roottag->tags[0]->attributes['DSCRITIC'],'Alerta - Aimaro','focaCampoErro(\'cdempfol\', \'frmOpcao\')',false);
                 die;
             }else{
-                exibirErro('error',$xmlObj->roottag->tags[0]->attributes['DSCRITIC'],'Alerta - Ayllos','',false);
+                exibirErro('error',$xmlObj->roottag->tags[0]->attributes['DSCRITIC'],'Alerta - Aimaro','',false);
                 die;
             }
         }
@@ -271,7 +271,7 @@
     $xmlObj = getObjectXML($xmlResult);
 
     if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-        exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','estadoInicial();',false);
+        exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','estadoInicial();',false);
         die;
     }
 
@@ -346,16 +346,16 @@
     }
 
     if((strlen(trim($ddmesnov)) == 0) || ($ddmesnov <= 0 || $ddmesnov > 28)){
-        exibirErro('error','Dia inv&aacute;lido!','Alerta - Ayllos','focaCampoErro(\'ddmesnov\', \'frmInfTarifa\')',false);
+        exibirErro('error','Dia inv&aacute;lido!','Alerta - Aimaro','focaCampoErro(\'ddmesnov\', \'frmInfTarifa\')',false);
         die;
     }else if((strlen(trim($dtlimdeb)) == 0) || ($dtlimdeb <= 0 || $dtlimdeb > 28)){
-        exibirErro('error','Dia inv&aacute;lido!','Alerta - Ayllos','focaCampoErro(\'dtlimdeb\', \'frmInfEmprestimo\')',false);
+        exibirErro('error','Dia inv&aacute;lido!','Alerta - Aimaro','focaCampoErro(\'dtlimdeb\', \'frmInfEmprestimo\')',false);
         die;
     }else if((strlen(trim($ddpgtmes)) == 0) || ($ddpgtmes <= 0 || $ddpgtmes > 28)){
-        exibirErro('error','Dia inv&aacute;lido!','Alerta - Ayllos','focaCampoErro(\'ddpgtmes\', \'frmInfTarifa\')',false);
+        exibirErro('error','Dia inv&aacute;lido!','Alerta - Aimaro','focaCampoErro(\'ddpgtmes\', \'frmInfTarifa\')',false);
         die;
     }else if((strlen(trim($ddpgthor)) == 0) || ($ddpgthor <= 0 || $ddpgthor > 28)){
-        exibirErro('error','Dia inv&aacute;lido!','Alerta - Ayllos','focaCampoErro(\'ddpgthor\', \'frmInfTarifa\')',false);
+        exibirErro('error','Dia inv&aacute;lido!','Alerta - Aimaro','focaCampoErro(\'ddpgthor\', \'frmInfTarifa\')',false);
         die;
     }
 
