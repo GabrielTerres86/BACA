@@ -1330,21 +1330,21 @@ function formataTabelaBens() {
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 
-    $('table > tbody > tr', divRegistro).each(function (i) {
+    // $('table > tbody > tr', divRegistro).each(function (i) {
 
-        if ($(this).hasClass('corSelecao')) {
+        // if ($(this).hasClass('corSelecao')) {
 
-            selecionaBens($(this));
+            // selecionaBens($(this));
 
-        }
+        // }
 
-    });
+    // });
 
     //seleciona o lancamento que é clicado
-    $('table > tbody > tr', divRegistro).click(function () {
+    // $('table > tbody > tr', divRegistro).click(function () {
 
-        selecionaBens($(this));
-    });
+        // selecionaBens($(this));
+    // });
 
     return false;
 
@@ -1667,7 +1667,10 @@ function montaFormFiltro() {
             hideMsgAguardo();
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
-
+					if($('#cddopcao', '#frmCab').val() == 'S'){
+						cddopcao = 'S';
+					}
+					
                     $('#divFiltro').html(response);
                     return false;
                 } catch (error) {
@@ -2242,6 +2245,7 @@ function baixaManual(idseqbem,tpctrpro) {
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
     var nrgravam = $("#nrgravam", "#frmBens").val();
     var dsjustif = $("#dsjustif", "#frmBens").val().replace(/\r\n/g, ' ');
+	idseqbem = $('#ddl_descrbem', '#frmBens').val();
     
     $('input,select,textarea', '#frmBens').removeClass('campoErro');
 
@@ -2322,6 +2326,7 @@ function buscaBens(nriniseq, nrregist) {
                 try {
 
                     $('#divTabela').html(response);
+					$('#ddl_descrbem').trigger('change');
 					mostrabutton();
                     return false;
                 } catch (error) {
@@ -2387,6 +2392,9 @@ function mostrabutton() {
 	}else if (opcaoButton == "X" ) {	
 		$('#dsjustif', '#frmBens').habilitaCampo();
 		$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
+	}else if (opcaoButton == 'S'){
+		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });
+		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline' });	
 	}
 	
 }
