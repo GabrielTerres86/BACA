@@ -1572,8 +1572,7 @@ function controlaVoltar(ope,tpconsul) {
 				
 				
 				$('#dsjustif', '#divJustificativa').desabilitaCampo();
-				dtmvttel
-				opcaoButton = 'C';
+				opcaoButton = opcaoButton == 'S' ? opcaoButton : 'C';
 				validPermiss(opcaoButton);				
 			}else{
 				$('input[type="text"]', '#frmFiltro').limpaFormulario();
@@ -2132,7 +2131,7 @@ function cancelarGravame(idseqbem, tpctrpro) {
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
     var tpcancel = $("#tpcancel", "#frmFiltro").val();
-	var dsjustif = $("#dsjustif", "#frmBens").val();
+	var dsjustif = $("#dsjustif", "#frmBens").val().replace(/\r\n/g, ' ');;
     
     $('input,select', '#frmBens').removeClass('campoErro');
 
@@ -2190,7 +2189,7 @@ function blqLibJudicial(idseqbem, tpctrpro) {
     var ufdplaca = $("#ufdplaca", "#frmBens").val();
     var nrdplaca = $("#nrdplaca", "#frmBens").val();
     var nrrenava = $("#nrrenava", "#frmBens").val();
-	var dsjustif = $("#dsjustif", "#frmBens").val();
+	var dsjustif = $("#dsjustif", "#frmBens").val().replace(/\r\n/g, ' ');;
    
     $('input,select', '#frmBens').removeClass('campoErro');
 
