@@ -261,7 +261,7 @@
     <input type="hidden" id="vlbtBaixar" 		name="vlbtBaixar" 		value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'B',false); ?>" />
     <input type="hidden" id="vlbtCancelar" 		name="vlbtCancelar" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'X',false); ?>" />
 	<input type="hidden" id="vlbtBaixaManual" 	name="vlbtBaixaManual" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'Z',false); ?>" />
-	
+
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" 		onclick="controlaVoltar('5'); 		return false;">Voltar</a>
 	

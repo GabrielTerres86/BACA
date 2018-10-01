@@ -1495,14 +1495,9 @@ function ValidAcesso(opcao) {
             if ($('#vlbtBlocJudicial').val() != '') {
 				showError("error",$('#vlbtBlocJudicial').val(),'Alerta - Ayllos','',false);
 				return false;
-			}			               
-        break;		
-		case "S":
-            if ($('#vlbtAltBensSubsA').val() != '') {
-				showError("error",$('#vlbtAltBensSubsA').val(),'Alerta - Ayllos','',false);
-				return false;
-			}			               
+			}			               		               
         break;
+		
 		case "Z":
             if ($('#vlbtBaixaManual').val() != '') {
 				showError("error",$('#vlbtBaixaManual').val(),'Alerta - Ayllos','',false);
@@ -1650,7 +1645,7 @@ function montaFormFiltro() {
 	}else{
 		$('#btConsultar', '#divBotoes').css({ 'display': 'none' });
 	}
-		
+	
     showMsgAguardo("Aguarde ...");
 
     //Requisição para montar o form correspondente a opção escolhida
