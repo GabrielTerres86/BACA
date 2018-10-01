@@ -629,6 +629,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               ,tdb.vltitulo
               ,tdb.vlsldtit
               ,bdt.flverbor
+			  ,tdb.vlmratit
+              ,tdb.vlpagmra
               ,COUNT(1)      OVER (PARTITION BY bdt.nrborder,cob.flgregis) qtd_max
               ,ROW_NUMBER () OVER (PARTITION BY bdt.nrborder,cob.flgregis
                                        ORDER BY bdt.nrborder,cob.flgregis) seq_atu
