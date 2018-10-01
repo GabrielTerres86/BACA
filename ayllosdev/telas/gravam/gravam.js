@@ -106,9 +106,9 @@ function formataCabecalho() {
             return false;
         }
 
-		if (!ValidAcesso(cddopcao)){
-			return false;
-		}
+		// if (!ValidAcesso(cddopcao)){
+			// return false;
+		// }
 		
         montaFormFiltro();
 
@@ -1642,6 +1642,8 @@ function montaFormFiltro() {
 	
 	if (cddopcao == 'I'){
 		$('#btConsultar', '#divBotoes').css({ 'display': 'inline' });
+	}else if(cddopcao == 'S'){
+		cddopcao = 'C';
 	}else{
 		$('#btConsultar', '#divBotoes').css({ 'display': 'none' });
 	}
