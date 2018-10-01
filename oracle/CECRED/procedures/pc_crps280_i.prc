@@ -21,7 +21,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 29/08/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 28/09/2018
 
      Dados referentes ao programa:
 
@@ -374,6 +374,8 @@ BEGIN
                  29/08/2018 - P450 - Ajuste para Novo Grupo Economico (Guilherme/AMcom)
                               P450 - Acréscimo do valor dos juros +60 aos saldos devedores para a modalidade 0101 (ADP)
                               nos relatórios 227 e 354. (Reginaldo/AMcom - P450)
+
+                 28/09/2018 - P450 - Ajuste do vliofmes dentro das tabelas do paralelismo (Guilherme/AMcom)
 
   ............................................................................. */
 
@@ -3083,7 +3085,9 @@ BEGIN
                      vr_tab_crapris(vr_indice_crapris).qtdiaatr || ds_character_separador ||
                      vr_tab_crapris(vr_indice_crapris).dsinfaux || ds_character_separador ||
                      vr_tab_crapris(vr_indice_crapris).tpemprst || ds_character_separador ||
-                     vr_tab_crapris(vr_indice_crapris).fleprces || ds_character_separador;
+                     vr_tab_crapris(vr_indice_crapris).fleprces || ds_character_separador ||
+                     vr_tab_crapris(vr_indice_crapris).vliofmes || ds_character_separador ||
+                     vr_tab_crapris(vr_indice_crapris).inprejuz || ds_character_separador ;
 
         pc_popular_tbgen_batch_rel_wrk(pr_cdcooper     => pr_cdcooper,
                                        pr_nmtabmemoria => 'VR_TAB_CRAPRIS',
@@ -3130,6 +3134,8 @@ BEGIN
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 24) + 1, instr(tab.dsxml, '#', 1, 25) - instr(tab.dsxml, '#', 1, 24) - 1) dsinfaux,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 25) + 1, instr(tab.dsxml, '#', 1, 26) - instr(tab.dsxml, '#', 1, 25) - 1) tpemprst,
                substr(tab.dsxml, instr(tab.dsxml, '#', 1, 26) + 1, instr(tab.dsxml, '#', 1, 27) - instr(tab.dsxml, '#', 1, 26) - 1) fleprces,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 27) + 1, instr(tab.dsxml, '#', 1, 28) - instr(tab.dsxml, '#', 1, 27) - 1) vliofmes,
+               substr(tab.dsxml, instr(tab.dsxml, '#', 1, 28) + 1, instr(tab.dsxml, '#', 1, 29) - instr(tab.dsxml, '#', 1, 28) - 1) inprejuz,
                tab.dschave vr_indice
           from (select wrk.dscritic dsxml,
                        wrk.dschave
@@ -3170,6 +3176,8 @@ BEGIN
           vr_tab_crapris(r_crapris.vr_indice).dsinfaux := r_crapris.dsinfaux;
           vr_tab_crapris(r_crapris.vr_indice).tpemprst := r_crapris.tpemprst;
           vr_tab_crapris(r_crapris.vr_indice).fleprces := r_crapris.fleprces;
+          vr_tab_crapris(r_crapris.vr_indice).vliofmes := r_crapris.vliofmes;
+          vr_tab_crapris(r_crapris.vr_indice).inprejuz := r_crapris.inprejuz;
           --vr_tab_dados_epr(r_dados_epr.vr_indice).vlindice:= r_dados_epr.vr_indice;
         END LOOP;
       EXCEPTION
@@ -4826,11 +4834,11 @@ BEGIN
                                                       ,pr_dtefetiv => pr_rw_crapdat.dtmvtolt                        -- Data da efetivacao do emprestimo.
                                                       ,pr_qtpreemp => 1                                             -- Quantidade de prestacoes.
                                                       ,pr_vlemprst => vr_vldivida                                   -- Valor emprestado.
-                                                      ,pr_vlsdeved => vr_vldivida + vr_tab_crapris(vr_des_chave_crapris).vliofmes                                 -- Saldo devedor
+                                                      ,pr_vlsdeved => vr_vldivida + NVL(vr_tab_crapris(vr_des_chave_crapris).vliofmes,0)   -- Saldo devedor
                                                       ,pr_vljura60 => vr_tab_crapris(vr_des_chave_crapris).vljura60 -- Juros 60 dias
                                                       ,pr_vlpreemp => vr_tab_crapris(vr_des_chave_crapris).vlpreemp -- Valor da prestacao
                                                       ,pr_qtpreatr => vr_tab_crapris(vr_des_chave_crapris).nroprest -- Qtd. Prestacoes
-                                                      ,pr_vlpreapg => vr_vldivida                                   -- Valor a regularizar
+                                                      ,pr_vlpreapg => vr_vldivida + NVL(vr_tab_crapris(vr_des_chave_crapris).vliofmes,0)   -- Valor a regularizar
                                                       ,pr_vldespes => vr_vlpreatr                                   -- Valor despesas
                                                       ,pr_vlperris => vr_percentu                                   -- Valor percentual risco
                                                       ,pr_nivrisat => vr_dsnivris                                   -- Risco atual
