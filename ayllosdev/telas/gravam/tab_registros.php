@@ -37,7 +37,7 @@
       <select id="ddl_descrbem" name="ddl_descrbem" >
 	  <?foreach($bens as &$bem)
 	  {?>
-		<option value="<? echo getByTagName($bem->tags,'nrseqbem' );?>"><? echo getByTagName($bem->tags,'nrseqbem');?> - <? echo getByTagName($bem->tags,'dsbemfin' );?></option>
+		<option value="<? echo getByTagName($bem->tags,'idseqbem' );?>"><? echo getByTagName($bem->tags,'nrseqbem');?> - <? echo getByTagName($bem->tags,'dsbemfin' );?></option>
 	  <?}?>
 	  </select>
 	  
@@ -161,7 +161,7 @@
         
           < count($bens); $i++){?>
 
-          <tr id="<? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>">
+          <tr id="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>">
             <td>
               <span>
                 <? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>
