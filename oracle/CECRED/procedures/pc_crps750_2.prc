@@ -36,7 +36,9 @@ BEGIN
                            os acordos, conforme chamado 807093. (Kelvin).
 
               09/07/2018 - Deverá buscar novamente o saldo em conta e utilizar o 
-                           valor final do saldo para pagar o boleto (Renato Darosci - Supero)
+                           valor final do saldo para pagar o boleto (Renato Darosci - Supero)	
+
+              23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
 
               13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).		
               
@@ -137,10 +139,11 @@ BEGIN
          AND cob.incobran = 0
          AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                      (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                        FROM tbepr_cobranca cde
+                        FROM tbrecup_cobranca cde
                        WHERE cde.cdcooper = pr_cdcooper
                          AND cde.nrdconta = pr_nrdconta
-                         AND cde.nrctremp = pr_nrctremp);
+                         AND cde.nrctremp = pr_nrctremp
+                         AND cde.tpproduto = 0);
     rw_cde cr_cde%ROWTYPE;
 
     -- Cursor para verificar se existe algum boleto pago pendente de processamento
@@ -155,10 +158,11 @@ BEGIN
          AND cob.dtdpagto = pr_dtmvtolt
          AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                    (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
-                      FROM tbepr_cobranca cde
+                      FROM tbrecup_cobranca cde
                      WHERE cde.cdcooper = pr_cdcooper
                        AND cde.nrdconta = pr_nrdconta
-                       AND cde.nrctremp = pr_nrctremp)
+                       AND cde.nrctremp = pr_nrctremp
+                       AND cde.tpproduto = 0)
          AND ret.cdcooper = cob.cdcooper
          AND ret.nrdconta = cob.nrdconta
          AND ret.nrcnvcob = cob.nrcnvcob
@@ -277,7 +281,7 @@ BEGIN
     -- Debitador Unico	
     vr_flultexe     NUMBER;
     vr_qtdexec      NUMBER;	
-  ----------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
   
     -- Procedure para limpar os dados das tabelas de memoria
     PROCEDURE pc_limpa_tabela IS
@@ -392,20 +396,20 @@ BEGIN
       vr_flultexe := 1;	
       vr_qtdexec  := 1;	  
     ELSE	
-      --> Verificar/controlar a execução. 
-      SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
-                                      ,pr_cdtipope  => 'C'                         --> Tipo de operacao I-incrementar e C-Consultar
-                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
-                                      ,pr_cdprogra  => substr(vr_cdprogra,1,7)     --> Codigo do programa                                  
-                                      ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
-                                      ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
-                                      ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
-                                      ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+    --> Verificar/controlar a execução. 
+    SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
+                                    ,pr_cdtipope  => 'C'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
+                                    ,pr_cdprogra  => substr(vr_cdprogra,1,7)     --> Codigo do programa                                  
+                                    ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                    ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                    ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                    ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
 
-      IF nvl(vr_cdcritic,0) > 0 OR
-         TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_saida; 
-      END IF;
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_saida; 
+    END IF;
     END IF; -- pr_cdcooper = 3.
 	
    
