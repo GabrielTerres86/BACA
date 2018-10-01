@@ -819,7 +819,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			     01/08/2018 - Incluir novo campo liquidOpCredAtraso na esteira
                               Diego Simas (AMcom) 
 
-                 21/11/2017 - Inclusão do parametro pr_flgpreap, Prj. 402 (Jean Michel)             
+                 21/11/2017 - Inclusão do parametro pr_flgpreap, Prj. 402 (Jean Michel)   
+				 
+				 26/09/2018 - Incluso coalesce ao atualizar crawpepr campo  dsratori  
+				              Alcemir Mout's - INC0023901.
      ..............................................................................*/
     DECLARE
       CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
