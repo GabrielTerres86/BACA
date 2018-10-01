@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 20/09/2018
+     Data    : Maio/2001                       Ultima atualizacao: 01/10/2018
      
      Dados referentes ao programa:
 
@@ -323,6 +323,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                             - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
 
                  20/09/2018 - Considerar o valor dos juros de mora no valor da divida do desconto de titulos. (Paulo Penteado GFT)
+
+                 01/10/2018 - P450 - Ajuste do juros60 nos Vencimentos/VRI (Guilherme/AMcom)
 
   ............................................................................ */
 
@@ -5475,6 +5477,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
               TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60(pr_cdcooper => pr_cdcooper
                                                              , pr_nrdconta => rw_crapass.nrdconta
                                                              , pr_qtdiaatr => nvl(vr_qtdiaatr, 0)
+                                                         , pr_tppesqui => 0 --> 1|Online  0|Batch
                                                              , pr_vlsld59d => vr_vlsld59d
                                                              , pr_vljuro60 => vr_vljuro60
                                                              , pr_cdcritic => vr_cdcritic
