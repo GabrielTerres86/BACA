@@ -587,12 +587,19 @@ DO WHILE TRUE:
                          DO:
                            IF tel_dsorige <> "INTRANET" THEN
                              DO:
-                            aux_query = aux_query + "AND craplgm.dsorigem = '" +
-                                        STRING(tel_dsorige) + "' ".
+                               IF tel_dsorige = "AIMARO" THEN
+                                 DO:
+                                   aux_query = aux_query + "AND CAN-DO('AYLLOS,AIMARO', craplgm.dsorigem)".
+                                 END.
+                                ELSE
+                                 DO:
+                                   aux_query = aux_query + "AND craplgm.dsorigem = '" +
+                                     STRING(tel_dsorige) + "' ".
+                                 END.       
                              END.
                            ELSE
                              DO:
-                               aux_query = aux_query + "AND CAN-DO('INTRANET,AYLLOS WEB','AIMARO WEB', craplgm.dsorigem)".
+                               aux_query = aux_query + "AND CAN-DO('INTRANET,AYLLOS WEB,AIMARO WEB', craplgm.dsorigem)".
                              END.
                          END.
 

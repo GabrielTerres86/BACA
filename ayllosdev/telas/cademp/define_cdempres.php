@@ -31,10 +31,10 @@
 	$cdprogra = ( isset($glbvars["cdprogra"]) ) ? $glbvars["cdprogra"] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
-    $nmdatela = isset($_POST['nmdatela']) ? $glbvars["nmdatela"] : 'AYLLOSWEB';
+    $nmdatela = isset($_POST['nmdatela']) ? $glbvars["nmdatela"] : 'AIMAROWEB'; /*Alterações Marcas 01/10/2018*/
 
 	$xml  = '';
 	$xml .= '<Root>';
@@ -62,7 +62,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= ( isset($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata) ) ? $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata : '';
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
 	}
 	
 	$registros = ( isset($xmlObjeto->roottag->tags[0]->tags) ) ? $xmlObjeto->roottag->tags[0]->tags : array();
