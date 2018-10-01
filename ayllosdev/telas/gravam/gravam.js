@@ -712,7 +712,8 @@ function formataFormularioBens() {
     $('#dschassi', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '20').addClass('alphanum');
     $('#tpchassi', '#frmBens').css({ 'width': '45px', 'text-align': 'right' }).desabilitaCampo();
     $('#ufdplaca', '#frmBens').css({ 'width': '45px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '2').addClass('alphanum');
-    $('#nrdplaca', '#frmBens').css({ 'width': '100px' }).desabilitaCampo().attr('maxlength', '8').addClass('placa');
+    $('#nrdplaca', '#frmBens').css({ 'width': '100px' }).desabilitaCampo().attr('maxlength', '7').addClass('alphanum');;
+	// $('#nrdplaca', '#frmBens').setMask('INTEGER' ,'9999999','','');
     $('#uflicenc', '#frmBens').css({ 'width': '45px', 'text-align': 'left' }).desabilitaCampo();
     $('#nrrenava', '#frmBens').css({ 'width': '110px', 'text-align': 'right' }).desabilitaCampo().attr('maxlength', '25').addClass('renavan');
     $('#nranobem', '#frmBens').css({ 'width': '50px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
@@ -1587,7 +1588,7 @@ function controlaVoltar(ope,tpconsul) {
         break;
 		case '6':
 		$('input[type="text"]', '#frmFiltro').limpaFormulario();
-		$('#divDados').html('').css('display', 'none');
+		$('#divDados').html('');
 		
 		formataFiltroImpressao();
 		
