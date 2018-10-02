@@ -35,7 +35,7 @@
 
 	$dscatbem = (isset($_POST['dscatbem'])) ? $_POST['dscatbem'] : '';
 	$dsbemfin = (isset($_POST['dsbemfin'])) ? $_POST['dsbemfin'] : '';
-	$vlmerbem = (isset($_POST['vlmerbem'])) ? $_POST['vlmerbem'] : '';
+	//$vlmerbem = (isset($_POST['vlmerbem'])) ? $_POST['vlmerbem'] : '';
 	$idcatbem = (isset($_POST['idcatbem'])) ? $_POST['idcatbem'] : '';
 	$tpchassi = (isset($_POST['tpchassi'])) ? $_POST['tpchassi'] : '';
 	$dschassi = (isset($_POST['dschassi'])) ? $_POST['dschassi'] : '';
@@ -44,10 +44,16 @@
 	$nrrenava = (isset($_POST['nrrenava'])) ? $_POST['nrrenava'] : '';
 	$nranobem = (isset($_POST['nranobem'])) ? $_POST['nranobem'] : '';
 	$nrmodbem = (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : '';
-	$nrcpfbem = (isset($_POST['nrcpfbem'])) ? $_POST['nrcpfbem'] : '';
+	//$nrcpfbem = (isset($_POST['nrcpfbem'])) ? $_POST['nrcpfbem'] : '';
 	$nomeform = (isset($_POST['nomeform'])) ? $_POST['nomeform'] : '';
 	$dstipbem = (isset($_POST['dstipbem'])) ? $_POST['dstipbem'] : '';
 	$vlemprst = (isset($_POST['vlemprst'])) ? $_POST['vlemprst'] : '';
+
+	$dsmarbem = (isset($_POST['dsmarbem'])) ? $_POST['dsmarbem'] : '';
+	$vlrdobem = (isset($_POST['vlrdobem'])) ? $_POST['vlrdobem'] : '';
+	$vlfipbem = (isset($_POST['vlfipbem'])) ? $_POST['vlfipbem'] : '';
+	$nrcpfcgc = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : '';
+	$dstpcomb = (isset($_POST['dstpcomb'])) ? $_POST['dstpcomb'] : '';
 
 	$dscatbem = ( $dscatbem == 'null' ) ? '' : $dscatbem ;
 	$tpchassi = ( $tpchassi == 'null' ) ? '' : $tpchassi ;
@@ -55,7 +61,10 @@
 	$ufdplaca = ( $ufdplaca == 'null' ) ? '' : $ufdplaca ;
 	$uflicenc = ( $uflicenc == 'null' ) ? '' : $uflicenc ;
 	$dstipbem = ( $dstipbem == 'null' ) ? '' : $dstipbem ;
-	
+
+	$nrcpfbem = $nrcpfcgc;
+	$vlmerbem = $vlrdobem;
+
 	// Monta o xml de requisição
 	$xml .= "<Root>";
 	$xml .= "	<Cabecalho>";
@@ -91,6 +100,13 @@
 	$xml .= "		<nrmodbem>".$nrmodbem."</nrmodbem>";
 	$xml .= "		<nrcpfbem>".$nrcpfbem."</nrcpfbem>";
 	$xml .= "		<vlemprst>".$vlemprst."</vlemprst>";
+
+	$xml .= "		<dsmarbem>".$dsmarbem."</dsmarbem>";
+	$xml .= "		<vlrdobem>".$vlrdobem."</vlrdobem>";
+	$xml .= "		<vlfipbem>".$vlfipbem."</vlfipbem>";
+	$xml .= "		<nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+	$xml .= "		<dstpcomb>".$dstpcomb."</dstpcomb>";
+
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 
@@ -122,8 +138,8 @@
 			$metodo .= "pedeSenhaCoordenador(2,'".addslashes(addslashes(addslashes($nmfuncao)))."','');";
 		}else{
 			$metodo .= addslashes($nmfuncao);
-		}	
-		exibirErro('inform',$xmlObj->roottag->tags[0]->attributes['DSMENSAG'],'Alerta - Ayllos',$metodo,false);		
+		}
+		exibirErro('inform',$xmlObj->roottag->tags[0]->attributes['DSMENSAG'],'Alerta - Ayllos',$metodo,false);
 	}else{
 		echo $nmfuncao;
 	}
