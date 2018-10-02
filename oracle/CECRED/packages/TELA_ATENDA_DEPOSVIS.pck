@@ -1179,13 +1179,14 @@ DECLARE
   vr_vliofprj              NUMBER := 0;
   vr_dtprejuz              DATE;
 
-	vr_tab_saldos  EXTR0001.typ_tab_saldos;
-	vr_tab_erro    GENE0001.typ_tab_erro;
-	vr_vlsldisp    NUMBER;  
-	vr_index_saldo INTEGER; 
-	vr_des_reto    VARCHAR2(2000);
-	vr_dscritic    crapcri.dscritic%TYPE;
-	vr_exc_erro    EXCEPTION;
+  vr_tab_saldos  EXTR0001.typ_tab_saldos;
+  vr_tab_erro    GENE0001.typ_tab_erro;
+  vr_vlsldisp    NUMBER;  
+  vr_index_saldo INTEGER; 
+  vr_des_reto    VARCHAR2(2000);
+  vr_dscritic    crapcri.dscritic%TYPE;
+  vr_exc_erro    EXCEPTION;
+  vr_tipo_busca  VARCHAR2(1);
 
   vr_exc_saldo_indisponivel EXCEPTION;  --> Exceção para o caso de saldo indisponível na base de dados
   vr_qtddiaatr INTEGER;                 --> Quantidade de dias de atraso da conta
