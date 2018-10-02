@@ -14,13 +14,6 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0007 AS
   -- Objetivo  : Manter as rotinas específica do processo de Captação e
   --             Custódia das Aplicações junto ao B3
   -- 
-  -- Alterações: 21/09/2018 - Ajuste na query da pc_gera_arquivos_envio, incluindo novo índice
-  --                        - Alterar nome dos arquivos de conciliação recebidos da B3, incluindo
-  --                          o horário no final do nome, pois os nomes não são únicos e ocorria 
-  --                          perda de arquivos
-  --                        - Remover o tempo de espera para o envio dos arquivos gerados. Passa
-  --                          a considerar como processados os arquivos quando são colocados na 
-  --                          pasta envia. (Daniel - Envolti)
   -- ----------------------------------------------------------------------------------- 
   
   -- Retornar tipo da Aplicação enviada
@@ -2011,62 +2004,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     DECLARE
       -- Busca dos lançamentos ainda não gerados em arquivos
       CURSOR cr_lctos IS        
-        select lct.*,
-               count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
-               row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
-          from (
+        SELECT lct.*
+               ,Count (1)
+                  OVER (PARTITION BY lct.cdcooper
+                                    ,lct.idtipo_arquivo
+                                    ,lct.dtregistro) qtregis
+               ,ROW_NUMBER ()
+                  OVER (PARTITION BY lct.cdcooper
+                                    ,lct.idtipo_arquivo
+                                    ,lct.dtregistro
+                            ORDER BY lct.cdcooper
+                                    ,lct.idtipo_arquivo
+                                    ,lct.dtregistro) nrseqreg
+          FROM (
                 -- Registros ligados a RDC PRé e Pós
-                select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
-                       rda.cdcooper,
-                       rda.nrdconta,
-                       rda.nraplica,
-                       0 cdprodut,
-                       lct.*
-                  from craprda                   rda,
-                       tbcapt_custodia_aplicacao apl,
-                       tbcapt_custodia_lanctos   lct
-                 where lct.idsituacao in (0, 2) -- Pendente de Envio ou Re-envio
-                   and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PRé e Pós
-                   and rda.idaplcus = apl.idaplicacao
-                union
+                SELECT rda.cdcooper
+                      ,rda.nrdconta
+                      ,rda.nraplica
+                      ,0 cdprodut
+                      ,lct.*
+                  FROM tbcapt_custodia_lanctos   lct
+                      ,tbcapt_custodia_aplicacao apl
+                      ,craprda                   rda
+                 WHERE lct.idaplicacao = apl.idaplicacao
+                   AND apl.idaplicacao = rda.idaplcus
+                   AND apl.tpaplicacao IN(1,2) -- RDC PRé e Pós
+                UNION
                 -- Registros ligados a novo produto de Captação
-                select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
-                       rac.cdcooper,
-                       rac.nrdconta,
-                       rac.nraplica,
-                       rac.cdprodut,
-                       lct.*
-                  from craprac                   rac,
-                       tbcapt_custodia_aplicacao apl,
-                       tbcapt_custodia_lanctos   lct
-                 where lct.idsituacao in (0, 2) -- Pendente de Envio ou Re-envio
-                   and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pré e Pós
-                   and rac.idaplcus = apl.idaplicacao
+                SELECT rac.cdcooper
+                      ,rac.nrdconta
+                      ,rac.nraplica
+                      ,rac.cdprodut
+                      ,lct.*              
+                  FROM tbcapt_custodia_lanctos   lct
+                      ,tbcapt_custodia_aplicacao apl
+                      ,craprac                   rac
+                 WHERE lct.idaplicacao = apl.idaplicacao
+                   AND apl.idaplicacao = rac.idaplcus
+                   AND apl.tpaplicacao in(3,4) -- PCAPTA Pré e Pós
                ) lct
-         WHERE lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
+         WHERE lct.idsituacao    in(0,2) -- Pendente de Envio ou Re-envio
+           AND lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
            -- Não pode haver arquivos criados para este idLançamento
            -- ou caso existam, a data de criação deve ser inferior
-           -- ao ultimo retorno deste, pois isso significa que é uma
-           -- solicitação de Reenvio
-           and not exists (select 1
-                             from tbcapt_custodia_arquivo      arq,
-                                  tbcapt_custodia_conteudo_arq cont
-                            where arq.idarquivo = cont.idarquivo
-                              and cont.idlancamento = lct.idlancamento
-                              and (lct.idsituacao = 0 or arq.dtcriacao > lct.dtretorno))
+           -- ao ultimo retorno deste, pois isso significa que é uma solicita-
+           -- ção de Reenvio
+           AND NOT EXISTS(SELECT 1
+                            FROM tbcapt_custodia_arquivo arq
+                                ,tbcapt_custodia_conteudo_arq cont
+                           WHERE arq.idarquivo = cont.idarquivo
+                             AND cont.idlancamento = lct.idlancamento
+                             AND (lct.idsituacao = 0 OR arq.dtcriacao > lct.dtretorno))
            -- Se este possui registros de origem, os registros de origem devem 
            -- ter gerado Numero CETIP e estarem OK 
-           and (   lct.idlancto_origem is null
-                or exists (select 1
-                             from tbcapt_custodia_lanctos lctori
-                            where lctori.idlancamento = lct.idlancto_origem
-                              and lctori.idsituacao = 8
-                              and lctori.cdoperac_cetip is not null))
-         order by lct.cdcooper,
-                  lct.idtipo_arquivo,
-                  lct.dtregistro;
+           AND (   lct.idlancto_origem IS NULL 
+                OR EXISTS(SELECT 1
+                            FROM tbcapt_custodia_lanctos lctOri
+                           WHERE lctOri.idlancamento = lct.idlancto_origem
+                             AND lctOri.Idsituacao = 8
+                             AND lctOri.Cdoperac_Cetip IS NOT NULL)
+               )              
+        ORDER BY lct.cdcooper
+                ,lct.idtipo_arquivo
+                ,lct.dtregistro;
       -- Busca dos dados da Aplicação em rotina já preparada
       vr_tbsaldo_rdca APLI0001.typ_tab_saldo_rdca;
                 
@@ -2429,6 +2429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
     --
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
+      vr_flenviad   BOOLEAN := FALSE; --> Flag para indicar que o arquivo foi enviado
       vr_typ_saida  VARCHAR2(3);      --> Saída do comando no OS
     BEGIN
   	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
@@ -2436,12 +2437,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
 
       -- Primeiramente checamos se o arquivo por ventura já não está na pasta enviados
       IF gene0001.fn_exis_arquivo(pr_caminho => pr_dsdirend||'/'||pr_nmarquiv) THEN
-        -- O que ocorreu é que a cópia anterior não havia sido enviada na última execução,
-        -- mas o envio ocorreu com sucesso entre as duas execuções do job.
-        -- Devemos remover o arquivo da pasta temporária, caso exista.
-        gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||pr_nmdireto||'/'||pr_nmarquiv
-                                   ,pr_typ_saida   => vr_typ_saida
-                                   ,pr_des_saida   => pr_dscritic);
+        -- O que ocorreu é que a cópia anterior não havia sido enviada nos 5 minutos que
+        -- a rotina espera, então, após esta nova execução o envio ocorreu com sucesso.   
+        -- Apenas retornamos
         RETURN;
       ELSE
         -- Checamos se o arquivo já não foi copiado a envia
@@ -2450,25 +2448,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||pr_nmdireto||'/'||pr_nmarquiv||' '||pr_dsdirenv
                                      ,pr_typ_saida   => vr_typ_saida
                                      ,pr_des_saida   => pr_dscritic);
-          -- Se retornou erro, incrementar a mensagem e retornar
-          IF vr_typ_saida = 'ERR' THEN
-            RETURN;
-          END IF;
-        else
-          -- Se já está na pasta envia, devemos remover o arquivo da pasta temporária
-          gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||pr_nmdireto||'/'||pr_nmarquiv
-                                     ,pr_typ_saida   => vr_typ_saida
-                                     ,pr_des_saida   => pr_dscritic);
-          -- Se retornou erro, incrementar a mensagem e retornar
+          -- Se retornou erro, incrementar a mensagem e retornoar
           IF vr_typ_saida = 'ERR' THEN
             RETURN;
           END IF;
         END IF;
         -- Agora devemos checar o envio do arquivo, que é garantido quando o arquivo
-        -- é movido da envia para enviados pelo Connect Direct.
-        -- Testar envio (Existencia na enviados)
-        IF pr_flaguard and not gene0001.fn_exis_arquivo(pr_caminho => pr_dsdirend||'/'||pr_nmarquiv) THEN
-          -- Se não conseguiu enviar
+        -- é movido da envia para enviados pelo Connect Direct. Checaremos de 10 em 10
+        -- segundos e aguardaremos no máximo 5 minutos.
+        FOR vr_tent IN 1..100 LOOP
+          -- Testar envio (Existencia na enviados)
+          IF gene0001.fn_exis_arquivo(pr_caminho => pr_dsdirend||'/'||pr_nmarquiv) THEN
+            -- Validar flag e sair da espera
+            vr_flenviad := TRUE;
+            EXIT;
+          END IF;
+          -- Se foi solicitado pra aguardar
+          IF pr_flaguard THEN
+            -- Aguardar 3 segundos
+            sys.dbms_lock.sleep(3);
+          ELSE
+            -- Sair e vamos checar posteriormente
+            EXIT;
+          END IF;
+        END LOOP;
+        -- Se não conseguiu enviar e aguardou
+        IF pr_flaguard AND NOT vr_flenviad THEN
+          -- Montar critica
           pr_dscritic := 'Arquivo persiste na pasta ENVIA';
           RETURN;
         END IF;
@@ -2847,7 +2853,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       vr_idtipo_arquivo   tbcapt_custodia_arquivo.idtipo_arquivo%TYPE; --> Tipo do Arquivo
       vr_dtrefere         DATE;                                        --> Data de referência do arquivo
       vr_idtipo_linha     tbcapt_custodia_conteudo_arq.idtipo_linha%TYPE; --> Tipo da Linha
-      v_hora              varchar2(6);
       
       --> Checar se arquivo já não foi retornado
       CURSOR cr_arq_duplic(pr_nmarquiv VARCHAR2) IS
@@ -2930,15 +2935,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
           FOR vr_idx IN 1..vr_lstarqre.count LOOP
             -- Reiniciar controle de ignore
             vr_flignore := FALSE;
-            --
-            if vr_dspadrao = 'CETIP%DPOSICAOCUSTODIA%' then
-              -- Renomeia arquivo, para que não haja duplicidade com os próximos ZIPs
-              v_hora := to_char(sysdate, 'hh24miss');
-              gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||pr_dsdirrec||'/'||vr_lstarqre(vr_idx)||' '||pr_dsdirrec||'/'||vr_lstarqre(vr_idx)||'_'||v_hora
-                                         ,pr_typ_saida   => vr_typ_saida
-                                         ,pr_des_saida   => vr_dscritic);
-              vr_lstarqre(vr_idx) := vr_lstarqre(vr_idx)||'_'||v_hora;
-            end if;
             -- Devemos checar se o arquivo em questão já não foi retornado
             OPEN cr_arq_duplic(vr_lstarqre(vr_idx));
             FETCH cr_arq_duplic
@@ -4437,8 +4433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
     BEGIN
   	  -- Inclusão do módulo e ação logado
---GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_processo_controle');
- gene0001.pc_informa_acesso(pr_module => null, pr_action => 'APLI0007.pc_processo_controle');
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0007.pc_processo_controle');       
       -- Buscar Parâmetros Sistema
       vr_nmarqlog := gene0001.fn_param_sistema('CRED',0,'NOM_ARQUIVO_LOG_B3');  
       vr_hriniprc := to_date(to_char(sysdate,'ddmmrrrr')||gene0001.fn_param_sistema('CRED',0,'HOR_INICIO_CUSTODIA_B3'),'ddmmrrrrhh24:mi');
@@ -4753,14 +4748,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             -- Finalizando LOG
             pr_dsinform := pr_dsinform ||vr_dscarque||fn_get_time_char || 'Finalização da execução do processo controlador.';
             
-            -- Enviar para o arquivo de LOG o texto informativo montado, quebrando a cada 3900 caracteres para evitar estouro de variável na pc_gera_log_batch
-            for i in 1..trunc(length(pr_dsinform)/3900)+1 loop
-              btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_nmarqlog     => vr_nmarqlog
-                                        ,pr_flfinmsg     => 'N'
-                                        ,pr_des_log      => substr(pr_dsinform, (i-1)*3900+1, 3900));
-            end loop;
+            -- Enviar para o arquivo de LOG o texto informativo montado
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_nmarqlog     => vr_nmarqlog
+                                      ,pr_flfinmsg     => 'N'
+                                      ,pr_des_log      => pr_dsinform);                                          
+            
+            
           ELSE
             pr_dsinform := 'Operação não realizada! Execução liberada somente '||vr_dsjanexe;
           END IF;
@@ -4770,6 +4765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
       ELSE
         pr_dsinform := 'Operação não realizada! Execução só será efetuada de 2a a 6a feira.';
       END IF;  
+      
+       
+      
     EXCEPTION
       WHEN OTHERS THEN
         -- Efetuar retorno do erro nao tratado
