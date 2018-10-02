@@ -284,7 +284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   --  Programa : TELA_MANPRT
   --  Sistema  : Ayllos Web
   --  Autor    : Helinton Steffens (Supero)
-  --  Data     : Janeiro - 2018                 Ultima atualizacao: 24/09/2018
+  --  Data     : Janeiro - 2018                 Ultima atualizacao: 28/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -293,6 +293,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   -- Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
   --																	  
   -- 24/09/2018: Ajuste no cursor tbfin_recursos_movimento CS 25859 (Andre Supero)
+  --																			  
+  -- 28/09/2018: Alterado select para remover cdcartorio na selecao do cartorio para a conciliacao. (Fabio Stein - Supero)
   --
   ---------------------------------------------------------------------------
     
@@ -2411,8 +2413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       FROM tbcobran_cartorio_protesto car, crapmun mun
      WHERE mun.cdcomarc = pr_cdcomarca
        AND car.idcidade = mun.idcidade
-       AND car.nrcpf_cnpj = pr_nrcpf_cnpj
-       AND car.cdcartorio = pr_cdcartorio;
+       AND car.nrcpf_cnpj = pr_nrcpf_cnpj;
     rw_cartorio cr_cartorio%ROWTYPE;       
     
     PRAGMA AUTONOMOUS_TRANSACTION;

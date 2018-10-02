@@ -6,7 +6,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao: 24/09/2018
+   Data    : Fevereiro/2018                    Ultima atualizacao: 02/10/2018
 
    Dados referentes ao programa:
 
@@ -19,6 +19,8 @@
                 inclusão de pc_set_modulo (Carlos)
 
    24/09/2018 - Merge de atualização CS 25888 - Ajuste no controle da varivel vr_tot_outros_cra_tarifa (Nagasava Supero)
+
+   02/10/2018 - Merge de atualização CS 26141 - Ajuste na conversão de datas nos campos 34 e 37 (Nagasava Supero)
    
   ............................................................................. */
   
@@ -1499,9 +1501,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -1633,9 +1635,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -1782,9 +1784,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -1823,9 +1825,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2100,9 +2102,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2157,9 +2159,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcuscar                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2213,9 +2215,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar 	                        -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2269,9 +2271,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2325,9 +2327,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2381,9 +2383,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele 	                        -- IN
@@ -2437,9 +2439,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2493,9 +2495,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2549,9 +2551,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2605,9 +2607,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2661,9 +2663,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2717,9 +2719,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
@@ -2773,9 +2775,9 @@
 																	 ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
 																	 ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
 																	 ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-																	 ,pr_dtprotocolo         => vr_tab_arquivo(vr_index_reg).campot34 -- IN
+																	 ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
 																	 ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-																	 ,pr_dtocorre            => vr_tab_arquivo(vr_index_reg).campot37 -- IN
+																	 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
 																	 ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																	 ,pr_vlcustas_cartorio   => vr_vlcuscar                           -- IN
 																	 ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN

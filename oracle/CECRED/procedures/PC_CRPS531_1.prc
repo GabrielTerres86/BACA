@@ -314,6 +314,8 @@ end;
              10/08/2018 - Salvar arquivos STR0004R2 recusados e gravar historico nulo nas mensagens
                           STR0004R2 e STR0006R2. PRJ486 (Lombardi)
                   
+			 02/10/2018 - Utilizar variavel vr_aux_ISPBIFDebtd na tabela tbfin_recursos_movimento - Protesto IEPTB - (Fabio Stein - Supero)                          
+
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -6776,6 +6778,10 @@ END pc_trata_arquivo_ldl;
 
             ELSE
                    
+              /* Seta o vr_aux_ISPBIFDebtd na variavel vr_aux_BancoDeb */
+              vr_aux_BancoDeb := vr_aux_ISPBIFDebtd;
+        
+        
               vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
                              'nrseqdig',''||rw_crapcop_mensag.cdcooper
                              ||';'||vr_aux_nrctacre||';'||to_char(vr_aux_dtmvtolt,'dd/mm/yyyy')||'');
