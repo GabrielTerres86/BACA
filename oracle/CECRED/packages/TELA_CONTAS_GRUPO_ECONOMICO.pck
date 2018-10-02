@@ -496,7 +496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'peparticipacao'   , pr_tag_cont => TO_CHAR(0,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdoperad_inclusao', pr_tag_cont => 'Carga Manutenção', pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmoperad_inclusao', pr_tag_cont => 'Carga Manutenção', pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtinclusao'       , pr_tag_cont => TO_CHAR(trunc(SYSDATE),'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtinclusao'       , pr_tag_cont => to_char(rw_tbcc_grupo_economico.dtinclusao,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdoperad_exclusao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmoperad_exclusao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtexclusao'       , pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
