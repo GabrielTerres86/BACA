@@ -1178,6 +1178,7 @@ DECLARE
   vr_jur60_38              NUMBER;
   vr_vliofprj              NUMBER := 0;
   vr_dtprejuz              DATE;
+  vr_tipo_busca            Varchar2(1);
 
 	vr_tab_saldos  EXTR0001.typ_tab_saldos;
 	vr_tab_erro    GENE0001.typ_tab_erro;
