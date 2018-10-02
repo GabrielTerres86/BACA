@@ -4753,22 +4753,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             -- Finalizando LOG
             pr_dsinform := pr_dsinform ||vr_dscarque||fn_get_time_char || 'Finalização da execução do processo controlador.';
             
-            if length(pr_dsinform) <= 4000 then
-              -- Enviar para o arquivo de LOG o texto informativo montado
+            -- Enviar para o arquivo de LOG o texto informativo montado, quebrando a cada 3900 caracteres para evitar estouro de variável na pc_gera_log_batch
+            for i in 1..trunc(length(pr_dsinform)/3900)+1 loop
               btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
                                         ,pr_nmarqlog     => vr_nmarqlog
                                         ,pr_flfinmsg     => 'N'
-                                        ,pr_des_log      => pr_dsinform);                                          
-            else
-              for i in 1..trunc(length(pr_dsinform)/4000)+1 loop
-                btch0001.pc_gera_log_batch(pr_cdcooper     => 3
-                                          ,pr_ind_tipo_log => 2 -- Erro tratato
-                                          ,pr_nmarqlog     => vr_nmarqlog
-                                          ,pr_flfinmsg     => 'N'
-                                          ,pr_des_log      => substr(pr_dsinform, (i-1)*4000+1, 4000));
-              end loop;
-            end if;
+                                        ,pr_des_log      => substr(pr_dsinform, (i-1)*3900+1, 3900));
+            end loop;
           ELSE
             pr_dsinform := 'Operação não realizada! Execução liberada somente '||vr_dsjanexe;
           END IF;
