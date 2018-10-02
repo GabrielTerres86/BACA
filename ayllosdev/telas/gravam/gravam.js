@@ -1086,7 +1086,6 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 	//} else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
         $('#dsjustif', '#divJustificativa').habilitaCampo().focus();
-        $('#dsjustif', '#frmBens').val(dsjustif);
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1099,7 +1098,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 	} else if (opcaoButton == 'C'){
 	//} else if ($('#cddopcao', '#frmCab').val() == 'C') {
 		mostrabutton();
-        $('#dsjustif', '#frmBens').val(dsjustif);
+        $('#dsjustif', '#frmBens').val();
         $('#btVoltar', '#divBotoesBens').focus();
 
 		return false;
@@ -1122,8 +1121,6 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 		$('#nrgravam', '#frmBens').habilitaCampo();
 		$('#dsjustif', '#frmBens').habilitaCampo();
 
-        $('#dsjustif', '#frmBens').val(dsjustif);
-
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
 			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
@@ -1134,7 +1131,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
 
 
-        $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
+        $('#dsjustif', '#frmBens').habilitaCampo();
 
         //Define ação para CLICK no botão de Concluir
         $("#btBlocJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1147,7 +1144,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //} else if (opcaoButton == 'L') {
         //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
 
-            $('#dsjustif', '#frmBens').val(dsjustif).habilitaCampo();
+            $('#dsjustif', '#frmBens').habilitaCampo();
 
             //Define ação para CLICK no botão de Concluir
             $("#btLibJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1362,31 +1359,31 @@ function selecionaContratoGravame(tr,tpconsul) {
 
 function selecionaBens(tr) {
 
-    $('#dssitgrv', '#divBens').val($('#cdsitgrv', tr).val());
-    $('#dsseqbem', '#divBens').val($('#dsseqbem', tr).val());
-    $('#nrgravam', '#divBens').val($('#nrgravam', tr).val());
-    $('#dsbemfin', '#divBens').val($('#dsbemfin', tr).val());
-    $('#vlmerbem', '#divBens').val($('#vlmerbem', tr).val());
-    $('#tpchassi', '#divBens').val($('#tpchassi', tr).val());
-    $('#nrdplaca', '#divBens').val($('#nrdplaca', tr).val());
-    $('#nranobem', '#divBens').val($('#nranobem', tr).val());
-    $('#vlctrgrv', '#divBens').val($('#vlctrgrv', tr).val());
-    $('#dscpfbem', '#divBens').val($('#dscpfbem', tr).val());
-    $('#dtmvttel', '#divBens').val($('#dtmvtolt', tr).val());
-    $('#uflicenc', '#divBens').val($('#uflicenc', tr).val());
-    $('#dscatbem', '#divBens').val($('#dscatbem', tr).val());
-    $('#dscorbem', '#divBens').val($('#dscorbem', tr).val());
-    $('#dschassi', '#divBens').val($('#dschassi', tr).val());
-    $('#ufdplaca', '#divBens').val($('#ufdplaca', tr).val());
-    $('#nrrenava', '#divBens').val($('#nrrenava', tr).val());
-    $('#nrmodbem', '#divBens').val($('#nrmodbem', tr).val());
-    $('#dtoperac', '#divBens').val($('#dtoperac', tr).val());
-    $('#dsblqjud', '#divBens').val($('#dsblqjud', tr).val());
-	$('#dsjustif', '#frmBens').val($('#dsjustif', tr).val());
-	$('#situacao_anterior', '#divBens').val($('#cdsitgrv', tr).val());
-	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
+    $('#dssitgrv', '#divBens').val($('#hdcdsitgrv', tr).val());
+    $('#dsseqbem', '#divBens').val($('#hddsseqbem', tr).val());
+    $('#nrgravam', '#divBens').val($('#hdnrgravam', tr).val());
+    $('#dsbemfin', '#divBens').val($('#hddsbemfin', tr).val());
+    $('#vlmerbem', '#divBens').val($('#hdvlmerbem', tr).val());
+    $('#tpchassi', '#divBens').val($('#hdtpchassi', tr).val());
+    $('#nrdplaca', '#divBens').val($('#hdnrdplaca', tr).val());
+    $('#nranobem', '#divBens').val($('#hdnranobem', tr).val());
+    $('#vlctrgrv', '#divBens').val($('#hdvlctrgrv', tr).val());
+    $('#dscpfbem', '#divBens').val($('#hddscpfbem', tr).val());
+    $('#dtmvttel', '#divBens').val($('#hddtmvtolt', tr).val());
+    $('#uflicenc', '#divBens').val($('#hduflicenc', tr).val());
+    $('#dscatbem', '#divBens').val($('#hddscatbem', tr).val());
+    $('#dscorbem', '#divBens').val($('#hddscorbem', tr).val());
+    $('#dschassi', '#divBens').val($('#hddschassi', tr).val());
+    $('#ufdplaca', '#divBens').val($('#hdufdplaca', tr).val());
+    $('#nrrenava', '#divBens').val($('#hdnrrenava', tr).val());
+    $('#nrmodbem', '#divBens').val($('#hdnrmodbem', tr).val());
+    $('#dtoperac', '#divBens').val($('#hddtoperac', tr).val());
+    $('#dsblqjud', '#divBens').val($('#hddsblqjud', tr).val());
+	$('#dsjustif', '#frmBens').val($('#hddsjustif', tr).val());
+	$('#situacao_anterior', '#divBens').val($('#hdcdsitgrv', tr).val());
+	$('#chassi_anterior', '#divBens').val($('#hddschassi', tr).val());
 
-    controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
+    controlaCampos($('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#hdidseqbem', tr).val(), $('#hddsjustif', tr).val(), $('#hdtpjustif', tr).val(), $('#hdtpctrpro', tr).val(), $('#hdtpinclus', tr).val(), $('#permisit', '#divBens').val());
 }
 
 function controlaPesquisa(valor) {
@@ -1449,72 +1446,17 @@ function controlaPesquisaAgencia() {
     return false;
 
 }
-function ValidAcesso(opcao) {
-		
-	switch (opcao) {
-	    case "M":            
-            if ($('#vlbtIncluir').val() != '') {
-				showError("error",$('#vlbtIncluir').val(),'Alerta - Ayllos','',false);
-				opcaoButton = 'C';
-				return false
-			}
-		break;
-		
-        case "A":            
-            if ($('#vlbtAlterar').val() != '') {
-				showError("error",$('#vlbtAlterar').val(),'Alerta - Ayllos','',false);
-				opcaoButton = 'C';
-				return false;
-			}			
-        break;
-		
-        case "B":          
-            if ($('#vlbtBaixar').val() != '') {
-				showError("error",$('#vlbtBaixar').val(),'Alerta - Ayllos','',false);
-				opcaoButton = 'C';
-				return false;
-			}		
-        break;
-		
-        case "X":              
-            if ($('#vlbtCancelar').val() != '') {
-				showError("error",$('#vlbtCancelar').val(),'Alerta - Ayllos','',false);
-				opcaoButton = 'C';
-				return false;
-			}			       
-        break;
-		
-        case "L":            
-            if ($('#vlbtLibJudicial').val() != '') {
-				showError("error",$('#vlbtLibJudicial').val(),'Alerta - Ayllos','',false);
-				return false;
-			}			       
-        break;
-		
-        case "J":             
-            if ($('#vlbtBlocJudicial').val() != '') {
-				showError("error",$('#vlbtBlocJudicial').val(),'Alerta - Ayllos','',false);
-				return false;
-			}			               		               
-        break;
-		
-		case "Z":
-            if ($('#vlbtBaixaManual').val() != '') {
-				showError("error",$('#vlbtBaixaManual').val(),'Alerta - Ayllos','',false);
-				return false;
-			}			               
-        break;		
-    }
-	
-	return true;
-}
+
 
 function controlaAlteraBaixa(cddopcao) {
 	opcaoButton = cddopcao;
 	mostrabutton();
 	
+	var id = $('#ddl_descrbem', '#frmBens').val();
+	var tr = $('.divRegistros table').find('tr#' + id);
 	
-	controlaCampos($('#possuictr').val(), $('#cdsitgrv').val(), $('#idseqbem').val(), $('#dsjustif').val(), $('#tpjustif').val(), $('#tpctrpro').val(), $('#tpinclus').val(), $('#permisit', '#divBens').val());
+	
+	controlaCampos($('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#hdidseqbem', tr).val(), $('#hddsjustif', tr).val(), $('#hdtpjustif', tr).val(), $('#hdtpctrpro', tr).val(), $('#hdtpinclus', tr).val(), $('#permisit', '#divBens').val());
 
 	return false;
 }

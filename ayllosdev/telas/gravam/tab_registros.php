@@ -150,65 +150,43 @@
     <div id="divRegistros" class="divRegistros">
 
       <table>
-        <thead>
-          <tr>
-            <th>Sequ&ecirc;ncial</th>
-            <th>Descri&ccedil;&atilde;o</th>
-          </tr>
-        </thead>
         <tbody>
           <? for($i = 0; $i 
         
           < count($bens); $i++){?>
 
           <tr id="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>">
-            <td>
-              <span>
-                <? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>
-            
-              </span>
-              <? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?> 
-          
-            </td>
-            <td>
-              <span>
-                <? echo getByTagName($bens[$i]->tags,'dscatbem'); ?>
-            
-              </span>
-              <? echo getByTagName($bens[$i]->tags,'dscatbem'); ?> 
-          
-            </td>
-
-			<input type="hidden" id="nrseqbem" name="nrseqbem" value="<? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>" />
-            <input type="hidden" id="nrgravam" name="nrgravam" value="<? echo getByTagName($bens[$i]->tags,'nrgravam'); ?>" />
-            <input type="hidden" id="dsseqbem" name="dsseqbem" value="<? echo getByTagName($bens[$i]->tags,'dsseqbem'); ?>" />
-            <input type="hidden" id="dsbemfin" name="dsbemfin" value="<? echo getByTagName($bens[$i]->tags,'dsbemfin'); ?>" />
-            <input type="hidden" id="vlmerbem" name="vlmerbem" value="<? echo getByTagName($bens[$i]->tags,'vlmerbem'); ?>" />
-            <input type="hidden" id="tpchassi" name="tpchassi" value="<? echo getByTagName($bens[$i]->tags,'tpchassi'); ?>" />
-            <input type="hidden" id="nrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($bens[$i]->tags,'nrdplaca'),'#######'); ?>" />
-            <input type="hidden" id="nranobem" name="nranobem" value="<? echo getByTagName($bens[$i]->tags,'nranobem'); ?>" />
-            <input type="hidden" id="dscpfbem" name="dscpfbem" value="<? echo getByTagName($bens[$i]->tags,'dscpfbem'); ?>" />
-            <input type="hidden" id="uflicenc" name="uflicenc" value="<? echo getByTagName($bens[$i]->tags,'uflicenc'); ?>" />
-            <input type="hidden" id="dscatbem" name="dscatbem" value="<? echo getByTagName($bens[$i]->tags,'dscatbem'); ?>" />
-            <input type="hidden" id="dscorbem" name="dscorbem" value="<? echo getByTagName($bens[$i]->tags,'dscorbem'); ?>" />
-            <input type="hidden" id="dschassi" name="dschassi" value="<? echo getByTagName($bens[$i]->tags,'dschassi'); ?>" />
-            <input type="hidden" id="nrmodbem" name="nrmodbem" value="<? echo getByTagName($bens[$i]->tags,'nrmodbem'); ?>" />
-            <input type="hidden" id="ufdplaca" name="ufdplaca" value="<? echo getByTagName($bens[$i]->tags,'ufdplaca'); ?>" />
-            <input type="hidden" id="nrrenava" name="nrrenava" value="<? echo getByTagName($bens[$i]->tags,'nrrenava'); ?>" />
-            <input type="hidden" id="vlctrgrv" name="vlctrgrv" value="<? echo getByTagName($bens[$i]->tags,'vlctrgrv'); ?>" />
-            <input type="hidden" id="dtoperac" name="dtoperac" value="<? echo getByTagName($bens[$i]->tags,'dtoperac'); ?>" />
-            <input type="hidden" id="dtmvtolt" name="dtmvtolt" value="<? echo getByTagName($bens[$i]->tags,'dtmvtolt'); ?>" />
-            <input type="hidden" id="dssitgrv" name="dssitgrv" value="<? echo getByTagName($bens[$i]->tags,'dssitgrv'); ?>" />
-            <input type="hidden" id="dsblqjud" name="dsblqjud" value="<? echo getByTagName($bens[$i]->tags,'dsblqjud'); ?>" />
-            <input type="hidden" id="cdsitgrv" name="cdsitgrv" value="<? echo getByTagName($bens[$i]->tags,'cdsitgrv'); ?>" />
-            <input type="hidden" id="tpctrpro" name="tpctrpro" value="<? echo getByTagName($bens[$i]->tags,'tpctrpro'); ?>" />
-            <input type="hidden" id="tpjustif" name="tpjustif" value="<? echo getByTagName($bens[$i]->tags,'tpjustif'); ?>" />
-            <input type="hidden" id="dsjustif" name="dsjustif" value="<? echo getByTagName($bens[$i]->tags,'dsjustif'); ?>" />
-            <input type="hidden" id="possuictr" name="possuictr" value="<? echo $possuictr; ?>" />
-            <input type="hidden" id="idseqbem" name="idseqbem" value="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>" />
-            <input type="hidden" id="tpinclus" name="tpinclus" value="<? echo getByTagName($bens[$i]->tags,'tpinclus'); ?>" />
+			<td>
+				<input type="hidden" id="hdnrseqbem" name="nrseqbem" value="<? echo getByTagName($bens[$i]->tags,'nrseqbem'); ?>" />
+				<input type="hidden" id="hdnrgravam" name="nrgravam" value="<? echo getByTagName($bens[$i]->tags,'nrgravam'); ?>" />
+				<input type="hidden" id="hddsseqbem" name="dsseqbem" value="<? echo getByTagName($bens[$i]->tags,'dsseqbem'); ?>" />
+				<input type="hidden" id="hddsbemfin" name="dsbemfin" value="<? echo getByTagName($bens[$i]->tags,'dsbemfin'); ?>" />
+				<input type="hidden" id="hdvlmerbem" name="vlmerbem" value="<? echo getByTagName($bens[$i]->tags,'vlmerbem'); ?>" />
+				<input type="hidden" id="hdtpchassi" name="tpchassi" value="<? echo getByTagName($bens[$i]->tags,'tpchassi'); ?>" />
+				<input type="hidden" id="hdnrdplaca" name="nrdplaca" value="<? echo mascara(getByTagName($bens[$i]->tags,'nrdplaca'),'#######'); ?>" />
+				<input type="hidden" id="hdnranobem" name="nranobem" value="<? echo getByTagName($bens[$i]->tags,'nranobem'); ?>" />
+				<input type="hidden" id="hddscpfbem" name="dscpfbem" value="<? echo getByTagName($bens[$i]->tags,'dscpfbem'); ?>" />
+				<input type="hidden" id="hduflicenc" name="uflicenc" value="<? echo getByTagName($bens[$i]->tags,'uflicenc'); ?>" />
+				<input type="hidden" id="hddscatbem" name="dscatbem" value="<? echo getByTagName($bens[$i]->tags,'dscatbem'); ?>" />
+				<input type="hidden" id="hddscorbem" name="dscorbem" value="<? echo getByTagName($bens[$i]->tags,'dscorbem'); ?>" />
+				<input type="hidden" id="hddschassi" name="dschassi" value="<? echo getByTagName($bens[$i]->tags,'dschassi'); ?>" />
+				<input type="hidden" id="hdnrmodbem" name="nrmodbem" value="<? echo getByTagName($bens[$i]->tags,'nrmodbem'); ?>" />
+				<input type="hidden" id="hdufdplaca" name="ufdplaca" value="<? echo getByTagName($bens[$i]->tags,'ufdplaca'); ?>" />
+				<input type="hidden" id="hdnrrenava" name="nrrenava" value="<? echo getByTagName($bens[$i]->tags,'nrrenava'); ?>" />
+				<input type="hidden" id="hdvlctrgrv" name="vlctrgrv" value="<? echo getByTagName($bens[$i]->tags,'vlctrgrv'); ?>" />
+				<input type="hidden" id="hddtoperac" name="dtoperac" value="<? echo getByTagName($bens[$i]->tags,'dtoperac'); ?>" />
+				<input type="hidden" id="hddtmvtolt" name="dtmvtolt" value="<? echo getByTagName($bens[$i]->tags,'dtmvtolt'); ?>" />
+				<input type="hidden" id="hddssitgrv" name="dssitgrv" value="<? echo getByTagName($bens[$i]->tags,'dssitgrv'); ?>" />
+				<input type="hidden" id="hddsblqjud" name="dsblqjud" value="<? echo getByTagName($bens[$i]->tags,'dsblqjud'); ?>" />
+				<input type="hidden" id="hdcdsitgrv" name="cdsitgrv" value="<? echo getByTagName($bens[$i]->tags,'cdsitgrv'); ?>" />
+				<input type="hidden" id="hdtpctrpro" name="tpctrpro" value="<? echo getByTagName($bens[$i]->tags,'tpctrpro'); ?>" />
+				<input type="hidden" id="hdtpjustif" name="tpjustif" value="<? echo getByTagName($bens[$i]->tags,'tpjustif'); ?>" />
+				<input type="hidden" id="hddsjustif" name="dsjustif" value="<? echo getByTagName($bens[$i]->tags,'dsjustif'); ?>" />
+				<input type="hidden" id="hdpossuictr" name="possuictr" value="<? echo $possuictr; ?>" />
+				<input type="hidden" id="hdidseqbem" name="idseqbem" value="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>" />
+				<input type="hidden" id="hdtpinclus" name="tpinclus" value="<? echo getByTagName($bens[$i]->tags,'tpinclus'); ?>" />
 			
-            
+			</td>        
           </tr>
 
           <?}?>
@@ -216,51 +194,10 @@
         </tbody>
       </table>
     </div>
-    <div id="divPesquisaRodape" class="divPesquisaRodape">
-      <table>
-        <tr>
-          <td>
-            <?if (isset($qtregist) and count($qtregist) == 0) $nriniseq = 0;
-							  if ($nriniseq > 1) {
-								  ?> <a class='paginacaoAnt'>
-              <<< Anterior</a> <?
-							  } else {
-								  ?> &nbsp; <?
-							  }?>
-						
-        
-          </td>
-          <td>
-            <? if (isset($nriniseq)) { ?>
-								Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?>
-						<? } ?>					
-        
-          </td>
-          <td>
-            <? if($qtregist > ($nriniseq + $nrregist - 1)) { ?>
-								  
-          
-            <a class="paginacaoProx">Pr&oacute;ximo >>></a>
-
-            <? }?>
-									
-						
-        
-          </td>
-        </tr>
-      </table>
-    </div>
 
   </fieldset>
 
 </form>
-
-	<input type="hidden" id="vlbconsultar" 		name="vlbconsultar" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C',false); ?>" />
-	<input type="hidden" id="vlbtIncluir" 		name="vlbtIncluir" 		value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'M',false); ?>" />
-    <input type="hidden" id="vlbtAlterar" 		name="vlbtAlterar" 		value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A',false); ?>" />
-    <input type="hidden" id="vlbtBaixar" 		name="vlbtBaixar" 		value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'B',false); ?>" />
-    <input type="hidden" id="vlbtCancelar" 		name="vlbtCancelar" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'X',false); ?>" />
-	<input type="hidden" id="vlbtBaixaManual" 	name="vlbtBaixaManual" 	value="<? echo validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'Z',false); ?>" />
 
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" 		onclick="controlaVoltar('5'); 		return false;">Voltar</a>

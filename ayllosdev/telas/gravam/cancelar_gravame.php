@@ -44,11 +44,12 @@
 	$xml 	   .= "  <Dados>";
 	$xml 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-  $xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
-  $xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
-  $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
-  $xml 	   .= "     <tpcancel>".$tpcancel."</tpcancel>";
-  $xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
+	$xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
+	$xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
+	$xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
+	$xml 	   .= "     <tpcancel>".$tpcancel."</tpcancel>";
+	$xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
+	$xml 	   .= "     <cdopeapr>".$_SESSION['cdopelib']."</cdopeapr>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
