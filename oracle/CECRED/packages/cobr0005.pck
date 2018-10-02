@@ -1175,7 +1175,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_qtdiaprt    INTEGER;
       vr_indiaprt    INTEGER;
       vr_dsparame    VARCHAR2(2000);
-      
+			--
+			vr_flcooexp crapceb.flcooexp%TYPE;
+			vr_flceeexp crapceb.flceeexp%TYPE; 
+			--
   BEGIN    
       -- Inclui nome do modulo logado - 23/02/2018 - Ch 839539
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gerar_titulo_cobranca');
@@ -1514,13 +1517,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       END IF;
       /*** Criando log do processo - Cobranca Registrada ***/
       IF pr_flgregis = 1 THEN 
-         paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_cob.rowid
-                                     , pr_cdoperad => pr_cdoperad
-                                     , pr_dtmvtolt => SYSDATE
-                                     , pr_dsmensag => (CASE WHEN pr_tpemitir = 1 THEN 'Titulo gerado'
-                                     ELSE 'Titulo gerado - Carne' END)
-                                     , pr_des_erro => vr_des_erro
-                                     , pr_dscritic => pr_dscritic);
+				--
+				BEGIN
+					--
+					SELECT crapceb.flcooexp
+								,crapceb.flceeexp
+						INTO vr_flcooexp
+								,vr_flceeexp
+						FROM crapceb
+					 WHERE crapceb.cdcooper = rw_cob.cdcooper
+						 AND crapceb.nrdconta = rw_cob.nrdconta
+						 AND crapceb.nrconven = rw_cob.nrcnvcob;
+					--
+				EXCEPTION
+					WHEN no_data_found THEN
+						pr_dscritic := 'Não encontrado o convênio!';
+						RAISE vr_exc_erro;
+					WHEN OTHERS THEN
+						pr_dscritic := 'Erro ao buscar o convênio: ' || SQLERRM;
+					  RAISE vr_exc_erro;
+				END;
+				--
+        paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_cob.rowid
+                                     ,pr_cdoperad => pr_cdoperad
+                                     ,pr_dtmvtolt => SYSDATE
+                                     ,pr_dsmensag => (CASE WHEN pr_tpemitir = 1 THEN
+																		                    CASE vr_flcooexp = 1 WHEN
+																		                      'Boleto gerado'
+																												ELSE
+																													CASE vr_flceeexp = 1 THEN
+																													  'Boleto gerado - Aguardando envio pelos correios'
+																													ELSE
+																														'Boleto gerado'
+																													END
+																												END
+                                                      ELSE 
+																												'Titulo gerado - Carne'
+																											END)
+                                     ,pr_des_erro => vr_des_erro
+                                     ,pr_dscritic => pr_dscritic);
          --Tratamento de erro - Ch 839539
          IF TRIM(pr_dscritic) IS NOT NULL THEN
            --Levantar Excecao
