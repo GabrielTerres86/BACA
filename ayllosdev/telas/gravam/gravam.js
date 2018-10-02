@@ -168,6 +168,7 @@ function formataFiltro() {
     $('#frmFiltro').css({ 'display': 'block' });
     $('#divBotoes').css({ 'display': 'block' });
     $('#btConcluir', '#divBotoes').css({ 'display': 'none' });
+	$('#btConsultar', '#divBotoes').css({ 'display': 'none' });
     $('#btProsseguir', '#divBotoes').css({ 'display': 'inline' });
 	
     

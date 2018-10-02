@@ -202,17 +202,17 @@
 <div id="divBotoesBens" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:none;' >
 	<a href="#" class="botao" id="btVoltar" 		onclick="controlaVoltar('5'); 		return false;">Voltar</a>
 	
-	<a href="#" class="botao" id="btIncluir"  onclick="validPermiss('M'); return false;">Incluir</a>
-	<a href="#" class="botao" id="btAlterar"  onclick="validPermiss('A'); return false;">Alterar</a>	
-	<a href="#" class="botao" id="btCancelar" onclick="validPermiss('X'); return false;">Cancelamento</a>
-	<a href="#" class="botao" id="btBaixar"   onclick="validPermiss('B'); return false;">Baixar</a>
+	<a href="#" class="botao" id="btIncluir" style="display:none;"  onclick="validPermiss('M'); return false;">Incluir</a>
+	<a href="#" class="botao" id="btAlterar" style="display:none;" onclick="validPermiss('A'); return false;">Alterar</a>	
+	<a href="#" class="botao" id="btCancelar" style="display:none;" onclick="validPermiss('X'); return false;">Cancelamento</a>
+	<a href="#" class="botao" id="btBaixar"  style="display:none;" onclick="validPermiss('B'); return false;">Baixar</a>
 	
-	<a href="#" class="botao" id="btLibJudicial" onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
-	<a href="#" class="botao" id="btBlocJudicial" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>
+	<a href="#" class="botao" id="btLibJudicial" style="display:none;" onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
+	<a href="#" class="botao" id="btBlocJudicial" style="display:none;" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>
 
-	<a href="#" class="botao" id="btBaixaManual"   onclick="validPermiss('Z'); return false;">Baixa Manual</a>	
+	<a href="#" class="botao" id="btBaixaManual" style="display:none;" onclick="validPermiss('Z'); return false;">Baixa Manual</a>	
 												
-  <a href="#" class="botao" id="btConcluir">Concluir</a>
+	<a href="#" class="botao" style="display:none;" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="showConfirmacao('Deseja concluir a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaConcluir();', '', 'sim.gif', 'nao.gif'); return false;">Concluir</a>
 	-->
