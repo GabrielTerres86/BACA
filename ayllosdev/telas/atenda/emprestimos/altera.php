@@ -11,17 +11,18 @@
  * 001: [05/09/2012] Mudar para layout padrao (Gabriel)	
  * 002: [08/09/2014] Projeto Automatização de Consultas em Propostas de Crédito (Jonata-RKAM).
  * 003: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
- */	
+ */
 ?>
- 
+
 <?
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../includes/config.php");
-	require_once("../../../includes/funcoes.php");	
-  
-  isPostMethod();
+	require_once("../../../includes/funcoes.php");
+
+	isPostMethod();
+
 	$inobriga = (isset($_POST['inobriga'])) ? $_POST['inobriga'] : '';
-  
+	$tplcremp = (isset($_POST['tplcremp'])) ? $_POST['tplcremp'] : '';
 ?>
 
 <table id="altera"cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -59,16 +60,20 @@
 							<tr>
 								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
 									<div style="width: 240px; height: 190px;" id="divConteudoAltara" class="divBotoes">
-												
+
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " id="todaProp" onClick="fechaAltera('A_NOVA_PROP');return false;">Toda a proposta de empr&eacute;stimo </a>
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_VALOR');return false;"> Somente o valor da proposta </a>																
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_NUMERO');return false;"> Alterar o n&uacute;mero do contrato </a>										
-                    <? IF ($inobriga!="S"){?>
-                    <a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('CONSULTAS');return false;"> Somente Consultas </a>
-                    <?}?>
+									<? IF ($inobriga!="S"){?>
+										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('CONSULTAS');return false;"> Somente Consultas </a>
+									<?}?>
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_AVALISTA');return false;"> Alterar Somente Avalistas </a>
+									<? IF (in_array($tplcremp,array(2,3))) { ?>
+										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_BENS');return false;"> Alterar Somente Bens </a>
+									<? } ?>
+										<br />
                                         <a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btVoltar" onClick="fechaAltera('fechar');return false;"> Voltar </a>
-										
+
 									</div>
 								</td>
 							</tr>
