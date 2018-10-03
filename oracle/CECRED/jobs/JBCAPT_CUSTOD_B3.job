@@ -2,7 +2,7 @@
 
     PROJETO 411 - Registro de Aplicacao na B3.
 	Responsavel por enviar e receber as informacoes para a custodia das aplicacoes na B3.
-	Roda de 30 em 30 minutos.
+	Roda de 30 em 30 minutos. 
 
 */
 BEGIN
