@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /*!
  * FONTE        : manter_lrotat.php                        Última alteração: 08/05/2018
  * CRIAÇÃO      : Otto - RKAM
@@ -12,6 +12,9 @@
  *
  *				  08/05/2018 - Ajuste no validacao da critica 529 para o tipo de 
  *               			   contrato 0 (que eh o correto a passar por padrao) - Lucas Skroch (Supero TI)
+ *                 
+ *                19/09/2018 - Criacao de um novo alerta, onde o operador nao possa alterar o limite maior que
+ *                             designado pelo sistema Ailos. - Douglas (Mouts)
  * --------------
  */
 
@@ -155,6 +158,11 @@
         //Código da submodalidade
         if ( $GLOBALS["cdsubmod"] == 0){ 
             exibirErro('error','C&oacute;digo da submodalidade deve ser informado.','Alerta - Ayllos','formataFormularioLrotat();focaCampoErro(\'cdsubmod\',\'frmLrotat\');',false);
+        }
+
+        //Valor limite
+         if($GLOBALS["vllimmax"] > $GLOBALS["vllmaxce"]){ 
+            exibirErro('error','Valor limite maior que o permitido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'vllimmax\',\'frmLrotat\');',false);
         }
     
     }
