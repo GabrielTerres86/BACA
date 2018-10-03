@@ -24,6 +24,9 @@ BEGIN
                     nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
                     nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
 
+  /* Dropa o JOB antigo */
+  sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBCAPT_CUSTOD_B3');
+
   -- Create do job do mesmo
   sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBCAPT_CUSTOD_B3'
                                ,job_type        => 'PLSQL_BLOCK'
