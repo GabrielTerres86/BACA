@@ -4464,7 +4464,7 @@ BEGIN
                                           END)                                    || '</flgpagto>' ||
                          '<dtdpagto>' || to_char(vr_tab_co_responsavel(vr_index).dtdpagto,'DD/MM/RRRR') || '</dtdpagto>' ||
                          '<cdpesqui>' || vr_tab_co_responsavel(vr_index).cdpesqui ||'</cdpesqui>'||
-                         '<dspreapg>' || vr_tab_co_responsavel(vr_index).dspreapg ||'</dspreapg>'||
+                         '<dspreapg>' || gene0007.fn_caract_acento(vr_tab_co_responsavel(vr_index).dspreapg,1) ||'</dspreapg>'||
                          '<cdlcremp>' || vr_tab_co_responsavel(vr_index).cdlcremp ||'</cdlcremp>'||
                          '<dslcremp>' || vr_tab_co_responsavel(vr_index).dslcremp ||'</dslcremp>'||
                          '<cdfinemp>' || vr_tab_co_responsavel(vr_index).cdfinemp ||'</cdfinemp>'||
@@ -4499,7 +4499,7 @@ BEGIN
                          '<tplcremp>' || vr_tab_co_responsavel(vr_index).tplcremp ||'</tplcremp>'||
                          '<tpemprst>' || vr_tab_co_responsavel(vr_index).tpemprst ||'</tpemprst>'||
                          '<cdtpempr>' || vr_tab_co_responsavel(vr_index).cdtpempr ||'</cdtpempr>'||
-                         '<dstpempr>' || vr_tab_co_responsavel(vr_index).dstpempr ||'</dstpempr>'||
+                         '<dstpempr>' || gene0007.fn_caract_acento(vr_tab_co_responsavel(vr_index).dstpempr,1) ||'</dstpempr>'||
                          '<permulta>' || vr_tab_co_responsavel(vr_index).permulta ||'</permulta>'||
                          '<perjurmo>' || vr_tab_co_responsavel(vr_index).perjurmo ||'</perjurmo>'||
                          '<dtpripgt>' || to_char(vr_tab_co_responsavel(vr_index).dtpripgt,'DD/MM/RRRR') || '</dtpripgt>' ||
