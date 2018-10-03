@@ -34,6 +34,7 @@
 { sistema/generico/includes/b1wgen0200tt.i } /*renato PJ450*/
 
 DEF VAR h-b1wgen0200 AS HANDLE        NO-UNDO.
+{ sistema/generico/includes/var_oracle.i }
 DEF BUFFER crablcm FOR craplcm.
 
 DEF        VAR aux_contador AS INT                                   NO-UNDO.
@@ -149,6 +150,10 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                  RUN sistema/generico/procedures/b1wgen0200.p 
                      PERSISTENT SET h-b1wgen0200.
 
+             aux_cdcritic = 0.
+             aux_dscritic = "".
+             aux_incrineg = 0.
+
              RUN gerar_lancamento_conta_comple IN h-b1wgen0200 
                          (INPUT craplot.dtmvtolt                      /*par_dtmvtolt*/
                          ,INPUT craplot.cdagenci                      /*par_cdagenci*/
@@ -193,6 +198,55 @@ FOR EACH crablcm WHERE crablcm.cdcooper = glb_cdcooper               AND
                          ,OUTPUT aux_dscritic).
              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
              DO:   
+
+                /* Posicionando no registro da craplcm criado acima */
+                FIND FIRST tt-ret-lancto NO-ERROR.
+                FIND FIRST craplcm WHERE RECID(craplcm) = tt-ret-lancto.recid_lcm NO-ERROR.
+
+                IF aux_incrineg = 1 THEN
+                DO:
+                    
+                    aux_cdcritic = 0.
+                    aux_dscritic = "".
+
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - INICIO*/
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_cria_lanc_futuro aux_handproc = PROC-HANDLE NO-ERROR
+                    
+                                         (INPUT glb_cdcooper,
+                                          INPUT crablcm.nrdconta,
+                                          INPUT STRING(crablcm.nrdconta,"99999999"),
+                                          INPUT craplot.cdagenci,
+                                          INPUT craplot.dtmvtolt,
+                                          INPUT 352,
+                                          INPUT aux_vllanmto,
+                                          INPUT 0,    /*pr_nrctremp*/
+                                          "BLQPREJU", /*pr_dsorigem*/
+                                          OUTPUT "").
+                    
+                    CLOSE STORED-PROC pc_cria_lanc_futuro aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                    
+                    ASSIGN aux_dscritic = pc_cria_lanc_futuro.pr_dscritic
+                                          WHEN pc_cria_lanc_futuro.pr_dscritic <> ?.
+                           
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF aux_dscritic <> "" THEN
+                    DO:
+                       ASSIGN glb_cdcritic = aux_cdcritic.
+                       RUN fontes/critic.p.
+                       UNIX SILENT VALUE ("echo " + 
+                            STRING(TIME,"HH:MM:SS") +
+                            " - " + glb_cdprogra + "' --> '" +
+                            aux_dscritic + " Conta " +
+                            STRING(crablcm.nrdconta) + " >> log/proc_batch.log").
+                       UNDO TRANS_1, RETURN.
+                    END.
+                   /*Renato Cordeiro - Gera lançamento futuro quando nao pdoe debitar - FIM*/
+                   END.
+             
+             ELSE
              /* historico marcado para debitar incondicionalmente */
                 glb_cdcritic = aux_cdcritic.
                 RUN fontes/critic.p.

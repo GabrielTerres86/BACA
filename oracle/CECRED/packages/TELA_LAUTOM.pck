@@ -1305,6 +1305,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                    ,NULL
                    ,pr_dsorigem);
 
+      commit;
+
       -- Inicializa nome do modulo logado - 22/09/2017 - Ch 758606
       GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
       EXCEPTION
