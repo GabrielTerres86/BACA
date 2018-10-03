@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 15/08/2018
+      Data: Janeiro/2010                        Ultima alteracao: 03/10/2018
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -326,6 +326,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             15/08/2018 - Inclusão da operação 200 - URA
                          (Everton - Mouts - Projeto 427)
 			            
+            03/10/2018 - Na validação de senha foi separado o canal para enviar TAA (4) ou URA(6),
+                         para que seja possivel zerar a quantidade de senha incorreta quando
+                         estiver sendo executado pela URA (Douglas - Prj 427 URA)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -2133,12 +2136,21 @@ END PROCEDURE.
 PROCEDURE valida_senha:
 
     DEF VAR aux_token AS CHAR NO-UNDO.
+    DEF VAR aux_idorigem AS INTE NO-UNDO.
+    
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
     IF aux_idtaanew = 1 THEN
     DO:
         /* Se for o sistema novo a senha será enviada aberta, e devemos criptografar */
         ASSIGN aux_dssencar = ENCODE(aux_dssencar).
     END.
+
+    /* Toda operacao do TAA é com origem no TAA, por isso por default o valor é 4 */
+    ASSIGN aux_idorigem = 4.
+    /* Operacao 200 é utilizada apenas na URA, com isso vamos alterar a origem  para 6.*/
+    IF aux_operacao = 200 THEN
+        ASSIGN aux_idorigem = 6.
+    
     
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
                                                                                      
@@ -2148,6 +2160,7 @@ PROCEDURE valida_senha:
                                       INPUT aux_dssencar,
                                       INPUT aux_dtnascto,
                                       INPUT aux_idtipcar,
+                                      INPUT aux_idorigem,
                                      OUTPUT aux_cdcritic,
                                      OUTPUT aux_dscritic).
 
