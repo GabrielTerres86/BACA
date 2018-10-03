@@ -1,4 +1,3 @@
-
   CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS729 (pr_dscritic OUT VARCHAR2
                                              ) IS
 /* .............................................................................
@@ -18,7 +17,7 @@
    
   ............................................................................. */
   
-  -- Declara√ß√µes
+  -- DeclaraÁıes
   -- Tipo de registro linha
   TYPE typ_reg_linha IS RECORD
     (ds_registro VARCHAR2(600)
@@ -27,7 +26,7 @@
     );
   -- Tabela para tip de registro linha
   TYPE typ_tab_arquivo IS TABLE OF typ_reg_linha INDEX BY PLS_INTEGER;
-  -- Tabela que cont√©m o arquivo
+  -- Tabela que contÈm o arquivo
   vr_index_arq   NUMBER := 0;
   vr_tab_arquivo typ_tab_arquivo;
   vr_cdprogra_cpl VARCHAR2(20) := 'PC_CRPS729';
@@ -49,13 +48,13 @@
   -- Subrotinas
   -- Controla Controla log
   PROCEDURE pc_controla_log_batch(pr_idtiplog IN NUMBER   -- Tipo de Log
-                                 ,pr_dscritic IN VARCHAR2 -- Descri√ß√£o do Log
+                                 ,pr_dscritic IN VARCHAR2 -- DescriÁ„o do Log
                                  ) IS
     --
     vr_dstiplog VARCHAR2(10);
     --
    BEGIN
-     -- Descri√ß√£o do tipo de log
+     -- DescriÁ„o do tipo de log
      IF pr_idtiplog = 2 THEN
        --
        vr_dstiplog := 'ERRO: ';
@@ -79,7 +78,7 @@
        CECRED.pc_internal_exception (pr_cdcooper => 3);                                                             
    END pc_controla_log_batch;
    
-  -- Rotina que insere uma linha na tabela em mem√≥ria
+  -- Rotina que insere uma linha na tabela em memÛria
   PROCEDURE pc_insere_linha(pr_cdcooper IN crapcop.cdcooper%TYPE
                            ,pr_rowid IN VARCHAR2
                            ,pr_linha IN VARCHAR2                           
@@ -95,7 +94,7 @@
     --
   END pc_insere_linha;
   
-  -- Atualiza o status dos t√≠tulos enviados para protesto
+  -- Atualiza o status dos tÌtulos enviados para protesto
   PROCEDURE pc_atualiza_status_enviados(pr_rowid    IN  VARCHAR2
                                        ,pr_cdcooper IN  crapcop.cdcooper%TYPE
                                        ,pr_dscritic OUT VARCHAR2
@@ -110,21 +109,21 @@
     FETCH cr_crapcop INTO rw_crapcop;
     CLOSE cr_crapcop;
     
-    -- pc_crps729 s√≥ roda na Central
+    -- pc_crps729 sÛ roda na Central
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;    
   
     --
     UPDATE crapcob
-       SET crapcob.insitcrt = 2 -- Entrada no cart√≥rio
+       SET crapcob.insitcrt = 2 -- Entrada no cartÛrio
           ,crapcob.dtsitcrt = rw_crapdat.dtmvtolt
      WHERE crapcob.rowid = pr_rowid;
      
      PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_rowid
                                  , pr_cdoperad => '1'
                                  , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                 , pr_dsmensag => 'Titulo remetido ao cartorio'
+                                 , pr_dsmensag => 'Boleto enviado ao cartorio para Protesto'
                                  , pr_des_erro => vr_des_erro
                                  , pr_dscritic => vr_dscritic);
      
@@ -143,7 +142,7 @@
       RAISE vr_exc_erro;
     END IF;     
      
-    -- gera movimenta√ß√£o de retorno do titulo 
+    -- gera movimentaÁ„o de retorno do titulo 
 		PAGA0001.pc_prepara_retorno_cooperativa(pr_idtabcob => pr_rowid
                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                            ,pr_dtocorre => rw_crapdat.dtmvtolt
@@ -172,7 +171,7 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao atualizar o status do t√≠tulo enviado: ' || SQLERRM;
+      pr_dscritic := 'Erro ao atualizar o status do tÌtulo enviado: ' || SQLERRM;
   END pc_atualiza_status_enviados;
 
   -- Gera o header da remessa
@@ -193,26 +192,26 @@
     --
   BEGIN
     --
-    pr_dsheader := '0'                                        -- 01 -- Identifica√ß√£o do registro                -- Fixo: 0 - Header
-                || lpad(pr_cdbandoc, 3, '0')                  -- 02 -- C√≥digo do banco/portador
+    pr_dsheader := '0'                                        -- 01 -- IdentificaÁ„o do registro                -- Fixo: 0 - Header
+                || lpad(pr_cdbandoc, 3, '0')                  -- 02 -- CÛdigo do banco/portador
                 || rpad(substr(pr_nmresbcc, 0, 40), 40, ' ')  -- 03 -- Nome do portador
                 || pr_dtmvtolt                                -- 04 -- Data do movimento
                 || 'BFO'                                      -- 05 -- Sigla do remetente
-                || 'SDT'                                      -- 06 -- Sigla do destinat√°rio
-                || 'TPR'                                      -- 07 -- Sigla de identifica√ß√£o da transa√ß√£o
+                || 'SDT'                                      -- 06 -- Sigla do destinat·rio
+                || 'TPR'                                      -- 07 -- Sigla de identificaÁ„o da transaÁ„o
                 || lpad(fn_sequence(pr_nmtabela => 'CRAPMUN'
                                    ,pr_nmdcampo => 'SQARQREM'
                                    ,pr_dsdchave => lpad(pr_cdbandoc, 3, '0') || ';' || rpad(pr_cdprapag, 7, ' ')
-                                   ), 6, '0')                 -- 08 -- Seq√ºencial de remessas
+                                   ), 6, '0')                 -- 08 -- Seq¸encial de remessas
                 || lpad(pr_qtregrem, 4, '0')                  -- 09 -- Quantidade de registro na remessa
-                || lpad(pr_qttitrem, 4, '0')                  -- 10 -- Quantidade de t√≠tulos na remessa
-                || lpad(pr_qtindrem, 4, '0')                  -- 11 -- Quantidade de indica√ß√µes na remessa
+                || lpad(pr_qttitrem, 4, '0')                  -- 10 -- Quantidade de tÌtulos na remessa
+                || lpad(pr_qtindrem, 4, '0')                  -- 11 -- Quantidade de indicaÁıes na remessa
                 || lpad(pr_qtorirem, 4, '0')                  -- 12 -- Quantidade de originais na remessa
-                || rpad(pr_idagecen, 6, ' ')                  -- 13 -- Identificar a ag√™ncia centralizadora
-                || '043'                                      -- 14 -- Vers√£o do layout                         -- Fixo: 043
-                || rpad(pr_cdprapag, 7, ' ')                  -- 15 -- C√≥digo da pra√ßa de pagamento
+                || rpad(pr_idagecen, 6, ' ')                  -- 13 -- Identificar a agÍncia centralizadora
+                || '043'                                      -- 14 -- Vers„o do layout                         -- Fixo: 043
+                || rpad(pr_cdprapag, 7, ' ')                  -- 15 -- CÛdigo da praÁa de pagamento
                 || rpad(' ', 497, ' ')                        -- 16 -- Complemento do registro                  -- Fixo: vazio
-                || lpad(pr_nrseqarq, 4, '0')                  -- 17 -- N√∫mero seq√ºencial do registro no arquivo
+                || lpad(pr_nrseqarq, 4, '0')                  -- 17 -- N˙mero seq¸encial do registro no arquivo
                 ;
     --
   EXCEPTION
@@ -257,7 +256,7 @@
       pr_dscritic := 'Erro ao gerar o header da remessa: ' || SQLERRM;  
   END pc_grava_header_remessa;
   
-  -- Gera o registro de transa√ß√£o da remessa
+  -- Gera o registro de transaÁ„o da remessa
   PROCEDURE pc_gera_registro_remessa(pr_cdbandoc IN  VARCHAR2
                                     ,pr_nrdconta IN  VARCHAR2
                                     ,pr_nmprimtl IN  VARCHAR2
@@ -287,66 +286,66 @@
                                     ) IS
   BEGIN
     --
-    pr_dstransa := '1'                                                                            -- 01 -- Identifi√ß√£o do registro -- Fixo: 1 - Transa√ß√£o
-                || lpad(pr_cdbandoc, 3, '0')                                                      -- 02 -- N√∫mero do c√≥digo portador
-                || rpad(pr_nrdconta, 15, ' ')                                                     -- 03 -- Ag√™ncia/C√≥digo do cedente
+    pr_dstransa := '1'                                                                            -- 01 -- IdentifiÁ„o do registro -- Fixo: 1 - TransaÁ„o
+                || lpad(pr_cdbandoc, 3, '0')                                                      -- 02 -- N˙mero do cÛdigo portador
+                || rpad(pr_nrdconta, 15, ' ')                                                     -- 03 -- AgÍncia/CÛdigo do cedente
                 || rpad(substr(pr_nmprimtl, 0, 45), 45, ' ')                                      -- 04 -- Nome do cedente/favorecido
                 || rpad(substr(pr_nmprimtl, 0, 45), 45, ' ')                                      -- 05 -- Nome do sacador/vendedor
                 || rpad(pr_dsdoccop, 14, ' ')                                                     -- 06 -- Documento do Sacador
-                || rpad(substr(pr_dsendere, 0, 45), 45, ' ')                                      -- 07 -- Endere√ßo do sacador/vendedor
+                || rpad(substr(pr_dsendere, 0, 45), 45, ' ')                                      -- 07 -- EndereÁo do sacador/vendedor
                 || lpad(pr_nrcepend, 8, '0')                                                      -- 08 -- CEP do sacador/vendedor
                 || rpad(substr(pr_nmcidade, 0, 20), 20, ' ')                                      -- 09 -- Cidade do sacador/vendedor
                 || nvl(pr_cdufende, '  ')                                                         -- 10 -- UF do sacador/vendedor
-                || rpad(nvl(pr_nrnosnum, ' '), 15, ' ')                                           -- 11 -- Nosso n√∫mero
-                || rpad(nvl(pr_cddespec, ' '), 3, ' ')                                            -- 12 -- Esp√©cie do t√≠tulo
-                || rpad(nvl(pr_nrdocmto, ' '), 11, ' ')                                           -- 13 -- N√∫mero do t√≠tulo
-                || lpad(nvl(pr_dtemiexp, '0'), 8, '0')                                            -- 14 -- Data da emiss√£o do t√≠tulo
-                || lpad(nvl(pr_dtvencto, '0'), 8, '0')                                            -- 15 -- Data de vencimento do t√≠tulo
+                || rpad(nvl(pr_nrnosnum, ' '), 15, ' ')                                           -- 11 -- Nosso n˙mero
+                || rpad(nvl(pr_cddespec, ' '), 3, ' ')                                            -- 12 -- EspÈcie do tÌtulo
+                || rpad(nvl(pr_nrdocmto, ' '), 11, ' ')                                           -- 13 -- N˙mero do tÌtulo
+                || lpad(nvl(pr_dtemiexp, '0'), 8, '0')                                            -- 14 -- Data da emiss„o do tÌtulo
+                || lpad(nvl(pr_dtvencto, '0'), 8, '0')                                            -- 15 -- Data de vencimento do tÌtulo
                 || '001'                                                                          -- 16 -- Tipo de moeda -- Fixo: 001 - Real
-                || lpad(pr_vltitulo, 14, '0')                                                     -- 17 -- Valor do t√≠tulo
-                || lpad(pr_vltitulo, 14, '0')                                                     -- 18 -- Saldo do t√≠tulo
-                || rpad(substr(nvl(pr_dsdpraca, '0'), 0, 20), 20, '0')                            -- 19 -- Pra√ßa de protesto
+                || lpad(pr_vltitulo, 14, '0')                                                     -- 17 -- Valor do tÌtulo
+                || lpad(pr_vltitulo, 14, '0')                                                     -- 18 -- Saldo do tÌtulo
+                || rpad(substr(nvl(pr_dsdpraca, '0'), 0, 20), 20, '0')                            -- 19 -- PraÁa de protesto
                 || 'M'                                                                            -- 20 -- Tipo de Endesso -- Fixo: Endosso Mandato
-                || 'N'                                                                            -- 21 -- Informa√ß√£o sobre aceite -- Fixo: N√£o Aceitos
-                || '1'                                                                            -- 22 -- N√∫mero de controle do(s) devedor(es) -- Fixo: 1
+                || 'N'                                                                            -- 21 -- InformaÁ„o sobre aceite -- Fixo: N„o Aceitos
+                || '1'                                                                            -- 22 -- N˙mero de controle do(s) devedor(es) -- Fixo: 1
                 || rpad(substr(pr_nmdsacad, 0, 45), 45, ' ')                                      -- 23 -- Nome do devedor
-                || lpad(pr_cdtpinsc, 3, '0')                                                      -- 24 -- Tipo de identifica√ß√£o do devedor
-                || lpad(pr_nrinssac, 14, '0')                                                     -- 25 -- N√∫mero de identifica√ß√£o do devedor
+                || lpad(pr_cdtpinsc, 3, '0')                                                      -- 24 -- Tipo de identificaÁ„o do devedor
+                || lpad(pr_nrinssac, 14, '0')                                                     -- 25 -- N˙mero de identificaÁ„o do devedor
                 || rpad(' ', 11, ' ')                                                             -- 26 -- Documento do devedor -- Fixo: Vazio
-                || rpad(substr(pr_dsendsac, 0, 45), 45, ' ')                                      -- 27 -- Endere√ßo do devedor
+                || rpad(substr(pr_dsendsac, 0, 45), 45, ' ')                                      -- 27 -- EndereÁo do devedor
                 || lpad(pr_nrcepsac, 8, '0')                                                      -- 28 -- CEP do devedor
                 || rpad(substr(pr_nmcidsac, 0, 20), 20, ' ')                                      -- 29 -- Cidade do devedor
                 || pr_cdufsaca                                                                    -- 30 -- UF do devedor
-                || '00'                                                                           -- 31 -- C√≥digo do cart√≥rio -- Uso restrito do servi√ßo de distribui√ß√£o
-                || rpad(' ', 10, ' ')                                                             -- 32 -- N√∫mero do protocolo do cart√≥rio -- Uso restrito do servi√ßo de distribui√ß√£o
-                || ' '                                                                            -- 33 -- Tipo de ocorr√™ncia -- Uso restrito do servi√ßo de distribui√ß√£o
-                || lpad('0', 8, '0')                                                              -- 34 -- Data do protocolo -- Uso restrito do servi√ßo de distribui√ß√£o
-                || lpad('0', 10, '0')                                                             -- 35 -- Valor das custas do cart√≥rio -- Uso restrito do servi√ßo de distribui√ß√£o
-                || 'D'                                                                            -- 36 -- Declara√ß√£o do portador
-                || lpad('0', 8, '0')                                                              -- 37 -- Data da ocorr√™ncia -- Uso restrito do servi√ßo de distribui√ß√£o
-                || '  '                                                                           -- 38 -- C√≥digo de irregularidade -- Uso restrito do servi√ßo de distribui√ß√£o
+                || '00'                                                                           -- 31 -- CÛdigo do cartÛrio -- Uso restrito do serviÁo de distribuiÁ„o
+                || rpad(' ', 10, ' ')                                                             -- 32 -- N˙mero do protocolo do cartÛrio -- Uso restrito do serviÁo de distribuiÁ„o
+                || ' '                                                                            -- 33 -- Tipo de ocorrÍncia -- Uso restrito do serviÁo de distribuiÁ„o
+                || lpad('0', 8, '0')                                                              -- 34 -- Data do protocolo -- Uso restrito do serviÁo de distribuiÁ„o
+                || lpad('0', 10, '0')                                                             -- 35 -- Valor das custas do cartÛrio -- Uso restrito do serviÁo de distribuiÁ„o
+                || 'D'                                                                            -- 36 -- DeclaraÁ„o do portador
+                || lpad('0', 8, '0')                                                              -- 37 -- Data da ocorrÍncia -- Uso restrito do serviÁo de distribuiÁ„o
+                || '  '                                                                           -- 38 -- CÛdigo de irregularidade -- Uso restrito do serviÁo de distribuiÁ„o
                 || rpad(substr(pr_nmbaisac, 0, 20), 20, ' ')                                      -- 39 -- Bairro do devedor
-                || lpad('0', 10, '0')                                                             -- 40 -- Valor das custas do cart√≥rio distribuidor -- Uso restrito do servi√ßo de distribui√ß√£o
-                || lpad('0', 6, '0')                                                              -- 41 -- Registro de distribui√ß√£o -- Uso restrito do 7¬™ of√≠cio do Rio de Janeiro
-                || lpad('0', 10, '0')                                                             -- 42 -- Valor da grava√ß√£o eletr√¥nica e demais despesas -- Uso restrito da Centralizadora de Remessa de Arquivos (CRA)
-                || lpad('0', 5, '0')                                                              -- 43 -- N√∫mero da opera√ß√£o do banco -- Exclusivo para protesto de letra de c√¢mbio
-                || lpad('0', 15, '0')                                                             -- 44 -- N√∫mero do contrato do banco -- Exclusivo para protesto de letra de c√¢mbio
-                || lpad('0', 3, '0')                                                              -- 45 -- N√∫mero da parcela do contrato -- Exclusivo para protesto de letra de c√¢mbio
-                || ' '                                                                            -- 46 -- Tipo da letra de c√¢mbio -- Exclusivo para protesto de letra de c√¢mbio
-                || rpad(' ', 8, ' ')                                                              -- 47 -- Complemento c√≥digo de irregularidade -- Uso restrito do servi√ßo de distribui√ß√£o
-                || ' '                                                                            -- 48 -- Protesto por motivo de fal√™ncia -- Fixo: vazio
+                || lpad('0', 10, '0')                                                             -- 40 -- Valor das custas do cartÛrio distribuidor -- Uso restrito do serviÁo de distribuiÁ„o
+                || lpad('0', 6, '0')                                                              -- 41 -- Registro de distribuiÁ„o -- Uso restrito do 7™ ofÌcio do Rio de Janeiro
+                || lpad('0', 10, '0')                                                             -- 42 -- Valor da gravaÁ„o eletrÙnica e demais despesas -- Uso restrito da Centralizadora de Remessa de Arquivos (CRA)
+                || lpad('0', 5, '0')                                                              -- 43 -- N˙mero da operaÁ„o do banco -- Exclusivo para protesto de letra de c‚mbio
+                || lpad('0', 15, '0')                                                             -- 44 -- N˙mero do contrato do banco -- Exclusivo para protesto de letra de c‚mbio
+                || lpad('0', 3, '0')                                                              -- 45 -- N˙mero da parcela do contrato -- Exclusivo para protesto de letra de c‚mbio
+                || ' '                                                                            -- 46 -- Tipo da letra de c‚mbio -- Exclusivo para protesto de letra de c‚mbio
+                || rpad(' ', 8, ' ')                                                              -- 47 -- Complemento cÛdigo de irregularidade -- Uso restrito do serviÁo de distribuiÁ„o
+                || ' '                                                                            -- 48 -- Protesto por motivo de falÍncia -- Fixo: vazio
                 || 'I'                                                                            -- 49 -- Instrumento de protesto -- Fixo: I
-                || lpad('0', 10, '0')                                                             -- 50 -- Valor das demais despesas -- Uso restrito dos cart√≥rios
+                || lpad('0', 10, '0')                                                             -- 50 -- Valor das demais despesas -- Uso restrito dos cartÛrios
                 || rpad(' ', 19, ' ')                                                             -- 51 -- Complemento do registro -- Fixo branco
-                || lpad(pr_nrseqarq, 4, '0')                                                      -- 52 -- N√∫mero seq√ºencial do registro no arquivo 
+                || lpad(pr_nrseqarq, 4, '0')                                                      -- 52 -- N˙mero seq¸encial do registro no arquivo 
                 ;        
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar a transa√ß√£o da remessa: ' || SQLERRM;
+      pr_dscritic := 'Erro ao gerar a transaÁ„o da remessa: ' || SQLERRM;
   END pc_gera_registro_remessa;
   
-  -- Grava o registro transa√ß√£o no arquivo XML
+  -- Grava o registro transaÁ„o no arquivo XML
   PROCEDURE pc_grava_transacao_remessa(pr_dstransa   IN     VARCHAR2
                                    	  ,pr_input_file IN OUT utl_file.file_type
                                       ,pr_dscritic   OUT    VARCHAR2
@@ -415,7 +414,7 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar a transa√ß√£o da remessa: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar a transaÁ„o da remessa: ' || SQLERRM;  
   END pc_grava_transacao_remessa;
   
 
@@ -430,14 +429,14 @@
                                     ) IS
   BEGIN
     --
-    pr_dstraill := '9'                                                                                -- 01 -- Identifica√ß√£o do registro -- Fixo: 9 - Trailler
-                || lpad(pr_cdbandoc, 3, '0')                                                          -- 02 -- N√∫mero do c√≥digo do portador
+    pr_dstraill := '9'                                                                                -- 01 -- IdentificaÁ„o do registro -- Fixo: 9 - Trailler
+                || lpad(pr_cdbandoc, 3, '0')                                                          -- 02 -- N˙mero do cÛdigo do portador
                 || rpad(substr(pr_nmresbcc, 0, 40), 40, ' ')                                          -- 03 -- Nome do portador
                 || pr_dtmvtolt                                                                        -- 04 -- Data do movimento
-                || lpad('0', 5, '0')                                                                  -- 05 -- Somat√≥rio de seguran√ßa - Quantidade de remessa
-                || lpad(pr_vltotrem, 18, '0')                                                         -- 06 -- Somat√≥rio de seguran√ßa - Valor da remessa
+                || lpad('0', 5, '0')                                                                  -- 05 -- SomatÛrio de seguranÁa - Quantidade de remessa
+                || lpad(pr_vltotrem, 18, '0')                                                         -- 06 -- SomatÛrio de seguranÁa - Valor da remessa
                 || rpad(' ', 521, ' ')                                                                -- 07 -- -- Complemento do registro -- Fixo: vazio
-                || lpad(pr_nrseqarq, 4, '0')                                                          -- 08 -- N√∫mero sequencial do registro
+                || lpad(pr_nrseqarq, 4, '0')                                                          -- 08 -- N˙mero sequencial do registro
                 ;
     --
   EXCEPTION
@@ -481,34 +480,34 @@
       SELECT DISTINCT
              crapcob.cdcooper
             ,crapcob.nrcnvcob
-            ,lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header/Transa√ß√£o
+            ,lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header/TransaÁ„o
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                     -- Campo 03 - Header
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                               -- Campo 04 - Header
             ,rpad(crapcop.cdagectl, 6, ' ') cdagectl                                                      -- Campo 13 - Header
             ,crapmun.cdcomarc                                                                             -- Campo 15 - Header
-            ,lpad(crapcop.cdagectl, 5, '0') || ' ' || lpad(crapcob.nrdconta, 9, '0') nrdconta             -- Campo 03 - Transa√ß√£o
-            ,rpad(crapass.nmprimtl, 45, ' ') nmprimtl                                                     -- Campo 04/05 - Transa√ß√£o
-            ,rpad(crapcob.dsdoccop, 14, ' ') dsdoccop                                                     -- Campo 06 - Transa√ß√£o
-            ,rpad(crapenc.dsendere, 45, ' ') dsendere                                                     -- Campo 07 - Transa√ß√£o
-            ,lpad(crapenc.nrcepend, 8, '0') nrcepend                                                      -- Campo 08 - Transa√ß√£o
-            ,rpad(crapenc.nmcidade, 20, ' ') nmcidade                                                     -- Campo 09 - Transa√ß√£o
-            ,rpad(crapenc.cdufende, 2, ' ') cdufende                                                      -- Campo 10 - Transa√ß√£o
-            ,lpad(crapcob.nrcnvcob, 6, '0') || lpad(crapcob.nrdocmto, 9, '0') nrnosnum                    -- Campo 11 - Transa√ß√£o
-            ,decode(crapcob.cddespec, 1, 'DMI', 2, 'DSI', '   ') cddespec                                 -- Campo 12 - Transa√ß√£o
-            ,rpad(crapcob.nrdocmto, 11, ' ') nrdocmto                                                     -- Campo 13 - Transa√ß√£o
-            --,to_char(crapcob.dtemiexp, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transa√ß√£o
-            ,to_char(crapcob.dtdocmto, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - Transa√ß√£o
-            ,to_char(crapcob.dtvencto, 'DDMMYYYY') dtvencto                                               -- Campo 15 - Transa√ß√£o
-            ,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 17/18 - Transa√ß√£o
-            ,rpad(SUBSTR(comarca.dscidade, 0, 20), 20, ' ') dscidade                                      -- Campo 19 - Transa√ß√£o
-            ,rpad(substr(crapcob.nmdsacad, 0, 45), 45, ' ') nmdsacad                                      -- Campo 23 - Transa√ß√£o
-            ,lpad(decode(crapcob.cdtpinsc, 1, 2, 2, 1, 0), 3, '0') cdtpinsc                               -- Campo 24 - Transa√ß√£o
-            ,lpad(crapcob.nrinssac, 14, '0') nrinssac                                                     -- Campo 25 - Transa√ß√£o
-            ,rpad(substr(crapsab.dsendsac, 0, 45), 45, ' ') dsendsac                                      -- Campo 27 - Transa√ß√£o
-            ,lpad(crapsab.nrcepsac, 8, '0') nrcepsac                                                      -- Campo 28 - Transa√ß√£o
-            ,rpad(substr(crapsab.nmcidsac, 0, 20), 20, ' ') nmcidsac                                      -- Campo 29 - Transa√ß√£o
-            ,crapsab.cdufsaca                                                                             -- Campo 30 - Transa√ß√£o
-            ,rpad(substr(crapsab.nmbaisac, 0, 20), 20, ' ') nmbaisac                                      -- Campo 39 - Transa√ß√£o
+            ,lpad(crapcop.cdagectl, 5, '0') || ' ' || lpad(crapcob.nrdconta, 9, '0') nrdconta             -- Campo 03 - TransaÁ„o
+            ,rpad(crapass.nmprimtl, 45, ' ') nmprimtl                                                     -- Campo 04/05 - TransaÁ„o
+            ,rpad(crapcob.dsdoccop, 14, ' ') dsdoccop                                                     -- Campo 06 - TransaÁ„o
+            ,rpad(crapenc.dsendere, 45, ' ') dsendere                                                     -- Campo 07 - TransaÁ„o
+            ,lpad(crapenc.nrcepend, 8, '0') nrcepend                                                      -- Campo 08 - TransaÁ„o
+            ,rpad(crapenc.nmcidade, 20, ' ') nmcidade                                                     -- Campo 09 - TransaÁ„o
+            ,rpad(crapenc.cdufende, 2, ' ') cdufende                                                      -- Campo 10 - TransaÁ„o
+            ,lpad(crapcob.nrcnvcob, 6, '0') || lpad(crapcob.nrdocmto, 9, '0') nrnosnum                    -- Campo 11 - TransaÁ„o
+            ,decode(crapcob.cddespec, 1, 'DMI', 2, 'DSI', '   ') cddespec                                 -- Campo 12 - TransaÁ„o
+            ,rpad(crapcob.nrdocmto, 11, ' ') nrdocmto                                                     -- Campo 13 - TransaÁ„o
+            --,to_char(crapcob.dtemiexp, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - TransaÁ„o
+            ,to_char(crapcob.dtdocmto, 'DDMMYYYY') dtemiexp                                               -- Campo 14 - TransaÁ„o
+            ,to_char(crapcob.dtvencto, 'DDMMYYYY') dtvencto                                               -- Campo 15 - TransaÁ„o
+            ,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 17/18 - TransaÁ„o
+            ,rpad(SUBSTR(comarca.dscidade, 0, 20), 20, ' ') dscidade                                      -- Campo 19 - TransaÁ„o
+            ,rpad(substr(crapcob.nmdsacad, 0, 45), 45, ' ') nmdsacad                                      -- Campo 23 - TransaÁ„o
+            ,lpad(decode(crapcob.cdtpinsc, 1, 2, 2, 1, 0), 3, '0') cdtpinsc                               -- Campo 24 - TransaÁ„o
+            ,lpad(crapcob.nrinssac, 14, '0') nrinssac                                                     -- Campo 25 - TransaÁ„o
+            ,rpad(substr(crapsab.dsendsac, 0, 45), 45, ' ') dsendsac                                      -- Campo 27 - TransaÁ„o
+            ,lpad(crapsab.nrcepsac, 8, '0') nrcepsac                                                      -- Campo 28 - TransaÁ„o
+            ,rpad(substr(crapsab.nmcidsac, 0, 20), 20, ' ') nmcidsac                                      -- Campo 29 - TransaÁ„o
+            ,crapsab.cdufsaca                                                                             -- Campo 30 - TransaÁ„o
+            ,rpad(substr(crapsab.nmbaisac, 0, 20), 20, ' ') nmbaisac                                      -- Campo 39 - TransaÁ„o
             ,crapcob.rowid
         FROM craprem
             ,crapcob
@@ -551,7 +550,7 @@
          AND crapenc.tpendass = 9 -- Comercial
          AND crapcob.cdbandoc = 85
          AND crapcob.insrvprt = 1
-         AND crapcob.insitcrt = 1 -- Com instru√ß√£o de protesto
+         AND crapcob.insitcrt = 1 -- Com instruÁ„o de protesto
          AND craprem.cdocorre = 9
        ORDER BY crapmun.cdcomarc;
     --
@@ -569,8 +568,8 @@
     --
   BEGIN
     -- Incluido controle de Log inicio programa
-    pc_controla_log_batch(1, 'In√≠cio pc_crps729.pc_gera_remessa');
-    -- Inicializa vari√°veis
+    pc_controla_log_batch(1, 'InÌcio pc_crps729.pc_gera_remessa');
+    -- Inicializa vari·veis
     vr_nmcidsac  := NULL;
     vr_qtregist  := 1;
     vr_qtnumarq  := 0;
@@ -628,7 +627,7 @@
         --
       END IF;     
       
-      -- Se for o primeiro registro, gerar o cabe√ßalho
+      -- Se for o primeiro registro, gerar o cabeÁalho
       IF vr_qtregist = 1 THEN
         --
         vr_dsdlinha := NULL;
@@ -749,11 +748,11 @@
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
-      -- Inclu√≠do controle de Log
-      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || pr_dscritic);
+      -- IncluÌdo controle de Log
+      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || pr_dscritic);
     WHEN OTHERS THEN
-      -- Inclu√≠do controle de Log
-      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || SQLERRM);
+      -- IncluÌdo controle de Log
+      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || SQLERRM);
   END pc_gera_remessa;
   
   -- Gera o arquivo de remessa
@@ -779,7 +778,7 @@
     --
   BEGIN
     -- Incluido controle de Log inicio programa
-    pc_controla_log_batch(1, 'In√≠cio crps729.pc_gera_arquivo_remessa');
+    pc_controla_log_batch(1, 'InÌcio crps729.pc_gera_arquivo_remessa');
     --
     IF vr_tab_arquivo.count > 0 THEN
       --
@@ -792,7 +791,7 @@
         --
       EXCEPTION
         WHEN OTHERS THEN
-          -- Inclu√≠do controle de Log
+          -- IncluÌdo controle de Log
           pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_remessa --> Erro ao buscar a data de movimento: ' || SQLERRM);
           RAISE vr_exc_erro;
       END;
@@ -808,14 +807,14 @@
                            
       vr_nmarqtxt := REPLACE(vr_nmarqtxt,'181','18' || to_char(vr_aux,'fm0'));                           
                                                                 
-      -- Diret√≥rio onde dever√° gerar o arquivo de remessa
+      -- DiretÛrio onde dever· gerar o arquivo de remessa
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
       vr_nmdirtxt := gene0001.fn_param_sistema (pr_nmsistem => 'CRED'              -- IN
                                                ,pr_cdcooper => 3                   -- IN
                                                ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
                                                );
-      -- Abre o arquivo de dados em modo de grava√ß√£o
-      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diret√≥rio do arquivo
+      -- Abre o arquivo de dados em modo de gravaÁ„o
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- DiretÛrio do arquivo
                               ,pr_nmarquiv => vr_nmarqtxt   -- IN -- Nome do arquivo
                               ,pr_tipabert => 'W'           -- IN -- Modo de abertura (R,W,A)
                               ,pr_utlfileh => vr_input_file -- IN -- Handle do arquivo aberto
@@ -840,7 +839,7 @@
       vr_index_arq := vr_tab_arquivo.first;
       -- Percorre todos os registros para gerar os totalizadores
       WHILE vr_index_arq IS NOT NULL LOOP
-        -- Verifica se o registro √© do tipo header
+        -- Verifica se o registro È do tipo header
         IF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 0 THEN
           --
           vr_dslinhea 	   := vr_tab_arquivo(vr_index_arq).ds_registro;
@@ -849,9 +848,9 @@
           vr_qtindrem      := 0;
           vr_qtorirem      := 0;
           --
-        -- Verifica se o registro √© do tipo transa√ß√£o
+        -- Verifica se o registro È do tipo transaÁ„o
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 1 THEN
-          -- Guarda a posi√ß√£o do primeiro registro de transa√ß√£o da remessa
+          -- Guarda a posiÁ„o do primeiro registro de transaÁ„o da remessa
           IF vr_index_arq_ant IS NULL THEN
             --
             vr_index_arq_ant := vr_index_arq;
@@ -870,7 +869,7 @@
             --
           END IF;
           --
-        -- Verifica se o registro √© do tipo trailler
+        -- Verifica se o registro È do tipo trailler
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 9 THEN
           --
           vr_dslintra := vr_tab_arquivo(vr_index_arq).ds_registro;
@@ -889,7 +888,7 @@
           END IF;
           --
           vr_index_reg := vr_index_arq_ant;
-          -- Grava as transa√ß√µes
+          -- Grava as transaÁıes
           WHILE vr_index_reg IS NOT NULL LOOP
             -- Finaliza
             IF substr(vr_tab_arquivo(vr_index_reg).ds_registro, 0, 1) = 9 THEN
@@ -898,7 +897,7 @@
               EXIT;
               --
             ELSE
-              -- Gravar a transa√ß√£o
+              -- Gravar a transaÁ„o
               pc_grava_transacao_remessa(pr_dstransa   => vr_tab_arquivo(vr_index_reg).ds_registro -- IN
                                         ,pr_input_file => vr_input_file                            -- IN OUT
                                         ,pr_dscritic   => pr_dscritic                              -- OUT
@@ -916,7 +915,7 @@
                                          );
               --
             END IF;
-            -- Pr√≥ximo registro
+            -- PrÛximo registro
             vr_index_reg := vr_tab_arquivo.next(vr_index_reg);
             --
           END LOOP;
@@ -933,14 +932,14 @@
             RAISE vr_exc_erro;
             --
           END IF;
-        -- Se n√£o for de nenhum dos tipos anteriores, gera erro
+        -- Se n„o for de nenhum dos tipos anteriores, gera erro
         ELSE
-          -- Inclu√≠do controle de Log
+          -- IncluÌdo controle de Log
           pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_remessa --> Tipo de registro inexistente!');
           RAISE vr_exc_erro;
           --
         END IF;
-        -- Pr√≥ximo registro
+        -- PrÛximo registro
         vr_index_arq := vr_tab_arquivo.next(vr_index_arq);
         --
       END LOOP;
@@ -964,14 +963,14 @@
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
-      -- Inclu√≠do controle de Log
+      -- IncluÌdo controle de Log
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_remessa --> ' || pr_dscritic);
     WHEN OTHERS THEN
-      -- Inclu√≠do controle de Log
+      -- IncluÌdo controle de Log
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_remessa --> ' || SQLERRM);
   END pc_gera_arquivo_remessa;
   
-  -- Gera o header do arquivo de desist√™ncia
+  -- Gera o header do arquivo de desistÍncia
   PROCEDURE pc_gera_header_arq_desist(pr_cdaprese IN  NUMBER
                                      ,pr_nmaprese IN  VARCHAR2
                                      ,pr_dtmvtolt IN  crapcob.dtmvtolt%TYPE
@@ -983,19 +982,19 @@
                                      ) IS
   BEGIN
     --
-    pr_dsheader := '0'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do arquivo de desist√™ncia
-                || lpad(pr_cdaprese, 3, '0')                 -- 02 -- C√≥digo do apresentante -- REVISAR
+    pr_dsheader := '0'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do arquivo de desistÍncia
+                || lpad(pr_cdaprese, 3, '0')                 -- 02 -- CÛdigo do apresentante -- REVISAR
                 || rpad(substr(pr_nmaprese, 0, 45), 45, ' ') -- 03 -- Nome do apresentante -- REVISAR
                 || to_char(pr_dtmvtolt, 'ddmmyyyy')          -- 04 -- Data do movimento
-                || lpad(pr_qtdesist, 5, '0')                 -- 05 -- Quantidade de desist√™ncias -- REVISAR
+                || lpad(pr_qtdesist, 5, '0')                 -- 05 -- Quantidade de desistÍncias -- REVISAR
                 || lpad(pr_qtregtp2, 5, '0')                 -- 06 -- Quantidade de registros tipo 2 no arquivo
                 || rpad(' ', 55, ' ')                        -- 07 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                 -- 08 -- Seq√º√™ncia do registro -- Constante 00001
+                || lpad(pr_nrseqreg, 5, '0')                 -- 08 -- Seq¸Íncia do registro -- Constante 00001
                 ;
     --
   END pc_gera_header_arq_desist;
   
-  -- Grava o header do arquivo de desist√™ncia no arquivo XML
+  -- Grava o header do arquivo de desistÍncia no arquivo XML
   PROCEDURE pc_grava_header_arq_desist(pr_dsheader   IN     VARCHAR2
                                       ,pr_input_file IN OUT utl_file.file_type
                                       ,pr_dscritic   OUT    VARCHAR2
@@ -1020,10 +1019,10 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o header do arquivo de desist√™ncia: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar o header do arquivo de desistÍncia: ' || SQLERRM;  
   END pc_grava_header_arq_desist;
   
-  -- Gera o header do cart√≥rio no arquivo de desist√™ncia
+  -- Gera o header do cartÛrio no arquivo de desistÍncia
   PROCEDURE pc_gera_header_cart_arq_desist(pr_cdcartor IN  NUMBER
                                           ,pr_qtdesist IN  NUMBER
                                           ,pr_cdmunici IN  NUMBER
@@ -1033,17 +1032,17 @@
                                           ) IS
   BEGIN
     --
-    pr_dsheader := '1'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do cart√≥rio no arquivo de desist√™ncia
-                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- C√≥digo do cart√≥rio -- REVISAR
-                || lpad(pr_qtdesist, 5, '0')                 -- 03 -- Quantidade de desist√™ncias -- REVISAR
-                || lpad(pr_cdmunici, 7, '0')                 -- 04 -- C√≥digo do Munic√≠pio
+    pr_dsheader := '1'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do cartÛrio no arquivo de desistÍncia
+                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- CÛdigo do cartÛrio -- REVISAR
+                || lpad(pr_qtdesist, 5, '0')                 -- 03 -- Quantidade de desistÍncias -- REVISAR
+                || lpad(pr_cdmunici, 7, '0')                 -- 04 -- CÛdigo do MunicÌpio
                 || rpad(' ', 107, ' ')                       -- 05 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                 -- 06 -- Seq√º√™ncia do registro -- Constante 00001
+                || lpad(pr_nrseqreg, 5, '0')                 -- 06 -- Seq¸Íncia do registro -- Constante 00001
                 ;
     --
   END pc_gera_header_cart_arq_desist;
   
-  -- Grava o header do cart√≥rio no arquivo de desist√™ncia no XML
+  -- Grava o header do cartÛrio no arquivo de desistÍncia no XML
   PROCEDURE pc_grava_head_cart_arq_desist(pr_dsheader   IN     VARCHAR2
                                          ,pr_input_file IN OUT utl_file.file_type
                                          ,pr_dscritic   OUT    VARCHAR2
@@ -1066,10 +1065,10 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o header do cart√≥rio no arquivo de desist√™ncia: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar o header do cartÛrio no arquivo de desistÍncia: ' || SQLERRM;  
   END pc_grava_head_cart_arq_desist;
   
-  -- Gera o registro da transa√ß√£o de desist√™ncia
+  -- Gera o registro da transaÁ„o de desistÍncia
   PROCEDURE pc_gera_reg_desist(pr_nrprotoc IN  VARCHAR2
                               ,pr_dtprotoc IN  VARCHAR2
                               ,pr_nrtitulo IN  VARCHAR2
@@ -1084,26 +1083,26 @@
     --
   BEGIN
     --
-    pr_dsregist := '2'                                                                            -- 01 -- Identifica√ß√£o do registro -- Fixo: 2 - Registro de transa√ß√£o
-                || rpad(pr_nrprotoc, 10, ' ')                                                     -- 02 -- N√∫mero do protocolo
+    pr_dsregist := '2'                                                                            -- 01 -- IdentificaÁ„o do registro -- Fixo: 2 - Registro de transaÁ„o
+                || rpad(pr_nrprotoc, 10, ' ')                                                     -- 02 -- N˙mero do protocolo
                 || lpad(pr_dtprotoc, 8, '0')                                                      -- 03 -- Data de protocolagem
-                || lpad(pr_nrtitulo, 11, '0')                                                     -- 04 -- N√∫mero do t√≠tulo
+                || lpad(pr_nrtitulo, 11, '0')                                                     -- 04 -- N˙mero do tÌtulo
                 || substr(pr_nmdevedo, 0, 45)                                                     -- 05 -- Nome do primeiro devedor
-                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- Valor do t√≠tulo
-                || 'S'                                                                            -- 07 -- Solicita√ß√£o de Susta√ß√£o -- Fixo S
-                || rpad(pr_cdagectl, 12, ' ')                                                     -- 08 -- Ag√™ncia/Conta
-                || rpad(pr_nrnosnum, 12, ' ')                                                     -- 09 -- Carteira/N.N√∫mero
+                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- Valor do tÌtulo
+                || 'S'                                                                            -- 07 -- SolicitaÁ„o de SustaÁ„o -- Fixo S
+                || rpad(pr_cdagectl, 12, ' ')                                                     -- 08 -- AgÍncia/Conta
+                || rpad(pr_nrnosnum, 12, ' ')                                                     -- 09 -- Carteira/N.N˙mero
                 || rpad(' ', 2, ' ')                                                              -- 10 -- Reservado
-                || rpad(' ', 6, ' ')                                                              -- 11 -- N√∫mero de controle de recebimento (n√£o utilizar)
-                || lpad(pr_nrseqreg, 5, '0')                                                      -- 12 -- Seq√º√™ncia do registro
+                || rpad(' ', 6, ' ')                                                              -- 11 -- N˙mero de controle de recebimento (n„o utilizar)
+                || lpad(pr_nrseqreg, 5, '0')                                                      -- 12 -- Seq¸Íncia do registro
                 ;
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o registro de transa√ß√£o da desist√™ncia: ' || SQLERRM;
+      pr_dscritic := 'Erro ao gerar o registro de transaÁ„o da desistÍncia: ' || SQLERRM;
   END pc_gera_reg_desist;
   
-  -- Grava o registro da transa√ß√£o de desist√™ncia
+  -- Grava o registro da transaÁ„o de desistÍncia
   PROCEDURE pc_grava_reg_desist(pr_dsregist   IN     VARCHAR2
                                ,pr_input_file IN OUT utl_file.file_type
                                ,pr_dscritic   OUT    VARCHAR2
@@ -1132,10 +1131,10 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gravar o registro de transa√ß√£o da desist√™ncia: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gravar o registro de transaÁ„o da desistÍncia: ' || SQLERRM;  
   END pc_grava_reg_desist;
   
-  -- Gera o trailler do cart√≥rio no arquivo de desist√™ncia
+  -- Gera o trailler do cartÛrio no arquivo de desistÍncia
   PROCEDURE pc_gera_trail_cart_arq_desist(pr_cdcartor IN  NUMBER
                                          ,pr_qtdesist IN  NUMBER
                                          ,pr_cdmunici IN  NUMBER
@@ -1145,16 +1144,16 @@
                                          ) IS
   BEGIN
     --
-    pr_dsheader := '8'                                       -- 01 -- Tipo do registro -- Fixo 8 - Trailler do cart√≥rio no arquivo de desist√™ncia
-                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- C√≥digo do cart√≥rio -- REVISAR
-                || lpad(pr_qtdesist, 5, '0')                 -- 03 -- Soma do total de desist√™ncias informada no header do cart√≥rio e registros tipo 2 do mesmo 
+    pr_dsheader := '8'                                       -- 01 -- Tipo do registro -- Fixo 8 - Trailler do cartÛrio no arquivo de desistÍncia
+                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- CÛdigo do cartÛrio -- REVISAR
+                || lpad(pr_qtdesist, 5, '0')                 -- 03 -- Soma do total de desistÍncias informada no header do cartÛrio e registros tipo 2 do mesmo 
                 || rpad(' ', 114, ' ')                       -- 04 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                 -- 05 -- Seq√º√™ncia do registro
+                || lpad(pr_nrseqreg, 5, '0')                 -- 05 -- Seq¸Íncia do registro
                 ;
     --
   END pc_gera_trail_cart_arq_desist;
   
-  -- Grava o trailler do cart√≥rio no arquivo de desist√™ncia no XML
+  -- Grava o trailler do cartÛrio no arquivo de desistÍncia no XML
   PROCEDURE pc_grava_trail_cart_arq_desist(pr_dsheader   IN     VARCHAR2
                                           ,pr_input_file IN OUT utl_file.file_type
                                           ,pr_dscritic   OUT    VARCHAR2
@@ -1176,10 +1175,10 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o trailler do cart√≥rio no arquivo de desist√™ncia: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar o trailler do cartÛrio no arquivo de desistÍncia: ' || SQLERRM;  
   END pc_grava_trail_cart_arq_desist;
   
-  -- Gera o trailler do arquivo de desist√™ncia
+  -- Gera o trailler do arquivo de desistÍncia
   PROCEDURE pc_gera_trail_arq_desist(pr_cdaprese IN  NUMBER
                                     ,pr_nmaprese IN  VARCHAR2
                                     ,pr_dtmvtolt IN  VARCHAR2
@@ -1191,19 +1190,19 @@
                                     ) IS
   BEGIN
     --
-    pr_dstraill := '9'                                                                            -- 01 -- Tipo do registro -- Fixo 9 - Trailler do arquivo de desist√™ncia
-                || lpad(pr_cdaprese, 3, '0')                                                      -- 02 -- C√≥digo do apresentante -- REVISAR
+    pr_dstraill := '9'                                                                            -- 01 -- Tipo do registro -- Fixo 9 - Trailler do arquivo de desistÍncia
+                || lpad(pr_cdaprese, 3, '0')                                                      -- 02 -- CÛdigo do apresentante -- REVISAR
                 || rpad(substr(pr_nmaprese, 0, 45), 45, ' ')                                      -- 03 -- Nome do apresentante -- REVISAR
                 || pr_dtmvtolt                                                                    -- 04 -- Data do movimento
-                || lpad(pr_qtdesist, 5, '0')                                                      -- 05 -- Soma do total de desist√™ncias informada no header do arquivo e registros tipo 2 do mesmo
-                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- Somat√≥ria do campo Valor do t√≠tulo
+                || lpad(pr_qtdesist, 5, '0')                                                      -- 05 -- Soma do total de desistÍncias informada no header do arquivo e registros tipo 2 do mesmo
+                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- SomatÛria do campo Valor do tÌtulo
                 || rpad(' ', 46, ' ')                                                             -- 07 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                                                      -- 08 -- Seq√º√™ncia do registro
+                || lpad(pr_nrseqreg, 5, '0')                                                      -- 08 -- Seq¸Íncia do registro
                 ;
     --
   END pc_gera_trail_arq_desist;
   
-  -- Grava o trailler do arquivo de desist√™ncia no XML
+  -- Grava o trailler do arquivo de desistÍncia no XML
   PROCEDURE pc_grava_trail_arq_desist(pr_dstraill   IN     VARCHAR2
                                      ,pr_input_file IN OUT utl_file.file_type
                                      ,pr_dscritic   OUT    VARCHAR2
@@ -1228,10 +1227,10 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o trailler do cart√≥rio no arquivo de desist√™ncia: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar o trailler do cartÛrio no arquivo de desistÍncia: ' || SQLERRM;  
   END pc_grava_trail_arq_desist;
   
-  -- Gera desist√™ncias a serem enviadas
+  -- Gera desistÍncias a serem enviadas
   PROCEDURE pc_gera_desistencia(pr_dscritic OUT VARCHAR2
                                ) IS
     --
@@ -1239,15 +1238,15 @@
       SELECT lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header Arquivo
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                     -- Campo 03 - Header Arquivo
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                               -- Campo 04 - Header Arquivo
-            ,lpad(tbcobran_confirmacao_ieptb.cdcartorio, 2, '0') cdcartor                                 -- Campo 02 - Header Cart√≥rio
-            ,lpad(tbcobran_confirmacao_ieptb.cdcomarc, 7, '0') cdcomarc                                   -- Campo 04 - Header Cart√≥rio
-            ,lpad(tbcobran_confirmacao_ieptb.nrprotoc_cartorio, 10, '0') nrprotoc                         -- Campo 02 - Transa√ß√£o
-            ,to_char(tbcobran_confirmacao_ieptb.dtprotocolo, 'DDMMYYYY') dtprotoc                         -- Campo 03 - Transa√ß√£o
-            ,lpad(crapcob.nrdocmto, 11, '0') nrdocmto                                                     -- Campo 04 - Transa√ß√£o
-            ,rpad(crapsab.nmdsacad, 45, ' ') nmdsacad                                                     -- Campo 05 - Transa√ß√£o
-            ,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 06 - Transa√ß√£o
-            ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                    -- Campo 08 - Transa√ß√£o
-            ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                     -- Campo 09 - Transa√ß√£o
+            ,lpad(tbcobran_confirmacao_ieptb.cdcartorio, 2, '0') cdcartor                                 -- Campo 02 - Header CartÛrio
+            ,lpad(tbcobran_confirmacao_ieptb.cdcomarc, 7, '0') cdcomarc                                   -- Campo 04 - Header CartÛrio
+            ,lpad(tbcobran_confirmacao_ieptb.nrprotoc_cartorio, 10, '0') nrprotoc                         -- Campo 02 - TransaÁ„o
+            ,to_char(tbcobran_confirmacao_ieptb.dtprotocolo, 'DDMMYYYY') dtprotoc                         -- Campo 03 - TransaÁ„o
+            ,lpad(crapcob.nrdocmto, 11, '0') nrdocmto                                                     -- Campo 04 - TransaÁ„o
+            ,rpad(crapsab.nmdsacad, 45, ' ') nmdsacad                                                     -- Campo 05 - TransaÁ„o
+            ,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 06 - TransaÁ„o
+            ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                    -- Campo 08 - TransaÁ„o
+            ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                     -- Campo 09 - TransaÁ„o
             ,crapcob.rowid
             ,crapcob.cdcooper
             ,crapdat.dtmvtolt dtmvtolt_dat
@@ -1309,8 +1308,8 @@
     --
   BEGIN
     -- Incluido controle de Log inicio programa
-    pc_controla_log_batch(1, 'In√≠cio pc_crps729.pc_gera_desistencia');
-    -- Inicializa vari√°veis
+    pc_controla_log_batch(1, 'InÌcio pc_crps729.pc_gera_desistencia');
+    -- Inicializa vari·veis
     vr_qtregist  := 1;
     vr_qtnumarq  := 0;
     vr_vlsomseg  := 0;
@@ -1332,7 +1331,7 @@
       EXIT WHEN cr_craprem%NOTFOUND;
       --
       IF vr_qtregist = 1 THEN
-        -- Inicializa o arquivo de desist√™ncias
+        -- Inicializa o arquivo de desistÍncias
         
 
         pc_gera_header_arq_desist(pr_cdaprese => rw_craprem.cdbandoc -- IN
@@ -1361,7 +1360,7 @@
         vr_qtregist := vr_qtregist + 1;
         --
       END IF;
-      -- Verifica se precisa inicializar um novo cart√≥rio
+      -- Verifica se precisa inicializar um novo cartÛrio
       IF (nvl(vr_cdcartor, 0) <> to_number(rw_craprem.cdcartor) OR (nvl(vr_cdcomarc, 0) <> to_number(rw_craprem.cdcomarc))) THEN
         -- Verifica se finaliza a remessa anterior
         IF vr_qtnumarq > 0 THEN
@@ -1400,7 +1399,7 @@
 				vr_cdcomarc := rw_craprem.cdcomarc;
         --
       END IF;
-      -- Se for o primeiro registro, gerar o cabe√ßalho
+      -- Se for o primeiro registro, gerar o cabeÁalho
       IF vr_idgercab THEN
         --
         vr_dsdlinha := NULL;
@@ -1541,21 +1540,21 @@
       --
     END IF;
     -- Escrever o log no arquivo
-    pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_desistencia --> Finalizado o processamento das desist√™ncias.'); -- Texto para escrita
+    pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_desistencia --> Finalizado o processamento das desistÍncias.'); -- Texto para escrita
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
-      -- Inclu√≠do controle de Log
-      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_desistencia --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || pr_dscritic);
+      -- IncluÌdo controle de Log
+      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_desistencia --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || pr_dscritic);
 			
       NULL;
     WHEN OTHERS THEN
-      -- Inclu√≠do controle de Log
-      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_desistencia --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || SQLERRM);
+      -- IncluÌdo controle de Log
+      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_desistencia --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || SQLERRM);
       pr_dscritic := SQLERRM;
   END pc_gera_desistencia;
   
-  -- Gera o arquivo de desist√™ncia
+  -- Gera o arquivo de desistÍncia
   PROCEDURE pc_gera_arquivo_desistencia(pr_dscritic OUT VARCHAR2
                                        ) IS
     --
@@ -1577,7 +1576,7 @@
     --
   BEGIN
     -- Incluido controle de Log inicio programa
-    pc_controla_log_batch(1, 'In√≠cio crps729.pc_gera_arquivo_desistencia');
+    pc_controla_log_batch(1, 'InÌcio crps729.pc_gera_arquivo_desistencia');
     --
     IF vr_tab_arquivo.count > 0 THEN
       --
@@ -1590,7 +1589,7 @@
         --
       EXCEPTION
         WHEN OTHERS THEN
-          -- Inclu√≠do controle de Log
+          -- IncluÌdo controle de Log
           pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_desistencia --> Erro ao buscar a data de movimento: ' || SQLERRM);
           RAISE vr_exc_erro;
       END;
@@ -1600,14 +1599,14 @@
                                                           );
                                                           
                                                           
-      -- Diret√≥rio onde dever√° gerar o arquivo de desist√™ncia
+      -- DiretÛrio onde dever· gerar o arquivo de desistÍncia
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
       vr_nmdirtxt := gene0001.fn_param_sistema (pr_nmsistem => 'CRED'              -- IN
                                                ,pr_cdcooper => 3                   -- IN
                                                ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
                                                );
-      -- Abre o arquivo de dados em modo de grava√ß√£o
-      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diret√≥rio do arquivo
+      -- Abre o arquivo de dados em modo de gravaÁ„o
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- DiretÛrio do arquivo
                               ,pr_nmarquiv => vr_nmarqtxt   -- IN -- Nome do arquivo
                               ,pr_tipabert => 'W'           -- IN -- Modo de abertura (R,W,A)
                               ,pr_utlfileh => vr_input_file -- IN -- Handle do arquivo aberto
@@ -1623,7 +1622,7 @@
       gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file            -- Handle do arquivo aberto
                                     ,pr_des_text  => '<?xml version="1.0"?> ' -- Texto para escrita
                                     );
-      -- Abre a desist√™ncia
+      -- Abre a desistÍncia
       -- Escrever o registro no arquivo
       gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file -- Handle do arquivo aberto
                                     ,pr_des_text  => '<sustacao>'   -- Texto para escrita
@@ -1632,7 +1631,7 @@
       vr_index_arq := vr_tab_arquivo.first;
       -- Percorre todos os registros para gerar os totalizadores
       WHILE vr_index_arq IS NOT NULL LOOP
-        -- Verifica se o registro √© do tipo header do arquivo
+        -- Verifica se o registro È do tipo header do arquivo
         IF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 0 THEN
           --
           vr_dslinhea  := vr_tab_arquivo(vr_index_arq).ds_registro;
@@ -1646,7 +1645,7 @@
               vr_qttotdes := vr_qttotdes + 1;
               --
             END IF;
-            -- Pr√≥ximo registro
+            -- PrÛximo registro
             vr_index_reg := vr_tab_arquivo.next(vr_index_reg);
             --
           END LOOP;
@@ -1665,16 +1664,16 @@
           END IF;
           --
           vr_dslinhea := NULL;
-        -- Verifica se o registro √© do tipo header do cart√≥rio
+        -- Verifica se o registro È do tipo header do cartÛrio
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 1 THEN
           --
           vr_dslinhea 	   := vr_tab_arquivo(vr_index_arq).ds_registro;
           vr_index_arq_ant := NULL;
           vr_qtregdes      := 0;
           --
-        -- Verifica se o registro √© do tipo transa√ß√£o
+        -- Verifica se o registro È do tipo transaÁ„o
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 2 THEN
-          -- Guarda a posi√ß√£o do primeiro registro de transa√ß√£o da desist√™ncia
+          -- Guarda a posiÁ„o do primeiro registro de transaÁ„o da desistÍncia
           IF vr_index_arq_ant IS NULL THEN
             --
             vr_index_arq_ant := vr_index_arq;
@@ -1683,13 +1682,13 @@
           --
           vr_qtregdes := vr_qtregdes + 1;
           --
-        -- Verifica se o registro √© do tipo trailler do cart√≥rio
+        -- Verifica se o registro È do tipo trailler do cartÛrio
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 8 THEN
           --
           vr_dslintra := vr_tab_arquivo(vr_index_arq).ds_registro;
-          -- Joga os totais no header do cart√≥rio
+          -- Joga os totais no header do cartÛrio
           vr_dslinhea := substr(vr_dslinhea, 0, 3) || lpad(vr_qtregdes, 5, '0') || substr(vr_dslinhea, 9, 119);
-          -- Grava o header do cart√≥rio
+          -- Grava o header do cartÛrio
           pc_grava_head_cart_arq_desist(pr_dsheader   => vr_dslinhea   -- IN
                                        ,pr_input_file => vr_input_file -- IN OUT
                                        ,pr_dscritic   => pr_dscritic   -- OUT
@@ -1702,7 +1701,7 @@
           END IF;
           --
           vr_index_reg := vr_index_arq_ant;
-          -- Grava as transa√ß√µes
+          -- Grava as transaÁıes
           WHILE vr_index_reg IS NOT NULL LOOP
             -- Finaliza
             IF substr(vr_tab_arquivo(vr_index_reg).ds_registro, 0, 1) = 8 THEN
@@ -1711,7 +1710,7 @@
               EXIT;
               --
             ELSE
-              -- Gravar a transa√ß√£o
+              -- Gravar a transaÁ„o
               pc_grava_reg_desist(pr_dsregist   => vr_tab_arquivo(vr_index_reg).ds_registro -- IN
                                  ,pr_input_file => vr_input_file                            -- IN OUT
                                  ,pr_dscritic   => pr_dscritic                              -- OUT
@@ -1724,13 +1723,13 @@
               END IF;
               --
             END IF;
-            -- Pr√≥ximo registro
+            -- PrÛximo registro
             vr_index_reg := vr_tab_arquivo.next(vr_index_reg);
             --
           END LOOP;
-          -- Joga os totais no trailler do cart√≥rio
+          -- Joga os totais no trailler do cartÛrio
           vr_dslintra := substr(vr_dslintra, 0, 3) || lpad((vr_qtregdes + vr_qtregdes), 5, '0') || substr(vr_dslintra, 009, 119);
-          -- Grava o trailler do cart√≥rio
+          -- Grava o trailler do cartÛrio
           pc_grava_trail_cart_arq_desist(pr_dsheader   => vr_dslintra   -- IN
                                         ,pr_input_file => vr_input_file -- IN OUT
                                         ,pr_dscritic   => pr_dscritic   -- OUT
@@ -1741,7 +1740,7 @@
             RAISE vr_exc_erro;
             --
           END IF;
-        -- Verifica se o registro √© do tipo trailler do arquivo
+        -- Verifica se o registro È do tipo trailler do arquivo
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 9 THEN
           --
           vr_dslintra := vr_tab_arquivo(vr_index_arq).ds_registro;
@@ -1758,14 +1757,14 @@
             RAISE vr_exc_erro;
             --
           END IF;
-        -- Se n√£o for de nenhum dos tipos anteriores, gera erro
+        -- Se n„o for de nenhum dos tipos anteriores, gera erro
         ELSE
-          -- Inclu√≠do controle de Log
+          -- IncluÌdo controle de Log
           pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_desistencia --> Tipo de registro inexistente!');
           RAISE vr_exc_erro;
           --
         END IF;
-        -- Pr√≥ximo registro
+        -- PrÛximo registro
         vr_index_arq := vr_tab_arquivo.next(vr_index_arq);
         --
       END LOOP;
@@ -1789,10 +1788,10 @@
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
-      -- Inclu√≠do controle de Log
+      -- IncluÌdo controle de Log
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_desistencia --> ' || pr_dscritic);
     WHEN OTHERS THEN
-      -- Inclu√≠do controle de Log
+      -- IncluÌdo controle de Log
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_desistencia --> ' || SQLERRM);
   END pc_gera_arquivo_desistencia;
   -- --------------------------------------------------------------------------------------------------
@@ -1810,13 +1809,13 @@
   BEGIN
     --
     pr_dsheader := '0'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do arquivo de cancelamento
-                || lpad(pr_cdaprese, 3, '0')                 -- 02 -- C√≥digo do apresentante -- REVISAR
+                || lpad(pr_cdaprese, 3, '0')                 -- 02 -- CÛdigo do apresentante -- REVISAR
                 || rpad(substr(pr_nmaprese, 0, 45), 45, ' ') -- 03 -- Nome do apresentante -- REVISAR
                 || to_char(pr_dtmvtolt, 'ddmmyyyy')          -- 04 -- Data do movimento
                 || lpad(pr_qtdesist, 5, '0')                 -- 05 -- Quantidade de cancelamentos -- REVISAR
                 || lpad(pr_qtregtp2, 5, '0')                 -- 06 -- Quantidade de registros tipo 2 no arquivo
                 || rpad(' ', 55, ' ')                        -- 07 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                 -- 08 -- Seq√º√™ncia do registro -- Constante 00001
+                || lpad(pr_nrseqreg, 5, '0')                 -- 08 -- Seq¸Íncia do registro -- Constante 00001
                 ;
     --
   END pc_gera_header_arq_cancel;
@@ -1849,7 +1848,7 @@
       pr_dscritic := 'Erro ao gerar o header do arquivo de cancelamento: ' || SQLERRM;  
   END pc_grava_header_arq_cancel;
   
-  -- Gera o header do cart√≥rio no arquivo de cancelamento
+  -- Gera o header do cartÛrio no arquivo de cancelamento
   PROCEDURE pc_gera_header_cart_arq_cancel(pr_cdcartor IN  NUMBER
                                           ,pr_qtdesist IN  NUMBER
                                           ,pr_cdmunici IN  NUMBER
@@ -1859,17 +1858,17 @@
                                           ) IS
   BEGIN
     --
-    pr_dsheader := '1'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do cart√≥rio no arquivo de cancelamento
-                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- C√≥digo do cart√≥rio -- REVISAR
+    pr_dsheader := '1'                                       -- 01 -- Tipo do registro -- Fixo 0 - Header do cartÛrio no arquivo de cancelamento
+                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- CÛdigo do cartÛrio -- REVISAR
                 || lpad(pr_qtdesist, 5, '0')                 -- 03 -- Quantidade de cancelamentos -- REVISAR
-                || lpad(pr_cdmunici, 7, '0')                 -- 04 -- C√≥digo do Munic√≠pio
+                || lpad(pr_cdmunici, 7, '0')                 -- 04 -- CÛdigo do MunicÌpio
                 || rpad(' ', 107, ' ')                       -- 05 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                 -- 06 -- Seq√º√™ncia do registro -- Constante 00001
+                || lpad(pr_nrseqreg, 5, '0')                 -- 06 -- Seq¸Íncia do registro -- Constante 00001
                 ;
     --
   END pc_gera_header_cart_arq_cancel;
   
-  -- Grava o header do cart√≥rio no arquivo de cancelamento no XML
+  -- Grava o header do cartÛrio no arquivo de cancelamento no XML
   PROCEDURE pc_grava_head_cart_arq_cancel(pr_dsheader   IN     VARCHAR2
                                          ,pr_input_file IN OUT utl_file.file_type
                                          ,pr_dscritic   OUT    VARCHAR2
@@ -1892,10 +1891,10 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o header do cart√≥rio no arquivo de cancelamento: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar o header do cartÛrio no arquivo de cancelamento: ' || SQLERRM;  
   END pc_grava_head_cart_arq_cancel;
   
-  -- Gera o registro da transa√ß√£o de cancelamento
+  -- Gera o registro da transaÁ„o de cancelamento
   PROCEDURE pc_gera_reg_cancel(pr_nrprotoc IN  VARCHAR2
                               ,pr_dtprotoc IN  VARCHAR2
                               ,pr_nrtitulo IN  VARCHAR2
@@ -1910,26 +1909,26 @@
     --
   BEGIN
     --
-    pr_dsregist := '2'                                                                            -- 01 -- Identifica√ß√£o do registro -- Fixo: 2 - Registro de transa√ß√£o
-                || rpad(pr_nrprotoc, 10, ' ')                                                     -- 02 -- N√∫mero do protocolo
+    pr_dsregist := '2'                                                                            -- 01 -- IdentificaÁ„o do registro -- Fixo: 2 - Registro de transaÁ„o
+                || rpad(pr_nrprotoc, 10, ' ')                                                     -- 02 -- N˙mero do protocolo
                 || lpad(pr_dtprotoc, 8, '0')                                                      -- 03 -- Data de protocolagem
-                || lpad(pr_nrtitulo, 11, '0')                                                     -- 04 -- N√∫mero do t√≠tulo
+                || lpad(pr_nrtitulo, 11, '0')                                                     -- 04 -- N˙mero do tÌtulo
                 || substr(pr_nmdevedo, 0, 45)                                                     -- 05 -- Nome do primeiro devedor
-                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- Valor do t√≠tulo
-                || 'C'                                                                            -- 07 -- Solicita√ß√£o de Cancelamento de Protesto -- Fixo C
-                || rpad(pr_cdagectl, 12, ' ')                                                     -- 08 -- Ag√™ncia/Conta
-                || rpad(nvl(pr_nrnosnum, ' '), 12, ' ')                                           -- 09 -- Carteira/N.N√∫mero
+                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- Valor do tÌtulo
+                || 'C'                                                                            -- 07 -- SolicitaÁ„o de Cancelamento de Protesto -- Fixo C
+                || rpad(pr_cdagectl, 12, ' ')                                                     -- 08 -- AgÍncia/Conta
+                || rpad(nvl(pr_nrnosnum, ' '), 12, ' ')                                           -- 09 -- Carteira/N.N˙mero
                 || rpad(' ', 2, ' ')                                                              -- 10 -- Reservado
-                || rpad(' ', 6, ' ')                                                              -- 11 -- N√∫mero de controle de recebimento (n√£o utilizar)
-                || lpad(pr_nrseqreg, 5, '0')                                                      -- 12 -- Seq√º√™ncia do registro
+                || rpad(' ', 6, ' ')                                                              -- 11 -- N˙mero de controle de recebimento (n„o utilizar)
+                || lpad(pr_nrseqreg, 5, '0')                                                      -- 12 -- Seq¸Íncia do registro
                 ;
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o registro de transa√ß√£o de cancelamento: ' || SQLERRM;
+      pr_dscritic := 'Erro ao gerar o registro de transaÁ„o de cancelamento: ' || SQLERRM;
   END pc_gera_reg_cancel;
   
-  -- Gera o registro da transa√ß√£o de cancelamento
+  -- Gera o registro da transaÁ„o de cancelamento
   PROCEDURE pc_grava_reg_cancel(pr_dsregist   IN     VARCHAR2
                                ,pr_input_file IN OUT utl_file.file_type
                                ,pr_dscritic   OUT    VARCHAR2
@@ -1958,10 +1957,10 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gravar o registro de transa√ß√£o de cancelamento: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gravar o registro de transaÁ„o de cancelamento: ' || SQLERRM;  
   END pc_grava_reg_cancel;
   
-  -- Gera o trailler do cart√≥rio no arquivo de cancelamento
+  -- Gera o trailler do cartÛrio no arquivo de cancelamento
   PROCEDURE pc_gera_trail_cart_arq_cancel(pr_cdcartor IN  NUMBER
                                          ,pr_qtdesist IN  NUMBER
                                          ,pr_cdmunici IN  NUMBER
@@ -1971,16 +1970,16 @@
                                          ) IS
   BEGIN
     --
-    pr_dsheader := '8'                                       -- 01 -- Tipo do registro -- Fixo 8 - Trailler do cart√≥rio no arquivo de cancelamento
-                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- C√≥digo do cart√≥rio -- REVISAR
-                || lpad(pr_qtdesist, 5, '0')                 -- 03 -- Soma do total de desist√™ncias informada no header do cart√≥rio e registros tipo 2 do mesmo 
+    pr_dsheader := '8'                                       -- 01 -- Tipo do registro -- Fixo 8 - Trailler do cartÛrio no arquivo de cancelamento
+                || lpad(pr_cdcartor, 2, '0')                 -- 02 -- CÛdigo do cartÛrio -- REVISAR
+                || lpad(pr_qtdesist, 5, '0')                 -- 03 -- Soma do total de desistÍncias informada no header do cartÛrio e registros tipo 2 do mesmo 
                 || rpad(' ', 114, ' ')                       -- 04 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                 -- 05 -- Seq√º√™ncia do registro
+                || lpad(pr_nrseqreg, 5, '0')                 -- 05 -- Seq¸Íncia do registro
                 ;
     --
   END pc_gera_trail_cart_arq_cancel;
   
-  -- Grava o trailler do cart√≥rio no arquivo de cancelamento no XML
+  -- Grava o trailler do cartÛrio no arquivo de cancelamento no XML
   PROCEDURE pc_grava_trail_cart_arq_cancel(pr_dsheader   IN     VARCHAR2
                                           ,pr_input_file IN OUT utl_file.file_type
                                           ,pr_dscritic   OUT    VARCHAR2
@@ -2002,7 +2001,7 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o trailler do cart√≥rio no arquivo de cancelamento: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar o trailler do cartÛrio no arquivo de cancelamento: ' || SQLERRM;  
   END pc_grava_trail_cart_arq_cancel;
   
   -- Gera o trailler do arquivo de cancelamento
@@ -2018,13 +2017,13 @@
   BEGIN
     --
     pr_dstraill := '9'                                                                            -- 01 -- Tipo do registro -- Fixo 9 - Trailler do arquivo de cancelamento
-                || lpad(pr_cdaprese, 3, '0')                                                      -- 02 -- C√≥digo do apresentante -- REVISAR
+                || lpad(pr_cdaprese, 3, '0')                                                      -- 02 -- CÛdigo do apresentante -- REVISAR
                 || rpad(substr(pr_nmaprese, 0, 45), 45, ' ')                                      -- 03 -- Nome do apresentante -- REVISAR
                 || lpad(pr_dtmvtolt, 8, '0')                                                      -- 04 -- Data do movimento
                 || lpad(pr_qtdesist, 5, '0')                                                      -- 05 -- Soma do total de cancelamentos informada no header do arquivo e registros tipo 2 do mesmo
-                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- Somat√≥ria do campo Valor do t√≠tulo
+                || lpad(pr_vltitulo, 14, '0')                                                     -- 06 -- SomatÛria do campo Valor do tÌtulo
                 || rpad(' ', 46, ' ')                                                             -- 07 -- Reservado
-                || lpad(pr_nrseqreg, 5, '0')                                                      -- 08 -- Seq√º√™ncia do registro
+                || lpad(pr_nrseqreg, 5, '0')                                                      -- 08 -- Seq¸Íncia do registro
                 ;
     --
   END pc_gera_trail_arq_cancel;
@@ -2054,7 +2053,7 @@
     --
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao gerar o trailler do cart√≥rio no arquivo de cancelamento: ' || SQLERRM;  
+      pr_dscritic := 'Erro ao gerar o trailler do cartÛrio no arquivo de cancelamento: ' || SQLERRM;  
   END pc_grava_trail_arq_cancel;
   
   -- Gera cancelamentos a serem enviados -- REVISAR
@@ -2065,15 +2064,15 @@
 		  SELECT lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header Arquivo
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                     -- Campo 03 - Header Arquivo
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                               -- Campo 04 - Header Arquivo
-            ,lpad(tbcobran_retorno_ieptb.cdcartorio, 2, '0') cdcartor                                 -- Campo 02 - Header Cart√≥rio
-            ,lpad(tbcobran_retorno_ieptb.cdcomarc, 7, '0') cdcomarc                                   -- Campo 04 - Header Cart√≥rio
-            ,lpad(tbcobran_retorno_ieptb.nrprotoc_cartorio, 10, '0') nrprotoc                         -- Campo 02 - Transa√ß√£o
-            ,to_char(tbcobran_retorno_ieptb.dtprotocolo, 'DDMMYYYY') dtprotoc                         -- Campo 03 - Transa√ß√£o
-            ,lpad(crapcob.nrdocmto, 11, '0') nrdocmto                                                     -- Campo 04 - Transa√ß√£o
-            ,rpad(crapsab.nmdsacad, 45, ' ') nmdsacad                                                     -- Campo 05 - Transa√ß√£o
-            ,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 06 - Transa√ß√£o
-            ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                    -- Campo 08 - Transa√ß√£o
-            ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                     -- Campo 09 - Transa√ß√£o
+            ,lpad(tbcobran_retorno_ieptb.cdcartorio, 2, '0') cdcartor                                 -- Campo 02 - Header CartÛrio
+            ,lpad(tbcobran_retorno_ieptb.cdcomarc, 7, '0') cdcomarc                                   -- Campo 04 - Header CartÛrio
+            ,lpad(tbcobran_retorno_ieptb.nrprotoc_cartorio, 10, '0') nrprotoc                         -- Campo 02 - TransaÁ„o
+            ,to_char(tbcobran_retorno_ieptb.dtprotocolo, 'DDMMYYYY') dtprotoc                         -- Campo 03 - TransaÁ„o
+            ,lpad(crapcob.nrdocmto, 11, '0') nrdocmto                                                     -- Campo 04 - TransaÁ„o
+            ,rpad(crapsab.nmdsacad, 45, ' ') nmdsacad                                                     -- Campo 05 - TransaÁ„o
+            ,lpad(replace(trim(to_char(crapcob.vltitulo, '999999999990D90')), ',', ''), 14, '0') vltitulo -- Campo 06 - TransaÁ„o
+            ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                    -- Campo 08 - TransaÁ„o
+            ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                     -- Campo 09 - TransaÁ„o
             ,crapcob.rowid
             ,crapcob.cdcooper
             ,crapdat.dtmvtolt dtmvtolt_dat
@@ -2132,8 +2131,8 @@
     --
   BEGIN
     -- Incluido controle de Log inicio programa
-    pc_controla_log_batch(1, 'In√≠cio pc_crps729.pc_gera_cancelamento');
-    -- Inicializa vari√°veis
+    pc_controla_log_batch(1, 'InÌcio pc_crps729.pc_gera_cancelamento');
+    -- Inicializa vari·veis
     vr_qtregist  := 1;
     vr_qtnumarq  := 0;
     vr_vlsomseg  := 0;
@@ -2181,7 +2180,7 @@
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_craprem.rowid
                                       , pr_cdoperad => '1'
                                       , pr_dtmvtolt => rw_craprem.dtmvtolt_dat
-                                      , pr_dsmensag => 'Exclusao de protesto enviada ao cartorio'
+                                      , pr_dsmensag => 'Exclusao Protesto - Carta de anuencia eletronica enviada'
                                       , pr_des_erro => vr_des_erro
                                       , pr_dscritic => vr_dscritic);                                                        
           --
@@ -2190,7 +2189,7 @@
         vr_qtregist := vr_qtregist + 1;
         --
       END IF;
-      -- Verifica se precisa inicializar um novo cart√≥rio
+      -- Verifica se precisa inicializar um novo cartÛrio
       IF nvl(vr_cdcartor, '0') <> rw_craprem.cdcartor THEN
         -- Verifica se finaliza a remessa anterior
         IF vr_qtnumarq > 0 THEN
@@ -2228,7 +2227,7 @@
 				vr_cdcartor := rw_craprem.cdcartor;
         --
       END IF;
-      -- Se for o primeiro registro, gerar o cabe√ßalho
+      -- Se for o primeiro registro, gerar o cabeÁalho
       IF vr_idgercab THEN
         --
         vr_dsdlinha := NULL;
@@ -2357,13 +2356,13 @@
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
-      -- Inclu√≠do controle de Log
-      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || pr_dscritic);
+      -- IncluÌdo controle de Log
+      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || pr_dscritic);
 			
       NULL;
     WHEN OTHERS THEN
-      -- Inclu√≠do controle de Log
-      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || SQLERRM);
+      -- IncluÌdo controle de Log
+      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || SQLERRM);
       pr_dscritic := SQLERRM;
   END pc_gera_cancelamento;
   
@@ -2389,7 +2388,7 @@
     --
   BEGIN
     -- Incluido controle de Log inicio programa
-    pc_controla_log_batch(1, 'In√≠cio crps729.pc_gera_arquivo_cancelamento');
+    pc_controla_log_batch(1, 'InÌcio crps729.pc_gera_arquivo_cancelamento');
     --
     IF vr_tab_arquivo.count > 0 THEN
       --
@@ -2402,7 +2401,7 @@
         --
       EXCEPTION
         WHEN OTHERS THEN
-          -- Inclu√≠do controle de Log
+          -- IncluÌdo controle de Log
           pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_cancelamento --> Erro ao buscar a data de movimento: ' || SQLERRM);
           RAISE vr_exc_erro;
       END;
@@ -2411,14 +2410,14 @@
                                                            ,pr_dtmvtolt => vr_dtmvtolt -- IN
                                                            );
                                                            
-      -- Diret√≥rio onde dever√° gerar o arquivo de cancelamento
+      -- DiretÛrio onde dever· gerar o arquivo de cancelamento
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
       vr_nmdirtxt := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'              -- IN
                                               ,pr_cdcooper => 3                   -- IN
                                               ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
                                               );
-      -- Abre o arquivo de dados em modo de grava√ß√£o
-      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diret√≥rio do arquivo
+      -- Abre o arquivo de dados em modo de gravaÁ„o
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- DiretÛrio do arquivo
                               ,pr_nmarquiv => vr_nmarqtxt   -- IN -- Nome do arquivo
                               ,pr_tipabert => 'W'           -- IN -- Modo de abertura (R,W,A)
                               ,pr_utlfileh => vr_input_file -- IN -- Handle do arquivo aberto
@@ -2443,7 +2442,7 @@
       vr_index_arq := vr_tab_arquivo.first;
       -- Percorre todos os registros para gerar os totalizadores
       WHILE vr_index_arq IS NOT NULL LOOP
-        -- Verifica se o registro √© do tipo header do arquivo
+        -- Verifica se o registro È do tipo header do arquivo
         IF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 0 THEN
           --
           vr_dslinhea  := vr_tab_arquivo(vr_index_arq).ds_registro;
@@ -2457,7 +2456,7 @@
               vr_qttotdes := vr_qttotdes + 1;
               --
             END IF;
-            -- Pr√≥ximo registro
+            -- PrÛximo registro
             vr_index_reg := vr_tab_arquivo.next(vr_index_reg);
             --
           END LOOP;
@@ -2476,16 +2475,16 @@
           END IF;
           --
           vr_dslinhea := NULL;
-        -- Verifica se o registro √© do tipo header do cart√≥rio
+        -- Verifica se o registro È do tipo header do cartÛrio
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 1 THEN
           --
           vr_dslinhea 	   := vr_tab_arquivo(vr_index_arq).ds_registro;
           vr_index_arq_ant := NULL;
           vr_qtregdes      := 0;
           --
-        -- Verifica se o registro √© do tipo transa√ß√£o
+        -- Verifica se o registro È do tipo transaÁ„o
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 2 THEN
-          -- Guarda a posi√ß√£o do primeiro registro de transa√ß√£o do cancelamento
+          -- Guarda a posiÁ„o do primeiro registro de transaÁ„o do cancelamento
           IF vr_index_arq_ant IS NULL THEN
             --
             vr_index_arq_ant := vr_index_arq;
@@ -2494,13 +2493,13 @@
           --
           vr_qtregdes := vr_qtregdes + 1;
           --
-        -- Verifica se o registro √© do tipo trailler do cart√≥rio
+        -- Verifica se o registro È do tipo trailler do cartÛrio
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 8 THEN
           --
           vr_dslintra := vr_tab_arquivo(vr_index_arq).ds_registro;
-          -- Joga os totais no header do cart√≥rio
+          -- Joga os totais no header do cartÛrio
           vr_dslinhea := substr(vr_dslinhea, 0, 3) || lpad(vr_qtregdes, 5, '0') || substr(vr_dslinhea, 9, 119);
-          -- Grava o header do cart√≥rio
+          -- Grava o header do cartÛrio
           pc_grava_head_cart_arq_cancel(pr_dsheader   => vr_dslinhea   -- IN
                                        ,pr_input_file => vr_input_file -- IN OUT
                                        ,pr_dscritic   => pr_dscritic   -- OUT
@@ -2513,7 +2512,7 @@
           END IF;
           --
           vr_index_reg := vr_index_arq_ant;
-          -- Grava as transa√ß√µes
+          -- Grava as transaÁıes
           WHILE vr_index_reg IS NOT NULL LOOP
             -- Finaliza
             IF substr(vr_tab_arquivo(vr_index_reg).ds_registro, 0, 1) = 8 THEN
@@ -2522,7 +2521,7 @@
               EXIT;
               --
             ELSE
-              -- Gravar a transa√ß√£o
+              -- Gravar a transaÁ„o
               pc_grava_reg_cancel(pr_dsregist   => vr_tab_arquivo(vr_index_reg).ds_registro -- IN
                                  ,pr_input_file => vr_input_file                            -- IN OUT
                                  ,pr_dscritic   => pr_dscritic                              -- OUT
@@ -2535,13 +2534,13 @@
               END IF;
               --
             END IF;
-            -- Pr√≥ximo registro
+            -- PrÛximo registro
             vr_index_reg := vr_tab_arquivo.next(vr_index_reg);
             --
           END LOOP;
-          -- Joga os totais no trailler do cart√≥rio
+          -- Joga os totais no trailler do cartÛrio
           vr_dslintra := substr(vr_dslintra, 0, 3) || lpad((vr_qtregdes + vr_qtregdes), 5, '0') || substr(vr_dslintra, 009, 119);
-          -- Grava o trailler do cart√≥rio
+          -- Grava o trailler do cartÛrio
           pc_grava_trail_cart_arq_cancel(pr_dsheader   => vr_dslintra   -- IN
                                         ,pr_input_file => vr_input_file -- IN OUT
                                         ,pr_dscritic   => pr_dscritic   -- OUT
@@ -2552,7 +2551,7 @@
             RAISE vr_exc_erro;
             --
           END IF;
-        -- Verifica se o registro √© do tipo trailler do arquivo
+        -- Verifica se o registro È do tipo trailler do arquivo
         ELSIF substr(vr_tab_arquivo(vr_index_arq).ds_registro, 0, 1) = 9 THEN
           --
           vr_dslintra := vr_tab_arquivo(vr_index_arq).ds_registro;
@@ -2569,14 +2568,14 @@
             RAISE vr_exc_erro;
             --
           END IF;
-        -- Se n√£o for de nenhum dos tipos anteriores, gera erro
+        -- Se n„o for de nenhum dos tipos anteriores, gera erro
         ELSE
-          -- Inclu√≠do controle de Log
+          -- IncluÌdo controle de Log
           pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_cancelamento --> Tipo de registro inexistente!');
           RAISE vr_exc_erro;
           --
         END IF;
-        -- Pr√≥ximo registro
+        -- PrÛximo registro
         vr_index_arq := vr_tab_arquivo.next(vr_index_arq);
         --
       END LOOP;
@@ -2600,10 +2599,10 @@
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
-      -- Inclu√≠do controle de Log
+      -- IncluÌdo controle de Log
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_cancelamento --> ' || pr_dscritic);
     WHEN OTHERS THEN
-      -- Inclu√≠do controle de Log
+      -- IncluÌdo controle de Log
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_cancelamento --> ' || SQLERRM);
   END pc_gera_arquivo_cancelamento;
   --
@@ -2614,15 +2613,15 @@
 		  SELECT lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                  -- Campo 02 - Header Arquivo
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                 -- Campo 03 - Header Arquivo
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                           -- Campo 04 - Header Arquivo
-            ,lpad(tbcobran_retorno_ieptb.cdcartorio, 2, '0') cdcartor                                 -- Campo 02 - Header Cart√≥rio
-            ,lpad(tbcobran_retorno_ieptb.cdcomarc, 7, '0') cdcomarc                                   -- Campo 04 - Header Cart√≥rio
-            ,lpad(tbcobran_retorno_ieptb.nrprotoc_cartorio, 10, '0') nrprotoc                         -- Campo 02 - Transa√ß√£o
-            ,to_char(tbcobran_retorno_ieptb.dtprotocolo, 'DDMMYYYY') dtprotoc                         -- Campo 03 - Transa√ß√£o
-            ,lpad(crapcob.nrdocmto, 11, '0') nrdocmto                                                 -- Campo 04 - Transa√ß√£o
-            ,rpad(crapsab.nmdsacad, 45, ' ') nmdsacad                                                 -- Campo 05 - Transa√ß√£o
-            ,replace(to_char(crapcob.vltitulo),',','.') vltitulo                                      -- Campo 06 - Transa√ß√£o
-            ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                -- Campo 08 - Transa√ß√£o
-            ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                 -- Campo 09 - Transa√ß√£o
+            ,lpad(tbcobran_retorno_ieptb.cdcartorio, 2, '0') cdcartor                                 -- Campo 02 - Header CartÛrio
+            ,lpad(tbcobran_retorno_ieptb.cdcomarc, 7, '0') cdcomarc                                   -- Campo 04 - Header CartÛrio
+            ,lpad(tbcobran_retorno_ieptb.nrprotoc_cartorio, 10, '0') nrprotoc                         -- Campo 02 - TransaÁ„o
+            ,to_char(tbcobran_retorno_ieptb.dtprotocolo, 'DDMMYYYY') dtprotoc                         -- Campo 03 - TransaÁ„o
+            ,lpad(crapcob.nrdocmto, 11, '0') nrdocmto                                                 -- Campo 04 - TransaÁ„o
+            ,rpad(crapsab.nmdsacad, 45, ' ') nmdsacad                                                 -- Campo 05 - TransaÁ„o
+            ,replace(to_char(crapcob.vltitulo),',','.') vltitulo                                      -- Campo 06 - TransaÁ„o
+            ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                -- Campo 08 - TransaÁ„o
+            ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                 -- Campo 09 - TransaÁ„o
             ,crapcob.rowid
         FROM craprem
             ,crapcob
@@ -2685,8 +2684,8 @@
     --
   BEGIN
     -- Incluido controle de Log inicio programa
-    pc_controla_log_batch(1, 'In√≠cio pc_crps729.pc_gera_cancelamento');
-    -- Inicializa vari√°veis
+    pc_controla_log_batch(1, 'InÌcio pc_crps729.pc_gera_cancelamento');
+    -- Inicializa vari·veis
     vr_qtregist  := 1;
 		vr_qtcartor  := 1;
     vr_qtnumarq  := 0;
@@ -2729,7 +2728,7 @@
 				vr_cdcartor := 0;
 				--
 			END IF;
-			-- Verifica se precisa inicializar um novo cart√≥rio
+			-- Verifica se precisa inicializar um novo cartÛrio
       IF nvl(vr_cdcartor, 0) <> to_number(rw_craprem.cdcartor) THEN
         --
         IF vr_qtcartor > 1 THEN
@@ -2773,7 +2772,7 @@
 			--
 		EXCEPTION
 			WHEN OTHERS THEN
-				-- Inclu√≠do controle de Log
+				-- IncluÌdo controle de Log
 				pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_cancelamento --> Erro ao buscar a data de movimento: ' || SQLERRM);
 				RAISE vr_exc_erro;
 		END;
@@ -2793,14 +2792,14 @@
                || '</soapenv:Body>'
                || '</soapenv:Envelope>';
 		
-		-- Diret√≥rio onde dever√° gerar o arquivo de cancelamento
+		-- DiretÛrio onde dever· gerar o arquivo de cancelamento
 		--vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
 		vr_nmdirtxt := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'              -- IN
 																						,pr_cdcooper => 3                   -- IN
 																						,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
 																						);
-		-- Abre o arquivo de dados em modo de grava√ß√£o
-		gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- Diret√≥rio do arquivo
+		-- Abre o arquivo de dados em modo de gravaÁ„o
+		gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirtxt   -- IN -- DiretÛrio do arquivo
 														,pr_nmarquiv => vr_nmarqtxt   -- IN -- Nome do arquivo
 														,pr_tipabert => 'W'           -- IN -- Modo de abertura (R,W,A)
 														,pr_utlfileh => vr_input_file -- IN -- Handle do arquivo aberto
@@ -2831,19 +2830,19 @@
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
-      -- Inclu√≠do controle de Log
-      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || pr_dscritic);
+      -- IncluÌdo controle de Log
+      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || pr_dscritic);
 			
       NULL;
     WHEN OTHERS THEN
-      -- Inclu√≠do controle de Log
-      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n√£o processado devido ao ERRO: ' || SQLERRM);
+      -- IncluÌdo controle de Log
+      --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' n„o processado devido ao ERRO: ' || SQLERRM);
       pr_dscritic := SQLERRM;
   END pc_gera_cancelamento_ieptb;
 	--
 BEGIN
   -- Incluido controle de Log inicio programa
-  pc_controla_log_batch(1, 'In√≠cio crps729');
+  pc_controla_log_batch(1, 'InÌcio crps729');
   --
   pc_gera_remessa(pr_dscritic => pr_dscritic -- OUT
                  );
@@ -2926,11 +2925,11 @@ BEGIN
 	--
 EXCEPTION
   WHEN vr_exc_erro THEN
-    -- Inclu√≠do controle de Log
+    -- IncluÌdo controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> ' || pr_dscritic);
 		ROLLBACK;
   WHEN OTHERS THEN
-    -- Inclu√≠do controle de Log
+    -- IncluÌdo controle de Log
 		pr_dscritic := SQLERRM;
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> ' || SQLERRM);
 		ROLLBACK;

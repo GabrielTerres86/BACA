@@ -111,7 +111,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
         paga0001.pc_cria_log_cobranca(pr_idtabcob => pr_rowid,
                                       pr_cdoperad => '1',
                                       pr_dtmvtolt => trunc(SYSDATE), -- Rotina nao utiliza esta data
-                                      pr_dsmensag => 'Serasa - Enviado para negativacao',
+                                      pr_dsmensag => 'Boleto enviado para negativacao',
                                       pr_des_erro => vr_des_erro,
                                       pr_dscritic => vr_dscritic);
         IF vr_dscritic IS NOT NULL THEN
@@ -122,7 +122,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
         paga0001.pc_cria_log_cobranca(pr_idtabcob => pr_rowid,
                                       pr_cdoperad => '1',
                                       pr_dtmvtolt => trunc(SYSDATE), -- Rotina nao utiliza esta data
-                                      pr_dsmensag => 'Serasa - Envio do cancelamento da negativacao',
+                                      pr_dsmensag => 'Envio do cancelamento de negativacao do boleto - Serasa',
                                       pr_des_erro => vr_des_erro,
                                       pr_dscritic => vr_dscritic);
         IF vr_dscritic IS NOT NULL THEN
@@ -743,7 +743,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
             paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob_2.rowid,
                                           pr_cdoperad => '1',
                                           pr_dtmvtolt => trunc(SYSDATE), -- Rotina nao utiliza esta data
-                                          pr_dsmensag => 'Serasa - Boleto negativado na Serasa',
+                                          pr_dsmensag => 'Boleto negativado - Serasa',
                                           pr_des_erro => vr_des_erro,
                                           pr_dscritic => vr_dscritic);
             IF vr_dscritic IS NOT NULL THEN

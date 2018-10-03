@@ -3624,7 +3624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
                                        ,pr_cdoperad => pr_cdoperad   --Operador
                                        ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                       ,pr_dsmensag => 'Instrucao de Cancelamento de Protesto' --Descricao Mensagem
+                                       ,pr_dsmensag => 'Pedido de cancelamento de Protesto' --Descricao Mensagem
                                        ,pr_des_erro => vr_des_erro   --Indicador erro
                                        ,pr_dscritic => vr_dscritic); --Descricao erro                    
                     
@@ -3770,7 +3770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
                                        ,pr_cdoperad => pr_cdoperad   --Operador
                                        ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                       ,pr_dsmensag => 'Instrucao de Cancelamento de Protesto' --Descricao Mensagem
+                                       ,pr_dsmensag => 'Pedido de cancelamento de Protesto' --Descricao Mensagem
                                        ,pr_des_erro => vr_des_erro   --Indicador erro
                                        ,pr_dscritic => vr_dscritic); --Descricao erro
           
@@ -5662,7 +5662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
 
         --Montar Motivo
-        vr_dsmotivo:= 'Instrucao de Baixa - Decurso Prazo';
+        vr_dsmotivo:= 'Boleto baixado automaticamente por decurso de prazo - ' || (pr_dtmvtolt - rw_crapcob.dtvencto) || ' dias apos o vencimento';
         --Cria log cobranca
         PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
                                      ,pr_cdoperad => pr_cdoperad   --Operador
@@ -6404,7 +6404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad   --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                 ,pr_dsmensag => 'Concessao de Abatimento Vlr: R$ ' || 
+                                 ,pr_dsmensag => 'Concessao de Abatimento no valor de R$ ' || 
                                                  TRIM(to_char(pr_vlabatim,'9g999g990d00')) --Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro   --Indicador erro
                                  ,pr_dscritic => vr_dscritic); --Descricao erro
@@ -6745,7 +6745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           CLOSE cr_crapcco;
           --Protesta titulo Migrado
           COBR0007.pc_inst_titulo_migrado (pr_idregcob => rw_crapcob --Rowtype da Cobranca
-                                          ,pr_dsdinstr => 'Cancelamento de Abatimento' --Descricao da Instrucao
+                                          ,pr_dsdinstr => 'Cancelamento de abatimento' --Descricao da Instrucao
                                           ,pr_dtaltvct => NULL       --Data Alteracao Vencimento
                                           ,pr_vlaltabt => 0          --Valor Alterado Abatimento
                                           ,pr_nrdctabb => rw_crapcco.nrdctabb --Numero da Conta BB
@@ -6964,7 +6964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                    ,pr_cdoperad => pr_cdoperad   --Operador
                                    ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
-                                   ,pr_dsmensag => 'Cancelamento de Abatimento'   --Descricao Mensagem
+                                   ,pr_dsmensag => 'Cancelamento de abatimento'   --Descricao Mensagem
                                    ,pr_des_erro => vr_des_erro   --Indicador erro
                                    ,pr_dscritic => vr_dscritic); --Descricao erro
       --Se ocorreu erro
@@ -7567,10 +7567,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad      --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt      --Data movimento
-                                 ,pr_dsmensag => 'Alter. Vencto. De ' || 
-                                                 to_char(vr_dtvencto_old,'dd/mm/yy') ||
+                                 ,pr_dsmensag => 'Alteracao de vencimento de ' || 
+                                                 to_char(vr_dtvencto_old,'dd/mm/yyyy') ||
                                                  ' para ' ||
-                                                 to_char(pr_dtvencto,'dd/mm/yy')  --Descricao Mensagem
+                                                 to_char(pr_dtvencto,'dd/mm/yyyy')  --Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro      --Indicador erro
                                  ,pr_dscritic => vr_dscritic);    --Descricao erro
     --Se ocorreu erro
@@ -8185,7 +8185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad      --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt      --Data movimento
-                                 ,pr_dsmensag => 'Concessao de Desconto Vlr: R$ ' ||
+                                 ,pr_dsmensag => 'Concessao de desconto no valor de R$ ' ||
                                                  TRIM(to_char(pr_vldescto,'9g999g990d00')) -- Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro      --Indicador erro
                                  ,pr_dscritic => vr_dscritic);    --Descricao erro
@@ -8530,7 +8530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         CLOSE cr_crapcco;
         --Protesta titulo Migrado
         COBR0007.pc_inst_titulo_migrado (pr_idregcob => rw_crapcob --Rowtype da Cobranca
-                                        ,pr_dsdinstr => 'Cancelamento de Desconto' --Descricao da Instrucao
+                                        ,pr_dsdinstr => 'Cancelamento de desconto' --Descricao da Instrucao
                                         ,pr_dtaltvct => NULL       --Data Alteracao Vencimento
                                         ,pr_vlaltabt => 0          --Valor Alterado Abatimento
                                         ,pr_nrdctabb => rw_crapcco.nrdctabb --Numero da Conta BB
@@ -8737,7 +8737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --ROWID da Cobranca
                                  ,pr_cdoperad => pr_cdoperad      --Operador
                                  ,pr_dtmvtolt => pr_dtmvtolt      --Data movimento
-                                 ,pr_dsmensag => 'Cancelamento de Desconto'               --Descricao Mensagem
+                                 ,pr_dsmensag => 'Cancelamento de desconto'               --Descricao Mensagem
                                  ,pr_des_erro => vr_des_erro      --Indicador erro
                                  ,pr_dscritic => vr_dscritic);    --Descricao erro
     --Se ocorreu erro
