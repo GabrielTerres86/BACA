@@ -630,75 +630,31 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
       
-    -- Cursor da  situação da conta do associado
-      CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
-                         pr_nrdconta IN crapass.nrdconta%TYPE                 
-                               ) IS
-        SELECT ca.inprejuz
-        FROM crapass ca
-        WHERE ca.cdcooper = pr_cdcooper
-        AND   ca.nrdconta = pr_nrdconta;
-        
-        rw_crapass cr_crapass%ROWTYPE; 
-        
         --Valor dos lançamentos envolvidos  no estorno
-        CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE,
+			CURSOR cr_craplem (pr_cdcooper IN craplcm.cdcooper%TYPE,
                            pr_nrdconta IN craplcm.nrdconta%TYPE,
-                           pr_dtmvtolt IN craplcm.dtmvtolt%TYPE 
-                               )  IS 
-         SELECT SUM(craplcm.vllanmto) vllanmto FROM craplcm
-         WHERE craplcm.cdcooper = pr_cdcooper
-           AND craplcm.nrdconta = pr_nrdconta
-           AND craplcm.dtmvtolt = pr_dtmvtolt
-           AND craplcm.nrdolote > 600000
-           AND craplcm.nrdolote < 650000
-           AND craplcm.cdbccxlt = 100
-           AND craplcm.cdhistor IN (108,1539,1541,1543,1060,1071,1542,1544,1070,1072)
-           AND TO_NUMBER(TRIM(REPLACE(craplcm.cdpesqbb,'.',''))) = pr_nrctremp;
-        
-        
-           rw_craplcm cr_craplcm%ROWTYPE;   
+                         pr_nrctremp IN craplem.nrctremp%TYPE,
+                         pr_nrparepr IN craplem.nrparepr%TYPE,
+												 pr_dtmvtolt IN craplcm.dtmvtolt%TYPE)  IS
+			SELECT SUM(craplem.vllanmto) vllanmto 
+        FROM craplem,
+             craphis 
+       WHERE craphis.cdcooper = craplem.cdcooper
+         AND craphis.cdhistor = craplem.cdhistor
+         AND craphis.indcalem = 'S'
+         AND craplem.cdcooper = pr_cdcooper
+         AND craplem.nrdconta = pr_nrdconta
+         AND craplem.nrctremp = pr_nrctremp
+         AND craplem.nrparepr = pr_nrparepr
+         AND craplem.dtmvtolt = pr_dtmvtolt
+         AND craplem.cdbccxlt = 100
+         AND craplem.nrdolote > 600000
+         AND craplem.nrdolote < 650000
+         AND craplem.cdhistor IN (1038,1039,1037,1044,1540,1619,1050,1045,1047,
+                                  1077,1048,1049,1618,1620,1051,1057,1076,1078);
+			rw_craplem cr_craplem%ROWTYPE;
     BEGIN
-
-
-    -- Buscar dados do associado 
-    OPEN  cr_crapass(pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
-    
-    -- Se o contrato não for encontrado
-    IF cr_crapass%NOTFOUND THEN
-      -- Fecha o cursor
-      CLOSE cr_crapass;
-      
-      --RAISE vr_exp_erro;
-    END IF;
-    
-    -- Fecha o cursor
-    CLOSE cr_crapass; 
-
-
-
-    -- Buscar dados do associado 
-    OPEN  cr_craplcm(pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta,
-                     pr_dtmvtolt => pr_dtmvtolt);
-    FETCH cr_craplcm INTO rw_craplcm;
-    
-    -- Se o contrato não for encontrado
-    IF cr_craplcm%NOTFOUND THEN
-      -- Fecha o cursor
-      CLOSE cr_craplcm;
-      
-      --RAISE vr_exp_erro;
-    END IF;
-    
-    -- Fecha o cursor
-    CLOSE cr_craplcm; 
-
-
-
-     IF rw_crapass.inprejuz = 0 THEN 
+      IF NOT PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN
       -- Exclui os lancamentos da Conta Corrente
       BEGIN
         DELETE FROM craplcm
@@ -717,24 +673,42 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
           RAISE vr_exc_saida;
       END;
     ELSE
-       PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper,
-                                      pr_nrdconta => pr_nrdconta,
-                                      pr_cdoperad => pr_cdoperad,
-                                      pr_vlrlanc  => rw_craplcm.vllanmto,
-                                      pr_dtmvtolt => pr_dtmvtolt,
-                                       
-                                      pr_cdcritic => vr_cdcritic,
-                                      pr_dscritic => vr_dscritic);
-                                      
+        OPEN cr_craplem( pr_cdcooper => pr_cdcooper,
+                         pr_nrdconta => pr_nrdconta,
+                         pr_nrctremp => pr_nrctremp,
+                         pr_nrparepr => pr_nrparepr,
+                         pr_dtmvtolt => pr_dtmvtolt);
+        FETCH cr_craplem INTO rw_craplem;
 
+        IF cr_craplem%NOTFOUND THEN
+          CLOSE cr_craplem;
 
-        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
-          RAISE vr_exc_saida; 
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel recuperar os dados do lancamento para estornar.';
+          RAISE vr_exc_saida;
         END IF;
 
+        CLOSE cr_craplem; 
+        
+        IF nvl(rw_craplem.vllanmto,0) > 0 THEN
+  			
+          PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => pr_cdcooper
+                                      , pr_nrdconta => pr_nrdconta
+                                      , pr_cdoperad => pr_cdoperad
+                                      , pr_vlrlanc  => rw_craplem.vllanmto
+                                      , pr_dtmvtolt => pr_dtmvtolt
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic);
+
+          IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+            RAISE vr_exc_saida; 
+          END IF;
+
                                      
-     END IF;                                 
-      -- Exclui os lancamentos da Conta Corrente
+        END IF;                                 
+      END IF;
+		 
+      -- Exclui os lancamentos do extratdo do empréstimo
       BEGIN
         DELETE FROM craplem
          WHERE craplem.cdcooper = pr_cdcooper
@@ -763,7 +737,7 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
 
-        -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
+        -- Gerar rotina de gravação de erro avisando sobre o erro não tratado
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
@@ -1264,18 +1238,6 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
                 crappep.vlpagmta < 0);
       vr_flgnegat PLS_INTEGER := 0;
 
-
-     -- Cursor da  situação da conta do associado
-      CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
-                         pr_nrdconta IN crapass.nrdconta%TYPE ) IS
-        SELECT ca.inprejuz
-        FROM crapass ca
-        WHERE ca.cdcooper = pr_cdcooper
-        AND   ca.nrdconta = pr_nrdconta;
-        
-        rw_crapass cr_crapass%ROWTYPE; 
-   
-
       vr_tab_erro                  GENE0001.typ_tab_erro;
       vr_tab_lancto_parcelas       EMPR0008.typ_tab_lancto_parcelas;
       vr_tab_lancto_cc             EMPR0001.typ_tab_lancconta;
@@ -1730,25 +1692,9 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
           RAISE vr_exc_saida;
         END IF;
 
-
-
-    -- Buscar dados do associado 
-    OPEN  cr_crapass(pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
-    
-    -- Se o contrato não for encontrado
-    IF cr_crapass%NOTFOUND THEN
-      -- Fecha o cursor
-      CLOSE cr_crapass;
-      
-      --RAISE vr_exp_erro;
-    END IF;
-    
-    -- Fecha o cursor
-    CLOSE cr_crapass; 
-
-     IF  rw_crapass.inprejuz = 0 THEN  
+        --> Verificar se conta nao está em prejuizo
+        IF NOT PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) THEN 
+        
         /* Lanca em C/C e atualiza o lote */
         EMPR0001.pc_cria_lancamento_cc (pr_cdcooper => vr_tab_lancto_cc(vr_index_lanc).cdcooper --> Cooperativa conectada
                                        ,pr_dtmvtolt => vr_tab_lancto_cc(vr_index_lanc).dtmvtolt --> Movimento atual
@@ -1775,7 +1721,8 @@ CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
           END IF;
         END IF;
    ELSE
-        PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => vr_tab_lancto_cc(vr_index_lanc).cdcooper, --> Cooperativa conectada
+          --> Caso esteja o credito de estono deve ser direcionado ao bloqueio prejuizo
+          PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => vr_tab_lancto_cc(vr_index_lanc).cdcooper, --> Cooperativa conectada
                                       pr_nrdconta =>  vr_tab_lancto_cc(vr_index_lanc).nrdconta, --> Número da conta,
                                       pr_cdoperad =>  vr_tab_lancto_cc(vr_index_lanc).cdoperad, --> Código do Operador,
                                       pr_vlrlanc  => vr_tab_lancto_cc(vr_index_lanc).vllanmto, --> Valor da parcela emprestimo,
