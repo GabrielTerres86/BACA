@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 18/06/2018
+      Data: Janeiro/2010                        Ultima alteracao: 03/10/2018
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -322,6 +322,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
+
+			03/10/2018 - Corrigir validação do aux_token na validação de senha no saque
+			             e na alteração de senha (Douglas - Prj 363)
 			            
 ............................................................................. */
 
@@ -2340,7 +2343,7 @@ END PROCEDURE.
 PROCEDURE altera_senha:
 
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
-    IF aux_token <> "" OR aux_token <> ? THEN
+    IF aux_token <> "" AND aux_token <> ? THEN
     DO:
 
         /* autenticidade da senha de letras, vamos verificar se o TOKEN eh valido  */
@@ -4439,7 +4442,7 @@ END PROCEDURE.
 PROCEDURE efetua_saque:
 
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
-    IF aux_token <> "" OR aux_token <> ? THEN
+    IF aux_token <> "" AND aux_token <> ? THEN
     DO:
         /* autenticidade da senha de letras, vamos verificar se o TOKEN eh valido  */
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
