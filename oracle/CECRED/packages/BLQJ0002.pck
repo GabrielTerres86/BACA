@@ -29,6 +29,9 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 				29/06/2018 - Alterada a procedure pc_resgata_aplicacao para utilização do Projeto URA (Everton Mouts)
                 15/08/2018 - Inclusão de aplicações programadas na checagem dos saques 
                              Proj. 411.2 - CIS Corporate
+        
+        03/10/2018 - Ajuste de tamanho de variável para evitar problemas 
+                     na nova versão do BD 12C (vr_jobname). Wagner - Sustentação - (SCTASK0031133)                       
 
   .............................................................................*/
 
@@ -1199,7 +1202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_idordem tbblqj_ordem_online.idordem%TYPE; -- Sequencial do recebimento
     vr_cdcooper      crapcop.cdcooper%TYPE; -- Codigo da cooperativa
     vr_dsplsql VARCHAR2(4000); -- Bloco PLSQL para chamar a execução do job
-    vr_jobname VARCHAR2(20); -- Nome do Job que sera executado
+    vr_jobname VARCHAR2(30); -- Nome do Job que sera executado
 
     -- Variaveis de erro
     vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
@@ -1355,7 +1358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- VARIÁVEIS
     vr_cdcooper      crapcop.cdcooper%TYPE; -- Codigo da cooperativa
     vr_dsplsql VARCHAR2(4000); -- Bloco PLSQL para chamar a execução do job
-    vr_jobname VARCHAR2(20); -- Nome do Job que sera executado
+    vr_jobname VARCHAR2(30); -- Nome do Job que sera executado
     vr_operacao VARCHAR2(11); -- Tipo de operacao
 
     -- Variaveis de erro
