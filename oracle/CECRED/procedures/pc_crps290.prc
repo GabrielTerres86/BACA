@@ -102,6 +102,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
 
                23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
                Renato Cordeiro (AMcom)         
+
+              03/10/2018 - PJ450 - Tratamento erro no raise da chamada rotina LANC0001
+                           (Renato Cordeiro - AMcom)
     ............................................................................. */
 
    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -804,6 +807,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                 pr_dscritic => pr_dscritic)--20
                 ;
                 if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+                   vr_dscritic := pr_dscritic;
+                   vr_cdcritic := pr_cdcritic;
                    RAISE vr_exc_saida;
                 end if;
               EXCEPTION 
@@ -848,6 +853,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                 pr_dscritic => pr_dscritic)
                 ;
                 if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+                   vr_dscritic := pr_dscritic;
+                   vr_cdcritic := pr_cdcritic;
                    RAISE vr_exc_saida;
                 end if;
               EXCEPTION 
@@ -1037,6 +1044,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
           pr_dscritic => pr_dscritic)
           ;
           if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+             vr_dscritic := pr_dscritic;
+             vr_cdcritic := pr_cdcritic;
              RAISE vr_exc_saida;
           end if;
         EXCEPTION 

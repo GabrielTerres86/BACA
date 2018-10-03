@@ -73,11 +73,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
               23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
               Renato Cordeiro (AMcom)         
 
-  --          06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
-  --                       após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
-  --                       Alteração específica neste programa acrescentando o tratamento para a origem
-  --                       BLQPREJU
-  --                       (Renato Cordeiro - AMcom)
+              06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
+                           após chamada da rotina de geraçao de lançamento em CONTA CORRENTE.
+                           Alteração específica neste programa acrescentando o tratamento para a origem
+                           BLQPREJU
+                           (Renato Cordeiro - AMcom)
+                          
+              03/10/2018 - PJ450 - Tratamento erro no raise da chamada rotina LANC0001
+                           (Renato Cordeiro - AMcom)
 
   ............................................................................. */
   
@@ -466,6 +469,8 @@ BEGIN
                    );
 
            if (nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) then
+              vr_dscritic := pr_dscritic;
+              vr_cdcritic := pr_cdcritic;
               RAISE vr_exc_saida;
            end if;
 
