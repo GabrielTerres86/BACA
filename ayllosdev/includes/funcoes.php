@@ -68,8 +68,11 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 046: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
  * 047:	[28/08/2017] Carlos Rafael Tanholi	: Ajuste nas rotinas xmlFilho, dataParaTimestamp, validaPermissao, mensageria. SD 743183. 	
  * 048: [28/09/2017] Jean Michel (CECRED)   : Adicionado função get_http_response_code para retornar o status code de arquivo ou domínio
- * 049:	[28/08/2017] Lombardi				: Criada nova rotina buscaDominios. Projeto 366 - Reestruturação dos tipos e situações de conta.
- */
+ * 049:	[28/08/2017] Lombardi (CECRED)		: Criada nova rotina buscaDominios. Projeto 366 - Reestruturação dos tipos e situações de conta.
+ * 050:	[26/04/2018] Lombardi (CECRED)		: Criada nova rotina buscaSituacoesConta. Projeto 366 - Reestruturação dos tipos e situações de conta.
+ * 051: [10/04/2018] Luis Fernando (Gft)	: Criada nova função getClassXml que devolve um objeto modificado do xmlFile fazendo algumas alterações em métodos para facilitar a construção
+ * 052: [20/08/2018] Maykon (Envolti) : P442 - Criadas funcoes para Fipe, Aditiv e Manbem
+  */
 
 // Função para requisição de dados através de XML 
 // Função retorna string com XML de retorno	
@@ -169,6 +172,105 @@ function getObjectXML($xmlResult) {
 	//Retorna objeto XML tratado
 	return $xmlObj;
 }
+
+// Função para criação do objeto responsável pelo tratamento do XML
+// Includes necessárias: - includes/xmlfile.php
+function getClassXML($xmlResult){
+	global $UrlLogin;
+	global $glbvars;
+	
+	if (!class_exists('oXmlTag')){
+		class oXmlTag extends XMLTag{
+		    function add_subtag($name, $attributes=0)
+		    {
+		        $tag = new oXmlTag( $this );
+		        $tag->set_name( $name );
+		        if (is_array($attributes)) {
+		            $tag->set_attributes( $attributes );
+		        }
+		        $this->tags[] = &$tag;
+		        $this->curtag = &$tag;
+		    }
+
+		    function __toString(){
+		        return $this->cdata;
+		    }
+
+		    function __get($name){
+		        $tags = $this->find($name);
+		        if($tags){
+		            if(count($tags)===1){
+		                $this->{$name} = $tags[0];
+		                return $tags[0];
+		            }
+		            $this->{$name} = $tags;
+		            return $tags;
+		        }
+		        return false;
+		    }
+
+		    function find($name){
+		        return $this->find_subtags_by_name($name);
+		    }
+
+		    function findFirst($name){
+		        $tags = $this->find_subtags_by_name($name);
+		        if (is_array($tags)){
+		            return $tags[0];
+		        }
+		        return false;
+		    }
+
+		    function getAttribute($name){
+		        if(isset($this->attributes[$name])){
+		            return $this->attributes[$name];
+		        }
+		        return '';
+		    }
+		}
+		class oXmlFile extends XMLFile{
+		    function create_root()
+		    {
+		        $null = 0;
+		        $this->roottag = new oXmlTag($null);
+		        $this->curtag = &$this->roottag;
+		    }
+
+		    function _tag_open( $parser, $tag, $attributes )
+		    {
+		        if (!is_object($this->curtag)) {
+		            $null = 0;
+		            $this->curtag = new oXmlTag($null);
+		            $this->curtag->set_name( $tag );
+		            $this->curtag->set_attributes( $attributes );
+		        }
+		        else {
+		            $this->curtag->add_subtag( $tag, $attributes );
+		            $this->curtag = &$this->curtag->curtag;
+		        }
+		    }
+		}
+	}
+	if (!strpos($xmlResult,"Unable") === false && !strpos($xmlResult,"distribuidor.p") === false) {
+		redirecionaErro($glbvars["redirect"],$UrlLogin,"_parent","Sistema indispon&iacute;vel.");
+	}
+	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObj = new oXmlFile();
+
+	// Executa leitura do XML
+	$xmlObj->read_xml_string($xmlResult);
+	
+	// Verifica se não foi retornado XML, mas retornado HMTL com erro do WEBSPEED
+	if (strtoupper($xmlObj->roottag->name) == "HTML" && !(strpos(strtoupper($xmlObj->roottag->tags[0]->tags[0]->cdata),"WEBSPEED") === false)) {
+		redirecionaErro($glbvars["redirect"],$UrlLogin,"_parent","Sistema indispon&iacute;vel.");
+	}			
+	
+	//Retorna objeto XML tratado
+	return $xmlObj;
+
+}
+
 
 // Função para verificar o método de requisição para telas
 function isPostMethod($flgIndex=false) {
@@ -467,6 +569,41 @@ function retornaUFs() {
 	return $estados;
 }
 
+function retornaCategorias() {
+	$categorias[0]["IDENTIFICADOR"]  = "AUTOMOVEL";
+	$categorias[0]["DESCRICAO"]   = "Automóvel";
+	$categorias[1]["IDENTIFICADOR"]  = "CAMINHAO";
+	$categorias[1]["DESCRICAO"]   = "Caminhão";
+	$categorias[2]["IDENTIFICADOR"]  = "MOTO";
+	$categorias[2]["DESCRICAO"]   = "Moto";	
+	
+	return $categorias;
+}
+function retornaTiposVeiculo() {
+	$tiposVeiculos[0]["IDENTIFICADOR"]  = "ZERO KM";
+	$tiposVeiculos[0]["DESCRICAO"]   = "Zero KM";
+	$tiposVeiculos[1]["IDENTIFICADOR"]  = "USADO";
+	$tiposVeiculos[1]["DESCRICAO"]   = "Usado";
+	
+	return $tiposVeiculos;
+}
+function retornaTiposChassi() {
+	$tiposVeiculos[0]["IDENTIFICADOR"]  = "1";
+	$tiposVeiculos[0]["DESCRICAO"]   = "Remarcado";
+	$tiposVeiculos[1]["IDENTIFICADOR"]  = "2";
+	$tiposVeiculos[1]["DESCRICAO"]   = "Normal";
+	
+	return $tiposVeiculos;
+}
+
+function retornaUfsLicenciamento(){
+	$ufs[0]["IDENTIFICADOR"] = "PR";
+	$ufs[1]["IDENTIFICADOR"] = "SC";
+	$ufs[2]["IDENTIFICADOR"] = "RS";
+	
+	return $ufs;
+}
+
 function validaPermissao($nmdatela,$nmrotina,$cddopcao='',$flgsecao=true) {
 	global $glbvars;
 	
@@ -567,6 +704,79 @@ function getByTagName( $xml, $tagName ) {
 	return trim($resultado);	
 }	
 
+function mask($val, $mask)
+{
+	$maskared = '';
+	$k = 0;
+	for($i = 0; $i<=strlen($mask)-1; $i++)
+	{
+		if($mask[$i] == '#')
+		{
+			if(isset($val[$k]))
+			$maskared .= $val[$k++];
+		}
+		else
+		{
+			if(isset($mask[$i]))
+			$maskared .= $mask[$i];
+		}
+	}
+	return $maskared;
+}
+
+function getCpfCnpj( $xml, $tagName ) {	
+	$resultado = "";
+	if ( $xml != ''){
+		foreach( $xml as $tag ) {
+			if ( strtoupper($tag->name) == strtoupper($tagName) ) {
+				$resultado = $tag->cdata;
+				break;
+			} 		
+		}
+	}	
+	$resultado = trim($resultado);
+	//***** Aplica mascara de acordo com o tipo
+	$tipo = verificaTipoPessoa($resultado);
+	
+	if($tipo==1)
+	{
+		$resultado = mascaraCpf($resultado);
+	}else if(tipo==2)
+	{
+		$resultado = mascaraCnpj($resultado);
+	}	
+	return $resultado;
+}
+
+function verificaTipoPessoa($doc)
+{		
+	$tipoPessoa=0;
+	if(strlen($doc) <= 11)
+	{
+		$tipoPessoa = 1;
+	}
+	else if(strlen($doc) <= 14)
+	{
+		$tipoPessoa = 2;
+	}
+	return $tipoPessoa;
+}
+
+function mascaraCpf($doc)
+{
+	$doc = str_pad($doc,11, '0', STR_PAD_LEFT);
+	$doc  = mask($doc,'###.###.###-##');
+	return $doc;
+}
+
+function mascaraCnpj($doc)
+{
+	$doc = str_pad($doc,14, '0', STR_PAD_LEFT);
+	$doc = mask($doc,'##.###.###/####-##');
+	return $doc;
+}
+
+
 /*!
  * ALTERAÇÃO  : 002 - Criada Função
  *              010 - Na chamada da fução "showError" do javascript, ao invés de passar os parâmetros $msgErro e $titulo 
@@ -649,6 +859,64 @@ function selectEstado($nomeCampo,$valorCampo,$modo = 3) {
 	$retorno .= '</select>';
 	return $retorno;
 }
+
+function selectCategoria($nomeCampo,$valorCampo) {
+	
+	$retorno 	  = '';
+	$categorias      = retornaCategorias();	
+	$retorno =  '<select name="'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	$retorno .= '<option value=""> - </option>';
+	
+	for ($i = 0; $i < count($categorias); $i++) {
+		$selected = ($valorCampo == $categorias[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$categorias[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$categorias[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+
+function selectTipoVeiculo($nomeCampo,$valorCampo) {
+	
+	$retorno 	  = '';
+	$tiposVeiculo      = retornaTiposVeiculo();	
+	$retorno =  '<select name="'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	$retorno .= '<option value=""> - </option>';
+	
+	for ($i = 0; $i < count($tiposVeiculo); $i++) {
+		$selected = ($valorCampo == $tiposVeiculo[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$tiposVeiculo[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$tiposVeiculo[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+function selectTipoChassi($nomeCampo,$valorCampo) {
+	
+	$retorno 	  = '';
+	$tiposChassi      = retornaTiposChassi();	
+	$retorno =  '<select name="'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	$retorno .= '<option value=""> - </option>';
+	
+	for ($i = 0; $i < count($tiposChassi); $i++) {
+		$selected = ($valorCampo == $tiposChassi[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$tiposChassi[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$tiposChassi[$i]["DESCRICAO"].'</option>';					
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+
+function selectUfPa($nomeCampo, $valorCampo){
+	$retorno		= '';
+	$ufs = retornaUfsLicenciamento();
+	$retorno = '<select name"'.$nomeCampo.'" id="'.$nomeCampo.'">';
+	
+	for($i = 0; $i < count($ufs); $i++){
+		$selected = ($valorCampo == $ufs[$i]["IDENTIFICADOR"]) ? "selected" : "";
+		$retorno .= '<option value="'.$ufs[$i]["IDENTIFICADOR"].'" '.$selected.'>'.$ufs[$i]["IDENTIFICADOR"].'</option>';
+	}
+	$retorno .= '</select>';
+	return $retorno;
+}
+
 
 /*!
  * ALTERAÇÃO  : 004
@@ -1762,6 +2030,32 @@ function buscaDominios($nmmodulo, $nmdomini) {
 	$xml .= "</Root>";
 	
 	$xmlResult = mensageria($xml, "GENE0010", "RETORNA_DOMINIOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);	
+	
+	//-----------------------------------------------------------------------------------------------
+	// Controle de Erros
+	//-----------------------------------------------------------------------------------------------
+	if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
+		$msgErro = $xmlObj->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+	}
+	
+	return $xmlObj->roottag->tags[0]->tags;
+}
+
+function buscaSituacoesConta() {
+	global $glbvars;
+	
+	// Montar o xml de Requisicao
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "CADA0006", "LISTA_SITUACOES_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);	
 	
 	//-----------------------------------------------------------------------------------------------
