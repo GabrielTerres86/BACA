@@ -66,6 +66,6 @@
 	$('#dsobservacao','#frmGrupoEconomico').val('<?= getByTagName($xmlObjeto->roottag->tags[0]->tags,'dsobservacao') ?>');
 	
 	if ($('#idgrupo','#frmGrupoEconomico').val() == ''){
-		showConfirmacao('Deseja Incluir o Grupo Econ&ocirc;mico?', 'Confirma&ccedil;&atilde;o - Ayllos', 'abreTelaInclusaoGrupoEconomico()', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
+		showConfirmacao('Deseja Incluir o Grupo Econ&ocirc;mico?', 'Confirma&ccedil;&atilde;o - Aimaro', 'abreTelaInclusaoGrupoEconomico()', 'bloqueiaFundo(divRotina)', 'sim.gif', 'nao.gif');
 	}
 </script>

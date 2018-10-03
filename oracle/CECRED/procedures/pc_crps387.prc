@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 21/08/2018
+   Data    : Abril/2004                        Ultima atualizacao: 04/09/2018
 
    Dados referentes ao programa:
 
@@ -463,6 +463,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                21/08/2018 - Tratar busca e update da craplau para buscarmos também 
                             pelo nrcrcard para que possamos cancelar os registros
                             que vieram no arquivo (Lucas Ranghetti INC0021039)
+                            
+               04/09/2018 - Adicionar valor na validação dos registros cancelados 
+                            vr_vllanmto_cancel (Lucas Ranghetti INC0023042)
 ............................................................................ */
 
     DECLARE
@@ -947,6 +950,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dsrefere_cancel VARCHAR2(25);                                --> Registro de referencia dentro do arquivo para registro de debito em conta cancelado
       vr_nrdocmto_cancel craplau.nrdocmto%TYPE;                       --> Numero do documento para debito em conta cancelado
       vr_dtrefere_cancel DATE;                                        --> Data de referencia
+      vr_vllanmto_cancel number;
       vr_inserir_lancamento  varchar2(1);                             --> Inserir Lancamento
       vr_dstexarq VARCHAR2(150);                                      --> Texto arquivo
       vr_nrdolote_sms NUMBER := NULL;                                 --> Numero de lote do SMS
@@ -5064,7 +5068,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                vr_dsrefere_cancel := TRIM(vr_dsrefere_cancel);
                                vr_dsrefere_cancel := LTRIM(vr_dsrefere_cancel, '0');
                                vr_nrdocmto_cancel := vr_dsrefere_cancel;
-                               IF(  vr_nrdconta = vr_nrconta_cancel AND vr_dtrefere_cancel = vr_dtrefere AND  vr_nrdocmto_int = vr_nrdocmto_cancel )THEN
+                               vr_vllanmto_cancel := SUBSTR(vr_tab_debcancel(vr_ind_deb).setlinha,53,15) / 100;
+                               IF(  vr_nrdconta = vr_nrconta_cancel  AND 
+                                    vr_dtrefere_cancel = vr_dtrefere AND  
+                                    vr_nrdocmto_int = vr_nrdocmto_cancel AND
+                                    vr_vllanmto_cancel = vr_vllanmto) THEN
                                     vr_ind_debcancel:= 'S';
                                     pc_critica_debito_cancelado(vr_cdcooper, vr_nrconta_cancel, rw_crapdat.dtmvtolt, vr_dtrefere_cancel, rw_gnconve.cdhisdeb, vr_nrdocmto_cancel, SUBSTR(vr_tab_debcancel(vr_ind_deb).setlinha,53,15) / 100);
                                     -- Retorna nome do modulo logado - 02/10/2017 - Ch 708424 

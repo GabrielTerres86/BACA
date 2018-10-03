@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 27/07/2018
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 21/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -603,7 +603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --  Sistema  : Procedimentos gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 27/07/2018
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 21/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -625,6 +625,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --                              
   --              27/07/2018 - Ajuste mensagem do Log
   --                          ( Belli - Envolti - Ch INC0019045 ) 
+  --                              
+  --              21/09/2018 - Ajuste mensagem e parâmetros
+  --                          ( Belli - Envolti - Ch INC0023245 ) 
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -2776,6 +2779,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 Inclusão nro contrato novo na variável pr_dsretorn
                                 Acrescenta os parâmetros nas exceptions vr_exc_erro e others
                                 (Ana - Envolti - Ch REQ0011327)
+                               
+                   21/09/2018 - Ajuste mensagem e parâmetros
+                                ( Belli - Envolti - Ch INC0023245 ) 
+  
     ............................................................................ */
     --------------->> CURSORES <<----------------
     --> Buscar SMSs enviados 
@@ -2908,8 +2915,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                      </SMS>');      
     END LOOP;
     
-    pc_escreve_xml('</crrl728>',TRUE);
-    
+    pc_escreve_xml('</crrl728>',TRUE);    
+    -- Retorna nome do modulo logado - 21/09/2018 - Ch INC0023245
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms'); 
+      
+    -- Forçado erro - Teste Belli - 21/09/2018 - INC0023245
+    --vr_flexsreg := FALSE;
+    ---vr_cdcritic := 0 / 0;
     IF vr_flexsreg = FALSE THEN
       vr_cdcritic := 1240;  --Nenhum registro encontrado para o periodo informado
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
@@ -3018,16 +3030,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
   EXCEPTION
     WHEN vr_exc_erro THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic||vr_dsparame;
+      pr_cdcritic := vr_cdcritic;                                
+      -- Ajuste mensagem e parâmetros - 21/09/2018 INC0023245
+      IF pr_idorigem = 3 THEN -- InternetBank
+        pr_dscritic := vr_dscritic;
+        --Grava tabela de log
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => CASE vr_cdcritic
+                                        WHEN 1240 THEN 'O' -- Mensagem
+                                        ELSE 'E'           -- Erro Tratado / Não Tratado
+                                        END,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => nvl(vr_cdcritic,0),
+                    pr_ind_tipo_log  => CASE vr_cdcritic
+                                        WHEN 1240 THEN 4 -- Mensagem
+                                        WHEN 9999 THEN 2 -- Erro não Tratado
+                                        ELSE 1           -- Erro Tratado
+                                        END);  
+        -- Erro não tratado: Setada mensagem padrão, daqui vai para o progress
+        IF pr_cdcritic = 9999 THEN
+          pr_cdcritic := 1224;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);                                           
+        END IF;         
+      ELSE
+        pr_dscritic := vr_dscritic||vr_dsparame;
+      END IF;
     WHEN OTHERS THEN
-      -- Montar descrição de erro não tratado
-      pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'COBR0005.pc_relat_anali_envio_sms. '||sqlerrm||vr_dsparame;
-      ROLLBACK;
-
       --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+      -- Montar descrição de erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||
+                     'COBR0005.pc_relat_anali_envio_sms. '||sqlerrm||vr_dsparame;
+      ROLLBACK;                              
+      -- Ajuste mensagem e parâmetros - 21/09/2018 INC0023245
+      IF pr_idorigem = 3 THEN -- InternetBank
+        --Grava tabela de log
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2); 
+        -- Erro não tratado: Setada mensagem padrão, daqui vai para o progress      
+        pr_cdcritic := 1224;
+        pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic); 
+      END IF;
   END pc_relat_anali_envio_sms; 
   
   --> Rotina responsavel por gerar o relatorio analitico de envio de SMS - Chamada ayllos Web
@@ -3061,6 +3110,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 Acrescenta os parâmetros na exception others, para a vr_exc_erro
                                 os parâmetros são acrescentados na rotina chamada (versão não web)
                                 (Ana - Envolti - Ch REQ0011327)
+                               
+                   21/09/2018 - Ajuste mensagem e parâmetros
+                                ( Belli - Envolti - Ch INC0023245 ) 
+                                
     ............................................................................ */  
     
     -------------->> VARIAVEIS <<----------------
@@ -3170,12 +3223,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
       --Grava tabela de log - Ch REQ0011327
       pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
+                  pr_dstiplog      => CASE vr_cdcritic
+                                        WHEN 1240 THEN 'O' -- Mensagem
+                                        ELSE 'E'           -- Erro Tratado / Não Tratado
+                                        END,
                   pr_dscritic      => vr_dscritic,
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(vr_cdcritic,0),
-                  pr_ind_tipo_log  => 1);
-
+                  pr_ind_tipo_log  => CASE nvl(vr_cdcritic,0)
+                                        WHEN 1240 THEN 4 -- Mensagem
+                                        WHEN 9999 THEN 2 -- Erro não Tratado
+                                        ELSE 1           -- Erro Tratado
+                                        END);
+                  
+      -- Erro não tratado: Setada mensagem padrão, daqui vai para o progress
+      IF nvl(vr_cdcritic,0) = 9999 THEN
+        vr_cdcritic := 1224;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);                                           
+      ELSIF nvl(vr_cdcritic,0) > 0 THEN 
+        -- Pociciona novamente a descrição porque pode haver parametros das procedures anteriores
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);                                           
+      END IF;       
+      
       vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
 
@@ -3183,6 +3252,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     WHEN OTHERS THEN
+      -- Ajuste mensagem e parâmetros - 21/09/2018 INC0023245
+      
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+      
       -- Montar descrição de erro não tratado
       pr_cdcritic := 9999;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_relat_anali_envio_sms_web. '||sqlerrm||vr_dsparame;
@@ -3194,9 +3268,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
-
-      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
-      CECRED.pc_internal_exception (pr_cdcooper => 3);
+                  
+      -- Erro não tratado: Setada mensagem padrão, daqui vai para o progress - 21/09/2018 INC0023245     
+      pr_cdcritic := 1224;
+      pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
 
       pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
       pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
@@ -9801,7 +9876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Março/2017                     Ultima atualizacao: 08/05/2018
+       Data    : Março/2017                     Ultima atualizacao: 21/09/2018
 
        Dados referentes ao programa:
 
@@ -9811,6 +9886,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Alteracoes: 10/05/2018 - Revitalização
                                 Grava tabela de log nas exceptions
                                 (Ana - Envolti - Ch REQ0011327)
+                                
+                   21/09/2018 - Ajuste mensagem e parâmetros
+                                ( Belli - Envolti - Ch INC0023245 ) 
+                                
     ............................................................................ */
     --------------->> CURSORES <<----------------
     --> Buscar SMSs enviados 
@@ -10007,7 +10086,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_resumo_envio_sms');
-
+    
+    -- Forçado erro - Teste Belli - 21/09/2018 - INC0023245
+    ---vr_flexsreg := FALSE;
+    ---vr_cdcritic := 0 / 0;
     IF vr_flexsreg = FALSE THEN
       vr_cdcritic := 1240;  --Nenhum registro encontrado para o periodo informado
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
@@ -10027,15 +10109,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic||vr_dsparame;
 
+      -- Ajusta Mensagem - 21/09/2018 INC0023245
       --Grava tabela de log - Ch REQ0011327
       pc_gera_log(pr_cdcooper      => pr_cdcooper,
                   pr_dstiplog      => 'E',
                   pr_dscritic      => pr_dscritic,
                   pr_cdcriticidade => 1,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 1);
+                  pr_cdmensagem    => CASE nvl(vr_cdcritic,0)
+                                        WHEN 1240 THEN 'O' -- Mensagem
+                                        ELSE 'E'           -- Erro Tratado / Não Tratado
+                                        END,
+                  pr_ind_tipo_log  => CASE nvl(vr_cdcritic,0)
+                                        WHEN 1240 THEN 4 -- Mensagem
+                                        WHEN 9999 THEN 2 -- Erro não Tratado
+                                        ELSE 1           -- Erro Tratado
+                                        END);
+                  
+      -- Erro não tratado: Setada mensagem padrão, daqui vai para o progress
+      IF nvl(pr_cdcritic,0) = 9999 THEN
+        pr_cdcritic := 1224;
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);                                           
+      ELSIF nvl(pr_cdcritic,0) > 0 THEN 
+        -- Pociciona novamente a descrição porque pode haver parametros das procedures anteriores
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);                                           
+      END IF;       
 
     WHEN OTHERS THEN
+      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+      
       -- Montar descrição de erro não tratado
       pr_cdcritic := 9999;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_relat_resumo_envio_sms. '||sqlerrm||vr_dsparame;
@@ -10047,9 +10149,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(pr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
-
-      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                  
+      -- Erro não tratado: Setada mensagem padrão, daqui vai para o progress - 21/09/2018 INC0023245     
+      pr_cdcritic := 1224;
+      pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
   END pc_relat_resumo_envio_sms; 
   
   --> Rotina para disponibilizar uma carta de anuencia - Chamada ayllos Web

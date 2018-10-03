@@ -5206,7 +5206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => ' '
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Solicitação Sugestão Motor'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1 --> FALSE
@@ -5525,7 +5525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
               gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => 'MOTOR'
                                   ,pr_dscritic => ' '
-                                  ,pr_dsorigem => 'AYLLOS'
+                                  ,pr_dsorigem => 'AIMARO'
                                   ,pr_dstransa => 'Expiracao da Analise Automatica'
                                   ,pr_dttransa => TRUNC(SYSDATE)
                                   ,pr_flgtrans => 1 --> FALSE
@@ -6745,7 +6745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => ' '
-                          ,pr_dsorigem => 'AYLLOS WEB'
+                          ,pr_dsorigem => 'AIMARO WEB'
                           ,pr_dstransa => 'Envio Proposta Analise Manual de Credito'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1 --> FALSE

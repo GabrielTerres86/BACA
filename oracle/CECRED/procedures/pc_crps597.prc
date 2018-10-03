@@ -179,11 +179,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps597 (pr_cdcooper IN crapcop.cdcooper%T
 											         ,pr_dtfimref IN crapepr.dtmvtolt%TYPE) IS
       SELECT epr.nrctremp,
              decode(epr.cdorigem
-                   ,1,'Ayllos Caracter'
+                   ,1,'Aimaro Caracter'
                    ,2,'Caixa'
                    ,3,'Internet Bank'
                    ,4,'TAA'
-                   ,5,'Ayllos Web'
+                   ,5,'Aimaro Web'
                    ,6,'URA') dsorigem,
              epr.vlsdevat
         FROM crapepr epr

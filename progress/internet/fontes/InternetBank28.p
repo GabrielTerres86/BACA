@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007.                       Ultima atualizacao: 21/09/2017
+   Data    : Junho/2007.                       Ultima atualizacao: 23/08/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -51,6 +51,9 @@
                21/09/2017 - Retornar tag indicando se o convenio pode ser 
 			                      cadastrado em debaut (David).
                
+               28/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+               
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -84,6 +87,12 @@ DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope LIKE crapopi.nrcpfope                    NO-UNDO.
 DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdagenci AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -99,8 +108,8 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
     DO:
         RUN verifica_operacao IN h-b1wgen0015 
                                       (INPUT par_cdcooper,
-                                       INPUT 90,         /** PAC           **/
-                                       INPUT 900,        /** CAIXA         **/
+                                       INPUT par_cdagenci, /** PAC   - Projeto 363 - Novo ATM -> estava fixo 90 **/
+                                       INPUT par_nrdcaixa, /** CAIXA - Projeto 363 - Novo ATM -> estava fixo 900 **/
                                        INPUT par_nrdconta,
                                        INPUT par_idseqttl,
                                        INPUT par_dtmvtolt,
@@ -114,7 +123,7 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
                                        INPUT "996",      /** OPERADOR      **/
                                        INPUT 2,          /** PAGAMENTO     **/
                                        INPUT FALSE,      /** VALIDACOES    **/
-                                       INPUT "INTERNET", /** ORIGEM        **/
+                                       INPUT par_dsorigem, /** ORIGEM - Projeto 363 - Novo ATM -> estava fixo "INTERNET" **/
                                        INPUT par_nrcpfope, /** CPF OPERADOR  */
                                        INPUT TRUE,       /** VALIDA LIMITES**/
                                       OUTPUT aux_dstrans1,
@@ -175,7 +184,7 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
             END.
 
         FIND FIRST crapage WHERE crapage.cdcooper = par_cdcooper AND
-                                 crapage.cdagenci = 90
+                                 crapage.cdagenci = par_cdagenci  /* Projeto 363 - Novo ATM -> estava fixo  90 */
                                  NO-LOCK NO-ERROR.
         
         IF  AVAILABLE crapage  THEN
@@ -194,7 +203,7 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
         /** Consultando e-mail da cooperativa e fax do internet banking (agencia 90) **/
         ASSIGN aux_dsconsul = "SELECT dsdemail, '|', nrtelfax FROM crapage WHERE " + 
                               "cdcooper = " + STRING(par_cdcooper) + " AND " + 
-                              "cdagenci = 90".
+                              "cdagenci = " + STRING(par_cdagenci).	/* Projeto 363 - Novo ATM -> estava fixo 90 */
 
         RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement iHandle = PROC-HANDLE NO-ERROR(aux_dsconsul).
 
@@ -258,6 +267,14 @@ PROCEDURE proc_geracao_log:
     
     DEF INPUT PARAM par_flgtrans AS LOGICAL                         NO-UNDO.
     
+    DEF   VAR       aux_dsorigem AS CHAR                            NO-UNDO.
+    
+    IF par_flmobile THEN
+        ASSIGN aux_dsorigem = "MOBILE".
+    ELSE 
+        ASSIGN aux_dsorigem = par_nmprogra.
+    
+    
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
         SET h-b1wgen0014.
         
@@ -266,13 +283,13 @@ PROCEDURE proc_geracao_log:
             RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                           INPUT "996",
                                           INPUT aux_dscritic,
-                                          INPUT "INTERNET",
+                                          INPUT par_dsorigem,  /* Projeto 363 - Novo ATM -> estava fixo "INTERNET" */
                                           INPUT aux_dstransa,
                                           INPUT aux_datdodia,
                                           INPUT par_flgtrans,
                                           INPUT TIME,
                                           INPUT par_idseqttl,
-                                          INPUT "INTERNETBANK",
+                                          INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                           INPUT par_nrdconta,
                                           OUTPUT aux_nrdrowid).
                                           
@@ -280,7 +297,7 @@ PROCEDURE proc_geracao_log:
                           (INPUT aux_nrdrowid,
                            INPUT "Origem",
                            INPUT "",
-                           INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).
+                           INPUT aux_dsorigem).
                  
             DELETE PROCEDURE h-b1wgen0014.
         END.

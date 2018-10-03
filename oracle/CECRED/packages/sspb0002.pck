@@ -263,11 +263,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                lmt.nrctrlif,
                lmt.vldocmto,
                -- Origem do lançamento
-               DECODE(lmt.idorigem,1,'AYLLOS CARACTER',
+               DECODE(lmt.idorigem,1,'AIMARO CARACTER',
                                    2,'CAIXA ONLINE',
                                    3,'INTERNET BANK',
                                    4,'TAA',
-                                   5,'AYLLOS WEB',
+                                   5,'AIMARO WEB',
                                    6,'URA',
                                    '') origem,
                -- Campos Cooperativa
@@ -1178,7 +1178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
           IF pr_dsdopcao = 'OI' THEN
             -- Para a duplicidade temos validar outros campos
             -- Indice das linhas que foram processadas
-            vr_index_proc:= 'AYLLOS'                         || -- Identificacao AYLLOS
+            vr_index_proc:= 'AIMARO'                         || -- Identificacao AYLLOS
                             TO_CHAR(rw_craplmt.cddbanco_cop) ||
                             TO_CHAR(rw_craplmt.cdagenci_cop) ||
                             TO_CHAR(rw_craplmt.nrdconta_cop) ||
@@ -1220,7 +1220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               vr_tbprocessados(vr_index_proc).nrcpfcgc_cre := vr_nrcpfcgc_cre;
               vr_tbprocessados(vr_index_proc).nmcooper_cre := vr_nmcli_cre; 
               -- Origem do Erro
-              vr_tbprocessados(vr_index_proc).dsorigemerro := 'AYLLOS';
+              vr_tbprocessados(vr_index_proc).dsorigemerro := 'AIMARO';
             END IF;
               
             -- Zerar os identificadores de criação do  erro
@@ -1264,7 +1264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               pr_tbcritic(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
               pr_tbcritic(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
               -- Origem do Erro
-              pr_tbcritic(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+              pr_tbcritic(vr_chave_conciliar).dsorigemerro := 'AIMARO';
               
             END IF; -- FIM gerar critica duplicidade
           ELSE
@@ -1293,7 +1293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             vr_tbayllos(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
             vr_tbayllos(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
             -- Origem do Erro
-            vr_tbayllos(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+            vr_tbayllos(vr_chave_conciliar).dsorigemerro := 'AIMARO';
           END IF; -- FIM opcao de duplicidade
         END LOOP;
         
@@ -1377,7 +1377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             
             -- Para a duplicidade temos validar outros campos
             -- Indice das linhas que foram processadas
-            vr_index_proc:= 'AYLLOS'                 || -- Identificacao AYLLOS
+            vr_index_proc:= 'AIMARO'                 || -- Identificacao AYLLOS
                             TO_CHAR(vr_ispbif_deb)   || -- Banco Debitada
                             TO_CHAR(vr_cdagenci_deb) || -- Agencia Debitada
                             TO_CHAR(vr_nrdconta_deb) || -- Conta Debitada
@@ -1416,7 +1416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               vr_tbprocessados(vr_index_proc).nrdconta_cre := vr_nrdconta_cre;
               vr_tbprocessados(vr_index_proc).nrcpfcgc_cre := vr_nrcpfcgc_cre;
               vr_tbprocessados(vr_index_proc).nmcooper_cre := vr_nmcli_cre; 
-              vr_tbprocessados(vr_index_proc).dsorigemerro := 'AYLLOS';
+              vr_tbprocessados(vr_index_proc).dsorigemerro := 'AIMARO';
             END IF;
               
             -- Zerar os identificadores de criação do  erro
@@ -1458,7 +1458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               pr_tbcritic(vr_chave_conciliar).nrdconta_cre := vr_nrdconta_cre;
               pr_tbcritic(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
               pr_tbcritic(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
-              pr_tbcritic(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+              pr_tbcritic(vr_chave_conciliar).dsorigemerro := 'AIMARO';
               
             END IF; -- FIM gerar critica duplicidade
           ELSE
@@ -1484,7 +1484,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             vr_tbayllos(vr_chave_conciliar).nrdconta_cre := vr_nrdconta_cre;
             vr_tbayllos(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
             vr_tbayllos(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
-            vr_tbayllos(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+            vr_tbayllos(vr_chave_conciliar).dsorigemerro := 'AIMARO';
 
           END IF; -- Fim da duplicidade
                                           
@@ -1520,7 +1520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             
             -- Para a duplicidade temos validar outros campos
             -- Indice das linhas que foram processadas
-            vr_index_proc:= 'AYLLOS'                 || -- Identificacao AYLLOS
+            vr_index_proc:= 'AIMARO'                 || -- Identificacao AYLLOS
                             TO_CHAR(vr_ispbif_deb)   || -- Banco Debitada
                             TO_CHAR(vr_cdagenci_deb) || -- Agencia Debitada
                             TO_CHAR(vr_nrdconta_deb) || -- Conta Debitada
@@ -1559,7 +1559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               vr_tbprocessados(vr_index_proc).nrdconta_cre := vr_nrdconta_cre;
               vr_tbprocessados(vr_index_proc).nrcpfcgc_cre := vr_nrcpfcgc_cre;
               vr_tbprocessados(vr_index_proc).nmcooper_cre := vr_nmcli_cre; 
-              vr_tbprocessados(vr_index_proc).dsorigemerro := 'AYLLOS';
+              vr_tbprocessados(vr_index_proc).dsorigemerro := 'AIMARO';
             END IF;
               
             -- Zerar os identificadores de criação do  erro
@@ -1601,7 +1601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               pr_tbcritic(vr_chave_conciliar).nrdconta_cre := vr_nrdconta_cre;
               pr_tbcritic(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
               pr_tbcritic(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
-              pr_tbcritic(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+              pr_tbcritic(vr_chave_conciliar).dsorigemerro := 'AIMARO';
               
             END IF; -- FIM gerar critica duplicidade
           ELSE
@@ -1627,7 +1627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             vr_tbayllos(vr_chave_conciliar).nrdconta_cre := vr_nrdconta_cre;
             vr_tbayllos(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
             vr_tbayllos(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
-            vr_tbayllos(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+            vr_tbayllos(vr_chave_conciliar).dsorigemerro := 'AIMARO';
 
           END IF; -- Fim da duplicidade
                                           

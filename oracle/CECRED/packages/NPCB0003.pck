@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0003 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Dezembro/2016.                   Ultima atualizacao: 21/09/2018
 
       Dados referentes ao programa:
 
@@ -1058,7 +1058,7 @@ END;
       Sistema  : Cobrança - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
-      Data     : Dezembro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Dezembro/2016.                   Ultima atualizacao: 21/09/2018
 
       Dados referentes ao programa:
 
@@ -1066,8 +1066,9 @@ END;
       Objetivo  : Rotina para consultar via webservice o titulo na CIP, retornando
                   o XML com os dados recebidos
 
-      Alteração :
-
+      Alteração : 21/09/2018 - se o horário do sistema é menor que o horário do parâmetro
+                               então deve consultar a data de movimento do sqlserver (jdnpc)
+                               senão deve utilizar a regra que já existe (sysdate) (PRB0040329 - AJFink)
     ..........................................................................*/
 
     -----------> CURSORES <-----------
@@ -1077,6 +1078,7 @@ END;
     vr_cdcritic      NUMBER;
     vr_dscritic      VARCHAR2(1000);
     vr_cdmetodo      NUMBER;
+    vr_dsdatamvto    varchar2(8);
     vr_xmlsoap       XMLTYPE;
     vr_dsxmltit      XMLTYPE;
     vr_tbcampos      NPCB0003.typ_tab_campos_soap;
@@ -1135,8 +1137,15 @@ END;
     END IF;
     
     --
+    --PRB0040329
+    if to_number(to_char(sysdate,'hh24')) < nvl(to_number(trim(gene0001.fn_param_sistema('CRED',0,'NPC_HORARIO_CNS_DIF'))),6) then
+      vr_dsdatamvto := to_char(to_date(ddda0001.fn_datamov,'yyyymmdd'),'yyyymmdd');
+    else
+      vr_dsdatamvto := to_char(SYSDATE, 'YYYYMMDD');
+    end if;
+
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtMovto';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE, 'YYYYMMDD'); -- pr_dtmvtolt 
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_dsdatamvto; --PRB0040329
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
     
     -- Montar o XML/SOAP para a requisição da consulta

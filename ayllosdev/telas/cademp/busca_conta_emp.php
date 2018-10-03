@@ -33,7 +33,7 @@
 	$retornoAposErro = 'estadoInicial();';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	$xml  = '';
@@ -68,7 +68,7 @@
 			$mtdErro = " $('#nrdconta','#frmInfEmpresa').focus();$('#nrdconta','#frmInfEmpresa').val('');$('#nmextttl','#frmInfEmpresa').val('');";			
 		}
 
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);		
+		exibirErro('error',$msgErro,'Alerta - Aimaro',$mtdErro,false);		
 	} 
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;

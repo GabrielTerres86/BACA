@@ -788,7 +788,7 @@ PROCEDURE Define_cdempres:
     ELSE
         ASSIGN par_cdempres = 1.
 
-    IF par_nmdatela = "AYLLOSWEB" THEN
+    IF par_nmdatela = "AIMAROWEB" THEN
        ASSIGN par_cdempres = 0.
 
     RETURN "OK".

@@ -344,7 +344,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
       FROM crapthi
      WHERE cdcooper = pr_cdcooper
        AND cdhistor = pr_cdhistor
-       AND dsorigem = 'AYLLOS';
+       AND dsorigem = 'AIMARO';
   vr_vltarifa_1154 crapthi.vltarifa%TYPE;
   vr_vltarifa_1019 crapthi.vltarifa%TYPE;
   vr_vltarifa_1414 crapthi.vltarifa%TYPE;

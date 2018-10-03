@@ -599,7 +599,7 @@ function controlaOperacao(operacao) {
         case 'TA':
 			// PRJ 438 - Adicionado controle para situação ANULADA
         	if (insitest == 6) {
-        	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Ayllos', '');
+        	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
         		return false;
         	}
             booPrimeiroBen = false; //809763
@@ -1293,7 +1293,7 @@ function controlaOperacao(operacao) {
         case 'ENV_ESTEIRA':
 			// PRJ 438 - Adicionado controle para situação ANULADA
         	if (insitest == 6) {
-        		showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Ayllos', '');
+        		showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
         		return false;
         	}
 			      insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
@@ -10015,7 +10015,7 @@ function carregaDadosConsultaMotivos() {
         },      
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             if (response.indexOf('showError("error"') == -1) {
@@ -10067,14 +10067,14 @@ function gravaMotivosAnulacao(){
         }, 
         error: function(objAjax,responseError,objExcept) {
             hideMsgAguardo();
-            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function(response) {
             try {
                 eval(response);
             } catch(error) {
                 hideMsgAguardo();
-                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
             }
         }               
     });

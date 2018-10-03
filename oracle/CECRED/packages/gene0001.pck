@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 18/12/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -87,7 +87,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** ---------------------------------------------------------**/
 
   TYPE typ_des_dorigens IS VARRAY(13) OF VARCHAR2(13);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','AYLLOS WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AIMARO','CAIXA','INTERNET','CASH','AIMARO WEB','URA','PROCESSO','MENSAGERIA','ESTEIRA','MOBILE','ACORDO','ANTIFRAUDE','COBRANCA');
 
 
   /** ---------------------------------------------------- **/
@@ -504,7 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 19/02/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 20/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -548,6 +548,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --             19/02/2018 - #827612 Criado o procedimento pc_mv_arquivo para usar o tipo de comando mv_grid, criado
   --                          na função fn_type_comando. Este tipo de comando foi criado para usar o user grid no
   --                          exec_comando_oracle.sh para ganho de performance (Carlos)
+  --
+  --             20/09/2018 - Criar uma nova opção de consulta e levar em conta o parametro de data
+  --                          pc_controle_exec                   
+  --                          ( Belli - Envolti - REQ0027434 )
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -3470,7 +3475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
   /* Procedimento para verificar/controlar a execução de programas */
   PROCEDURE pc_controle_exec ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
-                              ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar, C-Consultar e V-Validar
+                              ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar, C-Consultar, V-Validar e C2-Consultar
                               ,pr_dtmvtolt  IN DATE                         --> Data do movimento
                               ,pr_cdprogra  IN crapprg.cdprogra%TYPE        --> Codigo do programa
                               ,pr_flultexe OUT INTEGER                      --> Retorna se é a ultima execução do procedimento
@@ -3482,7 +3487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Belli - Envolti
-  --   Data    : Agosto/2017                       Ultima atualizacao: 
+  --   Data    : Agosto/2017                       Ultima atualizacao: 20/09/2018
 --  
   -- Dados referentes ao programa:
   --
@@ -3493,11 +3498,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --
   -- Observação: Rotina Copiada/Refeita da SICR0001 pc_controle_exec_deb, sendo atualizada para ser genérica
   --
-  --  Alteracoes:
+  --  Alteracoes:  
+  --             20/09/2018 - Criar uma nova opção de consulta e levar em conta o parametro de data
+  --                          pc_controle_exec                   
+  --                          ( Belli - Envolti - REQ0027434 )
   --
   --------------------------------------------------------------------------------------------------------------------*/
     ------------- Variaveis ---------------
-    vr_exc_mensagem  EXCEPTION;
+    vr_exc_mensagem EXCEPTION;
     vr_exc_erro  EXCEPTION;
     vr_dscritic  VARCHAR2(1000);
 
@@ -3645,7 +3653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         vr_qtdexec := nvl(vr_qtctlexc,0) + 1;
       END IF;            
 		
-	  BEGIN
+	    BEGIN
         UPDATE crapprm
            SET crapprm.dsvlrprm = to_char(pr_dtmvtolt,'DD/MM/RRRR')||'#'||vr_qtdexec
          WHERE nmsistem =  vr_nmsistem
@@ -3679,15 +3687,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     ELSE --> Consulta
       vr_qtdexec := vr_qtctlexc;
     END IF;
-
+    
     --> Verificar se é a ultima execucao
     IF vr_qtdexec >= vr_dsvlrprm_qtd THEN
       pr_flultexe := 1;
     ELSE
       pr_flultexe := 0;
-			END IF;    
+		END IF;      
 			
-    pr_qtdexec := vr_qtdexec;
+    pr_qtdexec := vr_qtdexec; 
+    
+    -- Consulta 2 - levando em conta a data de parâmetro - 20/09/2018 - REQ0027434
+    IF pr_cdtipope = 'C2' THEN        
+      IF nvl(vr_dtctlexc,to_date('01/01/2001','DD/MM/RRRR')) <> 
+         nvl(TRUNC(pr_dtmvtolt),to_date('01/01/2001','DD/MM/RRRR'))    THEN
+        -- Se a data do parâmetro for diferente da data do cadastro então nesta data não executou
+        pr_flultexe := 0;
+        pr_qtdexec  := 0;
+      END IF;
+    END IF; 
 
     EXCEPTION
     WHEN vr_exc_mensagem THEN  

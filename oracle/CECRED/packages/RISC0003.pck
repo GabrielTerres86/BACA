@@ -3239,6 +3239,16 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         CLOSE cr_dat;
       END IF;
 
+      -- Atualiza Controle BI
+      pc_atualiza_controle(pr_cdcooper => pr_cdcooper  -- Cooperativa
+                          ,pr_situacao => 1            -- Situação da execução(1-Erro  2-Sucesso)
+                          ,pr_cdcritic => vr_cdcritic  -- Código da crítica
+                          ,pr_dscritic => vr_dscritic);-- Erros do processo
+      -- Verifica erro na atualização controle BI
+      IF vr_cdcritic = 0 THEN
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Chama processo de limpeza
       pc_limpa_dados_risco(pr_cdcooper => pr_cdcooper  -- Cooperativa
                           ,pr_cdcritic => vr_cdcritic  -- Código da crítica
@@ -3275,6 +3285,8 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         IF vr_cdcritic = 0 THEN
           RAISE vr_exc_saida;
         END IF;    
+     
+     
    EXCEPTION
       WHEN vr_exc_saida THEN
       IF vr_cdcritic <> 0 THEN

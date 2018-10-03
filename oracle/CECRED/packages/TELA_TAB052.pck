@@ -2126,7 +2126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô IB - CECRED de ' ||
+                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô IB - AILOS de ' ||
                                     to_char(vr_tab_cecred_dsctit(1).qtmxtbib) ||
                                     ' para ' || to_char(pr_qtmxtbib_c));
 
@@ -2138,7 +2138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô Ayllos de' ||
+                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô Aimaro de' ||
                                     to_char(vr_tab_dados_dsctit(1).qtmxtbay) ||
                                     ' para ' || to_char(pr_qtmxtbay));
     END IF;
@@ -2149,7 +2149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       --> gerar log da tela
       pc_log_tab052(pr_cdcooper => vr_cdcooper,
                     pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô Ayllos - CECRED de ' ||
+                    pr_dscdolog => 'alterou o Qtd. máxima de títulos por borderô Aimaro - AILOS de ' ||
                                     to_char(vr_tab_cecred_dsctit(1).qtmxtbay) ||
                                     ' para ' || to_char(pr_qtmxtbay_c));
 

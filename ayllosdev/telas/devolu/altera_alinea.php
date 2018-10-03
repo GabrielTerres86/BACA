@@ -59,8 +59,8 @@
 	// ----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgErro,'Alerta - Aimaro','',false);
 	}
 	
-	exibirErro('inform','Alinea alterada com sucesso!','Alerta - Ayllos','hideMsgAguardo();BuscaDevolu(1,30);',false);
+	exibirErro('inform','Alinea alterada com sucesso!','Alerta - Aimaro','hideMsgAguardo();BuscaDevolu(1,30);',false);
 ?>

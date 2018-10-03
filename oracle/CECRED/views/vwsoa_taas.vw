@@ -1,6 +1,6 @@
 create or replace view cecred.vwsoa_taas as
    select taa.cdcooper
-         ,DECODE(NVL(age.cdagenci, 0), 0, 'SISTEMA CECRED', cop.nmrescop) nmrescop
+         ,DECODE(NVL(age.cdagenci, 0), 0, 'SISTEMA AILOS', cop.nmrescop) nmrescop
          ,taa.nrterfin
          ,taa.nmterminal
 				 ,taa.flganexo_pa AS flganexo

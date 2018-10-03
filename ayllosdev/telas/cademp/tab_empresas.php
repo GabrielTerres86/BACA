@@ -65,8 +65,8 @@ isPostMethod();
 						<input type="hidden" id="hindescsg" name="indescsg" value="<?php echo getByTagName($r->tags,'indescsg');?>" />
 						<input type="hidden" id="hnmbairro" name="nmbairro" value="<?php echo getByTagName($r->tags,'nmbairro');?>" />
 						<input type="hidden" id="hnmcidade" name="nmcidade" value="<?php echo getByTagName($r->tags,'nmcidade');?>" />
-						<input type="hidden" id="hnrcepend" name="nrcepend" value="<?php echo formataCep(getByTagName($r->tags,'nrcepend'));?>" />
-						<input type="hidden" id="hnrdocnpj" name="nrdocnpj" value="<?php echo formatar(getByTagName($r->tags,'nrdocnpj'), 'cnpj');?>" />
+						<input type="hidden" id="hnrcepend" name="nrcepend" value="<?php echo formataCep(getByTagName($r->tags,'nrcepend')); ?>" />
+						<input type="hidden" id="hnrdocnpj" name="nrdocnpj" value="<?php echo formatar(getByTagName($r->tags,'nrdocnpj'), 'cnpj'); ?>" />
 						<input type="hidden" id="hnrendemp" name="nrendemp" value="<?php echo mascara(getByTagName($r->tags,'nrendemp'), "###.###");?>" />
 						<input type="hidden" id="hnrfaxemp" name="nrfaxemp" value="<?php echo getByTagName($r->tags,'nrfaxemp');?>" />
 						<input type="hidden" id="hnrfonemp" name="nrfonemp" value="<?php echo getByTagName($r->tags,'nrfonemp');?>" />
@@ -75,7 +75,7 @@ isPostMethod();
 						<input type="hidden" id="hflgpgtib" name="flgpgtib" value="<?php echo getByTagName($r->tags,'flgpgtib');?>" />
 						<input type="hidden" id="hcdcontar" name="cdcontar" value="<?php echo getByTagName($r->tags,'cdcontar');?>" />
 						<input type="hidden" id="hdscontar" name="dscontar" value="<?php echo getByTagName($r->tags,'dscontar');?>" />
-						<input type="hidden" id="hvllimfol" name="vllimfol" value="<?php echo formataMoeda(getByTagName($r->tags,'vllimfol'));?>" />
+						<input type="hidden" id="hvllimfol" name="vllimfol" value="<?php echo formataMoeda(getByTagName($r->tags,'vllimfol')); ?>" />
 						<input type="hidden" id="hdtultufp" name="dtultufp" value="<?php echo getByTagName($r->tags,'dtultufp');?>" />
                         <input type="hidden" id="hdtlimdeb" name="dtlimdeb" value="<?php echo getByTagName($r->tags,'dtlimdeb');?>" />
 						<!-- CAMPOS COM OS DADOS PARA POPULAR OS FORMULARIOS CONFORME A EMPRESA ESCOLHIDA -->

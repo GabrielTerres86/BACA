@@ -713,7 +713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            ,crapcpt.dtdhomol
            ,DECODE(crapcpt.idretorn,1,'INTERNET','FTP')        dsidretorn
            ,crapcpt.idretorn
-           ,DECODE(crapcpt.cdoperad,'996','INTERNET','AYLLOS') dsorigem
+           ,DECODE(crapcpt.cdoperad,'996','INTERNET','AIMARO') dsorigem
            ,crapcpt.dtaltera
            ,(SELECT crapope.cdoperad || ' - ' || crapope.nmoperad 
                FROM crapope ope 
@@ -5263,7 +5263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
     -- Verifica Qual a Origem
     CASE pr_idorigem
-      WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+      WHEN 1 THEN vr_dsorigem := 'AIMARO';
       WHEN 3 THEN vr_dsorigem := 'INTERNET';
       WHEN 7 THEN vr_dsorigem := 'FTP';
       ELSE vr_dsorigem := ' ';
@@ -6511,7 +6511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
     -- Verifica Qual a Origem
     CASE pr_idorigem
-      WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+      WHEN 1 THEN vr_dsorigem := 'AIMARO';
       WHEN 3 THEN vr_dsorigem := 'INTERNET';
       WHEN 7 THEN vr_dsorigem := 'FTP';
       ELSE vr_dsorigem := ' ';
@@ -10624,7 +10624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   
     IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
     CASE gene0001.vr_vet_des_origens(pr_idorigem)
-      WHEN 'AYLLOS WEB' THEN
+      WHEN 'AIMARO WEB' THEN
         gene0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
                                     ,pr_cdagenci => pr_cdagenci
                                     ,pr_nrdcaixa => pr_nrdcaixa
@@ -10888,7 +10888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
     IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
     CASE gene0001.vr_vet_des_origens(pr_idorigem)
-      WHEN 'AYLLOS WEB' THEN
+      WHEN 'AIMARO WEB' THEN
         --Enviar arquivo para Web
         gene0002.pc_efetua_copia_pdf (pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
                                      ,pr_cdagenci => pr_cdagenci     --> Codigo da agencia para erros

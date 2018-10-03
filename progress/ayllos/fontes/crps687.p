@@ -210,7 +210,7 @@ IF glb_cdcooper <> 3 THEN DO:
     
     FIND FIRST crapthi where crapthi.cdcooper = glb_cdcooper AND
                              crapthi.cdhistor = 1414         AND 
-                             crapthi.dsorigem = 'AYLLOS' NO-LOCK.
+                             crapthi.dsorigem = 'AIMARO' NO-LOCK.
 
     FOR EACH craplgp
        WHERE craplgp.cdcooper = glb_cdcooper
@@ -263,7 +263,7 @@ FOR EACH tt-rel BREAK BY tt-rel.cdcooper
 
         FIND FIRST crapthi where crapthi.cdcooper = tt-rel.cdcooper AND
                                  crapthi.cdhistor = 1414            AND 
-                                 crapthi.dsorigem = 'AYLLOS' NO-LOCK.
+                                 crapthi.dsorigem = 'AIMARO' NO-LOCK.
     END.
 
     IF LAST-OF (tt-rel.cdagenci) THEN DO:
@@ -363,7 +363,7 @@ IF glb_cdcooper <> 3 THEN DO:
 
     FIND FIRST crapthi where crapthi.cdcooper = glb_cdcooper AND
                              crapthi.cdhistor = 1414         AND 
-                             crapthi.dsorigem = 'AYLLOS' NO-LOCK.
+                             crapthi.dsorigem = 'AIMARO' NO-LOCK.
 
     DO aux_data = data_ini TO data_fim:
         FOR EACH craplgp
@@ -418,7 +418,7 @@ FOR EACH tt-rel BREAK BY tt-rel.cdcooper
     IF  FIRST-OF(tt-rel.cdcooper) THEN DO:
         FIND FIRST crapthi where crapthi.cdcooper = tt-rel.cdcooper AND
                                  crapthi.cdhistor = 1414            AND 
-                                 crapthi.dsorigem = 'AYLLOS' NO-LOCK.
+                                 crapthi.dsorigem = 'AIMARO' NO-LOCK.
         /* Localizar a tarifa da base */
         FIND FIRST craptab WHERE craptab.cdcooper = glb_cdcooper
                              AND craptab.nmsistem = "CRED"

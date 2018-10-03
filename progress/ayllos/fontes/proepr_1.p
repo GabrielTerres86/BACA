@@ -204,7 +204,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 		6 -Registrar Gravames */
    IF CAN-DO("1,3,4,6,",STRING(opcao)) THEN
    DO:
-		MESSAGE "A opcao selecionada esta disponivel apenas no Ayllos Web".
+		MESSAGE "A opcao selecionada esta disponivel apenas no Aimaro Web".
         NEXT.
    END.
        

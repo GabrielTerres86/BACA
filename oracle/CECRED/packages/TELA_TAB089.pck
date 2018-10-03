@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
   --  Sistema  : Rotinas utilizadas pela Tela TAB089
   --  Sigla    : EMPR
   --  Autor    : Guilherme/AMcom
-  --  Data     : Janeiro/2018                 Ultima atualizacao:
+  --  Data     : Janeiro/2018                 Ultima atualizacao: 31/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -15,7 +15,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
   --
   -- Alteracoes:  12/01/2018 - Conversão Ayllos Web (Guilherme/AMcom)
   --              10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)  
-  --
+  --              31/07/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+  --                           PRJ 450 - Diego Simas (AMcom)
+  --              31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
+  --                           PRJ 450 - Diego Simas (AMcom)
   --
   ---------------------------------------------------------------------------
 
@@ -55,6 +58,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
                        ,pr_qtditava  IN INTEGER -- Avalista -- PJ438 - Márcio (Mouts) 
                        ,pr_qtditapl  IN INTEGER -- Aplicacao -- PJ438 - Márcio (Mouts) 
                        ,pr_qtditsem  IN INTEGER -- Sem Garantia -- PJ438 - Márcio (Mouts) 
+                       -- Prejuízo
+                       ,pr_pctaxpre  IN NUMBER  -- Taxa de juros remuneratório de prejuízo - PORCENTAGEM
+                       ,pr_qtdictcc  IN INTEGER -- Quantidade de dias para Transferência de valor da conta transitória para a CC
                                              
                        ,pr_xmllog      IN VARCHAR2  --> XML com informações de LOG
                        ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
@@ -134,7 +140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
   --  Sistema  : Rotinas utilizadas pela Tela TAB089
   --  Sigla    : EMPR
   --  Autor    : Guilherme/AMcom
-  --  Data     : Janeiro/2018                 Ultima atualizacao:
+  --  Data     : Janeiro/2018                 Ultima atualizacao: 31/07/2018
   --
   -- Dados referentes ao programa:
   --
@@ -143,6 +149,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
   --
   -- Alteracoes:  12/01/2018 - Conversão Ayllos Web (Guilherme/AMcom)
   --              10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)
+  --              31/07/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+  --                           PRJ 450 - Diego Simas (AMcom) 
+  --              31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
+  --                           PRJ 450 - Diego Simas (AMcom)
   --
   ---------------------------------------------------------------------------
   PROCEDURE pc_consultar(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -157,7 +167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Guilherme/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao:
+        Data    : Janeiro/2018                 Ultima atualizacao: 31/07/2018
 
         Dados referentes ao programa:
 
@@ -168,6 +178,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         Observacao: -----
 
         Alteracoes: 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)        
+                    31/07/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+                                 PRJ 450 - Diego Simas (AMcom)
+                    31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
+                                 PRJ 450 - Diego Simas (AMcom) 
+             
     ..............................................................................*/
       ----------->>> VARIAVEIS <<<--------
       -- Variável de críticas
@@ -201,6 +216,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_qtditava INTEGER :=0; -- PJ438 - Márcio (Mouts)
       vr_qtditapl INTEGER :=0; -- PJ438 - Márcio (Mouts)
       vr_qtditsem INTEGER :=0; -- PJ438 - Márcio (Mouts)                  
+      vr_pctaxpre NUMBER  :=0;
+      vr_qtdictcc NUMBER  :=0;                
       
       -- Variaveis retornadas da gene0004.pc_extrai_dados
       vr_cdcooper INTEGER;
@@ -275,6 +292,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         vr_qtditava := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,109,3)),0);  -- PJ438 - Márcio (Mouts)      
         vr_qtditapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,113,3)),0);  -- PJ438 - Márcio (Mouts)      
         vr_qtditsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,117,3)),0);  -- PJ438 - Márcio (Mouts)                              
+        
+        vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
+        vr_qtdictcc := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,128,3)),0);
+        
       END IF;
 
       -- PASSA OS DADOS PARA O XML RETORNO      
@@ -450,6 +471,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                              pr_tag_cont => to_char(vr_qtditsem),
                              pr_des_erro => vr_dscritic);                                                          
       -- Fim PJ438 - Márcio (Mouts)
+      
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'pctaxpre',
+                             pr_tag_cont => to_char(vr_pctaxpre,
+                                                    '999D00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                             pr_des_erro => vr_dscritic);   
+                             
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'qtdictcc',
+                             pr_tag_cont => to_char(vr_qtdictcc),
+                             pr_des_erro => vr_dscritic);
+                                   
   EXCEPTION
     WHEN vr_exc_saida THEN
 
@@ -485,25 +523,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                        ,pr_vlempres  IN NUMBER
                        ,pr_pzmaxepr  IN INTEGER
                        ,pr_vlmaxest  IN NUMBER
-                       
-                       ,pr_pcaltpar  IN NUMBER
-                       ,pr_vltolemp  IN NUMBER
-                       
-                       ,pr_qtdpaimo  IN INTEGER
-                       ,pr_qtdpaaut  IN INTEGER
-                       ,pr_qtdpaava  IN INTEGER
-                       ,pr_qtdpaapl  IN INTEGER
-                       ,pr_qtdpasem  IN INTEGER
+                       -- Novos Campos
+                       ,pr_pcaltpar  IN NUMBER -- Alteração de parcela - PORCENTAGEM
+                       ,pr_vltolemp  IN NUMBER -- Tolerância por valor de empréstimo - REAIS
+                       -- PROPOSTAS PA - Prazo de validade da análise para efetivação 
+                       ,pr_qtdpaimo  IN INTEGER -- Imovel - Quantidade Dias PA Imovel
+                       ,pr_qtdpaaut  IN INTEGER -- Automovel - Quantidade Dias PA Automovel
+                       ,pr_qtdpaava  IN INTEGER -- Aval - Quantidade Dias PA Aval
+                       ,pr_qtdpaapl  IN INTEGER -- Aplicacao - Quantidade Dias PA Aplicacao
+                       ,pr_qtdpasem  IN INTEGER -- Sem Garantia - Quantidade Dias PA Sem Garantia
                        ,pr_qtdpameq  IN INTEGER -- PJ438 - Márcio (Mouts) 
-                       
-                       ,pr_qtdibaut  IN INTEGER
-                       ,pr_qtdibapl  IN INTEGER
-                       ,pr_qtdibsem  IN INTEGER
-
+                        -- PROPOSTAS Mobile/IB/TAA - Prazo de validade da análise para efetivação 
+                       ,pr_qtdibaut  IN INTEGER -- Automovel
+                       ,pr_qtdibapl  IN INTEGER -- Aplicacao
+                       ,pr_qtdibsem  IN INTEGER -- Sem Garantia
                        -- Títulos - Prazo de validade da análise para efetivação
                        ,pr_qtditava  IN INTEGER -- Avalista -- PJ438 - Márcio (Mouts) 
                        ,pr_qtditapl  IN INTEGER -- Aplicacao -- PJ438 - Márcio (Mouts) 
                        ,pr_qtditsem  IN INTEGER -- Sem Garantia -- PJ438 - Márcio (Mouts) 
+                       -- Prejuízo
+                       ,pr_pctaxpre  IN NUMBER  -- Taxa de juros remuneratório de prejuízo - PORCENTAGEM
+                       ,pr_qtdictcc  IN INTEGER -- Quantidade de dias para Transferência de valor da conta transitória para a CC
 
                        ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
                        ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -517,7 +557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Guilherme/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao:
+        Data    : Janeiro/2018                 Ultima atualizacao: 31/07/2018
 
         Dados referentes ao programa:
 
@@ -528,6 +568,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         Observacao: -----
 
         Alteracoes: 10/07/2018 - PJ 438 - Agilidade nas Contratações de Crédito - Márcio (Mouts)        
+                    31/07/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+                                 PRJ 450 - Diego Simas (AMcom)                                 
+                    31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
+                                 PRJ 450 - Diego Simas (AMcom)               
+        
     ..............................................................................*/
 
     -- Variável de críticas
@@ -570,6 +615,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
     vr_qtditava INTEGER :=0; --PJ438 - Márcio (Mouts)
     vr_qtditapl INTEGER :=0; --PJ438 - Márcio (Mouts)
     vr_qtditsem INTEGER :=0; --PJ438 - Márcio (Mouts)
+    vr_pctaxpre NUMBER  :=0;
+    vr_qtdictcc INTEGER :=0;
 
     -- Cursor generico de calendario
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -648,6 +695,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_qtdibsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,101,3)),0);
 
       vr_qtdpameq := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,105,3)),0);--      PJ438 - Márcio (Mouts)
+      
+      vr_qtditava := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,109,3)),0);  -- PJ438 - Márcio (Mouts)      
+      vr_qtditapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,113,3)),0);  -- PJ438 - Márcio (Mouts)      
+      vr_qtditsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,117,3)),0);  -- PJ438 - Márcio (Mouts)                              
+      
+      vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,121,6)),0);
+      vr_qtdictcc := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,128,3)),0);
+                  
     END IF;
 
     vr_dstextab := to_char(pr_prtlmult,   'FM000', 'NLS_NUMERIC_CHARACTERS='',.''') || ' ' ||
@@ -673,8 +728,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                    to_char(pr_qtdpameq,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)
                    to_char(pr_qtditava,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)
                    to_char(pr_qtditapl,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)                                                      
-                   to_char(pr_qtditsem,   'FM000')       ||''      --PJ438 - Márcio (Mouts)
-                   ;                   
+                   to_char(pr_qtditsem,   'FM000')       || ' ' || --PJ438 - Márcio (Mouts)
+                   to_char(pr_pctaxpre,   'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.''') || ' ' ||
+                   to_char(pr_qtdictcc,   'FM000') || '';
 
     BEGIN
       UPDATE craptab tab
@@ -868,6 +924,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
 
  
  -- Fim PJ438 - Márcio (Mouts)
+
+    IF vr_pctaxpre <> pr_pctaxpre THEN
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou % Taxa de juros remuneratorio de prejuizo de ' ||
+                                    to_char(vr_pctaxpre,'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
+                                    ' para ' || to_char(pr_pctaxpre,'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
+
+    END IF;  
+    
+    IF vr_qtdictcc <> pr_qtdictcc THEN
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou Prejuizo - Prazo p/ transferencia de valor da conta transitoria para a CC de ' ||
+                                    to_char(vr_qtdictcc,'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
+                                    ' para ' || to_char(pr_qtdictcc,'FM000', 'NLS_NUMERIC_CHARACTERS='',.'''));
+    END IF;  
 
     IF vr_qtdibaut <> pr_qtdibaut THEN
       --> gerar log da tela

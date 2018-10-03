@@ -95,6 +95,9 @@
                                          
                12/06/2017 - Tratamento para Novo Catalgo do SPB (Lucas Ranghetti #668207)
                
+               09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+
                12/04/2018 - Inclusao de novos campo para realizaçao 
                               de analise de fraude. 
                               PRJ381 - AntiFraude (Odirlei-AMcom)
@@ -162,6 +165,16 @@ DEF  INPUT PARAM par_dshistor AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_iptransa AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_iddispos AS CHAR                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagenci AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_cdcoptfn AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_cdagetfn AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_nrterfin AS INTE                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -209,6 +222,14 @@ ASSIGN aux_dstransa = (IF par_flgexecu     THEN "" ELSE "Valida ")           +
         ,INPUT  INT(par_flmobile)      /* --> Indicativo de operacao mobile */
         ,INPUT  par_iptransa           /* --> IP da transacao  IBank/mobile */
         ,INPUT  par_iddispos           /* --> ID Dispositivo mobile         */
+        ,INPUT  par_cdorigem           /* --> Código da Origem */
+        ,INPUT  par_dsorigem           /* --> Descriçao da Origem */
+        ,INPUT  par_cdagenci           /* --> Agencia */
+        ,INPUT  par_nrdcaixa           /* --> Caixa */
+        ,INPUT  par_nmprogra           /* --> Nome do programa */
+        ,INPUT  par_cdcoptfn           /* --> Cooperativa do Terminal */
+        ,INPUT  par_cdagetfn           /* --> Agencia do Terminal */
+        ,INPUT  par_nrterfin           /* --> Numero do Terminal */
         ,OUTPUT ""                     /* --> Retorno XML de critica        */
         ,OUTPUT ""                     /* --> Retorno XML da operaçao 26    */
         ,OUTPUT "" ).                  /* --> Retorno de critica (OK ou NOK)*/
@@ -229,7 +250,8 @@ ASSIGN aux_dstransa = (IF par_flgexecu     THEN "" ELSE "Valida ")           +
                                  " Tente novamente ou contacte seu PA" +
                             "</dsmsgerr>".
                         
-      RUN proc_geracao_log.
+      RUN proc_geracao_log(INPUT par_dsorigem,
+                           INPUT par_nmprogra).
       RETURN "NOK".
       
   END. 
@@ -267,6 +289,11 @@ ASSIGN aux_dstransa = (IF par_flgexecu     THEN "" ELSE "Valida ")           +
 
 PROCEDURE proc_geracao_log:
     
+    DEF  INPUT PARAM par_dsorigem AS CHAR                              NO-UNDO.
+    DEF  INPUT PARAM par_nmprogra AS CHAR                              NO-UNDO.
+    
+    DEF  VAR aux_dsorigem         AS CHAR                              NO-UNDO.
+    
     /* Gerar log(CRAPLGM) - Rotina Oracle */
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_gera_log_prog
@@ -274,17 +301,15 @@ PROCEDURE proc_geracao_log:
         (INPUT par_cdcooper    /* pr_cdcooper */
         ,INPUT "996"           /* pr_cdoperad */
         ,INPUT aux_dscritic    /* pr_dscritic */
-        ,INPUT "INTERNET"      /* pr_dsorigem */
+        ,INPUT par_dsorigem    /*  Projeto 363 - Novo ATM -> estava fixo "INTERNET"*/      /* pr_dsorigem */
         ,INPUT aux_dstransa    /* pr_dstransa */
         ,INPUT aux_datdodia    /* pr_dttransa */
         ,INPUT 0 /* Operacao sem sucesso */ /* pr_flgtrans */
         ,INPUT TIME            /* pr_hrtransa */
         ,INPUT par_idseqttl    /* pr_idseqttl */
-        ,INPUT "INTERNETBANK"  /* pr_nmdatela */
+        ,INPUT par_nmprogra    /*  Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK"*/  /* pr_nmdatela */
         ,INPUT par_nrdconta    /* pr_nrdconta */
         ,OUTPUT 0 ). /* pr_nrrecid  */
-
-
 
     IF  ERROR-STATUS:ERROR  THEN DO:
         DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
@@ -312,6 +337,11 @@ PROCEDURE proc_geracao_log:
      ASSIGN aux_nrrecid = pc_gera_log_prog.pr_nrrecid
                               WHEN pc_gera_log_prog.pr_nrrecid <> ?.       
                               
+
+     IF par_flmobile THEN
+         ASSIGN aux_dsorigem = "MOBILE".
+     ELSE 
+         ASSIGN aux_dsorigem = par_nmprogra.
                               
      /* Gerar log item (CRAPLGI) - Rotina Oracle */
      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -320,7 +350,7 @@ PROCEDURE proc_geracao_log:
             (INPUT aux_nrrecid,
              INPUT "Origem",
              INPUT "",
-             INPUT STRING(par_flmobile,"MOBILE/INTERNETBANK")).                         
+             INPUT par_nmprogra).                         
      CLOSE STORED-PROC pc_gera_log_item_prog
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
 

@@ -3,18 +3,19 @@
 	/************************************************************************
 	      Fonte: grupo_economico.php
 	      Autor: Adriano
-	      Data : Outubro/2012              		Última Alteração: 10/02/2014
+	      Data : Outubro/2012              		Última Alteração: 21/09/2018
 
           Objetivo  : Mostrar opcao de Grupo Economico da rotina de Ocorrencias
                       da tela ATENDA
 
 	      Alterações: 21/03/2013 - Ajustes realizados:
-									- Corrigido a grafia do título da coluna "Endividamento"
-								    - Atribuido o valor correto a coluna "Endividamento" 
-									(Adriano).
-					  12/08/2013 - Alteração da sigla PAC para PA. (Carlos)
-					  10/02/2014 - Correção relativa ao Valor do Endividamento (Lucas).
-				25/07/2016 - Corrigi a forma de recuperacao dos dados do XML. SD 479874 (Carlos R.)							
+                               - Corrigido a grafia do título da coluna "Endividamento"
+                               - Atribuido o valor correto a coluna "Endividamento" 
+                               (Adriano).
+                    12/08/2013 - Alteração da sigla PAC para PA. (Carlos)
+                    10/02/2014 - Correção relativa ao Valor do Endividamento (Lucas).
+                    25/07/2016 - Corrigi a forma de recuperacao dos dados do XML. SD 479874 (Carlos R.)
+                    21/09/2018 - P450 - Correção da formatação do CPF/CNPJ (Guilherme/AMcom)
 											
 	************************************************************************/
 
@@ -176,7 +177,14 @@
 								<?php echo formataContaDV($grupo[$i]->tags[2]->cdata); ?>																
 						</td>
 						<td><span><?php echo $grupo[$i]->tags[5]->cdata;  ?></span>
-								<?php echo formataNumericos('999.999.999-10',$grupo[$i]->tags[5]->cdata,'.-'); ?>								
+                        <?php
+                          if (getByTagName($grupo[$i]->tags,"inpessoa") == 1){
+                            echo formataNumericos('999.999.999-10',$grupo[$i]->tags[5]->cdata,'.-');
+                          }
+                          else {
+                            echo formataNumericos('999.999.999-9999-99',$grupo[$i]->tags[5]->cdata,'.-');
+                          }
+                          ?>
 						</td>
 						<td><span><?php echo $grupo[$i]->tags[6]->cdata; ?></span>
 								<?php echo $grupo[$i]->tags[6]->cdata; ?>

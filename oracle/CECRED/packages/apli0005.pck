@@ -2621,7 +2621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       vr_percenir NUMBER      := 0;
       vr_qtdfaxir PLS_INTEGER := 0;
-      vr_dsorigem VARCHAR2(500) := 'AYLLOS,CAIXA,INTERNET,TAA,AYLLOS WEB,URA';
+      vr_dsorigem VARCHAR2(500) := 'AIMARO,CAIXA,INTERNET,TAA,AIMARO WEB,URA';
 
       -------------------- CURSORES --------------------
       
@@ -3683,7 +3683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_nmextttl crapttl.nmextttl%TYPE;
       vr_nmcidade crapage.nmcidade%TYPE;
       vr_dsprotoc crappro.dsprotoc%TYPE;
-      vr_dsorigem VARCHAR2(500) := 'AYLLOS,CAIXA,INTERNET,TAA,AYLLOS WEB,URA';
+      vr_dsorigem VARCHAR2(500) := 'AIMARO,CAIXA,INTERNET,TAA,AIMARO WEB,URA';
       vr_dstransa VARCHAR2(100) := 'Inclusao de aplicacao.';
       vr_nrdrowid ROWID;
 
@@ -5512,7 +5512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_exc_saida EXCEPTION;
 
       -- Variaveis locais
-      vr_dsorigem VARCHAR2(500) := 'AYLLOS,CAIXA,INTERNET,TAA,AYLLOS WEB,URA';
+      vr_dsorigem VARCHAR2(500) := 'AIMARO,CAIXA,INTERNET,TAA,AIMARO WEB,URA';
       vr_dstransa VARCHAR2(100) := 'Exclusao de aplicacao.';
       vr_nrdrowid ROWID;
       vr_dsprotoc crappro.dsprotoc%TYPE := ''; -- Descricao do protocolo
@@ -6820,7 +6820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         vr_tab_aplica(vr_ind_aplica).qtdiaapl := TRIM(rw_craprac.qtdiaapl);            --> Qtd dias de aplicacao
 				
         IF rw_craprac.idblqrgt = 0 THEN 
-				  vr_tab_aplica(vr_ind_aplica).dsblqrgt := TRIM('DISPONIVEL');                 --> Descrição do indicador de bloque de resgate
+				  vr_tab_aplica(vr_ind_aplica).dsblqrgt := TRIM('DISPONÍVEL');                 --> Descrição do indicador de bloque de resgate
 				ELSE 
 				  vr_tab_aplica(vr_ind_aplica).dsblqrgt := TRIM('BLOQUEADA');                  --> Descrição do indicador de bloque de resgate
 				END IF;

@@ -369,7 +369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                         || 'Os registros listados no anexo apresentaram criticas e não foram processados';
             -- Caso conciliação
             IF rw_arq.idtipo_arquivo = 9 THEN
-              vr_conteudo := vr_conteudo || ' pelo Ayllos '||vr_dstagque;
+              vr_conteudo := vr_conteudo || ' pelo Aimaro '||vr_dstagque;
             ELSE
               vr_conteudo := vr_conteudo || ' pela B3: '||vr_dstagque;
             END IF;      
@@ -389,7 +389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
                         || 'O arquivo apresentou o erro abaixo e não foi processado';
             -- Caso conciliação
             IF rw_arq.idtipo_arquivo = 9 THEN
-              vr_conteudo := vr_conteudo || ' pelo Ayllos '||vr_dstagque;
+              vr_conteudo := vr_conteudo || ' pelo Aimaro '||vr_dstagque;
             ELSE
               vr_conteudo := vr_conteudo || ' pela B3: '||vr_dstagque;
             END IF;
@@ -4760,7 +4760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0007 AS
             pr_dsinform := 'Operação não realizada! Execução liberada somente '||vr_dsjanexe;
           END IF;
         ELSE
-          pr_dsinform := 'Operação não realizada! Processo em Execução ou Sistema Ayllos não liberado!';      
+          pr_dsinform := 'Operação não realizada! Processo em Execução ou Sistema Aimaro não liberado!';      
         END IF;
       ELSE
         pr_dsinform := 'Operação não realizada! Execução só será efetuada de 2a a 6a feira.';

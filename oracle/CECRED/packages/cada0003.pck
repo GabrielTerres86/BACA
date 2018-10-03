@@ -7253,7 +7253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                          ,vr_dttransa
                          ,vr_hrtransa
                          ,'Alteracao de consultor'
-                         ,'AYLLOS'
+                         ,'AIMARO'
                          ,'CADCON'
                          ,1
                          ,' '
@@ -14085,7 +14085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                               ,pr_cdoperad => SubStr(vr_cdoperad,1,10)
                               ,pr_dscritic => SubStr(vr_dscritic,1,159)
-                              ,pr_dsorigem => 'AYLLOS'
+                              ,pr_dsorigem => 'AIMARO'
                               ,pr_dstransa => SubStr(vr_dstransa,1,121)
                               ,pr_dttransa => TRUNC(SYSDATE)
                               ,pr_flgtrans => 1
@@ -14102,7 +14102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                               ,pr_cdoperad => SubStr(pr_cdopelib,1,10)
                               ,pr_dscritic => SubStr(vr_dscritic,1,159)
-                              ,pr_dsorigem => 'AYLLOS'
+                              ,pr_dsorigem => 'AIMARO'
                               ,pr_dstransa => SubStr(vr_dstransa,1,121)
                               ,pr_dttransa => TRUNC(SYSDATE)
                               ,pr_flgtrans => 1

@@ -1862,7 +1862,7 @@ PROCEDURE verifica_operacao:
 
                             RUN busca-tarifa-ted IN h-b1crap20 
                                   (INPUT par_cdcooper,
-                                   INPUT 90,    /* cdagenci*/
+                                   INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */ 
                                    INPUT par_nrdconta,
                                    INPUT par_vllanmto,
                                   OUTPUT aux_vltarifa,
@@ -1886,7 +1886,7 @@ PROCEDURE verifica_operacao:
 
                             RUN tarifa-transf-intercooperativa IN h-b1crap22 
                                   (INPUT par_cdcooper,
-                                   INPUT 90,    /* cdagenci*/
+                                   INPUT par_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */ 
                                    INPUT par_nrdconta,
                                    INPUT par_vllanmto,
                                   OUTPUT aux_vltarifa,
@@ -9332,7 +9332,7 @@ PROCEDURE consulta-contas-cadastradas:
 				NEXT.
 			END.
 
-		/** Nao exibe contas bloqueadas para sistema cecred */
+        /** Nao exibe contas bloqueadas para sistema cecred */
         IF  crapcti.insitcta = 3 AND par_intipdif = 1 AND par_idorigem = 3 THEN
             NEXT.
 

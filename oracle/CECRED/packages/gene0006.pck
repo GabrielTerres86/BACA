@@ -93,6 +93,8 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,nmrescop_central crapcop.nmrescop%TYPE
           ,nrtelsac crapcop.nrtelsac%TYPE
           ,nrtelouv crapcop.nrtelouv%TYPE
+          ,idlstdom INTEGER
+          ,dsorigem VARCHAR2(50)
           );
 
   /* Definição da PL Table de registros de protocolos */
@@ -1556,11 +1558,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
            CONTINUE;
         END IF;
    
-        -- Validar para TAA
-        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
-           RAISE vr_exc_iter;
-        END IF;
-
         -- Valida protocolo Favorecido
         IF pr_cdtippro <> TO_CHAR(8) AND rw_crappro.cdtippro = 8 THEN
            RAISE vr_exc_iter;
@@ -1572,26 +1569,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         -- Valida condições sobre o registro
         IF pr_nrregist > 0 AND (pr_qttotreg <= pr_iniconta OR pr_nrregist < (pr_qttotreg - pr_iniconta)) THEN
            RAISE vr_exc_iter;
-        END IF;
-
-        IF pr_cdorigem = 3 AND -- InternetBank
-           rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-           CONTINUE;
-        END IF;
-
-        IF pr_cdorigem = 3 AND -- InternetBank
-           rw_crappro.cdtippro = 20 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-           CONTINUE;
-        END IF;
-
-        IF pr_cdorigem = 4 AND -- TAA
-           rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-           CONTINUE;
-        END IF;
-          
-        IF pr_cdorigem = 20 AND -- TAA
-           rw_crappro.cdtippro = 1 AND SUBSTR(rw_crappro.dsinform##3,1,3) = 'TAA' THEN -- InternetBank
-           CONTINUE;
         END IF;
 
         vr_nmoperad := '';
@@ -1665,6 +1642,122 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         ELSE
           pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
         END IF;
+          
+          -- Identificar a origem do comprovante
+          -- Devido as informações presentes na crappro, será possivel apenas diferenciar em TAA e não TAA
+          -- Quando não for TAA será devolvido como INTERNET
+          -- Caso seja necessario diferenciar a origem, deverá ser revisto a criação do protocolo
+          IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+            pr_protocolo(vr_index).dsorigem := 'TAA';
+          ELSE 
+            pr_protocolo(vr_index).dsorigem := 'INTERNET';
+          END IF;
+          
+          -- Desmontar a lista de dominio dos protocolos
+          -- Essa lista é referente ao TIPO DE COMPROVANTE
+          CASE
+            -- 2 = Pagamento (Tit/Cnv) / 6 = Pagamento (Tit/Cnv) no TAA
+            WHEN pr_protocolo(vr_index).cdtippro IN ( 2, 6 ) THEN
+              -- Verificar se é comprovante de boleto ou convenio
+              IF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%BANCO%'  THEN
+                -- Boleto
+                pr_protocolo(vr_index).idlstdom := 1;
+              ELSIF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%CONVENIO%'  THEN
+                -- Convênio
+                pr_protocolo(vr_index).idlstdom := 2;
+              ELSE 
+                -- Paramento não identificado
+                pr_protocolo(vr_index).idlstdom := 15;
+              END IF;
+              
+            -- Credito Salario
+            WHEN pr_protocolo(vr_index).cdtippro = 4 THEN
+              pr_protocolo(vr_index).idlstdom := 3;
+              
+            -- TED
+            WHEN pr_protocolo(vr_index).cdtippro = 9 THEN							
+              pr_protocolo(vr_index).idlstdom := 4;
+
+            -- Transferência
+            WHEN pr_protocolo(vr_index).cdtippro = 1 THEN
+              -- Diferenciar entre intracooperativa e intercooperativa
+              -- As Transferencias que no mesma cooperativa terão o "CDAGECTL" no campo dsinform3
+              IF UPPER(pr_protocolo(vr_index).dsinform##3) LIKE '%' || to_char(rw_crapcop.cdagectl ) || '%'  THEN
+                -- INTRACOOPERATIVA
+                pr_protocolo(vr_index).idlstdom := 5;
+              ELSE
+                -- INTERCOOPERATIVA
+                pr_protocolo(vr_index).idlstdom := 6;
+              END IF;
+              
+            -- 16 = Pagamento DARF / 18 = Agendamento DARF
+            WHEN pr_protocolo(vr_index).cdtippro IN ( 16, 18 ) THEN
+              pr_protocolo(vr_index).idlstdom := 7;
+              
+            -- 17 = Pagamento DAS / 19 = Agendamento DAS
+            WHEN pr_protocolo(vr_index).cdtippro IN ( 17, 19) THEN
+              pr_protocolo(vr_index).idlstdom := 8;
+              
+            -- 13 = Pagamento/Agendamento GPS
+            WHEN pr_protocolo(vr_index).cdtippro = 13 THEN
+              pr_protocolo(vr_index).idlstdom := 9;
+              
+            -- 24 = Pagamento FGTS
+            WHEN pr_protocolo(vr_index).cdtippro = 24 THEN
+              pr_protocolo(vr_index).idlstdom := 10;
+              
+            -- 23 = Pagamento DAE
+            WHEN pr_protocolo(vr_index).cdtippro = 23 THEN
+              pr_protocolo(vr_index).idlstdom := 11;
+              
+            -- 20 = Recarga de Celular
+            WHEN pr_protocolo(vr_index).cdtippro = 20 THEN
+              pr_protocolo(vr_index).idlstdom := 1;
+              
+            -- 10 = Aplicação Pre/Pos
+            WHEN pr_protocolo(vr_index).cdtippro = 10 THEN
+              pr_protocolo(vr_index).idlstdom := 30;
+              
+            -- 12 = Resgate Aplicação Pre/Pos
+            WHEN pr_protocolo(vr_index).cdtippro = 12 THEN
+              pr_protocolo(vr_index).idlstdom := 31;
+              
+            -- 11 = Operações DebAut 
+            WHEN pr_protocolo(vr_index).cdtippro = 11  THEN
+              CASE UPPER(pr_protocolo(vr_index).dsinform##1)
+                WHEN 'CADASTRO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 34;
+                WHEN 'CADASTRO - ALTERACAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 35;
+                WHEN 'CADASTRO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 36;
+                WHEN 'SUSPENSAO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 37;
+                WHEN 'SUSPENSAO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 38;
+                WHEN 'BLOQUEIO DE DEBITO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 39;
+                WHEN 'BLOQUEIO DE DEBITO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 40;
+              END CASE;
+              
+            -- 15 = Pagamento DebAut
+            WHEN pr_protocolo(vr_index).cdtippro = 15 THEN
+              pr_protocolo(vr_index).idlstdom := 32;
+              
+            -- 3 = Capital
+            WHEN pr_protocolo(vr_index).cdtippro = 3 THEN
+              pr_protocolo(vr_index).idlstdom := 33;
+
+            -- 5 = Depósito
+            WHEN pr_protocolo(vr_index).cdtippro = 5 THEN
+              pr_protocolo(vr_index).idlstdom := 12;
+              
+            -- Nao identificado 
+            ELSE
+              pr_protocolo(vr_index).idlstdom := 0;
+          END CASE;  
+          
         EXCEPTION
           WHEN vr_exc_iter THEN
             -- Somente passa para a próxima iteração do LOOP
@@ -2387,6 +2480,122 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         ELSE
           pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
         END IF;   
+        
+        -- Identificar a origem do comprovante
+        -- Devido as informações presentes na crappro, será possivel apenas diferenciar em TAA e não TAA
+        -- Quando não for TAA será devolvido como INTERNET
+        -- Caso seja necessario diferenciar a origem, deverá ser revisto a criação do protocolo
+        IF gene0002.fn_busca_entrada(3, rw_crappro.dsinform##3, '#') LIKE '%TAA%' THEN
+          pr_protocolo(vr_index).dsorigem := 'TAA';
+        ELSE 
+          pr_protocolo(vr_index).dsorigem := 'INTERNET';
+        END IF;
+            
+        -- Desmontar a lista de dominio dos protocolos
+        -- Essa lista é referente ao TIPO DE COMPROVANTE
+        CASE
+          -- 2 = Pagamento (Tit/Cnv) / 6 = Pagamento (Tit/Cnv) no TAA
+          WHEN pr_protocolo(vr_index).cdtippro IN ( 2, 6 ) THEN
+            -- Verificar se é comprovante de boleto ou convenio
+            IF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%BANCO%'  THEN
+              -- Boleto
+              pr_protocolo(vr_index).idlstdom := 1;
+            ELSIF UPPER(pr_protocolo(vr_index).dsinform##2) LIKE '%CONVENIO%'  THEN
+              -- Convênio
+              pr_protocolo(vr_index).idlstdom := 2;
+            ELSE 
+              -- Paramento não identificado
+              pr_protocolo(vr_index).idlstdom := 15;
+            END IF;
+                
+          -- Credito Salario
+          WHEN pr_protocolo(vr_index).cdtippro = 4 THEN
+            pr_protocolo(vr_index).idlstdom := 3;
+                
+          -- TED
+          WHEN pr_protocolo(vr_index).cdtippro = 9 THEN							
+            pr_protocolo(vr_index).idlstdom := 4;
+
+          -- Transferência
+          WHEN pr_protocolo(vr_index).cdtippro = 1 THEN
+            -- Diferenciar entre intracooperativa e intercooperativa
+            -- As Transferencias que no mesma cooperativa terão o "CDAGECTL" no campo dsinform3
+            IF UPPER(pr_protocolo(vr_index).dsinform##3) LIKE '%' || to_char(rw_crapcop.cdagectl ) || '%'  THEN
+              -- INTRACOOPERATIVA
+              pr_protocolo(vr_index).idlstdom := 5;
+            ELSE
+              -- INTERCOOPERATIVA
+              pr_protocolo(vr_index).idlstdom := 6;
+            END IF;
+
+          -- 16 = Pagamento DARF / 18 = Agendamento DARF
+          WHEN pr_protocolo(vr_index).cdtippro IN ( 16, 18 ) THEN
+            pr_protocolo(vr_index).idlstdom := 7;
+                
+          -- 17 = Pagamento DAS / 19 = Agendamento DAS
+          WHEN pr_protocolo(vr_index).cdtippro IN ( 17, 19) THEN
+            pr_protocolo(vr_index).idlstdom := 8;
+                
+          -- 13 = Pagamento/Agendamento GPS
+          WHEN pr_protocolo(vr_index).cdtippro = 13 THEN
+            pr_protocolo(vr_index).idlstdom := 9;
+                
+          -- 24 = Pagamento FGTS
+          WHEN pr_protocolo(vr_index).cdtippro = 24 THEN
+            pr_protocolo(vr_index).idlstdom := 10;
+                
+          -- 23 = Pagamento DAE
+          WHEN pr_protocolo(vr_index).cdtippro = 23 THEN
+            pr_protocolo(vr_index).idlstdom := 11;
+                
+          -- 20 = Recarga de Celular
+          WHEN pr_protocolo(vr_index).cdtippro = 20 THEN
+            pr_protocolo(vr_index).idlstdom := 1;
+                
+          -- 10 = Aplicação Pre/Pos
+          WHEN pr_protocolo(vr_index).cdtippro = 10 THEN
+            pr_protocolo(vr_index).idlstdom := 30;
+                
+          -- 12 = Resgate Aplicação Pre/Pos
+          WHEN pr_protocolo(vr_index).cdtippro = 12 THEN
+            pr_protocolo(vr_index).idlstdom := 31;
+                
+          -- 11 = Operações DebAut 
+          WHEN pr_protocolo(vr_index).cdtippro = 11  THEN
+            CASE UPPER(pr_protocolo(vr_index).dsinform##1)
+              WHEN 'CADASTRO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 34;
+              WHEN 'CADASTRO - ALTERACAO' THEN
+                pr_protocolo(vr_index).idlstdom := 35;
+              WHEN 'CADASTRO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 36;
+              WHEN 'SUSPENSAO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 37;
+              WHEN 'SUSPENSAO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 38;
+              WHEN 'BLOQUEIO DE DEBITO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 39;
+              WHEN 'BLOQUEIO DE DEBITO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 40;
+            END CASE;
+            
+          -- 15 = Pagamento DebAut
+          WHEN pr_protocolo(vr_index).cdtippro = 15 THEN
+            pr_protocolo(vr_index).idlstdom := 32;
+                
+          -- 3 = Capital
+          WHEN pr_protocolo(vr_index).cdtippro = 3 THEN
+            pr_protocolo(vr_index).idlstdom := 33;
+
+          -- 5 = Depósito
+          WHEN pr_protocolo(vr_index).cdtippro = 5 THEN
+            pr_protocolo(vr_index).idlstdom := 12;
+                
+          -- Nao identificado 
+          ELSE
+            pr_protocolo(vr_index).idlstdom := 0;
+        END CASE;  
+          
 
     EXCEPTION
       WHEN vr_exc_erro THEN

@@ -16,11 +16,11 @@
 						  as opções 'M', 'A' e 'B'. Projeto 369 (Lombardi).
 						  
              11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
-
+			 
              08/08/2018 - Ajuste no campo nrdplaca para formatar os caracteres para
                           caracteres maiusculos.
                           Chamado PRB0040116 (Gabriel - Mouts).
-
+						  
 ************************************************************************/
 
 var rating = new Object();
@@ -37,7 +37,7 @@ function estadoInicial() {
     rating = new Object();
 
     formataCabecalho();
-
+	
     $('#cddopcao', '#frmCab').habilitaCampo().focus().val('C');
     $('#divBotoes').css({ 'display': 'none' });
     $('#frmFiltro').css('display', 'none');
@@ -64,8 +64,23 @@ function formataCabecalho() {
     $("#cddopcao", "#frmCab").unbind('keypress').bind('keypress', function (e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
 
+            // Se esta desabilitado o campo 
+		
+		cddopcao = $("#cddopcao", "#frmCab").val();
+		opcaoButton = cddopcao;
+		
+		mostrabutton();
+        if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
+            return false;
+        }
+
+		if (!ValidAcesso(cddopcao)){
+			return false;
+		}
             montaFormFiltro();
 
+        $(this).unbind('click');
+		
             return false;
 
         }
@@ -75,7 +90,7 @@ function formataCabecalho() {
     //Define ação para CLICK no botão de OK
     $("#btnOK", "#frmCab").unbind('click').bind('click', function () {
 
-        // Se esta desabilitado o campo 
+		// Se esta desabilitado o campo 
         if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
             return false;
         }
@@ -83,13 +98,13 @@ function formataCabecalho() {
         montaFormFiltro();
 
         $(this).unbind('click');
-
-        return false;
-        
+		
+		return false;
+		
     });
 
     layoutPadrao();
-
+ 	
     return false;
 }
 
@@ -138,7 +153,7 @@ function formataFiltro() {
     $('#btConcluir', '#divBotoes').css({ 'display': 'none' });
     $('#btProsseguir', '#divBotoes').css({ 'display': 'inline' });
     $('#btVoltar', '#divBotoes').css({ 'display': 'inline' });
-    
+	
     highlightObjFocus($('#frmFiltro'));
     
     $('#divFiltroConta').css({ 'display': 'block' });
@@ -261,11 +276,11 @@ function formataFiltro() {
         });
 
     }
-
+	
     //Define ação para CLICK no botão de Concluir
     $("#btProsseguir", "#divBotoes").unbind('click').bind('click', function () {
 
-        buscaBens(1, 30);
+		buscaBens(1, 30);
 
     });
 
@@ -304,7 +319,7 @@ function formataFiltroImpressao() {
     // campo
     $('#cdcooper', '#divFiltroImpressao').css({ 'width': '150px', 'text-align': 'left' }).habilitaCampo();
     $('#tparquiv', '#divFiltroImpressao').css({ 'width': '150px', 'text-align': 'left' }).habilitaCampo();
-    $('#nrseqlot', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).attr('maxlength', '7').habilitaCampo().addClass('inteiro');
+	$('#nrseqlot', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).attr('maxlength', '7').habilitaCampo().addClass('inteiro');
     $('#dtrefere', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).habilitaCampo().addClass('data');
 
     
@@ -375,11 +390,11 @@ function formataFiltroImpressao() {
 
             return false;
 
-        }
+			}						
 
     });
-
-    //Define ação para CLICK no botão de Concluir
+	
+	//Define ação para CLICK no botão de Concluir
     $("#btConcluir", "#divBotoes").unbind('click').bind('click', function () {
 
         showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'gerarRelatorio670();', 'formataFiltroImpressao();', 'sim.gif', 'nao.gif');
@@ -515,8 +530,8 @@ function formataFiltroHistorico() {
     // Seta os valores caso tenha vindo do CRM
     if ($("#crm_inacesso","#frmCab").val() == 1) {
         $("#nrdconta","#frmFiltro").val($("#crm_nrdconta","#frmCab").val());
-    }
-    
+}
+
     /*##########################################
 
         Formata os campos da divFiltroHistorico
@@ -988,7 +1003,7 @@ function formataFormularioBens() {
 }
 
 function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctrpro, tpinclus, permisit) {
-
+	
     if ($('#cddopcao', '#frmCab').val() == 'A'){
         
         /* alteracoes apenas quando for situacao 
@@ -1043,7 +1058,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
             return false;
 
-        });
+		});
 
     } else if ($('#cddopcao', '#frmCab').val() == 'C') {
 
@@ -1319,7 +1334,7 @@ function selecionaBens(tr) {
 	$('#chassi_anterior', '#divBens').val($('#dschassi', tr).val());
 
     
-    controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
+		controlaCampos($('#possuictr', tr).val(), $('#cdsitgrv', tr).val(), $('#idseqbem', tr).val(), $('#dsjustif', tr).val(), $('#tpjustif', tr).val(), $('#tpctrpro', tr).val(), $('#tpinclus', tr).val(), $('#permisit', '#divBens').val());
     
 }
 
@@ -1380,8 +1395,8 @@ function controlaPesquisaAgencia() {
     colunas = 'Código;cdagepac;20%;right|Descrição;dsagepac;80%;left';
     mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas);
 
-    return false;
-
+				return false;
+	
 }
 
 function controlaVoltar(ope,tpconsul) {
@@ -1431,9 +1446,9 @@ function controlaVoltar(ope,tpconsul) {
 }
 
 function montaFormFiltro() {
-
+	
     var cddopcao = $("#cddopcao", "#frmCab").val();
-
+		
     showMsgAguardo("Aguarde ...");
 
     //Requisição para montar o form correspondente a opção escolhida
@@ -2203,15 +2218,15 @@ function buscaBens(nriniseq, nrregist) {
                 } catch (error) {
 
                     showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "$('#nrdconta','#frmFiltro').focus();");
-                }
-            }
+	}
+}
 
-        }
-
+	}
+	
     });
 
     return false;
-
-}
-
+	
+			}		
+		
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-08-17T17:18:31 -->
+<!-- 2018-09-18T10:15:47 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.3636363636363662"/>
 	<property name="ireport.x" value="0"/>
@@ -1299,10 +1299,10 @@ e) Descumprir qualquer das disposições constantes na Política de Responsabili
 				<textFieldExpression><![CDATA["<u>5. Atraso no Pagamento e Multa</u> - Caso ocorra atraso no pagamento ou vencimento antecipado, serão devidos os juros remuneratórios do período, acrescidos de juros moratórios, desde o atraso, e multa moratória nos percentuais informados nos subitens " + (2 + $F{ind_add_item}) + ".11 e " + (2 + $F{ind_add_item}) + ".12, incidentes sobre o valor em atraso.\na) Para fins de cobrança dos juros moratórios e da multa, fica estabelecido o prazo de tolerância previsto no item " + (2 + $F{ind_add_item}) + ".13, contados da data do vencimento da parcela não paga. Decorrido o prazo indicado, incidirão sobre o encargo mensal vencido e não pago, juros moratórios e multa, retroativos a data de vencimento da parcela, sem prejuízo dos demais encargos contratualmente previstos.\nb) Caso seja necessário realizar a cobrança judicial ou administrativa de quaisquer valores em atraso, o Emitente deverá pagar todas as despesas desta cobrança, incluindo custos de postagem de carta de cobrança, cobrança telefônica, inclusão de dados nos cadastros de proteção ao crédito, custas e honorários advocatícios. O Emitente também poderá reembolsar-se de todos os custos que tiver com a cobrança de qualquer obrigação da Cooperativa.\nc) O recebimento, pela Cooperativa, de determinada parcela não significará quitação das anteriores."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="95">
-			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<textField>
-				<reportElement x="6" y="0" width="466" height="95" uuid="edc1ceb4-5065-4aca-b495-70de75853eb1">
+    <band height="100">
+      <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+      <textField>
+        <reportElement x="6" y="0" width="466" height="100" uuid="edc1ceb4-5065-4aca-b495-70de75853eb1">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1554,43 +1554,43 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<text><![CDATA[<u>15. Devedores solidários</u> - As pessoas ao final nomeadas, designadas Devedores Solidários, declaram-se solidariamente responsáveis por todas as obrigações assumidas pelo Emitente e assinam esta cédula concordando com os seus termos.]]></text>
 			</staticText>
 		</band>
-		<band height="142">
-			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<staticText>
-				<reportElement x="6" y="75" width="466" height="66" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a">
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<printWhenExpression><![CDATA[$F{versao} > 0]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
-				</textElement>
-				<text><![CDATA[<u>18. Declaração de Responsabilidade Socioambiental</u> – Declara conhecer a Política de Responsabilidade Socioambiental da Cooperativa e cumprir o disposto na legislação referente à Política Nacional do Meio Ambiente, não destinando os recursos decorrentes desta Cédula a quaisquer finalidades e/ou projetos que possam causar danos ambientais e/ou sociais, adotando durante o prazo de vigência desta Cédula, medidas e ações destinadas a evitar ou corrigir danos causados ao Meio Ambiente, segurança e medicina do trabalho, mantendo ainda, em situação regular suas obrigações junto aos órgãos do meio ambiente.]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="6" y="18" width="466" height="29" uuid="b71853e8-3bcc-4f09-8b39-97edab1045b3"/>
-				<textElement textAlignment="Justified">
-					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{amigalvel}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="6" y="47" width="466" height="28" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
-				</textElement>
-				<text><![CDATA[<u>17. Declaração de Leitura</u> - O Emitente e o(s) Devedor(es) Solidário(s), ao assinarem as Condições Específicas desta Cédula, declaram que a leram previamente e que não possuem nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="6" y="0" width="466" height="19" uuid="45b88c7f-ab34-489a-8ac7-fc0183347b4d">
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
-				</textElement>
-				<text><![CDATA[<u>16. Solução amigável de conflitos</u> - Para a solução amigável de eventuais conflitos relacionados a esta cédula, o Emitente poderá dirigir seu pedido ou reclamação ao Posto de Atendimento]]></text>
-			</staticText>
-		</band>
+    <band height="170">
+      <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+      <staticText>
+        <reportElement x="6" y="1" width="466" height="28" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a">
+          <property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+          <printWhenExpression><![CDATA[$F{versao} > 0]]></printWhenExpression>
+        </reportElement>
+        <textElement textAlignment="Justified" markup="html">
+          <font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
+        </textElement>
+        <text><![CDATA[<u>16. Solução amigável de conflitos</u> - Para a solução amigável de eventuais conflitos relacionados a esta cédula, o Emitente poderá dirigir seu pedido ou reclamação ao Posto de Atendimento]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="6" y="20" width="466" height="29" uuid="b71853e8-3bcc-4f09-8b39-97edab1045b3"/>
+        <textElement textAlignment="Justified">
+          <font fontName="Courier New" size="8" pdfFontName="Courier"/>
+        </textElement>
+        <textFieldExpression><![CDATA[$F{amigalvel}]]></textFieldExpression>
+      </textField>
+      <staticText>
+        <reportElement x="6" y="51" width="466" height="28" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+        <textElement textAlignment="Justified" markup="html">
+          <font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
+        </textElement>
+        <text><![CDATA[<u>17. Declaração de Leitura</u> - O Emitente e o(s) Devedor(es) Solidário(s), ao assinarem as Condições Específicas desta Cédula, declaram que a leram previamente e que não possuem nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
+      </staticText>
+      <staticText>
+        <reportElement x="6" y="81" width="466" height="68" uuid="45b88c7f-ab34-489a-8ac7-fc0183347b4d">
+          <property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+          <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+        </reportElement>
+        <textElement textAlignment="Justified" markup="html">
+          <font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
+        </textElement>
+        <text><![CDATA[<u>18. Declaração de Responsabilidade Socioambiental</u> – Declara conhecer a Política de Responsabilidade Socioambiental da Cooperativa e cumprir o disposto na legislação referente à Política Nacional do Meio Ambiente, não destinando os recursos decorrentes desta Cédula a quaisquer finalidades e/ou projetos que possam causar danos ambientais e/ou sociais, adotando durante o prazo de vigência desta Cédula, medidas e ações destinadas a evitar ou corrigir danos causados ao Meio Ambiente, segurança e medicina do trabalho, mantendo ainda, em situação regular suas obrigações junto aos órgãos do meio ambiente.]]></text>
+      </staticText>
+    </band>
 		<band height="824">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<frame>
@@ -1822,17 +1822,17 @@ Endereço:
 				<text><![CDATA[2)]]></text>
 			</staticText>
 			<line>
-				<reportElement x="7" y="96" width="224" height="1" uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af"/>
+				<reportElement x="7" y="106" width="224" height="1" uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af"/>
 			</line>
 			<staticText>
-				<reportElement x="7" y="97" width="150" height="11" uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01"/>
+				<reportElement x="7" y="107" width="150" height="11" uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01"/>
 				<textElement>
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
 				<text><![CDATA[Emitente]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="7" y="129" width="198" height="11" isRemoveLineWhenBlank="true" uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01">
+				<reportElement x="7" y="139" width="198" height="11" isRemoveLineWhenBlank="true" uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1942,7 +1942,7 @@ Endereço:
 ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="244" y="129" width="198" height="11" isRemoveLineWhenBlank="true" uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01">
+				<reportElement x="244" y="139" width="198" height="11" isRemoveLineWhenBlank="true" uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>

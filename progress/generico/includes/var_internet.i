@@ -101,7 +101,7 @@ DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 /** -> Origem = 13 - COBRANCA (RENOVACAO AUTOMATICA)          **/
 /** --------------------------------------------------------- **/
 
-ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,AYLLOS WEB,URA,PROCESSO,MENSAGERIA,ESTEIRA,MOBILE,ACORDO,ANTIFRAUDE,COBRANCA".
+ASSIGN des_dorigens = "AIMARO,CAIXA,INTERNET,CASH,AIMARO WEB,URA,PROCESSO,MENSAGERIA,ESTEIRA,MOBILE,ACORDO,ANTIFRAUDE,COBRANCA".
 
 
 /** Armazenar data do servidor **/

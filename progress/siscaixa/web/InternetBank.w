@@ -1157,6 +1157,7 @@ DEF VAR aux_msgofatr AS CHAR                                           NO-UNDO.
 DEF VAR xml_cdempcon AS CHAR                                           NO-UNDO.
 DEF VAR xml_cdsegmto AS CHAR                                           NO-UNDO.
 DEF VAR xml_dsprotoc AS CHAR                                           NO-UNDO.
+DEF VAR xml_idlancto AS CHAR                                           NO-UNDO.
 
 /*Parametros para a operacao 142 */
 
@@ -2531,6 +2532,13 @@ PROCEDURE proc_operacao1:
                                                  INPUT aux_dsorigip,
                                                  INPUT aux_dtmvtoan,
                                                  INPUT aux_flmobile,
+                                                 /* Projeto 363 - Novo ATM */
+                                                 INPUT canal_cdorigem,
+                                                 INPUT canal_dsorigem,
+                                                 INPUT canal_cdagenci,
+                                                 INPUT canal_nrdcaixa,
+                                                 INPUT canal_nmprogra,
+                                                 /* Projeto 363 - Novo ATM */
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
                                                  
@@ -2552,56 +2560,95 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao2:
     
-    ASSIGN aux_vldfrase = INTE(GET-VALUE("vldfrase"))
-           aux_dssenlet = GET-VALUE("dssenlet")   
-           aux_vldshlet = LOGICAL(GET-VALUE("vldshlet"))
-           aux_inaceblq = INTE(GET-VALUE("inaceblq"))
-           aux_dsorigip = GET-VALUE("dsorigip")
-           aux_indlogin = INTE(GET-VALUE("indlogin")).
-
-    IF  aux_vldshlet  THEN
-        DO:
-            IF  aux_flgcript  THEN /** Utiliza criptografia **/
-                DO:
-                    RUN sistema/generico/procedures/b1wgencrypt.p PERSISTENT 
-                        SET h-b1wgencrypt (INPUT aux_nrdconta).
-            
-                    ASSIGN aux_dssenlet = DYNAMIC-FUNCTION("decriptar" IN h-b1wgencrypt,
-                                                           INPUT aux_dssenlet,
-                                                           INPUT aux_nrdconta).
+    /* Verificar se a operaçao está sendo realizada pela TAA, 
+       e se existe o TOKEN de senha */      
+    IF canal_cdorigem = 4       AND 
+       token_autenticacao <> ?  AND 
+       token_autenticacao <> "" THEN /* TOKEN informado */ 
+    DO: 
+        /* validaçao do TOKEN gerado no TA002 */
+        /* autenticidade da senha de letras, vamos verificar se o TOKEN eh valido  */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         
-                    DELETE PROCEDURE h-b1wgencrypt.
-                END.
-        END.
+        /* Efetuar a chamada a rotina Oracle */ 
+         RUN STORED-PROCEDURE pc_busca_autenticacao_cartao
+         aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT aux_cdcooper  /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT aux_nrdconta  /* pr_nrdconta --> Número da Conta do associado */
+                   ,INPUT token_autenticacao  /* pr_token    --> Token gerado na transaçao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                   
+         /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_busca_autenticacao_cartao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
+                            
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+        ASSIGN aux_dsmsgerr = pc_busca_autenticacao_cartao.pr_dscritic
+                      WHEN pc_busca_autenticacao_cartao.pr_dscritic <> ?.  
 
-    RUN sistema/internet/fontes/InternetBank2.p (INPUT aux_cdcooper,
-                                                 INPUT aux_nrdconta,
-                                                 INPUT aux_idseqttl,
-                                                 INPUT aux_nrcpfope,
-                                                 INPUT aux_cddsenha,
-                                                 INPUT aux_dssenweb,
-                                                 INPUT aux_dssenlet,
-                                                 INPUT aux_vldshlet,
-                                                 INPUT aux_vldfrase,
-                                                 INPUT aux_inaceblq,
-                                                 INPUT aux_nripuser,
-                                                 INPUT aux_dsorigip,
-                                                 INPUT aux_flmobile,
-                                                 INPUT IF NOT aux_flgcript THEN aux_indlogin ELSE 0,
-                                                OUTPUT aux_dsmsgerr,
-												OUTPUT TABLE xml_operacao).
-    
-    IF  RETURN-VALUE = "NOK"  THEN
+        IF  aux_dsmsgerr <> "" THEN
+            DO:
+               {&out} aux_dsmsgerr aux_tgfimprg.
+               RETURN "NOK".
+            END. 
+        
+    END.
+    ELSE
         DO:
-            {&out} aux_dsmsgerr aux_tgfimprg.
-            
-            RETURN "NOK".
-        END.
-	ELSE
-	    FOR EACH xml_operacao NO-LOCK:
+            /* Se nao for URA, ou o TOKEN nao tenha sido enviado, continuamos validando a senha informada. */    
+			ASSIGN aux_vldfrase = INTE(GET-VALUE("vldfrase"))
+				   aux_dssenlet = GET-VALUE("dssenlet")   
+				   aux_vldshlet = LOGICAL(GET-VALUE("vldshlet"))
+				   aux_inaceblq = INTE(GET-VALUE("inaceblq"))
+				   aux_dsorigip = GET-VALUE("dsorigip")
+				   aux_indlogin = INTE(GET-VALUE("indlogin")).
 
-            {&out} xml_operacao.dslinxml. 
+			IF  aux_vldshlet  THEN
+				DO:
+					IF  aux_flgcript  THEN /** Utiliza criptografia **/
+						DO:
+							RUN sistema/generico/procedures/b1wgencrypt.p PERSISTENT 
+								SET h-b1wgencrypt (INPUT aux_nrdconta).
+            
+							ASSIGN aux_dssenlet = DYNAMIC-FUNCTION("decriptar" IN h-b1wgencrypt,
+																   INPUT aux_dssenlet,
+																   INPUT aux_nrdconta).
+        
+							DELETE PROCEDURE h-b1wgencrypt.
+						END.
+				END.
+
+			RUN sistema/internet/fontes/InternetBank2.p (INPUT aux_cdcooper,
+														 INPUT aux_nrdconta,
+														 INPUT aux_idseqttl,
+														 INPUT aux_nrcpfope,
+														 INPUT aux_cddsenha,
+														 INPUT aux_dssenweb,
+														 INPUT aux_dssenlet,
+														 INPUT aux_vldshlet,
+														 INPUT aux_vldfrase,
+														 INPUT aux_inaceblq,
+														 INPUT aux_nripuser,
+														 INPUT aux_dsorigip,
+														 INPUT aux_flmobile,
+														 INPUT IF NOT aux_flgcript THEN aux_indlogin ELSE 0,
+														OUTPUT aux_dsmsgerr,
+														OUTPUT TABLE xml_operacao).
+    
+			IF  RETURN-VALUE = "NOK"  THEN
+				DO:
+					{&out} aux_dsmsgerr aux_tgfimprg.
+            
+					RETURN "NOK".
+				END.
+			ELSE
+				FOR EACH xml_operacao NO-LOCK:
+
+					{&out} xml_operacao.dslinxml. 
                 
+				END.	
         END.	
 
     RETURN "OK".
@@ -2830,6 +2877,12 @@ PROCEDURE proc_operacao6:
                                                  INPUT aux_dtmvtolt,
                                                  INPUT aux_dtmvtopr,
                                                  INPUT aux_inproces,
+                                                 /* Projeto 363 - Novo ATM */
+                                                 INPUT canal_cdorigem,
+                                                 INPUT canal_cdagenci,
+                                                 INPUT canal_nrdcaixa,
+                                                 INPUT canal_nmprogra,
+                                                 /* Projeto 363 - Novo ATM */
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
 
@@ -2929,6 +2982,12 @@ PROCEDURE proc_operacao9:
                                                  INPUT aux_dtiniper,
                                                  INPUT aux_dtfimper,
                                                  INPUT aux_indebcre,
+                                                 /* Projeto 363 - Novo ATM */
+                                                 INPUT canal_cdorigem,
+                                                 INPUT canal_cdagenci,
+                                                 INPUT canal_nrdcaixa,
+                                                 INPUT canal_nmprogra,        
+                                                 /* Projeto 363 - Novo ATM */
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao9).
 
@@ -3046,6 +3105,12 @@ PROCEDURE proc_operacao12:
                                                   INPUT aux_flglschq,
                                                   INPUT aux_flglsdep,
                                                   INPUT aux_flglsfut,
+                                                  /* Projeto 363 - Novo ATM */   
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_nmprogra,
+                                                  /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
@@ -3167,15 +3232,16 @@ PROCEDURE proc_operacao15:
     ASSIGN aux_intipapl = INTE(GET-VALUE("tipo_aplicacao")).
     
     RUN sistema/internet/fontes/InternetBank15.p (INPUT aux_cdcooper,
-                                                  INPUT 90, /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
+                                                  INPUT canal_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                                  INPUT canal_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
                                                   INPUT "996",
-                                                  INPUT 3, /*idorigem*/
-                                                  INPUT "INTERNETBANK",
+                                                  INPUT canal_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3 */
+                                                  INPUT canal_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_dtmvtolt,
                                                   INPUT aux_intipapl,
+                                                  INPUT canal_dsorigem,  /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
                                                  
@@ -3501,6 +3567,16 @@ PROCEDURE proc_operacao22:
                                                   INPUT aux_flmobile,
 												  INPUT aux_nripuser,
                                                   INPUT aux_iddispmobile,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_dsorigem,
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_nmprogra,
+                                                  INPUT canal_cdcoptfn,
+                                                  INPUT canal_cdagetfn,
+                                                  INPUT canal_nrterfin,
+                                                  /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
            
@@ -3536,6 +3612,8 @@ PROCEDURE proc_operacao23:
                                                   INPUT aux_nmtitpes,
                                                   INPUT aux_flgpesqu,
                                                   INPUT aux_flmobile,
+                                                  INPUT canal_dsorigem, /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_nmprogra, /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
                     
@@ -3654,6 +3732,13 @@ PROCEDURE proc_operacao26:
     RUN sistema/internet/fontes/InternetBank26.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_dsorigem,
+                                                  INPUT canal_nmprogra,
+                                                  /* Projeto 363 - Novo ATM */ 
                                                   INPUT aux_dtmvtocd,
                                                   INPUT aux_idtitdda,
                                                   INPUT aux_idtpdpag,
@@ -3729,6 +3814,13 @@ PROCEDURE proc_operacao27:
     RUN sistema/internet/fontes/InternetBank27.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_dsorigem,
+                                                  INPUT canal_nmprogra,
+                                                  /* Projeto 363 - Novo ATM */ 
                                                   INPUT aux_dtmvtocd,
                                                   INPUT aux_idtitdda,
                                                   INPUT aux_idagenda,
@@ -3760,13 +3852,19 @@ PROCEDURE proc_operacao27:
                                                   INPUT aux_cdctrlcs,
                                                   INPUT aux_nripuser,
                                                   INPUT aux_iddispmobile,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdcoptfn,
+                                                  INPUT canal_cdagetfn,
+                                                  INPUT canal_nrterfin,
+                                                  /* Projeto 363 - Novo ATM */ 
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT aux_msgofatr,
                                                  OUTPUT xml_cdempcon,
                                                  OUTPUT xml_cdsegmto,
-                                                 OUTPUT xml_dsprotoc).
+                                                 OUTPUT xml_dsprotoc,
+                                                 OUTPUT xml_idlancto). /* Projeto 363 - Novo ATM */
                                                  
-    {&out} aux_dsmsgerr aux_msgofatr xml_cdempcon xml_cdsegmto xml_dsprotoc aux_tgfimprg.
+    {&out} aux_dsmsgerr aux_msgofatr xml_cdempcon xml_cdsegmto xml_dsprotoc xml_idlancto aux_tgfimprg.
 
 END PROCEDURE.
 
@@ -3778,6 +3876,12 @@ PROCEDURE proc_operacao28:
                                                   INPUT aux_dtmvtocd,
                                                   INPUT aux_nrcpfope,
                                                   INPUT aux_flmobile,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_dsorigem,
+                                                  INPUT canal_nmprogra,
+                                                  /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
     
@@ -4129,6 +4233,13 @@ PROCEDURE proc_operacao39:
                                                   INPUT aux_flmobile,
                                                   INPUT aux_cdtiptra,
                                                   INPUT aux_nrcpfope,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_dsorigem,
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_nmprogra,
+                                                  /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -5264,6 +5375,12 @@ PROCEDURE proc_operacao80:
                                                   INPUT aux_flgexecu,
                                                   INPUT aux_rowidcti,
                                                   INPUT aux_flexclui,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_cdagenci,
+                                                  INPUT canal_nrdcaixa,
+                                                  INPUT canal_nmprogra,
+                                                  /* Projeto 363 - Novo ATM */
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
 
@@ -5645,13 +5762,14 @@ END PROCEDURE.
 PROCEDURE proc_operacao90:
     
     RUN sistema/internet/fontes/InternetBank90.p (INPUT aux_cdcooper,
-                                                  INPUT 90,    /*cdagenci*/
-                                                  INPUT 900,   /*nrdcaixa*/
-                                                  INPUT 1,     /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
+                                                  INPUT canal_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                                  INPUT canal_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
+                                                  INPUT 1,              /*cdoperad*/
+                                                  INPUT canal_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_nrcpfope,
+                                                  INPUT canal_cdorigem, /*  Projeto 363 - Novo ATM */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
@@ -5702,16 +5820,17 @@ PROCEDURE proc_operacao92:
            aux_diapagto = INTE(GET-VALUE("diapagto")).
 
     RUN sistema/internet/fontes/InternetBank92.p (INPUT aux_cdcooper,
-                                                  INPUT 90, /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
-                                                  INPUT 1,   /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
+                                                  INPUT canal_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */ 
+                                                  INPUT canal_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
+                                                  INPUT 1,              /*cdoperad*/
+                                                  INPUT canal_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_dtmvtolt,
                                                   INPUT aux_vlemprst,
                                                   INPUT aux_diapagto,
                                                   INPUT aux_nrcpfope,
+                                                  INPUT canal_cdorigem, /* Projeto 363 - Novo ATM */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     
@@ -5744,10 +5863,10 @@ PROCEDURE proc_operacao93:
            aux_flgprevi = LOGICAL(GET-VALUE("flgprevi")).
 
     RUN sistema/internet/fontes/InternetBank93.p (INPUT aux_cdcooper,
-                                                  INPUT 90,  /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
-                                                  INPUT 1,   /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
+                                                  INPUT canal_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                                  INPUT canal_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
+                                                  INPUT 1,              /*cdoperad*/
+                                                  INPUT canal_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_dtmvtolt,
@@ -5762,6 +5881,7 @@ PROCEDURE proc_operacao93:
                                                   INPUT aux_vltaxiof,
                                                   INPUT aux_vltariof,
                                                   INPUT aux_flgprevi,
+                                                  INPUT canal_cdorigem, /*  Projeto 363 - Novo ATM */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     
@@ -5976,6 +6096,16 @@ PROCEDURE proc_operacao99:
                                           INPUT aux_flcadast,
                                           INPUT aux_cdhistor,
                                           INPUT aux_idmotivo,
+                                          /* Projeto 363 - Novo ATM */
+                                          INPUT canal_cdorigem,
+                                          INPUT canal_dsorigem,
+                                          INPUT canal_cdagenci,
+                                          INPUT canal_nrdcaixa,
+                                          INPUT canal_nmprogra,
+                                          INPUT canal_cdcoptfn,
+                                          INPUT canal_cdagetfn,
+                                          INPUT canal_nrterfin,
+                                          /* Projeto 363 - Novo ATM */
                                          OUTPUT aux_dsmsgerr,
                                          OUTPUT TABLE xml_operacao).
 
@@ -6003,10 +6133,10 @@ PROCEDURE proc_operacao100:
            aux_vltariof = DEC(GET-VALUE("vltariof")).
 
     RUN sistema/internet/fontes/InternetBank100.p(INPUT aux_cdcooper,
-                                                  INPUT 90,  /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
-                                                  INPUT 1,   /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
+                                                  INPUT canal_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                                  INPUT canal_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
+                                                  INPUT 1,              /*cdoperad*/
+                                                  INPUT canal_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_dtmvtolt,
@@ -6021,6 +6151,14 @@ PROCEDURE proc_operacao100:
                                                   INPUT aux_vlrtarif,
                                                   INPUT aux_vltaxiof,
                                                   INPUT aux_vltariof,
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT canal_cdorigem,
+                                                  INPUT canal_dsorigem,
+                                                  INPUT canal_nmprogra,
+                                                  INPUT canal_cdcoptfn,
+                                                  INPUT canal_cdagetfn,
+                                                  INPUT canal_nrterfin,
+                                                  /* Projeto 363 - Novo ATM */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     
@@ -6171,6 +6309,8 @@ PROCEDURE proc_operacao105:
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_cddopcao,
+                                                   INPUT canal_dsorigem, /* Projeto 363 - Novo ATM */
+                                                   INPUT canal_nmprogra, /* Projeto 363 - Novo ATM */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
@@ -6382,6 +6522,16 @@ PROCEDURE proc_operacao112:
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_nrctraar,
                                                    INPUT "996",
+                                                   /* Projeto 363 - Novo ATM */
+                                                   INPUT canal_cdorigem,
+                                                   INPUT canal_dsorigem,
+                                                   INPUT canal_cdagenci,
+                                                   INPUT canal_nrdcaixa,
+                                                   INPUT canal_nmprogra,
+                                                   INPUT canal_cdcoptfn,
+                                                   INPUT canal_cdagetfn,
+                                                   INPUT canal_nrterfin,
+                                                   /* Projeto 363 - Novo ATM */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
@@ -6711,16 +6861,17 @@ PROCEDURE proc_operacao123:
            aux_dtvencto = DATE(GET-VALUE("dtvencto")).
 
     RUN sistema/internet/fontes/InternetBank123.p (INPUT aux_cdcooper,
-                                                   INPUT 90,  /*cdagenci*/
-                                                   INPUT 900, /*nrdcaixa*/
-                                                   INPUT 1,   /*cdoperad*/
-                                                   INPUT "INTERNETBANK",
+                                                   INPUT canal_cdagenci, /* Projeto 363 - Novo ATM -> estava fixo 90 */
+                                                   INPUT canal_nrdcaixa, /* Projeto 363 - Novo ATM -> estava fixo 900 */
+                                                   INPUT 1,              /*cdoperad*/
+                                                   INPUT canal_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK" */
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_vlemprst,
                                                    INPUT aux_vlparepr,
                                                    INPUT aux_nrparepr,
                                                    INPUT aux_dtvencto,
+                                                   INPUT canal_cdorigem, /* Projeto 363 - Novo ATM */
                                                    OUTPUT aux_dsmsgerr,
                                                    OUTPUT TABLE xml_operacao).
     
@@ -8214,6 +8365,12 @@ PROCEDURE proc_operacao173:
                                                  INPUT aux_flgacsms,
                                                  INPUT aux_nrdddtfc,
                                                  INPUT aux_nrtelefo,
+                                                 /* Projeto 363 - Novo ATM */
+                                                 INPUT canal_cdorigem,
+                                                 INPUT canal_cdagenci,
+                                                 INPUT canal_nrdcaixa,
+                                                 INPUT canal_nmprogra,
+                                                 /* Projeto 363 - Novo ATM */
                                                 OUTPUT aux_dsmsgerr,
                                                 OUTPUT TABLE xml_operacao).
 
@@ -8515,6 +8672,16 @@ PROCEDURE proc_operacao181:
                                                    INPUT aux_dtrecarga,
                                                    INPUT aux_qtmesagd,
 													   INPUT aux_flmobile,
+                                                   /* Projeto 363 - Novo ATM */
+                                                   INPUT canal_cdorigem,
+                                                   INPUT canal_cdagenci,
+                                                   INPUT canal_nrdcaixa,
+                                                   INPUT canal_nmprogra,
+                                                   INPUT canal_cdcoptfn,
+                                                   INPUT canal_cdagetfn,
+                                                   INPUT canal_nrterfin,
+                                                   INPUT aux_nrcartao,
+                                                   /* Projeto 363 - Novo ATM */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 

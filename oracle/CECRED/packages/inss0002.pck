@@ -919,7 +919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
 
     -- Verifica se já possui registro na lgp para AGENDAMENTO
-    IF  pr_nmdatela = 'AYLLOS'  THEN -- Veio pelo CRPS/DEBSIC
+    IF  pr_nmdatela = 'AIMARO'  THEN -- Veio pelo CRPS/DEBSIC
         BEGIN
           -- Excluir
           DELETE craplgp lgp
@@ -5169,7 +5169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         END IF;
 
         IF pr_idorigem = 3             -- Internet Banking
-        OR pr_nmdatela = 'AYLLOS' THEN -- Se veio pelo CRPS509
+        OR pr_nmdatela = 'AIMARO' THEN -- Se veio pelo CRPS509
 
            -- Formatando a linha digitavel
            IF pr_cdbarras IS NOT NULL AND pr_tpdpagto = 1 THEN
@@ -6477,7 +6477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                              ,pr_tpdpagto => rw_craplgp.tpdpagto     -- pr_tpdpagto
                              ,pr_idorigem => vr_idorigem              -- pr_idorigem
                              ,pr_cdoperad => rw_craplgp.cdopecxa     -- pr_cdoperad
-                             ,pr_nmdatela => 'AYLLOS'                -- pr_nmdatela
+                             ,pr_nmdatela => 'AIMARO'                -- pr_nmdatela
                              ,pr_idleitur => rw_craplgp.tpleitur     -- pr_idleitur
                              ,pr_inproces => rw_crapdat.inproces     -- pr_inproces/batch
                              ,pr_cdbarras => rw_craplgp.cdbarras     -- pr_cdbarras
@@ -6506,13 +6506,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => '1'
                         ,pr_dscritic => 'OK'
-                        ,pr_dsorigem => 'AYLLOS'
+                        ,pr_dsorigem => 'AIMARO'
                         ,pr_dstransa => 'Validar/Pagar GPS'
                         ,pr_dttransa => TRUNC(SYSDATE)
                         ,pr_flgtrans => 1 --> 1/1/SUCESSO/TRUE
                         ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                         ,pr_idseqttl => 1
-                        ,pr_nmdatela => 'AYLLOS'
+                        ,pr_nmdatela => 'AIMARO'
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
 
@@ -6523,13 +6523,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => NVL(pr_dscritic,' ')
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Validar/Pagar GPS'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 0 --> 0-FALSE/ERRO
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                           ,pr_idseqttl => 1
-                          ,pr_nmdatela => 'AYLLOS'
+                          ,pr_nmdatela => 'AIMARO'
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
 
@@ -6539,13 +6539,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => '1'
                           ,pr_dscritic => NVL(pr_dscritic,' ')
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Validar/Pagar GPS'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 0 --> 0-FALSE/ERRO
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                           ,pr_idseqttl => 1
-                          ,pr_nmdatela => 'AYLLOS'
+                          ,pr_nmdatela => 'AIMARO'
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
   END pc_gps_validar_pagar;
@@ -6626,13 +6626,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     GENE0001.pc_gera_log(pr_cdcooper => rw_craplau.cdcooper
                         ,pr_cdoperad => '1'
                         ,pr_dscritic => ' '
-                        ,pr_dsorigem => 'AYLLOS'
+                        ,pr_dsorigem => 'AIMARO'
                         ,pr_dstransa => 'Atualiza Agendamento'
                         ,pr_dttransa => TRUNC(SYSDATE)
                         ,pr_flgtrans => 1 --> 1/SUCESSO/TRUE
                         ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                         ,pr_idseqttl => 1
-                        ,pr_nmdatela => 'AYLLOS'
+                        ,pr_nmdatela => 'AIMARO'
                         ,pr_nrdconta => rw_craplau.nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
 

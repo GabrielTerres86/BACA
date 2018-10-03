@@ -249,7 +249,7 @@ BEGIN
                                               pr_nrdconta => rw_pendentes_gps.nrdconta,
                                               pr_idorigem => 1,
                                               pr_cdoperad => '1',
-                                              pr_nmdatela => 'AYLLOS',
+                                              pr_nmdatela => 'AIMARO',
                                               pr_dsdrowid => rw_pendentes_gps.rowid,
                                               pr_nrcpfope => 0, 
                                               pr_dscritic => vr_dscritic);

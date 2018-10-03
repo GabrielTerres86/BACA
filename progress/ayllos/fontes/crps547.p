@@ -110,7 +110,7 @@ DEF VAR h-b1wgen0011 AS HANDLE                                         NO-UNDO.
 
 FORM
     "CABINE FINANCEIRA" AT  20
-    "SISTEMA AYLLOS"    AT  82
+    "SISTEMA AIMARO"    AT  82
     SKIP
     "----------------------------------------------------------" AT 01
     "---------------------------------------------------" AT 64
@@ -190,7 +190,7 @@ FORM
 
 FORM 
     SKIP(2)
-    "----------------- NAO INTEGRADAS NO AYLLOS -----------------" AT 01
+    "----------------- NAO INTEGRADAS NO AIMARO -----------------" AT 01
     WITH WIDTH 132 NO-LABEL FRAME f_header_rejeitados.
 
 FORM 

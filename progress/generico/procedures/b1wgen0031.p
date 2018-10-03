@@ -1434,7 +1434,7 @@ PROCEDURE obtem-mensagens-alerta:
        LEAVE.
     
     IF par_flgdinss THEN
-        RUN cria-registro-msg ( INPUT "Beneficiario com Prova de Vida Pendente. Efetue Comprovacao atraves da Tela INSS no Ayllos WEB. " ).
+        RUN cria-registro-msg ( INPUT "Beneficiario com Prova de Vida Pendente. Efetue Comprovacao atraves da Tela INSS no Aimaro WEB. " ).
     
     RETURN "OK".
 
@@ -1811,7 +1811,7 @@ PROCEDURE obtem-mensagens-alerta-contas:
            LEAVE.
 
        IF par_flgdinss THEN
-          RUN cria-registro-msg-contas ( INPUT "Beneficiario com Prova de Vida Pendente. Efetue Comprovacao atraves da Tela INSS no Ayllos WEB. " ).
+          RUN cria-registro-msg-contas ( INPUT "Beneficiario com Prova de Vida Pendente. Efetue Comprovacao atraves da Tela INSS no Aimaro WEB. " ).
           
        ASSIGN aux_returnvl = "OK".
 

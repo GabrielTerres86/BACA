@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 18/06/2018
+      Data: Janeiro/2010                        Ultima alteracao: 03/10/2018
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -312,6 +312,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                          PRJ404 - Garantia.(Odirlei-AMcom)                 
 
+            16/04/2018 - Ajustes para o novo sistema do caixa eletronico 
+                         PRJ363 - Douglas Quisinski
+
             21/05/2018 - Inclusao de parametros devido a analise de fraude.
                          PRJ381 - Antifraude(Odirlei-AMcom)
                       
@@ -319,6 +322,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
+
+			03/10/2018 - Corrigir validação do aux_token na validação de senha no saque
+			             e na alteração de senha (Douglas - Prj 363)
 			            
 ............................................................................. */
 
@@ -356,6 +362,8 @@ DEFINE VARIABLE aux_dscritic AS CHARACTER                   NO-UNDO.
 
 /* dados do associado nas operacoes */                     
 DEFINE VARIABLE aux_cdcooper AS INT                         NO-UNDO. /* cooperativa */
+DEFINE VARIABLE par_nrdconta AS INT                         NO-UNDO. /* numero da conta */
+DEFINE VARIABLE par_cdagectl AS INT                         NO-UNDO. /* agencia da cooperativa */
 DEFINE VARIABLE aux_dscartao AS CHARACTER                   NO-UNDO. /* cartao lido */                                                           
 DEFINE VARIABLE aux_nrcartao AS DEC                         NO-UNDO. /* cartao ja tratado */
 DEFINE VARIABLE aux_nrdconta AS INT                         NO-UNDO. /* conta/dv */
@@ -391,6 +399,7 @@ DEFINE VARIABLE aux_lsdataqd AS CHAR                        NO-UNDO. /* lista de
 DEFINE VARIABLE aux_dtinipro AS DATE                        NO-UNDO. /* Periodo inicial para comprovantes */
 DEFINE VARIABLE aux_dtfimpro AS DATE                        NO-UNDO. /* Periodo final para comprovantes */
 DEFINE VARIABLE aux_tpextrat AS INTE                        NO-UNDO. /* Tipo de extrato */
+DEFINE VARIABLE aux_dsprefix AS CHAR  INIT ""               NO-UNDO. /* Prefixo para geracao do estatistico */
 DEFINE VARIABLE aux_cdagetra AS INTE                        NO-UNDO. /* Agencia do coop */
 DEFINE VARIABLE aux_tpoperac AS INTE                        NO-UNDO. /* Tipo Operacao */
 DEFINE VARIABLE aux_tpusucar AS INTE                        NO-UNDO. /* Tipo de usuario do cartao.*/
@@ -446,6 +455,14 @@ DEFINE VARIABLE aux_flgacsms AS INTE                        NO-UNDO.
 DEFINE VARIABLE aux_dsmsgsms AS CHAR                        NO-UNDO.
 DEFINE VARIABLE aux_cdctrlcs AS CHAR                        NO-UNDO.
 DEFINE VARIABLE aux_flgsitrc AS INTEGER                     NO-UNDO.
+
+
+/* TOKEN  para validar autenticidade da senha */
+DEFINE VARIABLE aux_token    AS CHAR                        NO-UNDO.
+DEFINE VARIABLE aux_idtaanew AS INTE INIT 0                 NO-UNDO.
+DEFINE VARIABLE aux_idopeexe AS CHAR                        NO-UNDO.
+DEFINE VARIABLE aux_tpintera AS CHAR                        NO-UNDO.
+
 
 /* para exclusao de agendamentos */
 DEFINE VARIABLE aux_dtmvtopg AS DATE                        NO-UNDO.
@@ -667,8 +684,6 @@ DO:
              END.
         
         
-             
-
         /* Operacoes e campos do XML recebido */
         IF  xField:NAME = "OPERACAO"   THEN
             aux_operacao = INT(xText:NODE-VALUE).
@@ -678,6 +693,12 @@ DO:
         ELSE
         IF  xField:NAME = "CDCOOPER"   THEN
             aux_cdcooper = INT(xText:NODE-VALUE).
+        ELSE
+        IF  xField:NAME = "NRDCONTA"   THEN
+            par_nrdconta = INT(xText:NODE-VALUE).
+        ELSE
+        IF  xField:NAME = "CDAGECTL"   THEN
+            par_cdagectl = INT(xText:NODE-VALUE).
         ELSE
         IF  xField:NAME = "NRCARTAO"   THEN
             DO:
@@ -901,6 +922,9 @@ DO:
         IF   xField:NAME = "TPEXTRAT"   THEN
              aux_tpextrat = INTE(xText:NODE-VALUE).
         ELSE
+        IF   xField:NAME = "DSPREFIX"   THEN
+             aux_dsprefix = xText:NODE-VALUE.
+        ELSE
         IF   xField:NAME = "DSDGRUP1"   THEN
              aux_dsdgrup1 = xText:NODE-VALUE.
         ELSE
@@ -1036,6 +1060,20 @@ DO:
         ELSE
         IF   xField:NAME = "LSDATAGD" THEN
              aux_lsdatagd = xText:NODE-VALUE.
+        ELSE
+        /* Projeto 363 - Novo ATM - Inicio */
+        IF   xField:NAME = "TOKEN" THEN
+             aux_token = xText:NODE-VALUE.
+        ELSE
+        IF   xField:NAME = "IDTAANEW" THEN
+             aux_idtaanew = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "IDOPEEXE" THEN
+             aux_idopeexe = xText:NODE-VALUE.
+        ELSE
+        IF   xField:NAME = "TPINTERA" THEN
+             aux_tpintera = xText:NODE-VALUE.
+        /* Projeto 363 - Novo ATM - Fim */
 
     END.
 
@@ -1955,6 +1993,8 @@ END PROCEDURE.
 
 PROCEDURE verifica_cartao:
 
+    DEFINE VARIABLE aux_nrcpfcgc AS DECIMAL INIT 0 NO-UNDO.
+    
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
                                                                                      
     RUN verifica_cartao IN h-b1wgen0025(       INPUT crapcop.cdcooper, /* Coop do TAA */
@@ -1974,6 +2014,34 @@ PROCEDURE verifica_cartao:
 
     IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
+
+    /* Projeto 363 - Novo ATM */
+    /* Verificar o tipo de pessoa para identificar o CPF / CNPJ */
+    IF aux_inpessoa = 1 THEN
+    DO:
+        /* Pessoa Fisica, buscar o CPF do TITULAR */ 
+        FIND FIRST crapttl
+             WHERE crapttl.cdcooper = aux_cdcooper
+               AND crapttl.nrdconta = aux_nrdconta
+               AND crapttl.idseqttl = aux_tpusucar
+              NO-LOCK NO-ERROR.
+
+        /* Verificar se foi encontrado o titular */ 
+        IF AVAILABLE crapttl THEN
+            ASSIGN aux_nrcpfcgc = crapttl.nrcpfcgc.
+    END.
+        ELSE
+        DO:
+            /* Pessoa Juridica, buscar o CNPJ da conta */ 
+            FIND FIRST crapass 
+                 WHERE crapass.cdcooper = aux_cdcooper
+                   AND crapass.nrdconta = aux_nrdconta
+                  NO-LOCK NO-ERROR.
+
+            /* Verificar se foi encontrado a conta */ 
+            IF AVAILABLE crapass THEN
+                ASSIGN aux_nrcpfcgc = crapass.nrcpfcgc.
+        END.
 
 
     /* ---------- */
@@ -2032,6 +2100,15 @@ PROCEDURE verifica_cartao:
     xText:NODE-VALUE = STRING(aux_idtipcar).
     xField:APPEND-CHILD(xText).  
     
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"NRCPFCGC","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_nrcpfcgc).
+    xField:APPEND-CHILD(xText).  
+
     RETURN "OK".
     
 END PROCEDURE.
@@ -2047,6 +2124,15 @@ END PROCEDURE.
 
 PROCEDURE valida_senha:
 
+    DEF VAR aux_token AS CHAR NO-UNDO.
+
+    /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
+    IF aux_idtaanew = 1 THEN
+    DO:
+        /* Se for o sistema novo a senha será enviada aberta, e devemos criptografar */
+        ASSIGN aux_dssencar = ENCODE(aux_dssencar).
+    END.
+    
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
                                                                                      
     RUN valida_senha IN h-b1wgen0025( INPUT aux_cdcooper, 
@@ -2062,6 +2148,52 @@ PROCEDURE valida_senha:
     IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
 
+    /* 
+      Se nao ocorreu erro na validacao de senha devera se criado um TOKEN
+      esse TOKEN sera validado em outras rotinas TA para garantir que a senha eh valida
+    */ 
+    
+    /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
+    IF aux_idtaanew = 1 THEN
+    DO:
+        /* Somente o sistema novo terá a geracao do TOKEN */
+        
+        /* 
+          Foram criados os seguintes parametros para na mensageria, que serao enviados gravados nessa nova tabela
+          aux_idopeexe -> ID da Operacao que está sendo executado (Ex: "IB027","TA037","IB181")
+          aux_tpintera -> Tipo de Interacao (O IB181 , além de outros, que possuim mais de uma operacao mas sempre sao chamados pelo mesmo codigo)
+        */ 
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+         RUN STORED-PROCEDURE pc_cria_autenticacao_cartao
+         aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT aux_cdcooper  /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT aux_nrdconta  /* pr_nrdconta --> Número da Conta do associado */
+                   ,INPUT STRING(aux_nrcartao)  /* pr_nrcartao --> Número do cartao do associado */
+                   ,INPUT aux_idopeexe  /* pr_cdoperacao  --> ID da Operaçao que está sendo executado (Ex: "IB027","TA037","IB181") */
+                   ,INPUT aux_tpintera  /* pr_tpinteracao --> Tipo de Interaçao (O IB181 , além de outros, que possuim mais de uma operacao mas sempre sao chamados pelo mesmo codigo) */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_token    --> Token gerado na transaçao */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+
+         /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_cria_autenticacao_cartao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
+
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+        ASSIGN aux_token = pc_cria_autenticacao_cartao.pr_token
+                      WHEN pc_cria_autenticacao_cartao.pr_token <> ?.
+        ASSIGN aux_dscritic = pc_cria_autenticacao_cartao.pr_dscritic
+                      WHEN pc_cria_autenticacao_cartao.pr_dscritic <> ?.  
+
+        IF  aux_dscritic <> "" THEN
+            DO:
+               RETURN "NOK".
+            END.        
+    END.
 
 
     /* ---------- */
@@ -2071,6 +2203,17 @@ PROCEDURE valida_senha:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = "OK".
     xField:APPEND-CHILD(xText).
+
+    /* Devolver o TOKEN que geramos */
+    IF aux_token <> ? AND aux_token <> "" THEN
+    DO:
+        xDoc:CREATE-NODE(xField,"TOKEN","ELEMENT").
+        xRoot:APPEND-CHILD(xField).
+        
+        xDoc:CREATE-NODE(xText,"","TEXT").
+        xText:NODE-VALUE = aux_token.
+        xField:APPEND-CHILD(xText).
+    END.
 
     RETURN "OK".
 END PROCEDURE.
@@ -2198,6 +2341,40 @@ END PROCEDURE.
 
 
 PROCEDURE altera_senha:
+
+    /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
+    IF aux_token <> "" AND aux_token <> ? THEN
+    DO:
+
+        /* autenticidade da senha de letras, vamos verificar se o TOKEN eh valido  */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+         RUN STORED-PROCEDURE pc_busca_autenticacao_cartao
+         aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT aux_cdcooper  /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT aux_nrdconta  /* pr_nrdconta --> Número da Conta do associado */
+                   ,INPUT aux_token     /* pr_token    --> Token gerado na transaçao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                   
+         /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_busca_autenticacao_cartao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
+                            
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+        ASSIGN aux_dscritic = pc_busca_autenticacao_cartao.pr_dscritic
+                      WHEN pc_busca_autenticacao_cartao.pr_dscritic <> ?.  
+
+        IF  aux_dscritic <> "" THEN
+            DO:
+               RETURN "NOK".
+            END. 
+    
+        /* Se for o sistema novo a senha será enviada aberta, e devemos criptografar */
+        ASSIGN aux_dssencar = ENCODE(aux_dssencar).
+    END.
 
     /* Cartao Magnetico */
     IF aux_idtipcar = 1 THEN
@@ -3455,10 +3632,24 @@ PROCEDURE obtem_sequencial_deposito:
     
     DEF VAR aux_cdcopdst AS INTE                                NO-UNDO.
 
+    DEF VAR aux_cdagectl AS INTE                                NO-UNDO.
+    
+    IF par_cdagectl <> ? AND
+       par_cdagectl <> 0 THEN
+        ASSIGN aux_cdagectl = par_cdagectl.
+    ELSE 
+        ASSIGN aux_cdagectl = aux_cdcooper.
+
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
     
     /* Variavel aux_cdcooper terá o codigo da agencia da cooperativa de destino */
-    FIND crapcop WHERE crapcop.cdagectl = aux_cdcooper NO-LOCK NO-ERROR.
+    FIND crapcop WHERE crapcop.cdagectl =  aux_cdagectl NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE crapcop THEN
+    DO:
+        ASSIGN aux_dscritic = "Cooperativa de destino nao encontrada".
+        RETURN "NOK".
+    END.
+    
     ASSIGN aux_cdcopdst = crapcop.cdcooper.
 
     /* Busca NSU na coop. de destino */ 
@@ -3896,7 +4087,10 @@ PROCEDURE efetua_transferencia:
                                  INPUT aux_nrdconta,                   
                                  INPUT 1,            /* par_idseqttl */
                                  INPUT crapdat.dtmvtocd,                        
+                                 /* Projeto 363 - Novo ATM */
+                                 INPUT 4,            /* par_cdorigem */
                                  INPUT "TAA",        /* par_dsorigem */
+                                 INPUT "TAA",        /* par_nmdatela */
                                  INPUT aux_tpoperac, /* par_cdtiptra */
                                  INPUT 0,            /* par_idtpdpag */
                                  INPUT "",           /* par_dscedent */
@@ -3928,7 +4122,7 @@ PROCEDURE efetua_transferencia:
                                  INPUT "",  /* pr_iptransa */
                                  INPUT "",  /* Numero controle consulta npc */   
                                  INPUT '', /* par_iddispos */
-                                 
+                                OUTPUT 0, 
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
                                 OUTPUT 0,
@@ -4246,6 +4440,37 @@ END PROCEDURE.
 
 
 PROCEDURE efetua_saque:
+
+    /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
+    IF aux_token <> "" AND aux_token <> ? THEN
+    DO:
+        /* autenticidade da senha de letras, vamos verificar se o TOKEN eh valido  */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+         RUN STORED-PROCEDURE pc_busca_autenticacao_cartao
+         aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT aux_cdcooper  /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT aux_nrdconta  /* pr_nrdconta --> Número da Conta do associado */
+                   ,INPUT aux_token     /* pr_token    --> Token gerado na transaçao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                   
+         /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_busca_autenticacao_cartao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
+                            
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+        ASSIGN aux_dscritic = pc_busca_autenticacao_cartao.pr_dscritic
+                      WHEN pc_busca_autenticacao_cartao.pr_dscritic <> ?.  
+
+        IF  aux_dscritic <> "" THEN
+            DO:
+               RETURN "NOK".
+            END.   
+            
+    END.
 
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
 
@@ -4787,7 +5012,10 @@ PROCEDURE paga_titulo:
                                                    INPUT aux_nrdconta,                   
                                                     INPUT 1,            /* par_idseqttl */
                                                    INPUT crapdat.dtmvtocd,                        
+                                                   /* Projeto 363 - Novo ATM */
+                                                   INPUT 4,            /* par_cdorigem */
                                                     INPUT "TAA",        /* par_dsorigem */
+                                                   INPUT "TAA",        /* par_nmdatela */
                                                     INPUT 2,            /* par_cdtiptra */
                                                     INPUT 2,            /* par_idtpdpag */
                                                     INPUT aux_nmconban, /* par_dscedent */
@@ -4819,7 +5047,7 @@ PROCEDURE paga_titulo:
                                                    INPUT "",   /* pr_iptransa */
                                                    INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                    INPUT '', /* pr_iddispos */
-                                                   
+                                                  OUTPUT 0,
                                                    OUTPUT "",  /* pr_dstransa */
                                                    OUTPUT "",
                                                    OUTPUT 0,
@@ -5323,7 +5551,10 @@ PROCEDURE paga_convenio:
                                                   INPUT aux_nrdconta,                   
                                                   INPUT 1,            /* par_idseqttl */
                                                   INPUT crapdat.dtmvtocd,                        
+                                                  /* Projeto 363 - Novo ATM */
+                                                  INPUT 4,            /* par_cdorigem */
                                                   INPUT "TAA",        /* par_dsorigem */
+                                                  INPUT "TAA",        /* par_nmdatela */
                                                   INPUT 2,            /* par_cdtiptra */
                                                   INPUT 1,            /* par_idtpdpag */
                                                   INPUT aux_nmconven, /* par_dscedent */
@@ -5355,7 +5586,7 @@ PROCEDURE paga_convenio:
                                                   INPUT '',  /* pr_iptransa */
                                                   INPUT '',  /* Numero controle consulta npc */   
                                                   INPUT '', /* par_iddispos */
-                                                  
+                                                 OUTPUT 0, 
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
                                                  OUTPUT 0,
@@ -5830,7 +6061,9 @@ PROCEDURE efetua_agendamento_mensal:
                                                  INPUT aux_nrdconta,
                                                  INPUT 1,
                                                  INPUT crapdat.dtmvtocd,
+                                    INPUT 4, /* cdorigem */
                                     INPUT "TAA",                        
+                                    INPUT "TAA", /* nmprogra */ 
                                     INPUT aux_lsdataqd,                 
                                                  INPUT aux_cdhisdeb,
                                                  INPUT aux_vltransf,
@@ -5849,6 +6082,7 @@ PROCEDURE efetua_agendamento_mensal:
                                     INPUT ' ', /* dshistor */
                                     INPUT '',  /* iptransa */
                                     INPUT '',  /* iddispos */ 
+                                    OUTPUT "",  /* pr_dslancto */ 
                                     OUTPUT "",  /* pr_dstransa */        
                                     OUTPUT "",  /* pr_cdcritic */        
                                     OUTPUT ""). /* pr_dscritic */        
@@ -6602,7 +6836,7 @@ PROCEDURE gera_estatistico:
 
     RUN gera_estatistico IN h-b1wgen0025 (INPUT aux_cdcoptfn,
                                           INPUT craptfn.nrterfin,
-                                          INPUT "",
+                                          INPUT aux_dsprefix, /* Sera recebido por parametro no novo caixa eletronico */
                                           INPUT aux_cdcooper,
                                           INPUT aux_nrdconta,
                                           INPUT aux_tpextrat).
@@ -6624,6 +6858,51 @@ END PROCEDURE.
 
 PROCEDURE valida_senha_letras:
 
+    /* Antes de validar a autenticidade da senha de letras, vamos verificar se o TOKEN eh valido */
+
+    /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
+    IF aux_token <> "" AND aux_token <> ? THEN
+    DO:
+        /* autenticidade da senha de letras, vamos verificar se o TOKEN eh valido  */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        /* Efetuar a chamada a rotina Oracle */ 
+         RUN STORED-PROCEDURE pc_busca_autenticacao_cartao
+         aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT aux_cdcooper  /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT aux_nrdconta  /* pr_nrdconta --> Número da Conta do associado */
+                   ,INPUT aux_token     /* pr_token    --> Token gerado na transaçao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                   
+         /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_busca_autenticacao_cartao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.  
+                            
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+        ASSIGN aux_dscritic = pc_busca_autenticacao_cartao.pr_dscritic
+                      WHEN pc_busca_autenticacao_cartao.pr_dscritic <> ?.  
+
+        IF  aux_dscritic <> "" THEN
+            DO:
+               RETURN "NOK".
+            END.   
+            
+        /* Se for o sistema novo a senha será enviada aberta, e devemos criptografar */
+        ASSIGN aux_dsdgrup1 = ENCODE(ENTRY(1,aux_dsdgrup1,"-")) + "-" + 
+                              ENCODE(ENTRY(2,aux_dsdgrup1,"-")) + "-" +
+                              ENCODE(ENTRY(3,aux_dsdgrup1,"-")).
+                              
+        ASSIGN aux_dsdgrup2 = ENCODE(ENTRY(1,aux_dsdgrup2,"-")) + "-" + 
+                              ENCODE(ENTRY(2,aux_dsdgrup2,"-")) + "-" +
+                              ENCODE(ENTRY(3,aux_dsdgrup2,"-")).        
+
+        ASSIGN aux_dsdgrup3 = ENCODE(ENTRY(1,aux_dsdgrup3,"-")) + "-" + 
+                              ENCODE(ENTRY(2,aux_dsdgrup3,"-")) + "-" +
+                              ENCODE(ENTRY(3,aux_dsdgrup3,"-")).
+    END.
+    
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
                                                                                      
     RUN valida_senha_letras IN h-b1wgen0025( INPUT aux_cdcooper, 
@@ -8794,13 +9073,29 @@ PROCEDURE verifica-banner:
     DEFINE VARIABLE aux_flgdobnr    AS LOGICAL  INIT NO         NO-UNDO.
     DEFINE VARIABLE aux_idbanner    AS CHAR                     NO-UNDO.
     
+    DEFINE VARIABLE tmp_nrdconta    AS INTEGER                  NO-UNDO.
+    
+    ASSIGN tmp_nrdconta = 0.
+    
+    IF aux_nrdconta <> 0 AND aux_nrdconta <> ? THEN
+        ASSIGN tmp_nrdconta = aux_nrdconta.
+    ELSE 
+        IF par_nrdconta <> 0 AND par_nrdconta <> ? THEN
+            ASSIGN tmp_nrdconta = par_nrdconta.
+    
+    IF tmp_nrdconta = 0 THEN
+    DO:
+        ASSIGN aux_dscritic = "Erro ao buscar o numero da conta".
+        RETURN "NOK".
+    END.
+        
     ASSIGN aux_idbanner = "".
 
     /* Verifica exibição banner Prova de Vida INSS */
     RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
 
     RUN verifica_prova_vida_inss IN h-b1wgen0025( INPUT aux_cdcooper,
-                                                  INPUT aux_nrdconta,
+                                                  INPUT tmp_nrdconta,
                                                  OUTPUT aux_flgdinss,
                                                  OUTPUT aux_flgbinss,
                                                  OUTPUT aux_dscritic).
@@ -8829,7 +9124,7 @@ PROCEDURE verifica-banner:
                                                     INPUT "TAA", /* par_nmdatela */
                                                     INPUT 4,     /* par_cdorigem */
                                                     INPUT crapdat.dtmvtolt,
-                                                    INPUT aux_nrdconta,
+                                                    INPUT tmp_nrdconta,
                                                     INPUT aux_tpusucar, /* par_idseqttl */
                                                     INPUT 0,     /* par_nrcpfope */
                                                     OUTPUT aux_flgdobnr,
@@ -10208,6 +10503,9 @@ PROCEDURE verifica_recarga:
 						  INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
 						  INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
 						  INPUT 4,             /* Id origem (4-TAA)*/
+                        INPUT 91,            /* Agencia de Origem */ 
+                        INPUT 900,           /* Caixa de Origem */ 
+                        INPUT "TAA",         /* Programa que chamou */ 
 						  OUTPUT "",           /* Lista de datas para agendamento recorrente */
 						  OUTPUT 0,            /* Código da crítica.*/
 						  OUTPUT "").          /* Desc. da crítica */
@@ -10285,9 +10583,13 @@ PROCEDURE efetua_recarga:
               INPUT aux_nrcartao,        /* Nr. cartao */
               INPUT aux_nrsequni,        /* Nr. sequencial unico */
 						  INPUT 4,             /* Id origem (4-TAA)*/
+                        INPUT 91,            /* Agencia de Origem */ 
+                        INPUT 900,           /* Caixa de Origem */ 
+                        INPUT "TAA",         /* Programa que chamou */ 
               INPUT 0,             /* Indicador de aprovacao de transacao pendente */
 						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
 			  INPUT 0,             /* Indicador se origem é mobile (Não) */
+                        OUTPUT "",           /* ID dos lançamentos de agendamento de recarga */ 
               OUTPUT 0,            /* Indicador de assinatura conjunta */
               OUTPUT "",           /* Protocolo */
               OUTPUT "",           /* NSU Operadora */
@@ -10374,6 +10676,7 @@ PROCEDURE exclui_agendamentos_recarga:
                          ,INPUT 1
                          ,INPUT 4   /* TAA */
                          ,INPUT aux_nrdocmto
+                         ,INPUT "TAA" /* Projeto 363 - Novo ATM */ 
                          ,OUTPUT 0
                          ,OUTPUT "").
                          

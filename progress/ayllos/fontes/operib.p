@@ -314,7 +314,7 @@ ON RETURN OF b_crapopi DO:
                 RUN proc_gerar_log (INPUT glb_cdcooper,
                                     INPUT glb_cdoperad,
                                     INPUT "",
-                                    INPUT "AYLLOS",
+                                    INPUT "AIMARO",
                                     INPUT "Bloqueio de Operador da Conta " +
                                           "On-Line",
                                     INPUT TRUE,

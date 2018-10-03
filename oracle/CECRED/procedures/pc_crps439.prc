@@ -182,6 +182,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
       from crapcop
      where cdcooper = pr_cdcooper;
   rw_crapcop     cr_crapcop%rowtype;
+	
   -- Buscar informações de seguros residenciais que ainda não foram debitados no mês
   CURSOR cr_crapseg (pr_cdcooper in crapseg.cdcooper%TYPE,
                      pr_nrctares in crapseg.nrdconta%TYPE,
@@ -219,6 +220,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        AND sld.nrdconta  = crapseg.nrdconta
      order by dtmvtolt, cdagenci, cdbccxlt, nrdolote, nrdconta, nrctrseg;
   rw_crapseg     cr_crapseg%rowtype;
+	
   -- Buscar informações da seguradora
   cursor cr_crapcsg (pr_cdcooper in crapcsg.cdcooper%type,
                      pr_cdsegura in crapcsg.cdsegura%type) is
@@ -228,6 +230,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
      where crapcsg.cdcooper = pr_cdcooper
        and crapcsg.cdsegura = pr_cdsegura;
   rw_crapcsg     cr_crapcsg%rowtype;
+	
   -- Buscar informações dos planos de seguro
   cursor cr_craptsg (pr_cdcooper in craptsg.cdcooper%type,
                      pr_tpplaseg in craptsg.tpplaseg%type,
@@ -912,7 +915,7 @@ begin
           GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => '1'
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'AYLLOS' --vr_dsorigem
+                              ,pr_dsorigem => 'AIMARO' --vr_dsorigem
                               ,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
                               ,pr_dttransa => trunc(SYSDATE)
                               ,pr_flgtrans => 0

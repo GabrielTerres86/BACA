@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 24/05/2018
+   Data    : Marco/2001                      Ultima atualizacao: 28/08/2018
 
    Dados referentes ao programa:
 
@@ -53,6 +53,9 @@
                24/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
                             norturno rodando (Douglas Pagel - AMcom).
                             
+               28/08/2018 - Inclusao de novo campo de tipo de saque (Boletim),
+                            Prj. Acelera (Jean Michel / Kledir Dalçóquio)
+                            
 ............................................................................**/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -86,7 +89,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_valor       AS CHARACTER FORMAT "X(256)":U 
        FIELD v_habilita    AS CHARACTER FORMAT "X(256)":U INIT "no"
        FIELD v_coordenador AS CHARACTER FORMAT "X(256)":U INIT "no"
-       FIELD v_saldo_conta AS CHARACTER FORMAT "X(256)":U.  
+       FIELD v_saldo_conta AS CHARACTER FORMAT "X(256)":U
+       FIELD v_flgbl       AS CHARACTER FORMAT "X(256)":U.  
 DEFINE VARIABLE v_mensagem_bkp AS CHARACTER   NO-UNDO.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -180,8 +184,8 @@ DEF VAR p-idtipcar   AS INT NO-UNDO.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.cancela ab_unmap.ok ab_unmap.v_msgtrf ab_unmap.v_senhaCartao ab_unmap.v_nrdocard  ab_unmap.v_infocry ab_unmap.v_chvcry ab_unmap.v_action ab_unmap.v_cod ab_unmap.v_senha ab_unmap.v_nome ab_unmap.v_mensagem ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_opcao  ab_unmap.v_cartao ab_unmap.v_conta ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_habilita ab_unmap.v_coordenador ab_unmap.v_saldo_conta
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.cancela ab_unmap.ok ab_unmap.v_msgtrf ab_unmap.v_senhaCartao ab_unmap.v_nrdocard ab_unmap.v_infocry ab_unmap.v_chvcry ab_unmap.v_action ab_unmap.v_cod ab_unmap.v_senha ab_unmap.v_nome ab_unmap.v_mensagem ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_opcao ab_unmap.v_cartao ab_unmap.v_conta ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_habilita ab_unmap.v_coordenador ab_unmap.v_saldo_conta
+&Scoped-Define ENABLED-OBJECTS ab_unmap.cancela ab_unmap.ok ab_unmap.v_msgtrf ab_unmap.v_senhaCartao ab_unmap.v_nrdocard  ab_unmap.v_infocry ab_unmap.v_chvcry ab_unmap.v_action ab_unmap.v_cod ab_unmap.v_senha ab_unmap.v_nome ab_unmap.v_mensagem ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_opcao  ab_unmap.v_cartao ab_unmap.v_conta ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_habilita ab_unmap.v_coordenador ab_unmap.v_saldo_conta ab_unmap.v_flgbl
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.cancela ab_unmap.ok ab_unmap.v_msgtrf ab_unmap.v_senhaCartao ab_unmap.v_nrdocard ab_unmap.v_infocry ab_unmap.v_chvcry ab_unmap.v_action ab_unmap.v_cod ab_unmap.v_senha ab_unmap.v_nome ab_unmap.v_mensagem ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_opcao ab_unmap.v_cartao ab_unmap.v_conta ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_valor ab_unmap.v_habilita ab_unmap.v_coordenador ab_unmap.v_saldo_conta ab_unmap.v_flgbl
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -258,8 +262,10 @@ DEFINE FRAME Web-Frame
       ab_unmap.v_opcao AT ROW 1 COL 1 HELP
           "" NO-LABEL VIEW-AS RADIO-SET VERTICAL
           RADIO-BUTTONS 
-           "v_opcao 1", "R":U,
-           "v_opcao 2", "C":U 
+           "v_opcao 1", "B":U,
+           "v_opcao 2", "BR":U,
+           "v_opcao 3", "C":U,
+           "v_opcao 4", "R":U 
            SIZE 20 BY 2
     ab_unmap.v_cartao AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
@@ -305,6 +311,10 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+    ab_unmap.v_flgbl AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -342,6 +352,7 @@ DEFINE FRAME Web-Frame
           FIELD v_senha AS CHARACTER FORMAT "X(256)":U 
           FIELD v_valor AS CHARACTER FORMAT "X(256)":U 
           FIELD v_saldo_conta AS CHARACTER FORMAT "X(256)":U 
+          FIELD v_flgbl AS CHARACTER FORMAT "X(256)":U 
       END-FIELDS.
    END-TABLES.
  */
@@ -413,6 +424,8 @@ DEFINE FRAME Web-Frame
 /* SETTINGS FOR FILL-IN ab_unmap.v_valor IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* SETTINGS FOR FILL-IN ab_unmap.v_saldo_conta IN FRAME Web-Frame
+   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
+/* SETTINGS FOR FILL-IN ab_unmap.v_flgbl IN FRAME Web-Frame
    ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -512,6 +525,8 @@ PROCEDURE htmOffsets :
     ("v_coordenador":U,"ab_unmap.v_coordenador":U,ab_unmap.v_coordenador:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_saldo_conta":U,"ab_unmap.v_saldo_conta":U,ab_unmap.v_saldo_conta:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("v_flgbl":U,"ab_unmap.v_flgbl":U,ab_unmap.v_flgbl:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 
@@ -609,7 +624,7 @@ PROCEDURE process-web-request :
             
         ELSE DO:
             IF get-value("cancela") <> "" THEN DO:
-                ASSIGN v_opcao     = "R"
+                ASSIGN v_opcao     = "B"
                        v_conta     = ""
                        v_nome      = ""
                        v_mensagem  = ''
@@ -661,6 +676,7 @@ PROCEDURE process-web-request :
                     DELETE PROCEDURE h-b1crap54.
 
                     IF  RETURN-VALUE <> "OK" THEN DO:
+                      
                         ASSIGN v_conta = "" 
                                v_cod       = ""
                                v_senha     = ""
@@ -687,6 +703,7 @@ PROCEDURE process-web-request :
                         DELETE PROCEDURE h-b1crap54.
                         
                         IF  RETURN-VALUE <> "OK" THEN DO:
+                          
                             ASSIGN v_conta = ""
                                    v_cod       = ""
                                    v_senha     = "".
@@ -709,6 +726,7 @@ PROCEDURE process-web-request :
                                 DELETE PROCEDURE h-b1crap54.
 
                                 IF RETURN-VALUE = "NOK" THEN DO:
+                                  
                                     {include/i-erro.i}
                                     ASSIGN v_cod       = ""
                                            v_senha     = "" 
@@ -730,6 +748,7 @@ PROCEDURE process-web-request :
                                 DELETE PROCEDURE h-b1crap54.
                                 
                                 IF RETURN-VALUE = "NOK" THEN DO:
+                                  
                                     ASSIGN v_cod   = ""
                                            v_senha = "".
                                     
@@ -806,6 +825,7 @@ PROCEDURE process-web-request :
                                                 DELETE PROCEDURE h-b1crap54.
                                                 
                                                 IF RETURN-VALUE = "NOK" THEN DO:
+                                                  
                                                     ASSIGN v_cod = ""
                                                            v_senha = "".
                                                            
@@ -838,6 +858,7 @@ PROCEDURE process-web-request :
                                                           DELETE PROCEDURE h-b1crap54.
 
                                                           IF RETURN-VALUE = 'NOK' THEN DO:
+                                                            
                                                                 ASSIGN v_cod = ""
                                                                        v_senha = ""
                                                                        vh_foco = "19".
@@ -870,6 +891,7 @@ PROCEDURE process-web-request :
                                                 DELETE PROCEDURE h-b1crap54.
 
                                                 IF RETURN-VALUE = "NOK" THEN DO:
+                                                  
                                                    ASSIGN l-houve-erro = YES.
                                                         
                                                    EMPTY TEMP-TABLE w-craperr.
@@ -911,6 +933,12 @@ PROCEDURE process-web-request :
                                                             {&OUT}
                                                             "<script>           
                                                                 alert('Saque efetuado com sucesso'); 
+                                                            </script>".  
+                                                        
+                                                        IF   v_opcao = "B"   THEN
+                                                            {&OUT}
+                                                            "<script>           
+                                                                alert('Pagamento efetuado com sucesso'); 
                                                             </script>".  
                                                    END.
                                                     
@@ -965,7 +993,8 @@ PROCEDURE process-web-request :
                                                            v_chvcry     = ""
                                                            flgsubopcao  = TRUE
                                                            v_nrdocard   = ""
-                                                           OK = ''.
+                                                           OK = ''
+                                                           v_flgbl = "".
                                                 END.
                                             END.
                                            END.
@@ -988,7 +1017,7 @@ PROCEDURE process-web-request :
     
         IF lOpenAutentica THEN DO:
 
-            IF   v_opcao = "R"   THEN
+            IF   v_opcao = "R" OR v_opcao = "BR" THEN
                  {&OUT}
                 '<script>window.open("autentica.html?v_plit=" + "' p-literal '" + 
                 "&v_pseq=" + "' p-ult-sequencia '" + "&v_prec=" + "yes"  + "&v_psetcook=" + "yes","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true")
@@ -1046,7 +1075,7 @@ PROCEDURE process-web-request :
         END.
 
         IF  flgsubopcao THEN 
-            ASSIGN v_opcao      = "R".                      
+            ASSIGN v_opcao      = "B".                      
         
         RUN displayFields.
         RUN enableFields.
@@ -1064,10 +1093,13 @@ PROCEDURE process-web-request :
                    vh_foco     = "16".
 
         /* Vinda da Rotina do BL (BLSAL) */
-        IF  INTE(GET-VALUE("v_conta")) > 0 THEN
+        IF  INTE(GET-VALUE("v_conta")) > 0 or 
+            INTE(GET-VALUE("cdhistor")) = 2553 THEN
             DO:
                 ASSIGN v_conta     = STRING(INTE(GET-VALUE("v_conta")), "zzzz,zz9,9")
-                       v_nome      = GET-VALUE("v_nome").
+                       v_nome      = GET-VALUE("v_nome")
+                       v_opcao     = "B"
+                       v_flgbl     = GET-VALUE("v_flgbl").
 
                 RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
                 RUN lista-saldo-conta IN  h-b1crap54(

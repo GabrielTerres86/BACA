@@ -55,7 +55,7 @@
 	$xmlObj = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','focaCampoErro(\'cdempres\', \'frmInfEmpresa\');',false);
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Aimaro','focaCampoErro(\'cdempres\', \'frmInfEmpresa\');',false);
 	}
 
 	$registros = $xmlObj->roottag->tags[0]->tags;

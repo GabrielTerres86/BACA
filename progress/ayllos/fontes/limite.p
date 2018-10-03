@@ -360,7 +360,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                          WITH FRAME f_limite.
     
        DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-           MESSAGE "Opcao nao disponível. Utilize o Ayllos Web.".
+           MESSAGE "Opcao nao disponível. Utilize o Aimaro Web.".
            PAUSE 3 NO-MESSAGE.
            HIDE MESSAGE.
            LEAVE.

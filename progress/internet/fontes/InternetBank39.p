@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2008.                       Ultima atualizacao: 27/11/2017
+   Data    : Abril/2008.                       Ultima atualizacao: 08/03/2018
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Cancelar agendamento de transferencias e pagamentos
@@ -24,6 +24,8 @@
                             parametro idlancto e demais parametros nao serao 
                             informados nesse caso (David)
                             
+               08/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
  
 create widget-pool.
@@ -48,7 +50,15 @@ DEF  INPUT PARAM par_idlancto LIKE craplau.idlancto                    NO-UNDO.
 DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_cdtiptra AS INT                                   NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope AS DECI                                  NO-UNDO.
+/* Projeto 363 - Novo ATM */ 
+DEF  INPUT PARAM par_cdorigem    AS INT                                NO-UNDO.
+DEF  INPUT PARAM par_dsorigem    AS CHAR                               NO-UNDO.
+DEF  INPUT PARAM par_cdagenci    AS INT                                NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa    AS INT                                NO-UNDO.
+DEF  INPUT PARAM par_nmprogra    AS CHAR                               NO-UNDO.
+/* Projeto 363 - Novo ATM */ 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
+
 
 /* Considerar agendamento de recarga se o tipo foi informado como 1 ou se estiver zerado. 
 No caso de valor zerado sera validado com base no registro da craplau */
@@ -73,12 +83,12 @@ IF aux_flgrecar THEN
                          (INPUT par_cdcooper 
                          ,INPUT par_nrdconta 
                          ,INPUT par_idseqttl
-                         ,INPUT 3
+                         ,INPUT par_cdorigem /* Projeto 363 - Novo ATM -> estava fixo 3*/
                          ,INPUT IF par_cdtiptra = 11 THEN par_nrdocmto ELSE par_idlancto
+                         ,INPUT par_nmprogra /* Projeto 363 - Novo ATM */ 
                          ,OUTPUT 0
                          ,OUTPUT "").
                          
-
     CLOSE STORED-PROC pc_cancela_agendamento_recarga aux_statproc = PROC-STATUS 
          WHERE PROC-HANDLE = aux_handproc.
     
@@ -108,17 +118,17 @@ ELSE
         DO:
             RUN cancelar-agendamento IN h-b1wgen0016 
                                             (INPUT par_cdcooper,
-                                             INPUT 90,          /** PAC      **/
-                                             INPUT 900,         /** CAIXA    **/
+                                             INPUT par_cdagenci,/* Projeto 363 - Novo ATM -> estava fixo 90,*/ /* PAC */
+                                             INPUT par_nrdcaixa,/* Projeto 363 - Novo ATM -> estava fixo 900,*//* CAIXA */
                                              INPUT "996",       /** OPERADOR **/
                                              INPUT par_nrdconta,
                                              INPUT par_idseqttl,
                                              INPUT par_dtmvtolt,
-                                             INPUT "INTERNET",  /** ORIGEM   **/
+                                             INPUT par_dsorigem,/* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/  /** ORIGEM   **/
                                              INPUT par_dtmvtage,
                                              INPUT par_nrdocmto,
                                              INPUT par_idlancto,
-                         INPUT "INTERNETBANK", /*Nome da tela*/ 
+                                             INPUT par_nmprogra,/* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/ /*Nome da tela*/ 
                                              INPUT par_nrcpfope,
                                             OUTPUT aux_dstransa,
                                             OUTPUT aux_dscritic).
@@ -150,13 +160,13 @@ PROCEDURE proc_geracao_log:
             RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                           INPUT "996",
                                           INPUT aux_dscritic,
-                                          INPUT "INTERNET",
+                                          INPUT par_dsorigem, /* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/
                                           INPUT aux_dstransa,
                                           INPUT aux_datdodia,
                                           INPUT par_flgtrans,
                                           INPUT TIME,
                                           INPUT par_idseqttl,
-                                          INPUT "INTERNETBANK",
+                                          INPUT par_nmprogra,/* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/
                                           INPUT par_nrdconta,
                                           OUTPUT aux_nrdrowid).
             

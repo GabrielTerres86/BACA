@@ -4,14 +4,15 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lombardi
-   Data    : Fevereiro/2016                        Ultima atualizacao: --/--/----
+   Data    : Fevereiro/2016                        Ultima atualizacao: 28/03/2018
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Mantem recarga de celular
    
-   Alteracoes: 
+   Alteracoes: 28/03/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Douglas Quisinski)
                             
 ..............................................................................*/
     
@@ -22,6 +23,7 @@ CREATE WIDGET-POOL.
  
 DEF VAR aux_dscritic AS CHAR                         NO-UNDO.
 DEF VAR xml_req      AS LONGCHAR                     NO-UNDO.
+DEF VAR xml_dslancto AS CHAR                         NO-UNDO.
 DEF VAR aux_dsxmlout AS CHAR                         NO-UNDO.
 DEF VAR aux_msgretor AS CHAR                         NO-UNDO.
 
@@ -41,6 +43,17 @@ DEF  INPUT PARAM aux_cdopcaodt   AS INT                NO-UNDO.
 DEF  INPUT PARAM par_dtrecarga   AS DATE               NO-UNDO.
 DEF  INPUT PARAM par_qtmesagd    AS INT                NO-UNDO.
 DEF  INPUT PARAM par_flmobile    AS LOGI               NO-UNDO.
+
+/*  Projeto 363 - Novo ATM  */ 
+DEF  INPUT PARAM par_cdorigem    AS INT                NO-UNDO.
+DEF  INPUT PARAM par_cdagenci    AS INT                NO-UNDO.
+DEF  INPUT PARAM par_nrdcaixa    AS INT                NO-UNDO.
+DEF  INPUT PARAM par_nmprogra    AS CHAR               NO-UNDO.
+DEF  INPUT PARAM par_cdcoptfn    AS INT                NO-UNDO.
+DEF  INPUT PARAM par_cdagetfn    AS INT                NO-UNDO.
+DEF  INPUT PARAM par_nrterfin    AS INT                NO-UNDO.
+DEF  INPUT PARAM par_nrcartao    AS DECI               NO-UNDO.
+
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -233,6 +246,17 @@ ELSE IF par_operacao = 6 THEN
                          ,INPUT 0
                          ,INPUT 0
 						 ,INPUT INT(par_flmobile)
+                         /* Projeto 363 - Novo ATM  */
+                         ,INPUT par_cdorigem 
+                         ,INPUT par_cdagenci
+                         ,INPUT par_nrdcaixa
+                         ,INPUT par_nmprogra
+                         ,INPUT par_cdcoptfn
+                         ,INPUT par_cdagetfn
+                         ,INPUT par_nrterfin
+                         ,INPUT par_nrcartao
+                         ,OUTPUT ""  /* Lista com todos os agendamentos */
+                         /* Projeto 363 - Novo ATM */
                          ,OUTPUT ""
                          ,OUTPUT 0
                          ,OUTPUT "").
@@ -241,8 +265,11 @@ ELSE IF par_operacao = 6 THEN
     CLOSE STORED-PROC pc_confirma_recarga_ib aux_statproc = PROC-STATUS 
          WHERE PROC-HANDLE = aux_handproc.
     
-    ASSIGN aux_dscritic = ""
+    ASSIGN xml_dslancto = "" 
+           aux_dscritic = ""
            aux_msgretor = ""
+           xml_dslancto = pc_confirma_recarga_ib.pr_xml_idlancto
+                          WHEN pc_confirma_recarga_ib.pr_xml_idlancto <> ?
            aux_dscritic = pc_confirma_recarga_ib.pr_dscritic 
                           WHEN pc_confirma_recarga_ib.pr_dscritic <> ?
            aux_msgretor = pc_confirma_recarga_ib.pr_msg_retor 
@@ -259,6 +286,10 @@ ELSE IF par_operacao = 6 THEN
     
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = xml_req.
+  
+    /* Projeto 363 - Novo ATM */ 
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = xml_dslancto.
   
   END.
 ELSE IF par_operacao = 7 THEN
@@ -277,7 +308,12 @@ ELSE IF par_operacao = 7 THEN
 						 ,INPUT par_dtrecarga
 						 ,INPUT par_qtmesagd 
 						 ,INPUT aux_cdopcaodt 
-						 ,INPUT 3
+                         /* Projeto 363 - Novo ATM */ 
+                         ,INPUT par_cdorigem
+                         ,INPUT par_cdagenci
+                         ,INPUT par_nrdcaixa
+                         ,INPUT par_nmprogra
+                         /* Projeto 363 - Novo ATM */
 						 ,OUTPUT ""
 						 ,OUTPUT 0
 						 ,OUTPUT "").

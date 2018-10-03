@@ -1268,7 +1268,7 @@ IF KEYFUNCTION(LASTKEY) <> "END-ERROR"   THEN
       RUN proc_gerar_log (INPUT glb_cdcooper,
                           INPUT glb_cdoperad,
                           INPUT "",
-                          INPUT "AYLLOS",
+                          INPUT "AIMARO",
                           INPUT aux_dstransa,
                           INPUT TRUE,
                           INPUT 1 ,

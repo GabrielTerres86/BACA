@@ -36,7 +36,7 @@ def browse b_escolhe query q_escolhe
                    with 14 down.
 
 
-form "1- AYLLOS"              SKIP
+form "1- AIMARO"              SKIP
      "2- CAIXA ON-LINE"       SKIP
      "4- CRM/INTERNET"        SKIP
      "5- GENERICO"            SKIP
@@ -106,7 +106,7 @@ if  not aux_tpcompil then
         pause 0.
 
         if   aux_cdsistem = 1   then
-             run valida_fonte (input "ayllos",
+             run valida_fonte (input "aimaro",
                                INPUT arquivos.dsdireto + "/" +
                                            arquivos.nmarquiv,
                                input arquivos.camifull).
@@ -148,7 +148,7 @@ procedure ayllos:
     def var aux_lsdireto as char  extent 2  init["fontes","includes"] no-undo.
     
     ASSIGN aux_caminho  = "/usr/coop/sistema/ayllos/"
-           aux_dssistem = "AYLLOS".
+           aux_dssistem = "AIMARO".
 
     do  aux_contador = 1 to aux_qtdireto:
         run carrega_arquivos(INPUT "ls " + aux_caminho +
@@ -385,7 +385,7 @@ procedure valida_fonte:
                  do:
                     /* mostra os resultados */
                     run /usr/coop/sistema/ayllos/fontes/busca_check_cdcooper2.p
-                        (input "ayllos",
+                        (input "aimaro",
                          input substring(par_nmarquiv,
                                          r-index(par_nmarquiv,"/") + 1),
                          input par_camifull,

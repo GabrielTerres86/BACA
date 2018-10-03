@@ -147,6 +147,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TITCTO IS
                                     pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
                                     pr_dtvencto    IN VARCHAR2,                  --> Data de vencimento
                                     pr_dtmvtolt    IN VARCHAR2,                  --> Data da movimentacao
+                                    pr_flverbor    IN INTEGER,                   --> se e bordero novo ou velho
                                     --> out
                                     pr_tab_dados_conciliacao   out  typ_tab_dados_conciliacao, --> Tabela de retorno
                                     pr_cdcritic out number,                         --> codigo da critica
@@ -808,6 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                     pr_tpcobran    IN CHAR,                  --> Filtro de tipo de cobranca
                                     pr_dtvencto    IN VARCHAR2,                  --> Data de vencimento
                                     pr_dtmvtolt    IN VARCHAR2,                  --> Data da movimentacao
+                                    pr_flverbor    IN INTEGER,                   --> se e bordero novo ou velho
                                     --> out
                                     pr_tab_dados_conciliacao   out  typ_tab_dados_conciliacao, --> Tabela de retorno
                                     pr_cdcritic out number,                         --> codigo da critica
@@ -841,12 +843,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
        tmp_diffdias INTEGER;
 
        /* Resgatados no dia */
-       CURSOR cr_resgatados IS
+       CURSOR cr_resgatados (pr_flverbor INTEGER) IS
          SELECT
               craptdb.insittit,
               craptdb.vltitulo
          FROM
               craptdb
+              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
               INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
@@ -858,17 +861,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
              craptdb.cdcooper = pr_cdcooper
              AND craptdb.insittit = 1
              AND craptdb.dtresgat = vr_dtvencto
+             AND crapbdt.flverbor = pr_flverbor
          ;
        rw_resgatados cr_resgatados%ROWTYPE;
 
        /*Baixados sem pagamento no dia*/
-       CURSOR cr_baixados_sem_pagamento IS
+       CURSOR cr_baixados_sem_pagamento (pr_flverbor INTEGER) IS
          SELECT
               craptdb.insittit,
               craptdb.vltitulo,
               craptdb.dtvencto
          FROM
               craptdb
+              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
               INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
@@ -879,15 +884,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          WHERE
              craptdb.cdcooper = pr_cdcooper
              AND craptdb.insittit = 3
-             AND craptdb.dtdebito = vr_dtvencto;
+             AND craptdb.dtdebito = vr_dtvencto
+             AND crapbdt.flverbor = pr_flverbor;
        rw_baixados_sem_pagamento cr_baixados_sem_pagamento%ROWTYPE;
 
        /* Pagos pelo Pagador - via COMPE... */
-       CURSOR cr_pagos_compe IS
+       CURSOR cr_pagos_compe (pr_flverbor INTEGER) IS
          SELECT
               craptdb.vltitulo
          FROM
               craptdb
+              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
               INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
@@ -903,15 +910,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
               /*Apenas BB*/
               AND crapcob.indpagto = 0
               AND crapcob.cdbandoc = 001
+              AND crapbdt.flverbor = pr_flverbor
          ;
        rw_pagos_compe cr_pagos_compe%ROWTYPE;
 
        /* Pagos pelo Pagador - via CAIXA... */
-       CURSOR cr_pagos_caixa IS
+       CURSOR cr_pagos_caixa (pr_flverbor INTEGER) IS
          SELECT
               craptdb.vltitulo
          FROM
               craptdb
+              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
               INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
@@ -931,15 +940,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                 OR crapcob.indpagto = 4 /**TAA**/
                 OR (crapcob.indpagto = 0 AND crapcob.cdbandoc = 085)
               )
+             AND crapbdt.flverbor = pr_flverbor
          ;
        rw_pagos_caixa cr_pagos_caixa%ROWTYPE;
 
        /* Recebidos no dia */
-       CURSOR cr_recebidos_dia IS
+       CURSOR cr_recebidos_dia (pr_flverbor INTEGER) IS
          SELECT
               craptdb.vltitulo
          FROM
               craptdb
+              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
               INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
@@ -950,11 +961,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          WHERE
               craptdb.cdcooper = pr_cdcooper
               AND craptdb.dtlibbdt = vr_dtvencto
+              AND crapbdt.flverbor = pr_flverbor
          ;
        rw_recebidos_dia cr_recebidos_dia%ROWTYPE;
 
        /* Saldo Anterior */
-       CURSOR cr_saldo_anterior IS
+       CURSOR cr_saldo_anterior (pr_flverbor INTEGER) IS
          SELECT
               craptdb.vltitulo,
               craptdb.dtlibbdt,
@@ -967,6 +979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
               craptdb.dtdebito
          FROM
               craptdb
+              INNER JOIN crapbdt  ON crapbdt.cdcooper = craptdb.cdcooper AND crapbdt.nrborder = craptdb.nrborder
               INNER JOIN crapcob  ON crapcob.cdcooper = craptdb.cdcooper AND
                                                    crapcob.cdbandoc = craptdb.cdbandoc AND
                                                    crapcob.nrdctabb = craptdb.nrdctabb AND
@@ -976,6 +989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                                    (pr_tpcobran='T' OR crapcob.flgregis=aux_flregis)
          WHERE
               craptdb.cdcooper = pr_cdcooper
+              AND crapbdt.flverbor = pr_flverbor
          ;
        rw_saldo_anterior cr_saldo_anterior%ROWTYPE;
 
@@ -1054,7 +1068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          END IF;
 
          /*Calcula Resgatados*/
-         OPEN  cr_resgatados;
+         OPEN  cr_resgatados(pr_flverbor=>pr_flverbor);
          LOOP
                FETCH cr_resgatados INTO rw_resgatados;
                EXIT  WHEN cr_resgatados%NOTFOUND;
@@ -1078,7 +1092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          vr_dtmvtoan := tmp_utilante;
 
          /*Calcula baixados sem pagamento dia*/
-         OPEN  cr_baixados_sem_pagamento;
+         OPEN  cr_baixados_sem_pagamento(pr_flverbor=>pr_flverbor);
          LOOP
                FETCH cr_baixados_sem_pagamento INTO rw_baixados_sem_pagamento;
                EXIT  WHEN cr_baixados_sem_pagamento%NOTFOUND;
@@ -1106,7 +1120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                              ,pr_tipo     => 'A' );
 
          /*Calcula pagos COMPE*/
-         OPEN  cr_pagos_compe;
+         OPEN  cr_pagos_compe(pr_flverbor=>pr_flverbor);
          LOOP
                FETCH cr_pagos_compe INTO rw_pagos_compe;
                EXIT  WHEN cr_pagos_compe%NOTFOUND;
@@ -1115,7 +1129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          end   loop;
 
          /*Calcula pagos CAIXA*/
-         OPEN  cr_pagos_caixa;
+         OPEN  cr_pagos_caixa(pr_flverbor=>pr_flverbor);
          LOOP
                FETCH cr_pagos_caixa INTO rw_pagos_caixa;
                EXIT  WHEN cr_pagos_caixa%NOTFOUND;
@@ -1124,16 +1138,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          end   loop;
 
          /*Calcula recebidos no dia*/
-         OPEN  cr_recebidos_dia;
+         OPEN  cr_recebidos_dia(pr_flverbor=>pr_flverbor);
          LOOP
                FETCH cr_recebidos_dia INTO rw_recebidos_dia;
                EXIT  WHEN cr_recebidos_dia%NOTFOUND;
                  vr_qttitulo := vr_qttitulo + 1;
-                 vr_vltitulo := vr_vltitulo - rw_recebidos_dia.vltitulo;
+                 vr_vltitulo := vr_vltitulo + rw_recebidos_dia.vltitulo;
          end   loop;
 
          /*Calcula Saldo Anterior*/
-         OPEN  cr_saldo_anterior;
+         OPEN  cr_saldo_anterior(pr_flverbor=>pr_flverbor);
          LOOP
                FETCH cr_saldo_anterior INTO rw_saldo_anterior;
                EXIT  WHEN cr_saldo_anterior%NOTFOUND;
@@ -1232,7 +1246,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       ) is
     -- variaveis de retorno
-    vr_tab_dados_conciliacao typ_tab_dados_conciliacao;
+    vr_tab_dados_antigo typ_tab_dados_conciliacao;
+    vr_tab_dados_novo typ_tab_dados_conciliacao;
 
     vr_tab_erro         gene0001.typ_tab_erro;
     vr_qtregist         number;
@@ -1273,16 +1288,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                               , pr_dscritic => vr_dscritic);
 
 
-      pc_obtem_dados_conciliacao( vr_cdcooper,
-                                        pr_tpcobran,
-                                        pr_dtvencto,
-                                        pr_dtmvtolt,
+      pc_obtem_dados_conciliacao( pr_cdcooper => vr_cdcooper,
+                                        pr_tpcobran => pr_tpcobran,
+                                        pr_dtvencto => pr_dtvencto,
+                                        pr_dtmvtolt => pr_dtmvtolt,
+                                        pr_flverbor => 0,
                                         --> out
-                                        vr_tab_dados_conciliacao,
-                                        pr_cdcritic,
-                                        pr_dscritic
+                                        pr_tab_dados_conciliacao => vr_tab_dados_antigo,
+                                        pr_cdcritic => pr_cdcritic,
+                                        pr_dscritic => pr_dscritic
                                );
 
+      pc_obtem_dados_conciliacao( pr_cdcooper => vr_cdcooper,
+                                        pr_tpcobran => pr_tpcobran,
+                                        pr_dtvencto => pr_dtvencto,
+                                        pr_dtmvtolt => pr_dtmvtolt,
+                                        pr_flverbor => 1,
+                                        --> out
+                                        pr_tab_dados_conciliacao => vr_tab_dados_novo,
+                                        pr_cdcritic => pr_cdcritic,
+                                        pr_dscritic => pr_dscritic
+                               );
 
       -- inicializar o clob
       vr_des_xml := null;
@@ -1294,26 +1320,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
       pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
                      '<root><dados >');
 
-      -- ler os registros de titcto e incluir no xml
-      vr_index := vr_tab_dados_conciliacao.first;
-      while vr_index is not null loop
-            pc_escreve_xml('<inf>'||
-                              '<dtvencto>' || to_char(vr_tab_dados_conciliacao(vr_index).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
-                              '<qtsldant>' || vr_tab_dados_conciliacao(vr_index).qtsldant || '</qtsldant>' ||
-                              '<vlsldant>' || vr_tab_dados_conciliacao(vr_index).vlsldant || '</vlsldant>' ||
-                              '<qtderesg>' || vr_tab_dados_conciliacao(vr_index).qtderesg || '</qtderesg>' ||
-                              '<vlderesg>' || vr_tab_dados_conciliacao(vr_index).vlderesg || '</vlderesg>' ||
-                              '<qtvencid>' || vr_tab_dados_conciliacao(vr_index).qtvencid || '</qtvencid>' ||
-                              '<vlvencid>' || vr_tab_dados_conciliacao(vr_index).vlvencid || '</vlvencid>' ||
-                              '<qttitulo>' || vr_tab_dados_conciliacao(vr_index).qttitulo || '</qttitulo>' ||
-                              '<vltitulo>' || vr_tab_dados_conciliacao(vr_index).vltitulo || '</vltitulo>' ||
-                              '<qtcredit>' || vr_tab_dados_conciliacao(vr_index).qtcredit || '</qtcredit>' ||
-                              '<vlcredit>' || vr_tab_dados_conciliacao(vr_index).vlcredit || '</vlcredit>' ||
-                           '</inf>'
+      pc_escreve_xml('<antigo>'||
+                        '<dtvencto>' || to_char(vr_tab_dados_antigo(0).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
+                        '<qtsldant>' || vr_tab_dados_antigo(0).qtsldant || '</qtsldant>' ||
+                        '<vlsldant>' || vr_tab_dados_antigo(0).vlsldant || '</vlsldant>' ||
+                        '<qtderesg>' || vr_tab_dados_antigo(0).qtderesg || '</qtderesg>' ||
+                        '<vlderesg>' || vr_tab_dados_antigo(0).vlderesg || '</vlderesg>' ||
+                        '<qtvencid>' || vr_tab_dados_antigo(0).qtvencid || '</qtvencid>' ||
+                        '<vlvencid>' || vr_tab_dados_antigo(0).vlvencid || '</vlvencid>' ||
+                        '<qttitulo>' || vr_tab_dados_antigo(0).qttitulo || '</qttitulo>' ||
+                        '<vltitulo>' || vr_tab_dados_antigo(0).vltitulo || '</vltitulo>' ||
+                        '<qtcredit>' || vr_tab_dados_antigo(0).qtcredit || '</qtcredit>' ||
+                        '<vlcredit>' || vr_tab_dados_antigo(0).vlcredit || '</vlcredit>' ||
+                     '</antigo>'
                           );
-          /* buscar proximo */
-          vr_index := vr_tab_dados_conciliacao.next(vr_index);
-      end loop;
+      pc_escreve_xml('<novo>'||
+                        '<dtvencto>' || to_char(vr_tab_dados_novo(0).dtvencto,'dd/mm/rrrr') || '</dtvencto>' ||
+                        '<qtsldant>' || vr_tab_dados_novo(0).qtsldant || '</qtsldant>' ||
+                        '<vlsldant>' || vr_tab_dados_novo(0).vlsldant || '</vlsldant>' ||
+                        '<qtderesg>' || vr_tab_dados_novo(0).qtderesg || '</qtderesg>' ||
+                        '<vlderesg>' || vr_tab_dados_novo(0).vlderesg || '</vlderesg>' ||
+                        '<qtvencid>' || vr_tab_dados_novo(0).qtvencid || '</qtvencid>' ||
+                        '<vlvencid>' || vr_tab_dados_novo(0).vlvencid || '</vlvencid>' ||
+                        '<qttitulo>' || vr_tab_dados_novo(0).qttitulo || '</qttitulo>' ||
+                        '<vltitulo>' || vr_tab_dados_novo(0).vltitulo || '</vltitulo>' ||
+                        '<qtcredit>' || vr_tab_dados_novo(0).qtcredit || '</qtcredit>' ||
+                        '<vlcredit>' || vr_tab_dados_novo(0).vlcredit || '</vlcredit>' ||
+                     '</novo>'
+                          );
+                          
       pc_escreve_xml ('</dados></root>',true);
       pr_retxml := xmltype.createxml(vr_des_xml);
 

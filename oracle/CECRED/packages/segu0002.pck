@@ -1743,7 +1743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
       END IF;
       
       -- Ao final, se a insercao do seguro tiver ocorrido com sucesso, retornamos a resposta com:
-      pc_monta_retorno_ws(202,'Contrato aceito – informacao integrada ao Ayllos',pr_dsxmlret);
+      pc_monta_retorno_ws(202,'Contrato aceito – informacao integrada ao Aimaro',pr_dsxmlret);
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2260,7 +2260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
       END IF;
       
       -- Ao final, se a insercao do seguro tiver ocorrido com sucesso, retornamos a resposta com:
-      pc_monta_retorno_ws(202,'Endosso aceito – informacao integrada ao Ayllos',pr_dsxmlret);
+      pc_monta_retorno_ws(202,'Endosso aceito – informacao integrada ao Aimaro',pr_dsxmlret);
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2520,7 +2520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
       END;
       
       -- Ao final, se a insercao do seguro tiver ocorrido com sucesso, retornamos a resposta com:
-      pc_monta_retorno_ws(202,'Cancelamento aceito – informacao integrada ao Ayllos',pr_dsxmlret);
+      pc_monta_retorno_ws(202,'Cancelamento aceito – informacao integrada ao Aimaro',pr_dsxmlret);
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
@@ -3069,7 +3069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
       END IF;
       
       -- Ao final, se a insercao do seguro tiver ocorrido com sucesso, retornamos a resposta com:
-      pc_monta_retorno_ws(202,'Contrato renovado – informacao integrada ao Ayllos',pr_dsxmlret);
+      pc_monta_retorno_ws(202,'Contrato renovado – informacao integrada ao Aimaro',pr_dsxmlret);
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN
@@ -3316,7 +3316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
       END;
       
       -- Ao final, se a insercao do seguro tiver ocorrido com sucesso, retornamos a resposta com:
-      pc_monta_retorno_ws(202,'Vencimento aceito – informacao integrada ao Ayllos',pr_dsxmlret);
+      pc_monta_retorno_ws(202,'Vencimento aceito – informacao integrada ao Aimaro',pr_dsxmlret);
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN

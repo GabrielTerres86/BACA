@@ -1175,6 +1175,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
 															,pr_qtmesagd => 0
 															,pr_cddopcao => 1 -- Data atual
 															,pr_idorigem => vr_idorigem
+                              ,pr_cdagenci => 1 -- Valor estava fixo no fonte RCEL0001.pc_efetua_recarga
+                              ,pr_nrdcaixa => 0 -- Valor estava fixo no fonte RCEL0001.pc_efetua_recarga
+                              ,pr_nmprogra => 'AYLLOS' -- Valor estava fixo no fonte RCEL0001.pc_efetua_recarga
 															,pr_lsdatagd => vr_lsdatagd
 															,pr_cdcritic => vr_cdcritic
 															,pr_dscritic => vr_dscritic);
@@ -1201,6 +1204,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
 															,pr_nrcartao => 0
 															,pr_nrsequni => 0
 															,pr_idorigem => vr_idorigem
+                              ,pr_cdagenci => 1 -- Valor estava fixo no fonte RCEL0001.pc_efetua_recarga
+                              ,pr_nrdcaixa => 0 -- Valor estava fixo no fonte RCEL0001.pc_efetua_recarga
+                              ,pr_nmprogra => 'AYLLOS' -- Valor estava fixo no fonte RCEL0001.pc_efetua_recarga
                               ,pr_flmobile => 0
 															,pr_nsuopera => vr_dsnsuope
 															,pr_dsprotoc => vr_dsprotoc

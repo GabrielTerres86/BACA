@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
     dbms_lob.createtemporary(vr_des_xml, TRUE);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
     vr_texto_completo := NULL;
-    pc_escreve_xml('CODIGO;COOPERATIVA;CODIGO OPERAD;NOME OPERAD;NIVEL;PERMISSAO DE ACESSO;TIPO;PA OPERADOR;PA TRABALHO;ACESSAR SISTEMA AYLLOS WEB;ACESSAR SISTEMA RELACIONAMENTO;ACESSO RESTRITO AO PA;SITUACAO DO OPERADOR;DEPARTAMENTO;VALOR LIMITE;VALOR LIMITE TED;PARTICIPA DO COMITE;VALOR ALCADA CREDITO;VALOR ALCADA CAPTACAO;' ||
+    pc_escreve_xml('CODIGO;COOPERATIVA;CODIGO OPERAD;NOME OPERAD;NIVEL;PERMISSAO DE ACESSO;TIPO;PA OPERADOR;PA TRABALHO;ACESSAR SISTEMA AIMARO WEB;ACESSAR SISTEMA RELACIONAMENTO;ACESSO RESTRITO AO PA;SITUACAO DO OPERADOR;DEPARTAMENTO;VALOR LIMITE;VALOR LIMITE TED;PARTICIPA DO COMITE;VALOR ALCADA CREDITO;VALOR ALCADA CAPTACAO;' ||
                    chr(10));
   
     FOR rw_crapcop IN cr_crapcop LOOP
@@ -386,10 +386,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
               vr_linha := vr_linha || LPAD(rw_crapace.idambace, 2, '0')||';';
               
               IF rw_crapace.idambace = 1 THEN
-                 vr_linha := vr_linha || 'AYLLOS CARACTER' ||';';
+                 vr_linha := vr_linha || 'AIMARO CARACTER' ||';';
               ELSE
                  IF rw_crapace.idambace = 2 THEN
-                    vr_linha := vr_linha || 'AYLLOS WEB' ||';';
+                    vr_linha := vr_linha || 'AIMARO WEB' ||';';
                  ELSE
                     vr_linha := vr_linha || 'PROGRID' ||';';  
                  END IF;

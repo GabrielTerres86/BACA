@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fabricio
-   Data    : Agosto/2014.                       Ultima atualizacao: 07/11/2017
+   Data    : Agosto/2014.                       Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -18,6 +18,8 @@
                      
                 07/11/2017 - Retornar indicadores de situacao da autorizacao (David).
    
+                09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -43,6 +45,9 @@ DEF INPUT PARAM par_nrdconta LIKE crapass.nrdconta                     NO-UNDO.
 DEF INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                     NO-UNDO.
 DEF INPUT PARAM par_dtmvtolt LIKE craplcm.dtmvtolt                     NO-UNDO.
 DEF INPUT PARAM par_cddopcao AS CHAR                                   NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_dsorigem AS CHAR                                  NO-UNDO.
+DEF  INPUT PARAM par_nmprogra AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -103,7 +108,9 @@ DO:
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "</AUTORIZACOES_CADASTRADAS>".
             
-    RUN proc_geracao_log (INPUT TRUE).
+    RUN proc_geracao_log (INPUT TRUE,
+                          INPUT par_dsorigem,
+                          INPUT par_nmprogra).
 END.
     
 /*................................ PROCEDURES ................................*/
@@ -111,6 +118,9 @@ END.
 PROCEDURE proc_geracao_log:
     
     DEF INPUT PARAM par_flgtrans AS LOGICAL                         NO-UNDO.
+    
+    DEF INPUT PARAM par_dsorigem AS CHAR                            NO-UNDO.
+    DEF INPUT PARAM par_nmprogra AS CHAR                            NO-UNDO.
     
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
         SET h-b1wgen0014.
@@ -120,13 +130,13 @@ PROCEDURE proc_geracao_log:
             RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
                                           INPUT "996",
                                           INPUT aux_dscritic,
-                                          INPUT "INTERNET",
+                                          INPUT par_dsorigem, /* Projeto 363 - Novo ATM -> estava fixo "INTERNET",*/
                                           INPUT aux_dstransa,
                                           INPUT aux_datdodia,
                                           INPUT par_flgtrans,
                                           INPUT TIME,
                                           INPUT par_idseqttl,
-                                          INPUT "INTERNETBANK",
+                                          INPUT par_nmprogra, /* Projeto 363 - Novo ATM -> estava fixo "INTERNETBANK",*/
                                           INPUT par_nrdconta,
                                           OUTPUT aux_nrdrowid).
                                                             

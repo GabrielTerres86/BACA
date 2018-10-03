@@ -4,14 +4,15 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : James Prust Junior
-   Data    : Agosto/2014.                       Ultima atualizacao: 
+   Data    : Agosto/2014.                       Ultima atualizacao: 09/04/2018
    
    Dados referentes ao programa:
    
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Imprime o extrato de contratacao
    
-   Alteracoes: 
+   Alteracoes: 09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
+                            servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
 
 ..............................................................................*/
 
@@ -40,6 +41,8 @@ DEF  INPUT PARAM par_dtdpagto AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_vltaxiof AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_vltariof AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_flgprevi AS LOG                                   NO-UNDO.
+/* Projeto 363 - Novo ATM */
+DEF  INPUT PARAM par_cdorigem AS INT                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -66,7 +69,7 @@ IF VALID-HANDLE(h-b1wgen0188) THEN
                                                          INPUT par_nrdcaixa,
                                                          INPUT par_cdoperad,
                                                          INPUT par_nmdatela,
-                                                         INPUT 3, /* par_cdorigem */
+                                                         INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* par_cdorigem */
                                                          INPUT par_nrdconta,
                                                          INPUT par_idseqttl,
                                                          INPUT par_dtmvtolt,
@@ -90,7 +93,7 @@ IF VALID-HANDLE(h-b1wgen0188) THEN
                                                          INPUT par_nrdcaixa,
                                                          INPUT par_cdoperad,
                                                          INPUT par_nmdatela,
-                                                         INPUT 3, /* par_cdorigem */
+                                                         INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* par_cdorigem */
                                                          INPUT par_nrdconta,
                                                          INPUT par_idseqttl,
                                                          INPUT par_dtmvtolt,

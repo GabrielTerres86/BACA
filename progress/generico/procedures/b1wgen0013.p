@@ -382,9 +382,9 @@ PROCEDURE consulta-acessadas:
             IF  NOT AVAIL tt-resulta THEN DO:
 
                 IF  craplgt.idorigem = 1 THEN
-                    ASSIGN aux_dsorigem = "Ayllos Caracter".
+                    ASSIGN aux_dsorigem = "Aimaro Caracter".
                 ELSE
-                    ASSIGN aux_dsorigem = "Ayllos Web".
+                    ASSIGN aux_dsorigem = "Aimaro Web".
 
                 CREATE tt-resulta.
                 
@@ -514,9 +514,9 @@ PROCEDURE exibe-detalhes:
                 aux_nmoperad = "OPERADOR NAO ENCONTRADO".
 
             IF  craplgt.idorigem = 1 THEN
-                ASSIGN aux_dsorigem = "Ayllos Caracter".
+                ASSIGN aux_dsorigem = "Aimaro Caracter".
             ELSE
-                ASSIGN aux_dsorigem = "Ayllos Web".
+                ASSIGN aux_dsorigem = "Aimaro Web".
 
             FOR FIRST crapcop FIELDS(crapcop.cdcooper
                                      crapcop.nmrescop)
@@ -619,9 +619,9 @@ PROCEDURE cria-valida-log:
                          AND tt-resulta.idorigem = par_idorigem) THEN
         DO:
             IF  par_idorigem = 1 THEN
-                ASSIGN aux_dsorigem = "Ayllos Caracter".
+                ASSIGN aux_dsorigem = "Aimaro Caracter".
             ELSE
-                ASSIGN aux_dsorigem = "Ayllos Web".
+                ASSIGN aux_dsorigem = "Aimaro Web".
 
             CREATE tt-resulta.
             ASSIGN tt-resulta.idresult = par_idpesqui

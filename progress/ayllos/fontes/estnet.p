@@ -40,6 +40,9 @@
 			   07/11/2016 - Desconsiderar Guias DARF/DAS pois não podem ser
 			                estornadas - Projeto 338 (David)
 							
+               30/06/2017 - Validar saida de critica para as procedures
+                            (Lucas Ranghetti #674894)
+
                01/09/2017 - Permitir estorno de titulos DDA (Rafael)
 ............................................................................. */
 
@@ -211,7 +214,7 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
              RUN gera_log IN h-b1wgen0014 (INPUT glb_cdcooper,
                                            INPUT glb_cdoperad,
                                            INPUT aux_dscritic,
-                                           INPUT "AYLLOS",
+                                           INPUT "AIMARO",
                                            INPUT aux_dstransa,
                                            INPUT glb_dtmvtolt,
                                            INPUT aux_fltransa,
@@ -454,7 +457,7 @@ DO  WHILE TRUE:
                            craplft.nrdolote = 15000 + tel_nrdcaixa   AND
                            craplft.nrdconta = tel_nrdconta
                            NO-LOCK:
-                           
+					
         /* Desconsiderar Guias DARF/DAS */					
 		IF  craplft.tpfatura = 1  OR
 		    craplft.tpfatura = 2  THEN

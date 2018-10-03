@@ -3124,7 +3124,7 @@ PROCEDURE trata-busca-endereco:
             IF  par_idoricad = 1  THEN
                 ASSIGN tt-endereco.dsoricad = "ENDERECO OBTIDO NOS CORREIOS".
             ELSE
-                ASSIGN tt-endereco.dsoricad = "ENDERECO CADASTRADO VIA AYLLOS".
+                ASSIGN tt-endereco.dsoricad = "ENDERECO CADASTRADO VIA AIMARO".
         END.
 
     ASSIGN par_nrregist = par_nrregist - 1
@@ -3246,7 +3246,7 @@ PROCEDURE exclui-endereco-ayllos:
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-               aux_dstransa = "Deletar endereco gerado pelo Ayllos.".
+               aux_dstransa = "Deletar endereco gerado pelo Aimaro.".
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""

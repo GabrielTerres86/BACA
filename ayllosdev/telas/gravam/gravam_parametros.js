@@ -8,12 +8,66 @@ $(document).ready(function(){
 			$('#perccber', '#divFiltroParametros').css({'display': 'none'});	
 		}
 	});
+	
+	if(/*@cc_on!@*/false || !!document.documentMode){
+	
+		if($("#hrenvi01","#divFiltroParametros").val() == ''){
+			$("#hrenvi01","#divFiltroParametros").val('--:--');
+		}	
+		else{
+			if($("#hrenvi01","#divFiltroParametros").val().indexOf(':') == -1){
+				hora = hora.val().substr(0, 2) + ':' + hora.val().substr(2, 2);
+				$("#hrenvi01","#divFiltroParametros").val(hora);
+			}
+		}
+		
+		$("#hrenvi01","#divFiltroParametros").unbind('change').bind('change', function (e) {
+			var hora = $(e.currentTarget).val(('0000' + $(e.currentTarget).val()).slice(-4));
+			
+			hora = hora.val().substr(0, 2) + ':' + hora.val().substr(2, 2);
+			$(e.currentTarget).val(hora);
+		});
+		
+		if($("#hrenvi02","#divFiltroParametros").val() == ''){
+			$("#hrenvi02","#divFiltroParametros").val('--:--');
+		} 	
+		else{
+			if($("#hrenvi02","#divFiltroParametros").val().indexOf(':') == -1){
+				hora = hora.val().substr(0, 2) + ':' + hora.val().substr(2, 2);
+				$("#hrenvi02","#divFiltroParametros").val(hora);
+			}
+		}
+		
+		$("#hrenvi02","#divFiltroParametros").unbind('change').bind('change', function (e) {
+			var hora = $(e.currentTarget).val(('0000' + $(e.currentTarget).val()).slice(-4));
+			
+			hora = hora.val().substr(0, 2) + ':' + hora.val().substr(2, 2);
+			$(e.currentTarget).val(hora);
+		});
+		
+		if($("#hrenvi03","#divFiltroParametros").val() == ''){
+			$("#hrenvi03","#divFiltroParametros").val('--:--');
+		}
+		else{
+			if($("#hrenvi03","#divFiltroParametros").val().indexOf(':') == -1){
+				hora = hora.val().substr(0, 2) + ':' + hora.val().substr(2, 2);
+				$("#hrenvi03","#divFiltroParametros").val(hora);
+			}
+		}
+		
+		$("#hrenvi03","#divFiltroParametros").unbind('change').bind('change', function (e) {
+			var hora = $(e.currentTarget).val(('0000' + $(e.currentTarget).val()).slice(-4));
+			
+			hora = hora.val().substr(0, 2) + ':' + hora.val().substr(2, 2);
+			$(e.currentTarget).val(hora);
+		});
+	}
 
 	formataFiltroParametros();
 });
 
 function formataFiltroParametros(){
-	// Desabilitar a opcao
+	// Desabilitar a opção
 	$("#cddopcao", "#frmCab").desabilitaCampo();
 	
 	$("#cddopcao", "#frmCab").css("width", "560px");

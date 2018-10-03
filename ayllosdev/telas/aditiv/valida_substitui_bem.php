@@ -124,7 +124,7 @@
     // Mostrar confirmação    
     echo "showConfirmacao(
                 ' ".$msgAvisoDefault.$msgAviso." Continuar alteração ?'
-                ,'Confirma?- Ayllos'
+                ,'Confirma?- Aimaro'
                 ,'".$funcaoSim."'
                 ,'".$funcaoNao."'
                 ,'sim.gif'

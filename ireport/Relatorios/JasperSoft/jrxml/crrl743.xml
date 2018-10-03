@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root nmprimtl="NMC CONFECCOES EIRELI - ME"  nrdconta="8028.016.1" >
+    <lancamentos>
+        <lancamento>
+            <tpresitro>SI</tpresitro>
+            <dsextrato>SALDO ANTERIOR</dsextrato>
+            <dtmvtolt>29/12/2017</dtmvtolt>
+            <nrdocmto>         </nrdocmto>
+            <cdhistor/>
+            <dshistor/>
+            <indebcre/>
+            <vllamnto>-14.260,96</vllamnto>
+            <vlslddia>-14.260,96</vlslddia>
+        </lancamento>
+        <lancamento>
+            <tpresitro>L</tpresitro>
+            <dsextrato>25/05/2018</dsextrato>
+            <dtmvtolt>25/05/2018</dtmvtolt>
+            <nrdocmto>        0</nrdocmto>
+            <cdhistor>508</cdhistor>
+            <dshistor>PG.P/INTERNET</dshistor>
+            <indebcre>D</indebcre>
+            <vllamnto>200,00</vllamnto>
+            <vlslddia/>
+        </lancamento>
+        <lancamento>
+            <tpresitro>SD</tpresitro>
+            <dsextrato>25/05/2018</dsextrato>
+            <dtmvtolt>25/05/2018</dtmvtolt>
+            <nrdocmto>         </nrdocmto>
+            <cdhistor/>
+            <dshistor/>
+            <indebcre/>
+            <vllamnto/>
+            <vlslddia/>
+        </lancamento>
+        <lancamento>
+            <tpresitro>L</tpresitro>
+            <dsextrato>10/06/2018</dsextrato>
+            <dtmvtolt>10/06/2018</dtmvtolt>
+            <nrdocmto>        0</nrdocmto>
+            <cdhistor>516</cdhistor>
+            <dshistor>CR.TED/DOC BB</dshistor>
+            <indebcre>C</indebcre>
+            <vllamnto>500,00</vllamnto>
+            <vlslddia>300,00</vlslddia>
+        </lancamento>
+        <lancamento>
+            <tpresitro>L</tpresitro>
+            <dsextrato>10/06/2018</dsextrato>
+            <dtmvtolt>10/06/2018</dtmvtolt>
+            <nrdocmto>        0</nrdocmto>
+            <cdhistor>508</cdhistor>
+            <dshistor>PG.P/INTERNET</dshistor>
+            <indebcre>D</indebcre>
+            <vllamnto>100,00</vllamnto>
+            <vlslddia>400,00</vlslddia>
+        </lancamento>
+        <lancamento>
+            <tpresitro>SD</tpresitro>
+            <dsextrato>10/06/2018</dsextrato>
+            <dtmvtolt>10/06/2018</dtmvtolt>
+            <nrdocmto>         </nrdocmto>
+            <cdhistor/>
+            <dshistor/>
+            <indebcre/>
+            <vllamnto>400,00</vllamnto>
+            <vlslddia>400,00</vlslddia>
+        </lancamento>
+        <lancamento>
+            <tpresitro>L</tpresitro>
+            <dsextrato>13/06/2018</dsextrato>
+            <dtmvtolt>13/06/2018</dtmvtolt>
+            <nrdocmto>        0</nrdocmto>
+            <cdhistor>516</cdhistor>
+            <dshistor>CR.TED/DOC BB</dshistor>
+            <indebcre>C</indebcre>
+            <vllamnto>150,00</vllamnto>
+            <vlslddia>50,00</vlslddia>
+        </lancamento>
+        <lancamento>
+            <tpresitro>L</tpresitro>
+            <dsextrato>13/06/2018</dsextrato>
+            <dtmvtolt>13/06/2018</dtmvtolt>
+            <nrdocmto>        0</nrdocmto>
+            <cdhistor>508</cdhistor>
+            <dshistor>PG.P/INTERNET</dshistor>
+            <indebcre>D</indebcre>
+            <vllamnto>300,00</vllamnto>
+            <vlslddia>-150,00</vlslddia>
+        </lancamento>
+        <lancamento>
+            <tpresitro>SD</tpresitro>
+            <dsextrato>13/06/2018</dsextrato>
+            <dtmvtolt>13/06/2018</dtmvtolt>
+            <nrdocmto>         </nrdocmto>
+            <cdhistor/>
+            <dshistor/>
+            <indebcre/>
+            <vllamnto>-150,00</vllamnto>
+            <vlslddia>-150,00</vlslddia>
+        </lancamento>
+    </lancamentos>
+</root>

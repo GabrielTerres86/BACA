@@ -1491,7 +1491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     vr_xml xmltype; -- XML que sera enviado
 
     -- Cursor para buscar as contas da pessoa
-    CURSOR cr_contas IS
+    CURSOR cr_contas_coop IS
       SELECT /*+index (ass CRAPASS##CRAPASS5)*/
              ass.cdcooper
             ,ass.nrdconta
@@ -1500,7 +1500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
         FROM tbcadast_pessoa tps
 				    ,crapass ass
        WHERE tps.idpessoa = pr_idpessoa
-			   AND ass.cdcooper = DECODE(NVL(pr_cdcooper,0),0,ass.cdcooper,pr_cdcooper) 
+			   AND ass.cdcooper = pr_cdcooper
 				 AND ass.nrcpfcgc = tps.nrcpfcgc
          AND ass.inpessoa <> 1
 --				 AND ass.dtdemiss IS NULL
@@ -1514,18 +1514,84 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
             ,tbcadast_pessoa tps
 				    ,crapttl ttl
        WHERE tps.idpessoa = pr_idpessoa
-			   AND ttl.cdcooper = DECODE(NVL(pr_cdcooper,0),0,ttl.cdcooper,pr_cdcooper) 
+			   AND ttl.cdcooper = pr_cdcooper 
 				 AND ttl.nrcpfcgc = tps.nrcpfcgc
          AND ass.cdcooper = ttl.cdcooper
          AND ass.nrdconta = ttl.nrdconta
 --				 AND ass.dtdemiss IS NULL
          ;
 
+    -- Cursor para buscar as contas da pessoa
+    CURSOR cr_contas IS
+      SELECT ass.cdcooper
+            ,ass.nrdconta
+            ,1 idseqttl
+            ,ROWNUM - 1 seq
+        FROM tbcadast_pessoa tps
+				    ,crapass ass
+       WHERE tps.idpessoa = pr_idpessoa
+				 AND ass.nrcpfcgc = tps.nrcpfcgc
+         AND ass.inpessoa <> 1
+         -- Adicionado apenas para melhorar indice
+         AND ass.cdcooper > 0
+      UNION ALL
+      SELECT ttl.cdcooper
+            ,ttl.nrdconta
+            ,ttl.idseqttl
+            ,ROWNUM - 1 seq
+        FROM tbcadast_pessoa tps
+				    ,crapttl ttl
+       WHERE tps.idpessoa = pr_idpessoa
+				 AND ttl.nrcpfcgc = tps.nrcpfcgc
+         -- Adicionado apenas para melhorar indice
+         AND ttl.cdcooper > 0;
+
   BEGIN
     -- Cria o cabecalho do xml de envio
     vr_xml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Contas/>');
 
+    --> Verificar se precisara
+    IF nvl(pr_cdcooper,0) > 0 THEN 
+    
     -- Loop sobre a tabela de pessoas
+      FOR rw_contas IN cr_contas_coop LOOP
+
+        -- Insere o nó principal
+        gene0007.pc_insere_tag(pr_xml      => vr_xml
+                              ,pr_tag_pai  => 'Contas'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'Conta'
+                              ,pr_tag_cont => NULL
+                              ,pr_des_erro => pr_dscritic);
+
+        -- Insere os detalhes
+        gene0007.pc_insere_tag(pr_xml      => vr_xml
+                              ,pr_tag_pai  => 'Conta'
+                              ,pr_posicao  => rw_contas.seq
+                              ,pr_tag_nova => 'cdcooper'
+                              ,pr_tag_cont => rw_contas.cdcooper
+                              ,pr_des_erro => pr_dscritic);
+
+        -- Insere os detalhes
+        gene0007.pc_insere_tag(pr_xml      => vr_xml
+                              ,pr_tag_pai  => 'Conta'
+                              ,pr_posicao  => rw_contas.seq
+                              ,pr_tag_nova => 'nrdconta'
+                              ,pr_tag_cont => rw_contas.nrdconta
+                              ,pr_des_erro => pr_dscritic);
+
+        -- Insere os detalhes
+        gene0007.pc_insere_tag(pr_xml      => vr_xml
+                              ,pr_tag_pai  => 'Conta'
+                              ,pr_posicao  => rw_contas.seq
+                              ,pr_tag_nova => 'idseqttl'
+                              ,pr_tag_cont => rw_contas.idseqttl
+                              ,pr_des_erro => pr_dscritic);
+
+      END LOOP;
+    ELSE
+      
+      -- Loop sobre a tabela de pessoas
     FOR rw_contas IN cr_contas LOOP
 
 			-- Insere o nó principal
@@ -1561,6 +1627,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                             ,pr_des_erro => pr_dscritic);
 
     END LOOP;
+    
+    
+    END IF;
 
     pr_retorno := vr_xml;
 

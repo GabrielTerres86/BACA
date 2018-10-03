@@ -24,7 +24,7 @@
 	$lisconta = (isset($_POST['lisconta']))   ? $_POST['lisconta']   : 0 ;
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 	}
 
 	// Monta o xml dinâmico de acordo com a operação 

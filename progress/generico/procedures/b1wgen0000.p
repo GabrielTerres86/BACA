@@ -412,7 +412,7 @@ PROCEDURE efetua_login:
                 IF  crapope.flgutcrm THEN
                     DO:
                        ASSIGN aux_cdcritic = 0
-                              aux_dscritic = "Operador nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM.".
+                              aux_dscritic = "Operador nao esta habilitado para acessar o sistema Aimaro. Utilize o CRM.".
                         
                        RUN gera_erro (INPUT par_cdcooper,
                                       INPUT par_cdagenci,
@@ -432,7 +432,7 @@ PROCEDURE efetua_login:
                   IF  crapage.flgutcrm THEN
                       DO:
                          ASSIGN aux_cdcritic = 0
-                                aux_dscritic = "PA nao esta habilitado para acessar o sistema Ayllos. Utilize o CRM".
+                                aux_dscritic = "PA nao esta habilitado para acessar o sistema Aimaro. Utilize o CRM".
                           
                          RUN gera_erro (INPUT par_cdcooper,
                                         INPUT par_cdagenci,

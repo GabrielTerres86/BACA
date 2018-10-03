@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0004 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 13/04/2018
+  --  Data     : Maio/2013.                   Ultima atualizacao: 10/09/2018
   --
   -- Dados referentes ao programa:
   --
@@ -25,6 +25,14 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0004 IS
   --                           6 - Modificada pc_executa_job para ser utilizada somente por rotinas 
   --                               ainda não alteradas nesse momento e ficaram pendentes
   --                           (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+  --
+  --              27/08/2018 - Gerado o modulo e ação das rotinas disparadas 
+  --                           Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+  --                           Também NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+  --                           (Envolti - Belli - Chamado REQ0024645)
+  --
+  --               10/09/2018 - Listar o XML no Log                           
+  --                           (Envolti - Belli - Chamado REQ0025926)
   --  
   ---------------------------------------------------------------------------------------------------------------
 
@@ -120,7 +128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 13/04/2018
+  --  Data     : Maio/2013.                   Ultima atualizacao: 10/09/2018
   --
   --  Dados referentes ao programa:
   --
@@ -183,7 +191,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --                           6 - Modificada pc_executa_job para ser utilizada somente por rotinas 
   --                               ainda não alteradas nesse momento e ficaram pendentes
   --                           (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
-  --  
+  --
+  --              27/08/2018 - Gerado o modulo e ação das rotinas disparadas 
+  --                           Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+  --                           Também NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+  --                           (Envolti - Belli - Chamado REQ0024645)
+  --
+  --              10/09/2018 - Listar o XML no Log - GIT
+  --                         - Mensagem para o usuário não levar parâmetros - 17/09/2018  
+  --                         - Liberação via GIT                       
+  --                          (Envolti - Belli - Chamado REQ0025926)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedures/functions de uso privado */
@@ -204,7 +222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2014.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -233,6 +251,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
     --  
     -- .............................................................................
   BEGIN
@@ -294,8 +316,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
          AND UPPER(rg.nmsistem) = 'CRED';
 
     BEGIN
-      -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- o Chmd REQ0011757 - 13/04/2018
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop(pr_cdcooper);
@@ -441,7 +464,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       pr_cdcritic := 0;
       
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
     EXCEPTION
       -- Trata mensagens - Chmd REQ0011757 - 13/04/2018
       WHEN vr_exc_saida THEN
@@ -473,7 +497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2014.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -494,6 +518,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
     --  
     -- .............................................................................
   BEGIN
@@ -537,7 +565,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
           
     BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       
       --Ajuste mensagem de erro - Chmd REQ0011757 - 13/04/2018
       vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper || 
@@ -547,7 +576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                      ', pr_nmrotina:' || pr_nmrotina || 
                      ', pr_cddopcao:' || pr_cddopcao || 
                      ', pr_inproces:' || pr_inproces ;
-      
+                  
       -- Valida o acesso ao sistema
       pc_valida_acesso_sistema(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => pr_cdoperad
@@ -605,12 +634,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       pr_cdcritic := 0;
       
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
     EXCEPTION      
       -- Trata mensagens - Chmd REQ0011757 - 13/04/2018
       WHEN vr_exc_saida THEN
         pr_dscritic := pr_dscritic ||
-                       '. ' || vr_dsparame;
+                       ' ' || vr_dsparame;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - Chmd REQ0011757 - 13/04/2018
         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper); 
@@ -994,7 +1024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2014.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1006,6 +1036,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
     --  
     -- .............................................................................
   BEGIN
@@ -1021,7 +1055,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
 
     BEGIN
       -- Incluido nome do módulo logado - Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => gene0007.fn_valor_tag(pr_xml => pr_xml, pr_pos_exc => 0, pr_nomtag => 'cdcooper'));
@@ -1052,14 +1087,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         RAISE vr_exc_saida;
       END IF;
       -- Retorna nome do módulo logado - Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
       -- Libera acesso a tela indicando que não existe crítica
       pr_cdcritic := 0;
       pr_dscritic := NULL;
       
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
     EXCEPTION
       -- Trata mensagens - Chmd REQ0011757 - 13/04/2018
       -- Excluido vr_exc_null - agora é tratado via variavel 
@@ -1092,7 +1129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2014.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1102,12 +1139,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
     --  
     -- .............................................................................
   BEGIN
     BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'gene0004.fn_cria_xml_log');
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'gene0004.fn_cria_xml_log');
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       RETURN '<?xml version="1.0" encoding="ISO-8859-1" ?><Root><params>' ||
              '<nmprogra>' || pr_nmdatela || '</nmprogra>' ||
              '<cdcooper>' || pr_cdcooper || '</cdcooper>' ||
@@ -1117,7 +1159,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
              '<cdoperad>' || pr_cdoperad || '</cdoperad>' ||
              '<nmeacao>' || pr_nmeacao || '</nmeacao></params></Root>';
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
     END;
   END;
 
@@ -1138,7 +1181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2013.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1152,6 +1195,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
     --  
     -- .............................................................................
   BEGIN
@@ -1159,11 +1206,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       vr_bxml   VARCHAR2(32700);    --> String com o XML do erro   
       
       -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
-      vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_gera_xml_erro'; 
+      --vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_gera_xml_erro'; - 27/08/2018 REQ0024645
 
     BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       pr_dscriret := 'OK';
 
       -- Cabeçalho do arquivo XML
@@ -1189,7 +1237,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       pr_xml := XMLType.createXML(vr_bxml);
     END;
     -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);   
+    --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL); 
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645  
   EXCEPTION        
     -- Trata mensagens - Chmd REQ0011757 - 13/04/2018   
     WHEN OTHERS THEN    
@@ -1212,7 +1261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2013.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1226,6 +1275,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
     --  
     -- .............................................................................
 
@@ -1241,7 +1294,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   BEGIN
     BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       
       BEGIN
         -- Inserir primeiro registro para o histórico (request)
@@ -1268,7 +1322,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       COMMIT;
       
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
     EXCEPTION
       -- Trata log - Chmd REQ0011757 - 13/04/2018
       WHEN vr_exc_erro THEN
@@ -1298,7 +1353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2013.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1310,6 +1365,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
     --  
     -- .............................................................................
 
@@ -1324,7 +1383,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   BEGIN
     BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro); 
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645 
       
       BEGIN      
         -- Atualizar histórico com XML de retorno (response)
@@ -1347,7 +1407,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       COMMIT;
       
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
     EXCEPTION
       -- Trata log - Chmd REQ0011757 - 13/04/2018
       WHEN vr_exc_erro THEN
@@ -1376,7 +1437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2013.                   Ultima atualizacao: 10/09/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1396,6 +1457,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Gerado o modulo e ação das rotinas disparadas                           
+    --                            Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
+    --
+    --               10/09/2018 - Listar o XML no Log                           
+    --                           (Envolti - Belli - Chamado REQ0025926)
     --  
     -- .............................................................................
   BEGIN
@@ -1433,7 +1502,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
 
     BEGIN
       -- Incluido nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       
       -- Extrair dados do XML de requisição
       gene0004.pc_extrai_dados(pr_xml      => pr_xml
@@ -1454,7 +1524,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         RAISE vr_exc_erro;
       END IF;
       -- Retorna nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
       -- Gravar solicitação
       pc_insere_trans(pr_xml      => pr_xml
@@ -1473,7 +1544,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         RAISE vr_exc_erro;
       END IF;
       -- Retorna nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
       -- Criar XML com dados de LOG para propagar para os objetos executados
       vr_xmllog := fn_cria_xml_log(pr_cdcooper => vr_cdcooper
@@ -1512,7 +1584,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         -- Quebra a string de parametros
         vr_param := gene0002.fn_quebra_string(rw_craprdr.lstparam, ',');
         -- Retorna nome do módulo logado Chmd REQ0011757 - 13/04/2018
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+        --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+        -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
         -- Itera sobre a string quebrada
         IF vr_param.count > 0 THEN
@@ -1554,6 +1627,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         vr_sql := vr_sql || '''' || vr_xmllog || ''', :1, :2, :3, :4, :5); end;';
       END IF;
 
+      -- Setado modulo paleativamente - 27/08/2018 - Chd REQ0024645    
+      DECLARE
+        vr_nmtelxml VARCHAR2(200);
+        vr_nmmodulo VARCHAR2(200);
+      BEGIN
+        vr_nmtelxml := gene0007.fn_valor_tag(pr_xml => pr_xml, pr_pos_exc => 0, pr_nomtag => 'nmdatela');
+        IF vr_nmtelxml IS NULL THEN
+           vr_nmmodulo := vr_nmeacao  || '-' || rw_craprdr.nmpackag;
+        ELSE
+           vr_nmmodulo := vr_nmtelxml || '-' || rw_craprdr.nmpackag;
+        END IF;
+        -- Incluido nome do módulo que "Vai Disparar"
+        GENE0001.pc_set_modulo(pr_module => vr_nmmodulo, pr_action => rw_craprdr.nmproced);        
+      EXCEPTION
+        WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => 0);  
+          gene0004.pc_log(pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 9999)||vr_nmrotpro||'. '||SQLERRM
+                         ,pr_cdcritic => 9999);               
+      END;
+     
       -- Ordem para executar de forma imediata o SQL dinâmico
       EXECUTE IMMEDIATE vr_sql USING OUT pr_cdcritic, OUT pr_dscritic, IN OUT pr_xml, OUT pr_nmdcampo, OUT pr_des_erro;
 
@@ -1576,25 +1669,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       END IF;
       
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);      
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL); 
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645     
     EXCEPTION
+      -- Incluir no Log o parametro que entra no execute imediate - Chmd REQ0025926 - 10/09/2018
       WHEN vr_exc_problema THEN
         pr_des_erro := 'NOK';
       WHEN vr_exc_erro THEN
         -- Buscar a descrição - Se foi retornado apenas código
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic, pr_dscritic => pr_dscritic); 
         pr_dscritic := pr_dscritic ||
-                       '. pr_nrseqsol:' || pr_nrseqsol;
+                       '. pr_nrseqsol:' || pr_nrseqsol ||
+                       
+                       ', vr_sql:'      || SUBSTR(vr_sql,1,2000) ||
+                       ', pr_cdcritic:' || pr_cdcritic ||
+                       ', pr_dscritic:' || SUBSTR(pr_dscritic,1,500) ||
+                       ', pr_nmdcampo:' || pr_nmdcampo ||
+                       ', pr_des_erro:' || SUBSTR(pr_des_erro,1,500)
+                       ;
+                       
         pr_des_erro := 'NOK';
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - Chmd REQ0011757 - 13/04/2018
-        CECRED.pc_internal_exception(pr_cdcooper => 0); 
+        CECRED.pc_internal_exception(pr_cdcooper => 0
+                                    ,pr_compleme => '. pr_nrseqsol:' || pr_nrseqsol ||                       
+                                                    ', execute immediate vr_sql:' || SUBSTR(vr_sql,1,2000) ||
+                                                    ', pr_cdcritic:' || pr_cdcritic ||
+                                                    ', pr_dscritic:' || SUBSTR(pr_dscritic,1,500) ||
+                                                    ', pr_nmdcampo:' || pr_nmdcampo ||
+                                                    ', pr_des_erro:' || SUBSTR(pr_des_erro,1,500) );  
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                        vr_nmrotpro      ||
                        '. ' || SQLERRM  ||
-                       '. pr_nrseqsol:' || pr_nrseqsol; 
+                       '. pr_nrseqsol:' || pr_nrseqsol ||
+                       
+                       ', vr_sql:'      || SUBSTR(vr_sql,1,2000) ||
+                       ', pr_cdcritic:' || pr_cdcritic ||
+                       ', pr_dscritic:' || SUBSTR(pr_dscritic,1,500) ||
+                       ', pr_nmdcampo:' || pr_nmdcampo ||
+                       ', pr_des_erro:' || SUBSTR(pr_des_erro,1,500)
+                       ;
+                        
         pr_des_erro := 'NOK';
     END;
   END pc_redir_acao;
@@ -1609,7 +1726,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Maio/2013.                   Ultima atualizacao: 27/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1628,6 +1745,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
+    --
+    --              10/09/2018 - Mensagem para o usuário não levar parâmetros - 17/09/2018                      
+    --                          (Envolti - Belli - Chamado REQ0025926)
     --  
     -- .................................................................................................
   BEGIN
@@ -1650,14 +1774,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
 
     BEGIN
       -- Incluido nome do módulo logado
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
       -- Criar instancia do XML em memória
       vr_xml := XMLType.createxml(pr_xml_req);
       
       vr_cdcooper := NVL(gene0007.fn_valor_tag(pr_xml => vr_xml, pr_pos_exc => 0, pr_nomtag => 'cdcooper'),0);
       -- Retorna nome do módulo logado
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
       -- Verifica se existe a TAG de permissão
       gene0007.pc_lista_nodo(pr_xml => vr_xml
@@ -1672,7 +1798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         RAISE vr_exc_erro;
       END IF;
       -- Retorna nome do módulo logado
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
 
       -- Verifica se existe permissão de execução da tela pelo usuário e hora
       IF vr_conttag > 0 THEN
@@ -1684,7 +1811,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
           RAISE vr_exc_libe;
         END IF;
         -- Retorna nome do módulo logado
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+        --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+        -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       END IF;
 
       -- Gerar requisição para web
@@ -1736,20 +1864,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
 
       ELSE
         -- Retorna nome do módulo logado
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+        --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+        -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
         -- Propagar XML de sucesso
         pr_xml_res := vr_xml.getClobVal();
       END IF;
       
       -- Limpa nome do módulo logado
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
     EXCEPTION      
       WHEN vr_exc_libe THEN                
         -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
         gene0004.pc_log(pr_dscritic => vr_dscritic
                        ,pr_cdcritic => vr_cdcritic                     
                        ,pr_cdcooper => vr_cdcooper
-                       );
+                       );        
+        -- Mensagem para o usuário não levar parâmetros - Chd REQ0025926 - 10/09/2018 - 17/09/2018        
+        IF NVL(vr_cdcritic,0) > 0 THEN
+          IF NVL(vr_cdcritic,0) = 9999 THEN
+            vr_cdcritic:= 1224;
+            vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          ELSE
+            vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          END IF;
+        END IF;        
         -- Gerar XML de erro
         pc_gera_xml_erro(pr_xml      => vr_erro_xml
                         ,pr_cdcooper => vr_cdcooper
@@ -1838,7 +1977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Abril/2014.                   Ultima atualizacao: 13/04/2018
+    --  Data     : Abril/2014.                   Ultima atualizacao: 10/09/2018
     --
     --  Dados referentes ao programa:
     --
@@ -1851,16 +1990,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --
     --               13/04/2018 - Trata Others / Seta Modulo / Mensagem fixa
     --                            (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+    --
+    --               27/08/2018 - Gerado o modulo e ação das rotinas disparadas                           
+    --                            Ação paleativa até todas rotinas setarem o modulo "o que são milhares"
+    --                            NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas
+    --                           (Envolti - Belli - Chamado REQ0024645)
+    --
+    --               10/09/2018 - Listar o XML no Log                           
+    --                           (Envolti - Belli - Chamado REQ0025926)
     --  
     -- .............................................................................
     --
     -- Variaveis para tratar as criticas - Chmd REQ0011757 - 13/04/2018
     vr_nmrotpro   VARCHAR2  (100)            := 'GENE0004.pc_extrai_dados'; 
     vr_cdcritic   crapcri.cdcritic%TYPE;
+    -- Variaveis para tratar xml nulo - Chmd REQ0025926 - 10/09/2018
+    vr_dsxml      VARCHAR2(3000);
+    vr_sqlcode    NUMBER(10);
+    vr_cdgraerr   NUMBER (1);
   BEGIN
     BEGIN
       -- Incluido nome do módulo logado
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
       --
       pr_cdcooper := TO_NUMBER(TRIM(pr_xml.extract('/Root/params/cdcooper/text()').getstringval()));
       pr_nmdatela := TRIM(pr_xml.extract('/Root/params/nmprogra/text()').getstringval());
@@ -1870,16 +2022,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       pr_idorigem := TRIM(pr_xml.extract('/Root/params/idorigem/text()').getstringval());
       pr_cdoperad := TRIM(pr_xml.extract('/Root/params/cdoperad/text()').getstringval());
       -- Limpa nome do módulo logado Chmd REQ0011757 - 13/04/2018
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      --GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+      -- NÃO setar MODULO e ACTION porque essa rotina entra no ciclo de milhares de chamadas - 27/08/2018 REQ0024645
+      
+      -- Setado modulo paleativamente - 27/08/2018 - Chd REQ0024645
+      DECLARE
+        vr_nmtelxml   VARCHAR2   (200);
+        vr_nmmodulo   VARCHAR2   (200);
+      BEGIN
+        BEGIN
+          vr_nmtelxml := TRIM(pr_xml.extract('/Root/Permissao/nmdatela/text()').getstringval());
+        EXCEPTION
+          WHEN OTHERS THEN
+            IF SQLCODE = -30625 THEN
+              vr_nmtelxml := NULL; -- O metodo pr_xml.extract não encontra e sai com o codigo 30625
+            ELSE
+              CECRED.pc_internal_exception(pr_cdcooper => 0); 
+              gene0004.pc_log(pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 9999)||vr_nmrotpro||'. '||SQLERRM
+                             ,pr_cdcritic => 9999); 
+            END IF;
+        END;
+        --
+        IF vr_nmtelxml IS NULL THEN
+           vr_nmmodulo := pr_nmdatela;
+        ELSE
+           vr_nmmodulo := vr_nmtelxml || ' - ' || pr_nmdatela;
+        END IF;
+        -- Incluido nome do módulo que "Vai Disparar"
+        GENE0001.pc_set_modulo(pr_module => vr_nmmodulo, pr_action => pr_nmeacao);
+        --
+      EXCEPTION
+        WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => 0);
+          gene0004.pc_log(pr_dscritic => gene0001.fn_busca_critica(pr_cdcritic => 9999)||vr_nmrotpro||'. '||SQLERRM
+                         ,pr_cdcritic => 9999); 
+      END;
+      --
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - Chmd REQ0011757 - 13/04/2018
-        CECRED.pc_internal_exception(pr_cdcooper => 0);         
+        -- Trata se erro de xml nulo não grava TBGEN 
+        -- porque não da para descobrir quem esta passando - Chmd REQ0025926 - 10/09/2018
+        BEGIN 
+          vr_sqlcode := SQLCODE;       
+          vr_dsxml   := SUBSTR(pr_xml.getStringVal(),1,3000); 
+          vr_dsxml   := '1 - sqlcode original:' || vr_sqlcode || ' - pr_xml:' || vr_dsxml;
+          CECRED.pc_internal_exception(pr_cdcooper => 0
+                                      ,pr_compleme => vr_dsxml);         
+        EXCEPTION
+          WHEN OTHERS THEN
+          IF SQLCODE = -30625 THEN
+            -- Se chegar XML nulo não vai gravar TBGEN ERRO
+            NULL;
+          ELSE
+            vr_dsxml := SUBSTR(pr_xml.getStringVal(),1,3000);            
+            vr_dsxml := '2 - sqlcode original:' || vr_sqlcode || ' - pr_xml:' || vr_dsxml;
+            BEGIN
+              -- Comando para retornar negativo o valor do SQLCODE e o sistema gravar a TBEGN ERRO
+              vr_cdgraerr := 0 / 0; 
+            EXCEPTION
+              WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => 0
+                                            ,pr_compleme => vr_dsxml || ' - ' ||vr_cdgraerr);         
+            END;                    
+          END IF;                      
+        END;      
         -- Efetuar retorno do erro não tratado
         vr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
                        vr_nmrotpro ||
-                       '. ' || SQLERRM; 
+                       '. ' || SQLERRM ||
+                       ', vr_dsxml:'   || vr_dsxml; 
     END;
   END pc_extrai_dados;
 

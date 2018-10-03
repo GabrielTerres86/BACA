@@ -65,7 +65,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',utf8_decode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos','',false);
+		exibirErro('error',utf8_decode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Aimaro','',false);
 	}
 	
 	$motivos = $xmlObjeto->roottag->tags;

@@ -1379,7 +1379,7 @@ function exibirMensagens( strArray, metodo  ) {
 		elementoAtual	= arrayMensagens.pop();
 		arrayMensagens 	= implode( '|' , arrayMensagens);
 		// Exibindo mensagem de erro
-		showError('inform',elementoAtual,'Alerta - Ayllos',"exibirMensagens('"+arrayMensagens+"','"+metodo+"')");
+		showError('inform',elementoAtual,'Alerta - Aimaro',"exibirMensagens('"+arrayMensagens+"','"+metodo+"')");
 	} else {
 		eval(metodo);
 	}
@@ -2029,7 +2029,7 @@ function verificaAguardoImpressao(callback) {
 		}
 	} catch (err) {
 		hideMsgAguardo();
-		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.","Alerta - Ayllos","");
+		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Aimaro.","Alerta - Aimaro","");
 	}			
 
 	return true;
@@ -2058,7 +2058,7 @@ function carregaImpressaoAyllos(form,action,callback) {
 		verificaAguardoImpressao(callback);	
 	} catch (err) {	
 		hideMsgAguardo();
-		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Ayllos.","Alerta - Ayllos","");
+		showError("error","Erro no sistema de impress&atilde;o: " + err.message + "<br>Feche o navegador e reinicie o sistema Aimaro.","Alerta - Aimaro","");
 	}
 	
 	return true;

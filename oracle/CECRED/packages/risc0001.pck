@@ -1107,6 +1107,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
      21/03/2018 - P450 - Ajuste para exibir valores de juros,taxas,mora etc... de contas
                   correntes negativas e caso possuir com limites de credito estourado (Rangel Decker) AMcom
 
+     02/10/2018 - Ajuste para acrescentar juros60 no valor da divida do ADP.
+                  PRJ450 - Regulatorio(Odirlei-AMcom)
   ............................................................................. */
 
 
@@ -1787,6 +1789,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_vlprejuz_conta := 0;
       vr_vldivida := 0;
 
+      --> Necessario acrescentar valor da do juros + 60 no ADP, 
+      -- visto que este valor não é apresentado nos vencimentos
+      IF rw_crapris.cdorigem = 1 THEN
+        vr_vldivida := vr_vldivida + nvl(rw_crapris.vljura60,0);
+      END IF;
+      
       -- Percorrer os valores do risco
       FOR rw_crapvri IN cr_crapvri(pr_cdcooper,
                                    rw_crapris.nrdconta,

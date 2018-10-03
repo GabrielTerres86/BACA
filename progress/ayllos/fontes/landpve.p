@@ -2292,7 +2292,7 @@ DO WHILE TRUE:
       RUN gera_log IN h-b1wgen0014 (INPUT glb_cdcooper,
                                     INPUT glb_cdoperad,
                                     INPUT "",
-                                    INPUT "AYLLOS",
+                                    INPUT "AIMARO",
                                     INPUT "Exclusao de lancamento",
                                     INPUT glb_dtmvtolt,
                                     INPUT TRUE,

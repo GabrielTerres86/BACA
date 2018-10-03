@@ -1,3 +1,12 @@
+<?php
+/* !
+ * --------------
+ * ALTERAÇÕES   :
+ * --------------
+ * 000: [25/09/2018] Lombardi (CECRED): Tratamento para nao permitir solicitacao de novos Cartoes BB.
+ */
+?>
+
 <?
 
 	session_start();
@@ -10,7 +19,7 @@
 	$inpessoa = $_POST['inpessoa'];
 	
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
-
+	
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>$nrdconta</nrdconta>";
@@ -22,10 +31,10 @@
 	{
 		 $length = strlen($needle);
 		 return (substr($haystack, 0, $length) === $needle);
-	}
+	}			
+	
 
-	
-	
+
 	$admresult = mensageria($xml, "ATENDA_CRD", "VALIDAR_EXISTE_SENHA_APROV_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlSenhaResult = simplexml_load_string($admresult);
 	$cdsitdct = $xmlSenhaResult->Dados->senhas->senha->cdsitdct;
@@ -82,11 +91,11 @@
 			echo  "<script> nmempdeb = '$value';</script>";
 		}
 
-		
+	
 		if($inpessoa == 2 && $key == "nmempmul"){
 			echo  "<script> nmempmul = '$value';</script>";
-		}
-			
+	}
+
 		//echo"<!-- \n >$key< >$value<   \n -->";
 	}
 	$desabilitarNovo = ($jaTemMultiplo && $jaTemEssencial) || ($jaTemMultiplo && $inpessoa == 2);
@@ -97,17 +106,17 @@
 	//echo "/* \n   $crdParams  \n   */ ";
 	
 	$strOpcoes =  implode("#",$opcoesAdicional);
-
 	
+
 	$habilitaMultiploAdicional = count($opcoesAdicional) > 0;
 	$habilitaDebitoAdicional = strlen($xmlAdicionalResult->Dados->cartoes->cartao->debito_tit) > 0;
 	
-	
+
 	echo "<!-- \n Adicional \n $resultAdicionalXML \n -->";
 	//if($xmlSenhaResult->Dados->senhas[0])
 	//$xml_adm =  simplexml_load_string($admresult);
 	$nm = $xml_adm->Dados->cartoes->cartao->operador;
-	
+
 
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro);
 	function contaDoOperador($nrdconta,$glbvars ){
@@ -117,7 +126,7 @@
 			$xml .= "   <nrdconta>$nrdconta</nrdconta>";
 			$xml .= " </Dados>";
 			$xml .= "</Root>";
-			
+
 			$admresult = mensageria($xml, "ATENDA_CRD", "VALIDAR_OPERADOR_ALTERACAO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 			$admxmlObj = getObjectXML($admresult);
 			$xml_adm =  simplexml_load_string($admresult);
@@ -130,9 +139,9 @@
 			}
 			return false;
 	}
-	
+							
 	if (contaDoOperador($nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar cartão de crédito para a própria conta do Operador."),'Alerta - Aimaro',$funcaoAposErro);
-
+				
 	$sNomeCartaoDebito   = 'Cartão CECRED Débito';
 	$sNomeCartaoMultiplo = 'Cartão CECRED Múltiplo';
 	$sNomeCartaoBB       = 'Cartão Banco do Brasil';
@@ -143,7 +152,7 @@
 			$sNomeCartaoMultiplo = 'Cartão CECRED Empresas';
 		}
 	}
-	
+				
 ?>
 <script>
 <?if($cdsitdct == 5){ ?>
@@ -154,13 +163,36 @@
 $(document).ready(function(){
 	if(inpessoa != 1)
 		$("#bbcard").hide();
+	
+	<?php // Tratamento para nao permitir solicitacao de novos Cartoes BB
+	$dtmvtolt = substr($glbvars["dtmvtolt"], 6, 4).'-'.substr($glbvars["dtmvtolt"], 3, 2).'-'.substr ($glbvars["dtmvtolt"], 0, 2);
+	
+	if (($glbvars["cdcooper"] == 10 || // Credcomin 
+		 $glbvars["cdcooper"] == 08 || // Credelesc 
+		 $glbvars["cdcooper"] == 05 || // Acentra 
+		 $glbvars["cdcooper"] == 06 || // Credifiesc 
+		 $glbvars["cdcooper"] == 02 || // Acredicoop 
+		 $glbvars["cdcooper"] == 11 || // Credifoz 
+		 $glbvars["cdcooper"] == 16 && // Alto Vale
+		 strtotime($dtmvtolt) >= strtotime('2018-11-08') && strtotime($dtmvtolt) <= strtotime('2018-11-19')) ||
+		($glbvars["cdcooper"] == 01 && // Viacredi
+		 strtotime($dtmvtolt) >= strtotime('2018-11-14') && strtotime($dtmvtolt) <= strtotime('2018-11-23')) ||
+		($glbvars["cdcooper"] == 12 && // Crevisc
+		 strtotime($dtmvtolt) >= strtotime('2018-10-04') && strtotime($dtmvtolt) <= strtotime('2018-10-15')) ||
+		($glbvars["cdcooper"] == 09 && // Transpocred
+		 strtotime($dtmvtolt) >= strtotime('2018-10-10') && strtotime($dtmvtolt) <= strtotime('2018-10-19')) ||
+		($glbvars["cdcooper"] == 07 && // Credcrea
+		 strtotime($dtmvtolt) >= strtotime('2018-10-18') && strtotime($dtmvtolt) <= strtotime('2018-10-26'))) {		 
+		echo '$("#bbcard").hide();';
+	} 
+	?>
 });
 function goBB(opt){
 	var cc = opt == 0? "bb":"dbt";
-	
+					
 	if(cc == "dbt" &&inpessoa == 2 ){
 		nmEmpresPla = nmempdeb;
-	}
+				}
 	showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 	$.ajax({		
 		type: "POST", 
@@ -173,7 +205,7 @@ function goBB(opt){
 			tipo:cc
 		},		
         error: function (objAjax, responseError, objExcept) {
-
+					
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
@@ -182,7 +214,7 @@ function goBB(opt){
 		}				
 	});
 }
-
+				
 function goCecred(){
 	<?
 	if($desabilitarNovo){
@@ -193,8 +225,8 @@ function goCecred(){
 			showError("error", "<? echo $mensagemDes;?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return;
 		<?
-	}
-	?>
+				}
+				?>
 	showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 	if(cdsitdct == 5){
 		showError("error", "<?php echo utf8ToHtml('Situação da conta permite apenas cartões de débito.');?>", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -215,7 +247,7 @@ function goCecred(){
 			redirect: "html_ajax"
 		},		
         error: function (objAjax, responseError, objExcept) {
-
+							
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
@@ -223,12 +255,12 @@ function goCecred(){
 			$("#divOpcoesDaOpcao1").html(response);			
 		}				
 	});
-}
-
+			}
+			
 function goAdicional(cdadmcrd){
 	if(inpessoa == 2){
 		nmEmpresPla = nmempmul;
-	}
+			}
 	showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 	$.ajax({		
 		type: "POST", 
@@ -243,7 +275,7 @@ function goAdicional(cdadmcrd){
 			cdadmcrd  : cdadmcrd
 		},		
         error: function (objAjax, responseError, objExcept) {
-
+			
 			hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
@@ -252,13 +284,13 @@ function goAdicional(cdadmcrd){
 		}				
 	});
 }
-
+			
 </script>
 <style>
 [title] {
     background-color: rgb(255, 246, 143);
 }
-
+			
 #tooltip * {
     font-size: 10px;
     font-weight: normal;
@@ -266,14 +298,14 @@ function goAdicional(cdadmcrd){
 }
 .dividr{
 	margin-left: 20px !important;
-}
+				}
 </style>
 
 <script>
     $('#nmtitcrd').tooltip();
     $('#nmextttl').tooltip();
 </script>
-
+			
 <form action="" name="frmNovoCartao" id="frmNovoCartao" method="post" onSubmit="return false;">
     <div id="divDadosNovoCartao">
         <fieldset style="text-align: center;">
@@ -283,7 +315,7 @@ function goAdicional(cdadmcrd){
 					<a 	style="display:table; margin:0 auto; vertical-align: middle;    cursor: default;height: 20px;padding-right:  10px;    padding-bottom: 5px;" 
 						class="botao" 
 						onClick="goCecred()">
-						
+			
 						<span style="margin-right: 10px; margin-left: 10px;"><? echo utf8ToHtml($sNomeCartaoMultiplo."<br>Titular") ?></span>
 					</a>
 					<? if($habilitaMultiploAdicional){ ?>
@@ -300,30 +332,30 @@ function goAdicional(cdadmcrd){
 						onClick="goBB(1);"><span style="margin-right: 10px; margin-left: 10px;">
 						<? echo utf8ToHtml($sNomeCartaoDebito."<br>&ensp; &ensp;Titular / Adicional") ?></span>
 					</a>
-					
+			
 				</p>
 				<br>
 				<p id="bbcard"  style="display:table; margin:0 auto; padding-top:10px; padding-bottom: 20px">
 					<a  class="botao" style="    cursor: default;height: 20px;"onClick="goBB(0);"> <span style="margin-right: 10px; margin-left: 10px;">Cart&atilde;o Banco do Brasil</span></a>
 				</p>
-				
-			</p>
-        </fieldset>
 
+			</p>
+		</fieldset>
+		
         <div id="divBotoes">
             <input type="image" src="<?echo $UrlImagens; ?>botoes/voltar.gif"
                    onClick="voltaDiv(0, 1, 4);
                    return false;"/>
-        </div>
+		</div>
+				
+	</div>
 
-    </div>
-
-    <div id="divDadosAvalistas" class="condensado">
+	<div id="divDadosAvalistas" class="condensado">
 
         <br style="clear:both"/>
     </fieldset>
 
-        <div id="divBotoes">
+		<div id="divBotoes">
             <input type="image" id="btVoltar" src="<?echo $UrlImagens; ?>botoes/voltar.gif"
                    onClick="mostraDivDadosCartao();
                    return false;">
@@ -333,19 +365,19 @@ function goAdicional(cdadmcrd){
             <input type="image" id="btSalvar" src="<?echo $UrlImagens; ?>botoes/concluir.gif"
                    onClick="validarAvalistas(4);
                    return false;">
-        </div>
-    </div>
+		</div>
+	</div>
 </form>
 
 <script type="text/javascript">
-    controlaLayout('frmNovoCartao');
-
+	controlaLayout('frmNovoCartao');
+	
 
     $("#divOpcoesDaOpcao1").css("display", "block");
     $("#divConteudoCartoes").css("display", "none");
 
-    mostraDivDadosCartao();
-    hideMsgAguardo();
-    bloqueiaFundo(divRotina);
+	mostraDivDadosCartao();
+	hideMsgAguardo();
+	bloqueiaFundo(divRotina);
     $('#dsadmcrd', '#frmNovoCartao').focus();
 </script>
