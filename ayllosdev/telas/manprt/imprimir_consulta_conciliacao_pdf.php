@@ -36,10 +36,6 @@
 	$dscartor 			= (isset($_POST['dscartor'])) ? $_POST['dscartor'] : null ;
 	$indconci 			= (isset($_POST['indconci'])) ? $_POST['indconci'] : '' ;
 
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= " <Dados>";

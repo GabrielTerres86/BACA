@@ -17,8 +17,7 @@ isPostMethod();
 // Carrega permissões do operador
 require_once('../../includes/carrega_permissoes.php');		
 
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"G")) <> '') {
-
+if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'@')) <> '') {		
     exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 }
     

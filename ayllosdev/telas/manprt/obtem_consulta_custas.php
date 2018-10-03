@@ -20,10 +20,8 @@
 	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();
 
-	// Verifica Permissões
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
-		?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
-		exit();	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'@')) <> '') {		
+		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}	
 
 	// Recebe o POST
@@ -34,10 +32,6 @@
 	$cduflogr 			= (isset($_POST['cduflogr'])) ? $_POST['cduflogr']  : null;
     $dscartor 			= (isset($_POST['dscartor'])) ? $_POST['dscartor']  : null;
 	$flcustas 			= (!empty($_POST['flcustas'])) ? $_POST['flcustas'] : null;
-
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
 
 	$xml  = "";
 	$xml .= "<Root>";

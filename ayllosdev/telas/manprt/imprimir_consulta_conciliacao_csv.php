@@ -38,10 +38,6 @@
 	$nriniseq 			= (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1  ;
 	$nrregist 			= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 50  ;
 
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
