@@ -28,8 +28,8 @@ BEGIN
   sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBCAPT_CUSTOD_B3'
                                ,job_type        => 'PLSQL_BLOCK'
                                ,job_action      => 'DECLARE ' || CHR(10)
-                                                || '  vr_dsinform varchar2(4000); ' || CHR(10)
-                                                || '  vr_dscritic varchar2(4000); ' || CHR(10)
+                                                || '  vr_dsinform varchar2(32767); ' || CHR(10)
+                                                || '  vr_dscritic varchar2(32767); ' || CHR(10)
                                                 || 'BEGIN ' || CHR(10)
                                                 || '  CECRED.APLI0007.pc_processo_controle(0,vr_dsinform,vr_dscritic); ' || CHR(10)
                                                 || 'END; '
