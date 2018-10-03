@@ -195,12 +195,24 @@ PROCEDURE pc_incluir_lote(pr_dtmvtolt   IN  craplot.dtmvtolt%TYPE DEFAULT NULL
                         , pr_rw_craplot OUT cr_craplot%ROWTYPE -- Retorna o registro inserido na CRAPLOT
                         , pr_cdcritic   OUT PLS_INTEGER
                         , pr_dscritic   OUT VARCHAR2);
-                        
+
 FUNCTION fn_retorna_val_bloq_transf(pr_cdcooper craplcm.cdcooper%TYPE
                                   , pr_nrdconta craplcm.nrdconta%TYPE
                                   , pr_cdhistor craplcm.cdhistor%TYPE
                                   , pr_dtmvtolt craplcm.dtmvtolt%TYPE DEFAULT NULL)
-  RETURN  tbblqj_ordem_transf.vlordem%TYPE;                        
+  RETURN  tbblqj_ordem_transf.vlordem%TYPE;
+	
+-- Rotina centralizada para estorno de lançamentos na conta corrente, com tratamento para 
+-- contas transferidas para prejuízo 
+PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE 
+	                              , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE 
+																, pr_cdagenci IN  craplcm.cdagenci%TYPE 
+																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+																, pr_nrdolote IN  craplcm.nrdolote%TYPE
+																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_cdcritic OUT crapcri.cdcritic%TYPE
+																, pr_dscritic OUT crapcri.dscritic%TYPE);
 
 END LANC0001;
 /
@@ -463,7 +475,7 @@ DECLARE
     vr_flgcredi       BOOLEAN;                 -- Flag indicadora para Crédito/Débito
 		vr_inprejuz       BOOLEAN;                 -- Indicador de conta em prejuízo
 		vr_vlsldblq       tbblqj_monitora_ordem_bloq.vlsaldo%TYPE; -- Saldo bloqueado por BACENJUD (somente para Créditos)
-		vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)    
+		vr_vltransf       NUMBER;                  -- Valor a transferir para Conta Transitória (somente para Créditos)
 
     vr_exc_erro       EXCEPTION;
 BEGIN
@@ -482,7 +494,7 @@ BEGIN
 		IF vr_reg_historico.indebcre = 'D' AND PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
 			-- Se a conta está estourada e não permite debitar
 			IF NOT fn_pode_debitar(pr_cdcooper, pr_nrdconta, pr_cdhistor) THEN
-				 pr_cdcritic := 1134; -- 1134 - Nao foi possivel realizar debito.
+				 pr_cdcritic := 1390; -- 1390 - Nao foi possivel realizar debito - Conta em prejuizo.
 				 pr_incrineg := 1;    -- Indica que trata-se de crítica de negócio e não erro de BD
 				 RAISE vr_exc_erro;
 			END IF;
@@ -630,11 +642,11 @@ BEGIN
 						vr_vltransf := 0;
 					END IF;
 			  END IF;
-        
+
         --> Verificar se for os historicos de desbloqueio
         IF pr_cdhistor IN (1404,1405) THEN
-        
-          -- Verificar se possui TED de bloqueio judicial pendente e retornar saldo 
+
+          -- Verificar se possui TED de bloqueio judicial pendente e retornar saldo
           -- para bloquio prejuixo caso possua
           vr_vltransf :=  fn_retorna_val_bloq_transf( pr_cdcooper => pr_cdcooper
                                                     , pr_nrdconta => pr_nrdconta
@@ -1280,7 +1292,7 @@ FUNCTION fn_retorna_val_bloq_transf(pr_cdcooper craplcm.cdcooper%TYPE
                                   , pr_cdhistor craplcm.cdhistor%TYPE
                                   , pr_dtmvtolt craplcm.dtmvtolt%TYPE DEFAULT NULL)
   RETURN  tbblqj_ordem_transf.vlordem%TYPE AS vr_vlbloq tbblqj_ordem_transf.vlordem%TYPE;
-  
+
   /* .............................................................................
 
     Programa: fn_retorna_val_bloq_transf
@@ -1298,9 +1310,9 @@ FUNCTION fn_retorna_val_bloq_transf(pr_cdcooper craplcm.cdcooper%TYPE
 
     Alteracoes:
 
-    ..............................................................................*/ 
+    ..............................................................................*/
 
- 
+
   -- Cursores
   CURSOR cr_vlordem IS
     SELECT Sum(b.vlordem) vlordem
@@ -1312,37 +1324,84 @@ FUNCTION fn_retorna_val_bloq_transf(pr_cdcooper craplcm.cdcooper%TYPE
        AND a.cdcooper = pr_cdcooper
        AND b.nrdconta = pr_nrdconta;
     rw_vlordem cr_vlordem%ROWTYPE;
-    
+
   CURSOR cr_craplcm IS
-    SELECT sum(craplcm.vllanmto) vllanmto 
+    SELECT sum(craplcm.vllanmto) vllanmto
       FROM craplcm craplcm
      WHERE craplcm.cdcooper = pr_cdcooper
        AND craplcm.nrdconta = pr_nrdconta
        AND craplcm.cdhistor = pr_cdhistor
        AND craplcm.dtmvtolt = pr_dtmvtolt;
     rw_craplcm cr_craplcm%ROWTYPE;
-  
+
 BEGIN
-  
+
   --> Buscar ordens de Transferencias pendentes
   OPEN cr_vlordem;
   FETCH cr_vlordem INTO rw_vlordem;
   CLOSE cr_vlordem;
-  
+
   --> Buscar lançamentos no dia
   OPEN cr_craplcm;
   FETCH cr_craplcm INTO rw_craplcm;
   CLOSE cr_craplcm;
-  
-  -- Caso o valor de lançamentos for maior que o total de ordens está diferença deve ser 
-  -- transferida para o bloqueado prejuízo                          
+
+  -- Caso o valor de lançamentos for maior que o total de ordens está diferença deve ser
+  -- transferida para o bloqueado prejuízo
   IF nvl(rw_craplcm.vllanmto,0) > nvl(rw_vlordem.vlordem,0) THEN
-    vr_vlbloq := nvl(rw_craplcm.vllanmto,0) - nvl(rw_vlordem.vlordem,0);                      
+    vr_vlbloq := nvl(rw_craplcm.vllanmto,0) - nvl(rw_vlordem.vlordem,0);
   END IF;
-  
+
   RETURN vr_vlbloq;
-  
+
 END fn_retorna_val_bloq_transf;
+
+-- Rotina centralizada para estorno de lançamentos na conta corrente, com tratamento para 
+-- contas transferidas para prejuízo 
+PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE 
+	                              , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE 
+																, pr_cdagenci IN  craplcm.cdagenci%TYPE 
+																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+																, pr_nrdolote IN  craplcm.nrdolote%TYPE
+																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_cdcritic OUT crapcri.cdcritic%TYPE
+																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
+
+  vr_nrdconta craplcm.nrdconta%TYPE;
+BEGIN
+	-- Exclui o lançamento da CRAPLCM
+  DELETE FROM craplcm lcm
+	 WHERE lcm.cdcooper = pr_cdcooper
+	   AND lcm.dtmvtolt = pr_dtmvtolt
+		 AND lcm.cdagenci = pr_cdagenci
+		 AND lcm.cdbccxlt = pr_cdbccxlt
+		 AND lcm.nrdolote = pr_nrdolote 
+		 AND lcm.nrdocmto = pr_nrdocmto
+	 RETURNING lcm.nrdconta INTO vr_nrdconta;
+	 
+	 IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, vr_nrdconta) THEN 
+		 -- Exclui lançamento de estorno do crédito da conta corrente para movimentação para a conta transitória
+		 DELETE FROM craplcm lcm
+		  WHERE lcm.cdcooper = pr_cdcooper
+			  AND lcm.dtmvtolt = pr_dtmvtolt
+				AND lcm.nrdconta = vr_nrdconta
+				AND lcm.nrdocmto = pr_nrdocmto
+				AND lcm.cdhistor = 2719;
+				
+		 -- Exclui lançamento de crédito da conta transitória
+		 DELETE FROM tbcc_prejuizo_lancamento prj
+		  WHERE prj.cdcooper = pr_cdcooper
+			  AND prj.nrdconta = vr_nrdconta
+				AND prj.dtmvtolt = pr_dtmvtolt
+				AND prj.nrdocmto = pr_nrdocmto
+				AND prj.cdhistor = 2720;	
+	 END IF;
+EXCEPTION
+	WHEN OTHERS THEN
+		pr_cdcritic := 0;
+		pr_dscritic := 'Erro nao tratado na rotina "LANC0001.pc_estorna_lancto_conta": ' || SQLERRM;
+END pc_estorna_lancto_conta;													
 
 END LANC0001;
 /
