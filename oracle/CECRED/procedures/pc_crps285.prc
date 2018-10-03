@@ -84,6 +84,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps285(pr_cdcooper IN crapcop.cdcooper%TY
               06/08/2018 - PJ450 - TRatamento do nao pode debitar, crítica de negócio, 
                            após chamada da rotina de geraçao de lançamento em CONTA CORRENTE
                            (Renato Cordeiro - AMcom)
+                           
+              03/10/2018 - PJ450 - Elimina tratamento de NÃO PODE DEBITAR. A própria rotina LANC0001
+                           já verifica se pode ou não debitar e executa a exceção quando volta INCRINEG=1
+                           (Renato Cordeiro - AMcom)
                        
   ............................................................................. */
   
@@ -572,31 +576,6 @@ BEGIN
     
     --Fechar Cursor
     CLOSE cr_crapass;
-    
-    
-    -- 10/07/2018 - Verificar se pode debitar (Regra de Negocio)
-    IF NOT LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => rw_crablcm.nrdconta
-                                   ,pr_cdhistor => rw_crablcm.cdhistor) THEN
-      vr_dscritic := 'Conta nao permite lancamento de debito (regra na LANC0001). Cooperativa: '|| 
-                      pr_cdcooper || ' - Nr. Conta: ' || rw_crablcm.nrdconta || 
-                      ' - Cod. historico: ' || rw_crablcm.cdhistor;
-
-      -- Gera Log
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro Tratado
-                                 pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
-                                                    ' - ' || vr_cdprogra || ' --> '  ||
-                                                    vr_dscritic);
-                                                    
-      -- Efetua Limpeza das variaveis de critica
-      vr_cdcritic := 0;
-      vr_dscritic := NULL;
-
-      -- passa para proximo registro 
-      CONTINUE;
-    END IF; 
-    
   
     -- Tarifa Cheque Administrativo
     IF rw_crablcm.cdhistor LIKE vr_lschqadm THEN
