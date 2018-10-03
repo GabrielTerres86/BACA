@@ -84,7 +84,7 @@
 		<table width="100%">
 			<tbody>
 				<tr>
-					<td width="100px" class="txtNormalBold" style="text-align:right;">
+					<td class="txtNormalBold" style="text-align:left; width: 50px;">
 						<label for="dsdregio" align="right" style="width:100%;">Retorno:</label>	
 					</td>
 					<td>

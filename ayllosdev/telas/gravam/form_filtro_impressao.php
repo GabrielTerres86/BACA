@@ -39,11 +39,6 @@
 			<label for="nrseqlot">Lote:</label>
 			<input type="text" id="nrseqlot" name="nrseqlot"/>
 			
-			<label for="flcritic">
-				<input id="flcritic" name="flcritic" type="checkbox" />
-				<? echo utf8ToHtml('Somente Críticas') ?>
-			</label>
-			
 			<label for="tparquiv"><? echo utf8ToHtml('Tipo:') ?></label>
 			<select id="tparquiv" name="tparquiv" >
 				<option value="INCLUSAO"> <? echo utf8ToHtml('Inclus&atilde;o') ?> </option> 
@@ -68,6 +63,11 @@
 			
 			<label for="dtrefate"> <? echo utf8ToHtml('Data até:') ?></label>
 			<input type="text" id="dtrefate" name="dtrefere" />
+			
+			<label for="flcritic">
+				<input id="flcritic" name="flcritic" type="checkbox" />
+				<? echo utf8ToHtml('Somente Críticas') ?>
+			</label>
 					
 		</div> 	
 

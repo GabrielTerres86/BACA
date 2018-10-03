@@ -84,7 +84,7 @@
 	if($tipsaida == 'PDF'){
 	$nmarquiv  =  $xmlObj->roottag->attributes["NMARQUIV"];
 
-	echo 'Gera_Impressao("'.$nmarquiv.'","estadoInicial();");';			
+	echo 'Gera_Impressao("'.$nmarquiv.'","controlaVoltar(6);");';			
 		
 	} else {
 		

@@ -393,10 +393,10 @@ function formataFiltroImpressao() {
     
     //rotulo
     $('label[for="cdcooper"]', "#divFiltroImpressao").addClass("rotulo");
-	$('label[for="cdagenci"]', "#divFiltroImpressao").addClass("rotulo-linha");
-	$('label[for="nrseqlot"]', "#divFiltroImpressao").addClass("rotulo-linha");
+	$('label[for="cdagenci"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '82px' });
+	$('label[for="nrseqlot"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '84px' });
     $('label[for="tparquiv"]', "#divFiltroImpressao").addClass("rotulo").css({ 'width': '73px' });
-	$('label[for="flcritic"]', "#divFiltroImpressao").css({ 'padding-left': '50px' });
+	$('label[for="flcritic"]', "#divFiltroImpressao").css({ 'padding-left': '60px' });
 	$('label[for="nrdconta"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '82px' });
 	$('label[for="nrctrpro"]', "#divFiltroImpressao").addClass("rotulo-linha").css({ 'width': '64px' });
 	$('label[for="dschassi"]', '#divFiltroImpressao').addClass("rotulo").css({ 'width': '73px' });
@@ -405,7 +405,7 @@ function formataFiltroImpressao() {
 
     // campo
     $('#cdcooper', '#divFiltroImpressao').css({ 'width': '150px', 'text-align': 'left' }).habilitaCampo();
-	$('#cdagenci', '#divFiltroImpressao').css({ 'width': '50px', 'text-align': 'center' }).addClass('inteiro').attr('maxlength', '3').habilitaCampo();
+	$('#cdagenci', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'center' }).addClass('inteiro').attr('maxlength', '3').habilitaCampo();
 	$('#nrseqlot', '#divFiltroImpressao').css({ 'width': '100px', 'text-align': 'right' }).attr('maxlength', '7').habilitaCampo().addClass('inteiro');
     $('#tparquiv', '#divFiltroImpressao').css({ 'width': '150px', 'text-align': 'left' }).habilitaCampo();
 	$('#flcritic', '#divFiltroImpressao').habilitaCampo();
@@ -2329,7 +2329,7 @@ function mostrabutton() {
 		$('#dsjustif', '#frmBens').habilitaCampo();
 		$('#btLibJudicial','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btBlocJudicial','#divBotoesBens').css({ 'display': 'inline' });				
-	}else if (opcaoButton == "M" || opcaoButton == "A" || opcaoButton == "B") {	
+	}else if (opcaoButton == "M" || opcaoButton == "A") {	
 		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });    
 	}else if (opcaoButton == "X" ) {	
 		$('#dsjustif', '#frmBens').habilitaCampo();
@@ -2337,6 +2337,9 @@ function mostrabutton() {
 	}else if (opcaoButton == 'S'){
 		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });
 		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline' });	
+	}else if (opcaoButton == 'B'){
+		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });  
+		$('#dsjustif', '#divJustificativa').habilitaCampo().focus();
 	}
 	
 }
@@ -2403,6 +2406,14 @@ function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtre
 				eval(response);
 			} else {
 				try {
+					$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
+				
+						controlaVoltar('6');
+				
+						return false;
+				
+					});
+					
 					if(tipsaida == 'PDF'){
 						eval(response);
 					} else {
@@ -2413,13 +2424,6 @@ function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtre
 						formatarTabelaRel670('M');
 						
 						//Define ação para CLICK no botão de Voltar
-					$("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
-				
-						controlaVoltar('6');
-				
-						return false;
-				
-					});
 						
 						hideMsgAguardo();
 					}
@@ -2435,7 +2439,7 @@ function Relatorio670(tipsaida,cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtre
 }
 
 function formatarTabelaRel670(tip){
-	$('#tblTela').css({ 'width': '1000' });
+	$('#tblTela').css({ 'width': '1022' });
 	$('#fsetFiltro').css({ 'padding': '0 10px 10px 195px' });
 	$('#cddopcao').css({ 'width': '91%' });
 	var divRegistro = $('div.divRegistros', '#frmCons');
@@ -2457,8 +2461,8 @@ function formatarTabelaRel670(tip){
 	arrayLargura[5] = '65px';	//Contrato
 	arrayLargura[6] = '140px';	//Chassi
 	arrayLargura[7] = '190px';	//Bem
-	arrayLargura[8] = '65px';	//Data Envio
-	arrayLargura[9] = '65px';	//Data Ret
+	arrayLargura[8] = '81px';	//Data Envio
+	arrayLargura[9] = '81px';	//Data Ret
 	arrayLargura[10] = '';		//Situação
 	arrayLargura[11] = '14px'; // Fixo para definir o tamanho da coluna do campo da ordenação inicial que fica sobre a barra de rolagem
 	
