@@ -3154,8 +3154,9 @@ function controlaLayout(operacao) {
     } else if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO'])) {
 
         nomeForm = 'frmTipo';
-        altura 	 = '330px';//'215px';
+        altura 	 = '350px';//'215px';
         largura  = '630px';//'462px';
+		$('#dssitgrv').parent().css({"margin-top": "20px"});
 
         var cTodos = $('select,input', '#' + nomeForm);
         var rRotulo = $('label[for="dscatbem"],label[for="dsbemfin"],label[for="dscorbem"],label[for="ufdplaca"],label[for="nrrenava"],label[for="nrmodbem"]', '#' + nomeForm);
