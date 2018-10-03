@@ -11470,7 +11470,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 			-- Busca lançamentos de aplicações de captação
 			CURSOR cr_craplac(pr_cdcooper IN craplac.cdcooper%TYPE
 			                 ,pr_nrdconta IN craplac.nrdconta%TYPE
-											 ,pr_nraplica IN craplac.nraplica%TYPE) IS
+			                 ,pr_nraplica IN craplac.nraplica%TYPE
+			                 ,pr_cdhsprap IN craphis.cdhistor%TYPE
+			                 ,pr_cdhsrvap IN craphis.cdhistor%TYPE
+			                 ,pr_cdhsrdap IN craphis.cdhistor%TYPE
+			                 ,pr_cdhsirap IN craphis.cdhistor%TYPE
+			                 ,pr_cdhsrgap IN craphis.cdhistor%TYPE) IS
 				SELECT lac.vllanmto,
 				       lac.cdhistor,
 							 lac.dtmvtolt,
@@ -11484,8 +11489,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 					 /*AND to_char(lac.cdhistor) IN ( -- Quebra String em registros separados por ','
 					                               SELECT regexp_substr(pr_lshistor,'[^,]+', 1, LEVEL) FROM dual 
                                          CONNECT BY regexp_substr(pr_lshistor,'[^,]+', 1, LEVEL) IS NOT NULL
-																				)*/
-				 ORDER BY lac.dtmvtolt, lac.cdhistor;
+																				)*/           
+         ORDER BY lac.dtmvtolt, 
+                  decode(lac.cdhistor,pr_cdhsprap,1 --PROVISAO
+                                     ,pr_cdhsrvap,2 --REVERSAO PRV
+                                     ,pr_cdhsrdap,3 --RENDIMENTO
+                                     ,pr_cdhsirap,4 --IRRF
+                                     ,pr_cdhsrgap,5 --RESGATE
+                                     ,0),
+                  lac.cdhistor;
 				 
 			-- Buscar histórico de lançamento das aplicações
 			CURSOR cr_craphis(pr_cdcooper IN craphis.cdcooper%TYPE
@@ -11619,10 +11631,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       -- Aliquota de IR			
       pr_percirrf := vr_percirrf;
 
-			-- Para cada registro de lançamento de aplicação de captação																	
+/*
+  A ordenacao dos registros deve ser igual ao RDCPOS, conforme 'de-para':
+     529 - PROV. RDCPOS - CDHSPRAP
+     531 - REVERSAO PRV - CDHSRVAP
+     532 - RENDIMENTO   - CDHSRDAP
+     533 - IRRF         - CDHSIRAP
+     534 - RESG.RDC     - CDHSRGAP
+  Para nao termos problemas no registro com a B3 - apli0007.
+*/
+      -- Para cada registro de lançamento de aplicação de captação																	      
       FOR rw_craplac IN cr_craplac(pr_cdcooper => pr_cdcooper
-				                          ,pr_nrdconta => pr_nrdconta
-																	,pr_nraplica => pr_nraplica) LOOP
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_nraplica => pr_nraplica
+                                  ,pr_cdhsprap => rw_craprac.cdhsprap
+                                  ,pr_cdhsrvap => rw_craprac.cdhsrvap
+                                  ,pr_cdhsrdap => rw_craprac.cdhsrdap
+                                  ,pr_cdhsirap => rw_craprac.cdhsirap
+                                  ,pr_cdhsrgap => rw_craprac.cdhsrgap) LOOP
 
 			  -- Verificar se o histórico de lançamento está cadastrado na tabela craphis
 			  OPEN cr_craphis(pr_cdcooper => pr_cdcooper
