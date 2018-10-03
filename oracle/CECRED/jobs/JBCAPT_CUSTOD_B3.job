@@ -1,0 +1,47 @@
+/*
+
+    PROJETO 411 - Registro de Aplicacao na B3.
+	Responsavel por enviar e receber as informacoes para a custodia das aplicacoes na B3.
+	Roda de 30 em 30 minutos.
+
+*/
+BEGIN
+
+  EXECUTE IMMEDIATE 'ALTER SESSION SET 
+                    nls_calendar = ''GREGORIAN''
+                    nls_comp = ''BINARY''
+                    nls_date_format = ''DD-MON-RR''
+                    nls_date_language = ''AMERICAN''
+                    nls_iso_currency = ''AMERICA''
+                    nls_language = ''AMERICAN''
+                    nls_length_semantics = ''BYTE''
+                    nls_nchar_conv_excp = ''FALSE''
+                    nls_numeric_characters = ''.,''
+                    nls_sort = ''BINARY''
+                    nls_territory = ''AMERICA''
+                    nls_time_format = ''HH.MI.SSXFF AM''
+                    nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+                    nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+                    nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+
+  -- Create do job do mesmo
+  sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBCAPT_CUSTOD_B3'
+                               ,job_type        => 'PLSQL_BLOCK'
+                               ,job_action      => 'DECLARE ' || CHR(10)
+                                                || '  vr_dsinform varchar2(4000); ' || CHR(10)
+                                                || '  vr_dscritic varchar2(4000); ' || CHR(10)
+                                                || 'BEGIN ' || CHR(10)
+                                                || '  CECRED.APLI0007.pc_processo_controle(0,vr_dsinform,vr_dscritic); ' || CHR(10)
+                                                || 'END; '
+                               ,start_date      => TO_TIMESTAMP_TZ(to_char(SYSDATE + 1,'DD/MM/RRRR')||' 07:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR')                               
+                               ,repeat_interval => 'Freq=Daily;ByDay=MON, TUE, WED, THU, FRI;ByHour=08,09,10,11,12,13,14,15,16,17,18,19,20,21;ByMinute=0,30;BySecond=0'
+                               ,end_date        => to_date(NULL)
+                               ,job_class       => 'DEFAULT_JOB_CLASS'
+                               ,enabled         => TRUE
+                               ,auto_drop       => TRUE
+                               ,comments        => 'Rodar programa CECRED.APLI0007.pc_processo_controle - Responsavel por gerar '||
+                                                   'lançamentos de custódia, enviar e processar o retorno das Custódias no B3.');
+
+  COMMIT;
+END;
+/
