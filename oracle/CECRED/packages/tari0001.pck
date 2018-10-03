@@ -5640,6 +5640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        WHERE lat.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
          AND lat.dtmvtolt >= pr_dtinicio -- DATA DE MOVIMENTAÇÃO
          AND lat.dtmvtolt <= pr_dtafinal -- DATA DE MOVIMENTAÇÃO
+		 AND lat.vltarifa IS NOT NULL    
          AND lat.insitlat = 1; -- SITUAÇÃO DE LANÇAMENTO 1-PENDENTE, 2-EFETIVADO, 3-ESTORNADO, 4-BAIXADO
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
