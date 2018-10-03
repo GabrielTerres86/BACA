@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-210
+226
 Declare
 
   cursor cr_lem is
@@ -17,7 +17,9 @@ Declare
       FROM craphis h,
            crapcop c
      WHERE h.cdhistor IN (1047,1076,1077,1078,1540,1618,
-                          1619,1620,1708,1711,1717,1720)
+                          1619,1620,1708,1711,1717,1720,
+                          2701,2702 --> prejuizo
+                          )
        AND h.cdcooper = c.cdcooper
        AND c.flgativo = 1                   
      ORDER BY h.cdhistor
@@ -60,6 +62,17 @@ BEGIN
                                        p_dir => vr_dsdireto,
                                        p_arquivo => 'craphis_LCM_antes_'||vr_hora);
 
+  
+  BEGIN
+    UPDATE craphis his
+       SET his.nmestrut = 'CRAPLEM'
+     WHERE his.cdhistor IN (2701,2702);  
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao atualizar registro 2701: '||SQLERRM;
+      raise_application_error(-20500,vr_dscritic);     
+  END; 
+  
   FOR rw_lem IN cr_lem LOOP
   
     CASE rw_lem.cdhistor
@@ -75,6 +88,9 @@ BEGIN
       WHEN 1711 THEN vr_cdhistor_lcm := 1712;
       WHEN 1717 THEN vr_cdhistor_lcm := 1718;
       WHEN 1720 THEN vr_cdhistor_lcm := 1721;
+      WHEN 2701 THEN vr_cdhistor_lcm := 2386;
+      WHEN 2702 THEN vr_cdhistor_lcm := 2387;
+      
       ELSE raise_application_error(-20500,'Historico invalido');
     END CASE;  
     
@@ -136,7 +152,7 @@ BEGIN
      WHERE his.cdhistor IN (1710,1719,1713,1722);  
   EXCEPTION
     WHEN OTHERS THEN
-      vr_dscritic := 'Erro ao atualizar registro '||rw_lem.rowid||': '||SQLERRM;
+      vr_dscritic := 'Erro ao atualizar registro 1710: '||SQLERRM;
       raise_application_error(-20500,vr_dscritic);     
   END; 
   
@@ -147,7 +163,7 @@ BEGIN
      WHERE his.cdhistor IN (2784,2785,2786,2787);  
   EXCEPTION
     WHEN OTHERS THEN
-      vr_dscritic := 'Erro ao atualizar registro '||rw_lem.rowid||': '||SQLERRM;
+      vr_dscritic := 'Erro ao atualizar registro 2784: '||SQLERRM;
       raise_application_error(-20500,vr_dscritic);     
   END;
   
