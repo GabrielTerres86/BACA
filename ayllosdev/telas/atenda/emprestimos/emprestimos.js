@@ -774,7 +774,6 @@ function controlaOperacao(operacao) {
             cddopcao = 'A';
             break;
         case 'A_ALIENACAO' :
-
             if (arrayProposta['tplcremp'] == 2) {
                 if (contAlienacao < nrAlienacao) {
                     mensagem = 'abrindo altera ...';
@@ -2304,14 +2303,14 @@ function controlaLayout(operacao) {
                 $("#btVoltar", "#divBotoes").unbind('click').bind('click', function() {
                     controlaOperacao('PORTAB_CRED_A');
                 });
-                
+
                 //atribui o novo parametro para o evento click do botao
                 $("#btSalvar", "#divBotoes").attr('onClick', "buscaLiquidacoes('PORTAB_A');");
                 //fiz esta adaptacao tecnica para obrigar o IE a executar a nova funcao se o botao for clicado.
                 $("#btSalvar", "#divBotoes").unbind('click').bind('click', function() {
                     buscaLiquidacoes('PORTAB_A');
                 });
-                
+
                 //desabilita o campo tipo de emprestimo
                 cTipoEmpr.attr('disabled', 'disabled');
                 //carrega finalidade especifica de portabilidade
@@ -2322,7 +2321,7 @@ function controlaLayout(operacao) {
                     controlaOperacao('PORTAB_CRED_C');
                 });
             } else if (operacao == 'TI' || operacao == 'I_INICIO') {
-                //carrega o campo finalidade 
+                //carrega o campo finalidade
                 if ($("#cdfinemp").val() == 0 && $("#dsfinemp").val() == '') {
                     carregaFinalidadePortabilidade();
                 }
@@ -3199,10 +3198,10 @@ function controlaLayout(operacao) {
 			$("#"+idElementTpVeiulo).unbind('change').bind('change', function() {
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
 					cTpBem.trigger("change");
-					rTpBem.css('visibility', 'visible');
-					cTpBem.css({'visibility': 'visible'}).habilitaCampo(); //, 'width': '87px'
-					rUfLicenc.css('visibility', 'visible');
-					cUfLicenc.css('visibility', 'visible').habilitaCampo();
+					//rTpBem.css('visibility', 'visible');
+					cTpBem.habilitaCampo(); //, 'width': '87px'
+					//rUfLicenc.css('visibility', 'visible');
+					cUfLicenc.habilitaCampo();
 					$("#btHistoricoGravame").show();
 					if (booBoxMarcas) {
 						$("#"+idElementMarca+"C").hide();
@@ -3242,10 +3241,10 @@ function controlaLayout(operacao) {
 						booBoxMarcas = true;
 					}
 				} else {
-					rTpBem.css('visibility', 'hidden');
-					cTpBem.css('visibility', 'hidden').desabilitaCampo();
-					rUfLicenc.css('visibility', 'hidden');
-					cUfLicenc.css('visibility', 'hidden').desabilitaCampo();
+					//rTpBem.css('visibility', 'hidden');
+					cTpBem.desabilitaCampo();
+					//rUfLicenc.css('visibility', 'hidden');
+					cUfLicenc.desabilitaCampo();
 					cChassi.addClass('alphanum').attr('maxlength', '20');//.css('width', '162px')
 					$("#btHistoricoGravame").hide();
 					cUfPlaca.val('').desabilitaCampo();
@@ -3412,8 +3411,7 @@ function controlaLayout(operacao) {
 		//desabilita campos somente leitura
 		cVlFipe.desabilitaCampo();
 		cSitGrv.desabilitaCampo();
-
-        //cUfLicenc.desabilitaCampo();
+		//cUfLicenc.desabilitaCampo();
 
     } else if (in_array(operacao, ['C_INTEV_ANU', 'A_INTEV_ANU', 'AI_INTEV_ANU', 'I_INTEV_ANU', 'IA_INTEV_ANU'])) {
 
