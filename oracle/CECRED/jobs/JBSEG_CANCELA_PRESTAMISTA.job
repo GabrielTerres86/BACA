@@ -1,0 +1,61 @@
+begin
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_calendar = ''GREGORIAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_comp = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD-MON-RR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_iso_currency = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_length_semantics = ''BYTE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_nchar_conv_excp = ''FALSE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = '',.''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_sort = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_territory = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = ''HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+  
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBSEG_CANCELA_PRESTAMISTA',
+                                job_type            => 'PLSQL_BLOCK',
+                                job_action          => 'declare
+    vr_stprogra integer;
+    vr_infimsol integer;
+    vr_cdcritic integer;
+    vr_dscritic varchar2(500);
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    cursor cr_crapcop is
+    select cdcooper
+    from crapcop
+    where flgativo = 1
+      and cdcooper <> 3
+    order by cdcooper;
+    begin
+      for rw_crapcop in cr_crapcop loop
+        OPEN btch0001.cr_crapdat(rw_crapcop.cdcooper);
+        FETCH btch0001.cr_crapdat  INTO rw_crapdat;
+        CLOSE btch0001.cr_crapdat;
+    
+        IF gene0005.fn_valida_dia_util(pr_cdcooper => rw_crapcop.cdcooper, pr_dtmvtolt => rw_crapdat.dtmvtolt) = 
+          trunc(rw_crapdat.dtmvtolt) THEN
+          cecred.pc_crps781(pr_cdcooper => rw_crapcop.cdcooper
+                           ,pr_flgresta => 0
+                           ,pr_cdoperad => ''1''
+                           ,pr_stprogra => vr_stprogra
+                           ,pr_infimsol => vr_infimsol
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+          if vr_dscritic is not null then
+            RAISE_application_error(-20500,''Erro rotina prej0001: ''||vr_dscritic);
+          end if;                
+               
+        end if;
+      end loop;
+    end;',
+                                start_date          => to_date('09-10-2018 21:00:00', 'dd-mm-yyyy hh24:mi:ss'),
+                                repeat_interval     => 'Freq=Daily;Interval=1',
+                                end_date            => to_date(null),
+                                job_class           => 'DEFAULT_JOB_CLASS',
+                                enabled             => true,
+                                auto_drop           => true,
+                                comments            => 'Job para realizar o cancelamento de seguro prestamista');
+end;

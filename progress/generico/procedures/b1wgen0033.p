@@ -253,6 +253,7 @@
                              os planos 14,18,24,34,44,54,64 mudando para cobertura do 
                              conjuge a indenizacao sera de 50% de Morte (M)
                              (Lucas Ranghetti #TASK0016716)
+				04/09/2018 - PJ 438 - Sprint 3 - Incluir o campo de número do contrato Márcio(Mouts)
 
 ..............................................................................*/
                     
@@ -7391,6 +7392,7 @@ PROCEDURE cria_seguro:
     DEF INPUT PARAM par_cdempres LIKE crapemp.cdempres      NO-UNDO.
     DEF INPUT PARAM par_dtnascsg AS DATE                    NO-UNDO.
     DEF INPUT PARAM par_complend LIKE crawseg.complend      NO-UNDO.
+    DEF INPUT PARAM par_nrctrato LIKE crawseg.nrctrato      NO-UNDO. /*PJ438 - Sprint3*/
     
     DEF OUTPUT PARAM par_flgsegur AS LOG                    NO-UNDO.
     DEF OUTPUT PARAM par_crawseg AS RECID                   NO-UNDO.
@@ -7928,7 +7930,9 @@ PROCEDURE cria_seguro:
                        crawseg.vlappinv = 0
                        crawseg.flgcurso = FALSE
                        crawseg.flgrepgr = FALSE
-                       crawseg.nrctrato = 0
+                       crawseg.nrctrato = IF par_tpseguro = 4 THEN
+                                            par_nrctrato
+                                          ELSE 0  /*PJ 438 - Sprint 3*/
                        crawseg.flgvisto = FALSE
                        crawseg.vlfrqobr = 0
                        crawseg.qtparcel = 0
@@ -7947,9 +7951,6 @@ PROCEDURE cria_seguro:
                                               par_cdsexosg
                                           ELSE tt-associado.cdsexotl 
                        crawseg.nrctrseg = par_nrctrseg.
-
-                    
-
 
             END.
         ELSE

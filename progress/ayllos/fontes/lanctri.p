@@ -229,19 +229,21 @@
 
                13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
                             as informações de Imóveis estejam preenchidas (Renato - Supero)
-                            
+
                30/01/2017 - Nao permitir efetuar lancamento para o produto Pos-Fixado.
                             (Jaison/James - PRJ298)
 
                17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
                             de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                             liberaçao do projeto (Renato - Supero)
-                            
+               
                16/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
                             
                12/07/2018 - PJ450 - Emininado acesso ao crapgrp e leitura do retorno
                             da chamada da bo 138 para atribuir dados de grupos economicos
                             para a variável tt-ge-economico (Renato/AMcom)
+                            
+			   03/09/2018 - Efetivaçao do seguro prestamista TR -- PRJ438 - Paulo Martins (Mouts)
                             
 ............................................................................. */
 
@@ -627,7 +629,7 @@ DO WHILE TRUE:
                         + " analise nao finalizada".
                 NEXT.            
             END.
-          
+
             /* Nao permite efetuar lancamento para o produto Pos-Fixado */
 			IF crawepr.tpemprst = 2 THEN
             DO:
@@ -1233,7 +1235,7 @@ DO WHILE TRUE:
    RELEASE craplot.
    RELEASE crablem.
    RELEASE crabepr.
-
+   
    
    /* Buscar dados do associado */
    FIND FIRST crapass WHERE crapass.cdcooper = glb_cdcooper AND
@@ -1395,61 +1397,61 @@ DO WHILE TRUE:
                          EXCLUSIVE-LOCK NO-ERROR.
 
       IF  AVAIL crawepr THEN
-          DO:
+          DO:      
       
       
-              IF  NOT VALID-HANDLE(h-b1wgen0002) THEN
-                  RUN sistema/generico/procedures/b1wgen0002.p
-                      PERSISTENT SET h-b1wgen0002.
+        IF  NOT VALID-HANDLE(h-b1wgen0002) THEN
+            RUN sistema/generico/procedures/b1wgen0002.p
+                PERSISTENT SET h-b1wgen0002.
 
-              /* Calcular o cet automaticamente */
-              RUN calcula_cet_novo IN h-b1wgen0002(
-                                   INPUT glb_cdcooper,
-                                   INPUT 0, /* agencia */
-                                   INPUT 0, /* caixa */
-                                   INPUT glb_cdoperad,
-                                   INPUT glb_nmdatela,
-                                   INPUT 1, /* ayllos*/
-                                   INPUT glb_dtmvtolt,
-                                   INPUT tel_nrdconta,
-                                   INPUT crapass.inpessoa,
-                                   INPUT 2, /* cdusolcr */
-                                   INPUT crawepr.cdlcremp,
-                                   INPUT crawepr.tpemprst,
-                                   INPUT crawepr.nrctremp,
-                                   INPUT glb_dtmvtolt,
-                                   INPUT tel_vlemprst,
-                                   INPUT tel_vlpreemp,
-                                   INPUT tel_qtpreemp,
-                                   INPUT tel_dtdpagto,
-                                   INPUT crawepr.cdfinemp,
+        /* Calcular o cet automaticamente */
+        RUN calcula_cet_novo IN h-b1wgen0002(
+                             INPUT glb_cdcooper,
+                             INPUT 0, /* agencia */
+                             INPUT 0, /* caixa */
+                             INPUT glb_cdoperad,
+                             INPUT glb_nmdatela,
+                             INPUT 1, /* ayllos*/
+                             INPUT glb_dtmvtolt,
+                             INPUT tel_nrdconta,
+                             INPUT crapass.inpessoa,
+                             INPUT 2, /* cdusolcr */
+                             INPUT crawepr.cdlcremp,
+                             INPUT crawepr.tpemprst,
+                             INPUT crawepr.nrctremp,
+                             INPUT glb_dtmvtolt,
+                             INPUT tel_vlemprst,
+                             INPUT tel_vlpreemp,
+                             INPUT tel_qtpreemp,
+                             INPUT tel_dtdpagto,
+                             INPUT crawepr.cdfinemp,
                              INPUT aux_dscatbem, /* dscatbem */
                              INPUT crawepr.idfiniof, /* IDFINIOF */
                              INPUT aux_par_dsctrliq, /* dsctrliq */
                              INPUT "S",
-                                  OUTPUT aux_percetop, /* taxa cet ano */
-                                  OUTPUT aux_txcetmes, /* taxa cet mes */
-                                  OUTPUT TABLE tt-erro).
+                            OUTPUT aux_percetop, /* taxa cet ano */
+                            OUTPUT aux_txcetmes, /* taxa cet mes */
+                            OUTPUT TABLE tt-erro).
 
-             IF  VALID-HANDLE(h-b1wgen0002) THEN
-                 DELETE OBJECT h-b1wgen0002.
+        IF  VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE OBJECT h-b1wgen0002.
 
-             IF  RETURN-VALUE <> "OK" THEN
-                 DO:
-                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
+        IF  RETURN-VALUE <> "OK" THEN
+            DO:
+                FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                     DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                         IF  AVAIL tt-erro THEN
-                             MESSAGE tt-erro.dscritic.
+                DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                    IF  AVAIL tt-erro THEN
+                        MESSAGE tt-erro.dscritic.
 
-                         PAUSE 3 NO-MESSAGE.
-                         LEAVE.
-                     END.
-                 END.
+                    PAUSE 3 NO-MESSAGE.
+                    LEAVE.
+                END.
+            END.
 
-                 ASSIGN crawepr.percetop = aux_percetop.
-          END.
-
+        ASSIGN crawepr.percetop = aux_percetop.
+      END.
+      
       RUN sistema/generico/procedures/b1wgen0043.p PERSISTENT SET h-b1wgen0043.
 
       RUN obtem_emprestimo_risco IN h-b1wgen0043
@@ -1504,7 +1506,7 @@ DO WHILE TRUE:
              craplot.vlcompdb = craplot.vlcompdb + tel_vlemprst.
 
       VALIDATE crablem.
-
+      
 
       /* Se houve valor de IOF calculado */
       IF aux_vliofpri + aux_vliofadi > 0 THEN
@@ -1708,6 +1710,40 @@ DO WHILE TRUE:
             END. /* IF aux_flimovel = 1 THEN */
       END. /* IF craplcr.tpctrato = 3 */
       FIM - 17/02/2017 - Retirado a validaçao conforme solicitaçao */
+
+      /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
+      IF crapass.inpessoa = 1 THEN
+      DO:
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      RUN STORED-PROCEDURE pc_efetiva_proposta_sp
+                           aux_handproc = PROC-HANDLE NO-ERROR
+                    (INPUT glb_cdcooper,      /* Cooperativa */
+                     INPUT tel_nrdconta,      /* Número da conta */
+                     INPUT tel_nrctremp,      /* Número emrepstimo */
+                     INPUT tel_cdagenci,      /* Agencia */
+                     INPUT 100                /* Caixa */
+                     INPUT glb_cdoperad,      /* Operador   */
+                     INPUT glb_nmdatela,      /* Tabela   */
+                     INPUT 1,                 /* Origem - Ayllos */ 
+                    OUTPUT 0,
+                    OUTPUT "").
+
+      CLOSE STORED-PROC pc_efetiva_proposta_sp 
+         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+   
+      ASSIGN glb_cdcritic = pc_efetiva_proposta_sp.pr_cdcritic
+                               WHEN pc_efetiva_proposta_sp.pr_cdcritic <> ?
+             glb_dscritic = pc_efetiva_proposta_sp.pr_dscritic
+                               WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
+          IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+             DO:
+                 ASSIGN glb_dscritic = "Erro ao efetivar prestamista: " + glb_dscritic.
+                 MESSAGE glb_dscritic.
+                 PAUSE 3 NO-MESSAGE.
+                 UNDO, RETURN.
+             END.
+      END.  	  
 
       IF glb_cdcritic > 0    THEN
          NEXT INCLUSAO.

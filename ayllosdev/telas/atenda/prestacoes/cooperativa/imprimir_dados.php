@@ -25,6 +25,7 @@
              
   08/06/2018 - P410 - Impressão declaração isento IOF imóvel (Marcos-Envolti)           
              
+  09/09/2018 - Alterada a chamada da impressao de Contrato - PRJ 438 (Mateus Z - Mouts)           
  *********************************************************************** */
 
 session_cache_limiter("private");
@@ -71,9 +72,9 @@ if (!validaInteiro($nrdconta)) {
 $dsiduser = session_id();
 
 // Verifica se opcao eh contrato ou contrato nao negociavel
-if ($idimpres == '2' || $idimpres == '8') {
+if ($idimpres == '8') {
 
-    $inimpctr = ($idimpres == '2') ? 0 : 1;
+    $inimpctr = 1;
 
     // Monta o xml de requisição
     $xml = '';
@@ -96,6 +97,23 @@ if ($idimpres == '2' || $idimpres == '8') {
     $xml .= '		<nrctremp>' . $nrctremp . '</nrctremp>';
     $xml .= '	</Dados>';
     $xml .= '</Root>';
+	
+} else if ($idimpres == '2') {
+
+  $inimpctr = 0;
+  $nrctrseg = 0;
+
+  // Monta o xml de requisição
+  $xml = '';
+  $xml .= '<Root>';
+  $xml .= ' <Dados>';
+  $xml .= '   <cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+  $xml .= '   <nrdconta>' . $nrdconta . '</nrdconta>';
+  $xml .= '   <nrctremp>' . $nrctremp . '</nrctremp>';
+  $xml .= '   <inimpctr>' . $inimpctr . '</inimpctr>';
+  $xml .= '   <nrctrseg>' . $nrctrseg . '</nrctrseg>';
+  $xml .= ' </Dados>';
+  $xml .= '</Root>';
 	
 } else {
     // Monta o xml de requisição
@@ -176,8 +194,8 @@ if ($idimpres == '57'){
   // Obtém nome do arquivo PDF 
   $nmarqpdf = $xmlObj;
 }
-else // verifica se opcao eh contrato
-if ($idimpres == '2' || $idimpres == '8') {
+else // verifica se opcao eh contrato nao negociavel
+if ($idimpres == '8') {
 	
     // Executa script para envio do XML
     $xmlResult = mensageria($xml, "EMPR0003", "IMPCONTR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -238,7 +256,27 @@ if ($idimpres == '2' || $idimpres == '8') {
 		?><script language="javascript">alert('<?php echo utf8ToHtml('Nao foi possivel retornar Protocolo da Analise Automatica de Credito!') ?>');</script><?php
         exit();
 	}
-} else {
+} 
+else // verifica se opcao eh contrato
+if ($idimpres == '2') {
+  
+    // Executa script para envio do XML
+    $xmlResult = mensageria($xml, "EMPR0003", "IMPRIME_CONTRATO_PRESTAMISTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+    // Cria objeto para classe de tratamento de XML
+    $xmlObj = simplexml_load_string($xmlResult);
+
+    // Se ocorrer um erro, mostra crítica
+    if ($xmlObj->Erro->Registro->dscritic != '') {
+        $msgErro = utf8ToHtml($xmlObj->Erro->Registro->dscritic);
+        ?><script language="javascript">alert('<?php echo $msgErro; ?>');</script><?php
+        exit();
+    }
+
+    // Obtém nome do arquivo PDF 
+    $nmarqpdf = $xmlObj;
+  
+}else {
 
     // Executa script para envio do XML
     $xmlResult = getDataXML($xml);
