@@ -606,7 +606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 12/04/2018
+    Data     : Maio/2013.                   Ultima atualizacao: 02/10/2018
   
    Dados referentes ao programa:
   
@@ -643,7 +643,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 	
 			  12/04/2018 - Inserida procedure prc_busca_motivo_demissao e alterada origem de dados da 
 			                procedure prc_busca_motivo_demissao 
-	
+
+        02/10/2108 - inc0024681 Na rotina pc_busca_dados_cto_58, repassagem das críticas com detalhe
+                     de conta e CPF para o usuário; Na rotina pc_busca_dados_ass_58, melhoria na crítica
+                     de obrigatoriedade de endereço (Carlos)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Type para os motivos de demissões
@@ -4492,8 +4496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Selecionar Endereco
       CURSOR cr_crapenc (pr_cdcooper IN crapenc.cdcooper%type
                         ,pr_nrdconta IN crapenc.nrdconta%type
-                        ,pr_idseqttl IN crapenc.idseqttl%type
-                        ,pr_cdseqinc IN crapenc.cdseqinc%TYPE
+                        ,pr_idseqttl IN crapenc.idseqttl%TYPE
                         ,pr_tpendass IN crapenc.tpendass%type) IS
         SELECT crapenc.nrendere
               ,crapenc.complend
@@ -4507,7 +4510,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         WHERE crapenc.cdcooper = pr_cdcooper
         AND   crapenc.nrdconta = pr_nrdconta
         AND   crapenc.idseqttl = pr_idseqttl
-        AND   crapenc.cdseqinc = pr_cdseqinc
         AND   crapenc.tpendass = pr_tpendass
         ORDER BY crapenc.progress_recid ASC;
       rw_crapenc cr_crapenc%ROWTYPE;
@@ -4599,7 +4601,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           OPEN cr_crapenc (pr_cdcooper => rw_crapass.cdcooper
                           ,pr_nrdconta => rw_crapass.nrdconta
                           ,pr_idseqttl => 1
-                          ,pr_cdseqinc => 1
                           ,pr_tpendass => 10); /*Residencial*/
           FETCH cr_crapenc INTO rw_crapenc;
           --Verificar se Encontrou
@@ -4607,7 +4608,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
             --Fechar Cursores
             CLOSE cr_crapenc;
             --Mensagem Critica
-            vr_dscritic:= 'Endereco nao cadastrado.';
+            vr_dscritic:= 'Endereco nao cadastrado. Conta: ' || pr_nrdconta || 
+                          ' | Conta contato: ' || pr_nrdctato;
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
@@ -4899,7 +4901,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           --Fechar Cursor
           CLOSE cr_crapttl;
           --Montar critica
-          vr_dscritic:= 'Titular da conta nao pode ser procurador.';
+          vr_dscritic:= '1 - Titular da conta nao pode ser procurador.' || 
+                        ' Conta: ' || pr_nrdconta ||
+                        ', CPF:'   || pr_nrcpfcto;
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
@@ -4933,7 +4937,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Verificar cadastro incompleto
       IF NOT vr_crapass THEN
         IF Nvl(pr_nrdctato,0) <> 0 THEN
-          vr_cdcritic:= 9;
+          vr_cdcritic := 9;
+          vr_dscritic := 'Cooperado nao encontrado.' || 
+                         ' Conta: ' || pr_nrdctato ||
+                         ' CPF: '  || pr_nrcpfcto;
           RAISE vr_exc_erro;
         END IF;
         --Levantar Excecao
@@ -4941,7 +4948,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       END IF;
       --Se conta for igual a do parametro -- Igual ao progress
       IF pr_nrdconta = rw_crapass.nrdconta THEN
-        vr_dscritic:= 'Titular da conta nao pode ser procurador.';
+        vr_dscritic:= '2 - Titular da conta nao pode ser procurador.' || 
+                      ' Conta: ' || pr_nrdconta ||
+                      ', CPF:'  || pr_nrcpfcto;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -5543,7 +5552,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           END IF;
         EXCEPTION
           WHEN vr_exc_filtro THEN
-            NULL;
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := vr_dscritic;
         END; --Filtro Busca
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -5617,7 +5627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         END LOOP; --rw_crapavt
       EXCEPTION
         WHEN vr_exc_busca THEN
-          NULL;
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
       END; --Busca
 
       --Se ocorreu erro
