@@ -579,7 +579,7 @@ PROCEDURE gera_log:
             RUN gera_log IN h-b1wgen0014 (INPUT crapecv.cdcooper,
                                           INPUT glb_cdoperad,
                                           INPUT "",
-                                          INPUT "AYLLOS",
+                                          INPUT "AIMARO",
                                           INPUT par_dstransa,
                                           INPUT glb_dtmvtolt,
                                           INPUT par_flgtrans,

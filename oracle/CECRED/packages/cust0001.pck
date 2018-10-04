@@ -46,6 +46,7 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --             21/07/2017 - Ajuste na procedure pc_ver_cheque para retornar numero 
 --                          da conta quando tiver critica. (Daniel)
 --             17/08/2018 - SCTASK0018345 - Paulo Martins - Mouts
+--	           27/09/2018 - INC0023556 - Ajuste não permitir exclusão cheque liberado -- Paulo Martins - Mouts
 ---------------------------------------------------------------------------------------------------------------
 
   -- Estruturas de registro
@@ -341,6 +342,7 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 		                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
 																			,pr_dscheque IN VARCHAR2               --> Lista de CMC7s
 																			,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador
+                                      ,pr_exclui_desconto IN varchar2 default 'S' -- Exclusão em desconto
 																			,pr_tab_erro_resg OUT typ_erro_resgate --> Erros do resgate
 																			,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
 																			,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica																
@@ -1989,7 +1991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     
     -- Verifica Qual a Origem
     CASE pr_idorigem 
-      WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+      WHEN 1 THEN vr_dsorigem := 'AIMARO';
       WHEN 3 THEN vr_dsorigem := 'INTERNET';
       WHEN 3 THEN vr_dsorigem := 'FTP';
       ELSE vr_dsorigem := ' ';
@@ -2478,7 +2480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     
     -- Verifica Qual a Origem
     CASE pr_idorigem 
-      WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+      WHEN 1 THEN vr_dsorigem := 'AIMARO';
       WHEN 3 THEN vr_dsorigem := 'INTERNET';
       WHEN 3 THEN vr_dsorigem := 'FTP';
       ELSE vr_dsorigem := ' ';
@@ -4153,7 +4155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
          
          -- Verifica Qual a Origem
          CASE pr_idorigem 
-           WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+           WHEN 1 THEN vr_dsorigem := 'AIMARO';
            WHEN 3 THEN vr_dsorigem := 'INTERNET';
            WHEN 7 THEN vr_dsorigem := 'FTP';
            ELSE vr_dsorigem := ' ';
@@ -7279,6 +7281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 		                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
 																			,pr_dscheque IN VARCHAR2               --> Lista de CMC7s
 																			,pr_cdoperad IN crapope.cdoperad%TYPE  --> Operador
+                                      ,pr_exclui_desconto IN varchar2 default 'S' -- Exclusão em desconto
 																			,pr_tab_erro_resg OUT typ_erro_resgate --> Erros do resgate
 																			,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
 																			,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
@@ -7572,7 +7575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 
       --SCTASK0018345 
       -- Remover cheques do bordero  
-      if vr_tab_cheques.count > 0 then
+      if vr_tab_cheques.count > 0 and pr_exclui_desconto = 'S' then
         DSCC0001.pc_excluir_cheque_bordero(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_cdagenci => rw_crapcst.cdagenci
