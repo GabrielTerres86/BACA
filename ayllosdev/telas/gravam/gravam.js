@@ -1134,6 +1134,9 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         });
 
     } else if (opcaoButton == 'J' || opcaoButton == 'L') {
+		$("#btHistGravame", "#divBotoesBens").unbind('click').bind('click', function () {
+			gerarHistoricoGravames();
+		});
         //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
 
 
@@ -1163,6 +1166,9 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
     } else if ($('#cddopcao', '#frmCab').val() == 'S') {
 
+		$("#btHistGravame", "#divBotoesBens").unbind('click').bind('click', function () {
+			gerarHistoricoGravames();
+		});
         /* alteracoes apenas quando for situacao 
                For contrato efetivado ou
                3 - Proc. com critica */
@@ -2603,40 +2609,63 @@ function buscaIndice(nriniseq, nrregist) {
 }
 
 function gerarHistoricoGravames(){ 
-	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
-	$('#divUsoGenerico').html('');
-	$('#divUsoGenerico').css('width','750px');
-	exibeRotina($('#divUsoGenerico'));
+	//Requisição para processar a opção que foi selecionada
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/gravam/val_permiss.php",
+        data: {
+            cddopcao: 'I',
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "Não foi possível concluir a requisição.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+        },
+        success: function (response) {
 
-	var dschassi = $("#dschassi","#frmBens").val();
-	var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
-	var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+            hideMsgAguardo();
+            try {
+                showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
+				$('#divUsoGenerico').html('');
+				$('#divUsoGenerico').css('width','750px');
+				exibeRotina($('#divUsoGenerico'));
+			
+				var dschassi = $("#dschassi","#frmBens").val();
+				var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
+				var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+			
+				// Executa script de confirmação através de ajax
+				$.ajax({
+					type: 'POST',
+					dataType: 'html',
+					//url: UrlSite + 'telas/manbem/historico_gravames.php',
+					url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+					data: {
+						nrdconta: nrdconta,
+						nrctrpro: nrctrpro,
+						dschassi: dschassi,
+						redirect: 'html_ajax'
+						},
+					error: function(objAjax,responseError,objExcept) {
+						hideMsgAguardo();
+						showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+					},
+					success: function(response) {
+						$('#divUsoGenerico').html(response);
+						controlaLayoutHistoricoGravames();
+						var td = $('#divUsoGenerico').find('table td#tdTitTela');
+						$(td).unbind('click').bind('click', function(){
+							unblockBackground();
+						});
+					}
+				});
+            } catch (error) {
+                showError("error", "Não foi possível concluir a requisição. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            }
 
-	// Executa script de confirmação através de ajax
-	$.ajax({
-		type: 'POST',
-		dataType: 'html',
-		//url: UrlSite + 'telas/manbem/historico_gravames.php',
-		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
-		data: {
-			nrdconta: nrdconta,
-			nrctrpro: nrctrpro,
-			dschassi: dschassi,
-			redirect: 'html_ajax'
-			},
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-		success: function(response) {
-			$('#divUsoGenerico').html(response);
-			controlaLayoutHistoricoGravames();
-			var td = $('#divUsoGenerico').find('table td#tdTitTela');
-			$(td).unbind('click').bind('click', function(){
-				unblockBackground();
-			});
-		}
-	});
+        }
+
+    });
 }
 
 function controlaLayoutHistoricoGravames() {
