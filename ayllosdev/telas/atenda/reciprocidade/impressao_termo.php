@@ -64,7 +64,7 @@ if ($flgregis == 'yes' ) {
 	$xml .= "</Root>";
 
 	// craprdr / crapaca 
-	$xmlResult = mensageria($xml, "ATENDA", "IMPTERMO_RECIPROCI", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "SSPC0002", "IMPTERMO_RECIPROCI", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
 
 	// Se ocorrer um erro, mostra cr�tica

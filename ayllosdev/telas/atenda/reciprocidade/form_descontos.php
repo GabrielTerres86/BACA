@@ -322,7 +322,7 @@ atualizacaoDesconto = false;
 		<td align="right">
 			<input type="hidden" id="vldeposito_old" value="<?php echo $vr_deposito; ?>">
 			<span>R$</span>
-			<input class="campo valor calculo <?php echo (($glbvars["cdcooper"] == 16) ? '' : 'campoTelaSemBorda') ?>" <?php echo (($glbvars["cdcooper"] == 16) ? '' : 'disabled') ?> value="<?php echo $vr_deposito; ?>" id="vldeposito" name="vldeposito" style="width:153px;" />
+			<input class="campo valor calculo" value="<?php echo $vr_deposito; ?>" id="vldeposito" name="vldeposito" style="width:153px;" />
 		</td>
 	</tr>
 	<tr class="corPar">
