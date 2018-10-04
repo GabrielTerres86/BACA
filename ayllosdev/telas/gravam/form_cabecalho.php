@@ -32,17 +32,17 @@
 	<label for="cddopcao"><? echo utf8ToHtml('Opcao:') ?></label>
 	<select id="cddopcao" name="cddopcao">
     <option value="C"><? echo utf8ToHtml('C - Gest&atilde;o de Bens (consultar, alterar, baixar, incluir, cancelar)') ?></option>
+	
+	<option value="I"><? echo utf8ToHtml('I - Impressão de Relatório / Histórico') ?></option>
+	
+	<option value="S"><? echo utf8ToHtml('S - Alterar dados de bens substituidos via aditivo') ?></option>
+	
+	<option value="J"><? echo utf8ToHtml('J - Libera&ccedil;&atilde;o Judicial / Bloqueio Judicial') ?></option>
 
     <option value="G"><? echo utf8ToHtml('G - Gerar Lotes / Retorno Lotes') ?></option>
 	
-    <option value="J"><? echo utf8ToHtml('J - Libera&ccedil;&atilde;o Judicial / Bloqueio Judicial') ?></option>	
-	
-    <option value="S"><? echo utf8ToHtml('S - Alterar dados de bens substituidos via aditivo') ?></option>
-	
-    <option value="I"><? echo utf8ToHtml('I - Impressão de Relatório / Histórico') ?></option>
-	
     <option value="P"><? echo utf8ToHtml('P - Parâmetros Gravam') ?></option>
-	
+
 	
   </select>
   
