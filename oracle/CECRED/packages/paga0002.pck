@@ -4,7 +4,7 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 16/07/2018
+   Data    : 13/04/2011                        Ultima atualizacao: 31/08/2018
 
    Dados referentes ao programa:
 
@@ -165,6 +165,11 @@ create or replace package cecred.PAGA0002 is
 							 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 
 			 17/04/2017 - Alterações referentes à Nova Plataforma de Cobrança - NPC (Renato-Amcom)
+    
+       31/08/2018 - Padrões: 
+                    Others, Modulo/Action, PC Internal Exception, PC Log Programa
+                    Inserts, Updates, Deletes e SELECT's, Parâmetros
+                    (Envolti - Belli - REQ0011727)
                            
                16/08/2018 - Inclusão do campo dsorigem no retorno da pltable da procedure pc_obtem_agendamentos,
                             Prj. 363 (Jean Michel)
@@ -780,6 +785,17 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                        ,pr_nrdconta    IN NUMBER   -- Numero da conta do cooperado
                                        ,pr_cdbarras    IN VARCHAR2 -- Código de barras da guia
                                        ,pr_xml_ret     OUT CLOB);  -- Retorno XML
+                                       
+  -- Rotina de Log - tabela: tbgen prglog ocorrencia
+  PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                  ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                  ,pr_tpexecuc IN NUMBER   DEFAULT 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                  ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'PAGA0002'
+                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
+                  );
                                         
 end PAGA0002;
 /
@@ -791,7 +807,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 16/07/2018
+  --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
   --
   -- Dados referentes ao programa:
   --
@@ -893,28 +909,33 @@ create or replace package body cecred.PAGA0002 is
   --
   --              11/12/2017 - Alterar campo flgcnvsi por tparrecd.
   --                           PRJ406-FGTS (Odirlei-AMcom)   
-  --
-  --              29/05/2018 - Alterar sumario para somente somar os nao efetivados 
-  --                           feitos no dia do debito, se ja foi cancelado nao vamos somar 
-  --                           (bater com informacoes do relatorio) (Lucas Ranghetti INC0016207)
-  --                           
-  --              27/06/2018 - Devido a um bug no app do IOS, foi necessário incluir uma validação
-  --                           para não permitir que seja enviado uma TED com "Código do identificador"
-  --                           contendo uma informação maior do que 25 caracteres, pois ela será rejeitada
-  --                           pela cabine
-  --                           (Adriano - INC0017772).
-  --                           
-  --              19/07/2018 - Validar que a agencia do banco creditada não seja zero (0),
-  --                           evitando erro no processamento da mensagem pela cabine.
-  --                           (Wagner - Sustentação - INC0019220).
-  --                           
-  --              24/07/2018 - Validar que o numero da conta creditada não tenha mais do que 13 digitos,
-  --                           evitando erro no processamento da mensagem pela cabine.
-  --                           (André Bohn - Mout'S - INC0019287).
-  --
-  --             16/08/2018 - Inclusão do campo dsorigem no retorno da pltable da procedure pc_obtem_agendamentos,
-  --                          Prj. 363 (Jean Michel)
-  --
+  
+                  29/05/2018 - Alterar sumario para somente somar os nao efetivados 
+                               feitos no dia do debito, se ja foi cancelado nao vamos somar 
+                               (bater com informacoes do relatorio) (Lucas Ranghetti INC0016207)
+                               
+                  27/06/2018 - Devido a um bug no app do IOS, foi necessário incluir uma validação
+                               para não permitir que seja enviado uma TED com "Código do identificador"
+                               contendo uma informação maior do que 25 caracteres, pois ela será rejeitada
+                               pela cabine
+                               (Adriano - INC0017772).
+                               
+                  19/07/2018 - Validar que a agencia do banco creditada não seja zero (0),
+                               evitando erro no processamento da mensagem pela cabine.
+                               (Wagner - Sustentação - INC0019220).
+                               
+                  24/07/2018 - Validar que o numero da conta creditada não tenha mais do que 13 digitos,
+                               evitando erro no processamento da mensagem pela cabine.
+                               (André Bohn - Mout'S - INC0019287).
+    			  
+				  16/08/2018 - Inclusão do campo dsorigem no retorno da pltable da procedure pc_obtem_agendamentos,
+                               Prj. 363 (Jean Michel)
+
+                  31/08/2018 - Padrões: 
+                               Others, Modulo/Action, PC Internal Exception, PC Log Programa
+                               Inserts, Updates, Deletes e SELECT's, Parâmetros
+                               (Envolti - Belli - REQ0011727)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -4136,7 +4157,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 17/05/2016
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -4153,6 +4174,12 @@ create or replace package body cecred.PAGA0002 is
     --                           estava gerando erro ao confirmar entrada do título. (Rafael)
     --
     --              17/05/2016 - Inclusao de parametro para apuracao (P213 - Marcos/Supero)
+    --
+    --              31/08/2018 - Padrões: 
+    --                           Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                           Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                           (Envolti - Belli - REQ0011727)
+    --
     -- ..........................................................................*/
 
     -------------------> CURSORES <-------------------
@@ -4231,6 +4258,7 @@ create or replace package body cecred.PAGA0002 is
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
     vr_des_erro VARCHAR2(4000);
 
     --variavel de descrição para log
@@ -4240,7 +4268,21 @@ create or replace package body cecred.PAGA0002 is
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
 
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_ent_confirmada'; -- Rotina e programa - 31/08/2018 - REQ0011727
+
   BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_nrnosnum:' || pr_nrnosnum ||
+                   ', pr_cdbcocob:' || pr_cdbcocob ||
+                   ', pr_cdagecob:' || pr_cdagecob ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+	                 ', pr_dsmotivo:' || pr_dsmotivo ||
+	                 ', pr_cdoperad:' || pr_cdoperad;
+    
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
     pr_dscritic:= NULL;
@@ -4267,9 +4309,16 @@ create or replace package body cecred.PAGA0002 is
        WHERE crapcob.rowid  = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-        --Levantar Excecao
-        RAISE vr_exc_erro;
+        -- Quando erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+        -- Efetuar retorno do erro não tratado
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       'CRAPCOB:' ||
+                       vr_dsparame || 
+                       '. ' || SQLERRM; 
+        --Levantar Excecao 
+        RAISE vr_exc_others;      
     END;
     /* Gerar motivos de ocorrencia  */
     PAGA0001.pc_proc_motivos_retorno (pr_idtabcob => pr_idtabcob  --Rowid da cobranca
@@ -4278,12 +4327,14 @@ create or replace package body cecred.PAGA0002 is
                                      ,pr_dtmvtolt => pr_crapdat.dtmvtolt  --Data Movimentacao
                                      ,pr_cdoperad => pr_cdoperad  --Codigo Operador
                                      ,pr_cdcritic => vr_cdcritic  --Codigo Critica
-                                     ,pr_dscritic => vr_dscritic); --Descricao Critica
+                                     ,pr_dscritic => vr_dscritic); --Descricao Critica                                    
     --Se ocorreu erro
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );   
 
      /* se titulo baixado ou pago, entao solicitar baixa */
     IF rw_crapcob.incobran IN (3,5) THEN
@@ -4303,6 +4354,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );   
 
       vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -4323,6 +4376,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );   
 
       /* Criar Log Cobranca */
       vr_dsmotivo:= 'Ent confirmada indevida. Bx solicitada';
@@ -4337,9 +4392,12 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );   
 
       /* ent confirmada indevida */
-      vr_cdcritic := 955;
+      vr_cdcritic := 955;       
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       RAISE vr_exc_erro;
 
     END IF;  --Fim rw_crapcob.incobran IN (3,5)
@@ -4359,6 +4417,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );   
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -4374,6 +4434,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );   
 
     /*verificar se cobrança 85 ja foi liquidado*/
     IF TRIM(rw_crapcob.cdtitprt) IS NOT NULL THEN
@@ -4450,6 +4512,8 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
         vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -4470,6 +4534,8 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
         /* Criar Log Cobranca */
         vr_dsmotivo:= 'Inst Autom de Protesto';
@@ -4484,21 +4550,37 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       END IF; /* IF NOT AVAIL craprem */
     ELSE
       --Somente Fecha Cursor
       CLOSE cr_crapcco;
     END IF; /*Fim cr_crapcco%NOTFOUND*/
+    
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
 
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
+    WHEN vr_exc_others THEN
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_ent_confirmada. '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
+      
   END pc_ent_confirmada;
 
   /* Gerar registro de Retorno = 03 - Entrada Rejeitada */
@@ -4518,7 +4600,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 16/11/2017
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
@@ -4529,6 +4611,11 @@ create or replace package body cecred.PAGA0002 is
     --                            BAIXADO, ao invés de REJEITADO. Também foi afdicionado a lista
     --                            de motivos o código '46' Tipo/Numero de Inscricao do Sacado Invalidos
     --                            (Douglas - Chamado 760923)
+    --
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> VARIAVEIS <-----------------
@@ -4537,12 +4624,22 @@ create or replace package body cecred.PAGA0002 is
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
 
     vr_cdposini INTEGER := 1;
     vr_cdmotivo VARCHAR2(10);
     vr_baixar   BOOLEAN := FALSE;
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_ent_rejeitada'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
   BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+	                 ', pr_dsmotivo:' || pr_dsmotivo ||
+	                 ', pr_cdoperad:' || pr_cdoperad;   
 
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -4557,6 +4654,8 @@ create or replace package body cecred.PAGA0002 is
          * "" = sem motivo */
         RETURN;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     --Selecionar registro cobranca
     OPEN cr_crapcob (pr_rowid => pr_idtabcob);
@@ -4597,7 +4696,7 @@ create or replace package body cecred.PAGA0002 is
 
     IF vr_baixar THEN
       /** Atualiza crapcob */
-      BEGIN
+      BEGIN 
         UPDATE CRAPCOB
            SET crapcob.incobran = 3 /* Baixado */
               ,crapcob.dtdbaixa = pr_crapdat.dtmvtolt
@@ -4606,9 +4705,18 @@ create or replace package body cecred.PAGA0002 is
              INTO rw_crapcob.incobran;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-          --Levantar Excecao
-          RAISE vr_exc_erro;
+          -- Quando erro de programa gravar tabela especifica de log
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+          -- Efetuar retorno do erro não tratado
+          vr_cdcritic := 1035;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         'CRAPCOB:' ||
+                         vr_dsparame ||
+                         ', dtdbaixa:' || pr_crapdat.dtmvtolt ||
+                         ', incobran:' || '3' ||
+                         '. ' || SQLERRM; 
+          --Levantar Excecao 
+          RAISE vr_exc_others;
       END;
     END IF;
 
@@ -4625,6 +4733,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -4640,15 +4750,27 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-
+    
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
+    WHEN vr_exc_others THEN
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_ent_rejeitada. '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_ent_rejeitada;
 
   /* Gerar registro de Retorno = 09 - Baixa */
@@ -4672,12 +4794,18 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 09 - Baixa
+    --
+    --   Alteracoes: 
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> VARIAVEIS <-----------------
@@ -4686,9 +4814,23 @@ create or replace package body cecred.PAGA0002 is
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
+
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_proc_baixa'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
   BEGIN
-
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_cdbanpag:' || pr_cdbanpag ||
+                   ', pr_cdagepag:' || pr_cdagepag ||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+	                 ', pr_dsmotivo:' || pr_dsmotivo ||
+	                 ', pr_cdoperad:' || pr_cdoperad;
+                           
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
     pr_dscritic:= NULL;
@@ -4713,12 +4855,14 @@ create or replace package body cecred.PAGA0002 is
                                      ,pr_dtmvtolt => pr_crapdat.dtmvtolt  --Data Movimentacao
                                      ,pr_cdoperad => pr_cdoperad   --Codigo Operador
                                      ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                     ,pr_dscritic => vr_dscritic); --Descricao Critica
+                                     ,pr_dscritic => vr_dscritic); --Descricao Critica                                     
     --Se ocorreu erro
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     IF TRIM(pr_dsmotivo) = '14' THEN
       rw_crapcob.insitcrt := 5;
@@ -4738,9 +4882,21 @@ create or replace package body cecred.PAGA0002 is
        WHERE crapcob.rowid  = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
+        -- Quando erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+        -- Efetuar retorno do erro não tratado
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       'CRAPCOB:'  ||
+                       vr_dsparame || 
+                       ', incobran:' || '3' ||
+                       ', dtdbaixa:' || pr_crapdat.dtmvtolt ||
+                       ', indpagto:' || '0' ||
+                       ', insitcrt:' || rw_crapcob.insitcrt ||
+                       ', dtsitcrt:' || rw_crapcob.dtsitcrt ||
+                       '. ' || SQLERRM;  
         --Levantar Excecao
-        RAISE vr_exc_erro;
+        RAISE vr_exc_others;    
     END;
 
     /* Gerar dados para tt-lcm-consolidada */
@@ -4758,6 +4914,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -4773,15 +4931,26 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-
+    
+    -- Inicializa nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
+    WHEN vr_exc_others THEN
+      pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_baixa. '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_proc_baixa;
 
   /* Gerar registro de Retorno = 12, 13, 14, 19, 20 */
@@ -4803,12 +4972,18 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 12, 13, 14, 19, 20
+    --
+    --   Alteracoes: 
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -4842,9 +5017,20 @@ create or replace package body cecred.PAGA0002 is
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
     vr_nrremret  crapret.nrremret%type;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
+
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_proc_conf_instrucao'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
   BEGIN
-
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+	                 ', pr_dsmotivo:' || pr_dsmotivo ||
+	                 ', pr_cdoperad:' || pr_cdoperad;
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
     pr_dscritic:= NULL;
@@ -4878,6 +5064,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF; -- fim pr_cdocorre NOT IN ('19','20')
 
     /* Gerar dados para tt-lcm-consolidada */
@@ -4895,6 +5083,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     CASE pr_cdocorre
       WHEN 19 THEN
@@ -4906,9 +5096,17 @@ create or replace package body cecred.PAGA0002 is
            WHERE crapcob.rowid    = pr_idtabcob;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
+            -- Quando erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+            -- Efetuar retorno do erro não tratado
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           'CRAPCOB(1):'    ||
+                           vr_dsparame   ||
+                           ', insitcrt:' || '1' ||
+                           '. ' || SQLERRM;  
+            --Levantar Excecao 
+            RAISE vr_exc_others;    
         END;
         /* Criar Log Cobranca */
         vr_dsmotivo:= 'Aguardando entrada em cartorio pelo BB';
@@ -4923,6 +5121,8 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       WHEN 20 THEN
         /** Atualiza crapcob */
@@ -4933,9 +5133,17 @@ create or replace package body cecred.PAGA0002 is
            WHERE crapcob.rowid    = pr_idtabcob;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
+            -- Quando erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+            -- Efetuar retorno do erro não tratado
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           'CRAPCOB(2):'    ||
+                           vr_dsparame   || 
+                           ', insitcrt:' || '2' ||
+                           '. ' || SQLERRM;
+            --Levantar Excecao  
+            RAISE vr_exc_others;    
         END;
         /* Criar Log Cobranca */
         vr_dsmotivo:= 'Aguardando sustacao pelo BB';
@@ -4950,6 +5158,8 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
         /* verificar se existe alguma instrucao de baixa */
         OPEN cr_craprem (pr_cdcooper => rw_crapcob.cdcooper
@@ -4981,6 +5191,8 @@ create or replace package body cecred.PAGA0002 is
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
+          -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
           vr_nrseqreg:= nvl(vr_nrseqreg,0) + 1;
 
@@ -5001,6 +5213,8 @@ create or replace package body cecred.PAGA0002 is
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
+          -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
           vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -5021,6 +5235,8 @@ create or replace package body cecred.PAGA0002 is
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
+          -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
           /* Criar Log Cobranca */
           vr_dsmotivo:= 'Inst Autom de Baixa';
@@ -5035,11 +5251,13 @@ create or replace package body cecred.PAGA0002 is
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
+          -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
         END IF; --Fim cr_craprem%NOTFOUND
       ELSE
         NULL;
     END CASE;
-
+    
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
                                        ,pr_cdocorre => pr_cdocorre         --Codigo Ocorrencia
@@ -5054,15 +5272,27 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-
+    
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
+    WHEN vr_exc_others THEN
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_conf_instrucao. '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_proc_conf_instrucao;
 
   /* Gerar registro de Retorno = 23 - Remessa a cartório */
@@ -5086,12 +5316,18 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 23 - Remessa a cartório
+    --
+    --   Alteracoes: 
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> VARIAVEIS <-----------------
@@ -5125,9 +5361,22 @@ create or replace package body cecred.PAGA0002 is
     vr_nrremret  crapret.nrremret%type;
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
 
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_proc_remessa_cartorio'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
   BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_vltarifa:' || pr_vltarifa ||
+                   ', pr_cdhistor:' || pr_cdhistor ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+	                 ', pr_dsmotivo:' || pr_dsmotivo ||
+	                 ', pr_cdoperad:' || pr_cdoperad;
 
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -5159,6 +5408,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* Gerar dados para tt-lcm-consolidada */
     PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
@@ -5175,6 +5426,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /** Atualiza crapcob */
     BEGIN
@@ -5184,11 +5437,19 @@ create or replace package body cecred.PAGA0002 is
        WHERE crapcob.rowid    = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-        --Levantar Excecao
-        RAISE vr_exc_erro;
+        -- Quando erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+        -- Efetuar retorno do erro não tratado
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       'CRAPCOB:'    ||
+                       vr_dsparame   ||
+                       ', insitcrt:' || '3' ||
+                       '. ' || SQLERRM;  
+        --Levantar Excecao  
+        RAISE vr_exc_others;    
     END;
-
+    
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
                                        ,pr_cdocorre => pr_cdocorre         --Codigo Ocorrencia
@@ -5203,6 +5464,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* verificar se existe alguma instrucao de baixa */
     OPEN cr_craprem (pr_cdcooper => rw_crapcob.cdcooper
@@ -5234,6 +5497,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -5254,6 +5519,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -5274,6 +5541,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       /* Criar Log Cobranca */
       vr_dsmotivo:= 'Inst Autom de Baixa';
@@ -5288,17 +5557,30 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF; --Fim cr_craprem%NOTFOUND
-
-
+    
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
+    WHEN vr_exc_others THEN
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_remessa_cartorio '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_proc_remessa_cartorio;
 
   /* Gerar registro de Retorno = 24 - Retirada de cartório e manutenção em carteira */
@@ -5322,12 +5604,18 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 24 - Retirada de cartório e manutenção em carteira
+    --
+    --   Alteracoes: 
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -5360,8 +5648,22 @@ create or replace package body cecred.PAGA0002 is
     vr_nrremret  crapret.nrremret%type;
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
+
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_proc_retirada_cartorio'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
   BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_vltarifa:' || pr_vltarifa ||
+                   ', pr_cdhistor:' || pr_cdhistor ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+	                 ', pr_dsmotivo:' || pr_dsmotivo ||
+	                 ', pr_cdoperad:' || pr_cdoperad;
 
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -5393,6 +5695,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* Gerar dados para tt-lcm-consolidada */
     PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
@@ -5409,6 +5713,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /** Atualiza crapcob */
     BEGIN
@@ -5418,9 +5724,17 @@ create or replace package body cecred.PAGA0002 is
        WHERE crapcob.rowid    = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-        --Levantar Excecao
-        RAISE vr_exc_erro;
+        -- Quando erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+        -- Efetuar retorno do erro não tratado
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       'CRAPCOB:'    ||
+                       vr_dsparame   || 
+                       ', insitcrt:' || '4' ||
+                       '. ' || SQLERRM;    
+        --Levantar Excecao  
+        RAISE vr_exc_others;    
     END;
 
     IF nvl(pr_vltarifa,0) > 0 THEN
@@ -5439,8 +5753,10 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF;
-
+    
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
                                        ,pr_cdocorre => pr_cdocorre         --Codigo Ocorrencia
@@ -5455,6 +5771,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* verificar se existe alguma instrucao de baixa */
     OPEN cr_craprem (pr_cdcooper => rw_crapcob.cdcooper
@@ -5486,6 +5804,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -5506,6 +5826,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -5526,6 +5848,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       /* Criar Log Cobranca */
       vr_dsmotivo:= 'Inst Autom de Baixa';
@@ -5540,16 +5864,30 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF; --Fim cr_craprem%NOTFOUND
-
+        
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
+    WHEN vr_exc_others THEN
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_retirada_cartorio '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_proc_retirada_cartorio;
 
   /* Gerar registro de Retorno = 25 - Protestado e Baixado */
@@ -5575,12 +5913,18 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 25 - Protestado e Baixado
+    --
+    --   Alteracoes: 
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -5591,8 +5935,24 @@ create or replace package body cecred.PAGA0002 is
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
+
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_proc_protestado'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
   BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper ||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_cdbanpag:' || pr_cdbanpag ||
+                   ', pr_cdagepag:' || pr_cdagepag ||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_vltarifa:' || pr_vltarifa ||
+                   ', pr_cdhistor:' || pr_cdhistor ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+	                 ', pr_dsmotivo:' || pr_dsmotivo ||
+	                 ', pr_cdoperad:' || pr_cdoperad;
 
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -5624,6 +5984,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* Gerar dados para tt-lcm-consolidada */
     PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
@@ -5640,6 +6002,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     IF nvl(pr_vltarifa,0) > 0 THEN
       /* Gerar dados para tt-lcm-consolidada */
@@ -5657,6 +6021,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF;
 
     /** Atualiza crapcob */
@@ -5672,9 +6038,19 @@ create or replace package body cecred.PAGA0002 is
        WHERE crapcob.rowid    = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-        --Levantar Excecao
-        RAISE vr_exc_erro;
+        -- Quando erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+        -- Efetuar retorno do erro não tratado
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       'CRAPCOB:'    ||
+                       vr_dsparame   || 
+                       ', insitcrt:' || '5' ||
+                       ', incobran:' || '3' ||
+                       ', indpagto:' || '0' ||
+                       '. ' || SQLERRM;    
+        --Levantar Excecao  
+        RAISE vr_exc_others;    
     END;
 
     /* Preparar Lote de Retorno Cooperado */
@@ -5691,15 +6067,27 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-
+    
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
+    WHEN vr_exc_others THEN
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_protestado '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_proc_protestado;
 
   /* Procedure que gera dados para tt-lcm-consolidada  */
@@ -5718,14 +6106,21 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Cred
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 09/06/2016
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure que gera dados para tt-lcm-consolidada
-  --   Alterações:
-  --               09/06/2016 - Inclusão da flag de apuração para as tarifas - Marcos(Supero) */
+    --   Alterações:
+    --               09/06/2016 - Inclusão da flag de apuração para as tarifas - Marcos(Supero)
+    --
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
+  
+    */
 
     --Variaveis Locais
     vr_vltarifa NUMBER;
@@ -5747,29 +6142,67 @@ create or replace package body cecred.PAGA0002 is
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
+
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_prep_lcm_mot_consolidada'; -- Rotina e programa - 31/08/2018 - REQ0011727
   BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_idtabcob:'   || pr_idtabcob ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+                   ', pr_dsmotivo:' || pr_dsmotivo ||
+                   ', pr_tplancto:' || pr_tplancto ||
+                   ', pr_vltarifa:' || pr_vltarifa ||
+                   ', pr_cdhistor:' || pr_cdhistor ;
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
     pr_dscritic:= NULL;
-    --Selecionar registro cobranca
-    OPEN cr_crapcob (pr_rowid => pr_idtabcob);
-    --Posicionar no proximo registro
-    FETCH cr_crapcob INTO rw_crapcob;
-    --Se nao encontrar
-    IF cr_crapcob%NOTFOUND THEN
-      --Fechar Cursor
-      CLOSE cr_crapcob;
-      --Mensagem Erro
-      vr_dscritic:= 'Registro de Cobranca nao encontrado.';
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    END IF;
+    --Selecionar registro cobranca    
+    OPEN cr_crapcob (pr_rowid => pr_idtabcob);    
+    -- Acerto do tratamento de ROWID por não funcionar - 31/08/2018 - REQ0011727
+        
+    BEGIN
+      --Posicionar no proximo registro
+      FETCH cr_crapcob INTO rw_crapcob;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        --Mensagem Erro
+        vr_cdcritic := 1179; -- 'Registro de Cobranca nao encontrado.';
+        --Fechar Cursor
+        CLOSE cr_crapcob;   
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      WHEN OTHERS THEN
+        IF SQLCODE = -01410 THEN -- ORA-01410: ROWID inválido
+          --Mensagem Erro
+          vr_cdcritic := 1179; -- 'Registro de Cobranca nao encontrado.';
+          --Fechar Cursor
+          CLOSE cr_crapcob;   
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        ELSE
+          -- Quando erro de programa gravar tabela especifica de log
+          CECRED.pc_internal_exception (pr_cdcooper => 0);      
+          -- Efetuar retorno do erro não tratado
+          vr_cdcritic := 1036;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         'CRAPCOB:'    ||
+                         vr_dsparame   || 
+                         '. ' || SQLERRM;    
+          --Fechar Cursor
+          CLOSE cr_crapcob;   
+          --Levantar Excecao  
+          RAISE vr_exc_others;    
+        END IF;
+    END;
     --Fechar Cursor
     CLOSE cr_crapcob;
+    
 
     --Se for lancamento tarifa
     IF  pr_tplancto = 'T' THEN
-
+      
       --Buscar dados tarifa
       TARI0001.pc_busca_dados_tarifa (pr_cdcooper  => rw_crapcob.cdcooper    --Codigo Cooperativa
                                      ,pr_nrdconta  => rw_crapcob.nrdconta    --Codigo da Conta
@@ -5788,15 +6221,32 @@ create or replace package body cecred.PAGA0002 is
                                      ,pr_cdcritic  => vr_cdcritic            --Codigo Critica
                                      ,pr_dscritic  => vr_dscritic            --Descricao Critica
                                      ,pr_tab_erro  => vr_tab_erro); --Tabela erros
+      --
+      ---END;
+      --
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Zerar tarifa e historico
         vr_vltarifa:= 0;
         vr_cdhistor:= 0;
+        -- Controlar geração de log de execução dos jobs
+        paga0002.pc_log(pr_dscritic    => vr_dscritic || vr_dsparame
+                                                      || ', pr_cdcooper:' || rw_crapcob.cdcooper
+                                                      || ', pr_nrdconta:' || rw_crapcob.nrdconta
+                                                      || ', pr_nrconven:' || rw_crapcob.nrcnvcob
+                                                      || ', pr_dsincide:' || 'RET'              
+                                                      || ', pr_cdocorre:' || pr_cdocorre        
+                                                      || ', pr_cdmotivo:' || pr_dsmotivo        
+                                                      || ', pr_idtabcob:' || pr_idtabcob        
+                                                      || ', pr_flaputar:' || '1'
+                       ,pr_cdcritic    => vr_cdcritic
+                       );   
       ELSE
         vr_vltarifa:= vr_tar_vltarifa;
         vr_cdhistor:= vr_tar_cdhistor;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF;
 
     --Se Encontrou tarifa
@@ -5826,14 +6276,28 @@ create or replace package body cecred.PAGA0002 is
         pr_tab_lcm_consolidada(vr_index).qtdregis:= Nvl(pr_tab_lcm_consolidada(vr_index).qtdregis,0) + 1;
       END IF;
     END IF;
+      
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic, pr_dscritic => vr_dscritic) || 
+                     ' ' || vr_dsparame;
+    WHEN vr_exc_others THEN
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_prep_lcm_mot_consolidada. '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => 0);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_prep_lcm_mot_consolidada;
 
   /* Gerar registro de Retorno = 28 - Debito de tarifas/custas */
@@ -5860,12 +6324,18 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = 28 - Debito de tarifas/custas
+    --
+    --   Alteracoes: 
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -5899,8 +6369,25 @@ create or replace package body cecred.PAGA0002 is
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
     vr_cdhistor craphis.cdhistor%type :=0;
+    vr_exc_others  EXCEPTION; -- Rotina e programa - 31/08/2018 - REQ0011727
+
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_proc_deb_tarifas_custas'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
   BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_cdbanpag:' || pr_cdbanpag ||
+                   ', pr_cdagepag:' || pr_cdagepag ||
+                   ', pr_vloutcre:' || pr_vloutcre ||
+                   ', pr_vloutdeb:' || pr_vloutdeb ||
+                   ', pr_vltarifa:' || pr_vltarifa ||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+                   ', pr_dsmotivo:' || pr_dsmotivo ||
+                   ', pr_cdoperad:' || pr_cdoperad;
 
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -5932,8 +6419,11 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     IF nvl(pr_vloutcre,0) > 0 THEN
+      
       /* Gerar dados para tt-lcm-consolidada */
       PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
                                           ,pr_cdocorre => pr_cdocorre      --Codigo Ocorrencia /* 28. Deb Tarif Cust */
@@ -5949,6 +6439,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF;
 
     IF nvl(pr_vloutdeb,0) > 0 THEN
@@ -5968,6 +6460,8 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       ELSE
         /* Gerar dados para tt-lcm-consolidada */
@@ -5985,6 +6479,8 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       END IF; -- Fim TRIM(pr_dsmotivo) = '02'
 
@@ -5992,16 +6488,24 @@ create or replace package body cecred.PAGA0002 is
          custas de sustacao enviada pelo BB */
       IF TRIM(pr_dsmotivo) = '09' THEN
         /** Atualiza crapcob */
-        BEGIN
+        BEGIN             
           UPDATE CRAPCOB
              SET crapcob.insitcrt = 4, /* sustado */
                  crapcob.dtsitcrt = pr_dtocorre
            WHERE crapcob.rowid    = pr_idtabcob;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possível atualizar crapcob: '||SQLErrm;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
+            -- Quando erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+            -- Efetuar retorno do erro não tratado
+            vr_cdcritic := 1035;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           'CRAPCOB:'    ||
+                           vr_dsparame   ||
+                           ', insitcrt:' || '4' ||
+                           '. ' || SQLERRM;     
+            --Levantar Excecao  
+            RAISE vr_exc_others;    
         END;
         /* Criar Log Cobranca */
         vr_dsmotivo := 'Sustacao confirmada em '|| to_char(pr_dtocorre, 'DD/MM/RRRR');
@@ -6016,6 +6520,8 @@ create or replace package body cecred.PAGA0002 is
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
       END IF; -- Fim TRIM(pr_dsmotivo) = '09'
     END IF;
 
@@ -6035,6 +6541,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF; --Fim nvl(pr_vltarifa,0) > 0
 
     /* Preparar Lote de Retorno Cooperado */
@@ -6051,6 +6559,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* verificar se existe alguma instrucao de baixa */
     OPEN cr_craprem (pr_cdcooper => rw_crapcob.cdcooper
@@ -6081,6 +6591,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -6101,6 +6613,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       vr_nrseqreg := nvl(vr_nrseqreg,0) + 1;
 
@@ -6121,6 +6635,8 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
       /* Criar Log Cobranca */
       vr_dsmotivo:= 'Inst Autom de Baixa';
@@ -6135,16 +6651,27 @@ create or replace package body cecred.PAGA0002 is
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
     END IF; --Fim cr_craprem%NOTFOUND
-
+        
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
       pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_deb_tarifas_custas: '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_proc_deb_tarifas_custas;
 
   /* Gerar registro de Retorno = Retorno Qualquer */
@@ -6166,12 +6693,18 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Março/2014.                   Ultima atualizacao: 05/03/2014
+    --  Data     : Março/2014.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar registro de Retorno = Retorno Qualquer
+    --
+    --   Alteracoes: 
+    --               31/08/2018 - Padrões: 
+    --                            Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                            Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                            (Envolti - Belli - REQ0011727)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -6183,13 +6716,23 @@ create or replace package body cecred.PAGA0002 is
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
 
-  BEGIN
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs - 31/08/2018 - REQ0011727
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_proc_retorno_qualquer'; -- Rotina e programa - 31/08/2018 - REQ0011727
 
+  BEGIN
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper||
+                   ', pr_idtabcob:' || pr_idtabcob ||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_cdocorre:' || pr_cdocorre ||
+                   ', pr_dsmotivo:' || pr_dsmotivo ||
+                   ', pr_cdoperad:' || pr_cdoperad;
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
-    pr_dscritic:= NULL;
+    pr_dscritic:= NULL;    
     --Selecionar registro cobranca
-    OPEN cr_crapcob (pr_rowid => pr_idtabcob);
+    OPEN cr_crapcob (pr_rowid => pr_idtabcob);    
     --Posicionar no proximo registro
     FETCH cr_crapcob INTO rw_crapcob;
     --Se nao encontrar
@@ -6215,6 +6758,8 @@ create or replace package body cecred.PAGA0002 is
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    -- Retorno nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -6226,19 +6771,31 @@ create or replace package body cecred.PAGA0002 is
                                        ,pr_cdcritic => vr_cdcritic         --Codigo Critica
                                        ,pr_dscritic => vr_dscritic);       --Descricao Critica
     --Se ocorreu erro
-    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN        
+      vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper||
+                   ', pr_dtocorre:' || pr_dtocorre ||
+                   ', pr_dsmotivo:' || pr_dsmotivo;
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
 
+    -- Zera nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL );   
   EXCEPTION
+    -- Padrões de Erros e Logs - 31/08/2018 - REQ0011727
     WHEN vr_exc_erro THEN
       pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
+      pr_dscritic:= vr_dscritic || '. ' || vr_dsparame;
     WHEN OTHERS THEN
-      -- Erro
-      pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_retorno_qualquer: '||sqlerrm;
+      -- Quando erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);      
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;                      
+      -- Log Ocorrencia gerada pela chamadora
   END pc_proc_retorno_qualquer;
 
   /* Procedimento para gerar os agendamentos de pagamento/transferencia/Credito salario */
@@ -8502,7 +9059,7 @@ create or replace package body cecred.PAGA0002 is
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos Martini
-       Data    : Julho/2016                      Ultima atualizacao: 28/08/2016
+       Data    : Julho/2016                      Ultima atualizacao: 31/08/2018
 
        Dados referentes ao programa:
 
@@ -8517,6 +9074,12 @@ create or replace package body cecred.PAGA0002 is
                     27/09/2017 - Ajuste no SQL para contagem dos registros de debito automatico
                                  para nao repetir registros. Inclusao dos historicos de
                                  pagamento de fatura de cartao de credito (Anderson SD 644304 e 764559).
+    
+                    31/08/2018 - Padrões: 
+                                 Others, Modulo/Action, PC Internal Exception, PC Log Programa
+                                 Inserts, Updates, Deletes e SELECT's, Parâmetros
+                                 (Envolti - Belli - REQ0011727)
+                                 
   ............................................................................. */
     DECLARE
       -- Códigos de operação
@@ -8526,6 +9089,8 @@ create or replace package body cecred.PAGA0002 is
       -- Tratamento de erros
       vr_dscritic VARCHAR2(1000);
       vr_excsaida EXCEPTION;
+      vr_exc_sem_processo EXCEPTION; -- Não tem processo - 31/08/2018 - REQ0011727
+      vr_exc_others       EXCEPTION; -- Erro de Others no meio da rotina - 31/08/2018 - REQ0011727
       -- Retorno das Cooperativas para processamento
       CURSOR cr_coop IS
         SELECT cdcooper
@@ -8536,6 +9101,12 @@ create or replace package body cecred.PAGA0002 is
       -- Calendário
       rw_data btch0001.cr_crapdat%ROWTYPE;
       vr_dtmvtoan crapdat.dtmvtoan%TYPE;
+      -- Variaveis de controle de erro e modulo - 31/08/2018 - REQ0011727
+      vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+      vr_nmrotina  VARCHAR2  (100) := 'PAGA0002'; -- Rotina
+      vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_auditoria_auto_atend'; -- Rotina e procedure 
+      vr_cdcritic  crapcri.cdcritic%TYPE;
+    
       -- Busca de apuração
       CURSOR cr_apuracao(pr_cdcooper crapcop.cdcooper%TYPE
                         ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
@@ -8611,9 +9182,18 @@ create or replace package body cecred.PAGA0002 is
     GROUP BY nrdconta;
     
     BEGIN
+      -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => vr_nmrotina, pr_action => vr_nmrotpro );        
+      vr_dsparame := 'pr_dtmvtoan:'   || pr_dtmvtoan;             
+      -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
+      PAGA0002.pc_log( pr_dstiplog => 'I');            
+      
       -- A rotina só pode ser executada em dias uteis
       IF gene0005.fn_valida_dia_util(3,trunc(SYSDATE)) <> trunc(SYSDATE) OR to_char(SYSDATE,'d') IN(1,7) THEN
-        RETURN;
+        -- Excluido RETURN;  31/08/2018 - REQ0011727
+        RAISE vr_exc_sem_processo; -- Saida com tratamento padrão de inicio e fim - 31/08/2018 - REQ0011727
+        -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+        GENE0001.pc_set_modulo(pr_module => vr_nmrotina, pr_action => vr_nmrotpro ); 
       END IF;
       -- Passada a validação das datas, iremos buscar os códigos de operação para PAgamento TAA, Mobile e iBank
       vr_cdoperac_taa    := gene0001.fn_param_sistema('CRED',0,'CDOPERAC_PAGTO_TAA');
@@ -8638,10 +9218,10 @@ create or replace package body cecred.PAGA0002 is
             END IF;
             -- Utilizar a data do calendário
             vr_dtmvtoan := rw_data.dtmvtoan;
-    ELSE
+          ELSE
             -- Utilizar a data do parâmetro
             vr_dtmvtoan := pr_dtmvtoan;
-    END IF;
+          END IF;
           
           -- Chamar rotina para realizar o processamento dos lançamentos
           -- referentes a Tributacao de Juros ao Capital (22/08/2017 - Renato Darosci)
@@ -8649,6 +9229,8 @@ create or replace package body cecred.PAGA0002 is
           -- enviar o e-mail de erro.
           pc_apura_lcm_his_emprestimo(pr_cdcooper => rw_coop.cdcooper
                                      ,pr_dtrefere => vr_dtmvtoan);
+          -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+          GENE0001.pc_set_modulo(pr_module => vr_nmrotina, pr_action => vr_nmrotpro ); 
           
           -- Também devemos garantir que não tenha havido apuração no dia
           OPEN cr_apuracao(rw_coop.cdcooper,vr_dtmvtoan);
@@ -8661,11 +9243,12 @@ create or replace package body cecred.PAGA0002 is
             continue;
           ELSE
             CLOSE cr_apuracao;
-        END IF;
+          END IF;      
+               
           -- PAssadas as validações, então buscar os pagamentos via iBank e Mobile
           FOR rw_pgto IN cr_pagtos(rw_coop.cdcooper,vr_dtmvtoan) LOOP
             -- Para cada registro, devemos inserir registros de apuração:
-            BEGIN
+            BEGIN              
               INSERT
                 INTO tbcc_operacoes_diarias(
                      cdcooper
@@ -8682,14 +9265,28 @@ create or replace package body cecred.PAGA0002 is
                     ,0);
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir registro de lancamento de TAA e Mobile. Erro: ' || SQLERRM;
+                -- No caso de erro de programa gravar tabela especifica de log
+                CECRED.pc_internal_exception(pr_cdcooper => rw_coop.cdcooper);
+                -- Monta Log
+                vr_cdcritic := 1034;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         'TBCC_OPERACOES_DIARIAS(1):' ||
+                         ' cdcooper:'  || rw_coop.cdcooper ||
+                         ', nrdconta:' || rw_pgto.nrdconta ||
+                         ', cdhistor:' || rw_pgto.cdhistor ||
+                         ', vr_cdoperac_mobibk:' || vr_cdoperac_mobibk ||
+                         ', vr_cdoperac_taa:'    || vr_cdoperac_taa    ||
+                         ', dtoperac:' || vr_dtmvtoan      ||
+                         ', nrsequen:' || rw_pgto.qtdregis ||
+                         ', flgisenc:' || '0' ||
+                         '. ' || SQLERRM;
                 RAISE vr_excsaida;
             END;
           END LOOP;
           -- Por fim, iremos buscar os pagamentos via Débito Automático:
           FOR rw_debaut IN cr_debaut(rw_coop.cdcooper,vr_dtmvtoan) LOOP
             -- Para cada registro, devemos inserir registros de apuração:
-            BEGIN
+            BEGIN              
               INSERT
                 INTO tbcc_operacoes_diarias(
                      cdcooper
@@ -8706,17 +9303,35 @@ create or replace package body cecred.PAGA0002 is
                     ,0);
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao inserir registro de lancamento de DebAut. Erro: ' || SQLERRM;
+                -- No caso de erro de programa gravar tabela especifica de log
+                CECRED.pc_internal_exception(pr_cdcooper => rw_coop.cdcooper);
+                -- Monta Log
+                vr_cdcritic := 1034;
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         'TBCC_OPERACOES_DIARIAS(2):' ||
+                         ' cdcooper:'  || rw_coop.cdcooper   ||
+                         ', nrdconta:' || rw_debaut.nrdconta ||
+                         ', cdoperac:' || vr_cdoperac_deb    ||
+                         ', dtoperac:' || vr_dtmvtoan        ||
+                         ', nrsequen:' || rw_debaut.qtdregis ||
+                         ', flgisenc:' || '0' ||
+                         '. ' || SQLERRM;
                 RAISE vr_excsaida;
             END;
           END LOOP;
         EXCEPTION
-          WHEN vr_excsaida THEN
+          -- Trata Erro - 31/08/2018 - REQ0011727
+          WHEN vr_excsaida THEN         
+            -- Controlar geração de log de execução dos jobs   
+            paga0002.pc_log(pr_dscritic    => vr_dscritic
+                           ,pr_cdcritic    => vr_cdcritic
+                           );   
             -- Desfazer alterações pendentes
-        ROLLBACK;
+            ROLLBACK;
+            -- Acerto do código do programa - 31/08/2018 - REQ0011727
             -- Efetuar montagem de e-mail
             gene0003.pc_solicita_email(pr_cdcooper    => nvl(rw_coop.cdcooper,3)
-                                      ,pr_cdprogra    => 'SOBR0001.AUDIT'
+                                      ,pr_cdprogra    => 'PAGA0002' -- 'SOBR0001.AUDIT'
                                       ,pr_des_destino => gene0001.fn_param_sistema('CRED',nvl(rw_coop.cdcooper,3), 'ERRO_EMAIL_JOB')
                                       ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||NVL(rw_coop.cdcooper,3)
                                       ,pr_des_corpo   => 'Olá, <br><br>'
@@ -8726,14 +9341,33 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_des_anexo   => ''
                                       ,pr_flg_enviar  => 'N'
                                       ,pr_des_erro    => vr_dscritic);
+            -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+            GENE0001.pc_set_modulo(pr_module => vr_nmrotina, pr_action => vr_nmrotpro ); 
+            
             -- Gravar a solictação do e-mail para envio posterior
             COMMIT;
-      WHEN OTHERS THEN
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log
+            CECRED.pc_internal_exception(pr_cdcooper => NVL(rw_coop.cdcooper,3));   
+            -- Efetuar retorno do erro não tratado
+            vr_cdcritic := 9999;
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                           vr_nmrotpro     || '. LOOP '||
+                           '. ' || SQLERRM ||
+                           '. ' || vr_dsparame ||
+                           ', vr_dtmvtoan:' || vr_dtmvtoan ||
+                           ', cdcooper:'    || rw_coop.cdcooper;
+            -- Controlar geração de log de execução dos jobs   
+            paga0002.pc_log(pr_dscritic    => vr_dscritic
+                           ,pr_cdcritic    => vr_cdcritic
+                           );   
+                       
             -- Desfazer alterações pendentes
-        ROLLBACK;
+            ROLLBACK;            
+            -- Acerto do código do programa - 31/08/2018 - REQ0011727
             -- Efetuar montagem de e-mail
             gene0003.pc_solicita_email(pr_cdcooper    => nvl(rw_coop.cdcooper,3)
-                                      ,pr_cdprogra    => 'SOBR0001.AUDIT'
+                                      ,pr_cdprogra    => 'PAGA0002' -- 'SOBR0001.AUDIT'
                                       ,pr_des_destino => gene0001.fn_param_sistema('CRED',nvl(rw_coop.cdcooper,3), 'ERRO_EMAIL_JOB')
                                       ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||NVL(rw_coop.cdcooper,3)
                                       ,pr_des_corpo   => 'Olá, <br><br>'
@@ -8743,19 +9377,49 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_des_anexo   => ''
                                       ,pr_flg_enviar  => 'N'
                                       ,pr_des_erro    => vr_dscritic);
+            -- Retorna nome do módulo logado - 31/08/2018 - REQ0011727
+            GENE0001.pc_set_modulo(pr_module => vr_nmrotina, pr_action => vr_nmrotpro );
+        
             -- Gravar a solictação do e-mail para envio posterior
             COMMIT;
         END;
         -- Após processar todos os registros da COop, commitamos
         COMMIT;
       END LOOP;
+      
+      -- Limpa nome do módulo logado - 31/08/2018 - REQ0011727
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL ); 
+      -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
+      paga0002.pc_log( pr_dstiplog => 'F');
+       
     EXCEPTION
+      -- Tratamentos de erros - 31/08/2018 - REQ0011727 
+      WHEN vr_exc_sem_processo THEN       
+        -- Limpa nome do módulo logado
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL ); 
+        -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
+        paga0002.pc_log( pr_dstiplog => 'F'); 
+           
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception(pr_cdcooper => NVL(rw_coop.cdcooper,3));   
+        -- Efetuar retorno do erro não tratado
+        vr_cdcritic := 9999;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame;
+        -- Controlar geração de log de execução dos jobs   
+        paga0002.pc_log(pr_dscritic    => vr_dscritic
+                       ,pr_cdcritic    => vr_cdcritic
+                       );   
+        
         -- Desfazer alterações pendentes
-        ROLLBACK;
+        ROLLBACK;                                 
+        -- Acerto do código do programa - 31/08/2018 - REQ0011727   
         -- Efetuar montagem de e-mail
         gene0003.pc_solicita_email(pr_cdcooper    => nvl(rw_coop.cdcooper,3)
-                                  ,pr_cdprogra    => 'RCIP0001'
+                                  ,pr_cdprogra    => 'PAGA0002' -- 'RCIP0001'
                                   ,pr_des_destino => gene0001.fn_param_sistema('CRED',nvl(rw_coop.cdcooper,3), 'ERRO_EMAIL_JOB')
                                   ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||NVL(rw_coop.cdcooper,3)
                                   ,pr_des_corpo   => 'Olá, <br><br>'
@@ -10742,13 +11406,20 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Renato Darosci - Supero
-    --  Data     : Agosto/2017.                   Ultima atualizacao: --/--/----
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 31/08/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Realizar a apuração diária dos lançamentos dos históricos de 
     --               pagamento de empréstimos e gravar os valores em uma tabela auxiliar
+
+         Alterações:     
+                    31/08/2018 - Padrões: 
+                                 Others, Modulo/Action, PC Internal Exception, PC Log Programa
+                                 Inserts, Updates, Deletes e SELECT's, Parâmetros
+                                 (Envolti - Belli - REQ0011727)
+                                 
     -- ..........................................................................*/
     
     -- ROTINA CRIADA COM PRAGMA AUTONOMO PARA QUE O COMMIT DA MESMA NÃO AFETE ROTINAS CHAMADORAS.
@@ -10763,19 +11434,44 @@ create or replace package body cecred.PAGA0002 is
     -- Variáveis
     vr_cdoperac_pagepr   NUMBER;
     
-  BEGIN
+    -- Variaveis de controle de erro e modulo - 31/08/2018 - REQ0011727
+    vr_dsparame  VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
+    vr_nmrotpro  VARCHAR2  (100) := 'PAGA0002.pc_apura_lcm_his_emprestimo'; -- Rotina e programa 
+    
+  BEGIN    
+    -- Incluido nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmrotpro );        
+    vr_dsparame := 'pr_cdcooper:'  || pr_cdcooper || 
+                   ',pr_dtrefere:' || pr_dtrefere;         
     
     -- Buscar o código de operação para os registros
     vr_cdoperac_pagepr := to_number(gene0001.fn_param_sistema('CRED',0,'CDOPERAC_HIS_PAGTO_EPR'));
+        
+    BEGIN      
+      -- Garantir que em caso de reprocessamento os registros sejam recalculados
+      DELETE TBCC_OPERACOES_DIARIAS  tab
+       WHERE tab.cdcooper   = pr_cdcooper
+         AND tab.cdoperacao = vr_cdoperac_pagepr
+         AND tab.dtoperacao = pr_dtrefere;
+    EXCEPTION
+      -- Trata Erro - 31/08/2018 - REQ0011727
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log 
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper); 
+        -- Ajuste log da critica
+        vr_cdcritic := 1037;   
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)
+                        ||'TBCC_OPERACOES_DIARIAS:'
+                        ||' cdcooper:'||pr_cdcooper
+                        ||', cdoperac:'||vr_cdoperac_pagepr
+                        ||', dtoperac:'||pr_dtrefere
+                        ||'. '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
     
-    -- Garantir que em caso de reprocessamento os registros sejam recalculados
-    DELETE TBCC_OPERACOES_DIARIAS  tab
-     WHERE tab.cdcooper   = pr_cdcooper
-       AND tab.cdoperacao = vr_cdoperac_pagepr
-       AND tab.dtoperacao = pr_dtrefere;
-    
-    -- Inserir os regitros referente aos lançamentos do dia
-    INSERT INTO TBCC_OPERACOES_DIARIAS(cdcooper, nrdconta, cdoperacao, dtoperacao, vloperacao)
+    BEGIN      
+      -- Inserir os regitros referente aos lançamentos do dia
+      INSERT INTO TBCC_OPERACOES_DIARIAS(cdcooper, nrdconta, cdoperacao, dtoperacao, vloperacao)
        (SELECT pr_cdcooper
              , lcm.nrdconta
              , vr_cdoperac_pagepr
@@ -10796,17 +11492,70 @@ create or replace package body cecred.PAGA0002 is
                , lcm.nrdconta
                , vr_cdoperac_pagepr
                , pr_dtrefere);
+    EXCEPTION
+      -- Trata Erro - 31/08/2018 - REQ0011727
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log 
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper); 
+        -- Ajuste log da critica
+        vr_cdcritic := 1034;   
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)
+                        ||'TBCC_OPERACOES_DIARIAS:'
+                        ||' cdcooper:'||pr_cdcooper
+                        ||', cdoperac:'||vr_cdoperac_pagepr
+                        ||', dtoperac:'||pr_dtrefere
+                        ||'. '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
     
     -- Efetivar os dados gerados
     COMMIT;
+      
+    -- Limpa nome do módulo logado - 31/08/2018 - REQ0011727
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL ); 
     
   EXCEPTION
-    WHEN OTHERS THEN
+    WHEN vr_exc_erro THEN
+      -- Controlar geração de log de execução dos jobs   
+      paga0002.pc_log(pr_dscritic    => vr_dscritic
+                     ,pr_cdcritic    => vr_cdcritic
+                     );  
       -- Desfazer alterações pendentes
       ROLLBACK;
       -- Efetuar montagem de e-mail
       gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
-                                ,pr_cdprogra    => 'SOBR0001.pc_apura_juros_capital'
+                                ,pr_cdprogra    => 'PAGA0002'
+                                ,pr_des_destino => gene0001.fn_param_sistema('CRED',pr_cdcooper, 'ERRO_EMAIL_JOB')
+                                ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||pr_cdcooper
+                                ,pr_des_corpo   => 'Olá, <br><br>'
+                                                || 'Foram encontrados problemas durante o processo de apuração '
+                                                || 'dos valores de Históricos dos Lançamentos de Empréstimos. <br> '
+                                                || 'Erro encontrado:<br>'||SQLERRM
+                                ,pr_des_anexo   => ''
+                                ,pr_flg_enviar  => 'N'
+                                ,pr_des_erro    => vr_dscritic);
+      -- Gravar a solictação do e-mail para envio posterior
+      COMMIT;  
+      
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+      -- Efetuar retorno do erro não tratado
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                     vr_nmrotpro     || 
+                     '. ' || SQLERRM ||
+                     '. ' || vr_dsparame; 
+      -- Controlar geração de log de execução dos jobs   
+      paga0002.pc_log(pr_dscritic    => vr_dscritic
+                     ,pr_cdcritic    => vr_cdcritic
+                     );   
+      -- Desfazer alterações pendentes
+      ROLLBACK;      
+      -- Acerto do código do programa - 31/08/2018 - REQ0011727
+      -- Efetuar montagem de e-mail
+      gene0003.pc_solicita_email(pr_cdcooper    => pr_cdcooper
+                                ,pr_cdprogra    => 'PAGA0002' -- 'SOBR0001.pc_apura_juros_capital'
                                 ,pr_des_destino => gene0001.fn_param_sistema('CRED',pr_cdcooper, 'ERRO_EMAIL_JOB')
                                 ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||pr_cdcooper
                                 ,pr_des_corpo   => 'Olá, <br><br>'
@@ -11578,5 +12327,52 @@ create or replace package body cecred.PAGA0002 is
       
   END pc_identif_tppagamento_car;
 
+  /*Procedures Rotina de Log - tabela: tbgen prglog ocorrencia*/     
+  PROCEDURE pc_log(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                  ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                  ,pr_tpexecuc IN NUMBER   DEFAULT 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                  ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
+                  ,pr_nmrotina IN VARCHAR2 DEFAULT 'PAGA0002'
+                  ,pr_cdcooper IN VARCHAR2 DEFAULT 0
+                  ) 
+  IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_log
+    --  Sistema  : Rotina de Log - tabela: tbgen prglog ocorrencia
+    --  Sigla    : GENE
+    --  Autor    : Envolti - Belli - Chamado REQ0011727
+    --  Data     : 31/08/2018                       Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Chamar a rotina de Log para gravação de criticas.
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+    --
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;        
+  BEGIN   
+    -- Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => pr_dscritic
+                          ,pr_cdmensagem    => pr_cdcritic
+                          ,pr_cdprograma    => pr_nmrotina
+                          ,pr_cdcooper      => pr_cdcooper 
+                          ,pr_idprglog      => vr_idprglog
+                          );   
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+  END pc_log;
+  
 END PAGA0002;
 /
