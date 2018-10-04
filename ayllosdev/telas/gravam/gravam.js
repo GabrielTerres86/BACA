@@ -846,12 +846,12 @@ function formataFormularioBens() {
 
     } else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
-        $('#dsjustif', '#divJustificativa').habilitaCampo().focus();
+        $('#dsjustif', '#divJustificativa').val('').habilitaCampo().focus();
 
     } else if ($('#cddopcao', '#frmCab').val() == 'M') {
 
         $('#nrgravam', '#frmBens').habilitaCampo();
-        $('#dsjustif', '#divJustificativa').habilitaCampo();
+        $('#dsjustif', '#divJustificativa').val('').habilitaCampo();
         $('#dtmvttel', '#frmBens').habilitaCampo().focus();
 
         //Define ação para o campo dtmvttel
@@ -1086,7 +1086,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 	} else if (opcaoButton == 'B'){
 	//} else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
-        $('#dsjustif', '#divJustificativa').habilitaCampo().focus();
+        $('#dsjustif', '#divJustificativa').val('').habilitaCampo().focus();
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1101,6 +1101,11 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 		mostrabutton();
         $('#dsjustif', '#frmBens').val();
         $('#btVoltar', '#divBotoesBens').focus();
+		
+		$("#btHistGravame", "#divBotoesBens").unbind('click').bind('click', function () {
+			gerarHistoricoGravames();
+		});
+		
 
 		return false;
 	} else if (opcaoButton == 'X'){
@@ -1132,7 +1137,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
 
 
-        $('#dsjustif', '#frmBens').habilitaCampo();
+        $('#dsjustif', '#frmBens').val('').habilitaCampo();
 
         //Define ação para CLICK no botão de Concluir
         $("#btBlocJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1145,7 +1150,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //} else if (opcaoButton == 'L') {
         //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
 
-            $('#dsjustif', '#frmBens').habilitaCampo();
+            $('#dsjustif', '#frmBens').val('').habilitaCampo();
 
             //Define ação para CLICK no botão de Concluir
             $("#btLibJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1169,9 +1174,6 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
           
 
         } else {
-
-            $('#btConcluir', '#divBotoesBens').css('display', 'inline').unbind('click');
-			$('#btBaixaManual', '#divBotoesBens').css('display', 'inline').unbind('click');
 
             $('#dschassi', '#frmBens').habilitaCampo().focus();
             $('#ufdplaca', '#frmBens').habilitaCampo();
@@ -1523,6 +1525,9 @@ function controlaVoltar(ope,tpconsul) {
 				$('#divTabela').html('').css('display', 'none');
 				formataFiltro();
 			}
+			var tr = $('.divRegistros table').find("[id="+ $('#ddl_descrbem').val() +"]");
+			var dsjustif = $('#hddsjustif', tr).val();
+			$('#dsjustif', '#divJustificativa').val(dsjustif);
         break;
 		case '6':
 		$('input[type="text"]', '#frmFiltro').limpaFormulario();
@@ -2310,6 +2315,7 @@ function displayNoneButton() {
 	$('#btInclManuGravame', '#divBotoes').css({ 'display': 'none' });
 	
 	$('#btBaixaManual', '#divBotoes').css({ 'display': 'none' });
+	$('#btHistGravame', '#divBotoesBens').css({ 'display': 'none ' });
 }
 function mostrabutton() {
 	
@@ -2321,6 +2327,7 @@ function mostrabutton() {
 	$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'none' });
 	$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'none ' });
 	$('#btBaixaManual', '#divBotoesBens').css({ 'display': 'none ' });
+	$('#btHistGravame', '#divBotoesBens').css({ 'display': 'none ' });
 	$('#dsjustif', '#frmBens').desabilitaCampo();
 	
 	if (opcaoButton == "C") {		
@@ -2328,21 +2335,30 @@ function mostrabutton() {
 		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btBaixar','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btCancelar','#divBotoesBens').css({ 'display': 'inline' });
+		$('#btHistGravame','#divBotoesBens').css({ 'display': 'inline' });
 	}else if (opcaoButton == "J" || opcaoButton == "L") {	
-		$('#dsjustif', '#frmBens').habilitaCampo();
+		$('#dsjustif', '#frmBens').val('').habilitaCampo();
 		$('#btLibJudicial','#divBotoesBens').css({ 'display': 'inline' });				
-		$('#btBlocJudicial','#divBotoesBens').css({ 'display': 'inline' });				
+		$('#btBlocJudicial','#divBotoesBens').css({ 'display': 'inline' });	
+		$('#btHistGravame','#divBotoesBens').css({ 'display': 'inline' });		
 	}else if (opcaoButton == "M" || opcaoButton == "A") {	
 		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });    
 	}else if (opcaoButton == "X" ) {	
-		$('#dsjustif', '#frmBens').habilitaCampo();
+		$('#dsjustif', '#frmBens').val('').habilitaCampo();
 		$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
 	}else if (opcaoButton == 'S'){
 		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });
 		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline' });	
+		$('#btHistGravame','#divBotoesBens').css({ 'display': 'inline' });
 	}else if (opcaoButton == 'B'){
 		$('#btConcluir', '#divBotoesBens').css({ 'display': 'inline' });  
-		$('#dsjustif', '#divJustificativa').habilitaCampo().focus();
+		$('#dsjustif', '#divJustificativa').val('').habilitaCampo().focus();
+	}else if(opcaoButton == 'I'){
+		var cddopcao = $('#cddopcao', '#frmCab').val();
+		if(cddopcao == 'C' || cddopcao == 'S' || cddopcao == 'J'){
+			opcaoButton = cddopcao;
+			mostrabutton();
+		}
 	}
 	
 }
@@ -2584,4 +2600,93 @@ function buscaIndice(nriniseq, nrregist) {
     Relatorio670('TELA',cdcooper,tparquiv,nrseqlot,dtrefere,cddopcao,dtrefate,cdagenci,nrdconta,nrctrpro,flcritic,dschassi);
 
     return false;
+}
+
+function gerarHistoricoGravames(){ 
+	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
+	$('#divUsoGenerico').html('');
+	$('#divUsoGenerico').css('width','750px');
+	exibeRotina($('#divUsoGenerico'));
+
+	var dschassi = $("#dschassi","#frmBens").val();
+	var nrctrpro = normalizaNumero($('#nrctrpro', '#frmFiltro').val());
+	var nrdconta = normalizaNumero($('#nrdconta', '#frmFiltro').val());
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		//url: UrlSite + 'telas/manbem/historico_gravames.php',
+		url: UrlSite + 'telas/atenda/prestacoes/cooperativa/historico_gravames.php',
+		data: {
+			nrdconta: nrdconta,
+			nrctrpro: nrctrpro,
+			dschassi: dschassi,
+			redirect: 'html_ajax'
+			},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$('#divUsoGenerico').html(response);
+			controlaLayoutHistoricoGravames();
+			var td = $('#divUsoGenerico').find('table td#tdTitTela');
+			$(td).unbind('click').bind('click', function(){
+				unblockBackground();
+			});
+		}
+	});
+}
+
+function controlaLayoutHistoricoGravames() {
+	$('#divUsoGenerico').css({ 'width': '1075px', 'left': '325px' });
+	var divRegistro = $('#divDetGravTabela');
+	var tabela      = $('table',divRegistro);
+	var linha       = $('table > tbody > tr', divRegistro);
+	divRegistro.css({'height':'250px'});
+	$('div.divRegistros').css({'height':'200px'});
+	$('div.divRegistros table tr td:nth-of-type(8)').css({'text-transform':'uppercase'});
+	$('div.divRegistros .dtenvgrv').css({'width':'25px'});
+	$('div.divRegistros .dtretgrv').css({'width':'25px'});
+
+	var ordemInicial = new Array();
+	ordemInicial = [[0,0]];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '31px';  	//Coop
+	arrayLargura[1] = '30px';	//PA
+	arrayLargura[2] = '101px';	//Operação
+	arrayLargura[3] = '48px';	//Lote
+	arrayLargura[4] = '65px';	//Conta/DV
+	arrayLargura[5] = '65px';	//Contrato
+	arrayLargura[6] = '140px';	//Chassi
+	arrayLargura[7] = '190px';	//Bem
+	arrayLargura[8] = '91px';	//Data Envio
+	arrayLargura[9] = '91px';	//Data Ret
+	arrayLargura[10] = '';		//Situação
+	arrayLargura[11] = '14px'; // Fixo para definir o tamanho da coluna do campo da ordenação inicial que fica sobre a barra de rolagem
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'center';
+    arrayAlinha[2] = 'center';
+    arrayAlinha[3] = 'center';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'center';
+    arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'center';
+	arrayAlinha[8] = 'center';
+	arrayAlinha[9] = 'center';
+	arrayAlinha[10] = 'left';
+	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+	for( var i in arrayLargura ) {
+		$('td:eq('+i+')', tabela ).css('width', arrayLargura[i] );
+	}
+
+	layoutPadrao();
+	hideMsgAguardo();
+	bloqueiaFundo($('#divUsoGenerico'));
+	return false;
 }

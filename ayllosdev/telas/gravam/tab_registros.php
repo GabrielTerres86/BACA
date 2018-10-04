@@ -211,6 +211,8 @@
 	<a href="#" class="botao" id="btBlocJudicial" style="display:none;" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>
 
 	<a href="#" class="botao" id="btBaixaManual" style="display:none;" onclick="validPermiss('Z'); return false;">Baixa Manual</a>	
+	
+	<a href="#" class="botao" id="btHistGravame" style="display:none;" onclick="validPermiss('I'); return false;"><? echo utf8ToHtml("Histórico Gravames") ?></a>	
 												
 	<a href="#" class="botao" style="display:none;" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>
