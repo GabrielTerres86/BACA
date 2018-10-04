@@ -24000,7 +24000,7 @@ PROCEDURE altera_administradora:
              END.
 
           CREATE crabcrd.
-          BUFFER-COPY crawcrd EXCEPT nrcrcard cdadmcrd insitcrd nrctrcrd TO crabcrd.
+          BUFFER-COPY crawcrd EXCEPT nrcrcard cdadmcrd insitcrd nrctrcrd dtcancel TO crabcrd.
           
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
