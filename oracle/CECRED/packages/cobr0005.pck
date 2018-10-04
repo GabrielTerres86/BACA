@@ -630,6 +630,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --                          ( Belli - Envolti - Ch INC0023245 )
   --
   --              03/10/2018 - Ajuste no cursor para geração dos boletos para o Cyber. (PRB0040197 - Saquetta).
+  --
+  --              01/10/2018 - Substituir '.' por ',', pois estava afetando na geração do
+  --                           relatorio (Lucas Ranghetti INC0023838)
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -2903,7 +2906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
+       Data    : Outubro/2016                     Ultima atualizacao: 01/10/2018
 
        Dados referentes ao programa:
 
@@ -2919,6 +2922,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                    21/09/2018 - Ajuste mensagem e parâmetros
                                 ( Belli - Envolti - Ch INC0023245 ) 
   
+                   01/10/2018 - Substituir '.' por ',', pois estava afetando na geração do
+                                relatorio (Lucas Ranghetti)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     --> Buscar SMSs enviados 
@@ -3044,7 +3049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                        '<nrnosnum>'||     rw_cobran_sms.nrnosnum                             ||'</nrnosnum>'||
                        '<nmdsacad>'||     rw_cobran_sms.nmdsacad                             ||'</nmdsacad>'||   
                        '<dtvencto>'||     to_char(rw_cobran_sms.dtvencto,'DD/MM/RRRR')       ||'</dtvencto>'||   
-                       '<vltitulo>'||     rw_cobran_sms.vltitulo                             ||'</vltitulo>'||   
+                       '<vltitulo>'||     REPLACE(rw_cobran_sms.vltitulo,'.',',')            ||'</vltitulo>'||   
                        '<dhenvio_sms>'||  to_char(rw_cobran_sms.dhenvsms,'DD/MM/RRRR HH24:MI:SS')   ||'</dhenvio_sms>'||
                        '<nrdofone>'||     rw_cobran_sms.nrdofone                             ||'</nrdofone> '||
                        '<dspacote>'||     rw_cobran_sms.dspacote                             ||'</dspacote>
