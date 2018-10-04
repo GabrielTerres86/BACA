@@ -126,6 +126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   -- 
   --             05/06/2018 - Adicionado calculo do saldo devedor do desconto de títulos (Paulo Penteado (GFT)) 
   -- 
+  --             04/10/2018 - Ajuste pc_gerar_acordo para o cursor cr_crapass delimitando enderecos com UF e CEP para o cooperado. (INC0024750 - Saquetta)
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
   vr_formtnum   VARCHAR2(30) := '99999999999990D00';
@@ -1148,6 +1149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 				               na tabela CRAPSAB.
                                Marcelo Coelho (Mouts) - Chamado 785483
 
+			      04/10/2018 - Ajuste para o cursor cr_crapass delimitando enderecos com UF e CEP para o cooperado. (INC0024750 - Saquetta)
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1174,7 +1176,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
        WHERE ass.cdcooper = enc.cdcooper
          AND ass.nrdconta = enc.nrdconta 
          AND ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta;
+         AND ass.nrdconta = pr_nrdconta
+		 AND trim(enc.cdufende) is not null
+         AND nvl(enc.nrcepend,0) <> 0;
     rw_crapass cr_crapass%ROWTYPE;
     
     --> Buscar sacado   
