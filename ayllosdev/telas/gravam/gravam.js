@@ -1266,6 +1266,7 @@ function formataMotivo (idseqbem,tpctrpro,dssitgrv) {
 		fechaRotina($('#divRotina'));
 		return false;
 	});
+	$('#btVoltar').trigger('click');
 }
 
 function formataTabelaContratosGravames(tpconsul) {
@@ -1997,6 +1998,7 @@ function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
         },
         success: function (response) {
 			hideMsgAguardo();
+			$('#btVoltar').trigger('click');
             try {
                 eval(response);
             } catch (error) {
@@ -2052,6 +2054,7 @@ function inclusaoManual(idseqbem, tpctrpro) {
             hideMsgAguardo();
             try {
                 eval(response);
+				$('#btVoltar').trigger('click')
             } catch (error) {
 
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
