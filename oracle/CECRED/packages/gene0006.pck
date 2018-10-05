@@ -1722,13 +1722,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
             WHEN pr_protocolo(vr_index).cdtippro = 12 THEN
               pr_protocolo(vr_index).idlstdom := 31;
               
-            -- 11 = Operações DebAut / 15 = Pagamento DebAut
-            WHEN pr_protocolo(vr_index).cdtippro IN ( 11, 15 ) THEN
+            -- 11 = Operações DebAut 
+            WHEN pr_protocolo(vr_index).cdtippro = 11  THEN
+              CASE UPPER(pr_protocolo(vr_index).dsinform##1)
+                WHEN 'CADASTRO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 34;
+                WHEN 'CADASTRO - ALTERACAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 35;
+                WHEN 'CADASTRO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 36;
+                WHEN 'SUSPENSAO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 37;
+                WHEN 'SUSPENSAO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 38;
+                WHEN 'BLOQUEIO DE DEBITO - INCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 39;
+                WHEN 'BLOQUEIO DE DEBITO - EXCLUSAO' THEN
+                  pr_protocolo(vr_index).idlstdom := 40;
+              END CASE;
+              
+            -- 15 = Pagamento DebAut
+            WHEN pr_protocolo(vr_index).cdtippro = 15 THEN
               pr_protocolo(vr_index).idlstdom := 32;
               
             -- 3 = Capital
             WHEN pr_protocolo(vr_index).cdtippro = 3 THEN
               pr_protocolo(vr_index).idlstdom := 33;
+
+            -- 5 = Depósito
+            WHEN pr_protocolo(vr_index).cdtippro = 5 THEN
+              pr_protocolo(vr_index).idlstdom := 12;
               
             -- Nao identificado 
             ELSE
@@ -2504,7 +2527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
               -- INTERCOOPERATIVA
               pr_protocolo(vr_index).idlstdom := 6;
             END IF;
-                
+
           -- 16 = Pagamento DARF / 18 = Agendamento DARF
           WHEN pr_protocolo(vr_index).cdtippro IN ( 16, 18 ) THEN
             pr_protocolo(vr_index).idlstdom := 7;
@@ -2537,8 +2560,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           WHEN pr_protocolo(vr_index).cdtippro = 12 THEN
             pr_protocolo(vr_index).idlstdom := 31;
                 
-          -- 11 = Operações DebAut / 15 = Pagamento DebAut
-          WHEN pr_protocolo(vr_index).cdtippro IN ( 11, 15 ) THEN
+          -- 11 = Operações DebAut 
+          WHEN pr_protocolo(vr_index).cdtippro = 11  THEN
+            CASE UPPER(pr_protocolo(vr_index).dsinform##1)
+              WHEN 'CADASTRO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 34;
+              WHEN 'CADASTRO - ALTERACAO' THEN
+                pr_protocolo(vr_index).idlstdom := 35;
+              WHEN 'CADASTRO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 36;
+              WHEN 'SUSPENSAO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 37;
+              WHEN 'SUSPENSAO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 38;
+              WHEN 'BLOQUEIO DE DEBITO - INCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 39;
+              WHEN 'BLOQUEIO DE DEBITO - EXCLUSAO' THEN
+                pr_protocolo(vr_index).idlstdom := 40;
+            END CASE;
+            
+          -- 15 = Pagamento DebAut
+          WHEN pr_protocolo(vr_index).cdtippro = 15 THEN
             pr_protocolo(vr_index).idlstdom := 32;
                 
           -- 3 = Capital
@@ -2547,8 +2589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
           -- 5 = Depósito
           WHEN pr_protocolo(vr_index).cdtippro = 5 THEN
-            pr_protocolo(vr_index).idlstdom := 34;
-
+            pr_protocolo(vr_index).idlstdom := 12;
                 
           -- Nao identificado 
           ELSE
