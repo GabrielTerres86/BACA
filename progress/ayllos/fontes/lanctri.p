@@ -1721,7 +1721,7 @@ DO WHILE TRUE:
                      INPUT tel_nrdconta,      /* Número da conta */
                      INPUT tel_nrctremp,      /* Número emrepstimo */
                      INPUT tel_cdagenci,      /* Agencia */
-                     INPUT 100                /* Caixa */
+                     INPUT 100,                /* Caixa */
                      INPUT glb_cdoperad,      /* Operador   */
                      INPUT glb_nmdatela,      /* Tabela   */
                      INPUT 1,                 /* Origem - Ayllos */ 
