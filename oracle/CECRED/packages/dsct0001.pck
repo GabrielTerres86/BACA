@@ -299,7 +299,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   /* Tipos de Tabelas da Package */
 
   --Tipo de Tabela de lancamentos de juros dos titulos
-  TYPE typ_tab_crawljt IS TABLE OF crapljt%ROWTYPE INDEX BY PLS_INTEGER;
+  TYPE typ_crawljt IS RECORD (
+    nrdconta crapljt.nrdconta%TYPE,
+    nrborder crapljt.nrborder%TYPE,
+    nrctrlim crapljt.nrctrlim%TYPE,
+    dtrefere crapljt.dtrefere%TYPE,
+    dtmvtolt crapljt.dtmvtolt%TYPE,
+    vldjuros NUMBER,
+    vlrestit crapljt.vlrestit%TYPE,
+    cdcooper crapljt.cdcooper%TYPE,
+    cdbandoc crapljt.cdbandoc%TYPE,
+    nrdctabb crapljt.nrdctabb%TYPE,
+    nrcnvcob crapljt.nrcnvcob%TYPE,
+    nrdocmto crapljt.nrdocmto%TYPE );
+
+  TYPE typ_tab_crawljt IS TABLE OF typ_crawljt INDEX BY PLS_INTEGER;
 
   --Tabela de lancamentos de juros dos titulos
   vr_tab_crawljt typ_tab_crawljt;
