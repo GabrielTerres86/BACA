@@ -1086,7 +1086,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 	} else if (opcaoButton == 'B'){
 	//} else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
-        $('#dsjustif', '#divJustificativa').val('').habilitaCampo().focus();
+        $('#dsjustif', '#divJustificativa').habilitaCampo().focus();
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1140,7 +1140,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //} else if ($('#cddopcao', '#frmCab').val() == 'J') {
 
 
-        $('#dsjustif', '#frmBens').val('').habilitaCampo();
+        $('#dsjustif', '#frmBens').habilitaCampo();
 
         //Define ação para CLICK no botão de Concluir
         $("#btBlocJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1153,7 +1153,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
         //} else if (opcaoButton == 'L') {
         //} else if ($('#cddopcao', '#frmCab').val() == 'L') {
 
-            $('#dsjustif', '#frmBens').val('').habilitaCampo();
+            $('#dsjustif', '#frmBens').habilitaCampo();
 
             //Define ação para CLICK no botão de Concluir
             $("#btLibJudicial", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1522,8 +1522,8 @@ function controlaVoltar(ope,tpconsul) {
 				$('#dtmvttel', '#frmBens').desabilitaCampo();
 				$('#nrgravam', '#frmBens').desabilitaCampo();
 				
-				
-				$('#dsjustif', '#divJustificativa').desabilitaCampo();
+				var tr = $('table').find('tr#'+ $('#ddl_descrbem').val());
+				$('#dsjustif', '#divJustificativa').val($('#hddsjustif', tr)).desabilitaCampo();
 				opcaoButton = opcaoButton == 'S' ? opcaoButton : 'C';
 				validPermiss(opcaoButton);				
 			}else{
@@ -2136,8 +2136,6 @@ function blqLibJudicial(idseqbem, tpctrpro) {
 
     //Desabilita todos os campos do form
     $('input,select', '#frmBens').desabilitaCampo();
-	idseqbem = $('#idseqbem').val();
-	tpctrpro = $('#tpctrpro').val();
     var cddopcao = opcaoButton;
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
@@ -2343,7 +2341,7 @@ function mostrabutton() {
 		$('#btCancelar','#divBotoesBens').css({ 'display': 'inline' });
 		$('#btHistGravame','#divBotoesBens').css({ 'display': 'inline' });
 	}else if (opcaoButton == "J" || opcaoButton == "L") {	
-		$('#dsjustif', '#frmBens').val('').habilitaCampo();
+		$('#dsjustif', '#frmBens').habilitaCampo();
 		$('#btLibJudicial','#divBotoesBens').css({ 'display': 'inline' });				
 		$('#btBlocJudicial','#divBotoesBens').css({ 'display': 'inline' });	
 		$('#btHistGravame','#divBotoesBens').css({ 'display': 'inline' });		
@@ -2669,7 +2667,7 @@ function gerarHistoricoGravames(){
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1075px', 'left': '325px' });
+	$('#divUsoGenerico').css({ 'width': '1075px', 'left': '26em' });
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
