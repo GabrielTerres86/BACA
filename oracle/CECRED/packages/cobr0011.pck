@@ -279,14 +279,14 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 
+  --  Data     : Março/2018.                   Ultima atualização: 05/10/2018
   --
   -- Dados referentes ao programa:
   --
   -- Freqüência: Sempre que chamado
   -- Objetivo  : Procedimentos para Retorno Instruções bancárias - Cecred/IEPTB
   --
-  -- Alterações: 
+  -- Alterações: 05/10/2018 - Remover inst autom de protesto quando titulo devolvido pelo cartorio
   --
 ---------------------------------------------------------------------------------------------------------------*/
 
@@ -2170,7 +2170,9 @@ create or replace package body cecred.cobr0011 IS
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 0,
              crapcob.dtsitcrt = NULL,
-             crapcob.dtbloque = NULL
+             crapcob.dtbloque = NULL,
+             crapcob.flgdprot = 0, -- remover inst automatica de protesto
+             crapcob.qtdiaprt = 0  -- zerar qtd de dias para protesto
        WHERE crapcob.rowid  = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2897,8 +2899,8 @@ create or replace package body cecred.cobr0011 IS
 															,pr_nmdcampo => 'NRDOCMTO'
 															,pr_dsdchave => 3 || ';'
 																					 || to_char(pr_dtmvtolt,'dd/mm/yyyy') || ';'
-																					 || pr_craplot.nrdolote
-															);
+																					 || pr_craplot.nrdolote);
+                              
 		-- Criar lançamento na cooperativa
 		BEGIN
 			--
