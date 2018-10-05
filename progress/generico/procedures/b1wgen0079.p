@@ -2602,6 +2602,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                 ASSIGN bb-descto-tit-sacado-dda.dsdescto =
                        IF bb-descto-tit-sacado-dda.vldesct > 0 THEN
                           (
+						    (IF bb-descto-tit-sacado-dda.cdtpdesc = "" THEN "R$ " ELSE "") +
                              TRIM(STRING(bb-descto-tit-sacado-dda.vldesct,
                                         "zzz,zzz,zzz,zz9.99")) +
                              bb-descto-tit-sacado-dda.cdtpdesc + 
@@ -2793,14 +2794,16 @@ PROCEDURE cria-registro-titulo PRIVATE:
     /** Obtem nome do banco Beneficiário **/
     FIND crapban WHERE crapban.cdbccxlt = aux_cdbccced NO-LOCK NO-ERROR.
 
-    ASSIGN aux_dsdamora = TRIM(STRING(aux_vlrdmora,"zzz,zzz,zzz,zz9.99")) + 
+    ASSIGN aux_dsdamora = (IF aux_cdtpmora = "" THEN "R$ " ELSE "") +
+	                      TRIM(STRING(aux_vlrdmora,"zzz,zzz,zzz,zz9.99")) + 
                           aux_cdtpmora + 
                          (IF  aux_dtdamora = ?  THEN
                               ""
                           ELSE
                               " - A PARTIR DE " + 
                                   STRING(aux_dtdamora,"99/99/9999"))
-           aux_dsdmulta = TRIM(STRING(aux_vlrmulta,"zzz,zzz,zzz,zz9.99")) +
+           aux_dsdmulta = (IF aux_cdtpmult = "" THEN "R$ " ELSE "") +
+		                  TRIM(STRING(aux_vlrmulta,"zzz,zzz,zzz,zz9.99")) +
                           aux_cdtpmult + 
                          (IF  aux_dtdmulta = ?  THEN
                               ""

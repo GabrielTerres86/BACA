@@ -283,9 +283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                NVL(TRIM(lmt.nrctadif),0) nrdconta_if,
                NVL(TRIM(lmt.nmtitdif),'') nmcooper_if
           FROM craplmt lmt
-         WHERE lmt.cdcooper > 0
-           AND lmt.nrdconta > 0
-           AND lmt.nrsequen > 0         
+         WHERE lmt.cdcooper IN (SELECT cdcooper FROM crapcop)
            AND lmt.dttransa = pr_dttransa
            AND lmt.nmevento IN ('STR0005R2','STR0007R2','STR0008R2','STR0005',
                                 'STR0037R2','STR0047R2','STR0008','STR0037',
@@ -297,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
       CURSOR cr_craplmt_qtd(pr_nrctrlif IN craplmt.nrctrlif%TYPE) IS
         SELECT COUNT(lmt.dttransa)
           FROM craplmt lmt
-         WHERE lmt.cdcooper > 0
+         WHERE lmt.cdcooper IN (SELECT cdcooper FROM crapcop)
            AND lmt.nrctrlif = pr_nrctrlif;
       vr_qtd_lmt INTEGER;
       
