@@ -299,6 +299,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                   pc_gera_conciliacao_auto para não criticar validações para o job (Carlos)
 
      28/09/2018: Alterado select para remover cdcartorio na selecao do cartorio para a conciliacao. (Fabio Stein - Supero)
+     04/10/2018: Alterado validação de data da conciliação. Realizando somente para a automatica.. (Fabio Stein - Supero)
+		         Ajustado query de conciliações para pois o lcódigo isbp 0 para o banco do brasil retornava varios bancos.
+				 Ajustado banco.flgdispb para 1 na query de conciliações.
    ---------------------------------------------------------------------------*/
     
     
@@ -336,6 +339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       and municipio.cdcomarc = ret.cdcomarc
       and mov.cdcooper = coop.cdcooper
       and mov.nrispbif = banco.nrispbif
+      AND banco.flgdispb = 1
       and ((conc.dtconcilicao between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
          or (pr_dtinicial is null and pr_dtfinal is null))
       and ((ret.vltitulo >= pr_vlinicial and ret.vltitulo <= pr_vlfinal) 
@@ -2296,9 +2300,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
               
               vr_ids_retorno := SUBSTR(vr_ids_retorno, 1, LENGTH(vr_ids_retorno) - 1);
 
+              -- Valida se a data de recebimento é maior ou igual a da TED
+             IF t_titulos(i).dtocorre < rw_ted.dtmvtolt THEN
+                vr_dscritic := 'Data de recebimento do título deve ser superior ou igual a TED. Favor verificar!';
+             END IF;
+
+              -- Se NAO gerou crítica  
+              IF TRIM(vr_dscritic) IS NULL THEN
               pc_gera_conciliacao(pr_idlancto   => rw_ted.idlancto,
                                   pr_idsretorno => vr_ids_retorno,
                                   pr_dscritic   => vr_dscritic);
+              END IF;
 
               -- Se gerou alguma crítica
               IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -2508,12 +2520,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       -- Valida se o valor do título excede o valor da TED
       IF rw_titulos.vlsaldo_titulo > rw_ted.vllanmto THEN
         vr_dscritic := 'Valor do título não pode exceder o valor da TED. Favor verificar!';
-        RAISE vr_exc_saida;
-      END IF;
-      
-      -- Valida se a data de recebimento é maior ou igual a da TED
-      IF rw_titulos.dtocorre < rw_ted.dtmvtolt THEN
-        vr_dscritic := 'Data de recebimento do título deve ser superior ou igual a TED. Favor verificar!';
         RAISE vr_exc_saida;
       END IF;
 
