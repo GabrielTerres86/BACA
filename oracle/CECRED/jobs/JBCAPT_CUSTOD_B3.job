@@ -24,12 +24,15 @@ BEGIN
                     nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
                     nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
 
+  /* Dropa o JOB antigo */
+  sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBCAPT_CUSTOD_B3');
+
   -- Create do job do mesmo
   sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBCAPT_CUSTOD_B3'
                                ,job_type        => 'PLSQL_BLOCK'
                                ,job_action      => 'DECLARE ' || CHR(10)
-                                                || '  vr_dsinform varchar2(4000); ' || CHR(10)
-                                                || '  vr_dscritic varchar2(4000); ' || CHR(10)
+                                                || '  vr_dsinform varchar2(32767); ' || CHR(10)
+                                                || '  vr_dscritic varchar2(32767); ' || CHR(10)
                                                 || 'BEGIN ' || CHR(10)
                                                 || '  CECRED.APLI0007.pc_processo_controle(0,vr_dsinform,vr_dscritic); ' || CHR(10)
                                                 || 'END; '
