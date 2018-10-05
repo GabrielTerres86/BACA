@@ -8257,8 +8257,10 @@ EXCEPTION
     
     END IF;
     
-    COMMIT;
-        
+    IF pr_cdorigpg <> 1 THEN
+      COMMIT;
+    END IF;
+
     EXCEPTION
       WHEN vr_exc_erro THEN
       vr_cdcritic := NVL(vr_cdcritic, 0);
@@ -8267,14 +8269,20 @@ EXCEPTION
       END IF;
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-      -- Efetuar rollback
-      ROLLBACK;
+      
+      IF pr_cdorigpg <> 1 THEN
+        -- Efetuar rollback
+        ROLLBACK;
+      END IF;
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
-      -- Efetuar rollback
-      ROLLBACK;                            
+      
+      IF pr_cdorigpg <> 1 THEN
+        -- Efetuar rollback
+        ROLLBACK;
+      END IF;                      
         
     --END;  
   END pc_pagar_titulo;
