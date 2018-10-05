@@ -5518,6 +5518,7 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
                                     pr_cdoperad       => pr_cdoperad,
                                     pr_nmdatela       => pr_nmdatela,
                                     pr_idorigem       => pr_idorigem,   
+                                    pr_valida_proposta => 'N',
                                     pr_sld_devedor    => vr_saldodevedor,  
                                     pr_flgprestamista => vr_flgprestamista,
                                     pr_flgdps         => vr_id_imprime_dsp,
