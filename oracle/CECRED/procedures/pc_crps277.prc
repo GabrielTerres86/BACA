@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair 
-   Data    : Outubro/1999                    Ultima atualizacao: 20/05/2016
+   Data    : Outubro/1999                    Ultima atualizacao: 05/10/2018
 
    Dados referentes ao programa:
 
@@ -81,6 +81,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
                           
               03/10/2018 - PJ450 - Tratamento erro no raise da chamada rotina LANC0001
                            (Renato Cordeiro - AMcom)
+                           
+              05/10/2018  - PJ450 - Tratamento de crítica de negócio retornado pela rotina LANC0001
+                           (Diego Simas - AMcom)
 
   ............................................................................. */
   
@@ -468,10 +471,21 @@ BEGIN
                    ,pr_dscritic => pr_dscritic
                    );
 
-           if (nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) then
+           if ((nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) and vr_incrineg = 0) then
               vr_dscritic := pr_dscritic;
               vr_cdcritic := pr_cdcritic;
               RAISE vr_exc_saida;
+           end if;
+           
+           if (vr_incrineg = 1) then
+              vr_dscritic := 0;
+              vr_cdcritic := '';
+              -- Envio Centralizado de Log de que não pôde debitar
+              BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                         pr_ind_tipo_log => 2, -- ERRO TRATATO
+                                         pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') ||
+                                         ' -' || vr_cdprogra || ' --> ' ||
+                                         pr_dscritic);
            end if;
 
       EXCEPTION
