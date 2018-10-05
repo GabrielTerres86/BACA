@@ -620,7 +620,17 @@ PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> 
                                     ,pr_nmarqpdf   OUT VARCHAR2               --> Retorna o nome do relatorio gerado
                                     ,pr_dsxmlrel   OUT CLOB                   --> Retorna xml do relatorio quando origem for 3 -InternetBank
                                     ,pr_cdcritic   OUT NUMBER                 --> Codigo da critica
-                                    ,pr_dscritic   OUT VARCHAR2);             --> Retorno de critica                                 
+                                    ,pr_dscritic   OUT VARCHAR2);             --> Retorno de critica  
+  --
+	PROCEDURE pc_gera_log_boleto(pr_cdcooper  IN crapcop.cdcooper%TYPE -- Codigo da cooperativa                                    
+															,pr_nrdconta  IN crapass.nrdconta%TYPE -- Número de conta do cooperado                                     
+															,pr_nrdocmto  IN crapcol.nrdocmto%TYPE -- Número do documento
+															,pr_nrcnvcob  IN crapcol.nrcnvcob%TYPE -- Número do convênio
+															--------->> OUT <<-----------
+															,pr_dsxmlrel OUT CLOB                  -- Retorna xml do relatorio
+															,pr_dscritic OUT VARCHAR2              -- Retorno de critica
+															);
+  --                               
 END cobr0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
@@ -1175,6 +1185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_qtdiaprt    INTEGER;
       vr_indiaprt    INTEGER;
       vr_dsparame    VARCHAR2(2000);
+			vr_dsmensag    VARCHAR2(4000);
 			--
 			vr_flcooexp crapceb.flcooexp%TYPE;
 			vr_flceeexp crapceb.flceeexp%TYPE; 
@@ -1538,22 +1549,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 					  RAISE vr_exc_erro;
 				END;
 				--
+				IF pr_tpemitir = 1 THEN
+					--
+					IF vr_flcooexp = 1 THEN
+						--
+						vr_dsmensag := 'Boleto gerado';
+						--
+					ELSE
+						--
+						IF vr_flceeexp = 1 THEN
+							--
+							vr_dsmensag := 'Boleto gerado - Aguardando envio pelos correios';
+							--
+						ELSE
+							--
+							vr_dsmensag := 'Boleto gerado';
+							--
+						END IF;
+						--
+					END IF;
+					--
+				ELSE
+					-- 
+					vr_dsmensag := 'Titulo gerado - Carne';
+					--
+				END IF;
+				--
         paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_cob.rowid
                                      ,pr_cdoperad => pr_cdoperad
                                      ,pr_dtmvtolt => SYSDATE
-                                     ,pr_dsmensag => (CASE WHEN pr_tpemitir = 1 THEN
-																		                    CASE vr_flcooexp = 1 WHEN
-																		                      'Boleto gerado'
-																												ELSE
-																													CASE vr_flceeexp = 1 THEN
-																													  'Boleto gerado - Aguardando envio pelos correios'
-																													ELSE
-																														'Boleto gerado'
-																													END
-																												END
-                                                      ELSE 
-																												'Titulo gerado - Carne'
-																											END)
+                                     ,pr_dsmensag => vr_dsmensag
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => pr_dscritic);
          --Tratamento de erro - Ch 839539
@@ -11244,7 +11269,213 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   
       --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-  END pc_verifar_oferta_sms; 
+  END pc_verifar_oferta_sms;
+	-- 
+	PROCEDURE pc_gera_log_boleto(pr_cdcooper  IN crapcop.cdcooper%TYPE -- Codigo da cooperativa                                    
+															,pr_nrdconta  IN crapass.nrdconta%TYPE -- Número de conta do cooperado                                     
+															,pr_nrdocmto  IN crapcol.nrdocmto%TYPE -- Número do documento
+															,pr_nrcnvcob  IN crapcol.nrcnvcob%TYPE -- Número do convênio
+															--------->> OUT <<-----------
+															,pr_dsxmlrel OUT CLOB                  -- Retorna xml do relatorio
+															,pr_dscritic OUT VARCHAR2              -- Retorno de critica
+															) IS
+    /* ............................................................................
 
+       Programa: pc_gera_log_boleto
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Adriano Nagasava - Supero
+       Data    : Outubro/2018                     Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para gerar o log do titulo informado em formato XML
+
+       Alteracoes: 
+    ............................................................................ */
+		--> Buscar SMSs enviados 
+		CURSOR cr_log_boleto(pr_cdcooper crapcol.cdcooper%TYPE
+												,pr_nrdconta crapcol.nrdconta%TYPE
+												,pr_nrdocmto crapcol.nrdocmto%TYPE
+												,pr_nrcnvcob crapcol.nrcnvcob%TYPE
+												) IS
+			SELECT to_char(crapcol.dtaltera, 'dd/mm/yyyy') dtaltera
+						,to_char(to_date(crapcol.hrtransa,'SSSSS'),'HH24:MI:SS') hrtransa
+						,crapcol.dslogtit
+						,crapcol.cdoperad
+				FROM crapcol
+			 WHERE crapcol.cdcooper = pr_cdcooper
+				 AND crapcol.nrdconta = pr_nrdconta
+				 AND crapcol.nrdocmto = pr_nrdocmto
+				 AND crapcol.nrcnvcob = pr_nrcnvcob
+		ORDER BY crapcol.dtaltera DESC
+						,crapcol.hrtransa DESC
+						,crapcol.rowid DESC;
+				 
+		rw_log_boleto cr_log_boleto%ROWTYPE;
+		
+		CURSOR cr_log_operador(pr_cdcooper crapope.cdcooper%TYPE
+													,pr_cdoperad crapope.cdoperad%TYPE
+													) IS
+			SELECT crapope.nmoperad
+				FROM crapope
+			 WHERE crapope.cdcooper = pr_cdcooper
+				 AND crapope.cdoperad = pr_cdoperad;
+		
+		rw_log_operador cr_log_operador%ROWTYPE;
+		
+		CURSOR cr_log_cobranca(pr_cdcooper crapcco.cdcooper%TYPE
+													,pr_nrconven crapcco.nrconven%TYPE
+													) IS
+			SELECT crapcco.cddbanco
+				FROM crapcco
+			 WHERE crapcco.cdcooper = pr_cdcooper
+				 AND crapcco.nrconven = pr_nrconven;
+		
+		rw_log_cobranca cr_log_cobranca%ROWTYPE;
+	     
+		-------------->> VARIAVEIS <<----------------
+		vr_exc_erro     EXCEPTION;
+		vr_dscritic     VARCHAR2(2000);
+		--
+		vr_dtlog        VARCHAR2(1000);
+		vr_hrlog        VARCHAR2(1000);
+		vr_dslog        VARCHAR2(4000);
+		vr_cdoperad     VARCHAR2(1000);
+		vr_nmoperad     VARCHAR2(1000);
+		--
+	    
+		-- Variáveis para armazenar as informações em XML
+		vr_des_xml      CLOB;
+		vr_txtcompl     VARCHAR2(32600);
+	    
+		--------------------------- SUBROTINAS INTERNAS --------------------------
+		-- Subrotina para escrever texto na variável CLOB do XML
+		PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+														 pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+		BEGIN
+			gene0002.pc_escreve_xml(vr_des_xml, vr_txtcompl, pr_des_dados, pr_fecha_xml);
+		END;
+	    
+	BEGIN
+		-- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
+		GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_gera_log_boleto');
+	  
+		-- Inicializar o CLOB
+		vr_des_xml := NULL;
+		dbms_lob.createtemporary(vr_des_xml, TRUE);
+		dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);    
+		vr_txtcompl := NULL;
+		
+		-- Buscar logs
+		OPEN cr_log_boleto(pr_cdcooper
+											,pr_nrdconta
+											,pr_nrdocmto
+											,pr_nrcnvcob
+											);
+		--
+		pc_escreve_xml('<log_boleto>');
+		--
+		pc_escreve_xml('<boleto>' ||
+											'<cdcooper>' || pr_cdcooper || '</cdcooper>' ||
+											'<nrdconta>' || pr_nrdconta || '</nrdconta>' ||
+											'<nrdocmto>' || pr_nrdocmto || '</nrdocmto>' ||
+											'<nrcnvcob>' || pr_nrcnvcob || '</nrcnvcob>' ||
+									 '</boleto>');
+		--
+		pc_escreve_xml('<log>');
+		--
+		LOOP
+			--
+			FETCH cr_log_boleto INTO rw_log_boleto;
+			EXIT WHEN cr_log_boleto%NOTFOUND;
+			--
+			vr_dtlog := rw_log_boleto.dtaltera;
+			vr_hrlog := rw_log_boleto.hrtransa;
+			vr_dslog := rw_log_boleto.dslogtit;
+			--
+			IF rw_log_boleto.cdoperad NOT IN('1','996') THEN
+				--
+				OPEN cr_log_operador(pr_cdcooper
+														,rw_log_boleto.cdoperad
+														);
+				--
+				FETCH cr_log_operador INTO rw_log_operador;
+				--
+				vr_cdoperad := rw_log_boleto.cdoperad;
+				vr_nmoperad := rw_log_operador.nmoperad;
+				--
+				CLOSE cr_log_operador;
+				--
+			ELSIF rw_log_boleto.cdoperad NOT IN('996') THEN
+				--
+				OPEN cr_log_cobranca(pr_cdcooper
+														,pr_nrcnvcob
+														);
+				--
+				FETCH cr_log_cobranca INTO rw_log_cobranca;
+				--
+				IF cr_log_cobranca%FOUND THEN
+					--
+					IF rw_log_cobranca.cddbanco = 1 THEN
+						--
+						vr_nmoperad := '001-BB';
+						--
+					ELSIF rw_log_cobranca.cddbanco = 85 THEN
+						--
+						vr_nmoperad := '085-AILOS';
+						--
+					ELSE
+						--
+						vr_nmoperad := '000-Nao encontrado';
+						--
+					END IF;
+					--
+				END IF;
+				--
+				CLOSE cr_log_cobranca;
+				--
+			ELSE
+				--
+				vr_cdoperad := '';
+				vr_nmoperad := '';
+				--
+			END IF;
+			--
+			pc_escreve_xml('<ocorrencia>' ||
+											 '<dtaltera>' || vr_dtlog    || '</dtaltera>' ||
+											 '<hrtransa>' || vr_hrlog    || '</hrtransa>' ||
+											 '<dslogtit>' || vr_dslog    || '</dslogtit>' ||
+											 '<cdoperad>' || vr_cdoperad || '</cdoperad>' ||
+											 '<nmoperad>' || vr_nmoperad || '</nmoperad>
+										 </ocorrencia>');
+			--
+		END LOOP;
+		--
+		pc_escreve_xml('</log>');
+		pc_escreve_xml('</log_boleto>',TRUE);
+		--
+		IF cr_log_boleto%ROWCOUNT = 0 THEN
+			--
+			vr_dscritic := 'Nenhum log encontrado para o documento informado';
+			CLOSE cr_log_boleto;
+			RAISE vr_exc_erro;
+			--
+		END IF;
+		--
+		CLOSE cr_log_boleto;
+		--
+		pr_dsxmlrel := vr_des_xml;
+		-- Retira nome do modulo logado
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+		--
+	EXCEPTION
+		WHEN vr_exc_erro THEN
+			pr_dscritic := vr_dscritic;
+		WHEN OTHERS THEN
+			pr_dscritic := 'Erro ao gerar o log em XML: ' || SQLERRM;
+	END pc_gera_log_boleto;
+  --
 END COBR0005;
 /
