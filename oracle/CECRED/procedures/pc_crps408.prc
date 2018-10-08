@@ -1970,7 +1970,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         END IF;     
 
         -- Verificar se conseguiu realizar o download do arquivo.
-        IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nom_diretorio||'/arq/ver'||vr_nmarqped) THEN
+        IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nom_diretorio||'/arq/ver/'||vr_nmarqped) THEN
           
           -- Necessário verificar se o Arquivo esta no diretório ainda, ou esta em salvar
           IF gene0001.fn_exis_arquivo(pr_caminho => vr_nom_diretorio||'/arq/'||vr_nmarqped) THEN -- Diretório onde arquivo é gerado
