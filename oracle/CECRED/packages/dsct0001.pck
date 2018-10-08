@@ -299,7 +299,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   /* Tipos de Tabelas da Package */
 
   --Tipo de Tabela de lancamentos de juros dos titulos
-  TYPE typ_tab_crawljt IS TABLE OF crapljt%ROWTYPE INDEX BY PLS_INTEGER;
+  TYPE typ_crawljt IS RECORD (
+    nrdconta crapljt.nrdconta%TYPE,
+    nrborder crapljt.nrborder%TYPE,
+    nrctrlim crapljt.nrctrlim%TYPE,
+    dtrefere crapljt.dtrefere%TYPE,
+    dtmvtolt crapljt.dtmvtolt%TYPE,
+    vldjuros NUMBER,
+    vlrestit crapljt.vlrestit%TYPE,
+    cdcooper crapljt.cdcooper%TYPE,
+    cdbandoc crapljt.cdbandoc%TYPE,
+    nrdctabb crapljt.nrdctabb%TYPE,
+    nrcnvcob crapljt.nrcnvcob%TYPE,
+    nrdocmto crapljt.nrdocmto%TYPE );
+
+  TYPE typ_tab_crawljt IS TABLE OF typ_crawljt INDEX BY PLS_INTEGER;
 
   --Tabela de lancamentos de juros dos titulos
   vr_tab_crawljt typ_tab_crawljt;
@@ -6473,11 +6487,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --Percorrer todo o prazo
       FOR vr_contador IN 1..vr_qtdprazo LOOP
         --Valor juros
-        vr_vldjuros:= APLI0001.fn_round(vr_vltitulo * vr_txdiaria,2);
-        
         IF (rw_crapbdt.flverbor=0) THEN
           --Valor Titulo recebe valor juros
+          vr_vldjuros:= APLI0001.fn_round(vr_vltitulo * vr_txdiaria,2);
           vr_vltitulo:= vr_vltitulo + vr_vldjuros;
+        ELSE
+          vr_vldjuros:= vr_vltitulo * vr_txdiaria;
         END IF;
         --Data Periodo
         vr_dtperiod:= vr_dtperiod + 1;
@@ -6519,6 +6534,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       END LOOP;  --vr_contador IN 1..vr_qtdprazo
       /*  Atualiza registro de provisao de juros ..........  */
       FOR idx IN 1..vr_tab_crawljt.Count LOOP
+        --Se for a mesma cooperativa
+        IF (rw_crapbdt.flverbor=1) THEN
+          vr_tab_crawljt(idx).vldjuros := APLI0001.fn_round(vr_tab_crawljt(idx).vldjuros,2);
+        END IF;
         --Se for a mesma cooperativa
         IF vr_tab_crawljt(idx).cdcooper = pr_cdcooper THEN
           --Selecionar lancamento juros desconto titulo
