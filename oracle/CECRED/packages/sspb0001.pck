@@ -797,12 +797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       * Cuidar ao alterar o log pois os espacamentos e formats estao  *
       * ajustados para que a tela LogSPB pegue os dados com SUBSTRING *
       *****************************************************************/
-      -- Inicializar o CLOB
-      dbms_lob.createtemporary(vr_des_xml, TRUE);
-      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-
-      pc_escreve_xml(
-       Chr(34) || To_Char(SYSDATE,'DD/MM/YYYY')|| ' - '||
+      vr_des_log :=  Chr(34) || To_Char(SYSDATE,'DD/MM/YYYY')|| ' - '||
        to_char(SYSDATE,'HH24:MI:SS')|| ' - '|| 'b1wgen0046'||
        ' - ENVIADA OK         --> '||
        'Arquivo '|| SUBSTR(vr_nmarquiv,1,40)||
@@ -815,14 +810,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        ', CPF/CNPJ Sacado: '|| pr_nrinssac||
        ', Banco Cedente.: '|| TO_CHAR(pr_cdbanced,'fm990')||
        ', Agencia Cedente: '|| TO_CHAR(pr_cdageced,'fm9990')||
-       ', Cod.Barras.: '|| pr_dscodbar);
+                     ', Cod.Barras.: '|| pr_dscodbar;
 
-      --Gera arquivo XML no diretorio salvar
-      DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,vr_nom_direto_log,vr_nmarqlog, 0);
-
-      -- Liberando a mem¿ria alocada pro CLOB
-      dbms_lob.close(vr_des_xml);
-      dbms_lob.freetemporary(vr_des_xml);
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 1, -- Normal
+                                 pr_des_log      => vr_des_log,
+                                 pr_nmarqlog     => vr_nmarqlog);
 
     EXCEPTION
       WHEN vr_exc_erro THEN
