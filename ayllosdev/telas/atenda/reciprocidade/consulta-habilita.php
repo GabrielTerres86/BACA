@@ -436,6 +436,11 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                                                     $xmlObject = getObjectXML($xmlResult);
                                                                     $xmlTarifa = $xmlObject->roottag->tags[0]->tags;
 
+                                                                    $cdcatego_liq = array(20, 18);
+                                                                    $cdcatego_reg = array(24);
+                                                                    $cdcatego_liq = array(19);
+                                                                    $cdcatego_reg = array(23);
+
                                                                     // Listagem das tarifas
                                                                     $contTar = 0;
                                                                     foreach ($xmlTarifa as $tar) {
@@ -573,12 +578,41 @@ if ($cco_flrecipr == 1 || $qtapurac > 0) {
 // Div flutuante com as tarifas
 $(".clsDesCategoria").hover(
   function() {
+
+    var cat_coo = [18,20,24];
+    var cat_cee = [19,23];
+    var vlr_des_coo = $('#vldescontoconcedido_coo', '.tabelaDesconto').val();
+    var vlr_des_cee = $('#vldescontoconcedido_cee', '.tabelaDesconto').val();
+
     var numLinha = $(this).attr('numLinha');
     for (indTable = 0; indTable < <?php echo count($convenios); ?>; indTable++) {
         var qtdTarif = $('.clsTar' + numLinha, $(this).find('table')[indTable]).length;
         for (indTar = 0; indTar < qtdTarif; indTar++) {
             var vlTarSemDesc = converteMoedaFloat($('.clsTarValorOri' + numLinha + '' + indTar, $(this).find('table')[indTable]).html());
-            var vlPerDesconto = converteMoedaFloat($('#perdesconto_' + numLinha).val());
+            /*
+            var cdcatego = parseInt($('#perdesconto_' + numLinha).attr('cdcatego'));
+
+            if (cat_coo.indexOf(cdcatego) > -1) {
+                var _percDesc = converteMoedaFloat(vlr_des_coo);
+                vlTarSemDesc = vlTarSemDesc - (vlTarSemDesc * (_percDesc / 100));
+            }
+            if (cat_cee.indexOf(cdcatego) > -1) {
+                var _percDesc = converteMoedaFloat(vlr_des_cee);
+                vlTarSemDesc = vlTarSemDesc - (vlTarSemDesc * (_percDesc / 100));
+            }
+            */
+            var cdcatego = parseInt($('#perdesconto_' + numLinha).attr('cdcatego'));
+            var auxPerc = 0;
+            if (cat_coo.indexOf(cdcatego) > -1) {
+                auxPerc = converteMoedaFloat(vlr_des_coo);
+            }
+            if (cat_cee.indexOf(cdcatego) > -1) {
+                auxPerc = converteMoedaFloat(vlr_des_cee);
+            }
+            var vlPerDesconto = converteMoedaFloat($('#perdesconto_' + numLinha).val()) + auxPerc;
+            if (vlPerDesconto > 100) {
+                vlPerDesconto = 100;
+            }
             var vlTarComDesc = vlTarSemDesc * (vlPerDesconto / 100);
             vlTarComDesc = number_format((vlTarComDesc == 0 ? vlTarSemDesc : (vlTarSemDesc - vlTarComDesc)),2,',','.');
             $('.clsTarValorDes' + numLinha + '' + indTar, $(this).find('table')[indTable]).html(vlTarComDesc);

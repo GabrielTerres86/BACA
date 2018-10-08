@@ -371,6 +371,8 @@ function selecionaConvenio(linha, idrecipr, insitceb, convenios) {
     validaHabilitacaoCamposBtn();
     blockBackground(parseInt($("#divRotina").css("z-index")));    
 
+    atualizarDescontos();
+
     return false;
  }
 
@@ -3338,7 +3340,6 @@ function atualizarDescontos() {
             perdescontos.push($item.attr('cdcatego') + "#" + $item.val().replace(".", ","));
         }
     }
-    voltarParaDesconto();
 }
 
 function confirmaCancelarContrato() {    
