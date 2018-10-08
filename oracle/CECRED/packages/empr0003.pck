@@ -5507,8 +5507,7 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
     
     --> Montar nome do arquivo
     pr_nmarqpdf := 'psvp001'|| gene0002.fn_busca_time || '.pdf';
-    
-    
+   
     --Aqui deve chamar a rotina para verificar se imprime o relatório e se é DPS ou não
     SEGU0003.pc_validar_prestamista(pr_cdcooper       => pr_cdcooper,
                                     pr_nrdconta       => pr_nrdconta,
@@ -5518,7 +5517,7 @@ PROCEDURE pc_imprime_contrato_prest(pr_cdcooper IN crapcop.cdcooper%TYPE        
                                     pr_cdoperad       => pr_cdoperad,
                                     pr_nmdatela       => pr_nmdatela,
                                     pr_idorigem       => pr_idorigem,   
-                                    pr_valida_proposta => 'N',
+                                    pr_valida_proposta => 'S',
                                     pr_sld_devedor    => vr_saldodevedor,  
                                     pr_flgprestamista => vr_flgprestamista,
                                     pr_flgdps         => vr_id_imprime_dsp,
