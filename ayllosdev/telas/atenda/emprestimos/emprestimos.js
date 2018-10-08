@@ -3150,12 +3150,13 @@ function controlaLayout(operacao) {
             cMedia.desabilitaCampo();
         }
 
-    } else if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO'])) {
+	} else if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO', 'A_BENS', 'AI_BENS'])) {
 
         nomeForm = 'frmTipo';
         altura 	 = '350px';//'215px';
         largura  = '630px';//'462px';
 		$('#dssitgrv').parent().css({"margin-top": "20px"});
+		$('#lsbemfin').css({'width': '100%', 'text-align': 'center'});
 
         var cTodos = $('select,input', '#' + nomeForm);
         var rRotulo = $('label[for="dscatbem"],label[for="dsbemfin"],label[for="dscorbem"],label[for="ufdplaca"],label[for="nrrenava"],label[for="nrmodbem"]', '#' + nomeForm);
@@ -3181,7 +3182,7 @@ function controlaLayout(operacao) {
         var cAnoFab = $('#nranobem', '#' + nomeForm);
         var cAnoMod = $('#nrmodbem', '#' + nomeForm);
         var cCPF = $('#nrcpfcgc', '#' + nomeForm); //nrcpfbem
-		
+
         var cVlFipe = $('#vlfipbem', '#' + nomeForm);
         var cVlMercad = $('#vlrdobem', '#' + nomeForm); //vlmerbem
 		var cSitGrv = $('#dssitgrv', '#' + nomeForm);
@@ -3193,7 +3194,7 @@ function controlaLayout(operacao) {
 			value: "MAQUINA DE COSTURA",
 			text: "Máquina de Costura"
 		}));
-		$('#lsbemfin').css({'width': '100%', 'text-align': 'center'});
+
 		if (!in_array(operacao, ['C_ALIENACAO'])) {
 			$("#"+idElementTpVeiulo).unbind('change').bind('change', function() {
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
@@ -3230,13 +3231,13 @@ function controlaLayout(operacao) {
 						trataCamposFipe($(this));
 					}
 
-					if(validaValorCombo($(this)))
-					{
+					if( validaValorCombo( $(this) ) ) {
 						var urlPagina= "telas/manbem/fipe/busca_marcas.php";
 						var tipoVeiculo = trataTipoVeiculo($(this).val());
 						var data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
 						buscaFipeServico(urlPagina,data);
 					}
+					$("#"+idElementAno+"C").habilitaCampo();
 					if (!booBoxMarcas) {
 						booBoxMarcas = true;
 					}
@@ -3257,16 +3258,14 @@ function controlaLayout(operacao) {
 					$("#"+idElementMarca).hide();
 					$("#"+idElementModelo+"C").show();
 					$("#"+idElementModelo).hide();
-					$("#"+idElementAno+"C").show();
+					$("#"+idElementAno+"C").show().val('').desabilitaCampo();
 					$("#"+idElementAno).hide();
 				}
-
 			});
 
 			$("#"+idElementMarca).unbind('change').bind('change', function() {
-				trataCamposFipe($(this)); 
-				if(validaValorCombo($(this)))
-				{
+				trataCamposFipe($(this));
+				if( validaValorCombo( $(this) ) ) {
 					var urlPagina= "telas/manbem/fipe/busca_modelos.php";
 					var cdMarcaFipe = $(this).val();
 					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax'});
@@ -3285,7 +3284,7 @@ function controlaLayout(operacao) {
 
 			$("#"+idElementModelo).unbind('change').bind('change', function() {
 				trataCamposFipe($(this));
-				if(validaValorCombo($(this))) {
+				if( validaValorCombo( $(this) ) ) {
 					var urlPagina= "telas/manbem/fipe/busca_anos.php";
 					var cdMarcaFipe = $("#"+idElementMarca).val();
 					var cdModeloFipe = $(this).val();
@@ -3303,7 +3302,7 @@ function controlaLayout(operacao) {
 
 			$("#"+idElementAno).unbind('change').bind('change', function() {
 				trataCamposFipe($(this));
-				if(validaValorCombo($(this)))
+				if( validaValorCombo( $(this) ) )
 				{
 					var urlPagina= "telas/manbem/fipe/busca_valor.php";
 					var cdMarcaFipe = $("#"+idElementMarca).val();
@@ -3358,13 +3357,13 @@ function controlaLayout(operacao) {
 				
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
 					re = /[\Q\q\I\i\O\o\_]/g;
-					
+
 					if(re.test(cChassi.val())){
 						cChassi.val(cChassi.val().replace(re, ''));
 					}			
 				}
 				re = / /g;
-				
+
 				if(re.test(cChassi.val())){
 					cChassi.val(cChassi.val().replace(re, ''));
 				}			
@@ -3372,41 +3371,36 @@ function controlaLayout(operacao) {
 
 			cChassi.unbind('blur').bind('blur', function(){
 				cChassi.val(cChassi.val().replace(/[^\w\s]/gi, ''));
-				
+
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
 				  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
 				}
-				
+
 				cChassi.val(cChassi.val().replace(/ /g,''));			
 			});
-			
+
 		}
 
         if (operacao == 'C_ALIENACAO') {
             cTodos.desabilitaCampo();
-        } else if (operacao == 'A_ALIENACAO' || operacao == 'IA_ALIENACAO') {
+        } else {
             cTodos.habilitaCampo();
-            if (cTpBem.val() != 'USADO' ) {
-                cUfPlaca.val('').desabilitaCampo();
-                cNrPlaca.val('').desabilitaCampo();
-                cRenavan.val('').desabilitaCampo();
-            }
-            if (contAlienacao == 1) {
-                $('#btDeletar', '#divBotoes').css('display', 'none');
-            }
-        } else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO') {
-            cTodos.habilitaCampo();
-            if (cTpBem.val() != 'USADO' ) {
-                cUfPlaca.val('').desabilitaCampo();
-                cNrPlaca.val('').desabilitaCampo();
-                cRenavan.val('').desabilitaCampo();
-            }
-            //strSelect(lscatbem, 'dscatbem', 'frmTipo');
-            $('#' + nomeForm).limpaFormulario();
-            rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
-            cTpChassi.val(2);
-        }
-
+			if (cTpBem.val() != 'USADO' ) {
+				cUfPlaca.val('').desabilitaCampo();
+				cNrPlaca.val('').desabilitaCampo();
+				cRenavan.val('').desabilitaCampo();
+			}
+			if (operacao == 'A_ALIENACAO' || operacao == 'IA_ALIENACAO') {
+				if (contAlienacao == 1) {
+					$('#btDeletar', '#divBotoes').css('display', 'none');
+				}
+			} else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO' || operacao == 'AI_BENS') {
+				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
+				$('#' + nomeForm).limpaFormulario();
+				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
+				cTpChassi.val(2);
+			}
+		}
 
 		//desabilita campos somente leitura
 		cVlFipe.desabilitaCampo();
