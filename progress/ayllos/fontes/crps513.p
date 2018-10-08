@@ -246,9 +246,12 @@ ASSIGN aux_lshistor = "0144,0229,0729,0870"
        aux_lshsttrf = "0470".
 
 ASSIGN aux_flgfirst = TRUE
+/*
        aux_nmarquiv = "compbb/deb558*" + 
                       STRING(glb_dtmvtolt,"999999") + "*" + 
                       STRING(aux_cdconven,"999999999") + "*".
+*/
+       aux_nmarquiv = "compbb/deb558".
         
 
 /*  Verifica se existe arquivo a ser integrado  */
@@ -626,14 +629,9 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
             ,OUTPUT aux_cdcritic                  /* Código da crítica                             */
             ,OUTPUT aux_dscritic).                /* Descriçao da crítica                          */
   
-        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:   
-            glb_cdcritic = aux_cdcritic.
-            glb_dscritic = aux_dscritic.
-      			RUN fontes/critic.p.
-			      UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") +
-						                 	" - " + glb_cdprogra + "' --> '" +
-						                 glb_dscritic + " >> log/proc_batch.log").
-			      NEXT.
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+            RUN cria_rejeitado (INPUT aux_dscritic).
+            NEXT.
         END.
   
         IF  VALID-HANDLE(h-b1wgen0200) THEN
