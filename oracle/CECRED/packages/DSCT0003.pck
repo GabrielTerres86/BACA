@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   --
   --  Programa:  DSCT0003                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : André Ávila - GFT
-  --  Data    : Abril/2018                     Ultima Atualizacao: 24/08/2018
+  --  Data    : Abril/2018                     Ultima Atualizacao: 18/09/2018
   --
   --  Dados referentes ao programa:
   --
@@ -182,7 +182,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   
   FUNCTION fn_busca_decisao_bordero (pr_insitapr crapbdt.insitapr%TYPE) RETURN VARCHAR2;
   
-  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE) RETURN VARCHAR2;
+  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE
+                                   ,pr_flverbor crapbdt.flverbor%TYPE DEFAULT 0) RETURN VARCHAR2;
   
   -- Funcao de calculo de restricao do CNAE                                  
   FUNCTION fn_calcula_cnae(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa conectada
@@ -619,7 +620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     Sistema  : Procedimentos envolvendo liberação de borderôs
     Sigla    : CRED
     Autor    : André Ávila - GFT
-    Data     : Abril/2018.                   Ultima atualizacao: 24/08/2018
+    Data     : Abril/2018.                   Ultima atualizacao: 18/09/2018
 
    Dados referentes ao programa:
 
@@ -928,7 +929,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 
    END fn_busca_decisao_bordero;
    
-  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE) RETURN VARCHAR2 IS
+  FUNCTION fn_busca_situacao_titulo(pr_insittit craptdb.insittit%TYPE
+                                   ,pr_flverbor crapbdt.flverbor%TYPE DEFAULT 0) RETURN VARCHAR2 IS
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : fn_busca_situacao_titulo
     Sistema  : CRED
@@ -937,13 +939,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     Data     : Agosto/2018
     Frequencia: Sempre que for chamado
     Objetivo  : Função que retorna a descrição da situação do título
+
+    Alteração : 19/09/2018 - Adicionado parametro pr_flverbor (Paulo Penteado (GFT))
   ---------------------------------------------------------------------------------------------------------------------*/
    BEGIN 
      RETURN (
        CASE
-         WHEN pr_insittit=0 THEN 'Não processado'
+         WHEN pr_insittit=0 THEN 
+           CASE WHEN nvl(pr_flverbor,0) = 0 THEN 'Não processado'
+                ELSE 'Pendente'
+           END
          WHEN pr_insittit=1 THEN 'Resgatado'
-         WHEN pr_insittit=2 THEN 'Processado'
+         WHEN pr_insittit=2 THEN 
+           CASE WHEN nvl(pr_flverbor,0) = 0 THEN 'Processado'
+                ELSE 'Pago'
+           END
          WHEN pr_insittit=3 THEN 'Pago após vencimento'
          WHEN pr_insittit=4 THEN 'Liberado'
        END
@@ -4190,9 +4200,11 @@ END pc_inserir_lancamento_bordero;
       OPEN cr_crapbdt;
       FETCH cr_crapbdt INTO rw_crapbdt;
       IF (cr_crapbdt%NOTFOUND) THEN
+        CLOSE cr_crapbdt;
         vr_dscritic := 'Borderô inválido';
         RAISE vr_exc_erro;
       END IF;
+      CLOSE cr_crapbdt;
       IF (rw_crapbdt.nrctrlim<>vr_tab_dados_limite(0).nrctrlim) THEN
         vr_dscritic := 'O contrato deste borderô não se encontra mais ativo.';
         RAISE vr_exc_erro;
@@ -6830,10 +6842,10 @@ EXCEPTION
        ELSE -- Caso nao tenha saldo, verifica a alcada do operador
           OPEN  cr_crapope(vr_cdcooper => vr_cdcooper, vr_cdoperad => vr_cdoperad);
           FETCH cr_crapope into rw_crapope;
+          CLOSE cr_crapope;
           IF vr_total <= rw_crapope.vlpagchq THEN
             vr_possui_saldo := 2; -- Possui Alcada
             vr_mensagem_ret := 'Utilizando alcada do Operador.';
-          CLOSE cr_crapope;
           ELSE
             vr_possui_saldo := 0;
             vr_mensagem_ret := 'Saldo e alcada insuficientes.';
@@ -7256,17 +7268,26 @@ EXCEPTION
         AND crapjur.nrdconta = pr_nrdconta;
     rw_crapjur cr_crapjur%ROWTYPE;
     
-    CURSOR cr_tbdsct_lancamento_bordero(pr_cdcooper tbdsct_lancamento_bordero.cdcooper%type
-                                       ,pr_nrdconta tbdsct_lancamento_bordero.nrdconta%type
-                                       ,pr_nrborder tbdsct_lancamento_bordero.nrborder%type
-                                       ,pr_nrtitulo tbdsct_lancamento_bordero.nrtitulo%type) IS
-      SELECT dtmvtolt
+    CURSOR cr_tbdsct_lancamento_bordero(pr_cdcooper tbdsct_lancamento_bordero.cdcooper%TYPE
+                                       ,pr_nrdconta tbdsct_lancamento_bordero.nrdconta%TYPE
+                                       ,pr_nrborder tbdsct_lancamento_bordero.nrborder%TYPE
+                                       ,pr_cdbandoc tbdsct_lancamento_bordero.cdbandoc%TYPE
+                                       ,pr_nrdctabb tbdsct_lancamento_bordero.nrdctabb%TYPE
+                                       ,pr_nrcnvcob tbdsct_lancamento_bordero.nrcnvcob%TYPE
+                                       ,pr_nrdocmto tbdsct_lancamento_bordero.nrdocmto%TYPE) IS
+      SELECT dtmvtolt,vllanmto
         FROM tbdsct_lancamento_bordero
        WHERE tbdsct_lancamento_bordero.cdcooper = pr_cdcooper
          AND tbdsct_lancamento_bordero.nrdconta = pr_nrdconta
          AND tbdsct_lancamento_bordero.nrborder = pr_nrborder
-         AND tbdsct_lancamento_bordero.nrtitulo = pr_nrtitulo
-         AND tbdsct_lancamento_bordero.cdhistor IN (2686,2688);
+         AND tbdsct_lancamento_bordero.cdbandoc = pr_cdbandoc
+         AND tbdsct_lancamento_bordero.nrdctabb = pr_nrdctabb
+         AND tbdsct_lancamento_bordero.nrcnvcob = pr_nrcnvcob
+         AND tbdsct_lancamento_bordero.nrdocmto = pr_nrdocmto
+         AND tbdsct_lancamento_bordero.cdhistor IN (vr_cdhistordsct_pgtoopc,vr_cdhistordsct_pgtocompe,vr_cdhistordsct_pgtocooper,vr_cdhistordsct_pgtoavalopc)
+       ORDER BY dtmvtolt ASC
+      ;
+  
     rw_tbdsct_lancamento_bordero cr_tbdsct_lancamento_bordero%ROWTYPE;
     
     -- cursor genérico de calendário
@@ -7279,6 +7300,8 @@ EXCEPTION
     vr_txdiaria NUMBER; -- Taxa diária de juros de mora
     
     vr_dtmvtolt DATE;
+    vr_valormora NUMBER;
+    vr_valorsaldo NUMBER;
     
     vr_vliofpri NUMBER;
     vr_vliofadi NUMBER;
@@ -7368,25 +7391,35 @@ EXCEPTION
     vr_vlsldtit := rw_craptdb.vlsldtit;
     pr_vlmratit := rw_craptdb.vlmratit;
     
-    -- Se já houve pagamento de juros, pega a data do último pagamento de juros como base e acumula os juros do saldo devedor atual
-    -- com o valor já calculado até então
+    vr_valormora  := 0;
+    IF (vr_vlsldtit > 0) THEN
+      -- Verifica se houve algum pagamento parcial do saldo 
     vr_dtmvtolt := rw_craptdb.dtvencto;
-    
-    IF rw_craptdb.vlpagmra > 0 THEN
+      vr_valorsaldo := rw_craptdb.vltitulo;
+      IF rw_craptdb.vltitulo <> rw_craptdb.vlsldtit THEN -- houve algum pagamento do saldo
       FOR rw_tbdsct_lancamento_bordero IN cr_tbdsct_lancamento_bordero(pr_cdcooper => pr_cdcooper
                                                                       ,pr_nrdconta => pr_nrdconta
                                                                       ,pr_nrborder => pr_nrborder
-                                                                      ,pr_nrtitulo => rw_craptdb.nrtitulo) LOOP
-
-        IF rw_tbdsct_lancamento_bordero.dtmvtolt > vr_dtmvtolt THEN
-          vr_dtmvtolt := rw_tbdsct_lancamento_bordero.dtmvtolt;
+                                                                        ,pr_cdbandoc => pr_cdbandoc
+                                                                        ,pr_nrdctabb => pr_nrdctabb
+                                                                        ,pr_nrcnvcob => pr_nrcnvcob
+                                                                        ,pr_nrdocmto => pr_nrdocmto) LOOP
+          IF (vr_dtmvtolt <= rw_tbdsct_lancamento_bordero.dtmvtolt) THEN
+            vr_valormora  := vr_valormora + NVL(ROUND(vr_valorsaldo * (rw_tbdsct_lancamento_bordero.dtmvtolt - vr_dtmvtolt) * vr_txdiaria,2),0);
+            vr_dtmvtolt := rw_tbdsct_lancamento_bordero.dtmvtolt;
+            vr_valorsaldo := vr_valorsaldo - rw_tbdsct_lancamento_bordero.vllanmto;
         END IF;
     END LOOP;
-    
-      pr_vlmratit := NVL(rw_craptdb.vlpagmra + ROUND(vr_vlsldtit * vr_txdiaria * (pr_dtmvtolt - vr_dtmvtolt),2),0);
-    ELSE
-      pr_vlmratit := NVL(ROUND(vr_vlsldtit * vr_txdiaria * (pr_dtmvtolt - rw_craptdb.dtvencto),2),0);
     END IF;
+    
+      IF (vr_vlsldtit <> vr_valorsaldo) THEN
+        vr_dscritic := 'Ocorreu um erro ao calcular o saldo do titulo';
+        RAISE vr_exc_erro;
+      END IF;
+      vr_valormora  := vr_valormora + NVL(ROUND(vr_vlsldtit * (pr_dtmvtolt - vr_dtmvtolt) * vr_txdiaria,2),0);
+    END IF;
+
+    pr_vlmratit := vr_valormora;
 
     -- Cálculo do IOF
     TIOF0001.pc_calcula_valor_iof_prg (pr_tpproduto            => 2 -- Desconto de títulos
@@ -7470,6 +7503,8 @@ EXCEPTION
      Alterações: 24/08/2018 - Adicionar novo histórico de credito para desconto de titulo pago a maior 
                               (vr_cdhistordsct_creddscttitpgm). Este será usado na pc_pagar_titulo quando 
                               o valor pago do boleto for maior que o saldo restante. (Andrew Albuquerque (GFT))
+                 19/09/2018 - Alterado a regra de alimentação dos campos insittit, dtdpagto e dtdebito para considerar o código da origem do 
+                              processamento do pagamento pr_cdorigpg (Paulo Penteado GFT)
 
   ..................................................................................*/ 
     
@@ -7583,8 +7618,6 @@ EXCEPTION
     vr_vlpagmta NUMBER; -- Valor pago da multa
     vr_vlpagmra NUMBER; -- Valor pago dos juros de mora
     vr_vlpagtit NUMBER; -- Valor pago do título
-    
-    vr_vlencarg NUMBER;
     
     vr_insittit craptdb.insittit%TYPE;
     vr_dtdebito craptdb.dtdebito%TYPE;
@@ -7734,7 +7767,6 @@ EXCEPTION
     vr_vlpagmra := 0; 
     vr_vlsldtit := rw_craptdb.vlsldtit;
     vr_vlpagtit := 0;
-    vr_vlencarg := 0;
     
     -- 1) IOF
     
@@ -7778,7 +7810,7 @@ EXCEPTION
         vr_vlpagiof := rw_craptdb.vliofcpl_restante;
       END IF;
         
-      vr_vlencarg := vr_vlencarg + vr_vlpagiof;
+      vr_vlpagmto := vr_vlpagmto - vr_vlpagiof;
         
       -- Realiza o débito do IOF complementar na conta corrente do cooperado     
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
@@ -7831,7 +7863,7 @@ EXCEPTION
         vr_vlpagmta := rw_craptdb.vlmtatit_restante;
       END IF;
       
-      vr_vlencarg := vr_vlencarg + vr_vlpagmta; 
+      vr_vlpagmto := vr_vlpagmto - vr_vlpagmta;
       
       -- Realiza o débito da multa na conta corrente do cooperado 
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
@@ -7909,7 +7941,7 @@ EXCEPTION
         vr_vlpagmra := rw_craptdb.vlmratit_restante;
       END IF;
       
-      vr_vlencarg := vr_vlencarg + vr_vlpagmra; 
+      vr_vlpagmto := vr_vlpagmto - vr_vlpagmra;
       
       -- Lança o valor dos juros de mora na conta do cooperado
       pc_efetua_lanc_cc(pr_dtmvtolt => pr_dtmvtolt
@@ -7982,8 +8014,6 @@ EXCEPTION
       -- 0 - Conta-Corrente (Raspada, ...)
       IF pr_cdorigpg = 0 THEN
         vr_cdhistor_opc := vr_cdhistordsct_pgtoopc; -- conta corrente
-        vr_dtdebito     := pr_dtmvtolt;
-        vr_vlpagmto     := vr_vlpagmto - vr_vlencarg;
 
       -- 1 - Pagamento (Baixa de cobrança de títulos, ...)
       -- 2 - COBTIT
@@ -7999,11 +8029,9 @@ EXCEPTION
           END IF;  
         END IF;
         
-        IF pr_cdorigpg = 2 THEN
-          vr_vlpagmto := vr_vlpagmto - vr_vlencarg;
+        IF pr_cdorigpg = 1 THEN
+          vr_vlpagmto := pr_vlpagmto;
         END IF;
-        
-        vr_dtdpagto := pr_dtmvtolt;
         
       -- 3 - Tela PAGAR
       ELSIF pr_cdorigpg = 3 THEN
@@ -8013,8 +8041,6 @@ EXCEPTION
           vr_cdhistor_opc := vr_cdhistordsct_pgtoopc;
         END IF;
         
-        vr_dtdebito := pr_dtmvtolt;
-
       -- origem de pagamento inválida
       ELSE
         vr_cdcritic := 0;
@@ -8122,16 +8148,18 @@ EXCEPTION
     pr_vlpagmto := vr_vlpagmto;
     
     -- chama a rotina de baixa do titulo
+      vr_dtdebito := null;
+      vr_dtdpagto := null;
     IF vr_flbaixar THEN
-      IF gene0005.fn_valida_dia_util(pr_cdcooper,rw_craptdb.dtvencto) >= pr_dtmvtolt THEN
+      IF pr_cdorigpg = 1 THEN
         vr_insittit := 2;
+        vr_dtdpagto := pr_dtmvtolt;
       ELSE
         vr_insittit := 3;
+        vr_dtdebito := pr_dtmvtolt;
       END IF;
     ELSE
       vr_insittit := 4;
-      vr_dtdebito := null;
-      vr_dtdpagto := null;
     END IF;
     
     BEGIN
