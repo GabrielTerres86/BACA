@@ -40,6 +40,7 @@ var nrdconta;
 var nrctrpro;
 var flcritic;
 var dschassi;
+var bemselec;
 
 
 $(document).ready(function() {	
@@ -101,7 +102,7 @@ function formataCabecalho() {
 		cddopcao = $("#cddopcao", "#frmCab").val();
 		opcaoButton = cddopcao;
 		
-		mostrabutton();
+		//mostrabutton();
         if ($("#cddopcao", "#frmCab").prop("disabled") == true) {
             return false;
         }
@@ -731,10 +732,173 @@ function formataFormularioBens() {
        
     layoutPadrao();
 	
+	var tr;
 	$('#ddl_descrbem', '#frmBens').unbind('change').bind('change', function(e){
-		var tr = $('.divRegistros table').find("[id="+ e.currentTarget.value +"]");
-		selecionaBens(tr);
+		tr = $('.divRegistros table').find("[id="+ e.currentTarget.value +"]");
+		if(e.currentTarget.value == ''){
+			$('#divBens').limparBens();
+			$('#divJustificativa').limparBens();
+		} else {
+			selecionaBens(tr);
+		}
 	});
+	
+	$("#btHistGravame", "#divBotoesBens").unbind('click').bind('click', function () {
+		gerarHistoricoGravames();
+	});
+	
+	
+	if ($('#cddopcao', '#frmCab').val() == 'C') {
+		$('#btIncluir', '#divBotoesBens').css({ 'display': 'inline'});
+		$('#btAlterar', '#divBotoesBens').css({ 'display': 'inline'});
+		$('#btCancelar', '#divBotoesBens').css({ 'display': 'inline'});
+		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline'});
+		$('#btHistGravame', '#divBotoesBens').css({ 'display': 'inline'});
+		
+	} else if ($('#cddopcao', '#frmCab').val() == 'S') {
+		
+        $("#dschassi", "#divBens").unbind('keypress').bind('keypress', function (e) {
+
+            if (divError.css('display') == 'block') { return false; }
+
+            if (e.keyCode == 13) {
+
+                $("#ufdplaca", "#frmBens").focus();
+
+                return false;
+            }
+
+        });
+
+        // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
+        $("#dschassi", "#divBens").unbind('keydown').bind('keydown', function (event) {
+
+            var tecla = event.which || event.keyCode;
+
+            // Se é a tecla "Q" ou "q"
+            if (tecla == 81) {
+                return false;
+            }
+
+            // Se é a tecla "I" ou "i"			
+            if (tecla == 73) {
+                return false;
+            }
+
+            // Se é a tecla "O" ou "o"
+            if (tecla == 79) {
+                return false;
+            }
+        });
+
+        //Remover caracteres especiais
+        $("#dschassi", "#divBens").unbind('keyup').bind('keyup', function (e) {
+            var re = /[^\w\s]/gi;
+
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
+            }
+
+            re = /[\Q\q\I\i\O\o\_]/g;
+
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
+            }
+
+            re = / /g;
+
+            if (re.test($("#dschassi", "#divBens").val())) {
+                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
+            }
+        });
+
+        $("#dschassi", "#divBens").unbind('blur').bind('blur', function () {
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[^\w\s]/gi, ''));
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
+            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/ /g, ''));
+        });
+
+
+        //Define ação para o campo ufdplaca
+        $("#ufdplaca", "#frmBens").unbind('keypress').bind('keypress', function (e) {
+
+            $(this).removeClass('campoErro');
+
+            // Se é a tecla ENTER, TAB
+            if (e.keyCode == 13 || e.keyCode == 9) {
+
+                $("#nrdplaca", "#frmBens").focus();
+                return false;
+            }
+
+        });
+
+        //Define ação para o campo nrdplaca
+        $("#nrdplaca", "#frmBens").unbind('keypress').bind('keypress', function (e) {
+
+            $(this).removeClass('campoErro');
+
+            // Se é a tecla ENTER, TAB
+            if (e.keyCode == 13 || e.keyCode == 9) {
+
+                $("#nrrenava", "#frmBens").focus();
+                return false;
+            }
+
+        });
+
+        //Define ação para o campo nrrenava
+        $("#nrrenava", "#frmBens").unbind('keypress').bind('keypress', function (e) {
+
+            $(this).removeClass('campoErro');
+
+            // Se é a tecla ENTER, TAB
+            if (e.keyCode == 13 || e.keyCode == 9) {
+
+                $("#nranobem", "#frmBens").focus();
+                return false;
+            }
+
+        });
+
+        //Define ação para o campo nranobem
+        $("#nranobem", "#frmBens").unbind('keypress').bind('keypress', function (e) {
+
+            $(this).removeClass('campoErro');
+
+            // Se é a tecla ENTER, TAB
+            if (e.keyCode == 13 || e.keyCode == 9) {
+
+                $("#nrmodbem", "#frmBens").focus();
+                return false;
+            }
+
+        });
+
+        //Define ação para o campo nrmodbem
+        $("#nrmodbem", "#frmBens").unbind('keypress').bind('keypress', function (e) {
+
+            $(this).removeClass('campoErro');
+
+            // Se é a tecla ENTER, TAB
+            if (e.keyCode == 13 || e.keyCode == 9) {
+
+                $("#btConcluir", "#divBotoesBens").click();
+                return false;
+            }
+
+        });
+
+        $("#dschassi", "#divBens").focus();
+
+    } else if ($('#cddopcao', '#frmCab').val() == 'J'){
+		$('#btHistGravame', '#divBotoesBens').css({ 'display': 'inline'});
+		$('#btLibJudicial', '#divBotoesBens').css({ 'display': 'inline'});
+		$('#btBlocJudicial', '#divBotoesBens').css({ 'display': 'inline'});
+		
+	}
+	
+	
 
     if ($('#cddopcao', '#frmCab').val() == 'A') {
 
@@ -897,143 +1061,7 @@ function formataFormularioBens() {
 
         });
 
-    } else if ($('#cddopcao', '#frmCab').val() == 'S') {
-
-        $("#dschassi", "#divBens").unbind('keypress').bind('keypress', function (e) {
-
-            if (divError.css('display') == 'block') { return false; }
-
-            if (e.keyCode == 13) {
-
-                $("#ufdplaca", "#frmBens").focus();
-
-                return false;
-            }
-
-        });
-
-        // Se pressionar alguma tecla no campo Chassi/N.Serie, verificar a tecla pressionada e toda a devida ação
-        $("#dschassi", "#divBens").unbind('keydown').bind('keydown', function (event) {
-
-            var tecla = event.which || event.keyCode;
-
-            // Se é a tecla "Q" ou "q"
-            if (tecla == 81) {
-                return false;
-            }
-
-            // Se é a tecla "I" ou "i"			
-            if (tecla == 73) {
-                return false;
-            }
-
-            // Se é a tecla "O" ou "o"
-            if (tecla == 79) {
-                return false;
-            }
-        });
-
-        //Remover caracteres especiais
-        $("#dschassi", "#divBens").unbind('keyup').bind('keyup', function (e) {
-            var re = /[^\w\s]/gi;
-
-            if (re.test($("#dschassi", "#divBens").val())) {
-                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
-            }
-
-            re = /[\Q\q\I\i\O\o\_]/g;
-
-            if (re.test($("#dschassi", "#divBens").val())) {
-                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
-            }
-
-            re = / /g;
-
-            if (re.test($("#dschassi", "#divBens").val())) {
-                $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(re, ''));
-            }
-        });
-
-        $("#dschassi", "#divBens").unbind('blur').bind('blur', function () {
-            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[^\w\s]/gi, ''));
-            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
-            $("#dschassi", "#divBens").val($("#dschassi", "#divBens").val().replace(/ /g, ''));
-        });
-
-
-        //Define ação para o campo ufdplaca
-        $("#ufdplaca", "#frmBens").unbind('keypress').bind('keypress', function (e) {
-
-            $(this).removeClass('campoErro');
-
-            // Se é a tecla ENTER, TAB
-            if (e.keyCode == 13 || e.keyCode == 9) {
-
-                $("#nrdplaca", "#frmBens").focus();
-                return false;
-            }
-
-        });
-
-        //Define ação para o campo nrdplaca
-        $("#nrdplaca", "#frmBens").unbind('keypress').bind('keypress', function (e) {
-
-            $(this).removeClass('campoErro');
-
-            // Se é a tecla ENTER, TAB
-            if (e.keyCode == 13 || e.keyCode == 9) {
-
-                $("#nrrenava", "#frmBens").focus();
-                return false;
-            }
-
-        });
-
-        //Define ação para o campo nrrenava
-        $("#nrrenava", "#frmBens").unbind('keypress').bind('keypress', function (e) {
-
-            $(this).removeClass('campoErro');
-
-            // Se é a tecla ENTER, TAB
-            if (e.keyCode == 13 || e.keyCode == 9) {
-
-                $("#nranobem", "#frmBens").focus();
-                return false;
-            }
-
-        });
-
-        //Define ação para o campo nranobem
-        $("#nranobem", "#frmBens").unbind('keypress').bind('keypress', function (e) {
-
-            $(this).removeClass('campoErro');
-
-            // Se é a tecla ENTER, TAB
-            if (e.keyCode == 13 || e.keyCode == 9) {
-
-                $("#nrmodbem", "#frmBens").focus();
-                return false;
-            }
-
-        });
-
-        //Define ação para o campo nrmodbem
-        $("#nrmodbem", "#frmBens").unbind('keypress').bind('keypress', function (e) {
-
-            $(this).removeClass('campoErro');
-
-            // Se é a tecla ENTER, TAB
-            if (e.keyCode == 13 || e.keyCode == 9) {
-
-                $("#btConcluir", "#divBotoesBens").click();
-                return false;
-            }
-
-        });
-
-        $("#dschassi", "#divBens").focus();
-
-    }
+    } 
 
     return false;
 
@@ -1059,6 +1087,8 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
             $('#ufdplaca', '#frmBens').habilitaCampo();
             $('#nrdplaca', '#frmBens').habilitaCampo();
             $('#nrrenava', '#frmBens').habilitaCampo();
+			
+			
 		
         }
 			if (permisit.toUpperCase() == 'S' && $('#dssitgrv', '#frmBens').val() != 1) {
@@ -1087,6 +1117,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 	//} else if ($('#cddopcao', '#frmCab').val() == 'B') {
 
         $('#dsjustif', '#divJustificativa').habilitaCampo().focus();
+		$("#btConcluirAltera", "#divBotoesBens").css({ 'display': 'none' });
 
         //Define ação para CLICK no botão de Concluir
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
@@ -1098,7 +1129,7 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
 	} else if (opcaoButton == 'C'){
 	//} else if ($('#cddopcao', '#frmCab').val() == 'C') {
-		mostrabutton();
+		//mostrabutton();
         $('#dsjustif', '#frmBens').val();
         $('#btVoltar', '#divBotoesBens').focus();
 		
@@ -1166,9 +1197,9 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
     } else if ($('#cddopcao', '#frmCab').val() == 'S') {
 
-		$("#btHistGravame", "#divBotoesBens").unbind('click').bind('click', function () {
-			gerarHistoricoGravames();
-		});
+		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline'});
+		$('#btHistGravame', '#divBotoesBens').css({ 'display': 'inline'});
+		
         /* alteracoes apenas quando for situacao 
                For contrato efetivado ou
                3 - Proc. com critica */
@@ -1176,8 +1207,8 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 
             $('input,select', '#frmBens').desabilitaCampo();
 			$('#ddl_descrbem', '#frmBens').habilitaCampo();
-            $('#btConcluir', '#divBotoesBens').css('display', 'none').unbind('click');
-          
+			$('#btAlterar', '#divBotoesBens').css({ 'display': 'inline' });
+			$('#btConcluirAltera', '#divBotoesBens').css({ 'display': 'none' });
 
         } else {
 
@@ -1187,9 +1218,11 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
             $('#nrrenava', '#frmBens').habilitaCampo();
             $('#nranobem', '#frmBens').habilitaCampo();
             $('#nrmodbem', '#frmBens').habilitaCampo();
+			$('#btAlterar', '#divBotoesBens').css({ 'display': 'none' });
+			$('#btConcluirAltera', '#divBotoesBens').css({ 'display': 'inline'});
 
             //Define ação para CLICK no botão de Concluir
-            $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
+            $("#btConcluirAltera", "#divBotoesBens").unbind('click').bind('click', function () {
 			
                 showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'alterarBensSubAditivo(' + idseqbem + ',' + tpctrpro + ');', '$(\'#btVoltar\',\'#divBotoesBens\').focus();', 'sim.gif', 'nao.gif');
 
@@ -1199,11 +1232,11 @@ function controlaCampos(possuictr, cdsitgrv, idseqbem, dsjustif, tpjustif, tpctr
 			
 			$("#btBaixaManual", "#divBotoesBens").unbind('click').bind('click', function () {
         
-			showConfirmacao('Este processo informa ao sistema que o veículo foi baixado manualmente na Cetip. Confirmar?', 'Confirma&ccedil;&atilde;o - Ayllos', 'baixaManual(' +idseqbem + ',' +tpctrpro + ');', '', 'sim.gif', 'nao.gif');
-			
-			return false;
+				showConfirmacao('Este processo informa ao sistema que o veículo foi baixado manualmente na Cetip. Confirmar?', 'Confirma&ccedil;&atilde;o - Ayllos', 'baixaManual(' +idseqbem + ',' +tpctrpro + ');', '', 'sim.gif', 'nao.gif');
+				
+				return false;
         
-        });
+			});
 
         }
 
@@ -1916,6 +1949,7 @@ function alterarBensSubAditivo(idseqbem,tpctrpro) {
     var nrrenava = $("#nrrenava", "#frmBens").val();
     var nranobem = $("#nranobem", "#frmBens").val();
     var nrmodbem = $("#nrmodbem", "#frmBens").val();
+	bemselec = $('#ddl_descrbem').val();
 
     $('input,select', '#frmBens').removeClass('campoErro');
 
@@ -2228,7 +2262,7 @@ function baixaManual(idseqbem,tpctrpro) {
             hideMsgAguardo();
             try {
                 eval(response);
-				mostrabutton();
+				//mostrabutton();
             } catch (error) {
 
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
@@ -2280,8 +2314,18 @@ function buscaBens(nriniseq, nrregist) {
                 try {
 
                     $('#divTabela').html(response);
-					$('#ddl_descrbem').trigger('change');
-					mostrabutton();
+					if(bemselec != undefined){
+						$('#ddl_descrbem').val(bemselec);
+						$('#ddl_descrbem').trigger('change');
+					} else {
+						if($('#ddl_descrbem option').length > 1){
+							$('#ddl_descrbem').prepend($('<option>', {value:'', text:'Selecione'}));
+							$('#ddl_descrbem').val('');
+						} else {
+							$('#ddl_descrbem').trigger('change');
+						}
+					}
+					//mostrabutton();
                     return false;
                 } catch (error) {
 
@@ -2320,6 +2364,7 @@ function displayNoneButton() {
 	
 	$('#btBaixaManual', '#divBotoes').css({ 'display': 'none' });
 	$('#btHistGravame', '#divBotoesBens').css({ 'display': 'none ' });
+	$('#btConcluirAltera', '#divBotoesBens').css({ 'display': 'none ' });
 }
 function mostrabutton() {
 	
@@ -2351,6 +2396,7 @@ function mostrabutton() {
 		$('#dsjustif', '#frmBens').val('').habilitaCampo();
 		$('#btConcluir','#divBotoesBens').css({ 'display': 'inline' });
 	}else if (opcaoButton == 'S'){
+		$('#btConcluirAltera','#divBotoesBens').css({ 'display': 'inline' });
 		$('#btAlterar','#divBotoesBens').css({ 'display': 'inline' });
 		$('#btBaixar', '#divBotoesBens').css({ 'display': 'inline' });	
 		$('#btHistGravame','#divBotoesBens').css({ 'display': 'inline' });
@@ -2717,3 +2763,14 @@ function controlaLayoutHistoricoGravames() {
 	bloqueiaFundo($('#divUsoGenerico'));
 	return false;
 }
+
+$.fn.extend({ 
+	limparBens: function(){
+		$(this).children().each(function(){
+			var type = this.type;
+			if(this.type == 'text' || this.type == 'select-one' || this.type == 'textarea'){
+				$(this).val('');
+			}
+		});
+	}
+});
