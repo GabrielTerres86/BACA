@@ -17,6 +17,10 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
 
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'@')) <> '') {		
+		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	}
+
 	// Recebe o POST
 	$inidtpro 			= $_POST['inidtpro'] ;
 	$fimdtpro 			= $_POST['fimdtpro'];
@@ -26,10 +30,6 @@
 	$indconci 			= (isset($_POST['indconci'])) ? $_POST['indconci'] : '' ;
 	$nriniseq 			= (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1  ;
 	$nrregist 			= (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 50  ;
-
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
 
 	$xml  = "";
 	$xml .= "<Root>";

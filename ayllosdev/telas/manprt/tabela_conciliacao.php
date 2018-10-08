@@ -6,14 +6,14 @@ require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 isPostMethod();
 
+if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'@')) <> '') {		
+    exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+}
+
 // Recebe o POST
 $dtinicio = (!empty($_POST['dtinicio'])) ? $_POST['dtinicio'] : null;
 $vlrfinal = (!empty($_POST['vlrfinal'])) ? str_replace(',', '.', str_replace('.', '', $_POST['vlrfinal'])) : null;
 $cartorio = (!empty($_POST['cartorio'])) ? $_POST['cartorio'] : null;
-
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-    exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-}
 
 $xml  = "";
 $xml .= "<Root>";
