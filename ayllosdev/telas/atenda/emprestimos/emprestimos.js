@@ -347,7 +347,7 @@ var inobriga = '';
 
 //emprestimo
 var booPrimeiroBen = false; //809763
-var booBoxMarcas = false;
+var booBoxMarcas = true;
 
 // PRJ366
 var vlemprst_antigo = 0;
