@@ -3,7 +3,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 
 	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
 	limpaDivGenerica();
-	$('#divUsoGenerico').css('width','750px');
+	$('#divUsoGenerico').css('width','1075px');
 	exibeRotina($('#divUsoGenerico'));
 
 	var dschassi = $("#dschassi","#frmTipo").val();
@@ -39,7 +39,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1075px', 'left': '325px' });
+
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
