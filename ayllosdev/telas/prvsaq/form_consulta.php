@@ -6,9 +6,11 @@
  * OBJETIVO     : Tabela de Regionais
  * --------------
  * ALTERAÇÕES   :  27/11/2015 - Ajuste decorrente a homologação de conversão realizada pela DB1
-                               (Adriano). 
-
-                   29/05/2018 - Incluido novos campos PRJ 420 - Mateus Z (Mouts).            
+ *                              (Adriano). 
+ *
+ *                 29/05/2018 - Incluido novos campos PRJ 420 - Mateus Z (Mouts).
+ *
+ *                 05/10/2018 - Incluido coluna Hora Saque na opção Consulta - Mateus Z (Mouts).
  * --------------
  */	
  
@@ -31,6 +33,7 @@
 								<? if($cddopcao == 'C'){ ?>
 									<th><? echo utf8ToHtml('Cooperativa');?></th>
 									<th><? echo utf8ToHtml('Data Saque');?></th>
+									<th><? echo utf8ToHtml('Hora Saque');?></th>
 									<th><? echo utf8ToHtml('PA Saque');?></th>				
 									<th><? echo utf8ToHtml('CPF/CNPJ Titular');?></th>
 									<th><? echo utf8ToHtml('Nome Titular');?></th>
@@ -119,7 +122,12 @@
 													echo substr($registros->inf[$i]->dhsaque,0,10);
 												}
 											?>										
-										</td>													
+										</td>
+										<? if($cddopcao == 'C'){ ?>
+												<td>
+													<? echo substr($registros->inf[$i]->dhsaque,11,20); ?>
+												</td>
+										<? } ?>													
 										<td>
 											<?
 												if($cddopcao != 'A'){
@@ -139,7 +147,7 @@
 										</td>
 										<td>
 											<? 	if($cddopcao == 'C'){
-													echo stringTabela($registros->inf[$i]->nmtitular_saque,23,'maiuscula');
+													echo stringTabela($registros->inf[$i]->nmtitular_saque,20,'maiuscula');
 												}else if($cddopcao == 'A'){
 													echo stringTabela($registros->inf[$i]->nmtitular_saque,12,'maiuscula');
 												}else{
