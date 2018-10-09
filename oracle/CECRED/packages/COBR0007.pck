@@ -7031,6 +7031,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --   Alteracao : 19/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
     --
+	--               01/10/2018 - Removida validacao quando data de vencto for menor que vencto atual
+    --                            Andre Clemer (Supero)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -7187,7 +7189,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       CLOSE cr_crapcre;
     END IF;
     
-    -- Validar parametro de tela
+    /*
+     * REMOVIDA VALIDAÇÃO PJ341 - Reciprocidade (Quickwins)
+     *
+    **/
+    /*
     IF pr_dtvencto <= rw_crapcob.dtvencto THEN
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
@@ -7210,6 +7216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       vr_dscritic := 'Data Vencto inferior ao atual - Alteracao Vencto nao efetuada!';
       RAISE vr_exc_erro;
     END IF;
+    */
 
     --  AQUI - Rever que valor sera esse "120" 
     IF (pr_dtvencto - rw_crapcob.dtvencto) > 120 THEN
