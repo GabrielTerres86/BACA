@@ -33,29 +33,21 @@
       <input type="hidden" id="situacao_anterior" name="situacao_anterior" />
       <input type="hidden" id="chassi_anterior" name="chassi_anterior" />
 	  
-	  <label for="ddl_descrbem"><? echo utf8ToHtml('Descri&ccedil;&atilde;o:') ?></label>
+	  <label for="ddl_descrbem"><? echo utf8ToHtml('Selecione o Veículo:') ?></label>
       <select id="ddl_descrbem" name="ddl_descrbem" >
 	  <?foreach($bens as &$bem)
 	  {?>
 		<option value="<? echo getByTagName($bem->tags,'idseqbem' );?>"><? echo getByTagName($bem->tags,'nrseqbem');?> - <? echo getByTagName($bem->tags,'dsbemfin' );?></option>
 	  <?}?>
 	  </select>
+	  <br />
+	  <br />
+	  <br />
 	  
 	  <label for="dtmvttel"><? echo utf8ToHtml('Data do registro:') ?></label>
       <input id="dtmvttel" name="dtmvttel" type="text" ></input>
-
-      <label for="dsseqbem"></label>
-      <input id="dsseqbem" name="dsseqbem" type="text" ></input>
-
-      <br />
 	  
-	  <label for=""></label>
-	  
-
-      <label for="nrgravam"><? echo utf8ToHtml('N&uacute;mero de registro:') ?></label>
-      <input id="nrgravam" name="nrgravam" type="text" ></input>
-
-      <label for="dssitgrv"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>
+	  <label for="dssitgrv"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>
       <select id="dssitgrv" name="dssitgrv">
 		<option value="0">Nao enviado</option>
 		<option value="1">Em processamento</option>
@@ -65,54 +57,47 @@
 		<option value="5">Cancelado</option>
 	  </select>
 
-      <br />
+      <label for="dsseqbem"></label>
+      <input id="dsseqbem" name="dsseqbem" type="hidden" ></input>	  
+
+      <label for="nrgravam"><? echo utf8ToHtml('N&uacute;mero de registro:') ?></label>
+      <input id="nrgravam" name="nrgravam" type="text" ></input>
+	  
+	  <label for="dsblqjud"><? echo utf8ToHtml('Bloqueado:') ?></label>
+      <input id="dsblqjud" name="dsblqjud" type="text" ></input>
 
       <label for="dscatbem"><? echo utf8ToHtml('Categoria:') ?></label>
       <input id="dscatbem" name="dscatbem" type="text" ></input>
-
-      <label for="dsblqjud"><? echo utf8ToHtml('Bloqueado:') ?></label>
-      <input id="dsblqjud" name="dsblqjud" type="text" ></input>
-
-      <!--<br />
-
-      <label for="dsbemfin"><? echo utf8ToHtml('Descri&ccedil;&atilde;o:') ?></label>
-      <input id="dsbemfin" name="dsbemfin" type="text" ></input>-->
 	  
-      <br />
+	  <label for="vlmerbem"><? echo utf8ToHtml('Valor de mercado:') ?></label>
+      <input id="vlmerbem" name="vlmerbem" type="text" ></input>
 
       <label for="dscorbem"><? echo utf8ToHtml('Cor/Classe:') ?></label>
       <input id="dscorbem" name="dscorbem" type="text" ></input>
-
-      <label for="vlmerbem"><? echo utf8ToHtml('Valor de mercado:') ?></label>
-      <input id="vlmerbem" name="vlmerbem" type="text" ></input>
-
-      <br />
+	  
+	  <label for="tpchassi"><? echo utf8ToHtml('Tipo chassi:') ?></label>
+      <input id="tpchassi" name="tpchassi" type="text" ></input>
 
       <label for="dschassi"><? echo utf8ToHtml('Chassi/N&#186;. S&eacute;rie:') ?></label>
       <input id="dschassi" name="dschassi" type="text" ></input>
-
-      <label for="tpchassi"><? echo utf8ToHtml('Tipo chassi:') ?></label>
-      <input id="tpchassi" name="tpchassi" type="text" ></input>
-
-      <br />
+	  
+	  <label for="nrrenava"><? echo utf8ToHtml('RENAVAM:') ?></label>
+      <input id="nrrenava" name="nrrenava" type="text" ></input>
 
       <label for="ufdplaca"><? echo utf8ToHtml('UF/Placa:') ?></label>
       <input id="ufdplaca" name="ufdplaca" type="text" ></input>
 
       <label for="nrdplaca"></label>
       <input id="nrdplaca" name="nrdplaca" type="text" ></input>
-
+	  
+	  <label for="nrmodbem"><? echo utf8ToHtml('Ano/Modelo:') ?></label>
+      <input id="nrmodbem" name="nrmodbem" type="text" ></input>
+	  
+	  <label for="nranobem"><? echo utf8ToHtml('Ano de Fabrica&ccedil;&atilde;o:') ?></label>
+      <input id="nranobem" name="nranobem" type="text" ></input>
+	  
       <label for="uflicenc"><? echo utf8ToHtml('UF Licenciamento:') ?></label>
       <input id="uflicenc" name="uflicenc" type="text" ></input>
-
-      <label for="nrrenava"><? echo utf8ToHtml('RENAVAM:') ?></label>
-      <input id="nrrenava" name="nrrenava" type="text" ></input>
-
-      <label for="nranobem"><? echo utf8ToHtml('Ano de Fabrica&ccedil;&atilde;o:') ?></label>
-      <input id="nranobem" name="nranobem" type="text" ></input>
-
-      <label for="nrmodbem"><? echo utf8ToHtml('Ano/Modelo:') ?></label>
-      <input id="nrmodbem" name="nrmodbem" type="text" ></input>
 
       <label for="dscpfbem"><? echo utf8ToHtml('CPF/CNPJ Interv.:') ?></label>
       <input id="dscpfbem" name="dscpfbem" type="text" ></input>
