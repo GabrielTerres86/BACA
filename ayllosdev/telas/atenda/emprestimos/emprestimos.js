@@ -29,7 +29,7 @@
  * 020: [01/11/2012] Retirado marcara campo CPF proprietario. (Daniel)
  * 021: [21/11/2012] Tratar quantidade de dias de liberação dependendo do produto (Gabriel)
  * 022: [22/11/2012] Ajustes referente ao projeto GE (Adriano).
- * 023: [25/02/2013] Enviar o numero do contrato para a validacao da liquidacao(Gabriel).
+ * 023: [25/02/2013] Enviar o numero do contrato para a validacao da liquidacao(GabriTel).
  * 024: [08/05/2013] Bloquear Qtd. Notas Promissorias para edição. Utilizar param. da TAB016 (Lucas).
  * 025: [04/06/2013] Segunda fase Projeto Credito (Gabriel).
  * 026: [27/07/2013] Controle na liquidacao de contratos (Gabriel)
@@ -4605,18 +4605,19 @@ function atualizaTela() {
 
     } else if (in_array(operacao, ['C_ALIENACAO', 'A_ALIENACAO', 'IA_ALIENACAO'])) {
 
-        //strSelect(lscatbem, 'dscatbem', 'frmTipo');
+        var vlrdobemtmp = "";
+		var nrcpfcgctmp = 0;
 
 		if (arrayAlienacoes[contAlienacao]['vlrdobem']) {
-			var vlrdobemtmp = arrayAlienacoes[contAlienacao]['vlrdobem'];
+			vlrdobemtmp = arrayAlienacoes[contAlienacao]['vlrdobem'];
 		} else {
-			var vlrdobemtmp = arrayAlienacoes[contAlienacao]['vlmerbem'];
+			vlrdobemtmp = arrayAlienacoes[contAlienacao]['vlmerbem'];
 		}
 
 		if (arrayAlienacoes[contAlienacao]['nrcpfcgc']) {
-			var nrcpfcgctmp = arrayAlienacoes[contAlienacao]['nrcpfcgc'];
-		} else {
-			var nrcpfcgctmp = arrayAlienacoes[contAlienacao]['nrcpfbem'];
+			nrcpfcgctmp = arrayAlienacoes[contAlienacao]['nrcpfcgc'];
+		} else if (arrayAlienacoes[contAlienacao]['nrcpfbem']) {
+			nrcpfcgctmp = arrayAlienacoes[contAlienacao]['nrcpfbem'];
 		}
 
 		var nrmodbemtmp = arrayAlienacoes[contAlienacao]['nrmodbem'];
@@ -4660,13 +4661,26 @@ function atualizaTela() {
 		}
 
 		$('#nrrenava', '#frmTipo').mask('AAA.AAA.AAA.AAA', {reverse: true});
-
+/*
 		if (!in_array(operacao, ['IA_ALIENACAO'])) {
 			$("#dsmarbemC").show();
 			$("#dsbemfinC").show();
 			$("#nrmodbemC").show();
 			$("#dsmarbem").hide();
 			$("#dsbemfin").hide();
+			$("#nrmodbem").hide();
+		}
+*/
+		if ( $("#dsmarbemC").val() != "" ) {
+			$("#dsmarbemC").show();
+			$("#dsmarbem").hide();
+		}
+		if ( $("#dsbemfinC").val() != "" ) {
+			$("#dsbemfinC").show();
+			$("#dsbemfin").hide();
+		}
+		if ( $("#nrmodbemC").val() != "" ) {
+			$("#nrmodbemC").show();
 			$("#nrmodbem").hide();
 		}
 
@@ -4946,11 +4960,11 @@ function insereAlienacao(operacao, opContinua) {
 
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
 	if ( $('#dsmarbem', '#frmTipo').val() == '-1' ) {
-		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().replace("<","").replace(">","")));');
+		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().replace("<","").replace(">","")));');
 		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().replace("<","").replace(">","")));');
 		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().replace("<","").replace(">","")));');
 	} else {
-		eval('arrayAlienacao' + i + '["dsmarbem"] = $("#nrmodbem option:selected","#frmTipo").text();');
+		eval('arrayAlienacao' + i + '["dsmarbem"] = $("#dsmarbem option:selected","#frmTipo").text();');
 		eval('arrayAlienacao' + i + '["dsbemfin"] = $("#dsbemfin option:selected","#frmTipo").text();');
 		eval('arrayAlienacao' + i + '["nrmodbem"] = $("#nrmodbem option:selected","#frmTipo").text();');
 	}
