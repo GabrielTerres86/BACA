@@ -84,7 +84,7 @@ $nrctrseg  = $_POST['nrctrseg'];
 $nrctrato  = $_POST['nrctrato'];
 
 $nmresseg = '';
-//$nrctrseg = '0'; -- Removido - PRJ438 - Paulo Martins - 09/10/2018
+$nrctrseg = '0'; 
 $ddpripag = '';
 $ddvencto = '';
 $flgclabe = 'false'; 
