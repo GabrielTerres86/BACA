@@ -80,8 +80,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                b.nmfase nmfase_anterior,
                a.qttempo_alerta,
                a.qtmensagem_alerta,
-               NVL(a.dtultima_execucao,'01/01/1900') dtultima_execucao,
-               NVL(a.dtultima_execucao,'01/01/1900') + (a.qttempo_alerta/1440) dtproxima_execucao
+               NVL(a.dtultima_execucao,to_date('01/01/1900','dd/mm/yyyy')) dtultima_execucao,
+               NVL(a.dtultima_execucao,to_date('01/01/1900','dd/mm/yyyy')) + (a.qttempo_alerta/1440) dtproxima_execucao
           FROM tbspb_fase_mensagem a
               ,tbspb_fase_mensagem b
          WHERE a.idativo = 1                  -- ativa
@@ -229,7 +229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND b.nrseq_mensagem = d.nrseq_mensagem
                    AND d.cdfase         = c.cdfase_anterior
                    AND b.dhmensagem     > TRUNC(SYSDATE)
-                   AND b.dhmensagem     > nvl(c.dtultima_execucao, '01/01/1900')
+                   AND b.dhmensagem     > nvl(c.dtultima_execucao, to_date('01/01/1900','dd/mm/yyyy'))
                    AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                         > nvl(c.qttempo_alerta, 0)
                    AND b.cdfase         = pr_cdfase
@@ -271,7 +271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND b.nrseq_mensagem = d.nrseq_mensagem
                    AND d.cdfase         = c.cdfase_anterior
                    AND b.dhmensagem     > TRUNC(SYSDATE)
-                   AND b.dhmensagem     > nvl(c.dtultima_execucao, '01/01/1900')
+                   AND b.dhmensagem     > nvl(c.dtultima_execucao, to_date('01/01/1900','dd/mm/yyyy'))
                    AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                         > nvl(c.qttempo_alerta, 0)
                    AND b.cdfase         = pr_cdfase
@@ -317,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
            AND b.nrseq_mensagem = d.nrseq_mensagem
            AND d.cdfase         = c.cdfase_anterior
            AND b.dhmensagem     > TRUNC(SYSDATE)
-           AND b.dhmensagem     > nvl(c.dtultima_execucao, '01/01/1900')
+           AND b.dhmensagem     > nvl(c.dtultima_execucao, to_date('01/01/1900','dd/mm/yyyy'))
            AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                 > nvl(c.qttempo_alerta, 0)
            AND b.cdfase         = pr_cdfase
@@ -362,7 +362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
            AND b.nrseq_mensagem     = d.nrseq_mensagem
            AND d.cdfase             = c.cdfase_anterior
            AND b.dhmensagem         > TRUNC(SYSDATE)
-           AND b.dhmensagem         > nvl(c.dtultima_execucao, '01/01/1900')
+           AND b.dhmensagem         > nvl(c.dtultima_execucao, to_date('01/01/1900','dd/mm/yyyy'))
            AND ((b.dhmensagem - d.dhmensagem) * 1440)
                                     > nvl(c.qttempo_alerta, 0)
            AND b.cdfase             = pr_cdfase
@@ -403,7 +403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND b.nrseq_mensagem = d.nrseq_mensagem
                    AND d.cdfase         = c.cdfase_anterior
                    AND b.dhmensagem     > TRUNC(SYSDATE)
-                   AND b.dhmensagem     > nvl(c.dtultima_execucao, '01/01/1900')
+                   AND b.dhmensagem     > nvl(c.dtultima_execucao, to_date('01/01/1900','dd/mm/yyyy'))
                    AND b.cdfase         = pr_cdfase
                 UNION
                 SELECT TRIM(TO_CHAR(COUNT(a.nrcontrole_if),'00000')) qtd_msg_total
@@ -432,7 +432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0004 AS
                    AND b.nrseq_mensagem = d.nrseq_mensagem
                    AND d.cdfase         = c.cdfase_anterior
                    AND b.dhmensagem     > TRUNC(SYSDATE)
-                   AND b.dhmensagem     > nvl(c.dtultima_execucao, '01/01/1900')
+                   AND b.dhmensagem     > nvl(c.dtultima_execucao, to_date('01/01/1900','dd/mm/yyyy'))
                    AND b.cdfase         = pr_cdfase
                 UNION
                 SELECT TRIM(TO_CHAR(COUNT(a.nrcontrole_str_pag),'00000')) qtd_msg_total

@@ -232,7 +232,7 @@ create or replace package body cecred.PCAP0001 is
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Tiago
-    Data    : Setembro/12                            Ultima alteracao: 31/08/2018
+    Data    : Setembro/12                            Ultima alteracao: 21/09/2018
 
     Objetivo  : Procedures referentes ao PROCAP (Programa de capitalização).
 
@@ -263,6 +263,8 @@ create or replace package body cecred.PCAP0001 is
                              
                 31/08/2018 - sctask0026522 Atualização do layout para a versão 18.2
                              na geração do arquivo (pc_gerar_arq_enc_brde) (Carlos)
+                             
+                21/09/2018 - SCTASK0029643 Deixar a última linha sem quebra (char(10)) (Carlos)
   ............................................................................ */
 
   -- Cursor de associados
@@ -2364,8 +2366,7 @@ create or replace package body cecred.PCAP0001 is
     vr_nom_direto_cop := gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros
                                               ,pr_cdcooper => pr_cdcooper
                                               ,pr_nmsubdir => '/procap'); 
-    
-    
+
     -- Inicializar o CLOB
     vr_des_xml := NULL;
     dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -2375,9 +2376,11 @@ create or replace package body cecred.PCAP0001 is
     
     -- Ler linhas para o arquivo
     IF vr_tab_arq_brde.count > 0 THEN
-      FOR i IN vr_tab_arq_brde.FIRST..vr_tab_arq_brde.LAST LOOP
-        pc_escreve_xml(vr_tab_arq_brde(i).dsdlinha||chr(10));
+      FOR i IN vr_tab_arq_brde.FIRST..vr_tab_arq_brde.LAST - 1 LOOP
+          pc_escreve_xml(vr_tab_arq_brde(i).dsdlinha||chr(10));
       END LOOP;
+      -- Última linha sem quebra (char(10))
+      pc_escreve_xml(vr_tab_arq_brde(vr_tab_arq_brde.LAST).dsdlinha);
     END IF;
     
     --descarregar buffer
@@ -2410,7 +2413,7 @@ create or replace package body cecred.PCAP0001 is
     -- Testar se o arquivo existe
     IF NOT gene0001.fn_exis_arquivo(pr_nmarquiv) THEN
       -- Levantar exceção
-      vr_dscritic := 'Erro na geração do arquivo procap.';
+      vr_dscritic := 'Erro na geração do arquivo procap. Arquivo: ' || pr_nmarquiv;
       RAISE vr_exc_erro;
     END IF;
     

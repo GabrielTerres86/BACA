@@ -109,6 +109,7 @@ CREATE OR REPLACE PACKAGE CECRED.SSPB0003 AS
 
   -- Rotina para verificar se uma mensagem de devolução já foi processada
   FUNCTION fn_ver_msg_processada (pr_nrcontrole_str_pag IN TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE                 --> Nr.controle da Instituicao Financeira
+                                 ,pr_CabInf_erro        IN BOOLEAN
                                   ) RETURN BOOLEAN;
 
   -- Rotina para acerto de recebidas
@@ -1043,10 +1044,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
 
   -- Rotina para verificar se uma mensagem de devolução já foi processada
   FUNCTION fn_ver_msg_processada (pr_nrcontrole_str_pag IN TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE                 --> Nr.controle da Instituicao Financeira
+                                 ,pr_CabInf_erro        IN BOOLEAN
                                   ) RETURN BOOLEAN IS
     -- Marcelo Telles Coelho - Mouts - Projeto 475
     --
-    CURSOR cr_ver_msg_processada (pr_nrcontrole_str_pag IN TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE) IS
+    CURSOR cr_ver_msg_processada (pr_nrcontrole_str_pag IN TBSPB_MSG_ENVIADA.NRCONTROLE_IF%TYPE
+                                 ,pr_aux_CabInf_erro    IN VARCHAR2) IS
     SELECT 1 idmsg_processada
       FROM tbspb_msg_enviada a
           ,tbspb_msg_enviada_fase b
@@ -1059,7 +1062,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
           ,tbspb_msg_enviada_fase b
      WHERE a.nrcontrole_if      = pr_nrcontrole_str_pag
        AND b.nrseq_mensagem     = a.nrseq_mensagem
-       AND b.cdfase             = 43 -- Rejeição automática - Cancelamento
+       AND ((pr_aux_CabInf_erro  = 'TRUE'  AND b.cdfase = 40)  -- Retorno JD - Rejeição
+         OR (pr_aux_CabInf_erro  = 'FALSE' AND b.cdfase = 43)) -- Rejeição automática - Cancelamento
     UNION
     SELECT 1 idmsg_processada
       FROM tbspb_msg_recebida l
@@ -1070,10 +1074,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     rw_ver_msg_processada cr_ver_msg_processada%ROWTYPE;
 
     vr_msg_processada BOOLEAN := FALSE;
+    vr_aux_CabInf_erro VARCHAR2(05);
 
   BEGIN
+    vr_aux_CabInf_erro := 'FALSE';
+    IF pr_CabInf_erro THEN
+      vr_aux_CabInf_erro := 'TRUE';
+    END IF;
     -- Verifica se a mensagem de devolução já foi processada
-    OPEN cr_ver_msg_processada (pr_nrcontrole_str_pag => pr_nrcontrole_str_pag);
+    OPEN cr_ver_msg_processada (pr_nrcontrole_str_pag => pr_nrcontrole_str_pag
+                               ,pr_aux_CabInf_erro    => vr_aux_CabInf_erro);
     --
     FETCH cr_ver_msg_processada INTO rw_ver_msg_processada;
     --Se nao encontrar

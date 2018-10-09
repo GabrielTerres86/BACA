@@ -744,12 +744,12 @@ function getCpfCnpj( $xml, $tagName ) {
 	}else if(tipo==2)
 	{
 		$resultado = mascaraCnpj($resultado);
-	}	
+	}
 	return $resultado;
 }
 
 function verificaTipoPessoa($doc)
-{		
+	{
 	$tipoPessoa=0;
 	if(strlen($doc) <= 11)
 	{
@@ -763,11 +763,11 @@ function verificaTipoPessoa($doc)
 }
 
 function mascaraCpf($doc)
-{
+		{
 	$doc = str_pad($doc,11, '0', STR_PAD_LEFT);
 	$doc  = mask($doc,'###.###.###-##');
 	return $doc;
-}
+	}	
 
 function mascaraCnpj($doc)
 {
@@ -1548,6 +1548,10 @@ function removeCaracteresInvalidos( $str, $encodeString = false ){
 	return $str;
 	
 	
+}
+
+function removeTodosCaracteresInvalidos($str) {
+	return preg_replace("/[^\w\s\.]/i", "", $str);
 }
 
 /************************************************************/

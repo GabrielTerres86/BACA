@@ -2476,6 +2476,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 219 THEN /* Retornar lista com horários limite de todos os tipos de pagamento */
                 RUN proc_operacao219.
+        ELSE
+            IF  aux_operacao = 220 THEN /* Preview de notificações na Home */
+                RUN proc_operacao220.
 
             
     END.
@@ -9721,6 +9724,26 @@ PROCEDURE proc_operacao219:
 												   INPUT aux_nrdconta,
                                                   OUTPUT TABLE xml_operacao).
 
+    FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Preview das notificacoes para a Home do App*/
+PROCEDURE proc_operacao220:
+
+    ASSIGN aux_qtdregistros  = INTE(GET-VALUE("aux_qtdregistros")).
+    
+    RUN sistema/internet/fontes/InternetBank220.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_qtdregistros,
+												   INPUT aux_cdcanal,
+                                                   OUTPUT TABLE xml_operacao).
+                                                   
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
     END.

@@ -105,7 +105,7 @@
 		<input name="nrdocnpj" id="nrdocnpj" type="text" onfocusout="buscaNomePessoa_gen($('#nrdocnpj','#frmDadosConjuge' ).val(),'nmextemp', 'frmDadosConjuge'); $('#nmextemp', '#frmDadosConjuge').focus();" value="<? echo getByTagName($conjuge,'nrdocnpj') ?>" />
 				
 		<label for="nmextemp">Empresa:</label>
-		<input name="nmextemp" id="nmextemp" type="text" value="<? echo getByTagName($conjuge,'nmextemp') ?>" />
+		<input name="nmextemp" id="nmextemp" type="text" value="<? echo removeTodosCaracteresInvalidos(getByTagName($conjuge,'nmextemp')) ?>" />
 		<br />
 		
 		
@@ -119,7 +119,7 @@
 		</select>
 		
 		<label for="nrfonemp">Tel. Com.:</label>
-		<input name="nrfonemp" id="nrfonemp" type="text" value="<? echo getByTagName($conjuge,'nrfonemp') ?>" />
+		<input name="nrfonemp" id="nrfonemp" type="text" onKeyUp="telefone(this)" value="<? echo (strlen(getByTagName($conjuge,'nrfonemp')) > 9 && strlen(getByTagName($conjuge,'nrfonemp')) < 12 ) ? telefone(getByTagName($conjuge,'nrfonemp')) : '' ?>" />
 		
 		<label for="nrramemp">Ramal:</label>
 		<input name="nrramemp" id="nrramemp" type="text" value="<? echo getByTagName($conjuge,'nrramemp') ?>" />
@@ -155,3 +155,12 @@
 	<input type="image" id="btContinuar"  src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaContinuar();" />
 
 </div>
+<?php	
+	function telefone($numero) {
+		if (strlen($numero) == 10)
+			$fone = preg_replace('/^(\\d\\d)(\\d{4})(\\d{4})$/','(\1) \2-\3',$numero, 1);
+		else
+			$fone = preg_replace('/^(\\d\\d)(\\d{5})(\\d{4})$/','(\1) \2-\3',$numero, 1);		
+		return substr($fone,0, 15);
+	}
+?>

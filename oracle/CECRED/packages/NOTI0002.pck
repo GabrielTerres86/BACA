@@ -22,7 +22,16 @@ CREATE OR REPLACE PACKAGE CECRED.NOTI0002 IS
                                     ,pr_cdcanal      IN tbgen_canal_entrada.cdcanal%TYPE --> Canal de entrada
                                     ,pr_xml_ret     OUT CLOB --> Retorno XML
                                      );
-
+  
+  -- Consulta de notificações para a Home do app
+  PROCEDURE pc_preview_notificacoes(pr_cdcooper     IN tbgen_notificacao.cdcooper%TYPE --> Codigo da cooperativa
+                                   ,pr_nrdconta     IN tbgen_notificacao.nrdconta%TYPE --> Numero da conta
+                                   ,pr_idseqttl     IN tbgen_notificacao.idseqttl%TYPE --> Sequencial titular
+                                   ,pr_qtdregistros IN NUMBER --> Contagem de registros à serem buscados
+                                   ,pr_cdcanal      IN tbgen_canal_entrada.cdcanal%TYPE --> Canal de entrada
+                                   ,pr_xml_ret     OUT CLOB --> Retorno XML
+                                    );
+                                    
   -- Obtem os detalhes de uma notificação
   PROCEDURE pc_obtem_detalhes_notificacao(pr_cdcooper      IN tbgen_notificacao.cdcooper%TYPE --> Codigo da cooperativa
                                          ,pr_nrdconta      IN tbgen_notificacao.nrdconta%TYPE --> Numero da conta
@@ -249,6 +258,117 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
       pr_xml_ret := '<dsmsgerr>' || vr_dscritic || '</dsmsgerr>';
     
   END pc_consulta_notificacoes;
+  
+  PROCEDURE pc_preview_notificacoes(pr_cdcooper     IN tbgen_notificacao.cdcooper%TYPE --> Codigo da cooperativa
+                                   ,pr_nrdconta     IN tbgen_notificacao.nrdconta%TYPE --> Numero da conta
+                                   ,pr_idseqttl     IN tbgen_notificacao.idseqttl%TYPE --> Sequencial titular
+                                   ,pr_qtdregistros IN NUMBER --> Contagem de registros à serem buscados
+                                   ,pr_cdcanal      IN tbgen_canal_entrada.cdcanal%TYPE --> Canal de entrada
+                                   ,pr_xml_ret     OUT CLOB --> Retorno XML
+                                    ) IS
+  
+    --Cursor que busca a lista de notificações
+    CURSOR cr_notificacoes IS
+      SELECT *
+        FROM (SELECT noti.cdnotificacao
+                    ,mens.dstitulo_mensagem
+                    ,noti0001.fn_substitui_variaveis(noti.cdcooper
+                                                    ,noti.nrdconta
+                                                    ,noti.idseqttl
+                                                    ,mens.dstexto_mensagem
+                                                    ,noti.dsvariaveis) dstexto_mensagem
+                    ,to_char(noti.dhenvio, 'yyyy-MM-dd HH24:MI:SS') dhenvio
+                    ,to_char(noti.dhenvio ,'DD MON','nls_date_language =''brazilian portuguese''') dhenviofmt
+                    ,NVL2(noti.dhleitura, 1, 0) indicadorlida
+                    ,icon.nmimagem_lida nomeiconelida
+                    ,icon.nmimagem_naolida nomeiconenaolida
+                    ,icon.nmimagem_ibank nomeiconeibank
+                    ,row_number() OVER(ORDER BY noti.dhenvio DESC, noti.cdnotificacao DESC) indiceregistro -- Índice utilizado para paginação
+                    ,COUNT(1) OVER() totalregistros -- Quantidade total de registros
+                FROM tbgen_notificacao        noti
+                    ,tbgen_notif_msg_cadastro mens
+                    ,tbgen_notif_icone        icon
+               WHERE noti.cdmensagem = mens.cdmensagem
+                 AND mens.cdicone = icon.cdicone
+                 AND noti.cdcooper = pr_cdcooper
+                 AND noti.nrdconta = pr_nrdconta
+                 AND noti.idseqttl = pr_idseqttl
+                 AND noti.dhenvio <= SYSDATE -- Mensagens > sysdate são Agendamentos e não devem ser exibidas ainda
+                 AND noti.dhleitura IS NULL
+               ORDER BY dhenvio            DESC
+                       ,noti.cdnotificacao DESC)
+       WHERE indiceregistro <= pr_qtdregistros;
+  
+    vr_ultimoindice   NUMBER(10) := 0;
+    vr_totalregistros NUMBER(10) := 0;
+  
+    vr_nomeiconelida    tbgen_notif_icone.nmimagem_lida%TYPE; 
+    vr_nomeiconenaolida tbgen_notif_icone.nmimagem_naolida%TYPE; 
+  
+    -- Variaveis de XML
+    vr_xml_tmp VARCHAR2(32767);
+  
+    -- Variáveis de Exceção
+    vr_dscritic VARCHAR2(1000);
+    vr_exception EXCEPTION;
+  
+  BEGIN
+    
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_xml_ret, TRUE);
+    dbms_lob.open(pr_xml_ret, dbms_lob.lob_readwrite);
+  
+    -- Abrir a tag NOTIFICACOES
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => '<NOTIFICACOES>');
+  
+    FOR rw_notificacao IN cr_notificacoes LOOP
+      
+      IF pr_cdcanal = 3 THEN -- Conta Online
+        vr_nomeiconelida    := rw_notificacao.nomeiconeibank;
+        vr_nomeiconenaolida := rw_notificacao.nomeiconeibank;         
+      ELSE
+        vr_nomeiconelida    := rw_notificacao.nomeiconelida;
+        vr_nomeiconenaolida := rw_notificacao.nomeiconenaolida;        
+      END IF;
+      
+      -- Insere dados
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                             ,pr_texto_completo => vr_xml_tmp
+                             ,pr_texto_novo     => '<NOTIFICACAO>' ||
+                                                      '<codigo>'           || rw_notificacao.cdnotificacao || '</codigo>' ||
+                                                      '<titulo>'           || rw_notificacao.dstitulo_mensagem || '</titulo>' ||
+                                                      '<mensagem>'         || rw_notificacao.dstexto_mensagem || '</mensagem>' ||
+                                                      '<dataenvio>'        || rw_notificacao.dhenvio || '</dataenvio>' ||
+                                                      '<dataenviofmt>'     || rw_notificacao.dhenviofmt || '</dataenviofmt>' ||
+                                                      '<indicadorlida>'    || rw_notificacao.indicadorlida || '</indicadorlida>' ||
+                                                      '<indiceregistro>'   || rw_notificacao.indiceregistro || '</indiceregistro>' ||
+                                                      '<nomeiconelida>'    || vr_nomeiconelida || '</nomeiconelida>' ||
+                                                      '<nomeiconenaolida>' || vr_nomeiconenaolida || '</nomeiconenaolida>' ||
+                                                      '<nomeiconemd>'      || rw_notificacao.nomeiconeibank || '</nomeiconemd>' || -- Nome do ícone no material design
+                                                   '</NOTIFICACAO>');
+    
+      vr_totalregistros := rw_notificacao.totalregistros;
+      vr_ultimoindice := rw_notificacao.indiceregistro;
+    
+    END LOOP;
+  
+    -- Fechar a tag NOTIFICACOES
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
+                           ,pr_texto_completo => vr_xml_tmp
+                           ,pr_texto_novo     => '</NOTIFICACOES>'
+                           ,pr_fecha_xml      => TRUE);
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF vr_dscritic IS NULL THEN
+        vr_dscritic := 'Ocorreu um erro ao buscar as notificações.';
+      END IF;
+    
+      pr_xml_ret := '<dsmsgerr>' || vr_dscritic || '</dsmsgerr>';
+    
+  END pc_preview_notificacoes;
 
   PROCEDURE pc_obtem_detalhes_notificacao(pr_cdcooper      IN tbgen_notificacao.cdcooper%TYPE --> Codigo da cooperativa
                                          ,pr_nrdconta      IN tbgen_notificacao.nrdconta%TYPE --> Numero da conta
@@ -332,12 +452,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
     -- Atualiza data da leitura da notificação (se ainda não foi lida)
     UPDATE tbgen_notificacao noti
        SET noti.dhleitura = SYSDATE
+          ,noti.dhvisualizacao = NVL(noti.dhvisualizacao,SYSDATE) --Se o usuário abrir pelo Push ou pela Home não estará nem visualizado ainda
           ,noti.cdcanal_leitura = pr_cdcanal
      WHERE noti.cdnotificacao = pr_cdnotificacao
        AND noti.cdcooper = pr_cdcooper -- Filtra coop/conta apenas para garantir a pessoa que acessou a notificação é a dona da conta
        AND noti.nrdconta = pr_nrdconta
        AND noti.idseqttl = pr_idseqttl
-       AND noti.dhleitura IS NULL; -- Somente se não possui data de leitura
+       AND noti.dhleitura IS NULL; -- Somente se não foi lida ainda
      
     -- Cria o XML de retorno
     gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret

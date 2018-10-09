@@ -22,6 +22,9 @@
 
    02/10/2018 - Merge de atualização CS 26141 - Ajuste na conversão de datas nos campos 34 e 37 (Nagasava Supero)
    
+   01/10/2018 - inc0024348 Passagem do nome do programa para a execução da rotina tela_manprt.pc_gera_conciliacao_auto;
+                Validação das conversões das datas dos campos 34 e 37 (Carlos)
+   
   ............................................................................. */
   
   -- Declarações
@@ -159,9 +162,13 @@
 	--
 	vr_dtmvtolt crapdat.dtmvtolt%TYPE;
 	--
+	vr_dtauxili DATE;
+  --
 	texto CLOB;
   
   vr_cdprogra VARCHAR2(32) := 'CRPS730';
+  
+  vr_idprglog NUMBER := 0;
   
   -- Subrotinas
 	-- Remove caracteres especiais
@@ -1488,6 +1495,34 @@
 							CLOSE cr_crapret;
 							--
 							*/
+              
+              -- Validar formatação das datas
+              BEGIN
+                IF vr_tab_arquivo(vr_index_reg).campot34 IS NOT NULL THEN
+                  vr_dtauxili := to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy');
+                END IF;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Data invalida - Coop: ' || rw_crapcob.cdcooper || 
+                                 ' Conta: ' || rw_crapcob.nrdconta ||
+                                 ' Conv cob: ' ||rw_crapcob.nrcnvcob ||
+                                 ' Data campo 34: ' || vr_tab_arquivo(vr_index_reg).campot34 || ' - ' || SQLERRM;
+                  RAISE vr_exc_erro;
+              END;
+
+              BEGIN
+                IF vr_tab_arquivo(vr_index_reg).campot37 IS NOT NULL THEN
+                  vr_dtauxili := to_date(vr_tab_arquivo(vr_index_reg).campot37,'ddmmyyyy');
+                END IF;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Data invalida - Coop: ' || rw_crapcob.cdcooper || 
+                                 ' Conta: ' || rw_crapcob.nrdconta ||
+                                 ' Conv cob: ' ||rw_crapcob.nrcnvcob ||
+                                 ' Data campo 37: ' || vr_tab_arquivo(vr_index_reg).campot37 || ' - ' || SQLERRM;
+                  RAISE vr_exc_erro; 
+              END;
+
 							pc_gera_retorno_ieptb(pr_cdcooper            => rw_crapcob.cdcooper                   -- IN
 																	 ,pr_dtmvtolt            => rw_crapcob.dtmvtolt                   -- IN
 																	 ,pr_cdcomarc            => vr_tab_arquivo(vr_index_reg).campoh15 -- IN
@@ -3465,6 +3500,15 @@
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := nvl(pr_dscritic, vr_dscritic);
+      
+      cecred.pc_log_programa(PR_DSTIPLOG      => 'O', 
+                             PR_CDPROGRAMA    => vr_cdprogra, 
+                             pr_tpexecucao    => 2,           --job
+                             pr_tpocorrencia  => 2,           --erro
+                             pr_cdcriticidade => 0,           --baixa
+                             pr_dsmensagem    => pr_dscritic,
+                             PR_IDPRGLOG      => vr_idprglog);
+      
     WHEN OTHERS THEN
       cecred.pc_internal_exception;
       pr_dscritic := 'Erro ao processar os arquivos de confirmação/retorno: ' || SQLERRM;
@@ -3637,7 +3681,8 @@ BEGIN
   END IF;
 	
 	-- Executa a conciliação automática
-	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
+	tela_manprt.pc_gera_conciliacao_auto(pr_cdprograma => vr_cdprogra,
+                                       pr_dscritic   => pr_dscritic);
 	--
   GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_gera_movimento_pagamento');
 	-- Gera as movimentações

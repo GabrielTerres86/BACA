@@ -391,6 +391,26 @@ function controlaLayout(operacao) {
 			}
 		});	
 
+	    // Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
+		$('#nmconjug,#dtnasccj,#tpdoccje,#nrdoccje,#cdoedcje,#cdufdcje,#dtemdcje,#grescola,#cdfrmttl,#cdnatopc,#cdocpcje').bind("keyup", function () {
+		    this.value = removeTodosCaracteresInvalidos(this.value, 1);
+		});
+
+	    // Bloqueia a digitação de caracteres com a tecla Alt + ..
+		$('#nmconjug,#dtnasccj,#tpdoccje,#nrdoccje,#cdoedcje,#cdufdcje,#dtemdcje,#grescola,#cdfrmttl,#cdnatopc,#cdocpcje').bind("keydown", function (e) {
+		    if (e.altKey) { return false; }
+		});
+
+	    // Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
+		$('#nmextemp,#nrdocnpj,#dsproftl,#nrfonemp,#nrramemp,#dtadmemp,#vlsalari,#tpcttrab,#cdturnos,#cdnvlcgo').bind("keyup", function () {
+		    this.value = removeTodosCaracteresInvalidos(this.value, 1);
+		});
+
+	    // Bloqueia a digitação de caracteres com a tecla Alt + ..
+		$('#nmextemp,#nrdocnpj,#dsproftl,#nrfonemp,#nrramemp,#dtadmemp,#vlsalari,#tpcttrab,#cdturnos,#cdnvlcgo').bind("keydown", function (e) {
+		    if (e.altKey) { return false; }
+		});
+
 		// CONTROLE DO CPF
 		cCPF.unbind('keydown').bind('keydown', function(e) {
 			if ( !verificaContadorSelect() ) return false;

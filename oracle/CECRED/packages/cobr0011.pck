@@ -15,6 +15,8 @@ create or replace package cecred.cobr0011 is
   -- Alterações: 
   --				  
   -- 24/09/2018 : Merge da atualização CS 25859 - Extrato de TED IEPTB (André Supero)
+  -- 04/10/2018 : Ajustado sequence para lançamentos na conta da central. - (Fabio Stein Supero)
+  --              Ajustado CPNJ do emissor da TED. - (Fabio Stein Supero)
 ---------------------------------------------------------------------------------------------------------------*/
   
   -- Public type declarations
@@ -277,14 +279,14 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 
+  --  Data     : Março/2018.                   Ultima atualização: 05/10/2018
   --
   -- Dados referentes ao programa:
   --
   -- Freqüência: Sempre que chamado
   -- Objetivo  : Procedimentos para Retorno Instruções bancárias - Cecred/IEPTB
   --
-  -- Alterações: 
+  -- Alterações: 05/10/2018 - Remover inst autom de protesto quando titulo devolvido pelo cartorio
   --
 ---------------------------------------------------------------------------------------------------------------*/
 
@@ -616,6 +618,7 @@ create or replace package body cecred.cobr0011 IS
               ,rc.flgativo
               ,rc.tpconta
               ,rc.nmtitular
+              ,rc.dscnpj_titular
           FROM tbfin_recursos_conta rc
          WHERE rc.cdcooper = pr_cdcooper
            AND rc.nrdconta = pr_nrdconta
@@ -934,7 +937,7 @@ create or replace package body cecred.cobr0011 IS
                           ,pr_tpdctacr => 1 -- CC     -- INTEGER
                           ,pr_nmpesemi => rw_tbfin_rec_con.nmtitular -- VARCHAR2
                           ,pr_nmpesde1 => NULL        -- VARCHAR2             -- Nome de 2TTL
-                          ,pr_cpfcgemi => pr_nrcpfcgc -- NUMBER
+                          ,pr_cpfcgemi => rw_tbfin_rec_con.dscnpj_titular -- NUMBER
                           ,pr_cpfcgdel => 0           -- NUMBER             -- CPF sec TTL
                           ,pr_nmpesrcb => pr_nmtitula -- VARCHAR2
                           ,pr_nmstlrcb => NULL        -- VARCHAR2             -- Nome para 2TTL
@@ -2167,7 +2170,9 @@ create or replace package body cecred.cobr0011 IS
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 0,
              crapcob.dtsitcrt = NULL,
-             crapcob.dtbloque = NULL
+             crapcob.dtbloque = NULL,
+             crapcob.flgdprot = 0, -- remover inst automatica de protesto
+             crapcob.qtdiaprt = 0  -- zerar qtd de dias para protesto
        WHERE crapcob.rowid  = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2653,8 +2658,8 @@ create or replace package body cecred.cobr0011 IS
 		-- Gerar novo titulo usando a fn_sequence 
 		vr_sqdoclan := fn_sequence(pr_nmtabela => 'CRAPLCM'
 															,pr_nmdcampo => 'NRDOCMTO'
-															,pr_dsdchave => pr_cdcooper || ';'
-																					 || pr_dtmvtolt || ';'
+															,pr_dsdchave => 3 || ';'
+																					 || to_char(pr_dtmvtolt,'dd/mm/yyyy') || ';'
 																					 || rw_craplot.nrdolote
 															);
 		-- Criar lançamento na cooperativa
@@ -2892,10 +2897,10 @@ create or replace package body cecred.cobr0011 IS
 		-- Gerar novo titulo usando a fn_sequence 
 		vr_sqdoclan := fn_sequence(pr_nmtabela => 'CRAPLCM'
 															,pr_nmdcampo => 'NRDOCMTO'
-															,pr_dsdchave => pr_cdcooper || ';'
-																					 || pr_dtmvtolt || ';'
-																					 || pr_craplot.nrdolote
-															);
+															,pr_dsdchave => 3 || ';'
+																					 || to_char(pr_dtmvtolt,'dd/mm/yyyy') || ';'
+																					 || pr_craplot.nrdolote);
+                              
 		-- Criar lançamento na cooperativa
 		BEGIN
 			--

@@ -188,7 +188,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
                            ,pr_nmdcampo      OUT VARCHAR2               -- Nome do Campo
                            ,pr_des_erro      OUT VARCHAR2);
                            
-  PROCEDURE pc_gera_conciliacao_auto(pr_dscritic  OUT VARCHAR2);
+  PROCEDURE pc_gera_conciliacao_auto(pr_cdprograma IN VARCHAR2,
+                                     pr_dscritic  OUT VARCHAR2);
                            
   PROCEDURE pc_gera_conciliacao(pr_idlancto IN tbfin_recursos_movimento.idlancto%TYPE -- ID da TED
                                ,pr_idsretorno IN VARCHAR2                             -- IDs dos títulos
@@ -291,12 +292,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   -- Objetivo  : Centralizar rotinas relacionadas a tela PARPRT
   --
   -- Alteracoes: Adaptado script para contemplar os parametros da tela PARPRT
-  --																	  
-  -- 24/09/2018: Ajuste no cursor tbfin_recursos_movimento CS 25859 (Andre Supero)
-  --																			  
-  -- 28/09/2018: Alterado select para remover cdcartorio na selecao do cartorio para a conciliacao. (Fabio Stein - Supero)
-  --
-  ---------------------------------------------------------------------------
+  /*
+     24/09/2018: Ajuste no cursor tbfin_recursos_movimento CS 25859 (Andre Supero)
+  
+     26/09/2018 - inc0024348 Passagem do nome do programa para a execução da rotina 
+                  pc_gera_conciliacao_auto para não criticar validações para o job (Carlos)
+
+     28/09/2018: Alterado select para remover cdcartorio na selecao do cartorio para a conciliacao. (Fabio Stein - Supero)
+     04/10/2018: Alterado validação de data da conciliação. Realizando somente para a automatica.. (Fabio Stein - Supero)
+		         Ajustado query de conciliações para pois o lcódigo isbp 0 para o banco do brasil retornava varios bancos.
+				 Ajustado banco.flgdispb para 1 na query de conciliações.
+   ---------------------------------------------------------------------------*/
     
     
     CURSOR cr_tbcobran_conciliacao_ieptb(pr_dtinicial    IN VARCHAR2
@@ -333,6 +339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       and municipio.cdcomarc = ret.cdcomarc
       and mov.cdcooper = coop.cdcooper
       and mov.nrispbif = banco.nrispbif
+      AND banco.flgdispb = 1
       and ((conc.dtconcilicao between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
          or (pr_dtinicial is null and pr_dtfinal is null))
       and ((ret.vltitulo >= pr_vlinicial and ret.vltitulo <= pr_vlfinal) 
@@ -2167,7 +2174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       pr_dscritic := 'Erro ao devolver TED : ' || nvl(vr_dscritic, SQLERRM);
   END pc_devolver_ted;
   
-  PROCEDURE pc_gera_conciliacao_auto(pr_dscritic  OUT VARCHAR2) IS
+  PROCEDURE pc_gera_conciliacao_auto(pr_cdprograma IN VARCHAR2,
+                                     pr_dscritic  OUT VARCHAR2) IS
 	/* ............................................................................
 
        Programa: pc_gera_conciliacao_auto
@@ -2205,6 +2213,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     --actual table
     t_titulos titulos_tbl_type;
     
+    vr_idprglog NUMBER := 0;
+
     CURSOR cr_teds IS
       SELECT ted.idlancto,
              ted.cdcooper,
@@ -2290,9 +2300,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
               
               vr_ids_retorno := SUBSTR(vr_ids_retorno, 1, LENGTH(vr_ids_retorno) - 1);
 
+              -- Valida se a data de recebimento é maior ou igual a da TED
+             IF t_titulos(i).dtocorre < rw_ted.dtmvtolt THEN
+                vr_dscritic := 'Data de recebimento do título deve ser superior ou igual a TED. Favor verificar!';
+             END IF;
+
+              -- Se NAO gerou crítica  
+              IF TRIM(vr_dscritic) IS NULL THEN
               pc_gera_conciliacao(pr_idlancto   => rw_ted.idlancto,
                                   pr_idsretorno => vr_ids_retorno,
                                   pr_dscritic   => vr_dscritic);
+              END IF;
 
               -- Se gerou alguma crítica
               IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -2330,9 +2348,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
 
 
   EXCEPTION
-    WHEN OTHERS THEN
-      pr_dscritic:= vr_dscritic;
+    WHEN vr_exc_saida THEN
+      pr_dscritic := vr_dscritic;
+      
+      IF pr_cdprograma = 'CRPS730' THEN
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'O', 
+                               PR_CDPROGRAMA    => pr_cdprograma, 
+                               pr_tpexecucao    => 2,           --job
+                               pr_tpocorrencia  => 3,           --alerta
+                               pr_cdcriticidade => 0,           --baixa
+                               pr_dsmensagem    => pr_dscritic,
+                               PR_IDPRGLOG      => vr_idprglog);
+        -- Não retornar crítica para o programa
+        pr_dscritic := '';
+      END IF;
 
+    WHEN OTHERS THEN
+      cecred.pc_internal_exception;
+      pr_dscritic:= vr_dscritic;
   END pc_gera_conciliacao_auto;
   
   PROCEDURE pc_gera_conciliacao(pr_idlancto   IN tbfin_recursos_movimento.idlancto%TYPE -- ID da TED
@@ -2487,12 +2520,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       -- Valida se o valor do título excede o valor da TED
       IF rw_titulos.vlsaldo_titulo > rw_ted.vllanmto THEN
         vr_dscritic := 'Valor do título não pode exceder o valor da TED. Favor verificar!';
-        RAISE vr_exc_saida;
-      END IF;
-      
-      -- Valida se a data de recebimento é maior ou igual a da TED
-      IF rw_titulos.dtocorre < rw_ted.dtmvtolt THEN
-        vr_dscritic := 'Data de recebimento do título deve ser superior ou igual a TED. Favor verificar!';
         RAISE vr_exc_saida;
       END IF;
 

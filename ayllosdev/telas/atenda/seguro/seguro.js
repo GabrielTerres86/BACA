@@ -58,6 +58,9 @@
  
                   02/07/2018 - Ajuste para não permitir caracteres especiais nos dados do beneficiário do seguro de vida
                                PRB0040130 (André Bohn - MoutS).
+
+				  04/09/2018 - Alterado a impressão da proposta seguro prestamista PRJ 438 e incluído campo contrato 
+				  			   para o tipo seguro prestamista. PRJ 438 (Mateus Z - MoutS).
  * */
  
 //**************************************************
@@ -1744,7 +1747,8 @@ function carregaPropriedadesFormPrestVida(){
 	
 	var label = 'label[for="vlpreseg"],label[for="vlcapseg"],'+
 			    'label[for="qtpreseg"],label[for="vlprepag"],'+
-				'label[for="dscobert"],label[for="nmdsegur"]';				
+				'label[for="dscobert"],label[for="nmdsegur"],'+
+				'label[for="nrctrato"]';				
 	$(label).css({'width':'130px','text-align':'right'});
 	$('label[for="pesquisa"]').css({'width':'72px','text-align':'right'})
 	
@@ -1753,7 +1757,7 @@ function carregaPropriedadesFormPrestVida(){
 				  '#nmbenefi,#dsgraupr,#txpartic,#nmdsegur,#dssitseg,#pesquisa';
 				  
 	// Seta o tamanho da div
-	$('#divConteudoOpcao,#tableJanela').css({'height':'330px','width':'680px'});
+	$('#divConteudoOpcao,#tableJanela').css({'height':'360px','width':'680px'});
 
 	 $('#pesquisa').css('width','160px');
 	 $('label[for="dssitseg"]').css('margin-left','7px');
@@ -1763,7 +1767,7 @@ function carregaPropriedadesFormPrestVida(){
 		 $('#tpplaseg,#seguradora,#qtpreseg,#ddvencto').addClass('inteiro campo').css('width','40px');
 		 $('#tpplaseg').attr('maxlength','3');
          $('#ddvencto').attr('maxlength','2');
-         
+         $('#nrctrato').addClass('inteiro campo').css('width','80px');
 		 $('#vlpreseg,#vlcapseg,#vlprepag').addClass('moeda campo').css('width','80px');
 		 $(part).attr('maxlength','6').css('width','80px');
 		 $(parent).addClass('campo');
@@ -1822,7 +1826,13 @@ function carregaPropriedadesFormPrestVida(){
 					
 			    }
 				else{
+					// PRJ 438 - Se tipo prestamista, entao primeiro validar o contrato
+					if(tpseguro == 4){
+						validaContrato();
+					}else{
 					controlaOperacao('BUSCASEG');return false;			
+				}
+				
 				}
 				
 		});
@@ -2079,6 +2089,7 @@ function criaSeg(operacao){
 		var vlpreseg = $('#vlpreseg').val();
         // carregar dia dos proximos debitos
         var ddvencto = $('#ddvencto').val();
+        var nrctrato = $('#nrctrato').val();
 		
 		var nmbenefi1 = $('#nmbenefi_1').val();
 		var nmbenefi2 = $('#nmbenefi_2').val();
@@ -2491,6 +2502,16 @@ function controlaPesquisas(operacao) {
 			return false;
 		});
 	}
+	else if(operacao=='TI'){
+		$('a','#frmNovo').ponteiroMouse();
+		$('#nrctrato','#frmNovo').next().unbind('click').bind('click', function() {			
+            filtrosPesq	= 'Contrato;nrctrato;80px;S;;N|Conta;nrdconta;80px;S;'+nrdconta+';N';
+			colunas 	= 'Contrato;nrctremp;100%;center';
+			mostraPesquisa("SEGU0003", "BUSCA_CONTRATOS_PRESTAMISTA", "Contratos", "30", filtrosPesq, colunas, divRotina);
+			$('#btPesquisar').hide();
+			return false;
+		});
+	}
 }
 
 function cancelarSeguro(){
@@ -2629,6 +2650,9 @@ function imprimirPropostaSeguro(nomeForm, reccraws){
 	} 
 	if($('#tpseguro','#formImpressao').val() == 11){
 		var action = UrlSite + 'telas/atenda/seguro/imprime_proposta_seguro.php';
+	}else if($('#tpseguro','#formImpressao').val() == 4){  
+		// PRJ 438 - Novo relatorio para prestamista
+		var action = UrlSite + 'telas/atenda/seguro/imprime_proposta_prestamista.php';
 	}else{  
 		var action = UrlSite + 'telas/atenda/seguro/imprime_proposta_seguro_vidaprestamista.php';
 	}
@@ -2938,4 +2962,40 @@ function carregaFormCasa()
 	}
 
 	return false;
+}
+
+// PRJ 438 - Validação do novo campo contrato
+function validaContrato(){
+
+	var nrctrato = $('#nrctrato', '#frmNovo').val();
+
+	if(nrctrato == ''){
+		showError('error','Campo contrato &eacute; obrigat&oacute;rio.','Alerta - Ayllos','hideMsgAguardo();');
+	return false;
+}
+
+	$.ajax({		
+		type: "POST", 
+		dataType: 'html',
+		url: UrlSite + "telas/atenda/seguro/valida_contrato.php",
+		data: {
+            nrdconta: nrdconta,
+			nrctrato: nrctrato,
+			redirect: "html_ajax" // Tipo de retorno do ajax
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","$('#nrsennov','#frmEskeci').focus()");
+		},
+		success: function(response) {				
+			if ( response.indexOf('showError("error"') == -1 ) {
+				controlaOperacao('BUSCASEG');
+				return false;
+			} else {
+				$('#nrctrato', '#frmNovo').val('');
+				eval(response);
+				return false;
+			}
+		}
+	});
 }

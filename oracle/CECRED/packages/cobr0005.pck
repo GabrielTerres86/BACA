@@ -603,7 +603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --  Sistema  : Procedimentos gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 21/09/2018
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/10/2018
   --
   -- Dados referentes ao programa:
   --
@@ -627,7 +627,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --                          ( Belli - Envolti - Ch INC0019045 ) 
   --                              
   --              21/09/2018 - Ajuste mensagem e parâmetros
-  --                          ( Belli - Envolti - Ch INC0023245 ) 
+  --                          ( Belli - Envolti - Ch INC0023245 )
+  --
+  --              03/10/2018 - Ajuste no cursor para geração dos boletos para o Cyber. (PRB0040197 - Saquetta).
+  --
+  --              01/10/2018 - Substituir '.' por ',', pois estava afetando na geração do
+  --                           relatorio (Lucas Ranghetti INC0023838)
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -1647,7 +1652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: 08/05/2018
+     Data    : Agosto/2015                     Ultima atualizacao: 03/10/2018
 
      Dados referentes ao programa:
 
@@ -1663,6 +1668,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                               (Ana - Envolti - Ch REQ0011327)
 
                16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).                              
+			   
+			   03/10/2018 - Ajuste no cursor para geração dos boletos para o Cyber. (PRB0040197 - Saquetta).
   ............................................................................ */      
 
 	DECLARE
@@ -1685,36 +1692,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_cdagediv   INTEGER;
       vr_dsinform   cecred.gene0002.typ_split;
       vr_dsparame   VARCHAR2(2000);
+      vr_tipo_cursor varchar2(1);
 
 			---------------------------- CURSORES -----------------------------------
-			CURSOR cr_crapcob 
-      
-/*      (    pr_cdcooper IN crapcop.cdcooper%TYPE              --> Cooperativa
-                            ,pr_cdagenci IN crapass.cdagenci%TYPE DEFAULT NULL --> PA
-                            ,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT NULL --> Nr da Conta
-                            ,pr_nrctremp IN crapcob.nrctremp%TYPE DEFAULT NULL --> Nr do contato de emprestimo
-                            ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE DEFAULT NULL --> Convenio    
-                            ,pr_nrdocmto IN crapcob.nrdocmto%TYPE DEFAULT NULL --> Nr do titulo
-                            ,pr_cdbandoc IN crapcob.cdbandoc%TYPE DEFAULT NULL --> Banco                                                                        
-                            ,pr_dtemissi IN DATE DEFAULT NULL                  --> Data de emissão inicial
-                            ,pr_dtemissf IN DATE DEFAULT NULL                  --> Data de emissão final                                      
-                            ,pr_dtvencti IN DATE DEFAULT NULL                  --> Data de vencimento inicial
-                            ,pr_dtvenctf IN DATE DEFAULT NULL                  --> Data de vencimento final                                      
-                            ,pr_dtbaixai IN DATE DEFAULT NULL                  --> Data de baixa inicial
-                            ,pr_dtbaixaf IN DATE DEFAULT NULL                  --> Data de baixa final
-                            ,pr_dtpagtoi IN DATE DEFAULT NULL                  --> Data de pagamento inicial
-                            ,pr_dtpagtof IN DATE DEFAULT NULL                  --> Data de pagamento final
-                            ,pr_vltituli IN crapcob.vltitulo%TYPE DEFAULT NULL --> Valor do título inicial
-                            ,pr_vltitulf IN crapcob.vltitulo%TYPE DEFAULT NULL --> Valor do título final
-                            ,pr_dsdoccop IN crapcob.dsdoccop%TYPE DEFAULT NULL --> Seu número
-                            ,pr_incobran IN INTEGER DEFAULT NULL               --> Situacao do titulo (0=em aberto, 3=baixado, 5=Pago)
-                            ,pr_flgcbdda IN crapcob.flgcbdda%TYPE DEFAULT NULL --> Flag se o título é DDA
-                            ,pr_flcooexp IN INTEGER DEFAULT NULL               --> Cooperado emite e expede
-                            ,pr_flceeexp IN INTEGER DEFAULT NULL               --> Cooperativa emite e expede
-                            ,pr_flprotes IN INTEGER DEFAULT NULL               --> Se titulo foi protestado
-                            ,pr_fldescon IN INTEGER DEFAULT NULL)      
-*/      
-      
+			CURSOR cr_crapcob1
       IS SELECT cop.nmrescop
                ,cop.dsendweb
                ,cop.cdagectl
@@ -1872,8 +1853,149 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 					         cob.nrcnvcob,
                    cob.nrdocmto;
                    
-      rw_crapcob cr_crapcob%ROWTYPE;                     
-  
+      rw_crapcob cr_crapcob1%ROWTYPE;                     
+
+			CURSOR cr_crapcob2
+      IS SELECT cop.nmrescop
+               ,cop.dsendweb
+               ,cop.cdagectl
+               ,cop.cdagedbb
+               ,cob.dtmvtolt
+               ,decode(cob.incobran, 0, 'A', 3, 'B', 5, 'P') incobran
+               ,cob.nrdconta
+               ,cob.nrctremp
+               ,cob.nrdctabb               
+               ,cob.cdbandoc
+               ,cob.nrdocmto
+               ,cob.dtretcob
+               ,cob.nrcnvcob
+               ,cob.cdcooper
+               ,cob.indpagto
+               ,cob.dtdpagto
+               ,cob.vldpagto
+               ,cob.vltitulo
+               ,cob.dsinform
+               ,cob.dsdinstr
+               ,cob.dtvencto
+               ,cco.cdcartei
+               ,cob.cddespec
+               ,decode(cob.cddespec,1,'DM'
+                                   ,2,'DS'
+                                   ,3,'NP'
+                                   ,4,'MENS'
+                                   ,5,'NF'
+                                   ,6,'RECI'
+                                   ,7,'OUTR') dsdespec                                                  
+               ,cob.cdtpinsc
+               ,cob.cdtpinav
+               ,cob.nrinsava
+               ,cob.nrinssac
+               ,cob.nmdavali
+               ,cob.vldescto
+               ,cob.cdmensag
+               ,cob.dsdoccop
+               ,cob.idseqttl
+               ,cob.dtdbaixa
+               ,cob.vlabatim
+               ,cob.vltarifa
+               ,decode(cob.cdbanpag, 11, 'COOP', to_char(cob.cdbanpag,'fm000')) cdbanpag
+               ,decode(cob.cdagepag, 11, ' ', to_char(cob.cdagepag, 'fm0000')) cdagepag               
+               ,cob.dtdocmto
+               ,cob.nrnosnum
+               ,cob.insitcrt
+               ,cob.dtsitcrt
+               ,cob.flgdprot
+               ,cob.qtdiaprt
+               ,cob.indiaprt
+               ,cob.vljurdia
+               ,cob.vlrmulta
+               ,decode(cob.flgaceit,1,' S', 0, ' N') flgaceit
+               ,cob.dsusoemp
+               ,cob.flgregis
+               ,cob.inemiten
+               ,cob.tpjurmor
+               ,cob.tpdmulta
+               ,decode(cob.flgcbdda,1,'S',0,'N') flgcbdda
+               ,cob.idtitleg
+               ,cob.idopeleg
+               ,cob.insitpro
+               ,cob.nrremass
+               ,cob.cdtitprt
+               ,cob.dcmc7chq
+               ,cob.inemiexp
+               ,cob.dtemiexp
+               ,cob.dtelimin
+               ,cob.flserasa 
+               ,cob.qtdianeg
+               ,cob.insrvprt
+               ,sab.nmdsacad
+               ,sab.dsendsac
+               ,sab.nmbaisac
+               ,sab.nrcepsac
+               ,sab.nmcidsac
+               ,sab.cdufsaca
+               ,sab.nrendsac
+               ,sab.complend
+               ,sab.cdsitsac
+         --    ,sab.dsdemail
+               ,sab.flgemail
+               ,sab.nrcelsac
+               ,ceb.nrcnvceb
+               ,ass.cdagenci
+               ,ass.nmprimtl
+               ,ass.nrcpfcgc
+               ,ass.inpessoa
+               ,cco.dsorgarq
+               ,cco.nrvarcar
+               ,cob.rowid
+               ,decode(cob.inemiten,1,'1-BCO',2,'2-COO',3,'3-CEE') dsemiten
+               ,decode(cob.inemiten,1,'BCO',2,'COO',3,'CEE') dsemitnt
+               ,nvl((SELECT 1 FROM crapcol col
+                      WHERE col.cdcooper (+) = cob.cdcooper
+                        AND col.nrdconta (+) = cob.nrdconta
+                        AND col.nrcnvcob (+) = cob.nrcnvcob
+                        AND col.nrdocmto (+) = cob.nrdocmto
+                        AND col.dslogtit (+) = 'Titulo gerado - Carne'),0) flgcarne
+               ,nvl((SELECT 1 FROM craptdb tdb
+                      WHERE tdb.cdcooper (+) = cob.cdcooper
+                        AND tdb.nrdconta (+) = cob.nrdconta
+                        AND tdb.nrcnvcob (+) = cob.nrcnvcob
+                        AND tdb.nrdocmto (+) = cob.nrdocmto
+                        AND tdb.nrdctabb (+) = cob.nrdctabb
+                        AND tdb.cdbandoc (+) = cob.cdbandoc
+                        AND tdb.insittit (+) = 4),0) fldescon
+           FROM crapcob cob
+              , crapsab sab
+              , crapass ass
+              , crapcop cop
+              , crapceb ceb
+              , crapcco cco
+          WHERE sab.nrinssac = cob.nrinssac
+            AND sab.nrdconta = cob.nrdconta            
+            AND sab.cdcooper = cob.cdcooper
+            --
+            AND ass.nrdconta = cob.nrdconta
+            AND ass.cdcooper = cob.cdcooper
+            --
+            AND cop.cdcooper = cob.cdcooper
+            --
+            AND ceb.nrconven = cco.nrconven
+            AND ceb.cdcooper = cco.cdcooper
+            --
+            AND cob.nrdocmto = pr_nrdocmto
+            AND cob.nrcnvcob = ceb.nrconven
+            AND cob.nrdconta = ceb.nrdconta
+            AND cob.cdcooper = ceb.cdcooper
+            AND cob.cdbandoc = cco.cddbanco
+            AND cob.nrdctabb = cco.nrdctabb
+            --
+            AND ceb.nrdconta = pr_nrdconta
+            AND cco.nrconven = pr_nrcnvcob
+            AND cco.cdcooper = pr_cdcooper
+				  ORDER BY cob.nrdconta,
+					         cob.nrcnvcob,
+                   cob.nrdocmto;
+
     BEGIN
     -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_buscar_titulo_cobranca');
@@ -2021,37 +2143,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
         -- inicializar elemento do indice        
         vr_ind_cob := 0;
-    
+
+        if  pr_cdcooper is not null
+        and pr_nrcnvcob is not null
+        and pr_nrdconta is not null
+        and pr_nrdocmto is not null
+        and pr_cdagenci is null
+        and pr_nrctremp is null
+        and pr_cdbandoc is null
+        and pr_dtbaixai is null
+        and pr_dtbaixaf is null
+        and pr_dtemissi is null
+        and pr_dtemissf is null
+        and pr_dtvencti is null
+        and pr_dtvenctf is null
+        and pr_dtpagtoi is null
+        and pr_dtpagtof is null
+        and pr_dsdoccop is null
+        and pr_incobran is null
+        and pr_fldescon is null then
+          vr_tipo_cursor := 2;
+        else
+          vr_tipo_cursor := 1;
+        end if;
+
 				-- Abre cursor para atribuir os registros encontrados na PL/Table
-				FOR rw_crapcob IN cr_crapcob 
-          
-/*                                      (pr_cdcooper => pr_cdcooper
-                                      ,pr_cdagenci => pr_cdagenci
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_nrctremp => pr_nrctremp
-                                      ,pr_nrcnvcob => pr_nrcnvcob
-                                      ,pr_nrdocmto => pr_nrdocmto
-                                      ,pr_cdbandoc => pr_cdbandoc
-                                      ,pr_dtemissi => pr_dtemissi
-                                      ,pr_dtemissf => pr_dtemissf
-                                      ,pr_dtvencti => pr_dtvencti
-                                      ,pr_dtvenctf => pr_dtvenctf
-                                      ,pr_dtbaixai => pr_dtbaixai
-                                      ,pr_dtbaixaf => pr_dtbaixaf
-                                      ,pr_dtpagtoi => pr_dtpagtoi
-                                      ,pr_dtpagtof => pr_dtpagtof
-                                      ,pr_vltituli => pr_vltituli
-                                      ,pr_vltitulf => pr_vltitulf
-                                      ,pr_dsdoccop => pr_dsdoccop
-                                      ,pr_incobran => pr_incobran
-                                      ,pr_flgcbdda => pr_flgcbdda
-                                      ,pr_flcooexp => pr_flcooexp
-                                      ,pr_flceeexp => pr_flceeexp
-                                      ,pr_flprotes => pr_flprotes
-                                      ,pr_fldescon => pr_fldescon) */
-          
-                      LOOP				   
-				
+        if vr_tipo_cursor = 1 then
+          open cr_crapcob1;
+        else
+          open cr_crapcob2;
+        end if;
+        
+        LOOP
+
+          if vr_tipo_cursor = 1 then
+            fetch cr_crapcob1 into rw_crapcob;
+            exit when cr_crapcob1%notfound;
+          else
+            fetch cr_crapcob2 into rw_crapcob;
+            exit when cr_crapcob2%notfound;
+          end if;
+
           -- incrementar indice
           vr_ind_cob := vr_ind_cob + 1;
           
@@ -2382,7 +2514,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_buscar_titulo_cobranca');
 				END LOOP;
-        
+
+        if cr_crapcob1%isopen then
+          close cr_crapcob1;
+        end if;
+        if cr_crapcob2%isopen then
+          close cr_crapcob2;
+        end if;
+
         IF pr_tab_cob.count() = 0 THEN
            RAISE vr_exc_semresultado;
         END IF;
@@ -2767,7 +2906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: 08/05/2018
+       Data    : Outubro/2016                     Ultima atualizacao: 01/10/2018
 
        Dados referentes ao programa:
 
@@ -2783,6 +2922,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                    21/09/2018 - Ajuste mensagem e parâmetros
                                 ( Belli - Envolti - Ch INC0023245 ) 
   
+                   01/10/2018 - Substituir '.' por ',', pois estava afetando na geração do
+                                relatorio (Lucas Ranghetti)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     --> Buscar SMSs enviados 
@@ -2908,7 +3049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                        '<nrnosnum>'||     rw_cobran_sms.nrnosnum                             ||'</nrnosnum>'||
                        '<nmdsacad>'||     rw_cobran_sms.nmdsacad                             ||'</nmdsacad>'||   
                        '<dtvencto>'||     to_char(rw_cobran_sms.dtvencto,'DD/MM/RRRR')       ||'</dtvencto>'||   
-                       '<vltitulo>'||     rw_cobran_sms.vltitulo                             ||'</vltitulo>'||   
+                       '<vltitulo>'||     REPLACE(rw_cobran_sms.vltitulo,'.',',')            ||'</vltitulo>'||   
                        '<dhenvio_sms>'||  to_char(rw_cobran_sms.dhenvsms,'DD/MM/RRRR HH24:MI:SS')   ||'</dhenvio_sms>'||
                        '<nrdofone>'||     rw_cobran_sms.nrdofone                             ||'</nrdofone> '||
                        '<dspacote>'||     rw_cobran_sms.dspacote                             ||'</dspacote>

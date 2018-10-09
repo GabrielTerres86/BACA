@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 06/08/2018
+    Data      : Abril/2012                      Ultima Atualizacao: 23/08/2018
     
     Dados referentes ao programa:
 
@@ -336,6 +336,8 @@
 
                 11/06/2018 - No cursor crapbdt filtrar data de liberação que não seja null
 
+                23/08/2018 - sctask0016914 Reativado o batimento dos termos, porém quando chamado pelo crps620, verifica apenas os termos digitalizados
+                             no dia (Carlos)
 .............................................................................*/
 
 
@@ -689,10 +691,8 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
-                END.
+            END. /* tela prcged */
 
-/*  21/05/2018 sctask0014409 Batimento de termos desativado temporariamente na opção todos (Carlos). */
-/*
              RUN efetua_batimento_ged_termos(INPUT crapcop.cdcooper,
                                              INPUT aux_dtterini,
                                              INPUT aux_dtterfim,
@@ -724,8 +724,8 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
-*/
-        END.    
+
+        END. /* Batimento par_tipopcao = 0 (TODOS) */
     ELSE IF  par_tipopcao = 1 THEN /* CADASTRO */
         DO:
             
@@ -3136,9 +3136,19 @@ PROCEDURE efetua_batimento_ged_termos:
 
     END.
 
-    /* Adicionar intervalo de data, 3 em 3 meses */
+
+    /* Chamado pelo CRPS, pegar docs digitalizados apenas do dia */
+    IF par_inchamad = 0 THEN
+    DO:
+      ASSIGN aux_dtinidoc = TODAY
+             aux_dtfimdoc = TODAY.
+    END.
+    ELSE
+    DO:
+      /* Adicionar intervalo de data, 2 em 2 meses */
     ASSIGN aux_dtinidoc = par_datainic
            aux_dtfimdoc = ADD-INTERVAL(aux_dtinidoc,02,'months').
+    END.
         
     periodo:
     DO  WHILE TRUE:
