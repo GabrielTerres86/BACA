@@ -249,7 +249,6 @@
   $('#frmBens').css('display', 'block');
 
   formataFormularioBens();
-  formataTabelaBens();
 
 
 </script>
