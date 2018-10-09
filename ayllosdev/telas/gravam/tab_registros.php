@@ -190,7 +190,7 @@
 	<a href="#" class="botao" id="btIncluir" style="display:none;"  onclick="validPermiss('M'); return false;">Incluir</a>
 	<a href="#" class="botao" id="btAlterar" style="display:none;" onclick="validPermiss('A'); return false;">Alterar</a>	
 	<a href="#" class="botao" id="btCancelar" style="display:none;" onclick="validPermiss('X'); return false;">Cancelamento</a>
-	<a href="#" class="botao" id="btBaixar"  style="display:none;" onclick="validPermiss('B'); return false;">Informar Baixa</a>
+	<a href="#" class="botao" id="btBaixar"  style="display:none;" onclick="validPermiss('B'); return false;">Baixar</a>
 	
 	<a href="#" class="botao" id="btLibJudicial" style="display:none;" onclick="validPermiss('L'); 	return false;">Libera&ccedil;&atilde;o Judicial</a>																																			
 	<a href="#" class="botao" id="btBlocJudicial" style="display:none;" onclick="validPermiss('J'); 	return false;">Bloqueio Judicial</a>
