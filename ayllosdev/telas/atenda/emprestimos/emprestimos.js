@@ -3379,6 +3379,10 @@ function controlaLayout(operacao) {
 				cChassi.val(cChassi.val().replace(/ /g,''));			
 			});
 
+			if ($("#"+idElementMarca+"C").val()==""){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
+			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
+			if ($("#"+idElementAno+"C").val()==""){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
+
 		}
 
         if (operacao == 'C_ALIENACAO') {
@@ -10553,4 +10557,3 @@ function mostraAplicacao(tpaplica) {
     
 	return false;
 }
-
