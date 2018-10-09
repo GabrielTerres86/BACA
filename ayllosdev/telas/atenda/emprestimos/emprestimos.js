@@ -347,6 +347,7 @@ var inobriga = '';
 
 //emprestimo
 var booPrimeiroBen = false; //809763
+var booBoxMarcas = false;
 
 // PRJ366
 var vlemprst_antigo = 0;
@@ -3378,10 +3379,6 @@ function controlaLayout(operacao) {
 
 				cChassi.val(cChassi.val().replace(/ /g,''));			
 			});
-
-			if ($("#"+idElementMarca+"C").val()==""){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
-			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
-			if ($("#"+idElementAno+"C").val()==""){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
 
 		}
 
@@ -10557,3 +10554,4 @@ function mostraAplicacao(tpaplica) {
     
 	return false;
 }
+
