@@ -310,7 +310,7 @@ function formataFiltro() {
     //Define ação para CLICK no botão de Voltar
     $("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
 
-        controlaVoltar('1');
+        controlaVoltar('2');
 
         return false;
 
@@ -669,31 +669,31 @@ function formataFormularioBens() {
     highlightObjFocus($('#frmBens'));  
 
     //rotulo
-	$('label[for="ddl_descrbem"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-    $('label[for="dtmvttel"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-	$('label[for="dssitgrv"]', "#frmBens").addClass("rotulo-linha").css({ "width": "140px" });
+	$('label[for="ddl_descrbem"]', "#frmBens").addClass("rotulo");
+    $('label[for="dtmvttel"]', "#frmBens").addClass("rotulo").css({ "margin-right": "20px" });
+	$('label[for="dssitgrv"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "54px", "margin-right": "52px" });
     $('label[for="dsseqbem"]', "#frmBens").addClass("rotulo-linha").css({ "width": "10px" });
-    $('label[for="nrgravam"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-	$('label[for="dsblqjud"]', "#frmBens").addClass("rotulo-linha").css({ "width": "140px" });
-    $('label[for="dscatbem"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-	$('label[for="vlmerbem"]', "#frmBens").addClass("rotulo-linha").css({ "width": "140px" });
+    $('label[for="nrgravam"]', "#frmBens").addClass("rotulo").css({ "margin-right": "2px" });
+	$('label[for="dsblqjud"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "54px", "margin-right": "39px" });
+    $('label[for="dscatbem"]', "#frmBens").addClass("rotulo").css({ "margin-right": "57px" });
+	$('label[for="vlmerbem"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "54px", "margin-right": "2px" });
     $('label[for="dsbemfin"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-    $('label[for="dscorbem"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-	$('label[for="tpchassi"]', "#frmBens").addClass("rotulo-linha").css({ "width": "140px" });
-    $('label[for="dschassi"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-	$('label[for="nrrenava"]', "#frmBens").addClass("rotulo-linha").css({ "width": "140px" });
-    $('label[for="ufdplaca"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
+    $('label[for="dscorbem"]', "#frmBens").addClass("rotulo").css({ "margin-right": "50px" });
+	$('label[for="tpchassi"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "54px", "margin-right": "35px" });
+    $('label[for="dschassi"]', "#frmBens").addClass("rotulo").css({ "margin-right": "22px" });
+	$('label[for="nrrenava"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "54px", "margin-right": "40px" });
+    $('label[for="ufdplaca"]', "#frmBens").addClass("rotulo").css({ "margin-right": "63px" });
     $('label[for="nrdplaca"]', "#frmBens").addClass("rotulo-linha").css({ "width": "15px" });
-	$('label[for="nrmodbem"]', "#frmBens").addClass("rotulo-linha").css({ "width": "140px" });
-	$('label[for="nranobem"]', "#frmBens").addClass("rotulo-linha").css({ "width": "130px" });
-	$('label[for="uflicenc"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-    $('label[for="dscpfbem"]', "#frmBens").addClass("rotulo-linha").css({ "width": "280px" });
-    $('label[for="vlctrgrv"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
-    $('label[for="dtoperac"]', "#frmBens").addClass("rotulo-linha").css({ "width": "140px" });
-    $('label[for="dsjustif"]', "#frmBens").addClass("rotulo").css({ "width": "150px" });
+	$('label[for="nrmodbem"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "54px", "margin-right": "31px" });
+	$('label[for="nranobem"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "22px" });
+	$('label[for="uflicenc"]', "#frmBens").addClass("rotulo").css({ "margin-right": "11px" });
+    $('label[for="dscpfbem"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "191px", "margin-right": "5px" });
+    $('label[for="vlctrgrv"]', "#frmBens").addClass("rotulo").css({ "margin-right": "62px" });
+    $('label[for="dtoperac"]', "#frmBens").addClass("rotulo-linha").css({ "padding-left": "51px" });
+    $('label[for="dsjustif"]', "#frmBens").addClass("rotulo").css({ "margin-right": "45px" });
     
     // campo
-	$('#ddl_descrbem', '#frmBens').css({ 'width': '570px', 'text-align': 'left' });
+	$('#ddl_descrbem', '#frmBens').css({ 'width': '588px', 'text-align': 'left' });
     $('#dtmvttel', '#frmBens').css({ 'width': '190px', 'text-align': 'right' }).desabilitaCampo(); //.addClass('data');
 	$("#dssitgrv", "#frmBens").css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
     $("#dsseqbem", "#frmBens").css({ 'width': '410px', 'text-align': 'left' }).desabilitaCampo();
@@ -705,7 +705,7 @@ function formataFormularioBens() {
     $('#dscorbem', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo();
 	$('#tpchassi', '#frmBens').css({ 'width': '50px', 'text-align': 'right' }).desabilitaCampo();
     $('#dschassi', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '20').addClass('alphanum');
-	$('#nrrenava', '#frmBens').css({ 'width': '235px', 'text-align': 'right' }).desabilitaCampo().attr('maxlength', '25').addClass('renavan');
+	$('#nrrenava', '#frmBens').css({ 'width': '234px', 'text-align': 'right' }).desabilitaCampo().attr('maxlength', '25').addClass('renavan');
     $('#ufdplaca', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '2').addClass('alphanum');
     $('#nrdplaca', '#frmBens').css({ 'width': '118px' }).desabilitaCampo().attr('maxlength', '7').addClass('alphanum');;
 	$('#nrmodbem', '#frmBens').css({ 'width': '50px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
@@ -714,8 +714,8 @@ function formataFormularioBens() {
     $('#dscpfbem', '#frmBens').css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
     $('#vlctrgrv', '#frmBens').css({ 'width': '190px', 'text-align': 'right' }).desabilitaCampo();
     $('#dtoperac', '#frmBens').css({ 'width': '235px', 'text-align': 'right' }).desabilitaCampo();
-    $('#dsjustif', '#divJustificativa').addClass('alphanum').css('width', '570px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '70').css('margin-left', '3').setMask("STRING", "129", charPermitido(), "");
-    $('#dsjustif', '#divJustificativa').desabilitaCampo();
+    $('#dsjustif', '#divJustificativa').addClass('alphanum').css('width', '584px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '70').css('margin-left', '3').setMask("STRING", "129", charPermitido(), "");
+    $('#dsjustif', '#divJustificativa').desabilitaCampo().prop('disabled',true);
 
     $('#frmBens').css({ 'display': 'block' });    
 	
@@ -948,7 +948,7 @@ function carregarBotoesIniciais(possuictr, cdsitgrv, idseqbem, tpctrpro, tpjusti
                3 - Proc. com critica */
         if ((possuictr == "0" && cdsitgrv != '3') || (cdsitgrv != 0 && cdsitgrv != 3)) {
 
-            $('input,select', '#frmBens').desabilitaCampo();
+            $('input,select,textarea', '#frmBens').desabilitaCampo();
 			$('#ddl_descrbem', '#frmBens').habilitaCampo();
 
         } else {
@@ -1000,7 +1000,7 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, idseqbem, tpct
            For contrato efetivado ou
            3 - Proc. com critica */
         if((possuictr == "0" && cdsitgrv != '3')) {
-            $('input,select','#frmBens').desabilitaCampo();
+            $('input,select,textarea','#frmBens').desabilitaCampo();
 			$('#ddl_descrbem', '#frmBens').habilitaCampo();
             
         }else{
@@ -1348,7 +1348,7 @@ function controlaVoltar(ope,tpconsul) {
 				$('#nrgravam', '#frmBens').desabilitaCampo();
 				
 				var tr = $('table').find('tr#'+ $('#ddl_descrbem').val());
-				$('#dsjustif', '#divJustificativa').val($('#hddsjustif', tr)).desabilitaCampo();
+				$('#dsjustif', '#divJustificativa').val($('#hddsjustif', tr)).desabilitaCampo().prop('disabled',true);
 				selecionaBens(tr);
 			}else{
 				$('input[type="text"]', '#frmFiltro').limpaFormulario();
@@ -1594,7 +1594,7 @@ function buscaGravames(nriniseq, nrregist) {
 function geraArquivo() {
 
     //Desabilita todos os campos do form
-    $('input,select', '#frmFiltro').desabilitaCampo();
+    $('input,select,textarea', '#frmFiltro').desabilitaCampo();
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
     var cdcooper = $("#cdcooper", "#frmFiltro").val();
@@ -1727,7 +1727,8 @@ function buscaPaAssociado() {
 function alterarBensSubAditivo(idseqbem,tpctrpro) {
 
     //Desabilita todos os campos do form
-    $('input,select', '#frmBens').desabilitaCampo();
+    $('input,select,textarea', '#frmBens').desabilitaCampo();
+	$('#ddl_descrbem', '#frmBens').habilitaCampo();
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
     var nrdconta = $("#nrdconta", "#frmFiltro").val();    
@@ -1789,7 +1790,8 @@ function alterarBensSubAditivo(idseqbem,tpctrpro) {
 function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
 	
     //Desabilita todos os campos do form
-    //$('input,select', '#frmBens').desabilitaCampo();
+    $('input,select', '#frmBens').desabilitaCampo();
+	$('#ddl_descrbem', '#frmBens').habilitaCampo();
 
     var cddopcao = $("#cddopcao","#frmCab").val();
     var nrdconta = $("#nrdconta","#frmFiltro").val();    
@@ -1853,6 +1855,7 @@ function inclusaoManual(idseqbem, tpctrpro) {
 
     //Desabilita todos os campos do form
     $('input,select,textarea', '#frmBens').desabilitaCampo();
+	$('#ddl_descrbem', '#frmBens').habilitaCampo();
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
@@ -1907,6 +1910,7 @@ function cancelarGravame(idseqbem, tpctrpro) {
 
     //Desabilita todos os campos do form
     $('input,select', '#frmBens').desabilitaCampo();
+	$('#ddl_descrbem', '#frmBens').habilitaCampo();	
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
@@ -1960,6 +1964,8 @@ function blqLibJudicial(idseqbem, tpctrpro) {
 
     //Desabilita todos os campos do form
     $('input,select', '#frmBens').desabilitaCampo();
+	$('#ddl_descrbem', '#frmBens').habilitaCampo();
+	
     var cddopcao = opcaoButton;
     var nrdconta = $("#nrdconta", "#frmFiltro").val();
     var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
@@ -2017,6 +2023,7 @@ function baixaManual(idseqbem,tpctrpro) {
 
     //Desabilita todos os campos do form
     $('input,select,textarea', '#frmBens').desabilitaCampo();
+	$('#ddl_descrbem', '#frmBens').habilitaCampo();
 
     var cddopcao = $("#cddopcao", "#frmCab").val();
     var nrdconta = $("#nrdconta", "#frmFiltro").val();

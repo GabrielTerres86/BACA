@@ -23,7 +23,7 @@
 
 <form id="frmBens" name="frmBens" class="formulario" style="display:none;">
 
-  <fieldset id="fsetBens" name="fsetBens" style="padding:0px; margin:0px; padding-bottom:10px;">
+  <fieldset id="fsetBens" name="fsetBens" style="margin:0px; padding:10 30 10 30;">
 
     <legend>Bens</legend>
 
@@ -32,6 +32,7 @@
 	  <input type="hidden" id="permisit" name="permisit" value="<? echo $permissao_situacao; ?>" />
       <input type="hidden" id="situacao_anterior" name="situacao_anterior" />
       <input type="hidden" id="chassi_anterior" name="chassi_anterior" />
+	  <input id="dsseqbem" name="dsseqbem" type="hidden" ></input>	  
 	  
 	  <label for="ddl_descrbem"><? echo utf8ToHtml('Selecione o Veículo:') ?></label>
       <select id="ddl_descrbem" name="ddl_descrbem" >
@@ -56,9 +57,6 @@
 		<option value="4">Baixado</option>
 		<option value="5">Cancelado</option>
 	  </select>
-
-      <label for="dsseqbem"></label>
-      <input id="dsseqbem" name="dsseqbem" type="hidden" ></input>	  
 
       <label for="nrgravam"><? echo utf8ToHtml('N&uacute;mero de registro:') ?></label>
       <input id="nrgravam" name="nrgravam" type="text" ></input>
@@ -127,7 +125,7 @@
   </fieldset>
 
  
-  <fieldset id="fsetBens" name="fsetBens" style="padding:0px; margin:0px; padding-bottom:10px; display: none">
+  <fieldset id="fsetBens" name="fsetBens" style="margin:0px; padding:10 30 10 30; display: none">
 
     <legend>Bens</legend>
 
