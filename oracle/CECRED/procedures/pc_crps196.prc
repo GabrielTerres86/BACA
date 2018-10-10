@@ -523,8 +523,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
       ELSIF rw_crapepc.incvcta1 = 2  AND  rw_crapepc.incvcta2 = 1  AND
            rw_crapepc.dtcvcta2 = rw_crapdat.dtmvtolt THEN
         vr_intipdeb := 2; -- segundo debito referente conta
-      ELSE
-        continue;
+              
+ --     ELSE
+--        continue;
       END IF;     
       
       -- Inciar variaveis de controle
@@ -759,7 +760,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
                 -- Neste caso se trata de uma crítica de Negócio e o lançamento não pode ser efetuado
                 -- Para CREDITO: Utilizar o CONTINUE ou gerar uma mensagem de retorno(se for chamado por uma tela); 
                 -- Para DEBITO: Será necessário identificar se a rotina ignora esta inconsistência(CONTINUE) ou se devemos tomar alguma ação(efetuar algum cancelamento por exemplo, gerar mensagem de retorno ou abortar o programa)
-                CONTINUE;  
+                --CONTINUE;  
+                
+                tela_lautom.pc_cria_lanc_futuro(pr_cdcooper => pr_cdcooper, 
+                                                pr_nrdconta => rw_crapavs.nrdconta,
+                                                pr_nrdctitg => gene0002.fn_mask(rw_crapavs.nrdconta,'99999999'), 
+                                                pr_cdagenci => rw_craplot.cdagenci, 
+                                                pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                                pr_cdhistor => rw_crapavs.cdhistor,  
+                                                pr_vllanaut => vr_vldescto,  
+                                                pr_nrctremp => 0, 
+                                                pr_dsorigem => 'BLQPREJU', 
+                                                pr_dscritic => vr_dscritic);
+                IF vr_dscritic IS NOT NULL THEN
+                   RAISE vr_exc_saida;
+                end if;
+                
              END IF;  
           END IF;		  
 		  
@@ -845,11 +861,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
       -- se nao localizou
       IF cr_crapctc%NOTFOUND THEN
         CLOSE cr_crapctc;
-        vr_cdcritic := 563;
+  /*      vr_cdcritic := 563;
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) ||
                        ' Convenio '||to_char(rw_crapcnv.nrconven,'000');
         RAISE vr_exc_saida;
-      ELSE
+    */  ELSE
         CLOSE cr_crapctc;
       END IF;
       
@@ -930,4 +946,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps196;
 /
-
