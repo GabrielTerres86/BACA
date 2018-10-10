@@ -21,7 +21,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
    Frequencia: Diario (Batch).
    Objetivo: 
      Foi retirada essas rotinas do programa cprs538 
-     para priorizar as libera√ß√µes do sistema para os clientes.
+     para priorizar as liberaÁıes do sistema para os clientes.
      - atualiza protesto 
      - atualiza baixa decurso prazo
      - relatorio 686 - "MOVIMENTO FLOAT - 085"
@@ -31,16 +31,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
    - Incluido controle de inicio e fim de programa - 
      ( Belli - Chamado 801477 - 24/11/2017 )
                     
-   15/03/2018 - Ajustar os padr√µes:
+   15/03/2018 - Ajustar os padrıes:
               - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-              - Eliminando mensagens de erro e informa√ß√£o gravadas fixas
+              - Eliminando mensagens de erro e informaÁ„o gravadas fixas
               (Belli - Envolti - Chamado 801483)  
 
-   - Ajuste na cria√ß√£o de cr√≠ticas, l√≥gica do programa invertida.
+   - Ajuste na criaÁ„o de crÌticas, lÛgica do programa invertida.
      ( Andrey Formigari - Mouts #856928  - 04/04/2018 )
               
-   - Inclu√≠do tratativa para efetiva√ß√£o de pagamento por recurso de prazo para boletos da COBTIT
+   - IncluÌdo tratativa para efetivaÁ„o de pagamento por recurso de prazo para boletos da COBTIT
      ( Paulo Penteado GFT - 03/08/2018)
+                    
+   08/10/2018 - Retorno de vers„o por sikmples suspeita de problema
+              (Belli - Envolti - Chamado REQ0029352)  
               
    .............................................................................*/
 
@@ -97,7 +100,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
        vr_dtmvtaux        DATE;
        vr_nmarqimp        VARCHAR2(100);
        vr_caminho_rl      VARCHAR2(1000);
-       -- Excluida vr_caminho_salvar pois n√£o utilizada - 15/03/2018 - Chamado 801483 
+       -- Excluida vr_caminho_salvar pois n„o utilizada - 15/03/2018 - Chamado 801483 
        vr_nmarquiv        VARCHAR2(100);
        vr_dtmvtpro        DATE;
        vr_contador        INTEGER;
@@ -136,7 +139,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
        vr_vlregisd     NUMBER:= 0;
        vr_vlregrej     NUMBER:= 0;
        
-       -- Excluida vr_tab_nmarqtel pois n√£o utilizada - 15/03/2018 - Chamado 801483 
+       -- Excluida vr_tab_nmarqtel pois n„o utilizada - 15/03/2018 - Chamado 801483 
        
        -- Variavel para armazenar as informacoes em XML
        vr_clobcri             CLOB;
@@ -179,16 +182,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
 
     -- Ajuste log - 15/03/2018 - Chamado 801483 
     -- Controla Controla log em banco de dados
-    PROCEDURE pc_controla_log_programa( pr_dstiplog IN VARCHAR2            -- I-in√≠cio/ F-fim/ O-ocorr√™ncia/ E- rro
+    PROCEDURE pc_controla_log_programa( pr_dstiplog IN VARCHAR2            -- I-inÌcio/ F-fim/ O-ocorrÍncia/ E- rro
                                        ,pr_tpocorre IN NUMBER DEFAULT NULL -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensage
-                                       ,pr_dscritic IN VARCHAR2            -- Descri√ß√£o do Log
-                                       ,pr_cdcritic IN tbgen_prglog_ocorrencia.cdmensagem%type    DEFAULT 0   -- Codigo da descri√ß√£o do Log
+                                       ,pr_dscritic IN VARCHAR2            -- DescriÁ„o do Log
+                                       ,pr_cdcritic IN tbgen_prglog_ocorrencia.cdmensagem%type    DEFAULT 0   -- Codigo da descriÁ„o do Log
                                        ,pr_cdcricid IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 2 -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
                                       )
     IS
       vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
     BEGIN         
-      --> Controlar gera√ß√£o de log de execu√ß√£o dos jobs                                
+      --> Controlar geraÁ„o de log de execuÁ„o dos jobs                                
       CECRED.pc_log_programa( pr_dstiplog      => pr_dstiplog 
                              ,pr_tpocorrencia  => pr_tpocorre
                              ,pr_cdcriticidade => pr_cdcricid
@@ -476,7 +479,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
            vr_vlregicd:= 0;
            
            -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
-           -- para evitar sobrepor arquivos de outras execu√ß√µes
+           -- para evitar sobrepor arquivos de outras execuÁıes
            IF vr_inreproc THEN
              -- Nome arquivo impressao
              vr_nmarqimp:= 'crrl605_'|| gene0002.fn_mask(rw_crapcco.nrconven,'9999999') ||
@@ -524,7 +527,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                --Se possui erro
                IF vr_cdcritic = 0 THEN
                  --Descricao Critica
-                 -- Variavel n√£o careega ent√£o n√£o criada e n√£o utilizada - Chamado 714566 - 11/08/2017
+                 -- Variavel n„o careega ent„o n„o criada e n„o utilizada - Chamado 714566 - 11/08/2017
                  --vr_dscritic:= vr_typ_craprej_array(vr_index_cratrej).dshistor;
                  vr_dscritic := NULL;
                ELSE
@@ -544,8 +547,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                  dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
                END IF;
                               
-               -- Variavel n√£o careega ent√£o n√£o criada e n√£o utilizada - Chamado 714566 - 11/08/2017
-               --Determinar se o historico ser√° ou nao mostrado
+               -- Variavel n„o careega ent„o n„o criada e n„o utilizada - Chamado 714566 - 11/08/2017
+               --Determinar se o historico ser· ou nao mostrado
                --IF vr_typ_craprej_array(vr_index_cratrej).cdcritic = 922  AND --Boleto pago com cheque 
                --   trim(vr_typ_craprej_array(vr_index_cratrej).dshistor) IS NOT NULL THEN
                --  NULL;
@@ -568,8 +571,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                   <dscritic>'||substr(vr_dscritic,1,54)||'</dscritic>
                   <dshistor>'||vr_dshistor||'</dshistor>
                 </lancto>');               
-               -- Variavel n√£o careega ent√£o n√£o criada e n√£o utilizada - Chamado 714566 - 11/08/2017
-               -- Subistituida por uma variavel nula ( Motivo IREPORT gerador de relat√≥rio )
+               -- Variavel n„o careega ent„o n„o criada e n„o utilizada - Chamado 714566 - 11/08/2017
+               -- Subistituida por uma variavel nula ( Motivo IREPORT gerador de relatÛrio )
                --<dshistor>'||vr_typ_craprej_array(vr_index_cratrej).dshistor||'</dshistor>
                -- Retorna nome do modulo logado
                GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
@@ -951,7 +954,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
 
 		     -- Se possuir conteudo de critica no CLOB
          IF LENGTH(vr_clobcri) > 0 THEN
-            -- Busca o diret√≥rio para contabilidade
+            -- Busca o diretÛrio para contabilidade
             vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
             vr_dircon := vr_dircon || vc_dircon;
             vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_605.txt';
@@ -962,12 +965,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                                             ,pr_dtmvtolt  => rw_crapdat.dtmvtolt      --> Data do movimento atual
                                             ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
                                             ,pr_dsarqsaid => vr_caminho_puro || '/contab/' || vr_arqcon    --> Arquivo final com o path
-                                            ,pr_cdrelato  => NULL                     --> C√≥digo fixo para o relat√≥rio
+                                            ,pr_cdrelato  => NULL                     --> CÛdigo fixo para o relatÛrio
                                             ,pr_flg_gerar => 'N'                      --> Apenas submeter
                                             ,pr_dspathcop => vr_dircon
                                             ,pr_fldoscop  => 'S'
-                                            ,pr_des_erro  => vr_des_erro2);            --> Sa√≠da com erro
-		       -- Liberando a mem√≥ria alocada pro CLOB
+                                            ,pr_des_erro  => vr_des_erro2);            --> SaÌda com erro
+		       -- Liberando a memÛria alocada pro CLOB
            dbms_lob.close(vr_clobcri);
            dbms_lob.freetemporary(vr_clobcri);
 
@@ -1005,7 +1008,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-        -- Efetuar retorno do erro n√£o tratado
+        -- Efetuar retorno do erro n„o tratado
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                        ' pc_gera_relatorio_605 - ' || SQLERRM; 
@@ -1224,7 +1227,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
               
       -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
-      -- para evitar sobrepor arquivos de outras execu√ß√µes
+      -- para evitar sobrepor arquivos de outras execuÁıes
       IF vr_inreproc THEN
         vr_nmarqimp:= 'crrl686_REP_'||GENE0002.fn_busca_time()||'.lst';
       ELSE   
@@ -1245,7 +1248,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                                  ,pr_sqcabrel  => 1                            --> Sequencia do Relatorio {includes/cabrel132_2.i}
                                  ,pr_flg_impri => 'S'                          --> Chamar a impressao (Imprim.p)
                                  ,pr_nmformul  => '234dh'                      --> Nome do formulario para impress?o
-                                 ,pr_nrcopias  => 1                            --> N√∫mero de c√≥pias
+                                 ,pr_nrcopias  => 1                            --> N˙mero de cÛpias
                                  ,pr_flg_gerar => 'S'                          --> gerar PDF
                                  ,pr_des_erro  => vr_dscritic);                --> Sa?da com erro
               
@@ -1276,14 +1279,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
      WHEN OTHERS THEN
        -- No caso de erro de programa gravar tabela especifica de log
        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-       -- Efetuar retorno do erro n√£o tratado
+       -- Efetuar retorno do erro n„o tratado
        pr_cdcritic := 9999;
        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                       ' pr_nmtelant:' || pr_nmtelant ||
                       ', pc_gera_relatorio_686 - ' || SQLERRM; 
     END pc_gera_relatorio_686;
 
-    -- Excluida pr_dtmvtolt pois n√£o necessaria - 15/03/2018 - Chamado 801483                                             
+    -- Excluida pr_dtmvtolt pois n„o necessaria - 15/03/2018 - Chamado 801483                                             
     --atualiza protesto baixa 
     PROCEDURE pc_atualiza_protesto_baixa(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                         ,pr_cdcritic OUT INTEGER
@@ -1370,7 +1373,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       
       vr_cdoperad:= '1';
       
-      -- N√£o deve executar o 2o processamento quando for execu√ß√£o de arquivo REPROC (Renato Darosci - 11/10/2016)
+      -- N„o deve executar o 2o processamento quando for execuÁ„o de arquivo REPROC (Renato Darosci - 11/10/2016)
          
       IF NOT vr_inreproc THEN
          
@@ -1433,7 +1436,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
                     --Se ocorreu erro
                     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      /* Alterado para n√£o apresentar a critica no log, e sim salvar no log de cobran√ßa */
+                      /* Alterado para n„o apresentar a critica no log, e sim salvar no log de cobranÁa */
                       PAGA0001.pc_cria_log_cobranca (pr_idtabcob => rw_crapcob.rowid            --ROWID da Cobranca
                                                     ,pr_cdoperad => vr_cdoperad               --Operador
                                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --Data movimento
@@ -1475,13 +1478,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                 -- se o boleto eh de emprestimo, venceu no dia e nao foi pago, baixar por decurso de prazo
                 (rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') AND rw_crapcob.dtvencto <= rw_crapdat.dtmvtolt) ) AND
                            
-                -- Se o boleto √© de acordo, n√£o ser√° baixado por decurso de prazo, pois a baixa 
+                -- Se o boleto È de acordo, n„o ser· baixado por decurso de prazo, pois a baixa 
                 -- acontece apenas no momento de quebra do acordo
                 (rw_crapcco.dsorgarq <> 'ACORDO' ) AND
                            
-                -- n√£o pode-se baixar caso o crapcob.inserasa for 1 (Pendente autom√°tica) ou 
-                -- 2 (Pendente manual) ou 3 (Solicita√ß√£o enviada) ou 4 (Sol. Cancel. Enviadas)
-                -- 5 (Negativada) ou 7 (A√ß√£o Judicial)
+                -- n„o pode-se baixar caso o crapcob.inserasa for 1 (Pendente autom·tica) ou 
+                -- 2 (Pendente manual) ou 3 (SolicitaÁ„o enviada) ou 4 (Sol. Cancel. Enviadas)
+                -- 5 (Negativada) ou 7 (AÁ„o Judicial)
                 rw_crapcob.inserasa NOT IN (1,2,3,4,5,7) THEN                           
 
                 IF rw_crapcco.dsorgarq IN ('EMPRESTIMO','DESCONTO DE TITULO') THEN
@@ -1516,7 +1519,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
 
                 --Se ocorreu erro
                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                  /* Alterado para n√£o apresentar a critica no log, e sim salvar no log de cobran√ßa */
+                  /* Alterado para n„o apresentar a critica no log, e sim salvar no log de cobranÁa */
                   PAGA0001.pc_cria_log_cobranca (pr_idtabcob => rw_crapcob.rowid            --ROWID da Cobranca
                                                 ,pr_cdoperad => vr_cdoperad               --Operador
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt       --Data movimento
@@ -1591,7 +1594,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-        -- Efetuar retorno do erro n√£o tratado
+        -- Efetuar retorno do erro n„o tratado
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                        ' pr_cdcooper:' || pr_cdcooper ||
@@ -1612,15 +1615,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       vr_cdcritic    PLS_INTEGER      := NULL;
       vr_dscritic    VARCHAR2(4000)   := NULL;
     BEGIN 
-      --> Verificar a execu√ß√£o
-      CECRED.gene0001.pc_controle_exec(pr_cdcooper  => pr_cdcooper       --> C√≥digo da coopertiva
+      --> Verificar a execuÁ„o
+      CECRED.gene0001.pc_controle_exec(pr_cdcooper  => pr_cdcooper       --> CÛdigo da coopertiva
                                       ,pr_cdtipope  => pr_cdtipope       --> Tipo de operacao I-incrementar e C-Consultar
                                       ,pr_dtmvtolt  => pr_dtproces       --> Data do movimento
                                       ,pr_cdprogra  => pr_cdprogra       --> Codigo do programa
-                                      ,pr_flultexe  => vr_flultexe       --> Retorna se √© a ultima execu√ß√£o do procedimento
+                                      ,pr_flultexe  => vr_flultexe       --> Retorna se È a ultima execuÁ„o do procedimento
                                       ,pr_qtdexec   => vr_qtdexec        --> Retorna a quantidade
                                       ,pr_cdcritic  => vr_cdcritic       --> Codigo da critica de erro
-                                      ,pr_dscritic  => vr_dscritic);     --> descri√ß√£o do erro se ocorrer
+                                      ,pr_dscritic  => vr_dscritic);     --> descriÁ„o do erro se ocorrer
       pr_qtdexec := vr_qtdexec;                                  
       --Trata retorno
       IF nvl(vr_cdcritic,0) > 0         OR
@@ -1642,7 +1645,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
-        -- Efetuar retorno do erro n√£o tratado
+        -- Efetuar retorno do erro n„o tratado
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                        ' pr_dtproces:'  || pr_dtproces ||
@@ -1679,7 +1682,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                                ,pr_cdcricid => 2
                                );  
       
-      --Se der um erro no CRPS538_1 Ficara registrado no Log com erro e vai abrir chamado N√£o vai parar a cadeia     
+      --Se der um erro no CRPS538_1 Ficara registrado no Log com erro e vai abrir chamado N„o vai parar a cadeia     
 
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -1722,7 +1725,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
         vr_dtmvtaux:= rw_crapdat.dtmvtolt;
       END IF;
       
-      -- Verifica se programa anterior j√° executou
+      -- Verifica se programa anterior j· executou
       pc_verifica_ja_executou( pr_dtproces  => vr_dtmvtaux
                               ,pr_cdtipope  => 'C'
                               ,pr_cdprogra  => 'CRPS538'
@@ -1744,7 +1747,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
         RAISE vr_exc_saida;
       END IF;
       
-      -- Verifica se programa j√° executou
+      -- Verifica se programa j· executou
       pc_verifica_ja_executou( pr_dtproces  => vr_dtmvtaux
                               ,pr_cdtipope  => 'I'
                               ,pr_cdprogra  => vr_cdprogra
@@ -1780,7 +1783,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       vr_caminho_rl  := vr_caminho_rl||'/rl';			
             
       --                 
-      -- Excluida pr_dtmvtolt pois n√£o necessaria - 15/03/2018 - Chamado 801483 
+      -- Excluida pr_dtmvtolt pois n„o necessaria - 15/03/2018 - Chamado 801483 
       -- Gera arq cooperado    
       pc_atualiza_protesto_baixa (pr_cdcooper => pr_cdcooper
                                  ,pr_cdcritic => vr_cdcritic
@@ -1846,7 +1849,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
-        -- Efetuar retorno do erro n√£o tratado
+        -- Efetuar retorno do erro n„o tratado
         pr_cdcritic := 9999;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
                        ' pr_cdcooper:'  || pr_cdcooper ||
