@@ -15,6 +15,10 @@
  *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * 
  *			  	  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
+ *
+ *                03/10/2018 - Scripts para tratamento de opcao de excluir.
+ *                             Bruno Luiz K. - Chamado SCTASK0029653 (Mouts).
+ * 
  */
 
 // Definição de algumas variáveis globais
@@ -28,6 +32,7 @@ var cdcooper;
 var nrcheque;
 var alinea;
 var nrdctitg;
+var cdbccxlt;
 var cdbanchq;
 var cdagechq;
 var cddsitua;
@@ -311,9 +316,11 @@ function trocaBotao( botao , funcao ) {
 	}else {
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btSalvar" onclick=' + funcao + ' return false;" >' + botao + '</a>');
 	}
+    $('#divBotoes','#divTela').append('<a href="#" class="botao" id="btExcluir" onClick="btExcluir(); return false;" >Excluir</a>');
 	$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btFechaImagem" onClick="btFechaImagem(); return false;" >Fechar Imagem</a>');
 	
 	$('#btFechaImagem','#divBotoes').hide(); 
+    $('#btExcluir','#divBotoes').hide();
 	$('#btDesmarcar').trocaClass('botao', 'botaoDesativado');
 	return false;
 }
@@ -482,6 +489,7 @@ function formataTabelaDevolu() {
     	
     $('#btSalvar','#divBotoes').hide();
     $('#btVoltar','#divBotoes').show();
+    $('#btExcluir','#divBotoes').show();
 	$('#btVoltar','#divBotoes').focus();
 	
 	/********************
@@ -499,7 +507,59 @@ function formataTabelaDevolu() {
 	});
 	
 	$('table > tbody > tr:eq(0)', divRegistro).click();
+
+    var tables = $('.tituloRegistros');
+    $(tables[0]).find('tr').each(function(){
+        $(this).unbind('click').bind('click',function(){
+            $(tables[1]).find('tr').each(function(){
+                $(this).removeClass('corSelecao');
+                $(this).unbind('click').bind('click',function(){
+                    $('.corSelecao',tables[1]).each(function(){$(this).removeClass('corSelecao')});
+                    $(this).toggleClass('corSelecao');
+                    selecionaTabela($(this));
+                });
+            });
+        });
+    });
+
 	return false;
+}
+
+function btExcluir(){
+    showConfirmacao("Deseja realmente excluir a devolu&ccedil&atilde;o do cheque "+nrcheque+" no valor de "+formataMoeda(parseFloat(vllanmto))+"?",
+                    'Confirma&ccedil;&atilde;o - Ayllos',
+                    'excluir_cheque_devolu()',
+                    'console.log("nao")',
+                    'sim.gif',
+                    'nao.gif');
+}
+
+function excluir_cheque_devolu(){
+
+    $.ajax({
+        type    :    'POST',
+        url     :    UrlSite + 'telas/devolu/excluir_cheque_devolu.php',
+        dataType:    'html',
+        data    :
+                {
+                     cdbanchq : cdbccxlt,
+                     cdagechq : cdagechq,
+                     nrdconta : nrdconta_tab,
+                     nrctachq : nrctachq,
+                     nrdocmto : nrcheque,
+                     redirect: 'script_ajax'
+                }, 
+        error: function(objAjax,responseError,objExcept) {
+                     hideMsgAguardo();
+                     showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
+        },
+        success: function(response) {
+                     eval(response);
+        }
+    });
+
+return false; //return false to allow default event  tag <a>
+
 }
 
 function btFechaImagem(){
@@ -610,12 +670,13 @@ function formataTabelaLancto() {
 }
 
 function selecionaTabela(tr) {
-   
+
 	cdcooper = $('#cdcooper', tr).val();
     dsbccxlt = $('#dsbccxlt', tr).val();
     banco = $('#banco', tr).val();
     nrcheque = $('#nrcheque', tr).val();
     nrdctitg = $('#nrdctitg', tr).val();
+	cdbccxlt = $('#cdbccxlt', tr).val();
 	cdbanchq = $('#cdbanchq', tr).val();
     cdagechq = $('#cdagechq', tr).val();
 	cddsitua = $('#cddsitua', tr).val();
@@ -1807,4 +1868,10 @@ function validaSelecao(linhaSelec){
 
     return false;
 	
+}
+
+function formataMoeda(valor){
+    if(typeof valor !== "float")
+        valor = parseFloat(valor);
+    return (valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
