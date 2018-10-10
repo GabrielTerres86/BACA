@@ -2466,7 +2466,7 @@ function gerarHistoricoGravames(){
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1075px', 'left': '26em' });
+	$('#divUsoGenerico').css({ 'width': '1115px', 'left': '24.5em' });
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
@@ -2488,8 +2488,8 @@ function controlaLayoutHistoricoGravames() {
 	arrayLargura[5] = '65px';	//Contrato
 	arrayLargura[6] = '140px';	//Chassi
 	arrayLargura[7] = '190px';	//Bem
-	arrayLargura[8] = '91px';	//Data Envio
-	arrayLargura[9] = '91px';	//Data Ret
+	arrayLargura[8] = '98px';	//Data Envio
+	arrayLargura[9] = '98px';	//Data Ret
 	arrayLargura[10] = '';		//Situação
 	arrayLargura[11] = '14px'; // Fixo para definir o tamanho da coluna do campo da ordenação inicial que fica sobre a barra de rolagem
 

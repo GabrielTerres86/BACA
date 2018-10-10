@@ -197,7 +197,7 @@
 	
 	<a href="#" class="botao" style="display:none;" id="btConcluirAltera"><? echo utf8ToHtml('Concluir Alterações') ?></a>
 	
-	<a href="#" class="botao" id="btHistGravame" style="display:none;" ><? echo utf8ToHtml("Histórico Gravames") ?></a>	
+	<a href="#" class="botao" id="btHistGravame" style="display:none;" ><? echo utf8ToHtml("Histórico Gravame") ?></a>	
 												
 	<a href="#" class="botao" style="display:none;" id="btConcluir">Concluir</a>
 	<!--<a href="#" class="botao" id="btConcluir" onclick="controlaConcluir(); return false;">Concluir</a>
