@@ -2025,7 +2025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
              vr_flesprej := TRUE;
           END IF;
           
-          CLOSE cr_crapepr_preju;
+          CLOSE cr_prejuizo;
                 
       END LOOP;
       
@@ -2904,7 +2904,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_obj_generic2.put('opCred', vr_lst_generic3);
 
       -- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
-      vr_qtmesest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_ESTOUROS');
+      vr_qtmesest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_EST_CRD');
 
       -- Montar objeto para Estrutura Estouros
       vr_lst_generic3 := json_list();
@@ -2952,7 +2952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_lst_generic3 := json_list();
 
       -- Buscar parâmetro da quantidade de meses para busca dos Estouros/Adiantamentos
-      vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEV_CHEQUES');
+      vr_qtmeschq := gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_MES_HIST_DEVCHQ_CRD');
 
       -- Efetuar laço para trazer todos os registros
       FOR rw_negchq IN cr_crapneg_cheq(vr_qtmeschq) LOOP
@@ -3599,9 +3599,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     -- Enviaremos os dados básicos encontrados na tabela
     IF vr_inpessoa = 1 THEN
-      vr_obj_generico.put('documento'      ,gene0002.fn_mask(pr_rw_crapavt.nrcpfcgc,'99999999999'));
+      vr_obj_generico.put('documento'      ,gene0002.fn_mask(NVL(pr_rw_crapavt.nrcpfcgc,0),'99999999999'));
     ELSE
-      vr_obj_generico.put('documento'      ,gene0002.fn_mask(pr_rw_crapavt.nrcpfcgc,'99999999999999'));
+      vr_obj_generico.put('documento'      ,gene0002.fn_mask(NVL(pr_rw_crapavt.nrcpfcgc,0),'99999999999999'));
     END IF;
 
     -- Para Pessoas Fisicas
@@ -4371,7 +4371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de conjugue
-          vr_obj_conjuge.put('documento',gene0002.fn_mask(rw_crapcje.nrcpfcjg,'99999999999'));
+          vr_obj_conjuge.put('documento',gene0002.fn_mask(NVL(rw_crapcje.nrcpfcjg,0),'99999999999'));
           vr_obj_conjuge.put('tipoPessoa','FISICA');
           vr_obj_conjuge.put('nome',rw_crapcje.nmconjug);
           vr_obj_conjuge.put('dataNascimento',este0002.fn_Data_ibra_motor(rw_crapcje.dtnasccj));
@@ -4560,7 +4560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
          ELSE
            -- Enviaremos os dados básicos encontrados na tabela de responsável legal
-           vr_obj_responsav.put('documento'      ,gene0002.fn_mask(rw_crapcrl.nrcpfcgc,'99999999999'));
+           vr_obj_responsav.put('documento'      ,gene0002.fn_mask(NVL(rw_crapcrl.nrcpfcgc,0),'99999999999'));
            vr_obj_responsav.put('tipoPessoa'     ,'FISICA');
            vr_obj_responsav.put('nome'           ,rw_crapcrl.nmrespon);
 
@@ -4726,7 +4726,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de Participações
-          vr_obj_particip.put('documento'      ,gene0002.fn_mask(rw_crapepa.nrdocsoc,'99999999999999'));
+          vr_obj_particip.put('documento'      ,gene0002.fn_mask(NVL(rw_crapepa.nrdocsoc,0),'99999999999999'));
           vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
           vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
 
@@ -5302,7 +5302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => ' '
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Solicitação Sugestão Motor'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1 --> FALSE
@@ -5621,7 +5621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
               gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                                   ,pr_cdoperad => 'MOTOR'
                                   ,pr_dscritic => ' '
-                                  ,pr_dsorigem => 'AYLLOS'
+                                  ,pr_dsorigem => 'AIMARO'
                                   ,pr_dstransa => 'Expiracao da Analise Automatica'
                                   ,pr_dttransa => TRUNC(SYSDATE)
                                   ,pr_flgtrans => 1 --> FALSE
@@ -5820,7 +5820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
        WHERE w.cdcooper = pr_cdcooper
          AND w.nrdconta = pr_nrdconta
          AND w.insitapr IN(1,3)        -- já estao aprovadas
-         AND w.insitest NOT IN(4,5)    -- 4 - Expiradas 5 - Expiradas por decurso de prazo - PJ 438 - Márcio(Mouts)
+         AND w.insitest NOT IN(4,5,6)  -- 4 - Expiradas 5 - Expiradas por decurso de prazo - PJ 438 - Márcio(Mouts) - 6 - Anulação -- PJ438 - Paulo Martins - Mouts
          AND NOT EXISTS ( SELECT 1
                             FROM crapepr p
                            WHERE w.cdcooper = p.cdcooper
@@ -6775,7 +6775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     IF lower(vr_dscritic) LIKE '%proposta%ja existente na esteira%' THEN
 
       -- Tentaremos enviar alteração com reinício de fluxo para a Esteira
-      este0005.pc_alterar_proposta_est (pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
+      ESTE0005.pc_alterar_proposta_est (pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
                                        ,pr_cdagenci => pr_cdagenci          --> Codigo da agencia
                                        ,pr_cdoperad => pr_cdoperad          --> codigo do operador
                                        ,pr_cdorigem => pr_cdorigem          --> Origem da operacao
@@ -6841,7 +6841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => ' '
-                          ,pr_dsorigem => 'AYLLOS WEB'
+                          ,pr_dsorigem => 'AIMARO WEB'
                           ,pr_dstransa => 'Envio Proposta Analise Manual de Credito'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1 --> FALSE
