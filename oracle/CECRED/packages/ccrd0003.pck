@@ -95,6 +95,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             30/07/2018 - Adicionado tratamento para não enviar conta PJ caso a mesma ainda não tenha sido criada 
   --                          no arquivo gerado na procedure pc_crps671 (Reinert).
+  --
+  --             10/10/2018 - Feita a inclusao de uma nova variavel que faz a leitura do nome do titular do cartao,
+  --                          onde é gerada a critica 999.
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -9890,7 +9893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         -- fecha cursor 
                         CLOSE cr_crapass;
                         CLOSE cr_crawcrd;
-                          
+                         vr_nmtitcrd :=substr(vr_des_text,38,19)||substr(vr_des_text,57,23)||substr(vr_des_text,7,2); 
                           BEGIN
                             INSERT INTO craprej
                                        (cdcooper,
@@ -9906,7 +9909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                     VALUES
                                         (vr_cdcooper,
                                          rw_crapass.cdagenci,
-                                         '',
+                                         vr_nmtitcrd,
                                          'CCR3',
                                          rw_crapdat.dtmvtolt,
                                          999, -- Representante nao encontrado
