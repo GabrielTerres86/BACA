@@ -7,7 +7,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Supero
-   Data    : Fevereiro/2018                    Ultima atualizacao:
+   Data    : Fevereiro/2018                    Ultima atualizacao: 10/10/2018
 
    Dados referentes ao programa:
 
@@ -15,6 +15,8 @@
    Objetivo: Integrar as remessas com o IEPTB
 
    Alteracoes: 
+   
+   10/10/12018 - Ajustado campo t06 para informar o CPF/CNPJ do cooperado (Cechet).   
    
   ............................................................................. */
   
@@ -488,7 +490,7 @@
             ,crapmun.cdcomarc                                                                             -- Campo 15 - Header
             ,lpad(crapcop.cdagectl, 5, '0') || ' ' || lpad(crapcob.nrdconta, 9, '0') nrdconta             -- Campo 03 - Transação
             ,rpad(crapass.nmprimtl, 45, ' ') nmprimtl                                                     -- Campo 04/05 - Transação
-            ,rpad(crapcob.dsdoccop, 14, ' ') dsdoccop                                                     -- Campo 06 - Transação
+            ,lpad(to_char(crapass.nrcpfcgc), 14, '0') nrcpfcgc                                            -- Campo 06 - Transação
             ,rpad(crapenc.dsendere, 45, ' ') dsendere                                                     -- Campo 07 - Transação
             ,lpad(crapenc.nrcepend, 8, '0') nrcepend                                                      -- Campo 08 - Transação
             ,rpad(crapenc.nmcidade, 20, ' ') nmcidade                                                     -- Campo 09 - Transação
@@ -671,7 +673,7 @@
       pc_gera_registro_remessa(pr_cdbandoc => rw_craprem.cdbandoc -- IN
                               ,pr_nrdconta => rw_craprem.nrdconta -- IN
                               ,pr_nmprimtl => rw_craprem.nmprimtl -- IN
-                              ,pr_dsdoccop => rw_craprem.dsdoccop -- IN
+                              ,pr_dsdoccop => rw_craprem.nrcpfcgc -- IN
                               ,pr_dsendere => rw_craprem.dsendere -- IN
                               ,pr_nrcepend => rw_craprem.nrcepend -- IN
                               ,pr_nmcidade => rw_craprem.nmcidade -- IN
