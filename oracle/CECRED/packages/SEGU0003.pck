@@ -345,7 +345,7 @@ EXCEPTION
       where 
              cs.cdcooper = pr_cdcooper 
          and cs.nrdconta = pr_nrdconta 
-         and cs.nrctrseg = pr_nrctrseg
+         and (cs.nrctrseg = pr_nrctrseg or cs.nrctrato = pr_nrctremp)
          and cs.cdcooper = cc.cdcooper
          and cs.cdcooper = ca.cdcooper
          and cs.nrdconta = ca.nrdconta
@@ -1486,28 +1486,28 @@ EXCEPTION
     Objetivo  : Rotina para carregar os códigos dos contratos cadastrados na CRAWEPR aprovados 
                 e que não estejam associados a uma proposta de seguro prestamista
     
-    Alteracoes: 
+    Alteracoes: 09/10/2018 - Alterado para buscar dados da crapepr (Propostas efetivadas) -- Paulo Martins - Mouts
     ............................................................................. */
     CURSOR cr_crawepr(p_cdcooper IN crapcop.cdcooper%type) IS             
       SELECT 
-              w.nrctremp
+              e.nrctremp
           FROM
-              crawepr w
+              crapepr e
          WHERE 
-              w.cdcooper = p_cdcooper
-          AND w.nrdconta = pr_nrdconta
-          AND w.insitapr = 1 -- Decisao Aprovado 
+              e.cdcooper = p_cdcooper
+          AND e.nrdconta = pr_nrdconta
           AND NOT EXISTS (SELECT 
                                 1 
                             FROM 
                                 crawseg cc 
                            WHERE
-                                cc.cdcooper = w.cdcooper 
-                            AND cc.nrdconta = w.nrdconta 
-                            AND cc.nrctrato = w.nrctremp)          
+                                cc.cdcooper = e.cdcooper 
+                            AND cc.nrdconta = e.nrdconta 
+                            AND cc.nrctrato = e.nrctremp
+                            AND cc.tpseguro = 4)          
       ORDER BY          
-              w.nrctremp;          
-
+              e.nrctremp;          
+              
     -- Variaveis de log
     vr_cdcooper NUMBER;
     vr_cdoperad VARCHAR2(100);

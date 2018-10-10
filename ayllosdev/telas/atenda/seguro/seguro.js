@@ -337,10 +337,10 @@ function controlaOperacao(operacao) {
 						cdprodut = 19;
 						break;
 				}
-				if (tpseguro == 11 || tpseguro == 4) {   // se for casa            
+            if (tpseguro == 11 || tpseguro == 4) {   // se for casa            
 					executa_depois = 'valida_inclusao(' + tpseguro + ');';
 				}
-				else { // se não for casa
+            else { // se não for casa
 					executa_depois = 'validaAssociados();';
 				}
 				validaAdesaoProduto(nrdconta, cdprodut, executa_depois);
@@ -1744,7 +1744,7 @@ function carregaPropriedadesFormPrestVida(){
     $(ben+','+parent).bind("keydown", function (e) {
 	   if (e.altKey) { return false; }
     });
-	
+		
 	var label = 'label[for="vlpreseg"],label[for="vlcapseg"],'+
 			    'label[for="qtpreseg"],label[for="vlprepag"],'+
 				'label[for="dscobert"],label[for="nmdsegur"],'+
@@ -2148,7 +2148,7 @@ function criaSeg(operacao){
 			
 			cdempres:cdempres,cdsexosg:cdsexosg,cdsegura:cdsegura,
 			nrctrseg:nrctrseg,qtparcel:qtparcel,qtprepag:qtprepag,
-			executandoProdutos: executandoProdutos,
+			executandoProdutos: executandoProdutos,nrctrato:nrctrato,
 			
 			redirect: 'script_ajax'},
 		url: dest, 
@@ -2626,6 +2626,7 @@ function imprimirPropostaSeguro(nomeForm, reccraws){
 	$('#formImpressao').append('<input type="hidden" id="reccraws" name="reccraws" />'); 
 	$('#formImpressao').append('<input type="hidden" id="redirect" name="redirect" />'); 
 	$('#formImpressao').append('<input type="hidden" id="cddopcao" name="cddopcao" />'); 
+    $('#formImpressao').append('<input type="hidden" id="nrctrato" name="nrctrato" />');
 	
 	$('#sidlogin','#formImpressao').val( $('#sidlogin','#frmMenu').val() );
 	$('#nrdconta','#formImpressao').val( nrdconta );
@@ -2641,6 +2642,7 @@ function imprimirPropostaSeguro(nomeForm, reccraws){
 		$('#tpplaseg','#formImpressao').val($('#tpplaseg','#'+nomeForm).val());
 		$('#cdsegura','#formImpressao').val($('#cdsegura','#'+nomeForm).val());
 		$('#reccraws','#formImpressao').val($('#reccraws','#'+nomeForm).val());
+		$('#nrctrato','#formImpressao').val($('#nrctrato','#'+nomeForm).val());
 	} 
 	else{ 
 		$('#nrctrseg','#formImpressao').val(nrctrseg);
@@ -2994,8 +2996,8 @@ function validaContrato(){
 			} else {
 				$('#nrctrato', '#frmNovo').val('');
 				eval(response);
-				return false;
-			}
+	return false;
+}
 		}
 	});
 }
