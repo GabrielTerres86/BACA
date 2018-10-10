@@ -3444,11 +3444,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                       ,pr_texto_completo => vr_xml_3040_temp
                                       ,pr_texto_novo     => ' />');
-               vr_dtcorte := to_date(GENE0001.fn_param_sistema(pr_cdcooper => 0
-                                                              ,pr_nmsistem => 'CRED'
-                                                              ,pr_cdacesso => 'DT_CORTE_COLFIN') ,'DD/MM/RRRR');
 
-               IF trunc(sysdate) >= vr_dtcorte THEN
+               IF pr_dtmvtolt >= vr_dtcorte THEN
                  IF vr_inaplicacao_propria = 1
                  OR vr_inpoupanca_propria  = 1 THEN
                    gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
@@ -4881,6 +4878,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         --> 03/11/2016 - Renato Darosci - Alterado para considerar faixa "sem rendimento" até 0.01 - SD 549969
         --> 17/07/2018 - Heckmann (AMcom) - Alterado as regras das faixas 0, 1 e 2 - Product Backlog Item 9028:3040 - Porte Indisponível
       
+      IF pr_dtmvtolt >= vr_dtcorte THEN
+        -- Nova forma a partir de 01/11/2018
         IF pr_vlrrendi >= 0.01 AND pr_vlrrendi <= 1 THEN
           RETURN 0;
         ELSIF pr_vlrrendi = 0 THEN
@@ -4902,12 +4901,38 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         ELSE
           RETURN 0;
         END IF;
+      ELSE
+        -- Forma Atual até 01/11/2018
+        IF pr_vlrrendi <= 0.01 THEN
+          RETURN 1;
+        ELSIF pr_vlrrendi > 0.01 AND pr_vlrrendi <= pr_vlsalmin THEN
+          RETURN 2;
+        ELSIF pr_vlrrendi > pr_vlsalmin AND pr_vlrrendi <= (pr_vlsalmin * 2) THEN
+          RETURN 3;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 2 AND pr_vlrrendi <= pr_vlsalmin * 3 THEN
+          RETURN 4;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 3 AND pr_vlrrendi <= pr_vlsalmin * 5 THEN
+          RETURN 5;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 5 AND pr_vlrrendi <= pr_vlsalmin * 10 THEN
+          RETURN 6;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 10 AND pr_vlrrendi <= pr_vlsalmin * 20 THEN
+          RETURN 7;
+        ELSIF pr_vlrrendi > pr_vlsalmin * 20 THEN
+          RETURN 8;
+        ELSE
+          RETURN 0;
+        END IF;
+      END IF;
+
       END;
       
       -- Classifica o porte do PJ
       FUNCTION fn_classifi_porte_pj(pr_fatanual IN NUMBER) RETURN pls_integer IS
       BEGIN  
     --> 17/07/2018 - Heckmann (AMcom) - Alterado as regras das faixas 0 e 1 - Product Backlog Item 9028:3040 - Porte Indisponível
+       
+        IF pr_dtmvtolt >= vr_dtcorte THEN
+          -- Nova forma a partir de 01/11/2018
         IF pr_fatanual >= 0 AND pr_fatanual <= 0.01 then
           RETURN 0;
         ELSIF pr_fatanual > 0.01 AND pr_fatanual <= 360000 THEN
@@ -4918,6 +4943,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           RETURN 3;
         ELSIF pr_fatanual > 300000000 THEN
           RETURN 4;
+        END IF;
+        ELSE
+          -- Forma Atual até 01/11/2018
+          IF pr_fatanual <= 360000 THEN
+            RETURN 1;
+          ELSIF pr_fatanual > 360000 AND pr_fatanual <= 4800000 THEN
+            RETURN 2;
+          ELSIF pr_fatanual > 4800000 AND pr_fatanual <= 300000000 THEN
+            RETURN 3;
+          ELSIF pr_fatanual > 300000000 THEN
+            RETURN 4;
+          END IF;
         END IF;
       END;
       
@@ -5159,6 +5196,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
       -- Inicializar o CLOB 3040
       dbms_lob.createtemporary(vr_xml_3040, TRUE);
       dbms_lob.open(vr_xml_3040, dbms_lob.lob_readwrite);
+
+
+      -- data de corte para Colateral Financeiro e Porte Cliente
+      vr_dtcorte := to_date(GENE0001.fn_param_sistema(pr_cdcooper => 0
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_cdacesso => 'DT_CORTE_COLFIN') ,'DD/MM/RRRR');
       
       -- Carrega as tabelas temporarias de vencimentos de risco
       IF pr_flbbndes = 'N' THEN
