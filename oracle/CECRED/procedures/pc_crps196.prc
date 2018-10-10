@@ -78,6 +78,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps196 (pr_cdcooper IN crapcop.cdcooper%T
 				              Heitor (Mouts) - Melhoria 440         
 
                  06/07/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
+                 
+                 10/10/2018 - Se a conta está em prejuizo e não foi possivel debitar 
+                              gera lançamento futuro (Fabio Adriano - AMcom)
 							  
   ............................................................................ */
 
