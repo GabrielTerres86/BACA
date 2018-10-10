@@ -69,7 +69,7 @@
 									<?}?>
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_AVALISTA');return false;"> Alterar Somente Avalistas </a>
 									<? IF (in_array($tplcremp,array(2,3))) { ?>
-										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_BENS');return false;"> Alterar Somente Bens </a>
+										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_SOMBENS');return false;"> Alterar Somente Bens </a>
 									<? } ?>
 										<br />
                                         <a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btVoltar" onClick="fechaAltera('fechar');return false;"> Voltar </a>

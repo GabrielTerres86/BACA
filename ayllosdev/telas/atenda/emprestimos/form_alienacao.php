@@ -18,22 +18,37 @@
  *		[25/01/2016] Alterar a chamada do botao Salvar. (James) 
  */
 
-if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO'))) {
+if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO','A_BENS','AI_BENS'))) {
   	require_once("./lib/metadados.php");
-} else { ?>
+} else {
+?>
 	<script type="text/javascript" src="../manbem/scripts/historico_gravames.js"></script>
 <?
 }
 	include('../../manbem/form_alie_veiculo.php');
- ?>
+?>
 <div id="divBotoes">
-	<? if ( $operacao == 'A_ALIENACAO' ) { ?>
-		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
+	<? if ( $operacao == 'A_ALIENACAO' || $operacao == 'A_BENS' ) {
+			if ($operacao == 'A_ALIENACAO') {
+				$inicio = "A_INICIO";
+			} else {
+				$inicio = "AT";
+			} ?>
+		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('<? echo $inicio; ?>'); return false;">Voltar</a>
 		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'A_ALIENACAO\');','A_ALIENACAO'); return false;">Continuar</a>
-	<? } else if ($operacao == 'AI_ALIENACAO') { ?>
-		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'A_ALIENACAO\',\'A_INTEV_ANU\');','A_ALIENACAO'); return false;">Continuar</a>		
+		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'<? echo $operacao; ?>\');','<? echo $operacao; ?>'); return false;">Continuar</a>
+	<? } else if ($operacao == 'AI_ALIENACAO' || $operacao == 'AI_BENS') {
+			if ($operacao == 'AI_ALIENACAO') {
+				$nova_opecacao = "A_ALIENACAO";
+				$finalizacao = "A_INTEV_ANU";
+				$inicio = "A_INICIO";
+			} else {
+				$nova_opecacao = "AI_BENS";
+				$finalizacao = "A_BENSFIM";
+				$inicio = "AT";
+			} ?>
+		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('<? echo $inicio; ?>'); return false;">Voltar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'<? echo $nova_opecacao; ?>\',\'<? echo $finalizacao; ?>\');','<? echo $nova_opecacao; ?>'); return false;">Continuar</a>
 	<? } else if ($operacao == 'C_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('CF'); return false;">Voltar</a>
 		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
@@ -42,7 +57,7 @@ if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIE
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'I_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'I_ALIENACAO\',\'I_INTEV_ANU\');','I_ALIENACAO'); return false;">Continuar</a>		
+		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'I_ALIENACAO\',\'I_INTEV_ANU\');','I_ALIENACAO'); return false;">Continuar</a>
 	<? } else if ( $operacao == 'IA_ALIENACAO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'I_ALIENACAO\');','I_ALIENACAO'); return false;">Continuar</a>

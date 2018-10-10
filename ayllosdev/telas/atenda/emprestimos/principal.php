@@ -105,9 +105,9 @@
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 
-	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
+	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
 
-	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC',''))) {
+	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC','','A_SOMBENS'))) {
 
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";
@@ -187,7 +187,7 @@
 
 			</script><?php
 
-		}else if (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))){
+		} else if (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC','A_SOMBENS'))) {
 
 			$cooperativa  = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 			$associado    = $xmlObjeto->roottag->tags[1]->tags[0]->tags;
@@ -216,8 +216,8 @@
 			$inpessoa 	  = getByTagName($rendimento,'inpessoa');
 
 			// RISCO ORIGINAL
-			$riscoOrig = getByTagName($proposta,'nivriori'); 
-			$riscoCalc = getByTagName($proposta,'nivrisco'); 
+			$riscoOrig = getByTagName($proposta,'nivriori');
+			$riscoCalc = getByTagName($proposta,'nivrisco');
 			$nivrisori = (!empty($riscoOrig)) ? $riscoOrig : $riscoCalc;
  
   
@@ -307,8 +307,7 @@
 			arrayProposta['inintegra_cont'] = '<? echo getByTagName($proposta,'inintegra_cont'); ?>';
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
 
-
-      vleprori 	 = arrayProposta['vlemprst'];
+			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
 			bkp_dsfinemp = arrayProposta["dsfinemp"];
@@ -316,7 +315,6 @@
 			tpemprst 	 = arrayProposta["tpemprst"];
 			cdtpempr 	 = arrayProposta["cdtpempr"];
 			dstpempr	 = arrayProposta["dstpempr"];
-
 
 			var arrayRendimento = new Object();
 
@@ -438,20 +436,20 @@
 
 						arrayBensAval<? echo $i; ?>[<? echo $j; ?>] = arrayBemAval<? echo $identificador; ?>;
 
-					<?}
-				}?>
+					<? }
+				} ?>
 
 				arrayAvalista<? echo $i; ?>['bensaval'] = arrayBensAval<? echo $i; ?> ;
 
 
 				arrayAvalistas[<? echo $i; ?>] = arrayAvalista<? echo $i; ?>;
-			<?}?>
+			<? } ?>
 
 			var arrayAlienacoes = new Array();
-			nrAlienacao    = "<?echo count($alienacoes)?>";
+			nrAlienacao    = "<? echo count($alienacoes); ?>";
 			contAlienacao  = 0;
 
-			<?for($i=0; $i<count($alienacoes); $i++) {?>
+			<? for($i=0; $i<count($alienacoes); $i++) { ?>
 
 				var arrayAlienacao<? echo $i; ?> = new Object(); 
 				arrayAlienacao<? echo $i; ?>['lsbemfin'] = '<? echo getByTagName($alienacoes[$i]->tags,'lsbemfin'); ?>';
@@ -581,12 +579,14 @@
 				arrayFaturamentos[<? echo $i; ?>] = arrayFaturamento<? echo $i; ?>;
 
 			<?}?>
-
+			<? if (in_array($operacao,array('A_SOMBENS'))) { ?>
+			controlaOperacao('A_BENS');
+			<? } ?>
 			</script><?
 
 		}
 
-	}else if(in_array($operacao,array('A_PARCELAS','V_PARCELAS','C_PARCELAS','I_PARCELAS'))) { // Só exibe se for 'Novo Cálculo'
+	} else if(in_array($operacao,array('A_PARCELAS','V_PARCELAS','C_PARCELAS','I_PARCELAS'))) { // Só exibe se for 'Novo Cálculo'
 
 		$xml = "<Root>";
 		$xml .= "	<Cabecalho>";
@@ -639,7 +639,7 @@
 
 				arrayParcelas[<? echo $i; ?>] = arrayParcela<? echo $i; ?>;
 
-			<?} ?>
+			<? } ?>
 		</script>
 		<?
 	}else if(in_array($operacao,array('T_EFETIVA'))) {
@@ -871,7 +871,7 @@
 		$registros = $xmlObj->roottag->tags[0]->tags;
 		$qtregist = $xmlObj->roottag->tags[1]->cdata;
 		
-	}else if (in_array($operacao, array('A_DEMONSTRATIVO_EMPRESTIMO', 'I_DEMONSTRATIVO_EMPRESTIMO'))){ 
+	}else if (in_array($operacao, array('A_DEMONSTRATIVO_EMPRESTIMO', 'I_DEMONSTRATIVO_EMPRESTIMO'))){
 
 		$inpessoa = isset($_POST['inpessoa']) ? $_POST['inpessoa'] : '0';
 		$dscatbem = isset($_POST['dscatbem']) ? $_POST['dscatbem'] : '';
@@ -1047,7 +1047,7 @@
 		include ('../../../includes/consultas_automatizadas/form_orgaos.php');
 	} else if (in_array($operacao,array('I_MICRO_PERG','A_MICRO_PERG','C_MICRO_PERG'))) {
 		include ('questionario.php');	
-	} else if (in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO'))){
+	} else if (in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO','A_BENS','AI_BENS'))){
 		include('form_alienacao.php');
 	}else if (in_array($operacao,array('C_INTEV_ANU','AI_INTEV_ANU','A_INTEV_ANU','E_INTEV_ANU','I_INTEV_ANU','IA_INTEV_ANU'))){
 		include('form_intev_anuente.php');
