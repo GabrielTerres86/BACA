@@ -6300,7 +6300,7 @@ function montaString() {
                 number_format(parseFloat(arrayAlienacoes[i]['vlrdobem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //altera
                 arrayAlienacoes[i]['dschassi'] + ';' +
                 arrayAlienacoes[i]['nranobem'] + ';' +
-                nrmodbem + ';' +
+                nrmodbem.substring(0,4) + ';' +
                 arrayAlienacoes[i]['nrdplaca'].replace('0000000', '') + ';' +
                 normalizaNumero(arrayAlienacoes[i]['nrrenava']) + ';' +
                 arrayAlienacoes[i]['tpchassi'] + ';' +
