@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 12/09/2018
+ * FONTE        : emprestimos.js                            Última alteração: 10/10/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -140,6 +140,7 @@
 * 111: [15/08/2018] Criada tela 'Motivos', botão 'Anular' e controle para não permitir alterar e analisar com situação ANULADA. PRJ 438 (Mateus Z - Mouts)
 * 111: [28/05/2018] P439 - Criado validacoes de contingencia da integracao cdc
 * 112: [12/09/2018] P442 - Ajustes nos tamanhos da tela devido novos campos nas Consultas Automatizadas (Maykon-Envolti)
+* 113: [10/10/2018] Ajustes nas declaracoes de variaveis (Andrey Formigari)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -419,6 +420,12 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 }
 
 function controlaOperacao(operacao) {
+	
+	var idcobope = '';
+	var insitest = '';
+	var err_efet = '';
+	var nrdrecid = '';
+	var flgimpnp = '';
 
     cdlcremp = '';
     vlempres = '';
