@@ -13,6 +13,8 @@
 
               21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
 
+              26/09/2018 - Inclusão do campo 'Horário mínimo login'. SCTASK0027519 (Mateus Z / Mouts)
+
  * ********************************************************************* */
 
     require_once('../../includes/config.php');
@@ -650,9 +652,15 @@
     
     <fieldset id="fsetSangria" name="fsetSangria" style="padding:0px; margin:0px; padding-bottom:10px;">
 
-        <legend>Sangria de CAIXA</legend>
+        <!-- Alterado legend de 'Sangria de CAIXA' para 'Parâmetros Caixa Online' - SCTASK0027519 (Mateus Z / Mouts)  -->
+        <legend>Par&acirc;metros Caixa Online</legend>
 
-        <label for="qttmpsgr"><?php echo utf8ToHtml("Intervalo de Tempo:"); ?></label>
+        <!-- Criado novo campo 'Horário mínimo login' - SCTASK0027519 (Mateus Z / Mouts)  -->
+        <label for="hrinicxa"><?php echo utf8ToHtml("Horário mínimo login:"); ?></label>
+        <input type="text" id="hrinicxa" name="hrinicxa" value="<?php echo getByTagName($cooperativa->tags,'hrinicxa');?>" >
+
+        <!-- Alterado label de 'Intervalo de Tempo' para 'Intervalo de Tempo Sangria' - SCTASK0027519 (Mateus Z / Mouts)  -->
+        <label for="qttmpsgr"><?php echo utf8ToHtml("Intervalo de Tempo Sangria:"); ?></label>
         <input type="text" id="qttmpsgr" name="qttmpsgr" value="<?php echo getByTagName($cooperativa->tags,'qttmpsgr');?>" >
 
     </fieldset>

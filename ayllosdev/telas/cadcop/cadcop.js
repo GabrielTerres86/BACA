@@ -18,6 +18,9 @@
             
              03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
              21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
+
+             26/09/2018 - Inclusão do campo 'Horário mínimo login'. SCTASK0027519 (Mateus Z / Mouts)
+
 ************************************************************************/
 var cddepart;
 
@@ -343,7 +346,7 @@ function formataFormularioConsulta() {
     $('label[for="nrouvbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" }); 
     $('label[for="nrsacbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "190px" }); 
     
-
+    $('label[for="hrinicxa"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
     $('label[for="qttmpsgr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
     $('label[for="flgkitbv"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "180px" });
 
@@ -512,6 +515,8 @@ function formataFormularioConsulta() {
     $('#nrouvbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '20');
     $('#nrsacbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '20');
     
+    // Criado novo campo 'Horário mínimo login' - SCTASK0027519 (Mateus Z / Mouts)
+    $('#hrinicxa', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#qttmpsgr', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
 
     $('#flgkitbv', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
@@ -2680,7 +2685,7 @@ function formataFormularioConsulta() {
             if ($("#cdcooper", "#frmConsulta").val() == 3) {
               $("#vlgarbcb", "#frmConsulta5").focus();
             }else{
-            $("#qttmpsgr", "#frmConsulta5").focus();
+            $("#hrinicxa", "#frmConsulta5").focus();
             }
 
             return false;
@@ -2690,6 +2695,23 @@ function formataFormularioConsulta() {
     
     //Define ação para o campo vlgarbcb
     $("#vlgarbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
+            $("#hrinicxa", "#frmConsulta5").focus();
+
+            return false;
+        }
+
+    });
+
+    //Define ação para o campo hrinicxa
+    $("#hrinicxa", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
@@ -3066,10 +3088,12 @@ function formataFormularioConsulta() {
 
         if(cddepart != 20) {
 
+            $("#hrinicxa", "#frmConsulta5").desabilitaCampo();
             $("#qttmpsgr", "#frmConsulta5").desabilitaCampo();
 
         } else {
 
+            $("#hrinicxa", "#frmConsulta5").habilitaCampo();
             $("#qttmpsgr", "#frmConsulta5").habilitaCampo();
 
         }
@@ -3550,7 +3574,7 @@ function alterarCooperativa() {
     var cdcrdins = $("#cdcrdins", "#frmConsulta5").val();
     var vltarsic = isNaN(parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var vltardrf = isNaN(parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
-    var qttmpsgr = $("#qttmpsgr", "#frmConsulta5").val();
+    var hrinicxa = $("#hrinicxa", "#frmConsulta5").val();
 
     //Bancoob
     var nrctabcb = normalizaNumero($("#nrctabcb", "#frmConsulta5").val());
@@ -3704,7 +3728,7 @@ function alterarCooperativa() {
             vlgarbcb: vlgarbcb,
             nrsacbcb: nrsacbcb,
             nrouvbcb: nrouvbcb,
-            
+            hrinicxa: hrinicxa,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

@@ -178,6 +178,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
                                   ,pr_nrouvbcb IN crapcop.nrouvbcb%TYPE --> Numero de ouvidoria do bancoon                                                                    
                                   ,pr_flintcdc IN crapcop.flintcdc%TYPE --> Possui CDC                                  
                                   ,pr_tpcdccop IN crapcop.tpcdccop%TYPE --> Tipo CDC
+								  ,pr_hrinicxa IN crapcop.nrouvbcb%TYPE --> Horario minimo de login caixa online
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -194,7 +195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --  Sistema  : Rotina acessada pela tela CADCOP
   --  Sigla    : TELA_CADCOP
   --  Autor    : Andrei - RKAM
-  --  Data     : Agosto/2016.                   Ultima atualizacao: 21/12/2017
+  --  Data     : Agosto/2016.                   Ultima atualizacao: 04/10/2018
   --
   -- Dados referentes ao programa:
   --
@@ -219,6 +220,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --             21/12/2017 - Incluido campos bancoob. PRJ406-FGTS(Odirlei-AMcom)
   --
   --             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
+  --
+  --             04/10/2018 - Incluido campo hrinicxa (Mateus Z / MoutS)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Funcao para validacao dos caracteres */
@@ -651,6 +654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.nrouvbcb 
           ,crapcop.flintcdc
           ,crapcop.tpcdccop
+		  ,crapcop.hrinicxa
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -998,7 +1002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrfimsac', pr_tag_cont => to_char(to_date(rw_crapcop.hrfimsac,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hriniouv', pr_tag_cont => to_char(to_date(rw_crapcop.hriniouv,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrfimouv', pr_tag_cont => to_char(to_date(rw_crapcop.hrfimouv,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
-
+	gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrinicxa', pr_tag_cont => to_char(to_date(rw_crapcop.hrinicxa,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
 
     pr_des_erro := 'OK';
 
@@ -1163,6 +1167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
                                   ,pr_nrouvbcb IN crapcop.nrouvbcb%TYPE --> Numero de ouvidoria do bancoob                                                                    
                                   ,pr_flintcdc IN crapcop.flintcdc%TYPE --> Possui CDC                                  
                                   ,pr_tpcdccop IN crapcop.tpcdccop%TYPE --> Tipo CDC
+								  ,pr_hrinicxa IN crapcop.nrouvbcb%TYPE --> Horario minimo de login caixa online
                                   ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
                                   ,pr_cdcritic  OUT PLS_INTEGER            --> Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2               --> Descrição da crítica
@@ -1267,6 +1272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.vllimpag
           ,crapcop.flintcdc
           ,crapcop.tpcdccop
+		  ,crapcop.hrinicxa
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -2410,6 +2416,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
         RAISE vr_exc_saida;
 
       END if;
+	  
+	  IF rw_crapcop.hrinicxa <> to_number(to_char(to_date(pr_hrinicxa,'hh24:mi:ss'),'sssss'))THEN
+
+        -- Montar mensagem de critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Departamento sem persmissao para alterar horario minimo login!';
+        pr_nmdcampo := 'hrinicxa';
+
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+
+      END if;
 
     ELSE
 
@@ -2419,6 +2437,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
         vr_cdcritic := 0;
         vr_dscritic := 'Informe um intervalo de tempo para verificacao da sangria.!';
         pr_nmdcampo := 'qttmpsgr';
+
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+
+      END IF;
+	  
+	  IF nvl(to_number(to_char(to_date(pr_hrinicxa,'hh24:mi:ss'),'sssss')),0) = 0 THEN
+
+        -- Montar mensagem de critica
+        vr_cdcritic := 0;
+        vr_dscritic := 'Informe o horario minimo login!';
+        pr_nmdcampo := 'hrinicxa';
 
         -- volta para o programa chamador
         RAISE vr_exc_saida;
@@ -2657,6 +2687,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.vllimpag = pr_vllimpag
             ,crapcop.flintcdc = pr_flintcdc
             ,crapcop.tpcdccop = pr_tpcdccop
+			,crapcop.hrinicxa = CASE WHEN pr_cddepart = 20 THEN to_number(to_char(to_date(pr_hrinicxa,'hh24:mi'),'sssss')) ELSE crapcop.hrinicxa END
        WHERE crapcop.cdcooper = vr_cdcooper;
 
     EXCEPTION
