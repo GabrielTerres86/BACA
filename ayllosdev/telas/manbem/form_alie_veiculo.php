@@ -103,7 +103,7 @@
 				</div>
 				<div>
 					<label for="nrrenava"> RENAVAM :</label>
-					<input name="nrrenava" id="nrrenava" type="text" value="<? echo mascara(getByTagName($dados,'nrrenava'),'###.###.###.###')?>" onkeypress="return VerificaNumero(event)"  />
+					<input name="nrrenava" id="nrrenava" type="text" value="<? echo mascara(getByTagName($dados,'nrrenava'),'###.###.###.###')?>" onkeypress="return VerificaNumero(event)" maxlength="11" />
 				</div>
 				<div>
 					<label for="uflicenc"> UF Licenciamento :</label>

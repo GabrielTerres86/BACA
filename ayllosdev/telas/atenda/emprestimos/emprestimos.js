@@ -4641,7 +4641,7 @@ function atualizaTela() {
         $('#nranobem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nranobem']);
         $('#nrmodbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrmodbem']);
         $('#nrdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
-        $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']);
+        $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']).mask('AAA.AAA.AAA.AAA', {reverse: true});
         $('#tpchassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['tpchassi']);
         //$('#ufdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
         //$('#nrcpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
@@ -4667,7 +4667,7 @@ function atualizaTela() {
 			$('#nrcpfcgc', '#frmTipo').setMask('INTEGER','zz.zzz.zzz/zzzz-zz','/.-','');
 		}
 
-		$('#nrrenava', '#frmTipo').mask('AAA.AAA.AAA.AAA', {reverse: true});
+		//$('#nrrenava', '#frmTipo').mask('AAA.AAA.AAA.AAA', {reverse: true});
 /*
 		if (!in_array(operacao, ['IA_ALIENACAO'])) {
 			$("#dsmarbemC").show();
