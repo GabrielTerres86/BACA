@@ -512,8 +512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                  , 1901, 'LIM'
                  , 299, 'EMP'
                  , 499, 'EMP'
-                 , 301, 'DCH'
-                 , 302, 'DTI'
+                 , 301, 'DTI'
+                 , 302, 'DCH'
                  , 999, 'CTA'  ) tipo_registro
       FROM tbrisco_central_ocr ris      
      WHERE ris.cdcooper = pr_cdcooper
