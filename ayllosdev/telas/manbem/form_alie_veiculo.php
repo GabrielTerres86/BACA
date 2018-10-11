@@ -103,7 +103,7 @@
 				</div>
 				<div>
 					<label for="nrrenava"> RENAVAM :</label>
-					<input name="nrrenava" id="nrrenava" type="text" value="<? echo mascara(getByTagName($dados,'nrrenava'),'###.###.###.###')?>" onkeypress="return VerificaNumero(event)" maxlength="11" />
+					<input name="nrrenava" id="nrrenava" type="text" value="<? echo mascara(getByTagName($dados,'nrrenava'),'###.###.###.###')?>" onkeypress="return VerificaNumero(event)" />
 				</div>
 				<div>
 					<label for="uflicenc"> UF Licenciamento :</label>
@@ -111,7 +111,7 @@
 				</div>
 				<div>
 					<label for="nrcpfcgc"> CPF/CNPJ Interv. :</label>
-					<input name="nrcpfcgc" id="nrcpfcgc" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" />
+					<input name="nrcpfcgc" id="nrcpfcgc" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" maxlength="18" />
 				</div>
 			</div>
 		</fieldset>

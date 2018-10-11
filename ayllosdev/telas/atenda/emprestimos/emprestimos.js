@@ -3197,13 +3197,39 @@ function controlaLayout(operacao) {
         var cVlMercad = $('#vlrdobem', '#' + nomeForm); //vlmerbem
 		var cSitGrv = $('#dssitgrv', '#' + nomeForm);
 
-		$('#dscatbem','#frmTipo').append($('<option>', {
-			value: "EQUIPAMENTO",
-			text: "Equipamento"
-		}));$('#dscatbem','#frmTipo').append($('<option>', {
-			value: "MAQUINA DE COSTURA",
-			text: "Máquina de Costura"
-		}));
+		if($("#dscatbem option[value='EQUIPAMENTO']").length == 0){
+			$('#dscatbem','#frmTipo').append($('<option>', {
+				value: "EQUIPAMENTO",
+				text: "Equipamento"
+			}));
+		}
+		if($("#dscatbem option[value='MAQUINA DE COSTURA']").length == 0){
+			$('#dscatbem','#frmTipo').append($('<option>', {
+				value: "MAQUINA DE COSTURA",
+				text: "Máquina de Costura"
+			}));
+		}
+
+        if (operacao == 'C_ALIENACAO') {
+            cTodos.desabilitaCampo();
+        } else {
+            cTodos.habilitaCampo();
+			if (cTpBem.val() != 'USADO' ) {
+				cUfPlaca.val('').desabilitaCampo();
+				cNrPlaca.val('').desabilitaCampo();
+				cRenavan.val('').desabilitaCampo();
+			}
+			if (operacao == 'A_ALIENACAO' || operacao == 'IA_ALIENACAO') {
+				if (contAlienacao == 1) {
+					$('#btDeletar', '#divBotoes').css('display', 'none');
+				}
+			} else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO' || operacao == 'AI_BENS') {
+				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
+				$('#' + nomeForm).limpaFormulario();
+				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
+				cTpChassi.val(2);
+			}
+		}
 
 		if (!in_array(operacao, ['C_ALIENACAO'])) {
 			$("#"+idElementTpVeiulo).unbind('change').bind('change', function() {
@@ -3347,13 +3373,13 @@ function controlaLayout(operacao) {
 					if (tecla == 73){
 						return false;
 					}
-					
+
 					// Se é a tecla "O" ou "o"
 					if (tecla == 79){
 						return false;
-					}			
-					
-				}	
+					}
+
+				}
 			});
 
 			//Remover caracteres especiais
@@ -3363,20 +3389,20 @@ function controlaLayout(operacao) {
 				
 				if(re.test(cChassi.val())){
 					cChassi.val(cChassi.val().replace(re, ''));
-				}		            
+				}
 				
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
 					re = /[\Q\q\I\i\O\o\_]/g;
 
 					if(re.test(cChassi.val())){
 						cChassi.val(cChassi.val().replace(re, ''));
-					}			
+					}
 				}
 				re = / /g;
 
 				if(re.test(cChassi.val())){
 					cChassi.val(cChassi.val().replace(re, ''));
-				}			
+				}
 			});
 
 			cChassi.unbind('blur').bind('blur', function(){
@@ -3386,35 +3412,33 @@ function controlaLayout(operacao) {
 				  cChassi.val(cChassi.val().replace(/[\Q\q\I\i\O\o\_]/g, ''));
 				}
 
-				cChassi.val(cChassi.val().replace(/ /g,''));			
+				cChassi.val(cChassi.val().replace(/ /g,''));
 			});
 
 			if ($("#"+idElementMarca+"C").val()==""){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
 			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
-			if ($("#"+idElementAno+"C").val()==""){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
+			if ($("#"+idElementAno+"C").val()=="" && (!in_array(cCateg.val(), ['MAQUINA DE COSTURA', 'EQUIPAMENTO']))){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
 
 		}
+		
+		cRenavan.mask('AA.AAA.AAA.AAA', {reverse: true});
 
-        if (operacao == 'C_ALIENACAO') {
-            cTodos.desabilitaCampo();
-        } else {
-            cTodos.habilitaCampo();
-			if (cTpBem.val() != 'USADO' ) {
-				cUfPlaca.val('').desabilitaCampo();
-				cNrPlaca.val('').desabilitaCampo();
-				cRenavan.val('').desabilitaCampo();
+		cCPF.keyup(function(){
+			valor = $(this).val();
+			if ( valor.length > 14 ) {
+				valor=valor.replace(/\D/g,"");
+				valor=valor.replace(/^(\d{2})(\d)/,"$1.$2");
+				valor=valor.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
+				valor=valor.replace(/\.(\d{3})(\d)/,".$1/$2");
+				valor=valor.replace(/(\d{4})(\d)/,"$1-$2");
+			} else {
+				valor=valor.replace(/\D/g,"");
+				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
+				valor=valor.replace(/(\d{3})(\d)/,"$1.$2");
+				valor=valor.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
 			}
-			if (operacao == 'A_ALIENACAO' || operacao == 'IA_ALIENACAO') {
-				if (contAlienacao == 1) {
-					$('#btDeletar', '#divBotoes').css('display', 'none');
-				}
-			} else if (operacao == 'AI_ALIENACAO' || operacao == 'I_ALIENACAO' || operacao == 'AI_BENS') {
-				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
-				$('#' + nomeForm).limpaFormulario();
-				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
-				cTpChassi.val(2);
-			}
-		}
+			$(this).val(valor);
+		});
 
 		//desabilita campos somente leitura
 		cVlFipe.desabilitaCampo();
@@ -4629,19 +4653,19 @@ function atualizaTela() {
 
 		var nrmodbemtmp = arrayAlienacoes[contAlienacao]['nrmodbem'];
 
-		if (arrayAlienacoes[contAlienacao]['dstpcomb']) {
+		if (arrayAlienacoes[contAlienacao]['dstpcomb'] && nrmodbemtmp.indexOf(arrayAlienacoes[contAlienacao]['dstpcomb']) == -1) {
 			nrmodbemtmp = nrmodbemtmp + " " + arrayAlienacoes[contAlienacao]['dstpcomb'];
 		}
 
-        $('#dscatbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscatbem']);
+        //$('#dscatbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscatbem']);
         $('#dstipbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dstipbem']);
         $('#dsbemfin', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dsbemfin']);
         $('#dscorbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dscorbem']);
         $('#dschassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['dschassi']);
         $('#nranobem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nranobem']);
-        $('#nrmodbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrmodbem']);
+        //$('#nrmodbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrmodbem']);
         $('#nrdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrdplaca']);
-        $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']).mask('AAA.AAA.AAA.AAA', {reverse: true});
+        $('#nrrenava', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrrenava']);
         $('#tpchassi', '#frmTipo').val(arrayAlienacoes[contAlienacao]['tpchassi']);
         //$('#ufdplaca', '#frmTipo').val(arrayAlienacoes[contAlienacao]['ufdplaca']);
         //$('#nrcpfbem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['nrcpfbem']);
@@ -4656,16 +4680,24 @@ function atualizaTela() {
 		$('#vlfipbem', '#frmTipo').val( arrayAlienacoes[contAlienacao]['vlfipbem'] ).trigger('mask.maskMoney');
 		$('#dssitgrv', '#frmTipo').val( arrayAlienacoes[contAlienacao]['dssitgrv'] );
 
+		if (nrcpfcgctmp > 0) {
+			if (nrcpfcgctmp.length < 12) { //CPF
+				nrcpfcgctmp = ("00000000000" + nrcpfcgctmp).slice(-11);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+			} else { //CNPJ
+				nrcpfcgctmp = ("00000000000000" + nrcpfcgctmp).slice(-14);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/\.(\d{3})(\d)/,".$1/$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{4})(\d)/,"$1-$2");
+			}
+		}
+
 		$('#vlrdobem', '#frmTipo').val( vlrdobemtmp ).trigger('mask.maskMoney');
 		$('#nrcpfcgc', '#frmTipo').val( nrcpfcgctmp );
 		$('#nrmodbemC','#frmTipo').val( nrmodbemtmp );
-		if ( nrcpfcgctmp.length < 9 ) {
-			$('#nrcpfcgc', '#frmTipo').setMask('INTEGER', 'zzzzzzzzzzzzzz','','');
-		} else if( nrcpfcgctmp.length < 12 ) {
-			$('#nrcpfcgc', '#frmTipo').setMask('INTEGER','999.999.999-99','.-','');
-		} else {
-			$('#nrcpfcgc', '#frmTipo').setMask('INTEGER','zz.zzz.zzz/zzzz-zz','/.-','');
-		}
 
 		//$('#nrrenava', '#frmTipo').mask('AAA.AAA.AAA.AAA', {reverse: true});
 /*
@@ -4678,6 +4710,21 @@ function atualizaTela() {
 			$("#nrmodbem").hide();
 		}
 */
+		$('#dscatbem','#frmTipo').append($('<option>', {
+			value: "EQUIPAMENTO",
+			text: "Equipamento"
+		}));
+		$('#dscatbem','#frmTipo').append($('<option>', {
+			value: "MAQUINA DE COSTURA",
+			text: "Máquina de Costura"
+		}));
+
+		$("#frmTipo #dscatbem option").each(function() {
+			if (arrayAlienacoes[contAlienacao]['dscatbem'] == $(this).val()) {
+				$(this).attr('selected', 'selected');
+			}
+		});
+
 		if ( $("#dsmarbemC").val() != "" ) {
 			$("#dsmarbemC").show();
 			$("#dsmarbem").hide();
@@ -4693,28 +4740,33 @@ function atualizaTela() {
 
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO'])) {
 			$("#btHistoricoGravame").show();
-		}
+			$("#frmTipo #dstipbem option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
+			$("#frmTipo #tpchassi option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['tpchassi'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
+			$("#frmTipo #ufdplaca option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['ufdplaca'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
+			$("#frmTipo #uflicenc option").each(function() {
+				if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
+					$(this).attr('selected', 'selected');
+				}
+			});
 
-		$("#frmTipo #dstipbem option").each(function() {
-			if (arrayAlienacoes[contAlienacao]['dstipbem'] == $(this).val()) {
-				$(this).attr('selected', 'selected');
-			}
-		});
-		$("#frmTipo #tpchassi option").each(function() {
-			if (arrayAlienacoes[contAlienacao]['tpchassi'] == $(this).val()) {
-				$(this).attr('selected', 'selected');
-			}
-		});
-		$("#frmTipo #ufdplaca option").each(function() {
-			if (arrayAlienacoes[contAlienacao]['ufdplaca'] == $(this).val()) {
-				$(this).attr('selected', 'selected');
-			}
-		});
-		$("#frmTipo #uflicenc option").each(function() {
-			if (arrayAlienacoes[contAlienacao]['uflicenc'] == $(this).val()) {
-				$(this).attr('selected', 'selected');
-			}
-		});
+		} else {
+			$('#dstipbem', '#frmTipo').desabilitaCampo();
+			$('#uflicenc', '#frmTipo').desabilitaCampo();
+			$('#tpchassi', '#frmTipo').val('').desabilitaCampo();
+			$('#dscorbem', '#frmTipo').val('').desabilitaCampo();
+		}
 
 		$('#lsbemfin','#frmTipo').html( arrayAlienacoes[contAlienacao]['lsbemfin'] );
 
@@ -4966,7 +5018,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["uflicenc"] = $("#uflicenc","#frmTipo").val().toUpperCase();');
 
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
-	if ( $('#dsmarbem', '#frmTipo').val() == '-1' ) {
+	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
 		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
 		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
 		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
@@ -4986,7 +5038,7 @@ function insereAlienacao(operacao, opContinua) {
     nrAlienacao++;
     contAlienacao++;
 
-    arrayAlienacoes[i]["lsbemfin"] = '( ' + contAlienacao + ' Bem )';
+    arrayAlienacoes[i]["lsbemfin"] = '( ' + contAlienacao + '&ordm; Bem )';
 
     controlaOperacao(operacao);
     glb_codigoOperadorLiberacao = '';
@@ -5699,7 +5751,7 @@ function validaAlienacao(nmfuncao, operacao) {
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
 	var dsbemfin = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase(); // string
 	var nrmodbem = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
-	if ($('#dsmarbem', '#frmTipo').val() == '-1') {
+	if ($('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
 		dsmarbem = $('#dsmarbemC', '#frmTipo').val().toUpperCase();
 		dsbemfin = $('#dsbemfinC', '#frmTipo').val().toUpperCase();
 		nrmodbem = $('#nrmodbemC', '#frmTipo').val().toUpperCase();
