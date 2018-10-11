@@ -388,7 +388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                           instr(TRIM(enc.dsendere), ' '),
                           length(enc.dsendere))) AS endereco
              ,enc.nrendere 
-             ,enc.complend 
+             ,substr(enc.complend,1,47) complend -- Heckmann/Amcom Task 11393 - Conforme sugerido pelo Ornelas/Jaison 
              ,enc.nrcepend 
              ,enc.nmbairro 
              ,enc.nmcidade 
