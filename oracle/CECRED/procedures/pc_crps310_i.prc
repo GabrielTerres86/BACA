@@ -324,6 +324,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  12/09/2018 - P450 - Mudança na regra do Risco Refin (Guilherme/AMcom)
 
                  01/10/2018 - P450 - Ajuste do juros60 nos Vencimentos/VRI (Guilherme/AMcom)
+                 08/10/2018 - Alterado calcula de atraso de sessão de credito a partir da data de inclusao do emprestimo
+                              e não do vencimento do cartão para os novos emprestimos de cessao.
+                              PRJ450 - Regulatorio(Odirlei-AMcom)
+                              
 
   ............................................................................ */
 
@@ -761,6 +765,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         SELECT ces.nrdconta
               ,ces.nrctremp
               ,ces.dtvencto
+              ,epr.dtmvtolt
           FROM tbcrd_cessao_credito ces
           JOIN crapepr epr
             ON epr.cdcooper = ces.cdcooper
@@ -1194,6 +1199,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_idx_ass_ris   PLS_INTEGER:=0;
 
       vr_dsmensag varchar2(400);
+
+      vr_dtcorte_cessao DATE := NULL;
 
       
       -- variaveis para criação de rotina paralela
@@ -6833,11 +6840,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tab_crappep_maior(vr_idxpep) := rw_crappep_maior.dtvencto;
       END LOOP;
       
+      --> Buscar data de corte para 
+      BEGIN
+        vr_dtcorte_cessao := to_date(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                                               pr_cdcooper => pr_cdcooper, 
+                                                               pr_cdacesso => 'DTCESSAO_CORTE_ATRASO'),'DD/MM/RRRR');
+        
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dtcorte_cessao := to_date('01/01/2000','DD/MM/RRRR');        
+      END;
+      
       --> Buscar vencimentos daos emprestimos de cessao de cartao
       FOR rw_cessao_carga IN cr_cessao_carga LOOP
         vr_idxpep := lpad(pr_cdcooper,5,'0')||lpad(rw_cessao_carga.nrdconta,10,'0')||lpad(rw_cessao_carga.nrctremp,10,'0');
-        vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtvencto;
-        vr_tab_cessoes(vr_idxpep) := rw_cessao_carga.dtvencto;
+        
+        --> Apos a data de corte deve utilizar a data de efetivação do contrato para contagem de atraso
+        IF rw_cessao_carga.dtmvtolt < vr_dtcorte_cessao THEN
+          vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtvencto;
+          vr_tab_cessoes(vr_idxpep) := rw_cessao_carga.dtvencto;
+        ELSE
+          vr_tab_crappep_maior(vr_idxpep) := rw_cessao_carga.dtmvtolt;
+          vr_tab_cessoes(vr_idxpep) := rw_cessao_carga.dtmvtolt;
+        END IF;
+        
       END LOOP;
      
       r_craplem.delete;
