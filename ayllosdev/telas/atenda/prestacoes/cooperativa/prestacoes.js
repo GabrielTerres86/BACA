@@ -2445,7 +2445,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 
 	showMsgAguardo('Aguarde, buscando hist&oacute;rico...');
 	limpaDivGenerica();
-	$('#divUsoGenerico').css('width','750px');
+$('#divUsoGenerico').css({ 'width': '90em', 'left': '19em' });
 	exibeRotina($('#divUsoGenerico'));
 
 	var dschassi = $("#dschassi","#frmTipo").val();

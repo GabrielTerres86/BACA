@@ -310,7 +310,7 @@ function formataFiltro() {
     //Define ação para CLICK no botão de Voltar
     $("#btVoltar", "#divBotoes").unbind('click').bind('click', function () {
 
-        controlaVoltar('2');
+        controlaVoltar('1');
 
         return false;
 
@@ -694,26 +694,26 @@ function formataFormularioBens() {
     
     // campo
 	$('#ddl_descrbem', '#frmBens').css({ 'width': '588px', 'text-align': 'left' });
-    $('#dtmvttel', '#frmBens').css({ 'width': '190px', 'text-align': 'right' }).desabilitaCampo(); //.addClass('data');
+    $('#dtmvttel', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo(); //.addClass('data');
 	$("#dssitgrv", "#frmBens").css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
     $("#dsseqbem", "#frmBens").css({ 'width': '410px', 'text-align': 'left' }).desabilitaCampo();
-    $('#nrgravam', '#frmBens').css({ 'width': '190px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '9').desabilitaCampo();
+    $('#nrgravam', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).attr('maxlength', '9').desabilitaCampo().setMask('INTEGER','999999999');
 	$('#dsblqjud', '#frmBens').css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
     $('#dscatbem', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo();
-	$('#vlmerbem', '#frmBens').css({ 'width': '235px', 'text-align': 'right' }).desabilitaCampo();
+	$('#vlmerbem', '#frmBens').css({ 'width': '234px', 'text-align': 'left' }).desabilitaCampo();
     $('#dsbemfin', '#frmBens').css({ 'width': '400px', 'text-align': 'left' }).desabilitaCampo();
     $('#dscorbem', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo();
-	$('#tpchassi', '#frmBens').css({ 'width': '50px', 'text-align': 'right' }).desabilitaCampo();
+	$('#tpchassi', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).desabilitaCampo();
     $('#dschassi', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '20').addClass('alphanum');
-	$('#nrrenava', '#frmBens').css({ 'width': '234px', 'text-align': 'right' }).desabilitaCampo().attr('maxlength', '25').addClass('renavan');
+	$('#nrrenava', '#frmBens').css({ 'width': '234px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '25').addClass('renavan');
     $('#ufdplaca', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).desabilitaCampo().attr('maxlength', '2').addClass('alphanum');
     $('#nrdplaca', '#frmBens').css({ 'width': '118px' }).desabilitaCampo().attr('maxlength', '7').addClass('alphanum');;
-	$('#nrmodbem', '#frmBens').css({ 'width': '50px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
-	$('#nranobem', '#frmBens').css({ 'width': '50px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
+	$('#nrmodbem', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).attr('maxlength', '4').desabilitaCampo().setMask('INTEGER','9999');
+	$('#nranobem', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).attr('maxlength', '4').desabilitaCampo().setMask('INTEGER','9999');
     $('#uflicenc', '#frmBens').css({ 'width': '50px', 'text-align': 'left' }).desabilitaCampo();
     $('#dscpfbem', '#frmBens').css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
-    $('#vlctrgrv', '#frmBens').css({ 'width': '190px', 'text-align': 'right' }).desabilitaCampo();
-    $('#dtoperac', '#frmBens').css({ 'width': '235px', 'text-align': 'right' }).desabilitaCampo();
+    $('#vlctrgrv', '#frmBens').css({ 'width': '190px', 'text-align': 'left' }).desabilitaCampo();
+    $('#dtoperac', '#frmBens').css({ 'width': '235px', 'text-align': 'left' }).desabilitaCampo();
     $('#dsjustif', '#divJustificativa').addClass('alphanum').css('width', '584px').css('overflow-y', 'scroll').css('overflow-x', 'hidden').css('height', '70').css('margin-left', '3').setMask("STRING", "129", charPermitido(), "");
     $('#dsjustif', '#divJustificativa').desabilitaCampo().prop('disabled',true);
 
@@ -1063,7 +1063,7 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, idseqbem, tpct
 		$('#dsjustif', '#frmBens').habilitaCampo();
 
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
-			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validarIncluir(' + idseqbem + ',' + tpctrpro + ');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
             return false;
         });
 
@@ -1339,7 +1339,7 @@ function controlaVoltar(ope,tpconsul) {
         case '5':
 			/* Este if é para controlar quando se está na cddopcao J e tiver clicado no botão J (Bloqueio Judicial)*/
 			if(!$('#btBlocJudicial').is(':visible') && opbt == 'J'){ opbt = 'L'; }
-			if (opbt == 'M' || opbt == 'A' || opbt == 'X' || opbt == 'B' || opbt == 'L') {				
+			if (opbt == 'M' || opbt == 'A' || opbt == 'X' || opbt == 'B' || opbt == 'L' || opbt == 'Z') {				
 				$('#dschassi', '#frmBens').desabilitaCampo();
 				$('#ufdplaca', '#frmBens').desabilitaCampo();
 				$('#nrdplaca', '#frmBens').desabilitaCampo();
@@ -1849,6 +1849,53 @@ function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
 
     return false;
 
+}
+
+function validarIncluir(idseqbem, tpctrpro){
+	//Desabilita todos os campos do form
+    $('input,select,textarea', '#frmBens').desabilitaCampo();
+	$('#ddl_descrbem', '#frmBens').habilitaCampo();
+	
+	var cddopcao = $("#cddopcao", "#frmCab").val();
+	var nrdconta = $("#nrdconta", "#frmFiltro").val();
+    var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
+	
+	$('input,select,textarea', '#frmBens').removeClass('campoErro');
+
+    showMsgAguardo("Aguarde, realizando inclus&atilde;o ...");
+
+    //Requisição para processar a opção que foi selecionada
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/gravam/validar_inclusao.php",
+        data: {
+            cddopcao: cddopcao,
+            nrdconta: normalizaNumero(nrdconta),
+            nrctrpro: normalizaNumero(nrctrpro),
+            tpctrpro: tpctrpro,
+            idseqbem: idseqbem,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+        },
+        success: function (response) {
+
+            hideMsgAguardo();
+            try {
+                eval(response);
+				$('#btVoltar').trigger('click')
+            } catch (error) {
+
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
+            }
+
+        }
+
+    });
+
+    return false;	
 }
 
 function inclusaoManual(idseqbem, tpctrpro) {
@@ -2466,7 +2513,7 @@ function gerarHistoricoGravames(){
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1115px', 'left': '24.5em' });
+	$('#divUsoGenerico').css({ 'width': '90em', 'left': '19em' });
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
