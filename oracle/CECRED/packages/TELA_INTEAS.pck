@@ -165,7 +165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                   30/04/2018 - Alterados codigos de situacao "pr_cdsitdct". PRJ366 (Lombardi).
                                
                   16/08/2018 - Inclusão da Aplicação Programda - Proj. 411.2 (CIS Corporate)
-
+                               
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
   FUNCTION fn_nrcpfcgc_easy (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE,
@@ -388,7 +388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                           instr(TRIM(enc.dsendere), ' '),
                           length(enc.dsendere))) AS endereco
              ,enc.nrendere 
-             ,enc.complend 
+             ,substr(enc.complend,1,47) complend 
              ,enc.nrcepend 
              ,enc.nmbairro 
              ,enc.nmcidade 
@@ -559,7 +559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND (avt.nrcpfcgc > 0 OR
               avt.nrdctato > 0);
     
-  -----------> VAIAVEIS <-----------
+  -----------> VAIAVEIS <-----------        
 
     vr_exc_erro     EXCEPTION;
     vr_dscritic     VARCHAR2(4000);
@@ -615,7 +615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       vr_dslinha  VARCHAR2(3200);
       vr_dscritic VARCHAR2(2000);
     BEGIN
-      
+
       --> Buscar endereço do cooperado
       OPEN cr_crapenc ( pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => pr_nrdconta,
@@ -649,7 +649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                         pr_idseqttl => pr_idseqttl);
       FETCH cr_crapcem INTO rw_crapcem;
       CLOSE cr_crapcem;
-
+      
       --> Montar linha conforme layout easyway
       vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)                 ||     --> CPF/CNPJ Cooperado
@@ -745,7 +745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         RAISE vr_prox_reg;
       END IF;
         
-      IF pr_cdsitdct IN (1, -- normal
+      IF pr_cdsitdct IN (1, -- normal 
                                  3, -- contas que não podem ter movimento de produtos
                                  5, -- cooperado com restrição
                                  6  -- Normal sem talão
@@ -949,7 +949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     
     END IF;
     
-
+     
     --> Buscar os CPFs/CNPJs a serem enviados para a Easyway
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
                                                    pr_dtiniger => pr_dtiniger,
@@ -963,7 +963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                            pr_dtfimger => pr_dtfimger)) THEN
         CONTINUE;
       END IF;
-          
+    
       -- loop para garantir que todas as pessoas sejam enviadas para o arquivo.
       -- Visto que os dados principais do associado devem ser os da conta mais atualizada
       -- caso exista mais de uma conta, assim o loop força que primeiro seja enviado a conta mais atualizada
@@ -1014,8 +1014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         IF vr_dscritic IS NOT NULL THEN
           pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
             continue;  
-        END IF;
-        
+          END IF;
+          
         -- Sair do loop qnd processar a mesma conta entre os dois cursores
         IF rw_crapass_nrcpfcgc.nrdconta = rw_crapass.nrdconta THEN
           EXIT;
@@ -1103,14 +1103,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapcrl.nmdavali,    
                               pr_dtnasctl  => rw_crapcrl.dtnascto,  
-                              pr_endereco  => rw_crapcrl.dsendres,
-                              pr_nrendere  => rw_crapcrl.nrendere,
-                              pr_complend  => rw_crapcrl.complend,
-                              pr_nrcepend  => rw_crapcrl.nrcepend,
-                              pr_nmbairro  => rw_crapcrl.nmbairro,
-                              pr_nmcidade  => rw_crapcrl.nmcidade,
-                              pr_cdufende  => rw_crapcrl.cdufresd,
-                              pr_tplograd  => rw_crapcrl.tplograd,
+                              pr_endereco  => rw_crapcrl.dsendres,  
+                              pr_nrendere  => rw_crapcrl.nrendere,  
+                              pr_complend  => rw_crapcrl.complend,  
+                              pr_nrcepend  => rw_crapcrl.nrcepend,  
+                              pr_nmbairro  => rw_crapcrl.nmbairro,  
+                              pr_nmcidade  => rw_crapcrl.nmcidade,  
+                              pr_cdufende  => rw_crapcrl.cdufresd,    
+                              pr_tplograd  => rw_crapcrl.tplograd,  
                               pr_dtmvtolt  => rw_crapcrl.dtmvtolt,  
                               ----- OUT ----
                               pr_dscritic  => vr_dscritic);
@@ -1189,13 +1189,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_nmprimtl  => rw_crapavt.nmdavali,    
                               pr_dtnasctl  => rw_crapavt.dtnascto,  
                               pr_endereco  => rw_crapavt.dsendres,
-                              pr_nrendere  => rw_crapavt.nrendere,
-                              pr_complend  => rw_crapavt.complend,
-                              pr_nrcepend  => rw_crapavt.nrcepend,
-                              pr_nmbairro  => rw_crapavt.nmbairro,
-                              pr_nmcidade  => rw_crapavt.nmcidade,
-                              pr_cdufende  => rw_crapavt.cdufresd,
-                              pr_tplograd  => rw_crapavt.tplograd,
+                              pr_nrendere  => rw_crapavt.nrendere,  
+                              pr_complend  => rw_crapavt.complend,  
+                              pr_nrcepend  => rw_crapavt.nrcepend,  
+                              pr_nmbairro  => rw_crapavt.nmbairro,  
+                              pr_nmcidade  => rw_crapavt.nmcidade,  
+                              pr_cdufende  => rw_crapavt.cdufresd,    
+                              pr_tplograd  => rw_crapavt.tplograd,  
                               pr_dtmvtolt  => rw_crapavt.dtmvtolt,  
                               ----- OUT ----
                               pr_dscritic  => vr_dscritic);
@@ -1284,15 +1284,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Odirlei Busana(Amcom)
-    Data     : Abril/2016.                   Ultima atualizacao: 29/08/2018
+    Data     : Abril/2016.                   Ultima atualizacao: 12/04/2016
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento responsavel em gerar a movimentação das operações dos cooperados
     
-    Alteração : 29/08/2018 - P450 - Alterado para descontar do saldo da conta corrente, o saldo
-                             da conta transitória (Heckmann/AMCom)
+    Alteração : 
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -1587,7 +1586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_nrdconta  => rw_crapass.nrdconta,
                                   pr_dtultmes  => last_day(rw_craplcm.dtmesmvt),
                                   pr_tpoperac  => 101, -- 101-Conta corrente
-                                  pr_vloperac  => rw_craplcm.vllanmto + PREJ0003.fn_sld_cta_prj(rw_crapass.cdcooper, rw_crapass.nrdconta, 0),
+                                  pr_vloperac  => rw_craplcm.vllanmto,
                                   pr_indebcre  => rw_craplcm.indebcre,
                                   pr_dtinclus  => last_day(pr_dtiniger),
                                   pr_dtdemiss  => rw_crapass.dtelimin,
@@ -1624,7 +1623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_nrdconta  => rw_crapass.nrdconta,
                                   pr_dtultmes  => last_day(rw_aplicac.dtmesmvt),
                                   pr_tpoperac  => 199, -- 199-Aplicação
-                                  pr_vloperac  => rw_aplicac.vllanmto + PREJ0003.fn_sld_cta_prj(rw_crapass.cdcooper, rw_crapass.nrdconta, 0),
+                                  pr_vloperac  => rw_aplicac.vllanmto,
                                   pr_indebcre  => rw_aplicac.indebcre,
                                   pr_dtinclus  => last_day(pr_dtiniger),
                                   pr_dtdemiss  => rw_crapass.dtelimin,
@@ -1730,15 +1729,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Odirlei Busana(Amcom)
-    Data     : Abril/2016.                   Ultima atualizacao: 29/08/2018
+    Data     : Abril/2016.                   Ultima atualizacao: 19/04/2016
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento responsavel em gerar arquivo com os saldos das operações dos cooperados
     
-    Alteração : 29/08/2018 - P450 - Alterado para descontar do saldo da conta corrente, o saldo
-                             da conta transitória (Heckmann/AMCom)
+    Alteração : 
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -1777,7 +1775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              ,ass.cdagenci
              ,ass.inpessoa 
              ,sda.dtmvtolt
-             ,sda.vlsddisp + PREJ0003.fn_sld_cta_prj(ass.cdcooper, ass.nrdconta, 0) AS vlsddisp
+             ,sda.vlsddisp
              ,sda.vlsdrdca + sda.vlsdrdpp AS vlsdapli  -- aplicação + p. programada
         FROM crapsda sda,
              crapass ass
