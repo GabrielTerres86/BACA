@@ -812,6 +812,8 @@ PROCEDURE process-web-request :
                                             END.
                                             ELSE DO:
                                               
+                                                IF v_opcao = "C" OR v_opcao = "R" THEN
+                                                  DO:
                                                 RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
                                                 RUN consulta-provisao IN h-b1crap54(
                                                                                    INPUT v_coop,
@@ -823,8 +825,10 @@ PROCEDURE process-web-request :
                                                                                    OUTPUT p-solicita).
 
                                                 DELETE PROCEDURE h-b1crap54.
+                                                  END.
                                                 
-                                                IF RETURN-VALUE = "NOK" THEN DO:
+                                                IF RETURN-VALUE = "NOK" AND 
+                                                   (v_opcao = "C" OR v_opcao = "R") THEN DO:
                                                   
                                                     ASSIGN v_cod = ""
                                                            v_senha = "".
@@ -843,6 +847,8 @@ PROCEDURE process-web-request :
                                                         ASSIGN v_action = ''.
                                                     END.
                                                     ELSE DO:
+                                                      IF v_opcao = "C" OR v_opcao = "R" THEN
+                                                        DO:
                                                           RUN dbo/b1crap54.p
                                                               PERSISTENT SET h-b1crap54.
                                                               
@@ -856,8 +862,10 @@ PROCEDURE process-web-request :
                                                                                                      INPUT DEC(v_valor),
                                                                                                      INPUT p-solicita).
                                                           DELETE PROCEDURE h-b1crap54.
+                                                        END.
 
-                                                          IF RETURN-VALUE = 'NOK' THEN DO:
+                                                          IF RETURN-VALUE = 'NOK' AND 
+                                                             (v_opcao = "C" OR v_opcao = "R") THEN DO:
                                                             
                                                                 ASSIGN v_cod = ""
                                                                        v_senha = ""
@@ -1024,7 +1032,7 @@ PROCEDURE process-web-request :
                  </script>'.
 
             /*** Incluido por Magui 19/08/2003 ***/
-            IF   aux_vllanmto <> 0   THEN
+            IF   aux_vllanmto <> 0 AND (v_opcao = "R" OR v_opcao = "C") THEN
                  DO:                                  
                     FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper  AND
                                        craptab.nmsistem = "CRED"            AND

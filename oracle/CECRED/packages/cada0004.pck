@@ -52,6 +52,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                  
 				 04/09/2018 - Atualizar DTINICIO_CREDITO ao atualizar TBCOTAS_DEVOLUCAO.
 				              (Alcemir - Mout's : SM 364)
+
+                 11/10/2018 - Incluido opção 6-Pagamento na tabela de log tbcrd_log_operacao.
+						      (Reinert)
                  
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -8934,6 +8937,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       vr_dstransa := 'Transferência';
     ELSIF pr_indoperacao = 5 THEN -- Se for solicitacao de taloes
       vr_dstransa := 'Solicitação de Talões';
+	  ELSIF pr_indoperacao = 6 THEN -- Se for solicitacao de taloes
+      vr_dstransa := 'Pagamento';			
     END IF;
     
     -- Preenche a descricao da origem
@@ -9167,7 +9172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        AND nrdconta = pr_nrdconta
        AND cdhistor = pr_cdhistor
        AND nrdocmto = pr_nrdocmto
-       AND indoperacao IN (2,3,4);
+       AND indoperacao IN (2,3,4,6);
   BEGIN
     OPEN cr_log;
     FETCH cr_log INTO pr_tpcartao;

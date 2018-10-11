@@ -265,6 +265,19 @@ PROCEDURE valida-outros-conta:
            RETURN "NOK".
        END.
 
+   IF  p-cdhistor = 2553 THEN
+       DO:
+         ASSIGN i-cod-erro  = 0 
+                c-desc-erro = "Pagamentos no caixa devem ser realizados na rotina 54.".           
+         RUN cria-erro (INPUT p-cooper,
+                        INPUT p-cod-agencia,
+                        INPUT p-nro-caixa,
+                        INPUT i-cod-erro,
+                        INPUT c-desc-erro,
+                        INPUT YES).
+         RETURN "NOK".   
+       END.
+
    FIND craphis WHERE craphis.cdcooper = crapcop.cdcooper   AND
                       craphis.cdhistor = p-cdhistor
                       NO-LOCK NO-ERROR.
