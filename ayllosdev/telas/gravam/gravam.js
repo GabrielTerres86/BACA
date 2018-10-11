@@ -991,7 +991,7 @@ function carregarBotoesIniciais(possuictr, cdsitgrv, idseqbem, tpctrpro, tpjusti
 	
 }
 
-function controlaCampos(optButton, possuictr, cdsitgrv, permisit, idseqbem, tpctrpro) {
+function controlaCampos(optButton, possuictr, cdsitgrv, permisit, tpinclus, idseqbem, tpctrpro) {
 	displayNoneButton();
 	opcaoButton = optButton;
 	if (optButton == 'A'){	
@@ -1060,10 +1060,10 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, idseqbem, tpct
 		
         $('#dtmvttel', '#frmBens').habilitaCampo().focus();
 		$('#nrgravam', '#frmBens').habilitaCampo();
-		$('#dsjustif', '#frmBens').habilitaCampo();
+		$('#dsjustif', '#frmBens').val('').habilitaCampo();
 
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
-			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validarIncluir(' + idseqbem + ',' + tpctrpro + ');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
             return false;
         });
 
@@ -1401,7 +1401,7 @@ function validPermiss(cddopcao){
 				if (response ==''){
 					var id = $('#ddl_descrbem', '#frmBens').val();
 					var tr = $('.divRegistros table').find('tr#' + id);
-					controlaCampos(cddopcao, $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val())
+					controlaCampos(cddopcao, $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val())
 				}else{
 					showError("error",response,'Alerta - Ayllos','',false);							
 				}
@@ -1851,6 +1851,7 @@ function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
 
 }
 
+/*
 function validarIncluir(idseqbem, tpctrpro){
 	//Desabilita todos os campos do form
     $('input,select,textarea', '#frmBens').desabilitaCampo();
@@ -1897,6 +1898,7 @@ function validarIncluir(idseqbem, tpctrpro){
 
     return false;	
 }
+*/
 
 function inclusaoManual(idseqbem, tpctrpro) {
 
