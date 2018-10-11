@@ -5063,7 +5063,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                   ,pr_retxml   IN OUT NOCOPY XMLType            --> Arquivo de retorno do XML
                                   ,pr_nmdcampo OUT VARCHAR2                     --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2) IS                 --> Erros do processo
-
+	
+	/*
+		Alteracoes: 
+		
+		11/10/2018: Ajuste para nao ignorar a Poupanca Programada na tela Contas -> Impedimentos Desligamento
+					(Andrey Formigari - Mouts) INC0024647
+	*/
+	
     -- Cursor sobre os dados do associado
     CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -5103,7 +5110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          -- Produtos que não devem ser exibidos
          AND tbcc_produto.cdproduto NOT IN (25)
          AND ((pr_flgautom = 1
-         AND  tbcc_produto.cdproduto NOT IN (3,4,5,6,7,13,16,17,18,19,21,22,23,24,31,33,34,35,36,37,38,39,40,41)) 
+         AND  tbcc_produto.cdproduto NOT IN (3,4,5,6,7,13,17,18,19,21,22,23,24,31,33,34,35,36,37,38,39,40,41)) 
           OR pr_flgautom = 0)
        ORDER BY tbcc_produtos_coop.tpproduto,
                 tbcc_produtos_coop.nrordem_exibicao;
