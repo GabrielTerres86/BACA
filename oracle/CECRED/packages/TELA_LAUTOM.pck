@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LAUTOM IS
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
                                     ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
 
-	PROCEDURE pc_efetiva_lcto_pendente_job;
+	PROCEDURE pc_efetiva_lcto_pendente_job (pr_cdcooper IN crapcop.cdcooper%TYPE default 0);
 
 	PROCEDURE pc_efetua_lancamento(pr_nrdconta     IN crapass.nrdconta%TYPE --> Numero da Conta
                                 ,pr_vlcampos     IN VARCHAR2              --> Dados enviados
@@ -659,7 +659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
 
   END pc_efetiva_lcto_pendente;
 
-	PROCEDURE pc_efetiva_lcto_pendente_job IS
+	PROCEDURE pc_efetiva_lcto_pendente_job (pr_cdcooper IN crapcop.cdcooper%TYPE default 0) IS
   BEGIN
     /* .............................................................................
 
@@ -683,6 +683,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
                                 Inclui nome do modulo logado
                                 ( Belli - Envolti - Chamados 697089 758606 )
 
+                   17/04/2018 - Incluido o parametro pr_cdcooper
+                                Projeto debitador único - Josiane Stiehler (Amcom) 
+
     ............................................................................. */
     DECLARE
 
@@ -690,7 +693,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LAUTOM IS
       CURSOR cr_crapcop IS
         SELECT cdcooper
           FROM crapcop
-         WHERE flgativo = 1;
+         WHERE flgativo = 1
+           AND cdcooper = decode(nvl(pr_cdcooper,0),0,cdcooper,pr_cdcooper);
 
       -- Cursor para retornar lancamentos automaticos
       CURSOR cr_craplau(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
