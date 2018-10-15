@@ -862,13 +862,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     ----------> VARIAVEIS <-----------
 
   BEGIN   
-  
-    BTCH0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
+    NULL;  
+    /*BTCH0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                ,pr_ind_tipo_log => 2 -- Erro tratato
                                ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
                                                 || pr_nmrotina ||' --> '
                                                 || pr_dsdolog
-                               ,pr_nmarqlog     => vr_dsarqlg);
+                               ,pr_nmarqlog     => vr_dsarqlg);*/
   EXCEPTION 
     WHEN OTHERS THEN
       NULL;      
