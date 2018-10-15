@@ -70,27 +70,27 @@
   function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == '' ){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrctrpro"] == '' ){ 
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrctrpro\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrgravam"] == '' ){ 
-			exibirErro('error','N&uacute;mero do gravame inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','N&uacute;mero do gravame inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrgravam\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["tpctrpro"] == 0 ){ 
-			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'tpctrpro\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["idseqbem"] == 0 ){ 
-			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'idseqbem\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["dsjstbxa"] == '' ){ 
-			exibirErro('error','Justificativa da baixa deve ser informada.','Alerta - Ayllos','formataFormularioBens();',false);
+			exibirErro('error','Justificativa da baixa deve ser informada.','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
 				
 	}	

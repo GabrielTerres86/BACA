@@ -1401,7 +1401,7 @@ function validPermiss(cddopcao){
 				if (response ==''){
 					var id = $('#ddl_descrbem', '#frmBens').val();
 					var tr = $('.divRegistros table').find('tr#' + id);
-					controlaCampos(cddopcao, $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val())
+					controlaCampos(cddopcao, $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val());
 				}else{
 					showError("error",response,'Alerta - Ayllos','',false);							
 				}
@@ -1835,9 +1835,15 @@ function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
         },
         success: function (response) {
 			hideMsgAguardo();
-			$('#btVoltar').trigger('click');
             try {
                 eval(response);
+				if(response.indexOf('dschassi') > -1 || response.indexOf('ufdplaca') > -1 || response.indexOf('nrdplaca') > -1 || response.indexOf('nrrenava') > -1){ 
+					var id = $('#ddl_descrbem', '#frmBens').val();
+					var tr = $('.divRegistros table').find('tr#' + id);
+					controlaCampos('A', $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val());
+				} else {
+					$('#btVoltar').trigger('click');
+				}
             } catch (error) {
 
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
@@ -1850,55 +1856,6 @@ function alterarGravame(idseqbem,tpctrpro,dssitgrv,dsmotivo) {
     return false;
 
 }
-
-/*
-function validarIncluir(idseqbem, tpctrpro){
-	//Desabilita todos os campos do form
-    $('input,select,textarea', '#frmBens').desabilitaCampo();
-	$('#ddl_descrbem', '#frmBens').habilitaCampo();
-	
-	var cddopcao = $("#cddopcao", "#frmCab").val();
-	var nrdconta = $("#nrdconta", "#frmFiltro").val();
-    var nrctrpro = $("#nrctrpro", "#frmFiltro").val();
-	
-	$('input,select,textarea', '#frmBens').removeClass('campoErro');
-
-    showMsgAguardo("Aguarde, realizando inclus&atilde;o ...");
-
-    //Requisição para processar a opção que foi selecionada
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/gravam/validar_inclusao.php",
-        data: {
-            cddopcao: cddopcao,
-            nrdconta: normalizaNumero(nrdconta),
-            nrctrpro: normalizaNumero(nrctrpro),
-            tpctrpro: tpctrpro,
-            idseqbem: idseqbem,
-            redirect: "script_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
-        },
-        success: function (response) {
-
-            hideMsgAguardo();
-            try {
-                eval(response);
-				$('#btVoltar').trigger('click')
-            } catch (error) {
-
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
-            }
-
-        }
-
-    });
-
-    return false;	
-}
-*/
 
 function inclusaoManual(idseqbem, tpctrpro) {
 
@@ -1941,7 +1898,13 @@ function inclusaoManual(idseqbem, tpctrpro) {
             hideMsgAguardo();
             try {
                 eval(response);
-				$('#btVoltar').trigger('click')
+				if(response.indexOf('dtmvttel') > -1 || response.indexOf('dsjustif') > -1 || response.indexOf('nrgravam') > -1){ 
+					var id = $('#ddl_descrbem', '#frmBens').val();
+					var tr = $('.divRegistros table').find('tr#' + id);
+					controlaCampos('M', $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val());
+				} else {
+					$('#btVoltar').trigger('click');
+				}
             } catch (error) {
 
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");
@@ -2108,6 +2071,13 @@ function baixaManual(idseqbem,tpctrpro) {
             hideMsgAguardo();
             try {
                 eval(response);
+				if(response.indexOf('nrdconta') > -1 || response.indexOf('nrctrpro') > -1 || response.indexOf('nrgravam') > -1 || response.indexOf('tpctrpro') > -1 || response.indexOf('idseqbem') > -1 || response.indexOf('dsjustif') > -1){ 
+					var id = $('#ddl_descrbem', '#frmBens').val();
+					var tr = $('.divRegistros table').find('tr#' + id);
+					controlaCampos('B', $('#hdpossuictr', tr).val(), $('#hdcdsitgrv', tr).val(), $('#permisit', '#divBens').val(), $('#hdtpinclus', tr).val(), $('#hdidseqbem', tr).val(), $('#hdtpctrpro', tr).val());
+				} else {
+					$('#btVoltar').trigger('click');
+				}
             } catch (error) {
 
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "$('#btVoltar','#divBotoesBens').focus();");

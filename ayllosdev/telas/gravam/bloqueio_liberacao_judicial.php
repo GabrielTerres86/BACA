@@ -129,7 +129,7 @@
 			}
 		
 		IF($GLOBALS["dsjustif"] == '' ){ 
-			exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos',' $(\'#dsjustif\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
 				
 	}

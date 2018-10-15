@@ -79,27 +79,27 @@
   function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == '' ){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'nrdconta\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrctrpro"] == '' ){ 
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrctrpro\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["tpcancel"] != '1' && $GLOBALS["tpcancel"] != '2'){ 
-			exibirErro('error','Tipo de cancelamento inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo de cancelamento inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'tpcancel\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["tpctrpro"] == 0 ){ 
-			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'tpctrpro\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["idseqbem"] == 0 ){ 
-			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'idseqbem\',\'frmBens\');',false);
 		}
 		
 	IF($GLOBALS["dsjustif"] == '' ){ 
-		exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+		exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 	}
 				
 	}	
