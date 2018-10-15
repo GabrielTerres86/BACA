@@ -478,6 +478,7 @@
 				arrayAlienacao<? echo $i; ?>['cdoperad'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdoperad'); ?>';
 				arrayAlienacao<? echo $i; ?>['dssitgrv'] = '<? echo getByTagName($alienacoes[$i]->tags,'dssitgrv'); ?>';
 				arrayAlienacao<? echo $i; ?>['dstpcomb'] = '<? echo getByTagName($alienacoes[$i]->tags,'dstpcomb'); ?>';
+				arrayAlienacao<? echo $i; ?>['uflicenc'] = '<? echo getByTagName($alienacoes[$i]->tags,'uflicenc'); ?>';
 
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 

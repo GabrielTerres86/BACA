@@ -351,6 +351,7 @@ var inobriga = '';
 //emprestimo
 var booPrimeiroBen = false; //809763
 var booBoxMarcas = true;
+var bemCarregadoUfPa = false;
 
 // PRJ366
 var vlemprst_antigo = 0;
@@ -1441,9 +1442,9 @@ function controlaOperacao(operacao) {
                     }
                 }
 
-                if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'E_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO', 'A_BENS', 'AI_BENS'])) {
+/*                if (in_array(operacao, ['C_ALIENACAO', 'AI_ALIENACAO', 'A_ALIENACAO', 'E_ALIENACAO', 'I_ALIENACAO', 'IA_ALIENACAO', 'A_BENS', 'AI_BENS']) && !bemCarregadoUfPa) {
                     busca_uf_pa_ass();
-                }
+                }*/
 				if (operacao == "A_SOMBENS") {
 					showMsgAguardo('Aguarde, buscando bens...');
 				}
@@ -3227,26 +3228,39 @@ function controlaLayout(operacao) {
 				//strSelect(lscatbem, 'dscatbem', 'frmTipo');
 				$('#' + nomeForm).limpaFormulario();
 				rNrBem.html('( ' + (contAlienacao + 1) + 'º Bem )');
-				cTpChassi.val(2);
 			}
 		}
 
 		if (!in_array(operacao, ['C_ALIENACAO'])) {
+			if (!bemCarregadoUfPa) {
+				busca_uf_pa_ass();
+			}
 			$("#"+idElementTpVeiulo).unbind('change').bind('change', function() {
 				if (in_array(cCateg.val(), ['AUTOMOVEL', 'MOTO', 'CAMINHAO'])) {
+					if (cTpChassi.val()==""){
+						cTpChassi.val(2);
+					}
 					cTpBem.trigger("change");
 					//rTpBem.css('visibility', 'visible');
 					cTpBem.habilitaCampo(); //, 'width': '87px'
 					//rUfLicenc.css('visibility', 'visible');
 					cUfLicenc.habilitaCampo();
 					$("#btHistoricoGravame").show();
-					if (booBoxMarcas) {
+					//if (booBoxMarcas) {
 					    $("#" + idElementMarca + "C").hide();
 					    $("#" + idElementMarca).show();
-					} else {
+					    $("#" + idElementModelo + "C").hide();
+					    $("#" + idElementModelo).show();
+					    $("#" + idElementAno + "C").hide();
+					    $("#" + idElementAno).show();
+					/*} else {
 					    $("#" + idElementMarca + "C").show();
 					    $("#" + idElementMarca).hide();
-					}
+					    $("#" + idElementModelo + "C").show();
+					    $("#" + idElementModelo).hide();
+					    $("#" + idElementAno + "C").show();
+					    $("#" + idElementAno).hide();
+					}*/
 					cChassi.addClass('alphanum').attr('maxlength', '17'); //.css('width', '162px')
 					cTpChassi.habilitaCampo();
 					cCor.habilitaCampo();
@@ -3267,16 +3281,38 @@ function controlaLayout(operacao) {
 						trataCamposFipe($(this));
 					}
 
-					if( validaValorCombo( $(this) ) ) {
+					if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 						var urlPagina= "telas/manbem/fipe/busca_marcas.php";
 						var tipoVeiculo = trataTipoVeiculo($(this).val());
 						var data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax'});
 						buscaFipeServico(urlPagina,data);
 					}
-					$("#"+idElementAno+"C").habilitaCampo();
+					//$("#"+idElementAno+"C").habilitaCampo();
 					if (!booBoxMarcas) {
 					    booBoxMarcas = true;
 					}
+				} else if ( cCateg.val()=="" ) {
+					cTpBem.val('').desabilitaCampo();
+					cUfLicenc.val('').desabilitaCampo();
+					$("#btHistoricoGravame").hide();
+					cUfPlaca.val('').desabilitaCampo();
+					cNrPlaca.val('').desabilitaCampo();
+					cRenavan.val('').desabilitaCampo();
+					cTpChassi.val('').desabilitaCampo();
+					cCor.val('').desabilitaCampo();
+					cVlFipe.val('');
+					cVlMercad.val('');
+					cSitGrv.val('');
+					cAnoFab.val('');
+					cCPF.val('');
+					cChassi.val('');
+					$("#" + idElementMarca + "C").hide();
+					$("#" + idElementMarca).show().html('');
+					$("#" + idElementModelo + "C").hide();
+					$("#" + idElementModelo).show().html('');
+					$("#" + idElementAno + "C").hide();
+					$("#" + idElementAno).show().html('');
+					busca_uf_pa_ass();
 				} else {
 					//rTpBem.css('visibility', 'hidden');
 					cTpBem.desabilitaCampo();
@@ -3301,11 +3337,11 @@ function controlaLayout(operacao) {
 
 			$("#"+idElementMarca).unbind('change').bind('change', function() {
 				trataCamposFipe($(this));
-				if( validaValorCombo( $(this) ) ) {
+				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_modelos.php";
 					var cdMarcaFipe = $(this).val();
-					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax'});
-					buscaFipeServico(urlPagina,data);	
+					var data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax' });
+					buscaFipeServico(urlPagina,data);
 				}
 				if ($(this).val() == '-1' && $("#"+idElementModelo+"C").val() != "") {
 					$("#"+idElementModelo+"C").show();
@@ -3320,11 +3356,11 @@ function controlaLayout(operacao) {
 
 			$("#"+idElementModelo).unbind('change').bind('change', function() {
 				trataCamposFipe($(this));
-				if( validaValorCombo( $(this) ) ) {
+				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_anos.php";
 					var cdMarcaFipe = $("#"+idElementMarca).val();
 					var cdModeloFipe = $(this).val();
-					var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax'});
+					var data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 				if ($(this).val() == '-1' && $("#"+idElementAno+"C").val() != "") {
@@ -3338,8 +3374,7 @@ function controlaLayout(operacao) {
 
 			$("#"+idElementAno).unbind('change').bind('change', function() {
 				trataCamposFipe($(this));
-				if( validaValorCombo( $(this) ) )
-				{
+				if( validaValorCombo( $(this) ) && !bemCarregadoUfPa ) {
 					var urlPagina= "telas/manbem/fipe/busca_valor.php";
 					var cdMarcaFipe = $("#"+idElementMarca).val();
 					var cdModeloFipe = $("#"+idElementModelo).val();
@@ -3349,7 +3384,7 @@ function controlaLayout(operacao) {
 					} else {
 						cdAnoFipe = modeloBem;
 					}
-					var data = jQuery.param({idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, redirect: 'script_ajax'});
+					var data = jQuery.param({ idelhtml:idElementValor, cdmarfip: cdMarcaFipe, cdmodfip: cdModeloFipe, cdanofip: cdAnoFipe, redirect: 'script_ajax' });
 					buscaFipeServico(urlPagina,data);
 				}
 			});
@@ -3415,6 +3450,7 @@ function controlaLayout(operacao) {
 				cChassi.val(cChassi.val().replace(/ /g,''));
 			});
 
+			bemCarregadoUfPa = false;
 			if ($("#"+idElementMarca+"C").val()==""){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
 			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
 			if ($("#"+idElementAno+"C").val()=="" && (!in_array(cCateg.val(), ['MAQUINA DE COSTURA', 'EQUIPAMENTO']))){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
@@ -4674,9 +4710,6 @@ function atualizaTela() {
         $('#idalibem', '#frmTipo').val(arrayAlienacoes[contAlienacao]['idalibem']);
         //$('#uflicenc', '#frmTipo').val(arrayAlienacoes[contAlienacao]['uflicenc']); //GRAVAMES */
 
-		$('#dstipbemC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dstipbem'] );
-		$('#dsmarbemC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsmarbem'] );
-		$('#dsbemfinC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsbemfin'] );
 		$('#vlfipbem', '#frmTipo').val( arrayAlienacoes[contAlienacao]['vlfipbem'] ).trigger('mask.maskMoney');
 		$('#dssitgrv', '#frmTipo').val( arrayAlienacoes[contAlienacao]['dssitgrv'] );
 
@@ -4697,7 +4730,6 @@ function atualizaTela() {
 
 		$('#vlrdobem', '#frmTipo').val( vlrdobemtmp ).trigger('mask.maskMoney');
 		$('#nrcpfcgc', '#frmTipo').val( nrcpfcgctmp );
-		$('#nrmodbemC','#frmTipo').val( nrmodbemtmp );
 
 		//$('#nrrenava', '#frmTipo').mask('AAA.AAA.AAA.AAA', {reverse: true});
 /*
@@ -4724,7 +4756,7 @@ function atualizaTela() {
 				$(this).attr('selected', 'selected');
 			}
 		});
-
+/*
 		if ( $("#dsmarbemC").val() != "" ) {
 			$("#dsmarbemC").show();
 			$("#dsmarbem").hide();
@@ -4736,6 +4768,37 @@ function atualizaTela() {
 		if ( $("#nrmodbemC").val() != "" ) {
 			$("#nrmodbemC").show();
 			$("#nrmodbem").hide();
+		}
+*/
+		if (arrayAlienacoes[contAlienacao]['tpchassi'] != "") {
+			bemCarregadoUfPa = true;
+		}
+		
+		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO']) && !in_array(operacao, ['C_ALIENACAO'])) {
+
+			urlPagina= "telas/manbem/fipe/busca_marcas.php";
+			tipoVeiculo = trataTipoVeiculo(arrayAlienacoes[contAlienacao]['dscatbem']);
+			data = jQuery.param({ idelhtml: idElementMarca, tipveicu: tipoVeiculo, redirect: 'script_ajax', dsmarbem: arrayAlienacoes[contAlienacao]['dsmarbem'], dsbemfin: arrayAlienacoes[contAlienacao]['dsbemfin'], nrmodbem: nrmodbemtmp });
+			buscaFipeServico(urlPagina,data);
+			/*
+			$("#"+idElementMarca).on("change", function () {
+				urlPagina= "telas/manbem/fipe/busca_modelos.php";
+				cdMarcaFipe = $("#"+idElementMarca).val();
+				data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax', dsbemfin:arrayAlienacoes[contAlienacao]['dsbemfin'] });
+				buscaFipeServico(urlPagina,data);
+			});
+
+			$("#"+idElementModelo).on("change", function () {
+				urlPagina= "telas/manbem/fipe/busca_anos.php";
+				cdModeloFipe = $(this).val();
+				data = jQuery.param({ idelhtml:idElementAno, cdmarfip: cdMarcaFipe ,cdmodfip: cdModeloFipe, redirect: 'script_ajax', vlrselec: nrmodbemtmp });
+				buscaFipeServico(urlPagina,data);
+			});
+			*/
+		} else {
+			$('#dsmarbemC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsmarbem'] );
+			$('#dsbemfinC','#frmTipo').val( arrayAlienacoes[contAlienacao]['dsbemfin'] );
+			$('#nrmodbemC','#frmTipo').val( nrmodbemtmp );
 		}
 
 		if (in_array(arrayAlienacoes[contAlienacao]['dscatbem'],['AUTOMOVEL','CAMINHAO','MOTO'])) {
@@ -4760,7 +4823,6 @@ function atualizaTela() {
 					$(this).attr('selected', 'selected');
 				}
 			});
-
 		} else {
 			$('#dstipbem', '#frmTipo').desabilitaCampo();
 			$('#uflicenc', '#frmTipo').desabilitaCampo();
@@ -10613,6 +10675,44 @@ function mostraAplicacao(tpaplica) {
 function alteraSomenteBens() {
 	showMsgAguardo('Aguarde, salvando ...');
 
+    //Bens alienação
+    aux_dsdalien = '';
+    for (i in arrayAlienacoes) {
+
+        if (aux_dsdalien != '') {
+            aux_dsdalien = aux_dsdalien + '|';
+        }
+
+		var dstpcomb = "";
+		var nrmodbem = arrayAlienacoes[i]['nrmodbem'];
+		arrmodbem = nrmodbem.split(" ");
+		if ( arrmodbem[0] !== nrmodbem ) {
+			nrmodbem = arrmodbem[0];
+			dstpcomb = arrmodbem[1];
+		}
+
+        aux_dsdalien = aux_dsdalien +
+                arrayAlienacoes[i]['dscatbem'] + ';' +
+                removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dsbemfin'].replace("<", "").replace(">", ""))) + ';' +
+                removeAcentos(removeCaracteresInvalidos(arrayAlienacoes[i]['dscorbem'].replace("<", "").replace(">", ""))) + ';' +
+                number_format(parseFloat(arrayAlienacoes[i]['vlrdobem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //altera
+                arrayAlienacoes[i]['dschassi'] + ';' +
+                arrayAlienacoes[i]['nranobem'] + ';' +
+                nrmodbem.substring(0,4) + ';' +
+                arrayAlienacoes[i]['nrdplaca'].replace('0000000', '') + ';' +
+                normalizaNumero(arrayAlienacoes[i]['nrrenava']) + ';' +
+                arrayAlienacoes[i]['tpchassi'] + ';' +
+                arrayAlienacoes[i]['ufdplaca'] + ';' +
+                normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) + ';' + //altera
+                arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
+                arrayAlienacoes[i]['dstipbem'] + ';' +
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES*/
+                arrayAlienacoes[i]['cdcoplib'] + ';' + /* OPERADOR DE LIBERACAO */
+                arrayAlienacoes[i]['dsmarbem'] + ';' + //novo
+                number_format(parseFloat(arrayAlienacoes[i]['vlfipbem'].replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '') + ';' + //novo
+				dstpcomb + ';' ; //novo
+    }
+
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -10621,6 +10721,7 @@ function alteraSomenteBens() {
 			cddopcao: cddopcao,
 			nrdconta: nrdconta,
 			nrctremp: nrctremp,
+			dsdalien: aux_dsdalien,
 			arrayAlienacoes : JSON.stringify(arrayAlienacoes),
 			redirect: 'html_ajax'
 		},
@@ -10641,3 +10742,5 @@ function alteraSomenteBens() {
     
 	return false;
 }
+// Verificar perda de informações na navegação da janela quando volta ao início e revisa bens;
+// verificar situação do UF placa e UF Licenciamento;

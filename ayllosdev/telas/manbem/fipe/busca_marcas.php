@@ -2,10 +2,10 @@
 /*!
  * FONTE            : busca_marcas.php
  * CRIAÃ‡ÃƒO        : Maykon D. Granemann / ENVOLTI
- * DATA CRIAÇÃO     : 14/08/2018
+ * DATA CRIAÃ‡ÃƒO     : 14/08/2018
  * OBJETIVO         : 
  * --------------
- * ALTERAÇÕES     :
+ * ALTERAÃ‡Ã•ES     :
  * --------------
  */
 ?> 
@@ -21,10 +21,15 @@
     require_once('uteis/class_combo.php');
     require_once('uteis/xml_convert_values.php');
 	isPostMethod();
+	
+	$aux = "";
 
-    /******************************************************* Chama Serviço Fipe *****************************************************************/
+    /******************************************************* Chama ServiÃ§o Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
-    $cdTipoVeiculo		= (isset($_POST['tipveicu'])) ? $_POST['tipveicu'] : 0  ;    
+    $cdTipoVeiculo		= (isset($_POST['tipveicu'])) ? $_POST['tipveicu'] : 0  ;
+	$dsmarbem			= (isset($_POST['dsmarbem'])) ? $_POST['dsmarbem'] : 0  ;
+	$dsbemfin			= (isset($_POST['dsbemfin'])) ? $_POST['dsbemfin'] : 0  ;
+	$nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
 
     $urlServicoOperacao = $UrlFipe."ObterListaMarcasFipe";
     $data = '{
@@ -41,7 +46,7 @@
     $arrayHeader = array("Content-Type:application/json","Accept-Charset:application/json","Authorization:".$AuthFipe);    
     $xmlReturn = ChamaServico($urlServicoOperacao, "POST", $arrayHeader, $data);
 
-    /**************************************************** Fim Chamada Serviço Fipe ****************************************************************/
+    /**************************************************** Fim Chamada ServiÃ§o Fipe ****************************************************************/
 
     /*************************************************** Tratamento dados retornados **************************************************************/
     $nameTagList = 'marca';
@@ -55,8 +60,18 @@
         echo "$('#".$idElementoHtml."').append($('<option>', 
               {
                 value: ".$comboItem->value.",
-                text: '".utf8_decode($comboItem->text)."'
+                text: '".utf8_decode(removeCaracteresInvalidos($comboItem->text))."'
               }));";
+
+		if (strtoupper(utf8_decode(removeCaracteresInvalidos($comboItem->text))) == strtoupper(utf8_decode($dsmarbem))) {
+			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . utf8_decode(removeCaracteresInvalidos($comboItem->text)) . "'; }).attr('selected', 'selected');
+						urlPagina= \"telas/manbem/fipe/busca_modelos.php\";
+						cdMarcaFipe = ".$comboItem->value.";
+						data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax', dsbemfin: '$dsbemfin', nrmodbem: '$nrmodbem' });
+						buscaFipeServico(urlPagina,data);
+			";
+		}
     }
+	echo $aux;
     /************************************************** Fim Tratamento dados retornados *************************************************************/
 ?>

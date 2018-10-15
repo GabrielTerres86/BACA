@@ -35,7 +35,7 @@ if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIE
 				$inicio = "AT";
 			} ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('<? echo $inicio; ?>'); return false;">Voltar</a>
-		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico Gravames</a>
 		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'<? echo $operacao; ?>\');','<? echo $operacao; ?>'); return false;">Continuar</a>
 	<? } else if ($operacao == 'AI_ALIENACAO' || $operacao == 'AI_BENS') {
 			if ($operacao == 'AI_ALIENACAO') {
