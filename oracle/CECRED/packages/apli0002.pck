@@ -1406,7 +1406,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 							 
                 27/06/2018 - PRJ450 - Regulatorios de Credito - Centralizacao do lancamento em conta corrente (Fabiano B. Dias - AMcom).
                              PC_INCLUIR_NOVA_APLICACAO e PC_EFETUA_RESGATE_ONLINE
-			 
+                             
+                15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
+			                       pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+                             
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -7979,13 +7982,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
         -- Excluir lancamentos 
         BEGIN
-          DELETE FROM craplcm
-           WHERE craplcm.rowid = rw_craplcm.rowid;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Nao foi possivel excluir lancamentos!';
-            RAISE vr_exc_erro;
+          /*DELETE FROM craplcm
+           WHERE craplcm.rowid = rw_craplcm.rowid;*/
+           
+          lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_craplcm.cdcooper
+                                         , pr_dtmvtolt => rw_craplcm.dtmvtolt
+                                         , pr_cdagenci => 0
+                                         , pr_cdbccxlt => 0
+                                         , pr_nrdolote => 0
+                                         , pr_nrdctabb => rw_craplcm.nrdconta 
+                                         , pr_nrdocmto => rw_craplcm.nrdocmto
+                                         , pr_rowid    => rw_craplcm.rowid
+                                         , pr_cdcritic => vr_cdcritic
+                                         , pr_dscritic => vr_dscritic); 
+                                         
+          IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
+             vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
+             RAISE vr_exc_erro;
+          END IF;                                 
+        
         END;
           
       END IF;  
@@ -21669,7 +21684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_cdcritic INTEGER;
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecoes
-      vr_exc_erro EXCEPTION;
+      vr_exc_erro EXCEPTION; 
       vr_exc_sair EXCEPTION;
     BEGIN
       --Limpar tabelas memoria
