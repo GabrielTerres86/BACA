@@ -606,7 +606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 11/10/2018
+    Data     : Maio/2013.                   Ultima atualizacao: 15/10/2018
   
    Dados referentes ao programa:
   
@@ -648,8 +648,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                      de conta e CPF para o usuário; Na rotina pc_busca_dados_ass_58, melhoria na crítica
                      de obrigatoriedade de endereço (Carlos)
                      
-        11/10/2018 - inc0025288 Tratamento na pc_busca_dados_58 para não retornar crítica nas exceptions 
-                     vr_exc_filtro e vr_exc_busca quando esta for chamada pelo programa crps652 (Carlos)
+        15/10/2018 - inc0025288 Tratamento na pc_busca_dados_58 para não retornar crítica nas exceptions 
+                     vr_exc_filtro e vr_exc_busca quando esta for chamada pela tela LOTPRC (Carlos)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -5556,11 +5556,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           END IF;
         EXCEPTION
           WHEN vr_exc_filtro THEN
-            IF UPPER(pr_nmdatela) = 'CRPS652' THEN
-              NULL;
-            ELSE
+            IF UPPER(pr_nmdatela) = 'LOTPRC' THEN
               pr_cdcritic := vr_cdcritic;
               pr_dscritic := vr_dscritic;
+            ELSE
+              NULL;
             END IF;
         END; --Filtro Busca
         --Se ocorreu erro
@@ -5635,11 +5635,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         END LOOP; --rw_crapavt
       EXCEPTION
         WHEN vr_exc_busca THEN          
-          IF UPPER(pr_nmdatela) = 'CRPS652' THEN
-            NULL;
-          ELSE
+          IF UPPER(pr_nmdatela) = 'LOTPRC' THEN
             pr_cdcritic := vr_cdcritic;
             pr_dscritic := vr_dscritic;
+          ELSE
+            NULL;
           END IF;
       END; --Busca
 
