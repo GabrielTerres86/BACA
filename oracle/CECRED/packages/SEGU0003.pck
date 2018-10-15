@@ -1496,6 +1496,7 @@ EXCEPTION
          WHERE 
               e.cdcooper = p_cdcooper
           AND e.nrdconta = pr_nrdconta
+		  AND e.inliquid = 0
           AND NOT EXISTS (SELECT 
                                 1 
                             FROM 
