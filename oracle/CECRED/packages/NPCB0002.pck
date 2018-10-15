@@ -1025,7 +1025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            --> Garantir a gravação da tabela tbcobran_consulta_titulo
            COMMIT;
            
-           BTCH0001.pc_gera_log_batch ( pr_cdcooper     => 3
+           /*BTCH0001.pc_gera_log_batch ( pr_cdcooper     => 3
                                        ,pr_ind_tipo_log => 2 -- Erro tratato
                                        ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '||
                                                         'Coop: '  || pr_cdcooper ||' - '||
@@ -1035,7 +1035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                                         'porém consulta ainda esta no periodo de convivencia.'
                                                         
                                        ,pr_nmarqlog     => 'npc_conviv_'||to_char(SYSDATE,'RRRRMM')||'.log');
-                      
+           */           
            
            --> limpar variaveis/parametro
            vr_cdctrlcs    := NULL;
