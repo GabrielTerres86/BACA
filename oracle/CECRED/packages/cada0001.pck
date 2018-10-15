@@ -606,7 +606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 02/10/2018
+    Data     : Maio/2013.                   Ultima atualizacao: 11/10/2018
   
    Dados referentes ao programa:
   
@@ -647,6 +647,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         02/10/2108 - inc0024681 Na rotina pc_busca_dados_cto_58, repassagem das críticas com detalhe
                      de conta e CPF para o usuário; Na rotina pc_busca_dados_ass_58, melhoria na crítica
                      de obrigatoriedade de endereço (Carlos)
+                     
+        11/10/2018 - inc0025288 Tratamento na pc_busca_dados_58 para não retornar crítica nas exceptions 
+                     vr_exc_filtro e vr_exc_busca quando esta for chamada pelo programa crps652 (Carlos)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -4770,6 +4773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_ass_58: ' || SQLERRM;
     END;
@@ -5552,8 +5556,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           END IF;
         EXCEPTION
           WHEN vr_exc_filtro THEN
-            pr_cdcritic := vr_cdcritic;
-            pr_dscritic := vr_dscritic;
+            IF UPPER(pr_nmdatela) = 'CRPS652' THEN
+              NULL;
+            ELSE
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := vr_dscritic;
+            END IF;
         END; --Filtro Busca
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -5626,9 +5634,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 
         END LOOP; --rw_crapavt
       EXCEPTION
-        WHEN vr_exc_busca THEN
-          pr_cdcritic := vr_cdcritic;
-          pr_dscritic := vr_dscritic;
+        WHEN vr_exc_busca THEN          
+          IF UPPER(pr_nmdatela) = 'CRPS652' THEN
+            NULL;
+          ELSE
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := vr_dscritic;
+          END IF;
       END; --Busca
 
       --Se ocorreu erro
@@ -5673,6 +5685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        cecred.pc_internal_exception;
         pr_cdcritic:= 0;
         pr_dscritic := 'Erro em CADA0001.pc_busca_dados_58: ' || SQLERRM;
     END;
