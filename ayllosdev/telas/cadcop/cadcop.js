@@ -346,8 +346,8 @@ function formataFormularioConsulta() {
     $('label[for="nrouvbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" }); 
     $('label[for="nrsacbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "190px" }); 
     
-    $('label[for="hrinicxa"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
-    $('label[for="qttmpsgr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
+    $('label[for="hrinicxa"]', "#frmConsulta5").addClass("rotulo").css({ "width": "170px" });
+    $('label[for="qttmpsgr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "170px" });
     $('label[for="flgkitbv"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "180px" });
 
     $('label[for="qtdiasus"]', "#frmConsulta5").addClass("rotulo").css({ "width": "300px" });
