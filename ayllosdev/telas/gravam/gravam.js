@@ -1063,7 +1063,7 @@ function controlaCampos(optButton, possuictr, cdsitgrv, permisit, tpinclus, idse
 		$('#dsjustif', '#frmBens').val('').habilitaCampo();
 
         $("#btConcluir", "#divBotoesBens").unbind('click').bind('click', function () {
-			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'validarIncluir(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
+			showConfirmacao('Deseja confirmar a opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'inclusaoManual(' + idseqbem + ',' + tpctrpro + ');\',\'\');', 'validPermiss("M");', 'sim.gif', 'nao.gif');
             return false;
         });
 
