@@ -211,6 +211,7 @@ PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_nrdolote IN  craplcm.nrdolote%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
 																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                , pr_rowid    IN  ROWID
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -1365,36 +1366,46 @@ PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_nrdolote IN  craplcm.nrdolote%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
 																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+                                , pr_rowid    IN  ROWID
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
-  vr_nrdconta craplcm.nrdconta%TYPE;
-BEGIN
-	-- Exclui o lançamento da CRAPLCM
+  vr_cdcooper craplcm.cdcooper%TYPE;
+  vr_dtmvtolt craplcm.dtmvtolt%TYPE;
+	vr_nrdocmto craplcm.nrdocmto%TYPE;
+  vr_nrdconta craplcm.nrdconta%TYPE; 
+  
+BEGIN   
+  
+  -- Exclui o lançamento da CRAPLCM
   DELETE FROM craplcm lcm
-	 WHERE lcm.cdcooper = pr_cdcooper
+	 WHERE ((lcm.cdcooper = pr_cdcooper
 	   AND lcm.dtmvtolt = pr_dtmvtolt
 		 AND lcm.cdagenci = pr_cdagenci
 		 AND lcm.cdbccxlt = pr_cdbccxlt
 		 AND lcm.nrdolote = pr_nrdolote 
 		 AND lcm.nrdocmto = pr_nrdocmto
-	 RETURNING lcm.nrdconta INTO vr_nrdconta;
+     AND pr_rowid IS NULL) 
+      OR (lcm.rowid = pr_rowid)
+      )     
+	 RETURNING lcm.cdcooper, lcm.dtmvtolt, lcm.nrdocmto, lcm.nrdconta
+   INTO       vr_cdcooper,  vr_dtmvtolt, vr_nrdocmto,  vr_nrdconta;
 	 
 	 IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, vr_nrdconta) THEN 
 		 -- Exclui lançamento de estorno do crédito da conta corrente para movimentação para a conta transitória
 		 DELETE FROM craplcm lcm
-		  WHERE lcm.cdcooper = pr_cdcooper
-			  AND lcm.dtmvtolt = pr_dtmvtolt
-				AND lcm.nrdconta = vr_nrdconta
-				AND lcm.nrdocmto = pr_nrdocmto
-				AND lcm.cdhistor = 2719;
+		  WHERE lcm.cdcooper   = vr_cdcooper
+			  AND lcm.dtmvtolt   = vr_dtmvtolt
+				AND lcm.nrdconta   = vr_nrdconta
+				AND lcm.nrdocmto   = vr_nrdocmto
+				AND lcm.cdhistor   = 2719;
 				
 		 -- Exclui lançamento de crédito da conta transitória
 		 DELETE FROM tbcc_prejuizo_lancamento prj
-		  WHERE prj.cdcooper = pr_cdcooper
+		  WHERE prj.cdcooper = vr_cdcooper
 			  AND prj.nrdconta = vr_nrdconta
-				AND prj.dtmvtolt = pr_dtmvtolt
-				AND prj.nrdocmto = pr_nrdocmto
+				AND prj.dtmvtolt = vr_dtmvtolt
+				AND prj.nrdocmto = vr_nrdocmto
 				AND prj.cdhistor = 2720;	
 	 END IF;
 EXCEPTION
