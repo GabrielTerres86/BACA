@@ -649,7 +649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                      de obrigatoriedade de endereço (Carlos)
                      
         15/10/2018 - inc0025288 Tratamento na pc_busca_dados_58 para não retornar crítica nas exceptions 
-                     vr_exc_filtro e vr_exc_busca quando esta for chamada pela tela LOTPRC (Carlos)
+                     vr_exc_filtro e vr_exc_busca quando esta não for chamada pela tela LOTPRC (Carlos)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
