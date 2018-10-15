@@ -1,24 +1,31 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0001
-  --  Sistema  : Rotinas para cadastros Web
-  --  Sigla    : CADA
-  --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 16/06/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
-  --
-  --             10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
-  --                          na procedure pc_busca_dados_58 para verificar se o representante
-  --                          é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).	   
-  --
-  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
-  --                          procedures desta package. (Carlos Rafael Tanholi).                    
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : CADA0001
+    Sistema  : Rotinas para cadastros Web
+    Sigla    : CADA
+    Autor    : Petter R. Villa Real  - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 12/04/2018
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
+  
+               10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
+                            na procedure pc_busca_dados_58 para verificar se o representante
+                            é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).	             
+  
+               16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
+                            procedures desta package. (Carlos Rafael Tanholi).   
+  
+               22/06/2017 - Ajustes para retirar as rotinas de consulta/inclusão de naciondalidade, pois
+                            foi criado a tela CADNAC para genrenciar as nacionalidades
+                            (Adriano - P339).
+                                             
+               12/04/2018 - Inserida procedure prc_busca_motivo_demissao e alterada origem de dados da 
+			                procedure prc_busca_motivo_demissao                              
+  ---------------------------------------------------------------------------------------------------------------*/
 
   --Tipo de Registro para os lançamentos
   TYPE typ_reg_lancamentos IS
@@ -115,7 +122,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
            ,nmdavali crapavt.nmdavali%type
            ,tpdocava crapavt.tpdocava%type
            ,nrdocava crapavt.nrdocava%type
-           ,cdoeddoc crapavt.cdoeddoc%type
+           ,cdoeddoc tbgen_orgao_expedidor.cdorgao_expedidor%TYPE
            ,cdufddoc crapavt.cdufddoc%type
            ,dtemddoc crapavt.dtemddoc%type
            ,dsproftl crapavt.dsproftl%type
@@ -123,7 +130,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
            ,cdsexcto crapavt.cdsexcto%type
            ,cdestcvl crapavt.cdestcvl%type
            ,dsestcvl VARCHAR2(100)
-           ,dsnacion crapavt.dsnacion%type
+           ,cdnacion crapnac.cdnacion%type
+           ,dsnacion crapnac.dsnacion%type
            ,dsnatura crapavt.dsnatura%type
            ,nmmaecto crapttl.nmmaettl%type
            ,nmpaicto crapttl.nmpaittl%type
@@ -166,13 +174,14 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
            ,nrdconta crapcrl.nrdconta%type
            ,nrcpfcgc crapcrl.nrcpfcgc%type
            ,nmrespon crapcrl.nmrespon%type
-           ,dsorgemi crapcrl.dsorgemi%type
+           ,dsorgemi tbgen_orgao_expedidor.cdorgao_expedidor%TYPE
            ,cdufiden crapcrl.cdufiden%type
            ,dtemiden crapcrl.dtemiden%type
            ,dtnascin crapcrl.dtnascin%type
            ,cddosexo crapcrl.cddosexo%type
            ,cdestciv crapcrl.cdestciv%type
-           ,dsnacion crapcrl.dsnacion%type
+           ,cdnacion crapnac.cdnacion%type
+           ,dsnacion crapnac.dsnacion%type
            ,dsnatura crapcrl.dsnatura%type
            ,cdcepres crapcrl.cdcepres%type
            ,dsendres crapcrl.dsendres%type
@@ -358,6 +367,13 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                            ,pr_nrdmeses OUT INTEGER               --Numero de meses
                            ,pr_dsdidade OUT VARCHAR2              --Descricao da idade
                            ,pr_des_erro OUT VARCHAR2);            --Mensagem de Erro
+
+  /* Rotina responsavel por Buscar o Motivo da demissao - via progress*/
+  PROCEDURE prc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
+                                     ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
+                                     ,pr_dsmotdem OUT VARCHAR2              --Descrição Motivo Demissao
+                                     ,pr_cdcritic OUT INTEGER               --Codigo da Critica
+                                     ,pr_des_erro OUT VARCHAR2);
 
   /* Rotina responsavel por Buscar o Motivo da demissao */
   PROCEDURE pc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
@@ -567,63 +583,78 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro
                          
-  PROCEDURE pc_busca_nacionalidades(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);
                                      
-  PROCEDURE pc_inclui_nacionalidade(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);                                   
+
+  --> Identificar Orgão Expedidor
+  PROCEDURE pc_busca_id_orgao_expedidor (pr_cdorgao_expedidor   IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE, 
+                                         pr_idorgao_expedidor  OUT tbgen_orgao_expedidor.idorgao_expedidor%TYPE, 
+                                         pr_cdcritic           OUT INTEGER,
+                                         pr_dscritic           OUT VARCHAR2);                                     
+  --> Buscar dados Orgão Expedidor
+  PROCEDURE pc_busca_orgao_expedidor (pr_idorgao_expedidor   IN tbgen_orgao_expedidor.idorgao_expedidor%TYPE, 
+                                      pr_cdorgao_expedidor  OUT tbgen_orgao_expedidor.cdorgao_expedidor%TYPE, 
+                                      pr_nmorgao_expedidor  OUT tbgen_orgao_expedidor.nmorgao_expedidor%TYPE, 
+                                      pr_cdcritic           OUT INTEGER,
+                                      pr_dscritic           OUT VARCHAR2);
 
 END CADA0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0001
-  --  Sistema  : Rotinas para cadastros Web
-  --  Sigla    : CADA
-  --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 16/06/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
-  --
-  -- Alteracoes: 02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
-  --                          adicionados na crapttl. Ajustes na "pc_busca_dados_cto_72",
-  --                          "pc_busca_dados_cto_58", "pc_busca_dados_ass_58",
-  --                          "pc_busca_dados_id_58" (Douglas - Chamado 131253)
-  --
-  --             07/10/2015 - Alterado parametro pr_flcomple da pc_busca_idade para number 
-  --                          (Lucas Ranghetti #340156)  
-  --
-  --             10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
-  --                          na procedure pc_busca_dados_58 para verificar se o representante
-  --                          é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).
-  --
-  --             01/03/2016 - Adicionado SUBSTR na procedure pc_busca_dados_cto_72 para os campos 
-  --                          nmrespon, nmpairsp, nmmaersp que são carregados da crapttl, e que 
-  --                          possuem tamanho de campos diferentes (Douglas - Chamado 410909)
-  --
-  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
-  --                          procedures desta package. (Carlos Rafael Tanholi).        
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : CADA0001
+    Sistema  : Rotinas para cadastros Web
+    Sigla    : CADA
+    Autor    : Petter R. Villa Real  - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 02/10/2018
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
+  
+   Alteracoes: 02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
+                            adicionados na crapttl. Ajustes na "pc_busca_dados_cto_72",
+                            "pc_busca_dados_cto_58", "pc_busca_dados_ass_58",
+                            "pc_busca_dados_id_58" (Douglas - Chamado 131253)
+  
+               07/10/2015 - Alterado parametro pr_flcomple da pc_busca_idade para number 
+                            (Lucas Ranghetti #340156)  
+  
+               10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
+                            na procedure pc_busca_dados_58 para verificar se o representante
+                            é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).
+  
+               01/03/2016 - Adicionado SUBSTR na procedure pc_busca_dados_cto_72 para os campos 
+                            nmrespon, nmpairsp, nmmaersp que são carregados da crapttl, e que 
+                            possuem tamanho de campos diferentes (Douglas - Chamado 410909)
+  
+               16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
+                            procedures desta package. (Carlos Rafael Tanholi).        
+  
+    			     25/04/2017 - Ajustes realizados:
+                            - Retirar o uso de campos removidos da tabela crapass, crapttl, crapjur 
+                            - Retirar as rotinas de consulta/inclusão de naciondalidade, pois
+                              foi criado a tela CADNAC para genrenciar as nacionalidades
+                            (Adriano - P339).
+              
+			  24/07/2017 - Alterar cdoedptl para idorgexp.
+                           PRJ339-CRM  (Odirlei-AMcom)
+	
+			  12/04/2018 - Inserida procedure prc_busca_motivo_demissao e alterada origem de dados da 
+			                procedure prc_busca_motivo_demissao 
+
+        02/10/2108 - inc0024681 Na rotina pc_busca_dados_cto_58, repassagem das críticas com detalhe
+                     de conta e CPF para o usuário; Na rotina pc_busca_dados_ass_58, melhoria na crítica
+                     de obrigatoriedade de endereço (Carlos)
+
+  ---------------------------------------------------------------------------------------------------------------*/
 
   -- Type para os motivos de demissões
   TYPE tab_motdem IS TABLE OF craptab.dstextab%TYPE INDEX BY BINARY_INTEGER;
   vr_tbmotdem   tab_motdem;
 
+  vr_dsnacion   crapnac.dsnacion%TYPE;
 
   -- Busca dos dados do associado
   CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -634,24 +665,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           ,crapass.nrcpfcgc
           ,crapass.inpessoa
           ,crapass.cdcooper
-          ,crapass.nrcpfstl
           ,crapass.cdagenci
           ,crapass.dtdemiss
-          ,crapass.dsdemail
           ,crapass.indnivel
           ,crapass.cdtipcta
           ,crapass.tpdocptl
           ,crapass.nrdocptl
-          ,crapass.cdoedptl
+          ,crapass.idorgexp
           ,crapass.cdufdptl
           ,crapass.dtemdptl
           ,crapass.dtnasctl
           ,crapass.cdsexotl
-          ,crapass.dsnacion
+          ,crapass.cdnacion
     FROM crapass
     WHERE crapass.cdcooper = pr_cdcooper
     AND   crapass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
+
+  -- Busca a Nacionalidade
+  CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+    SELECT crapnac.dsnacion
+      FROM crapnac
+     WHERE crapnac.cdnacion = pr_cdnacion;
 
   --Selecionar Cadastro Tipos de natureja juridica
   CURSOR cr_gncdntj (pr_cdnatjur IN gncdntj.cdnatjur%type) IS
@@ -875,6 +910,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     END;
   END;
 
+  /* Rotina responsavel por Buscar o Motivo da demissao - via progress*/
+  PROCEDURE prc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
+                                     ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
+                                     ,pr_dsmotdem OUT VARCHAR2              --Descrição Motivo Demissao
+                                     ,pr_cdcritic OUT INTEGER               --Codigo da Critica
+                                     ,pr_des_erro OUT VARCHAR2) IS          --Mensagem de Erro
+  BEGIN
+     cada0001.pc_busca_motivo_demissao (pr_cdcooper  --Código Cooperativa
+                                       ,pr_cdmotdem  --Código Motivo Demissao
+                                       ,pr_dsmotdem  --Descrição Motivo Demissao
+                                       ,pr_cdcritic  --Codigo da Critica
+                                       ,pr_des_erro);
+
+  END;
 
   /* Rotina responsavel por Buscar o Motivo da demissao */
   PROCEDURE pc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
@@ -906,22 +955,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     DECLARE
 
       --Cursores Locais
-      CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%TYPE
-                        ,pr_nmsistem IN craptab.nmsistem%TYPE
-                        ,pr_tptabela IN craptab.tptabela%TYPE
-                        ,pr_cdempres IN craptab.cdempres%TYPE
-                        ,pr_cdacesso IN craptab.cdacesso%TYPE
-                        ,pr_tpregist IN craptab.tpregist%TYPE) IS
-        SELECT craptab.tpregist
-             , craptab.dstextab
-        FROM craptab craptab
-        WHERE craptab.cdcooper = pr_cdcooper
-        AND   UPPER(craptab.nmsistem) = pr_nmsistem
-        AND   UPPER(craptab.tptabela) = pr_tptabela
-        AND   craptab.cdempres = pr_cdempres
-        AND   UPPER(craptab.cdacesso) = pr_cdacesso
-        AND   (craptab.tpregist = pr_tpregist OR pr_tpregist IS NULL);
-      rw_craptab cr_craptab%ROWTYPE;
+       CURSOR cr_motivo_deslig (pr_cdmotivo IN tbcotas_motivo_desligamento.cdmotivo%TYPE) IS
+        SELECT cdmotivo
+             , dsmotivo
+          FROM tbcotas_motivo_desligamento 
+         WHERE cdmotivo = pr_cdmotivo OR pr_cdmotivo IS NULL;
 
       --Variaveis Locais
       vr_exc_erro     EXCEPTION;
@@ -933,45 +971,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       pr_cdcritic:= 0;
       pr_des_erro:= NULL;
 
-      -- Se n¿o informar o motivo da demiss¿o
+      -- Se nao informar o motivo da demissao
       IF pr_cdmotdem IS NULL THEN
         -- Limpar os dados em memória
         vr_tbmotdem.DELETE;
         -- Percorre os motivos de demiss¿o
-        FOR rg_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'MOTIVODEMI'
-                                    ,pr_tpregist => NULL) LOOP
+        FOR rw_motivo_deslig IN cr_motivo_deslig(pr_cdmotivo => NULL) LOOP
           -- Inclui o registro na memória
-          vr_tbmotdem(rg_craptab.tpregist) := rg_craptab.dstextab;
-
+          vr_tbmotdem(rw_motivo_deslig.cdmotivo) := rw_motivo_deslig.dsmotivo;
         END LOOP;
-
+        --
       ELSIF NOT vr_tbmotdem.EXISTS(pr_cdmotdem) THEN
         --Se o codigo do motivo da demissao for zero ignora
         IF NVL(pr_cdmotdem,-1) <> 0 THEN
-
-          -- Buscar configuração na tabela
-          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsistem => 'CRED'
-                                          ,pr_tptabela => 'GENERI'
-                                          ,pr_cdempres => 0
-                                          ,pr_cdacesso => 'MOTIVODEMI'
-                                          ,pr_tpregist => pr_cdmotdem);        
-
+          -- inicaliza variável
+          pr_dsmotdem := null;
+          -- Buscar registro específico
+          FOR rw_motivo_deslig IN cr_motivo_deslig(pr_cdmotivo => pr_cdmotdem) LOOP
+            -- Inclui o registro na memória
+            pr_dsmotdem := rw_motivo_deslig.dsmotivo;
+          END LOOP;
           --Se nao encontrou registro
-          IF TRIM(vr_dstextab) IS NULL THEN
+          IF pr_dsmotdem IS NULL THEN
             --Retornar que nao encontrou
             pr_cdcritic:= 848;
             pr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
-          ELSE
-            --Retornar o motivo encontrado
-            pr_dsmotdem:= vr_dstextab;
           END IF;
-          --Fechar Cursor
-          CLOSE cr_craptab;
         END IF;
       ELSIF vr_tbmotdem.EXISTS(pr_cdmotdem) THEN
         -- Retorna a descrição do registro de memória
@@ -1665,7 +1690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -1673,6 +1698,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para verificar se o cooperado é primeiro titular em outra conta
 
    Alteracoes: 08/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               19/02/2018 - Retirada a validação do NOT IN dos tipos de contas 6, 7, 17 e 18, 
+                            substituído pelo NOT IN dos tipos de contas que tem a modalidade 3 – Conta Aplicação.
+                            PRJ366 (Lombardi).
 
   ............................................................................. */
   BEGIN
@@ -1712,7 +1741,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta
         AND   crapass.dtdemiss IS NULL
-        AND   crapass.cdtipcta NOT IN (6,7,17,18); /** Ignora conta aplicacao **/
+        AND NOT EXISTS (SELECT 1
+                          FROM tbcc_tipo_conta tpcta
+                         WHERE tpcta.cdmodalidade_tipo = 3
+                           AND tpcta.inpessoa = crapass.inpessoa
+                           AND tpcta.cdtipo_conta = crapass.cdtipcta); /** Ignora conta aplicacao **/
+        
+        
       --Selecionar Historico alteracoes na crapass
       CURSOR cr_crapalt (pr_cdcooper IN crapass.cdcooper%type
                         ,pr_nrdconta IN crapass.nrdconta%type) IS
@@ -1949,8 +1984,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                                                  ,pr_nmsistem => 'CRED'
                                                  ,pr_tptabela => 'GENERI'
                                                  ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'SETORECONO'
-                                                 ,pr_tpregist => pr_tab_crapepa(vr_index).cdseteco);        
+                        ,pr_cdacesso => 'SETORECONO'
+                        ,pr_tpregist => pr_tab_crapepa(vr_index).cdseteco);
         
         
         --Se Encontrou
@@ -2224,8 +2259,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                                                      ,pr_nmsistem => 'CRED'
                                                      ,pr_tptabela => 'GENERI'
                                                      ,pr_cdempres => 0
-                                                     ,pr_cdacesso => 'SETORECONO'
-                                                     ,pr_tpregist => pr_tab_crapepa(vr_index).cdseteco);        
+                            ,pr_cdacesso => 'SETORECONO'
+                            ,pr_tpregist => pr_tab_crapepa(vr_index).cdseteco);
             
             
             --Se Encontrou
@@ -2684,7 +2719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -2692,6 +2727,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para buscar dados empresa participante pela conta Contato
 
    Alteracoes: 09/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               19/02/2018 - Comentado validação se o cadastro do contato está completo.
+                            PRJ366 (Lombardi).
 
   ............................................................................. */
   BEGIN
@@ -2794,6 +2832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapass;
+      /*
       --Verificar cadastro incompleto
       IF rw_crapass.indnivel < 2 AND rw_crapass.cdtipcta > 7 THEN
         --Mensagem Critica
@@ -2801,6 +2840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      */
       --Encontrar proximo indice para tabela
       vr_index:= pr_tab_crapavt.count+1;
       /* Endereco */
@@ -3287,7 +3327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 01/03/2016
+   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -3302,6 +3342,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                01/03/2016 - Adicionado SUBSTR para os campos nmrespon, nmpairsp, nmmaersp
                             que são carregados da crapttl, e que possuem tamanho de campos
                             diferentes (Douglas - Chamado 410909)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ 
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)             
+
+               19/02/2018 - A validação se o tipo de conta é maior ou igual a 12 alterada de 
+                            forma que seja validada através da modalidade e do indicador de 
+                            situação da conta ITG. PRJ366 (Lombardi).
+
   ............................................................................. */
   BEGIN
     DECLARE
@@ -3314,6 +3364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapass.nrdconta
               ,crapass.cdcooper
               ,crapass.nrcpfcgc
+              ,crapass.flgctitg
         FROM crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
@@ -3326,6 +3377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapass.nrdconta
               ,crapass.cdcooper
               ,crapass.nrcpfcgc
+              ,crapass.flgctitg
         FROM crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrcpfcgc = pr_nrcpfcgc
@@ -3337,13 +3389,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                         ,pr_idseqttl IN crapttl.idseqttl%type) IS
         SELECT crapttl.nmextttl
               ,crapttl.nrdocttl
-              ,crapttl.cdoedttl
+              ,crapttl.idorgexp
               ,crapttl.cdufdttl
               ,crapttl.dtemdttl
               ,crapttl.dtnasttl
               ,crapttl.cdsexotl
               ,crapttl.cdestcvl
-              ,crapttl.dsnacion
+              ,crapttl.cdnacion
               ,crapttl.dsnatura
               ,crapttl.nmpaittl
               ,crapttl.nmmaettl
@@ -3407,6 +3459,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         AND   crapcrl.nrdconta = pr_nrdctato
         AND   crapcrl.nrcpfcgc = pr_nrcpfcto;
       rw_crapcrl cr_crapcrl%ROWTYPE;
+      --Selecionar modalidade
+      CURSOR cr_tipo_conta (pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE
+                           ,pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE) IS
+        SELECT tpcta.cdmodalidade_tipo
+        FROM tbcc_tipo_conta tpcta
+        WHERE tpcta.cdtipo_conta = pr_cdtipcta
+        AND   tpcta.inpessoa = pr_inpessoa;
+      rw_tipo_conta cr_tipo_conta%ROWTYPE;
+      
       --Variaveis Locais
       vr_flgsuces BOOLEAN;
       vr_crapass  BOOLEAN;
@@ -3420,6 +3481,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       vr_exc_erro   EXCEPTION;
       vr_exc_busca  EXCEPTION;
       vr_exc_filtro EXCEPTION;
+      
+      vr_nmorgexp   tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
+      
     BEGIN
       --Inicializar variaveis erro
       pr_cdcritic:= NULL;
@@ -3496,8 +3560,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Marcar Sucesso
       vr_flgsuces:= TRUE;
 
+      OPEN cr_tipo_conta (pr_cdtipcta => rw_crapass.cdtipcta
+                         ,pr_inpessoa => rw_crapass.inpessoa);
+      FETCH cr_tipo_conta INTO rw_tipo_conta;
+      --Se Encontrou
+      IF cr_tipo_conta%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_tipo_conta;
+        vr_dscritic:= 'Tipo de conta nao encontrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_tipo_conta;
+      
       --Tipo da Conta
-      IF rw_crapass.cdtipcta >= 12 THEN
+      IF rw_tipo_conta.cdmodalidade_tipo = 3 /*AND rw_crapass.flgctitg IN (2,3)*/ THEN
         --Selecionar Titulares
         OPEN cr_crapttl2 (pr_cdcooper => rw_crapass.cdcooper
                          ,pr_nrdconta => rw_crapass.nrdconta);
@@ -3534,19 +3612,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       FETCH cr_crapttl INTO rw_crapttl;
       --Se Encontrou
       IF cr_crapttl%FOUND THEN
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crapttl.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         pr_tab_crapcrl(vr_index).nmrespon:= SUBSTR(rw_crapttl.nmextttl,1,40);
         pr_tab_crapcrl(vr_index).nridenti:= rw_crapttl.nrdocttl;
-        pr_tab_crapcrl(vr_index).dsorgemi:= rw_crapttl.cdoedttl;
         pr_tab_crapcrl(vr_index).cdufiden:= rw_crapttl.cdufdttl;
         pr_tab_crapcrl(vr_index).dtemiden:= rw_crapttl.dtemdttl;
         pr_tab_crapcrl(vr_index).dtnascin:= rw_crapttl.dtnasttl;
         pr_tab_crapcrl(vr_index).cddosexo:= rw_crapttl.cdsexotl;
         pr_tab_crapcrl(vr_index).cdestciv:= rw_crapttl.cdestcvl;
-        pr_tab_crapcrl(vr_index).dsnacion:= rw_crapttl.dsnacion;
+        pr_tab_crapcrl(vr_index).cdnacion:= rw_crapttl.cdnacion;
+        pr_tab_crapcrl(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_crapcrl(vr_index).dsnatura:= rw_crapttl.dsnatura;
         pr_tab_crapcrl(vr_index).nmpairsp:= SUBSTR(rw_crapttl.nmpaittl,1,64);
         pr_tab_crapcrl(vr_index).nmmaersp:= SUBSTR(rw_crapttl.nmmaettl,1,64);
         pr_tab_crapcrl(vr_index).tpdeiden:= rw_crapttl.tpdocttl;
+
+        --> Buscar orgão expedidor
+        pr_tab_crapcrl(vr_index).dsorgemi := NULL;
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl.idorgexp, 
+                                          pr_cdorgao_expedidor => pr_tab_crapcrl(vr_index).dsorgemi, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          pr_tab_crapcrl(vr_index).dsorgemi := 'NAO CADAST';
+          vr_nmorgexp := NULL; 
+        END IF; 
 
         /* validar a idade */
         IF cada0001.fn_Busca_Idade(pr_dtnascto => rw_crapttl.dtnasttl
@@ -3644,7 +3741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -3652,6 +3749,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para buscar dados empresa participante pelo rowid
 
    Alteracoes: 10/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
   ............................................................................. */
   BEGIN
@@ -3667,6 +3766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Variaveis Locais
       vr_index    INTEGER;
       vr_flgcadas BOOLEAN:= FALSE;
+      vr_nmorgexp tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
       --Tabela Memoria Erro
       vr_tab_erro gene0001.typ_tab_erro;
       --Variaveis de erro
@@ -3724,6 +3824,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       IF NOT vr_flgcadas THEN
         --Buscar proximo Indice
         vr_index:= pr_tab_crapcrl.COUNT+1;
+
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crapcrl.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         --Inserir Representante Legal
         pr_tab_crapcrl(vr_index).cddopcao:= pr_cddopcao;
         pr_tab_crapcrl(vr_index).cdcooper:= rw_crapcrl.cdcooper;
@@ -3735,13 +3842,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_tab_crapcrl(vr_index).nmrespon:= rw_crapcrl.nmrespon;
         pr_tab_crapcrl(vr_index).nridenti:= rw_crapcrl.nridenti;
         pr_tab_crapcrl(vr_index).tpdeiden:= rw_crapcrl.tpdeiden;
-        pr_tab_crapcrl(vr_index).dsorgemi:= rw_crapcrl.dsorgemi;
         pr_tab_crapcrl(vr_index).cdufiden:= rw_crapcrl.cdufiden;
         pr_tab_crapcrl(vr_index).dtemiden:= rw_crapcrl.dtemiden;
         pr_tab_crapcrl(vr_index).dtnascin:= rw_crapcrl.dtnascin;
         pr_tab_crapcrl(vr_index).cddosexo:= rw_crapcrl.cddosexo;
         pr_tab_crapcrl(vr_index).cdestciv:= rw_crapcrl.cdestciv;
-        pr_tab_crapcrl(vr_index).dsnacion:= rw_crapcrl.dsnacion;
+        pr_tab_crapcrl(vr_index).cdnacion:= rw_crapcrl.cdnacion;
+        pr_tab_crapcrl(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_crapcrl(vr_index).dsnatura:= rw_crapcrl.dsnatura;
         pr_tab_crapcrl(vr_index).cdcepres:= rw_crapcrl.cdcepres;
         pr_tab_crapcrl(vr_index).dsendres:= rw_crapcrl.dsendres;
@@ -3753,6 +3860,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_tab_crapcrl(vr_index).dsdufres:= rw_crapcrl.dsdufres;
         pr_tab_crapcrl(vr_index).nmpairsp:= rw_crapcrl.nmpairsp;
         pr_tab_crapcrl(vr_index).nmmaersp:= rw_crapcrl.nmmaersp;
+        
+        --> Buscar orgão expedidor
+        pr_tab_crapcrl(vr_index).dsorgemi := NULL;
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapcrl.idorgexp, 
+                                          pr_cdorgao_expedidor => pr_tab_crapcrl(vr_index).dsorgemi, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          pr_tab_crapcrl(vr_index).dsorgemi := 'NAO CADAST';
+          vr_nmorgexp := NULL; 
+        END IF; 
+        
         /* Estado civil */
         OPEN cr_gnetcvl (pr_cdestcvl => rw_crapcrl.cdestciv);
         FETCH cr_gnetcvl INTO rw_gnetcvl;
@@ -3833,7 +3954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -3841,6 +3962,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Buscar dados dos Responsaveis Legais do associado
 
    Alteracoes: 10/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
   ............................................................................. */
   BEGIN
@@ -3890,13 +4013,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapcrl.nmrespon
               ,crapcrl.nridenti
               ,crapcrl.tpdeiden
-              ,crapcrl.dsorgemi
+              ,crapcrl.idorgexp
               ,crapcrl.cdufiden
               ,crapcrl.dtemiden
               ,crapcrl.dtnascin
               ,crapcrl.cddosexo
               ,crapcrl.cdestciv
-              ,crapcrl.dsnacion
+              ,crapcrl.cdnacion
               ,crapcrl.dsnatura
               ,crapcrl.cdcepres
               ,crapcrl.dsendres
@@ -3924,6 +4047,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       vr_nrcpfcto NUMBER;
       vr_dstransa VARCHAR2(100);
       vr_dsorigem VARCHAR2(100);
+      vr_nmorgexp tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
+      
       --Tabela memoria erros
       vr_tab_erro gene0001.typ_tab_erro;
       --Variaveis de erro
@@ -4156,6 +4281,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           ELSE
             --Incrementar Indice para tabela memoria
             vr_index:= pr_tab_crapcrl.count+1;
+
+            -- Busca a Nacionalidade
+            vr_dsnacion := '';
+            OPEN  cr_crapnac(pr_cdnacion => rw_crapcrl.cdnacion);
+            FETCH cr_crapnac INTO vr_dsnacion;
+            CLOSE cr_crapnac;
+
             --Carregar tabela memoria
             pr_tab_crapcrl(vr_index).cdcooper:= rw_crapcrl.cdcooper;
             pr_tab_crapcrl(vr_index).nrctamen:= rw_crapcrl.nrctamen;
@@ -4166,13 +4298,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
             pr_tab_crapcrl(vr_index).nmrespon:= rw_crapcrl.nmrespon;
             pr_tab_crapcrl(vr_index).nridenti:= rw_crapcrl.nridenti;
             pr_tab_crapcrl(vr_index).tpdeiden:= rw_crapcrl.tpdeiden;
-            pr_tab_crapcrl(vr_index).dsorgemi:= rw_crapcrl.dsorgemi;
             pr_tab_crapcrl(vr_index).cdufiden:= rw_crapcrl.cdufiden;
             pr_tab_crapcrl(vr_index).dtemiden:= rw_crapcrl.dtemiden;
             pr_tab_crapcrl(vr_index).dtnascin:= rw_crapcrl.dtnascin;
             pr_tab_crapcrl(vr_index).cddosexo:= rw_crapcrl.cddosexo;
             pr_tab_crapcrl(vr_index).cdestciv:= rw_crapcrl.cdestciv;
-            pr_tab_crapcrl(vr_index).dsnacion:= rw_crapcrl.dsnacion;
+            pr_tab_crapcrl(vr_index).cdnacion:= rw_crapcrl.cdnacion;
+            pr_tab_crapcrl(vr_index).dsnacion:= vr_dsnacion;
             pr_tab_crapcrl(vr_index).dsnatura:= rw_crapcrl.dsnatura;
             pr_tab_crapcrl(vr_index).cdcepres:= rw_crapcrl.cdcepres;
             pr_tab_crapcrl(vr_index).dsendres:= rw_crapcrl.dsendres;
@@ -4184,6 +4316,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
             pr_tab_crapcrl(vr_index).dsdufres:= rw_crapcrl.dsdufres;
             pr_tab_crapcrl(vr_index).nmpairsp:= rw_crapcrl.nmpairsp;
             pr_tab_crapcrl(vr_index).nmmaersp:= rw_crapcrl.nmmaersp;
+            
+            --> Buscar orgão expedidor
+            pr_tab_crapcrl(vr_index).dsorgemi := NULL;
+            cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapcrl.idorgexp, 
+                                              pr_cdorgao_expedidor => pr_tab_crapcrl(vr_index).dsorgemi, 
+                                              pr_nmorgao_expedidor => vr_nmorgexp, 
+                                              pr_cdcritic          => vr_cdcritic, 
+                                              pr_dscritic          => vr_dscritic);
+            IF nvl(vr_cdcritic,0) > 0 OR 
+               TRIM(vr_dscritic) IS NOT NULL THEN
+              pr_tab_crapcrl(vr_index).dsorgemi := 'NAO CADAST';
+              vr_nmorgexp := NULL; 
+            END IF; 
+            
             /* Estado civil */
             OPEN cr_gnetcvl (pr_cdestcvl => rw_crapcrl.cdestciv);
             FETCH cr_gnetcvl INTO rw_gnetcvl;
@@ -4298,7 +4444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 02/06/2014
+   Data    : Janeiro/2014.                        Ultima atualizacao: 24/07/2017
 
    Dados referentes ao programa:
 
@@ -4309,6 +4455,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 
                02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
                             adicionados na crapttl. (Douglas - Chamado 131253)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom) 
 
   ............................................................................. */
   BEGIN
@@ -4321,13 +4472,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                         ,pr_idseqttl IN crapttl.idseqttl%type) IS
         SELECT crapttl.nmextttl
               ,crapttl.nrdocttl
-              ,crapttl.cdoedttl
+              ,crapttl.idorgexp
               ,crapttl.cdufdttl
               ,crapttl.dtemdttl
               ,crapttl.dtnasttl
               ,crapttl.cdsexotl
               ,crapttl.cdestcvl
-              ,crapttl.dsnacion
+              ,crapttl.cdnacion
               ,crapttl.dsnatura
               ,crapttl.nmpaittl
               ,crapttl.nmmaettl
@@ -4345,8 +4496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Selecionar Endereco
       CURSOR cr_crapenc (pr_cdcooper IN crapenc.cdcooper%type
                         ,pr_nrdconta IN crapenc.nrdconta%type
-                        ,pr_idseqttl IN crapenc.idseqttl%type
-                        ,pr_cdseqinc IN crapenc.cdseqinc%TYPE
+                        ,pr_idseqttl IN crapenc.idseqttl%TYPE
                         ,pr_tpendass IN crapenc.tpendass%type) IS
         SELECT crapenc.nrendere
               ,crapenc.complend
@@ -4360,7 +4510,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         WHERE crapenc.cdcooper = pr_cdcooper
         AND   crapenc.nrdconta = pr_nrdconta
         AND   crapenc.idseqttl = pr_idseqttl
-        AND   crapenc.cdseqinc = pr_cdseqinc
         AND   crapenc.tpendass = pr_tpendass
         ORDER BY crapenc.progress_recid ASC;
       rw_crapenc cr_crapenc%ROWTYPE;
@@ -4422,6 +4571,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       vr_contador INTEGER;
       vr_flgerro  BOOLEAN;
       vr_index    INTEGER;
+      vr_nmorgexp tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
+      
       --Variaveis de erro
       vr_cdcritic  crapcri.cdcritic%TYPE;
       vr_dscritic  VARCHAR2(4000);
@@ -4450,7 +4601,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           OPEN cr_crapenc (pr_cdcooper => rw_crapass.cdcooper
                           ,pr_nrdconta => rw_crapass.nrdconta
                           ,pr_idseqttl => 1
-                          ,pr_cdseqinc => 1
                           ,pr_tpendass => 10); /*Residencial*/
           FETCH cr_crapenc INTO rw_crapenc;
           --Verificar se Encontrou
@@ -4458,12 +4608,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
             --Fechar Cursores
             CLOSE cr_crapenc;
             --Mensagem Critica
-            vr_dscritic:= 'Endereco nao cadastrado.';
+            vr_dscritic:= 'Endereco nao cadastrado. Conta: ' || pr_nrdconta || 
+                          ' | Conta contato: ' || pr_nrdctato;
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
           --Fechar Cursor
           CLOSE cr_crapenc;
+
+          -- Busca a Nacionalidade
+          vr_dsnacion := '';
+          OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
+          FETCH cr_crapnac INTO vr_dsnacion;
+          CLOSE cr_crapnac;
+
           --Criar Avalista
           vr_index:= pr_tab_crapavt.Count+1;
           pr_tab_crapavt(vr_index).cddconta:= gene0002.fn_mask_conta(rw_crapass.nrdconta);
@@ -4473,13 +4631,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           pr_tab_crapavt(vr_index).nmdavali:= substr(rw_crapass.nmprimtl,1,50);
           pr_tab_crapavt(vr_index).tpdocava:= rw_crapass.tpdocptl;
           pr_tab_crapavt(vr_index).nrdocava:= rw_crapass.nrdocptl;
-          pr_tab_crapavt(vr_index).cdoeddoc:= rw_crapass.cdoedptl;
           pr_tab_crapavt(vr_index).cdufddoc:= rw_crapass.cdufdptl;
           pr_tab_crapavt(vr_index).dtemddoc:= rw_crapass.dtemdptl;
           pr_tab_crapavt(vr_index).dtnascto:= rw_crapass.dtnasctl;
           pr_tab_crapavt(vr_index).cdsexcto:= rw_crapass.cdsexotl;
           pr_tab_crapavt(vr_index).cdestcvl:= rw_crapttl.cdestcvl;
-          pr_tab_crapavt(vr_index).dsnacion:= rw_crapass.dsnacion;
+          pr_tab_crapavt(vr_index).cdnacion:= rw_crapass.cdnacion;
+          pr_tab_crapavt(vr_index).dsnacion:= vr_dsnacion;
           pr_tab_crapavt(vr_index).dsnatura:= rw_crapttl.dsnatura;
           pr_tab_crapavt(vr_index).nmmaecto:= rw_crapttl.nmmaettl;
           pr_tab_crapavt(vr_index).nmpaicto:= rw_crapttl.nmpaittl;
@@ -4497,6 +4655,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           pr_tab_crapavt(vr_index).dthabmen:= rw_crapttl.dthabmen;
           pr_tab_crapavt(vr_index).nrctremp:= rw_crapttl.idseqttl;
           pr_tab_crapavt(vr_index).tpctrato:= 6; /*Procuradores*/
+
+          --> Buscar orgão expedidor
+          pr_tab_crapavt(vr_index).cdoeddoc := NULL;
+          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
+                                            pr_cdorgao_expedidor => pr_tab_crapavt(vr_index).cdoeddoc, 
+                                            pr_nmorgao_expedidor => vr_nmorgexp, 
+                                            pr_cdcritic          => vr_cdcritic, 
+                                            pr_dscritic          => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR 
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            pr_tab_crapavt(vr_index).cdoeddoc := 'NAO CADAST';
+            vr_nmorgexp := NULL; 
+          END IF; 
 
           /* validar pela procedure generica do b1wgen9999.p */
           pc_busca_idade (pr_dtnasctl => rw_crapass.dtnasctl  --Data de Nascimento
@@ -4620,7 +4791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 21/11/2014
+   Data    : Janeiro/2014.                        Ultima atualizacao: 24/07/2017
 
    Dados referentes ao programa:
 
@@ -4633,6 +4804,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                             adicionados na crapttl. (Douglas - Chamado 131253)
                             
                21/11/2014 - Ajuste conforme procedimento é em progress(Odirlei-Amcom)             
+               
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)          
   ............................................................................. */
   BEGIN
     DECLARE
@@ -4671,13 +4845,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                         ,pr_nrcpfcgc IN crapttl.nrcpfcgc%type) IS
         SELECT crapttl.nmextttl
               ,crapttl.nrdocttl
-              ,crapttl.cdoedttl
+              ,crapttl.idorgexp
               ,crapttl.cdufdttl
               ,crapttl.dtemdttl
               ,crapttl.dtnasttl
               ,crapttl.cdsexotl
               ,crapttl.cdestcvl
-              ,crapttl.dsnacion
+              ,crapttl.cdnacion
               ,crapttl.dsnatura
               ,crapttl.nmpaittl
               ,crapttl.nmmaettl
@@ -4727,7 +4901,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           --Fechar Cursor
           CLOSE cr_crapttl;
           --Montar critica
-          vr_dscritic:= 'Titular da conta nao pode ser procurador.';
+          vr_dscritic:= '1 - Titular da conta nao pode ser procurador.' || 
+                        ' Conta: ' || pr_nrdconta ||
+                        ', CPF:'   || pr_nrcpfcto;
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
@@ -4761,7 +4937,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Verificar cadastro incompleto
       IF NOT vr_crapass THEN
         IF Nvl(pr_nrdctato,0) <> 0 THEN
-          vr_cdcritic:= 9;
+          vr_cdcritic := 9;
+          vr_dscritic := 'Cooperado nao encontrado.' || 
+                         ' Conta: ' || pr_nrdctato ||
+                         ' CPF: '  || pr_nrcpfcto;
           RAISE vr_exc_erro;
         END IF;
         --Levantar Excecao
@@ -4769,7 +4948,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       END IF;
       --Se conta for igual a do parametro -- Igual ao progress
       IF pr_nrdconta = rw_crapass.nrdconta THEN
-        vr_dscritic:= 'Titular da conta nao pode ser procurador.';
+        vr_dscritic:= '2 - Titular da conta nao pode ser procurador.' || 
+                      ' Conta: ' || pr_nrdconta ||
+                      ', CPF:'  || pr_nrcpfcto;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -4817,7 +4998,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 02/06/2014
+   Data    : Janeiro/2014.                        Ultima atualizacao: 24/07/2017
 
    Dados referentes ao programa:
 
@@ -4829,6 +5010,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
                             adicionados na crapttl. (Douglas - Chamado 131253)
 
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom) 
   ............................................................................. */
   BEGIN
     DECLARE
@@ -4899,6 +5084,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       vr_index     INTEGER;
       vr_index_bem INTEGER;
       vr_flgerro   BOOLEAN;
+      vr_nmorgexp  tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
+      
       --Tabela memoria erros
       vr_tab_erro gene0001.typ_tab_erro;
       --Variaveis de erro
@@ -5004,9 +5191,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       ELSE
         --Incrementar Indice
         vr_index:= pr_tab_crapavt.Count+1;
+
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crabavt.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         --Criar tabela avalistascopiando dados da tabela
         pr_tab_crapavt(vr_index).cdcooper:= rw_crabavt.cdcooper;
-        pr_tab_crapavt(vr_index).cdoeddoc:= rw_crabavt.cdoeddoc;
         pr_tab_crapavt(vr_index).cdufddoc:= rw_crabavt.cdufddoc;
         pr_tab_crapavt(vr_index).cdsexcto:= rw_crabavt.cdsexcto;
         pr_tab_crapavt(vr_index).cdestcvl:= rw_crabavt.cdestcvl;
@@ -5018,7 +5211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_tab_crapavt(vr_index).dtadmsoc:= rw_crabavt.dtadmsoc;
         pr_tab_crapavt(vr_index).dsproftl:= rw_crabavt.dsproftl;
         pr_tab_crapavt(vr_index).dtnascto:= rw_crabavt.dtnascto;
-        pr_tab_crapavt(vr_index).dsnacion:= rw_crabavt.dsnacion;
+        pr_tab_crapavt(vr_index).cdnacion:= rw_crabavt.cdnacion;
+        pr_tab_crapavt(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_crapavt(vr_index).dsnatura:= rw_crabavt.dsnatura;
         pr_tab_crapavt(vr_index).dsendres(1):= rw_crabavt.dsendres##1;
         pr_tab_crapavt(vr_index).dsendres(2):= rw_crabavt.dsendres##2;
@@ -5079,6 +5273,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_tab_crapavt(vr_index).rowidavt:= rw_crabavt.ROWID;
         pr_tab_crapavt(vr_index).vledvmto:= rw_crabavt.vledvmto;
         pr_tab_crapavt(vr_index).cdcpfcgc:= gene0002.fn_mask_cpf_cnpj(rw_crabavt.nrcpfcgc,1);
+
+        --> Buscar orgão expedidor
+        pr_tab_crapavt(vr_index).cdoeddoc := NULL;
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crabavt.idorgexp, 
+                                          pr_cdorgao_expedidor => pr_tab_crapavt(vr_index).cdoeddoc, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          pr_tab_crapavt(vr_index).cdoeddoc := 'NAO CADAST';
+          vr_nmorgexp := NULL; 
+        END IF;  
 
         /* validar pela procedure generica do b1wgen9999.p */
         pc_busca_idade (pr_dtnasctl => rw_crabavt.dtnascto    --Data de Nascimento
@@ -5345,7 +5552,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           END IF;
         EXCEPTION
           WHEN vr_exc_filtro THEN
-            NULL;
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := vr_dscritic;
         END; --Filtro Busca
         --Se ocorreu erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -5419,7 +5627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         END LOOP; --rw_crapavt
       EXCEPTION
         WHEN vr_exc_busca THEN
-          NULL;
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
       END; --Busca
 
       --Se ocorreu erro
@@ -5958,202 +6167,137 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     END;
   END pc_lista_cooperativas_web;
   
-  --Busca as nacionalidades cadastradas no sistema
-  PROCEDURE pc_busca_nacionalidades(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+    
+  
+  --> Identificar Orgão Expedidor
+  PROCEDURE pc_busca_id_orgao_expedidor (pr_cdorgao_expedidor   IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE, 
+                                         pr_idorgao_expedidor  OUT tbgen_orgao_expedidor.idorgao_expedidor%TYPE, 
+                                         pr_cdcritic           OUT INTEGER,
+                                         pr_dscritic           OUT VARCHAR2)  IS
+
+  
   /* .............................................................................
-   Programa: pc_busca_nacionalidades
-   Sistema : Conta-Corrente - Cooperativa de Credito
-   Sigla   : CRED
-   Autor   : Kelvin Souza Ott
-   Data    : 13/05/2016                        Ultima atualizacao: --/--/----
+
+   Programa: pc_busca_id_orgao_expedidor
+   Sistema : CRED
+   Sigla   : CADA0001
+   Autor   : Odirlei Busana(AMcom)
+   Data    : Julho/2017.                        Ultima atualizacao:
 
    Dados referentes ao programa:
 
-   Frequencia: Sempre que for chamado
-   Objetivo  : Rotina para buscar as nacionalidades
+   Frequencia: Sempre que for chamada.
+   Objetivo  : Identificar o id da tabela tbgen_orgao_expedidor atraves do cdorgao_expedidor
 
    Alteracoes: 
-                
-    ............................................................................. */                                    
-    CURSOR cr_crapnac (p_dsnacion IN crapnac.dsnacion%TYPE) IS
-      SELECT nac.dsnacion 
-            ,nac.cdnacion
-        FROM crapnac nac
-       WHERE (UPPER(nac.dsnacion) LIKE '%' || UPPER(pr_dsnacion) || '%') 
-          OR (TRIM(pr_dsnacion) IS NULL)
-       ORDER BY nac.dsnacion;
-    
-    -- Variaveis de log
-    vr_cdcooper NUMBER;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-    vr_auxconta PLS_INTEGER := 0;
-    
-    --Variaveis de erro
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic crapcri.dscritic%TYPE;         
-    vr_exc_saida EXCEPTION;
+
+  ............................................................................. */
   
+    --> Buscar id do orgao expedidor
+    CURSOR cr_orgexp IS
+      SELECT org.idorgao_expedidor
+        FROM tbgen_orgao_expedidor org
+       WHERE UPPER(org.cdorgao_expedidor) = UPPER(pr_cdorgao_expedidor);
+    rw_orgexp cr_orgexp%ROWTYPE;
+    
+    vr_exc_erro EXCEPTION;
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
   BEGIN
-    -- Extrai os dados dos dados que vieram do php
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);  
-    -- Verifica se houve erro                      
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;                         
     
-    -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nacionalidades/>');
+    rw_orgexp := NULL;
+    --> Buscar id do orgao expedidor
+    OPEN cr_orgexp;
+    FETCH cr_orgexp INTO pr_idorgao_expedidor;
     
-    --Loop nas nacionalidades   
-    FOR rw_crapnac IN cr_crapnac(p_dsnacion => pr_dsnacion) LOOP
-       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => 0,pr_tag_nova => 'nacionalidade',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
-       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidade',pr_posicao => vr_auxconta, pr_tag_nova => 'dsnacion', pr_tag_cont => rw_crapnac.dsnacion, pr_des_erro => vr_dscritic);
-       
-       -- Incrementa contador p/ posicao no XML
-       vr_auxconta := nvl(vr_auxconta,0) + 1;  
-        
-    END LOOP;
+    IF cr_orgexp%NOTFOUND OR 
+       nvl(pr_idorgao_expedidor,0) = 0 THEN
+      CLOSE cr_orgexp; 
+      vr_dscritic := 'Orgao Emissor nao cadastrado.';
+      RAISE vr_exc_erro;       
+    END IF;
+    CLOSE cr_orgexp;
+    
   
   EXCEPTION
-    WHEN vr_exc_saida THEN
-      IF TRIM(vr_dscritic) IS NULL THEN
-        vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      END IF;
-      pr_cdcritic := pr_cdcritic;
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
+    
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral (CADA0001.pc_buscar_nacionalidades): ' || SQLERRM;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;   
+      pr_dscritic := 'Erro ao identificar orgao Emissor: '||SQLERRM;
+    
+  END pc_busca_id_orgao_expedidor;
   
-  END;
+  --> Buscar dados Orgão Expedidor
+  PROCEDURE pc_busca_orgao_expedidor (pr_idorgao_expedidor   IN tbgen_orgao_expedidor.idorgao_expedidor%TYPE, 
+                                      pr_cdorgao_expedidor  OUT tbgen_orgao_expedidor.cdorgao_expedidor%TYPE, 
+                                      pr_nmorgao_expedidor  OUT tbgen_orgao_expedidor.nmorgao_expedidor%TYPE, 
+                                      pr_cdcritic           OUT INTEGER,
+                                      pr_dscritic           OUT VARCHAR2)  IS
 
---Inclui nacionalidade requerida pelo usuario
-  PROCEDURE pc_inclui_nacionalidade(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+  
   /* .............................................................................
-   Programa: pc_busca_nacionalidades
-   Sistema : Conta-Corrente - Cooperativa de Credito
-   Sigla   : CRED
-   Autor   : Kelvin Souza Ott
-   Data    : 16/05/2016                        Ultima atualizacao: --/--/----
+
+   Programa: pc_busca_id_orgao_expedidor
+   Sistema : CRED
+   Sigla   : CADA0001
+   Autor   : Odirlei Busana(AMcom)
+   Data    : Julho/2017.                        Ultima atualizacao:
 
    Dados referentes ao programa:
 
-   Frequencia: Sempre que for chamado
-   Objetivo  : Rotina para incluir as nacionalidades
+   Frequencia: Sempre que for chamada.
+   Objetivo  : Identificar o id da tabela tbgen_orgao_expedidor atraves do cdorgao_expedidor
 
    Alteracoes: 
-                
-    ............................................................................. */                                    
-    CURSOR cr_crapnac (p_dsnacion IN crapnac.dsnacion%TYPE) IS
-      SELECT nac.dsnacion 
-        FROM crapnac nac
-       WHERE UPPER(nac.dsnacion) = UPPER(pr_dsnacion);
-    
-    rw_crapnac cr_crapnac%ROWTYPE;
-    
-    -- Variaveis de log
-    vr_cdcooper NUMBER;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-    vr_auxconta PLS_INTEGER := 0;
-    
-    --Variaveis de erro
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic crapcri.dscritic%TYPE;         
-    vr_exc_saida EXCEPTION;
+
+  ............................................................................. */
   
+    --> Buscar id do orgao expedidor
+    CURSOR cr_orgexp IS
+      SELECT org.cdorgao_expedidor,
+             org.nmorgao_expedidor
+        FROM tbgen_orgao_expedidor org
+       WHERE org.idorgao_expedidor = pr_idorgao_expedidor;
+    rw_orgexp cr_orgexp%ROWTYPE;
+    
+    vr_exc_erro EXCEPTION;
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
   BEGIN
-    -- Extrai os dados dos dados que vieram do php
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);  
-    -- Verifica se houve erro                      
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;                         
     
-    OPEN cr_crapnac(pr_dsnacion);
-      FETCH cr_crapnac
-      INTO rw_crapnac;
-      
-      IF cr_crapnac%FOUND THEN
-        vr_dscritic := 'Nacionalidade ja existe.';
-        RAISE vr_exc_saida;
-      END IF;  
-    CLOSE cr_crapnac;
+    rw_orgexp := NULL;
+    --> Buscar id do orgao expedidor
+    OPEN cr_orgexp;
+    FETCH cr_orgexp INTO rw_orgexp;
     
-    -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nacionalidades/>');    
+    IF cr_orgexp%NOTFOUND THEN
+       CLOSE cr_orgexp;
+       vr_dscritic := 'Orgao Emissor nao cadastrado.';
+       RAISE vr_exc_erro;       
+    END IF;
+    CLOSE cr_orgexp;
     
-    --Inclui a nacionalidade
-    INSERT INTO cecred.crapnac
-      (dsnacion)
-    VALUES
-      (UPPER(pr_dsnacion));
-    
+    pr_cdorgao_expedidor := rw_orgexp.cdorgao_expedidor;
+    pr_nmorgao_expedidor := rw_orgexp.nmorgao_expedidor;
+ 
+  
+  
   EXCEPTION
-    WHEN vr_exc_saida THEN
-      IF TRIM(vr_dscritic) IS NULL THEN
-        vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      END IF;
-      pr_cdcritic := pr_cdcritic;
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
+    
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral (CADA0001.pc_inclui_nacionalidades): ' || SQLERRM;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;   
-  
-  END;  
+      pr_dscritic := 'Erro ao buscar orgao Emissor: '||SQLERRM;
+    
+  END pc_busca_orgao_expedidor;
+    
   
 END CADA0001;
 /
