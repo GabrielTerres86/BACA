@@ -215,6 +215,16 @@ PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE);
 
+PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE 
+	                              , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE 
+																, pr_cdagenci IN  craplcm.cdagenci%TYPE 
+																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+																, pr_nrdolote IN  craplcm.nrdolote%TYPE
+																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_cdcritic OUT crapcri.cdcritic%TYPE
+																, pr_dscritic OUT crapcri.dscritic%TYPE);
+
 END LANC0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
@@ -1413,6 +1423,31 @@ EXCEPTION
 		pr_cdcritic := 0;
 		pr_dscritic := 'Erro nao tratado na rotina "LANC0001.pc_estorna_lancto_conta": ' || SQLERRM;
 END pc_estorna_lancto_conta;													
+
+PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE 
+	                              , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE 
+																, pr_cdagenci IN  craplcm.cdagenci%TYPE 
+																, pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
+																, pr_nrdolote IN  craplcm.nrdolote%TYPE
+																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
+																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
+																, pr_cdcritic OUT crapcri.cdcritic%TYPE
+																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
+
+begin
+
+   pc_estorna_lancto_conta(pr_cdcooper => pr_cdcooper
+	                       , pr_dtmvtolt => pr_dtmvtolt
+	                       , pr_cdagenci => pr_cdagenci 
+												 , pr_cdbccxlt => pr_cdbccxlt
+												 , pr_nrdolote => pr_nrdolote
+												 , pr_nrdctabb => pr_nrdctabb
+												 , pr_nrdocmto => pr_nrdocmto
+                         , pr_rowid    => null
+												 , pr_cdcritic => pr_cdcritic
+												 , pr_dscritic => pr_dscritic);
+  
+end pc_estorna_lancto_prog;
 
 END LANC0001;
 /
