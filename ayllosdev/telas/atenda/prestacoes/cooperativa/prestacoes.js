@@ -2480,7 +2480,7 @@ $('#divUsoGenerico').css({ 'width': '90em', 'left': '19em' });
 }
 
 function controlaLayoutHistoricoGravames() {
-	$('#divUsoGenerico').css({ 'width': '1075px', 'left': '325px' });
+	$('#divUsoGenerico').css({ 'width': '93em', 'left': '19em' });
 	var divRegistro = $('#divDetGravTabela');
 	var tabela      = $('table',divRegistro);
 	var linha       = $('table > tbody > tr', divRegistro);
