@@ -7987,11 +7987,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            
           lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_craplcm.cdcooper
                                          , pr_dtmvtolt => rw_craplcm.dtmvtolt
-                                         , pr_cdagenci => 0
-                                         , pr_cdbccxlt => 0
-                                         , pr_nrdolote => 0
+                                         , pr_cdagenci => NULL
+                                         , pr_cdbccxlt => NULL
+                                         , pr_nrdolote => NULL
                                          , pr_nrdctabb => rw_craplcm.nrdconta 
                                          , pr_nrdocmto => rw_craplcm.nrdocmto
+                                         , pr_cdhistor => NULL
                                          , pr_rowid    => rw_craplcm.rowid
                                          , pr_cdcritic => vr_cdcritic
                                          , pr_dscritic => vr_dscritic); 
