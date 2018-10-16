@@ -1515,7 +1515,7 @@ function manterRotina(operacao) {
     showMsgAguardo('Aguarde, ' + mensagem + '...');
 
     if (operacao != 'ENV_ESTEIRA' ){
-        
+
 			var aux_nrctaav0 = 0;
 			var aux_nrctaav1 = 0;
 
@@ -1524,8 +1524,7 @@ function manterRotina(operacao) {
 			}
 
 			geraRegsDinamicos();
-			
-    
+
 			var flgcmtlc = (typeof arrayCooperativa['flgcmtlc'] == 'undefined') ? '' : arrayCooperativa['flgcmtlc'];
 			var vllimapv = (typeof arrayCooperativa['vllimapv'] == 'undefined') ? '' : arrayCooperativa['vllimapv'];
 
@@ -1648,7 +1647,7 @@ function manterRotina(operacao) {
 			var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
 			var complen2 = (typeof aux_complen1 == 'undefined') ? '' : aux_complen1;
 			var nrcxaps2 = (typeof aux_nrcxaps1 == 'undefined') ? '' : aux_nrcxaps1;
-    } 
+    }
     // Daniel
     var inpesso2 = (typeof aux_inpesso1 == 'undefined') ? '' : aux_inpesso1;
     var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
@@ -1667,7 +1666,7 @@ function manterRotina(operacao) {
     // 032 : comentado replace do campo vlopescr
     //vlopescr = parseFloat( vlopescr.replace(',','.') );
 
-    if (operacao != 'ENV_ESTEIRA' ){
+    if (operacao != 'ENV_ESTEIRA' ) {
 		vlemprst = number_format(parseFloat(vlemprst.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 		percetop = number_format(parseFloat(percetop.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
 		vltotsfn = number_format(parseFloat(vltotsfn.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
@@ -1705,7 +1704,7 @@ function manterRotina(operacao) {
 
 		dsobserv = dsobserv.replace(/\r\n/g, ' ').replace("'", "");
 		dsobserv = removeCaracteresInvalidos(dsobserv);
-    }   
+    }
 
     var dscatbem = "";
     //Carrega a lista de bens para enviar junto no POST
@@ -1715,7 +1714,7 @@ function manterRotina(operacao) {
 		}
     }
 
-    if (typeof arrayAlienacoes != typeof undefined){    
+    if (typeof arrayAlienacoes != typeof undefined){
 		for (i in arrayAlienacoes) {
 			dscatbem += arrayAlienacoes[i]['dscatbem'] + '|';
 		}
@@ -2144,7 +2143,7 @@ function controlaLayout(operacao) {
                 // Se for Pos Fixado
                 if ($('#tpemprst', '#frmNovaProp').val() == 2) {
                     calculaDataCarencia();
-        }
+				}
             });
 
         }
@@ -6332,9 +6331,7 @@ function montaString() {
     }
 
     //Faturamentos
-
     aux_dsdfinan = '';
-
     for (i in arrayFaturamentos) {
 
         if (aux_dsdfinan != '') {
@@ -6348,9 +6345,7 @@ function montaString() {
     }
 
     //Rendimentos
-
     aux_dsdrendi = '';
-
     for (var i = 1; i <= contRend; i++) {
 
         // Se nao tem um tipo de rendimento valido
@@ -6368,9 +6363,7 @@ function montaString() {
     }
 
     //Bens do cooperado
-
     aux_dsdebens = '';
-
     for (i in arrayBensAss) {
 
         if (aux_dsdebens != '') {
@@ -6524,7 +6517,7 @@ function iniciaAval() {
     }
 
     return false;
-    }
+}
 
 function fechaAvalista() {
     showConfirmacao('Deseja cancelar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaOperacao(\'\')', 'bloqueiaFundo(divRotina);', 'sim.gif', 'nao.gif');
@@ -6847,8 +6840,6 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
-
-
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
@@ -8838,7 +8829,6 @@ function controlaPesquisas() {
         return false;
     });
 
-
     // Tipo Rendimento
     $('#tpdrend1,#tpdrend2,#tpdrend3,#tpdrend4,#tpdrend5,#tpdrend6', '#' + nomeForm).unbind('change').bind('change', function() {
         bo = 'b1wgen0059.p';
@@ -10685,7 +10675,8 @@ function alteraSomenteBens() {
 	showMsgAguardo('Aguarde, salvando ...');
 
     //Bens alienação
-    aux_dsdalien = '';
+    var aux_dsdalien = '';
+	var aux_dsinterv = '';
     for (i in arrayAlienacoes) {
 
         if (aux_dsdalien != '') {
@@ -10731,7 +10722,7 @@ function alteraSomenteBens() {
 			nrdconta: nrdconta,
 			nrctremp: nrctremp,
 			dsdalien: aux_dsdalien,
-			arrayAlienacoes : JSON.stringify(arrayAlienacoes),
+			dsinterv: aux_dsinterv,
 			redirect: 'html_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -10751,5 +10742,3 @@ function alteraSomenteBens() {
     
 	return false;
 }
-// Verificar select não está disparando novo valor fipe
-// codificação valores com acentos. 6576087 - 

@@ -18,6 +18,7 @@
     require_once('uteis/chama_servico.php');
     require_once('uteis/class_combo.php');
     require_once('uteis/xml_convert_values.php');
+    require_once('../includes/utils.php');
     isPostMethod();
 	
 	$aux = "";
@@ -56,11 +57,11 @@
         echo "$('#".$idElementoHtml."').append($('<option>', 
         {
           value: ".$comboItem->value.",
-          text: '".removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))."'
+          text: '".removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))))."'
         }));";
 
-		if (removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))) == utf8_decode(mb_strtoupper($dsbemfin, 'UTF-8'))) {
-			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))) . "'; }).attr('selected', 'selected');
+		if (removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))) == utf8_decode(mb_strtoupper($dsbemfin, 'UTF-8'))) {
+			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . removeAcentos(removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))) . "'; }).attr('selected', 'selected');
 				urlPagina= \"telas/manbem/fipe/busca_anos.php\";
 				cdMarcaFipe = $('#'+idElementMarca).val();
 				cdModeloFipe = ".$comboItem->value.";

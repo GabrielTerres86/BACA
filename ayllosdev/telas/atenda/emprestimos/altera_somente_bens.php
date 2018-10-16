@@ -22,6 +22,8 @@ $arrAlienacoes = json_decode($_POST['arrayAlienacoes'], true);
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '0';
 $nrctrato = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : '';
+$dsdalien = (isset($_POST['dsdalien'])) ? $_POST['dsdalien'] : '';
+$dsinterv = (isset($_POST['dsinterv'])) ? $_POST['dsinterv'] : '';
 
 $cddopcao = 'A';
 $tpctrato = '90';
@@ -35,7 +37,11 @@ $xmlCarregaDados .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
 $xmlCarregaDados .= "		<tpctrato>" . $tpctrato . "</tpctrato>";
 $xmlCarregaDados .= "		<nrctrato>" . $nrctrato . "</nrctrato>";
 $xmlCarregaDados .= "		<cddopcao>" . $cddopcao . "</cddopcao>";
+$xmlCarregaDados .= '		<dsdalien>' . $dsdalien . '</dsdalien>';
+$xmlCarregaDados .= '		<dsinterv>' . $dsinterv . '</dsinterv>';
 $xmlCarregaDados .= "	</Dados>";
+
+/*
 $xmlCarregaDados .= "	<listabem>";
 
 foreach ($arrAlienacoes as $alienacao) {
@@ -65,7 +71,7 @@ foreach ($arrAlienacoes as $alienacao) {
 	public 'cdoperad' => string '' (length=0)
 	public 'dstpcomb' => string 'Gasolina' (length=8)
 	public 'uflicenc' => string 'SC' (length=2)
-*/
+* /
 
 	$nrmodbem = $alienacao['nrmodbem'];
 	if ( $pieces = explode(" ", $nrmodbem) ) {
@@ -100,10 +106,8 @@ foreach ($arrAlienacoes as $alienacao) {
 }
 
 $xmlCarregaDados .= "	</listabem>";
-
+*/
 $xmlCarregaDados .= "</root>";
-
-//echo $xmlCarregaDados; die;
 
 $xmlResult = mensageria($xmlCarregaDados,"TELA_MANBEM","GRAVA_ALIENACAO_HIPOTEC",$glbvars["cdcooper"],$glbvars["cdagenci"],$glbvars["nrdcaixa"],$glbvars["idorigem"],$glbvars["cdoperad"],"</Root>");
 $xmlObject = getObjectXML($xmlResult);
