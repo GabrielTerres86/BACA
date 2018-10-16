@@ -21,6 +21,10 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --
 --              20/02/2018 - Removido tabela "craptip" do cursor "cr_crapass" na procedure
 --                           pc_integraliza_cotas. PRJ366 (Lombardi).
+--
+--              15/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
+--	                         pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
   PROCEDURE pc_integraliza_cotas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -872,7 +876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
      END IF;
 
      -- excluir lançamento na craplcm
-     DELETE craplcm
+     /*DELETE craplcm
       WHERE cdcooper = rw_craplct.cdcooper
         AND nrdconta = rw_craplct.nrdconta
         AND dtmvtolt = rw_craplct.dtmvtolt
@@ -880,7 +884,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
         AND cdbccxlt = rw_craplct.cdbccxlt
         AND nrdolote = vc_lote_deposito_vista
         AND cdpesqbb = rw_craplct.nrdocmto
-        AND cdhistor = vr_cdhistor;
+        AND cdhistor = vr_cdhistor;*/
+        
+     lanc0001.pc_estorna_lancto_conta(pr_cdcooper => rw_craplct.cdcooper
+                                    , pr_dtmvtolt => rw_craplct.dtmvtolt
+                                    , pr_cdagenci => rw_craplct.cdagenci
+                                    , pr_cdbccxlt => rw_craplct.cdbccxlt
+                                    , pr_nrdolote => vc_lote_deposito_vista
+                                    , pr_nrdctabb => rw_craplct.nrdconta
+                                    , pr_nrdocmto => rw_craplct.nrdocmto
+                                    , pr_cdhistor => vr_cdhistor
+                                    , pr_rowid    => NULL
+                                    , pr_cdcritic => vr_cdcritic
+                                    , pr_dscritic => vr_dscritic); 
+                                         
+     /*IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
+        vr_dscritic := 'Problemas ao excluir lancamento: '||vr_dscritic;
+        RAISE vr_exc_erro;
+     END IF; */
 
      -- log
     vr_dstransa := 'Cancelamento de integralização de capital';
