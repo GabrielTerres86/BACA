@@ -59,11 +59,11 @@
         echo  "$('#".$idElementoHtml."').append($('<option>', 
         {
           value: ".$comboItem->value.",
-          text: '".utf8_decode($comboItem->text)."'
+          text: '".utf8_decode(strtoupper($comboItem->text))."'
         }));";
 
-		if (strtoupper(utf8_decode($comboItem->text)) == strtoupper(utf8_decode($nrmodbem))) {
-			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . utf8_decode($comboItem->text) . "'; }).attr('selected', 'selected');";
+		if (utf8_decode(strtoupper($comboItem->text)) == utf8_decode(strtoupper($nrmodbem))) {
+			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . utf8_decode(strtoupper($comboItem->text)) . "'; }).attr('selected', 'selected');";
 		}
     }
 	echo $aux;

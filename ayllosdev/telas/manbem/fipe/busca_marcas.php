@@ -28,8 +28,8 @@
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
     $cdTipoVeiculo		= (isset($_POST['tipveicu'])) ? $_POST['tipveicu'] : 0  ;
 	$dsmarbem			= (isset($_POST['dsmarbem'])) ? $_POST['dsmarbem'] : 0  ;
-	$dsbemfin			= (isset($_POST['dsbemfin'])) ? $_POST['dsbemfin'] : 0  ;
-	$nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
+	$dsbemfin			= (isset($_POST['dsbemfin'])) ? utf8_decode($_POST['dsbemfin']) : 0  ;
+	$nrmodbem			= (isset($_POST['nrmodbem'])) ? utf8_decode($_POST['nrmodbem']) : 0  ;
 
     $urlServicoOperacao = $UrlFipe."ObterListaMarcasFipe";
     $data = '{
@@ -60,11 +60,11 @@
         echo "$('#".$idElementoHtml."').append($('<option>', 
               {
                 value: ".$comboItem->value.",
-                text: '".utf8_decode(removeCaracteresInvalidos($comboItem->text))."'
+                text: '".removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))."'
               }));";
 
-		if (strtoupper(utf8_decode(removeCaracteresInvalidos($comboItem->text))) == strtoupper(utf8_decode($dsmarbem))) {
-			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . utf8_decode(removeCaracteresInvalidos($comboItem->text)) . "'; }).attr('selected', 'selected');
+		if (removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))) == utf8_decode(strtoupper($dsmarbem))) {
+			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))) . "'; }).attr('selected', 'selected');
 						urlPagina= \"telas/manbem/fipe/busca_modelos.php\";
 						cdMarcaFipe = ".$comboItem->value.";
 						data = jQuery.param({ idelhtml:idElementModelo, cdmarfip: cdMarcaFipe , redirect: 'script_ajax', dsbemfin: '$dsbemfin', nrmodbem: '$nrmodbem' });

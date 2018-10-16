@@ -3276,6 +3276,10 @@ function controlaLayout(operacao) {
 							cRenavan.habilitaCampo();
 							busca_uf_pa_ass();
 						}
+						if($(this).val() == 'USADO'){ modeloBem = ''; }
+						$('#nrmodbem').val(-1).change();
+						var bemFin = $('#dsbemfin').val();
+						$('#dsbemfin').val(bemFin).change();
 					});
 					if (booBoxMarcas) {
 						trataCamposFipe($(this));
@@ -3314,9 +3318,7 @@ function controlaLayout(operacao) {
 					$("#" + idElementAno).show().html('');
 					busca_uf_pa_ass();
 				} else {
-					//rTpBem.css('visibility', 'hidden');
-					cTpBem.desabilitaCampo();
-					//rUfLicenc.css('visibility', 'hidden');
+					cTpBem.val('').desabilitaCampo();
 					cUfLicenc.desabilitaCampo();
 					cChassi.addClass('alphanum').attr('maxlength', '20');//.css('width', '162px')
 					$("#btHistoricoGravame").hide();
@@ -10627,7 +10629,7 @@ function buscaTipo() {
 	return false;
 }
 
-function verificarTipoVeiculo(){
+function verificarTipoVeiculo() {
 	var tipo = $('#dstipbem option:selected').val();
 	
 	var optionsModBem = $('#nrmodbem option');
@@ -10749,5 +10751,5 @@ function alteraSomenteBens() {
     
 	return false;
 }
-// Verificar perda de informações na navegação da janela quando volta ao início e revisa bens;
-// verificar situação do UF placa e UF Licenciamento;
+// Verificar select não está disparando novo valor fipe
+// codificação valores com acentos. 6576087 - 

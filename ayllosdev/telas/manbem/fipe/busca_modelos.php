@@ -56,11 +56,11 @@
         echo "$('#".$idElementoHtml."').append($('<option>', 
         {
           value: ".$comboItem->value.",
-          text: '".utf8_decode(removeCaracteresInvalidos($comboItem->text))."'
+          text: '".removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8')))."'
         }));";
 
-		if (strtoupper(utf8_decode(removeCaracteresInvalidos($comboItem->text))) == strtoupper(utf8_decode($dsbemfin))) {
-			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . utf8_decode($comboItem->text) . "'; }).attr('selected', 'selected');
+		if (removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))) == utf8_decode(mb_strtoupper($dsbemfin, 'UTF-8'))) {
+			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . removeCaracteresInvalidos(utf8_decode(mb_strtoupper($comboItem->text, 'UTF-8'))) . "'; }).attr('selected', 'selected');
 				urlPagina= \"telas/manbem/fipe/busca_anos.php\";
 				cdMarcaFipe = $('#'+idElementMarca).val();
 				cdModeloFipe = ".$comboItem->value.";
