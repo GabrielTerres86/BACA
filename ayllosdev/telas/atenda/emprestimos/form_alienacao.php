@@ -51,7 +51,7 @@ if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIE
 		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'<? echo $nova_opecacao; ?>\',\'<? echo $finalizacao; ?>\');','<? echo $nova_opecacao; ?>'); return false;">Continuar</a>
 	<? } else if ($operacao == 'C_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('CF'); return false;">Voltar</a>
-		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico de Gravames</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico Gravames</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_ALIENACAO'); return false;">Continuar</a>
 	<? } else if ($operacao == 'E_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
