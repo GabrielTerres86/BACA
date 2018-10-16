@@ -12212,12 +12212,26 @@ END pc_gera_titulos_iptu_prog;
                 CLOSE cr_craplcm;
                 
                 BEGIN
-                  DELETE craplcm
-                   WHERE rowid = rw_craplcm.rowid;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_cdcritic:= 11;
-                    RAISE vr_exc_erro;
+                  /*DELETE craplcm
+                   WHERE rowid = rw_craplcm.rowid; */
+                   
+                  lanc0001.pc_estorna_lancto_conta(pr_cdcooper => NULL
+                                                 , pr_dtmvtolt => NULL
+                                                 , pr_cdagenci => NULL
+                                                 , pr_cdbccxlt => NULL
+                                                 , pr_nrdolote => NULL
+                                                 , pr_nrdctabb => NULL
+                                                 , pr_nrdocmto => NULL
+                                                 , pr_cdhistor => NULL
+                                                 , pr_rowid    => rw_craplcm.rowid
+                                                 , pr_cdcritic => vr_cdcritic
+                                                 , pr_dscritic => vr_dscritic); 
+                                                 
+                  IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
+                     vr_cdcritic:= 11;
+                     RAISE vr_exc_erro;
+                  END IF;    
+                
                 END;
 
               ELSE
