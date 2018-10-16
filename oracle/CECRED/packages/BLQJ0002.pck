@@ -541,6 +541,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_des_reto   VARCHAR2(10); --> Situacao do retorno do resgate
 
   begin
+    
+    IF pr_idorigem = 6 AND pr_idastcjt = 1 THEN -- Conta com assinatura conjunta não pode resgatar na URA
+      vr_cdcritic := 0;
+      vr_dscritic := 'Resgate desabilitado para conta com assinatura conjunta.';                  
+      RAISE vr_exc_saida;      
+    END IF;
+    
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -794,6 +801,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           RAISE vr_exc_saida;
           --
          END IF;
+         
+         -- ir para o proximo
+         vr_indice := vr_tab_dados_resgate.NEXT(vr_indice);  
          --
       END IF;  
       --              

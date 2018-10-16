@@ -1035,7 +1035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       --Fechar Cursor
       CLOSE cr_crapass;
       
-      IF pr_cdorigem <> 4 THEN
+      IF NVL(pr_cdorigem,0) NOT IN (4,6) THEN
           pr_nrcpfcgc := 0;      
       
 		  IF (pr_idastcjt = 1 AND pr_idseqttl > 1) OR 
