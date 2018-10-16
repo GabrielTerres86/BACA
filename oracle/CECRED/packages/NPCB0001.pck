@@ -277,7 +277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Odirlei Busana - AMcom
-      Data     : Dezembro/2016.                   Ultima atualizacao: 16/12/2016
+      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
 
       Dados referentes ao programa:
 
@@ -285,6 +285,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Rotinas GERAIS referentes a Nova Plataforma de Cobrança de Boletos
 
       Alteracoes:
+                   
+      15/10/2018 - Validar proximo dia util após o vencimento caso o vencimento
+                   caia em um final de semana ou feriado (Lucas Ranghetti INC0025447)
+                         
+      16/10/2018 - Eliminar arquivo texto por tabela oracle
+                   ( Belli - Envolti - Chd INC0025460 ) 
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Campos com os valores do rollout, guardados como global para nao serem buscados 
@@ -313,56 +319,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
 
       Programa   : fn_titulo_vencimento_pagamento
       Autor      : Ademir Jose Fink
-      Data       : Dezembro/2017.                   Ultima atualizacao: --/--/----
+      Data       : Dezembro/2017.                   Ultima atualizacao: 07/02/2018
 
       Objetivo   : Recebe como parametro a data de vencimento do titulo e devolve a data
                    em que ele pode ser pago sem ser considerado vencido.
 
-      Alterações : 
+      Alterações : Tratamento para entrada de pr_dtvencto nulo (AJFink - SD#824706)
 
     ..........................................................................*/
     --
     --trunc da data de vencimento para considerar somente dia/mes/ano
     vr_dtvencto date := trunc(pr_dtvencto);
     --pega o ultimo dia do ano de vencimento do título
-    vr_dtultdia date := to_date('31/12/'||to_char(vr_dtvencto,'yyyy'),'dd/mm/yyyy');
+    vr_dtultdia date := null;
     vr_dtultuti date := null;
     vr_dtproxim date := null;
     --
   begin
     --
-    --calcula o próximo dia útil a partir da data de vencimento do título
-    vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
-                                              ,pr_dtmvtolt  => vr_dtvencto --> Data do movimento
-                                              ,pr_tipo      => 'P');       --> Proximo dia util
-    --
-    --com base no último dia do ano calcular o ultimo dia ÚTIL do ano
-    vr_dtultuti := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                              ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
-                                              ,pr_tipo     => 'A'         --> Dia util anterior
-                                              ,pr_feriado  => FALSE);     --> Nao considera feriados
-    --
-    --se a data de vencimento é igual ao ultimo dia ÚTIL do ano
-    --então obrigatório calcular a proxima data de pagamento
-    --porque no último dia ÚTIL do ano não há compensação (abbc-cip)
-    if vr_dtvencto = vr_dtultuti then
+    if vr_dtvencto is not null then
       --
-      --se o ultimo dia ÚTIL do ano é igual ao ultimo dia do ano
-      --então tomar como base o primeiro dia do ano seguinte
-      if vr_dtultuti = vr_dtultdia then
-        vr_dtultdia := vr_dtultdia + 1;
-      end if;
+      vr_dtultdia := to_date('31/12/'||to_char(vr_dtvencto,'yyyy'),'dd/mm/yyyy');
       --
-      --entao calcula o proximo dia ÚTIL
-      vr_dtproxim := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+      --calcula o próximo dia útil a partir da data de vencimento do título
+      vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
+                                                ,pr_dtmvtolt  => vr_dtvencto --> Data do movimento
+                                                ,pr_tipo      => 'P');       --> Proximo dia util
+      --
+      --com base no último dia do ano calcular o ultimo dia ÚTIL do ano
+      vr_dtultuti := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                                 ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
-                                                ,pr_tipo     => 'P'         --> Proximo dia util
-                                                ,pr_feriado  => TRUE);      --> Considera feriados
+                                                ,pr_tipo     => 'A'         --> Dia util anterior
+                                                ,pr_feriado  => FALSE);     --> Nao considera feriados
       --
-    else
-      --
-      --senao pega o dia útil calculado com base na própria data de vencimento
-      vr_dtproxim := vr_dtvencto;
+      --se a data de vencimento é igual ao ultimo dia ÚTIL do ano
+      --então obrigatório calcular a proxima data de pagamento
+      --porque no último dia ÚTIL do ano não há compensação (abbc-cip)
+      if vr_dtvencto = vr_dtultuti then
+        --
+        --se o ultimo dia ÚTIL do ano é igual ao ultimo dia do ano
+        --então tomar como base o primeiro dia do ano seguinte
+        if vr_dtultuti = vr_dtultdia then
+          vr_dtultdia := vr_dtultdia + 1;
+        end if;
+        --
+        --entao calcula o proximo dia ÚTIL
+        vr_dtproxim := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                  ,pr_dtmvtolt => vr_dtultdia --> Data do movimento
+                                                  ,pr_tipo     => 'P'         --> Proximo dia util
+                                                  ,pr_feriado  => TRUE);      --> Considera feriados
+        --
+      else
+        --
+        --senao pega o dia útil calculado com base na própria data de vencimento
+        vr_dtproxim := vr_dtvencto;
+        --
+      end if;
       --
     end if;
     --
@@ -455,6 +467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Alteração : 31/07/2017 - Ajustado rotina para buscar a faixa de rollout
                                completa de todas as datas. (Rafael)            
         
+                  21/05/2018 - Inclusão de formatação para identificar casas decimais no parametro
+                               que indica a faixa de rollout. (INC0013085 - AJFink)
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
@@ -527,7 +542,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         IF vr_index MOD 2 = 0 THEN 
           IF pr_dtmvtolt >= to_date(vr_tab_campos(vr_index-1),'DD/MM/RRRR')  THEN
             --> Validar valor
-            IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            --IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            IF pr_vltitulo >= to_number(vr_tab_campos(vr_index),'999999d99','NLS_NUMERIC_CHARACTERS = ''.,''') THEN
               --> Retornar 1 - ja esta na faixa de rollout
               RETURN 1;
             END IF;
@@ -562,6 +578,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                convivencia tambem é por faixa de DATA e VALOR
                                (Douglas - Chamado 823963)
         
+                  21/05/2018 - Inclusão de formatação para identificar casas decimais no parametro
+                               que indica a faixa de rollout. (INC0013085 - AJFink)
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
@@ -615,7 +634,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         IF vr_index MOD 2 = 0 THEN 
           IF pr_dtmvtolt >= to_date(vr_tab_campos(vr_index-1),'DD/MM/RRRR')  THEN
             --> Validar valor
-            IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            --IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            IF pr_vltitulo >= to_number(vr_tab_campos(vr_index),'999999d99','NLS_NUMERIC_CHARACTERS = ''.,''') THEN
               --> Retornar 0 - acabou período de convivência
               RETURN 0;
             END IF;
@@ -849,32 +869,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Agosto/2017.                   Ultima atualizacao: 
+      Data     : Agosto/2017.                   Ultima atualizacao: 16/10/2018
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para gerar log das rotinas NPC
       Alteração : 
+      
+      16/10/2018 - Eliminar arquivo texto BTCH0001.pc_gera_log_batch por tabela oracle pc_log_programa
+                   ( Belli - Envolti - Chd INC0025460 ) 
         
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
 
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
   BEGIN   
-    NULL;  
-    /*BTCH0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
-                               ,pr_ind_tipo_log => 2 -- Erro tratato
-                               ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
-                                                || pr_nmrotina ||' --> '
-                                                || pr_dsdolog
-                               ,pr_nmarqlog     => vr_dsarqlg);*/
+    -- Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => 1   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => 'NPCB0001 - ' || vr_dsarqlg || 
+                                               ' - ' || SUBSTR(pr_dsdolog,1,3800)
+                          ,pr_cdmensagem    => 0
+                          ,pr_cdcooper      => NVL(pr_cdcooper,0) 
+                          ,pr_flgsucesso    => 1
+                          ,pr_flabrechamado => 0   -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => NULL
+                          ,pr_destinatario_email => NULL
+                          ,pr_flreincidente => 0
+                          ,pr_cdprograma    => NVL(pr_nmrotina,'NPCB0001') -- 
+                          ,pr_idprglog      => vr_idprglog
+                          );                                                          
   EXCEPTION 
     WHEN OTHERS THEN
-      NULL;      
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => NVL(pr_cdcooper,0)
+                                   ,pr_compleme => 'LENGTH(pr_dsdolog):' || LENGTH(pr_dsdolog) ||
+                                                   'pr_cdcritic:'        || 'NPCB0001 - ' || vr_dsarqlg || 
+                                                                             ' - ' || SUBSTR(pr_dsdolog,1,3500) ||
+                                                                             ' - ' || NVL(pr_nmrotina,'NPCB0001')
+                                   );      
   END pc_gera_log_npc;
   
-  --> Rotina para pre-validação do boleto na Nova plataforma de cobrança 
+--> Rotina para pre-validação do boleto na Nova plataforma de cobrança 
   PROCEDURE pc_valid_titulo_npc ( pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                  ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE --> Data de movimento
                                  ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
@@ -889,7 +929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 04/09/2017
+      Data     : Dezembro/2016.                   Ultima atualizacao: 15/10/2018
     
       Dados referentes ao programa:
     
@@ -899,6 +939,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       
       04/09/2017 - Verificar se a data do pagamento excedeu ao próximo dia util
                    da data limite de pagamento. (SD#747481 - Rafael).
+                   
+      15/10/2018 - Validar proximo dia util após o vencimento caso o vencimento
+                   caia em um final de semana ou feriado (Lucas Ranghetti INC0025447)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -907,7 +950,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       SELECT con.dsxml
              ,con.vltitulo 
              ,con.dscodbar
-             ,con.flgcontingencia 
+             ,con.flgcontingencia
+             ,con.cdagenci 
         FROM tbcobran_consulta_titulo con
        WHERE con.cdctrlcs = pr_cdctrlcs;
        
@@ -927,7 +971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_vlcontig       NUMBER;
     vr_de_campo       NUMBER;
     vr_dtvencto       DATE;
-    
+    vr_tab_erro        GENE0001.typ_tab_erro;
+    vr_critica_data    BOOLEAN:= FALSE;    
     
   BEGIN     
   
@@ -1000,14 +1045,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                              ,pr_dtvencto => vr_dtvencto
                              ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
                              ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
-      
-      
-      --> Verificar se o boleto excedeu a data limite de pagto
-      IF nvl(vr_dtvencto,SYSDATE-365) < pr_dtmvtolt THEN
+
+      -- Limpar a tabela de erros
+      vr_tab_erro.DELETE;
+
+      --Verificar vencimento do titulo
+      CXON0014.pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper             --Codigo Cooperativa
+                                             ,pr_cod_agencia     => rw_cons_titulo.cdagenci --Codigo da Agencia
+                                             ,pr_dt_agendamento  => NULL                 --Data Agendamento
+                                             ,pr_dt_vencto       => vr_dtvencto          --Data Vencimento
+                                             ,pr_critica_data    => vr_critica_data      --Critica na validacao
+                                             ,pr_cdcritic        => vr_cdcritic          --Codigo da Critica
+                                             ,pr_dscritic        => vr_dscritic          --Descricao da Critica
+                                             ,pr_tab_erro        => vr_tab_erro);        --Tabela retorno erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        
+        IF vr_tab_erro.Count > 0 THEN
+          vr_dscritic:= vr_dscritic || ' ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSIF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        vr_dscritic:= 'Nao foi possivel verificar o vencimento do boleto. Erro: ' || vr_dscritic;              
+        
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+        
+      --Retorna se está vencido ou não        
+      IF vr_critica_data = TRUE THEN
         vr_dscritic := 'Atenção boleto vencido: Sistema temporariamente indisponível para esta operação.';
         RAISE vr_exc_erro;
       END IF;
-      
+
       --> Não precisa realizar demais validações
       RETURN;
     
@@ -1059,7 +1130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Nao foi possivel validar titulo NPC: '||SQLERRM;  
-  END pc_valid_titulo_npc;  
+  END pc_valid_titulo_npc; 
   
   --> Validar se valor esta entre maximo e minimo
   FUNCTION fn_valid_max_min_valor (pr_vltitulo IN NUMBER   --> Valor do titulo
@@ -1258,7 +1329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 12/07/2017
+      Data     : Dezembro/2016.                   Ultima atualizacao: 12/01/2018
     
       Dados referentes ao programa:
     
@@ -1267,6 +1338,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Alteração : 12/07/2017 - Alterado parametro de data da procedure fn_valor_calc_titulo_npc
                                para correção de pagamentos DDA, Prj. 340 - NPC (Jean Michel)
         
+                  12/01/2018 - Ajuste para validar o valor do titulo e o valor informado
+                               utilizando ROUND na comparação (Douglas - Chamado 817561)        
     ..........................................................................*/
     -----------> CURSORES <-----------
     --> Buscar dados da consulta
@@ -1398,7 +1471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         IF vr_vltitcal IS NULL THEN
           vr_dscritic := 'Problemas ao buscar valor do titulo.';
           RAISE vr_exc_erro;
-        ELSIF pr_vldpagto < vr_vltitcal THEN
+        ELSIF ROUND(pr_vldpagto, 2) < ROUND(vr_vltitcal, 2) THEN
           vr_dscritic := 'Cob. Reg. - Valor informado '||
                          to_char(pr_vldpagto, 'fm999g999g990d00')||
                          ' menor que valor doc. '|| to_char(vr_vltitcal,'fm999g999g990D00');
