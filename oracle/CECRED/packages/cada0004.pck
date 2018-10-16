@@ -81,7 +81,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                 vllimite_saque tbtaa_limite_saque.vllimite_saque%TYPE,
                 pacote_tarifa BOOLEAN,
                 vldevolver NUMBER(32,8),
-                insituacprvd tbprevidencia_conta.insituac%TYPE);
+                insituacprvd tbprevidencia_conta.insituac%TYPE,
+                idportab NUMBER);
   TYPE typ_tab_valores_conta IS TABLE OF typ_rec_valores_conta
     INDEX BY PLS_INTEGER;
   
@@ -6419,6 +6420,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND tbprevidencia_conta.nrdconta = pr_nrdconta;
     rw_tbprevidencia_conta cr_tbprevidencia_conta%ROWTYPE; 
     
+    --> Busca informação Portabilidade de salario
+    CURSOR cr_tbcc_portabilidade_envia IS
+      SELECT 1
+      FROM tbcc_portabilidade_envia
+      WHERE tbcc_portabilidade_envia.cdcooper = pr_cdcooper
+        AND tbcc_portabilidade_envia.nrdconta = pr_nrdconta
+        AND tbcc_portabilidade_envia.idsituacao IN (1,2,3,5);
+    
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
     vr_tab_libera_epr         EXTR0001.typ_tab_libera_epr;
@@ -6494,6 +6503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_tab_cpt      CLOB;
     vr_idxval       PLS_INTEGER;
     vr_valor_deposito_vista NUMBER := 0;
+    vr_permportab   NUMBER  := 0;
     
     
     BEGIN
@@ -6934,6 +6944,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     CLOSE cr_tbprevidencia_conta;
     
+    -- Portabilidade de salario
+    OPEN cr_tbcc_portabilidade_envia;
+    FETCH cr_tbcc_portabilidade_envia INTO vr_permportab;
+    CLOSE cr_tbcc_portabilidade_envia;
+    
     --Executar rotina consulta poupanca
     apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
                                   ,pr_cdagenci => pr_cdagenci            --> Codigo da Agencia
@@ -7208,6 +7223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_valores_conta(vr_idxval).vllimite_saque := nvl(vr_vllimite_saque,0);
     pr_tab_valores_conta(vr_idxval).vldevolver := nvl(vr_vldevolver,0);
     pr_tab_valores_conta(vr_idxval).insituacprvd := vr_insituacprvd;
+    pr_tab_valores_conta(vr_idxval).idportab := vr_permportab;
     
     /* Busca o pacote tarifas */
     OPEN cr_pacotes_tarifas;
@@ -7582,6 +7598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                        END)   ||'</pacote_tarifa>'||
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
                         '<insituacprvd>'|| vr_tab_valores_conta(i).insituacprvd ||'</insituacprvd>'||
+                        '<idportab>'||  vr_tab_valores_conta(i).idportab ||'</idportab>'||
                         '</Registro>');                                               
                                                                      
                                                                      

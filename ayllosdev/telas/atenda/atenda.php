@@ -209,7 +209,7 @@ setVarSession("rotinasTela", $rotinasTela);
                                                                             </td>
                                                                         </tr>
 																		
-                                                                        <tr>																
+                                                                       	<tr>															
                                                                             <td style="padding: 3px 3px 3px 3px; border: 1px solid #E3E2DD;">
                                                                                 <table width="100%" border="0" cellpadding="5" cellspacing="0">
                                                                                     <tr>
@@ -427,13 +427,26 @@ setVarSession("rotinasTela", $rotinasTela);
 																						  <div class="bloco_full">
 
 																						    <div class="bloco_line" onMouseOver="focoRotina(32, true);" onMouseOut="focoRotina(32, false);">
-																						     <a tabindex="39 name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <a tabindex="39" name="39" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
 																						     <p id="valueRot32" class="txtNormal">&nbsp;</p>
 																							</div>
 																							
 																							<div class="bloco_line" onMouseOver="focoRotina(33, true);" onMouseOut="focoRotina(33, false);">
 																						     <a tabindex="40" name="40" class="txtNormalBold SetFocus" id="labelRot33">&nbsp;</a>
 																						     <p id="valueRot33" class="txtNormal">&nbsp;</p>
+																							</div>
+																						  </div>
+																						  
+																						  <div class="bloco_full">
+
+																						    <div class="bloco_line" onMouseOver="focoRotina(34, true);" onMouseOut="focoRotina(34, false);">
+																						     <a tabindex="41" name="41" class="txtNormalBold SetFocus" id="labelRot34">&nbsp;</a>
+																						     <p id="valueRot34" class="txtNormal">&nbsp;</p>
+																							</div>
+																							
+																							<div class="bloco_line" onMouseOver="focoRotina(35, true);" onMouseOut="focoRotina(35, false);">
+																						     <a tabindex="42" name="42" class="txtNormalBold SetFocus" id="labelRot35">&nbsp;</a>
+																						     <p id="valueRot35" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>
 																						  																

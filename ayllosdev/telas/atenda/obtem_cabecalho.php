@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /* * ****************************************************************************
 	 Fonte: obtem_cabecalho.php                                       
 	 Autor: David                                                     
@@ -117,7 +117,9 @@
 				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
 
          16/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
-
+		 
+		 27/09/2018 - Novo link no menu, Portabilidade
+		
  * ********************************************************************************** */
 
 	session_start();	
@@ -178,26 +180,26 @@ if ($nrdconta != "") {
 	$flgerlog = isset($_POST["flgerlog"]) ? $_POST["flgerlog"] : "no";
 	
 	// Monta o xml de requisição
-$xmlGetDadosAtenda = "";
+  $xmlGetDadosAtenda = "";
 	$xmlGetDadosAtenda .= "<Root>";	
-    $xmlGetDadosAtenda .= "	<Dados>";
-$xmlGetDadosAtenda .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
+  $xmlGetDadosAtenda .= "	<Dados>";
+  $xmlGetDadosAtenda .= "		<nrdconta>" . $nrdconta . "</nrdconta>";
 	$xmlGetDadosAtenda .= "		<idseqttl>1</idseqttl>";
-$xmlGetDadosAtenda .= "		<nrdctitg>" . $nrdctitg . "</nrdctitg>";
-$xmlGetDadosAtenda .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
-$xmlGetDadosAtenda .= "		<dtmvtopr>" . $glbvars["dtmvtopr"] . "</dtmvtopr>";
-$xmlGetDadosAtenda .= "		<dtmvtoan>" . $glbvars["dtmvtoan"] . "</dtmvtoan>";
-$xmlGetDadosAtenda .= "		<dtiniper>" . date("d/m/Y") . "</dtiniper>";
-$xmlGetDadosAtenda .= "		<dtfimper>" . date("d/m/Y") . "</dtfimper>";
-$xmlGetDadosAtenda .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
-$xmlGetDadosAtenda .= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
-$xmlGetDadosAtenda .= "		<inproces>" . $glbvars["inproces"] . "</inproces>";
+	$xmlGetDadosAtenda .= "		<nrdctitg>" . $nrdctitg . "</nrdctitg>";
+	$xmlGetDadosAtenda .= "		<dtmvtolt>" . $glbvars["dtmvtolt"] . "</dtmvtolt>";
+	$xmlGetDadosAtenda .= "		<dtmvtopr>" . $glbvars["dtmvtopr"] . "</dtmvtopr>";
+	$xmlGetDadosAtenda .= "		<dtmvtoan>" . $glbvars["dtmvtoan"] . "</dtmvtoan>";
+	$xmlGetDadosAtenda .= "		<dtiniper>" . date("d/m/Y") . "</dtiniper>";
+	$xmlGetDadosAtenda .= "		<dtfimper>" . date("d/m/Y") . "</dtfimper>";
+	$xmlGetDadosAtenda .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
+	$xmlGetDadosAtenda .= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
+	$xmlGetDadosAtenda .= "		<inproces>" . $glbvars["inproces"] . "</inproces>";
 
-if ($flgerlog) {
-        $xmlGetDadosAtenda .= "		<flgerlog>S</flgerlog>";
-} else {
+  if ($flgerlog) {
+          $xmlGetDadosAtenda .= "		<flgerlog>S</flgerlog>";
+  } else {
         $xmlGetDadosAtenda .= "		<flgerlog>N</flgerlog>";
-    }
+  }
 	$xmlGetDadosAtenda .= "	</Dados>";
 	$xmlGetDadosAtenda .= "</Root>";
 		
@@ -349,15 +351,15 @@ if ( isset($compCabecalho[7]->cdata) ) {
 }
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
-$xml = "";
+  $xml = "";
 	$xml .= "<Root>";
 	$xml .= "  <Cabecalho>";
 	$xml .= "    <Bo>b1wgen0147.p</Bo>";
 	$xml .= "    <Proc>dados_bndes</Proc>";
 	$xml .= "  </Cabecalho>";
 	$xml .= "  <Dados>";
-$xml .= "    <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
-$xml .= "    <nrdconta>" . $nrdconta . "</nrdconta>";
+	$xml .= "    <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
+	$xml .= "    <nrdconta>" . $nrdconta . "</nrdconta>";
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";
 			
@@ -387,15 +389,15 @@ $vlpresta = $vlpresta + $vlrbndes;
 	
 	
 	// Monta o xml de requisi&ccedil;&atilde;o
-$xmlConsorcio = "";
+  $xmlConsorcio = "";
 	$xmlConsorcio .= "<Root>";
 	$xmlConsorcio .= "  <Cabecalho>";
 	$xmlConsorcio .= "    <Bo>b1wgen0162.p</Bo>";
 	$xmlConsorcio .= "    <Proc>indicativo_consorcio</Proc>";
 	$xmlConsorcio .= "  </Cabecalho>";
 	$xmlConsorcio .= "  <Dados>";
-$xmlConsorcio .= "    <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
-$xmlConsorcio .= "    <nrdconta>" . $nrdconta . "</nrdconta>";
+  $xmlConsorcio .= "    <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
+  $xmlConsorcio .= "    <nrdconta>" . $nrdconta . "</nrdconta>";
 	$xmlConsorcio .= "  </Dados>";
 	$xmlConsorcio .= "</Root>";
 	
@@ -715,6 +717,17 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$urlRotina = "";
 				$strValue = ( isset($valores[22]->cdata) ) ? ($valores[22]->cdata == "1" OR $valores[22]->cdata == "2")  ? "SIM" : "NAO" : "NAO"; 
 				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
+			case "PORTABILIDADE": {
+				$nomeRotina = "Portabilidade";
+				if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == 1) {
+					$urlRotina = "portabilidade";
+				} else {
+					$urlRotina = "";
+				}
+				$strValue = ( isset($valores[23]->cdata) ) ? ($valores[23]->cdata == "1")  ? "SIM" : "NAO" : "NAO";
+				$telaPermitadaAcessoBacen = 1;
 				break;
 			}
 			default: {
