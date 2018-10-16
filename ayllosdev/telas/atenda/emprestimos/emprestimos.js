@@ -3454,7 +3454,13 @@ function controlaLayout(operacao) {
 			if ($("#"+idElementMarca+"C").val()==""){ $("#"+idElementMarca+"C").hide(); $("#"+idElementMarca).show(); }
 			if ($("#"+idElementModelo+"C").val()==""){ $("#"+idElementModelo+"C").hide(); $("#"+idElementModelo).show(); }
 			if ($("#"+idElementAno+"C").val()=="" && (!in_array(cCateg.val(), ['MAQUINA DE COSTURA', 'EQUIPAMENTO']))){ $("#"+idElementAno+"C").hide(); $("#"+idElementAno).show(); }
-
+		} else {
+			$("#" + idElementMarca + "C").show();
+			$("#" + idElementMarca).hide();
+			$("#" + idElementModelo + "C").show();
+			$("#" + idElementModelo).hide();
+			$("#" + idElementAno + "C").show();
+			$("#" + idElementAno).hide();
 		}
 		
 		cRenavan.mask('AA.AAA.AAA.AAA', {reverse: true});
@@ -4379,14 +4385,15 @@ function attArray(novaOp, cdcooper) {
 		arrayAlienacoes[atual]['vlrdobem'] = $('#vlrdobem', '#frmTipo').val().replace('R$','').replace(/\./g,'');//.replace(',','.');
 		arrayAlienacoes[atual]['dssitgrv'] = $('#dssitgrv', '#frmTipo').val().toUpperCase();
 		arrayAlienacoes[atual]['nrcpfcgc'] = normalizaNumero( $('#nrcpfcgc', '#frmTipo').val() );
-		if ($('#dsmarbem option:selected', '#frmTipo').val() != '-1') {
+		var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
+		if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
+			arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().toUpperCase()));
+			arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().toUpperCase()));
+			arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().toUpperCase()));
+		} else {
 			arrayAlienacoes[atual]['dsmarbem'] = $('#dsmarbem option:selected', '#frmTipo').text().toUpperCase();
 			arrayAlienacoes[atual]['dsbemfin'] = $('#dsbemfin option:selected', '#frmTipo').text().toUpperCase();
 			arrayAlienacoes[atual]['nrmodbem'] = $('#nrmodbem option:selected', '#frmTipo').text().toUpperCase();
-		} else {
-			arrayAlienacoes[atual]['dsmarbem'] = removeAcentos(removeCaracteresInvalidos($('#dsmarbemC', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
-			arrayAlienacoes[atual]['dsbemfin'] = removeAcentos(removeCaracteresInvalidos($('#dsbemfinC', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
-			arrayAlienacoes[atual]['nrmodbem'] = removeAcentos(removeCaracteresInvalidos($('#nrmodbemC', '#frmTipo').val().replace("<", "").replace(">", "").toUpperCase()));
 		}
 
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
@@ -5081,9 +5088,9 @@ function insereAlienacao(operacao, opContinua) {
 
 	var dsmarbem = $('#dsmarbem option:selected', '#frmTipo').text();  // string
 	if ( $('#dsmarbem', '#frmTipo').val() == '-1' || dsmarbem == "") {
-		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
-		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
-		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().replace("<","").replace(">","").toUpperCase()));');
+		eval('arrayAlienacao' + i + '["dsmarbem"] = removeAcentos(removeCaracteresInvalidos($("#dsmarbemC","#frmTipo").val().toUpperCase()));');
+		eval('arrayAlienacao' + i + '["dsbemfin"] = removeAcentos(removeCaracteresInvalidos($("#dsbemfinC","#frmTipo").val().toUpperCase()));');
+		eval('arrayAlienacao' + i + '["nrmodbem"] = removeAcentos(removeCaracteresInvalidos($("#nrmodbemC","#frmTipo").val().toUpperCase()));');
 	} else {
 		eval('arrayAlienacao' + i + '["dsmarbem"] = $("#dsmarbem option:selected","#frmTipo").text().toUpperCase();');
 		eval('arrayAlienacao' + i + '["dsbemfin"] = $("#dsbemfin option:selected","#frmTipo").text().toUpperCase();');
