@@ -277,7 +277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Odirlei Busana - AMcom
-      Data     : Dezembro/2016.                   Ultima atualizacao: 16/12/2016
+      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
 
       Dados referentes ao programa:
 
@@ -285,6 +285,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Rotinas GERAIS referentes a Nova Plataforma de Cobrança de Boletos
 
       Alteracoes:
+
+      15/10/2018 - Validar proximo dia util após o vencimento caso o vencimento
+                   caia em um final de semana ou feriado (Lucas Ranghetti INC0025447)
+                         
+      16/10/2018 - Eliminar arquivo texto por tabela oracle
+                   ( Belli - Envolti - Chd INC0025460 ) 
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Campos com os valores do rollout, guardados como global para nao serem buscados 
@@ -863,7 +869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Agosto/2017.                   Ultima atualizacao: 
+      Data     : Agosto/2017.                   Ultima atualizacao: 16/10/2018
     
       Dados referentes ao programa:
     
@@ -871,21 +877,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Rotina para gerar log das rotinas NPC
       Alteração : 
         
+      16/10/2018 - Eliminar arquivo texto BTCH0001.pc_gera_log_batch por tabela oracle pc_log_programa
+                   ( Belli - Envolti - Chd INC0025460 ) 
+        
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
 
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
   BEGIN   
-  
-    BTCH0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
-                               ,pr_ind_tipo_log => 2 -- Erro tratato
-                               ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
-                                                || pr_nmrotina ||' --> '
-                                                || pr_dsdolog
-                               ,pr_nmarqlog     => vr_dsarqlg);
+    -- Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => 1   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => 'NPCB0001 - ' || vr_dsarqlg || 
+                                               ' - ' || SUBSTR(pr_dsdolog,1,3800)
+                          ,pr_cdmensagem    => 0
+                          ,pr_cdcooper      => NVL(pr_cdcooper,0) 
+                          ,pr_flgsucesso    => 1
+                          ,pr_flabrechamado => 0   -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => NULL
+                          ,pr_destinatario_email => NULL
+                          ,pr_flreincidente => 0
+                          ,pr_cdprograma    => NVL(pr_nmrotina,'NPCB0001') -- 
+                          ,pr_idprglog      => vr_idprglog
+                          );                                                          
   EXCEPTION 
     WHEN OTHERS THEN
-      NULL;      
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => NVL(pr_cdcooper,0)
+                                   ,pr_compleme => 'LENGTH(pr_dsdolog):' || LENGTH(pr_dsdolog) ||
+                                                   'pr_cdcritic:'        || 'NPCB0001 - ' || vr_dsarqlg || 
+                                                                             ' - ' || SUBSTR(pr_dsdolog,1,3500) ||
+                                                                             ' - ' || NVL(pr_nmrotina,'NPCB0001')
+                                   );      
   END pc_gera_log_npc;
   
   --> Rotina para pre-validação do boleto na Nova plataforma de cobrança 
@@ -903,7 +929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 04/09/2017
+      Data     : Dezembro/2016.                   Ultima atualizacao: 15/10/2018
     
       Dados referentes ao programa:
     
@@ -914,6 +940,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       04/09/2017 - Verificar se a data do pagamento excedeu ao próximo dia util
                    da data limite de pagamento. (SD#747481 - Rafael).
         
+      15/10/2018 - Validar proximo dia util após o vencimento caso o vencimento
+                   caia em um final de semana ou feriado (Lucas Ranghetti INC0025447)
+        
     ..........................................................................*/
     -----------> CURSORES <-----------
     --> Buscar dados da consulta
@@ -922,6 +951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
              ,con.vltitulo 
              ,con.dscodbar
              ,con.flgcontingencia 
+             ,con.cdagenci 
         FROM tbcobran_consulta_titulo con
        WHERE con.cdctrlcs = pr_cdctrlcs;
        
@@ -941,7 +971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_vlcontig       NUMBER;
     vr_de_campo       NUMBER;
     vr_dtvencto       DATE;
-    
+    vr_tab_erro        GENE0001.typ_tab_erro;
+    vr_critica_data    BOOLEAN:= FALSE;    
     
   BEGIN     
   
@@ -1015,9 +1046,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                              ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
                              ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
       
-      
-      --> Verificar se o boleto excedeu a data limite de pagto
-      IF nvl(vr_dtvencto,SYSDATE-365) < pr_dtmvtolt THEN
+      -- Limpar a tabela de erros
+      vr_tab_erro.DELETE;
+
+      --Verificar vencimento do titulo
+      CXON0014.pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper             --Codigo Cooperativa
+                                             ,pr_cod_agencia     => rw_cons_titulo.cdagenci --Codigo da Agencia
+                                             ,pr_dt_agendamento  => NULL                 --Data Agendamento
+                                             ,pr_dt_vencto       => vr_dtvencto          --Data Vencimento
+                                             ,pr_critica_data    => vr_critica_data      --Critica na validacao
+                                             ,pr_cdcritic        => vr_cdcritic          --Codigo da Critica
+                                             ,pr_dscritic        => vr_dscritic          --Descricao da Critica
+                                             ,pr_tab_erro        => vr_tab_erro);        --Tabela retorno erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        
+        IF vr_tab_erro.Count > 0 THEN
+          vr_dscritic:= vr_dscritic || ' ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSIF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        vr_dscritic:= 'Nao foi possivel verificar o vencimento do boleto. Erro: ' || vr_dscritic;              
+        
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+        
+      --Retorna se está vencido ou não        
+      IF vr_critica_data = TRUE THEN
         vr_dscritic := 'Atenção boleto vencido: Sistema temporariamente indisponível para esta operação.';
         RAISE vr_exc_erro;
       END IF;
