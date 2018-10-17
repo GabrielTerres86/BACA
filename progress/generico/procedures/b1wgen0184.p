@@ -1,7 +1,7 @@
 /*.............................................................................
     Programa: sistema/generico/procedures/b1wgen0184.p
     Autor   : Jéssica Laverde Gracino (DB1)
-    Data    : 18/02/2014                     Ultima atualizacao: 09/11/2015
+    Data    : 18/02/2014                     Ultima atualizacao: 19/09/2018
 
     Objetivo  : Tranformacao BO tela LISLOT.
 
@@ -39,6 +39,9 @@
                             departamento passando a considerar o código (Renato Darosci)  
 
                18/08/2018 - Incluso busca de istoricos tbdsct_lancamento_bordero (GFT) 
+
+               19/09/2018 - P450 - LISLOT históricos de prejuizo (Fabio AMcom).
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -46,6 +49,7 @@
 { sistema/generico/includes/b1wgen0184tt.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -598,7 +602,7 @@ PROCEDURE Busca_Cooperado:
                     
                 END.
             ELSE
-                FOR EACH craphis WHERE CAN-DO("craplct,craplcm,craplem,craplpp,craplap,craplac,tbdsct_lancamento_bordero",
+                FOR EACH craphis WHERE CAN-DO("craplct,craplcm,craplem,craplpp,craplap,craplac,tbdsct_lancamento_bordero,tbcc_prejuizo_detalhe",
                                                craphis.nmestrut)               AND
                                        craphis.cdcooper = par_cdcooper         AND 
                                        craphis.cdhistor = par_cdhistor         
@@ -840,6 +844,188 @@ PROCEDURE Busca_Dinamica:
 
 END PROCEDURE. /* Busca_Dinamica*/
 
+
+PROCEDURE Busca_Dinamica_hibrido:
+
+    DEF  INPUT PARAM par_nmestrut  AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM aux_campos    AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM aux_filtros   AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM aux_param_e   AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM aux_temptable AS CHAR                           NO-UNDO.
+
+    DEF  OUTPUT PARAM TABLE FOR tt-handle.
+    
+    DEF  INPUT PARAM par_cdcooper AS INTE                                 NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                                 NO-UNDO.
+    DEF  INPUT PARAM par_dtinicio AS CHAR                                 NO-UNDO.
+    DEF  INPUT PARAM par_dttermin AS CHAR                                 NO-UNDO.
+    DEF  INPUT PARAM par_cdhistor AS INTE                                 NO-UNDO.
+         
+    DEF  VAR hQuery                AS HANDLE                         NO-UNDO.
+    DEF  VAR hBuffer               AS HANDLE                         NO-UNDO.
+    DEF  VAR hTTReturn             AS HANDLE                         NO-UNDO.
+    DEF  VAR hBufferTT             AS HANDLE                         NO-UNDO.
+    
+    /*  integracao Oracle */
+    DEF VAR vr_xml AS LONGCHAR.
+    DEF VAR vr_tpdecons AS INT.
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot3        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xFieldHistorico        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR lGood         AS LOGICAL                                NO-UNDO.
+    DEF VAR aux_historico AS INTEGER                                NO-UNDO. 
+    
+    DEF VAR aux_nmestrut  AS CHAR                           NO-UNDO.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_returnvl = "NOK"
+           aux_dstransa = "Dados Busca Dinamica".              
+
+    EMPTY TEMP-TABLE tt-erro.
+        
+    
+    Busca: DO ON ERROR UNDO Busca, LEAVE Busca:
+
+        IF par_nmestrut <> "TBCC_PREJUIZO_DETALHE" THEN 
+        DO:
+            RUN Busca_Dinamica
+                        ( INPUT par_nmestrut,
+                          INPUT aux_campos,
+                          INPUT aux_filtros,
+                          INPUT aux_param_e,
+                          INPUT aux_temptable,
+                          OUTPUT TABLE tt-handle).   
+            
+        END.
+        ELSE DO:
+                  EMPTY TEMP-TABLE tt-handle.
+              
+                  /*------Procedure Oracle------*/
+                                
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  /* Efetuar a chamada a rotina Oracle  */
+                  
+                  /*IF par_tpdecons = TRUE THEN*/
+                     ASSIGN vr_tpdecons = 1.
+                  /*ELSE
+                     ASSIGN vr_tpdecons = 0.*/
+                 
+                          
+                  RUN STORED-PROCEDURE pc_lista_lislot_periodo
+                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                            ,INPUT par_nrdconta /*pr_nrdconta*/
+                                                            ,INPUT par_cdhistor /*pr_cdhistor*/
+                                                            ,INPUT par_dtinicio
+                                                            ,INPUT par_dttermin
+                                                            ,INPUT ""    /*XML com informacoes de LOG*/
+                                                            ,OUTPUT 0    /*Codigo da critica*/
+                                                            ,OUTPUT ""     /*Descricao da critica*/
+                                                            ,OUTPUT ""    /*Arquivo de retorno do XML*/
+                                                            ,OUTPUT ""    /*Nome do campo com erro*/
+                                                            ,OUTPUT "").  /*Erros do processo*/
+                                                            
+                  /* Fechar o procedimento para buscarmos o resultado */ 
+                  CLOSE STORED-PROC pc_lista_lislot_periodo
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                         
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  ASSIGN aux_dscritic = "".
+                  ASSIGN aux_cdcritic = 0.
+                  
+                  ASSIGN vr_xml = pc_lista_lislot_periodo.pr_retxml
+                                   WHEN pc_lista_lislot_periodo.pr_retxml <> ?.
+                  ASSIGN aux_cdcritic = pc_lista_lislot_periodo.pr_cdcritic
+                                   WHEN pc_lista_lislot_periodo.pr_cdcritic <> ?.
+                  ASSIGN aux_dscritic = pc_lista_lislot_periodo.pr_dscritic
+                                   WHEN pc_lista_lislot_periodo.pr_dscritic <> ?.
+                                   
+                  /*desmontar o XML e jogar na tt-grupo de novo*/
+                  /* Efetuar a leitura do XML*/ 
+                  /*MESSAGE "depois rodar oracle=" vr_xml.*/
+                  
+                  SET-SIZE(ponteiro_xml) = LENGTH(vr_xml) + 1. 
+                  
+                  PUT-STRING(ponteiro_xml,1) = vr_xml. 
+                  /* Inicializando objetos para leitura do XML */ 
+                  CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+                  CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+                  CREATE X-NODEREF  xRoot2.  /* Vai conter a tag HISTORICOS em diante */ 
+                  CREATE X-NODEREF  xRoot3.  /*Vai conter a tag HISTORICO em diante */ 
+                  CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag HISTORICO */ 
+                  CREATE X-NODEREF  xFieldHistorico.  /* Vai conter os campos dentro da tag HISTORICO */ 
+                  CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+                  
+                  IF ponteiro_xml <> ? THEN
+                      DO:
+                          xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+                          xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+                          
+                          DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+                          
+                            xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+                            
+                            IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                                NEXT.
+                                
+                            IF xRoot2:NUM-CHILDREN > 0 THEN
+                            DO:
+                              CREATE tt-handle.                              
+                            END.
+                            
+                            
+                            DO aux_historico = 1 TO xRoot2:NUM-CHILDREN:
+                               
+                               xRoot2:GET-CHILD(xFieldHistorico,aux_historico).
+                               
+                               IF xFieldHistorico:SUBTYPE <> "ELEMENT" THEN 
+                                  NEXT. 
+                                    
+                               xFieldHistorico:GET-CHILD(xText,1) NO-ERROR.
+                               /*CHAR*/ ASSIGN tt-handle.dtmvtolt = DATE(xText:NODE-VALUE)  WHEN xFieldHistorico:NAME = "dtmvtolt" NO-ERROR.
+                               /*INTE*/ ASSIGN tt-handle.nrdconta = INT(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "nrdconta" NO-ERROR.
+                               /*DECI*/ ASSIGN tt-handle.nrdocmto = DEC(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "nrdocmto" NO-ERROR.
+                               /*DECI*/ ASSIGN tt-handle.vllanmto = DEC(xText:NODE-VALUE)   WHEN xFieldHistorico:NAME = "vllanmto" NO-ERROR.
+                               
+                            END.
+                                        
+                      END.
+                  SET-SIZE(ponteiro_xml) = 0. 
+             END.
+
+             /*Elimina os objetos criados*/
+             DELETE OBJECT xDoc. 
+             DELETE OBJECT xRoot. 
+             DELETE OBJECT xRoot2. 
+             DELETE OBJECT xField. 
+             DELETE OBJECT xText.
+             
+             
+            LEAVE Busca.
+              
+             /*------volta pro Progress------*/
+            
+             /*Fim volta pro Progress*/
+             
+        END.
+        
+    END. /* Busca */
+             
+
+END PROCEDURE. /* Busca_Dinamica_hibrido*/
+
+
+
+
 PROCEDURE Busca_Dados_T:
 
     DEF  INPUT PARAM par_nrdcaixa AS INTE                                 NO-UNDO.
@@ -867,6 +1053,11 @@ PROCEDURE Busca_Dados_T:
     
     DEF VAR aux_soma      AS INTE                                         NO-UNDO.
 
+    DEF  VAR c_par_dtinicio AS CHAR                                       NO-UNDO.
+    DEF  VAR c_par_dttermin AS CHAR                                       NO-UNDO.
+    
+    ASSIGN c_par_dtinicio = STRING(par_dtinicio, "99/99/9999").
+    ASSIGN c_par_dttermin = STRING(par_dttermin, "99/99/9999").
     ASSIGN aux_campos = "dtmvtolt nrdconta nrdocmto vllanmto"
            aux_temptable = "tt-handle".
 
@@ -881,13 +1072,18 @@ PROCEDURE Busca_Dados_T:
                                  "       dtmvtolt >= " + STRING(par_dtinicio) + " AND" +
                                  "       dtmvtolt <= " + STRING(par_dttermin) + " AND" +
                                  "       cdhistor  = " + STRING(par_cdhistor).
-            RUN Busca_Dinamica
+            RUN Busca_Dinamica_hibrido
                 ( INPUT par_nmestrut,                                                   
                   INPUT aux_campos,
                   INPUT aux_filtros,
                   INPUT "",
                   INPUT aux_temptable,
-                 OUTPUT TABLE tt-handle). 
+                  OUTPUT TABLE tt-handle,
+                 INPUT par_cdcooper,
+                 INPUT par_nrdconta,
+                 INPUT STRING(par_dtinicio, "99/99/9999"),
+                 INPUT STRING(par_dttermin, "99/99/9999"),
+                 INPUT par_cdhistor). 
     
             FOR EACH tt-handle NO-LOCK,
                 FIRST crapass   NO-LOCK WHERE
@@ -921,15 +1117,18 @@ PROCEDURE Busca_Dados_T:
                                      "       dtmvtolt <= " + STRING(par_dttermin) + " AND" +
                                      "       cdhistor  = " + STRING(par_cdhistor).
         
-                RUN Busca_Dinamica
+                RUN Busca_Dinamica_hibrido
                 ( INPUT par_nmestrut,
                   INPUT aux_campos,
                   INPUT aux_filtros,
                   INPUT "",
                   INPUT aux_temptable,
-                 OUTPUT TABLE tt-handle). 
-
-
+                  OUTPUT TABLE tt-handle,
+                 INPUT par_cdcooper,
+                 INPUT par_nrdconta,
+                 INPUT c_par_dtinicio,
+                 INPUT c_par_dttermin,
+                 INPUT par_cdhistor ). 
 
         
                 FOR EACH tt-handle,
@@ -963,13 +1162,18 @@ PROCEDURE Busca_Dados_T:
                                  "       dtmvtolt <= " + STRING(par_dttermin) + " AND" +
                                  "       cdhistor  = " + STRING(par_cdhistor).
         
-                RUN Busca_Dinamica
+                RUN Busca_Dinamica_hibrido
                     ( INPUT par_nmestrut,
                       INPUT aux_campos,
                       INPUT aux_filtros,
                       INPUT "",
                       INPUT aux_temptable,
-                     OUTPUT TABLE tt-handle). 
+                      OUTPUT TABLE tt-handle,
+                     INPUT par_cdcooper,
+                     INPUT par_nrdconta,
+                     INPUT STRING(par_dtinicio, "99/99/9999"),
+                     INPUT STRING(par_dttermin, "99/99/9999"),
+                     INPUT par_cdhistor).
         
                 FOR EACH tt-handle,
                     FIRST crapass WHERE  crapass.cdcooper = par_cdcooper   AND
@@ -998,13 +1202,18 @@ PROCEDURE Busca_Dados_T:
                                      "       dtmvtolt <= " + STRING(par_dttermin) + " AND" +
                                      "       cdhistor  = " + STRING(par_cdhistor).
             
-                    RUN Busca_Dinamica
+                    RUN Busca_Dinamica_hibrido
                         ( INPUT par_nmestrut,
                           INPUT aux_campos,
                           INPUT aux_filtros,
                           INPUT "",
                           INPUT aux_temptable,
-                         OUTPUT TABLE tt-handle). 
+                          OUTPUT TABLE tt-handle,
+                         INPUT par_cdcooper,
+                         INPUT par_nrdconta,
+                         INPUT STRING(par_dtinicio, "99/99/9999"),
+                         INPUT STRING(par_dttermin, "99/99/9999"),
+                         INPUT par_cdhistor).
             
                     FOR EACH tt-handle,
                         FIRST crapass WHERE  crapass.cdcooper = par_cdcooper   AND

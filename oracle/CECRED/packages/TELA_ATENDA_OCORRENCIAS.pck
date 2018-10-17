@@ -50,9 +50,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Atenda Seguros
   --
-  -- Alterado: 23/01/2018 - Reginaldo (AMcom)
   -- Alteracoes: 23/01/2018 - Criada procedure pc_busca_dados_risco
   --                          PJ 450 - Reginaldo (AMcom)
+  --             06/09/2018 - Inclusão da coluna quantidade de dias de atraso
+  --                          PJ 450 - Diego Simas - AMcom
+  --             10/09/2018 - Inclusão da coluna numero do grupo economico 
+  --                          PJ 450 - Diego Simas - AMcom
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -73,6 +76,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_numero_grupo  IN crapris.nrdgrupo%TYPE
                                ,pr_ris_melhora   IN crawepr.dsnivris%TYPE
                                ,pr_ris_final     IN crawepr.dsnivris%TYPE
+                               ,pr_qtd_dias_atraso IN crapris.qtdiaatr%TYPE
                                ,pr_tipo_registro IN VARCHAR2) IS
   BEGIN
          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -176,6 +180,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
+                             pr_tag_nova => 'qtd_dias_atraso',
+                             pr_tag_cont => pr_qtd_dias_atraso,
+                             pr_des_erro => pr_dscritic);
+
+          gene0007.pc_insere_tag(pr_xml  => pr_retxml,
+                             pr_tag_pai  => 'Conta',
+                             pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'numero_gr_economico',
                              pr_tag_cont => pr_numero_grupo,
                              pr_des_erro => pr_dscritic);
@@ -247,7 +258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         Sistema : Ayllos
         Sigla   : CECRED
         Autor   : Daniel/AMcom & Reginaldo/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao: 15/06/2018
+        Data    : Janeiro/2018                 Ultima atualizacao: 06/09/2018
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
@@ -257,6 +268,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 				             Março/2018 - Reginaldo (AMcom)	
 
                      15/06/2018 - P450 - Melhora de Performance (Reginaldo/AMcom)
+
+                     06/09/2018 - Inclusão da coluna quantidade de dias de atraso
+                                  PJ 450 - Diego Simas - AMcom 
+                                  
+                     10/09/2018 - Inclusão da coluna numero do grupo economico 
+                                  PJ 450 - Diego Simas - AMcom
 
       ..............................................................................*/
 
@@ -476,16 +493,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 				 , RISC0004.fn_traduz_risco(ris.inrisco_cpf) risco_cpf
 				 , RISC0004.fn_traduz_risco(ris.inrisco_grupo) risco_grupo
 				 , RISC0004.fn_traduz_risco(ris.inrisco_final) risco_final
+                 , ris.qtdiaatr
                  , ris.cdmodali as ris_cdmodali
 				 , decode (ris.cdmodali
-                 , 0, 'CTA' -- Apenas para compatibilidade com dados pré-existentes (foi mantido apenas o '999')
-				         , 101, 'CTA'
-								 , 201, 'LIM'
-								 , 1901, 'LIM'
-								 , 299, 'EMP'
-								 , 499, 'EMP'
-								 , 301, 'DCH'
-								 , 302, 'DTI'
+                   , 0,   'CTA' -- Apenas para compatibilidade com dados pré-existentes (foi mantido apenas o '999')
+                   , 101, 'CTA'
+                   , 201, 'LIM'
+                   , 1901,'LIM'
+                   , 299, 'EMP'
+                   , 499, 'EMP'
+                   , 301, 'DTI'
+                   , 302, 'DCH'
 								 , 999, 'CTA') tipo_registro
 		  FROM tbrisco_central_ocr ris
 		 WHERE ris.cdcooper = pr_cdcooper
@@ -516,6 +534,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
        AND t.cdacesso = 'RISCOBACEN'
        AND t.tpregist = 000;
     rw_tab cr_tab%ROWTYPE;
+
+    vr_tiporegistro VARCHAR(3);
 
     BEGIN
       pr_des_erro := 'OK';
@@ -592,6 +612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , rw_tabrisco_central.nrdgrupo
                                      , rw_tabrisco_central.risco_melhora
                                      , rw_tabrisco_central.risco_final
+                                     , rw_tabrisco_central.qtdiaatr
                                      , rw_tabrisco_central.tipo_registro
                                    );
 
@@ -632,6 +653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                      , rw_tabrisco_central.nrdgrupo
                                      , rw_tabrisco_central.risco_melhora
                                      , rw_tabrisco_central.risco_final
+                                     , rw_tabrisco_central.qtdiaatr
                                      , rw_tabrisco_central.tipo_registro
                                    );
 					     vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML

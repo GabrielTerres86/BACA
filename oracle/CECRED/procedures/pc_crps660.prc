@@ -10,7 +10,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 04/09/2017
+     Data    : Outubro/9999                     Ultima atualizacao: 10/10/2017
 
      Dados referentes ao programa:
 
@@ -79,6 +79,9 @@ BEGIN
 
                  04/09/2018 - P450 - Quando o Juros60 for maior que o valor da divida, enviar o valor da divida, 
                               senao subtrair do valor da divida o Juros60 para emprestimos em prejuizo. (P450 - Jaison)                              
+
+                 10/10/2018 - P450 - Ajustes gerais no Juros60/ADP/Empr. (Guilherme/AMcom)
+
   ............................................................................ */
 
   DECLARE
@@ -229,6 +232,7 @@ BEGIN
             ,ci.cdorigem
             ,ci.innivris  
             ,ci.inddocto
+            ,ci.cdmodali
             ,ci.cdinfadi
             ,ROW_NUMBER () OVER (PARTITION BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc)
                                      ORDER BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc)) nrseqctr
@@ -255,6 +259,8 @@ BEGIN
             ,ris.innivris 
             ,ris.inddocto
             ,ris.cdinfadi
+            ,ris.cdmodali
+            ,ris.vlsld59d
             ,ROW_NUMBER () OVER (PARTITION BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc)
                                      ORDER BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc)) nrseqctr
             ,COUNT(1)      OVER (PARTITION BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc)) qtdcontr
@@ -1238,10 +1244,10 @@ BEGIN
       END IF;  
       -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
       IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
-        IF rw_crapris.cdorigem <> 1 THEN
-          vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
-        ELSE
+        IF rw_crapris.cdmodali = 101 THEN -- ADP  -- Alterado para verificar pela modalidade de não pelo inddocto (Reginaldo/AMcom) 
           vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
+        ELSE
+          vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
         END IF;      
       END IF;
       
@@ -1263,7 +1269,7 @@ BEGIN
       vr_tab_rowid(vr_tab_rowid.count()+1) := rw_crapris.rowid;        
       -- Para o ultimo registro (Já acumulou todos os contratos do CPF)
       IF rw_crapris.nrseqctr = rw_crapris.qtdcontr THEN
-        -- Individualizar caso valor acumulado >= a R$ 1000,00
+        -- Individualizar caso valor acumulado >= a R$ 200,00
         IF vr_vldivida >= vr_vlindivi THEN
           -- Varrer pltable
           FOR vr_idx IN 1..vr_tab_rowid.count LOOP  
@@ -1309,7 +1315,11 @@ BEGIN
         END IF;
         -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
         IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
-          vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+          IF rw_crapris.cdmodali = 101 THEN -- Alterado para verificar pela modalidade de não pelo inddocto (Reginaldo/AMcom) 
+            vr_vldivida := vr_vldivida + rw_crapris.vlsld59d;
+          ELSE
+            vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
+          END IF;
         END IF;
         -- ***
         -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)

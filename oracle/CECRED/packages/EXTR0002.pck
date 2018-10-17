@@ -3790,6 +3790,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
   --
   --              31/07/2018 - P410 - Inclusao de Histórico para não compor Saldo no IOF do Prejuizo (Marcos-Envolti)
+  --
+  --              25/09/2018 - Incluir novos historicos de estorno de financiamento 2784,2785,2786,2787.
+  --                           PRJ450 - Regulatorio(Odirlei - AMcom)     
+  --
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Tabela de Memoria primeira parcela
@@ -3981,7 +3985,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476,2735) THEN 
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476,2735,
+                                   --> Novos historicos de estorno de financiamento
+                                   2784,2785,2786,2787) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
@@ -13176,6 +13182,9 @@ END pc_consulta_ir_pj_trim;
   --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).             
   --
   --              10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
+  --
+  --              25/09/2018 - Incluir novos historicos de estorno de financiamento 2784,2785,2786,2787.
+  --                           PRJ450 - Regulatorio(Odirlei - AMcom)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -13875,7 +13884,9 @@ END pc_consulta_ir_pj_trim;
               --Descricao do Extrato
               pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat||'*';
             END IF;
-            IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor IN (1711,1720,1708,1711) THEN
+            IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor IN (1711,1720,1708,1711,
+                                                                   --> Novos historicos de estorno de financiamento
+                                                                   2784,2785,2786,2787) THEN
               --Flag Informacao
               vr_flginfor2:= TRUE;
               --Descricao do Extrato

@@ -107,7 +107,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                                        ,pr_nmdcampo   OUT VARCHAR2                            --> Nome do campo com erro
                                        ,pr_des_erro   OUT VARCHAR2);                                                                     
 
-  PROCEDURE pc_job_grupo_economico_novo;                                       
+  
 END TELA_CONTAS_GRUPO_ECONOMICO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
@@ -122,6 +122,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Contas Grupo Economico
+  --
+  -- Alterações: 11/10/2018 - Removido rotina pc_job_grupo_economico_novo, pois a mesma será 
+  --                          executada durante o processo batch.
+  --                          PRJ450 - Regulatorio(Odirlei-AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
   FUNCTION fn_busca_tipo_vinculo(pr_tpvinculo IN tbcc_grupo_economico_integ.tpvinculo%TYPE) RETURN varchar2 IS
@@ -1815,101 +1819,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
   END pc_imprime_grupo_economico;      
-  
-  PROCEDURE pc_job_grupo_economico_novo IS
-  BEGIN                                   
-    /* .............................................................................
-     Programa: pc_job_grupo_economico_novo
-     Sistema : Rotinas referentes ao grupo economico
-     Sigla   : CONTAS
-     Autor   : Mauro (MOUTS)
-     Data    : Julho/17.                    Ultima atualizacao:
-
-     Dados referentes ao programa:
-
-     Frequencia: Sempre que for chamado
-
-     Objetivo  : Executar o JOB do Grupo Economico Novo
-
-     Observacao: -----
-     Alteracoes:
-     ..............................................................................*/
-    DECLARE
-      ------------------------------- Variaveis  -------------------------------       
-      vr_dscritic    VARCHAR(1000);
-      vr_cdcritic    PLS_INTEGER;
-      vr_cdcooper    PLS_INTEGER := 3;
-      vr_cdprogra    VARCHAR2(40) := 'PC_CRPS722';
-      vr_nomdojob    VARCHAR2(40) := 'JOB_GRUPO_ECONOMICO_NOVO';
-      vr_flgerlog    BOOLEAN := FALSE;
-      vr_dthoje      DATE := TRUNC(SYSDATE);
-      vr_exc_erro    EXCEPTION;
-    
-      ------------------------------- PROCEDURES -------------------------------   
-      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2
-                                     ,pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-      BEGIN
-        --> Controlar geração de log de execução dos jobs
-        BTCH0001.pc_log_exec_job( pr_cdcooper  => vr_cdcooper   --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra   --> Codigo do programa
-                                 ,pr_nomdojob  => vr_nomdojob   --> Nome do job
-                                 ,pr_dstiplog  => pr_dstiplog   --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                                 ,pr_dscritic  => pr_dscritic   --> Critica a ser apresentada em caso de erro
-                                 ,pr_flgerlog  => vr_flgerlog); --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-
-      END pc_controla_log_batch;      
-      
-    BEGIN
-      -- JOB somente rodara em dia util
-      IF NOT gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
-                                        ,pr_dtmvtolt => vr_dthoje) = vr_dthoje THEN 
-        RETURN;
-      END IF;  
-      
-      -- Log de inicio de execucao
-      pc_controla_log_batch(pr_dstiplog => 'I');
-      
-      gene0004.pc_executa_job(pr_cdcooper => vr_cdcooper --> Codigo da cooperativa
-                             ,pr_fldiautl => 1           --> Flag se deve validar dia util
-                             ,pr_flproces => 1           --> Flag se deve validar se esta no processo
-                             ,pr_flrepjob => 1           --> Flag para reprogramar o job
-                             ,pr_flgerlog => 1           --> indicador se deve gerar log
-                             ,pr_nmprogra => 'TELA_CONTAS_GRUPO_ECONOMICO.pc_job_grupo_economico_novo' --> Nome do programa que esta sendo executado no job
-                             ,pr_dscritic => vr_dscritic);                           
-      
-      -- se nao retornou critica chama rotina
-      IF TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-        
-      -- Procedure para criar o Grupo Economico Novo
-      pc_crps722(pr_cdcritic => vr_cdcritic
-                ,pr_dscritic => vr_dscritic);
-                                         
-      IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Log de fim de execucao
-      pc_controla_log_batch(pr_dstiplog => 'F');
-      
-      COMMIT;
-      
-    EXCEPTION      
-      WHEN vr_exc_erro THEN  
-        ROLLBACK;
-        -- Log de erro de execucao
-        pc_controla_log_batch(pr_dstiplog => 'E',
-                              pr_dscritic => vr_dscritic);
-      WHEN OTHERS THEN
-        ROLLBACK;
-        -- Erro Geral
-        vr_dscritic := 'Erro geral em TELA_CONTAS_GRUPO_ECONOMICO.pc_job_grupo_economico_novo: ' || SQLERRM;
-        -- Log de erro de execucao
-        pc_controla_log_batch(pr_dstiplog => 'E',
-                              pr_dscritic => vr_dscritic);
-    END;    
-  END pc_job_grupo_economico_novo;
 
   
 END TELA_CONTAS_GRUPO_ECONOMICO;

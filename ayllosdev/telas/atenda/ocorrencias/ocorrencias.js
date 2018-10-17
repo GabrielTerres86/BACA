@@ -1,7 +1,7 @@
 /***********************************************************************
     Fonte: ocorrencias.js
     Autor: Guilherme
-    Data : Fevereiro/2007                Última Alteração: 25/03/2018
+    Data : Fevereiro/2007                Última Alteração: 10/09/2018
 
     Objetivo  : Biblioteca de funções da rotina OCORRENCIAS da tela
                 ATENDA
@@ -19,8 +19,18 @@
 
 				24/01/2018 - Ajustes referentes a inclusão da opção "Riscos".
 					         Reginaldo - AMcom
+
 			    25/03/2018 - Adicionada coluna de Risco Refinanciamento e carregamento de dados brutos
 										Marcel Kohls - AMCom
+							 
+                19/06/2018 - Atualizado os detalhes da aba Prejuízo para considerar o prejuízo da Conta Corrente
+                             Diego Simas - AMcom - PRJ450
+
+				24/08/2018 - Inclusão da coluna quantidade de dias de atraso
+							 PJ 450 - Diego Simas - AMcom
+
+			    10/09/2018 - Ajuste no layout da tela de risco
+					         PJ 450 - Diego Simas - AMcom
 							 
  ***********************************************************************/
 
@@ -275,15 +285,27 @@ function formataRiscos() {
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
-	divRegistro.css({ 'height': '175px', 'width': '820px' });
+	divRegistro.css({ 'height': '175px', 'width': '950px' });
 
 	var ordemInicial = new Array();
 
-	var arrayLargura = ['99px', '67px', '55px', '40px', '40px', '40px', '40px', '40px', '40px', '40px',
-		'40px', '40px', '40px', '40px'];
+	var arrayLargura = ['99px', '67px', 
+		                '55px', '40px', 
+						'40px', '40px', 
+						'40px', '40px', 
+						'40px', '40px',
+ 		                '40px', '40px', 
+						'40px', '40px', 
+						'40px', '40px'];
 
-	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center', 'center', 'center',
-		'center', 'center', 'center', 'center', 'center'];
+	var arrayAlinha = ['center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center', 
+					   'center', 'center'];
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 
@@ -299,24 +321,38 @@ function formataPrejuizos() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'235px', 'width':'580px'});
+	divRegistro.css({'height':'235px', 'width':'910px'});
 	
 	var ordemInicial = new Array();
 	
 			
 	var arrayLargura = new Array();
-	arrayLargura[0] = '56px';
-	arrayLargura[1] = '72px';
-	arrayLargura[2] = '110px';
-	arrayLargura[3] = '110px';
-	
+	arrayLargura[0] = '65px';
+	arrayLargura[1] = '60px';
+	arrayLargura[2] = '65px';
+	arrayLargura[3] = '65px';
+	arrayLargura[4] = '50px';
+	arrayLargura[5] = '50px';
+	arrayLargura[6] = '55px';
+	arrayLargura[7] = '70px';
+	arrayLargura[8] = '68px';
+	arrayLargura[9] = '65px';
+	arrayLargura[10] = '65px';
+	arrayLargura[11] = '65px';
 		
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
-	arrayAlinha[1] = 'right';
-	arrayAlinha[2] = 'right';
-	arrayAlinha[3] = 'right';
-	arrayAlinha[4] = 'right';
+	arrayAlinha[1] = 'center';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';
+	arrayAlinha[5] = 'center';
+	arrayAlinha[6] = 'center';
+	arrayAlinha[7] = 'center';
+	arrayAlinha[8] = 'center';
+	arrayAlinha[9] = 'center';
+	arrayAlinha[10] = 'center';
+	arrayAlinha[11] = 'center';
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
 	ajustarCentralizacao();	

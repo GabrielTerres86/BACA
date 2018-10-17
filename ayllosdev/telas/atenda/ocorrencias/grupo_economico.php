@@ -179,10 +179,10 @@
 						<td><span><?php echo $grupo[$i]->tags[5]->cdata;  ?></span>
                         <?php
                           if (getByTagName($grupo[$i]->tags,"inpessoa") == 1){
-                            echo formataNumericos('999.999.999-10',$grupo[$i]->tags[5]->cdata,'.-');
+                            echo mascaraCpf($grupo[$i]->tags[5]->cdata);
                           }
                           else {
-                            echo formataNumericos('999.999.999-9999-99',$grupo[$i]->tags[5]->cdata,'.-');
+                            echo mascaraCnpj($grupo[$i]->tags[5]->cdata);
                           }
                           ?>
 						</td>
