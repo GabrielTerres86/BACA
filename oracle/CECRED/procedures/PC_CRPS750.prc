@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 16/02/2018
+  Data    : Abril/2017                      Ultima atualizacao: 30/08/2018
 
   Dados referentes ao programa:
 
@@ -32,10 +32,11 @@ BEGIN
               16/02/2018 - #674939 Inclusão do controle de execução dos jobs por agência
                            para permitir o restart do mesmo, não reexecutando as agências
                            que já foram processadas com sucesso (Carlos)
-    ............................................................................. */
-
+   
               13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
 
+              30/08/2018 - Debitador Unico - permitir executar na cadeia da CECRED alem do debitador (Fabiano B. Dias AMcom).
+			  
  ............................................................................. */
 
   DECLARE
@@ -242,7 +243,8 @@ BEGIN
        pr_cdcritic:= NULL;
        pr_dscritic:= NULL;
 
-    IF pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
+    IF pr_cdagenci = 0           -- JOB principal do paralelismo.
+    AND pr_cdcooper <> 3 THEN	 -- nao seja CECRED.
       -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
       gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
                                                   ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
@@ -310,22 +312,24 @@ BEGIN
     
     -- Debitador Unico:
     IF pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
-      --> Verificar/controlar a execução.
-      SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
-                                      ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
-                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento
-                                      ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa
-                                      ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
-                                      ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
-                                      ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
-                                      ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+      IF pr_cdcooper <> 3 THEN -- nao seja CECRED.
+	    --> Verificar/controlar a execução.
+        SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
+                                        ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                        ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento
+                                        ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa
+                                        ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                        ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                        ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                        ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
 
-      IF nvl(vr_cdcritic,0) > 0 OR
-         TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_saida;
-			ELSE
-			  COMMIT;
-      END IF;
+        IF nvl(vr_cdcritic,0) > 0 OR
+        TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        ELSE
+          COMMIT;
+        END IF;
+      END IF; -- pr_cdcooper <> 3.
     END IF; -- pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
 
   -- gera log para futuros rastreios
