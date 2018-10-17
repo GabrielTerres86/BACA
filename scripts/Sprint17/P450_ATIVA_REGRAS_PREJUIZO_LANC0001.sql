@@ -7,7 +7,7 @@ UPDATE crapprm prm
 
 UPDATE crapprm prm
    set prm.dsvlrprm = 'S'
- WHERE prm.cdcooper = 11 -- CONFIRMAR
+ WHERE prm.cdcooper = 11 
    AND prm.nmsistem = 'CRED'
    AND prm.cdacesso = 'IN_ATIVA_REGRAS_PREJU'
 ;
