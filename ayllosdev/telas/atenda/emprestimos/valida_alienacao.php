@@ -121,7 +121,7 @@ if ($operacao == 'A_BENS' || $operacao == 'AI_BENS') {
 	}
 
 	if ( $msgAviso != "" ) {
-		exibirErro('inform',$msgAviso,'Alerta - Ayllos',$metodo,false);
+		exibirErro('inform',$msgAviso,'Alerta - Aimaro',$metodo,false);
 	} else if ( $metodo != "" ) {
 		echo $metodo;
 	} else {

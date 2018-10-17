@@ -10473,222 +10473,6 @@ function controlarMotivos(cdMotivo){
     }
 }
 
-/**
- * Funções para utilizar formulário genérico da MANBEN
- * /
-function manterRotina( operacao ) {
-	if(cddopcao == "I" && cdaditiv == 5){			
-		if(!validaCamposAditiv()){
-			return false;
-		}else{
-			if(!intervenienteValidado){
-				validaCPFInterveniente();	
-				return false;
-			}			
-		}
-	}
-
-	hideMsgAguardo();
-
-	var mensagem = '';
-	var radios = $('input[name=nrbem]');
-	for (var i = 0, length = radios.length; i < length; i++){
-		if (radios[i].checked){
-			var idseqbem = normalizaNumero($.trim(radios[i].value));			
-			break;
-		}
-	}
-
-	if(cddopcao == "I" && cdaditiv == 5) {
-		var dscatbem = $('#dscatbem', '#frmTipo').val();	
-		var dstipbem = $('#dstipbem', '#frmTipo').val();
-		var nrmodbem = verificarModBem($('#nrmodbem option:selected', '#frmTipo').text()); 
-		var nranobem = normalizaNumero(  $('#nranobem', '#frmTipo').val()); // inteiro
-		var dsbemfin =  $('#dsbemfin option:selected', '#frmTipo').text(); // string
-		
-		var vlrdobem =  $('#vlrdobem', '#frmTipo').val();
-		var tpchassi = normalizaNumero(  $('#tpchassi', '#frmTipo').val()); // inteiro
-		var dschassi =  $('#dschassi', '#frmTipo').val(); // string
-
-		var dscorbem =  $('#dscorbem', '#frmTipo').val();; // string
-		var ufdplaca =  $('#ufdplaca', '#frmTipo').val(); // string
-		var nrdplaca =  $('#nrdplaca', '#frmTipo').val(); // string
-		nrdplaca =  nrdplaca.replace("-","");
-		var nrrenava = normalizaNumero(  $('#nrrenava', '#frmTipo').val()); // inteiro
-		var uflicenc =  $('#uflicenc option:selected', '#frmTipo').val(); // string
-		var nrcpfcgc =  normalizaNumero( $('#nrcpfcgc', '#frmTipo').val()); // inteiro
-
-		var dsmarbem =  $('#dsmarbem option:selected', '#frmTipo').text(); 
-		var vlfipbem =  $('#vlfipbem', '#frmTipo').val();
-		vlrdobem = vlrdobem.replace('R$','').replace(/\./g,'').replace(',','.');
-		vlfipbem = vlfipbem.replace('R$','').replace(/\./g,'').replace(',','.');
-
-		$.trim(dscatbem.toUpperCase());
-		$.trim(dstipbem.toUpperCase());
-		$.trim(nrmodbem.toUpperCase());
-		
-		$.trim(dsbemfin.toUpperCase());
-		$.trim(vlrdobem.toUpperCase());
-		$.trim(tpchassi.toUpperCase());
-		$.trim(dschassi.toUpperCase());
-
-		$.trim(dscorbem.toUpperCase());
-		$.trim(ufdplaca.toUpperCase());
-		$.trim(nrdplaca.toUpperCase());
-		$.trim(nrrenava);
-		$.trim(uflicenc.toUpperCase());
-		$.trim(dsmarbem.toUpperCase());
-		$.trim(vlfipbem.toUpperCase());
-	}
-
-	var idcobert = normalizaNumero($('#idcobert', '#'+frmCab).val());
-
-	var flgpagto = $('#flgpagto', '#frmTipo').val(); //
-	var dtdpagto = $('#dtdpagto', '#frmTipo').val(); //
-	var nrctagar = normalizaNumero( $('#nrctagar', '#frmTipo').val() ); // inteiro
-	var nrcpfgar = normalizaNumero( $('#nrcpfgar', '#frmTipo').val() ); //
-	var nrdocgar = $('#nrdocgar', '#frmTipo').val(); //
-
-	var nrpromi1 = $('#nrpromi1', '#frmTipo').val(); //
-	var nrpromi2 = $('#nrpromi2', '#frmTipo').val(); //
-	var nrpromi3 = $('#nrpromi3', '#frmTipo').val(); //
-	var nrpromi4 = $('#nrpromi4', '#frmTipo').val(); //
-	var nrpromi5 = $('#nrpromi5', '#frmTipo').val(); //
-	var nrpromi6 = $('#nrpromi6', '#frmTipo').val(); //
-	var nrpromi7 = $('#nrpromi7', '#frmTipo').val(); //
-	var nrpromi8 = $('#nrpromi8', '#frmTipo').val(); //
-	var nrpromi9 = $('#nrpromi9', '#frmTipo').val(); //
-	var nrprom10 = $('#nrprom10', '#frmTipo').val(); //
-
-	var vlpromi1 = cdaditiv == 7 ? $('#vlpromi1', '#frmTipo').val() : $('#vlpromis', '#frmTipo').val(); //
-	var vlpromi2 = $('#vlpromi2', '#frmTipo').val(); //
-	var vlpromi3 = $('#vlpromi3', '#frmTipo').val(); //
-	var vlpromi4 = $('#vlpromi4', '#frmTipo').val(); //
-	var vlpromi5 = $('#vlpromi5', '#frmTipo').val(); //
-	var vlpromi6 = $('#vlpromi6', '#frmTipo').val(); //
-	var vlpromi7 = $('#vlpromi7', '#frmTipo').val(); //
-	var vlpromi8 = $('#vlpromi8', '#frmTipo').val(); //
-	var vlpromi9 = $('#vlpromi9', '#frmTipo').val(); //
-	var vlprom10 = $('#vlprom10', '#frmTipo').val(); //
-
-	var tpaplic1 = $('#tpaplic1', '#frmTipo').val();
-	var tpaplic3 = $('#tpaplic3', '#frmTipo').val();
-	var tpaplic5 = $('#tpaplic5', '#frmTipo').val();
-	var tpaplic7 = $('#tpaplic7', '#frmTipo').val();
-	var tpaplic8 = $('#tpaplic8', '#frmTipo').val();
-
-	var tpproap1 = $('#tpproap1', '#frmTipo').val();
-	var tpproap3 = $('#tpproap3', '#frmTipo').val();
-	var tpproap5 = $('#tpproap5', '#frmTipo').val();
-	var tpproap7 = $('#tpproap7', '#frmTipo').val();
-	var tpproap8 = $('#tpproap8', '#frmTipo').val();
-	
-	switch ( operacao ) {
-		case 'VD': mensagem = 'Aguarde, validando dados...'; break;
-		case 'GD': mensagem = 'Aguarde, gravando dados...'; break;
-	}
-
-	showMsgAguardo( mensagem );
-	if(cddopcao == "I" && cdaditiv == 5){		
-		ValidaSubstituicaoBem(operacao, dscatbem, dstipbem, nrmodbem, nranobem, dsbemfin, vlrdobem, tpchassi, dschassi, dscorbem,
-								 ufdplaca, nrdplaca, nrrenava, uflicenc, nrcpfcgc, idseqbem, dsmarbem, vlfipbem);
-	}else{
-		$.ajax({
-			type  : 'POST',
-			url   : UrlSite + 'telas/atenda/emprestimos/manter_rotina_mamben.php',
-			data: {
-				operacao	: operacao,
-				cddopcao	: cddopcao, // global
-				nraditiv	: nraditiv, // global
-				cdaditiv	: cdaditiv, // global
-
-				nrdconta	: nrdconta, // global
-				nrctremp	: nrctremp, // global
-                tpctrato    : tpctrato, // global
-
-				dscatbem    : dscatbem,
-				dstipbem	: dstipbem,
-				nrmodbem    : nrmodbem,
-				nranobem  	: nranobem,
-
-				dsbemfin	: dsbemfin,
-				vlrdobem	: vlrdobem,
-				tpchassi    : tpchassi,
-				dschassi	: dschassi,
-				dscorbem	: dscorbem,
-				ufdplaca    : ufdplaca,
-				nrdplaca	: nrdplaca,
-				nrrenava    : nrrenava,
-				uflicenc    : uflicenc,
-                nrcpfcgc    : nrcpfcgc,
-				idseqbem	: idseqbem,
-				dsmarbem    : dsmarbem,
-				vlfipbem	: vlfipbem,
-
-				flgpagto	: flgpagto,
-				dtdpagto	: dtdpagto,
-				flgaplic	: flgaplic,
-				nrctagar	: nrctagar,
-				nrcpfgar	: nrcpfgar,
-				nrdocgar	: nrdocgar,
-				nmdgaran	: nmdgaran,
-				nrpromi1	: nrpromi1,
-				nrpromi2    : nrpromi2,
-				nrpromi3    : nrpromi3,
-				nrpromi4    : nrpromi4,
-				nrpromi5    : nrpromi5,
-				nrpromi6    : nrpromi6,
-				nrpromi7    : nrpromi7,
-				nrpromi8    : nrpromi8,
-				nrpromi9    : nrpromi9,
-				nrprom10    : nrprom10,
-
-				vlpromi1	: vlpromi1,
-				vlpromi2	: vlpromi2,
-				vlpromi3	: vlpromi3,
-				vlpromi4	: vlpromi4,
-				vlpromi5	: vlpromi5,
-				vlpromi6	: vlpromi6,
-				vlpromi7	: vlpromi7,
-				vlpromi8	: vlpromi8,
-				vlpromi9	: vlpromi9,
-				vlprom10	: vlprom10,
-
-				tpaplic1	: tpaplic1,
-				tpaplic3	: tpaplic3,
-				tpaplic5	: tpaplic5,
-				tpaplic7	: tpaplic7,
-				tpaplic8	: tpaplic8,
-
-				tpproap1	: tpproap1,
-				tpproap3    : tpproap3,
-				tpproap5    : tpproap5,
-				tpproap7    : tpproap7,
-				tpproap8    : tpproap8,
-
-				idgaropc    : idcobert,
-
-				redirect	: 'script_ajax'
-			},
-			error: function(objAjax,responseError,objExcept) {
-				hideMsgAguardo();
-				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-			},
-			success: function(response) {
-				try {
-					eval(response);
-					return false;
-				} catch(error) {
-					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-				}
-			}
-		});
-	}
-	
-	return false;
-} */
-
 function buscaTipo() {
 	arrayAditiv.length = 0;
 	showMsgAguardo('Aguarde, buscando ...');
@@ -10708,7 +10492,7 @@ function buscaTipo() {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground();");
 		},
 		success: function(response) {
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -10729,14 +10513,14 @@ function buscaTipo() {
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 				}
 			} else {
 				try {
 					eval( response );
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','unblockBackground()');
 				}
 			}
 		}
@@ -10785,7 +10569,7 @@ function mostraAplicacao(tpaplica) {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);

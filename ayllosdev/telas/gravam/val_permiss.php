@@ -19,7 +19,7 @@
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao, false)) <> '') {
-		//exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+		//exibirErro('error',$msgError,'Alerta - Aimaro','',false);
 		echo $msgError;
 	}
 		

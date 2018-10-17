@@ -78,7 +78,7 @@
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
 			$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro);
+			exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro);
 		}
 
 		$detalhesGrav = $xmlObjeto->roottag->tags[0]->tags;//->roottag->tags;

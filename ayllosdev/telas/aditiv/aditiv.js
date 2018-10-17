@@ -2716,7 +2716,7 @@ function mostraTabelaHistoricoGravames( nriniseq, nrregist ) {
 			},
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+			showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 			$('#divUsoGenerico').html(response);
