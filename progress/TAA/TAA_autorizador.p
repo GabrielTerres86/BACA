@@ -322,7 +322,7 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
-			            
+
             15/08/2018 - Inclusão da operação 200 - URA
                          (Everton - Mouts - Projeto 427)
 			            
@@ -466,6 +466,12 @@ DEFINE VARIABLE aux_idtaanew AS INTE INIT 0                 NO-UNDO.
 DEFINE VARIABLE aux_idopeexe AS CHAR                        NO-UNDO.
 DEFINE VARIABLE aux_tpintera AS CHAR                        NO-UNDO.
 
+/* Projeto ECO */
+DEFINE VARIABLE aux_nrcpfcgc AS DECIMAL                     NO-UNDO.
+DEFINE VARIABLE aux_tpconben AS INTE                        NO-UNDO.
+DEFINE VARIABLE aux_cdorgins AS INTE                        NO-UNDO.
+/* Projeto ECO */
+
 
 /* para exclusao de agendamentos */
 DEFINE VARIABLE aux_dtmvtopg AS DATE                        NO-UNDO.
@@ -516,6 +522,14 @@ DEFINE TEMP-TABLE tt-operadoras-recarga NO-UNDO
 DEFINE TEMP-TABLE tt-valores-recarga NO-UNDO
        FIELD vlrecarga AS DECIMAL.  /* Valor de recarga */
        
+/* Usada para exibir os beneficios de inss */
+DEFINE TEMP-TABLE tt-beneficios-inss NO-UNDO
+       FIELD nrrecben AS DECIMAL.  /* Numero do beneficio */
+       
+/* Usada para listar os dados dos comprovantes */
+DEFINE TEMP-TABLE tt-dados-comprovante-eco NO-UNDO
+       FIELD linha AS CHAR.  /* Linhas do comprovante */
+
 /* Recarga de celular */
 DEFINE VARIABLE aux_cdoperadora AS INTE                     NO-UNDO.
 DEFINE VARIABLE aux_cdproduto   AS INTE                     NO-UNDO.
@@ -1080,6 +1094,17 @@ DO:
         IF   xField:NAME = "TPINTERA" THEN
              aux_tpintera = xText:NODE-VALUE.
         /* Projeto 363 - Novo ATM - Fim */
+        /* Projeto ECO */ 
+        ELSE
+        IF   xField:NAME = "TPCONBEN" THEN
+             aux_tpconben = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "NRRECBEN" THEN
+             aux_nrrecben = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "CDORGINS" THEN
+             aux_cdorgins = INTE(xText:NODE-VALUE).
+        /* Projeto ECO */ 
 
     END.
 
@@ -1759,6 +1784,30 @@ DO:
         IF   aux_operacao = 76   THEN
              DO:
                  RUN busca_convenio_nome.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+	      ELSE
+        IF   aux_operacao = 77   THEN
+             DO:
+                 RUN verifica_opcao_benef_inss.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+	      ELSE
+        IF   aux_operacao = 78   THEN
+             DO:
+                 RUN listar_beneficios_inss.
+
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+	      ELSE
+        IF   aux_operacao = 79   THEN
+             DO:
+                 RUN consultar_eco.
 
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
@@ -10801,6 +10850,318 @@ PROCEDURE busca_convenio_nome:
 END PROCEDURE.
 /* Fim 76 */
 
+/*Operacao 77 - verifica_opcao_benef_inss */
+PROCEDURE verifica_opcao_benef_inss:
+
+  DEF VAR aux_flgsitbi AS INTE NO-UNDO.
+  DEF VAR aux_habilita_consulta_eco AS CHAR NO-UNDO.
+    
+  ASSIGN aux_flgsitbi = 0
+         aux_habilita_consulta_eco = "0". /* Inicia Desabilitado */
+  
+  { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+  RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
+                     (INPUT "CRED",                    /* pr_nmsistem */
+                      INPUT 0,                         /* pr_cdcooper */
+                      INPUT "HABILITAR_CONSULTA_ECO",  /* pr_cdacesso */
+                      OUTPUT ""                        /* pr_dsvlrprm */
+                      ).
+
+  CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
+  { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+
+  ASSIGN aux_habilita_consulta_eco = "0"
+         aux_habilita_consulta_eco = pc_param_sistema.pr_dsvlrprm
+                                       WHEN pc_param_sistema.pr_dsvlrprm <> ?.
+
+  
+  IF aux_habilita_consulta_eco = "1" THEN
+  DO:
+      /* Localizar o Cooperado */   
+      FIND crapass WHERE crapass.cdcooper = aux_cdcooper
+                     AND crapass.nrdconta = aux_nrdconta
+                   NO-LOCK NO-ERROR .
+
+      /* Se encontrou o cooperado, busca os beneficios */
+      IF AVAILABLE crapass THEN
+      DO:
+           /* Somente Pessoa Fisica possui beneficio */
+          IF crapass.inpessoa = 1 THEN
+          DO:
+              /* Buscar o CPF do titular*/ 
+              FIND FIRST crapttl
+                 WHERE crapttl.cdcooper = crapass.cdcooper
+                   AND crapttl.nrdconta = crapass.nrdconta
+                   AND crapttl.idseqttl = aux_tpusucar
+                  NO-LOCK NO-ERROR.
+
+              IF AVAILABLE crapttl THEN
+              DO:
+                  /* Busca todos os beneficios do cpf em questao */
+                  FOR EACH crapdbi WHERE crapdbi.nrcpfcgc = crapttl.nrcpfcgc
+                  NO-LOCK:
+                  
+                      /* Verificar se  a conta em questao recebeu o beneficio */
+                      FIND FIRST craplcm WHERE craplcm.cdcooper = crapass.cdcooper 
+                                           AND craplcm.nrdconta = crapass.nrdconta
+                                           AND craplcm.cdhistor = 1399
+                                           AND craplcm.dtmvtolt <= crapdat.dtmvtolt
+                                           AND craplcm.dtmvtolt >= (crapdat.dtmvtolt - 90)
+                                           /*Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)*/
+                                           AND DEC(ENTRY(1,craplcm.cdpesqbb, ";")) = crapdbi.nrrecben
+                                           NO-LOCK NO-ERROR.
+                             
+                      IF AVAILABLE craplcm THEN
+                              ASSIGN aux_flgsitbi = 1.
+                  END.
+              END.
+          END.
+      END.
+  END.
+  
+  /* ---------- */
+  xDoc:CREATE-NODE(xField,"FLGSITBI","ELEMENT").
+  xRoot:APPEND-CHILD(xField).
+  
+  xDoc:CREATE-NODE(xText,"","TEXT").
+  xText:NODE-VALUE = STRING(aux_flgsitbi).
+  xField:APPEND-CHILD(xText).
+  
+  
+  MESSAGE STRING(aux_flgsitbi).
+  
+  RETURN "OK".
+  
+END PROCEDURE.
+/* Fim Operacao 77 - verifica_opcao_benef_inss */
+
+/*Operacao 78 - listar_beneficios_inss */
+PROCEDURE listar_beneficios_inss:
+
+  /* Localizar o Cooperado */   
+  FIND crapass WHERE crapass.cdcooper = aux_cdcooper
+                 AND crapass.nrdconta = aux_nrdconta
+               NO-LOCK NO-ERROR .
+
+  /* Se encontrou o cooperado, busca os beneficios */
+  IF AVAILABLE crapass THEN
+  DO:
+       /* Somente Pessoa Fisica possui beneficio */
+      IF crapass.inpessoa = 1 THEN
+      DO:
+          /* Localizar o Cooperado */   
+          FIND crapage WHERE crapage.cdcooper = crapass.cdcooper
+                         AND crapage.cdagenci = crapass.cdagenci
+                       NO-LOCK NO-ERROR .
+  
+          /* Buscar o CPF do titular*/ 
+          FIND FIRST crapttl
+             WHERE crapttl.cdcooper = crapass.cdcooper
+               AND crapttl.nrdconta = crapass.nrdconta
+               AND crapttl.idseqttl = aux_tpusucar
+              NO-LOCK NO-ERROR.
+
+          IF AVAILABLE crapttl THEN
+          DO:
+              /* Busca todos os beneficios do cpf em questao */
+              FOR EACH crapdbi WHERE crapdbi.nrcpfcgc = crapttl.nrcpfcgc
+              NO-LOCK:
+              
+                  /* Verificar se  a conta em questao recebeu o beneficio */
+                  FIND FIRST craplcm WHERE craplcm.cdcooper = crapass.cdcooper 
+                                       AND craplcm.nrdconta = crapass.nrdconta
+                                       AND craplcm.cdhistor = 1399
+                                       AND craplcm.dtmvtolt <= crapdat.dtmvtolt
+                                       AND craplcm.dtmvtolt >= (crapdat.dtmvtolt - 90)
+                                       /*Buscar cdpesqbb até o primeiro ';' que é o NB(numero do beneficio)*/
+                                       AND DEC(ENTRY(1,craplcm.cdpesqbb, ";")) = crapdbi.nrrecben
+                                       NO-LOCK NO-ERROR.
+                         
+                  IF AVAILABLE craplcm THEN
+                  DO:
+                      CREATE tt-beneficios-inss.
+                      ASSIGN tt-beneficios-inss.nrrecben = crapdbi.nrrecben.
+                  END.
+              END.
+          END.
+      END.
+  END.
+  
+  FOR EACH tt-beneficios-inss NO-LOCK:
+  
+      xDoc:CREATE-NODE(xRoot2,"BENEFICIO","ELEMENT").
+      xRoot:APPEND-CHILD(xRoot2).
+
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"NRRECBEN","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(tt-beneficios-inss.nrrecben).
+      xField:APPEND-CHILD(xText). 
+      
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"CDORGINS","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(crapage.cdorgins).
+      xField:APPEND-CHILD(xText).          
+  END.
+  
+  RETURN "OK".
+  
+END PROCEDURE.
+/* Fim Operacao 78 - listar_beneficios_inss */
+
+/*Operacao 79 - consultar_eco */
+PROCEDURE consultar_eco:
+
+    DEFINE VARIABLE aux_cdcoptfn AS INTEGER                         NO-UNDO.
+    DEFINE VARIABLE aux_cdagetfn AS INTEGER                         NO-UNDO.
+    DEFINE VARIABLE aux_nrterfin AS INTEGER                         NO-UNDO.
+
+    DEF VAR aux_dscritic         AS CHAR                            NO-UNDO.
+
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot_ora           AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot_ora2          AS HANDLE   NO-UNDO.  
+    DEF VAR xField_ora          AS HANDLE   NO-UNDO. 
+    DEF VAR xText_ora           AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz   	  AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont        	  AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml_ora    AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req_ora         AS LONGCHAR NO-UNDO.
+    
+    ASSIGN aux_cdcoptfn = crapcop.cdcooper
+           aux_cdagetfn = crapage.cdagenci
+           aux_nrterfin = craptfn.nrterfin.
+
+    /* Tipo de comprovante 1 == Extrato Emprestimo Consignado */ 
+    IF aux_tpconben = 1 THEN
+    DO:
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_extrato_emprestimo_inss aux_handproc = PROC-HANDLE NO-ERROR
+                             (INPUT aux_cdcooper  /* Cooperativa */ 
+                             ,INPUT aux_nrdconta  /* Conta */
+                             ,INPUT aux_cdorgins  /* Orgao Pagador */
+                             ,INPUT aux_nrrecben  /* Numero do Beneficio */ 
+                             ,INPUT aux_cdcoptfn /* Coop Terminal */ 
+                             ,INPUT aux_cdagetfn /* PA Terminal */
+                             ,INPUT aux_nrterfin /* Numero Terminal */ 
+                             ,OUTPUT "" /* XML de retorno */ 
+                             ,OUTPUT ""). /* mensagem de erro */
+                             
+
+        CLOSE STORED-PROC pc_extrato_emprestimo_inss aux_statproc = PROC-STATUS 
+             WHERE PROC-HANDLE = aux_handproc.
+        
+        ASSIGN aux_dscritic = ""
+               aux_dscritic = pc_extrato_emprestimo_inss.pr_dsderror
+                      WHEN pc_extrato_emprestimo_inss.pr_dsderror <> ?.  
+               xml_req_ora  = pc_extrato_emprestimo_inss.pr_retorno. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    END.
+
+    /* Tipo de comprovante 2 == Margem Consignavel */ 
+    IF aux_tpconben = 2 THEN
+    DO:
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_margem_consignavel_inss aux_handproc = PROC-HANDLE NO-ERROR
+                             (INPUT aux_cdcooper  /* Cooperativa */ 
+                             ,INPUT aux_nrdconta  /* Conta */
+                             ,INPUT aux_cdorgins  /* Orgao Pagador */
+                             ,INPUT aux_nrrecben  /* Numero do Beneficio */ 
+                             ,INPUT aux_cdcoptfn /* Coop Terminal */ 
+                             ,INPUT aux_cdagetfn /* PA Terminal */
+                             ,INPUT aux_nrterfin /* Numero Terminal */ 
+                             ,OUTPUT "" /* XML de retorno */ 
+                             ,OUTPUT ""). /* mensagem de erro */
+                             
+
+        CLOSE STORED-PROC pc_margem_consignavel_inss aux_statproc = PROC-STATUS 
+             WHERE PROC-HANDLE = aux_handproc.
+        
+        ASSIGN aux_dscritic = ""
+               aux_dscritic = pc_margem_consignavel_inss.pr_dsderror
+                      WHEN pc_margem_consignavel_inss.pr_dsderror <> ?.  
+               xml_req_ora  = pc_margem_consignavel_inss.pr_retorno. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    END.
+
+    IF  aux_dscritic <> "" THEN
+        DO:
+           RETURN "NOK".
+        END.        
+
+    CREATE X-DOCUMENT xDoc_ora.
+    CREATE X-NODEREF  xRoot_ora.
+    CREATE X-NODEREF  xRoot_ora2.
+    CREATE X-NODEREF  xField_ora.
+    CREATE X-NODEREF  xText_ora.
+    
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml_ora) = LENGTH(xml_req_ora) + 1. 
+    PUT-STRING(ponteiro_xml_ora,1) = xml_req_ora. 
+     
+    xDoc_ora:LOAD("MEMPTR",ponteiro_xml_ora,FALSE). 
+    xDoc_ora:GET-DOCUMENT-ELEMENT(xRoot_ora).
+    
+    DO  aux_cont_raiz = 1 TO xRoot_ora:NUM-CHILDREN: 
+    
+        xRoot_ora:GET-CHILD(xRoot_ora2,aux_cont_raiz).
+    
+        IF xRoot_ora2:SUBTYPE <> "ELEMENT"   THEN 
+         NEXT.                    
+
+        IF  xRoot_ora2:NAME = "comprovante" THEN
+            DO:
+                
+                DO aux_cont = 1 TO xRoot_ora2:NUM-CHILDREN:
+                
+                    xRoot_ora2:GET-CHILD(xField_ora,aux_cont).
+                        
+                    IF xField_ora:SUBTYPE <> "ELEMENT" THEN 
+                        NEXT. 
+                    
+                    xField_ora:GET-CHILD(xText_ora,1).            
+        
+                    CREATE tt-dados-comprovante-eco.
+                    ASSIGN tt-dados-comprovante-eco.linha = xText_ora:NODE-VALUE.
+                END.            
+            END.
+    END.                
+
+    SET-SIZE(ponteiro_xml_ora) = 0. 
+
+    DELETE OBJECT xDoc_ora. 
+    DELETE OBJECT xRoot_ora. 
+    DELETE OBJECT xRoot_ora2. 
+    DELETE OBJECT xField_ora. 
+    DELETE OBJECT xText_ora.
+      
+    /* Percorrer todas as linhas do comprovante */
+    FOR EACH tt-dados-comprovante-eco NO-LOCK:
+        /* ---------- */
+        xDoc:CREATE-NODE(xField,"LINHA","ELEMENT").
+        xRoot:APPEND-CHILD(xField).
+        
+        xDoc:CREATE-NODE(xText,"","TEXT").
+        xText:NODE-VALUE = tt-dados-comprovante-eco.linha.
+        xField:APPEND-CHILD(xText).
+    END.
+    
+    RETURN "OK".
+  
+END PROCEDURE.
+/* Fim Operacao 79 - consultar_eco */
 
 /* .......................................................................... */
 
