@@ -212,6 +212,7 @@ PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
 																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                , pr_nrctachq IN  craplcm.nrctachq%TYPE
                                 , pr_rowid    IN  ROWID
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE);
@@ -225,6 +226,7 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
 																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                , pr_nrctachq IN  craplcm.nrctachq%TYPE
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE);
 
@@ -1380,6 +1382,7 @@ PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
 																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                , pr_nrctachq IN  craplcm.nrctachq%TYPE
                                 , pr_rowid    IN  ROWID
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
@@ -1391,15 +1394,17 @@ PROCEDURE pc_estorna_lancto_conta(pr_cdcooper IN  craplcm.cdcooper%TYPE
   
 BEGIN   
   
-  -- Exclui o lançamento da CRAPLCM
+  --Exclui o lançamento da CRAPLCM
   DELETE FROM craplcm lcm
 	 WHERE ((lcm.cdcooper = nvl(pr_cdcooper, lcm.cdcooper)
 	   AND lcm.dtmvtolt = nvl(pr_dtmvtolt, lcm.dtmvtolt)
 		 AND lcm.cdagenci = nvl(pr_cdagenci, lcm.cdagenci)
 		 AND lcm.cdbccxlt = nvl(pr_cdbccxlt, lcm.cdbccxlt) 
 		 AND lcm.nrdolote = nvl(pr_nrdolote, lcm.nrdolote)  
+     AND lcm.nrdctabb = nvl(pr_nrdctabb, lcm.nrdctabb) 
 		 AND lcm.nrdocmto = nvl(pr_nrdocmto, lcm.nrdocmto) 
      AND lcm.cdhistor = nvl(pr_cdhistor, lcm.cdhistor)
+     AND lcm.nrctachq = nvl(pr_nrctachq, lcm.nrctachq)
      AND pr_rowid IS NULL) 
       OR (lcm.rowid = pr_rowid)
       )     
@@ -1437,6 +1442,7 @@ PROCEDURE pc_estorna_lancto_prog (pr_cdcooper IN  craplcm.cdcooper%TYPE
 																, pr_nrdctabb IN  craplcm.nrdctabb%TYPE
 																, pr_nrdocmto IN  craplcm.nrdocmto%TYPE
                                 , pr_cdhistor IN  craplcm.cdhistor%TYPE
+                                , pr_nrctachq IN  craplcm.nrctachq%TYPE
 																, pr_cdcritic OUT crapcri.cdcritic%TYPE
 																, pr_dscritic OUT crapcri.dscritic%TYPE) IS
 
@@ -1450,6 +1456,7 @@ begin
 												 , pr_nrdctabb => pr_nrdctabb
 												 , pr_nrdocmto => pr_nrdocmto
                          , pr_cdhistor => pr_cdhistor
+                         , pr_nrctachq => pr_nrctachq
                          , pr_rowid    => null
 												 , pr_cdcritic => pr_cdcritic
 												 , pr_dscritic => pr_dscritic);
