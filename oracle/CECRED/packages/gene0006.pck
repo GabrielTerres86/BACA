@@ -1607,7 +1607,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
         pr_protocolo(vr_index).cdagesic := rw_crapcop.cdagesic;
 
-        IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,6,9,10,11,12,13,15,16,17,18,19,20,23,24) THEN
+        IF (rw_crappro.cdtippro = 1 AND pr_cdorigem = 3) OR rw_crappro.cdtippro IN (2,5,6,9,10,11,12,13,15,16,17,18,19,20,23,24) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
           pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
@@ -2439,7 +2439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         pr_protocolo(vr_index).nmoperad := vr_nmoperad;
         pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
 
-        IF rw_crappro.cdtippro IN (1,2,4,6,9,10,11,12,13,15,20,23,24) THEN
+        IF rw_crappro.cdtippro IN (1,2,4,5,6,9,10,11,12,13,15,20,23,24) THEN
           pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
           pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
 				  pr_protocolo(vr_index).nmrescop := rw_crapcop.nmrescop;
@@ -2451,7 +2451,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           --> Sac/Ouvidoria Bancoob
           pr_protocolo(vr_index).nrtelsac := rw_crapcop.nrsacbcb;
           pr_protocolo(vr_index).nrtelouv := rw_crapcop.nrouvbcb;
-        
         
 				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN
 					pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdagesic;

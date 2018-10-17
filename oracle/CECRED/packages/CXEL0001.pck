@@ -89,10 +89,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXEL0001 IS
     -- ..........................................................................*/
 
     ---------------> VARIAVEIS <-----------------
+    vr_sequencia INTEGER;
+    
     vr_dscritic    VARCHAR2(1000);
     vr_exc_erro    EXCEPTION;
 
   BEGIN
+     -- Buscar a sequencia, para evitar que requisições que sejam feitas no mesmo instante e para a mesma operação
+     -- acabem gerando chave duplicada
+     vr_sequencia := fn_sequence(pr_nmtabela => 'TBTAA_AUTENTICACAO_CARTAO'
+                                ,pr_nmdcampo => 'NRSEQUENCIA'
+                                -- Chave 'CDCOOPER, NRDCONTA, NRCARTAO, CDOPERACAO, DTCRIACAO, TPINTERACAO'
+                                ,pr_dsdchave => to_char(pr_cdcooper) || ';' ||
+                                                to_char(pr_nrdconta) || ';' ||
+                                                to_char(pr_nrcartao) || ';' ||
+                                                to_char(pr_cdoperacao) || ';' ||
+                                                to_char(SYSDATE, 'dd/mm/rrrr hh24:mi:ss') || ';' ||
+                                                to_char(pr_tpinteracao));
+      
      --Em caso de exclusao deve ser limpo os campos
      BEGIN
         INSERT INTO tbtaa_autenticacao_cartao 
@@ -104,6 +118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXEL0001 IS
         ,flagativo
         ,dtcriacao
         ,dtencerramento        
+        ,nrsequencia       
         )
         VALUES
         (pr_cdcooper
@@ -114,6 +129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXEL0001 IS
         ,1
         ,SYSDATE
         ,NULL
+        ,vr_sequencia
         )
         RETURNING ROWID 
              INTO pr_token;       
