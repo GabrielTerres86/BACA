@@ -43,6 +43,19 @@ DECLARE
 
   rw_crapppc cr_crapppc%ROWTYPE;
   
+  -- Início Chamado PRB0040122 - Erro tela de Inscrições
+  CURSOR cr_crapagp IS
+    SELECT count(*) qt_registros
+      FROM crapagp c
+     WHERE c.idevento = :new.idevento
+       AND c.dtanoage = :new.dtanoage
+       AND c.cdcooper = :new.cdcooper
+       AND c.cdagenci <>:new.cdagenci
+       AND c.idstagen = 5;
+
+  rw_crapagp cr_crapagp%ROWTYPE;
+  --Fim Chamado PRB0040122 - Erro tela de Inscrições
+  
   ww_cdlocali_ant VARCHAR2(100);
   ww_cdlocali_atu VARCHAR2(100);
   
@@ -509,7 +522,7 @@ BEGIN
     END IF;
 
   IF UPDATING THEN
-    
+
     OPEN cr_crapedp(pr_idevento => :NEW.IDEVENTO
                    ,pr_cdcooper => :NEW.CDCOOPER
                    ,pr_dtanoage => :NEW.DTANOAGE
@@ -539,6 +552,24 @@ BEGIN
 
     IF NVL(:NEW.dtinieve,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtinieve,TO_DATE('01/01/1900','dd/mm/RRRR')) THEN
       grava_historico('A','DTINIEVE',to_char(:OLD.dtinieve,'dd/mm/RRRR'), to_char(:NEW.dtinieve,'dd/mm/RRRR'));
+    -- Início Chamado PRB0040122 - Erro tela de Inscrições
+    -- Verificar se já existem registros na tabela crapagp onde o status já esteja como 5 e o PA seja diferente do atual
+    OPEN cr_crapagp;
+    FETCH cr_crapagp INTO rw_crapagp;    
+      IF rw_crapagp.qt_registros > 0 THEN
+        -- Se já existem registros com status 5 em outros PAs, altera o status deste PA para 5 se o status estiver como 3
+        UPDATE
+              crapagp c
+           SET
+              c.idstagen = 5
+         WHERE 
+              c.idevento = :new.idevento
+          AND c.dtanoage = :new.dtanoage
+          AND c.cdcooper = :new.cdcooper
+          AND c.cdagenci = :new.cdagenci
+          AND c.idstagen = 3;
+      END IF;
+    -- Fim Chamado PRB0040122 - Erro tela de Inscrições      
     END IF;
 
     IF NVL(:NEW.dtfineve,TO_DATE('01/01/1900','dd/mm/RRRR')) <> NVL(:OLD.dtfineve,TO_DATE('01/01/1900','dd/mm/RRRR')) THEN
