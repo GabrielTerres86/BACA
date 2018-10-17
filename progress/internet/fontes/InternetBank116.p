@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Douglas Quisinski
-   Data    : Setembro/2014.                 Ultima atualizacao: 11/12/2015
+   Data    : Setembro/2014.                 Ultima atualizacao: 14/08/2018
    
    Dados referentes ao programa:
    
@@ -24,6 +24,9 @@
                             de aplicacao. PRJ366 (Lombardi).
 
                28/06/2018 - Inserido tratamento para Resgate via URA
+
+               14/08/2018 - Inclusao da TAG <cdmsgerr> nos retornos de erro do XML,
+                            Prj.427 - URA (Jean Michel)
 
 ..............................................................................*/
 
@@ -209,27 +212,24 @@ ASSIGN aux_cdcritic = 0
        aux_dscritic = ""
        aux_cdcritic = pc_valid_repre_legal_trans.pr_cdcritic 
                           WHEN pc_valid_repre_legal_trans.pr_cdcritic <> ?
-       aux_dscritic = pc_valid_repre_legal_trans.pr_dscritic
+       aux_dscritic = TRIM(pc_valid_repre_legal_trans.pr_dscritic)
                           WHEN pc_valid_repre_legal_trans.pr_dscritic <> ?. 
 
-IF aux_cdcritic <> 0   OR
-   aux_dscritic <> ""  THEN
+IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> ""  THEN
 DO:
-   IF aux_dscritic = "" THEN
+     IF TRIM(aux_dscritic) = "" THEN
    DO:
-        FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                           NO-LOCK NO-ERROR.
+            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
         
-        IF AVAIL crapcri THEN
-           ASSIGN aux_dscritic = crapcri.dscritic.
+            IF AVAILABLE crapcri THEN
+               ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
         ELSE
-           ASSIGN aux_dscritic =  "Nao foi possivel validar o Representante " +
-                                  "Legal.".
+               ASSIGN aux_dscritic =  "Nao foi possivel validar o Representante Legal.".
 
    END.
 
-   ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                        "</dsmsgerr>".  
+     ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                           "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>". 
    RETURN "NOK".
 
 END.
@@ -270,27 +270,23 @@ ASSIGN aux_idastcjt = 0
                           WHEN pc_verifica_rep_assinatura.pr_flcartma <> ?
        aux_cdcritic = pc_verifica_rep_assinatura.pr_cdcritic 
                           WHEN pc_verifica_rep_assinatura.pr_cdcritic <> ?
-       aux_dscritic = pc_verifica_rep_assinatura.pr_dscritic
+       aux_dscritic = TRIM(pc_verifica_rep_assinatura.pr_dscritic)
                       WHEN pc_verifica_rep_assinatura.pr_dscritic <> ?. 
 
-IF aux_cdcritic <> 0   OR
-   aux_dscritic <> ""  THEN
+IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
 DO:
   IF aux_dscritic = "" THEN
      DO:
-        FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                           NO-LOCK NO-ERROR.
+        FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
         
-        IF AVAIL crapcri THEN
-           ASSIGN aux_dscritic = crapcri.dscritic.
+        IF AVAILABLE crapcri THEN
+           ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
         ELSE
-           ASSIGN aux_dscritic =  "Nao foi possivel validar o Representante " +
-                                  "Legal.".
-
+           ASSIGN aux_dscritic =  "Nao foi possivel validar o Representante Legal.".
      END.
 
-  ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                        "</dsmsgerr>".  
+  ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                        "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
   RETURN "NOK".
 
@@ -328,11 +324,13 @@ DO:
            FIND FIRST tt-erro NO-LOCK NO-ERROR.
        
            IF AVAILABLE tt-erro  THEN
-               ASSIGN aux_dscritic = tt-erro.dscritic.
+               ASSIGN aux_dscritic = TRIM(tt-erro.dscritic)
+                      aux_cdcritic = tt-erro.cdcritic.
            ELSE
                ASSIGN aux_dscritic = "Nao foi possivel consultar aplicacoes.".
        
-           ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+           ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                 "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>". 
        
            IF  VALID-HANDLE(h-b1wgen0081) THEN
                DELETE PROCEDURE h-b1wgen0081.
@@ -387,6 +385,7 @@ DO:
                         INPUT  aux_idastcjt,
                         INPUT  aux_nrcpfcgc,
                         OUTPUT "",
+                        OUTPUT 0,
                         OUTPUT "").
 
     CLOSE STORED-PROC pc_resgata_aplicacao 
@@ -396,14 +395,17 @@ DO:
 
     ASSIGN aux_dscritic = ""
            aux_nrdocmto = ""
-           aux_dscritic = pc_resgata_aplicacao.pr_dscritic
+           aux_dscritic = TRIM(pc_resgata_aplicacao.pr_dscritic)
                           WHEN pc_resgata_aplicacao.pr_dscritic <> ?
+           aux_cdcritic = INT(pc_resgata_aplicacao.pr_cdcritic)
+                          WHEN pc_resgata_aplicacao.pr_cdcritic <> ?               
            aux_nrdocmto = pc_resgata_aplicacao.pr_nrdocmto
                           WHEN pc_resgata_aplicacao.pr_nrdocmto <> ?.                           
 
-    IF aux_dscritic <> ""  THEN
+    IF TRIM(aux_dscritic) <> "" THEN
     DO:
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                              "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
         RETURN "NOK".  
     END. 
     
@@ -459,7 +461,7 @@ DO:
      ASSIGN aux_dscritic = "Resgate registrado com sucesso. "    + 
                            "Aguardando aprovacao da operacao pelos "  +
                            "demais responsaveis."   
-            aux_dslinxml = "<dsmsgsuc>" + aux_dscritic + "</dsmsgsuc>" +
+            aux_dslinxml = "<dsmsgsuc>" + TRIM(aux_dscritic) + "</dsmsgsuc>" +
                            "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".                             
     END.
 END.
@@ -511,26 +513,24 @@ DO:
               aux_dscritic = ""
               aux_cdcritic = pc_cria_trans_pend_aplica.pr_cdcritic 
                                  WHEN pc_cria_trans_pend_aplica.pr_cdcritic <> ?
-              aux_dscritic = pc_cria_trans_pend_aplica.pr_dscritic
+               aux_dscritic = TRIM(pc_cria_trans_pend_aplica.pr_dscritic)
                                  WHEN pc_cria_trans_pend_aplica.pr_dscritic <> ?. 
         
-        IF aux_cdcritic <> 0   OR
-           aux_dscritic <> ""  THEN
+        IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
         DO:
-             IF aux_dscritic = "" THEN
+             IF TRIM(aux_dscritic) = "" THEN
                 DO:
-                   FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                      NO-LOCK NO-ERROR.
+                   FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
         
-                   IF AVAIL crapcri THEN
-                      ASSIGN aux_dscritic = crapcri.dscritic.
+                   IF AVAILABLE crapcri THEN
+                      ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
                    ELSE
                       ASSIGN aux_dscritic =  "Nao foi possivel criar transacao pendente de aplicacao.".
         
                 END.
         
-             ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                                   "</dsmsgerr>".  
+             ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                   "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>". 
         
              RETURN "NOK".
         
@@ -586,4 +586,3 @@ ASSIGN xml_operacao.dslinxml = aux_dslinxml.
 RETURN "OK".
 
 /*............................................................................*/
-

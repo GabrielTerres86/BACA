@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Julho/2007.                       Ultima atualizacao: 29/11/2017
+   Data    : Julho/2007.                       Ultima atualizacao: 14/08/2018
 
    Dados referentes ao programa:
 
@@ -78,6 +78,9 @@
                             Ou seja, somando apenas RDCPOS (Anderson P285).
 
                28/06/2018 - Inserido tag <SALDORESGATEPOU>
+               
+               14/08/2018 - Inclusao da TAG <cdmsgerr> nos retornos de erro do XML,
+                            Prj.427 - URA (Jean Michel)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -261,27 +264,23 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                               WHEN pc_horario_limite.pr_hrlimfim <> ?
            aux_cdcritic = pc_horario_limite.pr_cdcritic 
                               WHEN pc_horario_limite.pr_cdcritic <> ?
-           aux_dscritic = pc_horario_limite.pr_dscritic
+           aux_dscritic = TRIM(pc_horario_limite.pr_dscritic)
                               WHEN pc_horario_limite.pr_dscritic <> ?. 
 
-    IF aux_cdcritic <> 0   OR
-       aux_dscritic <> ""  THEN
+    IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
        DO:
-          IF aux_dscritic = "" THEN
+          IF TRIM(aux_dscritic) = "" THEN
              DO:
-                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                   NO-LOCK NO-ERROR.
+                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
                 
-                IF AVAIL crapcri THEN
+                IF AVAILABLE crapcri THEN
                    ASSIGN aux_dscritic = crapcri.dscritic.
                 ELSE
-                   ASSIGN aux_dscritic =  "Nao foi possivel validar o horario " +
-                                          "limite.".
-    
+                   ASSIGN aux_dscritic =  "Nao foi possivel validar o horario limite.".
              END.
     
-          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                                "</dsmsgerr>".  
+          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
     
           RETURN "NOK".
     
@@ -290,12 +289,8 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
     CREATE xml_operacao.
     
     ASSIGN xml_operacao.dslinxml = "<HORARIO>" + 
-                                        "<hrlimini>" +  
-                                               TRIM(STRING(aux_hrlimini,"HH:MM")) +
-                                        "</hrlimini>" + 
-                                        "<hrlimfim>" +  
-                                               TRIM(STRING(aux_hrlimfim,"HH:MM")) +
-                                        "</hrlimfim>" +
+                                        "<hrlimini>" + TRIM(STRING(aux_hrlimini,"HH:MM")) + "</hrlimini>" + 
+                                        "<hrlimfim>" + TRIM(STRING(aux_hrlimfim,"HH:MM")) + "</hrlimfim>" +
                                    "</HORARIO>".
     
     /********NOVA CONSULTA APLICACOOES*********/
@@ -343,26 +338,34 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
            aux_dscritic = ""
            aux_cdcritic = pc_lista_aplicacoes_car.pr_cdcritic 
                          WHEN pc_lista_aplicacoes_car.pr_cdcritic <> ?
-           aux_dscritic = pc_lista_aplicacoes_car.pr_dscritic 
+           aux_dscritic = TRIM(pc_lista_aplicacoes_car.pr_dscritic)
                          WHEN pc_lista_aplicacoes_car.pr_dscritic <> ?.
 
-    IF aux_cdcritic <> 0 OR
-       aux_dscritic <> "" THEN
+    IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
       DO:
 
+        IF TRIM(aux_dscritic) = "" THEN
+          DO:
+            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
+            
+            IF AVAILABLE crapcri THEN
+               ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
+            ELSE
         ASSIGN aux_dscritic = "Nao foi possivel consultar aplicacoes.".
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+          END.
+        
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                              "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
+        
         RUN proc_geracao_log (INPUT FALSE).
          
         RETURN "NOK".    
 
       END.
-    
 
     /*Leitura do XML de retorno da proc e criacao dos registros na tt-saldo-rdca
     para visualizacao dos registros na tela */
     
-
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_req = pc_lista_aplicacoes_car.pr_clobxmlc. 
 
@@ -471,11 +474,13 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                       FIND FIRST tt-erro NO-LOCK NO-ERROR.
         
                       IF AVAILABLE tt-erro  THEN
-                         ASSIGN aux_dscritic = tt-erro.dscritic.
+                       ASSIGN aux_dscritic = TRIM(tt-erro.dscritic)
+                              aux_cdcritic = tt-erro.cdcritic.
                       ELSE
                          ASSIGN aux_dscritic = "Nao foi possivel consultar aplicacoes.".
         
-                      ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+                    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                          "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
         
                       RUN proc_geracao_log (INPUT FALSE).
         
@@ -615,14 +620,19 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
             IF  RETURN-VALUE = "NOK"  THEN
                 DO:
+                    ASSIGN aux_dscritic = ""
+                           aux_cdcritic = 0.
+                    
                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
                     IF  AVAILABLE tt-erro  THEN
-                        aux_dscritic = tt-erro.dscritic.
+                      ASSIGN aux_dscritic = TRIM(tt-erro.dscritic)
+                             aux_cdcritic = tt-erro.cdcritic.
                     ELSE
-                        aux_dscritic = "Nao foi possivel carregar os saldos poupanca.".
+                      ASSIGN aux_dscritic = "Nao foi possivel carregar os saldos poupanca.".
 
-                    xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+                    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                                          "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
                     RUN proc_geracao_log (INPUT FALSE).
 
@@ -727,5 +737,3 @@ PROCEDURE proc_geracao_log:
 END PROCEDURE.
 
 /*............................................................................*/
-
-

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Douglas
-   Data    : Agosto/2014.                       Ultima atualizacao: 11/12/2015
+   Data    : Agosto/2014.                       Ultima atualizacao: 14/08/2018
    
    Dados referentes ao programa:
    
@@ -16,7 +16,10 @@
                             (Jorge/David) - Proj. 131 Assinatura Multipla.
 
                20/04/2018 - Adicionado validacao da adesao do produto 41 resgate 
-                            de aplicacao. PRJ366 (Lombardi).
+                            de aplicacao. PRJ366 (Lombardi).   
+
+               14/08/2018 - Inclusao da TAG <cdmsgerr> nos retornos de erro do XML,
+                            Prj.427 - URA (Jean Michel)
 
 ..............................................................................*/
 
@@ -103,27 +106,24 @@ ASSIGN aux_cdcritic = 0
        aux_dscritic = ""
        aux_cdcritic = pc_valid_repre_legal_trans.pr_cdcritic 
                           WHEN pc_valid_repre_legal_trans.pr_cdcritic <> ?
-       aux_dscritic = pc_valid_repre_legal_trans.pr_dscritic
+       aux_dscritic = TRIM(pc_valid_repre_legal_trans.pr_dscritic)
                           WHEN pc_valid_repre_legal_trans.pr_dscritic <> ?. 
 
-IF aux_cdcritic <> 0   OR
-   aux_dscritic <> ""  THEN
+IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
    DO:
-      IF aux_dscritic = "" THEN
+      IF TRIM(aux_dscritic) = "" THEN
          DO:
-            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                               NO-LOCK NO-ERROR.
+            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
             
-            IF AVAIL crapcri THEN
-               ASSIGN aux_dscritic = crapcri.dscritic.
+            IF AVAILABLE crapcri THEN
+               ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
             ELSE
-               ASSIGN aux_dscritic =  "Nao foi possivel validar o Representante " +
-                                      "Legal.".
+               ASSIGN aux_dscritic = "Nao foi possivel validar o Representante Legal.".
 
          END.
 
-      ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                            "</dsmsgerr>".  
+      ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                            "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
       RETURN "NOK".
 
@@ -156,26 +156,24 @@ ASSIGN aux_cdcritic = 0
        aux_dscritic = ""
        aux_cdcritic = pc_valida_limite_internet.pr_cdcritic 
                           WHEN pc_valida_limite_internet.pr_cdcritic <> ?
-       aux_dscritic = pc_valida_limite_internet.pr_dscritic
+       aux_dscritic = TRIM(pc_valida_limite_internet.pr_dscritic)
                           WHEN pc_valida_limite_internet.pr_dscritic <> ?. 
 
-IF aux_cdcritic <> 0   OR
-   aux_dscritic <> ""  THEN
+IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> ""  THEN
    DO:
-       IF aux_dscritic = "" THEN
+       IF TRIM(aux_dscritic) = "" THEN
           DO:
-             FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                NO-LOCK NO-ERROR.
+             FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic NO-LOCK NO-ERROR.
              
-             IF AVAIL crapcri THEN
-                ASSIGN aux_dscritic = crapcri.dscritic.
+             IF AVAILABLE crapcri THEN
+                ASSIGN aux_dscritic = TRIM(crapcri.dscritic).
              ELSE
-                ASSIGN aux_dscritic =  "Nao foi possivel validar o limite de " +
-                                       "internet.".
+                ASSIGN aux_dscritic = "Nao foi possivel validar o limite de internet.".
 
           END.
 
-       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + TRIM(aux_dscritic) + "</dsmsgerr>" +
+                             "<cdmsgerr>" + STRING(aux_cdcritic) + "</cdmsgerr>".
 
        RETURN "NOK".
 

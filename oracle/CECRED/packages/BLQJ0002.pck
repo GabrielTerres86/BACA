@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 
     Programa: BLQJ0002
     Autor   : Andrino Carlos de Souza Junior (Mout's)
-    Data    : Dezembro/2016                Ultima Atualizacao: 15/08/2018
+    Data    : Dezembro/2016                Ultima Atualizacao: 16/08/2018
      
     Dados referentes ao programa:
    
@@ -25,15 +25,17 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 
 				15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
 
-				22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
+				  22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
 
 				29/06/2018 - Alterada a procedure pc_resgata_aplicacao para utilização do Projeto URA (Everton Mouts)
                 15/08/2018 - Inclusão de aplicações programadas na checagem dos saques 
                              Proj. 411.2 - CIS Corporate
-        
+
         03/10/2018 - Ajuste de tamanho de variável para evitar problemas 
                      na nova versão do BD 12C (vr_jobname). Wagner - Sustentação - (SCTASK0031133)                       
 
+        16/08/2018 - Incluido crítica vr_cdcritic := 1288 na procedure pc_resgata_aplicacao,
+                     Prj. 427 - URA (Jean Michel)
   .............................................................................*/
 
 
@@ -52,6 +54,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
                                  pr_idastcjt IN INTEGER default 0,  -- 1 (Assinatura Conjunta) / 0 (Assinatura Simples)  
                                  pr_nrcpfrep crapass.nrcpfcgc%TYPE default NULL, --> Numero do cpf do representante legal
                                  pr_nrdocmto OUT VARCHAR2,          -- lista documentos resgatados
+                                 pr_cdcritic OUT crapcri.cdcritic%TYPE, -- Código da Crítica
                                  pr_dscritic OUT VARCHAR2);         -- Retorno de erro
 
   -- Efetuar o recebimento das solicitacoes de consulta de conta
@@ -159,7 +162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
     Programa: BLQJ0002
     Autor   : Andrino Carlos de Souza Junior (Mout's)
-    Data    : Dezembro/2016                Ultima Atualizacao: 15/08/2018
+    Data    : Dezembro/2016                Ultima Atualizacao: 16/08/2018
      
     Dados referentes ao programa:
    
@@ -169,6 +172,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                              Proj. 411.2 - CIS Corporate
 
 
+			    16/08/2018 - Incluido crítica vr_cdcritic := 1288 na procedure pc_resgata_aplicacao,
+                             Prj. 427 - URA (Jean Michel)
   .............................................................................*/
 
   -- Rotina para bloquear valores  
@@ -383,7 +388,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- Efetuar retorno do erro não tratado
       pr_dscritic := 'Erro BLQJ0002.pc_bloqueio: '||sqlerrm;
     
-  END;
+  END pc_bloqueio;  
+
 
 
   -- Rotina para desbloquear valores  
@@ -504,9 +510,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                  pr_idastcjt IN INTEGER default 0,  -- 1 (Assinatura Conjunta) / 0 (Assinatura Simples)  
                                  pr_nrcpfrep crapass.nrcpfcgc%TYPE default NULL, --> Numero do cpf do representante legal
                                  pr_nrdocmto OUT VARCHAR2,          -- lista documentos resgatados
+                                 pr_cdcritic OUT crapcri.cdcritic%TYPE, -- Código da Crítica
                                  pr_dscritic OUT VARCHAR2) IS       -- Retorno de erro
 
-    -- Registro sobre a data do sistema 
+    -- Registro sobre a data do sistema
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
     -- Variaveis Pl/Tables
@@ -561,6 +568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                     
         -- Se existir erro adiciona na crítica
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
                     
         -- Limpar a tabela de erro, pois a exceção vai criar um novo registro
         vr_tab_erro.DELETE;
@@ -575,7 +583,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         
     -- Verifica se possui saldo para resgates
     IF vr_saldo_rdca.COUNT <= 0 THEN
-      vr_dscritic := 'Saldo de aplicacao insuficiente para resgate.';     
+      vr_cdcritic := 1288;
+      vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                   
       RAISE vr_exc_saida;        
                 
@@ -620,6 +629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                       
         -- Se existir erro adiciona na crítica
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
                       
         -- Limpar a tabela de erro, pois a exceção vai criar um novo registro
         vr_tab_erro.DELETE;
@@ -635,7 +645,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- Despreza resgate quando não houver valor suficiente para suprir o valor a ser resgatado
     IF vr_vlresgat > 0 THEN
                   
-      vr_dscritic := 'Saldo insuficiente para resgate.';     
+      vr_cdcritic := 1288;
+      vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       RAISE vr_exc_saida;        
                 
     END IF;
@@ -647,7 +658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                   
       --Monta critica
       vr_dscritic := 'Nao foi encontrado aplicacoes para serem efetuado(s) o(s) resgate(s).';
-                  
+      vr_cdcritic := 0;            
       RAISE vr_exc_saida;
                   
     END IF;  
@@ -709,10 +720,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         IF vr_tab_erro.COUNT > 0 THEN
           -- Se existir erro adiciona na crítica
           vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
           -- Limpar a tabela de erro, pois a exceção vai criar um novo registro
           vr_tab_erro.DELETE;
         ELSE  
           vr_dscritic := 'Nao foi possivel listar as aplicacoes.';
+          vr_cdcritic := 0;
         END IF;
                       
         -- Executa a exceção
@@ -724,7 +737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       END IF;         
                     
       -- ir para o proximo
-      vr_indice := vr_tab_dados_resgate.NEXT(vr_indice);  
+      vr_indice := vr_tab_dados_resgate.NEXT(vr_indice);                               
       -- Se for assinatura conjunta cadastra transação pendente de resgate                             
       ELSE
         -- cria transação pendente
@@ -745,7 +758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                                  rw_crapdat.dtmvtolt                                                                   
                                               ELSE
                                                  rw_crapdat.dtmvtocd
-                                              END)  --> Data do movimento    
+                                              END)        --> Data do movimento     
                        ,pr_cdcooper  => pr_cdcooper       --> Codigo da cooperativa
                        ,pr_nrdconta  => pr_nrdconta       --> Numero da Conta
                        ,pr_idoperac  =>  2                --> Identifica tipo da operacao (1 – Cancelamento Aplicacao / 2 – Resgate / 3 – Agendamento Resgate / 4 – Cancelamento Total Agendamento / 5 – Cancelamento Item Agendamento)
@@ -763,10 +776,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                        ,pr_idastcjt  => pr_idastcjt       --> Indicador de Assinatura Conjunta
                        ,pr_cdcritic => vr_cdcritic        --> Codigo de Critica
                        ,pr_dscritic => vr_dscritic);      --> Descricao de Critica
-     
+                      
         -- Verificar se possui alguma crítica
-        IF nvl(vr_cdcritic,0) <> 0 or vr_dscritic is not null THEN
-          IF vr_dscritic IS NULL THEN 
+        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+
+          IF vr_dscritic IS NULL AND nvl(vr_cdcritic,0) > 0 THEN 
            -- Buscar a descrição
             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           END IF;
@@ -783,12 +797,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     WHEN vr_exc_saida THEN
       -- Devolvemos a critica encontrada das variaveis locais
       pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;
 
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
+      --pr_dscritic := 0;
       pr_dscritic := 'Erro BLQJ0002.pc_resgata_aplicacao: '||sqlerrm;
 
-  END pc_resgata_aplicacao;                                  
+  END pc_resgata_aplicacao;                                 
 
   -- Efetua o lancamento de resgate
   PROCEDURE pc_efetua_resgate_poupanca(pr_cdcooper IN crapcop.cdcooper%TYPE,
@@ -984,7 +1000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       UNION
       SELECT rac.nrdconta
             ,rac.nrctrrpp
-          ,Count(*) qtlancmto
+            ,Count(*) qtlancmto
       FROM crapcpc cpc, craprac rac, craplac lac
       WHERE rac.cdcooper = pr_cdcooper
       AND   rac.nrctrrpp > 0                 -- Apenas apl. programadas
@@ -1269,12 +1285,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     ROLLBACK;
     
     -- Coloca o registro da solicitacao como processado com Erro
-	IF pr_idatualiza_ordem = 1 THEN
-      pc_atualiza_situacao(pr_idordem => pr_idordem,
-                           pr_instatus => 4, -- Erro
-                           pr_dslog_erro => pr_dsinconsit);
+    IF pr_idatualiza_ordem = 1 THEN
+    pc_atualiza_situacao(pr_idordem => pr_idordem,
+                         pr_instatus => 4, -- Erro
+                         pr_dslog_erro => pr_dsinconsit);
     END IF;
-
+      
     -- Insere na inconsistencia
     gene0005.pc_gera_inconsistencia(pr_cdcooper => pr_cdcooper
                                    ,pr_iddgrupo => 1 -- Inconsistencia Bloqueio Judicial
@@ -2366,7 +2382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- PJ 416 -- Se não foi possível bloquear o valor original para modalidade 1 - Conta Corrente
       -- Grava a tabela de monitoramento
       IF rw_solicitacao.cdmodali = 1 AND rw_solicitacao.vlordem <  vr_vlbloque_ori THEN
-      
+
       -- Buscar o último progress_recid da tabela de lançamento para gravar na tabela de monitoramento
       -- Isto é necessário pois quando a rotina de bloqueio busca o valor do saldo total
       -- ela utiliza além do valor disponível, os valores de créditos e débitos existentes na tabela de lançamento
@@ -2754,7 +2770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              tbblqj_ordem_online a
        WHERE a.instatus  = 5 -- Processada, porem sem TED gerada
          AND b.idordem   = a.idordem;
-
+    
     CURSOR cr_ted_reenvio IS
       SELECT c.rowid,
              a.cdcooper,
@@ -2917,9 +2933,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                pr_idseqttl => 1,          -- Sequencial de Titular                                
                                pr_idtipapl => 'A',        -- Tipo da aplicacao (A – Antigos Produtos / N – Novos Produtos)                                
                                pr_nrdocmto => vr_nrdocmto,
+                               pr_cdcritic => vr_cdcritic,
                                pr_dscritic => vr_dscritic);
 
-          IF vr_dscritic IS NOT NULL THEN
+          IF TRIM(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
             RAISE vr_exc_saida;
           END IF;
         ELSIF rw_solicitacao.cdmodali = 3 THEN -- Se for Poupanca Programada
@@ -2943,7 +2960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       EXCEPTION
         WHEN vr_exc_saida THEN
           -- Se foi retornado apenas código
-          IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          IF NVL(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
             -- Buscar a descrição
             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           END IF;
@@ -3028,6 +3045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
+          
           END LOOP; -- Fim dos loop das TEDs a enviar
         EXCEPTION
           WHEN vr_exc_saida THEN
@@ -3185,7 +3203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                   ,pr_cdcooper => vr_cdcooper
                                   ,pr_dsinconsit => 'Processamento TED: '||vr_dscritic
                                   ,pr_dsregistro_referencia => vr_dsinconsist
-                  ,pr_idatualiza_ordem => 0);
+								  ,pr_idatualiza_ordem => 0);
       END;
     END LOOP; -- Fim dos loop das TEDs a enviar
     --Fim Bacenjud - SM 1
@@ -3672,7 +3690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          AND cp.cdacesso = 'BLQJ_FIM_MONITORAMENTO'             
          AND cp.cdcooper = 0;
     RW_HORARIO_ENCERRAMENTO CR_HORARIO_ENCERRAMENTO%ROWTYPE;    
-    
+   
     -- Busca as ordens no monitoramento que estão com saldo zerado
     CURSOR cr_monitoramento_zerado IS
       SELECT
@@ -3681,7 +3699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             TBBLQJ_MONITORA_ORDEM_BLOQ C
       WHERE
             C.VLSALDO = 0;
-    
+
     CURSOR conta_monitorada is
       SELECT
             'Cooperativa: '||c.nmrescop||
@@ -3776,7 +3794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        vr_email_juridico := rw_email_juridico.dsvlrprm;
     END IF;
     CLOSE cr_email_juridico;
-    
+	    
      -- Busca o horário de encerramento
     OPEN CR_HORARIO_ENCERRAMENTO;
     FETCH CR_HORARIO_ENCERRAMENTO INTO RW_HORARIO_ENCERRAMENTO;
@@ -3807,7 +3825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
           RAISE vr_exc_saida;
-  END;
+      END;
 
       -- Coloca o registro de solicitacao como processado com sucesso      
       pc_atualiza_situacao(pr_idordem => rw_monitoramento.idordem,
@@ -3839,8 +3857,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                ,pr_utlfileh => vr_ind_arq     --> Handle do arquivo aberto
                                ,pr_des_erro => vr_des_erro);
        IF vr_des_erro IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
+       RAISE vr_exc_saida;
+     END IF;
        -- Envia e-mail para o jurídico com os lançamentos das contas monitoradas
        for c1 in conta_monitorada loop
            -- Busca a data do sistema
@@ -3857,7 +3875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        end loop;
        -- Fecha o arquivo
        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq);     
-    
+
        -- Comando para enviar e-mail para o Jurídico
        GENE0003.pc_solicita_email(pr_cdcooper        => 3 --> Cooperativa conectada
                                  ,pr_cdprogra        => 'BLQJ0002.PC_MONITORA_BLQ_JUD' --> Programa conectado
