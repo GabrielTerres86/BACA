@@ -840,6 +840,22 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                          ,pr_diasdebito       OUT TBCRD_CONFIG_CATEGORIA.DSDIAS_DEBITO%TYPE
                                          ,pr_possui_registro  OUT NUMBER);
 
+  PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
+                               ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
+                               ,pr_nrcartao IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
+                               ,pr_cdagenci OUT crapass.cdagenci%TYPE --> Agencia cooperado
+                               /*,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular*/
+                               ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
+                               ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
+                               ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
+                               ,pr_idsenlet OUT NUMBER -- Indica se existe senha de letras 1 = SIM 0 = NAO
+                               ,pr_tpusucar OUT NUMBER  --> Usuário do cartão (Conta de pessoa física devolve o número do titular, conta pessoa jurídica devolve sempre "1" e cartão de operador devolve sempre "9")
+                               ,pr_nrcpfcgc OUT crapass.nrcpfcgc%TYPE -->  Em caso de pessoa física é o CPF do titular que está utilizando o cartão, em caso se pessoa jurídica é o CNPJ
+                               ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
+                               ,pr_dtexpira OUT crapcrm.dtvalcar%TYPE --> Data expiração cartão
+                               ,pr_dtcancel OUT crapcrm.dtcancel%TYPE
+                               ,pr_dscritic OUT VARCHAR2);                                             
+
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -13001,6 +13017,302 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END LOOP;
     --
   END pc_busca_credito_config_categ;
+  
+PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código da cooperativa
+                               ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
+                               ,pr_nrcartao IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
+                               ,pr_cdagenci OUT crapass.cdagenci%TYPE --> Agencia cooperado
+                               /*,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular*/
+                               ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
+                               ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
+                               ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
+                               ,pr_idsenlet OUT NUMBER -- Indica se existe senha de letras 1 = SIM 0 = NAO
+                               ,pr_tpusucar OUT NUMBER  --> Usuário do cartão (Conta de pessoa física devolve o número do titular, conta pessoa jurídica devolve sempre "1" e cartão de operador devolve sempre "9")
+                               ,pr_nrcpfcgc OUT crapass.nrcpfcgc%TYPE -->  Em caso de pessoa física é o CPF do titular que está utilizando o cartão, em caso se pessoa jurídica é o CNPJ
+                               ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
+                               ,pr_dtexpira OUT crapcrm.dtvalcar%TYPE --> Data expiração cartão
+                               ,pr_dtcancel OUT crapcrm.dtcancel%TYPE
+                               ,pr_dscritic OUT VARCHAR2) IS --> Descricao da critica) IS --> Data cancelamento cartão
+      -- ..........................................................................
+      --
+      --  Programa : pc_obter_cartao_URA
+      --  Sistema  : Rotinas para buscar cartao magnetico e cecred
+      --  Sigla    : CRED
+      --  Autor    : Rafael Muniz Monteiro - Mouts
+      --  Data     : Julho/2018.                   Ultima atualizacao: --/--/----
+      --
+      --  Dados referentes ao programa:
+      --
+      --  Frequencia: Sempre que for chamado
+      --  Objetivo  : Autenticar o cartão do cooperado via URA
+      --
+      --  Alteracoes:
+      -- .............................................................................
+    BEGIN
+      DECLARE
+      
+        -- Cursor sobre a tabela de datas
+        rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+        -- Busca cooperativa
+        CURSOR cr_crapcop(pr_cdcooperc IN crapcop.cdcooper%TYPE)IS
+          SELECT 1
+            FROM crapcop cop
+           WHERE cop.cdcooper = pr_cdcooperc;
+        rw_crapcop cr_crapcop%ROWTYPE;        
+        -- Buscar cartão magnetico
+        CURSOR cr_crapcrm(prc_cdcooper IN crapcop.cdcooper%TYPE
+                         ,prc_nrdconta IN crapcrm.nrdconta%TYPE
+                         ,prc_nrcartao IN VARCHAR2 --crapcrm.nrcartao%TYPE
+                         ,prc_dtmvtolt IN crapdat.dtmvtolt%TYPE)IS
+          SELECT crm.nrcartao,
+                 crm.nmtitcrd,
+                 crm.tpusucar,
+                 crm.tptitcar,
+                 crm.dtvalcar,
+                 crm.dtcancel
+            FROM crapcrm crm
+           WHERE crm.cdcooper = prc_cdcooper
+             AND crm.nrdconta = prc_nrdconta
+             AND to_char(crm.nrcartao) LIKE prc_nrcartao
+             AND crm.cdsitcar = 2
+             AND crm.dtvalcar > prc_dtmvtolt
+             AND crm.dtentcrm IS NOT NULL;
+        rw_crapcrm cr_crapcrm%ROWTYPE;
+        --
+        CURSOR cr_crapass (prc_cdcooper crapass.cdcooper%TYPE,
+                           prc_nrdconta crapass.nrdconta%TYPE)IS 
+          SELECT ass.nrdconta,
+                 ass.inpessoa,
+                 ass.nrcpfcgc
+            FROM crapass ass
+          WHERE ass.cdcooper = prc_cdcooper
+            AND ass.nrdconta = prc_nrdconta;        
+        --
+        CURSOR cr_crapttl (prc_cdcooper crapttl.cdcooper%TYPE,
+                           prc_nrdconta crapttl.nrdconta%TYPE,
+                           prc_idseqttl crapttl.idseqttl%TYPE)IS       
+         SELECT ttl.dtnasttl,
+                ttl.nrcpfcgc
+           FROM crapttl ttl
+          WHERE ttl.cdcooper = prc_cdcooper
+            AND ttl.nrdconta = prc_nrdconta
+            AND ttl.idseqttl = prc_idseqttl;
+        --
+        CURSOR cr_crapttl1 (prc_cdcooper crapttl.cdcooper%TYPE,
+                           prc_nrdconta crapttl.nrdconta%TYPE,
+                           prc_nrcpfcgc crapttl.nrcpfcgc%TYPE)IS       
+         SELECT ttl.dtnasttl,
+                ttl.idseqttl
+           FROM crapttl ttl
+          WHERE ttl.cdcooper = prc_cdcooper
+            AND ttl.nrdconta = prc_nrdconta
+            AND ttl.nrcpfcgc = prc_nrcpfcgc;           
+        --        
+        CURSOR cr_crawcrd(prc_cdcooper IN craptip.cdcooper%TYPE,
+                          prc_nrdconta IN crapcrd.nrdconta%TYPE,
+                          prc_nrcartao IN VARCHAR2/*crapcrd.nrcrcard%TYPE*/) IS
+          SELECT p.nrcrcard,
+                 p.nmtitcrd,
+                 p.nrcpftit,
+                 p.dtvalida,
+                 p.dtcancel,
+                 p.cdadmcrd
+            FROM crapcrd p
+                ,crawcrd w
+           WHERE p.cdcooper = prc_cdcooper
+             AND p.nrdconta = prc_nrdconta
+             --AND p.nrcrcard = prc_nrcartao
+             AND to_char(REPLACE(p.nrcrcard,',''')) LIKE prc_nrcartao
+             AND p.cdadmcrd >= 10
+             AND p.cdadmcrd <= 80
+             AND w.cdcooper = p.cdcooper
+             AND w.nrdconta = p.nrdconta
+             AND w.nrctrcrd = p.nrctrcrd
+             AND w.insitcrd IN(4,6); 
+        --
+        -- administradora do cartao para verificar o tipo de conta
+        CURSOR cr_crapadc (prc_cdcooper IN crapadc.cdcooper%TYPE,
+                          prc_cdadmcrd IN crapadc.cdadmcrd%TYPE) IS
+          SELECT tpctahab
+            FROM crapadc
+           WHERE crapadc.cdcooper = prc_cdcooper 
+             AND crapadc.cdadmcrd = prc_cdadmcrd;
+                     
+        /*  SELECT crawcrd.nrcrcard
+            FROM crawcrd
+           WHERE crawcrd.cdcooper = pr_cdcooper
+             AND crawcrd.nrdconta = pr_nrdconta
+             AND crawcrd.insitcrd = 4
+             AND crawcrd.dtentreg < rw_crapdat.dtmvtolt
+             AND crawcrd.dtvalida > rw_crapdat.dtmvtolt
+             AND crawcrd.dtcancel IS NULL;    
+          rw_crawcrd cr_crawcrd%ROWTYPE;*/
+      
+        -- Variaveis locais      
+        vr_nrcpfcgc crapttl.nrcpfcgc%TYPE;
+        vr_existe   NUMBER(1) := 0;
+        vr_idseqttl crapttl.idseqttl%TYPE;
+        
+        -- Variaveis gerais
+        vr_contador PLS_INTEGER := 0;
+        
+        -- Variaveis de critica
+        vr_cdcritic crapcri.cdcritic%TYPE;
+        vr_dscritic crapcri.dscritic%TYPE;
+        vr_exc_saida   EXCEPTION;
+        
+      BEGIN
+      vr_existe := 0;
+    /*  
+        pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular
+       ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
+       ,pr_idtipcar OUT INTEGER               --> Indica qual o cartao
+       ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
+       ,pr_idsenlet OUT VARCHAR2 -- Identifica se o cartão possui senha de letras cadastrado (yes/no)
+       ,pr_tpusucar OUT NUMBER  --> Usuário do cartão (Conta de pessoa física devolve o número do titular, conta pessoa jurídica devolve sempre "1" e cartão de operador devolve sempre "9")
+       ,pr_nrcpfcgc OUT crapass.nrcpfcgc%TYPE -->  Em caso de pessoa física é o CPF do titular que está utilizando o cartão, em caso se pessoa jurídica é o CNPJ
+       ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
+       ,pr_dtexpira OUT crapcrm.dtvalcar%TYPE --> Data expiração cartão
+       ,pr_dtcancel OUT crapcrm.dtcancel%TYPE*/    
+        
+        -- Validar a cooperativa  
+        OPEN cr_crapcop(pr_cdcooper);
+        FETCH cr_crapcop INTO rw_crapcop;
+        IF cr_crapcop%NOTFOUND THEN
+          CLOSE cr_crapcop;
+          pr_dscritic := 'Cooperativa nao existe';
+          RAISE vr_exc_saida;
+        END IF;
+        -- Fecha cursor
+        CLOSE cr_crapcop;
+
+        pr_cdagenci := 0;
+        --pr_idseqttl := 0;
+        vr_idseqttl := 0;
+        pr_dtnascto := NULL; 
+        pr_idtipcar := 0;
+        pr_inpessoa := 0;
+        pr_idsenlet := 0;
+        pr_tpusucar := 0;
+        pr_nrcpfcgc := 0;
+        pr_nometitu := '';
+        pr_dtexpira := NULL;
+        pr_dtcancel := NULL;
+        pr_dscritic := '';
+        -- Busca a data do sistema
+        OPEN btch0001.cr_crapdat(pr_cdcooper);
+        FETCH btch0001.cr_crapdat INTO rw_crapdat;
+        CLOSE btch0001.cr_crapdat;
+          
+        -- Loop sobre o cursor de busca de cartoes magnetico
+        FOR rw_crapcrm IN cr_crapcrm(prc_cdcooper => pr_cdcooper,
+                                     prc_nrdconta => pr_nrdconta,
+                                     prc_nrcartao => pr_nrcartao,
+                                     prc_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+          --pr_idseqttl := rw_crapcrm.tpusucar;      
+          FOR rw_crapttl IN cr_crapttl(pr_cdcooper
+                                      ,pr_nrdconta
+                                      ,rw_crapcrm.tpusucar)LOOP
+            
+            pr_dtnascto := rw_crapttl.dtnasttl;
+            vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
+          END LOOP;
+          pr_idtipcar := 1; -- cartao magnetico
+          pr_tpusucar := rw_crapcrm.tpusucar;
+          
+          -- Tipo da conta
+          FOR rw_crapass IN cr_crapass(pr_cdcooper
+                                      ,pr_nrdconta)LOOP
+              
+            pr_inpessoa := rw_crapass.inpessoa;
+              
+            IF rw_crapass.inpessoa = 1 THEN
+              pr_nrcpfcgc := vr_nrcpfcgc;
+            ELSE -- se nao o cnpj da conta
+              pr_nrcpfcgc := rw_crapass.nrcpfcgc;
+            END IF;
+          END LOOP;
+
+          -- Verificar se existe senha de letras seguranca
+          pr_idsenlet := fn_verif_letras_seguranca(pr_cdcooper => pr_cdcooper,
+                                                   pr_nrdconta => pr_nrdconta,
+                                                   pr_idseqttl => pr_tpusucar); 
+          pr_nometitu := rw_crapcrm.nmtitcrd;
+                           
+                 
+          pr_dtexpira := rw_crapcrm.dtvalcar;
+          pr_dtcancel := rw_crapcrm.dtcancel;
+          vr_existe := 1;
+        END LOOP;
+        --
+        -- Loop sobre o cursor de busca de cartoes cecred
+        IF vr_existe = 0 THEN
+          FOR rw_crawcrd IN cr_crawcrd(prc_cdcooper => pr_cdcooper,
+                                       prc_nrdconta => pr_nrdconta,
+                                       prc_nrcartao => pr_nrcartao) LOOP
+            
+            vr_nrcpfcgc := rw_crawcrd.nrcpftit;  
+            FOR rw_crapttl1 IN cr_crapttl1(pr_cdcooper,
+                                           pr_nrdconta,
+                                           rw_crawcrd.nrcpftit)LOOP
+              --pr_idseqttl := rw_crapttl1.idseqttl;                  
+              vr_idseqttl := rw_crapttl1.idseqttl;
+              pr_dtnascto := rw_crapttl1.dtnasttl;
+                       
+            END LOOP;
+
+            pr_idtipcar := 2; -- Cartao Credito
+            
+            -- Tipo da conta
+            FOR rw_crapass IN cr_crapass(pr_cdcooper
+                                        ,pr_nrdconta)LOOP
+              
+              pr_inpessoa := rw_crapass.inpessoa;
+              
+              IF rw_crapass.inpessoa = 1 THEN
+                pr_nrcpfcgc := vr_nrcpfcgc;
+              ELSE -- se nao o cnpj da conta
+                pr_nrcpfcgc := rw_crapass.nrcpfcgc;
+              END IF;
+            END LOOP;
+            /* Obtem administradora do cartao para verificar o tipo de conta */
+            FOR rw_crapadc IN cr_crapadc(pr_cdcooper,
+                                         rw_crawcrd.cdadmcrd)LOOP
+              IF rw_crapadc.tpctahab = 1 THEN
+                -- Conta Fisica
+                pr_tpusucar := vr_idseqttl;
+              ELSE
+                -- Conta Juridica
+                pr_tpusucar := 1;
+              END IF;
+            END LOOP;
+            -- Verificar se existe senha de letras seguranca
+            pr_idsenlet := fn_verif_letras_seguranca(pr_cdcooper => pr_cdcooper,
+                                                     pr_nrdconta => pr_nrdconta,
+                                                     pr_idseqttl => pr_tpusucar); 
+            pr_nometitu := rw_crawcrd.nmtitcrd;  -- Nome do titular cartao        
+            pr_dtexpira := rw_crawcrd.dtvalida;  -- Data de expiracao cartao
+            pr_dtcancel := rw_crawcrd.dtcancel;  -- Data de cancelamento
+            vr_existe := 1;
+
+          END LOOP;
+        END IF;
+           
+        IF vr_existe = 0 THEN
+          pr_dscritic := 'Não encontrou o cartão';
+        END IF;
+        
+      EXCEPTION
+        WHEN vr_exc_saida THEN
+          NULL;
+        WHEN OTHERS THEN
+          --cecred.pc_internal_exception(3);
+          --pr_cdcritic := 0;
+          pr_dscritic := 'Erro geral (CADA0004.pc_obter_cartao_URA). '||SQLERRM;
+
+      END;
+      
+    END pc_obter_cartao_URA;  
   
 END CADA0004;
 /

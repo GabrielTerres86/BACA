@@ -666,7 +666,8 @@ PROCEDURE p_validasenha:
                             USE-INDEX crapsnh1 NO-LOCK NO-ERROR.
 
    IF   NOT AVAILABLE crapsnh THEN
-        {&OUT} "falso".
+        /*{&OUT} "falso".*/
+     {&OUT} "<pr_dscritic>Senha invalida</pr_dscritic>". 
    ELSE                    
         DO: 
             IF   INTEGER(crapsnh.cddsenha) = INTEGER(aux_dsdsenha) THEN
@@ -676,16 +677,20 @@ PROCEDURE p_validasenha:
 									     NO-LOCK NO-ERROR.
 
 			   IF   NOT AVAILABLE crapass THEN
-					{&OUT} "falso". 
+           /*{&OUT} "falso". */
+           {&OUT} "<pr_dscritic>Conta invalida</pr_dscritic>". 
 			   ELSE
-					{&OUT} "ok|" + STRING(crapass.cdcooper) + "|" + STRING(crapass.nrdconta) + "|" + STRING(crapass.cdagenci). 
+           /*{&OUT} "ok|" + STRING(crapass.cdcooper) + "|" + STRING(crapass.nrdconta) + "|" + STRING(crapass.cdagenci). */
+           {&OUT} "<pr_dscritic></pr_dscritic>". 
 			END.
             ELSE
             /* Conta Teste */
             IF   aux_nmprimtl = "CONTA  TESTE"   THEN
-                 {&OUT} "ok|1|999|1".
+               /*{&OUT} "ok|1|999|1".*/
+               {&OUT} "<pr_dscritic></pr_dscritic>". 
             ELSE
-                 {&OUT} "falso".
+              /*{&OUT} "falso".*/
+              {&OUT} "<pr_dscritic>Sistema invalida</pr_dscritic>". 
         END.
 
 END PROCEDURE.

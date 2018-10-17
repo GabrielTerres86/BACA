@@ -725,6 +725,9 @@
 
                  01/06/2018 - Adicionar o parametro dstelsms no IB66 para que seja consumido ao 
                               processar a instruça o95. Prj. 285 - Nova Conta Online (Douglas)
+
+				 28/06/2018 - Adaptação para implantação dos serviços de resgate, aplicação e consulta de saldo
+				              via URA
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1125,6 +1128,8 @@ DEF VAR aux_nrparepr AS INTE                                           NO-UNDO.
    As aplicações e o valor são passados separados por ";" */
 DEF VAR aux_dsaplica AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlresgat AS CHAR                                           NO-UNDO.
+DEF VAR aux_vltotrgt AS DECI                                           NO-UNDO.
+
 /* Dados do boleto separados por "|" e os boletos por ";" */
 DEF VAR aux_dsboleto AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpdaacao AS INTE                                           NO-UNDO.
@@ -2565,7 +2570,7 @@ PROCEDURE proc_operacao2:
     
     /* Verificar se a operaçao está sendo realizada pela TAA, 
        e se existe o TOKEN de senha */      
-    IF canal_cdorigem = 4       AND 
+    IF (canal_cdorigem = 4 or canal_cdorigem = 6)      AND
        token_autenticacao <> ?  AND 
        token_autenticacao <> "" THEN /* TOKEN informado */ 
     DO: 
@@ -5466,11 +5471,11 @@ PROCEDURE proc_operacao83:
            aux_tpaplica = INTE(GET-VALUE("tpaplica")).
                        
     RUN sistema/internet/fontes/InternetBank83.p (INPUT aux_cdcooper,
-                                                  INPUT 90, /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
+                                                  INPUT canal_cdagenci, /*cdagenci*/
+                                                  INPUT canal_nrdcaixa, /*nrdcaixa*/
                                                   INPUT "996", /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
-                                                  INPUT 3, /*idorigem*/
+                                                  INPUT canal_nmprogra,
+                                                  INPUT canal_cdorigem, /*idorigem*/
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_dtmvtolt,
@@ -5515,11 +5520,11 @@ PROCEDURE proc_operacao84:
         aux_idtipapl = 'A'.           
 
     RUN sistema/internet/fontes/InternetBank84.p (INPUT aux_cdcooper,
-                                                  INPUT 90, /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
+                                                  INPUT canal_cdagenci, /*cdagenci*/
+                                                  INPUT canal_nrdcaixa, /*nrdcaixa*/
                                                   INPUT "996", /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
-                                                  INPUT 3, /*idorigem*/
+                                                  INPUT canal_nmprogra,
+                                                  INPUT canal_cdorigem, /*idorigem*/
                                                   INPUT aux_inproces,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
@@ -5974,11 +5979,11 @@ PROCEDURE proc_operacao96:
     ASSIGN aux_idvalida = INTE(GET-VALUE("tpvalida")).
     
     RUN sistema/internet/fontes/InternetBank96.p (INPUT aux_cdcooper,
-                                                  INPUT 90, /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
+                                                  INPUT canal_cdagenci, /*cdagenci*/
+                                                  INPUT canal_nrdcaixa, /*nrdcaixa*/
                                                   INPUT "996", /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
-                                                  INPUT 3, /*idorigem*/
+                                                  INPUT canal_nmprogra,
+                                                  INPUT canal_cdorigem, /*idorigem*/
                                                   INPUT aux_idvalida,
                                                  OUTPUT aux_dsmsgerr,
                                                  OUTPUT TABLE xml_operacao).
@@ -6277,11 +6282,11 @@ PROCEDURE proc_operacao104:
     ASSIGN aux_vlaplica = DEC(GET-VALUE("vlresgat")).
                        
     RUN sistema/internet/fontes/InternetBank104.p (INPUT aux_cdcooper,
-                                                  INPUT 90, /*cdagenci*/
-                                                  INPUT 900, /*nrdcaixa*/
+                                                  INPUT canal_cdagenci, /*cdagenci*/
+                                                  INPUT canal_nrdcaixa, /*nrdcaixa*/
                                                   INPUT "996", /*cdoperad*/
-                                                  INPUT "INTERNETBANK",
-                                                  INPUT 3, /*idorigem*/
+                                                  INPUT canal_nmprogra,
+                                                  INPUT canal_cdorigem, /*idorigem*/
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_dtmvtolt,
@@ -6644,14 +6649,15 @@ END PROCEDURE.
 PROCEDURE proc_operacao116:
     
     ASSIGN aux_dsaplica = GET-VALUE("aux_dsaplica")
-           aux_flmensag = INT(GET-VALUE("aux_flmensag")).
+           aux_flmensag = INT(GET-VALUE("aux_flmensag"))
+		   aux_vltotrgt = DEC(GET-VALUE("aux_vltotrgt")).
 
     RUN sistema/internet/fontes/InternetBank116.p (INPUT aux_cdcooper,
-                                                   INPUT 90, /*cdagenci*/
-                                                   INPUT 900, /*nrdcaixa*/
+                                                   INPUT canal_cdagenci, /*cdagenci*/
+                                                   INPUT canal_nrdcaixa, /*nrdcaixa*/
                                                    INPUT "996", /*cdoperad*/
-                                                   INPUT "INTERNETBANK", /*nmdatela*/
-                                                   INPUT 3, /*idorigem*/
+                                                   INPUT canal_nmprogra, /*nmdatela*/
+                                                   INPUT canal_cdorigem, /*idorigem*/
                                                    INPUT aux_inproces,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
@@ -6662,6 +6668,7 @@ PROCEDURE proc_operacao116:
                                                    INPUT FALSE, /*flgctain - Resgate para conta investimento */ 
                                                    INPUT "RESGAT", /*cdprogra*/
                                                    INPUT aux_dsaplica, /*Aplicacoes do resgate*/
+												   INPUT aux_vltotrgt,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 
