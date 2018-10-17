@@ -120,6 +120,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                             Além disso, aproveitamos a manutenção para remover o conceito de praças
                             menor e maior, e deixar tudo consolidado em "CHEQUES OUTROS BANCOS".
                             (#Chamado 857696 - Wagner/Sustenção).
+
+               17/10/2018 - Liberacao primeiro pacote Projeto 421 - Melhorias nas
+                            ferramentas contabeis e fiscais.
+                            Heitor / Alcemir (Mouts)
                                                         
      ............................................................................. */
 
@@ -451,6 +455,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
 	   vr_last_chq  EXCEPTION;
        vr_exc_pula  EXCEPTION;   
 
+       --Variaveis prj421
+       vr_dtmvtolt_yymmdd     varchar2(6);
+       vr_ctb_tot_qtchqcrh    NUMBER := 0;
+       vr_ctb_tot_vlchqcrh    NUMBER := 0;
+       vr_ctb_tot_qtcredit    NUMBER := 0;
+       vr_ctb_tot_vlcredit    NUMBER := 0;
+       
+       -- Nome do diretório
+       vr_nom_diretorio       varchar2(200);
+       vr_dsdircop            varchar2(200);
+
+       -- Nome do arquivo que será gerado
+       vr_nmarqnov            VARCHAR2(50); -- nome do arquivo por cooperativa
+       vr_nmarqdat            varchar2(50);
+
+       -- Arquivo texto
+       vr_arquivo_txt         utl_file.file_type;
+       vr_linhadet            varchar2(200);
+
+       -- Tratamento de erros
+       vr_typ_said            VARCHAR2(4);
+       
+       -- Variaveis de Erro
+       vr_dscritic VARCHAR2(4000);
+ 
        --Procedure para limpar os dados das tabelas de memoria
        PROCEDURE pc_limpa_tabela IS
        BEGIN
@@ -1553,6 +1582,17 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                END LOOP;
              END IF;
 
+         /* Prj421 - Item 28 */
+         IF  vr_nrdconta = 85448 /* Cooper */
+         AND pr_cdcooper = 1 
+         AND (nvl(vr_tot_qtchqcrh,0) > 0 OR nvl(vr_tot_qtcredit,0) > 0) THEN
+           vr_ctb_tot_qtchqcrh := vr_tot_qtchqcrh;
+           vr_ctb_tot_vlchqcrh := vr_tot_vlchqcrh;
+           vr_ctb_tot_qtcredit := vr_tot_qtcredit;
+           vr_ctb_tot_vlcredit := vr_tot_vlcredit;
+         END IF;
+         /* Prj421 Fim */
+
              -- Atualizar restart se a flag estiver ativa
              IF pr_flgresta = 1 THEN
                BEGIN
@@ -1927,6 +1967,77 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        -- Liberando a mem?ria alocada pro CLOB
        dbms_lob.close(vr_des_xml);
        dbms_lob.freetemporary(vr_des_xml);
+       
+       /* Prj421 - Geracao arquivo contabil*/
+       IF nvl(vr_ctb_tot_qtchqcrh,0) > 0 OR nvl(vr_ctb_tot_qtcredit,0) > 0 THEN
+         vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                   pr_cdcooper => pr_cdcooper,
+                                                   pr_nmsubdir => 'contab');
+
+         -- Busca o diretório final para copiar arquivos
+         vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                 ,pr_cdcooper => 0
+                                                 ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');                                              
+
+         -- Nome do arquivo a ser gerado
+         vr_dtmvtolt_yymmdd := to_char(rw_crapdat.dtmvtopr, 'yymmdd');
+         vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_CUSTODIA_COOPER.txt';  
+
+         -- Abre o arquivo para escrita
+         gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
+                                  pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
+                                  pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
+                                  pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
+                                  pr_des_erro => vr_dscritic);
+
+         if vr_dscritic is not null then
+           vr_cdcritic := 0;
+           RAISE vr_exc_erro;
+         end if;
+
+         /* Escrita arquivo */
+         IF nvl(vr_ctb_tot_qtchqcrh,0) > 0 THEN
+           vr_linhadet := trim(vr_dtmvtolt_yymmdd)||','||
+                          trim(to_char(rw_crapdat.dtmvtopr,'ddmmyy'))||','||
+                          '1101,'||
+                          '1455,'||
+                          trim(to_char(vr_ctb_tot_vlchqcrh, '99999999999990.00'))||','||
+                          '5210,'||
+                          '"VALOR REF CUSTODIA COOPER, CFME RELATORIO CRRL234"';
+
+           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+           
+           vr_linhadet := '001,'||trim(to_char(vr_ctb_tot_vlchqcrh, '99999999999990.00'));
+           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+         END IF;
+
+         IF nvl(vr_ctb_tot_qtcredit,0) > 0 THEN
+           vr_linhadet := trim(vr_dtmvtolt_yymmdd)||','||
+                          trim(to_char(rw_crapdat.dtmvtopr,'ddmmyy'))||','||
+                          '1455,'||
+                          '4957,'||
+                          trim(to_char(vr_ctb_tot_vlcredit, '99999999999990.00'))||','||
+                          '5210,'||
+                          '"VALOR REF CREDITO COOPER, CFME RELATORIO CRRL234"';
+
+           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+         END IF;         
+
+         gene0001.pc_fecha_arquivo(vr_arquivo_txt);
+
+         vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CUSTODIA_COOPER.txt';                        
+
+         -- Copia o arquivo gerado para o diretório final convertendo para DOS
+         gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
+                                     pr_typ_saida   => vr_typ_said,
+                                     pr_des_saida   => vr_dscritic);
+         -- Testar erro
+         if vr_typ_said = 'ERR' then
+           vr_cdcritic := 1040;
+           gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
+         end if;
+       END IF;
+       /* Prj421 - Fim
 
        /* Eliminacao dos registros de restart */
        BTCH0001.pc_elimina_restart(pr_cdcooper => pr_cdcooper

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel132" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.200000000000016"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="dataset1" uuid="91f1cf62-c7be-482e-96bb-80f99844b493"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["\\\\pkghomol\\migracao_oracle\\_conversao\\crps613_v01\\"]]></defaultValueExpression>
+	</parameter>
+	<queryString language="xPath">
+		<![CDATA[/crrl760/transacoes/transacao/critica]]>
+	</queryString>
+	<field name="nrseqcri" class="java.lang.Integer">
+		<fieldDescription><![CDATA[nrseqcri]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="dscritic" class="java.lang.String">
+		<fieldDescription><![CDATA[dscritic]]></fieldDescription>
+	</field>
+	<field name="vltransa" class="java.lang.Double">
+		<fieldDescription><![CDATA[vltransa]]></fieldDescription>
+	</field>
+	<variable name="tot_vltransa" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vltransa}]]></variableExpression>
+	</variable>
+	<variable name="qtd_criticas" class="java.lang.Integer" calculation="Count">
+		<variableExpression><![CDATA[$F{nrseqcri}]]></variableExpression>
+	</variable>
+	<variable name="rel_tot_vltransa" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vltransa}]]></variableExpression>
+	</variable>
+	<variable name="rel_qtd_criticas" class="java.lang.Integer" calculation="Count">
+		<variableExpression><![CDATA[$F{nrseqcri}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<columnHeader>
+		<band height="18">
+			<staticText>
+				<reportElement uuid="9a5b9af5-a646-44bd-a0a0-83dc466282ba" x="0" y="9" width="25" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[SEQ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9a5b9af5-a646-44bd-a0a0-83dc466282ba" x="26" y="9" width="70" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[CONTA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9a5b9af5-a646-44bd-a0a0-83dc466282ba" x="97" y="9" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[VALOR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9a5b9af5-a646-44bd-a0a0-83dc466282ba" x="154" y="9" width="319" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[CRITICA]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="8">
+			<textField>
+				<reportElement uuid="d37c431d-25bd-4b20-9429-9044355219b0" x="0" y="0" width="25" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrseqcri}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="d37c431d-25bd-4b20-9429-9044355219b0" x="26" y="0" width="70" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="6b3797db-f6ab-478d-8ed3-8b5a35d218a5" x="97" y="0" width="56" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltransa}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement uuid="8990f0fb-da36-4232-a73b-52bdab47d3c6" x="154" y="0" width="319" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dscritic}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="32">
+			<staticText>
+				<reportElement uuid="9a5b9af5-a646-44bd-a0a0-83dc466282ba" x="0" y="8" width="202" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Total de criticas]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9a5b9af5-a646-44bd-a0a0-83dc466282ba" x="0" y="16" width="202" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isBold="true" isUnderline="true"/>
+				</textElement>
+				<text><![CDATA[Valor total (liquido) de criticas]]></text>
+			</staticText>
+			<textField pattern="#,##0.00;-#,##0.00">
+				<reportElement uuid="6b3797db-f6ab-478d-8ed3-8b5a35d218a5" x="202" y="16" width="56" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vltransa}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement uuid="6b3797db-f6ab-478d-8ed3-8b5a35d218a5" x="202" y="8" width="56" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{qtd_criticas}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

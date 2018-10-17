@@ -395,6 +395,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                20/03/2018 - Substituida validacao "cdtipcta IN (6,7,17,18)" pelo "cdmodali = 3".
                             Substituida validacao "cdtipcta IN (2,4,9,11,13,15)" pela chamada
                             da procedure pc_permite_produto_tipo. (Josiane - AMcom)
+
+               17/10/2018 - Liberacao primeiro pacote Projeto 421 - Melhorias nas
+                            ferramentas contabeis e fiscais.
+                            Heitor / Alcemir (Mouts)
      ............................................................................. */
 
      DECLARE
@@ -7216,6 +7220,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
            /* ------------  Bloqueio judicial  ------------ */
            --Se o valor Bloqueio menor zero
+           /* Prj421 - Nao deve mais gerar lancamentos contabeis de valores bloqueado judicialmente
+              Removido a pedido da contabilidade pois esses lancamentos sao inuteis para eles, sendo
+              revertidos diariamente
            IF vr_rel_vltotal9 < 0 THEN
              --Se for cecred
              IF pr_cdcooper = 3 THEN
@@ -7280,6 +7287,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
              END IF;
            END IF;
+           */
          END IF; -- Fim Mesmo Mês
            
          --Fechar Arquivo

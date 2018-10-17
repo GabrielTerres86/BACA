@@ -77,6 +77,11 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
 
                29/05/2017 - Incluir nova procedure pc_gerandb_car para chamar a pc_gerandb
                             (Lucas Ranghetti #681579)
+
+               17/10/2018 - Liberacao primeiro pacote Projeto 421 - Melhorias nas
+			                ferramentas contabeis e fiscais.
+							Heitor / Alcemir (Mouts)
+
 ..............................................................................*/
 
   --Tipo de Registro para convenios
@@ -3096,6 +3101,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
            AND psc.cdempres  = '85'  -- DPVAT
       ORDER BY lft.dtvencto;
 
+      --Tabela de feriados para calcula da data de recolhimento
+      CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE      --> Código da cooperativa
+                       ,pr_dtrecolh IN crapfer.dtferiad%TYPE) IS  --> Data de recolhimento
+        SELECT cf.dsferiad
+          FROM crapfer cf
+         WHERE cf.cdcooper = pr_cdcooper
+           AND cf.dtferiad = pr_dtrecolh;
+
+      rw_crapfer cr_crapfer%ROWTYPE;
+
       -- Tipo de Registro para resumo
       TYPE typ_reg_resumo IS
         RECORD (dt_total DATE
@@ -3128,6 +3143,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
       vr_nmdireto VARCHAR2(400);
       vr_index    INTEGER;
       vr_contador INTEGER := 0;
+
+      /* Variaveis Prj421 */
+      vr_vltotiof NUMBER  := 0;
+      vr_dtini    DATE;
+      vr_dtfim    DATE;
+      vr_dtrecolh DATE;
+      vr_contreco NUMBER;
+      vr_nrdecend NUMBER;
+      
+      -- Data do movimento no formato yymmdd
+      vr_dtmvtolt_yymmdd     varchar2(6);
+      
+      -- Nome do diretório
+      vr_nom_diretorio       varchar2(200);
+      vr_dsdircop            varchar2(200);
+
+      -- Nome do arquivo que será gerado
+      vr_nmarqnov            VARCHAR2(50); -- nome do arquivo por cooperativa
+      vr_nmarqdat            varchar2(50);
+
+      -- Arquivo texto
+      vr_arquivo_txt         utl_file.file_type;
+      vr_linhadet            varchar2(200);
+
+      -- Tratamento de erros
+      vr_typ_said            VARCHAR2(4);
 
       -- Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -3262,6 +3303,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           '  <vl_4_dia>'|| TO_CHAR(vr_vl_4_dia,'FM9999999990D00') ||'</vl_4_dia>'||
           '</dados>');
 
+        /* Prj421 - Acumular valores de IOF para lancamento contabil */
+        vr_vltotiof := vr_vltotiof + vr_vltariof;
+
       END LOOP; -- cr_arrecad
 
       -- Monta datas do resumo
@@ -3390,6 +3434,144 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         RAISE vr_exc_erro;
       END IF;
       
+      /* Prj421 - Geracao de arquivo contabil */
+      -- Busca do diretório onde ficará o arquivo
+      vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                pr_cdcooper => pr_cdcooper,
+                                                pr_nmsubdir => 'contab');
+                                                
+      -- Busca o diretório final para copiar arquivos
+      vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => 0
+                                              ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');                                              
+      -- Nome do arquivo a ser gerado
+      vr_dtmvtolt_yymmdd := to_char(pr_dtmvtolt, 'yymmdd');
+      vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_IOF_DPVAT.txt';
+
+      -- Abre o arquivo para escrita
+      gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
+                               pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
+                               pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
+                               pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
+                               pr_des_erro => vr_dscritic);
+
+      if vr_dscritic is not null then
+        vr_cdcritic := 0;
+        RAISE vr_exc_erro;
+      end if;
+
+      /* Escrita arquivo */
+      vr_linhadet := trim(vr_dtmvtolt_yymmdd)||','||
+                     trim(to_char(pr_dtmvtolt,'ddmmyy'))||','||
+                     '4336,'||
+                     '4118,'||
+                     trim(to_char(vr_vltotiof, '99999999999990.00'))||','||
+                     '5210,'||
+                     '"VALOR REF. IOF SOBRE ARRECADACOES DO SEGURO DPVAT"';
+
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      /* Fim escrita arquivo */
+      
+      CASE WHEN to_number(to_char(pr_dtmvtolt,'DD')) BETWEEN 1 AND 10 THEN
+        vr_dtini    := TO_DATE('21' || TO_CHAR(add_months(pr_dtmvtolt,-1), '/MM/RRRR'), 'DD/MM/RRRR');
+        vr_dtfim    := LAST_DAY(add_months(pr_dtmvtolt,-1));
+        vr_nrdecend := 3;
+      WHEN to_number(to_char(pr_dtmvtolt,'DD')) BETWEEN 11 AND 20 THEN
+        vr_dtini    := TO_DATE('01' || TO_CHAR(pr_dtmvtolt, '/MM/RRRR'), 'DD/MM/RRRR');
+        vr_dtfim    := TO_DATE('10' || TO_CHAR(pr_dtmvtolt, '/MM/RRRR'), 'DD/MM/RRRR');
+        vr_nrdecend := 1;
+      ELSE
+        vr_dtini    := TO_DATE('11' || TO_CHAR(pr_dtmvtolt, '/MM/RRRR'), 'DD/MM/RRRR');
+        vr_dtfim    := TO_DATE('20' || TO_CHAR(pr_dtmvtolt, '/MM/RRRR'), 'DD/MM/RRRR');
+        vr_nrdecend := 2;
+      END CASE;
+
+      vr_dtrecolh := vr_dtfim + 1;
+      vr_contreco := 0;
+
+      -- Fazer varredura até encontrar data util
+      LOOP
+        -- Busca se a data é feriado
+        -- Buscar data de processamento
+        OPEN cr_crapfer(pr_cdcooper, vr_dtrecolh);
+        FETCH cr_crapfer INTO rw_crapfer;
+        -- Se a data não for sabado ou domingo ou feriado
+        IF NOT(TO_CHAR(vr_dtrecolh, 'd') IN (1,7) OR cr_crapfer%FOUND) THEN
+          vr_contreco := vr_contreco + 1;
+        END IF;
+        --
+        close cr_crapfer;
+        -- Sair quando encontrar o 3º dia apos
+        exit when vr_contreco >= 3;
+        -- Incrementar data
+        vr_dtrecolh := vr_dtrecolh + 1;
+      END LOOP;
+
+      -- Busca próximo dia útil considerando feriados e finais de semana
+      vr_dtrecolh := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                ,pr_dtmvtolt => vr_dtrecolh
+                                                ,pr_tipo => 'P');
+      
+      --Se o dia atual é o dia do recolhimento decendial, deve-se realizar lancamento de baixa dos valores
+      IF vr_dtrecolh = pr_dtmvtolt THEN
+        vr_vltotiof := 0;
+
+        -- Listagem de arrecadacoes do periodo
+        FOR rw_arrecad IN cr_arrecad(pr_cdcooper => pr_cdcooper
+                                    ,pr_dtiniven => vr_dtini
+                                    ,pr_dtfimven => vr_dtfim) LOOP
+
+          IF rw_arrecad.cdagenci = 90 THEN -- Tarifa Internet
+            vr_vltarifa := vr_vltari90;
+          ELSIF rw_arrecad.cdagenci = 91 THEN -- Tarifa TAA
+            vr_vltarifa := vr_vltari91;
+          ELSE -- Tarifa Caixa
+            vr_vltarifa := vr_vltaricx;
+          END IF;
+
+          -- Processa os calculos
+          pc_calcula_valores(pr_cdcooper => pr_cdcooper
+                            ,pr_txccdiof => vr_txccdiof
+                            ,pr_nranoexe => rw_arrecad.nranoexe
+                            ,pr_idintegr => rw_arrecad.idintegr
+                            ,pr_vllanmto => rw_arrecad.vllanmto
+                            ,pr_vltarifa => vr_vltarifa
+                            ,pr_vlcusbil => vr_vlcusbil
+                            ,pr_vltariof => vr_vltariof
+                            ,pr_vl_2_dia => vr_vl_2_dia
+                            ,pr_vl_4_dia => vr_vl_4_dia);
+
+          /* Prj421 - Acumular valores de IOF para lancamento contabil */
+          vr_vltotiof := vr_vltotiof + vr_vltariof;
+        END LOOP; -- cr_arrecad
+        
+        IF vr_vltotiof > 0 THEN
+          vr_linhadet := trim(vr_dtmvtolt_yymmdd)||','||
+                         trim(to_char(pr_dtmvtolt,'ddmmyy'))||','||
+                         '4118,'||
+                         '4336,'||
+                         trim(to_char(vr_vltotiof, '99999999999990.00'))||','||
+                         '5210,'||
+                         '"VALOR REF. IOF S/ARRECADACAO SEGURO DPVAT '||vr_nrdecend||chr(186)||' DECENDIO DE '||trim(to_char(vr_dtini,'MONTH'))||'/'||to_char(vr_dtini,'RRRR')||'"';
+
+          gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+        END IF;
+      END IF;
+      
+      gene0001.pc_fecha_arquivo(vr_arquivo_txt);
+
+      vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_IOF_DPVAT.txt';                        
+
+      -- Copia o arquivo gerado para o diretório final convertendo para DOS
+      gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
+                                  pr_typ_saida   => vr_typ_said,
+                                  pr_des_saida   => vr_dscritic);
+      -- Testar erro
+      if vr_typ_said = 'ERR' then
+         vr_cdcritic := 1040;
+         gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
+      end if;
+
       COMMIT;
 
     EXCEPTION
