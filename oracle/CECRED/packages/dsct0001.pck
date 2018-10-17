@@ -299,6 +299,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             no sistema antes da nova versão de funcionalidade do bordero, quando houver o pagamento da operação de 
                             desconto, ou seja, do título vencido, através do débito em conta corrente deverá ser atualizada a coluna 
                             “Saldo Devedor” ficando zerada.(Paulo Penteado GFT)
+                            
+               17/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
+  	                        pc_estorna_lancto_conta (Fabio Adriano - AMcom)
     
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -6163,19 +6166,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            END IF;
            CLOSE cr_craplot;
            BEGIN
-              DELETE craplcm
-               WHERE rowid = rw_craplcm.rowid;
-           EXCEPTION
-             WHEN OTHERS THEN
-               -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
-               CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
-               -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
-               vr_cdcritic := 1037;
-               vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                              'craplcm(1): rowid:' || rw_craplcm.rowid ||
-                              '. ' ||sqlerrm; 
-               --Levantar Excecao
-               RAISE vr_exc_erro;
+              /*DELETE craplcm
+               WHERE rowid = rw_craplcm.rowid;*/
+               
+              lanc0001.pc_estorna_lancto_conta(pr_cdcooper => NULL
+                                             , pr_dtmvtolt => NULL
+                                             , pr_cdagenci => NULL
+                                             , pr_cdbccxlt => NULL
+                                             , pr_nrdolote => NULL
+                                             , pr_nrdctabb => NULL
+                                             , pr_nrdocmto => NULL
+                                             , pr_cdhistor => NULL
+                                             , pr_rowid    => rw_craplcm.rowid
+                                             , pr_cdcritic => vr_cdcritic
+                                             , pr_dscritic => vr_dscritic); 
+                                                 
+              IF nvl(vr_cdcritic, 0) >= 0 OR vr_dscritic IS NOT NULL THEN
+                 -- No caso de erro de programa gravar tabela especifica de log - 15/02/2018 - Chamado 851591 
+                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+                 -- Ajuste mensagem de erro - 15/02/2018 - Chamado 851591 
+                 vr_cdcritic := 1037;
+                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                                'craplcm(1): rowid:' || rw_craplcm.rowid ||
+                                '. ' ||sqlerrm; 
+                 --Levantar Excecao
+                 RAISE vr_exc_erro;
+              END IF;     
+           
            END;
          END IF;
          CLOSE cr_craplcm;
