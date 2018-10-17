@@ -844,7 +844,6 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                ,pr_nrcartao IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
                                ,pr_cdagenci OUT crapass.cdagenci%TYPE --> Agencia cooperado
-                               /*,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular*/
                                ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
                                ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
                                ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
@@ -854,6 +853,7 @@ PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA
                                ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
                                ,pr_dtexpira OUT crapcrm.dtvalcar%TYPE --> Data expiração cartão
                                ,pr_dtcancel OUT crapcrm.dtcancel%TYPE
+                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                ,pr_dscritic OUT VARCHAR2);                                             
 
 END CADA0004;
@@ -13022,7 +13022,6 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
                                ,pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
                                ,pr_nrcartao IN VARCHAR2 --crapcrm.nrcartao%TYPE  --> Número do cartão
                                ,pr_cdagenci OUT crapass.cdagenci%TYPE --> Agencia cooperado
-                               /*,pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular*/
                                ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
                                ,pr_idtipcar OUT NUMBER               --> Indica qual o cartao
                                ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
@@ -13032,6 +13031,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
                                ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
                                ,pr_dtexpira OUT crapcrm.dtvalcar%TYPE --> Data expiração cartão
                                ,pr_dtcancel OUT crapcrm.dtcancel%TYPE
+                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                ,pr_dscritic OUT VARCHAR2) IS --> Descricao da critica) IS --> Data cancelamento cartão
       -- ..........................................................................
       --
@@ -13137,16 +13137,6 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
             FROM crapadc
            WHERE crapadc.cdcooper = prc_cdcooper 
              AND crapadc.cdadmcrd = prc_cdadmcrd;
-                     
-        /*  SELECT crawcrd.nrcrcard
-            FROM crawcrd
-           WHERE crawcrd.cdcooper = pr_cdcooper
-             AND crawcrd.nrdconta = pr_nrdconta
-             AND crawcrd.insitcrd = 4
-             AND crawcrd.dtentreg < rw_crapdat.dtmvtolt
-             AND crawcrd.dtvalida > rw_crapdat.dtmvtolt
-             AND crawcrd.dtcancel IS NULL;    
-          rw_crawcrd cr_crawcrd%ROWTYPE;*/
       
         -- Variaveis locais      
         vr_nrcpfcgc crapttl.nrcpfcgc%TYPE;
@@ -13163,17 +13153,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
         
       BEGIN
       vr_existe := 0;
-    /*  
-        pr_idseqttl OUT crapttl.idseqttl%TYPE --> Identificador titular
-       ,pr_dtnascto OUT crapass.dtnasctl%TYPE --> Data nascimento cooperado
-       ,pr_idtipcar OUT INTEGER               --> Indica qual o cartao
-       ,pr_inpessoa OUT crapass.inpessoa%TYPE --> Indica o tipo de pessoa
-       ,pr_idsenlet OUT VARCHAR2 -- Identifica se o cartão possui senha de letras cadastrado (yes/no)
-       ,pr_tpusucar OUT NUMBER  --> Usuário do cartão (Conta de pessoa física devolve o número do titular, conta pessoa jurídica devolve sempre "1" e cartão de operador devolve sempre "9")
-       ,pr_nrcpfcgc OUT crapass.nrcpfcgc%TYPE -->  Em caso de pessoa física é o CPF do titular que está utilizando o cartão, em caso se pessoa jurídica é o CNPJ
-       ,pr_nometitu OUT crapcrm.nmtitcrd%TYPE -->  Nome impresso no cartão
-       ,pr_dtexpira OUT crapcrm.dtvalcar%TYPE --> Data expiração cartão
-       ,pr_dtcancel OUT crapcrm.dtcancel%TYPE*/    
+ 
         
         -- Validar a cooperativa  
         OPEN cr_crapcop(pr_cdcooper);
@@ -13187,7 +13167,6 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
         CLOSE cr_crapcop;
 
         pr_cdagenci := 0;
-        --pr_idseqttl := 0;
         vr_idseqttl := 0;
         pr_dtnascto := NULL; 
         pr_idtipcar := 0;
@@ -13299,7 +13278,9 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
         END IF;
            
         IF vr_existe = 0 THEN
-          pr_dscritic := 'Não encontrou o cartão';
+          -- 276 - Cartao nao existe.
+          pr_cdcritic := 276;
+          pr_dscritic := '276 - Cartao nao existe';
         END IF;
         
       EXCEPTION
@@ -13307,7 +13288,7 @@ PROCEDURE pc_obter_cartao_URA(pr_cdcooper IN crapcrm.cdcooper%TYPE  --> Código d
           NULL;
         WHEN OTHERS THEN
           --cecred.pc_internal_exception(3);
-          --pr_cdcritic := 0;
+          pr_cdcritic := 0;
           pr_dscritic := 'Erro geral (CADA0004.pc_obter_cartao_URA). '||SQLERRM;
 
       END;
