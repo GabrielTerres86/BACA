@@ -239,6 +239,12 @@
                
                16/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
                             
+               12/07/2018 - PJ450 - Emininado acesso ao crapgrp e leitura do retorno
+                            da chamada da bo 138 para atribuir dados de grupos economicos
+                            para a variável tt-ge-economico (Renato/AMcom)
+                            
+			   03/09/2018 - Efetivaçao do seguro prestamista TR -- PRJ438 - Paulo Martins (Mouts)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1014,7 +1020,16 @@ DO WHILE TRUE:
                              DO:
                                 ASSIGN aux_qtctarel = 0.
 
+                                /* PJ 450 - Renato Cordeiro -AMcom Julho 2018*/
+                                FOR EACH tt-grupo:
+                                   DO:
+                                       CREATE tt-ge-economico.
+                                       ASSIGN tt-ge-economico.nrctasoc = tt-grupo.nrctasoc
+                                              tt-ge-economico.dsdrisgp = tt-grupo.dsdrisgp
+                                              aux_qtctarel = aux_qtctarel + 1.
+                                   END.
                                 /*busca grupo economico*/
+/*
                                 FOR EACH crapgrp WHERE crapgrp.cdcooper = glb_cdcooper AND
                                                        crapgrp.nrdgrupo = aux_nrdgrupo
                                                        NO-LOCK BREAK BY crapgrp.nrctasoc:
@@ -1026,6 +1041,7 @@ DO WHILE TRUE:
                                                   tt-ge-economico.dsdrisgp = crapgrp.dsdrisgp
                                                   aux_qtctarel = aux_qtctarel + 1.
                                        END.
+*/
                                 END.
 
                                 IF TEMP-TABLE tt-ge-economico:HAS-RECORDS THEN
@@ -1360,7 +1376,7 @@ DO WHILE TRUE:
              crabepr.dtinipag = ?
              crabepr.tpdescto = aux_tpdescto
              crabepr.vliofepr = aux_vltotiof
-             crabepr.vlpagiof = aux_vliofpri
+             crabepr.vliofpri = aux_vliofpri
              crabepr.vliofadc = aux_vliofadi
              crabepr.cdcooper = glb_cdcooper.
 
@@ -1694,6 +1710,40 @@ DO WHILE TRUE:
             END. /* IF aux_flimovel = 1 THEN */
       END. /* IF craplcr.tpctrato = 3 */
       FIM - 17/02/2017 - Retirado a validaçao conforme solicitaçao */
+
+      /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
+      IF crapass.inpessoa = 1 THEN
+      DO:
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      RUN STORED-PROCEDURE pc_efetiva_proposta_sp
+                           aux_handproc = PROC-HANDLE NO-ERROR
+                    (INPUT glb_cdcooper,      /* Cooperativa */
+                     INPUT tel_nrdconta,      /* Número da conta */
+                     INPUT tel_nrctremp,      /* Número emrepstimo */
+                     INPUT tel_cdagenci,      /* Agencia */
+                     INPUT 100,                /* Caixa */
+                     INPUT glb_cdoperad,      /* Operador   */
+                     INPUT glb_nmdatela,      /* Tabela   */
+                     INPUT 1,                 /* Origem - Ayllos */ 
+                    OUTPUT 0,
+                    OUTPUT "").
+
+      CLOSE STORED-PROC pc_efetiva_proposta_sp 
+         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+   
+      ASSIGN glb_cdcritic = pc_efetiva_proposta_sp.pr_cdcritic
+                               WHEN pc_efetiva_proposta_sp.pr_cdcritic <> ?
+             glb_dscritic = pc_efetiva_proposta_sp.pr_dscritic
+                               WHEN pc_efetiva_proposta_sp.pr_dscritic <> ?.
+          IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+             DO:
+                 ASSIGN glb_dscritic = "Erro ao efetivar prestamista: " + glb_dscritic.
+                 MESSAGE glb_dscritic.
+                 PAUSE 3 NO-MESSAGE.
+                 UNDO, RETURN.
+             END.
+      END.  	  
 
       IF glb_cdcritic > 0    THEN
          NEXT INCLUSAO.
