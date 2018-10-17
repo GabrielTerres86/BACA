@@ -13595,7 +13595,7 @@ BEGIN
      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
    end if;
 
-  vr_cdhistor := 2386;
+ /*vr_cdhistor := 2386;
   vr_vllanmto := 0;
   --
   FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
@@ -13621,13 +13621,70 @@ BEGIN
                    '"(crps249) Pagamento Prejuizo"';
      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
    end if;
+   */
+   
+  --> contabilizar a partir da lem, pois em caso de prejuizo de CC não haverá lanc na conta
+  vr_cdhistor := 2701;
+   vr_vllanmto := 0;
    --
-   vr_cdhistor := 2387;
+  FOR rw_craplcm_prej IN cr_craplem2 (pr_cdcooper,
+                                           vr_dtmvtolt,
+                                      vr_cdhistor,
+                                      0) LOOP 
+
+    vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
+    --
+
+   END LOOP;
+  vr_vllanmto := abs(vr_vllanmto);
+
+
+  if nvl(vr_vllanmto,0) > 0 then
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3865,'||
+                   '3962,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Pagamento Prejuizo"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   end if;
+   
+   --
+  /* vr_cdhistor := 2387;
    vr_vllanmto := 0;
    --
    FOR rw_craplcm_prej IN cr_craplcm_prej (pr_cdcooper,
                                            vr_dtmvtolt,
                                            vr_cdhistor) LOOP -- Financiamento
+
+     vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
+     --
+   END LOOP;
+   vr_vllanmto := abs(vr_vllanmto);
+   IF nvl(vr_vllanmto,0) > 0 THEN
+     vr_cdestrut := '50';
+     vr_linhadet := TRIM(vr_cdestrut)||
+                   TRIM(vr_dtmvtolt_yymmdd)||','||
+                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   '3962,'||
+                   '3865,'||
+                   TRIM(to_char(abs(vr_vllanmto), '999999990.00'))||','||
+                   '5210,'||
+                   '"(crps249) Estorno de Pagamento Prejuizo"';
+     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+   END IF;*/
+   
+   --> contabilizar a partir da lem, pois em caso de prejuizo de CC não haverá lanc na conta
+   vr_cdhistor := 2702;
+   vr_vllanmto := 0;
+   --
+   FOR rw_craplcm_prej IN cr_craplem2 (pr_cdcooper,
+                                       vr_dtmvtolt,
+                                       vr_cdhistor,
+                                       0) LOOP -- Financiamento
 
      vr_vllanmto := vr_vllanmto + rw_craplcm_prej.vllanmto;
      --

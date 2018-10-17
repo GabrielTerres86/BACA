@@ -678,6 +678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         AND ris.cdmodali =  101
         AND ris.qtdiaatr >= 60
 	      AND ris.vljura60 >  0
+        AND ris.innivris < 10 --> Apenas operações que ainda não estejam em prejuizo
 				AND sld.cdcooper = ass.cdcooper
 				AND sld.nrdconta = ass.nrdconta;
   BEGIN
@@ -1107,6 +1108,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
      21/03/2018 - P450 - Ajuste para exibir valores de juros,taxas,mora etc... de contas
                   correntes negativas e caso possuir com limites de credito estourado (Rangel Decker) AMcom
 
+     02/10/2018 - Ajuste para acrescentar juros60 no valor da divida do ADP.
+                  PRJ450 - Regulatorio(Odirlei-AMcom)
+                  
+     08/10/2018 - Ajuste no loop cr_crapris_60, para desprezar os valores que contas que ja estao em prejuizo.
+                  PRJ450 - Regulatorio(Odirlei-AMcom)
+                  
   ............................................................................. */
 
 
@@ -1792,6 +1799,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_vlprejuz_conta := 0;
       vr_vldivida := 0;
 
+      --> Necessario acrescentar valor da do juros + 60 no ADP, 
+      -- visto que este valor não é apresentado nos vencimentos
+      IF rw_crapris.cdorigem = 1 THEN
+        vr_vldivida := vr_vldivida + nvl(rw_crapris.vljura60,0);
+      END IF;
+      
       -- Percorrer os valores do risco
       FOR rw_crapvri IN cr_crapvri(pr_cdcooper,
                                    rw_crapris.nrdconta,
@@ -1811,6 +1824,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         ELSIF rw_crapvri.cdvencto IN (310,320,330) THEN -- Se for 310, 320 ou 330
           vr_vlprejuz_conta := vr_vlprejuz_conta + NVL(rw_crapvri.vldivida,0);
         END IF;
+
+        --> para contratos de ADP em prejuizo não deve reconhecer a divida
+        IF rw_crapris.cdmodali = 0101 AND 
+           rw_crapris.innivris = 10   THEN           
+          vr_vldivida := 0;   
+        END IF;   
+        
 
         ----- Gerando Valores Para Contabilizacao (RISCO) ---
         IF  rw_crapvri.cdvencto BETWEEN 110 AND 190 THEN -- nao se considerar a vencer porque tem vencidas
@@ -1873,11 +1893,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
           END IF;
         END IF;
 
+        --> P450 - Se a modalidade é 0101, soma o valor dos juros +60 aos saldos devedores,
+				--> pois a CRAPVRI é alimentada para esta modalidade somente com o valor do
+				--> aldo devedor até 59 dias de atraso (sem os juros +60)
+        
         -- Contabilizar risco - prejuizo --
         IF vr_rel_vldivida.exists(vr_contador) THEN
-          vr_rel_vldivida(vr_contador).valor := nvl(vr_rel_vldivida(vr_contador).valor, 0) + rw_crapvri.vldivida;
+          vr_rel_vldivida(vr_contador).valor := nvl(vr_rel_vldivida(vr_contador).valor, 0) + rw_crapvri.vldivida +
+                                                (CASE WHEN rw_crapris.cdmodali = 101 
+                                                     THEN rw_crapris.vljura60
+                                                     ELSE 0 END);
         ELSE
-          vr_rel_vldivida(vr_contador).valor := rw_crapvri.vldivida;
+          vr_rel_vldivida(vr_contador).valor := rw_crapvri.vldivida +
+                                                (CASE WHEN rw_crapris.cdmodali = 101 
+                                                     THEN rw_crapris.vljura60
+                                                     ELSE 0 END);
         END IF;
 
         -- Verifica se é prejuizo para Contabilidade
@@ -1885,10 +1915,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
           CONTINUE; -- Desprezar prejuizo - para Contabilidade
         END IF;
 
+        --> P450 - Se a modalidade é 0101, soma o valor dos juros +60 aos saldos devedores,
+				--> pois a CRAPVRI é alimentada para esta modalidade somente com o valor do
+				--> aldo devedor até 59 dias de atraso (sem os juros +60)
+				 
         IF vr_vldevedo.exists(vr_contador) THEN
-          vr_vldevedo(vr_contador) := nvl(vr_vldevedo(vr_contador), 0) + rw_crapvri.vldivida;
+          vr_vldevedo(vr_contador) := nvl(vr_vldevedo(vr_contador), 0) + rw_crapvri.vldivida +
+                                      (CASE WHEN rw_crapris.cdmodali = 101 
+                                           THEN rw_crapris.vljura60
+                                           ELSE 0 END);
         ELSE
-          vr_vldevedo(vr_contador) := rw_crapvri.vldivida;
+          vr_vldevedo(vr_contador) := rw_crapvri.vldivida +
+                                      (CASE WHEN rw_crapris.cdmodali = 101 
+                                           THEN rw_crapris.vljura60
+                                           ELSE 0 END);
         END IF;
       END LOOP;  -- Fim do LOOP da cr_crapvri
 
@@ -7013,6 +7053,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                       ,vr_dtincorp) LOOP
 
 
+       --> Para o Nivel = 10 que são referente as contas em prejuizo o valores de juros +60 não deve ser enviado
+       --> por ja ser contabilizado como prejuizo 
+       IF rw_crapris_60.innivris = 10 THEN
+         continue;
+       END IF; 
 
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||

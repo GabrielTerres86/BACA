@@ -8426,15 +8426,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                vr_tab_crat030(vr_index_crat030).vlsdchsl:= rw_crapsld.vlsdchsl;
 
                --Se o saldo total for negativo
-               IF vr_rel_vlstotal < 0 THEN
+               IF vr_rel_vlstotal_006 < 0 THEN
                  --Valor adiantamentos em credito em liquidacao recebe saldo total + limite credito
                  --P450 - vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal,0) + nvl(rw_crapass.vllimcre,0));
-                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal_006,0) + nvl(rw_crapass.vllimcre,0));
+                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + 
+                                                            --> nao deve utilizar o valor bloqueado prejuizo no adiantamento
+                                                            ((nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapsld.vlblqprj,0)) + 
+                                                            nvl(rw_crapass.vllimcre,0));
                  
                ELSE
                  --Valor adiantamentos em credito em liquidacao recebe saldo total - limite credito
                  --P450-- vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal,0) - nvl(rw_crapass.vllimcre,0));
-                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + (nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapass.vllimcre,0));
+                 vr_tab_rel_vladiclq(rw_crapass.inpessoa):= vr_tab_rel_vladiclq(rw_crapass.inpessoa) + 
+                                                            --> nao deve utilizar o valor bloqueado prejuizo no adiantamento
+                                                            ((nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapsld.vlblqprj,0)) -
+                                                             nvl(rw_crapass.vllimcre,0));
                END IF;
 
                --Se for pessoa fisica ou juridica
@@ -8767,11 +8773,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                        vr_tab_gn099(vr_cdagenci).vladiclq:= 0;
                      END IF;
 
-
+                     --> APenas somar no relatorio 006 caso seja negativo o valor 
+                     IF vr_rel_vlsddisp_006 < 0 THEN   
                      --Acumular no Total Adiantamento deposito o disponivel + cheque salario + limite credito + bloqueado
                      vr_tab_rel_vlsadian(rw_crapass.inpessoa):= vr_tab_rel_vlsadian(rw_crapass.inpessoa) +
-                                                                (nvl(rw_crapsld.vlsddisp,0) + nvl(rw_crapsld.vlsdchsl,0) +
+                                                                  --> nao deve utilizar o valor bloqueado prejuizo no adiantamento
+                                                                  ((nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapsld.vlblqprj,0)) + 
+                                                                   nvl(rw_crapsld.vlsdchsl,0) +
                                                                  nvl(rw_crapass.vllimcre,0) + nvl(vr_vlbloque,0));
+                     END IF;
 
                      --Se for pessoa fisica ou juridica
                      IF rw_crapass.inpessoa <= 2 THEN
@@ -8812,7 +8822,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                    --Acumular no vetor do saque bloqueado o valor bloqueado
                    vr_tab_rel_vlsaqblq(rw_crapass.inpessoa):= vr_tab_rel_vlsaqblq(rw_crapass.inpessoa) + (vr_vlbloque * -1);
                    --Acumular no Total adiantamento o disponivel + cheque salario + limite credito + bloqueado
-                   vr_tot_vladiant:= nvl(vr_tot_vladiant,0) + (nvl(vr_rel_vlsddisp_006,0) + nvl(rw_crapsld.vlsdchsl,0) +
+                   vr_tot_vladiant:= nvl(vr_tot_vladiant,0) + ( --> nao deve utilizar o valor bloqueado prejuizo no adiantamento
+                                                               (nvl(vr_rel_vlstotal_006,0) - nvl(rw_crapsld.vlblqprj,0))  + 
+                                                                nvl(rw_crapsld.vlsdchsl,0) +
                                                                nvl(rw_crapass.vllimcre,0) + nvl(vr_vlbloque,0));
 
                    --Verificar se é conta do bndes

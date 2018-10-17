@@ -2533,9 +2533,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                  --Acumular no valor media saque sem bloqueado o valor bloqueado * -1
                  --dividido pela quantidade de dias uteis
                  rw_crapsld.vlsmnblq:= Nvl(rw_crapsld.vlsmnblq,0) + ((vr_vlbloque * -1) / vr_qtdiaute);
-                 --Acumular no valor do saldo negativo do mes o valor calculado m
-                 --dividido pela quantidade de dias uteis
-                 rw_crapsld.vlsmnmes:= Nvl(rw_crapsld.vlsmnmes,0) + (vr_vlcalcul / vr_qtdiaute);
+                 
+                 --> incrementar valor de saldo medio apenas para contas que não estejam em prejuizo,
+                 --> pois as que estão em prejuizo terão juro remuneratorio
+                 IF  vr_tab_crapass(rw_crapsld.nrdconta).inprejuz = 0 THEN
+                   --Acumular no valor do saldo negativo do mes o valor calculado m
+                   --dividido pela quantidade de dias uteis
+                   rw_crapsld.vlsmnmes:= Nvl(rw_crapsld.vlsmnmes,0) + (vr_vlcalcul / vr_qtdiaute);
+                 END IF;
 
                  --Se o valor calculo for negativo
                  IF vr_vlcalcul < 0  THEN
@@ -2550,8 +2555,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              END IF; --vr_vlcalcul > 0
 
              -- Atualiza dias de credito em liquidacao
-             --Se estourou limite
-             IF vr_flgestou THEN
+             --Se estourou limite (ou se a conta está em prejuízo)
+             IF vr_flgestou OR vr_tab_crapass(rw_crapsld.nrdconta).inprejuz = 1 THEN
                --
                -- Regra para cálculo de dias úteis ou dias corridos - Daniel(AMcom)
                vr_dtrisclq_aux := nvl(rw_crapsld.dtrisclq, rw_crapdat.dtmvtolt);
@@ -2590,12 +2595,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    -- Incrementar quantidade dias corridos saldo negativo risco
                    rw_crapsld.qtdriclq := 1;
                  ELSE
+						IF vr_tab_crapass(rw_crapsld.nrdconta).inprejuz = 0 THEN
                    -- Incrementar quantidade dias corridos devedor
                    rw_crapsld.qtddsdev := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);
-                   -- Incrementar quantidade total dias corridos conta devedora
-                   rw_crapsld.qtddtdev := nvl(rw_crapsld.qtddtdev,0)+(rw_crapsld.qtddsdev-vr_qtddsdev_aux);
                    -- Incrementar quantidade dias corridos saldo negativo risco
                    rw_crapsld.qtdriclq := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);
+							ELSE
+								rw_crapsld.qtddsdev := PREJ0003.fn_calc_dias_atraso_cc_prej(pr_cdcooper, rw_crapsld.nrdconta, rw_crapdat.dtmvtopr);
+								rw_crapsld.qtdriclq := rw_crapsld.qtddsdev;
+							END IF;
+
+                   -- Incrementar quantidade total dias corridos conta devedora
+                   rw_crapsld.qtddtdev := nvl(rw_crapsld.qtddtdev,0)+(rw_crapsld.qtddsdev-vr_qtddsdev_aux);
+
                  END IF;
                END IF;
              ELSE
