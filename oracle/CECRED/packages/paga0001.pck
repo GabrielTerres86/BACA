@@ -14470,7 +14470,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                 Ajuste mensagem de erro 
                                 (Belli - Envolti - Chamado 779415)     
 
-	                 26/03/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
+	               26/03/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
+
+                   12/09/2018 - Busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
 	
     -----------------------------------------------------------------------------*/
   BEGIN
@@ -14674,7 +14676,17 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            WHERE a.cdhisdeb = rw_craplau.cdhistor 
              AND a.cdhiscxa = b.cdhistor  
              AND b.cdsegmto in (2,3) -- 3=energia; 2=agua.
-			 AND b.cdcooper = pr_cdcooper;
+			 AND b.cdcooper = pr_cdcooper
+           UNION
+            SELECT 'S' FROM crapscn,crapcon
+             WHERE crapscn.cdempcon = crapcon.cdempcon 
+               AND crapscn.cdsegmto = crapcon.cdsegmto 
+               AND crapcon.flgcnvsi = 0 -- indica que eh Proprio
+               AND crapscn.dsoparre <> 'E' -- diferente de debito automatico
+               AND crapscn.cdsegmto IN(2,3) -- agua / energia
+               AND crapscn.cdempcon = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,16,4))
+               AND crapscn.cdsegmto = TO_NUMBER(SUBSTR(rw_craplau.dscodbar,2,1))
+               AND crapcon.cdcooper = pr_cdcooper;
  		  EXCEPTION
 			WHEN NO_DATA_FOUND THEN
 			  vr_agua_luz := 'N';
