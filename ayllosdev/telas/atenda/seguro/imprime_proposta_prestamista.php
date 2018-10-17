@@ -27,6 +27,8 @@
 
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 	$nrctrseg = (isset($_POST['nrctrseg'])) ? $_POST['nrctrseg'] : '';
+	$nrctrato = (isset($_POST['nrctrato'])) ? $_POST['nrctrato'] : '';
+    
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -39,7 +41,7 @@
 	$xml .= '	<Dados>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<nrctrseg>'.$nrctrseg.'</nrctrseg>';
-	$xml .= '		<nrctremp>0</nrctremp>';
+	$xml .= '		<nrctremp>'.$nrctrato.'</nrctremp>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 	

@@ -540,7 +540,12 @@
 			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                 
 				30/07/2018 - Alterado a procedure verifica_acesso_2via colocando uma nova condição para conta restrita.
-                
+
+                03/10/2018 - Ajuste no flag que indica titularidade 
+				             do cartao. Logica esta conforme sugestao das 
+							 anotacoes de trabalho do Incidente em questao.
+                             Chamado PRB0040351 - Gabriel (Mouts).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3542,14 +3547,29 @@ PROCEDURE cadastra_novo_cartao:
                   END.      
            END.
             
-        FOR FIRST crawcrd FIELDS(flgprcrd) WHERE crawcrd.cdcooper = par_cdcooper AND
-                                                 crawcrd.nrdconta = par_nrdconta AND
-                                                 crawcrd.cdadmcrd = par_cdadmcrd AND
-                                                 crawcrd.flgprcrd = 1
-                                                 NO-LOCK : 
-            ASSIGN aux_flgprcrd = 0.
-        END.
+        /* Inicio - Busca primeiro cartao do cooperado - dentro da mesma adm */
 
+        FIND FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper 
+                             AND crawcrd.nrdconta = par_nrdconta  
+                             AND crawcrd.cdadmcrd = par_cdadmcrd 
+                             AND crawcrd.flgprcrd = 1
+                                 NO-LOCK NO-ERROR NO-WAIT.
+
+        /* Verifica se registro foi encontrado */
+        IF AVAILABLE crawcrd THEN 
+          DO:
+            /* Verificar se o CPF do titular do primeiro cartao */
+            /* eh o mesmo que esta sendo validado */ 
+            IF crawcrd.nrcpftit = DECI(par_nrcpfcpf) THEN 
+              ASSIGN aux_flgprcrd = 1. /* Eh o primeiro cartão Bancoob */ 
+            ELSE 
+              ASSIGN aux_flgprcrd = 0. /* Não eh o primeiro titular */ 
+          END.
+        /* Se nao encontrado eh o primeiro cartão Bancoob */
+        ELSE 
+          ASSIGN aux_flgprcrd = 1.    
+
+        /* Fim - Busca primeiro cartao do cooperado - dentro da mesma adm */
 
         /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
         IF par_cdagenci = 0 THEN
@@ -23980,7 +24000,7 @@ PROCEDURE altera_administradora:
              END.
 
           CREATE crabcrd.
-          BUFFER-COPY crawcrd EXCEPT nrcrcard cdadmcrd insitcrd nrctrcrd TO crabcrd.
+          BUFFER-COPY crawcrd EXCEPT nrcrcard cdadmcrd insitcrd nrctrcrd dtcancel TO crabcrd.
           
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 

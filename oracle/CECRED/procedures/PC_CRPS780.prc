@@ -131,7 +131,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
           gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooper.cdcooper
                               ,pr_cdoperad => '1'
                               ,pr_dscritic => ''
-                              ,pr_dsorigem => 'AYLLOS'
+                              ,pr_dsorigem => 'AIMARO'
                               ,pr_dstransa => 'Nao houve transferencia Prejuizo, pois e dia de mensal'
                               ,pr_dttransa => trunc(sysdate)
                               ,pr_flgtrans => 1

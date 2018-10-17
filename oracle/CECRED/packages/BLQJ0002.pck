@@ -24,11 +24,14 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 			    30/11/2017 - Alterações referentes a M460 BACENJUD. (Thiago Rodrigues)
 
 				15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
-				  22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
+				22/03/2018 - Alterações referentes a PJ416 BACENJUD. (Márcio Mouts)
 
 				29/06/2018 - Alterada a procedure pc_resgata_aplicacao para utilização do Projeto URA (Everton Mouts)
                 15/08/2018 - Inclusão de aplicações programadas na checagem dos saques 
                              Proj. 411.2 - CIS Corporate
+        
+        03/10/2018 - Ajuste de tamanho de variável para evitar problemas 
+                     na nova versão do BD 12C (vr_jobname). Wagner - Sustentação - (SCTASK0031133)                       
 
   .............................................................................*/
 
@@ -473,7 +476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                  pr_vlresgat craprda.vlaplica%TYPE, -- Valor a ser resgatado
                                  pr_dscritic OUT VARCHAR2) IS -- Retorno de erro
 
-    -- Registro sobre a data do sistema
+    -- Registro sobre a data do sistema 
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
     -- Variaveis Pl/Tables
@@ -665,8 +668,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       END IF;         
                     
       -- ir para o proximo
-      vr_indice := vr_tab_dados_resgate.NEXT(vr_indice);                               
-                      
+      vr_indice := vr_tab_dados_resgate.NEXT(vr_indice);  
+     
     END LOOP;              
                   
   EXCEPTION
@@ -678,7 +681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- Efetuar retorno do erro não tratado
       pr_dscritic := 'Erro BLQJ0002.pc_resgata_aplicacao: '||sqlerrm;
 
-  END pc_resgata_aplicacao;                                 
+  END pc_resgata_aplicacao;                                  
 
   -- Efetua o lancamento de resgate
   PROCEDURE pc_efetua_resgate_poupanca(pr_cdcooper IN crapcop.cdcooper%TYPE,
@@ -1159,12 +1162,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     ROLLBACK;
     
     -- Coloca o registro da solicitacao como processado com Erro
-    IF pr_idatualiza_ordem = 1 THEN
-    pc_atualiza_situacao(pr_idordem => pr_idordem,
-                         pr_instatus => 4, -- Erro
-                         pr_dslog_erro => pr_dsinconsit);
+	IF pr_idatualiza_ordem = 1 THEN
+      pc_atualiza_situacao(pr_idordem => pr_idordem,
+                           pr_instatus => 4, -- Erro
+                           pr_dslog_erro => pr_dsinconsit);
     END IF;
-      
+
     -- Insere na inconsistencia
     gene0005.pc_gera_inconsistencia(pr_cdcooper => pr_cdcooper
                                    ,pr_iddgrupo => 1 -- Inconsistencia Bloqueio Judicial
@@ -1199,7 +1202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_idordem tbblqj_ordem_online.idordem%TYPE; -- Sequencial do recebimento
     vr_cdcooper      crapcop.cdcooper%TYPE; -- Codigo da cooperativa
     vr_dsplsql VARCHAR2(4000); -- Bloco PLSQL para chamar a execução do job
-    vr_jobname VARCHAR2(20); -- Nome do Job que sera executado
+    vr_jobname VARCHAR2(30); -- Nome do Job que sera executado
 
     -- Variaveis de erro
     vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
@@ -1355,7 +1358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- VARIÁVEIS
     vr_cdcooper      crapcop.cdcooper%TYPE; -- Codigo da cooperativa
     vr_dsplsql VARCHAR2(4000); -- Bloco PLSQL para chamar a execução do job
-    vr_jobname VARCHAR2(20); -- Nome do Job que sera executado
+    vr_jobname VARCHAR2(30); -- Nome do Job que sera executado
     vr_operacao VARCHAR2(11); -- Tipo de operacao
 
     -- Variaveis de erro
@@ -2256,7 +2259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       -- PJ 416 -- Se não foi possível bloquear o valor original para modalidade 1 - Conta Corrente
       -- Grava a tabela de monitoramento
       IF rw_solicitacao.cdmodali = 1 AND rw_solicitacao.vlordem <  vr_vlbloque_ori THEN
-
+      
       -- Buscar o último progress_recid da tabela de lançamento para gravar na tabela de monitoramento
       -- Isto é necessário pois quando a rotina de bloqueio busca o valor do saldo total
       -- ela utiliza além do valor disponível, os valores de créditos e débitos existentes na tabela de lançamento
@@ -2644,7 +2647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              tbblqj_ordem_online a
        WHERE a.instatus  = 5 -- Processada, porem sem TED gerada
          AND b.idordem   = a.idordem;
-    
+
     CURSOR cr_ted_reenvio IS
       SELECT c.rowid,
              a.cdcooper,
@@ -3065,7 +3068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                   ,pr_cdcooper => vr_cdcooper
                                   ,pr_dsinconsit => 'Processamento TED: '||vr_dscritic
                                   ,pr_dsregistro_referencia => vr_dsinconsist
-								  ,pr_idatualiza_ordem => 0);
+                  ,pr_idatualiza_ordem => 0);
       END;
     END LOOP; -- Fim dos loop das TEDs a enviar
     --Fim Bacenjud - SM 1
@@ -3552,7 +3555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          AND cp.cdacesso = 'BLQJ_FIM_MONITORAMENTO'             
          AND cp.cdcooper = 0;
     RW_HORARIO_ENCERRAMENTO CR_HORARIO_ENCERRAMENTO%ROWTYPE;    
-   
+    
     -- Busca as ordens no monitoramento que estão com saldo zerado
     CURSOR cr_monitoramento_zerado IS
       SELECT
@@ -3561,7 +3564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             TBBLQJ_MONITORA_ORDEM_BLOQ C
       WHERE
             C.VLSALDO = 0;
-
+    
     CURSOR conta_monitorada is
       SELECT
             'Cooperativa: '||c.nmrescop||
@@ -3656,7 +3659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        vr_email_juridico := rw_email_juridico.dsvlrprm;
     END IF;
     CLOSE cr_email_juridico;
-	    
+    
      -- Busca o horário de encerramento
     OPEN CR_HORARIO_ENCERRAMENTO;
     FETCH CR_HORARIO_ENCERRAMENTO INTO RW_HORARIO_ENCERRAMENTO;
@@ -3687,7 +3690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
           RAISE vr_exc_saida;
-      END;
+  END;
 
       -- Coloca o registro de solicitacao como processado com sucesso      
       pc_atualiza_situacao(pr_idordem => rw_monitoramento.idordem,
@@ -3719,8 +3722,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                ,pr_utlfileh => vr_ind_arq     --> Handle do arquivo aberto
                                ,pr_des_erro => vr_des_erro);
        IF vr_des_erro IS NOT NULL THEN
-       RAISE vr_exc_saida;
-     END IF;
+      RAISE vr_exc_saida;
+    END IF;
        -- Envia e-mail para o jurídico com os lançamentos das contas monitoradas
        for c1 in conta_monitorada loop
            -- Busca a data do sistema
@@ -3737,7 +3740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        end loop;
        -- Fecha o arquivo
        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq);     
-
+    
        -- Comando para enviar e-mail para o Jurídico
        GENE0003.pc_solicita_email(pr_cdcooper        => 3 --> Cooperativa conectada
                                  ,pr_cdprogra        => 'BLQJ0002.PC_MONITORA_BLQ_JUD' --> Programa conectado

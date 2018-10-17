@@ -10,6 +10,8 @@
  *                 03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  *
  *				   21/11/2017 - Inclusão dos campos flintcdc, tpcdccop, Prj. 402 (Jean Michel)
+ *
+ *                 26/09/2018 - Inclusão do campo 'Horário mínimo login'. SCTASK0027519 (Mateus Z / Mouts)
  */
 ?>
 
@@ -163,6 +165,7 @@
     $vlgarbcb = (isset($_POST["vlgarbcb"])) ? $_POST["vlgarbcb"] : 0;
     $nrsacbcb = (isset($_POST["nrsacbcb"])) ? $_POST["nrsacbcb"] : '';
     $nrouvbcb = (isset($_POST["nrouvbcb"])) ? $_POST["nrouvbcb"] : '';
+	$hrinicxa = (isset($_POST["hrinicxa"])) ? $_POST["hrinicxa"] : '';
 
     validaDados();
 
@@ -304,6 +307,7 @@
     $xml     .="       <vllimpag>".$vllimpag."</vllimpag>";    
 	$xml     .="       <flintcdc>".$flintcdc."</flintcdc>";
     $xml     .="       <tpcdccop>".$tpcdccop."</tpcdccop>";
+	$xml     .="       <hrinicxa>".$hrinicxa."</hrinicxa>";
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";
 

@@ -1991,7 +1991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     
     -- Verifica Qual a Origem
     CASE pr_idorigem 
-      WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+      WHEN 1 THEN vr_dsorigem := 'AIMARO';
       WHEN 3 THEN vr_dsorigem := 'INTERNET';
       WHEN 3 THEN vr_dsorigem := 'FTP';
       ELSE vr_dsorigem := ' ';
@@ -2480,7 +2480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     
     -- Verifica Qual a Origem
     CASE pr_idorigem 
-      WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+      WHEN 1 THEN vr_dsorigem := 'AIMARO';
       WHEN 3 THEN vr_dsorigem := 'INTERNET';
       WHEN 3 THEN vr_dsorigem := 'FTP';
       ELSE vr_dsorigem := ' ';
@@ -4155,7 +4155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
          
          -- Verifica Qual a Origem
          CASE pr_idorigem 
-           WHEN 1 THEN vr_dsorigem := 'AYLLOS';
+           WHEN 1 THEN vr_dsorigem := 'AIMARO';
            WHEN 3 THEN vr_dsorigem := 'INTERNET';
            WHEN 7 THEN vr_dsorigem := 'FTP';
            ELSE vr_dsorigem := ' ';

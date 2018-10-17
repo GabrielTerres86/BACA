@@ -710,6 +710,7 @@ PROCEDURE atualiza-cheque-avulso:
     DEF VAR aux_idtipcar AS INTE NO-UNDO.
     DEF VAR aux_nrcartao AS DECI NO-UNDO.
     DEF VAR aux_cdhistor AS INTE NO-UNDO.
+    DEF VAR aux_indopera AS INTE NO-UNDO.
 	DEF VAR aux_dscampos AS CHAR NO-UNDO.
 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
@@ -1109,15 +1110,23 @@ PROCEDURE atualiza-cheque-avulso:
     IF (p-opcao = "R" )   THEN
         ASSIGN aux_cdhistor = 22
                aux_idtipcar = 0
-               aux_nrcartao = 0.
+               aux_nrcartao = 0
+               aux_indopera = 1. /* Saque */
     ELSE IF (p-opcao = "C" )  THEN
         ASSIGN aux_cdhistor = 1030
                aux_idtipcar = p-idtipcar
-               aux_nrcartao = p-nrcartao.
-    ELSE IF (p-opcao = "B" OR p-opcao = "BR")  THEN
+               aux_nrcartao = p-nrcartao
+               aux_indopera = 1. /* Saque */
+    ELSE IF (p-opcao = "BR" )  THEN
+        ASSIGN aux_cdhistor = 2553
+               aux_idtipcar = 0
+               aux_nrcartao = 0
+               aux_indopera = 6. /* Pagamento */
+    ELSE IF (p-opcao = "B" )  THEN
         ASSIGN aux_cdhistor = 2553
                aux_idtipcar = p-idtipcar
-               aux_nrcartao = p-nrcartao.
+               aux_nrcartao = p-nrcartao
+               aux_indopera = 6. /* Pagamento */
                
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
     
@@ -1125,7 +1134,7 @@ PROCEDURE atualiza-cheque-avulso:
         aux_handproc = PROC-HANDLE NO-ERROR
                                 (INPUT crapcop.cdcooper, /* Codigo da Cooperativa */
                                  INPUT p-nro-conta,      /* Numero da Conta */ 
-                                 INPUT 1,                /* Saque */
+                                 INPUT aux_indopera,     /* Indicador de operacao: 1 - Saque / 6 - Pagamento */
                                  INPUT 2,                /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */ 
                                  INPUT aux_idtipcar, 
                                  INPUT p-nrdocto,        /* Nrd Documento */               

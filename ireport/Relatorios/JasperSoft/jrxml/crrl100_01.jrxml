@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-08-17T17:15:22 -->
+<!-- 2018-09-29T01:14:32 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_01" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -1406,10 +1406,10 @@
 				<textFieldExpression><![CDATA["<u>8. Garantia</u> - Para garantir o pagamento de qualquer valor relacionado a esta cédula e para evitar o acúmulo de encargos, o Emitente, os Devedores Solidários e o Interveniente Garantidor, se houver, dão à Cooperativa, em cessão fiduciária, todos os direitos sobre suas aplicações financeiras mantidas nesta Cooperativa, tais como as realizadas a débito de sua conta corrente e/ou de Investimento e/ou de poupança, além de suas quotas-parte subscritas, atuais e futuras."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="80">
+		<band height="90">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="80" uuid="3923530b-9dba-418c-8d1d-22cb521e465c">
+				<reportElement x="6" y="0" width="466" height="50" uuid="3923530b-9dba-418c-8d1d-22cb521e465c">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1418,14 +1418,28 @@
 				<textElement markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["a) As aplicações financeiras atuais cedidas em garantia são aquelas consolidadas em extrato disponível nesta data e as futuras integrarão automaticamente esta garantia assim que realizadas, valendo o respectivo extrato de aplicação para identificá-las e aperfeiçoar esta cessão fiduciária." +
-"\nb) Até o cumprimento integral das obrigações assumidas pelo o Emitente, os Devedores Solidários e o Interveniente Garantidor, se houver, decorrentes desta cédula, as posses direta e indireta das aplicações e quotas-parte, cujos direitos são cedidos em garantia, serão detidas pela Cooperativa."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["a) As aplicações financeiras atuais cedidas em garantia são aquelas consolidadas em extrato disponível nesta data e as futuras integrarão automaticamente esta garantia assim que realizadas, valendo o respectivo extrato de aplicação para identificá-las e aperfeiçoar esta cessão fiduciária."]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="55">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="55" uuid="030fd918-c460-49d4-a4f2-e8a933b545f4">
+				<reportElement x="6" y="-39" width="466" height="55" uuid="030fd918-c460-49d4-a4f2-e8a933b545f4">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement markup="styled">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["b) Até o cumprimento integral das obrigações assumidas pelo o Emitente, os Devedores Solidários e o Interveniente Garantidor, se houver, decorrentes desta cédula, as posses direta e indireta das aplicações e quotas-parte, cujos direitos são cedidos em garantia, serão detidas pela Cooperativa."]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="55">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement x="6" y="-39" width="466" height="55" uuid="030fd918-c460-49d4-a4f2-e8a933b545f4">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1440,7 +1454,7 @@
 		<band height="85">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="85" uuid="24695f53-9c50-46ff-9d9c-828d81204c63">
+				<reportElement x="6" y="-39" width="466" height="85" uuid="24695f53-9c50-46ff-9d9c-828d81204c63">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1455,7 +1469,7 @@
 		<band height="155">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="155" uuid="20c45cdc-a6a7-47e7-8727-0c13fe29b967">
+				<reportElement x="6" y="-39" width="466" height="155" uuid="20c45cdc-a6a7-47e7-8727-0c13fe29b967">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1470,7 +1484,7 @@
 		<band height="85">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="85" uuid="b66d0877-628b-45ad-a7a5-9f21d439e1a2">
+				<reportElement x="6" y="-39" width="466" height="85" uuid="b66d0877-628b-45ad-a7a5-9f21d439e1a2">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1485,7 +1499,7 @@
 		<band height="30">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="30" uuid="8bac902c-5ef3-4817-af68-3c298f0d07cd">
+				<reportElement x="6" y="-39" width="466" height="30" uuid="8bac902c-5ef3-4817-af68-3c298f0d07cd">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1500,7 +1514,7 @@
 		<band height="52">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="52" uuid="cf73a650-7875-4afa-9652-f2a69602dcd6">
+				<reportElement x="6" y="-39" width="466" height="52" uuid="cf73a650-7875-4afa-9652-f2a69602dcd6">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1515,7 +1529,7 @@
 		<band height="85">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField>
-				<reportElement x="6" y="0" width="466" height="85" uuid="98d66d22-0d85-4125-9ea4-a25fe00a8f36">
+				<reportElement x="6" y="-39" width="466" height="85" uuid="98d66d22-0d85-4125-9ea4-a25fe00a8f36">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -1530,7 +1544,7 @@
 		<band height="139">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<staticText>
-				<reportElement x="6" y="0" width="466" height="82" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a">
+				<reportElement x="6" y="-39" width="466" height="82" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="html">
@@ -1542,14 +1556,14 @@
 ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="6" y="110" width="466" height="29" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement x="6" y="70" width="466" height="29" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
 				</textElement>
 				<text><![CDATA[<u>17. Declaração de Leitura</u> - O Emitente e o(s) Devedor(es) Solidário(s), ao assinarem as Condições Específicas desta Cédula, declaram que a leram previamente e que não possuem nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="6" y="82" width="466" height="29" uuid="b71853e8-3bcc-4f09-8b39-97edab1045b3"/>
+				<reportElement x="6" y="42" width="466" height="29" uuid="b71853e8-3bcc-4f09-8b39-97edab1045b3"/>
 				<textElement textAlignment="Justified">
 					<font fontName="Courier New" size="8" pdfFontName="Courier" pdfEncoding=""/>
 				</textElement>
@@ -1559,7 +1573,7 @@
 		<band height="66">
 			<printWhenExpression><![CDATA[$F{versao} > 0]]></printWhenExpression>
 			<staticText>
-				<reportElement x="6" y="0" width="466" height="66" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
+				<reportElement x="6" y="-40" width="466" height="66" uuid="597cdc48-95d8-4e22-abd0-5b039496e17a"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier" isPdfEmbedded="false"/>
 				</textElement>

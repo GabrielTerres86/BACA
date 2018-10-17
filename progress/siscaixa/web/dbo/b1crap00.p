@@ -26,7 +26,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2018
+   Data    : Marco/2001                      Ultima atualizacao: 04/10/2018
 
    Dados referentes ao programa:
 
@@ -173,7 +173,11 @@
                             batch (noturno) estiver em execução ...
                             específico para programas que possuiam a chamada 
                             para a valida-transacao.
-                            (Fabio Adriano - AMcom)			
+                            (Fabio Adriano - AMcom)
+                            
+               04/10/2018 - Adicionado validacao de horario minimo para 
+                            login no caixa online, baseado na coluna hrinicxa
+                            da CRAPCOP. SCTASK0027519 - (Mateus Z / Mouts)
                             
 ............................................................................ */
 
@@ -311,7 +315,21 @@ PROCEDURE valida-transacao:
                            INPUT i-cod-erro,
                            INPUT c-desc-erro,
                            INPUT YES).
-        END. 
+        END.
+        
+    /* Validar o horario minimo login - SCTASK0027519 */
+    IF  TIME < crapcop.hrinicxa  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Login permitido a partir das " + STRING(crapcop.hrinicxa, "HH:MM") + ".".
+
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.    
      
     RUN verifica-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
@@ -391,6 +409,20 @@ PROCEDURE valida-transacao2:
                        INPUT c-desc-erro,
                        INPUT YES).
     END. 
+    
+    /* Validar o horario minimo login - SCTASK0027519 */
+    IF  TIME < crapcop.hrinicxa  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Login permitido a partir das " + STRING(crapcop.hrinicxa, "HH:MM") + ".".
+
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.
    
     RUN verifica-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,
@@ -447,7 +479,21 @@ PROCEDURE valida-transacao3:
                            INPUT i-cod-erro,
                            INPUT c-desc-erro,
                            INPUT YES).
-        END. 
+        END.
+        
+    /* Validar o horario minimo login - SCTASK0027519 */
+    IF  TIME < crapcop.hrinicxa  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = "Login permitido a partir das " + STRING(crapcop.hrinicxa, "HH:MM") + ".".
+
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+        END.    
      
     RUN verifica-erro (INPUT p-cooper,
                        INPUT p-cod-agencia,

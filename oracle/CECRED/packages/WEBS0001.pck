@@ -912,7 +912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         CLOSE cr_crawepr;
         pr_status      := 202;
         pr_cdcritic    := 535;
-        pr_msg_detalhe := 'Parecer nao foi atualizado, a proposta nao foi encontrada no sistema Ayllos.';
+        pr_msg_detalhe := 'Parecer nao foi atualizado, a proposta nao foi encontrada no sistema Aimaro.';
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_crawepr;      
@@ -928,7 +928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         CLOSE cr_crapass;
         pr_status      := 202;
         pr_cdcritic    := 564;
-        pr_msg_detalhe := 'Parecer nao foi atualizado, a conta-corrente nao foi encontrada no sistema Ayllos.';
+        pr_msg_detalhe := 'Parecer nao foi atualizado, a conta-corrente nao foi encontrada no sistema Aimaro.';
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_crapass;
@@ -991,7 +991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       IF NVL(vr_flgexepr,0) = 1 THEN
         pr_status      := 202;
         pr_cdcritic    := 970;
-        pr_msg_detalhe := 'Parecer da proposta nao foi atualizado, a proposta ja esta efetivada no sistema Ayllos.';
+        pr_msg_detalhe := 'Parecer da proposta nao foi atualizado, a proposta ja esta efetivada no sistema Aimaro.';
         RAISE vr_exc_saida;
       END IF;
       
@@ -1219,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => 'ESTEIRA'
                           ,pr_dscritic => ' '
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Parecer da proposta atualizado com sucesso'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1 --> FALSE
@@ -1462,7 +1462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           close cr_crawlim;
           pr_status      := 202;
           pr_cdcritic    := 535;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, a proposta nao foi encontrada no sistema Ayllos.';
+          pr_msg_detalhe := 'Parecer nao foi atualizado, a proposta nao foi encontrada no sistema Aimaro.';
           raise vr_exc_saida;
     else
           --  Verificar se o limite já foi confirmado e está ativo
@@ -1470,7 +1470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
               close cr_crawlim;
               pr_status      := 202;
               pr_cdcritic    := 970;
-              pr_msg_detalhe := 'Parecer da proposta nao foi atualizado, a proposta ja esta efetivada no sistema Ayllos.';
+              pr_msg_detalhe := 'Parecer da proposta nao foi atualizado, a proposta ja esta efetivada no sistema Aimaro.';
               raise vr_exc_saida;
           end if;
     end   if;
@@ -1484,7 +1484,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           close cr_crapass;
           pr_status      := 202;
           pr_cdcritic    := 564;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, a conta-corrente nao foi encontrada no sistema Ayllos.';
+          pr_msg_detalhe := 'Parecer nao foi atualizado, a conta-corrente nao foi encontrada no sistema Aimaro.';
           raise vr_exc_saida;
     else
           close cr_crapass;
@@ -1684,7 +1684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => 'ESTEIRA'
                         ,pr_dscritic => ' '
-                        ,pr_dsorigem => 'AYLLOS'
+                        ,pr_dsorigem => 'AIMARO'
                         ,pr_dstransa => 'Parecer da proposta atualizado com sucesso'
                         ,pr_dttransa => trunc(sysdate)
                         ,pr_flgtrans => 1 --> FALSE
@@ -1896,14 +1896,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       CLOSE cr_crapbdt;
       pr_status      := 202;
       pr_cdcritic    := 1166;
-      pr_msg_detalhe := 'Parecer não foi atualizado, o borderô não foi encontrado no sistema Ayllos.';
+      pr_msg_detalhe := 'Parecer não foi atualizado, o borderô não foi encontrado no sistema Aimaro.';
       raise vr_exc_saida;
     ELSE
       -- Verificar se o Borderô já está Liberado. Se ele estiver apenas 2-Analisado, pode receber a resposta de uma re-analise.
       IF rw_crapbdt.insitbdt > 2 THEN -- 3 Liberado / 4-Liquidado / 5-Rejeitado
         pr_status      := 202;
         pr_cdcritic    := 970;
-        pr_msg_detalhe := 'Parecer do borderô não foi atualizado, o borderô já está efetivado no sistema Ayllos.';
+        pr_msg_detalhe := 'Parecer do borderô não foi atualizado, o borderô já está efetivado no sistema Aimaro.';
         raise vr_exc_saida;
       END IF;
     END IF;      
@@ -1920,7 +1920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           close cr_crapass;
           pr_status      := 202;
           pr_cdcritic    := 564;
-          pr_msg_detalhe := 'Parecer não foi atualizado, a conta-corrente não foi encontrada no sistema Ayllos.';
+          pr_msg_detalhe := 'Parecer não foi atualizado, a conta-corrente não foi encontrada no sistema Aimaro.';
           raise vr_exc_saida;
     else
           close cr_crapass;
@@ -2091,7 +2091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => 'ESTEIRA'
                         ,pr_dscritic => ' '
-                        ,pr_dsorigem => 'AYLLOS'
+                        ,pr_dsorigem => 'AIMARO'
                         ,pr_dstransa => 'Parecer do borderô atualizado com sucesso'
                         ,pr_dttransa => trunc(sysdate)
                         ,pr_flgtrans => 1 --> FALSE
@@ -2314,7 +2314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           CLOSE cr_crawcrd;
           pr_status      := 202;
           pr_cdcritic    := 535;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, a proposta nao foi encontrada no sistema Ayllos.';
+          pr_msg_detalhe := 'Parecer nao foi atualizado, a proposta nao foi encontrada no sistema Aimaro.';
           RAISE vr_exc_saida;
         ELSE
           CLOSE cr_crawcrd;
@@ -2331,7 +2331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         CLOSE cr_crapass;
         pr_status      := 202;
         pr_cdcritic    := 564;
-        pr_msg_detalhe := 'Parecer nao foi atualizado, a conta-corrente nao foi encontrada no sistema Ayllos.';
+        pr_msg_detalhe := 'Parecer nao foi atualizado, a conta-corrente nao foi encontrada no sistema Aimaro.';
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_crapass;
@@ -2383,7 +2383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           IF NVL(vr_flgexepr,0) = 1 THEN
             pr_status      := 202;
             pr_cdcritic    := 970;
-            pr_msg_detalhe := 'Parecer da proposta nao foi atualizado, a proposta ja esta efetivada no sistema Ayllos.';
+            pr_msg_detalhe := 'Parecer da proposta nao foi atualizado, a proposta ja esta efetivada no sistema Aimaro.';
             RAISE vr_exc_saida;
           END IF;
         END IF;
@@ -2676,7 +2676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => 'ESTEIRA'
                           ,pr_dscritic => ' '
-                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dsorigem => 'AIMARO'
                           ,pr_dstransa => 'Parecer da proposta atualizado com sucesso'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1 --> FALSE

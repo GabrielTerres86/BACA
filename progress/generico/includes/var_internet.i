@@ -87,7 +87,7 @@ DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 /** --------------------------------------------------------- **/
 /** Variavel para geracao de log - Origem da Solicitacao      **/
 /**                                                           **/
-/** -> Origem = 1 - AYLLOS                                    **/
+/** -> Origem = 1 - AIMARO                                    **/
 /** -> Origem = 2 - CAIXA                                     **/
 /** -> Origem = 3 - INTERNET                                  **/
 /** -> Origem = 4 - CASH                                      **/

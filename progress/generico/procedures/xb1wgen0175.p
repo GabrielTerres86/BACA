@@ -12,6 +12,10 @@
    Alteracoes: 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
                             de cheques (Lucas Ranghetti #484923)
    
+               03/10/2018 - Procedure para receber nova opcao de exclusao na 
+                            tela devolu.
+                            Chamado SCTASK0029653 - Gabriel (Mouts).
+   
 ............................................................................ */
 
 DEF VAR aux_cdcooper LIKE crapcop.cdcooper                             NO-UNDO.
@@ -494,6 +498,35 @@ PROCEDURE altera-alinea:
                              INPUT aux_cdalinea,
                              INPUT aux_cdoperad,                             
                              OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE <> "OK" THEN DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+        IF  NOT AVAILABLE tt-erro THEN DO:
+            CREATE tt-erro.
+            ASSIGN tt-erro.dscritic = "Operacao nao efetuada.".
+        END.
+
+        RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
+    END.
+    ELSE
+    DO:
+        RUN piXmlNew.
+        RUN piXmlSave.
+    END.  
+
+END PROCEDURE.
+
+PROCEDURE excluir-cheque-devolu:
+
+    RUN excluir-cheque-devolu IN hBO(INPUT aux_cdcooper,                        
+                                     INPUT aux_cdbanchq,
+                                     INPUT aux_cdagechq,
+                                     INPUT aux_nrdconta,
+                                     INPUT aux_nrctachq,
+                                     INPUT aux_nrdocmto,
+                                     INPUT aux_cdoperad,                             
+                                     OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN DO:
         FIND FIRST tt-erro NO-LOCK NO-ERROR.

@@ -188,6 +188,7 @@ function coopConfSaque(){
     *@autor: Jean Michel - 09/06/2013
 */
 function confirmaSaque(){
+
     var opcao = "";
     
     if(document.getElementById('v_opcao1').checked){
@@ -222,14 +223,14 @@ function confirmaSaque(){
     	bematech.PinpadPosicionaEscreveDisplay(2,1,strSaqueFinal,600);
     	
     	document.getElementById('divConfirmaSaque').style.display = "block";
-    	document.getElementById('btnConfirmaSaque').focus();
+    	$('#btnConfirmaSaque').focus();
 		if (opcao == "C"){
 			document.getElementById('msgConfirma').innerHTML = "Cooperado Confirma Saque?";
 		}else{
 			document.getElementById('msgConfirma').innerHTML = "Cooperado Confirma Pagamento?";
 		}
     } else {
-		document.getElementById('sok').focus();
+		$('#sok').focus();
     }
     
 	
@@ -597,6 +598,9 @@ function submitFormulario() {
 function cancelFormulario() {
 	cnxPinpad = fechaConexaoPinpadNovo(cnxPinpad);
    document.action.v_cartao.value = "";
+	document.action.v_nome.value = "";
+	document.action.v_conta.value = "";
+	document.action.v_mensagem.value = "";
    document.action.v_action.value='Cancelar';
    document.action.cancela.value='Cancelar';
    document.getElementById('v_habilita').value = "no";
@@ -628,18 +632,6 @@ function enviaFormularioPinPad(strInput, strEvent) {
         submitFormulario(); 
     }
 	
-}
-
-/**
-    *@desc:  Função p/ verificar qual tecla foi pressionado e se deve ou não da refresh no form
-    *@param: event - Evento
-    *@autor: Jean Michel - 06/06/2013
-    *@autor: Última Modificação: 
-*/
-function verificaBackspace(event){
-	if (document.activeElement.name != 'v_valor' && document.activeElement.name != 'v_senhaCartao' && event.keyCode == 8){
-		cancelFormulario();
-	}
 }
 
 /**
@@ -683,6 +675,7 @@ $(document).ready(function () {
         var code = (e.keyCode ? e.keyCode : e.which);
         if (code == 13 || code == 9) {
 			selectOpcao('B');
+			return false;
 		}
 	});
 	
@@ -691,6 +684,7 @@ $(document).ready(function () {
         var code = (e.keyCode ? e.keyCode : e.which);
         if (code == 13 || code == 9) {
 			selectOpcao('BR');
+			return false;
 		}
 	});
 	
@@ -699,6 +693,7 @@ $(document).ready(function () {
         var code = (e.keyCode ? e.keyCode : e.which);
         if (code == 13 || code == 9) {
 			selectOpcao('C');
+			return false;
 		}
 	});
 	
@@ -707,6 +702,7 @@ $(document).ready(function () {
         var code = (e.keyCode ? e.keyCode : e.which);
         if (code == 13 || code == 9) {
 			selectOpcao('R');
+			return false;
 		}
 	});
 	
@@ -732,6 +728,7 @@ $(document).ready(function () {
         var code = (e.keyCode ? e.keyCode : e.which);
         if (code == 13 || (!e.shiftKey && code == 9)) {
           confirmaSaque();
+		  return false;
         }
     });
 	
@@ -746,6 +743,7 @@ $(document).ready(function () {
 				document.getElementById('v_opcao3').focus();
 			}
 		}
+		
 });
 
 });
@@ -753,7 +751,7 @@ $(document).ready(function () {
 </script>
 <title>LANÇAMENTO INCLUSÃO - BOLETIM CAIXA</title></head>
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: mudaFoco(); inicializa();" onKeyUp="verificaBackspace(event); callBlass(event); callBLini(event); callBLsal(event);" oncontextmenu="    return false;" onunload="    bematech.PinpadLimpaTela(0);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: mudaFoco(); inicializa();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);" oncontextmenu="    return false;" onunload="    bematech.PinpadLimpaTela(0);"> 
 
 <div>
 	<form name="action" onKeyDown="change_page(event)" method=post name="frmSaque" id="frmSaque" >
@@ -876,7 +874,7 @@ $(document).ready(function () {
         <tr>
           <td align="right" class="linhaform" style="width:14%">Valor:</td>
           <td>
-            <input type="text" id="v_valor" name="v_valor" size="20" maxlength="18" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" onChange="JavaScript: formataDecimal(this,true,event); confirmaSaque();" style="text-align: right">
+            <input type="text" id="v_valor" name="v_valor" size="20" maxlength="18" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" onChange="JavaScript: formataDecimal(this,true,event);" style="text-align: right">
           </td> 
         </tr>
         <tr>

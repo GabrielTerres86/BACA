@@ -5,6 +5,8 @@
  * OBJETIVO     : Biblioteca de funções da tela PRVSAQ
  * --------------
  * ALTERAÇÕES   : 29/05/2018 - Incluido novos campos PRJ 420 - Mateus Z (Mouts).
+ *
+ *                05/10/2018 - Incluido coluna Hora Saque na opção Consulta - Mateus Z (Mouts).
  * -----------------------------------------------------------------------
  */
 
@@ -233,14 +235,15 @@ function formataConsulta() {
         arrayLargura[6] = '70px';
         arrayLargura[7] = '70px';
     } else if (cddopcao == 'C') {
-        arrayLargura[0] = '130px';
+        arrayLargura[0] = '100px';
         arrayLargura[1] = '70px';
-        arrayLargura[2] = '60px';
-        arrayLargura[3] = '100px';
-        arrayLargura[4] = '200px';
-        arrayLargura[5] = '60px';
-        arrayLargura[6] = '70px';
-        arrayLargura[7] = '100px';
+        arrayLargura[2] = '70px';
+        arrayLargura[3] = '60px';
+        arrayLargura[4] = '110px';
+        arrayLargura[5] = '160px';
+        arrayLargura[6] = '60px';
+        arrayLargura[7] = '70px';
+        arrayLargura[8] = '90px';
 
     } else if (cddopcao == 'A') {
         arrayLargura[0] = '85px';
@@ -258,13 +261,14 @@ function formataConsulta() {
     if (cddopcao == 'C') {
         arrayAlinha[0] = 'left';
         arrayAlinha[1] = 'right';
-        arrayAlinha[2] = 'center';
-        arrayAlinha[3] = 'right';
-        arrayAlinha[4] = 'left';
-        arrayAlinha[5] = 'right';
+        arrayAlinha[2] = 'right';
+        arrayAlinha[3] = 'center';
+        arrayAlinha[4] = 'right';
+        arrayAlinha[5] = 'left';
         arrayAlinha[6] = 'right';
-        arrayAlinha[7] = 'left';
+        arrayAlinha[7] = 'right';
         arrayAlinha[8] = 'left';
+        arrayAlinha[9] = 'left';
     }
 
     if (cddopcao == 'A') {
