@@ -645,6 +645,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                
   --              14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
   --                           da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
+  --
+  --              17/10/2018 - PRJ450 - Regulatorios de Credito - centralizacao de estorno de lançamentos na conta corrente              
+  --	                        pc_estorna_lancto_conta (Fabio Adriano - AMcom)
+  
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -12223,6 +12227,7 @@ END pc_gera_titulos_iptu_prog;
                                                  , pr_nrdctabb => NULL
                                                  , pr_nrdocmto => NULL
                                                  , pr_cdhistor => NULL
+                                                 , pr_nrctachq => NULL 
                                                  , pr_rowid    => rw_craplcm.rowid
                                                  , pr_cdcritic => vr_cdcritic
                                                  , pr_dscritic => vr_dscritic); 
