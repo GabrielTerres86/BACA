@@ -5380,6 +5380,7 @@ PROCEDURE valida_cartao_cecred:
     DEFINE  INPUT PARAM par_nrcartao    AS DEC          NO-UNDO.
     
     DEFINE OUTPUT PARAM par_idseqttl    AS INT          NO-UNDO.
+    DEFINE OUTPUT PARAM par_cdcritic    AS INT          NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic    AS CHAR         NO-UNDO.
 
     FOR crapcrd FIELDS(cdcooper nrdconta nrctrcrd cdadmcrd nrcpftit inacetaa)
@@ -5442,7 +5443,8 @@ PROCEDURE valida_cartao_cecred:
     /* Verificar se o cartão está com acesso liberado. */
     IF crapcrd.inacetaa <> 1 THEN
        DO:
-           par_dscritic = "Acesso bloqueado.".
+           ASSIGN par_cdcritic = 625
+                  par_dscritic = "Acesso bloqueado.".
            RETURN "NOK".
        END.
        
@@ -5494,6 +5496,7 @@ PROCEDURE valida_senha_cartao_cecred:
                               INPUT par_nrdconta,
                               INPUT par_nrcartao,
                               OUTPUT aux_idseqttl,
+                              OUTPUT par_cdcritic,
                               OUTPUT par_dscritic).
     
     IF RETURN-VALUE <> "OK" THEN
@@ -5815,12 +5818,14 @@ PROCEDURE valida_senha_letras_cartao_cecred:
     DEFINE VARIABLE aux_flsenlet AS LOGICAL             NO-UNDO.
     DEFINE VARIABLE aux_idseqttl LIKE crapttl.idseqttl  NO-UNDO.
     DEFINE VARIABLE h-b1wgen0028 AS HANDLE              NO-UNDO.
+    DEFINE VARIABLE aux_cdcritic AS INT                 NO-UNDO.
     
     /* Valida se os dados do cartao cecred estah OK */
     RUN valida_cartao_cecred (INPUT par_cdcooper,
                               INPUT par_nrdconta,
                               INPUT par_nrcartao,
                               OUTPUT aux_idseqttl,
+                              OUTPUT aux_cdcritic,
                               OUTPUT par_dscritic).
     
     IF RETURN-VALUE <> "OK" THEN

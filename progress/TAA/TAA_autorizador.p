@@ -361,7 +361,9 @@ DEFINE VARIABLE aux_tpdsaldo AS INTEGER                     NO-UNDO.
                                                             
 /* uso comum */                                             
 DEFINE VARIABLE aux_operacao AS INTEGER                     NO-UNDO.
-DEFINE VARIABLE aux_dscritic AS CHARACTER                   NO-UNDO.                                                            
+DEFINE VARIABLE aux_cdcritic AS INT                         NO-UNDO. /* cod critica */
+DEFINE VARIABLE aux_dscritic AS CHARACTER                   NO-UNDO.
+
 
 /* dados do associado nas operacoes */                     
 DEFINE VARIABLE aux_cdcooper AS INT                         NO-UNDO. /* cooperativa */
@@ -1143,16 +1145,27 @@ DO:
 
     DO  WHILE TRUE:
 
-        IF   aux_dscritic <> ""   THEN
-             DO:
-                 /* ---------- */
-                 xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
-                 xRoot:APPEND-CHILD(xField).
-    
-                 xDoc:CREATE-NODE(xText,"","TEXT").
-                 xText:NODE-VALUE = aux_dscritic.
-                 xField:APPEND-CHILD(xText).
-             END.
+      IF   aux_dscritic <> ""   THEN
+        DO:
+
+          /* ---------- */
+          xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+          xRoot:APPEND-CHILD(xField).
+          xDoc:CREATE-NODE(xText,"","TEXT").
+          xText:NODE-VALUE = aux_dscritic.
+          xField:APPEND-CHILD(xText).
+          IF aux_operacao = 200 THEN
+            DO:
+              /* ---------- */
+              xDoc:CREATE-NODE(xField,"CDCRITIC","ELEMENT").
+              xRoot:APPEND-CHILD(xField).
+              xDoc:CREATE-NODE(xText,"","TEXT").
+              xText:NODE-VALUE = STRING(aux_cdcritic).
+              xField:APPEND-CHILD(xText).
+              
+            END.          
+             
+        END.
         ELSE
         IF   aux_operacao = 9999    THEN
              DO:
@@ -2169,19 +2182,9 @@ PROCEDURE verifica_cartao:
 END PROCEDURE.
 /* Fim 1 - verifica_cartao */
 
-
-
-
-
-
-
-
-
 PROCEDURE valida_senha:
 
     DEF VAR aux_token AS CHAR NO-UNDO.
-    DEFINE VARIABLE aux_cdcritic    AS INT         NO-UNDO.
-
     /* Verificar se a rotina está sendo chamada pelo sistema NOVO */
     IF aux_idtaanew = 1 THEN
     DO:
@@ -2197,7 +2200,7 @@ PROCEDURE valida_senha:
                                       INPUT aux_dssencar,
                                       INPUT aux_dtnascto,
                                       INPUT aux_idtipcar,
-                                      INPUT aux_cdcritic,
+                                     OUTPUT aux_cdcritic,
                                      OUTPUT aux_dscritic).
 
     DELETE PROCEDURE h-b1wgen0025.
