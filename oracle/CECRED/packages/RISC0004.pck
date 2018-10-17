@@ -1502,7 +1502,9 @@ END pc_carrega_tabela_riscos;
          AND ris.dtrefere = pr_dtrefere
          AND ris.nrdconta = pr_nrdconta
          AND ris.innivris < pr_innivris -- Menor que o risco do grupo
-         AND ris.inddocto = 1;
+         --AND ris.inddocto = 1
+         AND (ris.inddocto = 1 OR ris.cdmodali = 1901)
+         ;
     rw_crapris cr_crapris%ROWTYPE;
 
     CURSOR cr_crapris_last(pr_nrdconta IN crapris.nrdconta%TYPE
@@ -1520,7 +1522,8 @@ END pc_carrega_tabela_riscos;
            AND r.nrctremp = pr_nrctremp
            AND r.cdmodali = pr_cdmodali
            AND r.cdorigem = pr_cdorigem
-           AND r.inddocto = 1 -- 3020 e 3030
+           --AND r.inddocto = 1 -- 3020 e 3030
+           AND (r.inddocto = 1 OR r.cdmodali = 1901)
          ORDER BY r.dtrefere DESC --> Retornar o ultimo gravado
                 , r.innivris DESC --> Retornar o ultimo gravado
                 , r.dtdrisco DESC;
@@ -1746,6 +1749,91 @@ END pc_carrega_tabela_riscos;
 
   END pc_central_risco_grupo;
 
+
+
+  PROCEDURE pc_central_grava_dtdrisco(pr_cdcooper IN NUMBER           --> Cooperativa
+                                     ,pr_dtrefere IN DATE             -- Data do dia da Coop
+                                     ,pr_dtmvtoan IN DATE             -- Data da central anterior
+                                     ,pr_dscritic OUT VARCHAR2) IS   --> Critica
+  /* .............................................................................
+
+   Programa: pc_central_grava_dtdrisco       (Antigo: NAO HA)
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Guilherme/AMcom
+   Data    : Outubro/2018.                        Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Gravar da Data do Risco de cada operação
+   
+   ------------------------------------------------------------------------
+               ATENÇÃO: ESTE DEVE SER O UNICO PONTO DO SISTEMA ONDE GRAVA
+               A dtdrisco DA CRAPRIS.
+   ------------------------------------------------------------------------
+
+   Alteracoes: 
+  ............................................................................. */
+
+    -- CURSORES
+  
+    -- VARIAVEIS LOCAIS
+
+
+    -- variaveis
+    vr_maxrisco             INTEGER:=-10;
+    vr_dtdrisco             crapris.dtdrisco%TYPE; -- Data da atualização do risco
+    vr_dttrfprj             DATE;
+    vr_des_msg              VARCHAR2(500);
+    vr_nrcpfcnpj_base       crapass.nrcpfcnpj_base%TYPE;
+    
+      
+    -- VARIAVEIS DE ERRO
+    vr_cdcritic             crapcri.cdcritic%TYPE;
+    vr_dscritic             VARCHAR2(4000);
+    vr_exc_erro             EXCEPTION;
+  
+    BEGIN
+
+   /*------------------------------------------------------------------------
+               ATENÇÃO: ESTE DEVE SER O UNICO PONTO DO SISTEMA ONDE GRAVA
+               A dtdrisco DA CRAPRIS.
+   ------------------------------------------------------------------------*/
+
+
+    	-- PROCESSAR TODA CENTRAL DE RISCO DA DTREFERE (HOJE)
+      
+        -- PARA CADA crapRIS, VERIFICAR RISCO DA DATA DTMVTOAN (ONTEM)
+        
+          -- VALIDAR CONFORME ESTRUTURADO NA ROTINA PC_CENTRAL_RISCO_GRUPO
+            -- VERIFICAR SE EXISTE "ONTEM"
+              -- SE NÃO EXISTE, GRAVAR DTDRISCO = HOJE
+              -- SE EXISTE, VERIFICAR O RISCO DE ONTEM É DIFERENTE DE HOJE
+                 -- SE DTDRISCO É NULA, GRAVAR DTDRISCO = HOJE
+                 -- SE SIM, GRAVAR DTDRISCO = HOJE
+                 -- SE NÃO, GRAVAR DTDRISCO = dtdrisco DE ONTEM
+                 -- EFETUAR A VALIDACAO/BUSCA fn_regra_dtprevisao_prejuizo
+                 -- GRAVAR DTDRISCO E DTtrfprj PARA CADA CONTRATO
+         
+      NULL;
+
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        ROLLBACK;
+        -- Variavel de erro recebe erro ocorrido
+        IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        ROLLBACK;
+        -- Descricao do erro
+        pr_dscritic := 'Erro nao tratado na RISC0004.pc_central_risco_grupo --> ' || SQLERRM;
+
+  END pc_central_grava_dtdrisco;
 
 END RISC0004;
 /
