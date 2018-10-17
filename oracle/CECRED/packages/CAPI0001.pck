@@ -891,9 +891,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
                                     , pr_cdagenci => rw_craplct.cdagenci
                                     , pr_cdbccxlt => rw_craplct.cdbccxlt
                                     , pr_nrdolote => vc_lote_deposito_vista
-                                    , pr_nrdctabb => rw_craplct.nrdconta
-                                    , pr_nrdocmto => rw_craplct.nrdocmto
+                                    , pr_nrdctabb => NULL 
+                                    , pr_nrdocmto => NULL
                                     , pr_cdhistor => vr_cdhistor
+                                    , pr_nrctachq => NULL 
+                                    , pr_nrdconta => rw_craplct.nrdconta
+                                    , pr_cdpesqbb => rw_craplct.nrdocmto
                                     , pr_rowid    => NULL
                                     , pr_cdcritic => vr_cdcritic
                                     , pr_dscritic => vr_dscritic); 
