@@ -115,6 +115,12 @@ CREATE OR REPLACE PACKAGE CECRED.SSPB0003 AS
   -- Rotina para acerto de recebidas
   PROCEDURE pc_acerto_recebida(pr_dscritic          OUT VARCHAR2
                               );
+  -- Função para buscar o conteúdo de uma TAG em um XML
+  function fn_busca_conteudo_campo(pr_retxml    IN CLOB,                  --> Conteúdo do XML
+                                   pr_nrcampo   IN VARCHAR2,              --> Tag a ser buscado o conteúdo, sem <>
+                                   pr_indcampo  IN VARCHAR2               --> Tipo de dado: S=String, D=Data, N=Numerico
+                                   ) RETURN VARCHAR2;
+
 END SSPB0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
@@ -1187,6 +1193,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
   WHEN vr_exc_saida THEN
     NULL;
   END pc_acerto_recebida;
+
+  -- Função para buscar o conteúdo de uma TAG em um XML
+  function fn_busca_conteudo_campo(pr_retxml    IN CLOB,                  --> Conteúdo do XML
+                                   pr_nrcampo   IN VARCHAR2,              --> Tag a ser buscado o conteúdo, sem <>
+                                   pr_indcampo  IN VARCHAR2               --> Tipo de dado: S=String, D=Data, N=Numerico
+                                   ) RETURN VARCHAR2 IS                   --> Texto de erro/critica encontrada
+
+    vr_retorno    VARCHAR2(4000) := '-';
+  BEGIN
+    --
+    vr_retorno := replace(regexp_substr(to_char(pr_retxml),'<'||pr_nrcampo||'>[^<]*'),'<'||pr_nrcampo||'>',null);
+    --
+    IF pr_indcampo = 'N' THEN
+       vr_retorno := trim(replace(vr_retorno,'.',','));
+       vr_retorno := trim(to_char(to_number(vr_retorno),'99999990.00'));
+    ELSIF pr_indcampo = 'D' THEN
+       IF LENGTH(vr_retorno) > 10 THEN
+         vr_retorno := TO_CHAR(TO_DATE(SUBSTR(vr_retorno,1,10)||' '||SUBSTR(vr_retorno,12,8),'yyyy-mm-dd hh24:mi:ss'),'dd-mm-yyyy hh24:mi:ss');
+       ELSE
+         vr_retorno := TO_CHAR(TO_DATE(vr_retorno,'YYYY-MM-DD'),'DD-MM-YYYY');
+       END IF;
+    END IF;
+    --
+    RETURN vr_retorno;
+    --
+  EXCEPTION
+    WHEN OTHERS THEN
+       IF pr_indcampo = 'N' THEN
+         BEGIN
+           vr_retorno := replace(regexp_substr(to_char(pr_retxml),'<'||pr_nrcampo||'>[^<]*'),'<'||pr_nrcampo||'>',null);
+           vr_retorno := trim(replace(vr_retorno,',','.'));
+           vr_retorno := trim(to_char(to_number(vr_retorno),'99999990.00'));
+         EXCEPTION
+            WHEN OTHERS THEN
+               vr_retorno := '0.00';
+         END;
+       ELSE
+         cecred.pc_internal_exception(pr_compleme => pr_nrcampo);
+         vr_retorno := 'Erro ao buscar campo '||pr_nrcampo||'. '||SQLERRM;
+       END IF;
+       RETURN vr_retorno;
+  END;
+
 
 END SSPB0003;
 /
