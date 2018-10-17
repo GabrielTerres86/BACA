@@ -5815,6 +5815,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Alteracoes: 9318:** Pagamento de Empréstimo  Rangel Decker (AMcom)
                             Adição do parametro pr_nmdatela DEFAULT 'EMPR0011'
 
+                   11/10/2018 - Ajustado rotina para caso pagamento for pago pela tela
+                                BLQ gerar o IOF na tabela prejuizo detalhe.
+                                PRJ450 - Regulatorio(Odirlei-AMcom)         
+
     ............................................................................. */
 
     DECLARE
@@ -5857,6 +5861,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
            AND craplem.nrctremp = pr_nrctremp
            AND craplem.nrparepr = pr_nrparepr
            AND craplem.cdhistor IN (2373,2371,2377,2375,2347,2346);
+           
+      -- Retorna as contas em prejuizo
+      CURSOR cr_contaprej (pr_cdcooper  IN tbcc_prejuizo.cdcooper%TYPE
+                         , pr_nrdconta  IN tbcc_prejuizo.nrdconta%TYPE) IS
+        SELECT tbprj.idprejuizo
+          FROM tbcc_prejuizo tbprj
+         WHERE tbprj.cdcooper = pr_cdcooper
+           AND tbprj.nrdconta = pr_nrdconta
+           AND tbprj.dtliquidacao IS NULL;
+       rw_contaprej cr_contaprej%ROWTYPE;
+            
     BEGIN
       -- Calcular o valor do atraso
       pc_calcula_atraso_pos_fixado(pr_cdcooper => pr_cdcooper
@@ -6303,9 +6318,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           RAISE vr_exc_erro;
         END IF;
 
+        --> Se for pagamento pela tela Bloqueado prejuizo
+        IF upper(pr_nmdatela) = 'BLQPREJU' THEN
+        
+          -- Identificar numero do prejuizo da conta
+          OPEN cr_contaprej(pr_cdcooper => pr_cdcooper, 
+                            pr_nrdconta => pr_nrdconta);
+          FETCH cr_contaprej INTO rw_contaprej;
+          CLOSE cr_contaprej;
+          
+          -- Se for Financiamento
+          IF pr_floperac THEN
+            vr_cdhistor := 2794;  --> IOF S/ FINANC
+          ELSE
+            vr_cdhistor := 2793; --> IOF S/EMPREST
+          END IF;
+                      
+          -- Incluir lançamento na TBCC_PREJUIZO_DETALHE
+          PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper   => pr_cdcooper
+                                          , pr_nrdconta   => pr_nrdconta
+                                          , pr_dtmvtolt   => pr_dtcalcul
+                                          , pr_cdhistor   => vr_cdhistor
+                                          , pr_idprejuizo => rw_contaprej.idprejuizo
+                                          , pr_vllanmto   => vr_vliofcpl
+                                          , pr_nrctremp   => pr_nrctremp
+                                          , pr_cdoperad   => pr_cdoperad
+                                          , pr_cdcritic   => vr_cdcritic
+                                          , pr_dscritic   => vr_dscritic);
+        
+          IF nvl(vr_cdcritic,0) > 0 OR 
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_erro;  
+          END IF;   
+        
         -- No programa CRPS149:
         -- Será feito o débito em conta corrente
-        IF UPPER(pr_cdprogra) <> 'CRPS149' AND upper(pr_nmdatela) <> 'BLQPREJU' THEN
+        ELSIF UPPER(pr_cdprogra) <> 'CRPS149' THEN
           -- Se for Financiamento
           IF pr_floperac THEN
             vr_cdhistor := 2542;

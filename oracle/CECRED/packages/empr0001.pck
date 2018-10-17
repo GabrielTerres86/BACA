@@ -11143,7 +11143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 28/02/2014
+       Data    : Fevereiro/2014                        Ultima atualizacao: 11/10/2018
 
        Dados referentes ao programa:
 
@@ -11151,6 +11151,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Objetivo  : Rotina para efetivar pagamento parcela atrasada
 
        Alteracoes: 28/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
+
+                   11/10/2018 - Ajustado rotina para caso pagamento for pago pela tela
+                                BLQ gerar o IOF na tabela prejuizo detalhe.
+                                PRJ450 - Regulatorio(Odirlei-AMcom)
 
     ............................................................................. */
 
@@ -11163,6 +11167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_cdhisatr NUMBER;
       vr_cdhispag NUMBER;
       vr_cdhisiof NUMBER;
+      vr_cdhisiof_prejdet NUMBER := 0; 
       vr_loteatra NUMBER;
       vr_lotemult NUMBER;
       vr_lotepaga NUMBER;
@@ -11183,6 +11188,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
       vr_exc_ok    EXCEPTION;
+
+      -- Retorna as contas em prejuizo
+      CURSOR cr_contaprej (pr_cdcooper  IN tbcc_prejuizo.cdcooper%TYPE
+                         , pr_nrdconta  IN tbcc_prejuizo.nrdconta%TYPE) IS
+        SELECT tbprj.idprejuizo
+          FROM tbcc_prejuizo tbprj
+         WHERE tbprj.cdcooper = pr_cdcooper
+           AND tbprj.nrdconta = pr_nrdconta
+           AND tbprj.dtliquidacao IS NULL;
+       rw_contaprej cr_contaprej%ROWTYPE;
+
 
 
     BEGIN
@@ -11298,29 +11314,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
         /* Projeto 410 - efetua o debito do IOF complementar de atraso */
         IF nvl(vr_vliofcpl, 0) > 0
-           AND nvl(vr_vlpagsld, 0) >= 0 AND pr_nmdatela <> 'BLQPREJU' THEN
+           AND nvl(vr_vlpagsld, 0) >= 0 THEN
+          
+          IF pr_nmdatela = 'BLQPREJU' THEN 
+          
+            -- Identificar numero do prejuizo da conta
+            OPEN cr_contaprej(pr_cdcooper => pr_cdcooper, 
+                              pr_nrdconta => pr_nrdconta);
+            FETCH cr_contaprej INTO rw_contaprej;
+            CLOSE cr_contaprej;
+            
+            CASE vr_cdhisiof
+              WHEN 2314 THEN vr_cdhisiof_prejdet := 2792; --> IOF S/ FINANC
+              --> 2313
+              ELSE vr_cdhisiof_prejdet := 2791; --> IOF S/EMPREST
+            END CASE;    
+                      
+            -- Incluir lançamento na TBCC_PREJUIZO_DETALHE
+            PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper   => pr_cdcooper
+                                            , pr_nrdconta   => pr_nrdconta
+                                            , pr_dtmvtolt   => pr_dtmvtolt
+                                            , pr_cdhistor   => vr_cdhisiof_prejdet
+                                            , pr_idprejuizo => rw_contaprej.idprejuizo
+                                            , pr_vllanmto   => vr_vliofcpl
+                                            , pr_nrctremp   => pr_nrctremp
+                                            , pr_cdoperad   => pr_cdoperad
+                                            , pr_cdcritic   => vr_cdcritic
+                                            , pr_dscritic   => vr_dscritic);
+            IF nvl(vr_cdcritic,0) > 0 OR 
+               TRIM(vr_dscritic) IS NOT NULL THEN
+              RAISE vr_exc_ok;  
+            END IF;   
+          ELSE
 
-          /* Debita o valor do IOF complementar atraso da C/C */
-          EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                        ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
-                                        ,pr_cdagenci => pr_cdagenci --> Código da agência
-                                        ,pr_cdbccxlt => 100 --> Número do caixa
-                                        ,pr_cdoperad => pr_cdoperad --> Código do Operador
-                                        ,pr_cdpactra => pr_cdpactra --> P.A. da transação
-                                        ,pr_nrdolote => vr_loteiof  --> Numero do Lote
-                                        ,pr_nrdconta => pr_nrdconta --> Número da conta
-                                        ,pr_cdhistor => vr_cdhisiof --> Codigo historico
-                                        ,pr_vllanmto => vr_vliofcpl --> Valor da parcela emprestimo
-                                        ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
-                                        ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
-                                        ,pr_nrseqava => pr_nrseqava --> Pagamento: Sequencia do avalista
-                                        ,pr_nrseqdig => vr_nrseqdig
-                                        ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
-                                        ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
-          --Se Retornou erro
-          IF vr_des_erro <> 'OK' THEN
-            --Sair
-            RAISE vr_exc_ok;
+            /* Debita o valor do IOF complementar atraso da C/C */
+            EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                          ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
+                                          ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                          ,pr_cdbccxlt => 100 --> Número do caixa
+                                          ,pr_cdoperad => pr_cdoperad --> Código do Operador
+                                          ,pr_cdpactra => pr_cdpactra --> P.A. da transação
+                                          ,pr_nrdolote => vr_loteiof  --> Numero do Lote
+                                          ,pr_nrdconta => pr_nrdconta --> Número da conta
+                                          ,pr_cdhistor => vr_cdhisiof --> Codigo historico
+                                          ,pr_vllanmto => vr_vliofcpl --> Valor da parcela emprestimo
+                                          ,pr_nrparepr => pr_nrparepr --> Número parcelas empréstimo
+                                          ,pr_nrctremp => pr_nrctremp --> Número do contrato de empréstimo
+                                          ,pr_nrseqava => pr_nrseqava --> Pagamento: Sequencia do avalista
+                                          ,pr_nrseqdig => vr_nrseqdig
+                                          ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
+                                          ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
+            --Se Retornou erro
+            IF vr_des_erro <> 'OK' THEN
+              --Sair
+              RAISE vr_exc_ok;
+            END IF;
           END IF;
 
         END IF;
