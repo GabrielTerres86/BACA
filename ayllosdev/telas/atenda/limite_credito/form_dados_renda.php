@@ -15,17 +15,17 @@
 	<legend><? echo utf8ToHtml('Dados da Renda') ?></legend>			
 
 	<label for="vlsalari"><? echo utf8ToHtml('Salário:')  ?></label>	
-	<input name="vlsalari" id="vlsalari" type="text"  />
+	<input name="vlsalari" class="moeda" id="vlsalari" type="text"  />
 	
 	<label for="vlsalcon"><? echo utf8ToHtml('Conjugê:') ?></label>
-	<input name="vlsalcon" id="vlsalcon" type="text" >
+	<input name="vlsalcon" class="moeda" id="vlsalcon" type="text" >
 	<br />
 	
 	<label for="vloutras"><? echo utf8ToHtml('Outras:') ?></label>	
-	<input name="vloutras" id="vloutras" type="text" />
+	<input name="vloutras" class="moeda" id="vloutras" type="text" />
 	
 	<label for="vlalugue"><? echo utf8ToHtml('Aluguel:') ?></label>
-	<input name="vlalugue" id="vlalugue" type="text" />
+	<input name="vlalugue" class="moeda" id="vlalugue" type="text" />
 	<br />
 	<input name="idcobert" id="idcobert" type="hidden" value="0" />
 </fieldset>		
