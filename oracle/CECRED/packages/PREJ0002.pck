@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Agosto/2017                      Ultima atualizacao: 05/08/2017
+   Data    : Agosto/2017                      Ultima atualizacao: 17/10/2018
 
    Dados referentes ao programa:
 
@@ -17,6 +17,9 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0002 AS
    Alteracoes: 19/04/2018 - Removida atualizacao de lote que estava sendo feita indevidamente.
                             As rotinas chamadas para geracao dos lancamentos ja fazem a atualizacao.
                             Heitor (Mouts) - Prj 324
+                            
+   17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
+               - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta 
 
 ..............................................................................*/
 
@@ -80,12 +83,12 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0002 AS
      PROCEDURE pc_consulta_pagamento_web(pr_dtpagto in varchar2
                                       ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
-              						 		 			  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
- 				    	          	 		 			  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-						    				         			,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-          			    									,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-					              							,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-										              		,pr_des_erro OUT VARCHAR2);                                                                           
+                                        ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                         ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2);                                                                           
                                                               
     PROCEDURE pc_valores_contrato_web(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
@@ -104,7 +107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 01/08/2018
+   Data    : Maio/2017                      Ultima atualizacao: 17/10/2018
 
    Dados referentes ao programa:
 
@@ -135,8 +138,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 
       *************************************************
       
-      Alteracoes: 01/08/2018 - Ajuste para bloquear pagamento quando a conta está em prejuízo
-                              PJ 450 - Diego Simas - AMcom 
+      Alteracoes: 
+      01/08/2018 - Ajuste para bloquear pagamento quando a conta está em prejuízo
+                              PJ 450 - Diego Simas - AMcom
+                              
+      17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
+               - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta 
                       
 ..............................................................................*/
 
@@ -176,7 +183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       Sistema : AyllosWeb
       Sigla   : PREJ
       Autor   : Jean Calão - Mout´S
-      Data    : Agosto/2017.                  Ultima atualizacao: 24/04/2018
+      Data    : Agosto/2017.                  Ultima atualizacao: 17/10/2018
 
       Dados referentes ao programa:
 
@@ -188,7 +195,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       Alteracoes: 24/04/2018 - Nova Regra para bloqueio de estorno realizado pela tela ESTPRJ
                   (Rafael Monteiro - Mouts)
                   18/05/2018 - Adicionar o tratamento para histórico 2701 e 2702
-                                   (Rafael - Mouts)              
+                                   (Rafael - Mouts) 
+      17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
+               - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta              
 
       ..............................................................................*/                              
 
@@ -244,6 +253,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
            AND t.cdbccxlt = 100
            AND TO_NUMBER(trim(replace(t.cdpesqbb,'.',''))) = prc_nrctremp
            AND t.dtmvtolt = prc_dtmvtolt;  
+           
+      -- Cursor para buscar o ROWID da CRAPLCM para exclusão do registro pela centralizadora     
+      CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE,
+												 pr_nrdconta IN craplcm.nrdconta%TYPE,
+                         pr_nrctremp IN craplem.nrctremp%TYPE,
+                         pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+      SELECT craplcm.rowid
+        FROM craplcm
+       WHERE craplcm.cdcooper = pr_cdcooper
+         AND craplcm.nrdconta = pr_nrdconta
+         AND craplcm.dtmvtolt = pr_dtmvtolt
+         AND craplcm.cdhistor = 2386 -- Pagamento na conta 
+         AND craplcm.cdbccxlt = 100         
+         AND TO_NUMBER(TRIM(REPLACE(craplcm.cdpesqbb,'.',''))) = pr_nrctremp;
+      rw_craplcm cr_craplcm%ROWTYPE;
+      
       --
       CURSOR C_CRAPCYC(PR_CDCOOPER IN NUMBER
                        , PR_NRDCONTA IN NUMBER
@@ -431,13 +456,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             END;                
             /* excluir lancamento LCM */
             BEGIN
-              DELETE FROM craplcm t
-               WHERE t.cdcooper = pr_cdcooper
-                 AND t.nrdconta = pr_nrdconta
-                 AND t.cdhistor = 2386
-                 AND t.cdbccxlt = 100
-                 AND TO_NUMBER(trim(replace(t.cdpesqbb,'.',''))) = pr_nrctremp
-                 AND t.dtmvtolt = r_craplem.dtmvtolt;
+              
+              OPEN cr_craplcm( pr_cdcooper => pr_cdcooper,
+                               pr_nrdconta => pr_nrdconta,
+                               pr_nrctremp => pr_nrctremp,
+                               pr_dtmvtolt => r_craplem.dtmvtolt);
+              FETCH cr_craplcm INTO rw_craplcm;
+        
+                IF cr_craplcm%NOTFOUND THEN
+                  CLOSE cr_craplcm;
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Nao foi possivel recuperar os dados do lancamento para estornar.';
+                  RAISE vr_erro;
+                END IF;
+        
+                -- Chamada da rotina centralizadora em substituição ao DELETE
+                LANC0001.pc_estorna_lancto_conta(pr_cdcooper => NULL 
+                                               , pr_dtmvtolt => NULL 
+                                               , pr_cdagenci => NULL
+                                               , pr_cdbccxlt => NULL 
+                                               , pr_nrdolote => NULL 
+                                               , pr_nrdctabb => NULL 
+                                               , pr_nrdocmto => NULL 
+                                               , pr_cdhistor => NULL 
+                                               , pr_rowid    => rw_craplcm.rowid
+                                               , pr_cdcritic => vr_cdcritic
+                                               , pr_dscritic => vr_dscritic);
+                                       
+                IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+                  CLOSE cr_craplcm;
+                  RAISE vr_erro;
+                END IF;
+                
+                COMMIT;
+                
+              CLOSE cr_craplcm;
+              
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Falha na exclusao CRAPLCM, cooper: ' || pr_cdcooper || 
@@ -1554,12 +1608,12 @@ END pc_pagamento_prejuizo_web;
    PROCEDURE pc_consulta_pagamento_web(pr_dtpagto  in varchar2
                                       ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
-              						 		 			  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
- 				    	          	 		 			  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-						    				         			,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-          			    									,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-					              							,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-										              		,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+                                        ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                         ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                      ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                      ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
   BEGIN
     /* .............................................................................
 
