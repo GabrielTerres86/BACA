@@ -6,34 +6,43 @@
  * OBJETIVO     : Formulário da rotina Emprestimos de veiculos
  * ALTERAÇÕES   :
  * --------------
- * 000: 
+ * 000:
  */
 
  ?>
+ 	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
  	<script src="../../scripts/jquery.maskMoney.js" type="text/javascript"></script>
-	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
-	
+
     <link href="../../css/aditiv_alie_veiculo.css" rel="stylesheet" type="text/css">
+
 	<script type="text/javascript" src="../manbem/scripts/utils.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/aliena_veiculo.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/servico_fipe.js"></script>
 	<script type="text/javascript" src="../manbem/scripts/interveniente.js"></script>
-	
-	<form name="frmTipo" id="frmTipo">	
+
+	<form name="frmTipo" id="frmTipo">
 		<fieldset>
+		<!-- Cabeçalho disponível somente para ADITIV -->
+		<? if($glbvars['nmdatela'] == "ADITIV"){ ?>
 			<legend>5 - Substituição de Veículo - Alienação</legend>
 			<div class="cabecalho">
-				<input id="nrctremp" name="nrctremp" type="hidden" value="" /> 
+				<input id="nrctremp" name="nrctremp" type="hidden" value="" />
 				<label id="lsbemfin"></label>
 				<div id="msgErro">
 					<h3 class="erro">* Campos de preenchimento obrigatório!</h3>
 				</div>
 				<br />
-
+        		<!-- Data do ativo somente para ADITIV -->
 				<label for="dtmvtolt"> Dt Inclusão Aditivo :</label>
 				<input type="text" id="dtmvtolt" name="dtmvtolt" value="<? echo getByTagName($dados,'dtmvtolt')?>" />
-			</div>			
+			</div>
 			<hr >
+		<? } else { ?>
+			<div class="cabecalho">
+				<input id="nrctremp" name="nrctremp" type="hidden" value="" />
+				<label id="lsbemfin"></label>
+			</div>
+		<? } ?>
 			<div class="bloco">
 				<div>
 					<label for="dscatbem" > Categoria :</label>
@@ -41,7 +50,7 @@
 				</div>
 				<div>
 					<label for="dstipbem"> Tipo Veículo :</label>
-					<? echo selectTipoVeiculo('dstipbem', getByTagName($dados,'dstipbem')) ?>					
+					<? echo selectTipoVeiculo('dstipbem', getByTagName($dados,'dstipbem')) ?>
 				</div>
 				<div>
 					<label for="dsmarbem"> Marca :</label>
@@ -55,10 +64,10 @@
 				</div>
 				<div>
                     <label for="nrmodbem" >Ano Mod./Fab.:</label>
-					<select name="nrmodbem" id="nrmodbem"></select>	
-					<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>				
+					<select name="nrmodbem" id="nrmodbem"></select>
+					<input name="nrmodbem" id="nrmodbemC" type="text" hidden="hidden" value="<? echo getByTagName($dados,'nrmodbem')?> <? echo getByTagName($dados,'dstpcomb')?>"/>
 					<label for="nranobem" style='display:none'>Ano Fab.:</label>
-					<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" />				
+					<input name="nranobem" id="nranobem" type="text" value="<? echo getByTagName($dados,'nranobem')?>" class="menor" onkeypress="return VerificaNumero(event)" maxlength="4" />
 				</div>
 				<div>
 					<label for="vlfipbem"> Valor Fipe :</label>
@@ -68,7 +77,11 @@
 					<label for="vlrdobem"> Valor de Mercado :</label>
 					<input name="vlrdobem" id="vlrdobem" type="text"  value="<? echo getByTagName($dados,'vlrdobem') ?>" readonly data-prefix="R$ " data-thousands="." data-decimal=","/>
 				</div>
-			</div>			
+				<div>
+					<label for="dssitgrv"> Situação :</label>
+					<input name="dssitgrv" id="dssitgrv" type="text" value="<?echo getByTagName($dados,'dssitgrv') ?>" />					
+				</div>
+			</div>
  			<div class="bloco">
 				<div>
 					<label for="tpchassi"> Tipo Chassi :</label>
@@ -80,17 +93,17 @@
 				</div>
 				<div>
 					<label for="dscorbem"> Cor/Classe :</label>
-					<input name="dscorbem" id="dscorbem" type="text" value="<? echo getByTagName($dados,'dscorbem')?>" />	
+					<input name="dscorbem" id="dscorbem" type="text" value="<? echo getByTagName($dados,'dscorbem')?>" />
 				</div>
 				<div>
 					<label for="ufdplaca"> UF/Placa :</label>
-					<? echo selectEstado('ufdplaca', getByTagName($dados,'ufdplaca'), 1) ?>                   
-					<label for="nrdplaca" style='display:none'>Placa:</label>                
+					<? echo selectEstado('ufdplaca', getByTagName($dados,'ufdplaca'), 1) ?>
+					<label for="nrdplaca" style='display:none'>Placa:</label>
 					<input name="nrdplaca" id="nrdplaca" type="text" value="<? echo mascara(getByTagName($dados,'nrdplaca'),'###-####') ?>"/>
 				</div>
 				<div>
 					<label for="nrrenava"> RENAVAM :</label>
-					<input name="nrrenava" id="nrrenava" type="text" value="<? echo mascara(getByTagName($dados,'nrrenava'),'###.###.###.###')?>" onkeypress="return VerificaNumero(event)"  />
+					<input name="nrrenava" id="nrrenava" type="text" value="<? echo mascara(getByTagName($dados,'nrrenava'),'###.###.###.###')?>" onkeypress="return VerificaNumero(event)" />
 				</div>
 				<div>
 					<label for="uflicenc"> UF Licenciamento :</label>
@@ -98,7 +111,7 @@
 				</div>
 				<div>
 					<label for="nrcpfcgc"> CPF/CNPJ Interv. :</label>
-					<input name="nrcpfcgc" id="nrcpfcgc" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" />
+					<input name="nrcpfcgc" id="nrcpfcgc" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" maxlength="18" />
 				</div>
 			</div>
 		</fieldset>

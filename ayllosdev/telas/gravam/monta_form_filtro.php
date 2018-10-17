@@ -22,7 +22,6 @@
 	}
 	
 	if($cddopcao == "G" ||
-	   $cddopcao == "H" ||
 	   $cddopcao == "I" ||
 	   $cddopcao == "R" ||
 	   $cddopcao == "P"){
@@ -73,21 +72,6 @@
 
 		<?
 	
-	}else if($cddopcao == "H"){
-		
-		include('form_filtro_historico.php'); 
-
-		?>
-		<script type="text/javascript">			
-			
-			formataFiltroHistorico();
-			$('#cdcooper','#divFiltroHistorico').html('');
-		    $('#cdcooper','#divFiltroHistorico').append('<?php echo $nmrescop;?>');
-			
-		</script>
-
-		<? 
-		
 	}else if($cddopcao == "I"){
 		
 		include('form_filtro_impressao.php'); 
@@ -105,7 +89,13 @@
 		
 	}else if($cddopcao == "P"){
 		include('form_filtro_parametros.php');
-		
+		?>
+		<script type="text/javscript">
+			$(document).ready(function(){
+				console.log('nmdatela: <?php echo $glbvars['nmdatela'];?>, nmrotina: <?php echo $glbvars['nmrotina'];?>, cddopcao: <?php echo $cddopcao;?>' );
+			});
+		</script>
+		<?
 	}else{
 		
 		include('form_filtro.php'); 

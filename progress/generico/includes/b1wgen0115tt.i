@@ -58,7 +58,8 @@ DEF TEMP-TABLE tt-aditiv NO-UNDO
     FIELD dsaditiv  AS CHAR    FORMAT "x(36)"
     FIELD dscpfavl  AS CHAR    FORMAT "x(18)"
     FIELD tpdescto  AS INTE    FORMAT 9
-    FIELD tpctrato  LIKE crapadt.tpctrato.
+    FIELD tpctrato  LIKE crapadt.tpctrato
+    FIELD dssitgrv  AS CHAR    FORMAT "x(25)".
 
 DEF TEMP-TABLE tt-aplicacoes NO-UNDO
     FIELD nraplica AS INTE FORMAT "zzz,zz9"

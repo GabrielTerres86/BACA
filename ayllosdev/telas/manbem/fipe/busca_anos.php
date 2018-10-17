@@ -19,11 +19,14 @@
     require_once('uteis/class_combo.php');
     require_once('uteis/xml_convert_values.php');
 	isPostMethod();
+	
+	$aux = "";
 
     /******************************************************* Chama Serviço Fipe *****************************************************************/
     $idElementoHtml  	= (isset($_POST['idelhtml'])) ? $_POST['idelhtml'] : 0  ;
     $cdMarcaVeiculo		= (isset($_POST['cdmarfip'])) ? $_POST['cdmarfip'] : 0  ; 
-    $cdModeloVeiculo	= (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ; 
+    $cdModeloVeiculo	= (isset($_POST['cdmodfip'])) ? $_POST['cdmodfip'] : 0  ;
+    $nrmodbem			= (isset($_POST['nrmodbem'])) ? $_POST['nrmodbem'] : 0  ;
 
     $urlServicoOperacao = $UrlFipe."ObterListaMarcaModeloAnosFipe";
     $data = '{
@@ -56,10 +59,14 @@
         echo  "$('#".$idElementoHtml."').append($('<option>', 
         {
           value: ".$comboItem->value.",
-          text: '".utf8_decode($comboItem->text)."'
+          text: '".utf8_decode(strtoupper($comboItem->text))."'
         }));";
-		
+
+		if (utf8_decode(strtoupper($comboItem->text)) == utf8_decode(strtoupper($nrmodbem))) {
+			$aux = "$('#".$idElementoHtml." option').filter(function() { return $.trim( $(this).text() ) == '" . utf8_decode(strtoupper($comboItem->text)) . "'; }).attr('selected', 'selected');";
+		}
     }
+	echo $aux;
 	echo "verificarTipoVeiculo();";
     /************************************************** Fim Tratamento dados retornados *************************************************************/
 ?>

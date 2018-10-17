@@ -9,7 +9,7 @@
  * --------------
  *   001 [28/02/2014] Guilherme(SUPERO)         : Novos campos NrCpfCgc e validações.
  *	 002 [11/12/2014] Lucas Reinert(CECRED)		: Adicionado campos tpproapl e novo parametro na function arrayTipo
- *   003 [01/11/2017] Passagem do tpctrato e idgaropc. (Jaison/Marcos Martini - PRJ404) 
+ *   003 [01/11/2017] Passagem do tpctrato e idgaropc. (Jaison/Marcos Martini - PRJ404)
  *
  */
 ?>
@@ -93,7 +93,7 @@
 		echo 'showError("error","'.utf8ToHtml($msgErro).'","'.utf8ToHtml('Alerta - Aimaro').'","","$NaN");';
 	}
 	else {
-    
+
     // Verificar se é obrigatorio aprovação do coordenador
     $aprovacao == 0;
     if (strtoupper($xmlObject->roottag->tags[1]->name) == 'APROVACA') {
@@ -102,7 +102,7 @@
     
     // Se é necessário pedir aprovação do coordenador
     if($aprovacao==1){
-      $funcaoSim = 'SenhaCoordenador();';
+		$funcaoSim = 'SenhaCoordenador();';
     }else{
       $funcaoSim = 'SubstituiBem();';
     }  
@@ -111,24 +111,24 @@
     //echo ("console.log('funcaoSim: $funcaoSim');");
     
 		$funcaoNao = 'CancelaSubstituicao();';
-		$msgAvisoDefault = "Este processo irá retirar a alienação do veículo selecionado e alienar o novo veículo.";
+		$msgAvisoDefault = "Este processo irá primeiro alienar o novo veículo e depois baixar/cancelar a alienação do veículo a ser substituído.";
     
     // Se ha mensagem
-    if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'MENSAGEM') {	
 				$msgAviso = $xmlObject->roottag->tags[0]->cdata;
         if ($msgAviso != '') {
             $msgAviso = "<br/>".$msgAviso;
         }  
     }   
-    
+
     // Mostrar confirmação    
-    echo "showConfirmacao(
+			echo "showConfirmacao(
                 ' ".$msgAvisoDefault.$msgAviso." Continuar alteração ?'
                 ,'Confirma?- Aimaro'
-                ,'".$funcaoSim."'
-                ,'".$funcaoNao."'
-                ,'sim.gif'
-                ,'nao.gif'
-              );";
-    }
+										,'".$funcaoSim."'
+										,'".$funcaoNao."'
+										,'sim.gif'
+										,'nao.gif'
+									);";
+        }
 ?>

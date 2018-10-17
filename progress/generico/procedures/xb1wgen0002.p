@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 28/06/2018
+   Data    : Junho/2007                     Ultima atualizacao: 15/10/2018
 
    Dados referentes ao programa:
 
@@ -143,10 +143,13 @@
 																
               22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
                            PRJ366 (Lombardi)
-                           
-              12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).
 
               28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom) 
+			  
+			  12/07/2018 - Ajuste para alterar a data pagto dentro da opcao "Valor da proposta e data de vencimento" (PRJ 438 - Mateus Z / Mouts).
+              
+              15/10/2018 - P442 - Não mais passar dados de interveniente e bens na validação
+                           de outras propostas (Marcos-Envolti)
               
 ..............................................................................*/
 
@@ -1421,8 +1424,6 @@ PROCEDURE verifica-outras-propostas:
                                   INPUT aux_qtpromis, 
                                   INPUT aux_qtpreemp, 
                                   INPUT aux_cdlcremp,
-                                  INPUT TABLE tt-interv-anuentes,
-                                  INPUT TABLE tt-bens-alienacao,
                                  OUTPUT TABLE tt-erro,                                  
                                  OUTPUT TABLE tt-msg-confirma,
                                  OUTPUT TABLE tt-ge-epr  ).

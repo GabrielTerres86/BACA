@@ -1327,7 +1327,7 @@ function layoutPadrao() {
 	$('input.renavan'		).setMask('INTEGER','zzz.zzz.zzz.zz9','.','');
     $('input.renavan2'		).setMask('INTEGER','zz.zzz.zzz.zz9','.',''); //GRAVAMES
     $('input.contaitg'      ).setMask('STRING' ,'9.999.999-9','.-','');
-	$('input.placa'         ).setMask('STRING' ,'999-9999','-','');
+	$('input.placa'         ).setMask('STRING' ,'9999999','','');
 	$('input.matricula'		).setMask('INTEGER','zzz.zzz','.','');
 	$('input.cadempresa'	).setMask('INTEGER','zzzz.zzz.z','.','');
 	$('input.cnpj'			).setMask('INTEGER','z.zzz.zzz/zzzz-zz','/.-','');

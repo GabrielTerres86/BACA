@@ -287,10 +287,10 @@
 			arrayRegistros['vlpgmupr'] = '<? echo getByTagName($registros,'vlpgmupr'); ?>';
 			arrayRegistros['vlpgjmpr'] = '<? echo getByTagName($registros,'vlpgjmpr'); ?>';
 			arrayRegistros['vlsdpjtl'] = '<? echo getByTagName($registros,'vlsdpjtl'); ?>';
-      
+			
       /* 410 IOF */
 			arrayRegistros['vliofcpl'] = '<? echo formataMoeda(getByTagName($registros,'vliofcpl')); ?>';
-      arrayRegistros['idfiniof'] = '<? echo getByTagName($registros,'idfiniof'); ?>';
+            arrayRegistros['idfiniof'] = '<? echo getByTagName($registros,'idfiniof'); ?>';
       
       /* IOF Prejuizo */
       arrayRegistros['vltiofpr'] = '<? echo getByTagName($registros,'vltiofpr'); ?>';
@@ -497,7 +497,6 @@
 						if( getByTagName($regBensAval[$j]->tags,'nrdconta') == getByTagName($avalistas[$i]->tags,'nrctaava') ){
 						
 						$identificador = $j.getByTagName($regBensAval[$j]->tags,'nrdconta');
-						
 						?>
 												
 						var arrayBemAval<? echo $identificador ?> = new Object();
@@ -544,12 +543,22 @@
 				arrayAlienacao<? echo $i; ?>['nrrenava'] = '<? echo getByTagName($alienacoes[$i]->tags,'nrrenava'); ?>';
 				arrayAlienacao<? echo $i; ?>['tpchassi'] = '<? echo getByTagName($alienacoes[$i]->tags,'tpchassi'); ?>';
 				arrayAlienacao<? echo $i; ?>['ufdplaca'] = '<? echo getByTagName($alienacoes[$i]->tags,'ufdplaca'); ?>';
-                arrayAlienacao<? echo $i; ?>['uflicenc'] = '<? echo getByTagName($alienacoes[$i]->tags,'uflicenc'); ?>';
+        arrayAlienacao<? echo $i; ?>['uflicenc'] = '<? echo getByTagName($alienacoes[$i]->tags,'uflicenc'); ?>';
 				arrayAlienacao<? echo $i; ?>['nrcpfbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'nrcpfbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['dscpfbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'dscpfbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['vlmerbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlmerbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['idalibem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idalibem'); ?>';
 								
+				arrayAlienacao<? echo $i; ?>['dstipbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'dstipbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['dsmarbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'dsmarbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['vlrdobem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlrdobem'); ?>';
+				arrayAlienacao<? echo $i; ?>['vlfipbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlfipbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['nrcpfcgc'] = '<? echo getByTagName($alienacoes[$i]->tags,'nrcpfcgc'); ?>';
+				arrayAlienacao<? echo $i; ?>['idseqbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idseqbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['cdoperad'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdoperad'); ?>';
+				arrayAlienacao<? echo $i; ?>['dssitgrv'] = '<? echo getByTagName($alienacoes[$i]->tags,'dssitgrv'); ?>';
+				arrayAlienacao<? echo $i; ?>['dstpcomb'] = '<? echo getByTagName($alienacoes[$i]->tags,'dstpcomb'); ?>';
+
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 				
 			<?}?>

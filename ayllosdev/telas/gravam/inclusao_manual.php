@@ -77,15 +77,15 @@
 	function validaDados(){
 			
 		IF($GLOBALS["dtmvttel"] == '' ){ 
-			exibirErro('error','Data do registro deve ser informada!.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
+			exibirErro('error','Data do registro deve ser informada!.','Alerta - Aimaro','focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
 		}
     
 		IF($GLOBALS["dsjustif"] == '' ){ 
-			exibirErro('error','Justificativa deve ser informada!','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+			exibirErro('error','Justificativa deve ser informada!','Alerta - Aimaro','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
     
 		IF($GLOBALS["nrgravam"] == 0 ){ 
-			exibirErro('error','O n&uacute;mero do registro deve ser informado!','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'nrgravam\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero do registro deve ser informado!','Alerta - Aimaro','focaCampoErro(\'nrgravam\',\'frmBens\');',false);
 		}
 				
 	}	

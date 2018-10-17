@@ -112,8 +112,17 @@ function bloqueiaCamposVeiculoZero(valor)
 	var renavam =$('#nrrenava');
 	var ufPlaca =$('#ufdplaca');
 	var nrPlaca =$('#nrdplaca');
+	
 	if(valor==="ZERO KM") 
 	{
+		renavam.addClass("campoTelaSemBorda");
+		ufPlaca.addClass("campoTelaSemBorda");
+		nrPlaca.addClass("campoTelaSemBorda");
+		
+		renavam.removeClass("campo");
+		ufPlaca.removeClass("campo");
+		nrPlaca.removeClass("campo");
+		
 		renavam.val("").prop( "disabled", true );
 		ufPlaca.val(null);
 		ufPlaca.prop( "disabled", true );
@@ -123,9 +132,18 @@ function bloqueiaCamposVeiculoZero(valor)
 		removeErroCampo(nrPlaca);
 	}
 	else{
+		
 		renavam.prop( "disabled", false );
 		ufPlaca.prop( "disabled", false );
 		nrPlaca.prop( "disabled", false );
+		
+		renavam.addClass("campo");
+		ufPlaca.addClass("campo");
+		nrPlaca.addClass("campo");
+		
+		renavam.removeClass("campoTelaSemBorda");
+		ufPlaca.removeClass("campoTelaSemBorda");
+		nrPlaca.removeClass("campoTelaSemBorda");		
 	}
 }
 

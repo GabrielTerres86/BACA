@@ -30,13 +30,13 @@
   
   $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
   $nrctrpro = (isset($_POST["nrctrpro"])) ? $_POST["nrctrpro"] : 0;
-  $tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
-  $dsblqjud = (isset($_POST["dsblqjud"])) ? $_POST["dsblqjud"] : '';
+	$tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
   $dschassi = (isset($_POST["dschassi"])) ? $_POST["dschassi"] : '';  
   $ufdplaca = (isset($_POST["ufdplaca"])) ? $_POST["ufdplaca"] : '';
   $nrdplaca = (isset($_POST["nrdplaca"])) ? $_POST["nrdplaca"] : '';
   $nrrenava = (isset($_POST["nrrenava"])) ? $_POST["nrrenava"] : 0;
+	$dsjustif = (isset($_POST["dsjustif"])) ? $_POST["dsjustif"] : '';
     
   validaDados();
   
@@ -51,9 +51,9 @@
   $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
   $xml 	   .= "     <dschassi>".$dschassi."</dschassi>";
   $xml 	   .= "     <ufdplaca>".$ufdplaca."</ufdplaca>";
-  $xml 	   .= "     <nrdplaca>".str_replace('-','',$nrdplaca)."</nrdplaca>";
+	$xml 	   .= "     <nrdplaca>".$nrdplaca."</nrdplaca>";
   $xml 	   .= "     <nrrenava>".$nrrenava."</nrrenava>";
-  
+	$xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
   if($cddopcao == 'J'){
   
     // 0-> Bloquear
@@ -65,9 +65,10 @@
      $xml 	   .= "     <flblqjud>0</flblqjud>";
   
   }  
-	
   $xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
+	
+
 	
 	// Executa script para envio do XML	
 	$xmlResult = mensageria($xml, "GRVM0001", "BLQLIBGRAVAM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
@@ -81,6 +82,8 @@
 					
 	} 
 		
+	
+			
   //Se for boqueio judicial
   if($cddopcao == "J"){ 
   
@@ -125,7 +128,9 @@
 			exibirErro('error','Chassi, UF, Nr. da Placa e Renavam s&atilde;o obrigat&oacute;rios!','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
 		}
     
-    
+		IF($GLOBALS["dsjustif"] == '' ){ 
+			exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
+		}
 				
 	}	
   

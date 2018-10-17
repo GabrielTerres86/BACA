@@ -56,7 +56,7 @@
 	$xml 	   .= "     <dscatbem>".$dscatbem."</dscatbem>";
 	$xml 	   .= "     <dschassi>".$dschassi."</dschassi>";
 	$xml 	   .= "     <ufdplaca>".$ufdplaca."</ufdplaca>";
-	$xml 	   .= "     <nrdplaca>".str_replace('-','',$nrdplaca)."</nrdplaca>";
+	$xml 	   .= "     <nrdplaca>".$nrdplaca."</nrdplaca>";
 	$xml 	   .= "     <nrrenava>".$nrrenava."</nrrenava>";
 	$xml 	   .= "     <nranobem>".$nranobem."</nranobem>";
 	$xml 	   .= "     <nrmodbem>".$nrmodbem."</nrmodbem>";
@@ -90,19 +90,19 @@
   function validaDados(){
 			
 		IF($GLOBALS["dschassi"] == '' ){ 
-			exibirErro('error','O n&uacute;mero do chassi deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'dschassi\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero do chassi deve ser informado.','Alerta - Aimaro','focaCampoErro(\'dschassi\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["ufdplaca"] == '' ){ 
-			exibirErro('error','O UF da placa deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'ufdplaca\',\'frmBens\');',false);
+			exibirErro('error','O UF da placa deve ser informado.','Alerta - Aimaro','focaCampoErro(\'ufdplaca\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrdplaca"] == '' ){ 
-			exibirErro('error','O n&uacute;mero da placa deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'nrdplaca\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero da placa deve ser informado.','Alerta - Aimaro','focaCampoErro(\'nrdplaca\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrrenava"] == 0 ){ 
-			exibirErro('error','O n&uacute;mero do RENAVAM deve ser informado.','Alerta - Aimaro','formataFormularioBens();focaCampoErro(\'nrrenava\',\'frmBens\');',false);
+			exibirErro('error','O n&uacute;mero do RENAVAM deve ser informado.','Alerta - Aimaro','focaCampoErro(\'nrrenava\',\'frmBens\');',false);
 		}
 				
 	}	

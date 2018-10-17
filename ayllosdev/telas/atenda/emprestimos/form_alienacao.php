@@ -18,121 +18,49 @@
  *		[25/01/2016] Alterar a chamada do botao Salvar. (James) 
  *
  */
- ?>
 
-<form name="frmAlienacao" id="frmAlienacao" class="formulario">
-
-	<input id="nrctremp" name="nrctremp" type="hidden" value="" />
-
-	<label id="lsbemfin"></label>
-	<br />
-
-	<label for="dscatbem">Categoria:</label>
-	<select name="dscatbem" id="dscatbem" onChange="formataCategoriaBem(this.value);" ></select>
-	<label for="dstipbem">Tipo Ve&iacute;culo:</label>
-	<select name="dstipbem" id="dstipbem">
-		<option value="ZERO KM"> 1 - Zero KM</option>
-		<option value="USADO" selected> 2 - Usado</option>
-	</select>
-	<br />
-
-	<label for="dsbemfin"><? echo utf8ToHtml('Descrição:') ?></label>
-	<input name="dsbemfin" id="dsbemfin" type="text" value="" />
-
-	<label for="tpchassi">Tipo Chassi:</label>
-	<select name="tpchassi" id="tpchassi">
-		<option value="1"> 1 - Remarcado</option>
-		<option value="2" selected> 2 - Normal</option>
-	</select>
-	<br />
-
-	<label for="dscorbem">Cor/Classe:</label>
-	<input name="dscorbem" id="dscorbem" type="text" value="" />
-	<label for="vlmerbem">Valor de Mercado:</label>
-	<input name="vlmerbem" id="vlmerbem" type="text" value="" />
-	<br />
-
-	<label for="ufdplaca">UF/Placa:</label>
-	<? echo selectEstado('ufdplaca', '', 1) ?>
-	<input name="nrdplaca" id="nrdplaca" type="text" value="" />
-
-	<label for="dschassi">Chassi/N.Serie:</label>
-	<input name="dschassi" id="dschassi" type="text" value="" />
-	<br />
-
-	<label for="nrrenava">RENAVAM:</label>
-	<input name="nrrenava" id="nrrenava" type="text" value="" />
-
-	<label for="uflicenc">UF Licenciamento:</label>
-    <input name="uflicenc" id="uflicenc" type="text" value="" disabled />
-
-
-	<label for="nranobem">Ano Fab.:</label>
-	<input name="nranobem" id="nranobem" type="text" value="" />
-	<br />
-
-	<label for="nrmodbem">Ano Mod.:</label>
-	<input name="nrmodbem" id="nrmodbem" type="text" value="" />
-
-	<label for="nrcpfbem">CPF/CNPJ Propr.:</label>
-	<input name="nrcpfbem" id="nrcpfbem" onKeyPress="VerificaPessoa(this.value)" onKeyUp="VerificaPessoa(this.value)" type="text" value="" />
-	<br />
-
-</form>
-
+if (!in_array($operacao,array('C_ALIENACAO','AI_ALIENACAO','A_ALIENACAO','E_ALIENACAO','I_ALIENACAO','IA_ALIENACAO','A_BENS','AI_BENS'))) {
+  	require_once("./lib/metadados.php");
+} else {
+?>
+	<script type="text/javascript" src="../manbem/scripts/historico_gravames.js"></script>
+<?
+}
+	include('../../manbem/form_alie_veiculo.php');
+?>
 <div id="divBotoes">
-	<? if ( $operacao == 'A_ALIENACAO' ) { ?>
-		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'A_ALIENACAO\');','A_ALIENACAO'); return false;">Continuar</a>
-	<? } else if ($operacao == 'AI_ALIENACAO') { ?>
-		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'A_ALIENACAO\',\'A_INTEV_ANU\');','A_ALIENACAO'); return false;">Continuar</a>		
+	<? if ( $operacao == 'A_ALIENACAO' || $operacao == 'A_BENS' ) {
+			if ($operacao == 'A_ALIENACAO') {
+				$inicio = "A_INICIO";
+			} else {
+				$inicio = "AT";
+			} ?>
+		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('<? echo $inicio; ?>'); return false;">Voltar</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico Gravames</a>
+		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'<? echo $operacao; ?>\');','<? echo $operacao; ?>'); return false;">Continuar</a>
+	<? } else if ($operacao == 'AI_ALIENACAO' || $operacao == 'AI_BENS') {
+			if ($operacao == 'AI_ALIENACAO') {
+				$nova_opecacao = "A_ALIENACAO";
+				$finalizacao = "A_INTEV_ANU";
+				$inicio = "A_INICIO";
+			} else {
+				$nova_opecacao = "AI_BENS";
+				$finalizacao = "A_BENSFIM";
+				$inicio = "AT";
+			} ?>
+		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('<? echo $inicio; ?>'); return false;">Voltar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'<? echo $nova_opecacao; ?>\',\'<? echo $finalizacao; ?>\');','<? echo $nova_opecacao; ?>'); return false;">Continuar</a>
 	<? } else if ($operacao == 'C_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('CF'); return false;">Voltar</a>
+		<a href="#" hidden="hidden" class="botao" id="btHistoricoGravame" onClick="controlaOperacao('C_HISTORICO_GRAVAMES'); return false;">Hist&oacute;rico Gravames</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_ALIENACAO'); return false;">Continuar</a>
 	<? } else if ($operacao == 'E_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'I_ALIENACAO') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'I_ALIENACAO\',\'I_INTEV_ANU\');','I_ALIENACAO'); return false;">Continuar</a>		
+		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('insereAlienacao(\'I_ALIENACAO\',\'I_INTEV_ANU\');','I_ALIENACAO'); return false;">Continuar</a>
 	<? } else if ( $operacao == 'IA_ALIENACAO' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="validaAlienacao('atualizaArray(\'I_ALIENACAO\');','I_ALIENACAO'); return false;">Continuar</a>
 	<? } ?>
 </div>
-
-<script>
-
-	$(document).ready(function() {
-        highlightObjFocus($('#frmAlienacao'));
-	});
-
-	function VerificaPessoa( campo ){
-		if ( verificaTipoPessoa( campo ) == 1 ) {
-		$('#nrcpfbem', '#frmAlienacao').setMask('INTEGER','999.999.999-99','.-','');
-		} else if( verificaTipoPessoa( campo ) == 2 ) {
-			$('#nrcpfbem', '#frmAlienacao').setMask('INTEGER','z.zzz.zzz/zzzz-zz','/.-','');
-		} else {
-			$('#nrcpfbem', '#frmAlienacao').setMask('INTEGER', 'zzzzzzzzzzzzzz','','');
-		}
-	};
-
-    function formataCategoriaBem(dscatbem) {
-
-        $('#nrdplaca', '#frmAlienacao').removeClass('placa');
-		$('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzzzzzz','','');
-		/*
-        //$('#nrrenava', '#frmAlienacao').removeClass('renavan');
-        if (dscatbem == 'AUTOMOVEL' ||
-            dscatbem == 'MOTO'      ||
-            dscatbem == 'CAMINHAO') {
-            $('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzz-zzzz','-','');
-          //  $('#nrrenava', '#frmAlienacao').setMask('INTEGER','zz.zzz.zzz.zz9','.','');
-        }
-        else{
-            $('#nrdplaca', '#frmAlienacao').setMask('STRING' ,'zzz-zzzz','-','');
-           // $('#nrrenava', '#frmAlienacao').setMask('INTEGER','zzz.zzz.zzz.zz9','.','');
-        }*/
-    };
-
-</script>

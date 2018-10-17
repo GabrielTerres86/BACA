@@ -33,6 +33,7 @@
   $tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
   $tpcancel = (isset($_POST["tpcancel"])) ? $_POST["tpcancel"] : 0;
+  $dsjustif = (isset($_POST["dsjustif"])) ? $_POST["dsjustif"] : '';
   
   
   validaDados();
@@ -47,6 +48,8 @@
   $xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
   $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
   $xml 	   .= "     <tpcancel>".$tpcancel."</tpcancel>";
+	$xml 	   .= "     <dsjustif>".$dsjustif."</dsjustif>";
+	$xml 	   .= "     <cdopeapr>".$_SESSION['cdopelib']."</cdopeapr>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
@@ -76,23 +79,27 @@
   function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == '' ){ 
-			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro',' $(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Conta inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'nrdconta\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["nrctrpro"] == '' ){ 
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'nrctrpro\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["tpcancel"] != '1' && $GLOBALS["tpcancel"] != '2'){ 
-			exibirErro('error','Tipo de cancelamento inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo de cancelamento inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'tpcancel\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["tpctrpro"] == 0 ){ 
-			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','Tipo do contrato inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'tpctrpro\',\'frmBens\');',false);
 		}
     
     IF($GLOBALS["idseqbem"] == 0 ){ 
-			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Aimaro','$(\'#btVoltar\',\'#divBotoesBens\').focus();',false);
+			exibirErro('error','C&oacute;digo do bem inv&aacute;lido.','Alerta - Aimaro','focaCampoErro(\'idseqbem\',\'frmBens\');',false);
+		}
+		
+	IF($GLOBALS["dsjustif"] == '' ){ 
+		exibirErro('error','Justificativa inv&aacute;lida.','Alerta - Aimaro','focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
 				
 	}	

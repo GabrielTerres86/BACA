@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 21/02/2018
+   Data    : Agosto/2007                      Ultima atualizacao: 17/09/2018
 
    Dados referentes ao programa:
 
@@ -198,6 +198,8 @@
                            flintcdc e inintegra_cont,Prj. 402 (Jean Michel)
               
               04/07/2018 - P410 - Inclusão dos campos vltiofpr e vlpiofpr (Marcos-Envolti)
+              
+              17/09/2018 - P442 - Inclusao de campos dos bens da Proposta (Marcos-Envolti)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -422,7 +424,11 @@ DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD idalibem AS INTE
     FIELD uflicenc AS CHAR
     FIELD idseqbem AS INTE
-    FIELD dstipbem AS CHAR.
+    FIELD dstipbem AS CHAR
+    FIELD dsmarbem AS CHAR
+    FIELD vlfipbem AS DECI
+    FIELD dstpcomb AS CHAR
+    FIELD dssitgrv AS CHAR.
     
 DEF TEMP-TABLE tt-interv-anuentes NO-UNDO
     FIELD nrctaava LIKE crapavt.nrdconta
