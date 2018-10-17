@@ -1057,7 +1057,8 @@ END pc_busca_saldos_devedores;
       RAISE vr_exc_erro;
     END IF;
 
-		PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
+    IF pr_vlrpagto > 0 THEN
+	  PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => pr_cdcooper
                                , pr_nrdconta => pr_nrdconta
                                , pr_cdoperad => '1'
                                , pr_vllanmto => pr_vlrpagto
@@ -1066,8 +1067,9 @@ END pc_busca_saldos_devedores;
                                , pr_cdcritic => vr_cdcritic
                                , pr_dscritic => vr_dscritic);
 
-    IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
+      IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
     END IF;
 
     COMMIT;
