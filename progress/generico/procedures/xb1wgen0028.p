@@ -555,6 +555,7 @@ PROCEDURE valida_nova_proposta:
                                      INPUT aux_dsrepinc,
                                      INPUT aux_dsrepres,
                                      INPUT aux_flgdebit,
+                                     INPUT aux_nrctrcrd,
                                     OUTPUT aux_solcoord,
                                     OUTPUT TABLE tt-msg-confirma, 
                                     OUTPUT TABLE tt-erro).
@@ -667,6 +668,7 @@ PROCEDURE cadastra_novo_cartao:
                                      INPUT aux_dsrepres,
                                      INPUT aux_dsrepinc,
                                      INPUT aux_flgdebit,
+                                     INPUT aux_nrctrcrd,
                                     OUTPUT TABLE tt-ctr_novo_cartao, 
                                     OUTPUT TABLE tt-msg-confirma, 
                                     OUTPUT TABLE tt-erro).        

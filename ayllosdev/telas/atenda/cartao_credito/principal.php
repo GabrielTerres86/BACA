@@ -221,13 +221,13 @@ function voltarParaTelaPrincipal(){
 									<?php echo formataNumericos("zzzz.zzz-9",getByTagName($ccredito[$i]->tags,"NRDCONTA"),".-"); ?></td>
 							<?php } 																		
 							?>
-							<td style=""><?php echo getByTagName($ccredito[$i]->tags,"NMTITCRD"); ?></td>
-							<td style="" ><?php echo getByTagName($ccredito[$i]->tags,"NMRESADM"); ?></td>
+							<td><?php echo getByTagName($ccredito[$i]->tags,"NMTITCRD"); ?></td>
+							<td ><?php echo getByTagName($ccredito[$i]->tags,"NMRESADM"); ?></td>
 							
-							<td style=""><?php echo getByTagName($ccredito[$i]->tags,"DSCRCARD"); ?></td>
-							<td style="width:47px"><?php echo getByTagName($ccredito[$i]->tags,"DSSITCRD"); ?></td>
-							<td style="width:72px"><?php echo $motorResp[1]; ?></td>
-							<td id="decisao_motor_esteira" style="width:72px"><?php echo $motorResp[0]; ?></td>					
+							<td><?php echo getByTagName($ccredito[$i]->tags,"DSCRCARD"); ?></td>
+							<td><?php echo getByTagName($ccredito[$i]->tags,"DSSITCRD"); ?></td>
+							<td><?php echo $motorResp[1]; ?></td>
+							<td id="decisao_motor_esteira"><?php echo $motorResp[0]; ?></td>					
 						</tr>				
 					<? } ?>			
 				</tbody>
@@ -235,43 +235,51 @@ function voltarParaTelaPrincipal(){
 		</div>
 		
 		<div id="divBotoes">
-			
-			<input type="image" id="btncons" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>
+			<a href="#" class="botao" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>Consultar</a>
 			<?if(in_array("I",$glbvars["opcoesTela"])){?>
-				<input type="image" id="btnalterarLimite" style='cursor:pointer' src="<?php echo $UrlImagens; ?>botoes/alterar_limite.jpg"  onClick="alteraCartao(this,'<? echo $_POST["nrdconta"]; ?>')" disabled>
+				<a href="#" id="btnalterarLimite" class="botao" onClick="alteraCartao()">Alterar Limite</a>
 			<?}else{
 				?>
-				<input type="image" id="btnalterarLimite" style='cursor:default' src="<?php echo $UrlImagens; ?>botoes/alterar_limite.jpg"  onClick="return false;" disabled>
+				<a href="#" id="btnalterarLimite" class="botao" onClick="return false;">Alterar</a>
 				<?
 			}?>
 			<?php if(!($sitaucaoDaContaCrm == '4' || 
 				       $sitaucaoDaContaCrm == '7' || 
 				       $sitaucaoDaContaCrm == '8'  )){?>
-
-				<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='$methodNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>
-						
+				<a href="#" id="btnnovo" class="botao" <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='$methodNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>Novo</a>		
 			<?}?>
 			
-			<input type="image" id="btnimpr" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoImprimir();return false;'"; } ?>>
 			
-			<input type="image" id="btnentr" src="<?php echo $UrlImagens; ?>botoes/entregar.gif"  <?php if (!in_array("F",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoEntregar();return false;'"; } ?>>
-			<input type="image" id="btnaltr" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoAlterar();return false;'"; } ?>>
-			<input type="image" id="btnnseg" src="<?php echo $UrlImagens; ?>botoes/2via.gif"      <?php if (!in_array("2",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcao2via();return false;'"; } ?>>
-			<input type="image" id="btnreno" src="<?php echo $UrlImagens; ?>botoes/renovar.gif"   <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoRenovar();return false;'"; } ?>>
-			<input type="image" id="btntaa"  src="<?php echo $UrlImagens; ?>botoes/taa.gif"   <?php if (!in_array("U",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoTAA();return false;'"; } ?>>
-			<input type="image" id="btndossie" src="<?php echo $UrlImagens; ?>botoes/dossie.gif" class="FluxoNavega" onclick="dossieDigdoc(1);return false;">
+			<a href="#" class="botao" id="btnimpr" <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoImprimir();return false;'"; } ?>>Imprimir</a>			
 			
-			<br style="clear:both;" />
+			<a href="#" class="botao" id="btnentr" <?php if (!in_array("F",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoEntregar();return false;'"; } ?>>Entregar</a>
 			
-			<input type="image" id="btncanc" src="<?php echo $UrlImagens; ?>botoes/cancelamento_bloqueio.gif" <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoCancBloq();return false;'"; } ?>>
-			<input type="image" id="btnence" src="<?php echo $UrlImagens; ?>botoes/encerrar.gif"  <?php if (!in_array("Z",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoEncerrar();return false;'"; } ?>>
-			<input type="image" id="btnexcl" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if (!in_array("E",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoExcluir();return false;'"; } ?>>
-			<input type="image" id="btnextr" src="<?php echo $UrlImagens; ?>botoes/extrato.gif"   <?php if (!in_array("T",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoExtrato();return false;'"; } ?>>
-			<input type="image" id="btnupdo" src="<?php echo $UrlImagens; ?>botoes/upgrade-downgrade.gif" <?php if (!in_array("D",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoAlteraAdm();return false;'"; } ?>>
+			<a href="#" class="botao" id="btnaltr" <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoAlterar();return false;'"; } ?>>Alterar</a>
+			
+			<a href="#" class="botao" id="btnnseg" <?php if (!in_array("2",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcao2via();return false;'"; } ?>>2via</a>
+			
+			<a href="#" class="botao" id="btnreno" <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoRenovar();return false;'"; } ?>>Renovar</a>
+			
+			<a href="#" class="botao" id="btntaa" <?php if (!in_array("U",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoTAA();return false;'"; } ?>>TAA</a>
+			
+			<a href="#" class="botao FluxoNavega" id="btndossie" onclick="dossieDigdoc(1);return false;">Dossi&ecirc; DigiDOC</a>
+			
+			<a href="#" class="botao" id="btncanc" <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoCancBloq();return false;'"; } ?>>Cancelamento/Bloqueio</a>
+			
+			<a href="#" class="botao" id="btnence" <?php if (!in_array("Z",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoEncerrar();return false;'"; } ?>>Encerrar</a>
+			
+			<a href="#" class="botao" id="btnexcl" <?php if (!in_array("E",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoExcluir();return false;'"; } ?>>Excluir</a>
+			
+			<a href="#" class="botao" id="btnextr" <?php if (!in_array("T",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoExtrato();return false;'"; } ?>>Extrato</a>
+			
+			<a href="#" class="botao" id="btnupdo" <?php if (!in_array("D",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoAlteraAdm();return false;'"; } ?>>Upgrade/Downgrade</a>
 			
 			<?php if ($inpessoa <> "1" && $glbvars["cddepart"] == 2 ) { ?>
-				<input type="image" src="<?php echo $UrlImagens; ?>botoes/habilitar.gif" <?php if (!in_array("H",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoHabilitar();return false;'"; } ?>>
+				<a href="#" class="botao" <?php if (!in_array("H",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='opcaoHabilitar();return false;'"; } ?>>Habilitar</a>
 			<?php } ?>
+
+            <a href="#" id="btedpro" class="botao" <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default'"; } else { echo "onClick='validaAlterarProposta(); return false;'"; } ?>>Editar Proposta</a>			
+
 		</div>
 				
 	</div>

@@ -93,6 +93,11 @@ CREATE OR REPLACE PACKAGE CECRED."CCRD0001" AS
                                       pr_qtcancel   OUT PLS_INTEGER,
                                       pr_tab_limites OUT CCRD0001.typ_tab_limites);
 
+  PROCEDURE pc_retorna_limite_cooperado (pr_cdcooper   IN crapcop.cdcooper%type
+                                        ,pr_nrdconta   IN crapass.nrdconta%type
+                                        ,pr_dtmvtolt   IN crapdat.dtmvtolt%type
+                                        ,pr_vllimtot   OUT NUMBER) ;
+
 END CCRD0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED."CCRD0001" AS
@@ -341,7 +346,90 @@ CREATE OR REPLACE PACKAGE BODY CECRED."CCRD0001" AS
       CLOSE cr_crawcrd_concedido;
 
     END;
-  END; -- pc_contabiliza
+  END pc_limite_cartao_credito; -- pc_contabiliza
+
+  PROCEDURE pc_retorna_limite_cooperado (pr_cdcooper   IN crapcop.cdcooper%type
+                                        ,pr_nrdconta   IN crapass.nrdconta%type
+                                        ,pr_dtmvtolt   IN crapdat.dtmvtolt%type
+                                        ,pr_vllimtot   OUT NUMBER) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_retorna_limite_cooperado
+  --  Sigla    : CRED
+  --  Autor    : Rafael Faria (Supero)
+  --  Data     : Autubro/2018.                   Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Retorna os limites dos cartoes do cooperado para a cooperativa
+  --
+  -- Alteracoes: 
+  ---------------------------------------------------------------------------------------------------------------
+    -- Buscar o CPF da conta
+    CURSOR cr_crapass IS
+      SELECT nrcpfcgc
+        FROM crapass
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    CURSOR cr_crapass_cpfcgc (pr_nrcpfcgc in crapass.nrcpfcgc%type) IS
+       SELECT cp.cdcooper
+             ,cp.nrdconta
+             ,cp.cdagenci
+         FROM crapass cp
+        WHERE cdcooper = pr_cdcooper
+          AND nrcpfcgc = pr_nrcpfcgc;
+    rw_crapass_cpfcgc cr_crapass_cpfcgc%rowtype;
+   
+    -- variaveis
+    vr_tab_cartoes CADA0004.typ_tab_cartoes;   
+    vr_vltotccr    NUMBER := 0;
+    vr_vllimtot    NUMBER := 0;
+    vr_flgativo    INTEGER;
+    vr_nrctrhcj    NUMBER;
+    vr_flgliber    INTEGER;
+    vr_tab_erro    GENE0001.typ_tab_erro;
+    vr_des_erro    VARCHAR2(10);
+    vr_des_reto    VARCHAR2(10);
+      
+  BEGIN
+    
+    OPEN cr_crapass;
+    FETCH cr_crapass INTO rw_crapass;
+    CLOSE cr_crapass;
+    
+    FOR rw_crapass_cpfcgc in cr_crapass_cpfcgc (rw_crapass.nrcpfcgc) LOOP
+
+       cada0004.pc_lista_cartoes(pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
+                                ,pr_cdagenci => rw_crapass_cpfcgc.cdagenci --> Codigo de agencia
+                                ,pr_nrdcaixa => 0 --> Numero do caixa
+                                ,pr_cdoperad => 1 --> Codigo do operador
+                                ,pr_nrdconta => rw_crapass_cpfcgc.nrdconta --> Numero da conta
+                                ,pr_idorigem => 5 --> Identificado de oriem
+                                ,pr_idseqttl => 1 --> sequencial do titular
+                                ,pr_nmdatela => 'ATENDA' --> Nome da tela
+                                ,pr_flgerlog => 'N' --> identificador se deve gerar log S-Sim e N-Nao
+                                ,pr_flgzerar => 'N' --> Nao zerar limite
+                                ,pr_dtmvtolt => pr_dtmvtolt --> Data da cooperativa
+                                ,pr_flgprcrd => 1 --> considerar apenas limite titular
+                                 ------ OUT ------
+                                ,pr_flgativo    => vr_flgativo --> Retorna situação 1-ativo 2-inativo
+                                ,pr_nrctrhcj    => vr_nrctrhcj --> Retorna numero do contrato
+                                ,pr_flgliber    => vr_flgliber --> Retorna se esta liberado 1-sim 2-nao
+                                ,pr_vltotccr    => vr_vltotccr --> retorna total de limite do cartao 
+                                ,pr_tab_cartoes => vr_tab_cartoes --> retorna temptable com os dados dos convenios
+                                ,pr_des_reto    => vr_des_reto --> OK ou NOK
+                                ,pr_tab_erro    => vr_tab_erro);
+
+        vr_vllimtot := vr_vllimtot + vr_vltotccr;                        
+
+    END LOOP;
+
+    pr_vllimtot := vr_vllimtot;
+    
+  END pc_retorna_limite_cooperado;
 
 END CCRD0001;
 /

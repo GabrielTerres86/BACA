@@ -32,6 +32,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
   vr_flgerlog     BOOLEAN := TRUE;
   vr_qtdregok     NUMBER := 0; -- Contador de registros processados com sucesso
   vr_qtregerr     NUMBER := 0; -- Contador de registros processados com erro
+  vr_tplimcrd     NUMBER(1) := 1; -- 0=concessao, 1=alteracao
 
   ------------------------------- CURSORES ---------------------------------
   -- Buscar os controles de cargas do BI, identificando as cargas prontas para importação
@@ -98,13 +99,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
   rw_crawcrd   cr_crawcrd%ROWTYPE;
   
    -- Cursor para verificar se o limite para atualização está habilitado para o tipo do cartão. (CECRED)
-  CURSOR cr_craptlc_cecred( pr_cdcooper   craptlc.cdcooper%TYPE
-                           ,pr_cdadmcrd   craptlc.cdadmcrd%TYPE
-                           ,pr_vllimatu   craptlc.vllimcrd%TYPE ) IS
+  CURSOR cr_craptlc_cecred( pr_cdcooper   tbcrd_config_categoria.cdcooper%TYPE
+                           ,pr_cdadmcrd   tbcrd_config_categoria.cdadmcrd%TYPE
+                           ,pr_vllimatu   tbcrd_config_categoria.vllimite_minimo%TYPE
+                           ,pr_tplimcrd   tbcrd_config_categoria.tplimcrd%TYPE) IS
     SELECT 1 AS existe
       FROM tbcrd_config_categoria tbcc
      WHERE tbcc.cdcooper = pr_cdcooper
        AND tbcc.cdadmcrd = pr_cdadmcrd
+       AND tbcc.tplimcrd = pr_tplimcrd
        AND pr_vllimatu BETWEEN tbcc.vllimite_minimo AND tbcc.vllimite_maximo;
   rw_craptlc_cecred   cr_craptlc_cecred%ROWTYPE;
 
@@ -318,7 +321,8 @@ BEGIN
         -- Validar se o limite para atualização está habilitado para o tipo do cartão. 
         OPEN  cr_craptlc_cecred(rw_majoracao.cdcooper    -- pr_cdcooper
                               ,rw_crawcrd.cdadmcrd      -- pr_cdadmcrd
-                              ,rw_majoracao.vllimite);  -- pr_vllimatu
+                               ,rw_majoracao.vllimite  -- pr_vllimatu
+                               ,vr_tplimcrd);          -- pr_tplimcrd
         FETCH cr_craptlc_cecred INTO rw_craptlc_cecred;
         -- Verificar se existe registro
         IF cr_craptlc_cecred%NOTFOUND THEN

@@ -1032,6 +1032,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                      INPUT tel_nrdoccrd,
                                      INPUT tel_dsrepinc,
                                      INPUT " ", /* dsrepres */
+									 INPUT FALSE, /*par_flgdebit*/
+									 INPUT 0, /*par_flgdebit*/
                                     OUTPUT TABLE tt-msg-confirma,
                                     OUTPUT TABLE tt-erro). 
 
@@ -1236,6 +1238,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                  INPUT " ", /* par_dsrepres */
                                  INPUT " ", /* par_dsrepinc */
                                  INPUT FALSE,
+								 INPUT 0, /*par_nrctrcrd*/
                                 OUTPUT TABLE tt-ctr_novo_cartao,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT TABLE tt-erro).

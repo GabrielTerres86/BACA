@@ -23,6 +23,7 @@
     }
 
     $cdadmcrd = isset($_POST['cdadmcrd'])? $_POST['cdadmcrd'] : "";
+    $tplimcrd = $_POST['tplimcrd'];
     $vllimite_min = isset($_POST['vllimite_min'])? formatValue($_POST['vllimite_min']) : "0";
     $vllimite_max = isset($_POST['vllimite_max'])? formatValue($_POST['vllimite_max']) : "0";
     $vllimite = isset($_POST['vllimite'])?formatValue($_POST['vllimite']) : "0";
@@ -33,11 +34,6 @@
     $dddebito = isset($_POST['dddebito'])? $_POST['dddebito'] : "";
     $tpproces = isset($_POST['tpproces'])? $_POST['tpproces'] : "A";
     $cecred = $cdadmcrd > 9 && $cdadmcrd < 81;
-	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$tpproces, false)) <> '') {
-	   exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-	
     if($tpproces == "A"){
         if($cecred  ){
             if(is_null($vllimite_min)){
@@ -70,6 +66,7 @@
     $xml .= " <Dados>";
     $xml .= "<cdcooper>". $glbvars["cdcooper"] ."</cdcooper>"; 
     $xml .= "<cdadmcrd>". $cdadmcrd."</cdadmcrd>"; 
+    $xml .= "<tplimcrd>". $tplimcrd."</tplimcrd>";
     $xml .= "<vllimite_min>".$vllimite_min."</vllimite_min>"; 
     $xml .= "<vllimite_max>".$vllimite_max."</vllimite_max>"; 
     $xml .= "<vllimite>".$vllimite."</vllimite>";         
@@ -89,7 +86,7 @@
     echo "hideMsgAguardo();";
     if(isset($obj->Erro->Registro->dscritic)){
        echo "success = false;"; 
-       exibirErro('error',preg_replace( "/\r|\n/", "<br>", utf8ToHtml($obj->Erro->Registro->cdcritic." ".$obj->Erro->Registro->dscritic)),'Alerta - Ayllos',$funcaoAposErro,false);
+       exibirErro('error',preg_replace( "/\r|\n/", "<br>", utf8ToHtml($obj->Erro->Registro->cdcritic." ".$obj->Erro->Registro->dscritic)),'Alerta - Aimaro',$funcaoAposErro,false);
     }else{
 		$status = str_replace("Ã§","ç",$obj->Dados->status);
         echo "success = true;message ='".utf8ToHtml($status)."'";

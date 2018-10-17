@@ -15,11 +15,8 @@ var btnVoltar;
 var btnConcluir;
 var btnExcluir;
 var btnOKPressed;
+var tplimcrd;
 $(document).ready(function () {
-    estadoInicial();
-});
-
-function estadoInicial() {
     // Estado Inicial da tela
     waiting = $("#waiting");
     btnVoltar = $("#btVoltar");
@@ -33,6 +30,7 @@ function estadoInicial() {
         btnVoltar.hide();
         $("#cddotipo").removeAttr("disabled");
         $("#mainAdmCrd").removeAttr("disabled", true);
+        $("#tplimcrd").removeAttr("disabled");
         btnOKPressed = false;
         $("#cddotipo").val("I").change();
         $("#content").fadeIn("slow");
@@ -48,7 +46,29 @@ function estadoInicial() {
     triggerBtnOK();
     waiting.hide();
     btnVoltar.hide();
-}
+    var opcoes = $("#mainAdmCrd").find('option');
+    $("#tplimcrd").change(function() {
+        var mainAdmCrd = $("#mainAdmCrd").val();
+        $("#mainAdmCrd").find('option').remove();        
+        for (var i = 0; i < opcoes.length; i++) {
+            var $elem = $(opcoes[i]);
+            if ($(this).val() == 1) {
+                if ($elem.attr('tpAdm') == "2") {
+                    $("#mainAdmCrd").append($elem);
+                }
+            } else {
+                $("#mainAdmCrd").append($elem);
+            }
+        }
+
+        $("#mainAdmCrd option").each(function () {
+            if ($(this).css('display') != 'none') {
+                $("#mainAdmCrd").val($(this).val());
+                return false;
+            }
+        });
+    });
+});
 
 function carregarFormulario() {
     $.ajax({
@@ -56,19 +76,14 @@ function carregarFormulario() {
         dataType: "html",
         url: UrlSite + "telas/limcrd/form_cadastro_limite.php",
         data: {
-			cddopcao: $("#cddotipo").val(),
-            admcrd: $("#mainAdmCrd").val()
+            admcrd: $("#mainAdmCrd").val(),
+            "tplimcrd": tplimcrd
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-			if (typeof response === 'string' && response.substr(0,14) == 'hideMsgAguardo') {
-				estadoInicial();
-				eval(response);
-				return;
-			}
             $("#cadastros").html(response);
         }
     });
@@ -87,17 +102,12 @@ function triggerBtnOK() {
         var opt = $("#cddotipo").val();
         if (opt == "I") {
 			var madm = parseInt($("#mainAdmCrd").val());
+            tplimcrd = $("#tplimcrd").val();
 			if(madm > 10 && madm < 18){				
-				$.post("busca_limites.php", {"action": opt, "admcrd": madm}, function (resp) {
-					
-					if (typeof resp === 'string' && resp.substr(0,14) == 'hideMsgAguardo') {
-						estadoInicial();
-						eval(resp);
-						return;
-					}
+				$.post("busca_limites.php", {"action": "C", "admcrd": madm, "tplimcrd": tplimcrd}, function (resp) {					
 					if(resp[0].totalregistros > 0){
 						//alertaLinhaExistente
-						showError("error",labels.alertaLinhaExistente , "Alerta - Ayllos", "");
+						showError("error",labels.alertaLinhaExistente , "Alerta - Aimaro", "");
 						btVoltar.click();
 					}else{
 						carregarFormulario();
@@ -150,6 +160,7 @@ function triggerBtnOK() {
         $(".clickable").css("cursor", "pointer");
         $("#cddotipo").attr("disabled", true);
         $("#mainAdmCrd").attr("disabled", true);
+        $("#tplimcrd").attr("disabled", true);
 
     });
 }
@@ -160,13 +171,9 @@ function getLimites(edit) {
     globalEdit = edit;
     waiting.show();
     admcrd = $('#mainAdmCrd').val();
+    tplimcrd = $("#tplimcrd").val();
     $(".rls").remove();
-    $.post("busca_limites.php", {"action": $("#cddotipo").val(), "admcrd": admcrd}, function (resp) {
-		if (typeof resp === 'string' && resp.substr(0,14) == 'hideMsgAguardo') {
-			estadoInicial();
-			eval(resp);
-			return;
-		}
+    $.post("busca_limites.php", {"action": "C", "admcrd": admcrd, "tplimcrd": tplimcrd}, function (resp) {
         gerenciarResultados(resp, globalEdit);
     });
 }
@@ -233,34 +240,29 @@ function pagination(movement) {
     waiting.show();
     $(".rls").remove();
     admcrd = $('#mainAdmCrd').val();
-    $.post("busca_limites.php", {"action": "C", "page": page, "admcrd": admcrd}, function (resp) {
+    tplimcrd = $("#tplimcrd").val();
+    $.post("busca_limites.php", {"action": "C", "page": page, "admcrd": admcrd, "tplimcrd": tplimcrd}, function (resp) {
         gerenciarResultados(resp, globalEdit);
     });
 }
 
 function editarLimite(index, edit) {
     $("#btnExcluir").attr("index",index);
+    tplimcrd = $("#tplimcrd").val();
     $.ajax({
         type: "POST",
         dataType: "html",
         url: UrlSite + "telas/limcrd/form_cadastro_limite.php",
         data: {
-			cddopcao: $("#cddotipo").val(),
-            admcrd: $("#mainAdmCrd").val()
+            admcrd: $("#mainAdmCrd").val(),
+            "tplimcrd": tplimcrd
         },
         error: function (objAjax, responseError, objExcept) {
 
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-			
-			if (typeof response === 'string' && response.substr(0,14) == 'hideMsgAguardo') {
-				estadoInicial();
-				eval(response);
-				return;
-			}
-			
             $("#cadastros").html("");
             $("#cadastros").html(response);
 
@@ -317,16 +319,16 @@ function buildRow(data, i, edit) {
         return "<tr class=\"rls " + "clickable" + "  "
             + (i % 2 == 0 ? " odd corPar" : " even corImpar") + " \" id=\"linha" + i + "\" onclick=\""
             + "editarLimite(" + i + "," + edit + ")" + "\">"
-            + "<td class='admCell' style='width: 169px;'>" + data.CDADMCRD + " - " + $('#mainAdmCrd option:selected').text() + "</td>"
-            + "<td class='limCell' style='width: 155px;'>" + data.vllimite_minimo + "</td>"
-            + "<td class='limiteCell' style='width: 161px;'>" + data.vllimite_maximo + "</td>"
+            + "<td class='admCell' style='width: 197px;'>" + $('#mainAdmCrd option:selected').text() + "</td>"
+            + "<td class='limCell' style='width: 181px;'>" + data.vllimite_minimo + "</td>"
+            + "<td class='limiteCell' style='width: 187px;'>" + data.vllimite_maximo + "</td>"
             + "<td class='diadebitoCell'>" + data.dsdias_debito + "</td>"
             + "</tr>";
     }
     return "<tr class=\"rls " + "clickable" + "  "
         + (i % 2 == 0 ? " odd corPar" : " even corImpar") + " \" id=\"linha" + i + "\" onclick=\""
         + "editarLimite(" + i + "," + edit + ")" + "\">"
-        + "<td class='admCell' style='width: 164px;'>" + data.CDADMCRD + " - " + $('#mainAdmCrd option:selected').text() + "</td>"
+        + "<td class='admCell' style='width: 164px;'>" + $('#mainAdmCrd option:selected').text() + "</td>"
         + "<td class='limiteCell' style='width: 72px;'>" + data.vllimite_maximo + "</td>"
         + "<td class='diadebitoCell' style='width: 127px;'>" + data.dsdias_debito + "</td>"
         + "<td class='tipocell' style='width: 60;'>" + data.cdlimcrd + "</td>"
@@ -359,8 +361,10 @@ function salvarLimite() {
     var insittab = $("#insittab").val();
     var tpcartao = $("#TPCARTAO").val();
     var dddebito = "";
+    tplimcrd = $("#tplimcrd").val();
 
     var objToSend = {};
+    objToSend.tplimcrd = tplimcrd;
     if ((cdadmcrd > 9) && (cdadmcrd < 81)) {
         $(".DDDEBITO").each(function (key, elem) {
             if (elem.checked) {
@@ -394,14 +398,14 @@ function salvarLimite() {
         error: function (objAjax, responseError, objExcept) {
 
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             console.log(response);
             success = false;
             eval(response);
             if(success){
-                showError("Alert", message, "Alerta - Ayllos", "");
+                showError("Alert", message, "Alerta - Aimaro", "");
                 btnVoltar.click();
             }
             
@@ -425,8 +429,10 @@ function excluirLimite(){
     var insittab = $("#insittab").val();
     var tpcartao = registros[index].tpcartao;
     var dddebito = "";
+    tplimcrd = $("#tplimcrd").val();
 
     var objToSend = {};
+    objToSend.tplimcrd = tplimcrd;
     if ((cdadmcrd > 9) && (cdadmcrd < 81)) {
         $(".DDDEBITO").each(function (key, elem) {
             if (elem.checked) {
@@ -461,14 +467,14 @@ function excluirLimite(){
         error: function (objAjax, responseError, objExcept) {
 
             hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
             console.log(response);
             success = false;
             eval(response);
             if(success){
-                showError("Alert", message, "Alerta - Ayllos", "");
+                showError("Alert", message, "Alerta - Aimaro", "");
                 btnVoltar.click();
             }
             

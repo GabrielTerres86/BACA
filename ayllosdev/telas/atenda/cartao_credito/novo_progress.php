@@ -156,7 +156,7 @@
 	$aListaLimite	     = explode(";",$cdAdmLimite[0]);	
 	$cdLimite			 = explode("@",$aListaLimite[1]);
 
-	$xml .= "<Root>";
+	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= " </Dados>";
@@ -168,6 +168,22 @@
 	$json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata,true);
 
 	$idacionamento = $xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[1]->cdata;
+
+	// Validação para saber se houve ou não alteração no nome da empresa, se houver habilita edição do campo empresa do plástico
+	// Augusto - Supero
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "VALIDA_ALT_EMPR_PLASTICO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);	
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
+		exibirErro('error', $msgErro, 'Alerta - Ayllos', $funcaoAposErro);
+	}
+	$habilitarEdicaoEmpresaPlastico = (!empty($xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata) ? $xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata : "0");
 ?>
 
 <style>
@@ -286,6 +302,7 @@
 			<div id="empresa">
 				<label for="nmempres"><? echo utf8ToHtml('Empresa do Plástico:') ?></label>
 				<input type="text" name="nmempres" id="nmempres" class="campo" value="<?echo $nmtitcrd; ?>" />
+				<input type="hidden" name="flgEditEmpPlas" id ="flgEditEmpPlas" value="<?=$habilitarEdicaoEmpresaPlastico?>" />
 			</div>
 			
 			<hr style="background-color:#666; height:1px; width:480px;" id="hr2"/>
@@ -338,15 +355,16 @@
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
 					<?php
 					//for ($i = 0; $i < count($cdLimite); $i++){
-						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option><?php
+						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option>
 					//}
+				</select>
+				<?php
 				}else{
 					?>
 					<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' value='<? echo number_format( 0,2,",",".");?>'>
 					<?
 				}
 					?>
-				</select>			
 			</div>
 			<label for="flgdebit"><? echo utf8ToHtml('Habilita função débito:') ?></label>
 			<input type="checkbox" name="flgdebit" id="flgdebit" class="campo" value="" onclick='confirmaPurocredito();'/>
@@ -551,18 +569,8 @@
 							
 							$("#flgdebit").removeAttr("readonly");
 							$("#flgdebit").removeAttr("disabled");
-							$("#flgdebit").removeProp("disabled");
-							$("#flgdebit").removeProp("readonly");
-							setTimeout(function(){
-								$("#flgdebit").removeAttr("readonly");
-							$("#flgdebit").removeAttr("disabled");
-								$("#flgdebit").removeProp("disabled");
-								$("#flgdebit").removeProp("readonly");
-							}, 600);
-							
-							
 							$("#tpdpagto").removeAttr("disabled");
-							$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
+							//$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
 							
 							$("#dddebito").removeAttr("disabled");
 							var ddDebit = '<? echo strlen($dadosTitular['ddebiess']) > 0 ? $dadosTitular['ddebiess'] : '' ; ?>';

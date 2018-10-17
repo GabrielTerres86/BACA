@@ -120,6 +120,8 @@
 	$dsrepres = $_POST['dsrepres'];
 	$flgdebit = $_POST['flgdebit'];
 	
+	$nrctrcrd = $_POST['nrctrcrd'];
+	
 	$executandoProdutos = $_POST['executandoProdutos'];
 	
 	// Verifica se número da conta é um inteiro válido
@@ -191,6 +193,30 @@
 	// Verifica tipo de envio
 	if (!validaInteiro($tpenvcrd)) exibirErro('error','Tipo de Envio inv&aacute;lido.','Alerta - Aimaro',$funcaoAposErro,false);	
 	
+	// Verifica tipo de envio
+	if (!validaInteiro($nrdoccrd)) exibirErro('error','Identidade inv&aacute;lida.','Alerta - Aimaro',$funcaoAposErro,false);	
+	
+
+	// Se for uma alteração validamos se a senha já foi informada
+	if (!empty($nrctrcrd)) {
+		$xml .= "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		$admresult = mensageria($xml, "ATENDA_CRD", "BUSCAR_ASSINATURA_REPRESENTANTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$objectResult = simplexml_load_string($admresult);
+
+		$alguemAssinou = false;
+		foreach($objectResult->Dados->representantes->representante as $representante){   
+			if( ($representante->assinou == "S")){
+				$alguemAssinou = true;
+			}
+		}
+	}
+
+
 	// Monta o xml de requisi&ccedil;&atilde;o
 	$xmlSetCartao  = "";
 	$xmlSetCartao .= "<Root>";
@@ -270,6 +296,7 @@
 	$xmlSetCartao .= "		<dsrepres>".$dsrepres."</dsrepres>";	
 	$xmlSetCartao .= "		<dsrepinc>".$dsrepinc."</dsrepinc>";	
 	$xmlSetCartao .= "		<flgdebit>".$flgdebit."</flgdebit>";	
+	$xmlSetCartao .= "		<nrctrcrd>".$nrctrcrd."</nrctrcrd>";
 	$xmlSetCartao .= "	</Dados>";
 	$xmlSetCartao .= "</Root>";
 
@@ -293,7 +320,7 @@
 	$dsmensag = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[1]->cdata;
 	
 	// Número do novo contrato
-	$nrctrcrd = $xmlObjCartao->roottag->tags[1]->tags[0]->tags[0]->cdata;
+	$nrctrcrd = ($nrctrcrd > 0) ? $nrctrcrd : $xmlObjCartao->roottag->tags[1]->tags[0]->tags[0]->cdata;
 
 	
 	/* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
@@ -319,9 +346,13 @@
 	if(in_array(  intval($cdadmcrd),$cecredCartoes) && $bAtivoPiloto){
 
 		echo "hideMsgAguardo();";
-		if(isset($nrctrcrd) && isset($cdadmcrd))
+		if(isset($nrctrcrd) && isset($cdadmcrd)) {
+			if ($alguemAssinou) {
+				echo "enviarBancoob(".$nrctrcrd.")";
+			} else {
 			echo "solicitaSenha($nrctrcrd, $cdadmcrd);";
-		else{
+			}
+		} else {
 			exibirErro('error',utf8ToHtml("O Contrato não pôde ser gerado."),'Alerta - Aimaro',$funcaoAposErro,false);
 		}
 			

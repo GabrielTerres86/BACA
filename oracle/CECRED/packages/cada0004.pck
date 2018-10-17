@@ -292,6 +292,18 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
                               ) RETURN VARCHAR2; --> returnar descricao da situacao(dssitura)
   
+	  
+  /******************************************************************************/
+	/**        Funcao para verificar qual a administradora do cartao (WEB)       **/
+	/******************************************************************************/
+	PROCEDURE pc_verifica_adm_web(pr_cdadmcrd IN INTEGER --> Codigo da administradora
+															 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+															 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+															 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+															 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+															 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+															 ,pr_des_erro OUT VARCHAR2);
+	
   /******************************************************************************/
   /**            Procedure para listar cartoes do cooperado                    **/
   /******************************************************************************/
@@ -306,6 +318,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                             ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
                             ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
+                            ,pr_flgprcrd IN crawcrd.flgprcrd%TYPE DEFAULT 0 --> Considerar apenas titular (0-Nao,1-Sim)
                             ------ OUT ------
                             ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
                             ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
@@ -835,6 +848,7 @@ PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> C
 
 PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA.CDCOOPER%TYPE
                                          ,pr_cdadmcrd    IN TBCRD_CONFIG_CATEGORIA.CDADMCRD%TYPE
+                                         ,pr_tplimcrd    IN tbcrd_config_categoria.tplimcrd%TYPE DEFAULT 0
                                          ,pr_vllimite_minimo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE
                                          ,pr_vllimite_maximo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE
                                          ,pr_diasdebito       OUT TBCRD_CONFIG_CATEGORIA.DSDIAS_DEBITO%TYPE
@@ -1777,6 +1791,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   END fn_verifica_adm;
   
   /******************************************************************************/
+	/**        Funcao para verificar qual a administradora do cartao (WEB)       **/
+	/******************************************************************************/
+	PROCEDURE pc_verifica_adm_web(pr_cdadmcrd IN INTEGER --> Codigo da administradora
+															 ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+															 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+															 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+															 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+															 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+															 ,pr_des_erro OUT VARCHAR2) IS
+			--> Erros do processo
+			/* .............................................................................
+        
+					Programa: pc_verifica_adm_web
+					Sistema : CECRED
+					Sigla   : CRD
+					Autor   : Augusto (Supero)
+					Data    : Setembro/2018                 Ultima atualizacao: 15/09/2018
+        
+					Dados referentes ao programa:
+        
+					Frequencia: Sempre que for chamado
+        
+					Objetivo  : Retorna a administradora
+        
+					Observacao: -----
+        
+					Alteracoes:
+			..............................................................................*/
+    
+			-- Tratamento de erros
+			vr_cdcritic NUMBER := 0;
+			vr_dscritic VARCHAR2(4000);
+	BEGIN
+    
+			pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+																		 '<Root><Dados><Administradora>' || fn_verifica_adm(pr_cdadmcrd) ||
+																		 '</Administradora></Dados></Root>');
+    
+	EXCEPTION
+			WHEN OTHERS THEN
+        
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := 'Erro geral na rotina na procedure CADA0004.pc_verifica_adm_web. Erro: ' || SQLERRM;
+					pr_des_erro := 'NOK';
+					-- Carregar XML padrão para variável de retorno não utilizada.
+					-- Existe para satisfazer exigência da interface.
+					pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
+																				 pr_dscritic || '</Erro></Root>');
+	END pc_verifica_adm_web;
+  
+  /******************************************************************************/
   /**        Funcao para retotnar a descricao da situacao do cartao            **/
   /******************************************************************************/
   FUNCTION fn_retorna_situacao_cartao ( pr_insitcrd IN INTEGER
@@ -1860,6 +1925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
                             ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
+                            ,pr_flgprcrd IN crawcrd.flgprcrd%TYPE DEFAULT 0 --> Considerar apenas titular (0-Nao,1-Sim)
                             ------ OUT ------
                             ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
                             ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
@@ -1912,6 +1978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
             ,crapadc.nmresadm
             ,crapadc.flgcchip
             ,crawcrd.nrdconta
+            ,crawcrd.flgprcrd
         FROM crawcrd
             ,crapadc
        WHERE crapadc.cdcooper = crawcrd.cdcooper
@@ -2033,6 +2100,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           
         END IF; --> Fim IF insitcrd IN (4,7)
       ELSE
+
+        -- se for para considerar apenas o titular ele pula o registro
+        IF pr_flgprcrd = 1 and rw_crawcrd.flgprcrd = 0 THEN
+          continue;
+        END IF;
+        
         -- P337 - SOmente zerar se passado via parametro [ZERAR LIMITE CONFORME SD 181559]
         IF pr_flgzerar = 'N' THEN
           -- Somente acumular limite conforme situação cartão
@@ -12990,6 +13063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   
   PROCEDURE pc_busca_credito_config_categ(pr_cdcooper    IN TBCRD_CONFIG_CATEGORIA.CDCOOPER%TYPE
                                          ,pr_cdadmcrd    IN TBCRD_CONFIG_CATEGORIA.CDADMCRD%TYPE
+                                         ,pr_tplimcrd    IN tbcrd_config_categoria.tplimcrd%TYPE DEFAULT 0
                                          ,pr_vllimite_minimo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MINIMO%TYPE
                                          ,pr_vllimite_maximo  OUT TBCRD_CONFIG_CATEGORIA.VLLIMITE_MAXIMO%TYPE
                                          ,pr_diasdebito       OUT TBCRD_CONFIG_CATEGORIA.DSDIAS_DEBITO%TYPE
@@ -13001,7 +13075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
             ,tbcc.dsdias_debito
       FROM   TBCRD_CONFIG_CATEGORIA tbcc
       WHERE  tbcc.cdcooper = pr_cdcooper
-      AND    tbcc.cdadmcrd = pr_cdadmcrd;
+         AND tbcc.cdadmcrd = pr_cdadmcrd
+         AND tbcc.tplimcrd = pr_tplimcrd;
   
     vr_possui_registro    NUMBER:=0;
     

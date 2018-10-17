@@ -15,6 +15,11 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
 
   ---------------------------------------------------------------------------------------------------------------*/
 
+  PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
+                                        ---- OUT ----
+                                        pr_cdcritic OUT NUMBER,                 --> Codigo da critica
+                                        pr_dscritic OUT VARCHAR2);              --> Descricao da critica
+  
   --> Rotina responsavel por montar o objeto json para analise
   PROCEDURE pc_gera_json_motor(pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
                               ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da agencia
@@ -2374,6 +2379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
       END IF;
 
+      
       -- Então chamaremos a rotina para busca do endividamento total
       gene0005.pc_saldo_utiliza(pr_cdcooper    => pr_cdcooper
                                ,pr_tpdecons    => 3
@@ -3916,7 +3922,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     rw_crapprp cr_crapprp%ROWTYPE;
     
     --Busca categorias de cartão
-    CURSOR cr_catcrd(pr_tpctahab crapadc.tpctahab%TYPE) IS
+    CURSOR cr_catcrd(pr_tpctahab crapadc.tpctahab%TYPE
+                    ,pr_tplimcrd tbcrd_config_categoria.tplimcrd%TYPE) IS
       SELECT tcc.cdadmcrd
             ,adc.nmadmcrd
             ,tcc.vllimite_minimo
@@ -3924,6 +3931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         FROM crapadc adc
             ,tbcrd_config_categoria tcc
        WHERE tcc.cdcooper = pr_cdcooper
+         AND tcc.tplimcrd = pr_tplimcrd
          AND adc.cdcooper = tcc.cdcooper
          AND adc.cdadmcrd = tcc.cdadmcrd
          AND adc.tpctahab = pr_tpctahab
@@ -3986,6 +3994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
     vr_qtdiarpv      INTEGER;
+    vr_tplimcrd      NUMBER(1) := 0; -- 0-concessao, 1-alteracao
 
   BEGIN
 
@@ -4178,6 +4187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_obj_generico.put('codigoCatAtualCartaoCecred',0);
       vr_obj_generico.put('descricaoCatAtualCartaoCecred','');
       vr_obj_generico.put('contaCartao',0);
+      vr_tplimcrd := 0; -- concessao
     ELSE
       -- Se for A - Alteracao (ou seja, alteracao de limite) enviaremos os dados.
       OPEN cr_crawcrd (pr_cdcooper => pr_cdcooper
@@ -4195,15 +4205,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         vr_obj_generico.put('descricaoCatAtualCartaoCecred','');
         vr_obj_generico.put('contaCartao',0);
       END IF;
+      vr_tplimcrd := 1; -- alteracao
       CLOSE cr_crawcrd;
     END IF;
 
     -- Montar objeto Categoria Cartão Cecred
     vr_lst_generic3 := json_list();
 
+     
+
     -- Buscar todos os dados do SPC
     -- Efetuar laço para trazer todos os registros
-    FOR rw_catcrd IN cr_catcrd(pr_tpctahab => rw_crapass.inpessoa) LOOP
+    FOR rw_catcrd IN cr_catcrd(pr_tpctahab => rw_crapass.inpessoa
+                              ,pr_tplimcrd => vr_tplimcrd) LOOP
 
       -- Criar objeto para a operação e enviar suas informações
       vr_obj_generic3 := json();
@@ -4862,7 +4876,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     
     --Busca caterogias de cartão
     CURSOR cr_catcrd(pr_cdcooper IN crapass.cdcooper%TYPE
-                    ,pr_tpctahab crapadc.tpctahab%TYPE) IS
+                    ,pr_tpctahab crapadc.tpctahab%TYPE
+                    ,pr_tplimcrd IN tbcrd_config_categoria.tplimcrd%TYPE) IS
       SELECT tcc.cdadmcrd
             ,adc.nmresadm
             ,tcc.vllimite_minimo
@@ -4870,6 +4885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         FROM crapadc adc
             ,tbcrd_config_categoria tcc
        WHERE tcc.cdcooper = pr_cdcooper
+         AND tcc.tplimcrd = pr_tplimcrd
          AND adc.cdcooper = tcc.cdcooper
          AND adc.cdadmcrd = tcc.cdadmcrd
          AND adc.tpctahab = pr_tpctahab
@@ -4910,12 +4926,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_dsmensag VARCHAR2(32767);
     vr_contigencia VARCHAR2(4000);
     vr_temcrapass  VARCHAR2(1);
+    vr_tplimcrd NUMERIC(1) := 0; -- 0=concessao, 1-alteracao
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
     vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
 
   BEGIN
+    
+    IF pr_tpproces='I' THEN
+      vr_tplimcrd := 0; -- concessao
+    ELSE
+      vr_tplimcrd := 1; -- alteracao
+    END IF;
+    
     -- Buscar informações do Associado
     OPEN cr_crapass;
     FETCH cr_crapass INTO rw_crapass;
@@ -4926,7 +4950,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_temcrapass := 'S';
         
       FOR rw_catcrd IN cr_catcrd(rw_crapass.cdcooper
-                                ,rw_crapass.inpessoa) LOOP
+                                ,rw_crapass.inpessoa
+                                ,vr_tplimcrd) LOOP
         -- Criar objeto para a operação e enviar suas informações 
         vr_obj_anl := json();
         vr_obj_anl.put('codigo',rw_catcrd.cdadmcrd);
@@ -5784,6 +5809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     --Busca dados Alteração de Limite
     CURSOR cr_limatu (pr_nrcontacartao tbcrd_limite_atualiza.nrconta_cartao%TYPE) IS
       SELECT a.vllimite_alterado
+            ,a.vllimite_anterior
             ,a.dsjustificativa
             ,a.dsprotocolo
             ,a.nrproposta_est
@@ -5792,15 +5818,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
          AND a.nrdconta = pr_nrdconta
          AND a.nrconta_cartao = pr_nrcontacartao
          AND a.nrctrcrd = pr_nrctrcrd
-         AND a.tpsituacao = 6
-         AND a.insitdec IN (1,6)   -- Sem Aprovação, Refazer
-         AND NOT EXISTS (SELECT 1
-                             FROM tbcrd_limite_atualiza b
-                            WHERE b.cdcooper = a.cdcooper
-                              AND b.nrdconta = a.nrdconta
-                              AND b.nrconta_cartao = a.nrconta_cartao
-                              AND b.idatualizacao > a.idatualizacao)
-      ORDER BY idatualizacao DESC;
+         AND a.tpsituacao = 6 -- em analise
+         AND a.insitdec   = 1 -- Sem Aprovação
+         AND a.dtalteracao = (select max(x.dtalteracao)
+                                from tbcrd_limite_atualiza x
+                               where a.cdcooper = x.cdcooper
+                                 AND a.nrdconta = x.nrdconta
+                                 AND a.nrctrcrd = x.nrctrcrd 
+                                 AND a.nrconta_cartao = x.nrconta_cartao
+                                 AND a.nrproposta_est = x.nrproposta_est);
     rw_limatu cr_limatu%ROWTYPE;      
     vr_vllimite_alterado tbcrd_limite_atualiza.vllimite_alterado%TYPE;
     
@@ -5827,12 +5853,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     rw_crapadc cr_crapadc%ROWTYPE;
     
     -- Busca limite maximo
-    CURSOR cr_tbcrd_config_categoria (pr_cdcooper crapcop.cdcooper%TYPE
-                                     ,pr_cdadmcrd crapadc.cdadmcrd%TYPE) IS
+    CURSOR cr_tbcrd_config_categoria (pr_cdcooper tbcrd_config_categoria.cdcooper%TYPE
+                                     ,pr_cdadmcrd tbcrd_config_categoria.cdadmcrd%TYPE
+                                     ,pr_tplimcrd tbcrd_config_categoria.tplimcrd%TYPE) IS
     SELECT cat.vllimite_maximo
       FROM tbcrd_config_categoria cat 
      WHERE cat.cdcooper = pr_cdcooper
-       AND cat.cdadmcrd = pr_cdadmcrd;
+       AND cat.cdadmcrd = pr_cdadmcrd
+       AND cat.tplimcrd = pr_tplimcrd;
     rw_tbcrd_config_categoria cr_tbcrd_config_categoria%ROWTYPE;
 
     -- Busca categoria cartao atual que esta sendo upgraded
@@ -5884,6 +5912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_dsjustif     crawcrd.dsjustif%TYPE;
     vr_vlsugmot     crawcrd.vllimdlr%TYPE;
     vr_nrctrcrd     crawcrd.nrctrcrd%TYPE;
+    vr_tplimcrd     NUMERIC(1) := 0; -- 0=concessao, 1=alteracao
     
     -- Hora da impressao
     vr_hrimpres NUMBER;
@@ -5947,6 +5976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       IF vr_dsprotoc = '0' THEN
         vr_dsprotoc := null;
       END IF;
+      vr_tplimcrd := 1; -- alteracao
     ELSE
       vr_vllimite := rw_crawcrd.vllimcrd;
       vr_tpprodut := 'LM';
@@ -5956,6 +5986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 	  IF vr_dsprotoc = '0' THEN
         vr_dsprotoc := null;
       END IF;
+      vr_tplimcrd := 0; -- concessao
     END IF;    
     CLOSE cr_limatu;
     
@@ -6130,7 +6161,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     
     -- Busca limite maximo da categoria
     OPEN cr_tbcrd_config_categoria (pr_cdcooper => pr_cdcooper
-                                   ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);
+                                   ,pr_cdadmcrd => rw_crawcrd.cdadmcrd
+                                   ,pr_tplimcrd => vr_tplimcrd);
     FETCH cr_tbcrd_config_categoria INTO rw_tbcrd_config_categoria;
     IF cr_tbcrd_config_categoria%FOUND THEN
       vr_obj_proposta.put('valorLimiteCategoria',este0001.fn_decimal_ibra(rw_tbcrd_config_categoria.vllimite_maximo));
@@ -6225,10 +6257,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
         
         -- Se o arquivo não existir
         IF NOT gene0001.fn_exis_arquivo(vr_nmarquiv) THEN
+          -- caso nao achar esperar um pouco antes de zerar erro
+          sys.dbms_lock.sleep(0.5);
+          IF NOT gene0001.fn_exis_arquivo(vr_nmarquiv) THEN
           -- Remover o conteudo do nome do arquivo para não enviar
           vr_nmarquiv := null;
         END IF;
-        
+        END IF;
       END IF;
     END IF;
 
@@ -6286,9 +6321,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
       -- Executar comando para Download
 --ATENCAO - EM PRODUCAO alterar para 'S' apenas
+      --ATENCAO - caso ocorrer erro em HOMOL alterar para 'SR' para testar
       gene0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_dscomando);
-
 
       -- Se NAO encontrou o arquivo
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
@@ -7042,6 +7077,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     -- verificar se retornou critica
     IF vr_dscritic IS NOT NULL THEN
+        IF lower(vr_dscritic) LIKE '%efetuar a reanalise%limite de reanalises%proposta foi excedido%' THEN
+           BEGIN
+             UPDATE crawcrd
+                SET insitcrd = 6 --Cancelado
+                   ,flgprcrd = 0 --Nao eh mais o primeiro cartao
+                   ,dtcancel = TRUNC(SYSDATE) -- Setar a data de cancelamento
+              WHERE cdcooper = pr_cdcooper
+                AND nrdconta = pr_nrdconta
+                AND nrctrcrd = pr_nrctrcrd;
+                vr_dscritic := 'Nao foi possivel efetuar a reanalise, pois o limite de reanalises desta proposta foi excedido.';
+           EXCEPTION
+             WHEN OTHERS THEN
+               vr_dscritic := 'Erro ao cancelar proposta.';
+           END;
+        END IF;
         RAISE vr_exc_erro;
     END IF;
 

@@ -19,11 +19,6 @@ require_once("../../includes/controla_secao.php");
 require_once("../../class/xmlfile.php");
 isPostMethod();
 
-if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$_POST["action"], false)) <> '') {
-   exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-   exit;
-}
-
 if ($_POST["action"] == "C") {
     $nr_page = isset($_POST["page"]) ? $_POST["page"] : 0;
     if (!is_numeric($nr_page))
@@ -32,11 +27,13 @@ if ($_POST["action"] == "C") {
     $nr_page = 1;
     $endCount = $nr_page + 50;
     $admcrd = $_POST['admcrd'];
+    $tplimcrd = $_POST['tplimcrd'];
 
     $xml .= "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
     $xml .= "   <cdadmcrd>" . $admcrd . "</cdadmcrd>";
+    $xml .= "   <tplimcrd>" . $tplimcrd . "</tplimcrd>";
     $xml .= "   <only_cecred></only_cecred>";
     $xml .= "   <pagesize>50</pagesize>";
     $xml .= "   <pagenumber>" . $nr_page . "</pagenumber>";
