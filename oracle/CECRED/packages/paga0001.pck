@@ -590,6 +590,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                               ,pr_dtmvtopg    IN crapdat.dtmvtolt%TYPE      --Data Pagamento
                               ,pr_inproces    IN crapdat.inproces%TYPE      --Indicador processo
                               ,pr_flsgproc    IN BOOLEAN                    --Flag segundo processamento
+							  ,pr_execucao    IN INTEGER DEFAULT 0          --Ordem de execução no dia
                               ,pr_cdcritic    OUT INTEGER     --Codigo da Critica
                               ,pr_dscritic    OUT VARCHAR2);   --Descricao da critica
 
@@ -1238,6 +1239,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                   ,pr_flsgproc IN BOOLEAN                 --Flag segundo processamento
                                   ,pr_cdtiptra IN INTEGER                 --Codigo tipo transferencia
                                   ,pr_craplau_progress_recid IN NUMBER    --Recid lancamento automático
+								  ,pr_execucao IN INTEGER DEFAULT 0       --Ordem de execução no dia
                                   ,pr_cdcritic OUT INTEGER      --Codigo da Critica
                                   ,pr_dscritic OUT VARCHAR2);
 
@@ -14159,6 +14161,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                               ,pr_dtmvtopg    IN crapdat.dtmvtolt%TYPE      --Data Pagamento
                               ,pr_inproces    IN crapdat.inproces%TYPE      --Indicador processo
                               ,pr_flsgproc    IN BOOLEAN                    --Flag segundo processamento
+							  ,pr_execucao    IN INTEGER DEFAULT 0          --Ordem de execução no dia
                               ,pr_cdcritic    OUT INTEGER     --Codigo da Critica
                               ,pr_dscritic    OUT VARCHAR2) IS --Descricao da critica
     -- ..........................................................................
@@ -14293,6 +14296,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                 ,pr_flsgproc => pr_flsgproc
                                 ,pr_cdtiptra => vr_tab_agendto(vr_index_agendto).cdtiptra
                                 ,pr_craplau_progress_recid => vr_tab_agendto(vr_index_agendto).prorecid
+								,pr_execucao => pr_execucao
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
          --Se for transferencia
@@ -14470,8 +14474,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                 Ajuste mensagem de erro 
                                 (Belli - Envolti - Chamado 779415)     
 
-	               26/03/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
-
+	                 26/03/2018 - Incluido pr_inpriori para o "debitador unico" (Fabiano B. Dias - AMcom)
+	
                    12/09/2018 - Busca de convenios prioritarios - Debitador Unico - Fabiano B. Dias (AMcom)
 	
     -----------------------------------------------------------------------------*/
@@ -26693,6 +26697,7 @@ end;';
                                   ,pr_flsgproc IN BOOLEAN                 --Flag segundo processamento
                                   ,pr_cdtiptra IN INTEGER                 --Codigo tipo transferencia
                                   ,pr_craplau_progress_recid IN NUMBER    --Recid lancamento automático
+								  ,pr_execucao IN INTEGER DEFAULT 0       --Ordem de execução no dia
                                   ,pr_cdcritic OUT INTEGER      --Codigo da Critica
                                   ,pr_dscritic OUT VARCHAR2) IS  --Descricao da critica);
     /* ..........................................................................
@@ -27052,7 +27057,7 @@ end;';
            --Se o saldo nao for suficiente
            IF rw_craplau.vllanaut > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
                                      nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
-                                     
+              IF pr_execucao = 3 THEN -- Terceira execução do dia (final) gera erro                                              
               --Verificar a conta de destino
               OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => rw_craplau.nrdconta
@@ -27111,6 +27116,8 @@ end;';
 	            -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
 		          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
 										
+			  END IF;
+										
              --Marcar que ocorreu erro TAA
              vr_flerrtaa:= TRUE;
              
@@ -27157,7 +27164,7 @@ end;';
         --Substituicao da condicao fixa por codigo - 15/12/2017 - Chamado 779415 
         IF vr_dscritic = 'Nao ha saldo suficiente para a operacao.'  OR
            vr_cdcritic = 717                                           THEN   
-           
+           IF pr_execucao = 3 THEN -- Terceira execução do dia (final) gera erro  
             --Verificar a conta de destino
             OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
                            ,pr_nrdconta => rw_craplau.nrdconta
@@ -27212,7 +27219,7 @@ end;';
                                          ,pr_nrdconta => rw_craplau.nrdconta
                                          ,pr_variaveis => vr_variaveis_notif);
 
-
+           END IF;
 
          END IF;
           
@@ -27307,7 +27314,8 @@ end;';
        IF trim(vr_dscritic) IS NOT NULL     OR 
           nvl(vr_cdcritic,0) <> 0           OR 
           (pr_idorigem = 4 AND vr_flerrtaa) THEN
-         
+         --
+         IF pr_execucao = 3 THEN -- Terceira execução do dia (final)         
          BEGIN
            UPDATE craplau SET craplau.insitlau = 4 /** NAO EFETIVADO **/
                              ,craplau.dtdebito = craplau.dtmvtopg
@@ -27362,7 +27370,7 @@ end;';
                                         );    
             END;
           END IF;
-         
+         END IF;
        ELSE
          --Montar descricao cedente
          vr_dscedent:= 'Docto.Debito: ' ||
