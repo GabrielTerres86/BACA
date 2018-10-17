@@ -155,7 +155,7 @@ aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                      INPUT par_nrdconta, /* Numero da conta */
                                      INPUT 41,           /* Codigo Produto */
                                      INPUT STRING(aux_vlresgat), /* Valor contratado */
-                                     INPUT 3,            /* Id Origem */
+                                     INPUT par_idorigem, /* Id Origem */
                                      INPUT 0,            /* Codigo da chave */
                                     OUTPUT 0,            /* Solicita senha coordenador */
                                     OUTPUT 0,            /* Codigo da crítica */
@@ -190,7 +190,6 @@ IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
 
           RETURN "NOK".
 END.
-
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -241,7 +240,7 @@ RUN STORED-PROCEDURE pc_verifica_rep_assinatura
                    (INPUT  par_cdcooper,
                     INPUT  par_nrdconta,
                     INPUT  par_idseqttl,
-                    INPUT  3,   /* cdorigem */
+                    INPUT  par_idorigem,
                     OUTPUT 0,   /* idastcjt */
                     OUTPUT 0,   /* nrcpfcgc */
                     OUTPUT "",  /* nmprimtl */
@@ -294,7 +293,6 @@ END.
 
 IF (par_flmensag OR (NOT par_flmensag AND aux_idastcjt = 0)) AND par_idorigem <> 6 THEN
 DO:
-
     IF  NOT VALID-HANDLE(h-b1wgen0081) THEN
         RUN sistema/generico/procedures/b1wgen0081.p 
             PERSISTENT SET h-b1wgen0081.
@@ -478,7 +476,7 @@ DO:
                            INPUT  par_nrdcaixa,
                            INPUT  par_cdoperad,
                            INPUT  par_nmdatela,
-                           INPUT  3,   /*  par_cdorigem */
+                           INPUT  par_idorigem,
                            INPUT  par_idseqttl,
                            INPUT  0,   /* par_nrcpfope */
                            INPUT  aux_nrcpfcgc,
