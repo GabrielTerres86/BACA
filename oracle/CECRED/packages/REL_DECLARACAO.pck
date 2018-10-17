@@ -123,7 +123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
           ,tbcadast_pessoa c
           ,tbcadast_pessoa_estrangeira d
           ,crapnac e
-     WHERE b.nrcpfcgc  = 76330927000151 -- pr_nrcpfcgc
+     WHERE b.nrcpfcgc  = pr_nrcpfcgc
        AND b.cdsitdct <> 4
        AND b.dtdemiss is null
        AND a.cdcooper  = b.CDCOOPER
@@ -132,6 +132,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
        AND a.dsproftl <> 'PROCURADOR'
        AND a.persocio >= 10
        AND c.nrcpfcgc  = a.nrcpfcgc
+       AND d.idpessoa  = c.idpessoa
+       AND d.inobrigacao_exterior = 'S'
+       AND e.cdnacion  = d.cdpais
+    UNION
+    SELECT e.nmpais nmpais_socio
+      FROM crapepa a
+          ,crapass b
+          ,tbcadast_pessoa c
+          ,tbcadast_pessoa_estrangeira d
+          ,crapnac e
+     WHERE b.nrcpfcgc  = pr_nrcpfcgc
+       AND b.cdsitdct <> 4
+       AND b.dtdemiss is null
+       AND a.cdcooper  = b.CDCOOPER
+       AND a.nrdconta  = b.NRDCONTA
+       AND a.persocio >= 10
+       AND c.nrcpfcgc  = a.nrdocsoc 
        AND d.idpessoa  = c.idpessoa
        AND d.inobrigacao_exterior = 'S'
        AND e.cdnacion  = d.cdpais;
@@ -410,5 +427,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.REL_DECLARACAO AS
       ROLLBACK;
 
   END pc_busca_cidade;
+
 END REL_DECLARACAO;
 /

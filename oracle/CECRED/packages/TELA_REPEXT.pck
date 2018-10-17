@@ -395,17 +395,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_REPEXT AS
        AND d.cdtipo_dominio (+) = a.cdtipo_proprietario;
 
     CURSOR cr_contador_socios (pr_nrcpfcgc     IN tbreportaval_fatca_crs.nrcpfcgc%TYPE) IS
+    SELECT count(*) qtsocios
+      FROM (SELECT COUNT(*) qtsocios
+              FROM crapass a
+                  ,crapavt b
+             WHERE a.nrcpfcgc  = pr_nrcpfcgc
+               AND a.cdsitdct <> 4
+               AND a.dtdemiss IS NULL
+               AND b.cdcooper  = a.cdcooper
+               AND b.nrdconta  = a.nrdconta
+               AND b.tpctrato  = 6
+               AND b.dsproftl <> 'PROCURADOR'
+               AND b.persocio >= 10
+            UNION
     SELECT COUNT(*) qtsocios
       FROM crapass a
-          ,crapavt b
+                  ,crapepa b
      WHERE a.nrcpfcgc  = pr_nrcpfcgc
        AND a.cdsitdct <> 4
        AND a.dtdemiss IS NULL
        AND b.cdcooper  = a.cdcooper
        AND b.nrdconta  = a.nrdconta
-       AND b.tpctrato  = 6
-       AND b.dsproftl <> 'PROCURADOR'
-       AND b.persocio >= 10;
+               AND b.persocio >= 10);
     rw_contador_socios cr_contador_socios%ROWTYPE;
 
     CURSOR cr_conta (pr_nrcpfcgc     IN tbreportaval_fatca_crs.nrcpfcgc%TYPE) IS
@@ -827,6 +838,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_REPEXT AS
      WHERE b.nrcpfcgc  = pr_nrcpfcgc
        AND b.tpctrato  = 6
        AND b.dsproftl <> 'PROCURADOR'
+       AND b.persocio >= 10
+       AND a.cdcooper  = b.cdcooper
+       AND a.nrdconta  = b.nrdconta
+       AND a.cdsitdct <> 4
+       AND a.dtdemiss IS NULL
+       AND c.cdcooper  = a.cdcooper
+       AND d.nrcpfcgc  = a.nrcpfcgc
+    UNION
+    SELECT a.cdcooper||'-'||UPPER(c.dsdircop) dscooper
+          ,a.cdagenci
+          ,a.nrdconta
+          ,DECODE(a.inpessoa,1,'FÍSICA','JURÍDICA') tppessoa
+          ,'SIM' insocio
+          ,replace(to_char(persocio,'990.00'),'.',',') prsocio
+          ,d.nmpessoa
+      FROM crapass a
+          ,crapepa b
+          ,crapcop c
+          ,tbcadast_pessoa d
+     WHERE b.nrdocsoc  = pr_nrcpfcgc
        AND b.persocio >= 10
        AND a.cdcooper  = b.cdcooper
        AND a.nrdconta  = b.nrdconta
@@ -1727,7 +1758,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_REPEXT AS
        AND b.persocio    >= 10
        AND c.nrcpfcgc (+) = b.nrcpfcgc
        AND d.idpessoa (+) = c.idpessoa
-       AND e.nrcpfcgc (+) = b.nrcpfcgc;
+       AND e.nrcpfcgc (+) = b.nrcpfcgc
+    UNION
+    SELECT distinct
+           c.nrcpfcgc nrcpfcgc_socio
+          ,c.nmpessoa nmpessoa_socio
+          ,d.nridentificacao
+          ,CASE
+             WHEN e.insituacao = 'P' THEN 'PENDENTE'
+             WHEN e.insituacao = 'E' THEN 'EM ABERTO'
+             WHEN e.insituacao = 'A' THEN 'ANALISADA'
+             ELSE
+               CASE
+                 WHEN d.inobrigacao_exterior = 'N' THEN 'SEM OBRIGACAO'
+                 ELSE                                   'NAO INFORMADO'
+               END
+           END insituacao
+          ,CASE
+             WHEN e.inreportavel = 'S' THEN 'SIM'
+             WHEN e.inreportavel = 'N' THEN 'NAO'
+             ELSE                           ''
+           END inreportavel
+          ,e.cdtipo_declarado
+          ,e.cdtipo_proprietario
+          ,c.tppessoa
+      FROM crapass a
+          ,crapepa b
+          ,tbcadast_pessoa c
+          ,tbcadast_pessoa_estrangeira d
+          ,tbreportaval_fatca_crs e
+     WHERE a.nrcpfcgc     = pr_nrcpfcgc
+       AND a.cdsitdct    <> 4
+       AND a.dtdemiss    IS NULL
+       AND b.cdcooper     = a.cdcooper
+       AND b.nrdconta     = a.nrdconta
+       AND b.persocio    >= 10
+       AND c.nrcpfcgc (+) = b.nrdocsoc 
+       AND d.idpessoa (+) = c.idpessoa
+       AND e.nrcpfcgc (+) = b.nrdocsoc;
 
     CURSOR cr_conta_socio (pr_nrcpfcgc     IN tbreportaval_fatca_crs.nrcpfcgc%TYPE) IS
     SELECT LPAD(cdcooper,3,'0') cdcooper

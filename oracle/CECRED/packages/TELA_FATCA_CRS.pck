@@ -225,14 +225,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FATCA_CRS AS
     vr_pais_exterior        tbcadast_pessoa_estrangeira.cdpais_exterior%TYPE;
 
   BEGIN -- Inicio pc_busca_dados_fatca_crs
-
     --Inicializar Variaveis
     vr_qtregist:= 0;
 
     -- Incluir nome do módulo logado
     GENE0001.pc_informa_acesso(pr_module => 'FATCA_CRS'
                               ,pr_action => null);
-
     -- Extrai os dados dos dados que vieram do php
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                             ,pr_cdcooper => vr_cdcooper
@@ -428,10 +426,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FATCA_CRS AS
        AND a.tpctrato  = 6
        AND a.dsproftl <> 'PROCURADOR'
        AND a.persocio >= 10
+    UNION
+    SELECT DISTINCT
+           x.nrdocsoc nrcpfcgc_socio
+      FROM crapepa x
+          ,crapass z
+     WHERE z.nrcpfcgc  = pr_nrcpfcgc
+       AND z.cdsitdct <> 4
+       AND z.dtdemiss is null
+       AND x.cdcooper  = z.CDCOOPER
+       AND x.nrdconta  = z.NRDCONTA
+       AND x.persocio >= 10
      ORDER BY 1;
 
     CURSOR cr_tbcadast_pessoa_socio (pr_nrcpfcgc IN tbcadast_pessoa.nrcpfcgc%TYPE) IS
-    SELECT a.nmpessoa nmpessoa_socio
+    SELECT SUBSTR(a.nmpessoa,1,30) nmpessoa_socio
           ,CASE
              WHEN b.inobrigacao_exterior = 'S' THEN 'SIM'
              WHEN b.inobrigacao_exterior = 'N' THEN 'NAO'
@@ -1127,25 +1136,15 @@ w_passo := 52;
             END IF;
             --
             IF vr_tpdocmto1 IS NOT NULL THEN
-              DIGI0001.pc_gera_pend_digitalizacao(PR_CDCOOPER => vr_cdcooper
-                                                 ,PR_NRDCONTA => pr_nrdconta
-                                                 ,PR_IDSEQTTL => 1
-                                                 ,PR_NRCPFCGC => rw_crapass.nrcpfcgc
-                                                 ,PR_DTMVTOLT => TRUNC(SYSDATE)
-                                                 ,PR_LSTPDOCT => vr_tpdocmto1
-                                                 ,PR_CDOPERAD => vr_cdoperad
-                                                 ,PR_NRSEQDOC => 0
-                                                 ,PR_CDCRITIC => vr_cdcritic
-                                                 ,PR_DSCRITIC => vr_dscritic);
---              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
---                                      ,pr_nrdconta  => pr_nrdconta
---                                      ,pr_idseqttl  => 1
---                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
---                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
---                                      ,pr_tpdocmto  => vr_tpdocmto1
---                                      ,pr_cdoperad  => vr_cdoperad
---                                      ,pr_cdcritic  => vr_cdcritic
---                                      ,pr_dscritic  => vr_dscritic);
+              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
+                                      ,pr_nrdconta  => pr_nrdconta
+                                      ,pr_idseqttl  => 1
+                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
+                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
+                                      ,pr_tpdocmto  => vr_tpdocmto1
+                                      ,pr_cdoperad  => vr_cdoperad
+                                      ,pr_cdcritic  => vr_cdcritic
+                                      ,pr_dscritic  => vr_dscritic);
               IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_saida;
               END IF;
@@ -1154,25 +1153,15 @@ w_passo := 52;
 w_passo := 53;
             --
             IF vr_tpdocmto2 IS NOT NULL THEN
-              DIGI0001.pc_gera_pend_digitalizacao(PR_CDCOOPER => vr_cdcooper
-                                                 ,PR_NRDCONTA => pr_nrdconta
-                                                 ,PR_IDSEQTTL => 1
-                                                 ,PR_NRCPFCGC => rw_crapass.nrcpfcgc
-                                                 ,PR_DTMVTOLT => TRUNC(SYSDATE)
-                                                 ,PR_LSTPDOCT => vr_tpdocmto2
-                                                 ,PR_CDOPERAD => vr_cdoperad
-                                                 ,PR_NRSEQDOC => 0
-                                                 ,PR_CDCRITIC => vr_cdcritic
-                                                 ,PR_DSCRITIC => vr_dscritic);
---              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
---                                      ,pr_nrdconta  => pr_nrdconta
---                                      ,pr_idseqttl  => 1
---                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
---                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
---                                      ,pr_tpdocmto  => vr_tpdocmto2
---                                      ,pr_cdoperad  => vr_cdoperad
---                                      ,pr_cdcritic  => vr_cdcritic
---                                      ,pr_dscritic  => vr_dscritic);
+              grava_pend_digitalizacao(pr_cdcooper  => vr_cdcooper
+                                      ,pr_nrdconta  => pr_nrdconta
+                                      ,pr_idseqttl  => 1
+                                      ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc
+                                      ,pr_dtmvtolt  => TRUNC(SYSDATE)
+                                      ,pr_tpdocmto  => vr_tpdocmto2
+                                      ,pr_cdoperad  => vr_cdoperad
+                                      ,pr_cdcritic  => vr_cdcritic
+                                      ,pr_dscritic  => vr_dscritic);
               IF vr_dscritic IS NOT NULL THEN
                 RAISE vr_exc_saida;
               END IF;
@@ -1760,7 +1749,15 @@ w_passo :=999;
        AND a.tpctrato  = 6
        AND a.dsproftl <> 'PROCURADOR'
        AND b.cdcooper  = a.cdcooper
-       AND b.nrdconta  = a.nrdconta;
+       AND b.nrdconta  = a.nrdconta
+    UNION
+    SELECT DISTINCT
+           z.nrcpfcgc
+      FROM crapepa x
+          ,crapass z
+     WHERE x.nrdocsoc  = pr_nrcpfcgc
+       AND z.cdcooper  = x.CDCOOPER
+       AND z.nrdconta  = x.NRDCONTA;
 
     CURSOR cr_empresas (pr_nrcpfcgc_empresa IN tbcadast_pessoa.nrcpfcgc%TYPE) IS
     SELECT distinct
@@ -1782,7 +1779,12 @@ w_passo :=999;
      WHERE a.cdcooper  = pr_cdcooper_empresa
        AND a.nrdconta  = pr_nrdconta_empresa
        AND a.tpctrato  = 6
-       AND a.dsproftl <> 'PROCURADOR';
+       AND a.dsproftl <> 'PROCURADOR'
+    UNION
+    SELECT x.nrdocsoc nrcpfcgc_socio
+      FROM crapepa x
+     WHERE x.cdcooper  = pr_cdcooper_empresa
+       AND x.nrdconta  = pr_nrdconta_empresa;
 
     --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;

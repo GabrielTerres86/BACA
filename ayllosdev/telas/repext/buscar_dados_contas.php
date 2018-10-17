@@ -77,6 +77,8 @@
 							<td><? echo stringTabela(getByTagName($conta->tags,'nmpessoa'), 25, 'maiuscula'); ?> </td>
 							<td><? echo getByTagName($conta->tags,'tppessoa'); ?> </td>
 							<td><? echo getByTagName($conta->tags,'prsocio'); ?> </td>
+
+							<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo getByTagName($conta->tags,'nrdconta'); ?>" />
 						</tr>	
 					<? } ?>
 				</tbody>	
