@@ -6,7 +6,7 @@ select
     else 2 end TipCli,
   ass.nrcpfcgc as IdfcCli,
   --epr.nrctremp as NrCtr,
-  ass.cdcooper || ass.nrdconta || epr.nrctremp as NrCtr, -- Conforme definição do Fernando Ornelas em 14/08/2018. Orientação: Ver a necessidade de acrescentar o tipo de contrato
+  lpad(ass.cdcooper,2,0) || ass.nrdconta || epr.nrctremp as NrCtr, -- Ver a necessidade de acrescentar o tipo de contrato
   --case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end cdproduto,
   fn_busca_modalidade_bacen(case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end , ass.cdcooper, ass.nrdconta, epr.nrctremp, ass.inpessoa, 3, '') as cdproduto,
   case when max(lem.dtmvtolt) is not null then to_char(max(lem.dtmvtolt), 'YYYYMMDD')
@@ -22,18 +22,21 @@ from
   craplem lem
 where
   ass.cdcooper = cop.cdcooper
-  and cop.flgativo = 1
   and ass.cdcooper = epr.cdcooper
   and ass.nrdconta = epr.nrdconta
   and epr.cdcooper = lem.cdcooper
   and epr.nrdconta = lem.nrdconta
   and epr.nrctremp = lem.nrctremp
+  and cop.flgativo = 1
   and ass.incadpos = 2
   --and ass.nrcpfcgc in (03297156902,91596670959,08486610000159,01268248940,18515174000152,05370297703,10381840000103,65468252287,11212502000100,73481289987, 67548610963, 9013972000195, 6130589000129, 97007277934, 59203919953, 82991191000165, 625159934, 43959636920, 86024299915)
   and epr.tpemprst = 0 --emprestimo Velho
   and epr.DTULTPAG >= (sysdate - 366) --mesmo where do contrato
   and (lem.dtmvtolt >= (sysdate-366) and (lem.dtmvtolt <= (sysdate)))
   and lem.cdhistor IN (91,92,93,94,95,277,353,382,383,391,392,393)
+  ---------------------------------------------------------------
+  --and  epr.cdcooper = 1
+  ---------------------------------------------------------------
 group by
   ass.cdcooper,
   ass.nrdconta,
