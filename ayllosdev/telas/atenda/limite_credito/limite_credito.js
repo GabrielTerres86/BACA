@@ -46,6 +46,7 @@
  *                                         por inadimplência e também novo campo onde contém a data do cancelamento automático.
  * 028: [13/04/2018] Lombardi  (CECRED)  : Inluidas funcoes validaAdesaoValorProduto e senhaCoordenador. PRJ366 (Lombardi).
  * 029: [27/06/2018] Christian Grosch (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
+ * 030: [09/10/2018] Marco Antonio Rodrigues Amorim(Mout's) : Remove ponto do usuario e substitui virgula da casa decimal por ponto.
  */
  
 var callafterLimiteCred = '';
@@ -421,6 +422,18 @@ function cadastrarNovoLimite() {
 	
     nrinfcad = (typeof (nrinfcad) == "undefined") ? 1 : nrinfcad;
 	
+	// 09/10/2018 - Remove ponto do usuario e substitui virgula da casa decimal por ponto
+    var f = function(valor){
+        valor = valor.replace(".","");
+        valor = valor.replace(",",".");
+        return valor;
+    }
+    
+    var vlsalari = f($("#vlsalari", "#frmNovoLimite").val());
+    var vlsalcon = f($("#vlsalcon", "#frmNovoLimite").val());
+    var vloutras = f($("#vloutras", "#frmNovoLimite").val());
+    var vlalugue = f($("#vlalugue", "#frmNovoLimite").val());
+	
 	// Executa script de cadastro do limite atravé	s de ajax
 	$.ajax({		
 		type: "POST", 
@@ -431,10 +444,10 @@ function cadastrarNovoLimite() {
             cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
             vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
             flgimpnp: $("#flgimpnp", "#frmNovoLimite").val(),
-            vlsalari: $("#vlsalari", "#frmNovoLimite").val() > 0 ? $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
-            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val() > 0 ? $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
-            vloutras: $("#vloutras", "#frmNovoLimite").val() > 0 ? $("#vloutras", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
-            vlalugue: $("#vlalugue", "#frmNovoLimite").val() > 0 ? $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vlsalari: vlsalari > 0 ? $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vlsalcon: vlsalcon > 0 ? $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vloutras: vloutras > 0 ? $("#vloutras", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vlalugue: vlalugue > 0 ? $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
             dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
 			dtconbir: dtconbir,			
