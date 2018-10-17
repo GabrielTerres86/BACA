@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0003 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Dezembro/2016.                   Ultima atualizacao: 16/10/2018
 
       Dados referentes ao programa:
 
@@ -107,6 +107,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0003 is
       Objetivo  : Rotinas de transações da Nova Plataforma de Cobrança de Boletos
 
       Alteracoes:
+                         
+      16/10/2018 - Substituir arquivo texto por tabela oracle
+                   ( Belli - Envolti - Chd INC0025460 ) 
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -189,7 +192,7 @@ END;
       Sistema  : Cobrança - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
-      Data     : Janeiro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Janeiro/2016.                   Ultima atualizacao: 16/10/2018
 
       Dados referentes ao programa:
 
@@ -198,6 +201,10 @@ END;
                   caso afirmativo, retornar a mesma.
 
       Alteração :
+                         
+      16/10/2018 - Substituir arquivo texto por tabela oracle
+                   ( Belli - Envolti - Chd INC0025460 ) 
+                   
     ..........................................................................*/
   
     -- Extrair erros do XML
@@ -218,6 +225,9 @@ END;
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
     vr_idlogarq     crapprm.dsvlrprm%TYPE;
+    
+    -- Altera log de arquivo para oracle - 16/10/2018 - Chd INC0025460
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
     
   BEGIN
     
@@ -251,29 +261,55 @@ END;
       IF NVL(vr_idlogarq,'0') = '1' THEN
         -- Bloco para escrever log de eventos NPB
         BEGIN
+          -- Altera log de arquivo para oracle - 16/10/2018 - Chd INC0025460
           -- Se o XML da requisição foi informado
-          IF pr_dsxmlreq IS NOT NULL THEN
-            BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
-                                                        || 'FAULT PACKET --> '
-                                                        || '['||pr_cdctrlcs||'] '
-                                                        || pr_dsxmlreq
-                                       ,pr_nmarqlog     => vr_dsarqlg);
+          IF pr_dsxmlreq IS NOT NULL THEN                                       
+            -- Controlar geração de log de execução dos jobs                                
+            CECRED.pc_log_programa(
+                           pr_dstiplog      => 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => 1   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => 'FAULT PACKET - ' ||
+                                               '['||pr_cdctrlcs||'] - xml: ' ||
+                                               SUBSTR(pr_dsxmlreq,1,3800) ||
+                                               ' - ' ||vr_dsarqlg
+                          ,pr_cdmensagem    => 0
+                          ,pr_cdcooper      => 3 
+                          ,pr_flgsucesso    => 1
+                          ,pr_flabrechamado => 0   -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => NULL
+                          ,pr_destinatario_email => NULL
+                          ,pr_flreincidente => 0
+                          ,pr_cdprograma    => 'NPCB0003'
+                          ,pr_idprglog      => vr_idprglog
+                          );              
           END IF;
-        
-          BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
-                                                      || 'FAULT PACKET --> '
-                                                      || '['||pr_cdctrlcs||'] '
-                                                      || vr_cdcritic||' - '
-                                                      || vr_dscritic
-                                     ,pr_nmarqlog     => vr_dsarqlg);
-        
+                                                    
+          -- Controlar geração de log de execução dos jobs                                
+          CECRED.pc_log_programa(
+                           pr_dstiplog      => 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                          ,pr_tpocorrencia  => 1   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade => 0   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao    => 0   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem    => 'FAULT PACKET - descrição: ' ||
+                                               '['||pr_cdctrlcs||'] ' ||
+                                               SUBSTR(vr_cdcritic||' - '||vr_dscritic,1,3800)||
+                                               ' - ' ||vr_dsarqlg
+                          ,pr_cdmensagem    => 0
+                          ,pr_cdcooper      => 3 
+                          ,pr_flgsucesso    => 1
+                          ,pr_flabrechamado => 0   -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado => NULL
+                          ,pr_destinatario_email => NULL
+                          ,pr_flreincidente => 0
+                          ,pr_cdprograma    => 'NPCB0003'
+                          ,pr_idprglog      => vr_idprglog
+                          );                      
         EXCEPTION
           WHEN OTHERS THEN
-            NULL; -- Não impactar no processo em caso de erro
+            -- No caso de erro de programa gravar tabela especifica de log  
+            CECRED.pc_internal_exception (pr_cdcooper => 3);  
         END;
       END IF;
       
@@ -690,13 +726,13 @@ END;
       IF nvl(rw_valorestitulo.VlrTotCobrar,0) = 0 THEN 
         pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar := nvl(pr_tbtitulo.VlrTit,0);
       ELSE       
-      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar  := rw_valorestitulo.VlrTotCobrar;
+        pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar  := rw_valorestitulo.VlrTotCobrar;
       END IF;
       
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMin   := rw_valorestitulo.VlrCalcdMin;
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMax   := rw_valorestitulo.VlrCalcdMax;
-
-    END LOOP;
+    
+    END LOOP;        
     
     -- Limpar e carregar as informações de baixas operacionais
     pr_tbtitulo.TabBaixaOperac.DELETE();
@@ -1058,7 +1094,7 @@ END;
       Sistema  : Cobrança - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Renato Darosci(Supero)
-      Data     : Dezembro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Dezembro/2016.                   Ultima atualizacao: 21/09/2018
 
       Dados referentes ao programa:
 
@@ -1066,8 +1102,9 @@ END;
       Objetivo  : Rotina para consultar via webservice o titulo na CIP, retornando
                   o XML com os dados recebidos
 
-      Alteração :
-
+      Alteração : 21/09/2018 - se o horário do sistema é menor que o horário do parâmetro
+                               então deve consultar a data de movimento do sqlserver (jdnpc)
+                               senão deve utilizar a regra que já existe (sysdate) (PRB0040329 - AJFink)
     ..........................................................................*/
 
     -----------> CURSORES <-----------
@@ -1077,12 +1114,26 @@ END;
     vr_cdcritic      NUMBER;
     vr_dscritic      VARCHAR2(1000);
     vr_cdmetodo      NUMBER;
+    vr_dsdatamvto    varchar2(8);
     vr_xmlsoap       XMLTYPE;
     vr_dsxmltit      XMLTYPE;
     vr_tbcampos      NPCB0003.typ_tab_campos_soap;
     vr_dssrdom       VARCHAR2(1000); -- Var para retorno do Service Domain
     
   BEGIN
+  
+   /* pr_dsxmltit := '<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"><SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:NS1="urn:JDNPCWS_RecebimentoPgtoTitIntf-IJDNPCWS_RecebimentoPgtoTit"><NS1:RequisitarTituloCIPCalcVlrResponse><return xsi:type="xsd:string"><RequisitarTituloCIP><NumCtrlPart>201707171358211234CX</NumCtrlPart><ISPBPartRecbdrPrincipal>05463212</ISPBPartRecbdrPrincipal><ISPBPartRecebdrAdmtd>05463212</ISPBPartRecebdrAdmtd><NumIdentcTit>2017070606000279285</NumIdentcTit><NumRefAtlCadTit>1500286255693000717</NumRefAtlCadTit><NumSeqAtlzCadTit>10</NumSeqAtlzCadTit><DtHrSitTit>2017-07-17T07:10:55</DtHrSitTit><ISPBPartDestinatario>33657248</ISPBPartDestinatario><CodPartDestinatario>007</CodPartDestinatario><TpPessoaBenfcrioOr>J</TpPessoaBenfcrioOr><CNPJ_CPFBenfcrioOr>33657248000189</CNPJ_CPFBenfcrioOr><Nom_RzSocBenfcrioOr>teste</Nom_RzSocBenfcrioOr><NomFantsBenfcrioOr>Banco Nacional de Desenvolvimento Econ?mico e Soci</NomFantsBenfcrioOr><LogradBenfcrioOr>Avenida República do Chile 100</LogradBenfcrioOr><CidBenfcrioOr>Rio de Janeiro</CidBenfcrioOr><UFBenfcrioOr>RJ</UFBenfcrioOr><CEPBenfcrioOr>20031917</CEPBenfcrioOr><TpPessoaPagdr>J</TpPessoaPagdr><CNPJ_CPFPagdr>82647165000114</CNPJ_CPFPagdr><Nom_RzSocPagdr>COOPERATIVA DE PRODUCAO E ABASTECIMENTO VALE DO IT</Nom_RzSocPagdr><NomFantsPagdr>COOPERATIVA DE PRODUCAO E ABASTECIMENTO VALE DO IT</NomFantsPagdr><CodMoedaCNAB>09</CodMoedaCNAB><NumCodBarras>00796722300316191180109019000043201707031446</NumCodBarras><NumLinhaDigtvl>00790109061900004320817070314467672230031619118</NumLinhaDigtvl><DtVencTit>2017-07-17</DtVencTit><VlrTit>316191.18</VlrTit><CodEspTit>24</CodEspTit><DtLimPgtoTit>2017-07-17</DtLimPgtoTit><IndrBloqPgto>N</IndrBloqPgto><IndrPgtoParcl>N</IndrPgtoParcl><VlrAbattTit>0.00</VlrAbattTit><TpModlCalc>03</TpModlCalc><TpAutcRecbtVlrDivgte>3</TpAutcRecbtVlrDivgte><RepetCalcTit><CalcTit>
+    <VlrCalcdJuros>0.00</VlrCalcdJuros>
+    <VlrCalcdMulta>0.00</VlrCalcdMulta>
+    <VlrCalcdDesct>0.00</VlrCalcdDesct>
+    <VlrTotCobrar>316191.18</VlrTotCobrar>
+    <DtValiddCalc>2017-07-17</DtValiddCalc>
+    </CalcTit></RepetCalcTit><SitTitPgto>12</SitTitPgto><JDCalcTit><DtValiddCalcJD>2017-07-17</DtValiddCalcJD><CdMunicipio>12311</CdMunicipio><DtCalcdJDVencTit>2017-07-17</DtCalcdJDVencTit><VlrCalcdJDAbatt>0</VlrCalcdJDAbatt><VlrCalcdJDJuros>0</VlrCalcdJDJuros><VlrCalcdJDMulta>0</VlrCalcdJDMulta><VlrCalcdJDDesct>0</VlrCalcdJDDesct><VlrCalcdJDTotCobrar>316191.18</VlrCalcdJDTotCobrar><VlrCalcdJDMin>316191.18</VlrCalcdJDMin><VlrCalcdJDMax>316191.18</VlrCalcdJDMax></JDCalcTit></RequisitarTituloCIP></return></NS1:RequisitarTituloCIPCalcVlrResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>';
+    pr_des_erro := 'OK';
+    pr_tpconcip := 1;
+    RETURN;*/
+  
     -- Indica que a rotina não foi executada por completo
     pr_des_erro := 'NOK';
     
@@ -1122,8 +1173,15 @@ END;
     END IF;
     
     --
+    --PRB0040329
+    if to_number(to_char(sysdate,'hh24')) < nvl(to_number(trim(gene0001.fn_param_sistema('CRED',0,'NPC_HORARIO_CNS_DIF'))),6) then
+      vr_dsdatamvto := to_char(to_date(ddda0001.fn_datamov,'yyyymmdd'),'yyyymmdd');
+    else
+      vr_dsdatamvto := to_char(SYSDATE, 'YYYYMMDD');
+    end if;
+
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtMovto';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE, 'YYYYMMDD'); -- pr_dtmvtolt 
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_dsdatamvto; --PRB0040329
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
     
     -- Montar o XML/SOAP para a requisição da consulta
@@ -1171,9 +1229,9 @@ END;
                            ,pr_dsxmlerr => vr_dsxmltit.getClobVal()
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
-    dbms_output.put_line('******************************************');
-    dbms_output.put_line('======>>> '||vr_cdcritic);
-    dbms_output.put_line('******************************************');
+    --dbms_output.put_line('******************************************');
+    --dbms_output.put_line('======>>> '||vr_cdcritic);
+    --dbms_output.put_line('******************************************');
     -- Se ocorreu crítica, mas a mesma é diferente da critica 940 - Tempo Excedido
     -- deve gerar o erro e encerrar a rotina
     IF (vr_cdcritic > 0 OR vr_dscritic IS NOT NULL) AND vr_cdcritic <> 940 THEN
@@ -1238,9 +1296,9 @@ END;
     
     -- Se passou pela validação de erros sem encontrar retorno do Fault Packet, deve retornar o XML
     pr_dsxmltit := REPLACE( REPLACE(vr_dsxmltit.getClobVal(),'&lt;','<') ,'&gt;','>');
-    dbms_output.PUT_LINE('#### RETORNO #######################################');
-    dbms_output.put_line(pr_dsxmltit);
-    dbms_output.PUT_LINE('####################################################');
+    --dbms_output.PUT_LINE('#### RETORNO #######################################');
+    --dbms_output.put_line(pr_dsxmltit);
+    --dbms_output.PUT_LINE('####################################################');
     -- Indica que a rotina foi executada com sucesso
     pr_des_erro := 'OK';
     
@@ -1375,9 +1433,9 @@ END;
                            ,pr_dsxmlerr => vr_dsxmltit.getClobVal()
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
-    dbms_output.put_line('******************************************');
-    dbms_output.put_line('======>>> '||vr_cdcritic);
-    dbms_output.put_line('******************************************');
+    --dbms_output.put_line('******************************************');
+    --dbms_output.put_line('======>>> '||vr_cdcritic);
+    --dbms_output.put_line('******************************************');
     -- Se ocorreu crítica, mas a mesma é diferente da critica 940 - Tempo Excedido
     -- deve gerar o erro e encerrar a rotina
     IF (vr_cdcritic > 0 OR vr_dscritic IS NOT NULL) THEN
@@ -1495,7 +1553,7 @@ END;
     
     -- Fechar o cursor
     CLOSE cr_craptit;
-  
+    
     vr_nratutit := NULL;
     
     --Se for titulo da propria cooperativa
@@ -1527,7 +1585,7 @@ END;
     
 
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'EnvioImediato';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 'N'; 
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 'N';
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';    
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCtrlPart';
@@ -1635,10 +1693,10 @@ END;
     vr_dssrdom := fn_url_SendSoapNPC (pr_idservic => 4);
     
     
-    dbms_output.PUT_LINE('#### REQUISIÇÃO ####################################');
-    dbms_output.put_line(vr_xml.getClobVal());
+    --dbms_output.PUT_LINE('#### REQUISIÇÃO ####################################');
+    --dbms_output.put_line(vr_xml.getClobVal());
     --DBMS_XSLPROCESSOR.CLOB2FILE(vr_xml.getclobval(), '/micros/cecred/odirlei/arq', 'req.xml', NLS_CHARSET_ID('UTF8'));
-    dbms_output.PUT_LINE('####################################################');
+    --dbms_output.PUT_LINE('####################################################');
     
     
     -- Enviar requisição para webservice
@@ -1656,9 +1714,9 @@ END;
     END IF;
     
     
-    dbms_output.PUT_LINE('#### RETORNO #######################################');
-    dbms_output.put_line(vr_xml_res.getClobVal());
-    dbms_output.PUT_LINE('####################################################');
+    --dbms_output.PUT_LINE('#### RETORNO #######################################');
+    --dbms_output.put_line(vr_xml_res.getClobVal());
+    --dbms_output.PUT_LINE('####################################################');
     
     
     -- Verifica se ocorreu retorno com erro no XML
